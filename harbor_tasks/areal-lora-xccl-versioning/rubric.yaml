@@ -1,0 +1,26 @@
+# Rules from repo agent configs, evaluated by LLM judge.
+# Task: fix LoRA XCCL versioning in areal/engine/ (vllm_ext + vllm_remote)
+rules:
+  - rule: "Follow existing code patterns in the same module."
+    from: "CLAUDE.md:76"
+
+  - rule: "No wildcard imports (`from x import *`)."
+    from: "AGENTS.md:30"
+
+  - rule: "No hardcoded secrets, paths, or endpoints."
+    from: "AGENTS.md:31"
+
+  - rule: "explicit type hints; reuse `areal/api/cli_args.py` dataclasses; no wildcard imports; heavy optional deps inside functions."
+    from: "AGENTS.md:99-100"
+
+  - rule: "Use `areal.utils.logging.getLogger(name)` with PascalCase descriptive name, NOT `print` or stdlib `logging`"
+    from: ".claude/rules/code-style.md:16-17"
+
+  - rule: "Prefer explicit imports over module-level imports for large modules"
+    from: ".claude/rules/code-style.md:67"
+
+  - rule: "Never create global process group in module-level code"
+    from: ".claude/rules/distributed.md:12"
+
+  - rule: "Prefer explicit dtype/device over implicit conversion"
+    from: ".claude/rules/code-style.md:61"

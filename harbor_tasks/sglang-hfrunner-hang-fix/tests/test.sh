@@ -7,7 +7,7 @@ TARGET="python/sglang/test/runners.py"
 
 mkdir -p /logs/verifier
 
-# GATE: Python syntax validity
+# ── GATE: Python syntax validity ──────────────────────────────────────
 python3 -c "
 import ast, sys
 try:
@@ -24,146 +24,333 @@ if [ $? -ne 0 ]; then
     exit 0
 fi
 
-# TEST 1: No bare self.out_queue.get() without timeout in forward()
+# ── TEST 1 (0.35): BEHAVIORAL — forward() does NOT hang when subprocess is dead ──
+# This is the critical fail-to-pass test. We extract the forward() method BODY
+# via AST, wrap it in a standalone function with a mock self, and verify it
+# raises (or returns quickly) rather than blocking forever when the subprocess
+# is dead and the output queue is empty.
 python3 << 'PYEOF'
-import ast, sys
+import ast, sys, os, signal, textwrap
 
-with open("python/sglang/test/runners.py") as f:
+# Deadman's switch: if this script runs longer than 25s, the test hangs → FAIL
+def alarm_handler(signum, frame):
+    print("FAIL: forward() hung (SIGALRM after 25s — the bug is NOT fixed)")
+    sys.exit(1)
+
+signal.signal(signal.SIGALRM, alarm_handler)
+signal.alarm(25)
+
+TARGET = "python/sglang/test/runners.py"
+
+with open(TARGET) as f:
     source = f.read()
 
 tree = ast.parse(source)
 
-# Find the HFRunner class and its forward method
+# Find HFRunner class
+hfrunner_node = None
 for node in ast.walk(tree):
     if isinstance(node, ast.ClassDef) and node.name == "HFRunner":
-        for item in ast.walk(node):
-            if isinstance(item, ast.FunctionDef) and item.name == "forward":
-                # Look for bare .get() calls on out_queue with no timeout
-                for call_node in ast.walk(item):
-                    if isinstance(call_node, ast.Call):
-                        func = call_node.func
-                        if isinstance(func, ast.Attribute) and func.attr == "get":
-                            if isinstance(func.value, ast.Attribute) and func.value.attr == "out_queue":
-                                # Check if timeout keyword is present
-                                has_timeout = any(kw.arg == "timeout" for kw in call_node.keywords)
-                                has_positional_timeout = len(call_node.args) >= 2
-                                if not has_timeout and not has_positional_timeout:
-                                    print("FAIL: bare out_queue.get() without timeout found")
-                                    sys.exit(1)
-                print("PASS: no bare out_queue.get() without timeout")
-                sys.exit(0)
-
-print("FAIL: could not find HFRunner.forward method")
-sys.exit(1)
-PYEOF
-if [ $? -eq 0 ]; then
-    PASS=$((PASS + 1))
-fi
-
-# TEST 2: Code checks model_proc.is_alive()
-python3 << 'PYEOF'
-import sys
-
-with open("python/sglang/test/runners.py") as f:
-    source = f.read()
-
-# Find the forward method region and check for is_alive
-in_forward = False
-found = False
-for line in source.splitlines():
-    stripped = line.strip()
-    if "def forward" in line:
-        in_forward = True
-    elif in_forward and (stripped.startswith("def ") or (stripped and not stripped.startswith("#") and not stripped.startswith("@") and line and not line[0].isspace() and stripped)):
-        # Reached next top-level or class-level def
-        if not line.startswith(" " * 4) and not line.startswith("\t"):
-            break
-    if in_forward and "is_alive" in line:
-        found = True
+        hfrunner_node = node
         break
 
-if found:
-    print("PASS: is_alive check found in forward method context")
+if hfrunner_node is None:
+    print("FAIL: HFRunner class not found")
+    sys.exit(1)
+
+# Find forward method
+forward_node = None
+for item in hfrunner_node.body:
+    if isinstance(item, ast.FunctionDef) and item.name == "forward":
+        forward_node = item
+        break
+
+if forward_node is None:
+    print("FAIL: forward() method not found in HFRunner")
+    sys.exit(1)
+
+# Extract the BODY of the forward method (not the def line / signature)
+# This avoids needing DEFAULT_PROMPTS, type annotations, torch, etc.
+lines = source.splitlines()
+body_start = forward_node.body[0].lineno
+body_end = forward_node.end_lineno
+body_lines = lines[body_start - 1 : body_end]
+body_source = "\n".join(body_lines)
+
+# Determine the indentation of the body so we can dedent it
+first_body_line = body_lines[0]
+body_indent = len(first_body_line) - len(first_body_line.lstrip())
+
+# Build test script that wraps the body in a function and calls it
+test_code = '''\
+import multiprocessing as mp
+import queue as queue_mod
+import sys
+import time
+
+class FakeProcess:
+    """Simulates a subprocess that has already died."""
+    def is_alive(self):
+        return False
+    @property
+    def exitcode(self):
+        return 1
+    @property
+    def pid(self):
+        return -1
+    def terminate(self):
+        pass
+    def kill(self):
+        pass
+    def join(self, timeout=None):
+        pass
+
+class FakeSelf:
+    def __init__(self):
+        self.in_queue = mp.Queue()
+        self.out_queue = mp.Queue()
+        self.model_proc = FakeProcess()
+        self.model_type = "generation"
+        self.output_str_only = False
+
+def forward(self, prompts=None, image_data=None, max_new_tokens=8,
+            lora_paths=None, token_ids_logprob=None):
+FORWARD_BODY
+
+obj = FakeSelf()
+try:
+    result = forward(obj, prompts=["test prompt"], image_data=None,
+                     max_new_tokens=8, lora_paths=None, token_ids_logprob=None)
+    # If forward() returned quickly without hanging, that is acceptable
+    print("PASS: forward() returned without hanging (returned value)")
+    sys.exit(0)
+except SystemExit:
+    raise
+except Exception as e:
+    # Fixed code raises an exception — this is the expected behavior
+    print(f"PASS: forward() raised {type(e).__name__}: {e}")
+    sys.exit(0)
+'''
+
+# Re-indent the body to 4 spaces (one level inside the wrapper function)
+reindented = []
+for line in body_lines:
+    if line.strip() == "":
+        reindented.append("")
+    else:
+        reindented.append("    " + line[body_indent:])
+body_reindented = "\n".join(reindented)
+
+test_code = test_code.replace("FORWARD_BODY", body_reindented)
+
+test_file = "/tmp/_test_forward_hang.py"
+with open(test_file, "w") as f:
+    f.write(test_code)
+
+import subprocess
+proc = subprocess.run(
+    [sys.executable, test_file],
+    timeout=20,
+    capture_output=True,
+    text=True,
+)
+print(proc.stdout.strip())
+if proc.stderr.strip():
+    print("stderr:", proc.stderr.strip()[-500:])
+
+signal.alarm(0)
+
+if proc.returncode == 0:
     sys.exit(0)
 else:
-    print("FAIL: no is_alive check found")
+    print(f"FAIL: test subprocess exited with code {proc.returncode}")
     sys.exit(1)
 PYEOF
-if [ $? -eq 0 ]; then
+T1=$?
+if [ $T1 -eq 0 ]; then
     PASS=$((PASS + 1))
 fi
 
-# TEST 3: RuntimeError raised when subprocess dies
+# ── TEST 2 (0.25): BEHAVIORAL — forward() still works when subprocess produces output ──
+# Pass-to-pass: if the queue has data and process is alive, forward() returns it.
+python3 << 'PYEOF'
+import ast, sys, os, signal
+
+signal.signal(signal.SIGALRM, lambda s,f: (print("FAIL: pass-to-pass test hung"), sys.exit(1)))
+signal.alarm(15)
+
+TARGET = "python/sglang/test/runners.py"
+
+with open(TARGET) as f:
+    source = f.read()
+
+tree = ast.parse(source)
+
+# Find HFRunner class
+hfrunner_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "HFRunner":
+        hfrunner_node = node
+        break
+
+if hfrunner_node is None:
+    print("FAIL: HFRunner class not found")
+    sys.exit(1)
+
+# Find forward method
+forward_node = None
+for item in hfrunner_node.body:
+    if isinstance(item, ast.FunctionDef) and item.name == "forward":
+        forward_node = item
+        break
+
+if forward_node is None:
+    print("FAIL: forward() not found")
+    sys.exit(1)
+
+# Extract the BODY of forward (not the signature)
+lines = source.splitlines()
+body_start = forward_node.body[0].lineno
+body_end = forward_node.end_lineno
+body_lines = lines[body_start - 1 : body_end]
+first_body_line = body_lines[0]
+body_indent = len(first_body_line) - len(first_body_line.lstrip())
+
+reindented = []
+for line in body_lines:
+    if line.strip() == "":
+        reindented.append("")
+    else:
+        reindented.append("    " + line[body_indent:])
+body_reindented = "\n".join(reindented)
+
+test_code = '''\
+import multiprocessing as mp
+import queue as queue_mod
+import sys
+import time
+
+class FakeAliveProcess:
+    """Simulates a subprocess that is alive and healthy."""
+    def is_alive(self):
+        return True
+    @property
+    def exitcode(self):
+        return None
+    @property
+    def pid(self):
+        return 12345
+    def terminate(self):
+        pass
+    def kill(self):
+        pass
+    def join(self, timeout=None):
+        pass
+
+class FakeSelf:
+    def __init__(self):
+        self.in_queue = mp.Queue()
+        self.out_queue = mp.Queue()
+        self.model_proc = FakeAliveProcess()
+        self.model_type = "generation"
+        self.output_str_only = False
+
+def forward(self, prompts=None, image_data=None, max_new_tokens=8,
+            lora_paths=None, token_ids_logprob=None):
+FORWARD_BODY
+
+obj = FakeSelf()
+
+# Pre-load the output queue with a result BEFORE calling forward()
+expected = {"output": "hello world", "logprobs": [1.0, 2.0]}
+obj.out_queue.put(expected)
+
+result = forward(obj, prompts=["test"], image_data=None,
+                 max_new_tokens=8, lora_paths=None, token_ids_logprob=None)
+
+if result == expected:
+    print("PASS: forward() returned correct result from queue")
+    sys.exit(0)
+else:
+    print(f"FAIL: forward() returned {result!r}, expected {expected!r}")
+    sys.exit(1)
+'''.replace("FORWARD_BODY", body_reindented)
+
+test_file = "/tmp/_test_forward_passthrough.py"
+with open(test_file, "w") as f:
+    f.write(test_code)
+
+import subprocess
+proc = subprocess.run(
+    [sys.executable, test_file],
+    timeout=12,
+    capture_output=True,
+    text=True,
+)
+print(proc.stdout.strip())
+if proc.stderr.strip():
+    print("stderr:", proc.stderr.strip()[-300:])
+
+signal.alarm(0)
+
+if proc.returncode == 0:
+    sys.exit(0)
+else:
+    print(f"FAIL: test subprocess exited with code {proc.returncode}")
+    sys.exit(1)
+PYEOF
+T2=$?
+if [ $T2 -eq 0 ]; then
+    PASS=$((PASS + 1))
+fi
+
+# ── TEST 3 (0.15): SUPPLEMENTARY STRUCTURAL — HFRunner.forward() has been modified ──
+# Light check: forward() body is no longer just `self.in_queue.put(...); return self.out_queue.get()`
 python3 << 'PYEOF'
 import ast, sys
 
-with open("python/sglang/test/runners.py") as f:
+TARGET = "python/sglang/test/runners.py"
+
+with open(TARGET) as f:
     source = f.read()
 
 tree = ast.parse(source)
 
 for node in ast.walk(tree):
     if isinstance(node, ast.ClassDef) and node.name == "HFRunner":
-        for item in ast.walk(node):
+        for item in node.body:
             if isinstance(item, ast.FunctionDef) and item.name == "forward":
-                for child in ast.walk(item):
-                    if isinstance(child, ast.Raise) and child.exc is not None:
-                        # Check if it raises RuntimeError or any exception with a message
-                        exc = child.exc
-                        if isinstance(exc, ast.Call):
-                            if isinstance(exc.func, ast.Name) and exc.func.id in ("RuntimeError", "ChildProcessError", "SubprocessError", "Exception", "OSError"):
-                                print(f"PASS: raises {exc.func.id}")
-                                sys.exit(0)
-                        elif isinstance(exc, ast.Name):
-                            print(f"PASS: raises {exc.id}")
-                            sys.exit(0)
-                print("FAIL: no RuntimeError or similar exception raised in forward()")
-                sys.exit(1)
+                # Count the number of AST statements in forward body
+                # Original buggy version has exactly 2 statements:
+                #   self.in_queue.put(...)
+                #   return self.out_queue.get()
+                body_stmts = len(item.body)
+                # Count total AST nodes in the method body (rough complexity measure)
+                total_nodes = sum(1 for _ in ast.walk(item))
+                if body_stmts > 2 or total_nodes > 20:
+                    print(f"PASS: forward() has been modified ({body_stmts} stmts, {total_nodes} AST nodes)")
+                    sys.exit(0)
+                else:
+                    print(f"FAIL: forward() looks unmodified ({body_stmts} stmts, {total_nodes} AST nodes)")
+                    sys.exit(1)
+        print("FAIL: forward() not found in HFRunner")
+        sys.exit(1)
 
-print("FAIL: could not find HFRunner.forward")
+print("FAIL: HFRunner class not found")
 sys.exit(1)
 PYEOF
-if [ $? -eq 0 ]; then
+T3=$?
+if [ $T3 -eq 0 ]; then
     PASS=$((PASS + 1))
 fi
 
-# TEST 4: queue.get uses timeout parameter
+# ── TEST 4 (0.10): SUPPLEMENTARY STRUCTURAL — HFRunner class still has required methods ──
 python3 << 'PYEOF'
 import ast, sys
 
-with open("python/sglang/test/runners.py") as f:
-    source = f.read()
+TARGET = "python/sglang/test/runners.py"
 
-tree = ast.parse(source)
-
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and node.name == "HFRunner":
-        for item in ast.walk(node):
-            if isinstance(item, ast.FunctionDef) and item.name == "forward":
-                for call_node in ast.walk(item):
-                    if isinstance(call_node, ast.Call):
-                        func = call_node.func
-                        if isinstance(func, ast.Attribute) and func.attr == "get":
-                            has_timeout = any(kw.arg == "timeout" for kw in call_node.keywords)
-                            has_positional_timeout = len(call_node.args) >= 2
-                            if has_timeout or has_positional_timeout:
-                                print("PASS: queue.get() uses timeout")
-                                sys.exit(0)
-                print("FAIL: no queue.get() with timeout found in forward()")
-                sys.exit(1)
-
-print("FAIL: could not find HFRunner.forward")
-sys.exit(1)
-PYEOF
-if [ $? -eq 0 ]; then
-    PASS=$((PASS + 1))
-fi
-
-# TEST 5: Anti-stub - file still has full HFRunner class with __init__, forward, terminate
-python3 << 'PYEOF'
-import ast, sys
-
-with open("python/sglang/test/runners.py") as f:
+with open(TARGET) as f:
     source = f.read()
 
 tree = ast.parse(source)
@@ -172,25 +359,94 @@ for node in ast.walk(tree):
     if isinstance(node, ast.ClassDef) and node.name == "HFRunner":
         methods = {item.name for item in node.body if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))}
         required = {"__init__", "forward"}
-        # terminate or __del__ or cleanup
-        has_cleanup = bool(methods & {"terminate", "__del__", "cleanup", "__exit__"})
-        has_required = required.issubset(methods)
-        # Check file is substantial (not a stub)
-        if has_required and len(source.splitlines()) > 100:
-            print(f"PASS: HFRunner has methods {methods & (required | {'terminate','__del__','cleanup'})} and file has {len(source.splitlines())} lines")
+        if required.issubset(methods):
+            print(f"PASS: HFRunner has required methods: {methods & required}")
             sys.exit(0)
         else:
-            print(f"FAIL: missing methods or file too short. methods={methods}, lines={len(source.splitlines())}")
+            print(f"FAIL: HFRunner missing methods. Found: {methods}, need: {required}")
             sys.exit(1)
 
 print("FAIL: HFRunner class not found")
 sys.exit(1)
 PYEOF
-if [ $? -eq 0 ]; then
+T4=$?
+if [ $T4 -eq 0 ]; then
     PASS=$((PASS + 1))
 fi
 
-# Compute reward
-REWARD=$(python3 -c "print(min($PASS / $TOTAL, 1.0))")
-echo "Score: $PASS / $TOTAL = $REWARD"
+# ── TEST 5 (0.15): ANTI-STUB — file is substantial and not gutted ──
+python3 << 'PYEOF'
+import ast, sys
+
+TARGET = "python/sglang/test/runners.py"
+
+with open(TARGET) as f:
+    source = f.read()
+
+tree = ast.parse(source)
+
+line_count = len(source.splitlines())
+class_count = sum(1 for node in ast.walk(tree) if isinstance(node, ast.ClassDef))
+func_count = sum(1 for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)))
+
+if line_count < 100:
+    print(f"FAIL: file only has {line_count} lines — looks like a stub")
+    sys.exit(1)
+
+if class_count < 1 or func_count < 5:
+    print(f"FAIL: file looks gutted ({class_count} classes, {func_count} functions)")
+    sys.exit(1)
+
+print(f"PASS: file is substantial ({line_count} lines, {class_count} classes, {func_count} functions)")
+sys.exit(0)
+PYEOF
+T5=$?
+if [ $T5 -eq 0 ]; then
+    PASS=$((PASS + 1))
+fi
+
+# ── TEST 6 (0.10): Config-derived — new test files have main guard ──
+# Source: .claude/skills/write-sglang-test/SKILL.md lines 8-10 @ 5ef56682b800c3905973c86beeddf1318cedb2a9
+cd /workspace/sglang 2>/dev/null
+NEW_TEST_FILES=$(git diff --name-only --diff-filter=A HEAD 2>/dev/null | grep -E '^test/.*\.py$' || true)
+T6=1
+if [ -z "$NEW_TEST_FILES" ]; then
+    echo "T6 PASS (no new test files added)"
+    T6=0
+else
+    ALL_OK=1
+    for tf in $NEW_TEST_FILES; do
+        if ! grep -q 'if __name__.*==.*"__main__"' "/workspace/sglang/$tf" 2>/dev/null; then
+            echo "T6 FAIL: $tf missing main guard"
+            ALL_OK=0
+        fi
+    done
+    if [ "$ALL_OK" -eq 1 ]; then
+        echo "T6 PASS"
+        T6=0
+    fi
+fi
+
+# ── Compute weighted reward ──────────────────────────────────────────
+# T1: behavioral hang test          0.35
+# T2: behavioral pass-to-pass       0.25
+# T3: structural forward modified   0.15
+# T4: structural required methods   0.10
+# T5: anti-stub                     0.05
+# T6: config-derived main guard     0.10
+# Total                             1.00
+REWARD=$(python3 -c "
+w = 0.0
+if $T1 == 0: w += 0.35
+if $T2 == 0: w += 0.25
+if $T3 == 0: w += 0.15
+if $T4 == 0: w += 0.10
+if $T5 == 0: w += 0.05
+if ${T6:-1} == 0: w += 0.10
+print(f'{w:.2f}')
+")
+echo "Score: $REWARD (T1=$T1 T2=$T2 T3=$T3 T4=$T4 T5=$T5 T6=${T6:-1})"
 echo "$REWARD" > /logs/verifier/reward.txt
+
+# LLM rubric judge (runs only when LLM_JUDGE=1)
+source /tests/judge_hook.sh 2>/dev/null || true

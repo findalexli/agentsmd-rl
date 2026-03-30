@@ -1,0 +1,21 @@
+# Rules from repo agent configs, evaluated by LLM judge.
+# Task modifies: crates/next-api/src/app.rs, crates/next-core/src/app_page_loader_tree.rs,
+#   packages/next/src/build/templates/app-page.ts, turbopack/crates/turbopack-core/src/module_graph/chunk_group_info.rs
+rules:
+  - rule: "`app-page.ts` is a build template compiled by the user's bundler: Any `require()` in this file is traced by webpack/turbopack at `next build` time. You cannot require internal modules with relative paths because they won't be resolvable from the user's project. Instead, export new helpers from `entry-base.ts` and access them via `entryBase.*` in the template."
+    from: "AGENTS.md:407"
+
+  - rule: "Keep `require()` behind compile-time `if/else` branches for DCE (avoid early-return/throw patterns)."
+    from: "AGENTS.md:396"
+
+  - rule: "`react-server-dom-webpack/*` imports must stay in `entry-base.ts`; consume via component module exports elsewhere."
+    from: "AGENTS.md:398"
+
+  - rule: "cargo fmt uses ASCII order (uppercase before lowercase)"
+    from: "AGENTS.md:414"
+
+  - rule: "Template helpers should stay out of `RenderResult`. If `app-page.ts` needs a Node-stream-only utility, prefer a small dedicated helper module in `server/stream-utils/` (with DCE-safe `if/else` + `require()`)."
+    from: ".agents/skills/dce-edge/SKILL.md:55"
+
+  - rule: "Only `entry-base.ts` is compiled in rspack's `(react-server)` layer. ALL imports from `react-server-dom-webpack/*` (Flight server/static APIs) must go through `entry-base.ts`. Other files like `stream-ops.node.ts` or `app-render.tsx` must access Flight APIs via the `ComponentMod` parameter (which is the `entry-base.ts` module exposed through the `app-page.ts` build template)."
+    from: ".agents/skills/react-vendoring/SKILL.md:25"

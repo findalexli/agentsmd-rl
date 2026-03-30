@@ -1,31 +1,18 @@
 #!/usr/bin/env bash
 # Verifier for vllm-tool-parser-indexerror
 #
-# Design philosophy (post-OpenAI SWE-bench critique):
-#   - PRIMARY: fail-to-pass behavioral tests that are implementation-agnostic
-#   - SECONDARY: structural checks as partial-credit supplementary signal
-#   - REGRESSION: pass-to-pass test ensuring existing logic isn't broken
+# Tests 1-2 use AST analysis of the source code to detect the buggy patterns
+# without extracting and exec-ing code regions (which fails due to the deeply
+# nested async generator context).
 #
-# The bug: in chat_completion_stream_generator(), `index` can be referenced
-# before assignment when tool_parser is None, and the code checks for
-# unstreamed tool arg tokens even when no tool calls were detected, causing
-# IndexError on empty prev_tool_call_arr.
-#
-# A correct fix must satisfy:
-#   1. `index` is always defined (no UnboundLocalError path)
-#   2. Accessing prev_tool_call_arr[-1] only happens when array is non-empty
-#
-# We do NOT require:
-#   - A specific variable name like `should_check`
-#   - A specific restructuring order
-#   - Use of `auto_tools_called` (any equivalent guard is fine)
+# Bug 1: `index` only assigned in `else` branch -> UnboundLocalError when
+#         tool_parser is not None
+# Bug 2: `_should_check_for_unstreamed_tool_arg_tokens` block runs even when
+#         prev_tool_call_arr is empty -> IndexError
 #
 set +e
 
 TARGET="/workspace/vllm/vllm/entrypoints/openai/chat_completion/serving.py"
-PASS=0
-TOTAL=5
-
 mkdir -p /logs/verifier
 
 ###############################################################################
@@ -49,368 +36,621 @@ fi
 echo "GATE PASSED"
 
 ###############################################################################
-# TEST 1 [FAIL-TO-PASS / behavioral]: index is always defined
-#   Extract the relevant code region and execute it with tool_parser=None.
-#   Buggy code: UnboundLocalError on `index` in the else-less path.
-#   Fixed code: `index` is always assigned, no error.
+# Weight allocation:
+#   TEST 1 (fail-to-pass: UnboundLocalError pattern)    = 0.30
+#   TEST 2 (fail-to-pass: IndexError pattern)            = 0.30
+#   TEST 3 (pass-to-pass: signature + importability)     = 0.10
+#   TEST 4 (structural: function exists, regions touched) = 0.15
+#   TEST 5 (anti-stub)                                   = 0.05
+#   TEST 6 (config-derived: no bare pip)                 = 0.10
+#   TOTAL                                                = 1.00
+###############################################################################
+SCORE=0
+
+###############################################################################
+# TEST 1 [FAIL-TO-PASS, 0.30]: UnboundLocalError on `index`
+#
+# In the buggy code, `index` is only assigned inside conditional branches
+# (inside `else:` when tool_parser is None, or inside `if auto_tools_called`).
+# When tool_parser is truthy but auto_tools_called is False in the ternary,
+# `index` is assigned to 0 via ternary — BUT the real bug is that `index = 0`
+# is inside the `else:` block, so when tool_parser IS set, `index` is assigned
+# via ternary inside the `if tool_parser:` block. Actually the exact buggy
+# pattern is:
+#   if tool_parser:
+#       auto_tools_called = len(tool_parser.prev_tool_call_arr) > 0
+#       index = (... if auto_tools_called else 0)
+#   else:
+#       index = 0
+#
+# Wait — that assigns index in both branches. Let me re-read the patch...
+# The patch ADDS `index = 0` BEFORE the if/else AND removes `else: index = 0`.
+# Looking at the original code more carefully with the patch context:
+#   Original has the ternary `index = (... if auto_tools_called else 0)` inside
+#   `if tool_parser:` and `index = 0` inside `else:`. The patch adds an
+#   unconditional `index = 0` before the if block.
+#
+# The key insight: with the gold patch, `index = 0` appears BEFORE/OUTSIDE the
+# `if tool_parser:` block. In the buggy code, ALL assignments to `index` are
+# INSIDE conditional branches. The fix ensures `index` has a default value
+# unconditionally.
+#
+# AST approach: Walk the function body. Find the code region near
+# `_should_check_for_unstreamed_tool_arg_tokens`. Look at `index` assignments.
+# Check whether any `index =` assignment exists at or above the indentation
+# level of the `if tool_parser:` block (i.e., unconditionally reachable).
 ###############################################################################
 echo ""
-echo "TEST 1/5: [fail-to-pass] index is always defined when tool_parser is None"
+echo "TEST 1: [fail-to-pass] index must be assigned unconditionally (not only in branches)"
 python3 << 'PYEOF'
-import ast, sys, textwrap
+import ast, sys
 
 with open("/workspace/vllm/vllm/entrypoints/openai/chat_completion/serving.py") as f:
     source = f.read()
 
-lines = source.split('\n')
+tree = ast.parse(source)
+lines = source.splitlines()
 
-# Find the block containing the index/auto_tools_called logic.
-# We look for the region around "auto_tools_called" and extract ~30 lines.
-region_start = None
-for i, line in enumerate(lines):
-    if 'auto_tools_called' in line and '=' in line and 'False' in line:
-        # Back up a few lines to capture any pre-block assignments
-        region_start = max(0, i - 5)
-        break
-
-if region_start is None:
-    # If auto_tools_called pattern is gone, the fix may have restructured
-    # differently. Look for _should_check_for_unstreamed_tool_arg_tokens instead.
-    for i, line in enumerate(lines):
-        if '_should_check_for_unstreamed_tool_arg_tokens' in line:
-            region_start = max(0, i - 10)
+# Find chat_completion_stream_generator
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if node.name == 'chat_completion_stream_generator':
+            func_node = node
             break
 
-if region_start is None:
-    print("FAIL: could not locate the relevant code region")
+if func_node is None:
+    print("FAIL: chat_completion_stream_generator not found")
     sys.exit(1)
 
-# Extract ~40 lines of the region
-region_end = min(len(lines), region_start + 40)
-region = '\n'.join(lines[region_start:region_end])
+func_start = func_node.lineno - 1
+func_end = func_node.end_lineno
+func_lines = lines[func_start:func_end]
 
-# De-indent to make it executable
-region_dedented = textwrap.dedent(region)
+# Strategy: Find the `if tool_parser:` block that's near
+# `_should_check_for_unstreamed_tool_arg_tokens`. Then check whether
+# `index` is assigned at or above that if-block's indentation level
+# (i.e., unconditionally reachable before entering the if/else).
 
-# Create a mock environment that simulates tool_parser=None
-test_code = '''
-class MockOutput:
-    text = "hello"
-    token_ids = [1, 2, 3]
+# Step 1: Find the line with _should_check_for_unstreamed_tool_arg_tokens
+should_check_idx = None
+for i, line in enumerate(func_lines):
+    if '_should_check_for_unstreamed_tool_arg_tokens' in line:
+        should_check_idx = i
+        break
 
-class MockDeltaMessage:
-    tool_calls = None
-    content = "test"
+if should_check_idx is None:
+    print("FAIL: _should_check_for_unstreamed_tool_arg_tokens not found in function")
+    sys.exit(1)
 
-class MockSelf:
-    def _should_check_for_unstreamed_tool_arg_tokens(self, delta_message, output):
-        return True
+# Step 2: Find the `if tool_parser:` line that's above _should_check
+# (within ~40 lines above it)
+tool_parser_if_idx = None
+tool_parser_if_indent = None
+for i in range(should_check_idx - 1, max(should_check_idx - 40, -1), -1):
+    stripped = func_lines[i].strip()
+    if stripped.startswith('if') and 'tool_parser' in stripped and stripped.endswith(':'):
+        tool_parser_if_idx = i
+        tool_parser_if_indent = len(func_lines[i]) - len(func_lines[i].lstrip())
+        break
 
-self = MockSelf()
-tool_parser = None
-delta_message = MockDeltaMessage()
-output = MockOutput()
+if tool_parser_if_idx is None:
+    # The code may have been restructured — check if index is assigned anywhere
+    # in the region unconditionally. Be lenient: if the if/else structure was
+    # removed entirely and index is just assigned, that's a valid fix.
+    region_start = max(0, should_check_idx - 50)
+    for i in range(region_start, should_check_idx):
+        stripped = func_lines[i].strip()
+        if ('index =' in stripped or 'index=' in stripped) and '==' not in stripped and not stripped.startswith('#'):
+            print("PASS: index is assigned (restructured code, no if tool_parser block found)")
+            sys.exit(0)
+    print("FAIL: could not find if tool_parser block or any index assignment")
+    sys.exit(1)
 
-# Execute the extracted region. If `index` is referenced before assignment,
-# this will raise UnboundLocalError.
-try:
-    exec(REGION_CODE, {
-        'self': self,
-        'tool_parser': tool_parser,
-        'delta_message': delta_message,
-        'output': output,
-        'len': len,
-        'isinstance': isinstance,
-    })
-    # If we get here without error, index should be defined
-    print("PASS: code executed without UnboundLocalError")
-except UnboundLocalError as e:
-    if 'index' in str(e):
-        print(f"FAIL: UnboundLocalError: {e}")
-        raise
-    # Other UnboundLocalErrors from our incomplete mock env are OK
-    print(f"PASS: no index UnboundLocalError (got unrelated: {e})")
-except NameError as e:
-    if 'index' in str(e):
-        print(f"FAIL: NameError on index: {e}")
-        raise
-    print(f"PASS: no index error (got unrelated NameError: {e})")
-except Exception as e:
-    # Other exceptions (AttributeError on mock objects etc.) are expected
-    # since we're only testing a code fragment. The key check is no
-    # UnboundLocalError/NameError on `index`.
-    print(f"PASS: no index error (got expected mock error: {type(e).__name__})")
-'''
+# Step 3: Look for `index = ...` assignments in the region BETWEEN
+# ~20 lines above the `if tool_parser:` line and the `if tool_parser:` line itself.
+# An unconditional assignment at the SAME or LESSER indent level as the
+# `if tool_parser:` means index is safely initialized before the branch.
+#
+# Also check: is there an `index = ` assignment at exactly the same indent
+# as `if tool_parser:` — that would be unconditional relative to that block.
+has_unconditional_index = False
 
-try:
-    exec(test_code, {'REGION_CODE': region_dedented})
-except (UnboundLocalError, NameError) as e:
-    if 'index' in str(e):
-        print(f"FAIL: {e}")
-        sys.exit(1)
-except Exception:
-    pass  # Mock-related errors are fine
+# Search from 20 lines above tool_parser_if down to (but not including) it
+search_start = max(0, tool_parser_if_idx - 20)
+for i in range(search_start, tool_parser_if_idx):
+    stripped = func_lines[i].strip()
+    if ('index =' in stripped or 'index=' in stripped) and '==' not in stripped and not stripped.startswith('#'):
+        line_indent = len(func_lines[i]) - len(func_lines[i].lstrip())
+        if line_indent <= tool_parser_if_indent:
+            has_unconditional_index = True
+            print(f"  Found unconditional index assignment at func line {i}: {stripped}")
+            break
 
-# If we haven't exited with 1, the test passes
-sys.exit(0)
+if has_unconditional_index:
+    print("PASS: index is assigned unconditionally before the if tool_parser block")
+    sys.exit(0)
+
+# Also check: maybe the else branch was kept but index is ALSO assigned before.
+# Or maybe the fix is different: index assigned at the same level right before if.
+# Let's also check the line immediately before `if tool_parser:`.
+prev_line = func_lines[tool_parser_if_idx - 1].strip() if tool_parser_if_idx > 0 else ""
+if ('index =' in prev_line or 'index=' in prev_line) and '==' not in prev_line:
+    print("PASS: index assigned immediately before if tool_parser block")
+    sys.exit(0)
+
+# If we get here, index is NOT assigned unconditionally — this is the buggy pattern.
+# Double check: are ALL index assignments inside the if/else branches?
+print("FAIL: index is not assigned unconditionally before the if tool_parser block")
+print("  (buggy pattern: index only assigned inside conditional branches)")
+sys.exit(1)
 PYEOF
-if [ $? -eq 0 ]; then PASS=$((PASS + 1)); fi
+T1=$?
+echo "  -> exit code: $T1"
 
 ###############################################################################
-# TEST 2 [FAIL-TO-PASS / behavioral]: empty tool_call_arr doesn't IndexError
-#   With tool_parser having an empty prev_tool_call_arr, the unstreamed-token
-#   check path should not try to index into the empty array.
+# TEST 2 [FAIL-TO-PASS, 0.30]: IndexError on empty prev_tool_call_arr
+#
+# In the buggy code, the condition guarding access to prev_tool_call_arr[-1]
+# is only:
+#   if (self._should_check_for_unstreamed_tool_arg_tokens(...) and tool_parser):
+# This allows entry when prev_tool_call_arr is empty, causing IndexError.
+#
+# The gold fix changes this to also require `auto_tools_called` (which is
+# True only when prev_tool_call_arr is non-empty), or an equivalent guard.
+#
+# AST approach: Find the if-statement that calls
+# _should_check_for_unstreamed_tool_arg_tokens. Count the number of boolean
+# operands in the condition. Buggy code has exactly 2 terms
+# (_should_check(...) and tool_parser). Fixed code has 3+ terms, or the
+# condition is restructured to include a guard against empty arrays.
 ###############################################################################
 echo ""
-echo "TEST 2/5: [fail-to-pass] empty prev_tool_call_arr doesn't cause IndexError"
+echo "TEST 2: [fail-to-pass] _should_check condition must guard against empty prev_tool_call_arr"
 python3 << 'PYEOF'
-import sys
+import ast, sys
 
 with open("/workspace/vllm/vllm/entrypoints/openai/chat_completion/serving.py") as f:
     source = f.read()
 
-lines = source.split('\n')
+tree = ast.parse(source)
+lines = source.splitlines()
 
-# The core bug: when tool_parser exists but prev_tool_call_arr is empty,
-# the code could try `prev_tool_call_arr[-1]` or `len(...) - 1` on empty list.
-# Find the region and check if there's a guard.
+# Find chat_completion_stream_generator
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if node.name == 'chat_completion_stream_generator':
+            func_node = node
+            break
 
-# Strategy: look for any access to prev_tool_call_arr that could IndexError
-# when the array is empty. Check if it's guarded by a length/emptiness check.
+if func_node is None:
+    print("FAIL: chat_completion_stream_generator not found")
+    sys.exit(1)
 
-# Find all references to prev_tool_call_arr
-risky_accesses = []
-for i, line in enumerate(lines):
-    stripped = line.strip()
-    # Look for indexing into prev_tool_call_arr or len()-1 patterns
-    if 'prev_tool_call_arr' in stripped:
-        # Check if this is inside a conditional that guards for non-empty
-        # Look at surrounding context for guard
-        context_before = '\n'.join(lines[max(0, i-10):i])
-        has_guard = False
-        # Accept any of: len() > 0, bool check, auto_tools_called, not empty, etc.
-        if any(g in context_before for g in [
-            'auto_tools_called',
-            'len(tool_parser.prev_tool_call_arr) > 0',
-            'len(tool_parser.prev_tool_call_arr) >',
-            'tool_parser.prev_tool_call_arr',  # truthy check
-            'if not tool_parser',
-        ]):
-            has_guard = True
+func_start = func_node.lineno - 1
+func_end = func_node.end_lineno
+func_lines = lines[func_start:func_end]
 
-        # Check if the line itself is the guard definition
-        if 'len(tool_parser.prev_tool_call_arr)' in stripped and '>' in stripped:
-            has_guard = True
-        if 'auto_tools_called' in stripped and ('=' in stripped or 'if' in stripped):
-            has_guard = True
-
-        # Check if accessing with index (risky if unguarded)
-        if '[' in stripped and ']' in stripped and 'prev_tool_call_arr[' in stripped:
-            if not has_guard:
-                risky_accesses.append((i+1, stripped))
-        if 'len(tool_parser.prev_tool_call_arr) - 1' in stripped:
-            if not has_guard:
-                risky_accesses.append((i+1, stripped))
-
-# Now check the critical path: _should_check_for_unstreamed_tool_arg_tokens
-# In buggy code, this runs even when prev_tool_call_arr is empty.
-# In fixed code, there should be an emptiness guard before the indexing block.
-for i, line in enumerate(lines):
+# Find the line(s) containing _should_check_for_unstreamed_tool_arg_tokens
+should_check_idx = None
+for i, line in enumerate(func_lines):
     if '_should_check_for_unstreamed_tool_arg_tokens' in line:
-        # Look at the if-condition containing this call
-        # Check if there's ALSO a non-empty guard in the same condition
-        context = ' '.join(l.strip() for l in lines[max(0,i-3):i+8])
+        should_check_idx = i
+        break
 
-        # The buggy code: `if self._should_check(...) and tool_parser:`
-        # - enters the block even with empty prev_tool_call_arr
-        # The fixed code adds: `and auto_tools_called` or `and len(...) > 0` or similar
+if should_check_idx is None:
+    print("FAIL: _should_check_for_unstreamed_tool_arg_tokens not found")
+    sys.exit(1)
 
-        has_emptiness_guard = False
-        for guard in ['auto_tools_called', 'prev_tool_call_arr', 'len(', 'tool_calls']:
-            if guard in context and ('and' in context or 'if' in context):
-                has_emptiness_guard = True
+# Strategy A: Use AST to find the If node containing _should_check.
+# Walk the function's AST to find If nodes whose test references
+# _should_check_for_unstreamed_tool_arg_tokens.
+# Then count the number of boolean operands in the BoolOp.
+
+def find_if_with_should_check(node):
+    """Recursively find If nodes whose condition calls _should_check..."""
+    results = []
+    for child in ast.walk(node):
+        if isinstance(child, ast.If):
+            # Check if the test (or any sub-expression) calls _should_check
+            for sub in ast.walk(child.test):
+                if isinstance(sub, ast.Call):
+                    # Check if the function being called is _should_check...
+                    func = sub.func
+                    if isinstance(func, ast.Attribute) and func.attr == '_should_check_for_unstreamed_tool_arg_tokens':
+                        results.append(child)
+                        break
+                    if isinstance(func, ast.Name) and func.id == '_should_check_for_unstreamed_tool_arg_tokens':
+                        results.append(child)
+                        break
+    return results
+
+if_nodes = find_if_with_should_check(func_node)
+
+if not if_nodes:
+    # _should_check might not be inside an `if` directly — it could be
+    # assigned to a variable first (like in the gold fix: `should_check = ...`)
+    # In that case, find the if-statement that uses the variable.
+
+    # Check if _should_check is assigned to a variable
+    assign_var = None
+    for i, line in enumerate(func_lines):
+        stripped = line.strip()
+        if '_should_check_for_unstreamed_tool_arg_tokens' in stripped and '=' in stripped:
+            # e.g., `should_check = self._should_check...`
+            parts = stripped.split('=', 1)
+            if len(parts) == 2 and not parts[0].strip().startswith('if'):
+                assign_var = parts[0].strip()
+                assign_idx = i
                 break
 
-        if not has_emptiness_guard:
-            print(f"FAIL: _should_check block at line {i+1} has no emptiness guard")
-            print(f"  context: {context[:200]}")
-            sys.exit(1)
-        else:
-            print(f"PASS: _should_check block has emptiness guard")
-            sys.exit(0)
+    if assign_var:
+        # Now find the if-statement that uses this variable
+        # Look in the lines after the assignment
+        for i in range(assign_idx + 1, min(assign_idx + 15, len(func_lines))):
+            stripped = func_lines[i].strip()
+            if stripped.startswith('if') and assign_var in stripped:
+                # Count the boolean terms in this if-condition
+                # Gather the full condition (may span lines)
+                cond_text = stripped
+                j = i + 1
+                while j < len(func_lines) and not cond_text.rstrip().endswith(':'):
+                    cond_text += ' ' + func_lines[j].strip()
+                    j += 1
 
-# If we couldn't find the pattern at all, check if risky accesses remain
-if risky_accesses:
-    print(f"FAIL: unguarded prev_tool_call_arr access at lines: {risky_accesses}")
+                # Count `and` / `or` to determine number of terms
+                # "if A and B and C:" has 2 ands = 3 terms
+                and_count = cond_text.count(' and ')
+                or_count = cond_text.count(' or ')
+                total_terms = and_count + or_count + 1
+
+                if total_terms >= 3:
+                    print(f"PASS: _should_check condition has {total_terms} terms (sufficient guard)")
+                    print(f"  Condition: {cond_text.strip()}")
+                    sys.exit(0)
+                elif total_terms == 2:
+                    # 2 terms: might be "should_check and tool_parser" — still buggy
+                    # unless one of the terms checks for non-empty array
+                    if 'auto_tools_called' in cond_text or 'prev_tool_call_arr' in cond_text or 'len(' in cond_text:
+                        print(f"PASS: condition includes array-emptiness guard")
+                        sys.exit(0)
+                    else:
+                        print(f"FAIL: condition has only 2 terms without array guard: {cond_text.strip()}")
+                        sys.exit(1)
+                else:
+                    print(f"FAIL: condition has only {total_terms} term(s): {cond_text.strip()}")
+                    sys.exit(1)
+
+        # If we got here, the variable is assigned but not used in a simple if
+        # This is unusual but could be a valid restructuring
+        print("WARN: _should_check assigned to variable but could not find corresponding if")
+        # Fall through to text-based analysis below
+
+# Strategy B: Text-based analysis of the if-condition lines
+# Find the if-statement that contains or follows _should_check
+# and count the boolean terms.
+
+# Gather the full condition block around should_check_idx
+# First, find the enclosing `if` line
+if_line_idx = None
+for i in range(should_check_idx, max(should_check_idx - 5, -1), -1):
+    if func_lines[i].strip().startswith('if'):
+        if_line_idx = i
+        break
+
+if if_line_idx is None:
+    if_line_idx = should_check_idx
+
+# Gather continuation lines until we hit ':'
+cond_text = ''
+for i in range(if_line_idx, min(if_line_idx + 10, len(func_lines))):
+    cond_text += ' ' + func_lines[i].strip()
+    if ':' in func_lines[i].split('#')[0] and i > if_line_idx:
+        break
+    if func_lines[i].strip().endswith(':'):
+        break
+
+cond_text = cond_text.strip()
+
+# Count boolean operators
+and_count = cond_text.count(' and ')
+or_count = cond_text.count(' or ')
+total_terms = and_count + or_count + 1
+
+# Check for guard against empty array
+has_array_guard = (
+    'auto_tools_called' in cond_text
+    or 'prev_tool_call_arr' in cond_text
+    or 'len(' in cond_text
+)
+
+if total_terms >= 3:
+    print(f"PASS: _should_check if-condition has {total_terms} terms (strengthened guard)")
+    print(f"  Condition: {cond_text}")
+    sys.exit(0)
+elif total_terms == 2 and has_array_guard:
+    print(f"PASS: _should_check condition has array-emptiness guard")
+    sys.exit(0)
+elif total_terms <= 2 and not has_array_guard:
+    # Check if there's a wrapping if above that provides the guard
+    context_above = '\n'.join(func_lines[max(0, if_line_idx - 5):if_line_idx])
+    if 'auto_tools_called' in context_above or ('prev_tool_call_arr' in context_above and 'if' in context_above):
+        print(f"PASS: guard against empty array found in enclosing context")
+        sys.exit(0)
+    print(f"FAIL: _should_check condition lacks guard against empty prev_tool_call_arr")
+    print(f"  Condition has {total_terms} term(s): {cond_text}")
     sys.exit(1)
-
-print("PASS: no unguarded prev_tool_call_arr access found")
-sys.exit(0)
+else:
+    print(f"PASS: condition appears to have array guard")
+    sys.exit(0)
 PYEOF
-if [ $? -eq 0 ]; then PASS=$((PASS + 1)); fi
+T2=$?
+echo "  -> exit code: $T2"
 
 ###############################################################################
-# TEST 3 [PASS-TO-PASS / regression]: file retains all critical streaming logic
-#   These patterns must exist both before and after the fix.
+# TEST 3 [PASS-TO-PASS, 0.10]: Function signature intact, file structure OK
 ###############################################################################
 echo ""
-echo "TEST 3/5: [pass-to-pass] streaming logic preserved"
+echo "TEST 3: [pass-to-pass] function signature and file structure preserved"
 python3 << 'PYEOF'
-import sys
+import ast, sys
 
 with open("/workspace/vllm/vllm/entrypoints/openai/chat_completion/serving.py") as f:
     source = f.read()
 
-# These are structural invariants that any correct fix must preserve
-required = [
-    'chat_completion_stream_generator',
+tree = ast.parse(source)
+
+# chat_completion_stream_generator must still exist
+found = False
+for node in ast.walk(tree):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if node.name == 'chat_completion_stream_generator':
+            found = True
+            break
+
+if not found:
+    print("FAIL: chat_completion_stream_generator function not found")
+    sys.exit(1)
+
+# File should have reasonable size (not stubbed out)
+line_count = len(source.splitlines())
+if line_count < 500:
+    print(f"FAIL: file suspiciously small ({line_count} lines)")
+    sys.exit(1)
+
+# Key identifiers that must exist in the function
+func_start = node.lineno - 1
+func_end = node.end_lineno
+func_source = '\n'.join(source.splitlines()[func_start:func_end])
+
+required_in_func = [
     'tool_parser',
     'delta_message',
     '_should_check_for_unstreamed_tool_arg_tokens',
+    'prev_tool_call_arr',
 ]
-
-missing = [p for p in required if p not in source]
+missing = [r for r in required_in_func if r not in func_source]
 if missing:
-    print(f"FAIL: missing critical patterns: {missing}")
+    print(f"FAIL: function missing key identifiers: {missing}")
     sys.exit(1)
 
-line_count = len(source.split('\n'))
-if line_count < 500:
-    print(f"FAIL: file too small ({line_count} lines)")
-    sys.exit(1)
-
-print(f"PASS: all critical patterns present, {line_count} lines")
+print(f"PASS: function intact, {line_count} lines, all key identifiers present")
 sys.exit(0)
 PYEOF
-if [ $? -eq 0 ]; then PASS=$((PASS + 1)); fi
+T3=$?
+echo "  -> exit code: $T3"
 
 ###############################################################################
-# TEST 4 [STRUCTURAL / supplementary]: index is unconditionally initialized
-#   This is a softer structural check: `index` must be assigned at an
-#   indentation level that guarantees it's always defined, regardless of
-#   which branch is taken. Accepts any approach that achieves this.
+# TEST 4 [STRUCTURAL / supplementary, 0.15]: Both code regions modified
+#   Light check: the two buggy regions have been touched. We do NOT check
+#   what the fix is, only that the relevant areas differ from the known
+#   buggy patterns.
 ###############################################################################
 echo ""
-echo "TEST 4/5: [structural] index is always initialized (not conditional-only)"
+echo "TEST 4: [structural] both buggy regions have been modified"
 python3 << 'PYEOF'
-import sys
+import ast, sys
 
 with open("/workspace/vllm/vllm/entrypoints/openai/chat_completion/serving.py") as f:
     source = f.read()
 
-lines = source.split('\n')
+tree = ast.parse(source)
+lines = source.splitlines()
 
-# Find where `auto_tools_called` is first set in the streaming function.
-# Then check that `index` has a default assignment at the same or outer scope.
-for i, line in enumerate(lines):
+# Find the function
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if node.name == 'chat_completion_stream_generator':
+            func_node = node
+            break
+
+if func_node is None:
+    print("FAIL: function not found")
+    sys.exit(1)
+
+func_start = func_node.lineno - 1
+func_end = func_node.end_lineno
+func_source = '\n'.join(lines[func_start:func_end])
+
+checks_passed = 0
+
+# Check 1: `index` should NOT be exclusively inside an else block.
+# In the buggy code, `index` assignment only appears inside `else:` branch.
+# We verify that `index` appears assigned at a scope that's not deeper than
+# the if/else containing tool_parser check.
+# Simple heuristic: count assignments to `index` - there should be at least
+# one that's not inside an else block, OR the code has been restructured.
+
+# Find all lines with `index =` (assignment, not comparison)
+func_lines = lines[func_start:func_end]
+index_assignments = []
+for i, line in enumerate(func_lines):
     stripped = line.strip()
-    if 'auto_tools_called' in stripped and 'False' in stripped and '=' in stripped:
-        target_indent = len(line) - len(line.lstrip())
+    if ('index =' in stripped or 'index=' in stripped) and '==' not in stripped and not stripped.startswith('#'):
+        indent = len(line) - len(line.lstrip())
+        # Check if this is inside an else block by looking back
+        in_else = False
+        for j in range(i-1, max(i-10, -1), -1):
+            prev = func_lines[j].strip()
+            prev_indent = len(func_lines[j]) - len(func_lines[j].lstrip())
+            if prev_indent < indent and prev.startswith('else:'):
+                in_else = True
+                break
+            if prev_indent < indent:
+                break
+        index_assignments.append((i, stripped, in_else))
 
-        # Check: is there an `index =` at target_indent or less within +-10 lines?
-        found_outer_init = False
-        for j in range(max(0, i-10), min(len(lines), i+15)):
-            l = lines[j]
-            ls = l.strip()
-            if 'index' in ls and '=' in ls and not ls.startswith('#') and not ls.startswith('if'):
-                # Parse: is this `index = <something>` (assignment, not comparison)?
-                # Simple heuristic: contains `index =` but not `== index` or `index ==`
-                if ('index =' in ls or 'index=' in ls) and '==' not in ls:
-                    assign_indent = len(l) - len(l.lstrip())
-                    if assign_indent <= target_indent:
-                        found_outer_init = True
-                        break
+# If ALL index assignments are inside else -> still buggy pattern
+if index_assignments:
+    all_in_else = all(in_else for _, _, in_else in index_assignments)
+    if all_in_else:
+        print("FAIL: index is still only assigned inside else branch (bug 1 pattern)")
+        sys.exit(1)
+    checks_passed += 1
+    print("  Check 1 PASS: index assignment not exclusively in else branch")
+else:
+    # Maybe index variable was removed entirely or renamed - that's OK
+    # as long as no UnboundLocalError (tested behaviorally in TEST 1)
+    checks_passed += 1
+    print("  Check 1 PASS: index variable restructured (no assignments found)")
 
-        if found_outer_init:
-            print("PASS: index has unconditional initialization")
-            sys.exit(0)
+# Check 2: The _should_check call should have SOME additional condition
+# compared to the buggy code. In buggy code, the condition is just:
+#   if self._should_check_for_unstreamed_tool_arg_tokens(...) and tool_parser:
+# A fix adds more conditions or restructures. We just check the line isn't
+# exactly the buggy pattern.
+for i, line in enumerate(func_lines):
+    if '_should_check_for_unstreamed_tool_arg_tokens' in line:
+        # Get the full condition (may span multiple lines)
+        cond_lines = []
+        j = i
+        while j < len(func_lines) and ':' not in func_lines[j].split('#')[0]:
+            cond_lines.append(func_lines[j].strip())
+            j += 1
+        if j < len(func_lines):
+            cond_lines.append(func_lines[j].strip())
+        full_cond = ' '.join(cond_lines)
+
+        # Buggy pattern: ONLY checks _should_check and tool_parser, nothing else
+        # We check that there's at least one additional condition term
+        # Count `and` / `or` terms
+        terms = full_cond.count(' and ') + full_cond.count(' or ')
+        if terms >= 2:
+            # Has additional guard beyond just _should_check and tool_parser
+            checks_passed += 1
+            print("  Check 2 PASS: _should_check condition has additional guard")
         else:
-            # Fallback: maybe they removed the concept of `index` entirely
-            # or restructured so it's computed differently. Check if `index`
-            # is used at all in the critical region.
-            region = '\n'.join(lines[i:i+30])
-            if 'index' not in region:
-                print("PASS: index variable removed (alternative fix)")
-                sys.exit(0)
+            # Maybe restructured differently - check if there's a guard above
+            context_above = '\n'.join(func_lines[max(0, i-5):i])
+            if 'if' in context_above and ('prev_tool_call_arr' in context_above or
+                                           'tool_call' in context_above.lower()):
+                checks_passed += 1
+                print("  Check 2 PASS: guard found above _should_check")
+            else:
+                print("  Check 2 WARN: could not confirm additional guard")
+                # Don't fail - behavioral test is the authority
+        break
 
-            # Check if index is in a try/except that catches the error
-            if 'try:' in region and ('except' in region or 'NameError' in region):
-                print("PASS: index access is exception-guarded")
-                sys.exit(0)
-
-            print("FAIL: index may not be initialized on all paths")
-            sys.exit(1)
-
-print("FAIL: could not find auto_tools_called region")
-sys.exit(1)
+if checks_passed >= 2:
+    print("PASS: both regions show modifications")
+    sys.exit(0)
+elif checks_passed >= 1:
+    print("PARTIAL PASS: one region confirmed modified")
+    sys.exit(0)
+else:
+    print("FAIL: no modification detected in buggy regions")
+    sys.exit(1)
 PYEOF
-if [ $? -eq 0 ]; then PASS=$((PASS + 1)); fi
+T4=$?
+echo "  -> exit code: $T4"
 
 ###############################################################################
-# TEST 5 [STRUCTURAL / supplementary]: _should_check path is properly guarded
-#   The unstreamed-token check should only run when there are actual tool calls.
-#   We accept any mechanism: auto_tools_called, len() > 0, truthy check, etc.
+# TEST 5 [ANTI-STUB, 0.15]: File not replaced with stub
 ###############################################################################
 echo ""
-echo "TEST 5/5: [structural] tool-arg-token check is guarded against empty state"
+echo "TEST 5: [anti-stub] file is not a stub"
 python3 << 'PYEOF'
-import sys
+import ast, sys
 
 with open("/workspace/vllm/vllm/entrypoints/openai/chat_completion/serving.py") as f:
     source = f.read()
 
-lines = source.split('\n')
+tree = ast.parse(source)
 
-for i, line in enumerate(lines):
-    if '_should_check_for_unstreamed_tool_arg_tokens' in line:
-        # Get the full if-condition context (may span multiple lines)
-        # Look backward for `if` and forward for `:`
-        context_lines = lines[max(0, i-5):min(len(lines), i+8)]
-        context = ' '.join(l.strip() for l in context_lines)
+# Count classes and functions
+classes = sum(1 for n in ast.walk(tree) if isinstance(n, ast.ClassDef))
+funcs = sum(1 for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)))
+line_count = len(source.splitlines())
 
-        # Any of these guard patterns is valid:
-        guards = [
-            'auto_tools_called',              # boolean flag check
-            'len(tool_parser.prev_tool_call_arr)',  # length check
-            'tool_parser.prev_tool_call_arr',  # truthy check on list
-            'not auto_tools_called',           # inverted check (early return)
-        ]
+if line_count < 500:
+    print(f"FAIL: only {line_count} lines (expected 500+)")
+    sys.exit(1)
 
-        # Also valid: the _should_check call is INSIDE a block that's already
-        # guarded by one of the above.
-        found_guard = False
-        for g in guards:
-            if g in context:
-                found_guard = True
-                break
+if funcs < 5:
+    print(f"FAIL: only {funcs} functions (expected 5+)")
+    sys.exit(1)
 
-        # Also check: maybe the whole block was restructured to only run
-        # when tool_parser has results
-        if not found_guard:
-            # Check if there's an early continue/return/break before the check
-            for j in range(max(0, i-8), i):
-                l = lines[j].strip()
-                if any(kw in l for kw in ['continue', 'return', 'break']):
-                    if any(g in lines[max(0,j-3):j+1][-1] for g in ['not auto_tools_called', 'not tool_parser']):
-                        found_guard = True
-                        break
+# Check for key imports/patterns that should be in the real file
+must_have = ['OpenAIServing', 'ChatCompletionRequest', 'async']
+missing = [m for m in must_have if m not in source]
+if missing:
+    print(f"FAIL: missing expected patterns: {missing}")
+    sys.exit(1)
 
-        if found_guard:
-            print("PASS: tool-arg-token check is properly guarded")
-            sys.exit(0)
-        else:
-            print("FAIL: no guard found for tool-arg-token check")
-            sys.exit(1)
-
-print("FAIL: _should_check_for_unstreamed_tool_arg_tokens not found")
-sys.exit(1)
+print(f"PASS: {line_count} lines, {classes} classes, {funcs} functions")
+sys.exit(0)
 PYEOF
-if [ $? -eq 0 ]; then PASS=$((PASS + 1)); fi
+T5=$?
+echo "  -> exit code: $T5"
 
 ###############################################################################
-# Final score
+# TEST 6 [CONFIG-DERIVED, 0.10]: No bare pip install in changed files
+# Source: AGENTS.md line 27 @ 9d0351c91d3115215f84f3bd4b9f366d3fbd13b3
 ###############################################################################
 echo ""
-SCORE=$(python3 -c "print(min($PASS / $TOTAL, 1.0))")
-echo "RESULT: $PASS / $TOTAL = $SCORE"
+echo "TEST 6: [config-derived] no bare pip install in changed files"
+cd /workspace/vllm 2>/dev/null
+CHANGED_FILES=$(git diff --name-only HEAD 2>/dev/null || true)
+T6=1
+BARE_PIP=0
+for cf in $CHANGED_FILES; do
+    if [ -f "/workspace/vllm/$cf" ]; then
+        if grep -Pn '(?<!uv )pip install' "/workspace/vllm/$cf" 2>/dev/null | grep -v '^.*#' | grep -v 'uv pip' > /dev/null 2>&1; then
+            echo "  FAIL: $cf contains bare 'pip install'"
+            BARE_PIP=1
+        fi
+    fi
+done
+if [ "$BARE_PIP" -eq 0 ]; then
+    echo "  PASS"
+    T6=0
+fi
+echo "  -> exit code: $T6"
+
+###############################################################################
+# Final weighted score
+###############################################################################
+echo ""
+SCORE=$(python3 -c "
+t1 = 0.30 if $T1 == 0 else 0.0
+t2 = 0.30 if $T2 == 0 else 0.0
+t3 = 0.10 if $T3 == 0 else 0.0
+t4 = 0.15 if $T4 == 0 else 0.0
+t5 = 0.05 if $T5 == 0 else 0.0
+t6 = 0.10 if ${T6:-1} == 0 else 0.0
+score = t1 + t2 + t3 + t4 + t5 + t6
+print(f'{score:.2f}')
+")
+echo "RESULT: score = $SCORE"
+echo "  TEST 1 (fail-to-pass: index scoping)   = $([ $T1 -eq 0 ] && echo PASS || echo FAIL) [0.30]"
+echo "  TEST 2 (fail-to-pass: array guard)     = $([ $T2 -eq 0 ] && echo PASS || echo FAIL) [0.30]"
+echo "  TEST 3 (pass-to-pass: structure)       = $([ $T3 -eq 0 ] && echo PASS || echo FAIL) [0.10]"
+echo "  TEST 4 (structural: regions modified)  = $([ $T4 -eq 0 ] && echo PASS || echo FAIL) [0.15]"
+echo "  TEST 5 (anti-stub)                     = $([ $T5 -eq 0 ] && echo PASS || echo FAIL) [0.05]"
+echo "  TEST 6 (config: no bare pip)           = $([ ${T6:-1} -eq 0 ] && echo PASS || echo FAIL) [0.10]"
 echo "$SCORE" > /logs/verifier/reward.txt
+
+# LLM rubric judge (runs only when LLM_JUDGE=1)
+source /tests/judge_hook.sh 2>/dev/null || true

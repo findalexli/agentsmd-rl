@@ -28,7 +28,8 @@ Harbor-compatible benchmark tasks mined from recent PRs in repos with agent conf
 Each task has:
 - `instruction.md` -- what the agent sees
 - `environment/Dockerfile` -- repo at the pre-fix commit (CPU-only, no GPU needed)
-- `tests/test.sh` -- fail-to-pass verification (0.0-1.0 reward)
+- `tests/test.sh` -- multi-grader verification -> `reward.json`
+- `rubric.yaml` -- LLM rubric rules with source traceability to repo's agent config files
 - `task.toml` -- Harbor metadata
 
 ### `research/`
@@ -50,14 +51,30 @@ harbor run -p harbor_tasks/<task> -a claude-code -m claude-opus-4-6 -n 1
 harbor run -p harbor_tasks/<task> -a terminus-2 -m anthropic/claude-opus-4-6 -n 1
 ```
 
-## Test Design Philosophy
+## Evaluation Architecture
+
+Multi-grader evaluation per task, following [Anthropic's agent eval guidance](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents). Each task's `test.sh` writes named metrics to `/logs/verifier/reward.json`:
+
+```json
+{"behavioral": 0.6, "regression": 0.2, "style": 0.1, "static_analysis": 0.1}
+```
+
+### Grader tiers
+
+| Grader | Type | Weight | What it checks |
+|--------|------|--------|----------------|
+| **Fail-to-pass behavioral** | Deterministic | >=60% | Bug is fixed (implementation-agnostic) |
+| **Pass-to-pass regression** | Deterministic | ~10-20% | Existing behavior not broken |
+| **Static analysis** | Deterministic | ~10% | ruff/mypy pass on changed files |
+| **LLM rubric** (planned) | Model-based | ~10% | Instruction adherence (ICR) |
+
+### Design principles
 
 Following [OpenAI's critique of SWE-bench Verified](https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/):
 
-- **Fail-to-pass behavioral tests** as the primary tier (implementation-agnostic)
-- **Pass-to-pass regression tests** to prevent breakage
-- **Structural checks** only as supplementary partial-credit signal
 - **No narrow tests** that enforce specific variable names or API choices from the gold patch
+- Accept multiple valid implementations -- test BEHAVIOR, not STRUCTURE
+- Structural AST checks are supplementary only (<=40% weight)
 
 See [research/test-design-audit.md](research/test-design-audit.md) for the full audit.
 

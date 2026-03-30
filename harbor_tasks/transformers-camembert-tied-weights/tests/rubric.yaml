@@ -1,0 +1,14 @@
+# Rules from repo agent configs, evaluated by LLM judge.
+# Base commit: d81ad48109331f910fd81f699869855cbd50f681
+rules:
+  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file."
+    from: "CLAUDE.md:67"
+
+  - rule: "If a model has a modular file, the modeling file should never be edited directly! Instead, changes should be made in the modular file."
+    from: ".github/copilot-instructions.md:28-29"
+
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    from: ".github/copilot-instructions.md:15"
+
+  - rule: "We try to avoid direct inheritance between model-specific files in `src/transformers/models/`."
+    from: "CLAUDE.md:64"

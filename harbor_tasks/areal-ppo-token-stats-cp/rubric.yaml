@@ -1,0 +1,30 @@
+# Rules from repo agent configs, evaluated by LLM judge.
+# Repo: inclusionAI/AReaL @ d1cdac3442585565f902f1e69b9d7399c50b9b34
+# Task touches: areal/trainer/ppo/actor.py, areal/trainer/ppo/critic.py, areal/trainer/ppo/stats.py (new)
+rules:
+  - rule: "No wildcard imports (`from x import *`)."
+    from: "AGENTS.md:25"
+
+  - rule: "Follow existing code patterns in the same module."
+    from: "AGENTS.md:35"
+
+  - rule: "No GPU-CPU sync in hot paths (`.item()`, `.tolist()`, `print(tensor)`)."
+    from: "AGENTS.md:90"
+
+  - rule: "Batch ops over Python loops on tensor elements."
+    from: "AGENTS.md:91"
+
+  - rule: "Explicit `dtype`/`device`; `torch.Size` assertions for shape validation."
+    from: "AGENTS.md:92"
+
+  - rule: "explicit type hints; no wildcard imports; heavy optional deps inside functions."
+    from: "AGENTS.md:94-95"
+
+  - rule: "Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation."
+    from: "AGENTS.md:75"
+
+  - rule: "Prefer explicit dtype/device over implicit conversion"
+    from: ".claude/rules/code-style.md:61"
+
+  - rule: "Prefer batch operations: Avoid Python loops over tensor elements"
+    from: ".claude/rules/code-style.md:45"

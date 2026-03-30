@@ -1,0 +1,15 @@
+# Rules from repo agent configs, evaluated by LLM judge.
+# Repo: huggingface/transformers @ c532659b8734b88d2bbaac2542c2a5a8b525f3f7
+# PR touches: src/transformers/models/perceiver/modeling_perceiver.py
+rules:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    from: ".github/copilot-instructions.md:15"
+
+  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`. Ideally you should edit the code it's copying from and propagate the change, but you can break the `# Copied from` link if needed."
+    from: "CLAUDE.md:66"
+
+  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file."
+    from: "CLAUDE.md:67"
+
+  - rule: "We try to avoid direct inheritance between model-specific files in `src/transformers/models/`."
+    from: "CLAUDE.md:64"

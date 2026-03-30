@@ -9,16 +9,20 @@ tags = ["sglang", "parsing", "robustness", "cpu-topology"]
 expert_time_estimate_min = 5.0
 junior_time_estimate_min = 15.0
 
+source_repo = "sgl-project/sglang"
+source_pr = 18520
+source_commit = "069c7e4188aca6ef69c0b81dfa05abba49685946"
+
 [verifier]
+env = { LLM_JUDGE = "${LLM_JUDGE:-0}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }
 timeout_sec = 60.0
 
 [agent]
 timeout_sec = 1200.0
 
 [environment]
-docker_image = "harbor-sglang-lscpu-topology-fix:latest"
 build_timeout_sec = 600.0
 cpus = 1
-memory = "4G"
-storage = "10G"
+memory_mb = 4096
+storage_mb = 10240
 allow_internet = true

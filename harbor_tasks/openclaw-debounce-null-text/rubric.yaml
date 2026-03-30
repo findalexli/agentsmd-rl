@@ -1,0 +1,26 @@
+# Rules from repo agent configs, evaluated by LLM judge.
+# Source: openclaw/openclaw @ 756df2e9554da097679e6c4d3c75deff025098b9
+rules:
+  - rule: "Language: TypeScript (ESM). Prefer strict typing; avoid `any`."
+    from: "AGENTS.md:102"
+
+  - rule: "Never add `@ts-nocheck` and do not add inline lint suppressions by default. Fix root causes first; only keep a suppression when the code is intentionally correct, the rule cannot express that safely, and the comment explains why."
+    from: "AGENTS.md:104"
+
+  - rule: "Do not disable `no-explicit-any`; prefer real types, `unknown`, or a narrow adapter/helper instead."
+    from: "AGENTS.md:105"
+
+  - rule: "Import boundaries: extension production code should treat `openclaw/plugin-sdk/*` plus local `api.ts` / `runtime-api.ts` barrels as the public surface. Do not import core `src/**`, `src/plugin-sdk-internal/**`, or another extension's `src/**` directly."
+    from: "AGENTS.md:16"
+
+  - rule: "Extension package boundary guardrail: inside `extensions/<id>/**`, do not use relative imports/exports that resolve outside that same `extensions/<id>` package root. If shared code belongs in the plugin SDK, import `openclaw/plugin-sdk/<subpath>` instead of reaching into `src/plugin-sdk/**` or other repo paths via `../`."
+    from: "AGENTS.md:109"
+
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    from: "AGENTS.md:114"
+
+  - rule: "Keep files concise; extract helpers instead of \"V2\" copies."
+    from: "AGENTS.md:115"
+
+  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings (e.g. \"color\" not \"colour\", \"behavior\" not \"behaviour\", \"analyze\" not \"analyse\")."
+    from: "AGENTS.md:118"

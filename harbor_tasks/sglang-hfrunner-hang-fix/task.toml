@@ -9,16 +9,20 @@ tags = ["sglang", "multiprocessing", "hang-detection", "test-runner"]
 expert_time_estimate_min = 5.0
 junior_time_estimate_min = 20.0
 
+source_repo = "sgl-project/sglang"
+source_pr = 21582
+source_commit = "5ef56682b800c3905973c86beeddf1318cedb2a9"
+
 [verifier]
+env = { LLM_JUDGE = "${LLM_JUDGE:-0}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }
 timeout_sec = 60.0
 
 [agent]
 timeout_sec = 1200.0
 
 [environment]
-docker_image = "harbor-sglang-hfrunner-hang-fix:latest"
 build_timeout_sec = 600.0
 cpus = 1
-memory = "4G"
-storage = "10G"
+memory_mb = 4096
+storage_mb = 10240
 allow_internet = true

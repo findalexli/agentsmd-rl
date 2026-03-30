@@ -1,0 +1,30 @@
+# Rules from repo agent configs, evaluated by LLM judge.
+# Task: fix sub-agent sessions failing to resolve plugin-registered tools
+# Modified file: src/plugins/tools.ts
+rules:
+  - rule: "Keep loader behavior aligned with the documented Plugin SDK and manifest contracts. Do not create private backdoors that bundled plugins can use but external plugins cannot."
+    from: "src/plugins/CLAUDE.md:23-25"
+
+  - rule: "When plugin-owned tools or provider fallbacks need core participation, keep the contract generic and honor plugin disablement plus SecretRef semantics."
+    from: "src/plugins/CLAUDE.md:32-33"
+
+  - rule: "Preserve manifest-first behavior: discovery, config validation, and setup should work from metadata before plugin runtime executes."
+    from: "src/plugins/CLAUDE.md:21-22"
+
+  - rule: "Keep contract loading and contract tests on the dedicated bundled registry path. Do not make contract validation depend on activating providers through unrelated production resolution flows."
+    from: "src/plugins/CLAUDE.md:34-36"
+
+  - rule: "keep manifest metadata, runtime registration, public SDK exports, and contract tests aligned. Do not create a hidden path around the declared plugin interfaces."
+    from: "CLAUDE.md:61"
+
+  - rule: "Compatibility: new plugin seams are allowed, but they must be added as documented, backwards-compatible, versioned contracts. We have third-party plugins in the wild and do not break them casually."
+    from: "CLAUDE.md:43"
+
+  - rule: "Language: TypeScript (ESM). Prefer strict typing; avoid any."
+    from: "CLAUDE.md:144"
+
+  - rule: "Never add @ts-nocheck and do not add inline lint suppressions by default. Fix root causes first; only keep a suppression when the code is intentionally correct, the rule cannot express that safely, and the comment explains why."
+    from: "CLAUDE.md:146"
+
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    from: "CLAUDE.md:156"

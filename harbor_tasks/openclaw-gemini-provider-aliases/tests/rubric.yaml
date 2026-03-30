@@ -1,0 +1,29 @@
+# Rules from repo agent configs, evaluated by LLM judge.
+# Source: openclaw/openclaw @ 6be14ab388eb74cd100e43bf975aad78146ac220
+rules:
+  - rule: "Prefer strict typing; avoid `any`."
+    from: "CLAUDE.md:102"
+
+  - rule: "Never add `@ts-nocheck` and do not add inline lint suppressions by default. Fix root causes first; only keep a suppression when the code is intentionally correct, the rule cannot express that safely, and the comment explains why."
+    from: "CLAUDE.md:104"
+
+  - rule: "Do not disable `no-explicit-any`; prefer real types, `unknown`, or a narrow adapter/helper instead."
+    from: "CLAUDE.md:105"
+
+  - rule: "Import boundaries: extension production code should treat `openclaw/plugin-sdk/*` plus local `api.ts` / `runtime-api.ts` barrels as the public surface. Do not import core `src/**`, `src/plugin-sdk-internal/**`, or another extension's `src/**` directly."
+    from: "CLAUDE.md:16"
+
+  - rule: "Extension SDK self-import guardrail: inside an extension package, do not import that same extension via `openclaw/plugin-sdk/<extension>` from production files. Route internal imports through a local barrel such as `./api.ts` or `./runtime-api.ts`, and keep the `plugin-sdk/<extension>` path as the external contract only."
+    from: "CLAUDE.md:108"
+
+  - rule: "Extension package boundary guardrail: inside `extensions/<id>/**`, do not use relative imports/exports that resolve outside that same `extensions/<id>` package root. If shared code belongs in the plugin SDK, import `openclaw/plugin-sdk/<subpath>` instead of reaching into `src/plugin-sdk/**` or other repo paths via `../`."
+    from: "CLAUDE.md:109"
+
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    from: "CLAUDE.md:114"
+
+  - rule: "Keep files concise; extract helpers instead of \"V2\" copies."
+    from: "CLAUDE.md:115"
+
+  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings (e.g. \"color\" not \"colour\", \"behavior\" not \"behaviour\", \"analyze\" not \"analyse\")."
+    from: "CLAUDE.md:118"

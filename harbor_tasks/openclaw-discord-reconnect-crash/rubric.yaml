@@ -1,0 +1,20 @@
+# Rules from repo agent configs, evaluated by LLM judge.
+# Source: openclaw/openclaw @ 496a1a35bd7ac7a1719d39a3723a731e2d131e8b
+rules:
+  - rule: "Prefer strict typing; avoid `any`."
+    from: "CLAUDE.md:102"
+
+  - rule: "Never add `@ts-nocheck` and do not add inline lint suppressions by default. Fix root causes first; only keep a suppression when the code is intentionally correct, the rule cannot express that safely, and the comment explains why."
+    from: "CLAUDE.md:104"
+
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    from: "CLAUDE.md:114"
+
+  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings (e.g. \"color\" not \"colour\", \"behavior\" not \"behaviour\", \"analyze\" not \"analyse\")."
+    from: "CLAUDE.md:118"
+
+  - rule: "Import boundaries: extension production code should treat `openclaw/plugin-sdk/*` plus local `api.ts` / `runtime-api.ts` barrels as the public surface. Do not import core `src/**`, `src/plugin-sdk-internal/**`, or another extension's `src/**` directly."
+    from: "CLAUDE.md:16"
+
+  - rule: "inside `extensions/<id>/**`, do not use relative imports/exports that resolve outside that same `extensions/<id>` package root. If shared code belongs in the plugin SDK, import `openclaw/plugin-sdk/<subpath>` instead of reaching into `src/plugin-sdk/**` or other repo paths via `../`."
+    from: "CLAUDE.md:109"
