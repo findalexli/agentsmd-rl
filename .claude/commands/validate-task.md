@@ -17,12 +17,33 @@ Run AFTER `/audit-tests` (which handles deep test quality analysis) and `/write-
 
 ## Questions to Answer
 
-### Q1: Instruction Quality
-- Describes a bug or feature request with enough context to act on?
+### Q1: Instruction Quality (from SWE-rebench-V2 issue clarity rubric)
+
+Score the instruction on a 0-3 scale:
+
+| Score | Meaning | Criteria |
+|-------|---------|----------|
+| 0 | Very clear | All essential details present, engineer could confidently implement from this alone |
+| 1 | Mostly clear | Minor details missing, but can proceed confidently |
+| 2 | Somewhat vague | Enough to guess the problem, but significant ambiguity about the fix |
+| 3 | Extremely vague | Almost impossible to infer what a successful solution involves |
+
+**Target: score 1-2.** Score 0 means the instruction is too detailed (may leak the fix). Score 3 means it's unusable.
+
+Also check:
 - Points to the right file(s) or area of the codebase?
-- Does NOT reveal the exact fix (that would be leakage)?
+- Does NOT reveal the exact fix (no identifiers unique to the gold diff)?
+- Does NOT tell the agent which test file to look at?
 
 ### Q2: Instruction ↔ Test Alignment
+
+Check for B-code quality problems (from SWE-rebench-V2 meta_info classifier):
+
+- **B2 (IMPLICIT_NAMING):** Do tests expect specific names, strings, or values that only appear in the gold patch and aren't specified in the instruction? This is the "narrow test" problem.
+- **B4 (AMBIGUOUS_SPEC):** Is the instruction so vague that even a human couldn't determine what "correct" means?
+- **B5 (PATCH_ARTIFACTS):** Do tests depend on unrelated changes in the gold patch?
+
+Also check:
 - Does the test verify something the instruction actually asks for?
 - Does the test expect changes to files not mentioned or discoverable from the instruction?
 - Would an agent reading ONLY instruction.md know what to fix?
@@ -34,9 +55,22 @@ Run AFTER `/audit-tests` (which handles deep test quality analysis) and `/write-
 - Can test.sh run without importing modules that need torch/GPU?
 
 ### Q4: Oracle Golden Patch Test
-Build the Docker image and run the oracle (apply gold patch → run tests with LLM judge):
+Build the Docker image and run TWO checks — base commit (buggy) AND gold patch (fixed):
+
+**Step 1: Base commit (should score < 1.0)**
 ```bash
 docker build -q -t harbor-$ARGUMENTS:latest harbor_tasks/$ARGUMENTS/environment/
+docker run --rm \
+  -v $(pwd)/harbor_tasks/$ARGUMENTS/tests:/tests \
+  harbor-$ARGUMENTS:latest \
+  bash -c "chmod +x /tests/test.sh && /tests/test.sh"
+```
+- At least one fail-to-pass test MUST fail on the base commit
+- All pass-to-pass tests MUST pass on the base commit
+- **If base_score == 1.0, flag CRITICAL** — tests don't discriminate buggy from fixed code
+
+**Step 2: Gold patch (should score 1.0)**
+```bash
 docker run --rm --env-file /tmp/judge_env \
   -v $(pwd)/harbor_tasks/$ARGUMENTS/solution:/solution \
   -v $(pwd)/harbor_tasks/$ARGUMENTS/tests:/tests \
@@ -47,6 +81,7 @@ docker run --rm --env-file /tmp/judge_env \
 - Deterministic score must be **1.0** (gold patch passes all tests)
 - If LLM judge is enabled, ICR must be **>=0.9** (rubric rules should pass on gold patch)
 - If ICR < 0.9, identify which rules fail and fix the rubric — a rule that fails on the gold patch is too subjective
+- **If base_score == gold_score, flag CRITICAL** — tests are useless (can't distinguish buggy from fixed)
 
 ### Q5: Verdict
 - **PASS**: instruction clear, tests aligned, environment works, oracle scores 1.0
