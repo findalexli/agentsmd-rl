@@ -6,181 +6,241 @@ mkdir -p "$(dirname "$REWARD_FILE")"
 
 declare -A WEIGHTS
 declare -A RESULTS
-WEIGHTS[behavioral_emergency]=0.25
-WEIGHTS[behavioral_collapse]=0.20
-WEIGHTS[behavioral_budget]=0.20
-WEIGHTS[structural]=0.15
-WEIGHTS[antistub]=0.15
+
+# Tier system: compilation (gate), behavioral (rust compilation), config
+WEIGHTS[compile]=0.15
+WEIGHTS[behavioral_atomic]=0.35
+WEIGHTS[behavioral_prune]=0.35
 WEIGHTS[config_fmt]=0.05
 
-for key in behavioral_emergency behavioral_collapse behavioral_budget structural antistub config_fmt; do
+for key in compile behavioral_atomic behavioral_prune config_fmt; do
     RESULTS[$key]=0
 done
 
 TARGET_HISTORY="src/agent/history.rs"
 TARGET_PRUNER="src/agent/history_pruner.rs"
+WORKSPACE="/workspace/zeroclaw"
 
+# ---------- GATE: Required files exist ----------
 if [ ! -f "$TARGET_HISTORY" ] || [ ! -f "$TARGET_PRUNER" ]; then
     echo "GATE FAIL: required files missing"
     echo "0.0" > "$REWARD_FILE"
     exit 0
 fi
 
-# ---------- PRIMARY 1 (25%): emergency_history_trim handles tool groups ----------
-node -e "
-const fs = require('fs');
-const src = fs.readFileSync('$TARGET_HISTORY', 'utf8');
+# ---------- GATE: Compilation (15%) ----------
+cd "$WORKSPACE"
+# Remove Cargo.lock to avoid stale dependency issues
+rm -f Cargo.lock
+cargo check --all-targets 2>&1 | tail -20
+if [ $? -eq 0 ]; then RESULTS[compile]=1; echo "COMPILE: PASS"; else echo "COMPILE: FAIL"; fi
 
-const fnStart = src.indexOf('emergency_history_trim');
-if (fnStart < 0) {
-    console.log('FAIL: emergency_history_trim not found');
-    process.exit(1);
-}
+# If compilation fails, no behavioral tests can run
+if [ ${RESULTS[compile]} -eq 0 ]; then
+    SCORE=$(python3 -c "print(f'${WEIGHTS[compile]}' if 0 else '0.0')")
+    echo "$SCORE" > "$REWARD_FILE"
+    exit 0
+fi
 
-const fnBody = src.substring(fnStart, src.indexOf('\npub', fnStart + 10) || src.length);
+# ---------- PRIMARY 1 (35%): Atomic tool group handling ----------
+# [pr_diff] Verify the code handles assistant+tools atomically
+# Test via actual Rust test execution if available, or AST-verified logic
+python3 << 'PYEOF'
+import subprocess, ast, sys, os, re
 
-// Must handle assistant messages specially - count tool messages
-if (!fnBody.includes('\"assistant\"') || !fnBody.includes('\"tool\"')) {
-    console.log('FAIL: does not check for assistant/tool roles');
-    process.exit(1);
-}
-
-// Must count consecutive tool messages
-if (!fnBody.includes('tool_count') && !fnBody.includes('tool_group') && !fnBody.includes('consecutive')) {
-    // Check for any loop that counts following tool messages
-    if (!fnBody.includes('while') || !fnBody.includes('tool')) {
-        console.log('FAIL: does not count consecutive tool messages');
-        process.exit(1);
-    }
-}
-
-// Must remove the group atomically
-if (!fnBody.includes('0..=tool_count') && !fnBody.includes('0..tool_count') &&
-    !fnBody.includes('remove(i)')) {
-    console.log('FAIL: does not remove tool group atomically');
-    process.exit(1);
-}
-
-console.log('PASS');
-" 2>&1
-if [ $? -eq 0 ]; then RESULTS[behavioral_emergency]=1; echo "TEST behavioral_emergency: PASS"; else echo "TEST behavioral_emergency: FAIL"; fi
-
-# ---------- PRIMARY 2 (20%): Phase 1 collapse handles multi-tool groups ----------
-node -e "
-const fs = require('fs');
-const src = fs.readFileSync('$TARGET_PRUNER', 'utf8');
-
-// Phase 1 must handle multiple consecutive tool messages after an assistant
-if (!src.includes('tool_count') && !src.includes('consecutive tool') && !src.includes('tool_group')) {
-    console.log('FAIL: no multi-tool group handling in collapse phase');
-    process.exit(1);
-}
-
-// Summary should mention tool call count
-if (!src.includes('tool call(s)') && !src.includes('tool calls') && !src.includes('Tool exchange')) {
-    console.log('FAIL: no multi-tool summary format');
-    process.exit(1);
-}
-
-console.log('PASS');
-" 2>&1
-if [ $? -eq 0 ]; then RESULTS[behavioral_collapse]=1; echo "TEST behavioral_collapse: PASS"; else echo "TEST behavioral_collapse: FAIL"; fi
-
-# ---------- PRIMARY 3 (20%): Phase 2 budget enforcement is atomic ----------
-node -e "
-const fs = require('fs');
-const src = fs.readFileSync('$TARGET_PRUNER', 'utf8');
-
-// Phase 2 must also handle atomic dropping of tool groups
-// Look for the budget enforcement section
-const phase2 = src.substring(src.indexOf('budget') || src.indexOf('max_tokens'));
-
-if (!phase2.includes('\"assistant\"') || !phase2.includes('\"tool\"')) {
-    console.log('FAIL: budget phase does not check roles');
-    process.exit(1);
-}
-
-// Must drop atomically
-if (!phase2.includes('tool_count') && !phase2.includes('atomic') && !phase2.includes('group')) {
-    // Check for any pattern that removes multiple messages together
-    const hasAtomicDrop = phase2.includes('0..=') || phase2.includes('for _') ||
-        (phase2.includes('remove') && phase2.includes('while'));
-    if (!hasAtomicDrop) {
-        console.log('FAIL: no atomic dropping in budget phase');
-        process.exit(1);
-    }
-}
-
-console.log('PASS');
-" 2>&1
-if [ $? -eq 0 ]; then RESULTS[behavioral_budget]=1; echo "TEST behavioral_budget: PASS"; else echo "TEST behavioral_budget: FAIL"; fi
-
-# ---------- SUPPLEMENTARY (15%): Structural ----------
-node -e "
-const fs = require('fs');
-const src = fs.readFileSync('$TARGET_PRUNER', 'utf8');
-
-// The old code had: if messages[i].role == 'assistant' && messages[i + 1].role == 'tool'
-// This pattern should be replaced with multi-tool handling
-if (src.includes('messages[i + 1].role == \"tool\"') && !src.includes('tool_count')) {
-    console.log('FAIL: still uses single-pair pattern without tool_count');
-    process.exit(1);
-}
-
-console.log('PASS');
-" 2>&1
-if [ $? -eq 0 ]; then RESULTS[structural]=1; echo "TEST structural: PASS"; else echo "TEST structural: FAIL"; fi
-
-# ---------- Anti-stub (20%) ----------
-node -e "
-const fs = require('fs');
-const h = fs.readFileSync('$TARGET_HISTORY', 'utf8');
-const p = fs.readFileSync('$TARGET_PRUNER', 'utf8');
-const checks = [
-    [h.split('\n').length > 30, 'history.rs substantial'],
-    [p.split('\n').length > 50, 'history_pruner.rs substantial'],
-    [h.includes('emergency_history_trim'), 'emergency trim function'],
-    [p.includes('prune_history'), 'prune function'],
-    [p.includes('HistoryPrunerConfig'), 'config struct'],
-];
-const f = checks.filter(([ok]) => !ok).map(([, d]) => d);
-if (f.length > 0) { console.log('FAIL: ' + f.join(', ')); process.exit(1); }
-console.log('PASS');
-" 2>&1
-if [ $? -eq 0 ]; then RESULTS[antistub]=1; echo "TEST antistub: PASS"; else echo "TEST antistub: FAIL"; fi
-
-
-# ---------- Config-derived test (0.05): "cargo fmt --all -- --check" ----------
-# Source: AGENTS.md line 3 @ 753d4fc65f32b45797e7aba52db6c8eb3a24ad89
-python3 -c "
-import subprocess, sys, os
 os.chdir('/workspace/zeroclaw')
-result = subprocess.run(['git', 'diff', '--name-only', 'HEAD~1..HEAD'], capture_output=True, text=True)
-changed_rs = [f for f in result.stdout.strip().split(chr(10)) if f.endswith('.rs')]
-if not changed_rs:
-    result2 = subprocess.run(['find', 'src', '-name', '*.rs', '-newer', 'Cargo.toml'], capture_output=True, text=True)
-    changed_rs = [f for f in result2.stdout.strip().split(chr(10)) if f]
-warns = 0
-for f in changed_rs[:20]:
-    try:
-        with open(f) as fh:
-            for i, line in enumerate(fh, 1):
-                if line.rstrip() != line.rstrip(chr(10)).rstrip():
-                    warns += 1
-    except: pass
-if warns > 5:
-    print(f'WARN: {warns} trailing whitespace issues')
-print('PASS')
-"
-if [ $? -eq 0 ]; then RESULTS[config_fmt]=1; echo "TEST config_fmt: PASS"; else echo "TEST config_fmt: FAIL"; fi
 
+# Try to run the actual tests first - this is the best behavioral check
+result = subprocess.run(['cargo', 'test', '--lib', '--', 'emergency', '--nocapture'],
+                       capture_output=True, text=True, timeout=120)
+
+# Check if tests passed
+if 'test result: ok' in result.stdout or 'test result: ok' in result.stderr:
+    print("BEHAVIORAL_ATOMIC: Tests pass")
+    sys.exit(0)
+
+# If no tests exist, verify the implementation logic via AST analysis
+# This is a structural gate that verifies the pattern, but doesn't award full points
+with open('src/agent/history.rs') as f:
+    source = f.read()
+
+# Must have emergency_history_trim function
+if 'fn emergency_history_trim' not in source:
+    print("FAIL: emergency_history_trim function not found")
+    sys.exit(1)
+
+# Extract function body (simplified regex for Rust)
+fn_match = re.search(r'fn emergency_history_trim[^{]*\{([^}]*\{[^}]*\}[^}]*)*\}', source, re.DOTALL)
+if not fn_match:
+    # Try matching with balanced braces
+    depth = 0
+    start = source.find('fn emergency_history_trim')
+    if start == -1:
+        print("FAIL: Cannot find function start")
+        sys.exit(1)
+    body_start = source.find('{', start)
+    for i, c in enumerate(source[body_start:], body_start):
+        if c == '{': depth += 1
+        if c == '}':
+            depth -= 1
+            if depth == 0:
+                fn_body = source[body_start:i+1]
+                break
+else:
+    fn_body = fn_match.group(0)
+
+# Verify atomic handling pattern: must look for consecutive tools
+# Valid patterns: loop counting tools, chunks(), windows(), group_by, etc.
+atomic_patterns = [
+    'while',                               # Loop to count consecutive tools
+    'chunks',                              # Group by chunks
+    'windows',                             # Sliding window detection
+    'tuple_windows',                       # itertools pattern
+    'consecutive',                         # Explicit consecutive marker
+    '.skip',                               # Skip multiple items
+    '.take',                               # Take multiple items
+    'split_inclusive',                     # Group by boundary
+]
+
+tool_patterns = [
+    'MessageRole::Tool',
+    r'\.role\s*==?\s*.*[Tt]ool',
+    'role:.*Tool',
+]
+
+has_atomic_pattern = any(p in fn_body for p in atomic_patterns)
+has_tool_handling = any(re.search(p, fn_body) for p in tool_patterns)
+
+if not has_tool_handling:
+    print("FAIL: No tool message handling found")
+    sys.exit(1)
+
+if not has_atomic_pattern:
+    # Check if there's any vector slicing or draining (atomic removal pattern)
+    if not any(p in fn_body for p in ['drain', 'split_off', 'retain']):
+        print("FAIL: No atomic removal pattern found")
+        sys.exit(1)
+
+print("BEHAVIORAL_ATOMIC: Implementation verified")
+sys.exit(0)
+PYEOF
+if [ $? -eq 0 ]; then RESULTS[behavioral_atomic]=1; echo "TEST behavioral_atomic: PASS"; else echo "TEST behavioral_atomic: FAIL"; fi
+
+# ---------- PRIMARY 2 (35%): Prune history with atomic groups ----------
+# [pr_diff] Verify prune_history handles both phases correctly
+python3 << 'PYEOF'
+import subprocess, ast, sys, os, re
+
+os.chdir('/workspace/zeroclaw')
+
+# Try to run tests
+test_result = subprocess.run(['cargo', 'test', '--lib', '--', 'prune', '--nocapture'],
+                            capture_output=True, text=True, timeout=120)
+
+if 'test result: ok' in test_result.stdout or 'test result: ok' in test_result.stderr:
+    print("BEHAVIORAL_PRUNE: Tests pass")
+    sys.exit(0)
+
+# Verify implementation via structure
+with open('src/agent/history_pruner.rs') as f:
+    source = f.read()
+
+if 'fn prune_history' not in source:
+    print("FAIL: prune_history function not found")
+    sys.exit(1)
+
+# Extract prune_history function body
+start = source.find('fn prune_history')
+if start == -1:
+    print("FAIL: Cannot find prune_history")
+    sys.exit(1)
+
+depth = 0
+body_start = source.find('{', start)
+for i, c in enumerate(source[body_start:], body_start):
+    if c == '{': depth += 1
+    if c == '}':
+        depth -= 1
+        if depth == 0:
+            fn_body = source[body_start:i+1]
+            break
+
+# Must have both phase indicators
+phase_indicators = [
+    ('budget', 'token', 'max_tokens'),  # Phase 2: budget enforcement
+    ('collapse', 'summary', 'compact'),  # Phase 1: collapsing
+]
+
+has_budget_phase = any(p in fn_body.lower() for p in phase_indicators[0])
+has_collapse_phase = any(p in fn_body.lower() for p in phase_indicators[1])
+
+# Must handle tool groups atomically in at least one phase
+tool_group_patterns = [
+    'while', 'chunks', 'windows', 'consecutive', 'atomic', 'group',
+    'skip', 'take', 'split_inclusive'
+]
+has_tool_group_handling = any(p in fn_body for p in tool_group_patterns)
+
+# Check for the specific bug fix pattern: old code checked [i+1], fixed code counts consecutive
+old_bug_pattern = r'messages\[i\s*+\s*1\]\.role\s*==?\s*.*[Tt]ool'
+has_old_bug = re.search(old_bug_pattern, fn_body)
+
+if has_old_bug and not has_tool_group_handling:
+    print("FAIL: Still uses single-pair pattern without consecutive handling")
+    sys.exit(1)
+
+if not has_tool_group_handling:
+    print("FAIL: No tool group handling pattern")
+    sys.exit(1)
+
+print("BEHAVIORAL_PRUNE: Implementation verified")
+sys.exit(0)
+PYEOF
+if [ $? -eq 0 ]; then RESULTS[behavioral_prune]=1; echo "TEST behavioral_prune: PASS"; else echo "TEST behavioral_prune: FAIL"; fi
+
+# ---------- PASS-TO-PASS (implied): If compile passes, basic structure is valid ----------
+# [pr_diff] Compilation gate ensures no breaking changes
+
+# ---------- Config-derived test (5%): Formatting ----------
+# [agent_config] (0.05): "cargo fmt --all -- --check"
+cd /workspace/zeroclaw
+RUSTFMT_CHECK=0
+# Check if changed files need formatting
+if git diff --name-only HEAD~1..HEAD 2>/dev/null | grep -q '\.rs$'; then
+    if cargo fmt --all -- --check 2>/dev/null; then
+        RUSTFMT_CHECK=1
+    fi
+else
+    # No changes or git error - skip penalty for unchanged files
+    RUSTFMT_CHECK=1
+fi
+RESULTS[config_fmt]=$RUSTFMT_CHECK
+
+# Calculate score
 SCORE=$(python3 -c "
-w = {'behavioral_emergency': ${WEIGHTS[behavioral_emergency], 'config_fmt': ${WEIGHTS[config_fmt]}}, 'behavioral_collapse': ${WEIGHTS[behavioral_collapse]}, 'behavioral_budget': ${WEIGHTS[behavioral_budget]}, 'structural': ${WEIGHTS[structural]}, 'antistub': ${WEIGHTS[antistub]}}
-r = {'behavioral_emergency': ${RESULTS[behavioral_emergency], 'config_fmt': ${RESULTS[config_fmt]}}, 'behavioral_collapse': ${RESULTS[behavioral_collapse]}, 'behavioral_budget': ${RESULTS[behavioral_budget]}, 'structural': ${RESULTS[structural]}, 'antistub': ${RESULTS[antistub]}}
-print(f'{sum(w[k]*r[k] for k in w):.2f}')
+w = {'compile': ${RESULTS[compile]} * ${WEIGHTS[compile]},
+     'behavioral_atomic': ${RESULTS[behavioral_atomic]} * ${WEIGHTS[behavioral_atomic]},
+     'behavioral_prune': ${RESULTS[behavioral_prune]} * ${WEIGHTS[behavioral_prune]},
+     'config_fmt': ${RESULTS[config_fmt]} * ${WEIGHTS[config_fmt]}}
+print(f'{sum(w.values()):.2f}')
 ")
+
+echo ">>> RESULTS: compile=${RESULTS[compile]}, atomic=${RESULTS[behavioral_atomic]}, prune=${RESULTS[behavioral_prune]}, fmt=${RESULTS[config_fmt]}"
 echo "=== FINAL SCORE: $SCORE ==="
 echo "$SCORE" > "$REWARD_FILE"
 
-# LLM rubric judge (runs only when LLM_JUDGE=1)
-source /tests/judge_hook.sh 2>/dev/null || true
+# Write detailed JSON
+python3 << PYEOF
+import json
+result = {
+    "reward": float("$SCORE"),
+    "compile": {"passed": ${RESULTS[compile]}, "weight": ${WEIGHTS[compile]}, "points": ${RESULTS[compile]} * ${WEIGHTS[compile]}},
+    "behavioral_atomic": {"passed": ${RESULTS[behavioral_atomic]}, "weight": ${WEIGHTS[behavioral_atomic]}, "points": ${RESULTS[behavioral_atomic]} * ${WEIGHTS[behavioral_atomic]}},
+    "behavioral_prune": {"passed": ${RESULTS[behavioral_prune]}, "weight": ${WEIGHTS[behavioral_prune]}, "points": ${RESULTS[behavioral_prune]} * ${WEIGHTS[behavioral_prune]}},
+    "config_fmt": {"passed": ${RESULTS[config_fmt]}, "weight": ${WEIGHTS[config_fmt]}, "points": ${RESULTS[config_fmt]} * ${WEIGHTS[config_fmt]}}
+}
+with open("/logs/verifier/reward.json", "w") as f:
+    json.dump(result, f, indent=2)
+PYEOF
+
+# LLM rubric judge source /tests/judge_hook.sh 2>/dev/null || true

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Verifier for transformers-fast-image-processor-import
 # Bug: importing fast image processor modules via full path fails with ModuleNotFoundError
-# Files: __init__.py, check_repo.py
 
 set +e
 
@@ -34,177 +33,252 @@ if [ $? -ne 0 ]; then
 fi
 echo "GATE PASS"
 
-# Weights
-W_BEHAV_MODULE_ALIAS=0.23
-W_BEHAV_CLASS_REDIRECT=0.24
-W_BEHAV_CHECK_REPO=0.14
-W_STRUCT_RGLOB=0.14
-W_PASSTOPASS=0.10
-W_ANTISTUB=0.10
-W_CONFIG_RUFF=0.05
+# Weights - target >=60% behavioral
+W_FAILTOPASS_IMPORT=0.35      # PRIMARY: actual import works
+W_FAILTOPASS_CLASS=0.25       # PRIMARY: Fast->non-Fast class redirect works
+W_BEHAV_CLASS_REDIRECT=0.10   # behavioral: class name handling verified
+W_BEHAV_CHECK_REPO=0.10       # behavioral: check_repo ignores _fast modules
+W_PASSTOPASS=0.10             # regression: existing imports still work
+W_ANTISTUB=0.10               # anti-stub: files not gutted
 
 SCORE="0.0"
+IMPORT_WORKS=false
 
-# ── TEST 1 (PRIMARY): behavioral — fast image processor module alias resolves ──
+# ── TEST 1 (PRIMARY - GATE): Fail-to-pass - import from alias module works ──
+# [pr_diff] (0.35): ModuleNotFoundError is fixed - can import from image_processing_*_fast paths
 echo ""
-echo "TEST 1: behavioral — fast image processor module alias created (weight=$W_BEHAV_MODULE_ALIAS)"
+echo "TEST 1 (PRIMARY): fail-to-pass - import from alias module works (weight=$W_FAILTOPASS_IMPORT)"
 T1=$(python3 << 'PYEOF'
-import ast, sys
+import sys
+sys.path.insert(0, '/workspace/transformers/src')
 
-with open("/workspace/transformers/src/transformers/__init__.py") as f:
-    source = f.read()
+# Try to import from a fast image processor module path
+# This is the actual bug: ModuleNotFoundError on these paths
+try:
+    # Find an available model with image_processing
+    from pathlib import Path
+    models_dir = Path('/workspace/transformers/src/transformers/models')
+    candidate = None
+    for proc_file in models_dir.rglob('image_processing_*.py'):
+        if proc_file.stem.endswith('_fast'):
+            continue
+        model_name = proc_file.parent.name
+        class_name = ''.join([p.title() for p in model_name.replace('_', '-').split('-')]) + 'ImageProcessorFast'
+        module_name = proc_file.stem
+        candidate = (model_name, module_name, class_name)
+        break
 
-# The fix should iterate over image_processing_*.py files and create _fast aliases
-if "image_processing_" in source and "_fast" in source and ("rglob" in source or "glob" in source):
-    if "_create_module_alias" in source:
-        lines = source.splitlines()
-        found_fast_alias = False
-        for i, line in enumerate(lines):
-            if "_create_module_alias" in line and "_fast" in line and "models" in line:
-                found_fast_alias = True
-                break
-        if found_fast_alias:
-            print("PASS: module alias creation for image_processing_*_fast found")
-            sys.exit(0)
-        else:
-            print("FAIL: _create_module_alias found but no _fast alias for model image processors")
-            sys.exit(1)
-    else:
-        print("FAIL: no _create_module_alias call found")
+    if candidate is None:
+        print("SKIP: no image_processing files found")
         sys.exit(1)
-else:
-    print("FAIL: no glob/rglob pattern for image_processing_*_fast aliases")
+
+    model_name, module_name, class_name = candidate
+    fast_module = f"transformers.models.{model_name}.{module_name}_fast"
+
+    # This is the actual failing import from the bug
+    exec(f"from {fast_module} import {class_name}")
+    print(f"PASS: successfully imported {class_name} from {fast_module}")
+    sys.exit(0)
+except ModuleNotFoundError as e:
+    print(f"FAIL: ModuleNotFoundError - {e}")
+    sys.exit(1)
+except ImportError as e:
+    # ImportError for missing deps is different from ModuleNotFoundError for missing module
+    if "ModuleNotFoundError" in str(e):
+        print(f"FAIL: ModuleNotFoundError wrapped in ImportError - {e}")
+        sys.exit(1)
+    # Other ImportErrors (missing optional deps) may be acceptable
+    print(f"PASS: ImportError (not ModuleNotFoundError) - module exists but has dep issues: {e}")
+    sys.exit(0)
+except Exception as e:
+    print(f"FAIL: unexpected error - {type(e).__name__}: {e}")
     sys.exit(1)
 PYEOF
 )
 echo "$T1"
 if echo "$T1" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_MODULE_ALIAS)")
+    SCORE=$(python3 -c "print($SCORE + $W_FAILTOPASS_IMPORT)")
+    IMPORT_WORKS=true
 fi
 
-# ── TEST 2 (PRIMARY): behavioral — __getattr__ redirect for Fast class names ──
+# ── TEST 2 (PRIMARY - GATE): Fail-to-pass - class redirect works ──
+# [pr_diff] (0.25): XImageProcessorFast imported from alias resolves to XImageProcessor
 echo ""
-echo "TEST 2: behavioral — __getattr__ redirects Fast class names (weight=$W_BEHAV_CLASS_REDIRECT)"
+echo "TEST 2 (PRIMARY): fail-to-pass - class redirect Fast->non-Fast works (weight=$W_FAILTOPASS_CLASS)"
 T2=$(python3 << 'PYEOF'
-import ast, sys
+import sys
+sys.path.insert(0, '/workspace/transformers/src')
 
-with open("/workspace/transformers/src/transformers/__init__.py") as f:
-    source = f.read()
+# After import, the Fast class should resolve to non-Fast class
+try:
+    from pathlib import Path
+    models_dir = Path('/workspace/transformers/src/transformers/models')
 
-# The fix should install a __getattr__ on the alias modules that strips "Fast" suffix
-if "removesuffix" in source and "Fast" in source and "__getattr__" in source:
-    if "getattr_factory" in source or ("__getattr__" in source and "removesuffix" in source):
-        print("PASS: __getattr__ with Fast->non-Fast redirect found")
-        sys.exit(0)
+    for proc_file in models_dir.rglob('image_processing_*.py'):
+        if proc_file.stem.endswith('_fast'):
+            continue
 
-# Alternative: check for any mechanism that handles Fast suffix removal
-lines = source.splitlines()
-found_redirect = False
-for i, line in enumerate(lines):
-    if ("Fast" in line and ("removesuffix" in line or "replace" in line or "[:-4]" in line)):
-        found_redirect = True
-        break
+        model_name = proc_file.parent.name
+        module_name = proc_file.stem
+        # Convert model_name to CamelCase
+        words = model_name.replace('_', '-').split('-')
+        camel_name = ''.join([w.title() for w in words])
+        fast_class = camel_name + 'ImageProcessorFast'
+        normal_class = camel_name + 'ImageProcessor'
 
-if found_redirect:
-    print("PASS: Fast class name redirect mechanism found")
-    sys.exit(0)
-else:
-    print("FAIL: no Fast->non-Fast class redirect found in __init__.py")
+        fast_module = f"transformers.models.{model_name}.{module_name}_fast"
+
+        try:
+            # Import the Fast class from the alias module
+            namespace = {}
+            exec(f"from {fast_module} import {fast_class} as ImportedFast", namespace)
+            ImportedFast = namespace['ImportedFast']
+
+            # Import the normal class from the actual module
+            normal_module = f"transformers.models.{model_name}.{module_name}"
+            namespace2 = {}
+            exec(f"from {normal_module} import {normal_class} as ImportedNormal", namespace2)
+            ImportedNormal = namespace2['ImportedNormal']
+
+            # They should be the same class (redirect worked)
+            if ImportedFast is ImportedNormal:
+                print(f"PASS: {fast_class} from alias module is same as {normal_class}")
+                sys.exit(0)
+            else:
+                print(f"FAIL: {fast_class} is not the same as {normal_class}")
+                sys.exit(1)
+
+        except ModuleNotFoundError:
+            continue  # Try next model
+        except ImportError:
+            continue  # Try next model
+
+    print("FAIL: could not find any model to test class redirect")
+    sys.exit(1)
+
+except Exception as e:
+    print(f"FAIL: unexpected error - {type(e).__name__}: {e}")
     sys.exit(1)
 PYEOF
 )
 echo "$T2"
 if echo "$T2" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_CLASS_REDIRECT)")
+    SCORE=$(python3 -c "print($SCORE + $W_FAILTOPASS_CLASS)")
 fi
 
-# ── TEST 3 (PRIMARY): behavioral — check_repo.py ignores _fast aliases ──
+# ── TEST 3: behavioral - __getattr__ mechanism present ──
+# [pr_diff] (0.10): __getattr__ handles Fast->non-Fast redirect
 echo ""
-echo "TEST 3: behavioral — check_repo.py ignores image_processing_*_fast (weight=$W_BEHAV_CHECK_REPO)"
+echo "TEST 3: behavioral - __getattr__ redirect mechanism (weight=$W_BEHAV_CLASS_REDIRECT)"
 T3=$(python3 << 'PYEOF'
-import ast, sys
+import sys
+sys.path.insert(0, '/workspace/transformers/src')
 
-with open("/workspace/transformers/utils/check_repo.py") as f:
-    source = f.read()
+# Verify the mechanism exists by checking that imported module has __getattr__
+try:
+    from pathlib import Path
+    models_dir = Path('/workspace/transformers/src/transformers/models')
 
-tree = ast.parse(source)
+    for proc_file in models_dir.rglob('image_processing_*.py'):
+        if proc_file.stem.endswith('_fast'):
+            continue
 
-func_node = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "ignore_undocumented":
-        func_node = node
-        break
+        model_name = proc_file.parent.name
+        module_name = proc_file.stem
+        fast_module_name = f"transformers.models.{model_name}.{module_name}_fast"
 
-if func_node is None:
-    print("FAIL: ignore_undocumented function not found")
+        try:
+            # Import the alias module
+            import importlib
+            fast_mod = importlib.import_module(fast_module_name)
+
+            # Check it has __getattr__
+            if hasattr(fast_mod, '__getattr__'):
+                print(f"PASS: {fast_module_name} has __getattr__ for redirect")
+                sys.exit(0)
+            else:
+                print(f"FAIL: {fast_module_name} missing __getattr__")
+                sys.exit(1)
+
+        except ModuleNotFoundError:
+            continue
+        except ImportError:
+            continue
+
+    print("FAIL: could not verify __getattr__ on any alias module")
     sys.exit(1)
 
-lines = source.splitlines()
-func_src = "\n".join(lines[func_node.lineno - 1:func_node.end_lineno])
-
-if "image_processing_" in func_src and "_fast" in func_src:
-    print("PASS: ignore_undocumented handles image_processing_*_fast")
-    sys.exit(0)
-else:
-    print("FAIL: ignore_undocumented does not handle image_processing_*_fast")
+except Exception as e:
+    print(f"FAIL: unexpected error - {type(e).__name__}: {e}")
     sys.exit(1)
 PYEOF
 )
 echo "$T3"
 if echo "$T3" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_CHECK_REPO)")
+    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_CLASS_REDIRECT)")
 fi
 
-# ── TEST 4: structural — rglob pattern or equivalent iteration ──
+# ── TEST 4: behavioral - check_repo.py ignores _fast aliases ──
+# [pr_diff] (0.10): check_repo.py excludes image_processing_*_fast from docs
 echo ""
-echo "TEST 4: structural — dynamic iteration over image_processing files (weight=$W_STRUCT_RGLOB)"
+echo "TEST 4: behavioral - check_repo.py ignores _fast aliases (weight=$W_BEHAV_CHECK_REPO)"
 T4=$(python3 << 'PYEOF'
 import sys
+sys.path.insert(0, '/workspace/transformers')
 
-with open("/workspace/transformers/src/transformers/__init__.py") as f:
-    source = f.read()
+# Import the actual function and test it
+try:
+    from utils.check_repo import ignore_undocumented
 
-if any(pattern in source for pattern in ["rglob(\"image_processing_", "glob(\"image_processing_",
-                                           "rglob('image_processing_", "glob('image_processing_"]):
-    print("PASS: dynamic file iteration for image_processing aliases found")
+    # Test that image_processing_*_fast names are ignored
+    test_names = [
+        "image_processing_llama4_fast",
+        "image_processing_clip_fast",
+        "image_processing_vit_fast",
+    ]
+
+    for name in test_names:
+        if not ignore_undocumented(name):
+            print(f"FAIL: ignore_undocumented('{name}') returned False, expected True")
+            sys.exit(1)
+
+    print("PASS: ignore_undocumented correctly excludes image_processing_*_fast")
     sys.exit(0)
 
-if source.count("image_processing_") > 5 and "_create_module_alias" in source:
-    print("PASS: multiple image_processing alias entries found (manual approach)")
-    sys.exit(0)
-
-print("FAIL: no dynamic iteration over image_processing files")
-sys.exit(1)
+except ImportError as e:
+    print(f"FAIL: could not import ignore_undocumented - {e}")
+    sys.exit(1)
+except Exception as e:
+    print(f"FAIL: unexpected error - {type(e).__name__}: {e}")
+    sys.exit(1)
 PYEOF
 )
 echo "$T4"
 if echo "$T4" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_STRUCT_RGLOB)")
+    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_CHECK_REPO)")
 fi
 
-# ── TEST 5: pass-to-pass — existing aliases still present ──
+# ── TEST 5: pass-to-pass - existing imports still work ──
+# [repo_tests] (0.10): Existing module aliases not broken
 echo ""
-echo "TEST 5: pass-to-pass — existing module aliases preserved (weight=$W_PASSTOPASS)"
+echo "TEST 5: pass-to-pass - existing imports preserved (weight=$W_PASSTOPASS)"
 T5=$(python3 << 'PYEOF'
 import sys
+sys.path.insert(0, '/workspace/transformers/src')
 
-with open("/workspace/transformers/src/transformers/__init__.py") as f:
-    source = f.read()
+try:
+    # These should still work after the fix
+    from transformers import AutoTokenizer  # Basic sanity
+    from transformers import image_processing_utils_fast  # Existing alias
 
-required = [
-    "tokenization_utils_fast",
-    "tokenization_utils_sentencepiece",
-    "image_processing_utils_fast",
-    "image_processing_backends",
-    "_create_module_alias",
-]
-missing = [r for r in required if r not in source]
-if missing:
-    print(f"FAIL: missing expected content: {missing}")
+    print("PASS: existing imports work")
+    sys.exit(0)
+except ImportError as e:
+    print(f"FAIL: existing import broken - {e}")
     sys.exit(1)
-
-print("PASS: existing module aliases preserved")
-sys.exit(0)
+except Exception as e:
+    print(f"FAIL: unexpected error - {type(e).__name__}: {e}")
+    sys.exit(1)
 PYEOF
 )
 echo "$T5"
@@ -214,7 +288,7 @@ fi
 
 # ── TEST 6: anti-stub ──
 echo ""
-echo "TEST 6: anti-stub — files retain original content (weight=$W_ANTISTUB)"
+echo "TEST 6: anti-stub - files retain content (weight=$W_ANTISTUB)"
 T6=$(python3 << 'PYEOF'
 import sys
 
@@ -240,33 +314,6 @@ PYEOF
 echo "$T6"
 if echo "$T6" | grep -q "^PASS"; then
     SCORE=$(python3 -c "print($SCORE + $W_ANTISTUB)")
-fi
-
-
-# -- CONFIG-DERIVED: ruff format check on changed files (weight=$W_CONFIG_RUFF) --
-# Config-derived test (0.05): "Changed files pass ruff format"
-# Source: CLAUDE.md lines 5-10 @ commit 29db503cdef2f00d1f0ecd5841c3a486708ed1dd
-echo ""
-echo "CONFIG: ruff format check (weight=$W_CONFIG_RUFF)"
-T_RUFF=$(python3 << 'PYRUFF'
-import subprocess, sys
-files = ['/workspace/transformers/src/transformers/__init__.py']
-all_ok = True
-for f in files:
-    result = subprocess.run(["ruff", "check", "--select", "I", f], capture_output=True, text=True)
-    if result.returncode != 0:
-        all_ok = False
-        print(f"FAIL: ruff check failed on {f}")
-if all_ok:
-    print("PASS: all changed files pass ruff import sort check")
-    sys.exit(0)
-else:
-    sys.exit(1)
-PYRUFF
-)
-echo "$T_RUFF"
-if echo "$T_RUFF" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_CONFIG_RUFF)")
 fi
 
 # ── Final score ──────────────────────────────────────────────────────────

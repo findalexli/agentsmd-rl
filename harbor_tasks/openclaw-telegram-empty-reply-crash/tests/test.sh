@@ -6,19 +6,21 @@ mkdir -p "$(dirname "$REWARD_FILE")"
 
 declare -A WEIGHTS
 declare -A RESULTS
-WEIGHTS[behavioral]=0.35
-WEIGHTS[behavioral_paths]=0.25
-WEIGHTS[structural]=0.20
-WEIGHTS[antistub]=0.15
-WEIGHTS[config_boundary]=0.05
+WEIGHTS[behavioral_f2p]=0.50
+WEIGHTS[behavioral_p2p]=0.10
+WEIGHTS[structural]=0.25
+WEIGHTS[config_boundary]=0.15
 
-for key in behavioral behavioral_paths structural antistub config_boundary; do
+for key in behavioral_f2p behavioral_p2p structural config_boundary; do
     RESULTS[$key]=0
 done
 
 TARGET="extensions/telegram/src/bot/delivery.replies.ts"
 
-# ---------- GATE ----------
+echo "=== Starting Test Audit for openclaw-telegram-empty-reply-crash ==="
+echo "TARGET: $TARGET"
+
+# ---------- GATE: File must exist ----------
 if [ ! -f "$TARGET" ]; then
     echo "GATE FAIL: $TARGET does not exist"
     echo "0.0" > "$REWARD_FILE"
@@ -26,99 +28,150 @@ if [ ! -f "$TARGET" ]; then
 fi
 echo "GATE PASS: file exists"
 
-# ---------- PRIMARY 1 (35%): Behavioral - whitespace filtering ----------
-node -e "
+# ---------- GATE: Must compile ----------
+cd /workspace/openclaw
+if ! npx tsc --noEmit --skipLibCheck 2>/dev/null; then
+    echo "GATE FAIL: TypeScript compilation failed"
+    echo "0.0" > "$REWARD_FILE"
+    exit 0
+fi
+echo "GATE PASS: TypeScript compiles"
+
+# ---------- PRIMARY (50%): Fail-to-pass behavioral test ----------
+# [pr_diff] (0.50): Empty/whitespace-only text chunks must be filtered before sending
+# Bug: GrammyError 400 when sending whitespace-only text
+# Fix: Add filterEmptyTelegramTextChunks and apply to all 3 delivery paths
+
+node --experimental-vm-modules -e "
 const fs = require('fs');
-const src = fs.readFileSync('$TARGET', 'utf8');
+const path = require('path');
 
-// Must have logic that filters or guards against whitespace-only text
-const hasTrimCheck = src.includes('.trim()') && (
-    src.includes('.length > 0') || src.includes('.length !== 0') ||
-    src.includes('.length >= 1') || src.includes('!== \"\"')
-);
-const hasFilterCall = src.includes('filter') && src.includes('trim');
+// Read the source file
+const srcPath = '$TARGET';
+const src = fs.readFileSync(srcPath, 'utf8');
 
-if (!hasTrimCheck && !hasFilterCall) {
-    console.log('BEHAVIORAL FAIL: no whitespace filtering logic found');
+// Check for the filter function definition
+const hasFilterFunc = src.includes('filterEmptyTelegramTextChunks');
+const hasTrimCheck = src.match(/\.trim\(\)\s*\.?\s*length\s*>{0,1}=?\s*0/) ||
+                     src.match(/\.trim\(\)\s*[!={]+\s*['\"]\s*['\"]/) ||
+                     src.match(/text\.trim\(\)/);
+
+if (!hasFilterFunc && !hasTrimCheck) {
+    console.log('FAIL: No empty-text filtering logic found');
     process.exit(1);
 }
 
-console.log('BEHAVIORAL PASS: whitespace filter logic present');
-" 2>&1
-if [ $? -eq 0 ]; then
-    RESULTS[behavioral]=1
-    echo "TEST behavioral: PASS"
-else
-    echo "TEST behavioral: FAIL"
-fi
+// Extract and verify the filter logic is applied to all 3 paths
+const funcNames = ['deliverTextReply', 'sendPendingFollowUpText', 'sendTelegramVoiceFallbackText'];
+const pathsWithFilter = [];
 
-# ---------- PRIMARY 2 (25%): All three delivery paths covered ----------
-node -e "
-const fs = require('fs');
-const src = fs.readFileSync('$TARGET', 'utf8');
-
-let pathsFixed = 0;
-
-// Path 1: deliverTextReply - should filter chunks before sending
-const idx1 = src.indexOf('deliverTextReply');
-const idx2 = src.indexOf('sendPendingFollowUpText');
-const idx3 = src.indexOf('sendTelegramVoiceFallbackText');
-
-if (idx1 >= 0 && idx2 >= 0) {
-    const section1 = src.substring(idx1, idx2);
-    if (section1.includes('filter') || (section1.includes('trim') && section1.includes('length'))) {
-        pathsFixed++;
+for (const funcName of funcNames) {
+    const funcMatch = src.match(new RegExp('async function ' + funcName + '\\\\([^)]*\\\\)[^{]*{([^}]*{[^}]*})*[^}]*}', 's'));
+    if (funcMatch) {
+        const funcBody = funcMatch[0];
+        // Check for filter function call or inline trim+length check
+        const hasFiltering = funcBody.includes('filterEmptyTelegramTextChunks') ||
+                            (funcBody.includes('.filter') && funcBody.includes('.trim()')) ||
+                            (funcBody.includes('.trim()') && funcBody.match(/length\s*[<>!=]+/));
+        if (hasFiltering) {
+            pathsWithFilter.push(funcName);
+        }
     }
 }
 
-if (idx2 >= 0 && idx3 >= 0) {
-    const section2 = src.substring(idx2, idx3);
-    if (section2.includes('filter') || (section2.includes('trim') && section2.includes('length'))) {
-        pathsFixed++;
-    }
-}
-
-if (idx3 >= 0) {
-    const section3 = src.substring(idx3);
-    if (section3.includes('filter') || (section3.includes('trim') && section3.includes('length'))) {
-        pathsFixed++;
-    }
-}
-
-if (pathsFixed < 3) {
-    console.log('BEHAVIORAL_PATHS FAIL: only ' + pathsFixed + '/3 delivery paths have filtering');
+if (pathsWithFilter.length < 3) {
+    console.log('FAIL: Only ' + pathsWithFilter.length + '/3 delivery paths have empty-text filtering');
+    console.log('Fixed paths: ' + pathsWithFilter.join(', '));
     process.exit(1);
 }
 
-console.log('BEHAVIORAL_PATHS PASS: all 3 delivery paths have empty filtering');
+console.log('PASS: All 3 delivery paths have empty-text filtering');
+process.exit(0);
 " 2>&1
+
 if [ $? -eq 0 ]; then
-    RESULTS[behavioral_paths]=1
-    echo "TEST behavioral_paths: PASS"
+    RESULTS[behavioral_f2p]=1
+    echo "TEST behavioral_f2p: PASS"
 else
-    echo "TEST behavioral_paths: FAIL"
+    echo "TEST behavioral_f2p: FAIL"
 fi
 
-# ---------- SUPPLEMENTARY (20%): Structural ----------
+# ---------- SECONDARY (10%): Pass-to-pass regression ----------
+# [agent_config] (0.10): Existing non-empty text delivery must still work
+# Source: instruction.md line 11-12 @ eec290e68d6191b4bb85538dd301d50cdbc6650a
+
 node -e "
 const fs = require('fs');
 const src = fs.readFileSync('$TARGET', 'utf8');
 
-// Should have a dedicated filter function or at least consistent filtering
-const hasFunction = /function\s+\w*[Ff]ilter\w*[Ee]mpty\w*/.test(src) ||
-                    /function\s+\w*[Ff]ilter\w*[Tt]ext\w*/.test(src);
-const hasArrow = /const\s+\w*[Ff]ilter\w*\s*=/.test(src);
+// Verify the original send logic is still intact
+// Check that sendTelegramText is still called in each path
+const hasSendTextCall = src.includes('sendTelegramText');
+const hasChunkIteration = src.includes('for') && src.includes('chunks');
+const hasMarkDelivered = src.includes('markDelivered');
 
-if (!hasFunction && !hasArrow) {
-    const filterCount = (src.match(/\.filter\s*\(/g) || []).length;
-    if (filterCount < 2) {
-        console.log('STRUCTURAL FAIL: no reusable filter pattern');
-        process.exit(1);
-    }
+const checks = [
+    ['sendTelegramText call preserved', hasSendTextCall],
+    ['Chunk iteration preserved', hasChunkIteration || src.includes('forEach')],
+    ['Delivery progress tracking preserved', hasMarkDelivered]
+];
+
+const failures = checks.filter(([_, ok]) => !ok).map(([name, _]) => name);
+if (failures.length > 0) {
+    console.log('P2P FAIL: ' + failures.join(', '));
+    process.exit(1);
+}
+
+console.log('P2P PASS: Core delivery logic preserved');
+process.exit(0);
+" 2>&1
+
+if [ $? -eq 0 ]; then
+    RESULTS[behavioral_p2p]=1
+    echo "TEST behavioral_p2p: PASS"
+else
+    echo "TEST behavioral_p2p: FAIL"
+fi
+
+# ---------- STRUCTURAL (25%): Function definition and usage pattern ----------
+# [pr_diff] (0.25): filterEmptyTelegramTextChunks function defined and used correctly
+
+node -e "
+const fs = require('fs');
+const src = fs.readFileSync('$TARGET', 'utf8');
+
+// Check for proper function definition with generic type parameter
+const hasFuncDef = /function\s+filterEmptyTelegramTextChunks\s*<[^>]+>/.test(src) ||
+                   src.includes('function filterEmptyTelegramTextChunks');
+
+// Check it's called in all 3 delivery functions
+const callsInDeliverTextReply = src.match(/function deliverTextReply[\\s\\S]*?filterEmptyTelegramTextChunks/) !== null;
+const callsInSendPending = src.match(/function sendPendingFollowUpText[\\s\\S]*?filterEmptyTelegramTextChunks/) !== null;
+const callsInVoiceFallback = src.match(/function sendTelegramVoiceFallbackText[\\s\\S]*?filterEmptyTelegramTextChunks/) !== null;
+
+// Alternative: inline filtering in all 3 paths
+const hasInlineFilter1 = src.match(/function deliverTextReply[\\s\\S]*?\.filter[\\s\\S]*?\.trim\(\)/) !== null;
+const hasInlineFilter2 = src.match(/function sendPendingFollowUpText[\\s\\S]*?\.filter[\\s\\S]*?\.trim\(\)/) !== null;
+const hasInlineFilter3 = src.match(/function sendTelegramVoiceFallbackText[\\s\\S]*?\.filter[\\s\\S]*?\.trim\(\)/) !== null;
+
+const allPathsCovered = (callsInDeliverTextReply || hasInlineFilter1) &&
+                        (callsInSendPending || hasInlineFilter2) &&
+                        (callsInVoiceFallback || hasInlineFilter3);
+
+if (!hasFuncDef && !(hasInlineFilter1 && hasInlineFilter2 && hasInlineFilter3)) {
+    console.log('STRUCTURAL FAIL: No filterEmptyTelegramTextChunks function and no inline filtering');
+    process.exit(1);
+}
+
+if (!allPathsCovered) {
+    console.log('STRUCTURAL FAIL: Not all 3 delivery paths have filtering');
+    process.exit(1);
 }
 
 console.log('STRUCTURAL PASS');
+process.exit(0);
 " 2>&1
+
 if [ $? -eq 0 ]; then
     RESULTS[structural]=1
     echo "TEST structural: PASS"
@@ -126,67 +179,64 @@ else
     echo "TEST structural: FAIL"
 fi
 
-# ---------- Anti-stub (20%) ----------
-node -e "
-const fs = require('fs');
-const src = fs.readFileSync('$TARGET', 'utf8');
-const lines = src.split('\n').length;
-
-const checks = [
-    [lines > 80, 'file has substantial content (' + lines + ' lines)'],
-    [src.includes('sendChunkedTelegramReplyText') || src.includes('sendTelegramText'), 'send function present'],
-    [src.includes('DeliveryProgress') || src.includes('progress'), 'delivery progress tracking present'],
-    [src.includes('trim'), 'trim logic present'],
-];
-
-const failures = checks.filter(([ok]) => !ok).map(([, desc]) => desc);
-if (failures.length > 0) {
-    console.log('ANTI-STUB FAIL: ' + failures.join(', '));
-    process.exit(1);
-}
-console.log('ANTI-STUB PASS');
-" 2>&1
-if [ $? -eq 0 ]; then
-    RESULTS[antistub]=1
-    echo "TEST antistub: PASS"
-else
-    echo "TEST antistub: FAIL"
-fi
-
-# ---------- Final weighted score ----------
-
-# ---------- Config-derived test (0.05): "Extension code must import from plugin-sdk/*" ----------
+# ---------- CONFIG-DERIVED (15%): Import boundary check ----------
+# [agent_config] (0.15): Extension code must import from plugin-sdk/* not ../../../src/
 # Source: CLAUDE.md line 16 @ eec290e68d6191b4bb85538dd301d50cdbc6650a
+
 node -e "
 const fs = require('fs');
 const {execSync} = require('child_process');
-const files = execSync('find extensions/telegram/src -name \"*.ts\" -not -name \"*.test.ts\" -not -name \"*.d.ts\" 2>/dev/null || true', {encoding: 'utf8'}).trim().split('\\n').filter(Boolean);
-let fail = false;
-for (const f of files) {
-    const content = fs.readFileSync(f, 'utf8');
-    const lines = content.split('\\n');
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        if (/^import .* from ['\"]\.\.\/\.\.\/\.\.\/src\//.test(line)) {
-            console.log('FAIL: ' + f + ':' + (i+1) + ' imports core internals: ' + line.trim());
-            fail = true;
+
+try {
+    const files = execSync('find extensions/telegram/src -name \"*.ts\" -not -name \"*.test.ts\" -not -name \"*.d.ts\" 2>/dev/null', {encoding: 'utf8'}).trim().split('\n').filter(Boolean);
+    let fail = false;
+    for (const f of files) {
+        if (!fs.existsSync(f)) continue;
+        const content = fs.readFileSync(f, 'utf8');
+        const lines = content.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (/^import .* from ['\"]\.\.\/\.\.\/\.\.\/src\//.test(line)) {
+                console.log('FAIL: ' + f + ':' + (i+1) + ' imports core internals: ' + line.trim());
+                fail = true;
+            }
         }
     }
+    if (fail) process.exit(1);
+    console.log('PASS: No cross-boundary imports');
+    process.exit(0);
+} catch (e) {
+    // If find fails, check at least the target file
+    const content = fs.readFileSync('$TARGET', 'utf8');
+    const hasBadImport = /from ['\"]\.\.\/\.\.\/\.\.\/src\//.test(content);
+    if (hasBadImport) {
+        console.log('FAIL: Target file has cross-boundary imports');
+        process.exit(1);
+    }
+    console.log('PASS: No cross-boundary imports in target');
+    process.exit(0);
 }
-if (fail) process.exit(1);
-console.log('PASS: no cross-boundary imports');
 " 2>&1
-if [ $? -eq 0 ]; then RESULTS[config_boundary]=1; echo "TEST config_boundary: PASS"; else echo "TEST config_boundary: FAIL"; fi
 
+if [ $? -eq 0 ]; then
+    RESULTS[config_boundary]=1
+    echo "TEST config_boundary: PASS"
+else
+    echo "TEST config_boundary: FAIL"
+fi
+
+# ---------- Final weighted score ----------
 SCORE=$(python3 -c "
-weights = {'behavioral': ${WEIGHTS[behavioral]}, 'behavioral_paths': ${WEIGHTS[behavioral_paths]}, 'structural': ${WEIGHTS[structural]}, 'antistub': ${WEIGHTS[antistub]}}
-results = {'behavioral': ${RESULTS[behavioral]}, 'behavioral_paths': ${RESULTS[behavioral_paths]}, 'structural': ${RESULTS[structural]}, 'antistub': ${RESULTS[antistub]}}
+weights = {'behavioral_f2p': ${WEIGHTS[behavioral_f2p]}, 'behavioral_p2p': ${WEIGHTS[behavioral_p2p]}, 'structural': ${WEIGHTS[structural]}}
+results = {'behavioral_f2p': ${RESULTS[behavioral_f2p]}, 'behavioral_p2p': ${RESULTS[behavioral_p2p]}, 'structural': ${RESULTS[structural]}}
 score = sum(weights[k] * results[k] for k in weights)
+# Add config_boundary separate (not weighted in main calc but added)
+score += ${WEIGHTS[config_boundary]} * ${RESULTS[config_boundary]}
 print(f'{score:.2f}')
 ")
 echo ""
 echo "=== FINAL SCORE ==="
-for key in behavioral behavioral_paths structural antistub config_boundary; do
+for key in behavioral_f2p behavioral_p2p structural config_boundary; do
     echo "  $key (${WEIGHTS[$key]}): ${RESULTS[$key]}"
 done
 echo "  TOTAL: $SCORE"

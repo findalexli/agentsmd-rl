@@ -2,6 +2,8 @@
 # Verifier for transformers-mxfp4-dependency-checks
 # Bug: combined kernels_available boolean prevents identifying which dependency is missing
 # File: src/transformers/quantizers/quantizer_mxfp4.py
+#
+# F2P tests check that specific error/warning messages are raised for each missing dependency
 
 set +e
 
@@ -12,7 +14,7 @@ TARGET="/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py"
 
 echo "=== transformers-mxfp4-dependency-checks verifier ==="
 
-# ── GATE: Python syntax validity ─────────────────────────────────────────
+# ── GATE 1: Python syntax validity ─────────────────────────────────────────
 echo ""
 echo "GATE: Python syntax validity"
 python3 << 'PYEOF'
@@ -33,354 +35,478 @@ if [ $? -ne 0 ]; then
 fi
 echo "GATE PASS"
 
-# Weights
-W_BEHAV_SEPARATE_VARS=0.19
-W_BEHAV_TRITON_WARNING=0.14
-W_BEHAV_KERNELS_WARNING=0.14
-W_BEHAV_TRITON_ERROR=0.14
-W_BEHAV_KERNELS_ERROR=0.14
-W_PASSTOPASS=0.10
-W_ANTISTUB=0.10
-W_CONFIG_RUFF=0.05
+# ── GATE 2: Bug is actually fixed (no combined boolean) ───────────────────
+echo ""
+echo "GATE: Bug is fixed (no combined kernels_available)"
+python3 << 'PYEOF'
+import sys
+with open("/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py") as f:
+    source = f.read()
+
+# Check that the buggy pattern is NOT present
+if "kernels_available = is_triton_available" in source or \
+   "kernels_available=is_triton_available" in source:
+    print("GATE FAIL: still using combined kernels_available variable (the bug)")
+    sys.exit(1)
+
+# Check that separate variables exist
+if not ("triton" in source.lower() and "kernel" in source.lower()):
+    print("GATE FAIL: missing triton or kernels references")
+    sys.exit(1)
+
+print("GATE PASS: combined boolean pattern removed")
+sys.exit(0)
+PYEOF
+if [ $? -ne 0 ]; then
+    echo "GATE FAIL — aborting with score 0"
+    echo "0.0000" > "$REWARD_FILE"
+    exit 0
+fi
+
+# Weights - 70% behavioral (F2P), 15% P2P, 10% anti-stub, 5% config
+W_F2P_SEPARATE=0.20       # [pr_diff] Separate variables for triton/kernels
+W_F2P_TRITON_MSG=0.15     # [pr_diff] Triton-specific warning/error messages
+W_F2P_KERNELS_MSG=0.15    # [pr_diff] Kernels-specific warning/error messages
+W_F2P_SPECIFIC_MSG=0.20   # [pr_diff] Messages don't say "triton and kernels" together
+W_P2P=0.15                # [repo_tests] Method structure preserved
+W_ANTISTUB=0.10           # [static] Not a stub implantation
+W_CONFIG=0.05             # [agent_config] Follows quantizer_higgs.py pattern
 
 SCORE="0.0"
 
-# ── TEST 1 (PRIMARY): behavioral — separate triton/kernels variables ──
+# ── TEST 1: Separate variables exist ─────────────────────────────────────
 echo ""
-echo "TEST 1: behavioral — triton and kernels checked separately (weight=$W_BEHAV_SEPARATE_VARS)"
+echo "TEST 1: F2P — triton and kernels have separate variables (weight=$W_F2P_SEPARATE)"
 T1=$(python3 << 'PYEOF'
-import ast, sys
-
-with open("/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py") as f:
-    source = f.read()
-
-tree = ast.parse(source)
-
-# Find validate_environment method
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and "Mxfp4" in node.name:
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef) and item.name == "validate_environment":
-                lines = source.splitlines()
-                func_src = "\n".join(lines[item.lineno - 1:item.end_lineno])
-
-                # The buggy code combines them: kernels_available = is_triton_available(...) and is_kernels_available()
-                # The fix should have separate variables
-                if "kernels_available = is_triton_available" in func_src:
-                    print("FAIL: still using combined kernels_available variable (the bug)")
-                    sys.exit(1)
-
-                # Check for separate variables
-                has_triton_var = ("triton_available" in func_src or "triton_ok" in func_src)
-                has_kernels_var = ("kernels_installed" in func_src or "kernels_available" in func_src)
-
-                # Make sure they are separate assignments
-                assigns = []
-                for subnode in ast.walk(item):
-                    if isinstance(subnode, ast.Assign):
-                        for target in subnode.targets:
-                            if isinstance(target, ast.Name):
-                                assigns.append(target.id)
-
-                triton_assign = any("triton" in a.lower() for a in assigns)
-                kernels_assign = any("kernel" in a.lower() for a in assigns)
-
-                if triton_assign and kernels_assign:
-                    print("PASS: triton and kernels have separate variable assignments")
-                    sys.exit(0)
-                elif has_triton_var and has_kernels_var:
-                    print("PASS: separate triton and kernels variables found")
-                    sys.exit(0)
-                else:
-                    print(f"FAIL: could not find separate variables (assigns={assigns})")
-                    sys.exit(1)
-
-print("FAIL: validate_environment method not found")
-sys.exit(1)
-PYEOF
-)
-echo "$T1"
-if echo "$T1" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_SEPARATE_VARS)")
-fi
-
-# ── TEST 2 (PRIMARY): behavioral — triton-specific warning when pre_quantized ──
-echo ""
-echo "TEST 2: behavioral — triton-specific warning for pre_quantized (weight=$W_BEHAV_TRITON_WARNING)"
-T2=$(python3 << 'PYEOF'
-import ast, sys
-
-with open("/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py") as f:
-    source = f.read()
-
-tree = ast.parse(source)
-
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and "Mxfp4" in node.name:
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef) and item.name == "validate_environment":
-                lines = source.splitlines()
-                func_src = "\n".join(lines[item.lineno - 1:item.end_lineno])
-
-                # Find warning_once calls that are specifically about triton (not combined)
-                # Look for a condition checking triton AND a warning mentioning triton specifically
-                # The fix should have: if not triton_available: logger.warning_once("...triton...")
-                # separate from: if not kernels_installed: logger.warning_once("...kernels...")
-
-                # Count warning_once calls that mention dependency-specific text
-                warning_sections = func_src.split("warning_once")
-
-                triton_specific_warning = False
-                for section in warning_sections[1:]:  # skip first split before any warning_once
-                    # Check within next ~200 chars
-                    snippet = section[:300].lower()
-                    # Must mention triton but NOT be a combined "triton and kernels" message
-                    if "triton" in snippet and "triton and kernels" not in snippet:
-                        triton_specific_warning = True
-                        break
-
-                if triton_specific_warning:
-                    print("PASS: triton-specific warning found (not combined with kernels)")
-                    sys.exit(0)
-                else:
-                    print("FAIL: no triton-specific warning found")
-                    sys.exit(1)
-
-print("FAIL: validate_environment not found")
-sys.exit(1)
-PYEOF
-)
-echo "$T2"
-if echo "$T2" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_TRITON_WARNING)")
-fi
-
-# ── TEST 3 (PRIMARY): behavioral — kernels-specific warning when pre_quantized ──
-echo ""
-echo "TEST 3: behavioral — kernels-specific warning for pre_quantized (weight=$W_BEHAV_KERNELS_WARNING)"
-T3=$(python3 << 'PYEOF'
-import ast, sys
-
-with open("/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py") as f:
-    source = f.read()
-
-tree = ast.parse(source)
-
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and "Mxfp4" in node.name:
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef) and item.name == "validate_environment":
-                lines = source.splitlines()
-                func_src = "\n".join(lines[item.lineno - 1:item.end_lineno])
-
-                warning_sections = func_src.split("warning_once")
-
-                kernels_specific_warning = False
-                for section in warning_sections[1:]:
-                    snippet = section[:300].lower()
-                    if "kernels" in snippet and "triton and kernels" not in snippet:
-                        kernels_specific_warning = True
-                        break
-
-                if kernels_specific_warning:
-                    print("PASS: kernels-specific warning found (not combined with triton)")
-                    sys.exit(0)
-                else:
-                    print("FAIL: no kernels-specific warning found")
-                    sys.exit(1)
-
-print("FAIL: validate_environment not found")
-sys.exit(1)
-PYEOF
-)
-echo "$T3"
-if echo "$T3" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_KERNELS_WARNING)")
-fi
-
-# ── TEST 4 (PRIMARY): behavioral — triton-specific ValueError when not pre_quantized ──
-echo ""
-echo "TEST 4: behavioral — triton-specific ValueError (weight=$W_BEHAV_TRITON_ERROR)"
-T4=$(python3 << 'PYEOF'
-import ast, sys
-
-with open("/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py") as f:
-    source = f.read()
-
-tree = ast.parse(source)
-
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and "Mxfp4" in node.name:
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef) and item.name == "validate_environment":
-                lines = source.splitlines()
-                func_src = "\n".join(lines[item.lineno - 1:item.end_lineno])
-
-                # Find ValueError raises
-                raise_sections = func_src.split("raise ValueError")
-
-                triton_specific_error = False
-                for section in raise_sections[1:]:
-                    snippet = section[:300].lower()
-                    if "triton" in snippet and "triton and kernels" not in snippet:
-                        triton_specific_error = True
-                        break
-
-                if triton_specific_error:
-                    print("PASS: triton-specific ValueError found")
-                    sys.exit(0)
-                else:
-                    print("FAIL: no triton-specific ValueError found")
-                    sys.exit(1)
-
-print("FAIL: validate_environment not found")
-sys.exit(1)
-PYEOF
-)
-echo "$T4"
-if echo "$T4" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_TRITON_ERROR)")
-fi
-
-# ── TEST 5 (PRIMARY): behavioral — kernels-specific ValueError when not pre_quantized ──
-echo ""
-echo "TEST 5: behavioral — kernels-specific ValueError (weight=$W_BEHAV_KERNELS_ERROR)"
-T5=$(python3 << 'PYEOF'
-import ast, sys
-
-with open("/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py") as f:
-    source = f.read()
-
-tree = ast.parse(source)
-
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and "Mxfp4" in node.name:
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef) and item.name == "validate_environment":
-                lines = source.splitlines()
-                func_src = "\n".join(lines[item.lineno - 1:item.end_lineno])
-
-                raise_sections = func_src.split("raise ValueError")
-
-                kernels_specific_error = False
-                for section in raise_sections[1:]:
-                    snippet = section[:300].lower()
-                    if "kernels" in snippet and "triton and kernels" not in snippet:
-                        kernels_specific_error = True
-                        break
-
-                if kernels_specific_error:
-                    print("PASS: kernels-specific ValueError found")
-                    sys.exit(0)
-                else:
-                    print("FAIL: no kernels-specific ValueError found")
-                    sys.exit(1)
-
-print("FAIL: validate_environment not found")
-sys.exit(1)
-PYEOF
-)
-echo "$T5"
-if echo "$T5" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_KERNELS_ERROR)")
-fi
-
-# ── TEST 6: pass-to-pass — validate_environment structure intact ──
-echo ""
-echo "TEST 6: pass-to-pass — validate_environment structure intact (weight=$W_PASSTOPASS)"
-T6=$(python3 << 'PYEOF'
-import ast, sys
-
-with open("/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py") as f:
-    source = f.read()
-
-tree = ast.parse(source)
-
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and "Mxfp4" in node.name:
-        method_names = [m.name for m in node.body if isinstance(m, ast.FunctionDef)]
-        if "validate_environment" not in method_names:
-            print("FAIL: validate_environment missing")
-            sys.exit(1)
-
-        for m in node.body:
-            if isinstance(m, ast.FunctionDef) and m.name == "validate_environment":
-                lines = source.splitlines()
-                func_src = "\n".join(lines[m.lineno - 1:m.end_lineno])
-                # Check key elements still present
-                required = ["is_device_supported_mxfp4", "pre_quantized", "dequantize",
-                           "is_triton_available", "is_kernels_available"]
-                missing = [r for r in required if r not in func_src]
-                if missing:
-                    print(f"FAIL: missing elements: {missing}")
-                    sys.exit(1)
-                print("PASS: validate_environment structure intact")
-                sys.exit(0)
-
-print("FAIL: Mxfp4 quantizer class not found")
-sys.exit(1)
-PYEOF
-)
-echo "$T6"
-if echo "$T6" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_PASSTOPASS)")
-fi
-
-# ── TEST 7: anti-stub ──
-echo ""
-echo "TEST 7: anti-stub — file retains original logic (weight=$W_ANTISTUB)"
-T7=$(python3 << 'PYEOF'
+import ast
 import sys
 
 with open("/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py") as f:
     source = f.read()
 
-required = ["Mxfp4HfQuantizer", "validate_environment", "is_triton_available",
-            "is_kernels_available", "HfQuantizer", "quantization_config"]
+tree = ast.parse(source)
+
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and "Mxfp4" in node.name:
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == "validate_environment":
+                func_node = item
+                break
+
+if not func_node:
+    print("FAIL: validate_environment not found")
+    sys.exit(1)
+
+# Look for assignment statements with triton and kernels in names
+assignments = []
+for node in ast.walk(func_node):
+    if isinstance(node, ast.Assign):
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                assignments.append(target.id.lower())
+
+has_triton_assign = any("triton" in a for a in assignments)
+has_kernels_assign = any("kernel" in a for a in assignments)
+
+if has_triton_assign and has_kernels_assign:
+    print("PASS: separate variables for triton and kernels")
+    sys.exit(0)
+else:
+    print(f"FAIL: missing separate variable assignments (found: {assignments})")
+    sys.exit(1)
+PYEOF
+)
+echo "$T1"
+if echo "$T1" | grep -q "^PASS"; then
+    SCORE=$(python3 -c "print($SCORE + $W_F2P_SEPARATE)")
+fi
+
+# ── TEST 2: Triton-specific messages ─────────────────────────────────────
+echo ""
+echo "TEST 2: F2P — triton-specific messages (weight=$W_F2P_TRITON_MSG)"
+T2=$(python3 << 'PYEOF'
+import ast
+import sys
+
+with open("/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py") as f:
+    source = f.read()
+
+tree = ast.parse(source)
+
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and "Mxfp4" in node.name:
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == "validate_environment":
+                func_node = item
+                break
+
+if not func_node:
+    print("FAIL: validate_environment not found")
+    sys.exit(1)
+
+# Check for triton-specific warning message
+has_triton_warning = False
+for node in ast.walk(func_node):
+    if isinstance(node, ast.Call):
+        func_name = ""
+        if isinstance(node.func, ast.Attribute):
+            func_name = node.func.attr
+        elif isinstance(node.func, ast.Name):
+            func_name = node.func.id
+
+        if "warning" in func_name.lower():
+            for arg in node.args:
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                    msg = arg.value.lower()
+                    if "triton" in msg and "triton and kernels" not in msg:
+                        has_triton_warning = True
+                        break
+
+# Check for triton-specific ValueError
+has_triton_error = False
+for node in ast.walk(func_node):
+    if isinstance(node, ast.Raise):
+        exc = node.exc
+        if isinstance(exc, ast.Call) and isinstance(exc.func, ast.Name) and exc.func.id == "ValueError":
+            for arg in exc.args:
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                    msg = arg.value.lower()
+                    if "triton" in msg and "triton and kernels" not in msg:
+                        has_triton_error = True
+                        break
+
+if has_triton_warning and has_triton_error:
+    print("PASS: triton-specific warning and error messages found")
+    sys.exit(0)
+elif has_triton_warning or has_triton_error:
+    print("PARTIAL: only triton warning or error found (need both)")
+    sys.exit(1)
+else:
+    print("FAIL: no triton-specific messages found")
+    sys.exit(1)
+PYEOF
+)
+echo "$T2"
+if echo "$T2" | grep -q "^PASS"; then
+    SCORE=$(python3 -c "print($SCORE + $W_F2P_TRITON_MSG)")
+fi
+
+# ── TEST 3: Kernels-specific messages ────────────────────────────────────
+echo ""
+echo "TEST 3: F2P — kernels-specific messages (weight=$W_F2P_KERNELS_MSG)"
+T3=$(python3 << 'PYEOF'
+import ast
+import sys
+
+with open("/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py") as f:
+    source = f.read()
+
+tree = ast.parse(source)
+
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and "Mxfp4" in node.name:
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == "validate_environment":
+                func_node = item
+                break
+
+if not func_node:
+    print("FAIL: validate_environment not found")
+    sys.exit(1)
+
+# Check for kernels-specific warning message
+has_kernels_warning = False
+for node in ast.walk(func_node):
+    if isinstance(node, ast.Call):
+        func_name = ""
+        if isinstance(node.func, ast.Attribute):
+            func_name = node.func.attr
+        elif isinstance(node.func, ast.Name):
+            func_name = node.func.id
+
+        if "warning" in func_name.lower():
+            for arg in node.args:
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                    msg = arg.value.lower()
+                    if "kernel" in msg and "triton and kernels" not in msg:
+                        has_kernels_warning = True
+                        break
+
+# Check for kernels-specific ValueError
+has_kernels_error = False
+for node in ast.walk(func_node):
+    if isinstance(node, ast.Raise):
+        exc = node.exc
+        if isinstance(exc, ast.Call) and isinstance(exc.func, ast.Name) and exc.func.id == "ValueError":
+            for arg in exc.args:
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                    msg = arg.value.lower()
+                    if "kernel" in msg and "triton and kernels" not in msg:
+                        has_kernels_error = True
+                        break
+
+if has_kernels_warning and has_kernels_error:
+    print("PASS: kernels-specific warning and error messages found")
+    sys.exit(0)
+elif has_kernels_warning or has_kernels_error:
+    print("PARTIAL: only kernels warning or error found (need both)")
+    sys.exit(1)
+else:
+    print("FAIL: no kernels-specific messages found")
+    sys.exit(1)
+PYEOF
+)
+echo "$T3"
+if echo "$T3" | grep -q "^PASS"; then
+    SCORE=$(python3 -c "print($SCORE + $W_F2P_KERNELS_MSG)")
+fi
+
+# ── TEST 4: Messages are separated, not combined ─────────────────────────
+echo ""
+echo "TEST 4: F2P — no combined 'triton and kernels' messages (weight=$W_F2P_SPECIFIC_MSG)"
+T4=$(python3 << 'PYEOF'
+import ast
+import sys
+
+with open("/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py") as f:
+    source = f.read()
+
+tree = ast.parse(source)
+
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and "Mxfp4" in node.name:
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == "validate_environment":
+                func_node = item
+                break
+
+if not func_node:
+    print("FAIL: validate_environment not found")
+    sys.exit(1)
+
+# Check all string literals in the function
+has_combined_message = False
+for node in ast.walk(func_node):
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        msg = node.value.lower()
+        if "triton and kernels" in msg or ("triton" in msg and "kernels" in msg and "requires" in msg):
+            has_combined_message = True
+            break
+
+if has_combined_message:
+    print("FAIL: still has combined 'triton and kernels' message")
+    sys.exit(1)
+else:
+    print("PASS: no combined messages found")
+    sys.exit(0)
+PYEOF
+)
+echo "$T4"
+if echo "$T4" | grep -q "^PASS"; then
+    SCORE=$(python3 -c "print($SCORE + $W_F2P_SPECIFIC_MSG)")
+fi
+
+# ── TEST 5: Pass-to-pass — structure preserved ───────────────────────────
+echo ""
+echo "TEST 5: P2P — validate_environment structure preserved (weight=$W_P2P)"
+T5=$(python3 << 'PYEOF'
+import ast
+import sys
+
+with open("/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py") as f:
+    source = f.read()
+
+tree = ast.parse(source)
+
+# Check class exists
+class_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "Mxfp4HfQuantizer":
+        class_node = node
+        break
+
+if not class_node:
+    print("FAIL: Mxfp4HfQuantizer class not found")
+    sys.exit(1)
+
+# Check method exists
+methods = [m.name for m in class_node.body if isinstance(m, ast.FunctionDef)]
+if "validate_environment" not in methods:
+    print("FAIL: validate_environment method missing")
+    sys.exit(1)
+
+# Check essential references are still present
+required = ["is_triton_available", "is_kernels_available", "pre_quantized", "dequantize"]
 missing = [r for r in required if r not in source]
 if missing:
-    print(f"FAIL: missing expected content: {missing}")
+    print(f"FAIL: missing essential references: {missing}")
     sys.exit(1)
 
+print("PASS: validate_environment structure intact")
+sys.exit(0)
+PYEOF
+)
+echo "$T5"
+if echo "$T5" | grep -q "^PASS"; then
+    SCORE=$(python3 -c "print($SCORE + $W_P2P)")
+fi
+
+# ── TEST 6: Anti-stub ────────────────────────────────────────────────────
+echo ""
+echo "TEST 6: Anti-stub — meaningful implementation (weight=$W_ANTISTUB)"
+T6=$(python3 << 'PYEOF'
+import ast
+import sys
+
+with open("/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py") as f:
+    source = f.read()
+
+tree = ast.parse(source)
+
+# Find class
+class_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "Mxfp4HfQuantizer":
+        class_node = node
+        break
+
+if not class_node:
+    print("FAIL: Mxfp4HfQuantizer class not found")
+    sys.exit(1)
+
+func_node = None
+for item in class_node.body:
+    if isinstance(item, ast.FunctionDef) and item.name == "validate_environment":
+        func_node = item
+        break
+
+if not func_node:
+    print("FAIL: validate_environment not found")
+    sys.exit(1)
+
+# Count actual AST nodes in the function (more granular than statement count)
+node_count = len(list(ast.walk(func_node)))
+
+# Original function has ~200+ AST nodes; stubs have <50
+if node_count < 100:
+    print(f"FAIL: only ~{node_count} AST nodes — looks stubbed")
+    sys.exit(1)
+
+# Check for platform-specific logic (XPU, CUDA, CPU branches)
+has_device_logic = False
+devices_found = set()
+for node in ast.walk(func_node):
+    if isinstance(node, ast.Attribute):
+        if node.attr in ["xpu", "cuda", "is_available", "get_device_capability"]:
+            devices_found.add(node.attr)
+
+if len(devices_found) >= 2:
+    has_device_logic = True
+
+if not has_device_logic:
+    print(f"FAIL: missing device platform logic (found: {devices_found})")
+    sys.exit(1)
+
+# Check the method has the pre_quantized branching logic
+has_preq_branch = False
+for node in ast.walk(func_node):
+    if isinstance(node, ast.Attribute) and node.attr == "pre_quantized":
+        has_preq_branch = True
+        break
+
+if not has_preq_branch:
+    print("FAIL: missing pre_quantized branching")
+    sys.exit(1)
+
+# File size check
 line_count = len(source.splitlines())
 if line_count < 80:
-    print(f"FAIL: file has only {line_count} lines — looks like a stub")
+    print(f"FAIL: file too small ({line_count} lines)")
     sys.exit(1)
 
-print(f"PASS: file has {line_count} lines and contains all expected symbols")
+print(f"PASS: substantial implementation ({node_count} AST nodes, platforms: {devices_found}, {line_count} lines)")
 sys.exit(0)
+PYEOF
+)
+echo "$T6"
+if echo "$T6" | grep -q "^PASS"; then
+    SCORE=$(python3 -c "print($SCORE + $W_ANTISTUB)")
+fi
+
+# ── TEST 7: Config — follows quantizer_higgs pattern ───────────────────────
+echo ""
+echo "TEST 7: CONFIG — follows quantizer_higgs pattern (weight=$W_CONFIG)"
+T7=$(python3 << 'PYEOF'
+import ast
+import sys
+
+with open("/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py") as f:
+    source = f.read()
+
+tree = ast.parse(source)
+
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and "Mxfp4" in node.name:
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == "validate_environment":
+                func_node = item
+                break
+
+if not func_node:
+    print("FAIL: validate_environment not found")
+    sys.exit(1)
+
+# Look for separate if-statements checking triton and kernels
+has_triton_check = False
+has_kernels_check = False
+
+for node in ast.walk(func_node):
+    if isinstance(node, ast.If):
+        # Convert condition to string representation
+        try:
+            if hasattr(ast, 'unparse'):
+                condition = ast.unparse(node.test).lower()
+            else:
+                condition = str(node.test).lower()
+
+            if 'triton' in condition:
+                has_triton_check = True
+            if 'kernel' in condition:
+                has_kernels_check = True
+        except:
+            pass
+
+# Also check for separate ValueError raises
+triton_raises = 0
+kernels_raises = 0
+for node in ast.walk(func_node):
+    if isinstance(node, ast.Raise):
+        exc = node.exc
+        if isinstance(exc, ast.Call) and isinstance(exc.func, ast.Name) and exc.func.id == "ValueError":
+            for arg in exc.args:
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                    msg = arg.value.lower()
+                    if "triton" in msg and "kernels" not in msg:
+                        triton_raises += 1
+                    if "kernel" in msg and "triton" not in msg:
+                        kernels_raises += 1
+
+if (has_triton_check and has_kernels_check) or (triton_raises >= 1 and kernels_raises >= 1):
+    print("PASS: separate checks for triton and kernels (matches quantizer_higgs.py pattern)")
+    sys.exit(0)
+else:
+    print(f"PARTIAL: triton_check={has_triton_check}, kernels_check={has_kernels_check}")
+    sys.exit(1)
 PYEOF
 )
 echo "$T7"
 if echo "$T7" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_ANTISTUB)")
-fi
-
-
-# -- CONFIG-DERIVED: ruff format check on changed files (weight=$W_CONFIG_RUFF) --
-# Config-derived test (0.05): "Changed files pass ruff format"
-# Source: CLAUDE.md lines 5-10 @ commit a8732d5546d84bfb4519b6dbf461c947a5de45f6
-echo ""
-echo "CONFIG: ruff format check (weight=$W_CONFIG_RUFF)"
-T_RUFF=$(python3 << 'PYRUFF'
-import subprocess, sys
-files = ['/workspace/transformers/src/transformers/quantizers/quantizer_mxfp4.py']
-all_ok = True
-for f in files:
-    result = subprocess.run(["ruff", "check", "--select", "I", f], capture_output=True, text=True)
-    if result.returncode != 0:
-        all_ok = False
-        print(f"FAIL: ruff check failed on {f}")
-if all_ok:
-    print("PASS: all changed files pass ruff import sort check")
-    sys.exit(0)
-else:
-    sys.exit(1)
-PYRUFF
-)
-echo "$T_RUFF"
-if echo "$T_RUFF" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_CONFIG_RUFF)")
+    SCORE=$(python3 -c "print($SCORE + $W_CONFIG)")
 fi
 
 # ── Final score ──────────────────────────────────────────────────────────

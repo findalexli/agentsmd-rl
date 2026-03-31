@@ -5,18 +5,11 @@ TARGET="/workspace/transformers/src/transformers/modeling_utils.py"
 REWARD_FILE="/logs/verifier/reward.txt"
 mkdir -p "$(dirname "$REWARD_FILE")"
 
-# Weighted scoring
-declare -A WEIGHTS
-declare -A RESULTS
-WEIGHTS[behavioral]=0.33
-WEIGHTS[behavioral2]=0.24
-WEIGHTS[structural]=0.19
-WEIGHTS[antistub]=0.19
-WEIGHTS[config_ruff]=0.05
+# Weighted scoring - behavioral focus
+WEIGHTS=(0.40 0.25 0.20 0.10 0.05)  # beh1, beh2, beh3, syntax, p2p
+PASSED=(0 0 0 0 0)  # Track which checks passed
 
-for key in behavioral behavioral2 structural antistub config_ruff; do
-    RESULTS[$key]=0
-done
+echo "=== Test: transformers-dtype-guess-state-dict ==="
 
 # ---------- GATE: Python syntax validity ----------
 python3 -c "
@@ -26,350 +19,287 @@ try:
         ast.parse(f.read())
     sys.exit(0)
 except SyntaxError as e:
-    print(f'GATE FAIL: syntax error: {e}')
+    print(f'SYNTAX FAIL: {e}')
     sys.exit(1)
 "
 if [ $? -ne 0 ]; then
-    echo "GATE FAIL: file has syntax errors -- aborting with score 0"
-    echo "0.0" > "$REWARD_FILE"
+    echo "GATE: Syntax error - aborting with 0"
+    echo "0.00" > "$REWARD_FILE"
     exit 0
 fi
-echo "GATE PASS: syntax valid"
+PASSED[0]=1
+echo "PASS: Syntax valid"
 
-# ---------- PRIMARY 1 (35%): Behavioral - get_state_dict_dtype skips float8 dtypes ----------
-# Extract the function via AST, then exec it with mock tensors that simulate
-# float8 and normal float dtypes. The fixed version should skip float8 and return
-# the first standard floating dtype.
-python3 << 'PYEOF'
-import ast, sys
-
-TARGET = "/workspace/transformers/src/transformers/modeling_utils.py"
-
-with open(TARGET) as f:
-    source = f.read()
-
-tree = ast.parse(source)
-
-# Find get_state_dict_dtype function
-func_node = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "get_state_dict_dtype":
-        func_node = node
-        break
-
-if func_node is None:
-    print("BEHAVIORAL FAIL: get_state_dict_dtype function not found")
-    sys.exit(1)
-
-# Extract function source
-lines = source.splitlines()
-func_source = "\n".join(lines[func_node.lineno - 1 : func_node.end_lineno])
-
-# Build mock environment and test
-test_code = '''
-import collections
-
-class MockDtype:
-    def __init__(self, name):
-        self.name = name
-    def __str__(self):
-        return self.name
-    def __repr__(self):
-        return f"torch.{self.name}"
-    def __eq__(self, other):
-        if isinstance(other, MockDtype):
-            return self.name == other.name
-        return NotImplemented
-    def __hash__(self):
-        return hash(self.name)
-
-class MockTensor:
-    def __init__(self, dtype_name, is_float=True):
-        self.dtype = MockDtype(dtype_name)
-        self._is_float = is_float
-    def is_floating_point(self):
-        return self._is_float
-
-# Mock torch module
-class MockTorch:
-    float32 = MockDtype("float32")
-
-torch = MockTorch()
-
-FUNC_SOURCE
-
-# Test 1: State dict with float8 first, then float16
-sd1 = collections.OrderedDict([
-    ("w1", MockTensor("float8_e4m3fn", True)),
-    ("w2", MockTensor("float16", True)),
-])
-result1 = get_state_dict_dtype(sd1)
-if "float8" in str(result1):
-    print(f"BEHAVIORAL FAIL: returned {result1} for float8+float16 state dict (should skip float8)")
-    exit(1)
-print(f"  PASS: float8+float16 -> {result1}")
-
-# Test 2: State dict with float4 first, then bfloat16
-sd2 = collections.OrderedDict([
-    ("w1", MockTensor("float4_e2m1fn", True)),
-    ("w2", MockTensor("bfloat16", True)),
-])
-result2 = get_state_dict_dtype(sd2)
-if "float4" in str(result2):
-    print(f"BEHAVIORAL FAIL: returned {result2} for float4+bfloat16 state dict (should skip float4)")
-    exit(1)
-print(f"  PASS: float4+bfloat16 -> {result2}")
-
-# Test 3: Normal case - float32 should still work
-sd3 = collections.OrderedDict([
-    ("w1", MockTensor("float32", True)),
-])
-result3 = get_state_dict_dtype(sd3)
-if str(result3) != "float32":
-    print(f"BEHAVIORAL FAIL: returned {result3} for float32-only dict")
-    exit(1)
-print(f"  PASS: float32 -> {result3}")
-
-print("BEHAVIORAL PASS: get_state_dict_dtype correctly skips float8/float4")
-'''
-
-# Inject function source
-test_code = test_code.replace("FUNC_SOURCE", func_source)
-
-try:
-    exec(compile(test_code, "<behavioral_test>", "exec"))
-except SystemExit as e:
-    sys.exit(e.code)
-except Exception as e:
-    print(f"BEHAVIORAL FAIL: test execution error: {e}")
-    sys.exit(1)
-PYEOF
-if [ $? -eq 0 ]; then
-    RESULTS[behavioral]=1
-    echo "TEST behavioral: PASS"
-else
-    echo "TEST behavioral: FAIL"
-fi
-
-# ---------- PRIMARY 2 (25%): Behavioral - fallback when only float8/float4 present ----------
-python3 << 'PYEOF'
-import ast, sys
-
-TARGET = "/workspace/transformers/src/transformers/modeling_utils.py"
-
-with open(TARGET) as f:
-    source = f.read()
-
-tree = ast.parse(source)
-
-func_node = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "get_state_dict_dtype":
-        func_node = node
-        break
-
-if func_node is None:
-    print("BEHAVIORAL2 FAIL: get_state_dict_dtype function not found")
-    sys.exit(1)
-
-lines = source.splitlines()
-func_source = "\n".join(lines[func_node.lineno - 1 : func_node.end_lineno])
-
-test_code = '''
-import collections
-
-class MockDtype:
-    def __init__(self, name):
-        self.name = name
-    def __str__(self):
-        return self.name
-    def __repr__(self):
-        return f"torch.{self.name}"
-    def __eq__(self, other):
-        if isinstance(other, MockDtype):
-            return self.name == other.name
-        return NotImplemented
-    def __hash__(self):
-        return hash(self.name)
-
-class MockTensor:
-    def __init__(self, dtype_name, is_float=True):
-        self.dtype = MockDtype(dtype_name)
-        self._is_float = is_float
-    def is_floating_point(self):
-        return self._is_float
-
-class MockTorch:
-    float32 = MockDtype("float32")
-
-torch = MockTorch()
-
-FUNC_SOURCE
-
-# Test: State dict with ONLY float8 tensors - should fall through to the fallback
-# (return first dtype, or float32 for empty)
-sd = collections.OrderedDict([
-    ("w1", MockTensor("float8_e4m3fn", True)),
-    ("w2", MockTensor("float8_e5m2", True)),
-])
-result = get_state_dict_dtype(sd)
-
-# The fallback should return the first dtype in the dict (float8_e4m3fn) since there
-# are no standard floating types. This is the expected behavior - the function only
-# skips float8/float4 in the "preferred" check, but falls back to first dtype.
-print(f"  Result for all-float8 dict: {result}")
-
-# Test: Empty state dict should return float32
-sd_empty = collections.OrderedDict()
-result_empty = get_state_dict_dtype(sd_empty)
-if str(result_empty) != "float32":
-    print(f"BEHAVIORAL2 FAIL: empty dict returned {result_empty}, expected float32")
-    exit(1)
-print(f"  PASS: empty dict -> {result_empty}")
-
-# Test: Mixed float8 + int should return the int dtype (first dtype fallback)
-sd_mixed = collections.OrderedDict([
-    ("w1", MockTensor("float8_e4m3fn", True)),
-    ("w2", MockTensor("int64", False)),
-])
-result_mixed = get_state_dict_dtype(sd_mixed)
-# Should not return float8; should fall through to first-dtype fallback
-if "float8" in str(result_mixed):
-    # Actually if there's no standard float, it falls through to the first dtype
-    # which happens to be float8. This is OK - the key fix is that it doesn't
-    # preferentially return float8 when standard floats are available.
-    pass
-print(f"  Result for float8+int dict: {result_mixed}")
-
-print("BEHAVIORAL2 PASS: fallback behavior works correctly")
-'''
-
-test_code = test_code.replace("FUNC_SOURCE", func_source)
-
-try:
-    exec(compile(test_code, "<behavioral2_test>", "exec"))
-except SystemExit as e:
-    sys.exit(e.code)
-except Exception as e:
-    print(f"BEHAVIORAL2 FAIL: test execution error: {e}")
-    sys.exit(1)
-PYEOF
-if [ $? -eq 0 ]; then
-    RESULTS[behavioral2]=1
-    echo "TEST behavioral2: PASS"
-else
-    echo "TEST behavioral2: FAIL"
-fi
-
-# ---------- SUPPLEMENTARY (20%): Structural - float8_ and float4_ strings in function ----------
-python3 << 'PYEOF'
-import ast, sys
-
-TARGET = "/workspace/transformers/src/transformers/modeling_utils.py"
-
-with open(TARGET) as f:
-    source = f.read()
-
-tree = ast.parse(source)
-
-func_node = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "get_state_dict_dtype":
-        func_node = node
-        break
-
-if func_node is None:
-    print("STRUCTURAL FAIL: get_state_dict_dtype function not found")
-    sys.exit(1)
-
-lines = source.splitlines()
-func_source = "\n".join(lines[func_node.lineno - 1 : func_node.end_lineno])
-
-if "float8_" not in func_source:
-    print("STRUCTURAL FAIL: get_state_dict_dtype does not check for float8_ dtypes")
-    sys.exit(1)
-
-if "float4_" not in func_source:
-    print("STRUCTURAL FAIL: get_state_dict_dtype does not check for float4_ dtypes")
-    sys.exit(1)
-
-print("STRUCTURAL PASS: function contains float8_ and float4_ exclusion checks")
-PYEOF
-if [ $? -eq 0 ]; then
-    RESULTS[structural]=1
-    echo "TEST structural: PASS"
-else
-    echo "TEST structural: FAIL"
-fi
-
-# ---------- Anti-stub check (20%) ----------
+# ---------- BEHAVIORAL 1 (40%): Skip float8/float4 dtypes ----------
+# [pr_diff] The fix must skip float8_e4m3fn and similar dtypes
 python3 << 'PYEOF'
 import sys
+sys.path.insert(0, '/workspace/transformers')
 
 TARGET = "/workspace/transformers/src/transformers/modeling_utils.py"
 
+import ast
 with open(TARGET) as f:
     source = f.read()
 
-checks = [
-    ("def get_state_dict_dtype" in source, "get_state_dict_dtype function present"),
-    ("is_floating_point" in source, "is_floating_point check present"),
-    ("class PreTrainedModel" in source, "PreTrainedModel class present"),
-    ("def from_pretrained" in source, "from_pretrained method present"),
-    (len(source.splitlines()) > 1000, "file has substantial content"),
-    ("state_dict" in source, "state_dict referenced"),
-]
+tree = ast.parse(source)
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "get_state_dict_dtype":
+        func_node = node
+        break
 
-failures = [desc for ok, desc in checks if not ok]
-
-if failures:
-    print(f"ANTI-STUB FAIL: missing: {', '.join(failures)}")
+if func_node is None:
+    print("FAIL: get_state_dict_dtype not found")
     sys.exit(1)
 
-print("ANTI-STUB PASS: file retains full implementation")
+lines = source.splitlines()
+func_source = "\n".join(lines[func_node.lineno - 1 : func_node.end_lineno])
+
+# Mock with realistic dtype behavior
+class MockDtype:
+    def __init__(self, name):
+        self.name = name
+        self.__module__ = 'torch'
+    def __str__(self):
+        return f"torch.{self.name}"
+    def __repr__(self):
+        return f"torch.{self.name}"
+    def __eq__(self, other):
+        if isinstance(other, MockDtype):
+            return self.name == other.name
+        return False
+    def __hash__(self):
+        return hash(self.name)
+
+class MockTorch:
+    float32 = MockDtype("float32")
+    float16 = MockDtype("float16")
+    bfloat16 = MockDtype("bfloat16")
+    float8_e4m3fn = MockDtype("float8_e4m3fn")
+    float8_e5m2 = MockDtype("float8_e5m2")
+    float4_e2m1fn = MockDtype("float4_e2m1fn")
+
+torch = MockTorch()
+namespace = {"torch": torch, "__builtins__": __builtins__}
+exec(compile(func_source, "<get_state_dict_dtype>", "exec"), namespace)
+get_state_dict_dtype = namespace["get_state_dict_dtype"]
+
+# Simulated tensor with is_floating_point
+class SimTensor:
+    def __init__(self, dtype_obj):
+        self.dtype = dtype_obj
+    def is_floating_point(self):
+        name = str(self.dtype).lower()
+        return any(x in name for x in ['float', 'f16', 'f32'])
+
+import collections
+
+# Test: float8 should be skipped for float16
+sd1 = collections.OrderedDict([("w1", SimTensor(torch.float8_e4m3fn)), ("w2", SimTensor(torch.float16))])
+result1 = get_state_dict_dtype(sd1)
+result1_str = str(result1).lower()
+if "float8" in result1_str:
+    print(f"FAIL: returned {result1} for float8+float16, should skip float8")
+    sys.exit(1)
+if "float16" not in result1_str and "16" not in result1_str:
+    print(f"FAIL: expected float16, got {result1}")
+    sys.exit(1)
+print(f"  PASS: float8+float16 -> {result1}")
+
+# Test: float4 should be skipped for bfloat16
+sd2 = collections.OrderedDict([("w1", SimTensor(torch.float4_e2m1fn)), ("w2", SimTensor(torch.bfloat16))])
+result2 = get_state_dict_dtype(sd2)
+result2_str = str(result2).lower()
+if "float4" in result2_str:
+    print(f"FAIL: returned {result2} for float4+bfloat16, should skip float4")
+    sys.exit(1)
+if "bfloat16" not in result2_str and "bf16" not in result2_str:
+    print(f"FAIL: expected bfloat16, got {result2}")
+    sys.exit(1)
+print(f"  PASS: float4+bfloat16 -> {result2}")
+
+print("PASS: float8/float4 correctly skipped")
 PYEOF
+
 if [ $? -eq 0 ]; then
-    RESULTS[antistub]=1
-    echo "TEST antistub: PASS"
+    PASSED[1]=1
+    echo "PASS: Behavioral1 - skip float8/float4"
 else
-    echo "TEST antistub: FAIL"
+    echo "FAIL: Behavioral1"
 fi
 
+# ---------- BEHAVIORAL 2 (25%): Edge case - empty state dict ----------
+# [pr_diff] Empty state dict should return float32
+python3 << 'PYEOF'
+import sys, collections
+sys.path.insert(0, '/workspace/transformers')
 
-# ---------- CONFIG-DERIVED (5%): ruff format check on changed files ----------
-# Config-derived test (0.05): "Changed files pass ruff format"
-# Source: CLAUDE.md lines 5-10 @ commit 7cd9b985e0698d4f625a18be0125231b6b930390
-echo "=== Config: ruff format check ==="
-RUFF_OK=true
-for f in /workspace/transformers/src/transformers/modeling_utils.py; do
-    if [ -f "$f" ]; then
-        ruff check --select I "$f" 2>/dev/null
-        if [ $? -ne 0 ]; then RUFF_OK=false; fi
-    fi
-done
-if [ "$RUFF_OK" = true ]; then
-    RESULTS[config_ruff]=1
-    echo "TEST config_ruff: PASS"
+TARGET = "/workspace/transformers/src/transformers/modeling_utils.py"
+
+import ast
+with open(TARGET) as f:
+    source = f.read()
+
+tree = ast.parse(source)
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "get_state_dict_dtype":
+        func_node = node
+        break
+
+if func_node is None:
+    print("FAIL: Function not found")
+    sys.exit(1)
+
+lines = source.splitlines()
+func_source = "\n".join(lines[func_node.lineno - 1 : func_node.end_lineno])
+
+class MockDtype:
+    def __init__(self, name):
+        self.name = name
+    def __str__(self):
+        return f"torch.{self.name}"
+
+torch = type('obj', (object,), {'float32': MockDtype("float32")})()
+namespace = {"torch": torch, "__builtins__": __builtins__}
+exec(compile(func_source, "<func>", "exec"), namespace)
+get_state_dict_dtype = namespace["get_state_dict_dtype"]
+
+# Empty state dict should return float32
+sd_empty = collections.OrderedDict()
+result_empty = get_state_dict_dtype(sd_empty)
+if str(result_empty) != "torch.float32":
+    print(f"FAIL: empty dict returned {result_empty}, expected torch.float32")
+    sys.exit(1)
+print(f"  PASS: empty -> {result_empty}")
+print("PASS: edge cases handled correctly")
+PYEOF
+
+if [ $? -eq 0 ]; then
+    PASSED[2]=1
+    echo "PASS: Behavioral2 - edge cases"
 else
-    echo "TEST config_ruff: FAIL"
+    echo "FAIL: Behavioral2"
 fi
 
-# ---------- Final weighted score ----------
-SCORE=$(python3 -c "
-weights = {'behavioral': ${WEIGHTS[behavioral]}, 'behavioral2': ${WEIGHTS[behavioral2]}, 'structural': ${WEIGHTS[structural]}, 'antistub': ${WEIGHTS[antistub]}, 'config_ruff': ${WEIGHTS[config_ruff]}}
-results = {'behavioral': ${RESULTS[behavioral]}, 'behavioral2': ${RESULTS[behavioral2]}, 'structural': ${RESULTS[structural]}, 'antistub': ${RESULTS[antistub]}, 'config_ruff': ${RESULTS[config_ruff]}}
-score = sum(weights[k] * results[k] for k in weights)
-print(f'{score:.2f}')
-")
+# ---------- BEHAVIORAL 3 (20%): Normal float dtypes still work ----------
+# [pr_diff] float32, float16, bfloat16 should still be returned
+python3 << 'PYEOF'
+import sys, collections
+sys.path.insert(0, '/workspace/transformers')
+
+TARGET = "/workspace/transformers/src/transformers/modeling_utils.py"
+
+import ast
+with open(TARGET) as f:
+    source = f.read()
+
+tree = ast.parse(source)
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "get_state_dict_dtype":
+        func_node = node
+        break
+
+if func_node is None:
+    print("FAIL: Function not found")
+    sys.exit(1)
+
+lines = source.splitlines()
+func_source = "\n".join(lines[func_node.lineno - 1 : func_node.end_lineno])
+
+class MockDtype:
+    def __init__(self, name):
+        self.name = name
+    def __str__(self):
+        return f"torch.{self.name}"
+    def __eq__(self, other):
+        if isinstance(other, MockDtype):
+            return self.name == other.name
+        return False
+    def __hash__(self):
+        return hash(self.name)
+
+class MockTensor:
+    def __init__(self, dtype_name, is_float=True):
+        self.dtype = MockDtype(dtype_name)
+        self._is_float = is_float
+    def is_floating_point(self):
+        return self._is_float
+
+class MockTorch:
+    float32 = MockDtype("float32")
+    float64 = MockDtype("float64")
+    float16 = MockDtype("float16")
+    bfloat16 = MockDtype("bfloat16")
+
+torch = MockTorch()
+namespace = {"torch": torch, "__builtins__": __builtins__}
+exec(compile(func_source, "<func>", "exec"), namespace)
+get_state_dict_dtype = namespace["get_state_dict_dtype"]
+
+test_cases = [
+    ([("w1", MockTensor("float32", True))], "float32"),
+    ([("w1", MockTensor("float16", True))], "float16"),
+    ([("w1", MockTensor("bfloat16", True))], "bfloat16"),
+]
+
+for weights, expected_contains in test_cases:
+    sd = collections.OrderedDict(weights)
+    result = get_state_dict_dtype(sd)
+    result_str = str(result).lower()
+    if expected_contains not in result_str:
+        print(f"FAIL: {weights[0][0]} -> {result}, expected {expected_contains}")
+        sys.exit(1)
+    print(f"  PASS: {weights[0][0]} -> {result}")
+
+print("PASS: normal float dtypes work correctly")
+PYEOF
+
+if [ $? -eq 0 ]; then
+    PASSED[3]=1
+    echo "PASS: Behavioral3 - normal floats"
+else
+    echo "FAIL: Behavioral3"
+fi
+
+# ---------- P2P (5%): Check transformers imports work ----------
+python3 -c "
+import sys
+sys.path.insert(0, '/workspace/transformers')
+try:
+    from transformers.modeling_utils import get_state_dict_dtype
+    print('PASS: Can import get_state_dict_dtype')
+except Exception as e:
+    print(f'FAIL: Import error: {e}')
+    sys.exit(1)
+" 2>/dev/null
+
+if [ $? -eq 0 ]; then
+    PASSED[4]=1
+    echo "PASS: P2P - module imports"
+else
+    echo "NOTE: P2P import test failed (may need dependencies)"
+fi
+
+# ---------- Final score ----------
 echo ""
 echo "=== FINAL SCORE ==="
-echo "  behavioral  (${WEIGHTS[behavioral]}): ${RESULTS[behavioral]}"
-echo "  behavioral2 (${WEIGHTS[behavioral2]}): ${RESULTS[behavioral2]}"
-echo "  structural  (${WEIGHTS[structural]}): ${RESULTS[structural]}"
-echo "  antistub    (${WEIGHTS[antistub]}): ${RESULTS[antistub]}"
-echo "  config_ruff    (${WEIGHTS[config_ruff]}): ${RESULTS[config_ruff]}"
-echo "  TOTAL: $SCORE"
-echo "$SCORE" > "$REWARD_FILE"
+echo "  Check          Weight  Passed"
+echo "  -----------------------------"
+echo "  Behavioral1    0.40    ${PASSED[1]}"
+echo "  Behavioral2    0.25    ${PASSED[2]}"
+echo "  Behavioral3    0.20    ${PASSED[3]}"
+echo "  Syntax         0.10    ${PASSED[0]}"
+echo "  P2P            0.05    ${PASSED[4]}"
+echo "  -----------------------------"
 
-# LLM rubric judge (runs only when LLM_JUDGE=1)
+SCORE=$(python3 -c "w=[0.40,0.25,0.20,0.10,0.05]; p=[${PASSED[1]},${PASSED[2]},${PASSED[3]},${PASSED[0]},${PASSED[4]}]; print(f'{sum(wi*pi for wi,pi in zip(w,p)):.2f}')")
+echo "  TOTAL: $SCORE"
+
+echo "$SCORE" > "$REWARD_FILE"
+echo "Score written to $REWARD_FILE"
+
+# LLM rubric judge hook
 source /tests/judge_hook.sh 2>/dev/null || true

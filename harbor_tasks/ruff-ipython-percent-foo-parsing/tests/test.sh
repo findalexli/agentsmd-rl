@@ -1,269 +1,180 @@
 #!/usr/bin/env bash
 # Verifier for ruff-ipython-percent-foo-parsing
 # Bug: %foo? parsed incorrectly in IPython assignment context
-# File: crates/ruff_python_parser/src/lexer.rs
+# Fixed by: IpyEscapeLexContext enum distinguishing Assignment vs LogicalLineStart
 set +e
 
 REWARD_FILE="/logs/verifier/reward.txt"
 mkdir -p "$(dirname "$REWARD_FILE")"
 
+echo "=== ruff-ipython-percent-foo-parsing verifier ==="
+
 LEXER_FILE="/workspace/ruff/crates/ruff_python_parser/src/lexer.rs"
 TESTS_FILE="/workspace/ruff/crates/ruff_python_parser/src/parser/tests.rs"
 
-echo "=== ruff-ipython-percent-foo-parsing verifier ==="
+# Weights: >=60% behavioral, <=40% structural
+W_BEHAV_INT_TEST=0.35      # [pr_diff] Integration test for %foo? assignment
+W_BEHAV_SNAPSHOT=0.25      # [pr_diff] Snapshot test matches expected output
+W_P2P_ALL_TESTS=0.15       # [pr_diff] No regressions in lexer tests
+W_STRUCTURAL_ENUM=0.15     # [pr_diff] IpyEscapeLexContext enum exists
+W_ANTISTUB=0.10            # [agent_config] AGENTS.md:78 - avoid stub implementations
+
+cd /workspace/ruff
 
 # -- GATE: files exist --
-echo ""
-echo "GATE: Target files exist"
-if [ ! -f "$LEXER_FILE" ]; then
-    echo "GATE FAIL: lexer file missing"
+echo "GATE: Checking target files"
+if [ ! -f "$LEXER_FILE" ] || [ ! -f "$TESTS_FILE" ]; then
+    echo "GATE FAIL: required files missing"
     echo "0.0000" > "$REWARD_FILE"
     exit 0
 fi
 echo "GATE PASS"
 
-# Weights: >=60% behavioral, <=40% structural
-W_BEHAV_CONTEXT_ENUM=0.25
-W_BEHAV_ASSIGNMENT_CTX=0.20
-W_BEHAV_TEST_CASES=0.20
-W_STRUCTURAL_ALLOWS_HELP=0.15
-W_STRUCTURAL_QUESTION_PUSH=0.10
-W_ANTISTUB=0.05
-W_CONFIG_NO_PANIC=0.05
-
-SCORE="0.0"
-
-# -- TEST 1 (BEHAVIORAL): Context enum distinguishes assignment vs line-start --
+# -- GATE: code compiles --
 echo ""
-echo "TEST 1: behavioral -- lexer context distinguishes assignment from line start (weight=$W_BEHAV_CONTEXT_ENUM)"
-T1=$(python3 << 'PYEOF'
+echo "GATE: Checking compilation"
+cargo check -p ruff_python_parser 2>&1 | tail -20
+if [ $? -ne 0 ]; then
+    echo "GATE FAIL: code does not compile"
+    echo "0.0000" > "$REWARD_FILE"
+    exit 0
+fi
+echo "GATE PASS: compiles"
+
+SCORE=0.0
+BEHAV_PASSED=false
+
+# -- TEST 1 (BEHAVIORAL): ipython_escape_commands integration test --
+# [pr_diff] (0.35): Tests bar = %foo? and baz = !pwd? parse correctly
+echo ""
+echo "TEST 1: behavioral -- ipython_escape_commands integration (weight=$W_BEHAV_INT_TEST)"
+cargo test -p ruff_python_parser --lib parser::tests::ipython_escape_commands -- --nocapture 2>&1 | tail -20
+if [ $? -eq 0 ]; then
+    echo "PASS: integration test passes"
+    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_INT_TEST)")
+    BEHAV_PASSED=true
+else
+    echo "FAIL: integration test failed"
+fi
+
+# -- TEST 2 (BEHAVIORAL): Snapshot test for assignment --
+# [pr_diff] (0.25): Lexer snapshot matches expected tokenization
+echo ""
+echo "TEST 2: behavioral -- ipython_escape_command_assignment snapshot (weight=$W_BEHAV_SNAPSHOT)"
+cargo test -p ruff_python_parser --lib lexer::tests::ipython_escape_command_assignment -- --nocapture 2>&1 | tail -20
+if [ $? -eq 0 ]; then
+    echo "PASS: assignment snapshot test passes"
+    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_SNAPSHOT)")
+    BEHAV_PASSED=true
+else
+    echo "FAIL: assignment snapshot test failed"
+fi
+
+# -- TEST 3 (P2P): All lexer tests pass (regression check) --
+# [agent_config] (0.15): AGENTS.md:78 - check existing tests still pass
+echo ""
+echo "TEST 3: pass-to-pass -- lexer test suite (weight=$W_P2P_ALL_TESTS)"
+if [ "$BEHAV_PASSED" = true ]; then
+    cargo test -p ruff_python_parser --lib lexer::tests 2>&1 | tail -20
+    if [ $? -eq 0 ]; then
+        echo "PASS: all lexer tests pass"
+        SCORE=$(python3 -c "print($SCORE + $W_P2P_ALL_TESTS)")
+    else
+        echo "FAIL: some lexer tests failed (regression)"
+    fi
+else
+    echo "SKIPPED: Need at least one behavioral test to pass first"
+fi
+
+# -- TEST 4 (STRUCTURAL): IpyEscapeLexContext implementation --
+# [pr_diff] (0.15): IpyEscapeLexContext with Assignment and LogicalLineStart variants
+echo ""
+echo "TEST 4: structural -- IpyEscapeLexContext enum (weight=$W_STRUCTURAL_ENUM)"
+if [ "$BEHAV_PASSED" = true ]; then
+    python3 << 'PYEOF'
 import sys
-
 with open("/workspace/ruff/crates/ruff_python_parser/src/lexer.rs") as f:
-    source = f.read()
+    src = f.read()
 
-# The fix adds an enum like IpyEscapeLexContext with Assignment and LogicalLineStart variants
-has_context_enum = "IpyEscapeLexContext" in source or "IpyEscapeContext" in source
-has_assignment = "Assignment" in source
-has_line_start = "LogicalLineStart" in source or "LineStart" in source
+has_enum = "enum IpyEscapeLexContext" in src
+has_assignment = "IpyEscapeLexContext::Assignment" in src
+has_line_start = "IpyEscapeLexContext::LogicalLineStart" in src
+has_allows_help = "allows_help_end" in src
 
-if has_context_enum and has_assignment and has_line_start:
-    print("PASS: IpyEscapeLexContext enum with Assignment and LogicalLineStart variants")
+score = 0
+if has_enum: score += 0.25
+if has_assignment: score += 0.25
+if has_line_start: score += 0.25
+if has_allows_help: score += 0.25
+
+if score >= 0.75:
+    print(f"PASS: IpyEscapeLexContext fully implemented (score={score})")
     sys.exit(0)
-elif has_context_enum:
-    print("PASS: context enum exists (partial)")
-    sys.exit(0)
+elif score >= 0.5:
+    print(f"PARTIAL: partial implementation (score={score})")
+    sys.exit(2)
 else:
-    # Alternative: could use a bool parameter
-    has_bool_param = "context" in source and "lex_ipython_escape_command" in source
-    if has_bool_param:
-        print("PASS: lex_ipython_escape_command takes context parameter")
-        sys.exit(0)
-    print("FAIL: no context distinction for IPython escape command lexing")
+    print(f"FAIL: missing implementation elements (score={score})")
     sys.exit(1)
 PYEOF
-)
-echo "$T1"
-if echo "$T1" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_CONTEXT_ENUM)")
+    T4_EXIT=$?
+    if [ $T4_EXIT -eq 0 ]; then
+        SCORE=$(python3 -c "print($SCORE + $W_STRUCTURAL_ENUM)")
+    elif [ $T4_EXIT -eq 2 ]; then
+        SCORE=$(python3 -c "print($SCORE + $W_STRUCTURAL_ENUM * 0.5)")
+    fi
+else
+    echo "SKIPPED: Behavioral tests must pass first"
 fi
 
-# -- TEST 2 (BEHAVIORAL): Assignment context passed for post-equals escapes --
+# -- TEST 5: Anti-stub --
+# [agent_config] (0.10): AGENTS.md:78 - substantial implementation
 echo ""
-echo "TEST 2: behavioral -- Assignment context used after = sign (weight=$W_BEHAV_ASSIGNMENT_CTX)"
-T2=$(python3 << 'PYEOF'
-import re, sys
-
-with open("/workspace/ruff/crates/ruff_python_parser/src/lexer.rs") as f:
-    source = f.read()
-
-# The fix passes IpyEscapeLexContext::Assignment when lexing escape commands after =
-has_assignment_ctx = "Assignment" in source and "lex_ipython_escape_command" in source
-
-# The old code had a single call with just the kind; new code passes context too
-# Count the number of lex_ipython_escape_command calls
-calls = re.findall(r'lex_ipython_escape_command\s*\(', source)
-
-if has_assignment_ctx and len(calls) >= 2:
-    print(f"PASS: lex_ipython_escape_command called {len(calls)} times with context parameter")
-    sys.exit(0)
-elif has_assignment_ctx:
-    print("PASS: Assignment context used with lex_ipython_escape_command")
-    sys.exit(0)
-else:
-    print("FAIL: no Assignment context in escape command lexing")
-    sys.exit(1)
-PYEOF
-)
-echo "$T2"
-if echo "$T2" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_ASSIGNMENT_CTX)")
-fi
-
-# -- TEST 3 (BEHAVIORAL): Test cases added for %foo? and !pwd? assignments --
-echo ""
-echo "TEST 3: behavioral -- test cases for %foo? and !pwd? assignments (weight=$W_BEHAV_TEST_CASES)"
-T3=$(python3 << 'PYEOF'
+echo "TEST 5: anti-stub -- lexer implementation substance (weight=$W_ANTISTUB)"
+if [ "$BEHAV_PASSED" = true ]; then
+    python3 << 'PYEOF'
 import sys
-
-# Check parser tests or lexer tests for the new cases
-tests_found = False
-for path in [
-    "/workspace/ruff/crates/ruff_python_parser/src/parser/tests.rs",
-    "/workspace/ruff/crates/ruff_python_parser/src/lexer.rs",
-]:
-    try:
-        with open(path) as f:
-            source = f.read()
-        if "%foo?" in source or "!pwd?" in source:
-            tests_found = True
-            break
-    except FileNotFoundError:
-        continue
-
-if tests_found:
-    print("PASS: test cases include %foo? or !pwd? assignment patterns")
-    sys.exit(0)
-else:
-    print("FAIL: no test cases for %foo? or !pwd? assignment")
-    sys.exit(1)
-PYEOF
-)
-echo "$T3"
-if echo "$T3" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_TEST_CASES)")
-fi
-
-# -- TEST 4 (STRUCTURAL): allows_help_end method on context --
-echo ""
-echo "TEST 4: structural -- context has allows_help_end method (weight=$W_STRUCTURAL_ALLOWS_HELP)"
-T4=$(python3 << 'PYEOF'
-import sys
-
 with open("/workspace/ruff/crates/ruff_python_parser/src/lexer.rs") as f:
-    source = f.read()
+    src = f.read()
 
-has_allows_help = "allows_help_end" in source or "allow_help" in source
+# Count non-empty code lines
+lines = [l for l in src.splitlines() if l.strip() and not l.strip().startswith('//')]
+code_lines = len(lines)
 
-if has_allows_help:
-    print("PASS: allows_help_end method exists")
-    sys.exit(0)
+# Check for required lexer implementation elements
+required = [
+    "lex_ipython_escape_command",
+    "IpyEscapeKind",
+    "question_count",
+    "TokenKind::IpyEscapeCommand",
+]
+missing = [r for r in required if r not in src]
+
+if code_lines < 300 or missing:
+    print(f"FAIL: stub detected ({code_lines} lines, missing: {missing})")
+    sys.exit(1)
 else:
-    # Alternative: inline check
-    has_inline_check = "Assignment" in source and "Help" in source
-    if has_inline_check:
-        print("PASS: assignment context check for help tokens (inline)")
-        sys.exit(0)
-    print("FAIL: no allows_help_end or equivalent check")
-    sys.exit(1)
-PYEOF
-)
-echo "$T4"
-if echo "$T4" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_STRUCTURAL_ALLOWS_HELP)")
-fi
-
-# -- TEST 5 (STRUCTURAL): Question marks pushed into value for assignment context --
-echo ""
-echo "TEST 5: structural -- ? chars pushed into value in assignment context (weight=$W_STRUCTURAL_QUESTION_PUSH)"
-T5=$(python3 << 'PYEOF'
-import sys
-
-with open("/workspace/ruff/crates/ruff_python_parser/src/lexer.rs") as f:
-    source = f.read()
-
-# The fix should push '?' chars into the value string instead of treating as help end
-has_push_question = "value.push('?')" in source or "value.push_str" in source
-has_question_count = "question_count" in source
-
-if has_push_question and has_question_count:
-    print("PASS: ? characters pushed into value string using question_count")
+    print(f"PASS: {code_lines} code lines, all required symbols present")
     sys.exit(0)
-elif has_push_question:
-    print("PASS: ? characters pushed into value string")
-    sys.exit(0)
-else:
-    print("FAIL: no logic to push ? into command value")
-    sys.exit(1)
 PYEOF
-)
-echo "$T5"
-if echo "$T5" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_STRUCTURAL_QUESTION_PUSH)")
-fi
-
-# -- TEST 6: Anti-stub --
-echo ""
-echo "TEST 6: anti-stub -- lexer retains core logic (weight=$W_ANTISTUB)"
-T6=$(python3 << 'PYEOF'
-import sys
-
-with open("/workspace/ruff/crates/ruff_python_parser/src/lexer.rs") as f:
-    source = f.read()
-
-required = ["lex_ipython_escape_command", "IpyEscapeKind", "Magic", "Shell",
-            "question_count", "TokenKind"]
-missing = [r for r in required if r not in source]
-
-if missing:
-    print(f"FAIL: file is missing expected content: {missing}")
-    sys.exit(1)
-
-line_count = len(source.splitlines())
-if line_count < 500:
-    print(f"FAIL: file has only {line_count} lines -- looks like a stub")
-    sys.exit(1)
-
-print(f"PASS: file has {line_count} lines and contains all expected symbols")
-sys.exit(0)
-PYEOF
-)
-echo "$T6"
-if echo "$T6" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_ANTISTUB)")
-fi
-
-
-# ---------- Config-derived test (0.05): "Avoid panic!, unreachable!, .unwrap()" ----------
-# Source: AGENTS.md line 79 @ 9d2b16029a6a141b2d15e966a69faa4c2ec41572
-echo ""
-echo "TEST config_no_panic: config-derived -- avoid panic!/unwrap (weight=$W_CONFIG_NO_PANIC)"
-T_CONFIG=$(python3 << 'PYEOF'
-import sys, os
-os.chdir('/workspace/ruff')
-import subprocess
-result = subprocess.run(['git', 'diff', '--name-only', 'HEAD~1..HEAD'], capture_output=True, text=True)
-changed_rs = [f for f in result.stdout.strip().split('\n') if f.endswith('.rs')]
-if not changed_rs:
-    result2 = subprocess.run(['find', 'crates', '-name', '*.rs', '-newer', 'Cargo.toml'], capture_output=True, text=True)
-    changed_rs = [f for f in result2.stdout.strip().split('\n') if f]
-warns = 0
-for f in changed_rs[:20]:
-    try:
-        with open(f) as fh:
-            for i, line in enumerate(fh, 1):
-                s = line.strip()
-                if s.startswith('//'):
-                    continue
-                if ('panic!(' in s or '.unwrap()' in s) and 'test' not in f:
-                    warns += 1
-    except: pass
-if warns > 5:
-    print('FAIL: ' + str(warns) + ' uses of panic!/unwrap in changed files')
-    sys.exit(1)
-print('PASS')
-PYEOF
-)
-echo "$T_CONFIG"
-if echo "$T_CONFIG" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_CONFIG_NO_PANIC)")
+    if [ $? -eq 0 ]; then
+        SCORE=$(python3 -c "print($SCORE + $W_ANTISTUB)")
+    fi
+else
+    echo "SKIPPED: Behavioral tests must pass first"
 fi
 
 # -- Final score --
 echo ""
 echo "================================"
 REWARD=$(python3 -c "print('{:.4f}'.format(min($SCORE, 1.0)))")
-echo "Reward: $REWARD"
+echo "Final Reward: $REWARD"
+echo ""
+echo "Breakdown:"
+BEHAV_VAL=$(python3 -c "b = min($SCORE, $W_BEHAV_INT_TEST + $W_BEHAV_SNAPSHOT); print(f'{b:.2f}')")
+STRUCT_VAL=$(python3 -c "s = max(0, $SCORE - $W_BEHAV_INT_TEST - $W_BEHAV_SNAPSHOT); print(f'{s:.2f}')")
+echo "  - Behavioral (F2P): $BEHAV_VAL target: >=0.60"
+echo "  - Structural+P2P: $STRUCT_VAL target: <=0.40"
 echo "================================"
 echo "$REWARD" > "$REWARD_FILE"
 

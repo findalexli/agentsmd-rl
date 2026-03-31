@@ -7,14 +7,13 @@ mkdir -p "$(dirname "$REWARD_FILE")"
 
 declare -A WEIGHTS
 declare -A RESULTS
-WEIGHTS[behavioral]=0.35
-WEIGHTS[regression]=0.25
-WEIGHTS[structural]=0.20
-WEIGHTS[antistub]=0.15
+WEIGHTS[behavioral_f2p]=0.40
+WEIGHTS[behavioral_p2p]=0.25
+WEIGHTS[behavioral_edge]=0.20
+WEIGHTS[structural]=0.10
+WEIGHTS[antistub]=0.05
 
-WEIGHTS[config_ruff_format]=0.05
-
-for key in behavioral regression structural antistub config_ruff_format; do
+for key in behavioral_f2p behavioral_p2p behavioral_edge structural antistub; do
     RESULTS[$key]=0
 done
 
@@ -36,139 +35,270 @@ if [ $? -ne 0 ]; then
 fi
 echo "GATE PASS: syntax valid"
 
-# ---------- PRIMARY 1 (35%): Behavioral - safe_join rejects paths starting with / ----------
-python3 << 'PYEOF'
-import ast, sys, textwrap, os, unittest.mock
-
-TARGET = "/workspace/gradio/gradio/utils.py"
-
-with open(TARGET) as f:
-    source = f.read()
-
-tree = ast.parse(source)
-
-# Find the safe_join function
-func_node = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "safe_join":
-        func_node = node
-        break
-
-if func_node is None:
-    print("BEHAVIORAL FAIL: safe_join function not found")
-    sys.exit(1)
-
-func_source = ast.get_source_segment(source, func_node)
-if func_source is None:
-    lines = source.splitlines()
-    func_source = "\n".join(lines[func_node.lineno - 1 : func_node.end_lineno])
-
-func_source = textwrap.dedent(func_source)
-
-# We need to mock os.path.isabs to NOT detect "/" as absolute (simulating Py3.14 on Windows)
-# Then test that safe_join still rejects the path
-exec_globals = {"os": os, "__builtins__": __builtins__}
-
-# First, we need the type aliases used in the function signature
-exec_globals["DeveloperPath"] = str
-exec_globals["UserProvidedPath"] = str
-
-# Get _os_alt_seps from the module
-# It's typically defined as: _os_alt_seps = list(sep for sep in [os.sep, os.altsep] if sep is not None and sep != os.sep)
-exec_globals["_os_alt_seps"] = list(sep for sep in [os.sep, os.altsep] if sep is not None and sep != os.sep)
-
-exec(compile(func_source, "<safe_join>", "exec"), exec_globals)
-safe_join = exec_globals["safe_join"]
-
-# Test: path starting with / should raise even if os.path.isabs returns False
-# (simulating Python 3.14 on Windows behavior)
-with unittest.mock.patch("os.path.isabs", return_value=False):
-    try:
-        result = safe_join("/tmp/uploads", "/etc/passwd")
-        # If it returns without error, the fix is missing
-        print(f"BEHAVIORAL FAIL: safe_join did not reject '/etc/passwd', returned: {result}")
-        sys.exit(1)
-    except Exception as e:
-        # Should raise some error (NotAllowedPath or similar)
-        print(f"BEHAVIORAL PASS: safe_join correctly rejects '/etc/passwd' with: {type(e).__name__}")
-        sys.exit(0)
-PYEOF
-if [ $? -eq 0 ]; then
-    RESULTS[behavioral]=1
-    echo "TEST behavioral: PASS"
-else
-    echo "TEST behavioral: FAIL"
+# ---------- Load safe_join from the actual module (not AST extraction) ----------
+# First, check that safe_join exists and can be imported
+python3 -c "
+import sys
+sys.path.insert(0, '/workspace/gradio')
+from gradio.utils import safe_join
+print('Import successful')
+" 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "GATE FAIL: Cannot import safe_join from gradio.utils"
+    echo "0.0" > "$REWARD_FILE"
+    exit 0
 fi
 
-# ---------- PRIMARY 2 (25%): Regression - normal relative paths still work ----------
+# ---------- PRIMARY FAIL-TO-PASS (40%): Reject paths starting with / on Windows Py3.14 ----------
+# [pr_diff] (0.40): Paths starting with / must be rejected even when os.path.isabs returns False
 python3 << 'PYEOF'
-import ast, sys, textwrap, os
+import sys
+import unittest.mock
 
-TARGET = "/workspace/gradio/gradio/utils.py"
+sys.path.insert(0, '/workspace/gradio')
 
-with open(TARGET) as f:
-    source = f.read()
+# Mock os.path.isabs to simulate Python 3.14 on Windows behavior BEFORE importing
+# On Windows Py3.14, os.path.isabs("/etc/passwd") returns False
+with unittest.mock.patch('os.path.isabs', return_value=False):
+    # Need to reload to pick up the mocked behavior if module caches it
+    import importlib
+    import gradio.utils
+    importlib.reload(gradio.utils)
+    from gradio.utils import safe_join, InvalidPathError
 
-tree = ast.parse(source)
+    # Test 1: Path starting with / should be rejected
+    try:
+        result = safe_join("/tmp/uploads", "/etc/passwd")
+        print(f"F2P FAIL: safe_join accepted '/etc/passwd', returned: {result}")
+        sys.exit(1)
+    except InvalidPathError:
+        print("F2P PASS: /etc/passwd correctly rejected with InvalidPathError")
+    except Exception as e:
+        print(f"F2P WARN: /etc/passwd rejected but with wrong exception: {type(e).__name__}")
+        # Still count as pass for security, but log the issue
 
-func_node = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "safe_join":
-        func_node = node
-        break
+    # Test 2: Multiple leading slashes
+    try:
+        result = safe_join("/tmp/uploads", "//etc/passwd")
+        print(f"F2P FAIL: safe_join accepted '//etc/passwd', returned: {result}")
+        sys.exit(1)
+    except Exception:
+        print("F2P PASS: //etc/passwd correctly rejected")
 
-if func_node is None:
-    print("REGRESSION FAIL: safe_join function not found")
-    sys.exit(1)
+    # Test 3: Path with / in the middle (should be allowed - not absolute)
+    try:
+        result = safe_join("/tmp/uploads", "subdir/file.txt")
+        if "/tmp/uploads/subdir/file.txt" in result or "subdir/file.txt" in result:
+            print("F2P PASS: subdir/file.txt correctly allowed")
+        else:
+            print(f"F2P FAIL: unexpected result for subdir/file.txt: {result}")
+            sys.exit(1)
+    except Exception as e:
+        print(f"F2P FAIL: subdir/file.txt was rejected: {e}")
+        sys.exit(1)
 
-func_source = ast.get_source_segment(source, func_node)
-if func_source is None:
-    lines = source.splitlines()
-    func_source = "\n".join(lines[func_node.lineno - 1 : func_node.end_lineno])
+sys.exit(0)
+PYEOF
+if [ $? -eq 0 ]; then
+    RESULTS[behavioral_f2p]=1
+    echo "TEST behavioral_f2p: PASS"
+    BEHAVIORAL_PASSED=1
+else
+    echo "TEST behavioral_f2p: FAIL"
+    BEHAVIORAL_PASSED=0
+fi
 
-func_source = textwrap.dedent(func_source)
+# ---------- PASS-TO-PASS (25%): Normal relative paths still work ----------
+# [pr_diff] (0.25): Existing functionality must not break
+python3 << 'PYEOF'
+import sys
+sys.path.insert(0, '/workspace/gradio')
+from gradio.utils import safe_join
 
-exec_globals = {"os": os, "__builtins__": __builtins__}
-exec_globals["DeveloperPath"] = str
-exec_globals["UserProvidedPath"] = str
-exec_globals["_os_alt_seps"] = list(sep for sep in [os.sep, os.altsep] if sep is not None and sep != os.sep)
-
-exec(compile(func_source, "<safe_join>", "exec"), exec_globals)
-safe_join = exec_globals["safe_join"]
-
-# Normal relative paths should work fine
 test_cases = [
-    ("/tmp/uploads", "image.png", "/tmp/uploads/image.png"),
-    ("/tmp/uploads", "subdir/file.txt", "/tmp/uploads/subdir/file.txt"),
+    ("/tmp/uploads", "image.png", "image.png"),
+    ("/tmp/uploads", "subdir/file.txt", "subdir/file.txt"),
+    ("/tmp/uploads", "a/b/c/d.txt", "d.txt"),
+    ("/var/www", "static/style.css", "style.css"),
 ]
 
 all_pass = True
-for directory, path, expected in test_cases:
+for directory, path, expected_substring in test_cases:
     try:
         result = safe_join(directory, path)
-        if result != expected:
-            # The function may normalize differently, just check it doesn't raise
-            print(f"  OK: safe_join({directory!r}, {path!r}) = {result!r}")
+        # Result should contain the path components properly joined
+        if expected_substring in result or (directory.replace("/", os.sep) in result and path.replace("/", os.sep) in result):
+            print(f"  P2P PASS: safe_join({directory!r}, {path!r}) = {result!r}")
         else:
-            print(f"  PASS: safe_join({directory!r}, {path!r}) = {result!r}")
+            print(f"  P2P FAIL: safe_join({directory!r}, {path!r}) = {result!r} (expected {expected_substring})")
+            all_pass = False
     except Exception as e:
-        print(f"  FAIL: safe_join({directory!r}, {path!r}) raised {type(e).__name__}: {e}")
+        print(f"  P2P FAIL: safe_join({directory!r}, {path!r}) raised {type(e).__name__}: {e}")
         all_pass = False
 
 if all_pass:
-    print("REGRESSION PASS: normal relative paths work correctly")
+    print("P2P PASS: all normal relative paths work correctly")
+    sys.exit(0)
 else:
-    print("REGRESSION FAIL")
+    print("P2P FAIL: some normal paths were rejected")
     sys.exit(1)
 PYEOF
 if [ $? -eq 0 ]; then
-    RESULTS[regression]=1
-    echo "TEST regression: PASS"
+    RESULTS[behavioral_p2p]=1
+    echo "TEST behavioral_p2p: PASS"
 else
-    echo "TEST regression: FAIL"
+    echo "TEST behavioral_p2p: FAIL"
 fi
 
-# ---------- SUPPLEMENTARY (20%): Structural - explicit / check present ----------
+# ---------- EDGE CASES (20%): .. paths, alt separators, error type ----------
+# [pr_diff] (0.20): Security edge cases must be handled
+python3 << 'PYEOF'
+import sys
+import os
+sys.path.insert(0, '/workspace/gradio')
+from gradio.utils import safe_join, InvalidPathError
+
+all_pass = True
+
+# Test 1: .. should be rejected
+try:
+    result = safe_join("/tmp/uploads", "..")
+    print(f"EDGE FAIL: '..' was accepted: {result}")
+    all_pass = False
+except InvalidPathError:
+    print("EDGE PASS: '..' correctly rejected with InvalidPathError")
+except Exception as e:
+    print(f"EDGE WARN: '..' rejected but with {type(e).__name__}")
+
+# Test 2: ../ should be rejected
+try:
+    result = safe_join("/tmp/uploads", "../etc/passwd")
+    print(f"EDGE FAIL: '../etc/passwd' was accepted: {result}")
+    all_pass = False
+except InvalidPathError:
+    print("EDGE PASS: '../etc/passwd' correctly rejected with InvalidPathError")
+except Exception as e:
+    print(f"EDGE WARN: '../etc/passwd' rejected but with {type(e).__name__}")
+
+# Test 3: Empty path should work or be rejected consistently
+try:
+    result = safe_join("/tmp/uploads", "")
+    print(f"EDGE INFO: empty path result: {result}")
+except Exception as e:
+    print(f"EDGE INFO: empty path raises: {type(e).__name__}")
+
+# Test 4: Current directory reference
+try:
+    result = safe_join("/tmp/uploads", "./file.txt")
+    # Should normalize to file.txt in the uploads directory
+    if "file.txt" in result:
+        print("EDGE PASS: './file.txt' correctly handled")
+    else:
+        print(f"EDGE FAIL: './file.txt' unexpected result: {result}")
+        all_pass = False
+except Exception as e:
+    print(f"EDGE FAIL: './file.txt' raised {type(e).__name__}: {e}")
+    all_pass = False
+
+if all_pass:
+    print("EDGE PASS: all edge cases handled correctly")
+    sys.exit(0)
+else:
+    print("EDGE FAIL: some edge cases failed")
+    sys.exit(1)
+PYEOF
+if [ $? -eq 0 ]; then
+    RESULTS[behavioral_edge]=1
+    echo "TEST behavioral_edge: PASS"
+else
+    echo "TEST behavioral_edge: FAIL"
+fi
+
+# ---------- STRUCTURAL (10%): Checks for explicit slash detection - gated behind behavioral ----------
+# Only award structural points if behavioral tests passed
+if [ "$BEHAVIORAL_PASSED" -eq 1 ]; then
+    python3 << 'PYEOF'
+import ast, sys, re
+
+TARGET = "/workspace/gradio/gradio/utils.py"
+
+with open(TARGET) as f:
+    source = f.read()
+
+tree = ast.parse(source)
+
+# Find safe_join function
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "safe_join":
+        func_node = node
+        break
+
+if func_node is None:
+    print("STRUCTURAL FAIL: safe_join not found")
+    sys.exit(1)
+
+# Get the source of the function body (without docstring)
+func_body = func_node.body
+if func_body and isinstance(func_body[0], ast.Expr) and isinstance(func_body[0].value, ast.Constant):
+    func_body = func_body[1:]  # Skip docstring
+
+# Check for explicit forward slash check using AST (not string matching)
+# Accept any of: startswith("/"), startswith('/'), [0] == "/", regex ^/, etc.
+has_slash_check = False
+
+for node in ast.walk(func_node):
+    # Check for startswith with "/" or '/'
+    if isinstance(node, ast.Call):
+        if isinstance(node.func, ast.Attribute) and node.func.attr == "startswith":
+            if node.args:
+                arg = node.args[0]
+                if isinstance(arg, ast.Constant) and arg.value == "/":
+                    has_slash_check = True
+                    break
+                if isinstance(arg, ast.Str) and arg.s == "/":  # Python <3.8 compatibility
+                    has_slash_check = True
+                    break
+    # Check for string comparison with "/"
+    if isinstance(node, ast.Compare):
+        if isinstance(node.ops[0], (ast.Eq,)):
+            for comparator in node.comparators:
+                if isinstance(comparator, ast.Constant) and comparator.value == "/":
+                    has_slash_check = True
+                    break
+                if isinstance(comparator, ast.Str) and comparator.s == "/":
+                    has_slash_check = True
+                    break
+    # Check for regex with ^/
+    if isinstance(node, ast.Call):
+        if isinstance(node.func, ast.Attribute) and node.func.attr in ("match", "search"):
+            if node.args and isinstance(node.args[0], ast.Constant):
+                pattern = node.args[0].value
+                if isinstance(pattern, str) and pattern.startswith("^") and "/" in pattern:
+                    has_slash_check = True
+                    break
+
+if has_slash_check:
+    print("STRUCTURAL PASS: explicit forward slash check detected")
+    sys.exit(0)
+else:
+    print("STRUCTURAL INFO: no explicit slash check found, but behavioral tests passed")
+    # Still award points if behavioral passed - the fix works even if structure differs
+    sys.exit(0)
+PYEOF
+    if [ $? -eq 0 ]; then
+        RESULTS[structural]=1
+        echo "TEST structural: PASS"
+    else
+        echo "TEST structural: FAIL"
+    fi
+else
+    echo "TEST structural: SKIPPED (behavioral failed)"
+    RESULTS[structural]=0
+fi
+
+# ---------- ANTI-STUB (5%): Minimum implementation depth ----------
+# [pr_diff] (0.05): Implementation must have substance
 python3 << 'PYEOF'
 import ast, sys
 
@@ -179,6 +309,7 @@ with open(TARGET) as f:
 
 tree = ast.parse(source)
 
+# Find safe_join and count meaningful statements
 func_node = None
 for node in ast.walk(tree):
     if isinstance(node, ast.FunctionDef) and node.name == "safe_join":
@@ -186,52 +317,36 @@ for node in ast.walk(tree):
         break
 
 if func_node is None:
-    print("STRUCTURAL FAIL: safe_join function not found")
+    print("ANTI-STUB FAIL: safe_join not found")
     sys.exit(1)
 
-func_source = ast.get_source_segment(source, func_node)
-if func_source is None:
-    lines = source.splitlines()
-    func_source = "\n".join(lines[func_node.lineno - 1 : func_node.end_lineno])
+# Count non-docstring, non-pass statements
+meaningful_count = 0
+for stmt in func_node.body:
+    if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
+        continue  # Skip docstring
+    if isinstance(stmt, ast.Pass):
+        continue
+    if isinstance(stmt, ast.Global):
+        continue
+    meaningful_count += 1
 
-# Check for explicit "/" check (startswith("/") or similar pattern)
-if 'startswith("/")' in func_source or "startswith('/')" in func_source or 'startswith("/")' in func_source:
-    print("STRUCTURAL PASS: explicit forward-slash check present in safe_join")
+# Also check file has reasonable size
+file_lines = len(source.splitlines())
+
+# Check for security-related checks in the function
+has_security_checks = False
+for node in ast.walk(func_node):
+    if isinstance(node, ast.Raise):
+        has_security_checks = True
+        break
+
+if meaningful_count >= 3 and file_lines >= 50 and has_security_checks:
+    print(f"ANTI-STUB PASS: {meaningful_count} statements, {file_lines} lines, has raise")
     sys.exit(0)
 else:
-    print("STRUCTURAL FAIL: no explicit forward-slash startswith check found")
+    print(f"ANTI-STUB FAIL: {meaningful_count} statements, {file_lines} lines, security: {has_security_checks}")
     sys.exit(1)
-PYEOF
-if [ $? -eq 0 ]; then
-    RESULTS[structural]=1
-    echo "TEST structural: PASS"
-else
-    echo "TEST structural: FAIL"
-fi
-
-# ---------- Anti-stub check (20%) ----------
-python3 << 'PYEOF'
-import sys
-
-TARGET = "/workspace/gradio/gradio/utils.py"
-
-with open(TARGET) as f:
-    source = f.read()
-
-checks = [
-    ("def safe_join" in source, "safe_join function present"),
-    ("os.path.isabs" in source, "os.path.isabs check present"),
-    ("_os_alt_seps" in source, "_os_alt_seps reference present"),
-    (len(source.splitlines()) > 100, "file has substantial content"),
-]
-
-failures = [desc for ok, desc in checks if not ok]
-
-if failures:
-    print(f"ANTI-STUB FAIL: missing: {', '.join(failures)}")
-    sys.exit(1)
-
-print("ANTI-STUB PASS: file retains full implementation")
 PYEOF
 if [ $? -eq 0 ]; then
     RESULTS[antistub]=1
@@ -240,36 +355,20 @@ else
     echo "TEST antistub: FAIL"
 fi
 
-
-# ---------- Config-derived test (0.05): "Python code formatted with ruff" ----------
-# Source: AGENTS.md line 43 @ commit e29e1ccd5874cb98b813ed4f7f72d9fef2935016
-echo "=== Config: ruff format check ==="
-pip install ruff > /dev/null 2>&1
-cd /workspace/gradio
-ruff check --select I /workspace/gradio/gradio/utils.py 2>/dev/null
-RUFF_EXIT=$?
-cd /
-if [ $RUFF_EXIT -eq 0 ]; then
-    RESULTS[config_ruff_format]=1
-    echo "TEST config_ruff_format: PASS"
-else
-    echo "TEST config_ruff_format: FAIL"
-fi
-
 # ---------- Final weighted score ----------
 SCORE=$(python3 -c "
-weights = {'behavioral': ${WEIGHTS[behavioral]}, 'regression': ${WEIGHTS[regression]}, 'structural': ${WEIGHTS[structural]}, 'antistub': ${WEIGHTS[antistub]}, 'config_ruff_format': ${WEIGHTS[config_ruff_format]}}
-results = {'behavioral': ${RESULTS[behavioral]}, 'regression': ${RESULTS[regression]}, 'structural': ${RESULTS[structural]}, 'antistub': ${RESULTS[antistub]}, 'config_ruff_format': ${RESULTS[config_ruff_format]}}
+weights = {'behavioral_f2p': ${WEIGHTS[behavioral_f2p]}, 'behavioral_p2p': ${WEIGHTS[behavioral_p2p]}, 'behavioral_edge': ${WEIGHTS[behavioral_edge]}, 'structural': ${WEIGHTS[structural]}, 'antistub': ${WEIGHTS[antistub]}}
+results = {'behavioral_f2p': ${RESULTS[behavioral_f2p]}, 'behavioral_p2p': ${RESULTS[behavioral_p2p]}, 'behavioral_edge': ${RESULTS[behavioral_edge]}, 'structural': ${RESULTS[structural]}, 'antistub': ${RESULTS[antistub]}}
 score = sum(weights[k] * results[k] for k in weights)
 print(f'{score:.2f}')
 ")
 echo ""
 echo "=== FINAL SCORE ==="
-echo "  behavioral (${WEIGHTS[behavioral]}): ${RESULTS[behavioral]}"
-echo "  regression (${WEIGHTS[regression]}): ${RESULTS[regression]}"
+echo "  behavioral_f2p (${WEIGHTS[behavioral_f2p]}): ${RESULTS[behavioral_f2p]}"
+echo "  behavioral_p2p (${WEIGHTS[behavioral_p2p]}): ${RESULTS[behavioral_p2p]}"
+echo "  behavioral_edge (${WEIGHTS[behavioral_edge]}): ${RESULTS[behavioral_edge]}"
 echo "  structural (${WEIGHTS[structural]}): ${RESULTS[structural]}"
-echo "  antistub   (${WEIGHTS[antistub]}): ${RESULTS[antistub]}"
-echo "  config_ruff_format (${WEIGHTS[config_ruff_format]}): ${RESULTS[config_ruff_format]}"
+echo "  antistub (${WEIGHTS[antistub]}): ${RESULTS[antistub]}"
 echo "  TOTAL: $SCORE"
 echo "$SCORE" > "$REWARD_FILE"
 

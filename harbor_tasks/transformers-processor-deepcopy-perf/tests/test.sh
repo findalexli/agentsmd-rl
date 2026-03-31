@@ -33,321 +33,375 @@ if [ $? -ne 0 ]; then
 fi
 echo "GATE PASS"
 
+# ── GATE: ProcessorMixin.to_dict can be imported ─────────────────────────
+echo ""
+echo "GATE: ProcessorMixin.to_dict can be imported"
+python3 << 'PYEOF'
+import sys
+sys.path.insert(0, '/workspace/transformers')
+try:
+    from transformers.processing_utils import ProcessorMixin
+    assert hasattr(ProcessorMixin, 'to_dict'), "ProcessorMixin missing to_dict method"
+    print("  OK: ProcessorMixin.to_dict imported successfully")
+    sys.exit(0)
+except Exception as e:
+    print(f"  FAIL: Import error: {e}")
+    sys.exit(1)
+PYEOF
+if [ $? -ne 0 ]; then
+    echo "GATE FAIL: cannot import to_dict — aborting with score 0"
+    echo "0.0000" > "$REWARD_FILE"
+    exit 0
+fi
+echo "GATE PASS"
+
 # Weights
-W_BEHAV_NO_DEEPCOPY_TOKENIZER=0.29
-W_BEHAV_TOKENIZER_EXCLUDED=0.24
-W_BEHAV_OUTPUT_CORRECT=0.14
-W_PASSTOPASS=0.14
-W_ANTISTUB=0.14
-W_CONFIG_RUFF=0.05
+W_BEHAV_SKIP_TOKENIZER_DEEPCOPY=0.35  # Primary fail-to-pass: tokenizer not deepcopied
+W_BEHAV_CORRECT_OUTPUT=0.25           # Correctness: output dict is correct
+W_P2P_STRUCTURE=0.15                  # P2P: method structure preserved
+W_P2P_FUNCTIONAL=0.15                 # P2P: functional tests still pass
+W_ANTISTUB=0.10                       # Anti-stub: real implementation
+
+echo ""
+echo "Weight distribution:"
+echo "  - F2P (skip tokenizer deepcopy): $W_BEHAV_SKIP_TOKENIZER_DEEPCOPY"
+echo "  - F2P (correct output): $W_BEHAV_CORRECT_OUTPUT"
+echo "  - P2P (structure): $W_P2P_STRUCTURE"
+echo "  - P2P (functional): $W_P2P_FUNCTIONAL"
+echo "  - Anti-stub: $W_ANTISTUB"
 
 SCORE="0.0"
 
-# ── TEST 1 (PRIMARY): behavioral — tokenizer not deepcopied ──
+# ── TEST 1 (PRIMARY FAIL-TO-PASS): Behavioral - tokenizer not deepcopied ──
+# [pr_diff] (0.35): Tokenizer attributes excluded before deepcopy
 echo ""
-echo "TEST 1: behavioral — tokenizer excluded before deepcopy (weight=$W_BEHAV_NO_DEEPCOPY_TOKENIZER)"
+echo "TEST 1: behavioral - tokenizer not deepcopied (weight=$W_BEHAV_SKIP_TOKENIZER_DEEPCOPY)"
 T1=$(python3 << 'PYEOF'
-import ast, sys, textwrap
+import sys
+import copy
 
-with open("/workspace/transformers/src/transformers/processing_utils.py") as f:
-    source = f.read()
+# Track all deepcopy calls
+deepcopy_calls = []
+original_deepcopy = copy.deepcopy
 
-tree = ast.parse(source)
+def tracking_deepcopy(obj, *args, **kwargs):
+    deepcopy_calls.append(type(obj).__name__)
+    return original_deepcopy(obj, *args, **kwargs)
 
-# Find ProcessorMixin class and its to_dict method
-to_dict_node = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and node.name == "ProcessorMixin":
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef) and item.name == "to_dict":
-                to_dict_node = item
-                break
-        break
+copy.deepcopy = tracking_deepcopy
 
-if to_dict_node is None:
-    print("FAIL: ProcessorMixin.to_dict not found")
+sys.path.insert(0, '/workspace/transformers')
+
+# Import after patching deepcopy
+from transformers.processing_utils import ProcessorMixin
+
+# Create mock objects to test to_dict behavior
+class MockTokenizer:
+    """Mock tokenizer that would be expensive to deepcopy"""
+    def __init__(self):
+        # Simulate large vocabulary
+        self.vocab = {f"token_{i}": i for i in range(10000)}
+        self.name_or_path = "mock/tokenizer"
+
+class MockImageProcessor:
+    """Mock image processor that should be preserved"""
+    def __init__(self):
+        self.size = {"height": 224, "width": 224}
+        self.name_or_path = "mock/image_processor"
+
+# Create a minimal ProcessorMixin instance
+class TestProcessor(ProcessorMixin):
+    attributes = ["tokenizer", "image_processor"]
+
+    @classmethod
+    def get_attributes(cls):
+        return cls.attributes
+
+    def __init__(self):
+        self.tokenizer = MockTokenizer()
+        self.image_processor = MockImageProcessor()
+        self.chat_template = None
+        self._processor_class = "TestProcessor"
+
+# Instantiate and call to_dict
+processor = TestProcessor()
+
+# Clear any deepcopy calls from initialization
+deepcopy_calls.clear()
+
+try:
+    result = processor.to_dict()
+except Exception as e:
+    print(f"FAIL: to_dict raised exception: {e}")
     sys.exit(1)
 
-lines = source.splitlines()
-func_lines = lines[to_dict_node.lineno - 1:to_dict_node.end_lineno]
-func_src = "\n".join(func_lines)
+# Check that no tokenizer was deepcopied
+tokenizer_copied = any("Tokenizer" in call or call == "MockTokenizer" for call in deepcopy_calls)
 
-# Check that deepcopy is NOT called on self.__dict__ directly
-# The buggy code has: output = copy.deepcopy(self.__dict__)
-# The fix should filter first, then deepcopy a filtered dict
-if "copy.deepcopy(self.__dict__)" in func_src:
-    print("FAIL: still deepcopying self.__dict__ directly (the bug)")
+if tokenizer_copied:
+    print(f"FAIL: tokenizer was deepcopied (calls: {deepcopy_calls})")
     sys.exit(1)
 
-# Verify deepcopy is still used (just not on the full __dict__)
-if "deepcopy" not in func_src:
-    print("FAIL: deepcopy removed entirely — still needed for non-tokenizer attrs")
+# Check that something WAS deepcopied (otherwise deepcopy was removed entirely)
+if not deepcopy_calls:
+    print("FAIL: deepcopy was not called at all - must still deepcopy non-tokenizer attrs")
     sys.exit(1)
 
-print("PASS: deepcopy no longer called on self.__dict__ directly")
+print(f"PASS: tokenizer not deepcopied (copied types: {deepcopy_calls})")
+print(f"  Output keys: {list(result.keys()) if isinstance(result, dict) else 'N/A'}")
 sys.exit(0)
 PYEOF
 )
 echo "$T1"
 if echo "$T1" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_NO_DEEPCOPY_TOKENIZER)")
+    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_SKIP_TOKENIZER_DEEPCOPY)")
 fi
 
-# ── TEST 2 (PRIMARY): behavioral — tokenizer attributes identified and excluded ──
+# ── TEST 2 (PRIMARY): Behavioral - correct output from to_dict ──
+# [pr_diff] (0.25): to_dict returns correct output structure
 echo ""
-echo "TEST 2: behavioral — tokenizer attributes excluded before deepcopy (weight=$W_BEHAV_TOKENIZER_EXCLUDED)"
+echo "TEST 2: behavioral - correct to_dict output (weight=$W_BEHAV_CORRECT_OUTPUT)"
 T2=$(python3 << 'PYEOF'
-import ast, sys
+import sys
+sys.path.insert(0, '/workspace/transformers')
 
+from transformers.processing_utils import ProcessorMixin
+
+class MockTokenizer:
+    def __init__(self):
+        self.vocab = {"hello": 1, "world": 2}
+        self.name_or_path = "mock/tokenizer"
+
+class MockImageProcessor:
+    def __init__(self):
+        self.size = {"height": 224, "width": 224}
+        self.name_or_path = "mock/image_processor"
+
+# Test processor
+class TestProcessor(ProcessorMixin):
+    attributes = ["tokenizer", "image_processor"]
+
+    @classmethod
+    def get_attributes(cls):
+        return cls.attributes
+
+    def __init__(self):
+        self.tokenizer = MockTokenizer()
+        self.image_processor = MockImageProcessor()
+        self.chat_template = "{{ messages }}"
+        self._processor_class = "TestProcessor"
+        self.auto_map = None
+
+processor = TestProcessor()
+
+try:
+    result = processor.to_dict()
+except Exception as e:
+    print(f"FAIL: to_dict raised exception: {e}")
+    sys.exit(1)
+
+# Verify output is a dict
+if not isinstance(result, dict):
+    print(f"FAIL: to_dict did not return a dict, got {type(result)}")
+    sys.exit(1)
+
+# Verify processor_class is set
+if "processor_class" not in result:
+    print("FAIL: processor_class not in output")
+    sys.exit(1)
+
+# Verify chat_template is NOT in output (should be deleted)
+if "chat_template" in result:
+    print("FAIL: chat_template should be excluded from output")
+    sys.exit(1)
+
+# Verify image_processor info is preserved (as it's not a tokenizer)
+# The image_processor may or may not be in output depending on attrs_to_save logic
+# but the key thing is tokenizer is NOT in output
+if "tokenizer" in result:
+    print("FAIL: tokenizer should not be in output dict")
+    sys.exit(1)
+
+print(f"PASS: to_dict returns correct structure")
+print(f"  Keys: {list(result.keys())}")
+sys.exit(0)
+PYEOF
+)
+echo "$T2"
+if echo "$T2" | grep -q "^PASS"; then
+    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_CORRECT_OUTPUT)")
+fi
+
+# ── TEST 3: Pass-to-pass - method structure preserved ──
+# [pr_diff] (0.15): to_dict method exists with proper signature
+echo ""
+echo "TEST 3: pass-to-pass - method structure (weight=$W_P2P_STRUCTURE)"
+T3=$(python3 << 'PYEOF'
+import sys
+import inspect
+sys.path.insert(0, '/workspace/transformers')
+
+from transformers.processing_utils import ProcessorMixin
+
+# Verify to_dict exists
+if not hasattr(ProcessorMixin, 'to_dict'):
+    print("FAIL: ProcessorMixin.to_dict not found")
+    sys.exit(1)
+
+# Get signature
+sig = inspect.signature(ProcessorMixin.to_dict)
+params = list(sig.parameters.keys())
+
+if 'self' not in params:
+    print("FAIL: to_dict missing self parameter")
+    sys.exit(1)
+
+# Verify _get_modality_for_attribute still exists (used by the fix)
+from transformers.processing_utils import _get_modality_for_attribute
+
+if not callable(_get_modality_for_attribute):
+    print("FAIL: _get_modality_for_attribute not callable")
+    sys.exit(1)
+
+print("PASS: method structure preserved")
+sys.exit(0)
+PYEOF
+)
+echo "$T3"
+if echo "$T3" | grep -q "^PASS"; then
+    SCORE=$(python3 -c "print($SCORE + $W_P2P_STRUCTURE)")
+fi
+
+# ── TEST 4: Pass-to-pass - functional tests ──
+# [pr_diff] (0.15): Existing behavior still works
+echo ""
+echo "TEST 4: pass-to-pass - functional (weight=$W_P2P_FUNCTIONAL)"
+T4=$(python3 << 'PYEOF'
+import sys
+sys.path.insert(0, '/workspace/transformers')
+
+from transformers.processing_utils import ProcessorMixin
+
+class MockImageProcessor:
+    """Non-tokenizer processor component that should be preserved"""
+    def __init__(self):
+        self.size = 224
+
+    def to_dict(self):
+        return {"size": self.size}
+
+class TestProcessor(ProcessorMixin):
+    attributes = ["image_processor"]
+
+    @classmethod
+    def get_attributes(cls):
+        return cls.attributes
+
+    def __init__(self):
+        self.image_processor = MockImageProcessor()
+        self.chat_template = None
+
+processor = TestProcessor()
+
+try:
+    result = processor.to_dict()
+except Exception as e:
+    print(f"FAIL: to_dict raised: {e}")
+    sys.exit(1)
+
+# Verify basic functionality
+if not isinstance(result, dict):
+    print("FAIL: result not a dict")
+    sys.exit(1)
+
+if "processor_class" not in result:
+    print("FAIL: missing processor_class")
+    sys.exit(1)
+
+if result.get("processor_class") != "TestProcessor":
+    print(f"FAIL: wrong processor_class: {result.get('processor_class')}")
+    sys.exit(1)
+
+print("PASS: functional P2P tests pass")
+sys.exit(0)
+PYEOF
+)
+echo "$T4"
+if echo "$T4" | grep -q "^PASS"; then
+    SCORE=$(python3 -c "print($SCORE + $W_P2P_FUNCTIONAL)")
+fi
+
+# ── TEST 5: Anti-stub - real implementation ──
+# [agent_config] (0.10): Substantial implementation, not a stub
+echo ""
+echo "TEST 5: anti-stub (weight=$W_ANTISTUB)"
+T5=$(python3 << 'PYEOF'
+import sys
+sys.path.insert(0, '/workspace/transformers')
+
+import ast
+
+# Read and parse the source
 with open("/workspace/transformers/src/transformers/processing_utils.py") as f:
     source = f.read()
 
 tree = ast.parse(source)
 
 # Find to_dict method
-to_dict_node = None
+found_method = False
+method_node = None
+
 for node in ast.walk(tree):
     if isinstance(node, ast.ClassDef) and node.name == "ProcessorMixin":
         for item in node.body:
             if isinstance(item, ast.FunctionDef) and item.name == "to_dict":
-                to_dict_node = item
+                found_method = True
+                method_node = item
                 break
         break
 
-if to_dict_node is None:
-    print("FAIL: ProcessorMixin.to_dict not found")
+if not found_method:
+    print("FAIL: to_dict method not found")
     sys.exit(1)
 
-lines = source.splitlines()
-func_src = "\n".join(lines[to_dict_node.lineno - 1:to_dict_node.end_lineno])
+# Count actual statements in the method (not comments/docstrings)
+def count_statements(node):
+    """Count non-docstring statements in function"""
+    count = 0
+    for item in node.body:
+        if isinstance(item, ast.Expr) and isinstance(item.value, ast.Constant):
+            # Skip docstring
+            continue
+        if isinstance(item, ast.Pass):
+            continue
+        count += 1
+    return count
 
-# The fix should: 1) identify tokenizer attributes, 2) exclude them before deepcopy
-# Check for tokenizer identification (using _get_modality_for_attribute or similar)
-has_tokenizer_check = ("tokenizer" in func_src and
-                        ("_get_modality_for_attribute" in func_src or "modality" in func_src))
+stmt_count = count_statements(method_node)
 
-# Check for filtering before deepcopy
-has_filter = any(pattern in func_src for pattern in [
-    "dict_to_copy", "filtered", "exclude", "tokenizer_attributes",
-    "{k: v for k, v in", "{k: v for k,v in",
-    "items() if k not in"
-])
-
-# The deepcopy line should now be on a filtered dict, not self.__dict__
-deepcopy_on_filtered = ("deepcopy(dict_to_copy)" in func_src or
-                        "deepcopy({k" in func_src or
-                        ("deepcopy" in func_src and "self.__dict__" not in func_src.split("deepcopy")[1].split("\n")[0]))
-
-if has_tokenizer_check and (has_filter or deepcopy_on_filtered):
-    print("PASS: tokenizer attributes identified and excluded before deepcopy")
-    sys.exit(0)
-else:
-    detail = f"tokenizer_check={has_tokenizer_check}, filter={has_filter}, deepcopy_filtered={deepcopy_on_filtered}"
-    print(f"FAIL: tokenizer exclusion pattern not found ({detail})")
+if stmt_count < 5:
+    print(f"FAIL: to_dict has only {stmt_count} statements - looks like a stub")
     sys.exit(1)
-PYEOF
-)
-echo "$T2"
-if echo "$T2" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_TOKENIZER_EXCLUDED)")
-fi
 
-# ── TEST 3 (PRIMARY): behavioral — exec to_dict with mock to verify tokenizer not copied ──
-echo ""
-echo "TEST 3: behavioral — exec to_dict with mocks verifies tokenizer not deepcopied (weight=$W_BEHAV_OUTPUT_CORRECT)"
-T3=$(python3 << 'PYEOF'
-import ast, sys, textwrap, copy, inspect, types
+# Verify it does something meaningful (has loops, conditionals, or comprehensions)
+has_meaningful_logic = False
 
-with open("/workspace/transformers/src/transformers/processing_utils.py") as f:
-    source = f.read()
-
-tree = ast.parse(source)
-
-# Find to_dict method source
-to_dict_node = None
-class_node = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and node.name == "ProcessorMixin":
-        class_node = node
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef) and item.name == "to_dict":
-                to_dict_node = item
-                break
+for child in ast.walk(method_node):
+    if isinstance(child, (ast.For, ast.If, ast.comprehension, ast.DictComp)):
+        has_meaningful_logic = True
         break
 
-if to_dict_node is None:
-    print("FAIL: ProcessorMixin.to_dict not found")
+if not has_meaningful_logic:
+    print("FAIL: to_dict lacks meaningful control structures")
     sys.exit(1)
 
-lines = source.splitlines()
-func_lines = lines[to_dict_node.lineno - 1:to_dict_node.end_lineno]
-func_src = textwrap.dedent("\n".join(func_lines))
-
-# Track deepcopy calls
-deepcopy_targets = []
-original_deepcopy = copy.deepcopy
-def tracking_deepcopy(obj):
-    deepcopy_targets.append(type(obj).__name__)
-    return original_deepcopy(obj)
-
-# Mock classes
-class MockTokenizer:
-    """A mock tokenizer with a large __dict__ to simulate the perf issue"""
-    def __init__(self):
-        self.vocab = {f"token_{i}": i for i in range(1000)}
-        self.special_tokens = ["<pad>", "<eos>"]
-
-class MockImageProcessor:
-    def __init__(self):
-        self.size = {"height": 224, "width": 224}
-
-# Mock _get_modality_for_attribute
-def mock_get_modality(attr):
-    if "tokenizer" in attr:
-        return "tokenizer"
-    if "image" in attr:
-        return "image_processor"
-    raise ValueError(f"Unknown modality for {attr}")
-
-# Mock ProcessorMixin-like class
-class MockProcessor:
-    attributes = ["tokenizer", "image_processor"]
-
-    def __init__(self):
-        self.tokenizer = MockTokenizer()
-        self.image_processor = MockImageProcessor()
-        self.chat_template = None
-
-    @classmethod
-    def get_attributes(cls):
-        return cls.attributes
-
-# Check if "tokenizer" ends up in deepcopy targets
-# We do this by examining the code structure rather than executing (avoids import issues)
-# The key check: after the fix, the code should NOT contain self.__dict__ in deepcopy call
-
-has_fix = "copy.deepcopy(self.__dict__)" not in func_src
-if has_fix:
-    print("PASS: to_dict no longer deepcopies full self.__dict__")
-    sys.exit(0)
-else:
-    print("FAIL: to_dict still deepcopies self.__dict__ directly")
-    sys.exit(1)
-PYEOF
-)
-echo "$T3"
-if echo "$T3" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_OUTPUT_CORRECT)")
-fi
-
-# ── TEST 4: pass-to-pass — to_dict method still exists with correct structure ──
-echo ""
-echo "TEST 4: pass-to-pass — to_dict method intact (weight=$W_PASSTOPASS)"
-T4=$(python3 << 'PYEOF'
-import ast, sys
-
-with open("/workspace/transformers/src/transformers/processing_utils.py") as f:
-    source = f.read()
-
-tree = ast.parse(source)
-
-to_dict_found = False
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and node.name == "ProcessorMixin":
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef) and item.name == "to_dict":
-                to_dict_found = True
-                # Check it takes self as arg
-                args = [a.arg for a in item.args.args]
-                if "self" not in args:
-                    print("FAIL: to_dict missing self parameter")
-                    sys.exit(1)
-                # Check return type annotation
-                lines = source.splitlines()
-                func_lines = lines[item.lineno - 1:item.end_lineno]
-                func_src = "\n".join(func_lines)
-                if "deepcopy" not in func_src:
-                    print("FAIL: deepcopy removed entirely")
-                    sys.exit(1)
-                if "chat_template" not in func_src:
-                    print("FAIL: chat_template handling removed")
-                    sys.exit(1)
-                break
-        break
-
-if not to_dict_found:
-    print("FAIL: ProcessorMixin.to_dict not found")
-    sys.exit(1)
-
-# Check _get_modality_for_attribute still exists
-if "_get_modality_for_attribute" not in source:
-    print("FAIL: _get_modality_for_attribute function missing")
-    sys.exit(1)
-
-print("PASS: to_dict method and supporting functions intact")
-sys.exit(0)
-PYEOF
-)
-echo "$T4"
-if echo "$T4" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_PASSTOPASS)")
-fi
-
-# ── TEST 5: anti-stub — file retains original logic ──
-echo ""
-echo "TEST 5: anti-stub — file retains original logic (weight=$W_ANTISTUB)"
-T5=$(python3 << 'PYEOF'
-import sys
-
-with open("/workspace/transformers/src/transformers/processing_utils.py") as f:
-    source = f.read()
-
-required = ["ProcessorMixin", "to_dict", "deepcopy", "inspect", "get_attributes",
-            "_get_modality_for_attribute", "chat_template", "auto_map"]
-missing = [r for r in required if r not in source]
-if missing:
-    print(f"FAIL: missing expected content: {missing}")
-    sys.exit(1)
-
-line_count = len(source.splitlines())
-if line_count < 400:
-    print(f"FAIL: file has only {line_count} lines — looks like a stub")
-    sys.exit(1)
-
-print(f"PASS: file has {line_count} lines and contains all expected symbols")
+print(f"PASS: to_dict has {stmt_count} statements with control structures")
 sys.exit(0)
 PYEOF
 )
 echo "$T5"
 if echo "$T5" | grep -q "^PASS"; then
     SCORE=$(python3 -c "print($SCORE + $W_ANTISTUB)")
-fi
-
-
-# -- CONFIG-DERIVED: ruff format check on changed files (weight=$W_CONFIG_RUFF) --
-# Config-derived test (0.05): "Changed files pass ruff format"
-# Source: CLAUDE.md lines 5-10 @ commit 55cc1a7fb8e53a5e7e35ca9cf9759498f20abb93
-echo ""
-echo "CONFIG: ruff format check (weight=$W_CONFIG_RUFF)"
-T_RUFF=$(python3 << 'PYRUFF'
-import subprocess, sys
-files = ['/workspace/transformers/src/transformers/processing_utils.py']
-all_ok = True
-for f in files:
-    result = subprocess.run(["ruff", "check", "--select", "I", f], capture_output=True, text=True)
-    if result.returncode != 0:
-        all_ok = False
-        print(f"FAIL: ruff check failed on {f}")
-if all_ok:
-    print("PASS: all changed files pass ruff import sort check")
-    sys.exit(0)
-else:
-    sys.exit(1)
-PYRUFF
-)
-echo "$T_RUFF"
-if echo "$T_RUFF" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_CONFIG_RUFF)")
 fi
 
 # ── Final score ──────────────────────────────────────────────────────────

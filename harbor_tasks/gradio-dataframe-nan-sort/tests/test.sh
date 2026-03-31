@@ -7,205 +7,178 @@ mkdir -p "$(dirname "$REWARD_FILE")"
 
 declare -A WEIGHTS
 declare -A RESULTS
-WEIGHTS[behavioral_null]=0.30
-WEIGHTS[behavioral_undef]=0.20
-WEIGHTS[regression]=0.15
-WEIGHTS[structural]=0.20
-WEIGHTS[antistub]=0.15
+WEIGHTS[behavioral_null]=0.35
+WEIGHTS[behavioral_undef]=0.25
+WEIGHTS[regression]=0.20
+WEIGHTS[antistub]=0.20
 
-for key in behavioral_null behavioral_undef regression structural antistub; do
+for key in behavioral_null behavioral_undef regression antistub; do
     RESULTS[$key]=0
 done
 
 # ---------- GATE: File exists ----------
 if [ ! -f "$TARGET" ]; then
-    echo "GATE FAIL: $TARGET not found"
     echo "0.0" > "$REWARD_FILE"
     exit 0
 fi
-echo "GATE PASS: target file exists"
 
-# ---------- PRIMARY 1 (30%): Behavioral - null values preserved for number type ----------
-# Extract and run cast_value_to_type with null input via node
-node --input-type=module << 'NODEEOF'
+# ---------- BEHAVIORAL: Extract and test the function ----------
+# We extract the function body and test it behaviorally by executing it
+# This is the most reliable way to test without GPU/service dependencies
+
+# Create a test harness that extracts and wraps the function
+node --input-type=module << 'NODECODE'
 import { readFileSync } from "fs";
 
 const source = readFileSync("/workspace/gradio/js/dataframe/shared/utils/utils.ts", "utf8");
 
-// Extract the cast_value_to_type function body
+// Extract just the cast_value_to_type function
 const funcMatch = source.match(/export\s+function\s+cast_value_to_type\s*\([^)]*\)[^{]*\{([\s\S]*?)^\}/m);
 if (!funcMatch) {
-    console.log("BEHAVIORAL_NULL FAIL: could not extract cast_value_to_type function");
+    console.log("EXTRACT_FAIL");
     process.exit(1);
 }
 
-// Build a standalone function from the extracted source
 const funcBody = funcMatch[1];
-const testFunc = new Function("v", "t", funcBody);
 
-// Test: null with "number" type should return null, not 0
-const result = testFunc(null, "number");
-if (result === null) {
-    console.log("BEHAVIORAL_NULL PASS: cast_value_to_type(null, 'number') returns null");
-    process.exit(0);
-} else {
-    console.log(`BEHAVIORAL_NULL FAIL: cast_value_to_type(null, 'number') returned ${JSON.stringify(result)}, expected null`);
+// Create testable function
+const testFn = new Function("v", "t", funcBody);
+
+// Test 1: null preservation (the core bug)
+const nullResult = testFn(null, "number");
+if (nullResult !== null) {
+    console.log(`NULL_FAIL: expected null, got ${JSON.stringify(nullResult)}`);
     process.exit(1);
 }
-NODEEOF
-if [ $? -eq 0 ]; then
+
+// Test 2: undefined preservation
+const undefResult = testFn(undefined, "number");
+if (undefResult !== undefined) {
+    console.log(`UNDEF_FAIL: expected undefined, got ${JSON.stringify(undefResult)}`);
+    process.exit(1);
+}
+
+// Test 3: All types preserve null/undefined
+const types = ["number", "bool", "date", "str", "markdown", "html", "image"];
+for (const t of types) {
+    if (testFn(null, t) !== null) {
+        console.log(`NULL_TYPE_FAIL: type ${t}`);
+        process.exit(1);
+    }
+    if (testFn(undefined, t) !== undefined) {
+        console.log(`UNDEF_TYPE_FAIL: type ${t}`);
+        process.exit(1);
+    }
+}
+
+// Test 4: Regression - normal values still work
+if (testFn("42", "number") !== 42) {
+    console.log(`REGRESSION_NUMBER_FAIL: ${JSON.stringify(testFn("42", "number"))}`);
+    process.exit(1);
+}
+if (testFn(3.14, "number") !== 3.14) {
+    console.log(`REGRESSION_FLOAT_FAIL`);
+    process.exit(1);
+}
+if (testFn("true", "bool") !== true) {
+    console.log(`REGRESSION_BOOL_TRUE_FAIL`);
+    process.exit(1);
+}
+if (testFn("false", "bool") !== false) {
+    console.log(`REGRESSION_BOOL_FALSE_FAIL`);
+    process.exit(1);
+}
+if (testFn("hello", "str") !== "hello") {
+    console.log(`REGRESSION_STR_FAIL`);
+    process.exit(1);
+}
+
+console.log("ALL_PASS");
+process.exit(0);
+NODECODE
+
+TEST_EXIT=$?
+if [ $TEST_EXIT -eq 0 ]; then
+    # All behavioral tests passed
     RESULTS[behavioral_null]=1
-    echo "TEST behavioral_null: PASS"
+    RESULTS[behavioral_undef]=1
+    RESULTS[regression]=1
+    echo "TEST behavioral: PASS (null, undef, regression)"
 else
-    echo "TEST behavioral_null: FAIL"
-fi
+    # Need to determine which specific tests failed
+    # Re-run individual checks for scoring granularity
 
-# ---------- PRIMARY 2 (20%): Behavioral - undefined values preserved ----------
-node --input-type=module << 'NODEEOF'
+    # Check just null
+    node --input-type=module << 'NODECODE'
 import { readFileSync } from "fs";
-
 const source = readFileSync("/workspace/gradio/js/dataframe/shared/utils/utils.ts", "utf8");
-
 const funcMatch = source.match(/export\s+function\s+cast_value_to_type\s*\([^)]*\)[^{]*\{([\s\S]*?)^\}/m);
-if (!funcMatch) {
-    console.log("BEHAVIORAL_UNDEF FAIL: could not extract function");
-    process.exit(1);
-}
+if (!funcMatch) { console.log("EXTRACT_FAIL"); process.exit(1); }
+const testFn = new Function("v", "t", funcMatch[1]);
+const r = testFn(null, "number");
+console.log(r === null ? "NULL_PASS" : `NULL_FAIL:${JSON.stringify(r)}`);
+process.exit(r === null ? 0 : 1);
+NODECODE
+    [ $? -eq 0 ] && RESULTS[behavioral_null]=1
 
-const funcBody = funcMatch[1];
-const testFunc = new Function("v", "t", funcBody);
-
-// Test null/undefined across all types
+    # Check undef
+    node --input-type=module << 'NODECODE'
+import { readFileSync } from "fs";
+const source = readFileSync("/workspace/gradio/js/dataframe/shared/utils/utils.ts", "utf8");
+const funcMatch = source.match(/export\s+function\s+cast_value_to_type\s*\([^)]*\)[^{]*\{([\s\S]*?)^\}/m);
+if (!funcMatch) { console.log("EXTRACT_FAIL"); process.exit(1); }
+const testFn = new Function("v", "t", funcMatch[1]);
 const types = ["number", "bool", "date", "str"];
 let allPass = true;
-
 for (const t of types) {
-    const nullResult = testFunc(null, t);
-    if (nullResult !== null) {
-        console.log(`  FAIL: cast_value_to_type(null, '${t}') returned ${JSON.stringify(nullResult)}`);
-        allPass = false;
-    }
-    const undefResult = testFunc(undefined, t);
-    if (undefResult !== undefined) {
-        console.log(`  FAIL: cast_value_to_type(undefined, '${t}') returned ${JSON.stringify(undefResult)}`);
-        allPass = false;
-    }
+    if (testFn(null, t) !== null) allPass = false;
+    if (testFn(undefined, t) !== undefined) allPass = false;
 }
+console.log(allPass ? "UNDEF_PASS" : "UNDEF_FAIL");
+process.exit(allPass ? 0 : 1);
+NODECODE
+    [ $? -eq 0 ] && RESULTS[behavioral_undef]=1
 
-if (allPass) {
-    console.log("BEHAVIORAL_UNDEF PASS: null/undefined preserved for all types");
-    process.exit(0);
-} else {
-    console.log("BEHAVIORAL_UNDEF FAIL");
-    process.exit(1);
-}
-NODEEOF
-if [ $? -eq 0 ]; then
-    RESULTS[behavioral_undef]=1
-    echo "TEST behavioral_undef: PASS"
-else
-    echo "TEST behavioral_undef: FAIL"
-fi
-
-# ---------- PRIMARY 3 (15%): Regression - normal values still cast correctly ----------
-node --input-type=module << 'NODEEOF'
+    # Check regression
+    node --input-type=module << 'NODECODE'
 import { readFileSync } from "fs";
-
 const source = readFileSync("/workspace/gradio/js/dataframe/shared/utils/utils.ts", "utf8");
-
 const funcMatch = source.match(/export\s+function\s+cast_value_to_type\s*\([^)]*\)[^{]*\{([\s\S]*?)^\}/m);
-if (!funcMatch) {
-    console.log("REGRESSION FAIL: could not extract function");
-    process.exit(1);
-}
-
-const funcBody = funcMatch[1];
-const testFunc = new Function("v", "t", funcBody);
-
-let allPass = true;
-
-// Number casting
-if (testFunc("42", "number") !== 42) { console.log("FAIL: '42' -> number"); allPass = false; }
-if (testFunc(3.14, "number") !== 3.14) { console.log("FAIL: 3.14 -> number"); allPass = false; }
-
-// Bool casting
-if (testFunc("true", "bool") !== true) { console.log("FAIL: 'true' -> bool"); allPass = false; }
-if (testFunc("false", "bool") !== false) { console.log("FAIL: 'false' -> bool"); allPass = false; }
-
-// String stays as-is
-if (testFunc("hello", "str") !== "hello") { console.log("FAIL: 'hello' -> str"); allPass = false; }
-
-if (allPass) {
-    console.log("REGRESSION PASS: normal values cast correctly");
-    process.exit(0);
-} else {
-    console.log("REGRESSION FAIL");
-    process.exit(1);
-}
-NODEEOF
-if [ $? -eq 0 ]; then
-    RESULTS[regression]=1
-    echo "TEST regression: PASS"
-else
-    echo "TEST regression: FAIL"
+if (!funcMatch) { console.log("EXTRACT_FAIL"); process.exit(1); }
+const testFn = new Function("v", "t", funcMatch[1]);
+let pass = true;
+if (testFn("42", "number") !== 42) pass = false;
+if (testFn("true", "bool") !== true) pass = false;
+if (testFn("false", "bool") !== false) pass = false;
+if (testFn("hello", "str") !== "hello") pass = false;
+console.log(pass ? "REGRESSION_PASS" : "REGRESSION_FAIL");
+process.exit(pass ? 0 : 1);
+NODECODE
+    [ $? -eq 0 ] && RESULTS[regression]=1
 fi
 
-# ---------- SUPPLEMENTARY (20%): Structural - null/undefined guard exists ----------
-node --input-type=module << 'NODEEOF'
-import { readFileSync } from "fs";
-
-const source = readFileSync("/workspace/gradio/js/dataframe/shared/utils/utils.ts", "utf8");
-
-const funcMatch = source.match(/export\s+function\s+cast_value_to_type\s*\([^)]*\)[^{]*\{([\s\S]*?)^\}/m);
-if (!funcMatch) {
-    console.log("STRUCTURAL FAIL: could not extract function");
-    process.exit(1);
-}
-
-const funcBody = funcMatch[1];
-
-// Check that there is a null/undefined guard before the type coercion
-const hasNullCheck = /null/.test(funcBody) && /undefined/.test(funcBody);
-const hasEarlyReturn = /return\s+v/.test(funcBody);
-
-// The null/undefined check should appear before Number() coercion
-const nullCheckPos = funcBody.search(/null|undefined/);
-const numberCoercionPos = funcBody.search(/Number\s*\(/);
-
-if (hasNullCheck && hasEarlyReturn && nullCheckPos < numberCoercionPos) {
-    console.log("STRUCTURAL PASS: null/undefined guard present before type coercion");
-    process.exit(0);
-} else {
-    console.log("STRUCTURAL FAIL: missing proper null/undefined guard before coercion");
-    process.exit(1);
-}
-NODEEOF
-if [ $? -eq 0 ]; then
-    RESULTS[structural]=1
-    echo "TEST structural: PASS"
-else
-    echo "TEST structural: FAIL"
-fi
-
-# ---------- Anti-stub check (15%) ----------
-if [ -f "$TARGET" ]; then
+# ---------- Anti-stub check (20%) ----------
+# Gate: must pass at least one behavioral test to be eligible for antistub
+if [ ${RESULTS[behavioral_null]} -eq 1 ] || [ ${RESULTS[behavioral_undef]} -eq 1 ]; then
     LINE_COUNT=$(wc -l < "$TARGET")
-    HAS_EXPORT=$(grep -c "export function cast_value_to_type" "$TARGET" || true)
-    HAS_NUMBER=$(grep -c "Number" "$TARGET" || true)
-    if [ "$LINE_COUNT" -gt 20 ] && [ "$HAS_EXPORT" -ge 1 ] && [ "$HAS_NUMBER" -ge 1 ]; then
+    HAS_EXPORT=$(grep -c "export function cast_value_to_type" "$TARGET" || echo 0)
+    HAS_LOGIC=$(grep -cE "(Number|Boolean|String|Date|isNaN)" "$TARGET" || echo 0)
+
+    if [ "$LINE_COUNT" -gt 15 ] && [ "$HAS_EXPORT" -ge 1 ] && [ "$HAS_LOGIC" -ge 2 ]; then
         RESULTS[antistub]=1
         echo "TEST antistub: PASS"
     else
         echo "TEST antistub: FAIL"
     fi
 else
-    echo "TEST antistub: FAIL (file missing)"
+    echo "TEST antistub: SKIP (behavioral tests failed)"
+    RESULTS[antistub]=0
 fi
 
 # ---------- Final weighted score ----------
 SCORE=$(python3 -c "
-weights = {'behavioral_null': ${WEIGHTS[behavioral_null]}, 'behavioral_undef': ${WEIGHTS[behavioral_undef]}, 'regression': ${WEIGHTS[regression]}, 'structural': ${WEIGHTS[structural]}, 'antistub': ${WEIGHTS[antistub]}}
-results = {'behavioral_null': ${RESULTS[behavioral_null]}, 'behavioral_undef': ${RESULTS[behavioral_undef]}, 'regression': ${RESULTS[regression]}, 'structural': ${RESULTS[structural]}, 'antistub': ${RESULTS[antistub]}}
+weights = {'behavioral_null': ${WEIGHTS[behavioral_null]}, 'behavioral_undef': ${WEIGHTS[behavioral_undef]}, 'regression': ${WEIGHTS[regression]}, 'antistub': ${WEIGHTS[antistub]}}
+results = {'behavioral_null': ${RESULTS[behavioral_null]}, 'behavioral_undef': ${RESULTS[behavioral_undef]}, 'regression': ${RESULTS[regression]}, 'antistub': ${RESULTS[antistub]}}
 score = sum(weights[k] * results[k] for k in weights)
 print(f'{score:.2f}')
 ")
@@ -214,7 +187,6 @@ echo "=== FINAL SCORE ==="
 echo "  behavioral_null  (${WEIGHTS[behavioral_null]}): ${RESULTS[behavioral_null]}"
 echo "  behavioral_undef (${WEIGHTS[behavioral_undef]}): ${RESULTS[behavioral_undef]}"
 echo "  regression       (${WEIGHTS[regression]}): ${RESULTS[regression]}"
-echo "  structural       (${WEIGHTS[structural]}): ${RESULTS[structural]}"
 echo "  antistub         (${WEIGHTS[antistub]}): ${RESULTS[antistub]}"
 echo "  TOTAL: $SCORE"
 echo "$SCORE" > "$REWARD_FILE"

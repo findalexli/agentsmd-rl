@@ -66,10 +66,12 @@ In test.sh, every check MUST have a comment:
 
 ### Output
 
-test.sh writes `reward.txt` (single float) and optionally `reward.json`:
+test.sh writes to `/logs/verifier/reward.txt` (single float) and optionally `/logs/verifier/reward.json`:
 ```json
 {"reward": 0.85, "behavioral": 0.65, "regression": 0.10, "config": 0.05, "style_rubric": 0.05}
 ```
+
+**CRITICAL**: Reward MUST be written to `/logs/verifier/reward.txt` — this is a Docker bind mount that Harbor's verifier reads. Writing to `/tests/reward.txt`, `/workspace/reward.txt`, or any other path will silently fail (Harbor won't find the file).
 
 For RL: `execution_bucket` (deterministic) + `model_reward` (LLM judge) follow the SWE-RM additive pattern.
 

@@ -158,7 +158,8 @@ def make_harbor_config(cfg: Config, proxy_base_url: str) -> dict[str, Any]:
         "trials_dir": os.path.join(cfg.log_dir, "trials"),
         "agent": {
             "name": cfg.agent_name,
-            "override_timeout_sec": cfg.agent_timeout,
+            "override_timeout_sec": 1200,  # 20 min total (install + agent run + verifier)
+            "override_setup_timeout_sec": 600,  # Claude Code binary install needs time
             # model_name for claude-code: passed as ANTHROPIC_MODEL env var
             "model_name": cfg.model_name.split("/")[-1],
             "kwargs": {
@@ -173,7 +174,7 @@ def make_harbor_config(cfg: Config, proxy_base_url: str) -> dict[str, Any]:
         "environment": {
             "type": cfg.environment_type,
             "override_cpus": 1,
-            "override_memory_mb": 1024,
+            "override_memory_mb": 4096,  # Claude Code install needs >1GB
             "delete": True,
         },
         "verifier": {"disable": False},
@@ -393,10 +394,20 @@ async def run(cfg: Config) -> None:
     sc = svc.create_sampling_client(model_path=sampling_path)
     tokenizer = sc.get_tokenizer()
 
-    # Start Anthropic proxy
+    # Start Anthropic proxy — bind 0.0.0.0 so Docker containers can reach us
     proxy = AnthropicTinkerProxy(sc, model_name=cfg.model_name.split("/")[-1])
-    proxy.start(port=cfg.proxy_port)
-    proxy_base_url = f"http://127.0.0.1:{cfg.proxy_port}"
+    proxy.start(host="0.0.0.0", port=cfg.proxy_port)
+
+    # Docker containers can't reach 127.0.0.1 (that's their own localhost).
+    # Use the host's eth0 IP which is routable from inside Docker.
+    import subprocess as _sp, re as _re
+    try:
+        _ip_out = _sp.check_output(["ip", "-4", "addr", "show", "eth0"], text=True, timeout=5)
+        _host_ip = _re.search(r"inet (\d+\.\d+\.\d+\.\d+)", _ip_out).group(1)
+    except Exception:
+        _host_ip = "127.0.0.1"
+    proxy_base_url = f"http://{_host_ip}:{cfg.proxy_port}"
+    logger.info(f"Proxy base URL for Docker containers: {proxy_base_url}")
 
     harbor_template = make_harbor_config(cfg, proxy_base_url)
     semaphore = asyncio.Semaphore(cfg.max_concurrent_trials)

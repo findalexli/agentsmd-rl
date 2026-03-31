@@ -387,8 +387,22 @@ class AnthropicTinkerProxy:
 
             max_tokens_requested = body.get("max_tokens", 4096)
             if est_prompt_len > 0 and proxy._max_ctx > 0:
-                max_tokens = min(max_tokens_requested, proxy._max_ctx - est_prompt_len - 64)
-                max_tokens = max(max_tokens, 1)
+                remaining = proxy._max_ctx - est_prompt_len - 64
+                if remaining <= 0:
+                    # Prompt alone exceeds context window — can't generate anything.
+                    # Return Anthropic error so Claude Code knows to stop.
+                    logger.warning(
+                        f"Prompt ({est_prompt_len} tokens) exceeds context window "
+                        f"({proxy._max_ctx}). Returning context_length error."
+                    )
+                    return JSONResponse({
+                        "type": "error",
+                        "error": {
+                            "type": "invalid_request_error",
+                            "message": f"prompt is too long: {est_prompt_len} tokens > {proxy._max_ctx} context window",
+                        },
+                    }, status_code=400)
+                max_tokens = min(max_tokens_requested, remaining)
             else:
                 max_tokens = max_tokens_requested
 

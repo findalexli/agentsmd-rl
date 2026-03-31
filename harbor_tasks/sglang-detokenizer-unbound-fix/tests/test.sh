@@ -36,9 +36,9 @@ echo "GATE PASS"
 
 # Weights
 W_BEHAVIORAL_UNBOUND=0.35
-W_BEHAVIORAL_EXCEPT_COMPLETES=0.30
+W_BEHAVIORAL_SIGQUIT=0.25
+W_BEHAVIORAL_EXCEPT_COMPLETES=0.15
 W_PASSTOPASS=0.10
-W_STRUCTURAL=0.10
 W_ANTISTUB=0.05
 W_CONFIG=0.10
 
@@ -145,9 +145,10 @@ if echo "$T1" | grep -q "^PASS"; then
     SCORE=$(python3 -c "print($SCORE + $W_BEHAVIORAL_UNBOUND)")
 fi
 
-# ── TEST 2 (PRIMARY): behavioral — except block runs to completion on constructor failure ──
+# ── TEST 2 (PRIMARY): behavioral — SIGQUIT must be sent to parent on constructor failure ──
+# [pr_diff] (0.25): Critical fix - parent_process.send_signal(signal.SIGQUIT) must execute
 echo ""
-echo "TEST 2: behavioral — except block completes without crash on constructor failure (weight=$W_BEHAVIORAL_EXCEPT_COMPLETES)"
+echo "TEST 2: behavioral — SIGQUIT sent to parent when constructor fails (weight=$W_BEHAVIORAL_SIGQUIT)"
 T2=$(python3 << 'PYEOF'
 import ast, sys, textwrap, types, signal
 
@@ -176,15 +177,7 @@ class FailingManager:
     def maybe_clear_socket_mapping(self):
         pass
 
-# Mock logger that records calls
-error_messages = []
-class RecordingLogger:
-    def error(self, *a, **kw): error_messages.append(a)
-    def info(self, *a, **kw): pass
-    def warning(self, *a, **kw): pass
-    def debug(self, *a, **kw): pass
-
-# Track whether the except block sent the parent signal
+# Track whether the parent signal was sent with SIGQUIT
 parent_signal_sent = []
 
 # Mock psutil with tracking
@@ -199,13 +192,105 @@ class MockProcessTracked:
         parent_signal_sent.append(sig)
 psutil_mock.Process = MockProcessTracked
 
-# Mock setproctitle module
+# Mock logger
+class MockLogger:
+    def error(self, *a, **kw): pass
+    def info(self, *a, **kw): pass
+    def warning(self, *a, **kw): pass
+    def debug(self, *a, **kw): pass
+
 setproctitle_mock = types.SimpleNamespace(setproctitle=lambda t: None)
 
 class MockArgs:
     tokenizer_worker_num = 1
 
-# Build exec namespace with all names the function definition and body may reference
+exec_globals = {
+    "DetokenizerManager": FailingManager,
+    "ServerArgs": MockArgs,
+    "PortArgs": MockArgs,
+    "kill_itself_when_parent_died": lambda: None,
+    "setproctitle": setproctitle_mock,
+    "psutil": psutil_mock,
+    "logger": MockLogger(),
+    "configure_logger": lambda *a, **kw: None,
+    "get_exception_traceback": lambda: "mock traceback",
+    "signal": signal,
+    "__builtins__": __builtins__,
+}
+
+exec(func_src, exec_globals)
+
+try:
+    exec_globals["run_detokenizer_process"](MockArgs(), MockArgs(), FailingManager)
+except SystemExit:
+    pass
+except Exception:
+    pass
+
+# CRITICAL: SIGQUIT must have been sent - this is the core bug fix
+if signal.SIGQUIT in parent_signal_sent:
+    print("PASS: SIGQUIT sent to parent on constructor failure")
+    sys.exit(0)
+else:
+    print(f"FAIL: SIGQUIT not sent to parent. Signals sent: {parent_signal_sent}")
+    sys.exit(1)
+PYEOF
+)
+echo "$T2"
+if echo "$T2" | grep -q "^PASS"; then
+    SCORE=$(python3 -c "print($SCORE + $W_BEHAVIORAL_SIGQUIT)")
+fi
+
+# ── TEST 3 (SECONDARY): behavioral — except block error logging ──
+echo ""
+echo "TEST 3: behavioral — error is logged when constructor fails (weight=$W_BEHAVIORAL_EXCEPT_COMPLETES)"
+T3=$(python3 << 'PYEOF'
+import ast, sys, textwrap, types, signal
+
+with open("/workspace/sglang/python/sglang/srt/managers/detokenizer_manager.py") as f:
+    source = f.read()
+
+tree = ast.parse(source)
+
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "run_detokenizer_process":
+        func_node = node
+        break
+
+if func_node is None:
+    print("FAIL: run_detokenizer_process not found")
+    sys.exit(1)
+
+lines = source.splitlines(keepends=True)
+func_src = textwrap.dedent("".join(lines[func_node.lineno - 1:func_node.end_lineno]))
+
+class FailingManager:
+    def __init__(self, *args, **kwargs):
+        raise RuntimeError("simulated constructor failure")
+    def maybe_clear_socket_mapping(self):
+        pass
+
+# Mock logger that records error calls
+error_messages = []
+class RecordingLogger:
+    def error(self, *a, **kw): error_messages.append(a)
+    def info(self, *a, **kw): pass
+    def warning(self, *a, **kw): pass
+    def debug(self, *a, **kw): pass
+
+psutil_mock = types.ModuleType("psutil")
+class MockProcess:
+    def __init__(self): pass
+    def parent(self): return self
+    def send_signal(self, sig): pass
+psutil_mock.Process = MockProcess
+
+setproctitle_mock = types.SimpleNamespace(setproctitle=lambda t: None)
+
+class MockArgs:
+    tokenizer_worker_num = 1
+
 exec_globals = {
     "DetokenizerManager": FailingManager,
     "ServerArgs": MockArgs,
@@ -223,43 +308,30 @@ exec_globals = {
 exec(func_src, exec_globals)
 
 try:
-    # Pass FailingManager explicitly as the detokenizer_manager_class argument
     exec_globals["run_detokenizer_process"](MockArgs(), MockArgs(), FailingManager)
 except SystemExit:
     pass
-except UnboundLocalError:
-    print("FAIL: except block crashed with UnboundLocalError — did not complete")
-    sys.exit(1)
-except NameError as e:
-    if "manager" in str(e):
-        print("FAIL: except block crashed with NameError on 'manager' — did not complete")
-        sys.exit(1)
 except Exception:
-    pass  # other exceptions may propagate, that's ok
+    pass
 
-# The except block should have logged the error and/or sent the parent signal.
-# At least one of these should have happened if the except block ran to completion.
-if error_messages or parent_signal_sent:
-    print("PASS: except block ran to completion (logged error or sent parent signal)")
+if error_messages:
+    print("PASS: error logged when constructor fails")
     sys.exit(0)
 else:
-    # Even if neither was recorded, if we got here without UnboundLocalError that's
-    # still a partial success — but the except block may not have run fully.
-    # Accept it: the key fix is no crash.
-    print("PASS: no crash in except block (cleanup may differ from original)")
-    sys.exit(0)
+    print("FAIL: no error logged")
+    sys.exit(1)
 PYEOF
 )
-echo "$T2"
-if echo "$T2" | grep -q "^PASS"; then
+echo "$T3"
+if echo "$T3" | grep -q "^PASS"; then
     SCORE=$(python3 -c "print($SCORE + $W_BEHAVIORAL_EXCEPT_COMPLETES)")
 fi
 
-# ── TEST 3 (SECONDARY): pass-to-pass — function is still callable structure ──
+# ── TEST 4 (PASS-TO-PASS): function structure maintained ──
 echo ""
-echo "TEST 3: pass-to-pass — function signature and structure intact (weight=$W_PASSTOPASS)"
-T3=$(python3 << 'PYEOF'
-import ast, sys, inspect
+echo "TEST 4: pass-to-pass — function signature and structure intact (weight=$W_PASSTOPASS)"
+T4=$(python3 << 'PYEOF'
+import ast, sys
 
 with open("/workspace/sglang/python/sglang/srt/managers/detokenizer_manager.py") as f:
     source = f.read()
@@ -276,41 +348,43 @@ if func_node is None:
     print("FAIL: run_detokenizer_process function not found")
     sys.exit(1)
 
-# Check it has the expected parameters (server_args, port_args, and the manager class)
+# Check it has the expected parameters (at least server_args, port_args)
 arg_names = [a.arg for a in func_node.args.args]
 if len(arg_names) < 2:
     print(f"FAIL: expected at least 2 params, got {arg_names}")
     sys.exit(1)
 
-# Check there is a try/except block in the function
-has_try = False
-for stmt in func_node.body:
-    if isinstance(stmt, ast.Try):
-        has_try = True
-        break
-
-if not has_try:
-    print("FAIL: function lost its try/except structure")
+# Check function body is non-trivial (not just pass/return)
+# Allow both try/except and try/except/finally patterns
+if len(func_node.body) < 2:
+    print("FAIL: function body too short — may be stubbed")
     sys.exit(1)
 
-# Check function body is non-trivial (not just pass/return)
-if len(func_node.body) < 3:
-    print("FAIL: function body too short — may be stubbed")
+# Check there's error handling of some form
+has_error_handling = False
+for stmt in func_node.body:
+    if isinstance(stmt, ast.Try):
+        has_error_handling = True
+        break
+
+if not has_error_handling:
+    print("FAIL: function lost its error handling structure")
     sys.exit(1)
 
 print("PASS: function signature and structure intact")
 sys.exit(0)
 PYEOF
 )
-echo "$T3"
-if echo "$T3" | grep -q "^PASS"; then
+echo "$T4"
+if echo "$T4" | grep -q "^PASS"; then
     SCORE=$(python3 -c "print($SCORE + $W_PASSTOPASS)")
 fi
 
-# ── TEST 4 (SUPPLEMENTARY): light structural — function exists with try/except ──
+# ── TEST 5: anti-stub check — file retains original logic ──
+# [pr_diff] (0.05): File should contain proper socket cleanup logic
 echo ""
-echo "TEST 4: structural — run_detokenizer_process has try/except with handler (weight=$W_STRUCTURAL)"
-T4=$(python3 << 'PYEOF'
+echo "TEST 5: anti-stub — file retains original logic (weight=$W_ANTISTUB)"
+T5=$(python3 << 'PYEOF'
 import ast, sys
 
 with open("/workspace/sglang/python/sglang/srt/managers/detokenizer_manager.py") as f:
@@ -318,55 +392,76 @@ with open("/workspace/sglang/python/sglang/srt/managers/detokenizer_manager.py")
 
 tree = ast.parse(source)
 
+# Check that run_detokenizer_process exists and has real implementation
+func_node = None
 for node in ast.walk(tree):
     if isinstance(node, ast.FunctionDef) and node.name == "run_detokenizer_process":
-        for stmt in node.body:
-            if isinstance(stmt, ast.Try) and len(stmt.handlers) > 0:
-                # Check the except handler references "manager" somewhere
-                # (it should use manager in some way — clearing sockets, etc.)
-                handler_src_lines = source.splitlines()[stmt.handlers[0].lineno - 1:stmt.handlers[0].end_lineno]
-                handler_text = "\n".join(handler_src_lines)
-                if "manager" in handler_text or "maybe_clear" in handler_text:
-                    print("PASS: try/except with handler referencing manager found")
-                    sys.exit(0)
-                else:
-                    print("FAIL: except handler does not reference manager at all")
-                    sys.exit(1)
-        print("FAIL: no try/except with handlers found")
-        sys.exit(1)
+        func_node = node
+        break
 
-print("FAIL: run_detokenizer_process not found")
-sys.exit(1)
-PYEOF
-)
-echo "$T4"
-if echo "$T4" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_STRUCTURAL)")
-fi
-
-# ── TEST 5: anti-stub check — file retains original logic ──
-echo ""
-echo "TEST 5: anti-stub — file retains original logic (weight=$W_ANTISTUB)"
-T5=$(python3 << 'PYEOF'
-import sys
-
-with open("/workspace/sglang/python/sglang/srt/managers/detokenizer_manager.py") as f:
-    source = f.read()
-
-required = ["psutil", "signal", "logger", "DetokenizerManager", "maybe_clear_socket_mapping",
-            "run_detokenizer_process", "parent_process", "SIGQUIT"]
-missing = [r for r in required if r not in source]
-
-if missing:
-    print(f"FAIL: file is missing expected content: {missing}")
+if func_node is None:
+    print("FAIL: run_detokenizer_process not found")
     sys.exit(1)
 
+# Count non-pass/non-docstring statements in function body
+meaningful_stmts = 0
+for stmt in func_node.body:
+    if isinstance(stmt, ast.Pass):
+        continue
+    if isinstance(stmt, ast.Expr) and isinstance(stmt.value, (ast.Constant, ast.Str)):
+        # Docstring
+        continue
+    meaningful_stmts += 1
+    # Recursively count in try blocks
+    if isinstance(stmt, ast.Try):
+        for try_stmt in stmt.body:
+            if not isinstance(try_stmt, ast.Pass):
+                meaningful_stmts += 1
+
+if meaningful_stmts < 3:
+    print(f"FAIL: function has only {meaningful_stmts} meaningful statements — looks like a stub")
+    sys.exit(1)
+
+# Check for essential function references using AST (not string matching)
+# to avoid false positives from comments
+try_block_found = False
+except_block_found = False
+cleanup_found = False
+
+for stmt in func_node.body:
+    if isinstance(stmt, ast.Try):
+        try_block_found = True
+        # Check except handlers exist
+        if stmt.handlers:
+            except_block_found = True
+        # Check for cleanup logic (maybe_clear_socket_mapping or similar)
+        for handler in stmt.handlers:
+            for handler_stmt in handler.body:
+                handler_src = ast.unparse(handler_stmt) if hasattr(ast, 'unparse') else ""
+                if "maybe_clear" in handler_src or ("manager" in handler_src and "None" in handler_src):
+                    cleanup_found = True
+        # Also check finally block if present
+        if stmt.finalbody:
+            for fin_stmt in stmt.finalbody:
+                fin_src = ast.unparse(fin_stmt) if hasattr(ast, 'unparse') else ""
+                if "maybe_clear" in fin_src or ("manager" in fin_src and "None" in fin_src):
+                    cleanup_found = True
+
+if not try_block_found:
+    print("FAIL: no try block found")
+    sys.exit(1)
+
+if not except_block_found:
+    print("FAIL: no except handler found")
+    sys.exit(1)
+
+# Ensure file isn't drastically shortened
 line_count = len(source.splitlines())
-if line_count < 200:
+if line_count < 150:
     print(f"FAIL: file has only {line_count} lines — looks like a stub")
     sys.exit(1)
 
-print(f"PASS: file has {line_count} lines and contains all expected symbols")
+print(f"PASS: file has {line_count} lines with proper error handling structure")
 sys.exit(0)
 PYEOF
 )

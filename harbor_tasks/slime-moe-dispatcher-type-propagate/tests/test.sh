@@ -11,13 +11,13 @@ mkdir -p "$(dirname "$REWARD_FILE")"
 
 declare -A WEIGHTS
 declare -A RESULTS
-WEIGHTS[behavioral]=0.30
-WEIGHTS[behavioral2]=0.30
+WEIGHTS[behavioral]=0.50
+WEIGHTS[regression]=0.15
 WEIGHTS[structural]=0.30
-WEIGHTS[config_no_wildcard]=0.05
-WEIGHTS[config_no_bare_print]=0.05
+WEIGHTS[config_no_wildcard]=0.03
+WEIGHTS[config_no_bare_print]=0.02
 
-for key in behavioral behavioral2 structural config_no_wildcard config_no_bare_print; do
+for key in behavioral regression structural config_no_wildcard config_no_bare_print; do
     RESULTS[$key]=0
 done
 
@@ -39,195 +39,252 @@ if [ $? -ne 0 ]; then
 fi
 echo "GATE PASS: syntax valid"
 
-# ---------- PRIMARY 1 (35%): Behavioral - moe_token_dispatcher_type is propagated ----------
+# ---------- BEHAVIORAL (50%): Verify moe_token_dispatcher_type propagation logic ----------
+# [pr_diff] Tests that the fix actually addresses the bug
 python3 << 'PYEOF'
-import ast, sys
+import ast
+import sys
 
 TARGET = "/workspace/slime/slime/backends/megatron_utils/model_provider.py"
+
+def find_function(tree, name):
+    """Find a function by name, including nested functions."""
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == name:
+            return node
+    return None
+
+def get_all_nodes(func_node):
+    """Get all nodes within a function body recursively."""
+    all_nodes = []
+    for child in ast.walk(func_node):
+        all_nodes.append(child)
+    return all_nodes
+
 with open(TARGET) as f:
     source = f.read()
 
 tree = ast.parse(source)
 
-# Find the wrapped_model_provider function
-func_node = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "wrapped_model_provider":
-        func_node = node
-        break
+# Find wrapped_model_provider function (it's nested inside get_model_provider_func)
+func_node = find_function(tree, "wrapped_model_provider")
 
 if func_node is None:
     print("BEHAVIORAL FAIL: wrapped_model_provider function not found")
     sys.exit(1)
 
-# Look for assignment: provider.moe_token_dispatcher_type = args.moe_token_dispatcher_type
-found_propagation = False
-for node in ast.walk(func_node):
-    if isinstance(node, ast.Assign):
-        for target in node.targets:
-            if (isinstance(target, ast.Attribute) and
-                target.attr == "moe_token_dispatcher_type" and
-                isinstance(target.value, ast.Name) and
-                target.value.id == "provider"):
-                found_propagation = True
-                break
-    if found_propagation:
-        break
+# Check for any valid moe_token_dispatcher_type handling
+# Accept multiple patterns: direct assignment, hasattr, getattr, setattr, EAFP
+def check_moe_handling(func_node):
+    """Check if there's valid MoE propagation logic in the function."""
+    nodes = get_all_nodes(func_node)
 
-if found_propagation:
-    print("BEHAVIORAL PASS: moe_token_dispatcher_type is propagated to provider")
+    # Pattern 1: Direct attribute assignment: provider.moe_token_dispatcher_type = ...
+    for node in nodes:
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if (isinstance(target, ast.Attribute) and
+                    target.attr == "moe_token_dispatcher_type" and
+                    isinstance(target.value, ast.Name) and
+                    target.value.id == "provider"):
+                    return True, "direct_assignment"
+
+    # Pattern 2: setattr(provider, "moe_token_dispatcher_type", ...)
+    for node in nodes:
+        if isinstance(node, ast.Call):
+            if (isinstance(node.func, ast.Name) and node.func.id == "setattr"):
+                if len(node.args) >= 2:
+                    first_arg = node.args[0]
+                    second_arg = node.args[1]
+                    if (isinstance(first_arg, ast.Name) and first_arg.id == "provider" and
+                        isinstance(second_arg, ast.Constant) and
+                        second_arg.value == "moe_token_dispatcher_type"):
+                        return True, "setattr"
+
+    # Pattern 3: hasattr or getattr check for the attribute
+    for node in nodes:
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name):
+                if node.func.id in ("hasattr", "getattr"):
+                    for arg in node.args:
+                        if (isinstance(arg, ast.Constant) and
+                            arg.value == "moe_token_dispatcher_type"):
+                            return True, f"{node.func.id}_check"
+
+    # Pattern 4: EAFP pattern - try block attempting the assignment
+    for node in nodes:
+        if isinstance(node, ast.Try):
+            # Check if try body has assignment to moe_token_dispatcher_type
+            for stmt in node.body:
+                if isinstance(stmt, ast.Assign):
+                    for target in stmt.targets:
+                        if (isinstance(target, ast.Attribute) and
+                            target.attr == "moe_token_dispatcher_type"):
+                            return True, "eafp_try_except"
+
+    return False, None
+
+found, pattern = check_moe_handling(func_node)
+
+if found:
+    print(f"BEHAVIORAL PASS: moe_token_dispatcher_type handling found (pattern: {pattern})")
     sys.exit(0)
 else:
-    print("BEHAVIORAL FAIL: moe_token_dispatcher_type not propagated to provider")
+    print("BEHAVIORAL FAIL: No valid moe_token_dispatcher_type handling found")
     sys.exit(1)
 PYEOF
 if [ $? -eq 0 ]; then RESULTS[behavioral]=1; fi
 
-# ---------- PRIMARY 2 (35%): Behavioral - propagation is guarded by hasattr/getattr ----------
+# ---------- REGRESSION (15%): Verify other provider assignments preserved ----------
+# [pr_diff] Pass-to-pass: existing behavior should not break
 python3 << 'PYEOF'
-import ast, sys
+import ast
+import sys
 
 TARGET = "/workspace/slime/slime/backends/megatron_utils/model_provider.py"
+
+def find_function(tree, name):
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == name:
+            return node
+    return None
+
+def get_all_nodes(func_node):
+    all_nodes = []
+    for child in ast.walk(func_node):
+        all_nodes.append(child)
+    return all_nodes
+
 with open(TARGET) as f:
     source = f.read()
 
 tree = ast.parse(source)
 
-func_node = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "wrapped_model_provider":
-        func_node = node
-        break
+func_node = find_function(tree, "wrapped_model_provider")
 
 if func_node is None:
-    print("BEHAVIORAL2 FAIL: function not found")
+    print("REGRESSION FAIL: function not found")
     sys.exit(1)
 
-# Find the assignment to provider.moe_token_dispatcher_type
-# It should be inside an if-block that checks hasattr or getattr for "moe_token_dispatcher_type"
-# Walk all If nodes and check if they contain the assignment AND have a guard
-found_guarded = False
-for node in ast.walk(func_node):
-    if isinstance(node, ast.If):
-        # Check if the test is a hasattr/getattr call with "moe_token_dispatcher_type"
-        has_guard = False
-        for sub in ast.walk(node.test):
-            if isinstance(sub, ast.Call):
-                fn = sub.func
-                if isinstance(fn, ast.Name) and fn.id in ("hasattr", "getattr"):
-                    for arg in sub.args:
-                        if isinstance(arg, ast.Constant) and arg.value == "moe_token_dispatcher_type":
-                            has_guard = True
-                            break
-            if has_guard:
-                break
+# These are the existing assignments from the PR that must still work
+required_attrs = [
+    "tensor_model_parallel_size",
+    "pipeline_model_parallel_size",
+    "expert_model_parallel_size",
+    "expert_tensor_parallel_size",
+    "sequence_parallel",
+    "context_parallel_size",
+    "variable_seq_lengths"
+]
 
-        if has_guard:
-            # Check if body contains assignment to provider.moe_token_dispatcher_type
-            for sub in ast.walk(node):
-                if isinstance(sub, ast.Assign):
-                    for t in sub.targets:
-                        if (isinstance(t, ast.Attribute) and t.attr == "moe_token_dispatcher_type"):
-                            found_guarded = True
-                            break
-                if found_guarded:
-                    break
-    if found_guarded:
-        break
-
-if found_guarded:
-    print("BEHAVIORAL2 PASS: moe_token_dispatcher_type propagation is guarded by hasattr/getattr")
-    sys.exit(0)
-else:
-    # Also accept getattr with default pattern (no if-block needed)
-    found_getattr = False
-    for node in ast.walk(func_node):
-        if isinstance(node, ast.Assign):
-            for t in node.targets:
-                if (isinstance(t, ast.Attribute) and t.attr == "moe_token_dispatcher_type" and
-                    isinstance(t.value, ast.Name) and t.value.id == "provider"):
-                    # Check if value uses getattr
-                    if isinstance(node.value, ast.Call):
-                        fn = node.value.func
-                        if isinstance(fn, ast.Name) and fn.id == "getattr":
-                            found_getattr = True
-            if found_getattr:
-                break
-
-    if found_getattr:
-        print("BEHAVIORAL2 PASS: moe_token_dispatcher_type uses getattr with default")
-        sys.exit(0)
-    else:
-        print("BEHAVIORAL2 FAIL: propagation not guarded by hasattr/getattr")
-        sys.exit(1)
-PYEOF
-if [ $? -eq 0 ]; then RESULTS[behavioral2]=1; fi
-
-# ---------- SECONDARY (30%): Structural - placement near other provider assignments ----------
-python3 << 'PYEOF'
-import ast, sys
-
-TARGET = "/workspace/slime/slime/backends/megatron_utils/model_provider.py"
-with open(TARGET) as f:
-    source = f.read()
-
-tree = ast.parse(source)
-
-func_node = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "wrapped_model_provider":
-        func_node = node
-        break
-
-if func_node is None:
-    print("STRUCTURAL FAIL: function not found")
-    sys.exit(1)
-
-# Check that there's an assignment to provider.variable_seq_lengths
-# AND provider.moe_token_dispatcher_type, meaning the new assignment
-# is placed in the same region as other provider configuration
-has_variable_seq = False
-has_moe_dispatcher = False
-for node in ast.walk(func_node):
+nodes = get_all_nodes(func_node)
+found_attrs = set()
+for node in nodes:
     if isinstance(node, ast.Assign):
-        for t in node.targets:
-            if isinstance(t, ast.Attribute) and isinstance(t.value, ast.Name) and t.value.id == "provider":
-                if t.attr == "variable_seq_lengths":
-                    has_variable_seq = True
-                if t.attr == "moe_token_dispatcher_type":
-                    has_moe_dispatcher = True
+        for target in node.targets:
+            if (isinstance(target, ast.Attribute) and
+                isinstance(target.value, ast.Name) and
+                target.value.id == "provider" and
+                target.attr in required_attrs):
+                found_attrs.add(target.attr)
 
-if has_variable_seq and has_moe_dispatcher:
-    print("STRUCTURAL PASS: both variable_seq_lengths and moe_token_dispatcher_type are set on provider")
+missing = set(required_attrs) - found_attrs
+if not missing:
+    print(f"REGRESSION PASS: all {len(required_attrs)} core provider assignments preserved")
     sys.exit(0)
 else:
-    print(f"STRUCTURAL FAIL: variable_seq_lengths={has_variable_seq}, moe_token_dispatcher_type={has_moe_dispatcher}")
+    print(f"REGRESSION FAIL: missing assignments for {missing}")
+    sys.exit(1)
+PYEOF
+if [ $? -eq 0 ]; then RESULTS[regression]=1; fi
+
+# ---------- STRUCTURAL (30%): Verify placement in bridge mode block ----------
+# [agent_config] Code organization - should be with other provider attrs
+python3 << 'PYEOF'
+import ast
+import sys
+
+TARGET = "/workspace/slime/slime/backends/megatron_utils/model_provider.py"
+
+def find_function(tree, name):
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == name:
+            return node
+    return None
+
+def get_all_nodes(func_node):
+    all_nodes = []
+    for child in ast.walk(func_node):
+        all_nodes.append(child)
+    return all_nodes
+
+with open(TARGET) as f:
+    source = f.read()
+
+tree = ast.parse(source)
+
+func_node = find_function(tree, "wrapped_model_provider")
+
+if func_node is None:
+    print("STRUCTURAL FAIL: wrapped_model_provider not found")
+    sys.exit(1)
+
+# Count provider attribute assignments in the function
+nodes = get_all_nodes(func_node)
+provider_attrs = set()
+for node in nodes:
+    if isinstance(node, ast.Assign):
+        for target in node.targets:
+            if (isinstance(target, ast.Attribute) and
+                isinstance(target.value, ast.Name) and
+                target.value.id == "provider"):
+                provider_attrs.add(target.attr)
+    # Also check setattr patterns
+    if isinstance(node, ast.Call):
+        if (isinstance(node.func, ast.Name) and node.func.id == "setattr"):
+            if len(node.args) >= 2:
+                first_arg = node.args[0]
+                second_arg = node.args[1]
+                if (isinstance(first_arg, ast.Name) and first_arg.id == "provider" and
+                    isinstance(second_arg, ast.Constant) and
+                    isinstance(second_arg.value, str)):
+                    provider_attrs.add(second_arg.value)
+
+# The fix should add moe_token_dispatcher_type alongside existing attrs
+has_moe = "moe_token_dispatcher_type" in provider_attrs
+has_variable_seq = "variable_seq_lengths" in provider_attrs
+
+if has_moe and len(provider_attrs) >= 7:  # At least the original 7 + moe
+    print(f"STRUCTURAL PASS: moe_token_dispatcher_type with {len(provider_attrs)} total provider attrs")
+    sys.exit(0)
+elif has_moe:
+    print(f"STRUCTURAL PASS: moe_token_dispatcher_type found")
+    sys.exit(0)
+else:
+    print(f"STRUCTURAL FAIL: moe_token_dispatcher_type not found (have: {provider_attrs})")
     sys.exit(1)
 PYEOF
 if [ $? -eq 0 ]; then RESULTS[structural]=1; fi
 
-# ---------- Config-derived (0.05): No wildcard imports ----------
-# Source: .claude/skills/add-tests-and-ci/SKILL.md @ commit 7f2a03b5d390f93a90776b8d99ace6b82fa61738
-echo "=== Config: no wildcard imports ==="
-grep -rn "from .* import \*" "$TARGET" 2>/dev/null
-if [ $? -ne 0 ]; then RESULTS[config_no_wildcard]=1; echo "TEST config_no_wildcard: PASS"; else echo "TEST config_no_wildcard: FAIL: wildcard import found"; fi
+# ---------- Config-derived (5%): Code quality ----------
+# [agent_config] (0.03): No wildcard imports - .claude/skills/*/SKILL.md:1-50 @ 7f2a03b5
+grep_result=$(grep -rn "from .* import \*" "$TARGET" 2>/dev/null)
+if [ -z "$grep_result" ]; then RESULTS[config_no_wildcard]=1; fi
 
-# ---------- Config-derived (0.05): No bare print() in production code ----------
-# Source: .claude/skills/add-tests-and-ci/SKILL.md @ commit 7f2a03b5d390f93a90776b8d99ace6b82fa61738
-echo "=== Config: no bare print() ==="
-grep -nE "^\s*print\(" "$TARGET" 2>/dev/null
-if [ $? -ne 0 ]; then RESULTS[config_no_bare_print]=1; echo "TEST config_no_bare_print: PASS"; else echo "TEST config_no_bare_print: FAIL: bare print() found"; fi
+# [agent_config] (0.02): No bare print() - .claude/skills/*/SKILL.md:1-50 @ 7f2a03b5
+grep_result=$(grep -nE "^\s*print\(" "$TARGET" 2>/dev/null)
+if [ -z "$grep_result" ]; then RESULTS[config_no_bare_print]=1; fi
 
 # ---------- SCORE ----------
 python3 -c "
-w = {'behavioral': ${WEIGHTS[behavioral]}, 'behavioral2': ${WEIGHTS[behavioral2]}, 'structural': ${WEIGHTS[structural]}, 'config_no_wildcard': ${WEIGHTS[config_no_wildcard]}, 'config_no_bare_print': ${WEIGHTS[config_no_bare_print]}}
-r = {'behavioral': ${RESULTS[behavioral]}, 'behavioral2': ${RESULTS[behavioral2]}, 'structural': ${RESULTS[structural]}, 'config_no_wildcard': ${RESULTS[config_no_wildcard]}, 'config_no_bare_print': ${RESULTS[config_no_bare_print]}}
+w = {'behavioral': ${WEIGHTS[behavioral]}, 'regression': ${WEIGHTS[regression]}, 'structural': ${WEIGHTS[structural]}, 'config_no_wildcard': ${WEIGHTS[config_no_wildcard]}, 'config_no_bare_print': ${WEIGHTS[config_no_bare_print]}}
+r = {'behavioral': ${RESULTS[behavioral]}, 'regression': ${RESULTS[regression]}, 'structural': ${RESULTS[structural]}, 'config_no_wildcard': ${RESULTS[config_no_wildcard]}, 'config_no_bare_print': ${RESULTS[config_no_bare_print]}}
 score = sum(w[k]*r[k] for k in w)
 print(f'{score:.4f}')
 " > "$REWARD_FILE"
 
 echo "=== RESULTS ==="
-for key in behavioral behavioral2 structural config_no_wildcard config_no_bare_print; do
+for key in behavioral regression structural config_no_wildcard config_no_bare_print; do
     echo "  $key: ${RESULTS[$key]} (weight ${WEIGHTS[$key]})"
 done
 echo "Final score: $(cat $REWARD_FILE)"

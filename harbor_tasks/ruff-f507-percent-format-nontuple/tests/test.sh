@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Verifier for ruff-f507-percent-format-nontuple
 # Bug: F507 doesn't flag non-tuple RHS in %-formatting with multiple placeholders
-# File: crates/ruff_linter/src/rules/pyflakes/rules/strings.rs
 set +e
 
 REWARD_FILE="/logs/verifier/reward.txt"
@@ -22,228 +21,275 @@ if [ ! -f "$RUST_FILE" ] || [ ! -f "$FIXTURE" ]; then
 fi
 echo "GATE PASS"
 
-# Weights: >=60% behavioral, <=40% structural
-W_BEHAV_FIXTURE_LITERALS=0.20
-W_BEHAV_RESOLVED_TYPE=0.25
-W_BEHAV_FIXTURE_SAFE=0.15
-W_STRUCTURAL_IMPORT=0.15
-W_STRUCTURAL_ATOM_CHECK=0.15
-W_ANTISTUB=0.05
-W_CONFIG_NO_PANIC=0.05
-
-SCORE="0.0"
-
-# -- TEST 1 (BEHAVIORAL): Fixture has literal non-tuple test cases --
-echo ""
-echo "TEST 1: behavioral -- fixture has literal non-tuple F507 test cases (weight=$W_BEHAV_FIXTURE_LITERALS)"
-T1=$(python3 << 'PYEOF'
-import sys
-
-with open("/workspace/ruff/crates/ruff_linter/resources/test/fixtures/pyflakes/F50x.py") as f:
-    source = f.read()
-
-# Check for literal non-tuple test cases
-has_int_case = "'%s %s' % 42" in source
-has_float_case = "'%s %s' % 3.14" in source
-has_str_case = "'%s %s' % \"hello\"" in source
-has_bool_case = "'%s %s' % True" in source
-has_none_case = "'%s %s' % None" in source
-
-count = sum([has_int_case, has_float_case, has_str_case, has_bool_case, has_none_case])
-
-if count >= 3:
-    print(f"PASS: fixture has {count} literal non-tuple test cases")
-    sys.exit(0)
-elif count >= 1:
-    print(f"PASS: fixture has {count} literal non-tuple test case(s) (partial)")
-    sys.exit(0)
-else:
-    print("FAIL: no literal non-tuple test cases found in fixture")
-    sys.exit(1)
-PYEOF
-)
-echo "$T1"
-if echo "$T1" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_FIXTURE_LITERALS)")
+# Verify Rust is available for compilation
+if ! command -v cargo &> /dev/null; then
+    echo "Installing Rust..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    source "$HOME/.cargo/env"
 fi
 
-# -- TEST 2 (BEHAVIORAL): Uses ResolvedPythonType for type inference --
+# Weights: >=60% behavioral, <=40% structural
+W_F2P_COMPILE=0.10        # Code compiles
+W_F2P_LITERAL_INT=0.10    # '%s %s' % 42 triggers F507
+W_F2P_LITERAL_FLOAT=0.10  # '%s %s' % 3.14 triggers F507
+W_F2P_LITERAL_STR=0.10    # '%s %s' % "hello" triggers F507
+W_F2P_COMPOUND_EXPR=0.10  # '%s %s' % -1 triggers F507 (unary op)
+W_P2P_SAFE_CASES=0.10     # Variables/calls do NOT trigger F507
+W_P2P_SINGLE_PLACEHOLDER=0.05  # '%s' % 42 is OK
+W_STRUCTURAL_TYPE_INFERENCE=0.15  # Uses ResolvedPythonType
+W_ANTISTUB=0.10           # File has meaningful implementation
+W_CONFIG_NO_PANIC=0.10    # No panic!/unwrap in changed code
+
+SCORE="0.0"
+FAILED_F2P=0  # Track if any fail-to-pass test fails
+
 echo ""
-echo "TEST 2: behavioral -- uses ResolvedPythonType for non-tuple detection (weight=$W_BEHAV_RESOLVED_TYPE)"
-T2=$(python3 << 'PYEOF'
+echo "=== Building ruff (required for behavioral tests) ==="
+cd /workspace/ruff
+
+# Try incremental build first, fall back to full build
+cargo build --release --bin ruff 2>&1 | tail -20
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo "RELEASE BUILD FAILED, trying debug build..."
+    cargo build --bin ruff 2>&1 | tail -20
+    if [ ${PIPESTATUS[0]} -ne 0 ]; then
+        echo "BUILD FAIL: ruff compilation failed"
+        echo "0.0000" > "$REWARD_FILE"
+        exit 0
+    fi
+    RUFF_BIN="/workspace/ruff/target/debug/ruff"
+else
+    RUFF_BIN="/workspace/ruff/target/release/ruff"
+fi
+
+echo "BUILD SUCCESS"
+SCORE=$(python3 -c "print($SCORE + $W_F2P_COMPILE)")
+
+# Helper function to check if F507 is reported on a line
+check_f507_on_line() {
+    local file="$1"
+    local line_num="$2"
+    local description="$3"
+    
+    output=$($RUFF_BIN check --output-format=concise --select=F507 "$file" 2>/dev/null)
+    # Check if F507 is reported for the specific line
+    echo "$output" | grep -q "F507.*$line_num\|:$line_num "
+    return $?
+}
+
+# Helper function to check if a line has NO F507
+check_no_f507_on_line() {
+    local file="$1"
+    local line_num="$2"
+    
+    output=$($RUFF_BIN check --output-format=concise --select=F507 "$file" 2>/dev/null)
+    # Should NOT find F507 on this line
+    if echo "$output" | grep -q "F507.*$line_num\|:$line_num "; then
+        return 1
+    fi
+    return 0
+}
+
+echo ""
+echo "=== FAIL-TO-PASS: Verify F507 triggers for literal non-tuples ==="
+
+# For fail-to-pass tests, the buggy baseline would NOT flag these
+# Fixed code SHOULD flag them
+
+echo ""
+echo "TEST F2P1: F507 triggered on literal int (line 29)"
+if check_f507_on_line "$FIXTURE" "29" "'%s %s' % 42"; then
+    echo "PASS: F507 detected on literal int"
+    SCORE=$(python3 -c "print($SCORE + $W_F2P_LITERAL_INT)")
+else
+    echo "FAIL: F507 not detected on literal int"
+    FAILED_F2P=1
+fi
+
+echo ""
+echo "TEST F2P2: F507 triggered on literal float (line 30)"
+if check_f507_on_line "$FIXTURE" "30" "'%s %s' % 3.14"; then
+    echo "PASS: F507 detected on literal float"
+    SCORE=$(python3 -c "print($SCORE + $W_F2P_LITERAL_FLOAT)")
+else
+    echo "FAIL: F507 not detected on literal float"
+    FAILED_F2P=1
+fi
+
+echo ""
+echo "TEST F2P3: F507 triggered on literal string (line 31)"
+if check_f507_on_line "$FIXTURE" "31" "'%s %s' % \"hello\""; then
+    echo "PASS: F507 detected on literal string"
+    SCORE=$(python3 -c "print($SCORE + $W_F2P_LITERAL_STR)")
+else
+    echo "FAIL: F507 not detected on literal string"
+    FAILED_F2P=1
+fi
+
+echo ""
+echo "TEST F2P4: F507 triggered on compound expression (line 38)"
+if check_f507_on_line "$FIXTURE" "38" "'%s %s' % -1"; then
+    echo "PASS: F507 detected on unary op expression"
+    SCORE=$(python3 -c "print($SCORE + $W_F2P_COMPOUND_EXPR)")
+else
+    echo "FAIL: F507 not detected on unary op expression"
+    FAILED_F2P=1
+fi
+
+echo ""
+echo "=== PASS-TO-PASS: Verify safe cases are NOT flagged ==="
+
+echo ""
+echo "TEST P2P1: No F507 on variable reference (line 47)"
+if check_no_f507_on_line "$FIXTURE" "47"; then
+    echo "PASS: F507 not triggered on variable"
+    SCORE=$(python3 -c "print($SCORE + $W_P2P_SAFE_CASES)")
+else
+    echo "FAIL: F507 incorrectly triggered on variable"
+fi
+
+echo ""
+echo "TEST P2P2: No F507 on single placeholder with literal (line 44)"
+if check_no_f507_on_line "$FIXTURE" "44"; then
+    echo "PASS: F507 not triggered on single placeholder"
+    SCORE=$(python3 -c "print($SCORE + $W_P2P_SINGLE_PLACEHOLDER)")
+else
+    echo "FAIL: F507 incorrectly triggered on single placeholder"
+fi
+
+echo ""
+echo "=== STRUCTURAL: Type inference usage ==="
+
+echo ""
+echo "TEST STRUCT1: Uses ResolvedPythonType for type inference"
+T_STRUCT=$(python3 << 'PYEOF'
 import sys
+import ast
 
 with open("/workspace/ruff/crates/ruff_linter/src/rules/pyflakes/rules/strings.rs") as f:
     source = f.read()
 
-has_resolved = "ResolvedPythonType" in source
-has_python_type = "PythonType" in source
+# Check for actual usage of ResolvedPythonType - not just string matching
+# The fix should use ResolvedPythonType::from() and check for Atom
+has_resolved_from = "ResolvedPythonType::from" in source
+has_atom_check = "ResolvedPythonType::Atom" in source or "let resolved_type" in source
+has_tuple_comparison = "PythonType::Tuple" in source
 
-if has_resolved and has_python_type:
-    print("PASS: uses ResolvedPythonType and PythonType for inference")
+# Also verify the logic flow exists
+has_if_branch = source.count("if") > 10  # Sanity check for actual code
+
+if has_resolved_from and has_tuple_comparison:
+    print("PASS: uses ResolvedPythonType::from() with Tuple comparison")
     sys.exit(0)
-elif has_resolved:
-    print("PASS: uses ResolvedPythonType (partial)")
+elif has_resolved_from:
+    print("PARTIAL: uses ResolvedPythonType but may not compare with Tuple")
     sys.exit(0)
 else:
     print("FAIL: no ResolvedPythonType usage found")
     sys.exit(1)
 PYEOF
 )
-echo "$T2"
-if echo "$T2" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_RESOLVED_TYPE)")
+echo "$T_STRUCT"
+if echo "$T_STRUCT" | grep -q "PASS"; then
+    SCORE=$(python3 -c "print($SCORE + $W_STRUCTURAL_TYPE_INFERENCE)")
 fi
 
-# -- TEST 3 (BEHAVIORAL): Fixture has safe (non-flagged) variable cases --
 echo ""
-echo "TEST 3: behavioral -- fixture has non-flagged variable/call cases (weight=$W_BEHAV_FIXTURE_SAFE)"
-T3=$(python3 << 'PYEOF'
-import sys
-
-with open("/workspace/ruff/crates/ruff_linter/resources/test/fixtures/pyflakes/F50x.py") as f:
-    source = f.read()
-
-# Variables should NOT be flagged (they could be tuples)
-has_var_case = "banana" in source or "% x" in source
-has_attr_case = "obj.attr" in source or ".attr" in source
-has_call_case = "get_args()" in source or "% func()" in source
-
-safe_count = sum([has_var_case, has_attr_case, has_call_case])
-
-if safe_count >= 2:
-    print(f"PASS: fixture has {safe_count} non-flagged safe cases")
-    sys.exit(0)
-elif safe_count >= 1:
-    print(f"PASS: fixture has {safe_count} non-flagged safe case(s)")
-    sys.exit(0)
-else:
-    print("FAIL: no non-flagged safe cases in fixture")
-    sys.exit(1)
-PYEOF
-)
-echo "$T3"
-if echo "$T3" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_BEHAV_FIXTURE_SAFE)")
-fi
-
-# -- TEST 4 (STRUCTURAL): type_inference import --
-echo ""
-echo "TEST 4: structural -- type_inference module imported (weight=$W_STRUCTURAL_IMPORT)"
-T4=$(python3 << 'PYEOF'
+echo "TEST ANTI_STUB: File has meaningful implementation"
+T_STUB=$(python3 << 'PYEOF'
 import sys
 
 with open("/workspace/ruff/crates/ruff_linter/src/rules/pyflakes/rules/strings.rs") as f:
     source = f.read()
 
-has_import = "type_inference" in source
-has_use = "use ruff_python_semantic" in source and "ResolvedPythonType" in source
+# Count actual implementation lines (non-comment, non-empty)
+lines = source.splitlines()
+code_lines = [l for l in lines if l.strip() and not l.strip().startswith('//') and not l.strip().startswith('///')]
 
-if has_import and has_use:
-    print("PASS: type_inference module properly imported")
-    sys.exit(0)
-elif has_import:
-    print("PASS: type_inference referenced")
-    sys.exit(0)
-else:
-    print("FAIL: type_inference not imported")
-    sys.exit(1)
-PYEOF
-)
-echo "$T4"
-if echo "$T4" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_STRUCTURAL_IMPORT)")
-fi
-
-# -- TEST 5 (STRUCTURAL): PythonType::Tuple exclusion check --
-echo ""
-echo "TEST 5: structural -- checks resolved type is not Tuple (weight=$W_STRUCTURAL_ATOM_CHECK)"
-T5=$(python3 << 'PYEOF'
-import sys
-
-with open("/workspace/ruff/crates/ruff_linter/src/rules/pyflakes/rules/strings.rs") as f:
-    source = f.read()
-
-# The fix should check: if resolved_type != PythonType::Tuple
-has_tuple_check = "PythonType::Tuple" in source
-has_atom = "Atom" in source and "ResolvedPythonType" in source
-
-if has_tuple_check and has_atom:
-    print("PASS: checks ResolvedPythonType::Atom is not Tuple")
-    sys.exit(0)
-elif has_tuple_check:
-    print("PASS: PythonType::Tuple exclusion exists")
-    sys.exit(0)
-else:
-    print("FAIL: no Tuple exclusion check found")
-    sys.exit(1)
-PYEOF
-)
-echo "$T5"
-if echo "$T5" | grep -q "^PASS"; then
-    SCORE=$(python3 -c "print($SCORE + $W_STRUCTURAL_ATOM_CHECK)")
-fi
-
-# -- TEST 6: Anti-stub --
-echo ""
-echo "TEST 6: anti-stub -- file retains core logic (weight=$W_ANTISTUB)"
-T6=$(python3 << 'PYEOF'
-import sys
-
-with open("/workspace/ruff/crates/ruff_linter/src/rules/pyflakes/rules/strings.rs") as f:
-    source = f.read()
-
-required = ["percent_format_positional_count_mismatch", "PercentFormatPositionalCountMismatch",
-            "num_positional", "checker"]
-missing = [r for r in required if r not in source]
-
-if missing:
-    print(f"FAIL: file is missing expected content: {missing}")
+if len(code_lines) < 50:
+    print(f"FAIL: only {len(code_lines)} code lines - looks like a stub")
     sys.exit(1)
 
-line_count = len(source.splitlines())
-if line_count < 100:
-    print(f"FAIL: file has only {line_count} lines -- looks like a stub")
+# Check for the specific function being modified
+if "percent_format_positional_count_mismatch" not in source:
+    print("FAIL: missing the target function")
     sys.exit(1)
 
-print(f"PASS: file has {line_count} lines and contains all expected symbols")
+# Verify the function has actual logic (not just pass/nop)
+func_start = source.find("pub(crate) fn percent_format_positional_count_mismatch")
+if func_start == -1:
+    func_start = source.find("fn percent_format_positional_count_mismatch")
+    
+if func_start != -1:
+    func_section = source[func_start:func_start+2000]
+    # Count control flow statements
+    control_flow = func_section.count('if ') + func_section.count('match ') + func_section.count('for ')
+    if control_flow < 2:
+        print(f"FAIL: function lacks control flow (only {control_flow} branches)")
+        sys.exit(1)
+
+print(f"PASS: {len(code_lines)} code lines, function present with control flow")
 sys.exit(0)
 PYEOF
 )
-echo "$T6"
-if echo "$T6" | grep -q "^PASS"; then
+echo "$T_STUB"
+if echo "$T_STUB" | grep -q "PASS"; then
     SCORE=$(python3 -c "print($SCORE + $W_ANTISTUB)")
 fi
 
-
-# ---------- Config-derived test (0.05): "Avoid panic!, unreachable!, .unwrap()" ----------
-# Source: AGENTS.md line 79 @ b8fad8312fde560943653811ae3e16e22b99dfc7
 echo ""
-echo "TEST config_no_panic: config-derived -- avoid panic!/unwrap (weight=$W_CONFIG_NO_PANIC)"
+echo "TEST CONFIG: No panic!/unwrap in changed code"
 T_CONFIG=$(python3 << 'PYEOF'
-import sys, os
+import sys, subprocess, os
+
 os.chdir('/workspace/ruff')
-import subprocess
-result = subprocess.run(['git', 'diff', '--name-only', 'HEAD~1..HEAD'], capture_output=True, text=True)
+
+# Get list of changed Rust files
+result = subprocess.run(['git', 'diff', '--name-only', 'HEAD~1..HEAD'], 
+                       capture_output=True, text=True)
 changed_rs = [f for f in result.stdout.strip().split('\n') if f.endswith('.rs')]
-if not changed_rs:
-    result2 = subprocess.run(['find', 'crates', '-name', '*.rs', '-newer', 'Cargo.toml'], capture_output=True, text=True)
-    changed_rs = [f for f in result2.stdout.strip().split('\n') if f]
+
+# If no tracked changes, find recently modified files
+if not changed_rs or changed_rs == ['']:
+    # Check if files in the crate have been modified vs original
+    result = subprocess.run(['git', 'status', '--porcelain'], 
+                           capture_output=True, text=True)
+    for line in result.stdout.strip().split('\n'):
+        if line.endswith('.rs') and 'crates/ruff_linter' in line:
+            changed_rs.append(line[3:])  # Strip status prefix
+
+# Also always check the main file being modified
+if 'crates/ruff_linter/src/rules/pyflakes/rules/strings.rs' not in changed_rs:
+    changed_rs.append('crates/ruff_linter/src/rules/pyflakes/rules/strings.rs')
+
 warns = 0
-for f in changed_rs[:20]:
+for f in changed_rs[:10]:
+    if not f:
+        continue
+    filepath = f if f.startswith('/') else os.path.join('/workspace/ruff', f)
+    if not os.path.exists(filepath):
+        continue
     try:
-        with open(f) as fh:
+        with open(filepath) as fh:
             for i, line in enumerate(fh, 1):
                 s = line.strip()
+                # Skip comments
                 if s.startswith('//'):
                     continue
-                if ('panic!(' in s or '.unwrap()' in s) and 'test' not in f:
+                # Count risky operations (but allow in tests)
+                if 'panic!(' in s or ('.unwrap()' in s and 'test' not in f.lower()):
                     warns += 1
-    except: pass
-if warns > 5:
-    print('FAIL: ' + str(warns) + ' uses of panic!/unwrap in changed files')
+                    if warns <= 3:
+                        print(f"WARNING: {f}:{i}: {s[:60]}")
+    except:
+        pass
+
+if warns > 3:
+    print(f'FAIL: {warns} uses of panic!/unwrap')
     sys.exit(1)
+
 print('PASS')
+sys.exit(0)
 PYEOF
 )
 echo "$T_CONFIG"
@@ -256,8 +302,21 @@ echo ""
 echo "================================"
 REWARD=$(python3 -c "print('{:.4f}'.format(min($SCORE, 1.0)))")
 echo "Reward: $REWARD"
+echo "Failed F2P tests: $FAILED_F2P"
 echo "================================"
 echo "$REWARD" > "$REWARD_FILE"
+
+# Write detailed reward.json
+cat > /logs/verifier/reward.json << EOF
+{
+  "reward": $REWARD,
+  "compile": $(python3 -c "print($REWARD >= 0.10 and '1' or '0')"),
+  "behavioral_f2p": $(python3 -c "print($REWARD >= 0.40 and '1' or '0')"),
+  "behavioral_p2p": $(python3 -c "print($REWARD >= 0.55 and '1' or '0')"),
+  "structural": $([ "$T_STRUCT" = "*PASS*" ] && echo "1" || echo "0"),
+  "failed_f2p_count": $FAILED_F2P
+}
+EOF
 
 # LLM rubric judge (runs only when LLM_JUDGE=1)
 source /tests/judge_hook.sh 2>/dev/null || true
