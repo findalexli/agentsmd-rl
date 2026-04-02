@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35650
+  base_commit: "87ae75b33f71eb673c55ddb3a147a9e58b7d05bd"
+  merge_commit: ""
+
+checks:
+  - id: createfakefunction_exists
+    type: pass_to_pass
+    origin: static
+    description: "ReactFlightClient.js exists and createFakeFunction has a catch block"
+
+  - id: defineProperty_sets_fn_name_in_csp_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "catch block in createFakeFunction sets fn.name via Object.defineProperty with {value: name}"
+
+  - id: flowfixme_cannot_write_comment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "$FlowFixMe[cannot-write] comment suppresses Flow type error on fn.name assignment inside catch block"
+
+  - id: existing_flight_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream ReactFlight test suite still passes after the fix"
+
+rubric:
+  - rule: "When using a non-obvious workaround (e.g. Object.defineProperty instead of the bind trick to name a function), include an explanatory comment describing why the more idiomatic approach does not work."
+    source:
+      path: "CLAUDE.md"
+      lines: ""
+      commit: "87ae75b33f71eb673c55ddb3a147a9e58b7d05bd"

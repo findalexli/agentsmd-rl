@@ -1,0 +1,46 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35723
+  base_commit: "eab523e2a99583703b13536670dfdd8a3b1e26e0"
+  merge_commit: "24f215ce8b0e17a230fbb7317919a6ae0c324f35"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "renderer.js must parse without syntax errors (node --check)"
+
+  - id: prevfiber_guard_profiling_loop
+    type: fail_to_pass
+    origin: pr_diff
+    description: >
+      renderer.js must have the 'prevFiber !== fiber && didFiberRender' guard in the
+      profiling data loop so bailed-out fibers are not reported as re-rendered
+
+  - id: prevfiber_guard_trace_update
+    type: fail_to_pass
+    origin: pr_diff
+    description: >
+      traceNearestHostComponentUpdate assignment must be guarded by
+      if (prevFiber !== nextFiber) to avoid false trace flags for filtered fibers
+
+  - id: prevfiber_guard_inspect_update
+    type: fail_to_pass
+    origin: pr_diff
+    description: >
+      hasElementUpdatedSinceLastInspected assignment must be guarded by
+      if (prevFiber !== nextFiber) to avoid spurious cache invalidation on bailed-out fibers
+
+  - id: existing_profiling_charts_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Full profilingCharts test suite passes after the fix"
+
+  - id: didfiberrender_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "didFiberRender function is not removed or stubbed — retains ClassComponent case"
+
+rubric: []

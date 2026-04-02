@@ -1,0 +1,51 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35923
+  base_commit: "93882bd40ee48dc6d072dfc0b6cc7801fac1be31"
+  merge_commit: ""
+
+checks:
+  - id: file_structure
+    type: pass_to_pass
+    origin: static
+    description: "ContextMenu.js must exist and export a ContextMenu function with useLayoutEffect and createPortal"
+
+  - id: createref_not_used_as_default
+    type: fail_to_pass
+    origin: pr_diff
+    description: "createRef() must not be used as default value for the ref prop — root cause of the null-ref crash"
+
+  - id: hidemenu_variable_and_early_return_in_effect
+    type: fail_to_pass
+    origin: pr_diff
+    description: "hideMenu variable must be defined and checked as early return inside useLayoutEffect"
+
+  - id: null_check_before_using_ref
+    type: fail_to_pass
+    origin: pr_diff
+    description: "menuRef.current must be null-checked before use in useLayoutEffect (guards against crash)"
+
+  - id: hidemenu_in_dependency_array
+    type: fail_to_pass
+    origin: pr_diff
+    description: "useLayoutEffect dependency array must be [hideMenu] not empty []"
+
+  - id: internal_ref_replaces_prop_ref
+    type: pass_to_pass
+    origin: static
+    description: "Component must use internal React.useRef (menuRef) attached to the div, not the external ref prop"
+
+rubric:
+  - rule: "The fix should not change the visible behavior of the component — context menus should still open, close, and respond to window click/resize/keydown events."
+    source:
+      path: "packages/react-devtools-shared/src/devtools/ContextMenu/ContextMenu.js"
+      lines: "70-120"
+      commit: "93882bd40ee48dc6d072dfc0b6cc7801fac1be31"
+
+  - rule: "Error thrown when menuRef.current is unexpectedly null should be descriptive and clearly identify it as a React DevTools bug (not a user error)."
+    source:
+      path: "packages/react-devtools-shared/src/devtools/ContextMenu/ContextMenu.js"
+      lines: "83-85"
+      commit: "93882bd40ee48dc6d072dfc0b6cc7801fac1be31"

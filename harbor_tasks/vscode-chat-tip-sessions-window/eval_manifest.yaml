@@ -1,0 +1,60 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 0
+  base_commit: "67fdb3ee04fbd04430cd47702977eaa51bd14c40"
+  merge_commit: ""
+
+checks:
+  - id: tip_id_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TIP_CATALOG must contain a tip with id 'tip.openSessionsWindow'"
+
+  - id: tip_tier_qol
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The sessions window tip must have tier ChatTipTier.Qol"
+
+  - id: command_link_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "buildMessage must link to workbench.action.openSessionsWindow"
+
+  - id: command_link_descriptive_title
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Command link must include the title 'Open Sessions Window'"
+
+  - id: exclude_when_commands_executed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tip must be excluded once workbench.action.openSessionsWindow is executed"
+
+  - id: dismiss_when_commands_clicked
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tip must be dismissed once workbench.action.openSessionsWindow is clicked"
+
+  - id: when_clause_non_stable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tip must only appear on non-stable builds via ProductQualityContext.notEqualsTo"
+
+  - id: when_clause_not_sessions_window
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tip must be hidden when already in a Sessions Window via IsSessionsWindowContext.negate()"
+
+  - id: required_imports
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ProductQualityContext and IsSessionsWindowContext must be imported"
+
+  - id: existing_tips_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-existing tip IDs in TIP_CATALOG must still be present"
+
+rubric: []

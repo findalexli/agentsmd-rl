@@ -1,0 +1,72 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 306366
+  base_commit: "d919f292bffcc695c5b23b12708c3a2ce3693f2a"
+  merge_commit: "0fab59cfaeb6d249c28917a47e6940c204cd3126"
+
+checks:
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript must compile without errors after the fix"
+
+  - id: viewmodel_parameter_in_constructor
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ChangesTreeRenderer constructor must accept a viewModel: ChangesViewModel parameter"
+
+  - id: viewmodel_passed_to_renderer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "createInstance must pass this.viewModel as the first argument to ChangesTreeRenderer"
+
+  - id: version_mode_context_key_binding
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bindContextKey must be called for changesVersionModeContextKey using viewModel.versionModeObs"
+
+  - id: css_conditional_hide_diff_stats
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CSS must hide diff stats only when action bar has actions, not unconditionally"
+
+  - id: class_structure_preserved
+    type: pass_to_pass
+    origin: static
+    description: "ChangesTreeRenderer class structure and ICompressibleTreeRenderer implementation preserved"
+
+  - id: disposables_registered_immediately
+    type: fail_to_pass
+    origin: agent_config
+    description: "bindContextKey result must be registered to templateDisposables immediately"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "144"
+      commit: "d919f292bffcc695c5b23b12708c3a2ce3693f2a"
+
+rubric:
+  - rule: "Use arrow functions => over anonymous function expressions"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "104"
+      commit: "d919f292bffcc695c5b23b12708c3a2ce3693f2a"
+
+  - rule: "Always surround loop and conditional bodies with curly braces"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "113"
+      commit: "d919f292bffcc695c5b23b12708c3a2ce3693f2a"
+
+  - rule: "Services are injected through constructor parameters; if non-service parameters are needed, they need to come after the service parameters"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "32"
+      commit: "d919f292bffcc695c5b23b12708c3a2ce3693f2a"
+
+  - rule: "Never duplicate imports. Always reuse existing imports if they are present."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "138"
+      commit: "d919f292bffcc695c5b23b12708c3a2ce3693f2a"

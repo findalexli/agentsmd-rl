@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 306347
+  base_commit: "64e73b036669494bbc9a6904cf090b01a8d3bb1e"
+  merge_commit: "af50a47c13e23e0b3c46719dbd92fe00144362a5"
+
+checks:
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "All modified TypeScript files compile without errors"
+
+  - id: rerun_failed_jobs_method_in_fetcher
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GitHubPRCIFetcher has async rerunFailedJobs calling the GitHub rerun-failed-jobs API"
+
+  - id: rerun_failed_check_method_in_model
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GitHubPullRequestCIModel has rerunFailedCheck that delegates to fetcher and calls refresh"
+
+  - id: parse_workflow_run_id_behavior
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parseWorkflowRunId extracts GitHub Actions run IDs from detail URLs (multiple URL shapes)"
+
+  - id: rerun_button_shown_for_failed_checks
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ciStatusWidget shows ci.rerunCheck action button only when CICheckGroup.Failed"
+
+  - id: existing_ci_methods_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "getChecksForRef (fetcher) and getCheckRunAnnotations (model) are not removed"
+
+  - id: named_regex_capture_groups
+    type: fail_to_pass
+    origin: agent_config
+    description: "parseWorkflowRunId uses named regex capture groups (?<runId>...) not numbered ones"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "136"
+      commit: "64e73b036669494bbc9a6904cf090b01a8d3bb1e"
+
+rubric:
+  - rule: "UI button labels use title-style capitalization (e.g. 'Rerun Check', not 'Rerun check' or 'rerun check')."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "99-100"
+      commit: "64e73b036669494bbc9a6904cf090b01a8d3bb1e"

@@ -1,0 +1,56 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 0  # no upstream PR number; task derived from base commit refactoring
+  base_commit: "78f5c504b732aec0eb12514bc2cf3f27a8143dd2"
+  merge_commit: ""
+
+checks:
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "packages/react-dom-bindings/src/client/ReactFiberConfigDOM.js must parse without Node.js syntax errors"
+
+  - id: empty_array_early_return
+    type: fail_to_pass
+    origin: pr_diff
+    description: "indexOfEventListener returns -1 immediately when the eventListeners array is empty (avoids loop overhead)"
+
+  - id: normalized_options_cached_before_loop
+    type: fail_to_pass
+    origin: pr_diff
+    description: "normalizeListenerOptions(optionsOrUseCapture) is called once before the loop and stored in normalizedOptions, not called repeatedly inside the loop"
+
+  - id: blur_early_exit_when_active_not_in_parent
+    type: fail_to_pass
+    origin: pr_diff
+    description: "blur() checks whether the active element is inside the fragment's parent (via .contains()) and returns early if not, skipping unnecessary tree traversal"
+
+  - id: active_element_passed_to_traversal_callback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "blur() fetches activeElement once and passes it to traverseFragmentInstance, so blurActiveElementWithinFragment does not re-query ownerDocument.activeElement per child"
+
+  - id: text_nodes_skipped_in_blur_traversal
+    type: fail_to_pass
+    origin: pr_diff
+    description: "blurActiveElementWithinFragment guards against HostText children (text nodes cannot receive focus and must be skipped)"
+
+  - id: redundant_first_instance_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "compareDocumentPosition no longer declares a redundant firstInstance variable that duplicates the children[0] lookup already stored in firstNode/firstElement"
+
+rubric:
+  - rule: "Code changes should be consistent with surrounding style: use the same variable naming conventions (e.g. camelCase) and Flow type annotation patterns already present in the file."
+    source:
+      path: "CLAUDE.md"
+      lines: "1-6"
+      commit: "78f5c504b732aec0eb12514bc2cf3f27a8143dd2"
+
+  - rule: "Before committing, run yarn prettier to fix formatting and yarn linc to catch lint issues."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "1-20"
+      commit: "78f5c504b732aec0eb12514bc2cf3f27a8143dd2"

@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 0
+  base_commit: "00356ebc69d09b93830f05eb4eabf872d425abdd"
+  merge_commit: ""
+
+checks:
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript must compile without errors after the fix"
+
+  - id: modal_navigation_conditional_on_item_count
+    type: fail_to_pass
+    origin: pr_diff
+    description: "openFileItem 6th argument must be 'items.length > 1', not hardcoded 'true', so single-item lists skip modal navigation"
+
+  - id: css_action_bar_visibility_uses_chat_editing_session_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CSS action bar hover/focus/select selectors use .chat-editing-session-list (not .changes-view-body)"
+
+  - id: css_diff_stats_hide_uses_chat_editing_session_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CSS working-set-line-counts hiding selectors use .chat-editing-session-list for all three states"
+
+  - id: css_no_changes_view_body_selectors
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All .changes-view-body selectors in the action bar / diff-stats blocks are removed from changesView.css"
+
+  - id: layering_rules
+    type: pass_to_pass
+    origin: repo_tests
+    description: "VS Code module layering rules pass (no forbidden cross-layer imports)"
+
+rubric: []

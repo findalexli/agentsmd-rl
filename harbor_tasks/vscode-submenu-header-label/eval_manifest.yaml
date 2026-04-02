@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 306327
+  base_commit: "29f5047784335d81e143570a307f75f7800c603a"
+  merge_commit: "03e592c6296a4ffa563ee9c8414757f3f64afbdf"
+
+checks:
+  - id: header_item_emitted_for_labeled_groups
+    type: fail_to_pass
+    origin: pr_diff
+    description: "actionList.ts pushes a Header item when a submenu group has a label"
+
+  - id: description_simplified_to_child_tooltip
+    type: fail_to_pass
+    origin: pr_diff
+    description: "description field no longer conditionally injects group.label; uses child.tooltip only"
+
+  - id: session_picker_submenu_label_cleared
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SubmenuAction in sessionWorkspacePicker.ts uses empty string as label, not provider.label"
+
+  - id: session_picker_provider_label_in_first_child_tooltip
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Provider label is passed as tooltip of the first child action (ci === 0)"
+
+  - id: header_push_uses_group_label_variable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Header item push uses group.label variable for both label and group.title (not hardcoded)"
+
+  - id: conditional_uses_curly_braces
+    type: fail_to_pass
+    origin: agent_config
+    description: "if (group.label) block uses curly braces per VS Code coding guidelines"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "113"
+      commit: "29f5047784335d81e143570a307f75f7800c603a"
+
+  - id: indentation_uses_tabs
+    type: pass_to_pass
+    origin: agent_config
+    description: "actionList.ts uses tab indentation (not spaces) per VS Code coding guidelines"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "72"
+      commit: "29f5047784335d81e143570a307f75f7800c603a"
+
+rubric:
+  - rule: "All strings visible to the user need to be externalized using the `vs/nls` module. Externalized strings must not use string concatenation. Use placeholders instead (`{0}`)."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "95-96"
+      commit: "29f5047784335d81e143570a307f75f7800c603a"
+
+  - rule: "All user facing messages must be localized using the applicable localization framework (for example `nls.localize()` method)."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "132"
+      commit: "29f5047784335d81e143570a307f75f7800c603a"

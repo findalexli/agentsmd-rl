@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35634
+  base_commit: "10680271fab565e0edf948d3a6dc9d30e83df94c"
+  merge_commit: "8c34556ca8df0dab34bbaf68e0dd15cd4a5e3f7f"
+
+checks:
+  - id: server_reference_id_not_opaque
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ServerReferenceId type must not use the 'opaque' modifier — it must be a plain exported type alias for string"
+
+  - id: resolve_server_reference_parameter_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resolveServerReference id parameter must be typed as ServerReferenceId, not mixed"
+
+  - id: load_server_reference_metadata_id_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "loadServerReference metaData.id must be typed as ServerReferenceId, not bare string"
+
+  - id: server_manifest_remains_opaque
+    type: pass_to_pass
+    origin: static
+    description: "ServerManifest type must remain opaque — it was not changed by this fix"
+
+  - id: resolve_server_reference_throws_error
+    type: pass_to_pass
+    origin: static
+    description: "resolveServerReference must still contain its throw statement — only the type annotation changed"
+
+rubric: []

@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35763
+  base_commit: "cd515d7e22636238adef912356f522168946313d"
+  merge_commit: "892c68605c46af0558cdd546782f23ad120ad0d4"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "packages/react-reconciler/src/getComponentNameFromFiber.js must parse without JavaScript syntax errors"
+
+  - id: suspense_offscreen_error_message
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error thrown inside Suspense should report <Suspense> as the component name, not <Offscreen>"
+
+  - id: activity_offscreen_error_message
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error thrown inside Activity should report <Activity> as the component name, not <Offscreen>"
+
+  - id: existing_error_logging_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing ReactIncrementalErrorLogging tests must not break"
+
+  - id: not_stub
+    type: fail_to_pass
+    origin: static
+    description: "OffscreenComponent case must recursively walk to parent fiber, not return a hardcoded string"
+
+rubric: []

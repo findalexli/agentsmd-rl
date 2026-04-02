@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 0
+  base_commit: "f8c32042ed5206d294fe73f1a3b2b74cd3f7bb7a"
+  merge_commit: ""
+
+checks:
+  - id: sidebar_visible_selector_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The .agent-sessions-workbench:not(.nosidebar) CSS selector must be added to sessionsTitleBarWidget.css"
+
+  - id: padding_left_zero_when_sidebar_visible
+    type: fail_to_pass
+    origin: pr_diff
+    description: "padding-left: 0 must be set inside the sidebar-visible (.not(.nosidebar)) rule block"
+
+  - id: css_rule_targets_titlebar_container
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The padding-left: 0 rule must be scoped to .agent-sessions-titlebar-container within the nosidebar selector"
+
+  - id: layout_md_documents_nosidebar_padding
+    type: fail_to_pass
+    origin: pr_diff
+    description: "LAYOUT.md must document the sidebar-aware padding behavior (references nosidebar class and padding-left)"
+
+  - id: base_css_rule_preserved
+    type: pass_to_pass
+    origin: static
+    description: "The original .agent-sessions-titlebar-container base CSS rule must not be removed or broken"
+
+rubric: []

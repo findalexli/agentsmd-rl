@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 0  # No PR number recorded; fix identified via solve.sh gold patch
+  base_commit: "24f215ce8b0e17a230fbb7317919a6ae0c324f35"
+  merge_commit: ""
+
+checks:
+  - id: renderer_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "renderer.js exists and contains Activity/OffscreenComponent handling"
+
+  - id: hidden_to_visible_branch_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "else if (prevWasHidden && !nextIsHidden) branch is present in renderer.js"
+
+  - id: mount_children_called_in_reveal_branch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "mountChildrenRecursively is called inside the hidden->visible branch"
+
+  - id: flags_updated_in_reveal_branch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ShouldResetChildren and ShouldResetSuspenseChildren flags are set in the reveal branch"
+
+  - id: reveal_branch_checks_child_not_null
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The reveal branch guards against null children before mounting"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "The reveal branch has real implementation, not just a comment or empty block"
+
+rubric:
+  - rule: "Run `yarn prettier` to fix formatting and `yarn linc` to check for remaining lint issues before committing."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "9-10"
+      commit: "24f215ce8b0e17a230fbb7317919a6ae0c324f35"

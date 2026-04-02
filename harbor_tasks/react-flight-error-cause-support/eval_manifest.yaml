@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35810
+  base_commit: "38cd020c1fb8a1e88b7852160796f411926a6fac"
+  merge_commit: "2ba3065527cbabc9778363e78a411653cd4cd215"
+
+checks:
+  - id: can_transport_error_cause
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error.cause property is serialized by Flight server and revived on the client"
+
+  - id: error_cause_in_thrown_errors
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error.cause is preserved when a Server Component throws"
+
+  - id: jsonvalue_exported_from_shared
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSONValue type is consolidated and exported from packages/shared/ReactTypes.js"
+
+  - id: cause_field_in_error_info_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReactErrorInfoDev type in ReactTypes.js includes an optional cause field"
+
+  - id: jsonvalue_not_locally_defined_in_client
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSONValue local definition is removed from ReactFlightClient.js (imported from shared)"
+
+  - id: existing_flight_cyclic_transport
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-existing ReactFlight cyclic-object transport test still passes"
+
+rubric: []

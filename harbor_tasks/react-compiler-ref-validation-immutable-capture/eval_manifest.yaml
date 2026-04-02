@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35893
+  base_commit: "c0060cf2a695d719152c939cfc3cced8f7da3e52"
+  merge_commit: "e33071c6142ae5212483a63b87d5d962860e535a"
+
+checks:
+  - id: typecheck
+    type: pass_to_pass
+    origin: static
+    description: "ValidateNoRefAccessInRender.ts must typecheck without errors"
+
+  - id: effects_path_for_non_hook_calls
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Non-hook calls with known effects use effects-based per-place validation (new else-if branch on hookKind == null && instr.effects != null)"
+
+  - id: immutable_capture_freeze_distinction
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ImmutableCapture operands with co-existing Freeze effect are treated as safe (isFrozen check distinguishes known-signature from downgraded-default)"
+
+  - id: visited_effects_deduplication
+    type: fail_to_pass
+    origin: pr_diff
+    description: "visitedEffects Set prevents duplicate diagnostics for the same (place, validation) pair within one instruction's effects"
+
+  - id: mutate_ref_fixture_still_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: "error.validate-mutate-ref-arg-in-render fixture still passes (Mutate effects on ref still produce errors)"
+
+  - id: effect_kind_switch_covers_mutation_cases
+    type: pass_to_pass
+    origin: static
+    description: "Effect kind switch routes Mutate/Capture to ref-passed and Freeze to direct-ref, both validate functions present"
+
+rubric: []

@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 0
+  base_commit: "bb53387716e96912cbfb48d92655bc23882798ff"
+  merge_commit: ""
+
+checks:
+  - id: file_exists
+    type: pass_to_pass
+    origin: static
+    description: "CommitTreeBuilder.js must be present in the workspace"
+
+  - id: existing_fiber_collision_error_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "'Commit tree already contains fiber' error still present (no regression)"
+
+  - id: validates_node_existence_before_cloning
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getClonedNode checks existingNode is not null before cloning"
+
+  - id: throws_descriptive_error_for_missing_node
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getClonedNode throws descriptive error ('Could not clone the node') for missing fiber"
+
+  - id: error_message_includes_fiber_id
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error message includes the missing fiber's ID for debuggability"
+
+  - id: spread_operator_used_for_cloning
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cloning uses object spread {...existingNode} instead of Object.assign workaround"
+
+rubric: []

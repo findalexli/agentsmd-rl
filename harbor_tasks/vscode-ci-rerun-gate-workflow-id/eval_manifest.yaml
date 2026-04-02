@@ -1,0 +1,41 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 306362
+  base_commit: "76258864c3a7669bd0254946543fe317959d1960"
+  merge_commit: "9f149cd91b0320b773744f56bb5604210369816e"
+
+checks:
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript must compile without errors after the fix"
+
+  - id: parse_workflow_run_id_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parseWorkflowRunId must be exported from githubPullRequestCIModel.ts"
+
+  - id: parse_workflow_run_id_imported_in_widget
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ciStatusWidget.ts must import parseWorkflowRunId from the model module"
+
+  - id: gate_condition_in_ci_widget
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The 'Rerun Check' action must be gated on parseWorkflowRunId returning non-undefined"
+
+  - id: function_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "parseWorkflowRunId must contain real URL parsing logic for '/actions/runs/'"
+
+  - id: parse_workflow_run_id_behavior
+    type: pass_to_pass
+    origin: static
+    description: "parseWorkflowRunId correctly extracts run IDs or returns undefined for diverse inputs"
+
+rubric:
+  []

@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 0
+  base_commit: "837894c2410fb23371e591be89f64f9a89f73efe"
+  merge_commit: ""
+
+checks:
+  - id: toolbar_listens_for_menu_item_changes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Widget subscribes to toolbar.onDidChangeMenuItems to re-layout when items appear/disappear at runtime"
+
+  - id: toolbar_stored_in_variable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MenuWorkbenchToolBar instance stored in a const variable so event subscription is possible"
+
+  - id: interface_option_renamed_to_on_did_change_layout
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Interface option renamed from onDidToggleCollapse to onDidChangeLayout in widget, old name removed"
+
+  - id: sessions_view_passes_on_did_change_layout
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SessionsView passes onDidChangeLayout callback (not old onDidToggleCollapse) to widget constructor"
+
+  - id: css_margin_bottom_reduced
+    type: fail_to_pass
+    origin: pr_diff
+    description: "sessionsViewPane.css margin-bottom reduced from 12px to 6px for sessions list container"
+
+  - id: sidebar_customizations_menu_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Menus.SidebarCustomizations menu ID unchanged — toolbar menu identifier not accidentally removed"
+
+rubric: []

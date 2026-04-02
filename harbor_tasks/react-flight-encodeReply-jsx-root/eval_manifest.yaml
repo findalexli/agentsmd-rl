@@ -1,0 +1,61 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35730
+  base_commit: "2dd9b7cf76c31df5d7e26e5199e3c362c3e94f95"
+  merge_commit: "b07aa7d643ec9028e452612c3ff2c17a6cee6bb7"
+
+checks:
+  - id: files_exist
+    type: pass_to_pass
+    origin: static
+    description: "Both modified files exist at expected paths"
+
+  - id: js_syntax_reply_client
+    type: pass_to_pass
+    origin: static
+    description: "ReactFlightReplyClient.js is readable, non-empty, and retains key symbols"
+
+  - id: js_syntax_flight_client
+    type: pass_to_pass
+    origin: static
+    description: "ReactFlightClient.js is readable, non-empty, and retains key symbols"
+
+  - id: modelroot_jsx_root_check
+    type: fail_to_pass
+    origin: pr_diff
+    description: "encodeReply detects JSX as root model and emits a temporary reference marker instead of throwing"
+
+  - id: modelroot_nulled_after_emit
+    type: fail_to_pass
+    origin: pr_diff
+    description: "modelRoot is set to null after emitting the temporary reference marker to prevent double-processing"
+
+  - id: frozen_guard_in_move_debug_info
+    type: fail_to_pass
+    origin: pr_diff
+    description: "moveDebugInfoFromChunkToInnerValue guards Object.defineProperty with Object.isFrozen to avoid crash on frozen elements"
+
+  - id: frozen_guard_in_add_async_info
+    type: fail_to_pass
+    origin: pr_diff
+    description: "addAsyncInfo guards Object.defineProperty with Object.isFrozen to avoid crash on frozen elements"
+
+  - id: isFrozen_count
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReactFlightClient.js has at least 2 Object.isFrozen guards (one per defineProperty call site)"
+
+  - id: error_preserved_for_non_temp_ref_jsx
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Original throw for JSX without TemporaryReferenceSet is preserved"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Neither modified file has been replaced with a stub"
+
+rubric:
+  []

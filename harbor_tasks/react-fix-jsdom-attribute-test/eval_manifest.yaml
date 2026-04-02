@@ -1,0 +1,51 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 0
+  base_commit: "90b2dd442cc05048b2a6ade5020c463ab0499eca"
+  merge_commit: ""
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Both modified files (ReactDOMAttribute-test.js, CheckStringCoercion.js) parse without errors"
+
+  - id: jsdom_setattribute_hack_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSDOM setAttribute override (Element.prototype.setAttribute with '' + value) added to test file"
+
+  - id: temporal_like_assertion_unified
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TemporalLike test uses unified TypeError assertion, no conditional gate('enableTrustedTypesIntegration') && !__DEV__ branching"
+
+  - id: stale_todo_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Stale TODO comment about enableTrustedTypesIntegration not needing DEV warning removed from CheckStringCoercion.js"
+
+  - id: temporal_like_test_passes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Jest test 'throws with Temporal-like objects' passes after the JSDOM fix"
+
+  - id: setattribute_override_at_top_level
+    type: pass_to_pass
+    origin: static
+    description: "JSDOM setAttribute override appears before the first describe() block (module scope)"
+
+rubric:
+  - rule: "Ensure tests pass across relevant release channels (source, www, experimental, stable)."
+    source:
+      path: ".claude/skills/test/SKILL.md"
+      lines: "1"
+      commit: "90b2dd442cc05048b2a6ade5020c463ab0499eca"
+
+  - rule: "For behavior differences based on flags, use inline gate() instead of @gate pragma."
+    source:
+      path: ".claude/skills/feature-flags/SKILL.md"
+      lines: "27"
+      commit: "90b2dd442cc05048b2a6ade5020c463ab0499eca"

@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35720
+  base_commit: "03ca38e6e7b84cf20438c1d333636b3d662ca726"
+  merge_commit: "e8c6362678c8bc86a02b8444d2c3f597b3dc4e22"
+
+checks:
+  - id: package_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "packages/eslint-plugin-react-hooks/package.json is valid JSON"
+
+  - id: package_structure_intact
+    type: pass_to_pass
+    origin: static
+    description: "Package name, version, and peerDependencies fields are present and correct"
+
+  - id: eslint_v10_in_peer_deps
+    type: fail_to_pass
+    origin: pr_diff
+    description: "peerDependencies.eslint includes ^10.0.0"
+
+  - id: v10_uses_or_separator
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ESLint v10 is appended with '|| ^10.0.0' OR format, consistent with existing entries"
+
+  - id: backward_compat_maintained
+    type: pass_to_pass
+    origin: static
+    description: "ESLint versions 3–9 remain in the peerDependency range"
+
+rubric: []

@@ -1,0 +1,62 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 306327
+  base_commit: "ee6bfc559a9089feb8b73962fd4fb5a306821ef4"
+  merge_commit: "03e592c6"
+
+checks:
+  - id: header_item_pushed_for_labeled_group
+    type: fail_to_pass
+    origin: pr_diff
+    description: "actionList.ts pushes ActionListItemKind.Header when a submenu group has a label"
+
+  - id: description_no_longer_uses_group_label
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Action item description uses child.tooltip || undefined, not group.label for first child"
+
+  - id: workspace_picker_provider_label_moved_to_tooltip
+    type: fail_to_pass
+    origin: pr_diff
+    description: "sessionWorkspacePicker.ts moves provider.label from SubmenuAction label to first-child tooltip"
+
+  - id: submenu_action_structure_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "SubmenuAction instantiation with workspacePicker.browse IDs still present"
+
+  - id: tab_indentation_in_modified_file
+    type: pass_to_pass
+    origin: agent_config
+    description: "actionList.ts uses tab indentation as required by VS Code coding guidelines"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "72"
+      commit: "ee6bfc559a9089feb8b73962fd4fb5a306821ef4"
+
+rubric:
+  - rule: "Use arrow functions => over anonymous function expressions"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "104"
+      commit: "ee6bfc559a9089feb8b73962fd4fb5a306821ef4"
+
+  - rule: "Always surround loop and conditional bodies with curly braces"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "113"
+      commit: "ee6bfc559a9089feb8b73962fd4fb5a306821ef4"
+
+  - rule: "Open curly braces always go on the same line as whatever necessitates them"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "114"
+      commit: "ee6bfc559a9089feb8b73962fd4fb5a306821ef4"
+
+  - rule: "Use camelCase for property names and local variables"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "79"
+      commit: "ee6bfc559a9089feb8b73962fd4fb5a306821ef4"

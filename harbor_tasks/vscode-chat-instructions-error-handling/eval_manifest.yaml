@@ -1,0 +1,56 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 0  # PR not recorded; see solve.sh for gold patch
+  base_commit: "ba1bdcd30b83d8090ee0f28549299a52874d71ac"
+  merge_commit: ""
+
+checks:
+  - id: try_block_around_collect
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_autoAttachInstructions wraps await computer.collect() in a try block"
+
+  - id: catch_block_logs_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Catch block catches the exception and logs it via logService.error with the expected message"
+
+  - id: original_logic_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core instruction-computation logic (ComputeAutomaticInstructions, enabledTools, enabledSubAgents) is still present"
+
+  - id: catch_is_not_empty
+    type: pass_to_pass
+    origin: static
+    description: "Catch block has real error handling — not empty or silently swallowing exceptions"
+
+  - id: no_promise_then_in_method
+    type: pass_to_pass
+    origin: agent_config
+    description: "Fix uses async/await syntax, not .then() chains"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "147"
+      commit: "ba1bdcd30b83d8090ee0f28549299a52874d71ac"
+
+rubric:
+  - rule: "Open curly braces always go on the same line as whatever necessitates them"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "125"
+      commit: "ba1bdcd30b83d8090ee0f28549299a52874d71ac"
+
+  - rule: "Always surround loop and conditional bodies with curly braces"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "122"
+      commit: "ba1bdcd30b83d8090ee0f28549299a52874d71ac"
+
+  - rule: "Use arrow functions => over anonymous function expressions"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "119"
+      commit: "ba1bdcd30b83d8090ee0f28549299a52874d71ac"

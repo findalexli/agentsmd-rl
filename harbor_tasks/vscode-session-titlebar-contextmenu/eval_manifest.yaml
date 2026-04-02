@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 306419
+  base_commit: "6a7e1b4bd33c970a4c5275ab90dbfd6a3cb91aa0"
+  merge_commit: "b730821"
+
+checks:
+  - id: files_exist
+    type: pass_to_pass
+    origin: static
+    description: "Both modified TypeScript files are present in the workspace"
+
+  - id: new_session_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Context menu suppressed for new/unsaved sessions via IsNewChatSessionContext early-return guard"
+
+  - id: pinned_state_not_hardcoded
+    type: fail_to_pass
+    origin: pr_diff
+    description: "IsSessionPinnedContext.key no longer hardcoded to false"
+
+  - id: pinned_state_dynamic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Pinned state resolved dynamically via IViewsService + isSessionPinned()"
+
+  - id: session_type_icon_method_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Private _getSessionTypeIcon method added with switch on providerType covering Background and Cloud"
+
+  - id: session_icon_uses_method
+    type: fail_to_pass
+    origin: pr_diff
+    description: "this.icon assigned via this._getSessionTypeIcon() instead of direct session.icon"
+
+rubric: []

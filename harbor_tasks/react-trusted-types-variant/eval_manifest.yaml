@@ -1,0 +1,51 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 0  # internal Meta commit, no public GitHub PR
+  base_commit: "c0c37063e2cd8976d839998573012d48d303ada0"
+  merge_commit: ""
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Target file must be valid JavaScript (no syntax errors)"
+
+  - id: flag_exists_in_file
+    type: pass_to_pass
+    origin: static
+    description: "enableTrustedTypesIntegration must still be declared in the file"
+
+  - id: flag_uses_variant
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableTrustedTypesIntegration must be assigned __VARIANT__, not false"
+
+  - id: flag_not_hardcoded_false
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableTrustedTypesIntegration must not be hardcoded to false"
+
+  - id: flag_not_in_hardcoded_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Flag must not appear in the TODO/hardcoded section of the file"
+
+  - id: existing_variant_flags_intact
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Other __VARIANT__ flags must still be declared correctly (anti-regression)"
+
+  - id: file_structure_preserved
+    type: pass_to_pass
+    origin: static
+    description: "File must retain @flow strict annotation and ES module export syntax"
+
+  - id: hardcoded_section_comment_preserved
+    type: pass_to_pass
+    origin: static
+    description: "The TODO warning comment about hardcoded flags must be preserved"
+
+rubric:
+  []

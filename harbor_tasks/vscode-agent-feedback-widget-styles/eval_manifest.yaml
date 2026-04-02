@@ -1,0 +1,71 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 0
+  base_commit: "39a50d8d3f4cb82f8d23f6ed762d8feda0a8032f"
+  merge_commit: ""
+
+checks:
+  - id: required_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "All modified source files are present in the workspace"
+
+  - id: copyright_headers_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Microsoft copyright header present in all modified TypeScript files"
+
+  - id: theme_border_uses_editor_widget_border
+    type: fail_to_pass
+    origin: pr_diff
+    description: "agentFeedbackInputWidgetBorder uses editorWidgetBorder instead of transparent(iconForeground)"
+
+  - id: icon_foreground_removed_from_theme
+    type: fail_to_pass
+    origin: pr_diff
+    description: "iconForeground import removed from theme.ts after border color fix"
+
+  - id: apply_font_info_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "applyFontInfo calls removed from agentFeedbackEditorInputContribution.ts"
+
+  - id: animation_keyframes_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "agentFeedbackInputAppear keyframe animation added to agentFeedbackEditorInput.css"
+
+  - id: reduced_motion_accessibility
+    type: fail_to_pass
+    origin: pr_diff
+    description: "prefers-reduced-motion media query added with animation: none for accessibility"
+
+  - id: font_inherit_in_input_css
+    type: fail_to_pass
+    origin: pr_diff
+    description: "font: inherit added to textarea and measure elements in agentFeedbackEditorInput.css"
+
+  - id: comment_icon_in_header
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Decorative Codicon.comment icon with aria-hidden added to widget header"
+
+  - id: single_comment_shows_text_not_label
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When count === 1, widget title shows commentItems[0].text instead of localized '1 comment'"
+
+rubric:
+  - rule: "CSS changes should use CSS custom properties (var(--vscode-*)) rather than hardcoded color values."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "1-50"
+      commit: "39a50d8d3f4cb82f8d23f6ed762d8feda0a8032f"
+
+  - rule: "Accessibility attributes (aria-hidden, aria-label) must be set appropriately on decorative elements."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "1-50"
+      commit: "39a50d8d3f4cb82f8d23f6ed762d8feda0a8032f"

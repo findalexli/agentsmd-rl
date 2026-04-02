@@ -1,0 +1,60 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35700
+  base_commit: "95ffd6cd9c794842e5c8ab36150296afab1ae70c"
+  merge_commit: "8b276df415a29bee586473bfced9191b25166790"
+
+checks:
+  - id: files_exist
+    type: pass_to_pass
+    origin: static
+    description: "All modified files (SuspenseBreadcrumbs.js, .css, SuspenseTab.js, .css) must be present"
+
+  - id: container_css_class
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SuspenseBreadcrumbsContainer CSS class added to SuspenseBreadcrumbs.css for flex overflow containment"
+
+  - id: menu_css_classes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SuspenseBreadcrumbsMenuButton and SuspenseBreadcrumbsModal CSS classes added for overflow dropdown"
+
+  - id: overflow_components_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SuspenseBreadcrumbsFlatList, SuspenseBreadcrumbsMenu, SuspenseBreadcrumbsDropdown components implemented"
+
+  - id: overflow_detection_hook
+    type: fail_to_pass
+    origin: pr_diff
+    description: "useIsOverflowing hook imported and used in SuspenseBreadcrumbs.js"
+
+  - id: resize_observer_used
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ResizeObserver used to dynamically measure breadcrumb container width"
+
+  - id: conditional_overflow_rendering
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isOverflowing used in a ternary to conditionally render menu vs flat list"
+
+  - id: overflow_x_scrollbar_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "overflow-x: auto removed from SuspenseTab.css to eliminate horizontal scrollbar"
+
+  - id: wrapper_div_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Wrapper div with className={styles.SuspenseBreadcrumbs} removed from SuspenseTab.js"
+
+  - id: reach_ui_menu_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Menu, MenuList, MenuButton, MenuItem imported from reach-ui/menu-button"
+
+rubric: []

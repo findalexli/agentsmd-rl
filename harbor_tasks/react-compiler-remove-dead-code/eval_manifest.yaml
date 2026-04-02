@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35827
+  base_commit: "ab18f33d46171ed1963ae1ac955c5110bb1eb199"
+  merge_commit: "8b6b11f703a1f92dd2bb2e0e3b93a1836dc06de6"
+
+checks:
+  - id: typescript_build
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript compilation succeeds after changes"
+
+  - id: validate_no_untransformed_references_deleted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ValidateNoUntransformedReferences.ts deleted (unused pass)"
+
+  - id: validate_no_untransformed_references_not_imported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "BabelPlugin.ts no longer imports validateNoUntransformedReferences"
+
+  - id: compile_program_metadata_type_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CompileProgramMetadata type removed from Program.ts"
+
+  - id: compile_program_returns_void
+    type: fail_to_pass
+    origin: pr_diff
+    description: "compileProgram return type changed from CompileProgramMetadata | null to void"
+
+  - id: retry_errors_field_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "retryErrors field removed from ProgramContext in Imports.ts"
+
+  - id: client_no_memo_removed_from_options
+    type: fail_to_pass
+    origin: pr_diff
+    description: "'client-no-memo' enum value removed from CompilerOutputModeSchema in Options.ts"
+
+  - id: client_no_memo_removed_from_environment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "'client-no-memo' case removed from switch statements in Environment.ts"
+
+  - id: compiler_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream compiler test suite still passes"
+
+rubric: []

@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 306535
+  base_commit: "891f5f2f96fe5161122912af25d8b3af708cbd1b"
+  merge_commit: ""
+
+checks:
+  - id: file_exists_and_has_imports
+    type: pass_to_pass
+    origin: static
+    description: "Target file exists and htmlContent.js import with MarkdownString is present"
+
+  - id: escape_function_not_imported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "escapeMarkdownSyntaxTokens must not be imported from htmlContent.js"
+
+  - id: escaped_display_command_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "const escapedDisplayCommand variable and all references must be removed"
+
+  - id: invocation_messages_use_display_command_directly
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All 4 localize invocation calls must pass displayCommand directly (not escapedDisplayCommand)"
+
+  - id: localize_keys_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "All 4 runInTerminal invocation localize message keys must remain unchanged"
+
+  - id: no_blank_line_left_in_import_block
+    type: pass_to_pass
+    origin: agent_config
+    description: "No blank line left in import block after removing escapeMarkdownSyntaxTokens import"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "139"
+      commit: "891f5f2f96fe5161122912af25d8b3af708cbd1b"
+
+rubric:
+  - rule: "When removing an import, do not leave behind blank lines where the import was. Ensure the surrounding code remains compact."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "139"
+      commit: "891f5f2f96fe5161122912af25d8b3af708cbd1b"
+
+  - rule: "All user facing messages must be localized using the applicable localization framework (for example nls.localize() method)."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "131"
+      commit: "891f5f2f96fe5161122912af25d8b3af708cbd1b"

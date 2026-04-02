@@ -1,0 +1,60 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 0  # no PR number recorded; see solve.sh for gold patch; merge commit: 64e73b0
+  base_commit: "0705ebef87428a3a1d38df65b38da286a7b9174c"
+  merge_commit: "64e73b0"
+
+checks:
+  - id: sessions_list_collects_selection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "sessionsList.ts calls this.tree.getSelection() to read the multi-selection before showing the context menu"
+
+  - id: sessions_list_computes_selected_sessions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "sessionsList.ts builds a selectedSessions array with element first, checking selection.includes(element)"
+
+  - id: context_menu_passes_selected_sessions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Context menu getActions call passes selectedSessions as arg instead of bare element"
+
+  - id: actions_accept_array_parameter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All 7 session actions (Pin, Unpin, Archive, Unarchive, MarkRead, MarkUnread, OpenInNewWindow) accept ISession | ISession[]"
+
+  - id: actions_use_array_isarray_pattern
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All 7 actions normalize context to array with Array.isArray(context) ? context : [context]"
+
+  - id: actions_iterate_over_sessions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All 7 actions apply their operation to each session via 'for (const session of sessions)'"
+
+  - id: copilot_bridge_accepts_array
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CopilotSessionContextMenuBridge wrapper command accepts ISession | ISession[] and uses Array.isArray"
+
+  - id: copilot_bridge_uses_coalesce
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Bridge imports and uses coalesce() to build agentSessions array with null filtering"
+
+  - id: backward_compatible_single_session
+    type: pass_to_pass
+    origin: static
+    description: "All 7 actions contain Array.isArray ternary so single-session callers still work"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files have real implementation bodies (not empty stubs)"
+
+rubric: []
