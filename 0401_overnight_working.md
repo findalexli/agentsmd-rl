@@ -184,9 +184,30 @@ Using E2B sandboxes (~5x faster than local Docker):
 - 107 gold=0 (tests fail even with correct patch applied)
 - 1 fail_nop (bun-ffi-linksymbols-nonobject-crash: nop=1,gold=1, useless)
 
-### Remaining work
-- [ ] Convert 62 partial kimi_drafts (need instruction.md generated)
-- [ ] Regenerate corrupt patches (8 tasks) from PRs
-- [ ] Debug E2B build failures — many may work with local Docker
-- [ ] Git commit everything
-- [ ] Update project memory
+### Hour 7: Wave 2 kimi_drafts + git commit — DONE
+- [x] Generated instruction.md for 44 partial kimi_drafts (agent)
+- [x] Copied 44 tasks to harbor_tasks (487 → 531)
+- [x] Sonnet remake: 42/44 OK, 2 timeouts
+- [x] E2B validate: 14 new passes
+- [x] Git commit 1: da02a95 — V2 migration, 487 tasks, 274 passing
+- [x] Git commit 2: 45e23d1 — 44 kimi_drafts, 288 passing
+
+### Final Scoreboard (2026-04-02 15:40)
+
+| Status | Count | % |
+|--------|-------|---|
+| **pass** | **288** | **54.2%** |
+| fail | 122 | 23.0% |
+| fail_build | 118 | 22.2% |
+| fail_nop | 1 | 0.2% |
+| no_status | 2 | 0.4% |
+| **Total** | **531** | |
+
+**Progress: 188 → 288 passing (+53%), 439 → 531 total tasks**
+
+### Remaining work (future sessions)
+- [ ] Debug 118 fail_build (76 Docker failures, 27 patch failures, 15 other)
+- [ ] Fix 122 fail tests (wrong assertions, need re-remake with better prompts)
+- [ ] Convert remaining 19 kimi_drafts (missing test.sh — highest effort)
+- [ ] Regenerate corrupt patches from PRs
+- [ ] Target: 400+ passing
