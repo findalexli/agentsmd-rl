@@ -1,0 +1,85 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 1039
+  base_commit: "02a25454bc8ff348b05ae2a62040d5ec48237e16"
+  merge_commit: "4940ad1275ca113b80f779e6c5059ea2349fa996"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Target file must parse without syntax errors"
+
+  - id: register_helper_creates_lora_request
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A dedicated helper creates a new LoRARequest in the registry instead of mutating the existing one"
+
+  - id: stale_aliases_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Registering a new name for the same adapter id removes all old aliases from the registry"
+
+  - id: infer_path_synthetic_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Path inference returns xccl:// synthetic path when no existing filesystem path is available"
+
+  - id: infer_path_preserves_existing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Path inference reuses existing lora_path from registry entries with matching name or adapter id"
+
+  - id: success_gating
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Registry update in update_weight_lora_xccl is gated on all XCCL operations succeeding"
+
+  - id: base_model_name_propagated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Registration helper propagates base_model_name to the new LoRARequest"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "File retains original logic and all expected symbols"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No wildcard imports (from x import *)"
+    source:
+      path: "AGENTS.md"
+      lines: "30"
+      commit: "02a25454bc8ff348b05ae2a62040d5ec48237e16"
+
+  - id: no_bare_print
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare print() calls — use logger instead"
+    source:
+      path: "AGENTS.md"
+      lines: "89-91"
+      commit: "02a25454bc8ff348b05ae2a62040d5ec48237e16"
+
+rubric:
+  - rule: "Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation"
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "02a25454bc8ff348b05ae2a62040d5ec48237e16"
+
+  - rule: "Follow existing code patterns in the same module"
+    source:
+      path: "CLAUDE.md"
+      lines: "76"
+      commit: "02a25454bc8ff348b05ae2a62040d5ec48237e16"
+
+  - rule: "Explicit type hints on function signatures"
+    source:
+      path: "AGENTS.md"
+      lines: "99-100"
+      commit: "02a25454bc8ff348b05ae2a62040d5ec48237e16"

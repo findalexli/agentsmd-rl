@@ -1,0 +1,99 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 1105
+  base_commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
+  merge_commit: "cbe35f5a4b866596d996d5690085eda0577708f5"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "app.py must be valid Python"
+
+  - id: batch_valid_request
+    type: fail_to_pass
+    origin: pr_diff
+    description: "POST /data/batch with valid shard_ids returns 200 and correct list payload with verified data"
+
+  - id: batch_single_shard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "POST /data/batch with one shard_id returns a list of one item with correct data"
+
+  - id: batch_missing_shard_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "POST /data/batch with nonexistent shard returns error status (400/404/422/500)"
+
+  - id: batch_invalid_input_rejected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "POST /data/batch with non-list shard_ids (string, int, non-string list) is rejected with 400 or 422"
+
+  - id: batch_empty_shard_ids
+    type: fail_to_pass
+    origin: pr_diff
+    description: "POST /data/batch with empty shard_ids list returns 200 with empty result"
+
+  - id: batch_route_before_param_route
+    type: fail_to_pass
+    origin: pr_diff
+    description: "/data/batch declared before /data/{shard_id} so FastAPI routes correctly"
+
+  - id: existing_routes_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing PUT/GET/DELETE data routes still registered in app.py"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "POST /data/batch handler has real logic, not just pass/return"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No wildcard imports in app.py"
+    source:
+      path: "AGENTS.md"
+      lines: "30"
+      commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
+
+  - id: no_hardcoded_endpoints
+    type: pass_to_pass
+    origin: agent_config
+    description: "No hardcoded host:port endpoints in app.py"
+    source:
+      path: "AGENTS.md"
+      lines: "31"
+      commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
+
+  - id: no_print_statements
+    type: pass_to_pass
+    origin: agent_config
+    description: "No print() calls in app.py — must use areal.utils.logging"
+    source:
+      path: "AGENTS.md"
+      lines: "90-92"
+      commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
+
+rubric:
+  - rule: "Composition over inheritance — keep hierarchies <= 2 levels; prefer delegation"
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
+
+  - rule: "Follow existing code patterns in the same module (e.g. error handling style, response types, decorator patterns in app.py)"
+    source:
+      path: "AGENTS.md"
+      lines: "40"
+      commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
+
+  - rule: "Async code must stay non-blocking — use await and aiofiles, no sync I/O in async handlers"
+    source:
+      path: "AGENTS.md"
+      lines: "103-104"
+      commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"

@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21481
+  base_commit: "4e905febd2f9e96b4c114530a2379b084ad791af"
+  merge_commit: "38ad2517384cf59d01be1f42ca9ce2f5a94d1b2a"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Both modified files (server_args.py, engine.py) parse without syntax errors"
+
+  - id: gc_function_sets_thresholds
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GC-setting function calls gc.set_threshold correctly for 1, 2, and 3 args plus None no-op"
+
+  - id: cli_parser_accepts_gc_threshold
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLI parser accepts --gc-threshold with varying numbers of int arguments and defaults to None"
+
+  - id: validation_rejects_invalid_gc_threshold
+    type: fail_to_pass
+    origin: pr_diff
+    description: "check_server_args rejects gc_threshold with 0 or 4+ values"
+
+  - id: server_args_structures_intact
+    type: pass_to_pass
+    origin: static
+    description: "ServerArgs class and add_cli_args/check_server_args functions still exist"
+
+  - id: launch_subprocesses_intact
+    type: pass_to_pass
+    origin: static
+    description: "_launch_subprocesses function still exists in engine.py"
+
+  - id: gc_invoked_in_launch_subprocesses
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GC threshold logic is invoked within _launch_subprocesses"
+
+  - id: gc_threshold_in_class_and_cli
+    type: fail_to_pass
+    origin: agent_config
+    description: "gc_threshold appears in both ServerArgs class body and add_cli_args (ordering rule)"
+    source:
+      path: "python/sglang/srt/server_args.py"
+      lines: "287-290"
+      commit: "4e905febd2f9e96b4c114530a2379b084ad791af"
+
+rubric:
+  - rule: "When you add new arguments, please make sure the order in this class definition the same as the order in the function ServerArgs.add_cli_args."
+    source:
+      path: "python/sglang/srt/server_args.py"
+      lines: "287-289"
+      commit: "4e905febd2f9e96b4c114530a2379b084ad791af"
+
+  - rule: "Please follow the existing style to group the new arguments into related groups or create new groups."
+    source:
+      path: "python/sglang/srt/server_args.py"
+      lines: "290"
+      commit: "4e905febd2f9e96b4c114530a2379b084ad791af"

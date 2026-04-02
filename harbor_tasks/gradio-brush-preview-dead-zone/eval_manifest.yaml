@@ -1,0 +1,69 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12981
+  base_commit: "911dc366e56e9210fd260300915d408058ae18c6"
+  merge_commit: "8bc75137b24ba8a8571b49b9b006741819c0518b"
+
+checks:
+  - id: typescript_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Both brush.ts and brush-textures.ts must parse without errors"
+
+  - id: reinitialize_uses_bounds_not_container_dims
+    type: fail_to_pass
+    origin: pr_diff
+    description: "reinitialize() must not compare image_container.width/height directly (buggy pattern)"
+
+  - id: set_tool_detects_dimension_changes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "set_tool() must trigger reinitialization when canvas dimensions change (>2 boolean terms)"
+
+  - id: reinitialize_calls_bounds_method
+    type: fail_to_pass
+    origin: pr_diff
+    description: "reinitialize() must call getLocalBounds/getBounds to get actual container dimensions"
+
+  - id: subpixel_rounding_in_comparisons
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dimension comparisons must use Math.round or similar to handle subpixel differences"
+
+  - id: initialize_textures_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "initialize_textures still creates render textures, preview sprite, and sets dimensions"
+
+  - id: cleanup_textures_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "cleanup_textures still calls destroy on resources"
+
+  - id: set_tool_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "set_tool has >=5 statements (not stubbed out)"
+
+  - id: reinitialize_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "reinitialize has >=2 statements (not stubbed out)"
+
+  - id: tab_indentation
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files use tab indentation per prettier config"
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "911dc366e56e9210fd260300915d408058ae18c6"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "911dc366e56e9210fd260300915d408058ae18c6"

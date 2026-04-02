@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 0
+  base_commit: "2640e6cd98c864231b570425e0877dcff295984c"
+  merge_commit: ""
+
+checks:
+  - id: patch_is_valid_diff
+    type: pass_to_pass
+    origin: static
+    description: "Patch file must exist, be non-empty, and contain a qwen3_5.py section with >=2 hunks"
+
+  - id: linear_init_allreduce_fusion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "LinearDecoderLayer.__init__ must pass allow_allreduce_fusion=True to LayerCommunicator"
+
+  - id: attn_init_allreduce_fusion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AttentionDecoderLayer.__init__ must pass allow_allreduce_fusion=True to LayerCommunicator"
+
+  - id: linear_forward_isinstance_dispatch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "LinearDecoderLayer.forward must branch on isinstance(self.mlp, Qwen2MoeSparseMoeBlock)"
+
+  - id: attn_forward_isinstance_dispatch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AttentionDecoderLayer.forward must branch on isinstance(self.mlp, Qwen2MoeSparseMoeBlock)"
+
+  - id: fusion_query_both_classes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both forward methods must call should_fuse_mlp_allreduce_with_next_layer"
+
+  - id: fusion_attr_and_conditional_postprocess
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both forwards set _sglang_needs_allreduce_fusion and conditionally call postprocess_layer"
+
+  - id: dense_mlp_gets_fusion_flag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dense MLP path must receive the fusion flag instead of forward_batch"
+
+  - id: other_patch_sections_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Other patch sections (qwen3_vl.py, model_config.py) must remain intact"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Both decoder layer sections must have substantive added code, not just stubs"
+
+  - id: changes_contained
+    type: pass_to_pass
+    origin: static
+    description: "Changes should be contained to the patch file (<=3 files modified)"
+
+rubric: []

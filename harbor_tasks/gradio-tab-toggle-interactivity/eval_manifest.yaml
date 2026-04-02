@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 13048
+  base_commit: "75f8dceb679b505c8887f0a3c3b9fee98a931db9"
+  merge_commit: "a5d40965bba21a832da522127048926b71c1a6dd"
+
+checks:
+  - id: files_exist_and_parse
+    type: pass_to_pass
+    origin: static
+    description: "Both target files must exist, be non-empty, and parse as TypeScript"
+
+  - id: update_state_detects_tabitem
+    type: fail_to_pass
+    origin: pr_diff
+    description: "update_state must detect tabitem components and invoke propagation logic"
+
+  - id: parent_tabs_update_logic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A method must find the parent Tabs and update its initial_tabs array"
+
+  - id: tabs_reactive_sync
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tabs.svelte must reactively sync initial_tabs changes to internal tabs array"
+
+  - id: mounted_tab_tracking
+    type: fail_to_pass
+    origin: pr_diff
+    description: "register_tab/unregister_tab must track mounted state via shared data structure"
+
+  - id: core_apis_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Essential methods (update_state, find_parent, register_tab, etc.) still exist"
+
+  - id: files_not_gutted
+    type: pass_to_pass
+    origin: static
+    description: "Both files retain substantial content (reject gutting)"
+
+  - id: init_file_grew
+    type: fail_to_pass
+    origin: static
+    description: "init.svelte.ts must be longer than base (~520 lines) since fix adds code"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "75f8dceb679b505c8887f0a3c3b9fee98a931db9"

@@ -1,0 +1,101 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 990
+  base_commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
+  merge_commit: "412d22411ce6cc48c2f776a0910c6fb2834bd1e0"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "actor.py and critic.py parse without syntax errors"
+
+  - id: attention_mask_preferred
+    type: fail_to_pass
+    origin: pr_diff
+    description: "infer_token_denominator prefers attention_mask over other metadata"
+
+  - id: cu_seqlens_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "cu_seqlens used for packed sequences when attention_mask absent"
+
+  - id: input_ids_shape_match
+    type: fail_to_pass
+    origin: pr_diff
+    description: "input_ids used when shape matches fallback; ignored otherwise"
+
+  - id: final_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Falls back to ones_like(fallback) when no usable metadata"
+
+  - id: actor_critic_use_helper
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Actor and critic import infer_token_denominator, old buggy pattern removed"
+
+  - id: not_stub
+    type: fail_to_pass
+    origin: static
+    description: "stats.py infer_token_denominator has real conditional fallback logic"
+
+  - id: no_wildcard_imports
+    type: fail_to_pass
+    origin: agent_config
+    description: "No wildcard imports in modified PPO files"
+    source:
+      path: "AGENTS.md"
+      lines: "25"
+      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
+
+  - id: no_print_in_ppo_files
+    type: fail_to_pass
+    origin: agent_config
+    description: "No bare print() calls in modified PPO files; use areal.utils.logging"
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
+
+  - id: type_hints_on_helper
+    type: fail_to_pass
+    origin: agent_config
+    description: "infer_token_denominator has type annotations on parameters and return"
+    source:
+      path: "AGENTS.md"
+      lines: "94"
+      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
+
+rubric:
+  - rule: "No GPU-CPU sync in hot paths (.item(), .tolist(), print(tensor))."
+    source:
+      path: "AGENTS.md"
+      lines: "90"
+      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
+
+  - rule: "Batch ops over Python loops on tensor elements."
+    source:
+      path: "AGENTS.md"
+      lines: "91"
+      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
+
+  - rule: "Explicit dtype/device; torch.Size assertions for shape validation."
+    source:
+      path: "AGENTS.md"
+      lines: "92"
+      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
+
+  - rule: "Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
+
+  - rule: "Emit metrics via stats_tracker.get(); use existing observability patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "142"
+      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"

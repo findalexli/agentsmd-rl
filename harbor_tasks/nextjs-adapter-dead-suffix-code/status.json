@@ -1,0 +1,57 @@
+{
+  "validations": [
+    {
+      "timestamp": "2026-03-30T13:02:43.965463",
+      "runner": "run_pipeline.py validate (20260330)",
+      "docker_build": false,
+      "gold_score": null,
+      "nop_score": null,
+      "verdict": "error",
+      "notes": "timeout"
+    },
+    {
+      "timestamp": "2026-03-30T11:48:11.528496",
+      "runner": "audit (audit-tests_20260330_114811)",
+      "phase": "audit",
+      "status": "success",
+      "output_tokens": 9949
+    },
+    {
+      "timestamp": "2026-03-31T13:37:45-07:00",
+      "runner": "validate_and_fix.sh",
+      "docker_build": false,
+      "gold_score": null,
+      "nop_score": null,
+      "verdict": "fail_build",
+      "notes": "Docker build failed"
+    },
+    {
+      "timestamp": "2026-04-01T20:15:41.678986",
+      "phase": "docker_validate_v2",
+      "runner": "scripts/docker_validate_all.sh",
+      "verdict": "fail",
+      "nop": "0",
+      "gold": "0",
+      "format": "pytest_binary"
+    },
+    {
+      "timestamp": "2026-04-02T12:58:21.146636",
+      "phase": "e2b_post_remake",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail",
+      "nop": "0.0",
+      "gold": "0.0",
+      "notes": "de_intact\nFAILED ../tests/test_outputs.py::test_typescript_syntax - AssertionError: Typ...\nFAILED ../tests/test_outputs.py::test_rsc_suffix_regex_preserved - AssertionE...\n2 failed, 9 passed in 0.08s\n"
+    },
+    {
+      "timestamp": "2026-04-02T14:28:08.947349",
+      "phase": "e2b_full_validation",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail",
+      "nop": "0.0",
+      "gold": "0.0"
+    }
+  ]
+}

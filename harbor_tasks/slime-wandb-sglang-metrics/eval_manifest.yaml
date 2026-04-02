@@ -1,0 +1,70 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1768
+  base_commit: "d4c4d3fb24d45c3cd12f47b64b30fc3301286778"
+  merge_commit: "b82193f89cdaaa9cf6ceddb3490c5cde5991bbfe"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All modified Python files parse without errors"
+
+  - id: router_addr_removed_from_secondary
+    type: fail_to_pass
+    origin: pr_diff
+    description: "router_addr parameter removed from init_wandb_secondary"
+
+  - id: reinit_function_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "reinit_wandb_primary_with_open_metrics function added with args + router_addr params"
+
+  - id: reinit_calls_wandb_finish_and_init
+    type: fail_to_pass
+    origin: pr_diff
+    description: "reinit function calls wandb.finish() then wandb.init() in correct order"
+
+  - id: reinit_configures_metrics_endpoints
+    type: fail_to_pass
+    origin: pr_diff
+    description: "reinit function configures sgl_engine metrics endpoints with resume mode for multiple router addresses"
+
+  - id: reinit_noop_when_no_router
+    type: fail_to_pass
+    origin: pr_diff
+    description: "reinit returns early without touching wandb when router_addr is None"
+
+  - id: update_tracking_bridge_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "logging_utils exposes update_tracking_open_metrics bridging to wandb_utils"
+
+  - id: public_get_metrics_router_addr
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Rollout manager exposes public get_metrics_router_addr method"
+
+  - id: train_calls_update_tracking
+    type: fail_to_pass
+    origin: pr_diff
+    description: "train.py imports and calls update_tracking_open_metrics after rollout manager"
+
+  - id: train_async_calls_update_tracking
+    type: fail_to_pass
+    origin: pr_diff
+    description: "train_async.py imports and calls update_tracking_open_metrics after rollout manager"
+
+  - id: reinit_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "reinit_wandb_primary_with_open_metrics has substantial implementation (not stub)"
+
+  - id: secondary_still_functional
+    type: pass_to_pass
+    origin: static
+    description: "init_wandb_secondary still exists with non-trivial body"
+
+rubric: []

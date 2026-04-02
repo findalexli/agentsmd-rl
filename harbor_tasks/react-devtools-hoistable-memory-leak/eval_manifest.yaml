@@ -1,0 +1,41 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35741
+  base_commit: "49c3b270f9991fbecbe2b9c29c27e19a54fb4466"
+  merge_commit: "f23aa1d9f5034e7cfbd3e6015ce102bb72a005a0"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "renderer.js must parse without syntax errors"
+
+  - id: correct_map_set_order
+    type: fail_to_pass
+    origin: pr_diff
+    description: "publicInstanceToDevToolsInstanceMap.set() must use publicInstance as first arg (key), not firstInstance"
+
+  - id: buggy_pattern_absent
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Buggy set(firstInstance, nearestInstance) call must not be present"
+
+  - id: function_exists
+    type: pass_to_pass
+    origin: static
+    description: "releaseHostResource() function must still be defined (not deleted or renamed)"
+
+rubric:
+  - rule: "Run yarn prettier to fix formatting before committing"
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "13"
+      commit: "49c3b270f9991fbecbe2b9c29c27e19a54fb4466"
+
+  - rule: "Run yarn linc to check for lint issues before committing"
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "14"
+      commit: "49c3b270f9991fbecbe2b9c29c27e19a54fb4466"

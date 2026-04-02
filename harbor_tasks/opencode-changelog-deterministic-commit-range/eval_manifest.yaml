@@ -1,0 +1,117 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19987
+  base_commit: "ee018d5c82a593907bae9011bc074766e670d593"
+  merge_commit: "6926fe1c7455f4cd075d374b188850c14cda0fb2"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All modified files exist and are non-trivial"
+
+  - id: changelog_runs_without_llm_sdk
+    type: fail_to_pass
+    origin: pr_diff
+    description: "changelog.ts does not import @opencode-ai/sdk or @opencode-ai/script"
+
+  - id: help_documents_from_and_to_flags
+    type: fail_to_pass
+    origin: pr_diff
+    description: "changelog.ts has no LLM SDK imports and declares --from/--to flags"
+
+  - id: changelog_accepts_from_to_without_import_errors
+    type: fail_to_pass
+    origin: pr_diff
+    description: "changelog.ts has no LLM session calls and uses deterministic gh api / git log"
+
+  - id: version_pins_upper_bound
+    type: fail_to_pass
+    origin: pr_diff
+    description: "version.ts passes --to flag when invoking changelog command"
+
+  - id: command_prompt_consumes_structured_data
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Command prompt consumes pre-computed data instead of instructing LLM to fetch releases"
+
+  - id: gitignore_upcoming_changelog
+    type: fail_to_pass
+    origin: pr_diff
+    description: "UPCOMING_CHANGELOG.md is listed in .gitignore"
+
+  - id: no_try_catch
+    type: fail_to_pass
+    origin: agent_config
+    description: "Changed files must not use try/catch blocks"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "ee018d5c82a593907bae9011bc074766e670d593"
+
+  - id: single_word_function_names
+    type: fail_to_pass
+    origin: agent_config
+    description: "Declared functions in changelog.ts must use single-word names, not multi-word camelCase"
+    source:
+      path: "AGENTS.md"
+      lines: "27-32"
+      commit: "ee018d5c82a593907bae9011bc074766e670d593"
+
+  - id: no_any_type
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changed files must not use the any type"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "ee018d5c82a593907bae9011bc074766e670d593"
+
+rubric:
+  - rule: "Prefer functional array methods (flatMap, filter, map) over for loops; use type guards on filter to maintain type inference downstream"
+    source:
+      path: "AGENTS.md"
+      lines: "17"
+      commit: "ee018d5c82a593907bae9011bc074766e670d593"
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "55-66"
+      commit: "ee018d5c82a593907bae9011bc074766e670d593"
+  - rule: "Prefer const over let. Use ternaries or early returns instead of reassignment."
+    source:
+      path: "AGENTS.md"
+      lines: "68-80"
+      commit: "ee018d5c82a593907bae9011bc074766e670d593"
+  - rule: "Reduce total variable count by inlining when a value is only used once."
+    source:
+      path: "AGENTS.md"
+      lines: "44-53"
+      commit: "ee018d5c82a593907bae9011bc074766e670d593"
+  - rule: "Avoid else statements. Prefer early returns."
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "ee018d5c82a593907bae9011bc074766e670d593"
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity."
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "ee018d5c82a593907bae9011bc074766e670d593"
+  - rule: "Keep things in one function unless composable or reusable."
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "ee018d5c82a593907bae9011bc074766e670d593"
+  - rule: "Prefer single word variable names where possible."
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "ee018d5c82a593907bae9011bc074766e670d593"
+  - rule: "Use Bun APIs when possible, like Bun.file()."
+    source:
+      path: "AGENTS.md"
+      lines: "15"
+      commit: "ee018d5c82a593907bae9011bc074766e670d593"

@@ -1,0 +1,78 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28426
+  base_commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"
+  merge_commit: "2d4c2beb23085873380840c9bd18eeca29645843"
+
+checks:
+  - id: hostname_crash_fixed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Hostname assertf removed and replaced with proper error return"
+
+  - id: unix_crash_fixed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Unix path assertf removed and replaced with proper error return"
+
+  - id: throw_tests_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Agent added tests verifying throw on truthy-but-empty hostname/unix"
+
+  - id: handlers_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "Handlers.zig is substantial, not gutted or replaced with stub"
+
+  - id: hostname_unix_branches_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Both hostname and unix handling branches still exist"
+
+  - id: socket_test_file_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "socket.test.ts not truncated or deleted"
+
+  - id: no_hardcoded_ports
+    type: pass_to_pass
+    origin: agent_config
+    description: "New tests use port: 0, not hardcoded ports"
+    source:
+      path: "CLAUDE.md"
+      lines: "97"
+      commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"
+
+  - id: no_settimeout_in_new_tests
+    type: pass_to_pass
+    origin: agent_config
+    description: "New tests do not use setTimeout — await conditions instead"
+    source:
+      path: "AGENTS.md"
+      lines: "102"
+      commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"
+
+  - id: no_panic_absence_tests
+    type: pass_to_pass
+    origin: agent_config
+    description: "New tests don't check for absence of 'panic' or 'uncaught exception'"
+    source:
+      path: "AGENTS.md"
+      lines: "99"
+      commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"
+
+rubric:
+  - rule: "Follow existing code style — check neighboring files for patterns before making changes."
+    source:
+      path: "AGENTS.md"
+      lines: "228"
+      commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"
+
+  - rule: "All changes must be tested — if you're not testing your changes, you're not done."
+    source:
+      path: "AGENTS.md"
+      lines: "226"
+      commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"

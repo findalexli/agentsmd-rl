@@ -1,0 +1,66 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 306224
+  base_commit: "002f2d99e814b4068447558eef47ac8977d1c05a"
+  merge_commit: "33741c26479a065aa2e96e8187090d5ec272e61c"
+
+checks:
+  - id: optimized_patterns_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New non-pathological watcherExclude patterns (.git/objects/** and */.git/objects/**) added to workbench config default"
+
+  - id: pathological_patterns_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Old **/.git/objects/**, **/.git/subtree-cache/**, **/.hg/store/** patterns removed from workbench config"
+
+  - id: performance_comment_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Explanatory comment 'Avoiding a ** pattern here which results in a very complex RegExp' added"
+
+  - id: session_config_duplicate_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Duplicate files.watcherExclude block removed from sessions configuration.contribution.ts"
+
+  - id: watcher_exclude_still_in_workbench
+    type: pass_to_pass
+    origin: repo_tests
+    description: "watcherExclude key and default section still present in files.contribution.ts"
+
+  - id: config_files_still_register
+    type: pass_to_pass
+    origin: static
+    description: "files.contribution.ts still calls registerConfiguration; configuration.contribution.ts still calls registerDefaultConfigurations"
+
+  - id: tab_indentation_in_files_contribution
+    type: pass_to_pass
+    origin: agent_config
+    description: "files.contribution.ts uses tabs (not spaces) for indentation"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "112"
+      commit: "002f2d99e814b4068447558eef47ac8977d1c05a"
+
+rubric:
+  - rule: "Use JSDoc style comments for functions, interfaces, enums, and classes"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "125"
+      commit: "002f2d99e814b4068447558eef47ac8977d1c05a"
+
+  - rule: "Use single quotes for non-user-facing strings"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "132"
+      commit: "002f2d99e814b4068447558eef47ac8977d1c05a"
+
+  - rule: "Use camelCase for property names and local variables"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "118"
+      commit: "002f2d99e814b4068447558eef47ac8977d1c05a"

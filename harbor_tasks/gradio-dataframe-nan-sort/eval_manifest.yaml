@@ -1,0 +1,46 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12890
+  base_commit: "735351422ca90c178e1b5bb9437ce9831eaf951d"
+  merge_commit: "ac29df82a735c72c021c07e0816f78001147671b"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Target file must parse as valid TypeScript/JavaScript"
+
+  - id: null_number_preservation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "cast_value_to_type(null, 'number') returns null, not 0"
+
+  - id: undefined_preservation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "cast_value_to_type(undefined, ...) returns undefined for all types"
+
+  - id: number_coercion_regression
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Normal number coercion still works (strings to numbers, floats preserved)"
+
+  - id: bool_coercion_regression
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Normal bool coercion still works"
+
+  - id: str_passthrough_regression
+    type: pass_to_pass
+    origin: repo_tests
+    description: "String type returns value as-is"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "cast_value_to_type has real logic, not a trivial stub"
+
+rubric: []
+# No agent config files exist in gradio-app/gradio at base commit

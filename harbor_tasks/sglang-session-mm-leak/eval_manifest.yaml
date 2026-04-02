@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21501
+  base_commit: "c2b3e42ad64521c018443f7efe294658a0b1da3b"
+  merge_commit: "e1ee68d0fc2284853f9977b091f587b7373dfa9e"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All four modified files parse without syntax errors"
+
+  - id: release_features_clears_all
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MultimodalInputs.release_features() sets feature=None on every mm_item"
+
+  - id: close_releases_session_mm_features
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SessionController._close() releases multimodal features from session requests"
+
+  - id: bos_offset_clamping
+    type: fail_to_pass
+    origin: pr_diff
+    description: "BOS offset adjustment in Session.create_req clamps to 0 instead of going negative"
+
+  - id: callers_use_release_features
+    type: fail_to_pass
+    origin: pr_diff
+    description: "scheduler.py and output_processor call .release_features() instead of inline loop"
+
+  - id: class_structure_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Core classes and methods unchanged across all modified files"
+
+  - id: release_features_not_stub
+    type: fail_to_pass
+    origin: static
+    description: "release_features has real logic, not just pass/return"
+
+rubric: []

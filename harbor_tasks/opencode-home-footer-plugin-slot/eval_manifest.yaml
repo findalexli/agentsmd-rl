@@ -1,0 +1,111 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 20057
+  base_commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"
+  merge_commit: "14f9e21d5c3f4e853dee8ca133693dd3b915b634"
+
+checks:
+  - id: home_tsx_footer_logic_extracted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "home.tsx must no longer contain inline MCP counting/display logic"
+
+  - id: home_tsx_uses_slot_for_footer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "home.tsx must render the footer via TuiPluginRuntime.Slot with home_footer"
+
+  - id: footer_plugin_exists_with_content
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Footer plugin under feature-plugins/home/ must have JSX rendering dir, MCP, and version"
+
+  - id: footer_plugin_has_slot_registration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Footer plugin must have default export and register home_footer slot"
+
+  - id: slot_map_declares_home_footer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TuiSlotMap in tui.ts must declare the home_footer slot type"
+
+  - id: internal_registry_includes_footer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "internal.ts must import/register the home footer plugin"
+
+  - id: home_tsx_hint_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "home.tsx must not pass hint prop to Prompt — redundant MCP display removed"
+
+  - id: home_tsx_preserves_core_components
+    type: pass_to_pass
+    origin: pr_diff
+    description: "home.tsx must still render Logo and Prompt components"
+
+  - id: existing_plugins_and_slots_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing internal plugins (Tips, SidebarFooter) and slots (home_logo, home_prompt, home_bottom) preserved"
+
+  - id: footer_plugin_no_any_type
+    type: fail_to_pass
+    origin: agent_config
+    description: "Footer plugin must not use the `any` type"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"
+
+  - id: footer_plugin_no_else_statements
+    type: fail_to_pass
+    origin: agent_config
+    description: "Footer plugin must not use `else` statements — prefer early returns"
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"
+
+  - id: footer_plugin_const_over_let
+    type: fail_to_pass
+    origin: agent_config
+    description: "Footer plugin must prefer const over let"
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"
+
+rubric:
+  - rule: "Keep things in one function unless composable or reusable"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"
+
+  - rule: "Prefer single word variable names where possible"
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"
+
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"
+
+  - rule: "Rely on type inference when possible; avoid explicit type annotations unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once"
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"

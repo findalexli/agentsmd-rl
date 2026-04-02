@@ -1,0 +1,155 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19457
+  base_commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+  merge_commit: "5cd54ec345f3dd501131f0c255d86ddfc8a90e07"
+
+checks:
+  - id: format_test_suite_passes
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Upstream format test suite must pass after refactor (both index.ts and test layer wiring)"
+
+  - id: module_imports_cleanly
+    type: pass_to_pass
+    origin: pr_diff
+    description: "format/index.ts must be importable without errors"
+
+  - id: format_exports_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Format namespace must still export Service, layer, defaultLayer, runPromise"
+
+  - id: no_any_type_introduced
+    type: pass_to_pass
+    origin: agent_config
+    description: "No any type annotations introduced in format/index.ts"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+  - id: uses_childprocess_spawner
+    type: fail_to_pass
+    origin: pr_diff
+    description: "formatFile must use ChildProcessSpawner instead of Process.spawn"
+
+  - id: format_file_returns_effect
+    type: fail_to_pass
+    origin: pr_diff
+    description: "formatFile must return an Effect (not async) and caller must not wrap with Effect.promise"
+
+  - id: default_layer_includes_spawner
+    type: fail_to_pass
+    origin: pr_diff
+    description: "defaultLayer must provide a spawner layer dependency"
+
+  - id: no_process_util_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Process utility import from util/process must be removed"
+
+  - id: no_try_catch_in_format_file
+    type: fail_to_pass
+    origin: agent_config
+    description: "formatFile must not use try/catch — use Effect error combinators"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+  - id: format_file_uses_effect_gen
+    type: fail_to_pass
+    origin: agent_config
+    description: "formatFile must use Effect.gen(function* () { ... }) for composition"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "20"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+  - id: no_let_in_added_lines
+    type: pass_to_pass
+    origin: agent_config
+    description: "New/changed lines must use const, not let"
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+  - id: no_else_in_format_file
+    type: pass_to_pass
+    origin: agent_config
+    description: "formatFile should not use else statements — prefer early returns"
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+rubric:
+  - rule: "Use Effect.gen(function* () { ... }) for composition throughout the refactored code."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "20"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+  - rule: "Use Effect.fn(\"Domain.method\") for named/traced effects and Effect.fnUntraced for internal helpers."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "21"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+  - rule: "Effect.fn / Effect.fnUntraced accept pipeable operators as extra arguments — avoid unnecessary outer .pipe() wrappers."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "22"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+  - rule: "Prefer ChildProcessSpawner.ChildProcessSpawner with ChildProcess.make(...) instead of custom process wrappers."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "47"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+  - rule: "In effectified services, prefer yielding existing Effect services over dropping down to ad hoc platform APIs."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "45"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+  - rule: "In Effect.gen / Effect.fn, prefer yield* new MyError(...) over yield* Effect.fail(new MyError(...)) for direct early-failure branches."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "32"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+  - rule: "Avoid unnecessary destructuring; use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+  - rule: "Prefer single word variable names where possible for new locals, params, and helper functions."
+    source:
+      path: "AGENTS.md"
+      lines: "27"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+  - rule: "Rely on type inference; avoid explicit type annotations unless necessary for exports."
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"
+
+  - rule: "Avoid mocks as much as possible in tests; test actual implementation with real layer wiring."
+    source:
+      path: "AGENTS.md"
+      lines: "122"
+      commit: "c8909908f50afc3622d354cd8fd7a83dc3445706"

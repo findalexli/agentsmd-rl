@@ -1,0 +1,132 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19455
+  base_commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
+  merge_commit: "4b9660b211aa57477b6baa1848e582d3279f4db7"
+
+checks:
+  # Gate
+  - id: router_exports_middleware
+    type: pass_to_pass
+    origin: static
+    description: "router.ts must exist and export WorkspaceRouterMiddleware as a function"
+
+  # Fail-to-pass — core behavioral
+  - id: instance_provide_in_router
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Router calls Instance.provide with InstanceBootstrap for directory-based routing"
+
+  - id: instance_provide_removed_from_instance_ts
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Instance.provide middleware removed from instance.ts (moved to router)"
+
+  - id: workspace_routing_branches
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Router handles no-workspace, worktree, and remote workspace cases"
+
+  - id: old_middleware_deleted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "workspace-router-middleware.ts deleted (consolidated into router.ts)"
+
+  - id: server_imports_from_router
+    type: fail_to_pass
+    origin: pr_diff
+    description: "server.ts imports WorkspaceRouterMiddleware from ./router, not control-plane"
+
+  - id: directory_resolution_in_router
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Router resolves directory from query param and x-opencode-directory header"
+
+  # Pass-to-pass — regression
+  - id: instance_routes_importable
+    type: pass_to_pass
+    origin: pr_diff
+    description: "InstanceRoutes still exported from instance.ts"
+
+  - id: worktree_adaptor_importable
+    type: pass_to_pass
+    origin: pr_diff
+    description: "WorktreeAdaptor still exported with a fetch method"
+
+  - id: router_delegates_to_instance_routes
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Router imports and delegates to InstanceRoutes via routes().fetch()"
+
+  # Config-derived — AGENTS.md rules
+  - id: no_any_type_in_router
+    type: fail_to_pass
+    origin: agent_config
+    description: "Router must not use the `any` type"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
+
+  - id: const_over_let_in_router
+    type: fail_to_pass
+    origin: agent_config
+    description: "Router must prefer const over let"
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
+
+  - id: no_else_in_router
+    type: fail_to_pass
+    origin: agent_config
+    description: "Router must not use else statements; prefer early returns"
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
+
+rubric:
+  - rule: "Avoid `try`/`catch` where possible"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
+
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
+
+  - rule: "Keep things in one function unless composable or reusable"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
+
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
+
+  - rule: "Prefer single word names for variables and functions. Only use multiple words if necessary."
+    source:
+      path: "AGENTS.md"
+      lines: "21"
+      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
+
+  - rule: "Prefer functional array methods (flatMap, filter, map) over for loops"
+    source:
+      path: "AGENTS.md"
+      lines: "17"
+      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once"
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"

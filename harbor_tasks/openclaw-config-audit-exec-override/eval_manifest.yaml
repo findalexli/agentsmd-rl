@@ -1,0 +1,85 @@
+version: "2.0"
+
+source:
+  repo: "openclaw/openclaw"
+  pr: 0
+  base_commit: "1ca4261d7e055d0be141ed79ebb1365d0fbc7364"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "audit.test.ts must parse without TypeScript syntax errors"
+
+  - id: exec_test_case_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "audit.test.ts has a test case with exec in a gateway tools.allow array"
+
+  - id: exec_expects_critical_severity
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The exec test case asserts critical severity (not just presence)"
+
+  - id: vitest_suite_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Full vitest run on audit.test.ts exits 0 after the change"
+
+  - id: uses_existing_test_pattern
+    type: fail_to_pass
+    origin: agent_config
+    description: "Exec test is in the runConfigAuditCases cases array, not a standalone block"
+    source:
+      path: "AGENTS.md"
+      lines: "131,164"
+      commit: "1ca4261d7e055d0be141ed79ebb1365d0fbc7364"
+
+  - id: no_any_type
+    type: pass_to_pass
+    origin: agent_config
+    description: "Agent's changes must not introduce `any` type annotations"
+    source:
+      path: "AGENTS.md"
+      lines: "144,147"
+      commit: "1ca4261d7e055d0be141ed79ebb1365d0fbc7364"
+
+  - id: no_lint_suppressions
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @ts-nocheck or inline lint suppressions added"
+    source:
+      path: "AGENTS.md"
+      lines: "146"
+      commit: "1ca4261d7e055d0be141ed79ebb1365d0fbc7364"
+
+  - id: no_prototype_mutation
+    type: pass_to_pass
+    origin: agent_config
+    description: "No prototype mutation for sharing test behavior"
+    source:
+      path: "AGENTS.md"
+      lines: "162"
+      commit: "1ca4261d7e055d0be141ed79ebb1365d0fbc7364"
+
+rubric:
+  - rule: "For narrowly scoped changes, prefer narrowly scoped tests that directly validate the touched behavior."
+    source:
+      path: "AGENTS.md"
+      lines: "131"
+      commit: "1ca4261d7e055d0be141ed79ebb1365d0fbc7364"
+  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings."
+    source:
+      path: "AGENTS.md"
+      lines: "167"
+      commit: "1ca4261d7e055d0be141ed79ebb1365d0fbc7364"
+  - rule: "Keep files concise; extract helpers instead of V2 copies. Use existing patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "164"
+      commit: "1ca4261d7e055d0be141ed79ebb1365d0fbc7364"
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    source:
+      path: "AGENTS.md"
+      lines: "163"
+      commit: "1ca4261d7e055d0be141ed79ebb1365d0fbc7364"

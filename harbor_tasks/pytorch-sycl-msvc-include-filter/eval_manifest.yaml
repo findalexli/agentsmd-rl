@@ -1,0 +1,90 @@
+version: "2.0"
+
+source:
+  repo: "pytorch/pytorch"
+  pr: 170701
+  base_commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
+  merge_commit: "a09b29e732f52a690d4ca3764256f26369115858"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Target file must parse without syntax errors"
+
+  - id: filter_msvc_paths_new_oneapi
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MSVC include paths are filtered out when oneAPI >= 2025.3"
+
+  - id: filter_msvc_paths_newer_oneapi
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MSVC include paths are filtered for oneAPI versions above 2025.3"
+
+  - id: no_filter_old_oneapi
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MSVC paths preserved when oneAPI < 2025.3 (version gating)"
+
+  - id: no_filter_without_env_var
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Paths preserved when VCToolsInstallDir is not set"
+
+  - id: filter_empty_opts
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Filtering an empty pp_opts list returns empty list"
+
+  - id: filter_applied_in_sycl_cflags
+    type: fail_to_pass
+    origin: pr_diff
+    description: "sycl_cflags construction wraps pp_opts through filter function"
+
+  - id: cuda_hip_flags_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CUDA and HIP flag functions are not removed or broken"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Target file retains full cpp_extension module content"
+
+rubric:
+  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
+    source:
+      path: "CLAUDE.md"
+      lines: "48"
+      commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
+  - rule: "Don't make trivial (1-2 LOC) helper functions that are only used once unless it significantly improves code readability."
+    source:
+      path: "CLAUDE.md"
+      lines: "51-52"
+      commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
+  - rule: "Match existing code style and architectural patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "57"
+      commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
+  - rule: "If uncertain, choose the simpler, more concise implementation."
+    source:
+      path: "CLAUDE.md"
+      lines: "62"
+      commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
+  - rule: "Self-explanatory code — variable and function names convey intent; minimal comments needed."
+    source:
+      path: ".claude/skills/pr-review/review-checklist.md"
+      lines: "28"
+      commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
+  - rule: "No over-engineering — only requested changes are made; no speculative features."
+    source:
+      path: ".claude/skills/pr-review/review-checklist.md"
+      lines: "11"
+      commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
+  - rule: "Appropriate complexity — solutions are as simple as possible for the current requirements."
+    source:
+      path: ".claude/skills/pr-review/review-checklist.md"
+      lines: "31"
+      commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"

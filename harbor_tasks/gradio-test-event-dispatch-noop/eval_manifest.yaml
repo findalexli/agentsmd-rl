@@ -1,0 +1,83 @@
+version: "2.0"
+
+source:
+  repo: gradio-app/gradio
+  pr: 13028
+  base_commit: 6f8a0533ad0247e709fefe406961b864473d344d
+  merge_commit: 30af84cdd100855999281de8720cbb6d58b48556
+
+checks:
+  # Gates
+  - id: modified_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "All files touched by the fix must exist and not be empty"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files have substantive content (not gutted/stubbed)"
+
+  # Core behavioral (fail-to-pass)
+  - id: noop_dispatcher_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Remove __GRADIO_BROWSER_TEST__ no-op dispatcher override from Gradio class constructor; wire dispatcher and register_component from shared props"
+
+  - id: listener_registry
+    type: fail_to_pass
+    origin: pr_diff
+    description: "render.ts has a Map-based listener registry with registration function using Map operations"
+
+  - id: render_returns_event_helpers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "render() returns listen, set_data, get_data helpers in addition to container/component"
+
+  - id: dispatcher_notifies_listeners
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dispatcher iterates over registered listeners to notify them, not just firing CustomEvent"
+
+  - id: register_component_wired
+    type: fail_to_pass
+    origin: pr_diff
+    description: "register_component in shared props is not a no-op; accepts set_data/get_data callbacks"
+
+  - id: clipboard_error_handling
+    type: fail_to_pass
+    origin: pr_diff
+    description: "handle_copy in Textbox.svelte wraps clipboard API in try/catch so copy_feedback still runs on error"
+
+  - id: vitest_browser_permissions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Permissions moved from browser instance context to playwright provider contextOptions"
+
+  - id: custom_button_prop_wired
+    type: fail_to_pass
+    origin: pr_diff
+    description: "IconButtonWrapper receives on_custom_button_click prop (not the wrong name)"
+
+  # Regression (pass-to-pass)
+  - id: render_cleanup_exports
+    type: pass_to_pass
+    origin: pr_diff
+    description: "render and cleanup functions still exported from render.ts"
+
+  - id: fire_event_export
+    type: pass_to_pass
+    origin: pr_diff
+    description: "fireEvent still exported from render.ts"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: 6f8a0533ad0247e709fefe406961b864473d344d
+  - rule: "Frontend code is formatted with prettier."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: 6f8a0533ad0247e709fefe406961b864473d344d

@@ -15,6 +15,7 @@ index d694339036..233238034a 100644
          or filename == ".."
          or filename.startswith("../")
      ):
+
 PATCH
 
 git apply --check /tmp/patch.diff 2>/dev/null && git apply /tmp/patch.diff || echo "Patch already applied or conflicts (idempotent)"

@@ -1,0 +1,71 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28202
+  base_commit: "af24e281ebacd6ac77c0f14b4206599cf4ae1c9f"
+  merge_commit: "a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d"
+
+checks:
+  - id: target_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "Target test file must exist and be non-empty"
+
+  - id: data_loss_pattern_fixed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Buggy str='' + continue outer pattern removed, remaining lines preserved"
+
+  - id: trailing_partial_lines_preserved
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Trailing partial line from stderr split saved for next iteration"
+
+  - id: bundler_no_inherit_pipes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Bundler subprocesses must not use stdout/stderr:'inherit'"
+
+  - id: early_bundler_exit_detection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Bundler-based tests detect early bundler exit via Promise.race or similar"
+
+  - id: sourcemap_tests_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "All three sourcemap hot-reload tests exist and verify 50 reload cycles"
+
+  - id: not_stub
+    type: fail_to_pass
+    origin: static
+    description: "Modified file has meaningful code changes (>= 10 non-comment lines)"
+
+  - id: buffer_alloc_convention
+    type: fail_to_pass
+    origin: agent_config
+    description: "Large repetitive strings use Buffer.alloc instead of .repeat()"
+    source:
+      path: "test/CLAUDE.md"
+      lines: "147"
+      commit: "af24e281ebacd6ac77c0f14b4206599cf4ae1c9f"
+
+rubric:
+  - rule: "Do not write flaky tests. Unless explicitly asked, never wait for time to pass in tests. Always wait for the condition to be met instead of waiting for an arbitrary amount of time."
+    source:
+      path: "test/CLAUDE.md"
+      lines: "21"
+      commit: "af24e281ebacd6ac77c0f14b4206599cf4ae1c9f"
+
+  - rule: "Generally, await using or using is a good idea to ensure proper resource cleanup."
+    source:
+      path: "test/CLAUDE.md"
+      lines: "100"
+      commit: "af24e281ebacd6ac77c0f14b4206599cf4ae1c9f"
+
+  - rule: "Prefer async/await over callbacks."
+    source:
+      path: "test/CLAUDE.md"
+      lines: "104"
+      commit: "af24e281ebacd6ac77c0f14b4206599cf4ae1c9f"

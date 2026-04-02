@@ -70,4 +70,5 @@ index 1a0bef8676..05349551d6 100644
  			{active_index}
  			onchange={handle_option_selected}
  			onload={() => (initialized = true)}
+
 PATCH

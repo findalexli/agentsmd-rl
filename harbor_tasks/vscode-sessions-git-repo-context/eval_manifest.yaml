@@ -1,0 +1,79 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 0
+  base_commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
+  merge_commit: ""
+
+checks:
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files compile without errors"
+
+  - id: has_git_repository_context_key_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "sessions.hasGitRepository RawContextKey defined in changesView.ts"
+
+  - id: active_session_has_git_repository_obs_declared
+    type: fail_to_pass
+    origin: pr_diff
+    description: "activeSessionHasGitRepositoryObs IObservable<boolean> declared in ChangesViewModel"
+
+  - id: active_session_has_git_repository_obs_uses_derived_and_repository_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "activeSessionHasGitRepositoryObs implemented via derived() checking session metadata.repositoryPath"
+
+  - id: bind_context_key_for_git_repository
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bindContextKey wires hasGitRepositoryContextKey into ChangesViewPane's scoped context service"
+
+  - id: mark_as_done_action_presentation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "changesView.ts returns showIcon+showLabel presentation for agentSession.markAsDone action"
+
+  - id: sessions_window_context_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: "IsSessionsWindowContext imported in sessionsViewActions.ts"
+
+  - id: mark_as_done_menu_registration_with_context_conditions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MarkAsDone registered in ChatEditingSessionChangesToolbar with IsSessionsWindowContext and sessions.hasPullRequest conditions"
+
+rubric:
+  - rule: "Use tabs, not spaces for indentation"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "indentation"
+      commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
+
+  - rule: "Use arrow functions => over anonymous function expressions"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "style"
+      commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
+
+  - rule: "Service dependencies must be declared in constructors and not accessed through IInstantiationService"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "code-quality"
+      commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
+
+  - rule: "vs/sessions may import from vs/workbench, but vs/workbench must never import from vs/sessions"
+    source:
+      path: ".github/skills/sessions/SKILL.md"
+      lines: "2.2"
+      commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
+
+  - rule: "Never use shared MenuId.* constants from vs/platform/actions for agent sessions UI"
+    source:
+      path: ".github/skills/sessions/SKILL.md"
+      lines: "6"
+      commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"

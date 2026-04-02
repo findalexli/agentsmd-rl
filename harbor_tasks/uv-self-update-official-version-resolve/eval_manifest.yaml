@@ -1,0 +1,91 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 14994
+  base_commit: "10477cd1ce808690a024e867417ce58df901d0c1"
+
+checks:
+  - id: compilation
+    type: pass_to_pass
+    origin: static
+    description: "Both modified crates (uv-bin-install, uv) compile without errors"
+
+  - id: binary_uv_name
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Binary::Uv variant exists and name() returns 'uv'"
+
+  - id: binary_uv_download_url_format
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Binary::Uv download URLs point to GitHub uv releases with correct format"
+
+  - id: binary_uv_default_constraints_empty
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Binary::Uv default_constraints() returns empty (no version constraints)"
+
+  - id: binary_uv_multiplatform_urls
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Binary::Uv download URLs work for different platforms and archive formats"
+
+  - id: binary_uv_single_url_no_mirror
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Binary::Uv has exactly 1 URL (no CDN mirror), Ruff still has 2"
+
+  - id: existing_uv_bin_install_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing uv-bin-install library tests still pass"
+
+  - id: no_unwrap_in_official_path
+    type: fail_to_pass
+    origin: agent_config
+    description: "New official-path functions must not use .unwrap(), panic!, or unreachable!"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "10477cd1ce808690a024e867417ce58df901d0c1"
+
+  - id: self_update_has_tests
+    type: fail_to_pass
+    origin: agent_config
+    description: "self_update module has working unit tests with real assertions"
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "10477cd1ce808690a024e867417ce58df901d0c1"
+
+rubric:
+  - rule: "PREFER patterns like `if let` to handle fallibility"
+    source:
+      path: "CLAUDE.md"
+      lines: "8"
+      commit: "10477cd1ce808690a024e867417ce58df901d0c1"
+
+  - rule: "PREFER let chains (`if let` combined with `&&`) over nested `if let` statements"
+    source:
+      path: "CLAUDE.md"
+      lines: "11"
+      commit: "10477cd1ce808690a024e867417ce58df901d0c1"
+
+  - rule: "ALWAYS read and copy the style of similar tests when adding new cases"
+    source:
+      path: "CLAUDE.md"
+      lines: "15"
+      commit: "10477cd1ce808690a024e867417ce58df901d0c1"
+
+  - rule: "PREFER top-level imports over local imports or fully qualified names"
+    source:
+      path: "CLAUDE.md"
+      lines: "16"
+      commit: "10477cd1ce808690a024e867417ce58df901d0c1"
+
+  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`"
+    source:
+      path: "CLAUDE.md"
+      lines: "17-18"
+      commit: "10477cd1ce808690a024e867417ce58df901d0c1"

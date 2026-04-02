@@ -1,0 +1,97 @@
+version: "2.0"
+
+source:
+  repo: "pytorch/pytorch"
+  pr: 177048
+  base_commit: "41f8e3e0381395e1669ca4bc6e36a7872d25cdcd"
+  merge_commit: "b61f54b5f6042369840d0c02d620ff762b5010d7"  # PR head (closed without merge)
+
+checks:
+  - id: shim_h_two_arg_deleter_callback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "shim.h declares a C function with a two-arg deleter callback: void (*)(void*, void*)"
+
+  - id: shim_h_context_pointer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "shim.h torch_from_blob declaration carries a separate void* context parameter after the callback"
+
+  - id: shim_cpp_wraps_two_arg_callback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "shim_common.cpp accepts a two-arg callback and wraps it for at::for_blob"
+
+  - id: ops_h_generic_callable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ops.h from_blob accepts generic callables (template or std::function), not just DeleterFnPtr"
+
+  - id: shim_cpp_context_forwarded
+    type: fail_to_pass
+    origin: pr_diff
+    description: "shim_common.cpp forwards the context pointer through a wrapping lambda to the two-arg callback"
+
+  - id: no_deleter_overload_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "The no-deleter from_blob overload still exists for backward compatibility"
+
+  - id: files_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "Modified files have real implementation, not stubs"
+
+  - id: shim_cpp_null_callback_guard
+    type: pass_to_pass
+    origin: pr_diff
+    description: "shim_common.cpp still guards against nullptr callback for backward compatibility"
+
+rubric:
+  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
+    source:
+      path: "CLAUDE.md"
+      lines: "48"
+      commit: "41f8e3e0381395e1669ca4bc6e36a7872d25cdcd"
+
+  - rule: "Don't make trivial (1-2 LOC) helper functions that are only used once unless it significantly improves code readability."
+    source:
+      path: "CLAUDE.md"
+      lines: "51-52"
+      commit: "41f8e3e0381395e1669ca4bc6e36a7872d25cdcd"
+
+  - rule: "Match existing code style and architectural patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "57"
+      commit: "41f8e3e0381395e1669ca4bc6e36a7872d25cdcd"
+
+  - rule: "If uncertain, choose the simpler, more concise implementation."
+    source:
+      path: "CLAUDE.md"
+      lines: "62"
+      commit: "41f8e3e0381395e1669ca4bc6e36a7872d25cdcd"
+
+  - rule: "No over-engineering — only requested changes are made; no speculative features."
+    source:
+      path: ".claude/skills/pr-review/review-checklist.md"
+      lines: "11"
+      commit: "41f8e3e0381395e1669ca4bc6e36a7872d25cdcd"
+
+  - rule: "No premature abstraction — helpers and utilities are only created when reused."
+    source:
+      path: ".claude/skills/pr-review/review-checklist.md"
+      lines: "12"
+      commit: "41f8e3e0381395e1669ca4bc6e36a7872d25cdcd"
+
+  - rule: "Self-explanatory code — variable and function names convey intent; minimal comments needed."
+    source:
+      path: ".claude/skills/pr-review/review-checklist.md"
+      lines: "28"
+      commit: "41f8e3e0381395e1669ca4bc6e36a7872d25cdcd"
+
+  - rule: "No backward-compatibility hacks — unused code is deleted completely, not renamed with underscores or marked with 'removed' comments."
+    source:
+      path: ".claude/skills/pr-review/review-checklist.md"
+      lines: "30"
+      commit: "41f8e3e0381395e1669ca4bc6e36a7872d25cdcd"

@@ -59,4 +59,5 @@ index 56a002a74..fb652e73d 100644
      for key in ("audio_kwargs", "images_kwargs", "videos_kwargs"):
          if key in result:
              result[key] = {**result[key], **modality_forced}
+
 PATCH

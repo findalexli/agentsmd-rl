@@ -1,0 +1,81 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24234
+  base_commit: "c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e"
+  merge_commit: "5f7e0346bc946d7fb484b285d49d351d3a54d526"
+
+checks:
+  - id: fixture_has_multiline_expression
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Fixture file includes a multiline arithmetic expression test case"
+
+  - id: fixture_has_multiline_call
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Fixture file includes a multiline function call test case"
+
+  - id: replacement_handles_multiline
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Replacement logic handles multiline expressions, not just walrus operators"
+
+  - id: walrus_still_parenthesized
+    type: pass_to_pass
+    origin: static
+    description: "Walrus operator (named expression) still gets parenthesized"
+
+  - id: core_ruf050_logic_intact
+    type: pass_to_pass
+    origin: static
+    description: "Core RUF050 rule logic is preserved (not stubbed)"
+
+  - id: fixture_retains_existing_cases
+    type: pass_to_pass
+    origin: static
+    description: "Fixture file retains existing walrus and basic call test cases"
+
+  - id: no_panic_unwrap
+    type: pass_to_pass
+    origin: agent_config
+    description: "Avoid panic!, unreachable!, .unwrap() per AGENTS.md guidelines"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e"
+
+  - id: no_function_local_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Rust imports at top of file, never locally in functions"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e"
+
+  - rule: "Avoid writing significant amounts of new code. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e"
+
+  - rule: "Prefer let chains (if let combined with &&) over nested if let statements to reduce indentation."
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e"
+
+  - rule: "Use comments purposefully. Don't narrate code, but explain invariants and unusual choices."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e"

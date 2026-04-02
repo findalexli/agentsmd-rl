@@ -1,0 +1,62 @@
+{
+  "validations": [
+    {
+      "timestamp": "2026-03-30T13:02:43.981474",
+      "runner": "run_pipeline.py validate (20260330)",
+      "docker_build": false,
+      "gold_score": null,
+      "nop_score": null,
+      "verdict": "error",
+      "notes": "timeout"
+    },
+    {
+      "timestamp": "2026-03-30T11:48:15.959743",
+      "runner": "audit (audit-tests_20260330_114815)",
+      "phase": "audit",
+      "status": "success",
+      "output_tokens": 15338
+    },
+    {
+      "timestamp": "2026-04-01T20:15:41.725091",
+      "phase": "docker_validate_v2",
+      "runner": "scripts/docker_validate_all.sh",
+      "verdict": "fail_build",
+      "nop": null,
+      "gold": null,
+      "format": "pytest_binary"
+    },
+    {
+      "timestamp": "2026-04-01T23:40:40-07:00",
+      "runner": "validate_and_fix.sh",
+      "docker_build": true,
+      "gold_score": 0.0,
+      "nop_score": 0.0,
+      "verdict": "fail_gold",
+      "notes": ""
+    },
+    {
+      "timestamp": "2026-04-02T12:58:21.156094",
+      "phase": "e2b_post_remake",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail_build",
+      "notes": "Sandbox create: 404: template '9p6s4759mukdktltbpz1' not found"
+    },
+    {
+      "timestamp": "2026-04-02T14:06:36.422118",
+      "phase": "e2b_sandbox404_retry",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail_build",
+      "notes": "Sandbox rebuild+create: failed to run command 'cargo fetch': exit status 127"
+    },
+    {
+      "timestamp": "2026-04-02T14:28:08.959972",
+      "phase": "e2b_full_validation",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail_build",
+      "notes": "Sandbox rebuild+create: failed to run command 'cargo fetch': exit status 127"
+    }
+  ]
+}

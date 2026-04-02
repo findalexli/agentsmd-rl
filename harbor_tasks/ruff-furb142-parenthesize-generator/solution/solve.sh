@@ -55,4 +55,5 @@ index 202f5095578e7..e55aca2d5e248 100644
      };
 
      let applicability = if checker.comment_ranges().intersects(for_stmt.range) {
+
 PATCH

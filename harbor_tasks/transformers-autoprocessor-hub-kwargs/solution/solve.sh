@@ -35,6 +35,7 @@ index 834a04541ed8..0bfdc61e7405 100644
          # We don't want to raise
          cached_file_kwargs.update(
              {
+
 PATCH
 
 git apply --check /tmp/patch.diff 2>/dev/null && git apply /tmp/patch.diff || echo "Patch already applied or conflicts (idempotent)"

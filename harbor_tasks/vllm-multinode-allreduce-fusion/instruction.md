@@ -2,24 +2,19 @@
 
 ## Problem
 
-The flashinfer trtllm allreduce backend does not work for multi-node setups. Running allreduce fusion results in a hang in multi-node configurations because the trtllm backend does not support multi-node allreduce.
+The flashinfer allreduce in vLLM hangs when running in multi-node configurations. The trtllm backend does not support multi-node allreduce, but the default backend is hardcoded to `"trtllm"` regardless of the cluster topology.
 
-The default backend was hardcoded to `trtllm`, which works for single-node but hangs on multi-node.
-
-## Root Cause
-
-In `vllm/distributed/device_communicators/flashinfer_all_reduce.py`, the `VLLM_FLASHINFER_ALLREDUCE_BACKEND` environment variable defaults to `"trtllm"` and `get_fi_ar_workspace` uses it directly without checking the node count. The `trtllm` backend only supports single-node allreduce.
-
-Additionally, `get_fi_ar_quant_workspace` always creates a trtllm workspace, which also fails in multi-node.
+Additionally, `get_fi_ar_quant_workspace` always attempts to create a trtllm workspace even in multi-node setups, which also fails.
 
 ## Expected Behavior
 
-1. Change the default backend from `"trtllm"` to `"auto"` in `vllm/envs.py`
-2. Add a `_resolve_fi_ar_backend()` helper that auto-selects `mnnvl` for multi-node and `trtllm` for single-node
-3. Raise `ValueError` if user explicitly requests `trtllm` in multi-node
-4. Return `None` from `get_fi_ar_quant_workspace` for multi-node (quant fusion not supported)
+- The default backend should be `"auto"` and resolved at runtime based on the number of nodes
+- Multi-node setups (>1 node) should use a backend that supports multi-node allreduce
+- Single-node setups should continue using `trtllm`
+- If a user explicitly requests `trtllm` in a multi-node setup, a clear error should be raised
+- Quant workspace creation should be skipped for multi-node (not supported by trtllm)
 
-## Files to Modify
+## Files to Look At
 
-- `vllm/distributed/device_communicators/flashinfer_all_reduce.py` -- add backend resolution
-- `vllm/envs.py` -- change default from "trtllm" to "auto"
+- `vllm/distributed/device_communicators/flashinfer_all_reduce.py` — allreduce workspace creation and backend selection
+- `vllm/envs.py` — environment variable defaults including `VLLM_FLASHINFER_ALLREDUCE_BACKEND`

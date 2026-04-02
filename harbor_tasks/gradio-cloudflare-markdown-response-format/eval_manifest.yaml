@@ -1,0 +1,67 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 13152
+  base_commit: "64828b08d5be4fdde8a73932b3f288c073ec49bd"
+  merge_commit: "30bf54c187478cdafa70037f088e353f5629a995"
+
+checks:
+  - id: doc_endpoint_uses_plain_response
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Doc endpoint returns plain Response instead of json() wrapper"
+
+  - id: guide_endpoint_uses_plain_response
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Guide endpoint returns plain Response instead of json() wrapper"
+
+  - id: client_uses_text_not_json
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Client fetches markdown via .text() instead of .json()/.markdown"
+
+  - id: content_type_markdown_in_servers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both server endpoints set Content-Type to text/markdown"
+
+  - id: no_json_import_from_sveltekit
+    type: fail_to_pass
+    origin: pr_diff
+    description: "json import from @sveltejs/kit removed in both server files"
+
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "All three modified files parse without syntax errors"
+
+  - id: handler_structure_preserved
+    type: pass_to_pass
+    origin: static
+    description: "SvelteKit handler exports (prerender, entries, GET) still present"
+
+  - id: handlers_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "GET handlers have real logic, not trivial stubs"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "64828b08d5be4fdde8a73932b3f288c073ec49bd"
+
+  - rule: "Frontend code must be formatted with prettier (consistent with project formatting standards)."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "64828b08d5be4fdde8a73932b3f288c073ec49bd"
+
+  - rule: "Modified TypeScript and Svelte files should pass type checking without errors."
+    source:
+      path: "js/README.md"
+      lines: "81-86"
+      commit: "64828b08d5be4fdde8a73932b3f288c073ec49bd"

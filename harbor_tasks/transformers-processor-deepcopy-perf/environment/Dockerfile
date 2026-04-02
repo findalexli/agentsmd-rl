@@ -1,29 +1,29 @@
 FROM python:3.12-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV LANG=C.UTF-8
-ENV LC_ALL=C.UTF-8
+RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
+    apt-get install -y --no-install-recommends \
+        git curl ca-certificates build-essential tmux && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git curl ca-certificates build-essential tmux \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN mkdir -p /workspace /logs/verifier
-
-WORKDIR /workspace
-
-RUN git clone https://github.com/huggingface/transformers.git /workspace/transformers && \
+# Clone transformers at the base commit (BEFORE the fix)
+ARG BASE_COMMIT=55cc1a7fb8e53a5e7e35ca9cf9759498f20abb93
+RUN git clone --filter=blob:none https://github.com/huggingface/transformers.git /workspace/transformers && \
     cd /workspace/transformers && \
-    git checkout 55cc1a7fb8e53a5e7e35ca9cf9759498f20abb93
+    git checkout ${BASE_COMMIT}
 
-# Install minimal deps (agent fills in specifics)
-RUN pip install --no-cache-dir numpy 2>/dev/null || true
-
-RUN pip install --no-cache-dir ruff 2>/dev/null || true
-
-ENV PYTHONPATH="/workspace/transformers"
-
-RUN git config --global user.email "agent@test.com" && \
-    git config --global user.name "Test Agent"
+RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace/transformers
+
+# Configure git for the agent
+RUN git config --global user.email "agent@test.com" && \
+    git config --global user.name "Agent" && \
+    git config --global --add safe.directory /workspace/transformers
+
+# Install minimal deps needed for testing (no torch/GPU)
+RUN pip install --no-cache-dir -e ".[dev]" jinja2 tokenizers && \
+    pip install --no-cache-dir ruff
+
+ENV PYTHONPATH="/workspace/transformers/src:${PYTHONPATH}"
+
+# Copy test and solution files

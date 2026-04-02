@@ -66,4 +66,5 @@ index 66f16f73b883..7f6e76c7e37b 100644
    if (!registry) {
      return [];
    }
+
 PATCH

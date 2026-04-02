@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21432
+  base_commit: "4dd4e06f1d5fd1d294cb82a84b803256760cbfff"
+  merge_commit: "75682f1d2f60797fb438da8fd6fe40e92e1a26fe"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "tokenizer_manager.py must parse without syntax errors"
+
+  - id: no_backlog_warning_in_method
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No logger.warning/warn calls about streaming backlog in _wait_one_response"
+
+  - id: no_warning_emitted_with_pending_chunks
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Executing backlog-related code paths must not emit WARNING-level output"
+
+  - id: async_generator_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Async generator structure with drain loop and event handling preserved"
+
+  - id: method_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "Method has substantial body with real logic, error handling, and completion detection"
+
+rubric: []

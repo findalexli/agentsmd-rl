@@ -1,0 +1,73 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 45049
+  base_commit: "d65c2b138a3d27a3321f7bbced0efc9bfb5a9688"
+  merge_commit: "12b6b57cac0397db0afda56f3ab0101729bc5f0f"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "configuration_utils.py must parse without syntax errors"
+
+  - id: legacy_rope_kwargs_converted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Config without rope_parameters attr but with rope_scaling+rope_theta kwargs gets conversion applied"
+
+  - id: warning_emitted_for_legacy_rope
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Warning/log emitted when legacy RoPE kwargs used on config lacking rope_parameters"
+
+  - id: config_with_rope_parameters_attr
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Config class defining rope_parameters still works with rope_scaling+rope_theta kwargs"
+
+  - id: config_without_rope_kwargs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Config without any RoPE kwargs initializes normally"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "__post_init__ method has real logic, not a stub"
+
+  - id: ruff_check
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changed file passes ruff linting"
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "d65c2b138a3d27a3321f7bbced0efc9bfb5a9688"
+
+  - id: ruff_format
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changed file passes ruff format check"
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "d65c2b138a3d27a3321f7bbced0efc9bfb5a9688"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "d65c2b138a3d27a3321f7bbced0efc9bfb5a9688"
+  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`."
+    source:
+      path: "CLAUDE.md"
+      lines: "66"
+      commit: "d65c2b138a3d27a3321f7bbced0efc9bfb5a9688"
+  - rule: "Use getattr()/setattr() for dynamic model/config attributes. For runtime-injected fields, use getattr(obj, 'field', default) for reads and setattr(obj, 'field', value) for writes."
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "162-167"
+      commit: "d65c2b138a3d27a3321f7bbced0efc9bfb5a9688"

@@ -1,0 +1,117 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 23802
+  base_commit: "29bf84e064567bde67320efd164a02b7322cc664"
+  merge_commit: ""
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "ruff_linter crate compiles without errors"
+
+  - id: annotated_redeclarations_flagged
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Annotated redeclarations (bar: int = 1 / bar: int = 2) flagged as F811 in preview mode"
+
+  - id: diagnostic_mentions_variable_names
+    type: fail_to_pass
+    origin: pr_diff
+    description: "F811 diagnostic output identifies the redefined variable names (bar, x)"
+
+  - id: fix_removes_first_annotated_assignment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "--fix mode removes the shadowed first annotated assignment, keeps the second"
+
+  - id: single_pair_flagged
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A single annotated redeclaration pair with a different variable name is flagged"
+
+  - id: plain_reassignment_not_flagged
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Plain reassignments (y = 1; y = 2) are not flagged"
+
+  - id: mixed_assignment_not_flagged
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Mixed assignments (one annotated, one plain) are not flagged"
+
+  - id: used_between_not_flagged
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Used-between-assignments are not flagged"
+
+  - id: non_preview_mode_skips
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Non-preview mode does not flag annotated redeclarations"
+
+  - id: existing_f811_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing upstream F811 snapshot tests still pass"
+
+  - id: rule_file_not_truncated
+    type: pass_to_pass
+    origin: static
+    description: "redefined_while_unused.rs has >200 lines (not stubbed)"
+
+  - id: preview_file_not_truncated
+    type: pass_to_pass
+    origin: static
+    description: "preview.rs has >5 lines (not stubbed)"
+
+  - id: no_local_imports_in_functions
+    type: pass_to_pass
+    origin: agent_config
+    description: "Rust imports at file top, never locally in functions"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "29bf84e064567bde67320efd164a02b7322cc664"
+
+  - id: no_new_unsafe_patterns
+    type: pass_to_pass
+    origin: agent_config
+    description: "No new .unwrap(), panic!(), or unreachable!() calls added to the rule file"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "29bf84e064567bde67320efd164a02b7322cc664"
+
+  - id: expect_over_allow
+    type: pass_to_pass
+    origin: agent_config
+    description: "If lint suppression attributes are added, use #[expect()] not #[allow()]"
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "29bf84e064567bde67320efd164a02b7322cc664"
+
+rubric:
+  - rule: "Avoid writing significant amounts of new code. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "29bf84e064567bde67320efd164a02b7322cc664"
+  - rule: "Prefer let chains (if let combined with &&) over nested if let statements to reduce indentation."
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "29bf84e064567bde67320efd164a02b7322cc664"
+  - rule: "Use comments purposefully. Don't narrate code, but explain invariants and why something unusual was done."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "29bf84e064567bde67320efd164a02b7322cc664"
+  - rule: "Make error messages concise. Think about how a diagnostic would look on a narrow terminal. Use subdiagnostics or secondary annotations for additional detail."
+    source:
+      path: "AGENTS.md"
+      lines: "83"
+      commit: "29bf84e064567bde67320efd164a02b7322cc664"

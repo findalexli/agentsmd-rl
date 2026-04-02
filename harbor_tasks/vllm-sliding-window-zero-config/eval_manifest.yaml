@@ -1,0 +1,53 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 0  # PR number unknown; fix derived from solve.sh patch
+  base_commit: "7b54f60db0f55d74dac8aa3040c02363b7a9f6ec"
+  merge_commit: ""
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "vllm/config/model.py must parse without errors"
+
+  - id: sw_zero_converted_to_none
+    type: fail_to_pass
+    origin: pr_diff
+    description: "sliding_window=0 must be treated as None (disabled)"
+
+  - id: sw_zero_sets_disable_flag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "disable_sliding_window must be True when sliding_window=0"
+
+  - id: sw_none_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "sliding_window=None stays None and does not trigger disable"
+
+  - id: sw_positive_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "sliding_window=128 must be preserved unchanged"
+
+  - id: sw_large_positive_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "sliding_window=4096 must be preserved unchanged"
+
+  - id: model_config_methods_preserved
+    type: pass_to_pass
+    origin: static
+    description: "ModelConfig retains get_sliding_window, get_and_verify_max_len, __post_init__"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "__post_init__ has real logic and a sliding_window assignment"
+
+rubric: []
+# AGENTS.md for vllm-project/vllm contains only process/tooling rules
+# (duplicate-work checks, uv usage, pre-commit, commit trailers).
+# No code-quality rules evaluable from a diff apply to this fix.

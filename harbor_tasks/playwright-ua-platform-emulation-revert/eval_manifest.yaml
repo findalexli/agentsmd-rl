@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 40016
+  base_commit: "346b39c7895a7df03b50b087d503e9f2997fe2e0"
+  merge_commit: "93f6b4e158337e2f4a78045a815c7595bf60a931"
+
+checks:
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must compile without errors"
+
+  - id: firefox_no_platform_override
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Firefox must not call setPlatformOverride when setting user agent"
+
+  - id: webkit_no_platform_override
+    type: fail_to_pass
+    origin: pr_diff
+    description: "WebKit must not override navigator.platform in updateUserAgent"
+
+  - id: chromium_no_platform_in_ua_override
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Chromium _updateUserAgent must not pass platform key to setUserAgentOverride"
+
+  - id: chromium_still_sends_ua_metadata
+    type: pass_to_pass
+    origin: static
+    description: "Chromium must still send userAgentMetadata for client hints"
+
+rubric:
+  - rule: "For exported classes: private _method() — only used within the class itself; _method() (no private) — used by other code in the same file, but not outside the file; method() (public) — used in other files"
+    source:
+      path: "CLAUDE.md"
+      lines: "67-69"
+      commit: "346b39c7895a7df03b50b087d503e9f2997fe2e0"
+  - rule: "Client code NEVER imports server code. Server code NEVER imports client code. Communication is only through the protocol."
+    source:
+      path: "CLAUDE.md"
+      lines: "62"
+      commit: "346b39c7895a7df03b50b087d503e9f2997fe2e0"

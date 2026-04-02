@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28447
+  base_commit: "2920fac5f712c2714e3a0a97c2d6e8e8ad47cc1e"
+  merge_commit: "fe4a66e086bebd2c3c5a238effa801426d736278"
+
+checks:
+  - id: source_files_intact
+    type: pass_to_pass
+    origin: static
+    description: "Key source files exist, are not truncated, and have balanced braces"
+
+  - id: regexp_object_removed_direct_match
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Old componentExec+createComponentMatchResult replaced with single method using direct RegExp::match + ovector buffer, all co-located"
+
+  - id: special_scheme_direct_matching
+    type: fail_to_pass
+    origin: pr_diff
+    description: "matchSpecialSchemeProtocol uses direct RegExp::match instead of RegExpObject, takes JSGlobalObject*"
+
+  - id: match_consolidated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "URLPattern::match calls new component matching method, removes componentExec, consolidates locking"
+
+  - id: constructor_parser_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "matchSpecialSchemeProtocol call site in URLPatternConstructorStringParser passes globalObject()"
+
+  - id: header_source_coherence
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New component matching method declared in header and defined in source with matching return type"
+
+  - id: api_surface_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core URLPattern types, methods, and symbols remain in headers and source"
+
+  - id: no_regexp_object_include
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RegExpObject.h removed from URLPatternComponent.cpp — direct RegExp::match eliminates the wrapper dependency"
+
+rubric:
+  - rule: "Follow existing code style - check neighboring files for patterns"
+    source:
+      path: "AGENTS.md"
+      lines: "228"
+      commit: "2920fac5f712c2714e3a0a97c2d6e8e8ad47cc1e"

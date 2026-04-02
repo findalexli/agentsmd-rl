@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 13164
+  base_commit: "b3722285163dcee97fe236e87d6ef98cee6be441"
+  merge_commit: "beb4b7f2124cacea17db2b3fe91cd52ccb2ee106"
+
+checks:
+  - id: routes_syntax
+    type: pass_to_pass
+    origin: static
+    description: "gradio/routes.py must parse without syntax errors"
+
+  - id: heartbeat_task_reference_stored
+    type: fail_to_pass
+    origin: pr_diff
+    description: "asyncio.create_task(heartbeat()) result stored in a variable, not fire-and-forget"
+
+  - id: heartbeat_cancelled_all_exit_paths
+    type: fail_to_pass
+    origin: pr_diff
+    description: "heartbeat task cancelled in all 3 exit paths (disconnect, completion, exception)"
+
+  - id: heartbeat_task_created_before_try
+    type: fail_to_pass
+    origin: pr_diff
+    description: "create_task placed before try block so variable is always defined in except handler"
+
+  - id: heartbeat_function_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "async heartbeat() function still defined in routes.py"
+
+  - id: sse_stream_returns_streaming_response
+    type: pass_to_pass
+    origin: repo_tests
+    description: "sse_stream function and StreamingResponse usage intact"
+
+  - id: ruff_format_routes
+    type: pass_to_pass
+    origin: agent_config
+    description: "Python code is formatted with ruff"
+    source:
+      path: "AGENTS.md"
+      lines: "43"
+      commit: "b3722285163dcee97fe236e87d6ef98cee6be441"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "b3722285163dcee97fe236e87d6ef98cee6be441"

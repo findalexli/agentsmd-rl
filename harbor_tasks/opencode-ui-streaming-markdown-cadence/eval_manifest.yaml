@@ -1,0 +1,90 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19404
+  base_commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
+  merge_commit: "a93374c48f724ebbc99886ac5d607a3990090b75"
+
+checks:
+  - id: file_valid
+    type: pass_to_pass
+    origin: static
+    description: "message-part.tsx exists with PART_MAPPING and createSignal markers"
+
+  - id: throttle_interval_reduced
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Render pacing interval reduced from ~100ms to <=50ms"
+
+  - id: pacing_is_streaming_aware
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Pacing function accepts and uses streaming/live state"
+
+  - id: incremental_reveal
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Text revealed in small increments via position tracking, not whole-buffer dump"
+
+  - id: both_displays_use_pacing
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Both TextPartDisplay and ReasoningPartDisplay use the pacing mechanism"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "message-part.tsx is not stubbed or truncated (>=100 lines)"
+
+  - id: no_any_type
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changed code must not introduce any type annotations"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
+
+  - id: no_try_catch
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changed code must avoid try/catch blocks"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
+
+  - id: no_else_blocks
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changed code must avoid else statements, prefer early returns"
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
+
+rubric:
+  - rule: "Prefer single word names for variables and functions. Only use multiple words if necessary."
+    source:
+      path: "AGENTS.md"
+      lines: "21-32"
+      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
+
+  - rule: "Prefer const over let. Use ternaries or early returns instead of reassignment."
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
+
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity."
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"

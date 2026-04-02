@@ -1,0 +1,143 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19363
+  base_commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+checks:
+  - id: no_facade_in_state_init
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Module-level Config/Plugin facades must not be called in InstanceState.make"
+
+  - id: all_is_effectful
+    type: fail_to_pass
+    origin: pr_diff
+    description: "all() must be an Effect function (Effect.fn or Effect.gen), not async"
+
+  - id: effect_concurrency
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Promise.all replaced with Effect.forEach or Effect.all for concurrent tool init"
+
+  - id: services_yielded_in_layer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Config.Service and Plugin.Service must be obtained via Effect dependency graph"
+
+  - id: plugin_default_layer_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Plugin module must export defaultLayer for layer composition"
+
+  - id: registry_default_layer_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ToolRegistry must export a composed defaultLayer providing dependencies"
+
+  - id: service_class_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "ToolRegistry.Service class definition must still exist"
+
+  - id: public_facades_exported
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Public facade functions (register, ids, tools) must remain exported"
+
+  - id: effect_fn_usage
+    type: pass_to_pass
+    origin: agent_config
+    description: "Service methods should use Effect.fn for named/traced effects (>= 3 uses)"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "21"
+      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+  - id: filter_usage
+    type: pass_to_pass
+    origin: agent_config
+    description: "Tool filtering should use .filter() (functional array method)"
+    source:
+      path: "AGENTS.md"
+      lines: "17"
+      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must have substantial implementation"
+
+rubric:
+  - rule: "Avoid `try`/`catch` where possible"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+  - rule: "Avoid using the `any` type"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+  - rule: "Prefer single word variable names where possible"
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+  - rule: "Rely on type inference when possible; avoid explicit type annotations unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+  - rule: "Prefer `const` over `let`; use ternaries or early returns instead of reassignment"
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+  - rule: "Avoid `else` statements; prefer early returns"
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+  - rule: "In effectified services, prefer yielding existing Effect services over dropping down to ad hoc platform APIs"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "45"
+      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+  - rule: "Use `Effect.gen(function* () { ... })` for composition"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "20"
+      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+  - rule: "Avoid unnecessary .pipe() wrappers around Effect.fn / Effect.fnUntraced"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "22"
+      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+  - rule: "Do the work directly in the InstanceState.make closure — don't add fibers, ensure() callbacks, or started flags on top"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "39"
+      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once"
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+  - rule: "Avoid unnecessary destructuring; use dot notation to preserve context"
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"

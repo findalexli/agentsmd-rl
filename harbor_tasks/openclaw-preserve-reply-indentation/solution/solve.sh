@@ -62,4 +62,5 @@ index 6d69e795b052..8dbbb2a05f5d 100644
    });
  
    cleaned = normalizeDirectiveWhitespace(cleaned);
+
 PATCH

@@ -89,4 +89,5 @@ index c7fe8e2d2..2ae74b813 100644
      return await _call_client_create(
          create_fn=_openai_client.chat.completions.create,
          request=request,
+
 PATCH

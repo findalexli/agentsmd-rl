@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1720
+  base_commit: "600624625219566f742540189dd18399d310d923"
+  merge_commit: "ae2590ae2c3686e62ac63e95058e70addc5e634d"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "arguments.py must parse without errors"
+
+  - id: rope_theta_from_parameters_dict
+    type: fail_to_pass
+    origin: pr_diff
+    description: "rope_theta extracted from rope_parameters dict instead of stale class default"
+
+  - id: rope_theta_from_parameters_dict_varied
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Same extraction logic works with different theta value (200000)"
+
+  - id: mismatch_detected_with_dict_override
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dict rope_theta overrides stale default; mismatch with rotary_base is caught"
+
+  - id: fallback_to_direct_attribute
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Without rope_parameters dict, direct rope_theta attribute still validates"
+
+  - id: fallback_mismatch_detected
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Without rope_parameters dict, mismatch via direct attribute still raises"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "hf_validate_args has real validation logic, not a stub"
+
+rubric: []

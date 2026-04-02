@@ -1,0 +1,41 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 36160
+  base_commit: "f944b4c5352be02623d2d7415c0806350f875114"
+  merge_commit: "9627b5a1caa64c1488643bffdf04495106fa3247"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "ReactFiberNewContext.js must parse without syntax errors (node --check)"
+
+  - id: context_propagates_to_fallback_simple
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Context change above a suspended Suspense boundary reaches fallback consumers"
+
+  - id: context_propagates_to_fallback_memo_boundary
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Context reaches fallback consumer even when React.memo prevents Suspense wrapper re-render (exact PR scenario)"
+
+  - id: existing_context_propagation_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing ReactContextPropagation-test.js suite passes without regression"
+
+rubric:
+  - rule: "Context propagation fix should include a comment explaining the Suspense fiber structure (SuspenseComponent → OffscreenComponent → sibling FallbackFragment) so future readers understand why the traversal skips the primary subtree."
+    source:
+      path: "CLAUDE.md"
+      lines: "1-7"
+      commit: "f944b4c5352be02623d2d7415c0806350f875114"
+
+  - rule: "Use yarn test --silent --no-watchman <pattern> when running tests; always specify a test pattern (never run the whole suite)."
+    source:
+      path: ".claude/skills/test/SKILL.md"
+      lines: "1-38"
+      commit: "f944b4c5352be02623d2d7415c0806350f875114"

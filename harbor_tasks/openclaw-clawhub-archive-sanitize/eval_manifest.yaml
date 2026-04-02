@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "openclaw/openclaw"
+  pr: 56779
+  base_commit: "7a16a481983e62bc3394c7c5f90d320b6be82f0e"
+  merge_commit: "eee8e9679e9e77f2f46ec45e5688eb8ccc42ffa7"
+
+checks:
+  - id: target_exists
+    type: pass_to_pass
+    origin: static
+    description: "Target file src/infra/clawhub.ts must exist"
+
+  - id: package_archive_flat_filename
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Scoped package names like @scope/name produce flat archive temp filenames"
+
+  - id: skill_archive_flat_filename
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Slash-containing skill slugs like ops/calendar produce flat archive filenames"
+
+  - id: functions_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Both download functions have substantial bodies, not stubs"
+
+  - id: no_ts_nocheck
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @ts-nocheck or @ts-ignore directives in target file"
+    source:
+      path: "CLAUDE.md"
+      lines: "146"
+      commit: "7a16a481983e62bc3394c7c5f90d320b6be82f0e"
+
+  - id: no_eslint_disable_explicit_any
+    type: pass_to_pass
+    origin: agent_config
+    description: "no-explicit-any must not be disabled in the target file"
+    source:
+      path: "CLAUDE.md"
+      lines: "147"
+      commit: "7a16a481983e62bc3394c7c5f90d320b6be82f0e"
+
+  - id: no_mixed_dynamic_static_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Do not mix await import(x) and static import from x for the same module"
+    source:
+      path: "CLAUDE.md"
+      lines: "148"
+      commit: "7a16a481983e62bc3394c7c5f90d320b6be82f0e"
+
+rubric:
+  - rule: "Keep files concise; extract helpers instead of V2 copies."
+    source:
+      path: "CLAUDE.md"
+      lines: "157"
+      commit: "7a16a481983e62bc3394c7c5f90d320b6be82f0e"
+
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    source:
+      path: "CLAUDE.md"
+      lines: "156"
+      commit: "7a16a481983e62bc3394c7c5f90d320b6be82f0e"

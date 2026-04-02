@@ -1,0 +1,136 @@
+version: "2.0"
+
+source:
+  repo: openclaw/openclaw
+  pr: 57772
+  base_commit: b7b46ad185392f53a995124f6861d2b356f84976
+  merge_commit: 1a75906a6fe5191ea573758017834f200056500b
+
+checks:
+  # Fail-to-pass: awk allowlist recognition
+  - id: allowlist_recognizes_awk
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isInterpreterLikeAllowlistPattern recognizes awk paths as interpreter-like"
+
+  - id: allowlist_recognizes_awk_variants
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isInterpreterLikeAllowlistPattern recognizes gawk, mawk, nawk"
+
+  # Fail-to-pass: inline eval detection
+  - id: detect_awk_inline_positional
+    type: fail_to_pass
+    origin: pr_diff
+    description: "detectInterpreterInlineEvalArgv detects awk positional inline program"
+
+  - id: detect_awk_with_value_flags
+    type: fail_to_pass
+    origin: pr_diff
+    description: "detectInterpreterInlineEvalArgv detects awk program after -F/-v flags"
+
+  - id: awk_detection_description
+    type: fail_to_pass
+    origin: pr_diff
+    description: "describeInterpreterInlineEval returns '<variant> inline program' format for awk family"
+
+  - id: awk_double_dash_positional
+    type: fail_to_pass
+    origin: pr_diff
+    description: "awk -- '{program}' detects inline code after double-dash separator"
+
+  # Fail-to-pass: integration wiring
+  - id: allowlist_imports_interpreter_check
+    type: fail_to_pass
+    origin: pr_diff
+    description: "exec-approvals-allowlist.ts calls isInterpreterLikeAllowlistPattern"
+
+  # Pass-to-pass: existing behavior preserved
+  - id: existing_interpreters_still_detected
+    type: pass_to_pass
+    origin: pr_diff
+    description: "python3, node, perl still recognized as interpreter-like"
+
+  - id: awk_file_flag_not_inline
+    type: pass_to_pass
+    origin: pr_diff
+    description: "awk -f script.awk is file-based, not inline eval"
+
+  - id: non_interpreters_not_flagged
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Non-interpreter programs (ls, cat, rg, grep) not falsely detected"
+
+  # Pass-to-pass: agent config rules
+  - id: no_ts_nocheck
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @ts-nocheck in modified files"
+    source:
+      path: CLAUDE.md
+      lines: "146"
+      commit: b7b46ad185392f53a995124f6861d2b356f84976
+
+  - id: no_any_type_annotations
+    type: pass_to_pass
+    origin: agent_config
+    description: "No 'any' type annotations in modified files"
+    source:
+      path: CLAUDE.md
+      lines: "144"
+      commit: b7b46ad185392f53a995124f6861d2b356f84976
+
+  - id: no_ts_ignore
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @ts-ignore in modified files"
+    source:
+      path: CLAUDE.md
+      lines: "146"
+      commit: b7b46ad185392f53a995124f6861d2b356f84976
+
+  - id: no_prototype_mutation
+    type: pass_to_pass
+    origin: agent_config
+    description: "No prototype mutation patterns in modified files"
+    source:
+      path: CLAUDE.md
+      lines: "160"
+      commit: b7b46ad185392f53a995124f6861d2b356f84976
+
+rubric:
+  - rule: "Prefer discriminated unions when parameter shape changes runtime behavior."
+    source:
+      path: CLAUDE.md
+      lines: "149"
+      commit: b7b46ad185392f53a995124f6861d2b356f84976
+
+  - rule: "Do not disable `no-explicit-any`; prefer real types, `unknown`, or a narrow adapter/helper instead."
+    source:
+      path: CLAUDE.md
+      lines: "147"
+      commit: b7b46ad185392f53a995124f6861d2b356f84976
+
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    source:
+      path: CLAUDE.md
+      lines: "163"
+      commit: b7b46ad185392f53a995124f6861d2b356f84976
+
+  - rule: "Always consider all built-in + extension channels when refactoring shared logic (routing, allowlists, pairing, command gating)."
+    source:
+      path: CLAUDE.md
+      lines: "18"
+      commit: b7b46ad185392f53a995124f6861d2b356f84976
+
+  - rule: "Prefer fixes that preserve user workflows over deny-by-default regressions unless the boundary demands it."
+    source:
+      path: .agents/skills/security-triage/SKILL.md
+      lines: "59-60"
+      commit: b7b46ad185392f53a995124f6861d2b356f84976
+
+  - rule: "For narrowly scoped changes, prefer narrowly scoped tests that directly validate the touched behavior."
+    source:
+      path: CLAUDE.md
+      lines: "131"
+      commit: b7b46ad185392f53a995124f6861d2b356f84976

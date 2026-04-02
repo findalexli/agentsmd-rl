@@ -1,0 +1,70 @@
+version: "2.0"
+
+source:
+  repo: "pytorch/pytorch"
+  pr: 177291
+  base_commit: "8401fdeb9abd665b36465c52b7aefd591cc3dbcb"
+  merge_commit: ""
+
+checks:
+  - id: header_balanced_braces
+    type: pass_to_pass
+    origin: static
+    description: "FakeProcessGroup.hpp must have balanced braces"
+
+  - id: allgather_guards_mismatched_sizes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "allgather must have a conditional size check before copy_"
+
+  - id: mismatched_tensors_skipped
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mismatched output tensors must be skipped, not copied"
+
+  - id: size_check_references_both_tensors
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Size guard must compare output tensor against inputTensors[0]"
+
+  - id: copy_still_in_allgather_loop
+    type: pass_to_pass
+    origin: pr_diff
+    description: "copy_ must still be present inside the allgather for-loop"
+
+  - id: allgather_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "allgather method has real logic referencing outputTensors and inputTensors"
+
+  - id: allgather_iterates_output_tensors
+    type: pass_to_pass
+    origin: static
+    description: "allgather loop must iterate over outputTensors[0]"
+
+rubric:
+  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
+    source:
+      path: "CLAUDE.md"
+      lines: "54"
+      commit: "8401fdeb9abd665b36465c52b7aefd591cc3dbcb"
+  - rule: "If uncertain, choose the simpler, more concise implementation."
+    source:
+      path: "CLAUDE.md"
+      lines: "68"
+      commit: "8401fdeb9abd665b36465c52b7aefd591cc3dbcb"
+  - rule: "Match existing code style and architectural patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "63"
+      commit: "8401fdeb9abd665b36465c52b7aefd591cc3dbcb"
+  - rule: "No over-engineering — only requested changes are made; no speculative features."
+    source:
+      path: ".claude/skills/pr-review/review-checklist.md"
+      lines: "11"
+      commit: "8401fdeb9abd665b36465c52b7aefd591cc3dbcb"
+  - rule: "Don't make trivial (1-2 LOC) helper functions that are only used once unless it significantly improves code readability."
+    source:
+      path: "CLAUDE.md"
+      lines: "57-58"
+      commit: "8401fdeb9abd665b36465c52b7aefd591cc3dbcb"

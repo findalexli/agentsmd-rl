@@ -1,0 +1,57 @@
+{
+  "validations": [
+    {
+      "timestamp": "2026-03-30T13:02:43.981436",
+      "runner": "run_pipeline.py validate (20260330)",
+      "docker_build": false,
+      "gold_score": null,
+      "nop_score": null,
+      "verdict": "error",
+      "notes": "timeout"
+    },
+    {
+      "timestamp": "2026-03-30T11:48:15.959693",
+      "runner": "audit (audit-tests_20260330_114815)",
+      "phase": "audit",
+      "status": "success",
+      "output_tokens": 23084
+    },
+    {
+      "timestamp": "2026-04-01T20:15:41.719533",
+      "phase": "docker_validate_v2",
+      "runner": "scripts/docker_validate_all.sh",
+      "verdict": "fail_build",
+      "nop": null,
+      "gold": null,
+      "format": "pytest_binary"
+    },
+    {
+      "timestamp": "2026-04-01T22:57:34-07:00",
+      "runner": "validate_and_fix.sh",
+      "docker_build": true,
+      "gold_score": 0.0,
+      "nop_score": 0.0,
+      "verdict": "fail_gold",
+      "notes": ""
+    },
+    {
+      "timestamp": "2026-04-02T12:58:21.155201",
+      "phase": "e2b_post_remake",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail",
+      "nop": "0.0",
+      "gold": "0.0",
+      "notes": "ILED ../tests/test_outputs.py::test_contiguity_guard_rejects_noncontiguous_reduction\nFAILED ../tests/test_outputs.py::test_contiguity_guard_with_ancestors_and_other_nodes\n3 failed, 10 passed in 0.81s\n"
+    },
+    {
+      "timestamp": "2026-04-02T14:28:08.956745",
+      "phase": "e2b_full_validation",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail",
+      "nop": "0.0",
+      "gold": "0.0"
+    }
+  ]
+}

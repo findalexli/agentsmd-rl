@@ -18,7 +18,7 @@ For example, none of these are flagged:
 
 The rule should be extended to also flag non-tuple RHS values when the format string expects a different number of positional arguments. However, variables, attribute accesses, subscripts, and calls should NOT be flagged because they could be tuples at runtime (e.g., `x = (1, 2); '%s %s' % x` is valid).
 
-The approach should use type inference (`ResolvedPythonType`) to determine if the RHS has a known concrete type. If the resolved type is a non-tuple atom, it counts as exactly 1 positional argument.
+The approach should use type inference to determine if the RHS has a known concrete type. If the resolved type is a non-tuple atom, it counts as exactly 1 positional argument. Look for existing type-inference utilities in the `ruff_python_semantic` crate.
 
 ## Files to Modify
 

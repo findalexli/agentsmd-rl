@@ -1,0 +1,51 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35775
+  base_commit: "6066c782fe06b65e98a410741d994f620321fe11"
+  merge_commit: "03ca38e6e7b84cf20438c1d333636b3d662ca726"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "store.js must be syntactically valid JavaScript"
+
+  - id: index_bounds_check_before_splice
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Must check index === -1 before calling splice in suspense remove block"
+
+  - id: throw_and_emit_error_on_missing_child
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Must call _throwAndEmitError when the child ID is not found (not console.error or raw throw)"
+
+  - id: error_message_describes_parent_child_mismatch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error message must identify the node, parent, and use Error() constructor"
+
+  - id: existing_error_patterns_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing error checks in the suspense remove block must still be present"
+
+  - id: splice_still_executed_on_valid_index
+    type: pass_to_pass
+    origin: static
+    description: "The splice call must still exist after the guard (fix guards, doesn't remove)"
+
+rubric:
+  - rule: "Run `yarn prettier` to fix formatting after making changes."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "10"
+      commit: "6066c782fe06b65e98a410741d994f620321fe11"
+
+  - rule: "Run `yarn linc` to check for remaining lint issues before committing."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "11"
+      commit: "6066c782fe06b65e98a410741d994f620321fe11"

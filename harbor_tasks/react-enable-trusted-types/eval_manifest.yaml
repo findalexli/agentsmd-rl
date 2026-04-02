@@ -1,0 +1,60 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: null
+  base_commit: "e33071c6142ae5212483a63b87d5d962860e535a"
+  merge_commit: null
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All feature flag files must be syntactically valid JavaScript"
+
+  - id: main_flags_trusted_types_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/shared/ReactFeatureFlags.js must have enableTrustedTypesIntegration = true"
+
+  - id: native_fb_flag_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReactFeatureFlags.native-fb.js must have enableTrustedTypesIntegration = true"
+
+  - id: native_oss_flag_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReactFeatureFlags.native-oss.js must have enableTrustedTypesIntegration = true"
+
+  - id: test_renderer_flag_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReactFeatureFlags.test-renderer.js must have enableTrustedTypesIntegration = true"
+
+  - id: test_renderer_native_fb_flag_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReactFeatureFlags.test-renderer.native-fb.js must have enableTrustedTypesIntegration = true"
+
+  - id: test_renderer_www_flag_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReactFeatureFlags.test-renderer.www.js must have enableTrustedTypesIntegration = true"
+
+  - id: www_flag_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReactFeatureFlags.www.js must export enableTrustedTypesIntegration = true directly (not via dynamic)"
+
+  - id: www_dynamic_flag_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableTrustedTypesIntegration must be removed from www-dynamic.js (now static everywhere)"
+
+  - id: www_not_importing_from_dynamic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReactFeatureFlags.www.js must not destructure enableTrustedTypesIntegration from the dynamic module"
+
+rubric: []

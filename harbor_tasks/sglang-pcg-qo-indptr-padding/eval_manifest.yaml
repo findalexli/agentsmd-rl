@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21452
+  base_commit: "efebcab43ed851405bd41cfdf206245945dbb8ee"
+  merge_commit: "3ab9afd653806db57c7eb5a2217b79796faae7b5"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All three modified files parse without syntax errors"
+
+  - id: forward_context_has_num_tokens
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ForwardContext has num_tokens attribute; set_forward_context accepts num_tokens kwarg"
+
+  - id: num_tokens_propagation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "num_tokens value propagates through set_forward_context with varied inputs (42, 256, None)"
+
+  - id: replay_num_tokens_and_ordering
+    type: fail_to_pass
+    origin: pr_diff
+    description: "replay() passes num_tokens to set_forward_context and calls init_forward_metadata inside the context block"
+
+  - id: call_begin_forward_pcg_padding
+    type: fail_to_pass
+    origin: pr_diff
+    description: "call_begin_forward extends qo_indptr/kv_indptr for PCG padding tokens with conditional guard"
+
+  - id: existing_context_manager_api
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Original ForwardContext attributes and context manager API preserved"
+
+  - id: files_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "Modified files retain expected content and minimum size"
+
+rubric: []

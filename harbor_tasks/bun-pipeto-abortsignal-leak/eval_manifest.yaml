@@ -1,0 +1,79 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28491
+  base_commit: "fe4a66e086bebd2c3c5a238effa801426d736278"
+  merge_commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
+
+checks:
+  - id: target_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "All five target source files must exist and be non-empty"
+
+  - id: weak_ref_replaces_strong
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSAbortAlgorithm must not use JSCallbackDataStrong; a weak callback mechanism must be present"
+
+  - id: gc_visitor_in_abort_algorithm
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSAbortAlgorithm must have a GC visitor method that delegates to m_data"
+
+  - id: handle_event_null_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "handleEvent must guard against GC-collected weak callback with null check"
+
+  - id: abort_signal_typed_container
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AbortSignal must store abort algorithms in a typed GC-visible container with visitor"
+
+  - id: thread_safety
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Abort algorithm storage must be synchronized with lock member and usage"
+
+  - id: gc_visitor_walks_algorithms
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSAbortSignal GC visitor must walk abort algorithms to keep weak callbacks alive"
+
+  - id: typed_storage_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "addAbortAlgorithmToSignal must use typed container, not type-erase into lambda"
+
+  - id: remove_uses_new_container
+    type: fail_to_pass
+    origin: pr_diff
+    description: "removeAbortAlgorithmFromSignal must use new locked typed container, not old removeAlgorithm"
+
+  - id: memory_cost_includes_new_container
+    type: fail_to_pass
+    origin: pr_diff
+    description: "memoryCost must account for the new abort algorithms container size"
+
+  - id: visit_children_for_gc_objects
+    type: fail_to_pass
+    origin: agent_config
+    description: "Custom heap objects holding GC refs must implement visitChildren/visitor pattern"
+    source:
+      path: "src/bun.js/bindings/v8/AGENTS.md"
+      lines: "230"
+      commit: "fe4a66e086bebd2c3c5a238effa801426d736278"
+
+rubric:
+  - rule: "Follow existing code style — check neighboring files for patterns"
+    source:
+      path: "CLAUDE.md"
+      lines: "228"
+      commit: "fe4a66e086bebd2c3c5a238effa801426d736278"
+  - rule: "GC Issues: Objects being freed prematurely. Ensure proper WriteBarrier usage and visitChildren() implementation."
+    source:
+      path: "src/bun.js/bindings/v8/AGENTS.md"
+      lines: "285"
+      commit: "fe4a66e086bebd2c3c5a238effa801426d736278"

@@ -1,0 +1,53 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38362
+  base_commit: "aa4eb0db78ec469438a7a18147b0372fe2eb7cf4"
+  merge_commit: "fafca38adc1ce65d2c9e2857138c3c0d65b0905e"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "io_processor.py must parse without syntax errors"
+
+  - id: task_prefix_as_system_prompt
+    type: fail_to_pass
+    origin: pr_diff
+    description: "task_prefix rendered as system-role message, not prepended to user text"
+
+  - id: mixed_content_system_prompt
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mixed text+image input with prefix produces system prompt; image preserved"
+
+  - id: multiple_texts_not_prefixed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Multiple text items with prefix are not individually prepended"
+
+  - id: no_prefix_no_system_message
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Without task_prefix, no system message is generated"
+
+  - id: has_chat_template_method
+    type: fail_to_pass
+    origin: pr_diff
+    description: "EmbedIOProcessor must have a _has_chat_template helper method"
+
+  - id: preprocess_cohere_text_completion_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "EmbedIOProcessor must have a _preprocess_cohere_text_completion helper"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "_mixed_input_to_messages and _pre_process_cohere_online have real logic"
+
+rubric: []
+  # No diff-evaluable soft rules found.
+  # AGENTS.md at aa4eb0db contains only process/tooling rules (uv, pre-commit,
+  # commit trailers, PR accountability) — none evaluable from a code diff.

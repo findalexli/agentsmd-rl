@@ -1,0 +1,52 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35760
+  base_commit: "57b79b0388b755096216b2b5308113e54eac3be8"
+  merge_commit: "e49335e961a77a45be32ad6c9c1877cbe2fe91f4"
+
+checks:
+  - id: file_exists
+    type: pass_to_pass
+    origin: static
+    description: "renderer.js exists at the expected path"
+
+  - id: react_optimistic_key_constant_imported
+    type: pass_to_pass
+    origin: static
+    description: "REACT_OPTIMISTIC_KEY constant is referenced in renderer.js"
+
+  - id: keystring_handles_optimistic_key
+    type: fail_to_pass
+    origin: pr_diff
+    description: "keyString computation maps REACT_OPTIMISTIC_KEY to 'React.optimisticKey' for tree view display"
+
+  - id: fiber_key_not_null_for_optimistic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "fiber.key === REACT_OPTIMISTIC_KEY returns 'React.optimisticKey' not null in component inspection"
+
+  - id: component_info_key_not_null_for_optimistic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "componentInfo.key === REACT_OPTIMISTIC_KEY returns 'React.optimisticKey' not null for Server Components"
+
+  - id: inspect_element_key_not_null_for_optimistic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "inspectElementInternal key field returns 'React.optimisticKey' not null (4th fix location)"
+
+  - id: null_key_still_returns_null
+    type: pass_to_pass
+    origin: static
+    description: "Normal null keys still produce null keyString (regression guard)"
+
+  - id: four_display_string_occurrences
+    type: fail_to_pass
+    origin: static
+    description: "'React.optimisticKey' appears in all 4 key-handling locations"
+
+rubric:
+  # Soft rules from .claude/skills/ — process/tooling rules, not evaluable from diff
+  []

@@ -1,0 +1,69 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21552
+  base_commit: "7160b6cb76d3619468b219ea066fcb6358a8000e"
+  merge_commit: "f0c68fbefd394f767980abcad10d071502cf0af0"
+
+checks:
+  - id: syntax
+    type: pass_to_pass
+    origin: static
+    description: "Target file must parse without syntax errors"
+
+  - id: summary_formatter_multiple_types
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Summary function aggregates multiple dtype mismatch pairs with counts and examples"
+
+  - id: summary_formatter_empty_examples
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Summary function handles pairs with no example parameter names"
+
+  - id: summary_formatter_single_pair
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Summary function works correctly with a single mismatch type"
+
+  - id: summary_formatter_no_raw_repr
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Summary output is human-readable, not raw Counter/defaultdict repr"
+
+  - id: no_per_param_warnings_in_loop
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Loading loop must not emit per-parameter logger.warning for dtype mismatches"
+
+  - id: quantized_dtypes_not_redefined_in_loop
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Quantized dtype tuple/set must not be re-created inside the loading loop"
+
+  - id: aggregated_summary_after_loop
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Aggregated dtype summary log must exist after the main loading loop"
+
+  - id: function_signatures_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core function signatures (load_model_from_full_model_state_dict, _make_param_like, shard_model) unchanged"
+
+  - id: logger_uses_init_logger
+    type: pass_to_pass
+    origin: agent_config
+    description: "Logger must be initialized via init_logger(__name__) from logging_utils"
+    source:
+      path: "python/sglang/multimodal_gen/.claude/skills/sglang-diffusion-add-model/SKILL.md"
+      lines: "333-335"
+      commit: "7160b6cb76d3619468b219ea066fcb6358a8000e"
+
+rubric:
+  - rule: "Keep the same parameter naming as Diffusers for weight loading compatibility."
+    source:
+      path: "python/sglang/multimodal_gen/.claude/skills/sglang-diffusion-add-model/SKILL.md"
+      lines: "131"
+      commit: "7160b6cb76d3619468b219ea066fcb6358a8000e"

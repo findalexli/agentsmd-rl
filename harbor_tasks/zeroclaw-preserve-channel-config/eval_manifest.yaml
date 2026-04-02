@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "zeroclaw-labs/zeroclaw"
+  pr: 4907
+  base_commit: "ce6dd7ca3740473e6414c3eee3d8172e15d79758"
+
+checks:
+  - id: file_exists_with_content
+    type: pass_to_pass
+    origin: static
+    description: "wizard.rs exists and has substantial content (anti-stub)"
+
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "Project compiles without errors after modification"
+
+  - id: setup_channels_accepts_existing_config
+    type: fail_to_pass
+    origin: pr_diff
+    description: "setup_channels() must accept a parameter for existing channel config"
+
+  - id: repair_wizard_passes_existing_config
+    type: fail_to_pass
+    origin: pr_diff
+    description: "run_channels_repair_wizard passes existing config to setup_channels"
+
+  - id: fresh_wizard_passes_none_or_default
+    type: fail_to_pass
+    origin: pr_diff
+    description: "run_wizard (fresh setup) passes None/default, not existing config"
+
+  - id: uses_existing_or_default_pattern
+    type: fail_to_pass
+    origin: pr_diff
+    description: "setup_channels uses unwrap_or_default or similar to preserve existing config"
+
+  - id: telegram_channel_handling_intact
+    type: pass_to_pass
+    origin: static
+    description: "Telegram channel handling code is still present"
+
+rubric: []
+# No agent config files found in this repo — no soft rules to evaluate.

@@ -56,4 +56,5 @@ index 73aa08b20d50..081accf68264 100644
      if name in SHOULD_HAVE_THEIR_OWN_PAGE:
          return True
      return False
+
 PATCH

@@ -1,0 +1,67 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 0
+  base_commit: "8c61afa3677cb13ce3071eac5326312fc4d2193a"
+  merge_commit: ""
+
+checks:
+  - id: scheme_check_in_findLocalHistoryEntry
+    type: fail_to_pass
+    origin: pr_diff
+    description: "findLocalHistoryEntry checks uri.scheme against LocalHistoryFileSystemProvider.SCHEMA before querying history"
+
+  - id: uri_remapped_via_fromLocalHistoryFileSystem
+    type: fail_to_pass
+    origin: pr_diff
+    description: "findLocalHistoryEntry calls fromLocalHistoryFileSystem to remap the vscode-local-history URI"
+
+  - id: getEntries_not_called_with_descriptor_uri_directly
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getEntries is called with a (possibly remapped) local variable, not descriptor.uri directly"
+
+  - id: associatedResource_used_for_original_uri
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".associatedResource is used to extract the original file URI from the local history URI"
+
+  - id: getEntries_still_called_in_function
+    type: pass_to_pass
+    origin: static
+    description: "getEntries call is still present in findLocalHistoryEntry after the fix"
+
+  - id: uses_schema_constant_not_hardcoded_string
+    type: fail_to_pass
+    origin: agent_config
+    description: "No hardcoded 'vscode-local-history' string literal in code; uses LocalHistoryFileSystemProvider.SCHEMA constant"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "158"
+      commit: "8c61afa3677cb13ce3071eac5326312fc4d2193a"
+
+rubric:
+  - rule: "Prefer async and await over Promise and then calls"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "145"
+      commit: "8c61afa3677cb13ce3071eac5326312fc4d2193a"
+
+  - rule: "Always surround loop and conditional bodies with curly braces"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "132"
+      commit: "8c61afa3677cb13ce3071eac5326312fc4d2193a"
+
+  - rule: "Use JSDoc style comments for functions, interfaces, enums, and classes"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "119"
+      commit: "8c61afa3677cb13ce3071eac5326312fc4d2193a"
+
+  - rule: "Do not use any or unknown as the type for variables, parameters, or return values unless absolutely necessary"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "162"
+      commit: "8c61afa3677cb13ce3071eac5326312fc4d2193a"

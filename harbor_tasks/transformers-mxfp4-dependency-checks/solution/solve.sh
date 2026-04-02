@@ -88,4 +88,5 @@ index a0755fa68c61..7859a8ff739a 100644
 
          if not self.pre_quantized:
              self._lazy_import_kernels()
+
 PATCH

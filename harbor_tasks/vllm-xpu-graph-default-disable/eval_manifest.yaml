@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38193
+  base_commit: "a9213c0ffea4c6485dd1d03de5e8b3ff96dda924"
+  merge_commit: "6ae8bbd0c2fa5b057f0c3066bc6519792f7048af"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Both modified files (envs.py, xpu.py) must parse without syntax errors"
+
+  - id: env_var_lambda_defaults_disabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "XPU graph env var lambda defaults to disabled when unset"
+
+  - id: env_var_lambda_parses_toggle_values
+    type: fail_to_pass
+    origin: pr_diff
+    description: "XPU graph env var lambda parses '1' as enabled and '0' as disabled"
+
+  - id: env_var_module_access
+    type: fail_to_pass
+    origin: pr_diff
+    description: "XPU graph env var accessible via vllm.envs module interface"
+
+  - id: existing_env_vars_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing env vars and XPUPlatform class still present"
+
+  - id: xpu_check_and_update_config_uses_env_var
+    type: fail_to_pass
+    origin: pr_diff
+    description: "check_and_update_config conditionally disables cudagraph based on XPU env var"
+
+rubric: []

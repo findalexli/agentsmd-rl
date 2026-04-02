@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35953
+  base_commit: "4cc5b7a90bac7e1f8ac51a9ac570d3ada3bddcb3"
+  merge_commit: "e6f1c33acf81d9865863ab149d24726f43a56db0"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "ReactFiberConfigDOM.js must parse without JavaScript syntax errors"
+
+  - id: isscriptdatablock_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isScriptDataBlock function must be defined in ReactFiberConfigDOM.js"
+
+  - id: warning_guarded_by_isscriptdatablock
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The trusted-types script warning must be gated on !isScriptDataBlock(props)"
+
+  - id: js_mime_types_excluded_from_data_block
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isScriptDataBlock must enumerate standard JS MIME types (text/javascript, application/javascript, etc.) and return false for them"
+
+  - id: special_keywords_not_data_blocks
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isScriptDataBlock must handle HTML spec special keywords (module, importmap, speculationrules) as non-data-blocks"
+
+  - id: existing_warning_test_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-existing Jest test 'should warn when rendering script tag' must still pass (no regression)"
+
+rubric: []

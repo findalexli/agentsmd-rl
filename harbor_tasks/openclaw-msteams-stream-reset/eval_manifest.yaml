@@ -1,0 +1,84 @@
+version: "2.0"
+
+source:
+  repo: "openclaw/openclaw"
+  pr: 56071
+  base_commit: "4752aca926624efdeb62f2f43b606f5090be8903"
+  merge_commit: "295d1de8d953ee25f6c6b47ef90c827cd08d76a8"
+
+checks:
+  - id: stream_received_tokens_reset
+    type: fail_to_pass
+    origin: pr_diff
+    description: "After first-segment suppression, subsequent segments use fallback delivery"
+
+  - id: is_finalized_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Finalized stream never re-suppresses fallback delivery"
+
+  - id: pending_finalize_awaited
+    type: fail_to_pass
+    origin: pr_diff
+    description: "stream.finalize() called eagerly in preparePayload, awaited in finalize()"
+
+  - id: single_segment_suppression_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Normal single-segment streaming suppression still works"
+
+  - id: group_chat_passthrough
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Group chats (no stream) pass through payloads unchanged"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "File has real implementation with all required methods exported"
+
+  - id: no_cross_boundary_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No imports from core src/ via relative paths in msteams extension"
+    source:
+      path: "CLAUDE.md"
+      lines: "16"
+      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
+
+  - id: no_ts_nocheck
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @ts-nocheck or inline lint suppressions added"
+    source:
+      path: "CLAUDE.md"
+      lines: "104"
+      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
+
+  - id: no_sdk_self_import
+    type: pass_to_pass
+    origin: agent_config
+    description: "No self-import via openclaw/plugin-sdk/msteams in extension production code"
+    source:
+      path: "CLAUDE.md"
+      lines: "108"
+      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
+
+rubric:
+  - rule: "Language: TypeScript (ESM). Prefer strict typing; avoid `any`."
+    source:
+      path: "CLAUDE.md"
+      lines: "102"
+      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
+
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    source:
+      path: "CLAUDE.md"
+      lines: "114"
+      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
+
+  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings."
+    source:
+      path: "CLAUDE.md"
+      lines: "118"
+      commit: "4752aca926624efdeb62f2f43b606f5090be8903"

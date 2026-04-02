@@ -1,0 +1,92 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28535
+  base_commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
+  merge_commit: "39094877abb3e74557d3975dd015ee677220eb35"
+
+checks:
+  - id: file_exists_and_nontrivial
+    type: pass_to_pass
+    origin: static
+    description: "JSGlobalObject.zig must exist with substantial content"
+
+  - id: crash_assert_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bun.assert(instance != .zero) crash trigger must be removed from throw()/throwPretty()"
+
+  - id: throwvalue_guarded
+    type: fail_to_pass
+    origin: pr_diff
+    description: "throwValue() must guard against calling vm().throwError() when exception already pending"
+
+  - id: throw_and_throwpretty_handle_zero
+    type: fail_to_pass
+    origin: pr_diff
+    description: "throw() and throwPretty() must handle createErrorInstance returning .zero"
+
+  - id: throwtodo_handles_zero
+    type: fail_to_pass
+    origin: pr_diff
+    description: "throwTODO() must handle createErrorInstance returning .zero"
+
+  - id: throwerror_safe_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "throwError(anyerror) must route through guarded path, not directly vm().throwError()"
+
+  - id: createrangeerror_handles_zero
+    type: fail_to_pass
+    origin: pr_diff
+    description: "createRangeError() must handle createErrorInstance returning .zero"
+
+  - id: throwTypeError_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "throwTypeError() must still exist with non-trivial body"
+
+  - id: throwDOMException_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "throwDOMException() must still exist with non-trivial body"
+
+  - id: no_inline_import_in_functions
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @import() inline inside function bodies"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
+
+  - id: uses_bun_assert_not_std
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must use bun.assert, not std.debug.assert"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16"
+      commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
+
+  - id: no_std_fs_posix_os
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must not use std.fs/std.posix/std.os"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16"
+      commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
+
+rubric:
+  - rule: "Always use `bun.*` APIs instead of `std.*`."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16"
+      commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
+  - rule: "Never use `@import()` inline inside of functions. Always put them at the bottom of the file or containing struct."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"

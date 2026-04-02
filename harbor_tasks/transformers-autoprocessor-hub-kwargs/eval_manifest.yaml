@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44710
+  base_commit: "c17877c2ad39f8f736d5ea8a34f98e562843fc83"
+  merge_commit: "0bfdc61e7405"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "processing_auto.py must parse without syntax errors"
+
+  - id: hub_kwargs_forwarded
+    type: fail_to_pass
+    origin: pr_diff
+    description: "force_download, cache_dir, and token survive the cached_file kwargs filter"
+
+  - id: revision_and_subfolder_forwarded
+    type: fail_to_pass
+    origin: pr_diff
+    description: "revision, subfolder, local_files_only, user_agent survive the cached_file kwargs filter"
+
+  - id: all_nine_hub_kwargs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All 9 hub kwargs forwarded with correct values; non-hub kwargs excluded"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "from_pretrained has substantial implementation, not a stub"
+
+  - id: no_unused_inspect_import
+    type: pass_to_pass
+    origin: pr_diff
+    description: "If inspect is imported it must actually be used; otherwise removed"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "c17877c2ad39f8f736d5ea8a34f98e562843fc83"
+  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`."
+    source:
+      path: "CLAUDE.md"
+      lines: "66"
+      commit: "c17877c2ad39f8f736d5ea8a34f98e562843fc83"

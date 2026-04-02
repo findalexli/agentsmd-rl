@@ -1,0 +1,112 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 18646
+  base_commit: "e169f431729c6dcf2cf3e518c0c86e0f962538f1"
+  merge_commit: "7f4ca688517f236da6ad71f3f4b24e5976b21d51"
+
+checks:
+  - id: syntax_valid_rust
+    type: pass_to_pass
+    origin: static
+    description: "middleware.rs must parse as valid Rust"
+
+  - id: auth_guard_uses_is_authenticated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Auth policy guard uses is_authenticated() instead of password().is_none()"
+
+  - id: password_is_none_removed_from_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Buggy password().is_none() pattern removed from AuthPolicy::Always guard"
+
+  - id: error_message_not_missing_password
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error message no longer says 'Missing password' (misleading for Bearer auth)"
+
+  - id: edit_rs_error_message_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Integration test in edit.rs no longer asserts on 'Missing password'"
+
+  - id: trace_no_username_and_password
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Trace/comments no longer say 'username and password'"
+
+  - id: auth_guard_not_deleted
+    type: pass_to_pass
+    origin: static
+    description: "AuthPolicy::Always guard still exists (fix modifies, not deletes)"
+
+  - id: complete_request_exists
+    type: pass_to_pass
+    origin: static
+    description: "complete_request and complete_request_with_request_credentials functions still exist"
+
+  - id: no_unwrap_panic_near_guard
+    type: pass_to_pass
+    origin: agent_config
+    description: "No unwrap()/panic!/unreachable! near auth policy guard"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "e169f431729c6dcf2cf3e518c0c86e0f962538f1"
+
+  - id: no_unsafe_near_guard
+    type: pass_to_pass
+    origin: agent_config
+    description: "No unsafe blocks near auth policy guard"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "e169f431729c6dcf2cf3e518c0c86e0f962538f1"
+
+  - id: no_allow_attr_near_guard
+    type: pass_to_pass
+    origin: agent_config
+    description: "No #[allow()] attributes near guard — use #[expect()] instead"
+    source:
+      path: "CLAUDE.md"
+      lines: "10"
+      commit: "e169f431729c6dcf2cf3e518c0c86e0f962538f1"
+
+rubric:
+  - rule: "ALWAYS attempt to add a test case for changed behavior"
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "e169f431729c6dcf2cf3e518c0c86e0f962538f1"
+  - rule: "PREFER integration tests, e.g., at `it/...` over unit tests"
+    source:
+      path: "CLAUDE.md"
+      lines: "3"
+      commit: "e169f431729c6dcf2cf3e518c0c86e0f962538f1"
+  - rule: "PREFER patterns like `if let` to handle fallibility"
+    source:
+      path: "CLAUDE.md"
+      lines: "8"
+      commit: "e169f431729c6dcf2cf3e518c0c86e0f962538f1"
+  - rule: "PREFER let chains (`if let` combined with `&&`) over nested `if let` statements"
+    source:
+      path: "CLAUDE.md"
+      lines: "11"
+      commit: "e169f431729c6dcf2cf3e518c0c86e0f962538f1"
+  - rule: "ALWAYS read and copy the style of similar tests when adding new cases"
+    source:
+      path: "CLAUDE.md"
+      lines: "15"
+      commit: "e169f431729c6dcf2cf3e518c0c86e0f962538f1"
+  - rule: "PREFER top-level imports over local imports or fully qualified names"
+    source:
+      path: "CLAUDE.md"
+      lines: "16"
+      commit: "e169f431729c6dcf2cf3e518c0c86e0f962538f1"
+  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
+    source:
+      path: "CLAUDE.md"
+      lines: "17-18"
+      commit: "e169f431729c6dcf2cf3e518c0c86e0f962538f1"

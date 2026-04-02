@@ -1,0 +1,118 @@
+version: "2.0"
+
+source:
+  repo: inclusionAI/AReaL
+  pr: 1074
+  merge_commit: "2ddd9595c2b374842068f6547720399f9157c945"
+  base_commit: "61281ba8851e6d1cf8c30794a5391359b4e324b7"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "fsdp_engine.py must parse as valid Python"
+
+  - id: pipelined_main_loop
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Main update loop overlaps bucket broadcast with next bucket preparation (deferred-wait pattern with try/finally)"
+
+  - id: async_bucket_method
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Async bucket broadcast method exists that returns pending state with real distributed logic"
+
+  - id: pending_state_dataclass
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Data structure with >=3 fields tracks in-flight broadcast state and is instantiated in FSDPEngine"
+
+  - id: error_safety_drain
+    type: fail_to_pass
+    origin: pr_diff
+    description: "try/finally in main method drains pending broadcasts on error"
+
+  - id: cuda_stream_usage
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CUDA stream used for broadcast overlap in weight update methods"
+
+  - id: sync_wrapper_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "_update_bucket_weights_from_distributed still exists with real body"
+
+  - id: init_method_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "_init_weight_update_from_distributed still present with real body"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No wildcard imports (from x import *)"
+    source:
+      path: "AGENTS.md"
+      lines: "30"
+      commit: "61281ba8851e6d1cf8c30794a5391359b4e324b7"
+
+  - id: broadcast_explicit_src
+    type: pass_to_pass
+    origin: agent_config
+    description: "All broadcast() calls specify src rank explicitly"
+    source:
+      path: "AGENTS.md"
+      lines: "194"
+      commit: "61281ba8851e6d1cf8c30794a5391359b4e324b7"
+
+  - id: no_print_calls
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare print() calls — use areal.utils.logging.getLogger()"
+    source:
+      path: "AGENTS.md"
+      lines: "90-91"
+      commit: "61281ba8851e6d1cf8c30794a5391359b4e324b7"
+
+  - id: no_module_level_process_groups
+    type: pass_to_pass
+    origin: agent_config
+    description: "No global process group creation at module level"
+    source:
+      path: "AGENTS.md"
+      lines: "189"
+      commit: "61281ba8851e6d1cf8c30794a5391359b4e324b7"
+
+  - id: no_gpu_cpu_sync_in_weight_update
+    type: pass_to_pass
+    origin: agent_config
+    description: "No .item() or .tolist() in weight update methods (GPU-CPU sync in hot paths)"
+    source:
+      path: "AGENTS.md"
+      lines: "96"
+      commit: "61281ba8851e6d1cf8c30794a5391359b4e324b7"
+
+rubric:
+  - rule: "No GPU-CPU sync in hot paths (.item(), .tolist(), print(tensor))"
+    source:
+      path: "AGENTS.md"
+      lines: "96"
+      commit: "61281ba8851e6d1cf8c30794a5391359b4e324b7"
+
+  - rule: "Prefer composition over inheritance — keep hierarchies <= 2 levels; prefer delegation"
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "61281ba8851e6d1cf8c30794a5391359b4e324b7"
+
+  - rule: "Explicit dtype/device; torch.Size assertions for shape validation"
+    source:
+      path: "AGENTS.md"
+      lines: "98"
+      commit: "61281ba8851e6d1cf8c30794a5391359b4e324b7"
+
+  - rule: "Batch ops over Python loops on tensor elements"
+    source:
+      path: "AGENTS.md"
+      lines: "97"
+      commit: "61281ba8851e6d1cf8c30794a5391359b4e324b7"

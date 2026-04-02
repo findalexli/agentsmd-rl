@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28200
+  base_commit: "5693fc1a98116743f16a7db2952d6e436bf9ec98"
+  merge_commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
+
+checks:
+  # Fail-to-pass: core behavioral fixes
+  - id: macos_headless_shell_mode
+    type: fail_to_pass
+    origin: pr_diff
+    description: "On macOS, headless mode must be 'shell' (not true) to avoid Gatekeeper blocking Chrome .app bundle"
+
+  - id: executable_path_excluded_on_macos
+    type: fail_to_pass
+    origin: pr_diff
+    description: "On macOS with shell mode, executablePath must not be set (it would point to full Chrome, not headless-shell)"
+
+  - id: finite_timeouts
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Launch timeout and protocolTimeout must be finite (>0), not 0/infinite"
+
+  - id: retry_delay_increased
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Retry delay between browser launch attempts must be > 1000ms"
+
+  - id: chmod_cached_binaries
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Downloaded browser binaries in Puppeteer cache must be chmod'd executable"
+
+  # Pass-to-pass: regression + structural
+  - id: retry_loop_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Browser retry loop (for/while + catch + launch) must still exist"
+
+  - id: core_launch_args_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Core Puppeteer launch args (--no-sandbox, --disable-setuid-sandbox, --disable-dev-shm-usage) preserved"
+
+  - id: puppeteer_launch_with_options
+    type: pass_to_pass
+    origin: pr_diff
+    description: "File has Puppeteer import, launch() call with headless and args config"
+
+  - id: xattr_quarantine_removal
+    type: pass_to_pass
+    origin: pr_diff
+    description: "xattr quarantine removal for macOS Gatekeeper must be preserved"
+
+rubric:
+  - rule: "Do not write flaky tests. Unless explicitly asked, never wait for time to pass in tests. Always wait for the condition to be met instead of waiting for an arbitrary amount of time."
+    source:
+      path: "test/CLAUDE.md"
+      lines: "21"
+      commit: "5693fc1a98116743f16a7db2952d6e436bf9ec98"
+
+  - rule: "Do not set a timeout on tests. Bun already has timeouts."
+    source:
+      path: "test/CLAUDE.md"
+      lines: "120"
+      commit: "5693fc1a98116743f16a7db2952d6e436bf9ec98"

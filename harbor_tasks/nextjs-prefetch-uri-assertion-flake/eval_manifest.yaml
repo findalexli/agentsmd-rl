@@ -1,0 +1,72 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91734
+  base_commit: "138092696c355fa38ec8409e7f2c6c67c97e4f6b"
+  merge_commit: "c53f5863e3716166e4697682220c41c436c5900d"
+
+checks:
+  - id: file_exists_and_substantial
+    type: pass_to_pass
+    origin: static
+    description: "Target test file exists and is not a stub (>150 lines)"
+
+  - id: accordion_assertion_retried
+    type: fail_to_pass
+    origin: pr_diff
+    description: "accordion-to-dashboard assertion wrapped in retry/waitFor/polling after click"
+
+  - id: assertion_in_async_callback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "accordion assertion inside async callback, not bare expect at test-body level"
+
+  - id: other_tests_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Other test cases in the file not removed or renamed"
+
+  - id: uri_encoding_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "URI encoding test logic (param=with%20space, rscRequests) preserved"
+
+  - id: navigation_flow_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Click on prefetch-via-link and waitForIdleNetwork still present"
+
+  - id: no_settimeout_in_fix
+    type: pass_to_pass
+    origin: agent_config
+    description: "Fix must use retry()/waitFor(), not setTimeout"
+    source:
+      path: "AGENTS.md"
+      lines: "180"
+      commit: "138092696c355fa38ec8409e7f2c6c67c97e4f6b"
+
+  - id: no_deprecated_check
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must not use deprecated check() — use retry() + expect()"
+    source:
+      path: "AGENTS.md"
+      lines: "194"
+      commit: "138092696c355fa38ec8409e7f2c6c67c97e4f6b"
+
+  - id: retry_imported_from_next_test_utils
+    type: pass_to_pass
+    origin: agent_config
+    description: "retry() must be imported from next-test-utils, not a custom implementation"
+    source:
+      path: "AGENTS.md"
+      lines: "180"
+      commit: "138092696c355fa38ec8409e7f2c6c67c97e4f6b"
+
+rubric:
+  - rule: "If using retry() for waiting, it should be for DOM element presence after navigation — not for waiting on network/prefetch activity. For network-level waits, the router-act pattern (createRouterAct) is preferred."
+    source:
+      path: ".agents/skills/router-act/SKILL.md"
+      lines: "17-24"
+      commit: "138092696c355fa38ec8409e7f2c6c67c97e4f6b"

@@ -1,0 +1,107 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91701
+  base_commit: "883d93c8935afb2b8124ab324a10fa36cbd7a88c"
+  merge_commit: "6a8a31a7f42bb7d133aed5a6d854d069883aa57b"
+
+checks:
+  - id: app_page_server_imports_have_transition
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Server-side imports in app-page.ts annotated with next-server-utility transition"
+
+  - id: fillmetadata_transition_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "fillMetadataSegment import no longer has next-server-utility transition"
+
+  - id: app_module_graphs_option_param
+    type: fail_to_pass
+    origin: pr_diff
+    description: "app_module_graphs uses Option<Vc<EvaluatableAssets>> instead of separate params"
+
+  - id: shared_multiple_in_chunk_group_entry
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SharedMultiple variant exists in ChunkGroupEntry enum"
+
+  - id: shared_multiple_in_chunk_group
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SharedMultiple variant exists in ChunkGroup enum"
+
+  - id: shared_multiple_in_chunk_group_key
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SharedMultiple variant exists in ChunkGroupKey enum"
+
+  - id: shared_multiple_pattern_matching
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SharedMultiple handled in pattern-match arms (entries, count, debug_str, compute)"
+
+  - id: route_handlers_no_empty_assets
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Route handlers pass None instead of EvaluatableAssets::empty() to app_module_graphs"
+
+  - id: modified_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "All four modified files exist with substantial content"
+
+  - id: no_relative_require_in_app_page
+    type: pass_to_pass
+    origin: agent_config
+    description: "app-page.ts must not use require() with relative paths"
+    source:
+      path: "AGENTS.md"
+      lines: "407"
+      commit: "883d93c8935afb2b8124ab324a10fa36cbd7a88c"
+
+  - id: no_react_server_dom_webpack_in_app_page
+    type: pass_to_pass
+    origin: agent_config
+    description: "app-page.ts must not directly import from react-server-dom-webpack/*"
+    source:
+      path: "AGENTS.md"
+      lines: "398"
+      commit: "883d93c8935afb2b8124ab324a10fa36cbd7a88c"
+
+  - id: existing_transitions_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Pre-existing transition annotations (RouteKind, entry-base) still present"
+
+rubric:
+  - rule: "app-page.ts is a build template: do not use require() with relative paths; export helpers from entry-base.ts and access via entryBase.*"
+    source:
+      path: "AGENTS.md"
+      lines: "407"
+      commit: "883d93c8935afb2b8124ab324a10fa36cbd7a88c"
+
+  - rule: "Keep require() behind compile-time if/else branches for DCE (avoid early-return/throw patterns)"
+    source:
+      path: "AGENTS.md"
+      lines: "396"
+      commit: "883d93c8935afb2b8124ab324a10fa36cbd7a88c"
+
+  - rule: "react-server-dom-webpack/* imports must stay in entry-base.ts; consume via component module exports elsewhere"
+    source:
+      path: "AGENTS.md"
+      lines: "398"
+      commit: "883d93c8935afb2b8124ab324a10fa36cbd7a88c"
+
+  - rule: "Only entry-base.ts is compiled in rspack's (react-server) layer. ALL imports from react-server-dom-webpack/* must go through entry-base.ts."
+    source:
+      path: ".agents/skills/react-vendoring/SKILL.md"
+      lines: "25"
+      commit: "883d93c8935afb2b8124ab324a10fa36cbd7a88c"
+
+  - rule: "Template helpers should stay out of RenderResult. If app-page.ts needs a Node-stream-only utility, prefer a small dedicated helper module in server/stream-utils/ (with DCE-safe if/else + require())."
+    source:
+      path: ".agents/skills/dce-edge/SKILL.md"
+      lines: "55"
+      commit: "883d93c8935afb2b8124ab324a10fa36cbd7a88c"

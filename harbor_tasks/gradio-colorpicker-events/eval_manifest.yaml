@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12862
+  base_commit: "3f835cf9c6cdf570a107233e2a87e0dc5cd751cb"
+  merge_commit: "a8e6b7ba1e6af793b6a200d4cc6b07f3151f229e"
+
+checks:
+  - id: svelte_structure_valid
+    type: pass_to_pass
+    origin: static
+    description: "File exists and has basic Svelte structure (script + template)"
+
+  - id: no_legacy_event_directives
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Template must not use Svelte 4 on:event directives"
+
+  - id: dialog_button_focus_and_blur
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dialog button must have onfocus/onblur handlers calling on_focus/on_blur props"
+
+  - id: enter_key_triggers_submit
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Text input must fire on_submit when Enter is pressed"
+
+  - id: native_click_handlers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Buttons use native onclick instead of on:click"
+
+  - id: svelte_window_native_handlers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "svelte:window uses native onmousemove/onmouseup"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Component is a real implementation, not a stub"
+
+rubric: []

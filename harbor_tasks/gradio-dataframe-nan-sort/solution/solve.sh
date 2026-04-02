@@ -18,6 +18,7 @@ index 789ae3a530..c83e0d28ee 100644
  	if (t === "number") {
  		const n = Number(v);
  		return isNaN(n) ? v : n;
+
 PATCH
 
 git apply --check /tmp/patch.diff 2>/dev/null && git apply /tmp/patch.diff || echo "Patch already applied or conflicts (idempotent)"

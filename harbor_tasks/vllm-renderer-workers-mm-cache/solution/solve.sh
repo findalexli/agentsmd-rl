@@ -31,4 +31,5 @@ index acb43a04b157..b8c601334a1d 100644
          # Multimodal GGUF models must use original repo for mm processing
          if is_gguf(self.tokenizer) and self.is_multimodal_model:
              raise ValueError(
+
 PATCH

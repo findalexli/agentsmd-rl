@@ -1,0 +1,99 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 0  # no public PR; patch derived from gold solve.sh
+  base_commit: "7b00e3ba398d355d5f277a4896743b16f21049eb"
+  merge_commit: ""
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All three Granite config files must parse without errors"
+
+  - id: test_granite_config_accepts_int_multipliers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GraniteConfig must accept integer multiplier fields without error (3 input sets)"
+
+  - id: test_granite_config_int_roundtrip
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GraniteConfig with int values survives save/load roundtrip (3 input sets)"
+
+  - id: test_granitemoe_config_accepts_int_multipliers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GraniteMoeConfig must accept integer multiplier fields (3 input sets)"
+
+  - id: test_granitemoe_config_int_roundtrip
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GraniteMoeConfig int values survive save/load roundtrip (3 input sets)"
+
+  - id: test_granitemoeshared_config_accepts_int_multipliers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GraniteMoeSharedConfig must accept integer multiplier fields (3 input sets)"
+
+  - id: test_granitemoeshared_config_int_roundtrip
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GraniteMoeSharedConfig int values survive save/load roundtrip (3 input sets)"
+
+  - id: test_granite_config_float_defaults
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing float-based configs still load correctly"
+
+  - id: test_granite_config_explicit_float_roundtrip
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Explicit float values still accepted and survive roundtrip"
+
+  - id: test_granitemoe_config_none_multipliers
+    type: pass_to_pass
+    origin: pr_diff
+    description: "GraniteMoeConfig fields that allow None must still accept None after the fix"
+
+  - id: test_granitemoeshared_config_none_multipliers
+    type: pass_to_pass
+    origin: pr_diff
+    description: "GraniteMoeSharedConfig fields that allow None must still accept None after the fix"
+
+  - id: test_ruff_check_clean
+    type: pass_to_pass
+    origin: agent_config
+    description: "ruff check passes on all three modified config files"
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "7b00e3ba398d355d5f277a4896743b16f21049eb"
+
+rubric:
+  - rule: "When writing tests, they should be added to an existing file. The only exception is for PRs to add a new model, when a new test directory should be created for that model."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "16"
+      commit: "7b00e3ba398d355d5f277a4896743b16f21049eb"
+  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`."
+    source:
+      path: "CLAUDE.md"
+      lines: "66"
+      commit: "7b00e3ba398d355d5f277a4896743b16f21049eb"
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "7b00e3ba398d355d5f277a4896743b16f21049eb"
+  - rule: "Do not add helper methods or abstractions just to satisfy the type checker (especially for only 1-2 occurrences)."
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "196-197"
+      commit: "7b00e3ba398d355d5f277a4896743b16f21049eb"
+  - rule: "When a modular file is present, generated files should not be edited, as changes will be overwritten by make fix-repo. Instead, edit the modular file."
+    source:
+      path: "CLAUDE.md"
+      lines: "67"
+      commit: "7b00e3ba398d355d5f277a4896743b16f21049eb"

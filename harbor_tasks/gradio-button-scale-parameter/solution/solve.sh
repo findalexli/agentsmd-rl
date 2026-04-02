@@ -24,6 +24,7 @@ index 087c8c3645..114e940ae6 100644
  	link={gradio.props.link}
  	icon={gradio.props.icon}
  	min_width={gradio.shared.min_width}
+
 PATCH
 
 git apply --check /tmp/patch.diff 2>/dev/null && git apply /tmp/patch.diff || echo "Patch already applied or conflicts (idempotent)"

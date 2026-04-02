@@ -1,0 +1,74 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28494
+  base_commit: "639bc4351cd7b5daa38b99d47a506dec68e95353"
+  merge_commit: "9ce5b052840cecea4aa1977aeb063c47d0137a22"
+
+checks:
+  - id: source_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "All five WebCore source files must exist and be non-empty"
+
+  - id: message_port_closed_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "postMessageToRemote must check m_isClosed before m_pendingMessages"
+
+  - id: message_port_variable_index
+    type: fail_to_pass
+    origin: pr_diff
+    description: "m_isClosed guard uses computed index, not hardcoded literal"
+
+  - id: abort_signal_reason_visited
+    type: fail_to_pass
+    origin: pr_diff
+    description: "visitChildrenImpl visits chained signal().reason()"
+
+  - id: broadcast_channel_weak_ptr
+    type: fail_to_pass
+    origin: pr_diff
+    description: "allBroadcastChannels map uses template pointer wrapper, not raw pointer"
+
+  - id: event_listener_map_thread_affinity
+    type: fail_to_pass
+    origin: pr_diff
+    description: "At least 4/5 EventListenerMap mutators have thread affinity checks before Locker"
+
+  - id: event_listener_map_thread_uid_member
+    type: fail_to_pass
+    origin: pr_diff
+    description: "EventListenerMap.h declares a thread UID member variable"
+
+  - id: event_listener_map_gc_thread_exemption
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Thread affinity helper exempts GC threads via function call"
+
+  - id: broadcast_channel_still_registers
+    type: pass_to_pass
+    origin: pr_diff
+    description: "BroadcastChannel constructor still registers in global map"
+
+  - id: visit_children_retains_base_calls
+    type: pass_to_pass
+    origin: pr_diff
+    description: "visitChildrenImpl retains Base::visitChildren and addWebCoreOpaqueRoot"
+
+  - id: broadcast_channel_locker_style
+    type: pass_to_pass
+    origin: agent_config
+    description: "BroadcastChannel.cpp follows existing Locker pattern"
+    source:
+      path: "CLAUDE.md"
+      lines: "228"
+      commit: "639bc4351cd7b5daa38b99d47a506dec68e95353"
+
+rubric:
+  - rule: "Follow existing code style — check neighboring files for patterns"
+    source:
+      path: "CLAUDE.md"
+      lines: "228"
+      commit: "639bc4351cd7b5daa38b99d47a506dec68e95353"

@@ -1,0 +1,303 @@
+"""
+Task: transformers-supports-tp-pp-plan
+Repo: huggingface/transformers @ 09fea1e6e970a1051b1141ce320a3d696b2c15ed
+PR:   44696
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import ast
+import subprocess
+import textwrap
+from pathlib import Path
+
+REPO = "/workspace/transformers"
+TARGET = f"{REPO}/src/transformers/modeling_utils.py"
+
+
+def _read_source():
+    return Path(TARGET).read_text()
+
+
+def _extract_method(source, method_name, *, is_setter=False):
+    """Extract a method from PreTrainedModel, dedented.
+    AST-only because: transformers requires torch/CUDA; we extract then exec with mocks.
+    """
+    tree = ast.parse(source)
+    lines = source.splitlines(keepends=True)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "PreTrainedModel":
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name == method_name:
+                    if is_setter:
+                        for dec in item.decorator_list:
+                            dec_src = ast.get_source_segment(source, dec)
+                            if dec_src and "setter" in dec_src:
+                                start = min(d.lineno for d in item.decorator_list)
+                                return textwrap.dedent(
+                                    "".join(lines[start - 1 : item.end_lineno])
+                                )
+                    else:
+                        if item.decorator_list:
+                            start = min(d.lineno for d in item.decorator_list)
+                        else:
+                            start = item.lineno
+                        return textwrap.dedent(
+                            "".join(lines[start - 1 : item.end_lineno])
+                        )
+    raise AssertionError(f"PreTrainedModel.{method_name} not found")
+
+
+def _build_supports_tp_harness(prop_src, *, tp_plan, base_tp_plan, config_tp_plan):
+    """Build exec code for supports_tp_plan with given mock values."""
+    return (
+        f"class Cfg:\n"
+        f"    base_model_tp_plan = {config_tp_plan!r}\n"
+        f"class Base:\n"
+        f"    _tp_plan = {base_tp_plan!r}\n"
+        f"class M:\n"
+        f"    _tp_plan = {tp_plan!r}\n"
+        f"    config = Cfg()\n"
+        f"    base_model = Base()\n"
+        + textwrap.indent(prop_src, "    ")
+        + "\nresult = M().supports_tp_plan\n"
+    )
+
+
+def _build_supports_pp_harness(prop_src, *, pp_plan, base_pp_plan, config_pp_plan):
+    """Build exec code for supports_pp_plan with given mock values."""
+    return (
+        f"class Cfg:\n"
+        f"    base_model_tp_plan = None\n"
+        f"    base_model_pp_plan = {config_pp_plan!r}\n"
+        f"class Base:\n"
+        f"    _pp_plan = {base_pp_plan!r}\n"
+        f"class M:\n"
+        f"    _pp_plan = {pp_plan!r}\n"
+        f"    config = Cfg()\n"
+        f"    base_model = Base()\n"
+        + textwrap.indent(prop_src, "    ")
+        + "\nresult = M().supports_pp_plan\n"
+    )
+
+
+def _build_pp_setter_harness(setter_src):
+    """Build exec code for pp_plan setter tests."""
+    return (
+        "class M:\n"
+        "    _pp_plan = None\n"
+        "    @property\n"
+        "    def pp_plan(self):\n"
+        "        return self._pp_plan\n"
+        + textwrap.indent(setter_src, "    ")
+    )
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static)
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_syntax_check():
+    """Modified file must parse without syntax errors."""
+    source = _read_source()
+    ast.parse(source)
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_supports_tp_plan_empty_dict_false():
+    """supports_tp_plan returns False when all plans are empty/None."""
+    source = _read_source()
+    prop = _extract_method(source, "supports_tp_plan")
+
+    # All these combos should return False — empty dicts are falsy after fix
+    cases = [
+        ({}, None, None),    # model has empty dict, rest None
+        ({}, {}, None),      # model + base both empty
+        ({}, {}, {}),        # all empty dicts
+    ]
+    for tp, base_tp, cfg_tp in cases:
+        ns = {}
+        exec(_build_supports_tp_harness(prop, tp_plan=tp, base_tp_plan=base_tp, config_tp_plan=cfg_tp), ns)
+        assert ns["result"] is False, (
+            f"supports_tp_plan should be False for tp={tp!r}, base={base_tp!r}, config={cfg_tp!r}"
+        )
+
+
+# [pr_diff] fail_to_pass
+def test_supports_pp_plan_empty_dict_false():
+    """supports_pp_plan returns False when all plans are empty/None."""
+    source = _read_source()
+    prop = _extract_method(source, "supports_pp_plan")
+
+    cases = [
+        ({}, None, None),
+        ({}, {}, None),
+        ({}, {}, {}),
+    ]
+    for pp, base_pp, cfg_pp in cases:
+        ns = {}
+        exec(_build_supports_pp_harness(prop, pp_plan=pp, base_pp_plan=base_pp, config_pp_plan=cfg_pp), ns)
+        assert ns["result"] is False, (
+            f"supports_pp_plan should be False for pp={pp!r}, base={base_pp!r}, config={cfg_pp!r}"
+        )
+
+
+# [pr_diff] fail_to_pass
+def test_supports_pp_plan_checks_config():
+    """supports_pp_plan returns True when config.base_model_pp_plan is set."""
+    source = _read_source()
+    prop = _extract_method(source, "supports_pp_plan")
+
+    config_values = [
+        {"layer": ("in", "out")},
+        {"block.0": ("input", "output"), "block.1": ("input", "output")},
+        {"single": ("a", "b")},
+    ]
+    for cfg_val in config_values:
+        ns = {}
+        exec(_build_supports_pp_harness(prop, pp_plan=None, base_pp_plan=None, config_pp_plan=cfg_val), ns)
+        assert ns["result"] is True, (
+            f"supports_pp_plan should be True when config has pp_plan={cfg_val!r}"
+        )
+
+
+# [pr_diff] fail_to_pass
+def test_pp_setter_rejects_non_dict():
+    """pp_plan setter raises ValueError for non-dict input."""
+    source = _read_source()
+    setter = _extract_method(source, "pp_plan", is_setter=True)
+    base = _build_pp_setter_harness(setter)
+
+    bad_inputs = ["not a dict", 42, ["a", "b"], True, (1, 2)]
+    for bad in bad_inputs:
+        code = base + (
+            f"\nraised = False\n"
+            f"try:\n"
+            f"    M().pp_plan = {bad!r}\n"
+            f"except (ValueError, TypeError):\n"
+            f"    raised = True\n"
+        )
+        ns = {}
+        exec(code, ns)
+        assert ns["raised"], f"pp_plan setter should reject {type(bad).__name__} input: {bad!r}"
+
+
+# [pr_diff] fail_to_pass
+def test_pp_setter_handles_none():
+    """pp_plan setter converts None to empty dict instead of storing None."""
+    source = _read_source()
+    setter = _extract_method(source, "pp_plan", is_setter=True)
+    base = _build_pp_setter_harness(setter)
+
+    code = base + (
+        "\nm = M()\n"
+        "m.pp_plan = None\n"
+        "result = m._pp_plan\n"
+    )
+    ns = {}
+    exec(code, ns)
+    assert ns["result"] == {}, (
+        f"pp_plan setter should convert None to {{}}, got {ns['result']!r}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_pipeline_parallel_enum_removed():
+    """PipelineParallel enum class must not exist in modeling_utils.py."""
+    # AST-only because: checking for absence of a class definition, not calling code
+    source = _read_source()
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "PipelineParallel":
+            raise AssertionError("PipelineParallel enum class still exists")
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — anti-stub + regression
+# ---------------------------------------------------------------------------
+
+# [pr_diff] pass_to_pass
+def test_supports_tp_plan_nonempty_true():
+    """supports_tp_plan returns True for non-empty plans (any source)."""
+    source = _read_source()
+    prop = _extract_method(source, "supports_tp_plan")
+
+    # True from model's own plan
+    for tp in [{"layer0": "col"}, {"a": "row", "b": "col"}]:
+        ns = {}
+        exec(_build_supports_tp_harness(prop, tp_plan=tp, base_tp_plan=None, config_tp_plan=None), ns)
+        assert ns["result"] is True, f"should be True for tp_plan={tp!r}"
+
+    # True from base model's plan
+    ns = {}
+    exec(_build_supports_tp_harness(prop, tp_plan={}, base_tp_plan={"x": "col"}, config_tp_plan=None), ns)
+    assert ns["result"] is True, "should be True when base_model has tp plan"
+
+    # True from config
+    ns = {}
+    exec(_build_supports_tp_harness(prop, tp_plan={}, base_tp_plan=None, config_tp_plan={"y": "row"}), ns)
+    assert ns["result"] is True, "should be True when config has tp plan"
+
+
+# [pr_diff] pass_to_pass
+def test_supports_pp_plan_nonempty_true():
+    """supports_pp_plan returns True for non-empty plans (any source)."""
+    source = _read_source()
+    prop = _extract_method(source, "supports_pp_plan")
+
+    # True from model's own plan
+    for pp in [{"layer0": ("input", "output")}, {"a": ("i", "o"), "b": ("i", "o")}]:
+        ns = {}
+        exec(_build_supports_pp_harness(prop, pp_plan=pp, base_pp_plan=None, config_pp_plan=None), ns)
+        assert ns["result"] is True, f"should be True for pp_plan={pp!r}"
+
+    # True from base model's plan
+    ns = {}
+    exec(_build_supports_pp_harness(prop, pp_plan={}, base_pp_plan={"x": ("i", "o")}, config_pp_plan=None), ns)
+    assert ns["result"] is True, "should be True when base_model has pp plan"
+
+    # True from config
+    ns = {}
+    exec(_build_supports_pp_harness(prop, pp_plan={}, base_pp_plan=None, config_pp_plan={"y": ("i", "o")}), ns)
+    assert ns["result"] is True, "should be True when config has pp plan"
+
+
+# [pr_diff] pass_to_pass
+def test_pp_setter_accepts_valid_dict():
+    """pp_plan setter accepts valid dicts and stores them correctly."""
+    source = _read_source()
+    setter = _extract_method(source, "pp_plan", is_setter=True)
+    base = _build_pp_setter_harness(setter)
+
+    valid_dicts = [
+        {"layer1": ("input", "output")},
+        {"a": ("x", "y"), "b": ("p", "q")},
+        {},
+    ]
+    for d in valid_dicts:
+        code = base + (
+            f"\nm = M()\n"
+            f"m.pp_plan = {d!r}\n"
+            f"result = m._pp_plan\n"
+        )
+        ns = {}
+        exec(code, ns)
+        assert ns["result"] == d, f"pp_plan setter should store {d!r}, got {ns['result']!r}"
+
+
+# [static] pass_to_pass
+def test_ruff_imports_clean():
+    """Changed file passes ruff import sorting check."""
+    r = subprocess.run(
+        ["ruff", "check", "--select", "I", TARGET],
+        capture_output=True, timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"ruff import check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+    )

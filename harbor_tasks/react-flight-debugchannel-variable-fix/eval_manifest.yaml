@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35724
+  base_commit: "65db1000b944c8a07b5947c06b38eb8364dce4f2"
+  merge_commit: "2dd9b7cf76c31df5d7e26e5199e3c362c3e94f95"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All four ReactFlightDOMServerNode.js files parse without errors"
+
+  - id: esm_uses_debugchannel_readable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ESM renderToPipeableStream passes debugChannelReadable to createRequest"
+
+  - id: parcel_uses_debugchannel_readable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Parcel renderToPipeableStream passes debugChannelReadable to createRequest"
+
+  - id: turbopack_uses_debugchannel_readable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Turbopack renderToPipeableStream passes debugChannelReadable to createRequest"
+
+  - id: affected_files_do_not_use_wrong_variable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "None of the three affected files use bare 'debugChannel !== undefined,' in createRequest"
+
+  - id: webpack_reference_unchanged
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Webpack reference implementation still uses debugChannelReadable"
+
+rubric:
+  - rule: "The fix in each bundler-specific file should match the pattern already used in the webpack implementation at packages/react-server-dom-webpack/src/server/ReactFlightDOMServerNode.js."
+    source:
+      path: "packages/react-server-dom-webpack/src/server/ReactFlightDOMServerNode.js"
+      lines: "196"
+      commit: "65db1000b944c8a07b5947c06b38eb8364dce4f2"

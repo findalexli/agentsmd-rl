@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "pytorch/pytorch"
+  pr: 175442
+  base_commit: "98e35020c7423c304778a7044f6baa3c8a98ba6d"
+  merge_commit: "ef5c69dec13056e58810a59663db7f8a6b8bebbd"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "torch/_dynamo/decorators.py must parse without syntax errors"
+
+  - id: allow_in_graph_wraps_core_ops
+    type: fail_to_pass
+    origin: pr_diff
+    description: "allow_in_graph must be called for rearrange and reduce (version check must not skip)"
+
+  - id: multiple_einops_functions_wrapped
+    type: fail_to_pass
+    origin: pr_diff
+    description: "At least 4 of 6 einops functions must be registered with allow_in_graph"
+
+  - id: function_imports_einops
+    type: pass_to_pass
+    origin: static
+    description: "_allow_in_graph_einops must exist and contain 'import einops'"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Function has substantive body (>=4 AST statements), not just pass/return"
+
+rubric:
+  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
+    source:
+      path: "CLAUDE.md"
+      lines: "48"
+      commit: "98e35020c7423c304778a7044f6baa3c8a98ba6d"
+  - rule: "Comments should be useful, for example, comments that remind the reader about some global context that is non-obvious and can't be inferred locally."
+    source:
+      path: "CLAUDE.md"
+      lines: "49-50"
+      commit: "98e35020c7423c304778a7044f6baa3c8a98ba6d"
+  - rule: "Match existing code style and architectural patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "57"
+      commit: "98e35020c7423c304778a7044f6baa3c8a98ba6d"
+  - rule: "If uncertain, choose the simpler, more concise implementation."
+    source:
+      path: "CLAUDE.md"
+      lines: "62"
+      commit: "98e35020c7423c304778a7044f6baa3c8a98ba6d"

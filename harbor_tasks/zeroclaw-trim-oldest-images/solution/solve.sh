@@ -111,4 +111,5 @@ index ee4e6dd734..4d7cdbefda 100644
  fn compose_multimodal_message(text: &str, data_uris: &[String]) -> String {
      let mut content = String::new();
      let trimmed = text.trim();
+
 PATCH

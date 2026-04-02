@@ -1,0 +1,96 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 1108
+  base_commit: "cbe35f5a4b866596d996d5690085eda0577708f5"
+  merge_commit: "61281ba8851e6d1cf8c30794a5391359b4e324b7"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "optimizer.py must parse as valid Python"
+
+  - id: init_streams_uses_platform
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_init_streams_and_events routes Stream/Event through current_platform (tested with varied group counts)"
+
+  - id: step_uses_platform
+    type: fail_to_pass
+    origin: pr_diff
+    description: "step() routes current_stream/stream/empty_cache through current_platform"
+
+  - id: current_platform_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Module imports current_platform from areal.infra.platforms"
+
+  - id: no_direct_cuda_calls
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No torch.cuda.{Stream,Event,current_stream,stream,empty_cache} in PerLayerOptimWrapper"
+
+  - id: todo_comments_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TODO comments about current_platform abstraction are resolved"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "_init_streams_and_events and step have real logic (not stubbed)"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No wildcard imports in optimizer.py"
+    source:
+      path: "AGENTS.md"
+      lines: "30"
+      commit: "cbe35f5a4b866596d996d5690085eda0577708f5"
+
+  - id: no_print_statements
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare print() calls in optimizer.py — use areal.utils.logging"
+    source:
+      path: "AGENTS.md"
+      lines: "90-92"
+      commit: "cbe35f5a4b866596d996d5690085eda0577708f5"
+
+  - id: no_gpu_cpu_sync
+    type: pass_to_pass
+    origin: agent_config
+    description: "No .item() or .tolist() GPU-CPU sync calls in PerLayerOptimWrapper"
+    source:
+      path: "AGENTS.md"
+      lines: "96"
+      commit: "cbe35f5a4b866596d996d5690085eda0577708f5"
+
+  - id: no_heavy_toplevel_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Heavy optional deps (transformers, datasets, etc.) not imported at module level"
+    source:
+      path: "AGENTS.md"
+      lines: "100-101"
+      commit: "cbe35f5a4b866596d996d5690085eda0577708f5"
+
+rubric:
+  - rule: "No GPU-CPU sync in hot paths (.item(), .tolist(), print(tensor))."
+    source:
+      path: "AGENTS.md"
+      lines: "96"
+      commit: "cbe35f5a4b866596d996d5690085eda0577708f5"
+  - rule: "Explicit dtype/device; torch.Size assertions for shape validation."
+    source:
+      path: "AGENTS.md"
+      lines: "98"
+      commit: "cbe35f5a4b866596d996d5690085eda0577708f5"
+  - rule: "Batch ops over Python loops on tensor elements."
+    source:
+      path: "AGENTS.md"
+      lines: "97"
+      commit: "cbe35f5a4b866596d996d5690085eda0577708f5"

@@ -1,0 +1,73 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91923
+  base_commit: "0090db224d177c51f6d5e45fe1be2527ce04e899"
+  merge_commit: "f7d487057c75a73f5a570cf8fd83b49262ca9809"
+
+checks:
+  - id: file_exists_and_nontrivial
+    type: pass_to_pass
+    origin: static
+    description: "Test file must exist and have substantial content"
+
+  - id: syntax_balanced_braces
+    type: pass_to_pass
+    origin: static
+    description: "Test file must have balanced braces"
+
+  - id: generate_route_types_retry_timeout
+    type: fail_to_pass
+    origin: pr_diff
+    description: "retry() in 'generate route types' test must have timeout >= 10s"
+
+  - id: custom_route_patterns_retry_timeout
+    type: fail_to_pass
+    origin: pr_diff
+    description: "retry() in 'custom route patterns' test must have timeout >= 10s"
+
+  - id: tsc_waits_for_routes_dts_before_stop
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tsc test must wait for routes.d.ts before calling next.stop()"
+
+  - id: tsc_retry_has_extended_timeout
+    type: fail_to_pass
+    origin: pr_diff
+    description: "retry() in tsc test must have timeout >= 10s"
+
+  - id: original_assertions_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Key assertion strings from original tests must be preserved"
+
+  - id: all_original_test_names_present
+    type: pass_to_pass
+    origin: pr_diff
+    description: "All original test block names must still exist"
+
+  - id: retry_blocks_have_assertions
+    type: pass_to_pass
+    origin: pr_diff
+    description: "All retry() blocks must contain expect() assertions"
+
+  - id: uses_retry_not_settimeout
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must use retry() not setTimeout for waiting"
+    source:
+      path: "AGENTS.md"
+      lines: "180"
+      commit: "0090db224d177c51f6d5e45fe1be2527ce04e899"
+
+  - id: no_deprecated_check
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must not use deprecated check() function"
+    source:
+      path: "AGENTS.md"
+      lines: "194"
+      commit: "0090db224d177c51f6d5e45fe1be2527ce04e899"
+
+rubric: []

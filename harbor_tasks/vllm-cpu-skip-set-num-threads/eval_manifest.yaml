@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38535
+  base_commit: "677424c7acd9fb7477294017c99f798588002d4f"
+  merge_commit: "6557f4937fd2937ae4824beb492ff67625895d89"
+
+checks:
+  - id: set_num_threads_noop
+    type: fail_to_pass
+    origin: pr_diff
+    description: "After monkey-patch, torch.set_num_threads must not change thread count"
+
+  - id: warning_logged
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Monkey-patched set_num_threads emits a log or warning when called"
+
+  - id: patch_after_thread_binding
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Monkey-patch must appear after init_cpu_threads_env in source order"
+
+  - id: init_device_exists
+    type: pass_to_pass
+    origin: pr_diff
+    description: "CPUWorker class and init_device method must still exist"
+
+  - id: key_functionality_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Distributed init and random seed setting must remain in cpu_worker.py"
+
+  - id: replacement_has_body
+    type: pass_to_pass
+    origin: static
+    description: "Replacement function must have real logic (logging/warning call), not just pass"
+
+rubric: []

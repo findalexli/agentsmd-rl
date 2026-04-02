@@ -1,0 +1,62 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 18601
+  base_commit: "635a76cad321b1fe3593a71dc7533cabbca244aa"
+  merge_commit: "bced7d57ea32b7fb2de52c72cc276341aa3c1275"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "fetch-download-metadata.py must parse without syntax errors"
+
+  - id: freethreaded_suffix_stripped
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Freethreaded suffix on macOS is stripped and promoted to build option across architectures and versions"
+
+  - id: freethreaded_variant_set
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Variant is FREETHREADED for macOS freethreaded artifacts across versions"
+
+  - id: freethreaded_triple_matches_normal
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Platform triple for freethreaded build matches the normal build"
+
+  - id: debug_suffix_still_works
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Debug suffix on macOS is still stripped and promoted correctly"
+
+  - id: linux_platform_unaffected
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Non-macOS platforms are parsed correctly and unaffected"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "The _parse_ndjson_artifact method has real logic, not a stub"
+
+rubric:
+  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
+    source:
+      path: "CLAUDE.md"
+      lines: "17"
+      commit: "635a76cad321b1fe3593a71dc7533cabbca244aa"
+
+  - rule: "ALWAYS read and copy the style of similar tests when adding new cases"
+    source:
+      path: "CLAUDE.md"
+      lines: "15"
+      commit: "635a76cad321b1fe3593a71dc7533cabbca244aa"
+
+  - rule: "PREFER top-level imports over local imports or fully qualified names"
+    source:
+      path: "CLAUDE.md"
+      lines: "16"
+      commit: "635a76cad321b1fe3593a71dc7533cabbca244aa"

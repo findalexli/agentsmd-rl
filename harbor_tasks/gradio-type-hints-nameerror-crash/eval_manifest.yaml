@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 13161
+  base_commit: "c13daab68aa40cb58f2c643a650b5db48e986935"
+  merge_commit: "0a0378dee463fb10e5a95685d595801171cf641b"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "gradio/utils.py must parse without syntax errors"
+
+  - id: nameerror_returns_empty_dict
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_type_hints returns {} when annotation triggers NameError (unresolvable forward ref)"
+
+  - id: normal_function_hints
+    type: pass_to_pass
+    origin: pr_diff
+    description: "get_type_hints returns correct hints for normally annotated functions"
+
+  - id: callable_object_hints
+    type: pass_to_pass
+    origin: pr_diff
+    description: "get_type_hints works for callable objects with __call__ annotations"
+
+  - id: non_callable_returns_empty
+    type: pass_to_pass
+    origin: pr_diff
+    description: "get_type_hints returns {} for non-callable inputs"
+
+  - id: unannotated_returns_empty
+    type: pass_to_pass
+    origin: pr_diff
+    description: "get_type_hints returns {} for unannotated functions"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "get_type_hints function has real logic, not just pass/return"
+
+rubric:
+  - rule: "Python code is formatted with `ruff`. Run `bash scripts/format_backend.sh`."
+    source:
+      path: "AGENTS.md"
+      lines: "43"
+      commit: "c13daab68aa40cb58f2c643a650b5db48e986935"

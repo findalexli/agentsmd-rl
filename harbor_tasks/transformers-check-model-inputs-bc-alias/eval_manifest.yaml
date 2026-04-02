@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44990
+  base_commit: "2620c4ddd41afcc8d3b1d1134803bd418ffa45a7"
+  merge_commit: "0e1978c9eb69ec64b55245212dbf63deab19d25b"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "generic.py must parse without syntax errors"
+
+  - id: decorator_delegates_to_merge_with_config_defaults
+    type: fail_to_pass
+    origin: pr_diff
+    description: "check_model_inputs as decorator produces identical results to merge_with_config_defaults across no-args, explicit, and mixed scenarios"
+
+  - id: decorator_returns_functional_wrapper
+    type: fail_to_pass
+    origin: pr_diff
+    description: "check_model_inputs returns a working wrapper that pulls config defaults and accepts explicit overrides"
+
+  - id: deprecation_warning_emitted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "check_model_inputs emits a deprecation or rename warning when called"
+
+  - id: merge_with_config_defaults_unaffected
+    type: pass_to_pass
+    origin: pr_diff
+    description: "merge_with_config_defaults still works correctly after alias addition"
+
+  - id: generic_utilities_intact
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing utilities in generic.py (ExplicitEnum, PaddingStrategy) still work"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "2620c4ddd41afcc8d3b1d1134803bd418ffa45a7"

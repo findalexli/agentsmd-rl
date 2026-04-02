@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35689
+  base_commit: "f84ce5a45c47b1081a09c17eea58c16ef145c113"
+  merge_commit: "90c6d1b218bbe07eeb757ce8777805a9b7f8e3c3"
+
+checks:
+  - id: minimize_ts_exists
+    type: pass_to_pass
+    origin: static
+    description: "minimize.ts must exist and contain expected function errorsMatch"
+
+  - id: compile_errors_type_has_description
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CompileErrors.errors array type must include description: string | null"
+
+  - id: error_details_type_has_description
+    type: fail_to_pass
+    origin: pr_diff
+    description: "error.details array type must include description: string | null"
+
+  - id: error_mapping_preserves_description
+    type: fail_to_pass
+    origin: pr_diff
+    description: "error.details.map must copy description field: description: detail.description"
+
+  - id: errors_match_compares_description
+    type: fail_to_pass
+    origin: pr_diff
+    description: "errorsMatch must compare a.errors[i].description !== b.errors[i].description"
+
+  - id: remove_function_parameters_generator_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Generator function* removeFunctionParameters must be defined"
+
+  - id: remove_array_pattern_elements_generator_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Generator function* removeArrayPatternElements must be defined"
+
+  - id: remove_object_pattern_properties_generator_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Generator function* removeObjectPatternProperties must be defined"
+
+  - id: new_strategies_registered_in_array
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All three new strategies registered inside simplificationStrategies array"
+
+rubric: []

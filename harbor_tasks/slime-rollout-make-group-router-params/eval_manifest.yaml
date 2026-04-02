@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 0  # Synthetic task — closure bug identified in code from PR #1704
+  base_commit: "6f11313004dbe71f4194536335b891371eefd0e9"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "rollout.py must parse without syntax errors"
+
+  - id: make_group_accepts_router_params
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_make_group must accept router_ip/router_port as explicit parameters"
+
+  - id: make_group_uses_param_router_not_closure
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ServerGroup receives param router values, not stale closure values"
+
+  - id: multi_model_router_independence
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Two _make_group calls with different router params produce independent ServerGroups"
+
+  - id: start_rollout_servers_signature
+    type: pass_to_pass
+    origin: pr_diff
+    description: "start_rollout_servers still accepts (args, pg) parameters"
+
+  - id: all_call_sites_pass_router_info
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All 3+ _make_group call sites pass router info, not just group_cfg"
+
+  - id: make_group_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "_make_group has real logic, not a stub"
+
+  - id: nonlocal_offset_tracking_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "_make_group still uses nonlocal for engine_offset/gpu_offset"
+
+rubric:
+  - rule: "Avoid blocking-heavy logic in high-frequency rollout paths without batching/concurrency control"
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "99"
+      commit: "6f11313004dbe71f4194536335b891371eefd0e9"

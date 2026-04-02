@@ -1,0 +1,91 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 45032
+  base_commit: "882ffdbbd6b8ad50feaa860d702e70950cfc95d0"
+  merge_commit: "e3f7cc3b4a5499c52ad56c72cad295de562f5b54"
+
+checks:
+  - id: python_syntax
+    type: pass_to_pass
+    origin: static
+    description: "check_bad_commit.py must parse without syntax errors"
+
+  - id: yaml_syntax
+    type: pass_to_pass
+    origin: static
+    description: "check_failed_tests.yml must be valid YAML"
+
+  - id: partition_across_runners
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script partitions 12 tests across 3 runners via run_idx/n_runners env vars"
+
+  - id: partition_with_different_runner_counts
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Partitioning works with 2 and 4 runners, not just 3"
+
+  - id: output_keyed_by_model
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Output from each runner is a dict keyed by model name, not a flat list"
+
+  - id: merge_step_combines_runners
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Merge step in workflow correctly merges multi-runner JSON outputs"
+
+  - id: backward_compatible_without_env_vars
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Script processes all tests when run_idx/n_runners are NOT set"
+
+  - id: workflow_structure_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Workflow retains core jobs (check/process) and required inputs (docker, job)"
+
+  - id: max_num_runners_input
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Workflow has max_num_runners input with number type and default"
+
+  - id: dynamic_matrix
+    type: fail_to_pass
+    origin: pr_diff
+    description: "check_new_failures uses dynamic matrix from setup job, not hardcoded [1]"
+
+  - id: script_not_bloated
+    type: pass_to_pass
+    origin: static
+    description: "check_bad_commit.py is not bloated (under 500 lines)"
+
+  - id: no_bare_type_ignore
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare # type: ignore without error code in check_bad_commit.py"
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "185-186"
+      commit: "882ffdbbd6b8ad50feaa860d702e70950cfc95d0"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "882ffdbbd6b8ad50feaa860d702e70950cfc95d0"
+
+  - rule: "Do not add helper methods or abstractions just to satisfy the type checker (especially for only 1-2 occurrences)."
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "196"
+      commit: "882ffdbbd6b8ad50feaa860d702e70950cfc95d0"
+
+  - rule: "make style or make fix-repo should be run as the final step before opening a PR — code should pass ruff formatting and linting."
+    source:
+      path: "AGENTS.md"
+      lines: "2,8"
+      commit: "882ffdbbd6b8ad50feaa860d702e70950cfc95d0"

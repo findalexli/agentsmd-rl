@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 307305
+  base_commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
+  merge_commit: "b826afb9f0b1a201e426d93b954224be11003763"
+
+checks:
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript type checker passes on modified source files"
+
+  - id: plugin_prefix_in_discovery
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Plugin skills get canonical plugin prefix applied during slash command discovery"
+
+  - id: frontmatter_override_prefixed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Even when SKILL.md frontmatter overrides the name, plugin prefix is preserved"
+
+  - id: type_signature_widened
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getCanonicalPluginCommandId accepts structural type with uri, not just IAgentPlugin"
+
+  - id: non_plugin_sources_unaffected
+    type: pass_to_pass
+    origin: static
+    description: "Non-plugin sources still use unmodified name (no false prefix application)"
+
+  - id: no_arrow_function_for_export
+    type: pass_to_pass
+    origin: agent_config
+    description: "Exported function uses function keyword, not arrow expression"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "126"
+      commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
+
+rubric:
+  - rule: "Use 'single quotes' for non-user-facing strings."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "94"
+      commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
+  - rule: "Use tabs, not spaces, for indentation."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "72"
+      commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"

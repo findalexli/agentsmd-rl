@@ -1,0 +1,101 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  base_commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"
+
+checks:
+  - id: target_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "All modified target files must exist and be non-empty"
+
+  - id: css_containment_conditional
+    type: fail_to_pass
+    origin: pr_diff
+    description: "content-visibility must be conditional on active/streaming state"
+
+  - id: contain_intrinsic_conditional
+    type: fail_to_pass
+    origin: pr_diff
+    description: "contain-intrinsic-size must be conditional or removed for active messages"
+
+  - id: markdown_streaming_prop
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Markdown component must accept streaming-related prop or context"
+
+  - id: streaming_state_propagated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "message-part.tsx must compute streaming state and pass it to Markdown"
+
+  - id: fence_detection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "markdown.tsx must detect incomplete/unclosed code fences during streaming"
+
+  - id: block_splitting
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Markdown must split streaming content into stable blocks + in-progress tail"
+
+  - id: markdown_not_stub
+    type: fail_to_pass
+    origin: pr_diff
+    description: "markdown.tsx must have substantial streaming logic, not just a prop stub"
+
+  - id: no_any_type_in_diff
+    type: pass_to_pass
+    origin: agent_config
+    description: "Avoid using the any type in added code"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"
+
+  - id: const_over_let_in_diff
+    type: pass_to_pass
+    origin: agent_config
+    description: "Prefer const over let in added code"
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"
+
+rubric:
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"
+
+  - rule: "Prefer single word names for variables and functions. Only use multiple words if necessary."
+    source:
+      path: "AGENTS.md"
+      lines: "21"
+      commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"
+
+  - rule: "Keep things in one function unless composable or reusable"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"
+
+  - rule: "Avoid else statements. Prefer early returns."
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"
+
+  - rule: "Prefer functional array methods (flatMap, filter, map) over for loops"
+    source:
+      path: "AGENTS.md"
+      lines: "17"
+      commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"
+
+  - rule: "Always prefer createStore over multiple createSignal calls"
+    source:
+      path: "packages/app/AGENTS.md"
+      lines: "15"
+      commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"

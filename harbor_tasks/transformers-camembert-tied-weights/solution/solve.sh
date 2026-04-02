@@ -5,8 +5,10 @@ cd /workspace/transformers
 MODELING="src/transformers/models/camembert/modeling_camembert.py"
 MODULAR="src/transformers/models/camembert/modular_camembert.py"
 
-# Check if patch is already applied (modeling file has the fix)
-if grep -q '"lm_head.decoder.weight": "roberta.embeddings.word_embeddings.weight"' "$MODELING"; then
+# Check if patch is already applied by looking for the BUGGY line.
+# Note: CamembertForMaskedLM already has the correct "roberta" path,
+# so we can't grep for the fixed string — we must check the buggy one is gone.
+if ! grep -q '"lm_head.decoder.weight": "camembert.embeddings.word_embeddings.weight"' "$MODELING"; then
     echo "Patch already applied."
     exit 0
 fi
@@ -43,6 +45,7 @@ index 2f5bf2825bf5..f3f06a2c70f6 100644
      def __init__(self, config):
          super().__init__(config)
          del self.camembert
+
 PATCH
 
 if [ "$APPLIED" = true ]; then

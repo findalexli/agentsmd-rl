@@ -52,4 +52,5 @@ index a5f334cb1c..b30b4ad9f1 100644
      *,
      queue: bool = True,
      trigger_mode: Literal["once", "multiple", "always_last"] | None = "always_last",
+
 PATCH

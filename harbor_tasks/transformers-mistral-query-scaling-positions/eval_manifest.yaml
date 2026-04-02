@@ -1,0 +1,69 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44860
+  base_commit: "e94695e574f969ba5eeb8e442a7fb1e9f72ff37f"
+  merge_commit: "b96f8a98965a744ef5137dd25efd2e280cddcc25"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All four affected files parse without syntax errors"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "get_llama_4_attn_scale in both modeling files has real computation (not a stub)"
+
+  - id: ministral3_modeling_scale_shape
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_llama_4_attn_scale in ministral3/modeling returns 4D tensor (B,1,S,1) for varied input shapes"
+
+  - id: mistral4_modeling_scale_shape
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_llama_4_attn_scale in mistral4/modeling returns 4D tensor (B,1,S,1) for varied input shapes"
+
+  - id: scaling_formula_values
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Scaling formula 1+beta*log(1+floor(pos/max_pos)) matches expected values at 5 diverse positions"
+
+  - id: per_batch_scaling_differs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Different position_ids per batch item produce different scaling values and correct 4D shape"
+
+  - id: ministral3_modular_scale_shape
+    type: fail_to_pass
+    origin: agent_config
+    description: "get_llama_4_attn_scale in modular_ministral3.py is also fixed to return 4D tensor"
+    source:
+      path: ".ai/AGENTS.md"
+      lines: "66"
+      commit: "e94695e574f969ba5eeb8e442a7fb1e9f72ff37f"
+
+  - id: modular_forward_no_absolute_positions
+    type: fail_to_pass
+    origin: agent_config
+    description: "Both modular forward() methods no longer compute absolute_positions from cache; use position_ids directly"
+    source:
+      path: ".ai/AGENTS.md"
+      lines: "66"
+      commit: "e94695e574f969ba5eeb8e442a7fb1e9f72ff37f"
+
+rubric:
+  - rule: "We try to avoid direct inheritance between model-specific files in src/transformers/models/. Prefer modular files."
+    source:
+      path: ".ai/AGENTS.md"
+      lines: "63"
+      commit: "e94695e574f969ba5eeb8e442a7fb1e9f72ff37f"
+
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "e94695e574f969ba5eeb8e442a7fb1e9f72ff37f"

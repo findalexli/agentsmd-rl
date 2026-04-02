@@ -1,0 +1,127 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19183
+  base_commit: "1d363fa19fe9c1445f635498da48211bf09cbc97"
+  merge_commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
+
+checks:
+  - id: typescript_parses
+    type: pass_to_pass
+    origin: static
+    description: "worker.ts must parse as valid TypeScript without syntax errors"
+
+  - id: bus_subscribe_in_stream
+    type: fail_to_pass
+    origin: pr_diff
+    description: "startEventStream calls Bus.subscribe/subscribeAll instead of SDK client"
+
+  - id: workspace_context_wrapping
+    type: fail_to_pass
+    origin: pr_diff
+    description: "startEventStream wraps subscription in WorkspaceContext.provide"
+
+  - id: instance_context_wrapping
+    type: fail_to_pass
+    origin: pr_diff
+    description: "startEventStream wraps subscription in Instance.provide"
+
+  - id: sse_client_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "createOpencodeClient and sdk.event.subscribe removed from file"
+
+  - id: event_bus_imports_resolve
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Bus and WorkspaceContext imported from modules that resolve to real files"
+
+  - id: instance_disposed_handling
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Bus.InstanceDisposed referenced in startEventStream for reconnection"
+
+  - id: rpc_exports_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "All RPC methods still exported (fetch, snapshot, server, checkUpgrade, reload, shutdown)"
+
+  - id: global_bus_forwarding
+    type: pass_to_pass
+    origin: pr_diff
+    description: "GlobalBus.on event forwarding still present in file"
+
+  - id: abort_cleanup
+    type: pass_to_pass
+    origin: pr_diff
+    description: "AbortController instantiated and signal used for cleanup"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "startEventStream has >= 15 meaningful AST nodes (anti-stub)"
+
+  - id: no_any_type
+    type: pass_to_pass
+    origin: agent_config
+    description: "No `any` type annotations in startEventStream"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "1d363fa19fe9c1445f635498da48211bf09cbc97"
+
+  - id: const_over_let
+    type: pass_to_pass
+    origin: agent_config
+    description: "Prefer const over let in startEventStream (<=3 lets allowed)"
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "1d363fa19fe9c1445f635498da48211bf09cbc97"
+
+  - id: no_else
+    type: pass_to_pass
+    origin: agent_config
+    description: "No else statements in startEventStream"
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "1d363fa19fe9c1445f635498da48211bf09cbc97"
+
+rubric:
+  - rule: "Keep things in one function unless composable or reusable"
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "1d363fa19fe9c1445f635498da48211bf09cbc97"
+  - rule: "Prefer single word variable names where possible"
+    source:
+      path: "AGENTS.md"
+      lines: "21"
+      commit: "1d363fa19fe9c1445f635498da48211bf09cbc97"
+  - rule: "Rely on type inference when possible; avoid explicit type annotations unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "23"
+      commit: "1d363fa19fe9c1445f635498da48211bf09cbc97"
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "52-58"
+      commit: "1d363fa19fe9c1445f635498da48211bf09cbc97"
+  - rule: "Reduce total variable count by inlining when a value is only used once."
+    source:
+      path: "AGENTS.md"
+      lines: "41-50"
+      commit: "1d363fa19fe9c1445f635498da48211bf09cbc97"
+  - rule: "Use Effect.callback for callback-based APIs."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "14"
+      commit: "1d363fa19fe9c1445f635498da48211bf09cbc97"
+  - rule: "Use Instance.bind(fn) for native addon callbacks that need to call Bus.publish or anything that reads Instance.directory."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "61-72"
+      commit: "1d363fa19fe9c1445f635498da48211bf09cbc97"

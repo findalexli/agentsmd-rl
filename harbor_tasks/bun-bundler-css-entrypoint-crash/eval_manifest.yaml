@@ -1,0 +1,94 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28251
+  base_commit: "7abe6c387d0746b26eeed7fe9175e14560840cbb"
+  merge_commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
+checks:
+  - id: zig_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "computeChunks.zig must exist and be non-empty"
+
+  - id: handler_next_no_direct_param_as_index
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Handler.next must not use raw entry_point_id as chunks[] index"
+
+  - id: css_entry_point_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Handler.next must guard/skip CSS-only entry points with no JS chunk"
+
+  - id: entry_point_to_chunk_mapping
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A mapping from entry point IDs to JS chunk indices must exist"
+
+  - id: handler_retains_core_logic
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Handler struct retains chunks, next, files_with_parts_in_chunk, getOrPut"
+
+  - id: compute_chunks_structure
+    type: pass_to_pass
+    origin: pr_diff
+    description: "computeChunks still creates js_chunks and css_chunks"
+
+  - id: handler_next_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Handler.next has >= 3 meaningful lines (not a stub)"
+
+  - id: no_prohibited_std_apis
+    type: pass_to_pass
+    origin: agent_config
+    description: "No std.fs/posix/os/process usage — bun.* wrappers required"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16"
+      commit: "7abe6c387d0746b26eeed7fe9175e14560840cbb"
+
+  - id: no_inline_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @import() inline inside function bodies"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "7abe6c387d0746b26eeed7fe9175e14560840cbb"
+
+  - id: no_catch_out_of_memory_pattern
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must use bun.handleOom() or try, not catch bun.outOfMemory()"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "234-238"
+      commit: "7abe6c387d0746b26eeed7fe9175e14560840cbb"
+
+  - id: mapping_populated_during_chunk_creation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Entry-point-to-chunk mapping is written when JS chunks are created"
+
+rubric:
+  - rule: "Always use `bun.*` APIs instead of `std.*`. The `bun` namespace (`@import(\"bun\")`) provides cross-platform wrappers that preserve OS error info and never use `unreachable`. Using `std.fs`, `std.posix`, or `std.os` directly is wrong in this codebase."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16"
+      commit: "7abe6c387d0746b26eeed7fe9175e14560840cbb"
+
+  - rule: "Never use `@import()` inline inside of functions. Always put them at the bottom of the file or containing struct."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "7abe6c387d0746b26eeed7fe9175e14560840cbb"
+
+  - rule: "Decl literals in Zig are recommended. `const decl: Decl = .{ .binding = 0, .value = 0 };`"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "6"
+      commit: "7abe6c387d0746b26eeed7fe9175e14560840cbb"

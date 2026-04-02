@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35768
+  base_commit: "8374c2abf13fa803233025192b8d7e87de70b087"
+  merge_commit: "705055d7ac3da03927758b22d8aea4b2e5913961"
+
+checks:
+  - id: required_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "All five modified files must exist in the repo"
+
+  - id: suspense_panel_created_eagerly
+    type: fail_to_pass
+    origin: pr_diff
+    description: "createSuspensePanel() is called directly inside mountReactDevTools, not via event listener"
+
+  - id: enable_suspense_tab_listener_removed_from_index
+    type: fail_to_pass
+    origin: pr_diff
+    description: "store.addListener('enableSuspenseTab') removed from index.js"
+
+  - id: static_tabs_array_in_devtools
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DevTools.js uses a static tabs array with suspenseTab; useIsSuspenseTabEnabled hook removed"
+
+  - id: suspense_tab_rendered_unconditionally
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Suspense tab JSX rendered unconditionally — enableSuspenseTab && guard removed"
+
+  - id: enable_suspense_tab_removed_from_bridge
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableSuspenseTab event type removed from BackendEvents in bridge.js"
+
+  - id: version_check_removed_from_agent
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Version-based Suspense tab feature detection removed from agent.js"
+
+  - id: enable_suspense_tab_removed_from_store
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableSuspenseTab listener, getter, and _supportsSuspenseTab field removed from store.js"
+
+rubric: []

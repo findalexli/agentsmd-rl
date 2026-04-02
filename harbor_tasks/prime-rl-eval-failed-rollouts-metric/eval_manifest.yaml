@@ -1,0 +1,79 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 2123
+  base_commit: "18594ab2f5c43bdf80424731e5e268d67311056e"
+  merge_commit: "f090c3e8f3027a69d0cff9f8f775bc806f895288"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (eval_utils.py, vf_utils.py) must parse without errors"
+
+  - id: failed_rollouts_normal_metrics
+    type: fail_to_pass
+    origin: pr_diff
+    description: "evaluate_env computes failed_rollouts = total_inputs - len(outputs) and includes in monitor metrics"
+
+  - id: failed_rollouts_all_fail
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When all rollouts fail, failure count is still logged to monitor"
+
+  - id: failed_groups_aggregate_warning
+    type: fail_to_pass
+    origin: pr_diff
+    description: "generate() counts None groups and logs aggregate summary warning with failure count"
+
+  - id: failed_rollouts_varied_counts
+    type: fail_to_pass
+    origin: pr_diff
+    description: "evaluate_env correctly computes failure count with different input/output sizes (20 in, 15 out = 5 failed)"
+
+  - id: compute_eval_ckpt_step_regression
+    type: pass_to_pass
+    origin: repo_tests
+    description: "compute_eval_ckpt_step pure function regression with known I/O pairs"
+
+  - id: evaluate_env_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "evaluate_env has real monitoring and metrics logic, not just pass/return"
+
+  - id: evaluate_delegates_to_generate
+    type: pass_to_pass
+    origin: pr_diff
+    description: "evaluate() in vf_utils calls generate() — structural regression"
+
+  - id: no_bare_except
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare except blocks — must specify exception type"
+    source:
+      path: "AGENTS.md"
+      lines: "5"
+      commit: "18594ab2f5c43bdf80424731e5e268d67311056e"
+
+  - id: no_process_comments
+    type: pass_to_pass
+    origin: agent_config
+    description: "No process-explanatory comments referencing old code"
+    source:
+      path: "AGENTS.md"
+      lines: "7"
+      commit: "18594ab2f5c43bdf80424731e5e268d67311056e"
+
+rubric:
+  - rule: "Errors should never pass silently. Unless explicitly silenced."
+    source:
+      path: "AGENTS.md"
+      lines: "23-24"
+      commit: "18594ab2f5c43bdf80424731e5e268d67311056e"
+
+  - rule: "Explicit is better than implicit."
+    source:
+      path: "AGENTS.md"
+      lines: "15"
+      commit: "18594ab2f5c43bdf80424731e5e268d67311056e"

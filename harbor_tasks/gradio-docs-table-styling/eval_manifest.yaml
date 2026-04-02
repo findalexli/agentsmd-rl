@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 0  # Synthetic task — no upstream PR
+  base_commit: "e8dadd648483b6016913a9b7fa2580dbc08cb823"
+
+checks:
+  - id: general_table_rules_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "At least one general-purpose rule targeting table/th/td exists"
+
+  - id: table_base_styles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Table has border-collapse and valid width"
+
+  - id: table_header_styles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Table headers have valid background color and padding"
+
+  - id: table_cell_styles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Table cells have valid padding and border"
+
+  - id: dark_mode_header
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dark mode styles table headers with background or color"
+
+  - id: dark_mode_cell
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dark mode styles table cells with border or color"
+
+  - id: css_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "CSS file has balanced braces (no broken syntax)"
+
+  - id: existing_scoped_dark_styles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing .obj scoped dark table styles preserved"
+
+  - id: existing_summary_styles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing summary::after styles preserved"
+
+  - id: file_not_truncated
+    type: pass_to_pass
+    origin: static
+    description: "CSS file has substantial content (>480 lines, anti-stub)"
+
+  - id: tab_indentation
+    type: fail_to_pass
+    origin: agent_config
+    description: "New table CSS uses tab indentation matching file convention"
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "e8dadd648483b6016913a9b7fa2580dbc08cb823"
+
+rubric: []

@@ -1,0 +1,93 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24274
+  base_commit: "09f645d49f1337866d63e62570cb9a43a4a875b3"
+  merge_commit: "716260bf10d7ae1d965ed9b22653e57fbc960582"
+
+checks:
+  - id: build_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified ruff code compiles without errors"
+
+  - id: lambda_super_detected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "UP008 detects super(ClassName, self) inside lambda class attributes"
+
+  - id: lambda_super_fix_available
+    type: fail_to_pass
+    origin: pr_diff
+    description: "UP008 offers autofix that simplifies lambda super(Cls, self) to super()"
+
+  - id: lambda_super_varied_inputs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "UP008 detects lambda super() across multiple class/nesting patterns"
+
+  - id: todo_comment_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TODO(charlie) about missed lambda rewrite removed from fixture file"
+
+  - id: upstream_up008_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream UP008 test suite still passes including snapshot tests"
+
+  - id: no_excessive_panic_unwrap
+    type: pass_to_pass
+    origin: agent_config
+    description: "No excessive panic!/unreachable!/unwrap() in changed file"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "09f645d49f1337866d63e62570cb9a43a4a875b3"
+
+  - id: no_local_rust_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Rust imports at top of file, not local in functions"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "09f645d49f1337866d63e62570cb9a43a4a875b3"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "09f645d49f1337866d63e62570cb9a43a4a875b3"
+
+  - rule: "Rust imports should always go at the top of the file, never locally in functions."
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "09f645d49f1337866d63e62570cb9a43a4a875b3"
+
+  - rule: "Avoid writing significant amounts of new code. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "09f645d49f1337866d63e62570cb9a43a4a875b3"
+
+  - rule: "Prefer let chains (if let combined with &&) over nested if let statements to reduce indentation."
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "09f645d49f1337866d63e62570cb9a43a4a875b3"
+
+  - rule: "If suppressing a Clippy lint, prefer #[expect()] over #[allow()] where possible."
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "09f645d49f1337866d63e62570cb9a43a4a875b3"
+
+  - rule: "Use comments purposefully. Don't narrate code, but explain invariants and unusual choices."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "09f645d49f1337866d63e62570cb9a43a4a875b3"

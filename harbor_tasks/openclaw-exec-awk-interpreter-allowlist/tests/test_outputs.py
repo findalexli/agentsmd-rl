@@ -1,0 +1,220 @@
+"""
+Task: openclaw-exec-awk-interpreter-allowlist
+Repo: openclaw/openclaw @ b7b46ad185392f53a995124f6861d2b356f84976
+PR:   57772
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import json
+import subprocess
+import textwrap
+from pathlib import Path
+
+REPO = "/workspace/openclaw"
+
+
+def _eval_ts(code: str) -> object:
+    """Write a .mts script, run it with tsx, return parsed JSON from stdout."""
+    script = Path(REPO) / "__test_probe.mts"
+    script.write_text(code)
+    try:
+        r = subprocess.run(
+            ["npx", "tsx", str(script)],
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, (
+            f"tsx failed (exit {r.returncode}):\n{r.stderr}\n{r.stdout}"
+        )
+        return json.loads(r.stdout.strip())
+    finally:
+        script.unlink(missing_ok=True)
+
+
+def _check_allowlist(pattern: str) -> bool:
+    """Check if a pattern is interpreter-like."""
+    return _eval_ts(textwrap.dedent(f"""\
+        import {{ isInterpreterLikeAllowlistPattern }} from "./src/infra/exec-inline-eval.js";
+        console.log(JSON.stringify(isInterpreterLikeAllowlistPattern({json.dumps(pattern)})));
+    """))
+
+
+def _detect_inline(argv: list[str]) -> object | None:
+    """Detect interpreter inline eval for an argv."""
+    return _eval_ts(textwrap.dedent(f"""\
+        import {{ detectInterpreterInlineEvalArgv }} from "./src/infra/exec-inline-eval.js";
+        console.log(JSON.stringify(detectInterpreterInlineEvalArgv({json.dumps(argv)})));
+    """))
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) -- core awk allowlist recognition
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_allowlist_recognizes_awk():
+    """isInterpreterLikeAllowlistPattern recognizes awk paths as interpreter-like."""
+    assert _check_allowlist("/usr/bin/awk") is True
+    assert _check_allowlist("/usr/local/bin/awk") is True
+    assert _check_allowlist("awk") is True
+
+
+# [pr_diff] fail_to_pass
+def test_allowlist_recognizes_awk_variants():
+    """isInterpreterLikeAllowlistPattern recognizes gawk, mawk, nawk."""
+    assert _check_allowlist("**/gawk") is True
+    assert _check_allowlist("/usr/bin/mawk") is True
+    assert _check_allowlist("nawk") is True
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) -- inline eval detection
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_detect_awk_inline_positional():
+    """detectInterpreterInlineEvalArgv detects awk positional inline program."""
+    hit = _detect_inline(["awk", "{print $1}", "data.csv"])
+    assert hit is not None, "awk positional program should be detected"
+    hit2 = _detect_inline(["mawk", "BEGIN { print 1 }"])
+    assert hit2 is not None, "mawk positional program should be detected"
+    hit3 = _detect_inline(["nawk", "{gsub(/old/,\"new\"); print}", "file.txt"])
+    assert hit3 is not None, "nawk positional program should be detected"
+
+
+# [pr_diff] fail_to_pass
+def test_detect_awk_with_value_flags():
+    """detectInterpreterInlineEvalArgv detects awk program after -F/-v flags."""
+    hit = _detect_inline(["gawk", "-F", ",", "{print $1}", "data.csv"])
+    assert hit is not None, "gawk with -F should still detect inline program"
+    hit2 = _detect_inline(["awk", "-v", "x=1", "{print x, $0}", "input.txt"])
+    assert hit2 is not None, "awk with -v should still detect inline program"
+    hit3 = _detect_inline(["awk", "-F", ":", "-v", "n=3", "{print $n}", "/etc/passwd"])
+    assert hit3 is not None, "awk with multiple value flags should still detect inline"
+
+
+# [pr_diff] fail_to_pass
+def test_awk_detection_description():
+    """describeInterpreterInlineEval returns '<variant> inline program' format."""
+    for variant in ["awk", "gawk", "mawk"]:
+        result = _eval_ts(textwrap.dedent(f"""\
+            import {{ detectInterpreterInlineEvalArgv, describeInterpreterInlineEval }} from "./src/infra/exec-inline-eval.js";
+            const hit = detectInterpreterInlineEvalArgv(["{variant}", "{{print $1}}"]);
+            console.log(JSON.stringify(hit ? describeInterpreterInlineEval(hit) : null));
+        """))
+        assert result is not None, f"{variant} inline detection must return a hit"
+        assert variant in result, f"description must mention '{variant}', got: {result}"
+        assert "inline program" in result, f"description must say 'inline program', got: {result}"
+
+
+# [pr_diff] fail_to_pass
+def test_awk_double_dash_positional():
+    """awk -- '{program}' detects inline code after double-dash separator."""
+    hit = _detect_inline(["awk", "--", "{print $1}", "data.csv"])
+    assert hit is not None, "awk with -- separator should still detect inline program"
+    hit2 = _detect_inline(["gawk", "--", "BEGIN { print 42 }"])
+    assert hit2 is not None, "gawk with -- should detect inline program"
+    hit3 = _detect_inline(["awk", "--"])
+    assert hit3 is None, "awk -- with no following arg should return null"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) -- integration wiring
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_allowlist_imports_interpreter_check():
+    """exec-approvals-allowlist.ts must call isInterpreterLikeAllowlistPattern."""
+    src = Path(f"{REPO}/src/infra/exec-approvals-allowlist.ts").read_text()
+    assert "isInterpreterLikeAllowlistPattern" in src, (
+        "allowlist module must import and use isInterpreterLikeAllowlistPattern"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (pr_diff) -- existing behavior preserved
+# ---------------------------------------------------------------------------
+
+# [pr_diff] pass_to_pass
+def test_existing_interpreters_still_detected():
+    """python3, node, perl, ruby are still recognized as interpreter-like."""
+    assert _check_allowlist("/usr/bin/python3") is True
+    assert _check_allowlist("**/node") is True
+    assert _check_allowlist("/usr/bin/perl") is True
+    hit = _detect_inline(["python3", "-c", "print(1)"])
+    assert hit is not None, "python3 -c should still be detected"
+    hit2 = _detect_inline(["node", "-e", "console.log(1)"])
+    assert hit2 is not None, "node -e should still be detected"
+    hit3 = _detect_inline(["perl", "-e", "print 1"])
+    assert hit3 is not None, "perl -e should still be detected"
+
+
+# [pr_diff] pass_to_pass
+def test_awk_file_flag_not_inline():
+    """awk -f script.awk is file-based, not inline eval."""
+    hit = _detect_inline(["awk", "-f", "script.awk", "data.csv"])
+    assert hit is None, "awk -f should NOT be detected as inline eval"
+    hit2 = _detect_inline(["gawk", "--file", "prog.awk", "input.txt"])
+    assert hit2 is None, "gawk --file should NOT be detected as inline eval"
+    hit3 = _detect_inline(["mawk", "-f", "transform.awk"])
+    assert hit3 is None, "mawk -f should NOT be detected as inline eval"
+
+
+# [pr_diff] pass_to_pass
+def test_non_interpreters_not_flagged():
+    """Non-interpreter programs must not be detected as interpreter-like."""
+    for prog in ["/usr/bin/ls", "/usr/bin/cat", "/usr/bin/rg", "/usr/bin/grep"]:
+        assert _check_allowlist(prog) is False, f"{prog} should not be interpreter-like"
+    for argv in [
+        ["ls", "-la", "/tmp"],
+        ["cat", "file.txt"],
+        ["grep", "-r", "pattern", "."],
+    ]:
+        hit = _detect_inline(argv)
+        assert hit is None, f"{argv[0]} should not be detected as inline eval"
+
+
+# ---------------------------------------------------------------------------
+# Config-derived (agent_config) -- rules from CLAUDE.md / AGENTS.md
+# ---------------------------------------------------------------------------
+
+# [agent_config] pass_to_pass -- CLAUDE.md:146 @ b7b46ad
+def test_no_ts_nocheck():
+    """No @ts-nocheck in modified files (CLAUDE.md:146)."""
+    for fname in ["exec-inline-eval.ts", "exec-approvals-allowlist.ts"]:
+        src = Path(f"{REPO}/src/infra/{fname}").read_text()
+        assert "@ts-nocheck" not in src, f"@ts-nocheck found in {fname}"
+
+
+# [agent_config] pass_to_pass -- CLAUDE.md:144 @ b7b46ad
+def test_no_any_type_annotations():
+    """No 'any' type annotations in modified files (CLAUDE.md:144)."""
+    import re
+    pattern = re.compile(r":\s*any\b|<any>|as\s+any\b")
+    for fname in ["exec-inline-eval.ts", "exec-approvals-allowlist.ts"]:
+        src = Path(f"{REPO}/src/infra/{fname}").read_text()
+        assert not pattern.search(src), f"'any' type found in {fname}"
+
+
+# [agent_config] pass_to_pass -- CLAUDE.md:146 @ b7b46ad
+def test_no_ts_ignore():
+    """No @ts-ignore in modified files; use @ts-expect-error with justification (CLAUDE.md:146)."""
+    for fname in ["exec-inline-eval.ts", "exec-approvals-allowlist.ts"]:
+        src = Path(f"{REPO}/src/infra/{fname}").read_text()
+        assert "@ts-ignore" not in src, (
+            f"@ts-ignore found in {fname} — use @ts-expect-error with justification"
+        )
+
+
+# [agent_config] pass_to_pass -- CLAUDE.md:160 @ b7b46ad
+def test_no_prototype_mutation():
+    """No prototype mutation patterns in modified files (CLAUDE.md:160)."""
+    import re
+    pattern = re.compile(r"\.prototype\s*[.=\[]")
+    for fname in ["exec-inline-eval.ts", "exec-approvals-allowlist.ts"]:
+        src = Path(f"{REPO}/src/infra/{fname}").read_text()
+        assert not pattern.search(src), f"prototype mutation found in {fname}"

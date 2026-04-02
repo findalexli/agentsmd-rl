@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1756
+  base_commit: "64e1e68f524e1da6ca646606c22e785eeb845268"
+  merge_commit: "6f70479966749e258ba0b20341e2c4b88ea094f1"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (checkpoint.py, data.py, processing_utils.py) must parse without errors"
+
+  - id: checkpoint_uses_load_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_load_checkpoint_hf passes load_path (not args.hf_checkpoint) to from_hf_pretrained"
+
+  - id: data_no_multimodal_num_items
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_batch does not track or set multimodal_num_items on the batch"
+
+  - id: processor_kwargs_mm_token_type_ids_none_input
+    type: fail_to_pass
+    origin: pr_diff
+    description: "build_processor_kwargs(None) includes return_mm_token_type_ids=False in text_kwargs"
+
+  - id: processor_kwargs_mm_token_type_ids_with_existing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "build_processor_kwargs preserves existing text_kwargs while adding return_mm_token_type_ids"
+
+  - id: processor_kwargs_mm_token_type_ids_empty_input
+    type: fail_to_pass
+    origin: pr_diff
+    description: "build_processor_kwargs({}) includes return_mm_token_type_ids=False"
+
+  - id: processor_kwargs_overrides_existing_mm_token_type_ids
+    type: fail_to_pass
+    origin: pr_diff
+    description: "build_processor_kwargs overrides return_mm_token_type_ids=True to False"
+
+  - id: data_multimodal_data_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "get_batch still creates multimodal_data dict and assigns to batch"
+
+  - id: processor_kwargs_modality_forced
+    type: pass_to_pass
+    origin: pr_diff
+    description: "build_processor_kwargs still sets return_tensors=pt for modality kwargs"
+
+  - id: processor_kwargs_return_tensors_none_for_text
+    type: pass_to_pass
+    origin: pr_diff
+    description: "text_kwargs has return_tensors=None across varied inputs"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified functions have meaningful bodies (not stubs)"
+
+rubric: []

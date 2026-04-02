@@ -1,0 +1,48 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28361
+  base_commit: "0de7a806d108a56a2c9f87d5974c52384059c397"
+  merge_commit: "70a2a77763eb1ab2ca30ada85a116f3554bc124f"
+
+checks:
+  - id: ffi_struct_integrity
+    type: pass_to_pass
+    origin: static
+    description: "ffi.zig has balanced braces and all core FFI identifiers present"
+
+  - id: value_guard_rejects_non_objects
+    type: fail_to_pass
+    origin: pr_diff
+    description: "generateSymbols condition rejects non-object symbol descriptor values"
+
+  - id: arg_types_cleanup_in_error_paths
+    type: fail_to_pass
+    origin: pr_diff
+    description: "arg_types freed in error-return paths before clearAndFree (memory leak fix)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "generateSymbols retains substantive symbol-parsing logic"
+
+  - id: no_std_apis_in_diff
+    type: fail_to_pass
+    origin: agent_config
+    description: "No prohibited std.* APIs (std.fs, std.posix, std.os) in agent changes"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16"
+      commit: "0de7a806d108a56a2c9f87d5974c52384059c397"
+
+  - id: no_inline_import_in_diff
+    type: fail_to_pass
+    origin: agent_config
+    description: "No inline @import() inside function bodies in agent changes"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "0de7a806d108a56a2c9f87d5974c52384059c397"
+
+rubric: []

@@ -1,0 +1,150 @@
+"""
+Task: prime-rl-nemotron-mamba-expand-mismatch
+Repo: PrimeIntellect-ai/prime-rl @ 8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4
+PR:   2110
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import ast
+import importlib.util
+from pathlib import Path
+
+REPO = "/workspace/prime-rl"
+CONFIG_PY = f"{REPO}/src/prime_rl/trainer/models/nemotron_h/configuration_nemotron_h.py"
+MODELING_PY = f"{REPO}/src/prime_rl/trainer/models/nemotron_h/modeling_nemotron_h.py"
+
+
+def _load_config_class():
+    spec = importlib.util.spec_from_file_location("configuration_nemotron_h", CONFIG_PY)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.NemotronHConfig
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static) — syntax checks
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_syntax_check():
+    """Both modified files must parse without syntax errors."""
+    for fpath in [CONFIG_PY, MODELING_PY]:
+        source = Path(fpath).read_text()
+        ast.parse(source)  # raises SyntaxError on failure
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_nano_30b_dimension_invariant():
+    """Config mamba_expand yields correct intermediate_size for Nano-30B."""
+    NemotronHConfig = _load_config_class()
+    # Nemotron-3-Nano-30B: mamba_num_heads=64, mamba_head_dim=64, hidden_size=2688
+    # Bug: raw mamba_expand=2 gives int(2*2688)=5376, expected 64*64=4096
+    config = NemotronHConfig(hidden_size=2688, mamba_num_heads=64, mamba_head_dim=64, mamba_expand=2)
+    expected = 64 * 64  # 4096
+    actual = int(config.mamba_expand * config.hidden_size)
+    assert actual == expected, f"intermediate_size={actual}, expected {expected}"
+
+
+# [pr_diff] fail_to_pass
+def test_multiple_dimension_combos():
+    """Config mamba_expand correct for varied hidden_size / head combos."""
+    NemotronHConfig = _load_config_class()
+    # Each case: (hidden_size, mamba_num_heads, mamba_head_dim, raw_mamba_expand)
+    # All chosen so raw_expand * hidden_size != heads * head_dim
+    cases = [
+        (1024, 32, 48, 3),   # expected 1536, raw gives 3072
+        (512,  16, 48, 2),   # expected  768, raw gives 1024
+        (2048, 64, 64, 1),   # expected 4096, raw gives 2048
+    ]
+    for hs, nh, hd, me in cases:
+        config = NemotronHConfig(hidden_size=hs, mamba_num_heads=nh, mamba_head_dim=hd, mamba_expand=me)
+        expected = nh * hd
+        actual = int(config.mamba_expand * config.hidden_size)
+        assert actual == expected, f"hs={hs} nh={nh} hd={hd}: got {actual}, expected {expected}"
+
+
+# [pr_diff] fail_to_pass
+def test_fractional_expand_precision():
+    """No off-by-one from float truncation when expand is not a clean fraction."""
+    NemotronHConfig = _load_config_class()
+    # 3840 / 2688 = 1.42857142857... (repeating)
+    config = NemotronHConfig(hidden_size=2688, mamba_num_heads=80, mamba_head_dim=48, mamba_expand=2)
+    expected = 80 * 48  # 3840
+    actual = int(config.mamba_expand * config.hidden_size)
+    assert actual == expected, f"Fractional case: got {actual}, expected {expected}"
+
+    # 3072 / 1536 = 2.0 (clean fraction, should still work)
+    config2 = NemotronHConfig(hidden_size=1536, mamba_num_heads=48, mamba_head_dim=64, mamba_expand=4)
+    expected2 = 48 * 64  # 3072
+    actual2 = int(config2.mamba_expand * config2.hidden_size)
+    assert actual2 == expected2, f"Clean fraction case: got {actual2}, expected {expected2}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (pr_diff / static) — regression + anti-stub
+# ---------------------------------------------------------------------------
+
+# [pr_diff] pass_to_pass
+def test_120b_default_config():
+    """120B default config still produces correct mamba_expand."""
+    NemotronHConfig = _load_config_class()
+    # Default config (120B): hidden_size=4096, mamba_num_heads=128, mamba_head_dim=64
+    config = NemotronHConfig()
+    expected = 128 * 64  # 8192
+    actual = int(config.mamba_expand * config.hidden_size)
+    assert actual == expected, f"120B: got {actual}, expected {expected}"
+    assert config.mamba_expand > 0, "mamba_expand must be positive"
+
+
+# [static] pass_to_pass
+def test_not_stub():
+    """NemotronHConfig.__init__ has real logic, not just pass/return."""
+    tree = ast.parse(Path(CONFIG_PY).read_text())
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "NemotronHConfig":
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name == "__init__":
+                    real = [s for s in item.body if not isinstance(s, (ast.Pass, ast.Expr))]
+                    assert len(real) >= 10, f"Stub detected: only {len(real)} statements"
+                    return
+    raise AssertionError("NemotronHConfig.__init__ not found")
+
+
+# ---------------------------------------------------------------------------
+# Config-derived (agent_config) — rules from AGENTS.md
+# ---------------------------------------------------------------------------
+
+# [agent_config] pass_to_pass — AGENTS.md:5 @ 8a6f4ef
+def test_no_silent_try_except():
+    """No silent except/pass blocks (AGENTS.md: avoid try/except unless necessary)."""
+    for fpath in [CONFIG_PY, MODELING_PY]:
+        tree = ast.parse(Path(fpath).read_text())
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Try):
+                for handler in node.handlers:
+                    if len(handler.body) == 1 and isinstance(handler.body[0], ast.Pass):
+                        raise AssertionError(
+                            f"Silent except/pass in {fpath} at line {node.lineno}"
+                        )
+
+
+# [agent_config] pass_to_pass — AGENTS.md:7 @ 8a6f4ef
+def test_no_work_process_comments():
+    """No comments referring to old code or work process (AGENTS.md: no unnecessary comments)."""
+    bad_patterns = ["used to", "previously", "old code", "was changed", "we changed", "refactored from"]
+    for fpath in [CONFIG_PY, MODELING_PY]:
+        for i, line in enumerate(Path(fpath).read_text().splitlines(), 1):
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                lower = stripped.lower()
+                for pat in bad_patterns:
+                    if pat in lower:
+                        raise AssertionError(
+                            f"Work-process comment in {fpath}:{i}: {stripped}"
+                        )

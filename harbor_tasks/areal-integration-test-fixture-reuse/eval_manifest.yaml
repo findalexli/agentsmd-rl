@@ -1,0 +1,90 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 1068
+  base_commit: "dfeab6396380f27be96ccb7cb642b57a5a25ef58"
+  merge_commit: "3bf10c9c56eeae846b3de52dde8db42918f80690"
+
+checks:
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "All three test files must be valid Python"
+
+  - id: fixtures_module_scoped
+    type: fail_to_pass
+    origin: pr_diff
+    description: "local_scheduler, gateway_controller, gateway_controller_full_init must be scoped module or session"
+
+  - id: pytestmark_sglang_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All 3 test files must have module-level pytestmark containing pytest.mark.sglang"
+
+  - id: slow_marker_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No test class should have @pytest.mark.slow decorator"
+
+  - id: should_accept_fn_tests_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tests referencing should_accept_fn removed from controller tests (incompatible with module-scoped fixtures)"
+
+  - id: controller_settings_loosened
+    type: fail_to_pass
+    origin: pr_diff
+    description: "gateway_controller and gateway_controller_full_init must have max_head_offpolicyness >= 100"
+
+  - id: fixture_no_tmp_path
+    type: fail_to_pass
+    origin: agent_config
+    description: "Module-scoped local_scheduler must not use function-scoped tmp_path"
+    source:
+      path: ".claude/rules/testing.md"
+      lines: "55"
+      commit: "dfeab6396380f27be96ccb7cb642b57a5a25ef58"
+
+  - id: core_test_classes_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "All non-removed test classes still exist in their respective files"
+
+  - id: fake_dataloader_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "_FakeDataLoader helper class still present in controller tests"
+
+  - id: files_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "Test files have substantial content with real test methods (not stubbed)"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No wildcard imports (from x import *) in any test file"
+    source:
+      path: "AGENTS.md"
+      lines: "30"
+      commit: "dfeab6396380f27be96ccb7cb642b57a5a25ef58"
+
+rubric:
+  - rule: "Follow existing code patterns in the same module"
+    source:
+      path: "CLAUDE.md"
+      lines: "76"
+      commit: "dfeab6396380f27be96ccb7cb642b57a5a25ef58"
+
+  - rule: "Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation."
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "dfeab6396380f27be96ccb7cb642b57a5a25ef58"
+
+  - rule: "test_<what>_<condition>_<expected>() with Arrange/Act/Assert"
+    source:
+      path: ".claude/rules/testing.md"
+      lines: "22"
+      commit: "dfeab6396380f27be96ccb7cb642b57a5a25ef58"

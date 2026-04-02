@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21495
+  base_commit: "c580ddd19d613862b8720e307442946d0b9c41e2"
+  merge_commit: "9dc266adb4dfd4690e8a0884406b70fae3db2b8e"
+
+checks:
+  # Gates
+  - id: handler_syntax
+    type: pass_to_pass
+    origin: static
+    description: "slash_command_handler.py must parse without syntax errors"
+
+  - id: workflow_yaml_syntax
+    type: pass_to_pass
+    origin: static
+    description: "rerun-ut.yml must be valid YAML"
+
+  # Core behavioral — fail-to-pass
+  - id: title_includes_test_command
+    type: fail_to_pass
+    origin: pr_diff
+    description: "find_workflow_run_url builds title containing test_command when provided"
+
+  - id: different_commands_unique_titles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Different test_commands produce different expected titles"
+
+  - id: title_with_sha_and_command
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Title includes both test_command and pr_head_sha for fork PRs"
+
+  - id: yaml_run_name_includes_test_command
+    type: fail_to_pass
+    origin: pr_diff
+    description: "rerun-ut.yml run-name template references test_command input"
+
+  - id: rerun_ut_no_pre_find_trigger_comment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "handle_rerun_ut does not post standalone trigger comment before find_workflow_run_url"
+
+  - id: rerun_stage_no_separate_link_comment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "handle_rerun_stage does not post a standalone comment before find_workflow_run_url"
+
+  # Regression — pass-to-pass
+  - id: title_without_command_backward_compat
+    type: pass_to_pass
+    origin: pr_diff
+    description: "find_workflow_run_url without test_command still produces correct title"
+
+  # Anti-stub
+  - id: handler_exports_public_api
+    type: pass_to_pass
+    origin: static
+    description: "Handler exports find_workflow_run_url, handle_rerun_ut, handle_rerun_stage (anti-stub)"
+
+rubric: []

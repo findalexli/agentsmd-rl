@@ -1,0 +1,88 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 2098
+  base_commit: "ecd080928014e20d1927a4f8b0b01d399151fdba"
+  merge_commit: "c2b99e69ce31c71261f56c97fbd2ed467258f940"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (model.py, vlm.py) must parse without errors"
+
+  - id: is_vlm_architecture_classifies_configs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "is_vlm_architecture returns True for VLM types, False for text-only types"
+
+  - id: get_model_uses_architecture_detection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_model() calls is_vlm_architecture() for model class dispatch"
+
+  - id: model_class_dispatch_uses_arch_detection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AutoModelForImageTextToText dispatch uses architecture detection, not training config"
+
+  - id: get_model_info_registry_lookup
+    type: pass_to_pass
+    origin: pr_diff
+    description: "_get_model_info_from_config returns ModelInfo for VLM types, None otherwise"
+
+  - id: vlm_registry_entries
+    type: pass_to_pass
+    origin: pr_diff
+    description: "VLM_REGISTRY has expected entries with valid attributes"
+
+  - id: is_vlm_architecture_not_stub
+    type: fail_to_pass
+    origin: static
+    description: "is_vlm_architecture uses registry lookup, not hardcoded values"
+
+  - id: freeze_guarded_by_training_config
+    type: pass_to_pass
+    origin: pr_diff
+    description: "freeze_vision_encoder guarded by training config, not architecture detection"
+
+  - id: setup_fsdp_vision_guarded_by_training
+    type: pass_to_pass
+    origin: pr_diff
+    description: "setup_fsdp vision encoder sharding guarded by training config, not architecture detection"
+
+  - id: no_bare_except
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare except blocks in modified files"
+    source:
+      path: "AGENTS.md"
+      lines: "5"
+      commit: "ecd080928014e20d1927a4f8b0b01d399151fdba"
+
+  - id: errors_not_silenced
+    type: pass_to_pass
+    origin: agent_config
+    description: "No except-pass patterns that silently swallow errors"
+    source:
+      path: "AGENTS.md"
+      lines: "5,23"
+      commit: "ecd080928014e20d1927a4f8b0b01d399151fdba"
+
+rubric:
+  - rule: "Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code."
+    source:
+      path: "AGENTS.md"
+      lines: "7"
+      commit: "ecd080928014e20d1927a4f8b0b01d399151fdba"
+  - rule: "Explicit is better than implicit."
+    source:
+      path: "AGENTS.md"
+      lines: "15"
+      commit: "ecd080928014e20d1927a4f8b0b01d399151fdba"
+  - rule: "Simple is better than complex."
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "ecd080928014e20d1927a4f8b0b01d399151fdba"

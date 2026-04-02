@@ -1,0 +1,96 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24167
+  base_commit: "d81266252aaf0820346d55edbed79c4f25ba13d2"
+  merge_commit: "9622285ed0081fc688149f6efca87f127d9b18dd"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified code must compile (including injected tests)"
+
+  - id: no_panic_list_subscript_before_paren
+    type: fail_to_pass
+    origin: pr_diff
+    description: "list[int]<CURSOR>() must not panic — exercises the exact buggy code path"
+
+  - id: no_panic_dict_subscript_before_paren
+    type: fail_to_pass
+    origin: pr_diff
+    description: "dict[str, int]<CURSOR>() must not panic — variant with different subscript"
+
+  - id: no_panic_tuple_subscript_before_paren
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tuple[int, str]<CURSOR>() must not panic — third subscript variant"
+
+  - id: existing_completion_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream completion tests must still pass"
+
+  - id: argument_completion_still_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Argument completion tests must still pass when cursor IS inside arguments"
+
+  - id: no_panic_patterns_in_diff
+    type: pass_to_pass
+    origin: agent_config
+    description: "No .unwrap(), panic!(), or unreachable!() introduced in changed code"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "d81266252aaf0820346d55edbed79c4f25ba13d2"
+
+  - id: no_local_use_statements
+    type: pass_to_pass
+    origin: agent_config
+    description: "Rust imports must be at top of file, not locally in functions"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "d81266252aaf0820346d55edbed79c4f25ba13d2"
+
+  - id: no_allow_lint_suppression
+    type: pass_to_pass
+    origin: agent_config
+    description: "Use #[expect()] over #[allow()] for lint suppression"
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "d81266252aaf0820346d55edbed79c4f25ba13d2"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "d81266252aaf0820346d55edbed79c4f25ba13d2"
+
+  - rule: "Avoid writing significant amounts of new code. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "d81266252aaf0820346d55edbed79c4f25ba13d2"
+
+  - rule: "Prefer let chains (if let combined with &&) over nested if let statements to reduce indentation and improve readability."
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "d81266252aaf0820346d55edbed79c4f25ba13d2"
+
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "d81266252aaf0820346d55edbed79c4f25ba13d2"
+
+  - rule: "All changes must be tested. Look for existing test files before adding a new file."
+    source:
+      path: "AGENTS.md"
+      lines: "72-73"
+      commit: "d81266252aaf0820346d55edbed79c4f25ba13d2"

@@ -26,4 +26,5 @@ index afcae7ddd75c..b84556efbb19 100755
 
          # Parameters for sequence generation saved in the config are popped instead of loading them.
          for parameter_name in GenerationConfig._get_default_generation_params().keys():
+
 PATCH

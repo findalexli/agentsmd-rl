@@ -1,0 +1,30 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 36160
+  base_commit: "f944b4c5352be02623d2d7415c0806350f875114"
+  merge_commit: "9627b5a1caa64c1488643bffdf04495106fa3247"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified JS file must parse without syntax errors"
+
+  - id: context_propagation_to_suspense_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Context changes above a suspended Suspense boundary must propagate to fallback consumers through a memo boundary"
+
+  - id: multiple_context_updates_propagate_to_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Multiple sequential context updates must all reach fallback consumers with correct values"
+
+  - id: existing_context_propagation_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing ReactContextPropagation tests still pass"
+
+rubric: []

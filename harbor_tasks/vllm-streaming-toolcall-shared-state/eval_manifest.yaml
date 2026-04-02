@@ -1,0 +1,42 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38158
+  base_commit: "cc06b4e86b2beb04fbee3e6d9167cc97f1491b1f"
+  merge_commit: "3683fe6c0651fe54a0201552ae7dfb7acb1e0cea"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Target file must parse without syntax errors"
+
+  - id: token_ids_creates_independent_lists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "all_previous_token_ids must create independent lists per choice — mutating one must not affect others"
+
+  - id: tool_parsers_creates_independent_instances
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tool_parsers must create independent parser instances per choice — mutating one must not affect others"
+
+  - id: sibling_methods_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Key sibling methods (create_chat_completion, chat_completion_full_generator) still present"
+
+  - id: method_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "chat_completion_stream_generator has substantial body (not a stub)"
+
+  - id: sibling_initializations_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Non-mutable sibling vars (added_content_delta_arr, reasoning_end_arr) still assigned"
+
+rubric: []
+# AGENTS.md rules are process-oriented (duplicate checks, PR descriptions,
+# commit trailers, use uv) — none are programmatically verifiable from a diff.

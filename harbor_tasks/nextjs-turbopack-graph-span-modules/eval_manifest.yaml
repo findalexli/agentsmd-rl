@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91697
+  base_commit: "25646b928f900c12504b8a30ce5939207533aa54"
+  merge_commit: "7d451fe01e7a42be4aa9dc12e13e2017c1f0483d"
+
+checks:
+  - id: antistub_files_have_substantial_content
+    type: pass_to_pass
+    origin: static
+    description: "All three modified files have substantial Rust code (not replaced with stubs)"
+
+  - id: module_count_method_in_single_module_graph
+    type: fail_to_pass
+    origin: pr_diff
+    description: "impl SingleModuleGraph exposes module count via turbo_tasks::function"
+
+  - id: app_rs_records_module_count_in_span
+    type: fail_to_pass
+    origin: pr_diff
+    description: "app.rs has a tracing span with 'modules' field and records module count"
+
+  - id: project_rs_records_module_count_in_span
+    type: fail_to_pass
+    origin: pr_diff
+    description: "project.rs has a tracing span with 'modules' for whole-app graph path"
+
+  - id: performance_guard_before_module_count
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both app.rs and project.rs guard module count computation on span activity"
+
+  - id: existing_functions_and_types_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing functions (whole_app_module_graphs, etc.) and types preserved"
+
+rubric:
+  - rule: "Before editing or creating files in any subdirectory (e.g., `packages/*`, `crates/*`), read all `README.md` files in the directory path from the repo root up to and including the target file's directory."
+    source:
+      path: "CLAUDE.md"
+      lines: "46"
+      commit: "25646b928f900c12504b8a30ce5939207533aa54"
+  - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run `cargo fmt`"
+    source:
+      path: "CLAUDE.md"
+      lines: "414"
+      commit: "25646b928f900c12504b8a30ce5939207533aa54"

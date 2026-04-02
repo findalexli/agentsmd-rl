@@ -39,4 +39,5 @@ index 62a0192e7b7a..6b39bc5ec404 100644
                              latest_delta_len = 0
                              if (
                                  isinstance(
+
 PATCH

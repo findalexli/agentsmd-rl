@@ -1,0 +1,67 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28364
+  base_commit: "8f0fd0cf1da17fff23df7133e414cdd1f5ed917e"
+  merge_commit: "69e92c767341915b887802ff28cef4ab2884d284"
+
+checks:
+  # Gate
+  - id: fd_zig_structural_integrity
+    type: pass_to_pass
+    origin: static
+    description: "fd.zig exists with FD packed struct and fromJSValidated function"
+
+  # Core behavioral — fail-to-pass
+  - id: range_check_before_int_conversion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Float range validated BEFORE @intFromFloat to prevent panic on extreme values"
+
+  - id: error_path_before_conversion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Out-of-range float triggers throwRangeError before @intFromFloat conversion"
+
+  - id: both_positive_and_negative_overflow
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Range check covers both positive (1e308) and negative (-1.5e308) overflow"
+
+  # Regression — pass-to-pass
+  - id: mod_check_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Non-integer float detection (@mod check) still present"
+
+  - id: int_from_float_still_used
+    type: pass_to_pass
+    origin: pr_diff
+    description: "@intFromFloat conversion still used for valid floats"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "fromJSValidated is substantive (not gutted to a stub)"
+
+  # Config-derived — agent_config
+  - id: no_inline_import
+    type: pass_to_pass
+    origin: agent_config
+    description: "No inline @import() inside fromJSValidated"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "8f0fd0cf1da17fff23df7133e414cdd1f5ed917e"
+
+  - id: no_forbidden_std_apis
+    type: pass_to_pass
+    origin: agent_config
+    description: "No forbidden std.* API usage (std.fs, std.posix, std.os) in fromJSValidated"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16"
+      commit: "8f0fd0cf1da17fff23df7133e414cdd1f5ed917e"
+
+rubric: []

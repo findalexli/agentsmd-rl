@@ -1,0 +1,70 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21439
+  base_commit: "9b29131961bb6c167e6956dae60a6269232ca694"
+  merge_commit: "6d48719e31aa42adfd718dd0da2becb1f9be1d2a"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (utils.py, lora_manager.py) parse without syntax errors"
+
+  - id: auto_detect_dense_model
+    type: fail_to_pass
+    origin: pr_diff
+    description: "auto_detect_lora_target_modules returns correct modules for a dense transformer model"
+
+  - id: auto_detect_single_module
+    type: fail_to_pass
+    origin: pr_diff
+    description: "auto_detect returns only the matching module for a single-module model"
+
+  - id: auto_detect_filters_unknown_modules
+    type: fail_to_pass
+    origin: pr_diff
+    description: "auto_detect returns empty set when model only has unknown-named linear modules"
+
+  - id: auto_detect_includes_lm_head
+    type: fail_to_pass
+    origin: pr_diff
+    description: "auto_detect includes lm_head when model has a ParallelLMHead module"
+
+  - id: auto_detect_moe_modules
+    type: fail_to_pass
+    origin: pr_diff
+    description: "auto_detect includes gate_up_proj and down_proj for FusedMoE modules"
+
+  - id: normalize_rejects_invalid_string
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_normalized_target_modules raises ValueError for unrecognized string shorthand"
+
+  - id: init_lora_shapes_no_raise
+    type: fail_to_pass
+    origin: pr_diff
+    description: "init_lora_shapes no longer raises ValueError('cannot be resolved automatically') for all-linear"
+
+  - id: init_lora_modules_none_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "init_lora_modules guards against get_layer_id returning None"
+
+  - id: normalize_list_input
+    type: pass_to_pass
+    origin: pr_diff
+    description: "get_normalized_target_modules still normalizes list inputs correctly"
+
+  - id: normalize_sentinel
+    type: pass_to_pass
+    origin: pr_diff
+    description: "get_normalized_target_modules returns sentinel {'all'} for 'all-linear' string"
+
+rubric:
+  - rule: "Prefer mock over real server — when testing logic that doesn't need a server / engine launch, use unittest.mock.patch / MagicMock"
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "16"
+      commit: "9b29131961bb6c167e6956dae60a6269232ca694"

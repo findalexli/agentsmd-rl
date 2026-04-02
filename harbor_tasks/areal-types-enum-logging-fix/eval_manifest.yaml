@@ -1,0 +1,94 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 1008
+  base_commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
+  merge_commit: ""
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Both modified files (types.py, clevr_count_70k.py) must parse without syntax errors"
+
+  - id: reward_fn_returns_float
+    type: fail_to_pass
+    origin: pr_diff
+    description: "clevr_count_70k_reward_fn must return float (not int) for correct, wrong, and no-match inputs"
+
+  - id: enum_classes_str_compatible
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ApiType and InputName must be str-compatible Enum subclasses with correct member values"
+
+  - id: properties_use_enum_types
+    type: fail_to_pass
+    origin: pr_diff
+    description: "api_type and input_name_for_logging properties must return enum instances, not bare strings"
+
+  - id: no_bare_print_uses_logger
+    type: fail_to_pass
+    origin: pr_diff
+    description: "clevr_count_70k.py must not use bare print(); must use logger instead"
+
+  - id: log_message_space_fix
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Warning message in to_tensor_dict must not have implicit string concat bug (missing space)"
+
+  - id: extract_answer_works
+    type: pass_to_pass
+    origin: pr_diff
+    description: "extract_answer still correctly parses bracketed numbers from text"
+
+  - id: reward_fn_edge_cases
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Reward function handles None answer and various inputs correctly"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files must not use wildcard imports"
+    source:
+      path: "AGENTS.md"
+      lines: "30"
+      commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
+
+  - id: reward_uses_areal_logging
+    type: fail_to_pass
+    origin: agent_config
+    description: "clevr_count_70k.py must import logging from areal.utils, not stdlib"
+    source:
+      path: "AGENTS.md"
+      lines: "89-91"
+      commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
+
+  - id: logger_pascalcase_name
+    type: fail_to_pass
+    origin: agent_config
+    description: "getLogger in clevr_count_70k.py must use a PascalCase descriptive name"
+    source:
+      path: "AGENTS.md"
+      lines: "89"
+      commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
+
+rubric:
+  - rule: "Follow existing code patterns in the same module."
+    source:
+      path: "AGENTS.md"
+      lines: "40"
+      commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
+
+  - rule: "Backward compat: add fields with defaults; deprecate before removing; avoid type changes."
+    source:
+      path: "AGENTS.md"
+      lines: "162-163"
+      commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
+
+  - rule: "Reward function should handle exceptions and return 0.0 on error, not raise."
+    source:
+      path: ".claude/skills/add-reward/SKILL.md"
+      lines: "175"
+      commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"

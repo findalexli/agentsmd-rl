@@ -1,0 +1,62 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28635
+  base_commit: "ba05a72939569c1a371a513c3bd64a2cab6a60ee"
+  merge_commit: "9a27ef75697d713dba18b7a9762308197014ecca"
+
+checks:
+  - id: final_sync_flush
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_final calls sink.flush() synchronously and invokes cb(null)"
+
+  - id: final_async_flush
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_final waits for async flush Promise before calling cb(null)"
+
+  - id: final_error_propagation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_final propagates flush() errors to cb(err) without crashing"
+
+  - id: existing_stream_setup
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing _destroy, _isStdio, and destroySoon must be preserved"
+
+  - id: no_dot_call_apply
+    type: fail_to_pass
+    origin: agent_config
+    description: "_final must use .$call/.$apply, never .call/.apply"
+    source:
+      path: "src/js/CLAUDE.md"
+      lines: "56"
+      commit: "ba05a72939569c1a371a513c3bd64a2cab6a60ee"
+
+  - id: string_literal_require
+    type: pass_to_pass
+    origin: agent_config
+    description: "All require() calls must use string literals"
+    source:
+      path: "src/js/CLAUDE.md"
+      lines: "103"
+      commit: "ba05a72939569c1a371a513c3bd64a2cab6a60ee"
+
+  - id: jsc_intrinsics_used
+    type: fail_to_pass
+    origin: agent_config
+    description: "_final must use $isPromise, not instanceof Promise"
+    source:
+      path: "src/js/CLAUDE.md"
+      lines: "105"
+      commit: "ba05a72939569c1a371a513c3bd64a2cab6a60ee"
+
+rubric:
+  - rule: "Follow existing code style — check neighboring files for patterns"
+    source:
+      path: "src/js/CLAUDE.md"
+      lines: "100-106"
+      commit: "ba05a72939569c1a371a513c3bd64a2cab6a60ee"

@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12984
+  base_commit: "429a9fad5207fb27648d860a4802ff52a5b38746"
+  merge_commit: "f1cd0644d2608b493db07cd204c0831a111f9fb2"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Both modified files (events.py, renderable.py) parse without errors"
+
+  - id: event_listener_callable_still_importable
+    type: pass_to_pass
+    origin: static
+    description: "EventListenerCallable is still present in events.py (backward compat)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files have real logic (sufficient lines and functions)"
+
+  - id: trigger_type_alias_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A `Trigger` type alias is defined in gradio/events.py"
+
+  - id: trigger_includes_callable_returning_dependency
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Trigger alias references both EventListenerCallable and Callable[..., Dependency]"
+
+  - id: on_function_triggers_uses_trigger_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "gr.on() triggers parameter annotation uses Trigger, not EventListenerCallable"
+
+  - id: render_function_triggers_uses_trigger_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "gr.render() triggers parameter annotation uses Trigger, not EventListenerCallable"
+
+  - id: renderable_imports_trigger_not_event_listener_callable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "renderable.py imports Trigger (not EventListenerCallable) from gradio.events"
+
+  - id: ruff_format
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified Python files pass ruff formatting check"
+    source:
+      path: "AGENTS.md"
+      lines: "43"
+      commit: "429a9fad5207fb27648d860a4802ff52a5b38746"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "429a9fad5207fb27648d860a4802ff52a5b38746"

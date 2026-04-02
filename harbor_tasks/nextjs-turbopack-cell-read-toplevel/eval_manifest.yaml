@@ -1,0 +1,51 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91699
+  base_commit: "cbf12d18457cbe62cbb8f57f4e485110b6630e42"
+  merge_commit: "25646b928f900c12504b8a30ce5939207533aa54"
+
+checks:
+  - id: debug_assert_removed_from_cell_read
+    type: fail_to_pass
+    origin: pr_diff
+    description: "debug_assert_not_in_top_level_task no longer fires unconditionally in try_read_task_cell"
+
+  - id: cell_read_test_expects_success
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cell-read integration test expects success (no #[should_panic])"
+
+  - id: cell_read_test_asserts_value
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cell-read test asserts the read value instead of discarding with let _"
+
+  - id: debug_assert_preserved_in_output_methods
+    type: pass_to_pass
+    origin: pr_diff
+    description: "debug_assert_not_in_top_level_task preserved in try_read_task_output and try_read_local_output"
+
+  - id: eventual_read_test_expects_panic
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Eventual-read test still expects panic (#[should_panic])"
+
+  - id: manager_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "manager.rs has substantial content (>1000 lines)"
+
+rubric:
+  - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run `cargo fmt`"
+    source:
+      path: "AGENTS.md"
+      lines: "414"
+      commit: "cbf12d18457cbe62cbb8f57f4e485110b6630e42"
+
+  - rule: "Tasks should never panic due to a potentially-inconsistent value stored in a Vc."
+    source:
+      path: "turbopack/crates/turbo-tasks/src/vc/README.md"
+      lines: "127"
+      commit: "cbf12d18457cbe62cbb8f57f4e485110b6630e42"

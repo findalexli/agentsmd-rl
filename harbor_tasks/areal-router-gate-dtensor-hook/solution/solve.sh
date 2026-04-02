@@ -8,7 +8,7 @@ if grep -q "class RouterGateLinear" areal/experimental/models/archon/moe/router.
     exit 0
 fi
 
-git apply --check - <<'PATCH' 2>/dev/null && git apply - <<'PATCH'
+git apply - <<'PATCH'
 diff --git a/areal/experimental/models/archon/moe/router.py b/areal/experimental/models/archon/moe/router.py
 index 4f71356f5..56433df84 100644
 --- a/areal/experimental/models/archon/moe/router.py
@@ -71,4 +71,5 @@ index 4f71356f5..56433df84 100644
 
          # Apply scoring function in float32 to avoid loss explosion
          if self.score_func == "sigmoid":
+
 PATCH

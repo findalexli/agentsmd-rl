@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 13013
+  base_commit: "a17eb7888b48cbd98b1e0feb17e2614bf3853d66"
+  merge_commit: "356db5c2c66795b281133c4395ef6885d2992242"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "gradio/utils.py parses without syntax errors"
+
+  - id: context_id_bumped_past_block_ids
+    type: fail_to_pass
+    origin: pr_diff
+    description: "After module re-exec, Context.id exceeds max existing block ID"
+
+  - id: context_id_varied_block_distributions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Fix handles sequential, sparse, and single-block ID distributions"
+
+  - id: context_id_preserved_when_already_high
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Context.id not decreased when already higher than max block ID"
+
+  - id: no_crash_when_demo_absent
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No crash when demo is missing, None, or has empty blocks"
+
+  - id: watchfn_structure_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Core watchfn landmarks (exec, Context.id reset, should_watch) still present"
+
+  - id: context_reset_precedes_exec
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Context.id = 0 appears before exec(no_reload_source_code)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "utils.py has substantial content (not replaced with a stub)"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "a17eb7888b48cbd98b1e0feb17e2614bf3853d66"

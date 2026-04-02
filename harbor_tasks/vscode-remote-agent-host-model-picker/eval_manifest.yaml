@@ -1,0 +1,73 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 0
+  base_commit: "de413b282f0b15a6618a15a79d4680b720ef9dc8"
+  merge_commit: ""
+
+checks:
+  - id: context_key_uses_constant
+    type: fail_to_pass
+    origin: pr_diff
+    description: "IsActiveSessionRemoteAgentHost uses ActiveSessionProviderIdContext.key, not hardcoded string"
+
+  - id: no_hardcoded_provider_id_in_regex
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ContextKeyExpr.regex is not called with the raw 'activeSessionProviderId' string"
+
+  - id: refresh_models_after_new_connection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_authenticateWithConnection chains refreshModels() for new connections"
+
+  - id: authenticate_all_connections_refresh
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_authenticateAllConnections chains refreshModels() after each authentication"
+
+  - id: coalesce_import_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "coalesce is imported from base/common/arrays.js in copilotChatSessionsActions.ts"
+
+  - id: context_menu_bridge_supports_arrays
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CommandsRegistry handler accepts ISession | ISession[] for multi-select"
+
+  - id: authenticate_function_intact
+    type: pass_to_pass
+    origin: static
+    description: "_authenticateWithConnection and _authenticateAllConnections still exist in remoteAgentHost.contribution.ts"
+
+  - id: bridge_class_uses_agent_session_service
+    type: pass_to_pass
+    origin: static
+    description: "agentSessionsService.getSession is still called in the context menu bridge"
+
+rubric:
+  - rule: "We use tabs, not spaces."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "38"
+      commit: "de413b282f0b15a6618a15a79d4680b720ef9dc8"
+
+  - rule: "Use PascalCase for type names"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "42"
+      commit: "de413b282f0b15a6618a15a79d4680b720ef9dc8"
+
+  - rule: "Use camelCase for function and method names"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "44"
+      commit: "de413b282f0b15a6618a15a79d4680b720ef9dc8"
+
+  - rule: "Use 'single quotes' otherwise"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "56"
+      commit: "de413b282f0b15a6618a15a79d4680b720ef9dc8"

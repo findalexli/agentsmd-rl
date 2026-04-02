@@ -1,0 +1,54 @@
+{
+  "validations": [
+    {
+      "timestamp": "2026-03-30T13:02:43.981190",
+      "runner": "run_pipeline.py validate (20260330)",
+      "docker_build": false,
+      "gold_score": null,
+      "nop_score": null,
+      "verdict": "error",
+      "notes": "timeout"
+    },
+    {
+      "timestamp": "2026-03-30T11:48:15.959533",
+      "runner": "audit (audit-tests_20260330_114815)",
+      "phase": "audit",
+      "status": "success",
+      "output_tokens": 15111
+    },
+    {
+      "timestamp": "2026-04-01T20:15:41.709519",
+      "phase": "docker_validate_v2",
+      "runner": "scripts/docker_validate_all.sh",
+      "verdict": "fail",
+      "nop": "0",
+      "gold": "0",
+      "format": "pytest_binary"
+    },
+    {
+      "timestamp": "2026-04-01T21:29:42-07:00",
+      "runner": "validate_and_fix.sh",
+      "docker_build": true,
+      "gold_score": 0.0,
+      "nop_score": 0.0,
+      "verdict": "fail_gold",
+      "notes": ""
+    },
+    {
+      "timestamp": "2026-04-02T12:58:21.150257",
+      "phase": "e2b_post_remake",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail_build",
+      "notes": "Template build: failed to run command 'bun install --frozen-lockfile || bun install': signal: killed"
+    },
+    {
+      "timestamp": "2026-04-02T14:28:08.953476",
+      "phase": "e2b_full_validation",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail_build",
+      "notes": "Sandbox rebuild+create: 429: Rate limit exceeded, please try again later. - you have reached the maximum number of concurrent template builds (20). Please wait for existing builds to complete or conta"
+    }
+  ]
+}

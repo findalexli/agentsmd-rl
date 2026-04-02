@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38161
+  base_commit: "37a83007fef9925609a8d9b7c7b86bb41dab4e5d"
+  merge_commit: "f2d16207c794e40c323adec50245ceecc4e6b635"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  - id: int_params_zeroed_on_rocm
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Integer params (int32/int64) are zeroed on ROCm platform"
+
+  - id: list_construction_matching_lengths
+    type: fail_to_pass
+    origin: pr_diff
+    description: "all_args and all_envs have matching lengths in compare_all_settings"
+
+  - id: inductor_comparison_not_dead_code
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Inductor comparison section produces non-empty pairs with backend args"
+
+  - id: float_params_initialized_correctly
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Float params still initialized in [low, high] with reproducible seeds"
+
+  - id: non_rocm_int_params_unchanged
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Non-ROCm integer params are returned untouched (early return)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Both modified functions have non-trivial bodies"
+
+  - id: ruff_lint_clean
+    type: pass_to_pass
+    origin: agent_config
+    description: "ruff lint passes on modified files"
+    source:
+      path: "AGENTS.md"
+      lines: "86-98"
+      commit: "37a83007fef9925609a8d9b7c7b86bb41dab4e5d"
+
+rubric: []

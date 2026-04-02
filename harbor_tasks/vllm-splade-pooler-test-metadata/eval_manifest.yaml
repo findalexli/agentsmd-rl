@@ -1,0 +1,30 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38495
+  base_commit: "85c0950b1f647e0b0654fbf3e91a9757b8233752"
+  merge_commit: "a08b7733fd3c07ad7b28e15a3fd3e75a503989ec"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Test file must be valid Python"
+
+  - id: pytest_splade_pooler
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SPLADE pooler unit test passes pytest (was broken by AttributeError on metadata mock)"
+
+  - id: forward_varied_inputs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Pooler forward() produces correct [B,V] SPLADE output for multiple parameter combos"
+
+  - id: parametrize_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Test function retains @pytest.mark.parametrize for varied B,T,H,V inputs"
+
+rubric: []

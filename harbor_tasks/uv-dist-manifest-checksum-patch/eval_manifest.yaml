@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 18625
+  base_commit: "d0f2f3babc7c892958e93419ad6065df0deb2112"
+  merge_commit: "2175e2ffba0bae50e566252a62d37c4477129f79"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Script must be valid Python"
+
+  - id: patches_checksums_into_manifest
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script injects sha256 checksums into matching artifact entries and preserves existing fields"
+
+  - id: idempotent_rerun
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Running the script twice on the same manifest yields identical output"
+
+  - id: exits_error_no_matches
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script returns non-zero exit code when no sidecar files match any artifact"
+
+  - id: rejects_invalid_checksum_length
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script rejects checksums that aren't exactly 64 characters (too short, too long)"
+
+  - id: rejects_empty_checksum_file
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script rejects empty .sha256 sidecar files"
+
+  - id: warns_unmatched_sidecar
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script warns on stderr about .sha256 files that don't match any manifest artifact"
+
+  - id: existing_scripts_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing Python scripts in scripts/ remain valid Python"
+
+  - id: top_level_imports_only
+    type: fail_to_pass
+    origin: agent_config
+    description: "PREFER top-level imports over local imports or fully qualified names"
+    source:
+      path: "CLAUDE.md"
+      lines: "16"
+      commit: "d0f2f3babc7c892958e93419ad6065df0deb2112"
+
+rubric:
+  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
+    source:
+      path: "CLAUDE.md"
+      lines: "17-18"
+      commit: "d0f2f3babc7c892958e93419ad6065df0deb2112"

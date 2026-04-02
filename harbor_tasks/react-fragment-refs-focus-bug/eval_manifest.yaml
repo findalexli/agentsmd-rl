@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 36010
+  base_commit: "8f4150605449efe909822d8b20fe529d85851afe"
+  merge_commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"
+
+checks:
+  - id: file_exists
+    type: pass_to_pass
+    origin: static
+    description: "ReactFiberConfigDOM.js must exist and export setFocusIfFocusable"
+
+  - id: already_focused_early_return
+    type: fail_to_pass
+    origin: pr_diff
+    description: "setFocusIfFocusable returns true immediately when element is already activeElement"
+
+  - id: early_return_before_try
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Already-focused check appears before the try block, not inside it"
+
+  - id: document_level_capture_listener
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Focus listener uses ownerDocument.addEventListener with capture=true, not element directly"
+
+  - id: capture_cleanup
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Listener removal uses ownerDocument.removeEventListener with capture=true"
+
+  - id: function_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "setFocusIfFocusable has a non-trivial implementation with try block and didFocus variable"
+
+rubric:
+  - rule: "Use `@gate` pragma for tests that depend on feature flags being enabled"
+    source:
+      path: ".claude/skills/feature-flags/SKILL.md"
+      lines: "15"
+      commit: "8f4150605449efe909822d8b20fe529d85851afe"

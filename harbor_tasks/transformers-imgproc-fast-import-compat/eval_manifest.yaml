@@ -1,0 +1,73 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44897
+  base_commit: "e6ed96c7e93a6408a151e3177793212b02b8bb53"
+  merge_commit: "e168f86efb28d92fa4ebd7e137d1fba4bec60bc3"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (__init__.py, image_processing_backends.py) parse without errors"
+
+  - id: base_image_processor_fast_importable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "BaseImageProcessorFast importable from legacy image_processing_utils_fast path and resolves to TorchvisionBackend"
+
+  - id: divide_to_patches_importable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "divide_to_patches importable from legacy image_processing_utils_fast path and is the same function as image_transforms.divide_to_patches"
+
+  - id: divide_to_patches_callable_via_alias
+    type: fail_to_pass
+    origin: pr_diff
+    description: "divide_to_patches imported via alias actually works with real PIL images of multiple sizes"
+
+  - id: alias_registered_in_sys_modules
+    type: fail_to_pass
+    origin: pr_diff
+    description: "image_processing_utils_fast alias module registered in sys.modules after import transformers, with __file__ directly set in __dict__"
+
+  - id: inspect_no_circular_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: "inspect operations on alias module do not trigger circular import; hasattr(__file__) returns True without invoking __getattr__"
+
+  - id: tokenization_aliases_still_work
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing tokenization_utils_fast and tokenization_utils aliases still registered in sys.modules"
+
+  - id: direct_import_image_processing_backends
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Direct import of TorchvisionBackend from image_processing_backends still works"
+
+  - id: ruff_check
+    type: pass_to_pass
+    origin: agent_config
+    description: "ruff check passes on modified files"
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "e6ed96c7e93a6408a151e3177793212b02b8bb53"
+
+  - id: no_bare_type_ignore
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare '# type: ignore' without error code in modified files"
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "185-186"
+      commit: "e6ed96c7e93a6408a151e3177793212b02b8bb53"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "__init__.py contains 'image_processing_utils_fast' as a string literal in AST (not just a comment or stub)"
+
+rubric: []

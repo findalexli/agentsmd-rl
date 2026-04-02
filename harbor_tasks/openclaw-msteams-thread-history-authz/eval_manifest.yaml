@@ -1,0 +1,86 @@
+version: "2.0"
+
+source:
+  repo: "openclaw/openclaw"
+  pr: 57723
+  base_commit: "7e086697152920c48651276ed8ae9c27354c092d"
+  merge_commit: "5cca38084074fb5095aa11b6a59820d63e4937c9"
+
+checks:
+  - id: thread_filter_excludes_nonallowlisted_parent
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Non-allowlisted parent message content must not appear in BodyForAgent thread context"
+
+  - id: thread_filter_excludes_nonallowlisted_reply
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Non-allowlisted reply sender content must not appear in BodyForAgent thread context"
+
+  - id: thread_filter_name_matching
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Filter must use resolveMSTeamsAllowlistMatch so dangerouslyAllowNameMatching is honoured for thread history"
+
+  - id: thread_filter_includes_all_allowlisted
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When all thread senders are allowlisted, all messages appear in BodyForAgent"
+
+  - id: handler_export_exists
+    type: pass_to_pass
+    origin: pr_diff
+    description: "createMSTeamsMessageHandler export still exists"
+
+  - id: handler_modified
+    type: fail_to_pass
+    origin: static
+    description: "Handler file has been modified from base commit (anti-stub)"
+
+  - id: no_ts_nocheck
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must not add @ts-nocheck or @ts-ignore"
+    source:
+      path: "CLAUDE.md"
+      lines: "146"
+      commit: "7e086697152920c48651276ed8ae9c27354c092d"
+
+  - id: no_new_any_type
+    type: pass_to_pass
+    origin: agent_config
+    description: "New code must not introduce explicit 'any' type annotations"
+    source:
+      path: "CLAUDE.md"
+      lines: "144"
+      commit: "7e086697152920c48651276ed8ae9c27354c092d"
+
+  - id: no_inline_lint_suppression
+    type: pass_to_pass
+    origin: agent_config
+    description: "New code must not add eslint-disable, oxlint-ignore, or @ts-expect-error inline suppressions"
+    source:
+      path: "CLAUDE.md"
+      lines: "146"
+      commit: "7e086697152920c48651276ed8ae9c27354c092d"
+
+  - id: no_extension_boundary_violation
+    type: pass_to_pass
+    origin: agent_config
+    description: "Extension code must not import from src/** or escape the package root"
+    source:
+      path: "extensions/CLAUDE.md"
+      lines: "29-31"
+      commit: "7e086697152920c48651276ed8ae9c27354c092d"
+
+rubric:
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    source:
+      path: "CLAUDE.md"
+      lines: "163"
+      commit: "7e086697152920c48651276ed8ae9c27354c092d"
+  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings."
+    source:
+      path: "CLAUDE.md"
+      lines: "167"
+      commit: "7e086697152920c48651276ed8ae9c27354c092d"

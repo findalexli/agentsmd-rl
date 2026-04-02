@@ -1,0 +1,106 @@
+version: "2.0"
+
+source:
+  repo: "openclaw/openclaw"
+  pr: 56573
+  base_commit: "756df2e9554da097679e6c4d3c75deff025098b9"
+
+checks:
+  - id: file_parses
+    type: pass_to_pass
+    origin: static
+    description: "Target file must be readable and contain combineDebounceEntries"
+
+  - id: null_text_no_crash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "combineDebounceEntries must not crash when entry has null/undefined text"
+
+  - id: mixed_null_and_valid_entries
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Batch with null-text + valid-text entries combines without crash, valid text preserved"
+
+  - id: all_null_entries_produce_empty_text
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When all entries have null text, combined text is empty string (not crash)"
+
+  - id: valid_entries_combine_text
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Multiple valid-text entries combine correctly (text joined, latest timestamp used)"
+
+  - id: single_valid_entry_passthrough
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Single valid entry returned as-is without mangling"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified file has real debounce logic, not a stub"
+
+  - id: no_cross_boundary_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Extension code must not import core internals directly"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "756df2e9554da097679e6c4d3c75deff025098b9"
+
+  - id: no_ts_nocheck
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must not add @ts-nocheck or blanket lint suppressions"
+    source:
+      path: "AGENTS.md"
+      lines: "104"
+      commit: "756df2e9554da097679e6c4d3c75deff025098b9"
+
+  - id: no_self_import_via_plugin_sdk
+    type: pass_to_pass
+    origin: agent_config
+    description: "Extension must not import itself via openclaw/plugin-sdk/bluebubbles"
+    source:
+      path: "AGENTS.md"
+      lines: "108"
+      commit: "756df2e9554da097679e6c4d3c75deff025098b9"
+
+rubric:
+  - rule: "Language: TypeScript (ESM). Prefer strict typing; avoid `any`."
+    source:
+      path: "AGENTS.md"
+      lines: "102"
+      commit: "756df2e9554da097679e6c4d3c75deff025098b9"
+
+  - rule: "Never add `@ts-nocheck` and do not add inline lint suppressions by default. Fix root causes first; only keep a suppression when the code is intentionally correct, the rule cannot express that safely, and the comment explains why."
+    source:
+      path: "AGENTS.md"
+      lines: "104"
+      commit: "756df2e9554da097679e6c4d3c75deff025098b9"
+
+  - rule: "Do not disable `no-explicit-any`; prefer real types, `unknown`, or a narrow adapter/helper instead."
+    source:
+      path: "AGENTS.md"
+      lines: "105"
+      commit: "756df2e9554da097679e6c4d3c75deff025098b9"
+
+  - rule: "Extension package boundary guardrail: inside `extensions/<id>/**`, do not use relative imports/exports that resolve outside that same `extensions/<id>` package root."
+    source:
+      path: "AGENTS.md"
+      lines: "109"
+      commit: "756df2e9554da097679e6c4d3c75deff025098b9"
+
+  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings."
+    source:
+      path: "AGENTS.md"
+      lines: "118"
+      commit: "756df2e9554da097679e6c4d3c75deff025098b9"
+
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    source:
+      path: "AGENTS.md"
+      lines: "114"
+      commit: "756df2e9554da097679e6c4d3c75deff025098b9"

@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12907
+  base_commit: "ac29df82a735c72c021c07e0816f78001147671b"
+  merge_commit: "3e625a0ecfab6e74b7561b68adbe55341ecbc47a"
+
+checks:
+  - id: submit_flags_connection_errors_as_broken
+    type: fail_to_pass
+    origin: pr_diff
+    description: "submit.ts compares against BROKEN_CONNECTION_MSG and sets broken flag dynamically"
+
+  - id: dispatch_short_circuits_on_connection_lost
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DependencyManager.dispatch() returns early when connection_lost is true"
+
+  - id: dependency_detects_broken_errors_and_sets_connection_lost
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DependencyManager detects broken/session errors, sets connection_lost, and fires callback"
+
+  - id: blocks_has_reconnection_handler
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Blocks.svelte defines connection-lost handler with setInterval reconnection and page reload"
+
+  - id: connection_lost_callback_wired
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Blocks.svelte passes connection-lost handler to DependencyManager constructor"
+
+  - id: modified_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "All three modified files (submit.ts, dependency.ts, Blocks.svelte) exist"
+
+  - id: files_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files have substantial implementation, not stubs"
+
+  - id: reconnect_interval_cleanup
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Blocks.svelte cleans up reconnection interval with clearInterval on teardown"
+
+rubric: []

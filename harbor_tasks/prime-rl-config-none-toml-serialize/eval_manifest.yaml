@@ -1,0 +1,88 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 2093
+  base_commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
+  merge_commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (config.py, all entrypoints) must parse without errors"
+
+  - id: flat_none_conversion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Flat dict None values are converted to 'None' strings"
+
+  - id: nested_none_conversion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Nested dict None values are converted recursively"
+
+  - id: toml_roundtrip
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TOML round-trip preserves None as 'None' string"
+
+  - id: edge_cases
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Handles empty dicts, all-None, bools, lists; does not mutate input"
+
+  - id: entrypoints_no_exclude_none
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Entrypoints no longer use exclude_none=True in model_dump calls"
+
+  - id: non_none_passthrough
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Non-None config values serialize identically after conversion"
+
+  - id: no_try_except_in_converter
+    type: pass_to_pass
+    origin: agent_config
+    description: "Conversion function must not use try/except"
+    source:
+      path: "AGENTS.md"
+      lines: "5"
+      commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
+
+  - id: no_process_comments
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changed files must not contain comments referring to old code or work process"
+    source:
+      path: "AGENTS.md"
+      lines: "7"
+      commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
+
+rubric:
+  - rule: "Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code. Prefer to use targeted comments sparingly to explain ambiguous code."
+    source:
+      path: "AGENTS.md"
+      lines: "7"
+      commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
+  - rule: "Simple is better than complex."
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
+  - rule: "Explicit is better than implicit."
+    source:
+      path: "AGENTS.md"
+      lines: "15"
+      commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
+  - rule: "Flat is better than nested."
+    source:
+      path: "AGENTS.md"
+      lines: "18"
+      commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
+  - rule: "If the implementation is hard to explain, it's a bad idea."
+    source:
+      path: "AGENTS.md"
+      lines: "29"
+      commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"

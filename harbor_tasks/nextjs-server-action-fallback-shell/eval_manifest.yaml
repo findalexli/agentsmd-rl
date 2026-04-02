@@ -1,0 +1,77 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91711
+  base_commit: "6a8a31a7f42bb7d133aed5a6d854d069883aa57b"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "app-page.ts must have balanced braces and export the handler function"
+
+  - id: server_action_guard_in_static_path_key
+    type: fail_to_pass
+    origin: pr_diff
+    description: "staticPathKey condition must reference server actions to prevent fallback rendering on action requests"
+
+  - id: server_action_excluded_from_static_path_key
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Server actions must be excluded (negated) from staticPathKey assignment, not just referenced"
+
+  - id: dev_mode_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "routeModule.isDev path still present in staticPathKey condition"
+
+  - id: ssg_dynamic_fallback_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "isSSG, pageIsDynamic, and fallbackRouteParams remain in the staticPathKey condition"
+
+  - id: handler_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "handler() exported and non-trivial (>100 lines, file >30KB)"
+
+  - id: no_relative_require
+    type: pass_to_pass
+    origin: agent_config
+    description: "No relative-path require() in build template — traced by bundler at build time"
+    source:
+      path: "AGENTS.md"
+      lines: "407"
+      commit: "6a8a31a7f42bb7d133aed5a6d854d069883aa57b"
+
+  - id: no_hardcoded_secrets
+    type: pass_to_pass
+    origin: agent_config
+    description: "No hardcoded secret values in source"
+    source:
+      path: "AGENTS.md"
+      lines: "306"
+      commit: "6a8a31a7f42bb7d133aed5a6d854d069883aa57b"
+
+  - id: no_react_server_dom_webpack_import
+    type: pass_to_pass
+    origin: agent_config
+    description: "react-server-dom-webpack/* imports must stay in entry-base.ts, not in build templates"
+    source:
+      path: "AGENTS.md"
+      lines: "398"
+      commit: "6a8a31a7f42bb7d133aed5a6d854d069883aa57b"
+
+rubric:
+  - rule: "app-page.ts is a build template compiled by the user's bundler: Any require() in this file is traced by webpack/turbopack at next build time. You cannot require internal modules with relative paths because they won't be resolvable from the user's project. Instead, export new helpers from entry-base.ts and access them via entryBase.* in the template."
+    source:
+      path: "AGENTS.md"
+      lines: "407"
+      commit: "6a8a31a7f42bb7d133aed5a6d854d069883aa57b"
+
+  - rule: "Keep require() behind compile-time if/else branches for DCE (avoid early-return/throw patterns)."
+    source:
+      path: "AGENTS.md"
+      lines: "396"
+      commit: "6a8a31a7f42bb7d133aed5a6d854d069883aa57b"

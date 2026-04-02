@@ -1,0 +1,147 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19365
+  base_commit: "bb8d2cdd108618c1057a8890ac1e655198db866e"
+  merge_commit: "e528ed5d86dc"
+
+checks:
+  # Gates
+  - id: plugin_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "Target file exists and has substantial content"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "InstanceState.make closure contains real Effect logic, not a stub"
+
+  # Core behavioral (fail-to-pass)
+  - id: no_monolithic_effect_promise
+    type: fail_to_pass
+    origin: pr_diff
+    description: "InstanceState.make must not wrap all logic in a single Effect.promise"
+
+  - id: config_service_yielded_directly
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Config.Service yielded in generator instead of Config.get() async facade"
+
+  - id: plugin_loading_uses_effect_try_promise
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Internal plugin loading errors use Effect.tryPromise instead of .catch()"
+
+  - id: trigger_yields_hooks_individually
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Trigger helper yields each hook individually, not batched in one Effect.promise"
+
+  - id: config_default_layer_provided
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Config.defaultLayer provided in Plugin's defaultLayer composition"
+
+  - id: config_hook_uses_effect_ignore
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Config hook error isolation uses Effect.tryPromise piped through Effect.ignore"
+
+  - id: bus_uses_yielded_service
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error publishing uses yielded bus service, not Bus.publish() async facade"
+
+  - id: auth_override_test_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "auth-override test regex updated to match Effect.tryPromise + Effect.ignore pattern"
+
+  # Regression (pass-to-pass)
+  - id: dynamic_server_import_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Dynamic import of server module still present"
+
+  - id: error_publishing_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Session.Event.Error publishing still present for plugin load failures"
+
+  - id: hook_registration_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Hook push/registration logic still present"
+
+  # Config-derived
+  - id: config_accessed_via_effect_service
+    type: fail_to_pass
+    origin: agent_config
+    description: "Config accessed by yielding Effect service, not async facade"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "45"
+      commit: "bb8d2cdd108618c1057a8890ac1e655198db866e"
+
+  - id: no_try_catch_in_plugin_service
+    type: fail_to_pass
+    origin: agent_config
+    description: "No try/catch blocks in InstanceState.make closure"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "bb8d2cdd108618c1057a8890ac1e655198db866e"
+
+  - id: limited_as_any_usage
+    type: pass_to_pass
+    origin: agent_config
+    description: "Limited 'as any' usage (max 3) per AGENTS.md style rules"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "bb8d2cdd108618c1057a8890ac1e655198db866e"
+
+rubric:
+  - rule: "Use Effect.gen(function* () { ... }) for composition."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "20"
+      commit: "bb8d2cdd108618c1057a8890ac1e655198db866e"
+
+  - rule: "Use Effect.fn(\"Domain.method\") for named/traced effects and Effect.fnUntraced for internal helpers."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "21"
+      commit: "bb8d2cdd108618c1057a8890ac1e655198db866e"
+
+  - rule: "Prefer single word variable names where possible."
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "bb8d2cdd108618c1057a8890ac1e655198db866e"
+
+  - rule: "Rely on type inference when possible; avoid explicit type annotations unless necessary for exports or clarity."
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "bb8d2cdd108618c1057a8890ac1e655198db866e"
+
+  - rule: "Keep things in one function unless composable or reusable."
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "bb8d2cdd108618c1057a8890ac1e655198db866e"
+
+  - rule: "In effectified services, prefer yielding existing Effect services over dropping down to ad hoc platform APIs."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "45"
+      commit: "bb8d2cdd108618c1057a8890ac1e655198db866e"
+
+  - rule: "Effect.fn / Effect.fnUntraced accept pipeable operators as extra arguments, so avoid unnecessary outer .pipe() wrappers."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "22"
+      commit: "bb8d2cdd108618c1057a8890ac1e655198db866e"

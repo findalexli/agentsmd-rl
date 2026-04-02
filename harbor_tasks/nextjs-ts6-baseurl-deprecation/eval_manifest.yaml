@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91855
+  base_commit: "b163a8bf6642c7c849964d1238c13cc91d0c2252"
+  merge_commit: "2e92c31f1a168e2d76cca15d2922e2501ff066aa"
+
+checks:
+  - id: syntax_valid_typescript
+    type: pass_to_pass
+    origin: static
+    description: "Target file must parse as valid TypeScript"
+
+  - id: inherited_baseurl_removed_ts6
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Inherited baseUrl (via extends) is deleted from parsed options on TS>=6"
+
+  - id: paths_rewritten_inherited_baseurl
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Paths are rewritten to relative form when inherited baseUrl is removed"
+
+  - id: direct_baseurl_still_works
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Direct-declared baseUrl handling is not broken by the fix"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Target file has substantial implementation, not stubs"
+
+rubric: []

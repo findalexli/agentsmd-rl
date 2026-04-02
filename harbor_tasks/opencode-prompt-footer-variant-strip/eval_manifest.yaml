@@ -1,0 +1,101 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19489
+  base_commit: "8446719b13a1c9566bccd206cb522f7e524b1867"
+  merge_commit: "81eb6e670be1baef2413ea18c0e60f92eedbe09e"
+
+checks:
+  - id: file_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "File exists and has not been replaced with a stub (>500 lines)"
+
+  - id: syntax_balanced_braces
+    type: pass_to_pass
+    origin: static
+    description: "Braces and parentheses are balanced (basic syntax sanity)"
+
+  - id: variant_cycle_removed_from_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The variant_cycle keybind reference is removed from the <Match when={true}> fallback block"
+
+  - id: variant_list_conditional_removed_from_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The variant.list() conditional Show block is removed from the fallback"
+
+  - id: fallback_block_agent_cycle_first
+    type: fail_to_pass
+    origin: pr_diff
+    description: "In the fallback Match block, variant content is gone and agent_cycle follows directly"
+
+  - id: agent_cycle_keybind_present
+    type: pass_to_pass
+    origin: pr_diff
+    description: "The agent_cycle keybind hint remains in the footer"
+
+  - id: command_list_keybind_present
+    type: pass_to_pass
+    origin: pr_diff
+    description: "The command_list keybind hint remains in the footer"
+
+  - id: prompt_export_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "The Prompt component export still exists"
+
+  - id: jsx_control_flow_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Switch/Match JSX control flow primitives still used"
+
+  - id: jsx_tags_balanced
+    type: pass_to_pass
+    origin: static
+    description: "Common JSX tags are balanced (catches orphaned tags from partial deletion)"
+
+rubric:
+  - rule: "Avoid using the `any` type"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "8446719b13a1c9566bccd206cb522f7e524b1867"
+
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "8446719b13a1c9566bccd206cb522f7e524b1867"
+
+  - rule: "Prefer `const` over `let`. Use ternaries or early returns instead of reassignment."
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "8446719b13a1c9566bccd206cb522f7e524b1867"
+
+  - rule: "Avoid `try`/`catch` where possible"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "8446719b13a1c9566bccd206cb522f7e524b1867"
+
+  - rule: "Avoid `else` statements. Prefer early returns."
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "8446719b13a1c9566bccd206cb522f7e524b1867"
+
+  - rule: "Use single word names by default for new locals, params, and helper functions. Multi-word names allowed only when single word would be unclear."
+    source:
+      path: "AGENTS.md"
+      lines: "25-30"
+      commit: "8446719b13a1c9566bccd206cb522f7e524b1867"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "8446719b13a1c9566bccd206cb522f7e524b1867"

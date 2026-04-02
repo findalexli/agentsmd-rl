@@ -1,0 +1,53 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28424
+  base_commit: "7fb789749edc96504fda8043e82a88eb88592d4e"
+  merge_commit: "9ead1e121d5cca2eaddad66d439ab3c0a74225f2"
+
+checks:
+  - id: dns_zig_structural_integrity
+    type: pass_to_pass
+    origin: static
+    description: "dns.zig exists and is structurally intact (balanced braces, key symbols)"
+
+  - id: non_object_guard_on_second_arg
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Guard on arguments.ptr[1] rejects non-object cells (not just isCell)"
+
+  - id: guard_uses_valid_object_method
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Guard uses a real, object-discriminating JSValue method (not isCell)"
+
+  - id: options_parsing_intact
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Options parsing block still extracts port and family via getTruthy"
+
+  - id: core_resolver_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core Resolver struct and key methods are still present"
+
+  - id: no_std_apis_in_changes
+    type: pass_to_pass
+    origin: agent_config
+    description: "No use of std.* APIs where bun.* equivalents exist"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16"
+      commit: "7fb789749edc96504fda8043e82a88eb88592d4e"
+
+  - id: no_inline_imports_in_changes
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @import() inline inside functions"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "7fb789749edc96504fda8043e82a88eb88592d4e"
+
+rubric: []

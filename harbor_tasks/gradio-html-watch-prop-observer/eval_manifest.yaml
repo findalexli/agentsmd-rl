@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12988
+  base_commit: "f4c3a6dcb45218722d3150baef953c731d3eccf2"
+  merge_commit: "0b943a4fd0d7701203f1b79b70b5afed19ee8413"
+
+checks:
+  - id: files_exist_and_python_parses
+    type: pass_to_pass
+    origin: static
+    description: "All three modified files exist and html.py parses without errors"
+
+  - id: falsy_value_coalescing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Value derivation uses ?? (nullish coalescing) not || which coerces 0 to empty string"
+
+  - id: watch_function_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A watch function is defined with callback storage for prop observation"
+
+  - id: watch_exposed_in_js_on_load
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Watch function is passed into the js_on_load Function scope so user code can call it"
+
+  - id: prop_changes_fire_watchers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Backend prop changes detect changed keys and invoke registered watch callbacks"
+
+  - id: python_docstring_documents_watch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "html.py HTML class docstring documents the watch function in js_on_load context"
+
+  - id: existing_features_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Svelte files have real content with existing component features intact"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "f4c3a6dcb45218722d3150baef953c731d3eccf2"

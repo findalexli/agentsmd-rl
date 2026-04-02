@@ -1,0 +1,49 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12954
+  base_commit: "77e7871176e50a894190ac98aa9de8fbdbf3620f"
+  merge_commit: "a74d37949e1f12dd6646d16bfab3665ef3579a65"
+
+checks:
+  - id: ruff_formatting
+    type: pass_to_pass
+    origin: agent_config
+    description: "browser_state.py passes ruff linting (AGENTS.md: Python code is formatted with ruff)"
+    source:
+      path: "AGENTS.md"
+      lines: "43"
+      commit: "77e7871176e50a894190ac98aa9de8fbdbf3620f"
+
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "browser_state.py must parse without syntax errors"
+
+  - id: postprocess_converts_model
+    type: fail_to_pass
+    origin: pr_diff
+    description: "postprocess() converts Pydantic BaseModel instances to dicts"
+
+  - id: default_value_converts_model
+    type: fail_to_pass
+    origin: pr_diff
+    description: "BrowserState(default_value=<model>) stores the value as a dict"
+
+  - id: postprocess_nested_model
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Nested Pydantic models are recursively converted to dicts"
+
+  - id: plain_types_passthrough
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Plain JSON-serializable types pass through postprocess unchanged"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "BrowserState is instantiable and postprocess returns values correctly"
+
+rubric: []

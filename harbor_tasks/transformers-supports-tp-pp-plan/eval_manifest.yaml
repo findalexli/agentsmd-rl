@@ -1,0 +1,75 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44696
+  base_commit: "09fea1e6e970a1051b1141ce320a3d696b2c15ed"
+  merge_commit: "9f93b61209e3a3cac026566bc11a77036941bbeb"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified file must parse without syntax errors"
+
+  - id: supports_tp_plan_empty_dict_false
+    type: fail_to_pass
+    origin: pr_diff
+    description: "supports_tp_plan returns False when _tp_plan is empty dict (multiple combos)"
+
+  - id: supports_pp_plan_empty_dict_false
+    type: fail_to_pass
+    origin: pr_diff
+    description: "supports_pp_plan returns False when _pp_plan is empty dict (multiple combos)"
+
+  - id: supports_pp_plan_checks_config
+    type: fail_to_pass
+    origin: pr_diff
+    description: "supports_pp_plan returns True when config.base_model_pp_plan is set"
+
+  - id: pp_setter_rejects_non_dict
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pp_plan setter raises ValueError for non-dict input (string, int, list, bool, tuple)"
+
+  - id: pp_setter_handles_none
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pp_plan setter converts None to empty dict instead of storing None"
+
+  - id: pipeline_parallel_enum_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PipelineParallel enum class removed from modeling_utils.py"
+
+  - id: supports_tp_plan_nonempty_true
+    type: pass_to_pass
+    origin: pr_diff
+    description: "supports_tp_plan returns True for non-empty plans from model, base, or config"
+
+  - id: supports_pp_plan_nonempty_true
+    type: pass_to_pass
+    origin: pr_diff
+    description: "supports_pp_plan returns True for non-empty plans from model, base, or config"
+
+  - id: pp_setter_accepts_valid_dict
+    type: pass_to_pass
+    origin: pr_diff
+    description: "pp_plan setter accepts valid dict input and stores it correctly"
+
+  - id: ruff_imports_clean
+    type: pass_to_pass
+    origin: static
+    description: "Changed file passes ruff import sorting check"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "09fea1e6e970a1051b1141ce320a3d696b2c15ed"
+  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`. Ideally you should edit the code it's copying from and propagate the change, but you can break the `# Copied from` link if needed."
+    source:
+      path: "AGENTS.md"
+      lines: "59"
+      commit: "09fea1e6e970a1051b1141ce320a3d696b2c15ed"

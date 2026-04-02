@@ -1,0 +1,73 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28493
+  base_commit: "594f421fdc9a6aaf04b394e2775abc2f4baba05c"
+  merge_commit: "36f17caa987d130788b97a6e9d7c9aea7895b6ed"
+
+checks:
+  # Gates
+  - id: header_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "NodeVMScriptFetcher.h must exist and be non-empty"
+
+  - id: class_definition_present
+    type: pass_to_pass
+    origin: static
+    description: "NodeVMScriptFetcher class definition must be present"
+
+  # Core fix — Strong → Weak
+  - id: m_owner_not_strong
+    type: fail_to_pass
+    origin: pr_diff
+    description: "m_owner member must NOT use Strong<> (creates uncollectable GC cycle)"
+
+  - id: m_owner_uses_weak
+    type: fail_to_pass
+    origin: pr_diff
+    description: "m_owner member must use Weak<> for GC-safe back-reference"
+
+  - id: owner_getter_null_check_and_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "owner() getter must check weak ref liveness and return safe fallback"
+
+  - id: owner_setter_or_ctor_guards_iscell
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Owner setter or constructor must guard Weak assignment with isCell check"
+
+  - id: weak_header_included
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Must include Weak.h or WeakInlines.h header"
+
+  # Regression — preserve existing API surface
+  - id: class_extends_script_fetcher
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Class must still extend JSC::ScriptFetcher"
+
+  - id: dynamic_import_callback_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "dynamicImportCallback() method must still exist"
+
+  - id: m_owner_field_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "m_owner field must not be deleted entirely"
+
+rubric:
+  - rule: "Do not write flaky tests. Unless explicitly asked, never wait for time to pass in tests. Always wait for the condition to be met instead of waiting for an arbitrary amount of time."
+    source:
+      path: "test/CLAUDE.md"
+      lines: "21"
+      commit: "594f421fdc9a6aaf04b394e2775abc2f4baba05c"
+  - rule: "NEVER write tests that check for no 'panic' or 'uncaught exception' or similar in the test output. These tests will never fail in CI."
+    source:
+      path: "CLAUDE.md"
+      lines: "99"
+      commit: "594f421fdc9a6aaf04b394e2775abc2f4baba05c"

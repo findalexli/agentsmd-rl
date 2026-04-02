@@ -1,0 +1,305 @@
+"""
+Task: pytorch-wheel-tag-freethreaded-abi
+Repo: pytorch/pytorch @ 8eaba043803b82549bf4fb42d5e03099be2eb1d9
+PR:   #177993
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import ast
+import io
+import contextlib
+import os
+import re
+import sys
+import sysconfig
+import tempfile
+import unittest.mock as mock
+import zipfile
+from pathlib import Path
+
+import pytest
+
+SRC = "/workspace/.ci/pytorch/smoke_test/check_wheel_tags.py"
+
+
+def _load_module():
+    """exec the source file and return its namespace."""
+    ns = {}
+    exec(Path(SRC).read_text(), ns)
+    return ns
+
+
+def _make_wheel(tmpdir, python_tag, abi_tag, platform_tag):
+    """Create a minimal .whl with the given tags."""
+    name = f"torch-2.7.0-{python_tag}-{abi_tag}-{platform_tag}.whl"
+    path = Path(tmpdir) / name
+    tag_line = f"Tag: {python_tag}-{abi_tag}-{platform_tag}"
+    with zipfile.ZipFile(path, "w") as zf:
+        zf.writestr("torch-2.7.0.dist-info/WHEEL", tag_line)
+    return path
+
+
+def _cleanup_env(*keys):
+    """Remove env vars, used in finally blocks."""
+    for k in keys:
+        os.environ.pop(k, None)
+
+
+def _with_freethreaded(gil_enabled, env_version=None):
+    """Context manager that simulates free-threaded Python detection state."""
+    class _Ctx:
+        def __enter__(self_):
+            self_._orig = getattr(sys, "_is_gil_enabled", None)
+            self_._patch = mock.patch.object(sys, "abiflags", "")
+            self_._patch.start()
+            sys._is_gil_enabled = lambda: gil_enabled
+            if env_version:
+                os.environ["MATRIX_PYTHON_VERSION"] = env_version
+            return self_
+
+        def __exit__(self_, *exc):
+            self_._patch.stop()
+            if self_._orig is not None:
+                sys._is_gil_enabled = self_._orig
+            elif hasattr(sys, "_is_gil_enabled"):
+                del sys._is_gil_enabled
+            if env_version:
+                os.environ.pop("MATRIX_PYTHON_VERSION", None)
+    return _Ctx()
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static)
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_syntax_check():
+    """Source file must parse without syntax errors."""
+    source = Path(SRC).read_text()
+    ast.parse(source)
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_freethreaded_abi_tag_accepted():
+    """Free-threaded Python (no GIL) wheel with 't' ABI suffix must pass validation."""
+    major, minor = sys.version_info.major, sys.version_info.minor
+
+    with _with_freethreaded(gil_enabled=False):
+        ns = _load_module()
+        for platform in ("linux_x86_64", "manylinux1_x86_64"):
+            with tempfile.TemporaryDirectory() as tmpdir:
+                _make_wheel(tmpdir, f"cp{major}{minor}", f"cp{major}{minor}t", platform)
+                os.environ["PYTORCH_FINAL_PACKAGE_DIR"] = tmpdir
+                os.environ["TARGET_OS"] = "linux"
+                try:
+                    ns["check_wheel_platform_tag"]()
+                finally:
+                    _cleanup_env("PYTORCH_FINAL_PACKAGE_DIR", "TARGET_OS")
+
+
+# [pr_diff] fail_to_pass
+def test_freethreaded_abi_via_env_var():
+    """Free-threaded detection via MATRIX_PYTHON_VERSION ending in 't'."""
+    major, minor = sys.version_info.major, sys.version_info.minor
+
+    # _is_gil_enabled returns True (not free-threaded by runtime),
+    # but MATRIX_PYTHON_VERSION says "X.Yt" → should still detect free-threaded
+    with _with_freethreaded(gil_enabled=True, env_version=f"{major}.{minor}t"):
+        ns = _load_module()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _make_wheel(tmpdir, f"cp{major}{minor}", f"cp{major}{minor}t", "linux_x86_64")
+            os.environ["PYTORCH_FINAL_PACKAGE_DIR"] = tmpdir
+            os.environ["TARGET_OS"] = "linux"
+            try:
+                ns["check_wheel_platform_tag"]()
+            finally:
+                _cleanup_env("PYTORCH_FINAL_PACKAGE_DIR", "TARGET_OS")
+
+
+# [pr_diff] fail_to_pass
+def test_freethreaded_abi_via_sysconfig():
+    """Free-threaded detection via sysconfig Py_GIL_DISABLED flag."""
+    major, minor = sys.version_info.major, sys.version_info.minor
+
+    # _is_gil_enabled returns True and no env var, but sysconfig says GIL disabled
+    with _with_freethreaded(gil_enabled=True):
+        with mock.patch("sysconfig.get_config_var", lambda key: 1 if key == "Py_GIL_DISABLED" else sysconfig.get_config_var(key)):
+            ns = _load_module()
+            with tempfile.TemporaryDirectory() as tmpdir:
+                _make_wheel(tmpdir, f"cp{major}{minor}", f"cp{major}{minor}t", "linux_x86_64")
+                os.environ["PYTORCH_FINAL_PACKAGE_DIR"] = tmpdir
+                os.environ["TARGET_OS"] = "linux"
+                try:
+                    ns["check_wheel_platform_tag"]()
+                finally:
+                    _cleanup_env("PYTORCH_FINAL_PACKAGE_DIR", "TARGET_OS")
+
+
+# [pr_diff] fail_to_pass
+def test_freethreaded_wrong_tag_rejected():
+    """A wheel WITHOUT 't' suffix must FAIL under free-threaded Python."""
+    major, minor = sys.version_info.major, sys.version_info.minor
+
+    with _with_freethreaded(gil_enabled=False):
+        ns = _load_module()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Wheel missing 't' — wrong for free-threaded
+            _make_wheel(tmpdir, f"cp{major}{minor}", f"cp{major}{minor}", "linux_x86_64")
+            os.environ["PYTORCH_FINAL_PACKAGE_DIR"] = tmpdir
+            os.environ["TARGET_OS"] = "linux"
+            try:
+                with pytest.raises(RuntimeError, match="(?i)abi|tag|mismatch"):
+                    ns["check_wheel_platform_tag"]()
+            finally:
+                _cleanup_env("PYTORCH_FINAL_PACKAGE_DIR", "TARGET_OS")
+
+
+# [pr_diff] fail_to_pass
+def test_mac_minos_mode2_attempted():
+    """check_mac_wheel_minos attempts Mode 2 when PYTORCH_FINAL_PACKAGE_DIR is unset."""
+    os.environ.pop("PYTORCH_FINAL_PACKAGE_DIR", None)
+
+    ns = _load_module()
+    fn = ns.get("check_mac_wheel_minos")
+    assert fn is not None, "check_mac_wheel_minos function not found"
+
+    # Patch sys.platform to darwin so the function doesn't early-return
+    with mock.patch("sys.platform", "darwin"):
+        f = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(f):
+                fn()
+            output = f.getvalue().lower()
+            # Fixed code should NOT just print "skipping wheel minos check" — it should
+            # attempt Mode 2 (reading from installed torch).
+            # The base code prints "not set, skipping" and returns.
+            assert "skipping wheel minos" not in output, (
+                f"Function silently skips instead of attempting Mode 2: {output}"
+            )
+        except Exception as e:
+            # Attempting Mode 2 but failing (torch not installed) is acceptable —
+            # the key is that it TRIES rather than silently skipping
+            err_msg = str(e).lower()
+            # Should not be a "skipping" type message even in exceptions
+            assert "not set, skipping" not in err_msg
+
+
+# [pr_diff] fail_to_pass
+def test_dead_code_removed():
+    """No unreachable 'continue' after 'raise' in tag validation loop."""
+    # AST-only because: structural check for dead code removal, not behavioral
+    tree = ast.parse(Path(SRC).read_text())
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.For, ast.While)):
+            body = node.body
+            for i in range(len(body) - 1):
+                if isinstance(body[i], ast.Raise) and isinstance(body[i + 1], ast.Continue):
+                    assert False, "Unreachable 'continue' after 'raise' found in loop body"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (pr_diff / static) — regression + anti-stub
+# ---------------------------------------------------------------------------
+
+# [pr_diff] pass_to_pass
+def test_standard_wheel_validation():
+    """Standard (non-free-threaded) wheels must still validate correctly."""
+    major, minor = sys.version_info.major, sys.version_info.minor
+    abiflags = getattr(sys, "abiflags", "")
+    abi = f"cp{major}{minor}{abiflags}"
+
+    ns = _load_module()
+    # Test across multiple platform tags
+    for platform, target_os in [
+        ("linux_x86_64", "linux"),
+        ("manylinux1_x86_64", "linux"),
+    ]:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _make_wheel(tmpdir, f"cp{major}{minor}", abi, platform)
+            os.environ["PYTORCH_FINAL_PACKAGE_DIR"] = tmpdir
+            os.environ["TARGET_OS"] = target_os
+            try:
+                ns["check_wheel_platform_tag"]()
+            finally:
+                _cleanup_env("PYTORCH_FINAL_PACKAGE_DIR", "TARGET_OS")
+
+
+# [pr_diff] pass_to_pass
+def test_extract_wheel_tags():
+    """_extract_wheel_tags correctly parses WHEEL metadata with varying tag counts."""
+    ns = _load_module()
+
+    # Case 1: single tag
+    with tempfile.TemporaryDirectory() as tmpdir:
+        whl_path = Path(tmpdir) / "single.whl"
+        with zipfile.ZipFile(whl_path, "w") as zf:
+            zf.writestr("pkg-1.0.dist-info/WHEEL", "Tag: cp312-cp312-linux_x86_64")
+        tags = ns["_extract_wheel_tags"](whl_path)
+        assert len(tags) == 1, f"Expected 1 tag, got {len(tags)}: {tags}"
+        assert tags[0] == "cp312-cp312-linux_x86_64"
+
+    # Case 2: two tags
+    with tempfile.TemporaryDirectory() as tmpdir:
+        whl_path = Path(tmpdir) / "multi.whl"
+        with zipfile.ZipFile(whl_path, "w") as zf:
+            zf.writestr(
+                "pkg-1.0.dist-info/WHEEL",
+                "Tag: cp312-cp312-linux_x86_64\nTag: cp312-cp312-manylinux1_x86_64",
+            )
+        tags = ns["_extract_wheel_tags"](whl_path)
+        assert len(tags) == 2, f"Expected 2 tags, got {len(tags)}: {tags}"
+        assert tags[0] == "cp312-cp312-linux_x86_64"
+        assert tags[1] == "cp312-cp312-manylinux1_x86_64"
+
+    # Case 3: three tags (including free-threaded)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        whl_path = Path(tmpdir) / "three.whl"
+        with zipfile.ZipFile(whl_path, "w") as zf:
+            zf.writestr(
+                "pkg-1.0.dist-info/WHEEL",
+                "Tag: cp313t-cp313t-linux_x86_64\n"
+                "Tag: cp313t-cp313t-manylinux1_x86_64\n"
+                "Tag: cp313t-cp313t-manylinux2014_x86_64",
+            )
+        tags = ns["_extract_wheel_tags"](whl_path)
+        assert len(tags) == 3, f"Expected 3 tags, got {len(tags)}: {tags}"
+        assert all("cp313t" in t for t in tags)
+
+
+# [pr_diff] pass_to_pass
+def test_core_functions_importable():
+    """All core public functions exist and are callable."""
+    ns = _load_module()
+    for name in ["check_wheel_platform_tag", "check_mac_wheel_minos", "_extract_wheel_tags"]:
+        fn = ns.get(name)
+        assert fn is not None, f"{name} not found"
+        assert callable(fn), f"{name} is not callable"
+
+
+# [static] pass_to_pass
+def test_not_stub():
+    """Core functions must have real implementations, not stubs."""
+    # AST-only because: anti-stub structural check, not behavioral
+    tree = ast.parse(Path(SRC).read_text())
+    required = {"check_wheel_platform_tag", "check_mac_wheel_minos", "_extract_wheel_tags"}
+    found = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name in required:
+            stmts = node.body
+            if stmts and isinstance(stmts[0], ast.Expr) and isinstance(
+                stmts[0].value, (ast.Constant,)
+            ):
+                stmts = stmts[1:]
+            real = [s for s in stmts if not isinstance(s, ast.Pass)]
+            found[node.name] = len(real)
+
+    missing = required - set(found.keys())
+    assert not missing, f"Missing functions: {missing}"
+    stubs = {k: v for k, v in found.items() if v < 3}
+    assert not stubs, f"Stubbed functions (< 3 real statements): {stubs}"

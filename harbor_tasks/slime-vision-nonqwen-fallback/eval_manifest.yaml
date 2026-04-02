@@ -1,0 +1,59 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 0  # multi-file fix, no single source PR identified
+  base_commit: "a1ee76cfe1c0fbb4511d5bc2d2fc28622728121c"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All modified files must be valid Python"
+
+  - id: vision_info_base64
+    type: fail_to_pass
+    origin: pr_diff
+    description: "process_vision_info returns PIL images from base64 strings without qwen_vl_utils"
+
+  - id: vision_info_data_uri
+    type: fail_to_pass
+    origin: pr_diff
+    description: "process_vision_info handles data:image/...;base64,... URIs"
+
+  - id: vision_info_pil_passthrough
+    type: fail_to_pass
+    origin: pr_diff
+    description: "process_vision_info passes through PIL Image objects directly"
+
+  - id: vision_info_multiple_images
+    type: fail_to_pass
+    origin: pr_diff
+    description: "process_vision_info extracts multiple images across messages"
+
+  - id: vision_info_no_images
+    type: fail_to_pass
+    origin: pr_diff
+    description: "process_vision_info returns None/empty for messages with no image content"
+
+  - id: build_processor_kwargs
+    type: pass_to_pass
+    origin: pr_diff
+    description: "build_processor_kwargs still works with and without multimodal inputs"
+
+  - id: encode_image
+    type: pass_to_pass
+    origin: pr_diff
+    description: "encode_image_for_rollout_engine still produces valid data URIs"
+
+  - id: actor_numpy_handling
+    type: fail_to_pass
+    origin: pr_diff
+    description: "actor.py must import numpy and handle ndarray values in multimodal_train_inputs"
+
+  - id: sglang_safe_multimodal_access
+    type: fail_to_pass
+    origin: pr_diff
+    description: "sglang_rollout.py must use safe access (.get) for multimodal_inputs images key"
+
+rubric: []

@@ -1,0 +1,59 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91693
+  base_commit: "df886d4a2d36b63717f8aa5eae1147811ad025f8"
+  merge_commit: "47230b12d4b18c599a5955d925028383d0bad5bf"
+
+checks:
+  - id: compact_span_removed_from_db
+    type: fail_to_pass
+    origin: pr_diff
+    description: "compact() in db.rs must no longer create its own tracing span"
+
+  - id: compact_span_added_to_mod
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A compact-related tracing span must exist in mod.rs (the call site)"
+
+  - id: root_span_in_mod
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A root span (parent: None) must exist in mod.rs for background work"
+
+  - id: sync_span_not_info_level
+    type: fail_to_pass
+    origin: pr_diff
+    description: "'sync new files' span in db.rs must not be at info level"
+
+  - id: snapshot_and_persist_not_called_with_none
+    type: fail_to_pass
+    origin: pr_diff
+    description: "snapshot_and_persist must pass a span id, not None"
+
+  - id: compact_call_still_present
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Compaction logic must still invoke compact() on backing storage"
+
+  - id: mod_rs_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "mod.rs has substantial content (not a stub replacement)"
+
+  - id: no_formatting_issues
+    type: pass_to_pass
+    origin: agent_config
+    description: "No tabs or trailing whitespace in modified files (cargo fmt)"
+    source:
+      path: "CLAUDE.md"
+      lines: "414"
+      commit: "df886d4a2d36b63717f8aa5eae1147811ad025f8"
+
+rubric:
+  - rule: "Before editing or creating files in any subdirectory (e.g., `packages/*`, `crates/*`), read all `README.md` files in the directory path from the repo root up to and including the target file's directory."
+    source:
+      path: "CLAUDE.md"
+      lines: "46"
+      commit: "df886d4a2d36b63717f8aa5eae1147811ad025f8"

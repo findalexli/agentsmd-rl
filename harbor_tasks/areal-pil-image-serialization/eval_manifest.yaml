@@ -1,0 +1,86 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 1070
+  base_commit: "99040b94e43d7e4b26d71c6f37edf7ce6781dc56"
+  merge_commit: "0a54cfa938f30ed61c9e88665fe6f97ce0920997"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "serialization.py must parse without syntax errors"
+
+  - id: pil_roundtrip_rgb
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RGB PIL images of varying sizes round-trip through serialize_value/deserialize_value"
+
+  - id: pil_roundtrip_varied_modes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RGBA and grayscale images round-trip with correct mode, size, and pixel data"
+
+  - id: pil_serialized_structure
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Serialized PIL image dict has type=pil_image and base64-encoded PNG data"
+
+  - id: pil_nested_in_structure
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PIL images inside dicts and lists are recursively serialized and deserialized"
+
+  - id: processor_class_serialize
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SerializedProcessor.from_processor creates a ZIP archive containing processor config files"
+
+  - id: original_types_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Primitive types and ndarray serialization unchanged after the change"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No wildcard imports in serialization.py"
+    source:
+      path: "AGENTS.md"
+      lines: "30"
+      commit: "99040b94e43d7e4b26d71c6f37edf7ce6781dc56"
+
+  - id: no_print_statements
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare print() calls — use areal.utils.logging instead"
+    source:
+      path: "AGENTS.md"
+      lines: "89"
+      commit: "99040b94e43d7e4b26d71c6f37edf7ce6781dc56"
+
+rubric:
+  - rule: "Use `areal.utils.logging.getLogger(name)` with PascalCase descriptive name, NOT `print` or stdlib `logging`"
+    source:
+      path: "AGENTS.md"
+      lines: "89-91"
+      commit: "99040b94e43d7e4b26d71c6f37edf7ce6781dc56"
+
+  - rule: "Heavy optional deps (PIL, transformers) imported inside functions or guarded with try/except, not bare top-level imports"
+    source:
+      path: "AGENTS.md"
+      lines: "100"
+      commit: "99040b94e43d7e4b26d71c6f37edf7ce6781dc56"
+
+  - rule: "Follow existing code patterns in the same module — new serialize/deserialize pairs should mirror existing ones"
+    source:
+      path: "AGENTS.md"
+      lines: "40"
+      commit: "99040b94e43d7e4b26d71c6f37edf7ce6781dc56"
+
+  - rule: "Prefer composition over inheritance: Avoid deep class hierarchies"
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "99040b94e43d7e4b26d71c6f37edf7ce6781dc56"

@@ -1,0 +1,83 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24232
+  base_commit: "4aabc71fa2594b5c90105cc963cb04c1c4d52f51"
+  merge_commit: "6505b079d7b7eddbf27c8a2e60a647a085d1b8ff"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified code must compile without errors"
+
+  - id: keyword_prefix_is_completion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "{1}.is<CURSOR> must produce completions (isdisjoint) — keyword 'is' tokenized as TokenKind::Is"
+
+  - id: keyword_prefix_in_completion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "[1,2,3].in<CURSOR> must produce completions (index) — keyword 'in' tokenized as TokenKind::In"
+
+  - id: keyword_prefix_for_completion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "\"abc\".for<CURSOR> must produce completions (format) — keyword 'for' tokenized as TokenKind::For"
+
+  - id: keyword_prefix_not_completion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Foo().not<CURSOR> must produce completions (not_ready) — keyword 'not' tokenized as TokenKind::Not"
+
+  - id: existing_completion_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream completion test suite must not regress (>= 10 tests pass)"
+
+  - id: existing_attribute_access_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing attribute_access completion tests must still pass"
+
+  - id: no_unwrap_panic_unreachable_in_diff
+    type: fail_to_pass
+    origin: agent_config
+    description: "No .unwrap(), panic!(), or unreachable!() introduced in changed code"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "4aabc71fa2594b5c90105cc963cb04c1c4d52f51"
+
+rubric:
+  - rule: "Rust imports should always go at the top of the file, never locally in functions."
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "4aabc71fa2594b5c90105cc963cb04c1c4d52f51"
+
+  - rule: "Avoid writing significant amounts of new code. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "4aabc71fa2594b5c90105cc963cb04c1c4d52f51"
+
+  - rule: "Prefer let chains (if let combined with &&) over nested if let statements to reduce indentation."
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "4aabc71fa2594b5c90105cc963cb04c1c4d52f51"
+
+  - rule: "Use comments purposefully. Don't narrate code, but explain invariants and why something unusual was done."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "4aabc71fa2594b5c90105cc963cb04c1c4d52f51"
+
+  - rule: "If you have to suppress a Clippy lint, prefer #[expect()] over #[allow()] where possible."
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "4aabc71fa2594b5c90105cc963cb04c1c4d52f51"

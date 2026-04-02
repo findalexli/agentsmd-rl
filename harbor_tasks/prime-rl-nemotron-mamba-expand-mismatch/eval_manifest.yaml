@@ -1,0 +1,75 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 2110
+  base_commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
+  merge_commit: "6cae5cca734d0063951efaf700ca9e4bc39c8677"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Both modified files must parse without syntax errors"
+
+  - id: nano_30b_dimension_invariant
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Config mamba_expand yields correct intermediate_size for Nano-30B (core bug)"
+
+  - id: multiple_dimension_combos
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Config mamba_expand correct for varied hidden_size / head combos"
+
+  - id: fractional_expand_precision
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No off-by-one from float truncation when expand is not a clean fraction"
+
+  - id: 120b_default_config
+    type: pass_to_pass
+    origin: pr_diff
+    description: "120B default config still produces correct mamba_expand (regression)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "NemotronHConfig.__init__ has real logic, not just pass/return"
+
+  - id: no_silent_try_except
+    type: pass_to_pass
+    origin: agent_config
+    description: "No silent except/pass blocks in modified files"
+    source:
+      path: "AGENTS.md"
+      lines: "5"
+      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
+
+  - id: no_work_process_comments
+    type: pass_to_pass
+    origin: agent_config
+    description: "No comments referring to old code or work process"
+    source:
+      path: "AGENTS.md"
+      lines: "7"
+      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
+
+rubric:
+  - rule: "Explicit is better than implicit — the fix should clearly express the relationship between mamba_expand, mamba_num_heads, mamba_head_dim, and hidden_size rather than using opaque constants."
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
+
+  - rule: "Simple is better than complex — the fix should be minimal and direct, not over-engineered with unnecessary abstractions."
+    source:
+      path: "AGENTS.md"
+      lines: "15"
+      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
+
+  - rule: "Do not add unnecessary comments — only add comments that explain why, not what. Do not reference the work process or old code."
+    source:
+      path: "AGENTS.md"
+      lines: "7"
+      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"

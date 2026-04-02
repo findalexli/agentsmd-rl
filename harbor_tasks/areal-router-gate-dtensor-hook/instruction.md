@@ -2,22 +2,14 @@
 
 ## Problem
 
-The MoE (Mixture of Experts) router in `areal/experimental/models/archon/moe/router.py` uses `nn.Linear` for `self.gate`, but the `forward()` method bypasses it by calling `router_gating_linear(x, self.gate.weight, ...)` directly instead of `self.gate(x)`. This means DTensor hooks registered by `ReplicateParallel` never fire when the router gate is invoked, breaking tensor parallelism setups that rely on `ReplicateParallel`.
+The MoE (Mixture of Experts) router in `areal/experimental/models/archon/moe/router.py` has a bug where DTensor hooks registered by `ReplicateParallel` never fire when the router gate is invoked.
 
-## Root Cause
-
-The `TokenChoiceTopKRouter.__init__` creates `self.gate = nn.Linear(dim, num_experts, bias=False)`, but `forward()` calls the standalone `router_gating_linear()` function with `self.gate.weight` directly. DTensor hooks are registered at the module call level (`__call__`), so bypassing the module call means the hooks never trigger.
+`TokenChoiceTopKRouter.__init__` creates `self.gate = nn.Linear(dim, num_experts, bias=False)`, but `forward()` calls the standalone function `router_gating_linear(x, self.gate.weight, self.router_dtype)` directly instead of invoking `self.gate(x)`. Since DTensor hooks are registered at the module call level (`__call__`), bypassing the module means the hooks never trigger, breaking tensor parallelism setups.
 
 ## Expected Behavior
 
-The gate should be wrapped in a proper `nn.Module` subclass that delegates to `router_gating_linear()` inside its own `forward()`, so that calling `self.gate(x)` triggers both the gate computation and any registered DTensor hooks.
+Calling `router.forward(x)` should invoke the gate as a module so that any DTensor hooks (or other `nn.Module` hooks) registered on `self.gate` fire correctly. The gate computation should still use `router_gating_linear()` for dtype-aware GEMM, and checkpoint compatibility with `nn.Linear(bias=False)` state dicts must be preserved.
 
-The fix should:
-1. Create an `nn.Linear` subclass (e.g., `RouterGateLinear`) that wraps `router_gating_linear()` and accepts `router_dtype`
-2. Replace `self.gate = nn.Linear(...)` with the new subclass
-3. Replace `scores = router_gating_linear(x, self.gate.weight, self.router_dtype)` with `scores = self.gate(x)`
-4. Maintain state dict compatibility with `nn.Linear(bias=False)` for checkpoint loading
+## Files to Look At
 
-## Files to Modify
-
-- `areal/experimental/models/archon/moe/router.py`
+- `areal/experimental/models/archon/moe/router.py` -- contains `TokenChoiceTopKRouter` and the standalone `router_gating_linear()` function

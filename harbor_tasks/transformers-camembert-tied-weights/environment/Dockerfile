@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-install-recommends \
     git curl ca-certificates build-essential tmux \
     && rm -rf /var/lib/apt/lists/*
 
@@ -16,12 +16,13 @@ RUN git clone https://github.com/huggingface/transformers.git /workspace/transfo
     cd /workspace/transformers && \
     git checkout d81ad48109331f910fd81f699869855cbd50f681
 
-# Install minimal deps (agent fills in specifics)
-RUN pip install --no-cache-dir numpy 2>/dev/null || true
+# Install torch CPU-only (no GPU needed for verification)
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 
-RUN pip install --no-cache-dir ruff 2>/dev/null || true
+# Install transformers in editable mode so agent edits are reflected at import time
+RUN cd /workspace/transformers && pip install --no-cache-dir -e .
 
-ENV PYTHONPATH="/workspace/transformers"
+RUN pip install --no-cache-dir pytest pytest-json-ctrf ruff 2>/dev/null || true
 
 RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Test Agent"

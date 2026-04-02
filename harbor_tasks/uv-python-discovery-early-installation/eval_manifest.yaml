@@ -1,0 +1,89 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 18564
+  base_commit: "6d628da78a2b1689640f5dbf2b04f56f179601b0"
+  merge_commit: "5e25583c42b01fe8b1fae3b8ef05057cfdb4090c"
+
+checks:
+  - id: helper_signatures_return_python_installation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Internal helpers return PythonInstallation, not (PythonSource, Interpreter) tuples"
+
+  - id: from_tuple_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "from_tuple conversion method removed from both discovery.rs and installation.rs"
+
+  - id: find_python_installations_calls_renamed_helpers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Public find_python_installations function calls the renamed helper functions"
+
+  - id: python_installation_constructed_in_from_executables
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PythonInstallation struct constructed inside python_installations_from_executables"
+
+  - id: closures_use_field_access_not_tuple_destructuring
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Closures use .source/.interpreter field access instead of tuple destructuring"
+
+  - id: find_python_installations_still_public
+    type: pass_to_pass
+    origin: repo_tests
+    description: "find_python_installations remains a public function"
+
+  - id: helper_bodies_not_stubs
+    type: pass_to_pass
+    origin: static
+    description: "Renamed helper functions have real implementations (>= 8 non-blank lines)"
+
+  - id: no_unwrap_panic_unreachable
+    type: pass_to_pass
+    origin: agent_config
+    description: "No panic!, unreachable!, .unwrap(), unsafe, or clippy ignores in modified helpers"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "6d628da78a2b1689640f5dbf2b04f56f179601b0"
+
+  - id: no_allow_attribute
+    type: pass_to_pass
+    origin: agent_config
+    description: "Use #[expect()] not #[allow()] for clippy disables in modified helpers"
+    source:
+      path: "CLAUDE.md"
+      lines: "10"
+      commit: "6d628da78a2b1689640f5dbf2b04f56f179601b0"
+
+  - id: no_abbreviated_variable_names
+    type: pass_to_pass
+    origin: agent_config
+    description: "No abbreviated variable names in closures"
+    source:
+      path: "CLAUDE.md"
+      lines: "17"
+      commit: "6d628da78a2b1689640f5dbf2b04f56f179601b0"
+
+rubric:
+  - rule: "PREFER patterns like `if let` to handle fallibility"
+    source:
+      path: "CLAUDE.md"
+      lines: "8"
+      commit: "6d628da78a2b1689640f5dbf2b04f56f179601b0"
+
+  - rule: "PREFER let chains (`if let` combined with `&&`) over nested `if let` statements"
+    source:
+      path: "CLAUDE.md"
+      lines: "11"
+      commit: "6d628da78a2b1689640f5dbf2b04f56f179601b0"
+
+  - rule: "PREFER top-level imports over local imports or fully qualified names"
+    source:
+      path: "CLAUDE.md"
+      lines: "16"
+      commit: "6d628da78a2b1689640f5dbf2b04f56f179601b0"

@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91603
+  base_commit: "56d75a0b77f2ceda8ea747810275da8e0a9a3d71"
+  merge_commit: "3ddfcace6636081e56bc64e0283b08e6cf5dae4a"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript file must parse without errors"
+
+  - id: encoded_single_dynamic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Encoded single dynamic placeholder %5BprojectSlug%5D is recognized"
+
+  - id: encoded_multiple_dynamic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Multiple encoded placeholders in same path both recognized"
+
+  - id: encoded_mixed_segments
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mixed encoded and non-encoded dynamic segments both recognized"
+
+  - id: encoded_catchall_segment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Encoded catchall segment %5B...slug%5D is recognized as dynamic"
+
+  - id: encoded_optional_catchall
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Encoded optional catchall %5B%5B...slug%5D%5D is recognized"
+
+  - id: normal_dynamic_segments
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Non-encoded dynamic segments still work"
+
+  - id: static_segments
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Static segments are parsed correctly with no false dynamic matches"
+
+  - id: malformed_encoding_no_crash
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Malformed URL encoding does not crash"
+
+  - id: no_hardcoded_secrets
+    type: pass_to_pass
+    origin: agent_config
+    description: "No hardcoded secret values in modified file"
+    source:
+      path: "AGENTS.md"
+      lines: "302-309"
+      commit: "56d75a0b77f2ceda8ea747810275da8e0a9a3d71"
+
+rubric: []

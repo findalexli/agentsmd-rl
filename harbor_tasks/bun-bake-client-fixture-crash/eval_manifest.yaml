@@ -1,0 +1,62 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28300
+  base_commit: "923690e923b2f13e0815e8cf342748082058bede"
+  merge_commit: "89c9124fa36c3e6f9726d94ea0e5e68854238310"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "client-fixture.mjs must parse as valid JavaScript"
+
+  - id: null_content_type_handled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Null content-type header must not cause TypeError crash"
+
+  - id: retry_on_transient_failures
+    type: fail_to_pass
+    origin: pr_diff
+    description: "loadPage() must retry fetch on transient connection errors"
+
+  - id: valid_response_loads
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Normal response with valid content-type still loads correctly"
+
+  - id: valid_response_with_charset
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Response with 'text/html; charset=utf-8' content-type loads correctly"
+
+  - id: unhandled_rejection_handler
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Process must register unhandledRejection handler to prevent silent crashes"
+
+  - id: exit_code_propagation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Client exit code must be forwarded to OutputLineStream in bake-harness.ts"
+
+rubric:
+  - rule: "Do not write flaky tests. Never wait for time to pass — always wait for the condition to be met."
+    source:
+      path: "test/CLAUDE.md"
+      lines: "21"
+      commit: "923690e923b2f13e0815e8cf342748082058bede"
+
+  - rule: "Never use hardcoded port numbers. Always use port: 0 to get a random port."
+    source:
+      path: "test/CLAUDE.md"
+      lines: "21"
+      commit: "923690e923b2f13e0815e8cf342748082058bede"
+
+  - rule: "Prefer async/await over callbacks."
+    source:
+      path: "test/CLAUDE.md"
+      lines: "104"
+      commit: "923690e923b2f13e0815e8cf342748082058bede"

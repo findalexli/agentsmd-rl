@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12942
+  base_commit: "83b223b746c3933920dfef670e545a12de9177ed"
+  merge_commit: "e5ba4fa992c0ac389c6af2d143c9ad4c33eea360"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Both modified files must parse without syntax errors"
+
+  - id: stream_sse_deque_single
+    type: fail_to_pass
+    origin: pr_diff
+    description: "stream_sse_v1plus consumes a single message from a deque via popleft"
+
+  - id: stream_sse_deque_fifo
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Multiple messages consumed in FIFO order from deque via popleft"
+
+  - id: stream_sse_deque_varied_protocols
+    type: fail_to_pass
+    origin: pr_diff
+    description: "stream_sse_v1plus works with deque across sse_v1, sse_v2, sse_v2.1"
+
+  - id: pending_init_uses_deque
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pending_messages_per_event must be initialized with deque(), not list()"
+
+  - id: type_annotation_uses_deque
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Type annotations for pending_messages_per_event use deque, not list"
+
+  - id: imports_ok
+    type: pass_to_pass
+    origin: static
+    description: "gradio_client modules import without errors"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files are not empty or stubbed out"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "83b223b746c3933920dfef670e545a12de9177ed"

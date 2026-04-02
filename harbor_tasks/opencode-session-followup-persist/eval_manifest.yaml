@@ -1,0 +1,122 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19421
+  base_commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
+  merge_commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+
+checks:
+  - id: file_parses_as_tsx
+    type: pass_to_pass
+    origin: static
+    description: "session.tsx must parse as valid TypeScript+JSX"
+
+  - id: followup_store_wrapped_with_persistence
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Followup store must be wrapped with a persistence layer"
+
+  - id: persistence_workspace_scoped
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Persistence must be workspace-scoped (per-project), not global"
+
+  - id: page_default_export
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Page function must remain the default export"
+
+  - id: followup_store_core_fields
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Followup store retains core fields: items, failed, paused, edit"
+
+  - id: file_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "session.tsx retains original component complexity"
+
+  - id: no_stub_markers_near_persistence
+    type: pass_to_pass
+    origin: static
+    description: "No TODO/FIXME/stub markers near followup persistence code"
+
+  - id: no_any_type_in_followup_block
+    type: pass_to_pass
+    origin: agent_config
+    description: "No 'any' type usage in followup persistence block"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
+
+  - id: followup_uses_create_store_not_signal
+    type: pass_to_pass
+    origin: agent_config
+    description: "Followup state uses createStore, not multiple createSignal calls"
+    source:
+      path: "packages/app/AGENTS.md"
+      lines: "15"
+      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
+
+  - id: no_try_catch_in_followup_block
+    type: pass_to_pass
+    origin: agent_config
+    description: "No try/catch in followup persistence block"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
+
+  - id: no_let_in_followup_block
+    type: pass_to_pass
+    origin: agent_config
+    description: "No 'let' declarations in followup persistence block"
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
+
+  - id: no_else_in_followup_block
+    type: pass_to_pass
+    origin: agent_config
+    description: "No 'else' statements in followup persistence block"
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
+
+  - id: no_for_loop_in_followup_block
+    type: pass_to_pass
+    origin: agent_config
+    description: "No for loops in followup persistence block — prefer functional array methods"
+    source:
+      path: "AGENTS.md"
+      lines: "17"
+      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
+
+rubric:
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
+
+  - rule: "Keep things in one function unless composable or reusable."
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
+
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity."
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"

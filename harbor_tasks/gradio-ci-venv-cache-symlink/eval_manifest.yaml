@@ -1,0 +1,60 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 13029
+  base_commit: "30af84cdd100855999281de8720cbb6d58b48556"
+  merge_commit: "735a6a6bfe63e27af84fc632da64eeb609eb2324"
+
+checks:
+  - id: action_yaml_valid
+    type: pass_to_pass
+    origin: static
+    description: "action.yml must be valid YAML"
+
+  - id: venv_created_after_cache_restore
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Venv creation (uv venv) must execute after the cache restore step"
+
+  - id: cache_key_includes_exact_python_version
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cache key must include exact installed Python version, not just requested minor version"
+
+  - id: step_output_refs_resolve
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Step output references in cache key must resolve to existing step ids"
+
+  - id: textbox_await_tick_active
+    type: fail_to_pass
+    origin: pr_diff
+    description: "await tick() must be active (not commented) in the textbox copy test"
+
+  - id: core_ci_steps_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core CI action steps (Install Python, ffmpeg, cache, uv venv) still present"
+
+  - id: textbox_copy_test_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Textbox copy test case and assertion still exist"
+
+  - id: cache_key_includes_hashfiles
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Cache key still includes hashFiles for dependency tracking"
+
+  - id: cache_paths_include_venv
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Cache paths still include venv directory"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "30af84cdd100855999281de8720cbb6d58b48556"

@@ -1,0 +1,83 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 2095
+  base_commit: "4f612601f6447b3df1ee17e535ac698b5cc3d16c"
+  merge_commit: "e7adec38f02f5901ca60ee9f7c73314d4d1dc956"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All modified files must parse without errors"
+
+  - id: none_helpers_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "none_to_none_str and _convert_none functions removed from config.py"
+
+  - id: entrypoints_no_import_none_helper
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No entrypoint imports or calls none_to_none_str"
+
+  - id: sft_write_config_excludes_none
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SFT write_config omits None-valued fields from TOML output"
+
+  - id: rl_write_config_excludes_none
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RL write_config omits None-valued fields from TOML output"
+
+  - id: inference_write_config_excludes_none
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Inference write_config omits None-valued fields from TOML output"
+
+  - id: rl_write_subconfigs_excludes_none
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RL write_subconfigs omits None-valued fields from all sub-config TOML files"
+
+  - id: get_all_fields_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "get_all_fields utility still works correctly"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files have real content — write_config, tomli_w.dump, write_subconfigs present"
+
+  - id: config_no_try_except
+    type: pass_to_pass
+    origin: agent_config
+    description: "config.py must not have try/except blocks"
+    source:
+      path: "AGENTS.md"
+      lines: "5"
+      commit: "4f612601f6447b3df1ee17e535ac698b5cc3d16c"
+
+  - id: no_class_based_tests_in_modified_files
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files must not introduce class-based test patterns"
+    source:
+      path: "AGENTS.md"
+      lines: "54"
+      commit: "4f612601f6447b3df1ee17e535ac698b5cc3d16c"
+
+rubric:
+  - rule: "Simple is better than complex."
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "4f612601f6447b3df1ee17e535ac698b5cc3d16c"
+  - rule: "Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code."
+    source:
+      path: "AGENTS.md"
+      lines: "7-8"
+      commit: "4f612601f6447b3df1ee17e535ac698b5cc3d16c"

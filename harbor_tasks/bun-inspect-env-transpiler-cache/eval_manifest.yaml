@@ -1,0 +1,67 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28189
+  base_commit: "047cedb2b3b05fb89b7081ab753d77a2f4df0135"
+  merge_commit: "5693fc1a98116743f16a7db2952d6e436bf9ec98"
+
+checks:
+  - id: cache_disabled_in_configure_debugger
+    type: fail_to_pass
+    origin: pr_diff
+    description: "configureDebugger must disable RuntimeTranspilerCache"
+
+  - id: cache_disable_applies_to_all_inspector_modes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cache disable must not be gated on mode != .connect (must work for BUN_INSPECT)"
+
+  - id: debugger_settings_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing debugger options (minify_*, debugger=true) must be preserved"
+
+  - id: inspect_flags_handled
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Arguments.zig must still handle --inspect, --inspect-wait, --inspect-brk"
+
+  - id: not_stub
+    type: fail_to_pass
+    origin: static
+    description: "VirtualMachine.zig must have non-trivial code changes"
+
+  - id: no_inline_import_in_changes
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @import() inline inside functions in added code"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "047cedb2b3b05fb89b7081ab753d77a2f4df0135"
+
+  - id: no_std_api_in_changes
+    type: pass_to_pass
+    origin: agent_config
+    description: "No std.fs/std.posix/std.os/std.base64 usage in added code"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16-28"
+      commit: "047cedb2b3b05fb89b7081ab753d77a2f4df0135"
+
+  - id: no_catch_out_of_memory
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must use bun.handleOom() not catch bun.outOfMemory()"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "234-238"
+      commit: "047cedb2b3b05fb89b7081ab753d77a2f4df0135"
+
+rubric:
+  - rule: "Memory management — In Zig code, be careful with allocators and use defer for cleanup"
+    source:
+      path: "CLAUDE.md"
+      lines: "232"
+      commit: "047cedb2b3b05fb89b7081ab753d77a2f4df0135"

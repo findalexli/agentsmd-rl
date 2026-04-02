@@ -1,0 +1,94 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24142
+  base_commit: "b8fad8312fde560943653811ae3e16e22b99dfc7"
+  merge_commit: "6cff03427e386e38dc2ead0cc7718a71bfa288f8"
+
+checks:
+  - id: compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified ruff crate compiles successfully"
+
+  - id: f507_literal_int
+    type: fail_to_pass
+    origin: pr_diff
+    description: "F507 fires when RHS is an int literal with multiple placeholders"
+
+  - id: f507_literal_string
+    type: fail_to_pass
+    origin: pr_diff
+    description: "F507 fires when RHS is a string literal with multiple placeholders"
+
+  - id: f507_literal_bool_and_none
+    type: fail_to_pass
+    origin: pr_diff
+    description: "F507 fires for bool and None literals with multiple placeholders"
+
+  - id: f507_compound_expression
+    type: fail_to_pass
+    origin: pr_diff
+    description: "F507 fires for unary/binary ops with known non-tuple result types"
+
+  - id: no_f507_variable_rhs
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Variables/calls do NOT trigger F507 — could be tuples at runtime"
+
+  - id: no_f507_single_placeholder
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Single placeholder with literal RHS is valid — no F507"
+
+  - id: existing_tuple_f507
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Pre-existing behavior: tuple with wrong count still triggers F507"
+
+  - id: no_panic_unwrap_in_target_function
+    type: pass_to_pass
+    origin: agent_config
+    description: "No panic!/unwrap in the target function"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "b8fad8312fde560943653811ae3e16e22b99dfc7"
+
+  - id: no_local_imports_in_target_function
+    type: pass_to_pass
+    origin: agent_config
+    description: "No local use statements inside functions"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "b8fad8312fde560943653811ae3e16e22b99dfc7"
+
+  - id: no_allow_lint_suppression
+    type: pass_to_pass
+    origin: agent_config
+    description: "Prefer #[expect()] over #[allow()] for lint suppression"
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "b8fad8312fde560943653811ae3e16e22b99dfc7"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "b8fad8312fde560943653811ae3e16e22b99dfc7"
+
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "b8fad8312fde560943653811ae3e16e22b99dfc7"
+
+  - rule: "Prefer let chains (if let combined with &&) over nested if let statements to reduce indentation and improve readability."
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "b8fad8312fde560943653811ae3e16e22b99dfc7"

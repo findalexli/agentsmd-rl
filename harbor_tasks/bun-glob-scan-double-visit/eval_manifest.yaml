@@ -1,0 +1,119 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28496
+  base_commit: "3ca678c93ee1d620873f7896af45486f9954553a"
+  merge_commit: "e59a147d615a0b95d446c75ba836717cf0dbc513"
+
+checks:
+  # Gates
+  - id: zig_files_balanced_braces
+    type: pass_to_pass
+    origin: static
+    description: "Modified Zig files must have balanced braces"
+
+  # Core behavioral (fail-to-pass)
+  - id: workitem_tracks_multiple_indices
+    type: fail_to_pass
+    origin: pr_diff
+    description: "WorkItem must use a multi-index structure instead of single u32 idx"
+
+  - id: double_push_eliminated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "workbuf.append count reduced from 6 (no paired pushes for same dir)"
+
+  - id: pattern_matching_iterates_active_indices
+    type: fail_to_pass
+    origin: pr_diff
+    description: "matchPatternDir/File called inside iteration over active index set"
+
+  # Regression (pass-to-pass)
+  - id: both_match_functions_present
+    type: pass_to_pass
+    origin: pr_diff
+    description: "matchPatternDir and matchPatternFile are defined and called"
+
+  - id: core_api_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Core GlobWalker identifiers (WorkItem, workbuf, match fns) still exist"
+
+  - id: workitem_retains_path_and_kind
+    type: pass_to_pass
+    origin: pr_diff
+    description: "WorkItem struct retains path and kind fields"
+
+  # Anti-stub (fail-to-pass)
+  - id: substantial_modification
+    type: fail_to_pass
+    origin: static
+    description: "GlobWalker.zig has >= 20 lines added"
+
+  - id: coherent_zig_code
+    type: fail_to_pass
+    origin: static
+    description: "Added lines contain real Zig constructs, not keyword stuffing"
+
+  # Config-derived
+  - id: allocator_usage
+    type: fail_to_pass
+    origin: agent_config
+    description: "New code references allocator (Zig memory management)"
+    source:
+      path: "CLAUDE.md"
+      lines: "232"
+      commit: "3ca678c93ee1d620873f7896af45486f9954553a"
+
+  - id: no_inline_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @import() inline inside functions"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "3ca678c93ee1d620873f7896af45486f9954553a"
+
+  - id: no_std_namespace_in_new_code
+    type: pass_to_pass
+    origin: agent_config
+    description: "New code uses bun.* APIs, not std.fs/std.posix/std.os"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16"
+      commit: "3ca678c93ee1d620873f7896af45486f9954553a"
+
+  - id: no_catch_out_of_memory
+    type: pass_to_pass
+    origin: agent_config
+    description: "Uses bun.handleOom() not catch bun.outOfMemory()"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "234"
+      commit: "3ca678c93ee1d620873f7896af45486f9954553a"
+
+rubric:
+  - rule: "Memory management — In Zig code, be careful with allocators and use defer for cleanup"
+    source:
+      path: "CLAUDE.md"
+      lines: "232"
+      commit: "3ca678c93ee1d620873f7896af45486f9954553a"
+
+  - rule: "Always use bun.* APIs instead of std.*. The bun namespace provides cross-platform wrappers that preserve OS error info and never use unreachable."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16"
+      commit: "3ca678c93ee1d620873f7896af45486f9954553a"
+
+  - rule: "Follow existing code style — check neighboring files for patterns"
+    source:
+      path: "CLAUDE.md"
+      lines: "228"
+      commit: "3ca678c93ee1d620873f7896af45486f9954553a"
+
+  - rule: "Cross-platform — consider platform-specific behavior; bun.* wrappers exist precisely to handle OS differences"
+    source:
+      path: "CLAUDE.md"
+      lines: "233"
+      commit: "3ca678c93ee1d620873f7896af45486f9954553a"

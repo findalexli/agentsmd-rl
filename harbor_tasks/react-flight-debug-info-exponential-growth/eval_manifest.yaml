@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35795
+  base_commit: "e8c6362678c8bc86a02b8444d2c3f597b3dc4e22"
+  merge_commit: "47d1ad1454759859c5a2b29616658e10a1ce049f"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "ReactFlightClient.js must parse without syntax errors"
+
+  - id: no_exponential_debug_accumulation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New regression test: 20-level deep async component tree resolves without infinite loop"
+
+  - id: is_initializing_debug_info_flag_declared
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Module-level 'let isInitializingDebugInfo: boolean = false' flag declared in ReactFlightClient.js"
+
+  - id: flag_set_in_initialize_debug_chunk
+    type: fail_to_pass
+    origin: pr_diff
+    description: "initializeDebugChunk sets isInitializingDebugInfo=true and restores it in a finally block"
+
+  - id: flag_set_in_resolve_io_info
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resolveIOInfo sets isInitializingDebugInfo=true and restores it in a finally block"
+
+  - id: transfer_debug_info_guarded_during_debug_init
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getOutlinedModel checks isInitializingDebugInfo before calling transferReferencedDebugInfo"
+
+  - id: existing_async_info_test_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing 'can track async information when awaited' test still passes"
+
+rubric:
+  - rule: "Do not add $FlowFixMe suppressions to silence type errors introduced by the fix; resolve underlying type issues properly."
+    source:
+      path: ".claude/skills/flow/SKILL.md"
+      lines: "24"
+      commit: "e8c6362678c8bc86a02b8444d2c3f597b3dc4e22"

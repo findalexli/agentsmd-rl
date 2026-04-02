@@ -32,5 +32,6 @@ index 5f455b61b901..5b61ed2b4836 100644
          return "stop";
        }
        throw event.err;
+
 PATCH
 fi

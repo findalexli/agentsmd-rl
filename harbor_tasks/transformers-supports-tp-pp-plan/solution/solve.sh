@@ -106,6 +106,7 @@ index e31af9847811..e38829de7deb 100644
 +        if self.config.base_model_pp_plan:
              return True
          return False
+
 PATCH
 
 if git apply --check /tmp/patch.diff 2>/dev/null && git apply /tmp/patch.diff; then

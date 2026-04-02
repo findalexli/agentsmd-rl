@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12906
+  base_commit: "ccff8b8cacffe36a270fcea9fc8ba29b78c31c8d"
+  merge_commit: "81482b58706ee9948d0f04e84e632ebb8d4bf7ea"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Both modified TypeScript files parse without syntax errors"
+
+  - id: tabs_filter_selected_only
+    type: fail_to_pass
+    origin: pr_diff
+    description: "make_visible_if_not_rendered only recurses into selected tab children"
+
+  - id: closed_accordion_children_skipped
+    type: fail_to_pass
+    origin: pr_diff
+    description: "make_visible_if_not_rendered skips children of closed accordions"
+
+  - id: nested_tabs_selected_path_only
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Nested tabs only render selected path at each level"
+
+  - id: init_accordion_branch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "determine_visible_components in _init.ts handles accordion type with open-state check"
+
+  - id: basic_visibility_setting
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Basic nodes in hidden_on_startup become visible; others unchanged"
+
+  - id: open_accordion_children_visible
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Open accordion children are still made visible"
+
+  - id: target_accordion_renders_children
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Target accordion renders children even when closed"
+
+rubric: []

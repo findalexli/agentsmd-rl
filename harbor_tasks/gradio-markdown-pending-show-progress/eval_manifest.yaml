@@ -1,0 +1,59 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12958
+  base_commit: "a2bd6e1fb5d19e59ae694ab80c2874288e9982b8"
+  merge_commit: "bb127c74bd6301e3782e0ce4744161ae976a8481"
+
+checks:
+  - id: svelte_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "Index.svelte must exist and contain a class:pending directive"
+
+  - id: pending_false_when_hidden
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Pending must be FALSE when status=pending and show_progress=hidden (core bug)"
+
+  - id: pending_true_when_full
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Pending must still be TRUE when status=pending and show_progress=full"
+
+  - id: pending_true_when_minimal
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Pending must be TRUE when status=pending and show_progress=minimal"
+
+  - id: pending_false_when_complete
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Pending must be FALSE when status=complete regardless of show_progress"
+
+  - id: pending_true_when_progress_undefined
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Pending must still work when show_progress is not set (backward compat)"
+
+  - id: expression_differs_from_buggy
+    type: fail_to_pass
+    origin: static
+    description: "The class:pending expression must differ from the unchanged buggy original"
+
+  - id: tab_indentation
+    type: pass_to_pass
+    origin: agent_config
+    description: "Lines near class:pending must use tab indentation (file convention)"
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "a2bd6e1fb5d19e59ae694ab80c2874288e9982b8"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "a2bd6e1fb5d19e59ae694ab80c2874288e9982b8"

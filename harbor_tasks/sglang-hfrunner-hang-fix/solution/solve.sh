@@ -36,4 +36,5 @@ index 61781fea21de..8edd4fa802f7 100644
 
      def terminate(self):
          self.model_proc.terminate()
+
 PATCH

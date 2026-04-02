@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1741
+  base_commit: "6f70479966749e258ba0b20341e2c4b88ea094f1"
+  merge_commit: "f96b71f18da8b8bdb6892ae75a82425c1927fb06"
+
+checks:
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified file must parse without syntax errors"
+
+  - id: no_crash_missing_encoder_only
+    type: fail_to_pass
+    origin: pr_diff
+    description: "launch_server_process must not raise AttributeError when encoder_only attribute is absent from server_args"
+
+  - id: missing_attr_defaults_to_http
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When encoder_only is absent, must fall back to http_server import path"
+
+  - id: encoder_only_true_uses_encode_server
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When encoder_only=True, must use encode_server import path"
+
+  - id: encoder_only_false_uses_http_server
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When encoder_only=False, must use http_server import path"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "launch_server_process must create a process with a real callable target"
+
+rubric: []

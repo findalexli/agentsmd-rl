@@ -1,0 +1,74 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12961
+  base_commit: "b1f62c0ebc09be80aee830e26689ab70b939cf44"
+  merge_commit: "0595d1b15ba6b7c47f68ddf7f79152b3d1d3c467"
+
+checks:
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "mcp.py must be syntactically valid Python"
+
+  - id: module_imports
+    type: pass_to_pass
+    origin: static
+    description: "gradio.mcp module must import without errors"
+
+  - id: nonqueued_calls_process_api
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Non-queued call_tool must use blocks.process_api() directly instead of HTTP loopback"
+
+  - id: nonqueued_extracts_data
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Non-queued path must extract output from process_api result['data']"
+
+  - id: session_state_imported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SessionState from gradio.state_holder must be imported in gradio.mcp"
+
+  - id: nonqueued_uses_session_state
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Non-queued path must create SessionState for the process_api call"
+
+  - id: queued_preserves_http_loopback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Queued call_tool must have client.submit in the queued branch (else body)"
+
+  - id: queued_no_process_api
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Queued path must NOT call process_api (uses HTTP loopback instead)"
+
+  - id: call_tool_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "call_tool has real logic (>= 6 meaningful statements), not a stub"
+
+  - id: nonqueued_no_submit
+    type: pass_to_pass
+    origin: static
+    description: "Non-queued path must NOT call client.submit (avoids HTTP loopback)"
+
+  - id: ruff_lint
+    type: pass_to_pass
+    origin: agent_config
+    description: "mcp.py must pass ruff linting (Python formatting standard)"
+    source:
+      path: "AGENTS.md"
+      lines: "43"
+      commit: "b1f62c0ebc09be80aee830e26689ab70b939cf44"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "b1f62c0ebc09be80aee830e26689ab70b939cf44"

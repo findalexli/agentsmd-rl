@@ -49,6 +49,7 @@ index 01486934ac37..702989331287 100755
          pos_emb = self.dropout(pos_emb)
 
          new_mems = ()
+
 PATCH
 
 git apply --check /tmp/patch.diff 2>/dev/null && git apply /tmp/patch.diff || echo "Patch already applied or conflicts (idempotent)"

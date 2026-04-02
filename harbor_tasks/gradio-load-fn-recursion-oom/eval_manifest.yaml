@@ -1,0 +1,59 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12928
+  base_commit: "ca84f3e36c6a3f3c3f0b57084b6f514d6cded1d4"
+  merge_commit: "e3710a3c189e87ac35e627f79c08530b003e7f9f"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (external.py, external_utils.py) must parse without syntax errors"
+
+  - id: closure_no_self_recursion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "fn variable in from_model must not shadow the closure, preventing infinite recursion"
+
+  - id: stop_iteration_handled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "handle_hf_error must catch StopIteration and raise an informative Error"
+
+  - id: empty_exception_non_empty_message
+    type: fail_to_pass
+    origin: pr_diff
+    description: "handle_hf_error must produce a non-empty error message for exceptions with no str representation"
+
+  - id: modules_importable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "gradio.external and gradio.external_utils remain importable"
+
+  - id: 401_error_still_handled
+    type: pass_to_pass
+    origin: repo_tests
+    description: "handle_hf_error still raises auth error for 401 responses"
+
+  - id: too_many_requests_still_handled
+    type: pass_to_pass
+    origin: repo_tests
+    description: "handle_hf_error still raises TooManyRequestsError for 429 responses"
+
+  - id: handle_hf_error_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "handle_hf_error has real branching logic, not just pass/return"
+
+  - id: ruff_lint_modified_files
+    type: pass_to_pass
+    origin: agent_config
+    description: "Python code must pass ruff linting on modified files"
+    source:
+      path: "AGENTS.md"
+      lines: "43"
+      commit: "ca84f3e36c6a3f3c3f0b57084b6f514d6cded1d4"
+
+rubric: []

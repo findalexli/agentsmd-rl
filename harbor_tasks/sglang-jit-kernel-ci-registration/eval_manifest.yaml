@@ -1,0 +1,77 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21239
+  base_commit: "6047d2c690483224b2bb7d70288ea60b0b8e0c7d"
+  merge_commit: "260abe1fb1f116ea51a72c922defccf2788197e8"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All 4 modified files must be valid Python"
+
+  - id: bench_cast_ci_registration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bench_cast.py is discoverable by ci_register AST parser and registered for benchmark suite"
+
+  - id: bench_fused_qknorm_rope_ci_registration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bench_fused_qknorm_rope.py is discoverable and registered for benchmark suite"
+
+  - id: cast_ci_registration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "test_cast.py is discoverable and registered for kernel unit suite"
+
+  - id: fused_qknorm_rope_ci_registration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "test_fused_qknorm_rope.py is discoverable and registered for kernel unit suite"
+
+  - id: collect_tests_no_errors
+    type: fail_to_pass
+    origin: pr_diff
+    description: "collect_tests() succeeds on all 4 files without ValueError, all est_time values positive"
+
+  - id: literal_registration_values
+    type: fail_to_pass
+    origin: agent_config
+    description: "Registration calls use literal values for est_time and suite (AST-parseable by run_suite.py)"
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "433"
+      commit: "6047d2c690483224b2bb7d70288ea60b0b8e0c7d"
+
+  - id: module_level_registration
+    type: fail_to_pass
+    origin: agent_config
+    description: "Registration calls are at module level, not nested inside functions or classes"
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "422"
+      commit: "6047d2c690483224b2bb7d70288ea60b0b8e0c7d"
+
+  - id: correct_import_path
+    type: fail_to_pass
+    origin: agent_config
+    description: "Files import register_cuda_ci from sglang.test.ci.ci_register"
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "425"
+      commit: "6047d2c690483224b2bb7d70288ea60b0b8e0c7d"
+
+  - id: suite_file_type_consistency
+    type: fail_to_pass
+    origin: agent_config
+    description: "Benchmark files use benchmark suite, test files use unit suite (not swapped)"
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "8"
+      commit: "6047d2c690483224b2bb7d70288ea60b0b8e0c7d"
+
+rubric:
+  []

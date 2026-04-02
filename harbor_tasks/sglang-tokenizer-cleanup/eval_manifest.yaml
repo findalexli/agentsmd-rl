@@ -1,0 +1,52 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21639
+  base_commit: "f3970b17ef043c069e30a5cb9ffa83bd97f8679c"
+  merge_commit: "9f7792415a9688155ddfd566cf4cf7492cd6d405"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (io_struct.py, tokenizer_manager.py, http_server.py) parse without errors"
+
+  - id: basereq_rid_uniqueness_validation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "BaseReq has a method that raises ValueError on duplicate batch rids and accepts valid inputs"
+
+  - id: inflight_rid_separation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TokenizerManager in-flight check raises on conflicts but does NOT reject non-inflight duplicates"
+
+  - id: regenerate_rid_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "BaseReq.regenerate_rid still works for both list and single rids"
+
+  - id: normalize_calls_rid_validation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GenerateReqInput and EmbeddingReqInput call BaseReq validation from normalize_batch_and_arguments"
+
+  - id: trace_header_priority
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Explicit trace context (external_trace_header) checked before HTTP request headers"
+
+  - id: dead_code_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "is_image_gen, current_load removed from TM; old monolithic _validate_rid removed"
+
+  - id: cpu_monitor_placement
+    type: fail_to_pass
+    origin: pr_diff
+    description: "start_cpu_monitor_thread moved from __init__ to init_metric_collector_watchdog"
+
+rubric: []
+# No applicable diff-evaluable rules found in repo agent configs.
+# All config files contain procedural/tooling rules, not code-quality rules.

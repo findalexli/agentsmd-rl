@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 36026
+  base_commit: "a74302c02d220e3663fcad5836cb90607fc2d006"
+  merge_commit: "1e3152365df2f7a23a5ad947e83f40914413be16"
+
+checks:
+  - id: required_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "All 4 feature flag files exist and contain export const syntax"
+
+  - id: main_instance_handles_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableFragmentRefsInstanceHandles is true in ReactFeatureFlags.js (was false)"
+
+  - id: native_oss_instance_handles_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableFragmentRefsInstanceHandles is true in ReactFeatureFlags.native-oss.js (was false)"
+
+  - id: native_oss_text_nodes_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableFragmentRefsTextNodes is true in ReactFeatureFlags.native-oss.js (was false)"
+
+  - id: test_renderer_instance_handles_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableFragmentRefsInstanceHandles is true in ReactFeatureFlags.test-renderer.js (was false)"
+
+  - id: www_all_fragment_flags_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All 4 fragment ref flags are true in ReactFeatureFlags.test-renderer.www.js (all were false)"
+
+  - id: no_duplicate_flag_definitions
+    type: pass_to_pass
+    origin: static
+    description: "Each fragment ref flag defined at most once per file"
+
+  - id: flag_values_are_boolean_literals
+    type: pass_to_pass
+    origin: static
+    description: "Fragment ref flags use boolean literal syntax (true/false/__VARIANT__)"
+
+  - id: instance_handles_in_all_forks
+    type: fail_to_pass
+    origin: agent_config
+    description: "enableFragmentRefsInstanceHandles enabled in all fork files"
+    source:
+      path: ".claude/skills/feature-flags/SKILL.md"
+      lines: "15"
+      commit: "a74302c02d220e3663fcad5836cb90607fc2d006"
+
+rubric:
+  - rule: "If it should vary in www/RN, set to __VARIANT__ in the fork file"
+    source:
+      path: ".claude/skills/feature-flags/SKILL.md"
+      lines: "17"
+      commit: "a74302c02d220e3663fcad5836cb90607fc2d006"

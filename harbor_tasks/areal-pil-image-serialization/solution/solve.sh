@@ -259,4 +259,5 @@ index a20053062..67cdc4823 100644
          # Check for SerializedTensor marker
          if value.get("type") == "tensor":
              try:
+
 PATCH

@@ -23,4 +23,5 @@ index 531d5c364805..6b2850390e27 100755
              mode="bicubic",
              align_corners=False,
          )
+
 PATCH

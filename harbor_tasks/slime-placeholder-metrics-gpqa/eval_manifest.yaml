@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1746
+  base_commit: "5996c6881e484fe0985ff3c8b8c8ce1af4e32632"
+  merge_commit: "a9614431b35e9c54b88a42f9d565ef81075172a1"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (gpqa.py, router.py, rollout.py) must parse without errors"
+
+  - id: gpqa_label_8_letter_i
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Integer label 8 (letter I, 9th option) must score correctly"
+
+  - id: gpqa_label_9_letter_j
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Integer label 9 (letter J, 10th option) must score correctly"
+
+  - id: gpqa_existing_labels_a_through_h
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing A-H labels still return correct rewards (regression guard)"
+
+  - id: workertype_placeholder_enum
+    type: fail_to_pass
+    origin: pr_diff
+    description: "WorkerType enum must include PLACEHOLDER with value 'placeholder'"
+
+  - id: nodes_per_engine_ignores_placeholder
+    type: fail_to_pass
+    origin: pr_diff
+    description: "nodes_per_engine property must exclude placeholder groups"
+
+  - id: init_tracking_after_server_launch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "init_tracking must be called after start_rollout_servers in RolloutManager.__init__"
+
+  - id: get_metrics_router_addr_behavior
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_get_metrics_router_addr returns correct URL or None based on metrics config"
+
+rubric:
+  - rule: "Keep exceptions explicit for invalid metadata instead of silently returning zeros"
+    source:
+      path: ".claude/skills/add-reward-function/SKILL.md"
+      lines: "51"
+      commit: "5996c6881e484fe0985ff3c8b8c8ce1af4e32632"

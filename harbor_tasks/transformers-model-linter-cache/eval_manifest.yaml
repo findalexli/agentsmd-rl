@@ -1,0 +1,108 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44790
+  base_commit: "aa1c36f1a9f454e69c4eac83071ced235942c7ed"
+  merge_commit: "2cd52c267ce4d0212eaa40c0ec7192a11654336f"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without syntax errors"
+
+  - id: content_hash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Content hash function is deterministic, content-sensitive, and rule-order-insensitive"
+
+  - id: cache_save_load_round_trip
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cache save/load round-trip persists data correctly; missing file returns empty dict"
+
+  - id: cli_cache_flag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script advertises a CLI flag to disable/bypass caching"
+
+  - id: makefile_typing_target
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Makefile has a 'typing' target that invokes the model structure linter"
+
+  - id: redundant_targets_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Legacy check-model-rules* Makefile targets are removed"
+
+  - id: check_repo_runs_linter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "check-repo target runs the model linter without error-ignore prefix"
+
+  - id: parse_args_backward_compat
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing CLI flags (--list-rules, --no-progress, --changed-only) still work"
+
+  - id: gitignore_excludes_cache
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".gitignore excludes the model linter cache file"
+
+  - id: agents_md_references_typing
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".ai/AGENTS.md references 'make typing'"
+
+  - id: skill_md_references_typing
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".ai/skills/add-or-fix-type-checking/SKILL.md references 'make typing'"
+
+  - id: pr_checks_docs_reference_typing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "docs/source/en/pr_checks.md documents the 'make typing' target"
+
+  - id: ruff_lint
+    type: pass_to_pass
+    origin: agent_config
+    description: "ruff lint passes on utils/check_modeling_structure.py"
+    source:
+      path: ".ai/AGENTS.md"
+      lines: "2"
+      commit: "aa1c36f1a9f454e69c4eac83071ced235942c7ed"
+
+  - id: no_bare_type_ignore
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare '# type: ignore' without specific error code in modified file"
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "185-186"
+      commit: "aa1c36f1a9f454e69c4eac83071ced235942c7ed"
+
+rubric:
+  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`. Ideally you should edit the code it's copying from and propagate the change, but you can break the `# Copied from` link if needed."
+    source:
+      path: ".ai/AGENTS.md"
+      lines: "65"
+      commit: "aa1c36f1a9f454e69c4eac83071ced235942c7ed"
+  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file."
+    source:
+      path: ".ai/AGENTS.md"
+      lines: "66"
+      commit: "aa1c36f1a9f454e69c4eac83071ced235942c7ed"
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "aa1c36f1a9f454e69c4eac83071ced235942c7ed"
+  - rule: "Never use `# type: ignore` as a first resort. Exhaust all approaches (isinstance narrowing, cast(), overloads, Protocol) before resorting to type: ignore."
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "191"
+      commit: "aa1c36f1a9f454e69c4eac83071ced235942c7ed"

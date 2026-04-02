@@ -1,0 +1,78 @@
+version: "2.0"
+
+source:
+  repo: "openclaw/openclaw"
+  pr: 57721
+  base_commit: "85647949a484957ba6bac00e47653b0acd4a92d7"
+  merge_commit: "3216df79238f614c42e40972ef81e875dd2364e2"
+
+checks:
+  - id: ts_file_parses
+    type: pass_to_pass
+    origin: static
+    description: "embeddings-http.ts parses without fatal TypeScript errors"
+
+  - id: embeddings_handler_enforces_scope
+    type: fail_to_pass
+    origin: pr_diff
+    description: "handleGatewayPostJsonEndpoint call includes requiredOperatorMethod for scope enforcement"
+
+  - id: scope_method_is_chat_send
+    type: fail_to_pass
+    origin: pr_diff
+    description: "requiredOperatorMethod value is 'chat.send' (canonical write-gated method)"
+
+  - id: handler_is_exported
+    type: pass_to_pass
+    origin: pr_diff
+    description: "handleOpenAiEmbeddingsHttpRequest remains an exported function"
+
+  - id: pathname_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Helper call still registers pathname '/v1/embeddings'"
+
+  - id: handler_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Handler retains substantial logic (>8 statements, await, return, multiple calls)"
+
+  - id: no_ts_nocheck
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @ts-nocheck directive added"
+    source:
+      path: "CLAUDE.md"
+      lines: "146"
+      commit: "85647949a484957ba6bac00e47653b0acd4a92d7"
+
+  - id: no_lint_suppressions
+    type: pass_to_pass
+    origin: agent_config
+    description: "No inline lint suppression comments (@ts-ignore, @ts-expect-error, eslint-disable)"
+    source:
+      path: "CLAUDE.md"
+      lines: "146"
+      commit: "85647949a484957ba6bac00e47653b0acd4a92d7"
+
+  - id: no_new_explicit_any
+    type: pass_to_pass
+    origin: agent_config
+    description: "No new explicit 'any' type annotations introduced"
+    source:
+      path: "CLAUDE.md"
+      lines: "144"
+      commit: "85647949a484957ba6bac00e47653b0acd4a92d7"
+
+rubric:
+  - rule: "Prefer additive evolution. If a change is incompatible, handle versioning explicitly and update all affected clients."
+    source:
+      path: "src/gateway/protocol/CLAUDE.md"
+      lines: "20-21"
+      commit: "85647949a484957ba6bac00e47653b0acd4a92d7"
+
+  - rule: "Keep schema, runtime validators, docs, tests, and generated client artifacts in sync."
+    source:
+      path: "src/gateway/protocol/CLAUDE.md"
+      lines: "22-23"
+      commit: "85647949a484957ba6bac00e47653b0acd4a92d7"

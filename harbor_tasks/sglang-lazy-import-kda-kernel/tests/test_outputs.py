@@ -1,0 +1,146 @@
+"""
+Task: sglang-lazy-import-kda-kernel
+Repo: sgl-project/sglang @ 75682f1d2f60797fb438da8fd6fe40e92e1a26fe
+PR:   21428
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import ast
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = "/workspace/sglang"
+TARGET = f"{REPO}/python/sglang/srt/layers/attention/linear/kda_backend.py"
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static) -- syntax check
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_syntax_valid():
+    """kda_backend.py must parse without syntax errors."""
+    src = Path(TARGET).read_text()
+    ast.parse(src)
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) -- core behavioral tests
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_import_kda_backend_no_cuda_crash():
+    """Importing kda_backend must not crash with a 'cuda' ModuleNotFoundError.
+
+    The base commit has a top-level import that chains to cuda.bindings.driver,
+    crashing on non-CUDA (AMD/ROCm/CPU) platforms. The fix makes it lazy.
+    """
+    script = (
+        "import sys\n"
+        "sys.path.insert(0, '/workspace/sglang/python')\n"
+        "try:\n"
+        "    from sglang.srt.layers.attention.linear import kda_backend\n"
+        "except ModuleNotFoundError as e:\n"
+        "    if 'cuda' in str(e).lower() or 'kda_cutedsl' in str(e).lower():\n"
+        "        print(f'FAIL: {e}')\n"
+        "        sys.exit(1)\n"
+        "except ImportError as e:\n"
+        "    if 'cuda' in str(e).lower():\n"
+        "        print(f'FAIL: {e}')\n"
+        "        sys.exit(1)\n"
+    )
+    r = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"CUDA-related import error at module load:\n{r.stdout}\n{r.stderr}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_cutedsl_import_not_at_module_level():
+    """CuteDSLKDAKernel must not be imported at module level.
+
+    A bare top-level `from ...kda_cutedsl import CuteDSLKDAKernel` eagerly
+    loads CUDA-only code. The import must be deferred (lazy local import,
+    conditional guard, or similar).
+    """
+    # AST-only because: CuteDSLKDAKernel chains to cuda.bindings.driver which
+    # requires CUDA hardware; cannot be imported on CPU-only test containers.
+    src = Path(TARGET).read_text()
+    tree = ast.parse(src)
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.ImportFrom):
+            names = [alias.name for alias in node.names]
+            assert "CuteDSLKDAKernel" not in names, (
+                f"CuteDSLKDAKernel is imported at module level (line {node.lineno}), "
+                "which crashes on non-CUDA platforms"
+            )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) -- regression + anti-stub
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_dispatcher_class_intact():
+    """KDAKernelDispatcher class must exist with __init__ and key attributes."""
+    # AST-only because: instantiating KDAKernelDispatcher requires torch, CUDA
+    # runtime, and complex attention backend objects not available on CPU
+    src = Path(TARGET).read_text()
+    tree = ast.parse(src)
+    classes = {n.name: n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
+    assert "KDAKernelDispatcher" in classes, "KDAKernelDispatcher class missing"
+    methods = [
+        n.name for n in ast.walk(classes["KDAKernelDispatcher"])
+        if isinstance(n, ast.FunctionDef)
+    ]
+    assert "__init__" in methods, "KDAKernelDispatcher.__init__ missing"
+
+
+# [static] pass_to_pass
+def test_cutedsl_still_referenced():
+    """CuteDSLKDAKernel must still be referenced (not deleted entirely)."""
+    src = Path(TARGET).read_text()
+    assert "CuteDSLKDAKernel" in src, (
+        "CuteDSLKDAKernel not found anywhere in file -- import was deleted "
+        "instead of being made lazy"
+    )
+
+
+# [static] pass_to_pass
+def test_triton_import_still_toplevel():
+    """TritonKDAKernel must remain a top-level import (unchanged by fix).
+
+    Only the CuteDSL import should be lazified; TritonKDAKernel is always
+    needed and must stay at module level.
+    """
+    # AST-only because: TritonKDAKernel depends on triton which is not
+    # installed in the CPU-only test container
+    src = Path(TARGET).read_text()
+    tree = ast.parse(src)
+    found = False
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.ImportFrom) and node.module and "kda_triton" in node.module:
+            names = [alias.name for alias in node.names]
+            if "TritonKDAKernel" in names:
+                found = True
+                break
+    assert found, (
+        "TritonKDAKernel top-level import was removed -- "
+        "only CuteDSLKDAKernel should be lazified"
+    )
+
+
+# [static] pass_to_pass
+def test_not_stub():
+    """File must have real content, not be gutted or stubbed out."""
+    src = Path(TARGET).read_text()
+    lines = src.strip().splitlines()
+    assert len(lines) >= 30, f"File too short ({len(lines)} lines), likely a stub"
+    for ident in ("TritonKDAKernel", "decode_kernel", "is_cuda", "is_cutedsl"):
+        assert ident in src, f"Required identifier '{ident}' missing from file"

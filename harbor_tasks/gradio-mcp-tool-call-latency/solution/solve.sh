@@ -87,4 +87,5 @@ index 2e4f874e8f..849cc4a554 100644
              output_data = self.pop_returned_state(block_fn.outputs, output_data)
 
              context_request: Request | None = self.mcp_server.request_context.request
+
 PATCH

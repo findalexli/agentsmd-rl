@@ -1,0 +1,51 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 36024
+  base_commit: "1e3152365df2f7a23a5ad947e83f40914413be16"
+  merge_commit: "5e9eedb57843dc161defdf93ed457ab7d982e324"
+
+checks:
+  - id: model_chunk_clears_reason
+    type: fail_to_pass
+    origin: pr_diff
+    description: >
+      initializeModelChunk sets initializedChunk.reason = null after successful
+      initialization, preventing a stale reentrant error from crashing the
+      stream-close handler
+
+  - id: module_chunk_clears_reason
+    type: fail_to_pass
+    origin: pr_diff
+    description: >
+      initializeModuleChunk sets initializedChunk.reason = null after successful
+      initialization, mirroring the model-chunk fix for the same reentrancy bug
+
+  - id: reply_server_clears_reason
+    type: fail_to_pass
+    origin: pr_diff
+    description: >
+      loadServerReference in ReactFlightReplyServer.js sets
+      initializedPromise.reason = null after successfully resolving a bound
+      server reference
+
+  - id: functions_not_removed
+    type: pass_to_pass
+    origin: static
+    description: >
+      initializeModelChunk, initializeModuleChunk, and loadServerReference
+      still exist in their respective files after the fix
+
+rubric:
+  - rule: "New code must match the style of the surrounding code (indentation, semicolons, brace placement)."
+    source:
+      path: "CLAUDE.md"
+      lines: "1"
+      commit: "1e3152365df2f7a23a5ad947e83f40914413be16"
+
+  - rule: "Error handling should be consistent with existing patterns in the file (use the same error chunk/state transition approach as nearby catch blocks)."
+    source:
+      path: "CLAUDE.md"
+      lines: "1"
+      commit: "1e3152365df2f7a23a5ad947e83f40914413be16"

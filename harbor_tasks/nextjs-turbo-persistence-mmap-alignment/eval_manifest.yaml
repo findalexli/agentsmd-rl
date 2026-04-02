@@ -1,0 +1,78 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91640
+  base_commit: "bdb2f2ce4dea0c1435af5fa433767d63fca11c0c"
+
+checks:
+  - id: mmap_maps_from_byte_zero
+    type: fail_to_pass
+    origin: pr_diff
+    description: "mmap must map entire file from byte 0, not use options.offset()"
+
+  - id: amqf_data_start_field
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MetaFile struct must have amqf_data_start: usize field"
+
+  - id: amqf_data_returns_offset_slice
+    type: fail_to_pass
+    origin: pr_diff
+    description: "amqf_data() must return &self.mmap[self.amqf_data_start..] not &self.mmap"
+
+  - id: amqf_data_start_set_in_constructor
+    type: fail_to_pass
+    origin: pr_diff
+    description: "amqf_data_start must be initialized from stream position in open_internal"
+
+  - id: mmap_helper_error_context
+    type: fail_to_pass
+    origin: pr_diff
+    description: "mmap_helper.rs must import anyhow::Context and add .context() to advise calls"
+
+  - id: meta_file_open_error_context
+    type: fail_to_pass
+    origin: pr_diff
+    description: "open_internal must have .context() on File::open, stream_position, mmap, and advise"
+
+  - id: files_exist
+    type: pass_to_pass
+    origin: static
+    description: "Both modified source files must exist"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must have substantial content"
+
+  - id: rust_files_formatted
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified Rust files must pass rustfmt formatting check"
+    source:
+      path: "AGENTS.md"
+      lines: "414"
+      commit: "bdb2f2ce4dea0c1435af5fa433767d63fca11c0c"
+
+  - id: no_claude_footer
+    type: pass_to_pass
+    origin: agent_config
+    description: "Commits must not contain Generated with Claude Code footers"
+    source:
+      path: "CLAUDE.md"
+      lines: "348"
+      commit: "bdb2f2ce4dea0c1435af5fa433767d63fca11c0c"
+
+rubric:
+  - rule: "Error context strings should be descriptive and specific to the operation that failed"
+    source:
+      path: "AGENTS.md"
+      lines: "355-358"
+      commit: "bdb2f2ce4dea0c1435af5fa433767d63fca11c0c"
+
+  - rule: "Changes should be consistent with the surrounding code style in the turbo-persistence crate"
+    source:
+      path: "AGENTS.md"
+      lines: "347-351"
+      commit: "bdb2f2ce4dea0c1435af5fa433767d63fca11c0c"

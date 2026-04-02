@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12874
+  base_commit: "34ee825ae7111488655e68f983e45d55673455a2"
+  merge_commit: "b10e17cafbe9ff385e44bcc63a85de0d893e2662"
+
+checks:
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "gradio/utils.py must parse without syntax errors"
+
+  - id: swap_blocks_regenerates_config
+    type: fail_to_pass
+    origin: pr_diff
+    description: "After swap_blocks, demo.config must equal demo.get_config_file()"
+
+  - id: config_varies_per_demo
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Swapping to different demos must produce their respective configs"
+
+  - id: postrun_updates_config_on_swap
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When postrun detects a changed demo, config must be regenerated"
+
+  - id: swap_blocks_calls_parent
+    type: pass_to_pass
+    origin: pr_diff
+    description: "swap_blocks must delegate to parent class via super().swap_blocks()"
+
+  - id: postrun_returns_false_when_unchanged
+    type: pass_to_pass
+    origin: pr_diff
+    description: "postrun returns False when the demo has not changed"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "SpacesReloader must have a swap_blocks method with real logic"
+
+rubric: []

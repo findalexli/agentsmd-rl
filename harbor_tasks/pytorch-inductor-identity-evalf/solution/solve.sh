@@ -50,4 +50,5 @@ index ee04c2461f3c6..5102afd9b530e 100644
      def __float__(self) -> float:
          # pyrefly: ignore [missing-attribute]
          return float(self.args[0])
+
 PATCH

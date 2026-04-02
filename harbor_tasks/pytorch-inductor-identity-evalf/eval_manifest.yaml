@@ -1,0 +1,62 @@
+version: "2.0"
+
+source:
+  repo: "pytorch/pytorch"
+  pr: 176783
+  base_commit: "f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e"
+  merge_commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Target file parses without syntax errors"
+
+  - id: identity_integer_comparison
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Identity-wrapped integers can be compared (>=) without RecursionError"
+
+  - id: max_with_identity
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Max(0, Identity(x)) evaluates correctly for multiple values"
+
+  - id: rational_comparison
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Identity-wrapped rationals can be compared without RecursionError"
+
+  - id: min_with_identity
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Min(0, Identity(x)) evaluates correctly for multiple values"
+
+  - id: all_comparison_operators
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All four comparison operators (__ge__, __gt__, __le__, __lt__) work on Identity"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Identity class retains __int__, __float__ and has non-trivial body"
+
+rubric:
+  - rule: "Minimize comments; code should be self-explanatory and self-documenting."
+    source:
+      path: "CLAUDE.md"
+      lines: "48"
+      commit: "f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e"
+
+  - rule: "If uncertain, choose the simpler, more concise implementation."
+    source:
+      path: "CLAUDE.md"
+      lines: "62"
+      commit: "f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e"
+
+  - rule: "Match existing code style and architectural patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "57"
+      commit: "f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e"

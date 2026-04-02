@@ -1,0 +1,98 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24263
+  base_commit: "6e76b4cd8a27c2b22263204b83372c4f3720bf79"
+  merge_commit: "62e1a60eb7cf5d90f2be011033531f3a917dcffc"
+
+checks:
+  - id: ty_compiles
+    type: pass_to_pass
+    origin: static
+    description: "ty binary must compile successfully"
+
+  - id: aliased_union_emits_unresolved_attribute
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ty emits unresolved-attribute for attribute access on type-aliased union member"
+
+  - id: aliased_union_identifies_missing_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error message identifies which concrete type lacks the attribute"
+
+  - id: nested_aliased_union
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ty recurses into nested type aliases that resolve to unions"
+
+  - id: explicit_union_still_reports
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Explicit (non-aliased) union attribute errors still work"
+
+  - id: no_false_positive_aliased_union
+    type: pass_to_pass
+    origin: pr_diff
+    description: "No diagnostic when all members of aliased union have the attribute"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified file has meaningful content (not gutted/stubbed)"
+
+  - id: no_unwrap_panic_unreachable
+    type: pass_to_pass
+    origin: agent_config
+    description: "New code must not use .unwrap(), panic!, or unreachable!"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "6e76b4cd8a27c2b22263204b83372c4f3720bf79"
+
+  - id: prefer_expect_over_allow
+    type: pass_to_pass
+    origin: agent_config
+    description: "Use #[expect()] over #[allow()] for Clippy lint suppression"
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "6e76b4cd8a27c2b22263204b83372c4f3720bf79"
+
+rubric:
+  - rule: "Rust imports should always go at the top of the file, never locally in functions."
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "6e76b4cd8a27c2b22263204b83372c4f3720bf79"
+
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "6e76b4cd8a27c2b22263204b83372c4f3720bf79"
+
+  - rule: "Avoid writing significant amounts of new code. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "6e76b4cd8a27c2b22263204b83372c4f3720bf79"
+
+  - rule: "Prefer let chains (if let combined with &&) over nested if let statements to reduce indentation."
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "6e76b4cd8a27c2b22263204b83372c4f3720bf79"
+
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "6e76b4cd8a27c2b22263204b83372c4f3720bf79"
+
+  - rule: "When adding new ty checks, make error messages concise. Think about how an error message would look on a narrow terminal screen."
+    source:
+      path: "AGENTS.md"
+      lines: "83"
+      commit: "6e76b4cd8a27c2b22263204b83372c4f3720bf79"

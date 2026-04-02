@@ -1,0 +1,100 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28511
+  base_commit: "9ce5b052840cecea4aa1977aeb063c47d0137a22"
+  merge_commit: "6034bd82b1a0d9b3635560405354e931b7e0e192"
+
+checks:
+  # --- Fail-to-pass: core fix (package_manager log save/restore) ---
+  - id: pm_log_set_before_defer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "package_manager .log set to &log before the defer block"
+
+  - id: pm_log_restored_in_defer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "package_manager .log restored to old_log in the defer block"
+
+  - id: pm_log_set_before_resolve_call
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pm.log is set before _resolve is called (ordering)"
+
+  # --- Pass-to-pass: existing functionality preserved ---
+  - id: resolver_linker_log_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing resolver and linker log save/restore still intact"
+
+  - id: jsc_vm_log_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "jsc_vm.log save/restore still intact"
+
+  - id: resolve_call_present
+    type: pass_to_pass
+    origin: pr_diff
+    description: "_resolve() call is still present in the function"
+
+  # --- Pass-to-pass: anti-stub ---
+  - id: function_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "Function has sufficient substantive lines (not gutted)"
+
+  # --- Pass-to-pass: agent config rules ---
+  - id: no_inline_import
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @import() inline inside functions"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "9ce5b052840cecea4aa1977aeb063c47d0137a22"
+
+  - id: no_std_api_in_diff
+    type: pass_to_pass
+    origin: agent_config
+    description: "No std.* API usage in changed lines"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16"
+      commit: "9ce5b052840cecea4aa1977aeb063c47d0137a22"
+
+  - id: no_non_default_allocator
+    type: pass_to_pass
+    origin: agent_config
+    description: "No std.heap allocators in changed lines"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "232"
+      commit: "9ce5b052840cecea4aa1977aeb063c47d0137a22"
+
+  - id: no_catch_outofmemory
+    type: pass_to_pass
+    origin: agent_config
+    description: "No catch bun.outOfMemory() pattern in changed lines"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "234-238"
+      commit: "9ce5b052840cecea4aa1977aeb063c47d0137a22"
+
+rubric:
+  - rule: "Never use @import() inline inside of functions. Always put them at the bottom of the file or containing struct."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "9ce5b052840cecea4aa1977aeb063c47d0137a22"
+  - rule: "Always use bun.* APIs instead of std.*."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16"
+      commit: "9ce5b052840cecea4aa1977aeb063c47d0137a22"
+  - rule: "Be careful with allocators and use defer for cleanup."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "230-232"
+      commit: "9ce5b052840cecea4aa1977aeb063c47d0137a22"

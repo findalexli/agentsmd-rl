@@ -20,4 +20,5 @@ index b0cb420eb6fca..f5947b8d65094 100644
        tensor.copy_(inputTensors[0]);
      }
      return c10::make_intrusive<FakeWork>();
+
 PATCH

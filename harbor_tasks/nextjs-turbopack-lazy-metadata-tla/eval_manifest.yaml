@@ -1,0 +1,69 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91705
+  base_commit: "04cc2f2ed2a2a65cf5ba78ea251be22a5f41e7c9"
+  merge_commit: "118bdaf68cdebe91540200d0bfa67374d03df719"
+
+checks:
+  - id: target_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "Both modified files (Rust loader tree + TS resolve-metadata) must exist"
+
+  - id: lazy_require_wrappers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Eager requires replaced with lazy () => require() wrappers in Rust codegen"
+
+  - id: await_lazy_loaders
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Generated JS templates must await lazy loader calls via interopDefault(await fn())"
+
+  - id: no_interop_default_in_collect_static
+    type: fail_to_pass
+    origin: pr_diff
+    description: "collectStaticImagesFiles calls imageModule directly, not via interopDefault"
+
+  - id: metadata_image_async_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Generated loader tree returns metadata images as async (props) => functions, not sync .default"
+
+  - id: interop_default_import_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "interopDefault import removed from resolve-metadata.ts — Rust codegen handles interop"
+
+  - id: collect_static_images_files_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "collectStaticImagesFiles function still exists and uses Promise.all"
+
+  - id: rust_loader_functions_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "fillMetadataSegment, get_content_type, and turbopackChunkingType preserved"
+
+  - id: all_metadata_types_handled
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Rust loader tree handles all metadata types: icon, apple, openGraph, twitter"
+
+  - id: no_secrets_in_source
+    type: pass_to_pass
+    origin: agent_config
+    description: "No hardcoded secret values (tokens, API keys) in modified source files"
+    source:
+      path: "AGENTS.md"
+      lines: "306"
+      commit: "04cc2f2ed2a2a65cf5ba78ea251be22a5f41e7c9"
+
+rubric:
+  - rule: "Before editing or creating files in any subdirectory (e.g., packages/*, crates/*), read all README.md files in the directory path from the repo root up to and including the target file's directory"
+    source:
+      path: "AGENTS.md"
+      lines: "48"
+      commit: "04cc2f2ed2a2a65cf5ba78ea251be22a5f41e7c9"

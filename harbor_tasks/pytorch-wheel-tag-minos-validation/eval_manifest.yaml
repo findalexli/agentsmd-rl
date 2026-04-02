@@ -1,0 +1,85 @@
+version: "2.0"
+
+source:
+  repo: "pytorch/pytorch"
+  pr: 177609
+  base_commit: "2a86e1131417aa9fa6b860b03308215bfe2be92c"
+  merge_commit: "8b5ba493a117a456242dc935f87f5b6f3b153f8d"
+
+checks:
+  - id: syntax_check
+    type: fail_to_pass
+    origin: static
+    description: "check_wheel_tags.py must exist and parse without syntax errors"
+
+  - id: extract_wheel_tags_basic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_extract_wheel_tags reads Tag: lines from WHEEL metadata in a zip"
+
+  - id: extract_wheel_tags_varied
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_extract_wheel_tags works with different wheel content (anti-hardcode)"
+
+  - id: extract_wheel_tags_no_wheel_file
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_extract_wheel_tags returns empty list when WHEEL metadata is missing"
+
+  - id: platform_tag_accepts_valid
+    type: fail_to_pass
+    origin: pr_diff
+    description: "check_wheel_platform_tag accepts a valid wheel with matching platform"
+
+  - id: platform_tag_rejects_mismatch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "check_wheel_platform_tag raises RuntimeError for platform mismatch"
+
+  - id: malformed_tag_rejected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tags with != 3 dash-separated parts must raise an error"
+
+  - id: platform_patterns_correct
+    type: fail_to_pass
+    origin: pr_diff
+    description: "EXPECTED_PLATFORM_TAGS patterns match correct platforms and reject wrong ones"
+
+  - id: multiple_wheels_rejected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Having more than one torch wheel raises RuntimeError"
+
+  - id: smoke_test_structure
+    type: pass_to_pass
+    origin: pr_diff
+    description: "smoke_test.py still parses and contains main()"
+
+  - id: smoke_test_integration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "smoke_test.py imports check_wheel_tags and calls its functions"
+
+  - id: not_stub
+    type: fail_to_pass
+    origin: static
+    description: "check_wheel_tags functions have real logic, not empty bodies"
+
+rubric:
+  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
+    source:
+      path: "CLAUDE.md"
+      lines: "58"
+      commit: "2a86e1131417aa9fa6b860b03308215bfe2be92c"
+  - rule: "Prefer clear abstractions. State management should be explicit."
+    source:
+      path: "CLAUDE.md"
+      lines: "63"
+      commit: "2a86e1131417aa9fa6b860b03308215bfe2be92c"
+  - rule: "If uncertain, choose the simpler, more concise implementation."
+    source:
+      path: "CLAUDE.md"
+      lines: "72"
+      commit: "2a86e1131417aa9fa6b860b03308215bfe2be92c"

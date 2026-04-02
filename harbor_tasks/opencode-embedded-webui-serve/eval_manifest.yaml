@@ -1,0 +1,122 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19299
+  base_commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
+  merge_commit: "ec20efc11a256444d5359d4520f24239d4dd36b1"
+
+checks:
+  - id: syntax_all_modified_files
+    type: pass_to_pass
+    origin: static
+    description: "All three modified files (flag.ts, server.ts, build.ts) parse without syntax errors"
+
+  - id: flag_disable_embedded_webui_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Flag.OPENCODE_DISABLE_EMBEDDED_WEB_UI is exported and falsy by default"
+
+  - id: flag_truthy_when_env_set
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Flag responds to OPENCODE_DISABLE_EMBEDDED_WEB_UI env var with truthy values"
+
+  - id: build_script_skip_embed_flag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Build script has --skip-embed-web-ui flag as a parsed string literal"
+
+  - id: build_script_asset_bundling_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Build script has asset bundling function that scans dist files via Glob/scan"
+
+  - id: build_entrypoints_include_generated_module
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Build config entrypoints array includes the generated web UI module"
+
+  - id: server_catch_all_branches_on_embedded_ui
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Server catch-all route branches on embedded UI availability with file serving"
+
+  - id: server_spa_fallback_to_index_html
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Server has SPA fallback to index.html within the catch-all route"
+
+  - id: server_csp_for_embedded_html
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Server sets Content-Security-Policy header when serving HTML from embedded UI"
+
+  - id: proxy_fallback_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Proxy fallback to app.opencode.ai is preserved in server code"
+
+  - id: dynamic_import_uses_catch_chain
+    type: fail_to_pass
+    origin: agent_config
+    description: "Dynamic import() uses .catch() promise chain, not try/catch block"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
+
+  - id: server_uses_bun_file_api
+    type: fail_to_pass
+    origin: agent_config
+    description: "Server uses Bun.file() API for serving embedded files in catch-all route"
+    source:
+      path: "AGENTS.md"
+      lines: "15"
+      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
+
+  - id: build_uses_functional_array_methods
+    type: fail_to_pass
+    origin: agent_config
+    description: "Asset bundling function uses functional array methods (.map/.join), not for-loops"
+    source:
+      path: "AGENTS.md"
+      lines: "17"
+      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
+
+rubric:
+  - rule: "Keep things in one function unless composable or reusable"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
+
+  - rule: "Avoid using the `any` type"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
+
+  - rule: "Prefer single word variable names where possible"
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
+
+  - rule: "Prefer `const` over `let`. Use ternaries or early returns instead of reassignment."
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
+
+  - rule: "Rely on type inference when possible; avoid explicit type annotations unless necessary for exports"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
+
+  - rule: "Avoid else statements. Prefer early returns."
+    source:
+      path: "AGENTS.md"
+      lines: "83-84"
+      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"

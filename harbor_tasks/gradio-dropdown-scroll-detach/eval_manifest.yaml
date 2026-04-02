@@ -1,0 +1,51 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12994
+  base_commit: "7fb33fc3b80b421817c1d1ddea19c8858a9f2924"
+  merge_commit: "7874d0411c81dcde9c4b08e7e064ca0dbef94e2e"
+
+checks:
+  - id: positioning_vars_use_state
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All 3 positioning variables (distance_from_top, distance_from_bottom, input_height) must use $state() for Svelte 5 reactivity"
+
+  - id: no_bare_positioning_declarations
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Old buggy bare 'let var: type;' declarations must be replaced"
+
+  - id: input_width_still_reactive
+    type: pass_to_pass
+    origin: pr_diff
+    description: "input_width must remain declared with $state (was already reactive)"
+
+  - id: effect_reads_positioning_vars
+    type: pass_to_pass
+    origin: pr_diff
+    description: "$effect block must reference positioning variables for CSS updates"
+
+  - id: template_structure_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Dropdown template must have <ul>, CSS positioning, and show_options guard"
+
+  - id: not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "File must have substantial content (>50 lines, >=2 functions)"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "7fb33fc3b80b421817c1d1ddea19c8858a9f2924"
+
+  - rule: "Frontend code is formatted with prettier."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "7fb33fc3b80b421817c1d1ddea19c8858a9f2924"

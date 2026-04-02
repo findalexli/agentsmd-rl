@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 40010
+  base_commit: "f6e14f9d73b46ab319b334c013094d867d4ef149"
+  merge_commit: "a89099d18c5b67355cf78d8e99f69b8ca23dee5b"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All modified TypeScript files must exist and contain valid content"
+
+  - id: response_raw_constructor_and_field
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Response constructor must accept options object with raw boolean field"
+
+  - id: raw_mode_section_filtering
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Raw mode must filter serialized sections to only Error, Result, and Snapshot"
+
+  - id: raw_mode_strips_markdown
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Raw mode must output plain content without markdown headers or code fences"
+
+  - id: raw_option_cli_pipeline
+    type: fail_to_pass
+    origin: pr_diff
+    description: "--raw must be wired from CLI args through session to daemon to backend"
+
+  - id: evaluate_error_handling
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Evaluate tool must catch errors and report them via response.addError"
+
+  - id: help_includes_raw_option
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Help generator must document the --raw global option"
+
+rubric:
+  - rule: "Semantic commit messages: label(scope): description. Labels: fix, feat, chore, docs, test, devops"
+    source:
+      path: "CLAUDE.md"
+      lines: "101-103"
+      commit: "f6e14f9d73b46ab319b334c013094d867d4ef149"
+  - rule: "Never add Co-Authored-By agents in commit message. Never add 'Generated with' in commit message."
+    source:
+      path: "CLAUDE.md"
+      lines: "127-128"
+      commit: "f6e14f9d73b46ab319b334c013094d867d4ef149"

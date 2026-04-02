@@ -1,0 +1,99 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44884
+  base_commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"
+  merge_commit: "7cd9b985e0698d4f625a18be0125231b6b930390"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "image_utils.py must parse without syntax errors"
+
+  - id: sizedict_or_dict
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SizeDict | dict returns a SizeDict with all fields merged"
+
+  - id: dict_or_sizedict
+    type: fail_to_pass
+    origin: pr_diff
+    description: "dict | SizeDict returns a plain dict with all entries merged"
+
+  - id: sizedict_or_sizedict
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SizeDict | SizeDict returns a merged SizeDict"
+
+  - id: or_override_conflict
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Right-side values override left-side on key conflict"
+
+  - id: or_unsupported_type
+    type: pass_to_pass
+    origin: pr_diff
+    description: "SizeDict | non-dict raises TypeError (preserved behavior)"
+
+  - id: equality_with_dict
+    type: pass_to_pass
+    origin: repo_tests
+    description: "SizeDict equality comparison with dict still works"
+
+  - id: getitem_and_contains
+    type: pass_to_pass
+    origin: repo_tests
+    description: "SizeDict __getitem__ and __contains__ still work"
+
+  - id: dict_conversion
+    type: pass_to_pass
+    origin: repo_tests
+    description: "SizeDict dict() conversion still works"
+
+  - id: minimal_diff
+    type: pass_to_pass
+    origin: agent_config
+    description: "Fix should be brief — fewer than 40 lines of non-comment code added"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"
+
+  - id: minimal_files_changed
+    type: pass_to_pass
+    origin: agent_config
+    description: "Only image_utils.py (and optionally one test file) should be modified"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"
+
+  - id: no_bare_type_ignore
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare '# type: ignore' without specific error code in added lines"
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "180-186"
+      commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"
+
+  - rule: "Do not add helper methods or abstractions just to satisfy the type checker, especially for only one or two occurrences."
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "196"
+      commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"
+
+  - rule: "Do not use cast() when @overload or generics can eliminate the need at the source."
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "195"
+      commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"

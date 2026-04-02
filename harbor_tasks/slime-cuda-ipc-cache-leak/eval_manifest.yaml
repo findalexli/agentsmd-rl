@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1731
+  base_commit: "08b201bd576e02fba08dae22e5c9324643e88884"
+  merge_commit: "183e525f60fcf435f82f273e9eb69702d3ce431a"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Target file must parse without syntax errors"
+
+  - id: hf_named_tensors_released_in_loop
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both long_lived_tensors and hf_named_tensors released in weight chunk loop"
+
+  - id: ipc_collect_in_loop
+    type: fail_to_pass
+    origin: pr_diff
+    description: "torch.cuda.ipc_collect() called inside weight chunk for-loop"
+
+  - id: ipc_collect_after_barrier
+    type: fail_to_pass
+    origin: pr_diff
+    description: "torch.cuda.ipc_collect() called after dist.barrier()"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "update_weights has substantial body (not a stub)"
+
+  - id: send_hf_params_exists
+    type: pass_to_pass
+    origin: static
+    description: "_send_hf_params method still exists"
+
+  - id: send_to_colocated_engine_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "_send_to_colocated_engine retains tuple return signature"
+
+  - id: ray_and_dist_integration
+    type: pass_to_pass
+    origin: static
+    description: "ray.get and dist.barrier calls remain in source"
+
+rubric: []

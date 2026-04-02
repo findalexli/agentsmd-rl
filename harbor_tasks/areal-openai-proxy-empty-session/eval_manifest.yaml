@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 971
+  base_commit: "84eaef1292b2a3184d4a565d4abb0758408be018"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "workflow.py must parse without syntax errors"
+
+  - id: empty_interactions_returns_none
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Empty interactions dict returns None (rejected trajectory) instead of empty dict"
+
+  - id: empty_interactions_logs_warning
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A warning is logged when session has no interactions"
+
+  - id: nonempty_interactions_returns_dict
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Non-empty interactions are returned as-is with stats recorded"
+
+  - id: single_interaction_returns_dict
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Single-interaction session still works correctly"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "arun_episode has a substantial body (not a stub)"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No wildcard imports in workflow.py"
+    source:
+      path: "AGENTS.md"
+      lines: "25"
+      commit: "84eaef1292b2a3184d4a565d4abb0758408be018"
+
+  - id: no_print_in_arun_episode
+    type: pass_to_pass
+    origin: agent_config
+    description: "No print() calls in arun_episode — use logger"
+    source:
+      path: "AGENTS.md"
+      lines: "84-86"
+      commit: "84eaef1292b2a3184d4a565d4abb0758408be018"
+
+rubric:
+  - rule: "Async: rollout workflows must stay non-blocking (await + aiofiles); no sync I/O in arun_episode."
+    source:
+      path: "AGENTS.md"
+      lines: "97-98"
+      commit: "84eaef1292b2a3184d4a565d4abb0758408be018"
+
+  - rule: "Follow existing code patterns in the same module."
+    source:
+      path: "AGENTS.md"
+      lines: "35"
+      commit: "84eaef1292b2a3184d4a565d4abb0758408be018"

@@ -1,0 +1,70 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44941
+  base_commit: "ed003b4482aabdf8377250f22826dd31f378269c"
+  merge_commit: "0f19dec775aae867c36d29db5d797afb87af2ff6"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "video_processing_utils.py must be valid Python"
+
+  - id: import_without_pil
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Module imports without PIL; BaseVideoProcessor has correct class attributes"
+
+  - id: docstring_constant_without_pil
+    type: fail_to_pass
+    origin: pr_diff
+    description: "BASE_VIDEO_PROCESSOR_DOCSTRING accessible and non-trivial without PIL"
+
+  - id: processor_mapping_without_pil
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PROCESSOR_MAPPING_NAMES accessible without PIL (CI import chain)"
+
+  - id: methods_exist_without_pil
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Key methods on BaseVideoProcessor present; __call__ delegates to preprocess"
+
+  - id: pil_resampling_with_pil
+    type: pass_to_pass
+    origin: pr_diff
+    description: "PILImageResampling available in module namespace when PIL IS installed"
+
+  - id: other_image_utils_imports
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Other image_utils imports (ChannelDimension, SizeDict) unaffected"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "File not emptied/stubbed — retains substantial content and key definitions"
+
+  - id: copied_from_annotations_intact
+    type: pass_to_pass
+    origin: agent_config
+    description: "'# Copied from' annotations must not be broken or removed"
+    source:
+      path: "CLAUDE.md"
+      lines: "66"
+      commit: "ed003b4482aabdf8377250f22826dd31f378269c"
+
+rubric:
+  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`."
+    source:
+      path: "CLAUDE.md"
+      lines: "67"
+      commit: "ed003b4482aabdf8377250f22826dd31f378269c"
+
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "ed003b4482aabdf8377250f22826dd31f378269c"

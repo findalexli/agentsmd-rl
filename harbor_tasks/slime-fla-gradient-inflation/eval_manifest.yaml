@@ -1,0 +1,66 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1748
+  base_commit: "051e91a33093cf3201acbbf96ca6748193a7eb1b"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All modified Python files must parse without syntax errors"
+
+  - id: sp_gather_uses_false_output_grad
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SP gather must use tensor_parallel_output_grad=False to prevent gradient inflation by TP"
+
+  - id: cp_custom_autograd_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CP gather must use custom autograd.Function instead of dist.nn.all_gather to avoid gradient inflation"
+
+  - id: autograd_backward_returns_local_slice
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Custom autograd backward must return only the local rank's gradient (no reduce)"
+
+  - id: load_hf_config_fallback_behavior
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_load_hf_config fallback must correctly load config.json as namespace when AutoConfig fails"
+
+  - id: layer_types_fallback_qwen35
+    type: fail_to_pass
+    origin: pr_diff
+    description: "qwen3_5.py must compute layer_types from full_attention_interval when config lacks it"
+
+  - id: layer_types_fallback_qwen3next
+    type: fail_to_pass
+    origin: pr_diff
+    description: "qwen3_next.py must compute layer_types from full_attention_interval when config lacks it"
+
+  - id: qwen_files_import_shared_load_hf_config
+    type: fail_to_pass
+    origin: pr_diff
+    description: "qwen3_5 and qwen3_next must import _load_hf_config from hf_attention, not define locally"
+
+  - id: memory_threshold_lowered
+    type: fail_to_pass
+    origin: pr_diff
+    description: "reloadable_process_group.py memory threshold must be lowered from 5 to 3 GB"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: static
+    description: "No wildcard imports in modified production files"
+
+  - id: no_bare_print
+    type: pass_to_pass
+    origin: static
+    description: "No bare print() calls in modified production files"
+
+rubric: []
+  # No applicable soft rules — repo configs are skill guides for different subsystems
+  # (filters, eval configs, rewards, rollouts) with no coding conventions for model code.

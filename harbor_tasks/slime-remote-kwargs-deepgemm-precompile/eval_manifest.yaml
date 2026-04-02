@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1765
+  base_commit: "243d0883b90e407ee56a6a51d2d8d80fe5cae47e"
+  merge_commit: "d4c4d3fb24d45c3cd12f47b64b30fc3301286778"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Both modified files must parse without syntax errors"
+
+  - id: keyword_args_in_remote_call
+    type: fail_to_pass
+    origin: pr_diff
+    description: "init_weights_update_group.remote() uses keyword arguments for all core params"
+
+  - id: precompile_default_true
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SGLANG_JIT_DEEPGEMM_PRECOMPILE defaults to 'true' in start_engines"
+
+  - id: fast_warmup_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SGLANG_JIT_DEEPGEMM_FAST_WARMUP present with default 'true' in start_engines"
+
+  - id: existing_env_vars_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing env vars in start_engines still present"
+
+  - id: connect_function_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "connect_rollout_engines_from_distributed exists with non-trivial body"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files not truncated or replaced with stubs"
+
+rubric: []

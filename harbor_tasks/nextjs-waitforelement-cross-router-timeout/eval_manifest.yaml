@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91918
+  base_commit: "ad65b1bdcf3d10e5213c80bea56a73038bbf1c99"
+  merge_commit: "63f485248bacc347b8593d4597d74bd4aaa160c4"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Test file must parse and have non-trivial content (not a stub)"
+
+  - id: anti_stub_real_waitfor_calls
+    type: pass_to_pass
+    origin: static
+    description: "At least 6 real .waitForElementByCss calls in non-comment code"
+
+  - id: all_waitfor_calls_have_timeout
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Every .waitForElementByCss call has an explicit timeout >= 15000ms"
+
+  - id: at_least_6_calls_with_timeout
+    type: fail_to_pass
+    origin: pr_diff
+    description: "At least 6 waitForElementByCss calls have explicit timeout argument"
+
+  - id: explanatory_comment_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Comment near waitForElementByCss explaining why timeout is increased (compilation/CI)"
+
+  - id: all_four_test_cases_present
+    type: pass_to_pass
+    origin: pr_diff
+    description: "All 4 navigation test cases (app->pages, pages->app, + back/forward) preserved"
+
+  - id: infrastructure_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Core test infrastructure (describe, webdriver, createNext) still present"
+
+  - id: navigation_logic_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Navigation actions (click, back, forward) and element checks present"
+
+  - id: no_settimeout_for_waiting
+    type: pass_to_pass
+    origin: agent_config
+    description: "No setTimeout or manual Promise delays used for waiting"
+    source:
+      path: "AGENTS.md"
+      lines: "180"
+      commit: "ad65b1bdcf3d10e5213c80bea56a73038bbf1c99"
+
+  - id: no_deprecated_check
+    type: pass_to_pass
+    origin: agent_config
+    description: "No deprecated check() usage"
+    source:
+      path: "AGENTS.md"
+      lines: "194"
+      commit: "ad65b1bdcf3d10e5213c80bea56a73038bbf1c99"
+
+rubric: []

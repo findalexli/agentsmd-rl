@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91727
+  base_commit: "b6ff1f6079694da08af88cec5cac7381e22cea10"
+  merge_commit: "cbf12d18457cbe62cbb8f57f4e485110b6630e42"
+
+checks:
+  - id: layer_name_fixed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "process_default_internal uses Layer::new with 'webpack_loaders' (not the buggy 'turbopack_use_loaders')"
+
+  - id: buggy_name_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Old buggy layer name 'turbopack_use_loaders' fully removed from lib.rs"
+
+  - id: cross_file_consistency
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both lib.rs and module_options/mod.rs use consistent 'webpack_loaders' layer name"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "lib.rs is substantial (800+ lines), not gutted or replaced with a stub"
+
+  - id: loader_pipeline_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Key loader pipeline constructs (WebpackLoaderItem, WebpackLoaders, etc.) still present"
+
+  - id: other_layers_untouched
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Other Layer::new calls (externals-tracing) not removed as collateral damage"
+
+  - id: layer_new_call_syntax
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Layer::new call uses rcstr! macro with the layer name string"
+
+rubric:
+  - rule: "cargo fmt uses ASCII order (uppercase before lowercase) — just run cargo fmt"
+    source:
+      path: "AGENTS.md"
+      lines: "414"
+      commit: "b6ff1f6079694da08af88cec5cac7381e22cea10"

@@ -81,4 +81,5 @@ index 591e4c35a849..3fbe12243596 100644
      if (split.length <= 1) {
        // Worst-case safety: avoid retry loops, deliver the chunk as-is.
        finalized.push(chunk);
+
 PATCH

@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "openclaw/openclaw"
+  pr: 56555
+  base_commit: "f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb"
+  merge_commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
+
+checks:
+  - id: typescript_file_valid
+    type: pass_to_pass
+    origin: static
+    description: "completion-cli.ts exists and contains completion generation logic"
+
+  - id: compdef_not_bare_at_toplevel
+    type: fail_to_pass
+    origin: pr_diff
+    description: "compdef must be called inside a registration function, not bare at top level"
+
+  - id: compdef_availability_check
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Registration logic checks whether compdef is available before calling it"
+
+  - id: precmd_hook_queues_deferred_registration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When compdef is unavailable, registration is deferred via precmd_functions"
+
+  - id: cleanup_after_successful_registration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "After compdef succeeds, hook removes itself from precmd_functions and undefines"
+
+  - id: dedup_prevents_duplicate_hooks
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Repeated sourcing does not add duplicate entries to precmd_functions"
+
+  - id: zsh_completion_function_intact
+    type: pass_to_pass
+    origin: static
+    description: "Root completion function still defined and not a stub"
+
+  - id: no_ts_nocheck
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @ts-nocheck or @ts-ignore in CLI source files"
+    source:
+      path: "CLAUDE.md"
+      lines: "104"
+      commit: "f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb"
+
+rubric:
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    source:
+      path: "CLAUDE.md"
+      lines: "114"
+      commit: "f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb"
+  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings."
+    source:
+      path: "CLAUDE.md"
+      lines: "118"
+      commit: "f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb"

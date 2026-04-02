@@ -1,0 +1,70 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 0  # synthetic — fix derived from check_models_have_kwargs nested-class bug
+  base_commit: "9a9997fd73c5eb29fb3677d3c489f5d3cd0765f6"
+  merge_commit: ""
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "utils/check_repo.py must parse without syntax errors"
+
+  - id: nested_class_in_container_ignored
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Nested class inside another class is not flagged for missing **kwargs"
+
+  - id: nested_class_in_function_ignored
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Nested class inside a function is not flagged for missing **kwargs"
+
+  - id: nested_only_file_no_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "File with only nested classes (no top-level models) produces no error"
+
+  - id: get_model_modules_cached
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_model_modules() returns same cached object on repeated calls"
+
+  - id: toplevel_missing_kwargs_caught
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Top-level PreTrainedModel subclass without **kwargs is still flagged"
+
+  - id: toplevel_with_kwargs_passes
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Top-level PreTrainedModel subclass with **kwargs passes check"
+
+  - id: ruff_lint
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified file passes ruff linting"
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "9a9997fd73c5eb29fb3677d3c489f5d3cd0765f6"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "check_repo.py has real code (>1000 lines), not stubbed out"
+
+rubric:
+  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`."
+    source:
+      path: "CLAUDE.md"
+      lines: "66"
+      commit: "9a9997fd73c5eb29fb3677d3c489f5d3cd0765f6"
+
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "9a9997fd73c5eb29fb3677d3c489f5d3cd0765f6"

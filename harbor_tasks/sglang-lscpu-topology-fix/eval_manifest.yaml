@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 18520
+  base_commit: "069c7e4188aca6ef69c0b81dfa05abba49685946"
+  merge_commit: "753da275358e4b4c9abcdfefae24dd192e5029b9"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified file must parse without syntax errors"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "parse_lscpu_topology has real logic, not just pass/return"
+
+  - id: malformed_lines_skipped
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Lines with != 4 fields must be skipped, not crash"
+
+  - id: empty_fields_default_to_zero
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Lines like '0,1,,0' must not raise ValueError on int('')"
+
+  - id: mixed_valid_invalid_input
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Valid lines parse correctly even when surrounded by bad lines"
+
+  - id: normal_input_parsed
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Normal 4-field input is parsed with correct values"
+
+  - id: multi_socket_topology
+    type: pass_to_pass
+    origin: pr_diff
+    description: "8-CPU multi-socket topology parses correctly"
+
+rubric: []

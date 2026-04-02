@@ -16,6 +16,7 @@ index 3a8d551eb2..daabdca71f 100644
              "title": "Checkbox Group",
              "type": "array",
          }
+
 PATCH
 
 git apply --check /tmp/patch.diff 2>/dev/null && git apply /tmp/patch.diff || echo "Patch already applied or conflicts (idempotent)"

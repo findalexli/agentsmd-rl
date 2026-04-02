@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12933
+  base_commit: "01352c78e560c3a6de728a4aec07027e96c27acc"
+  merge_commit: "44a8a9fe1316f1c110638c3c40158a75b6c0d135"
+
+checks:
+  - id: file_is_valid_svelte
+    type: pass_to_pass
+    origin: static
+    description: "Block.svelte must exist and be a valid Svelte component"
+
+  - id: hide_container_no_inherited_border_var
+    type: fail_to_pass
+    origin: pr_diff
+    description: "hide-container must NOT set --block-border-width CSS variable (inherits to children)"
+
+  - id: hide_container_uses_direct_border_zero
+    type: fail_to_pass
+    origin: pr_diff
+    description: "hide-container must zero its own border directly, not via inherited CSS variable"
+
+  - id: child_block_retains_border
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Simulated CSS inheritance: child .block inside hide-container retains border"
+
+  - id: hide_container_preserves_other_resets
+    type: pass_to_pass
+    origin: pr_diff
+    description: "hide-container preserves its other CSS resets (margin, box-shadow, background, padding, overflow)"
+
+  - id: block_class_preserves_styling
+    type: pass_to_pass
+    origin: pr_diff
+    description: ".block CSS class retains core visual properties (box-shadow, border-color, etc.)"
+
+  - id: svelte_template_integrity
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Key Svelte template bindings preserved (hide-container, fullscreen, flex-grow, etc.)"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "01352c78e560c3a6de728a4aec07027e96c27acc"
+  - rule: "Frontend code is formatted with `prettier`. Run `bash scripts/format_frontend.sh`."
+    source:
+      path: "AGENTS.md"
+      lines: "33-34"
+      commit: "01352c78e560c3a6de728a4aec07027e96c27acc"
+  - rule: "Formatting is handled by prettier to ensure consistent formatting. Formatting failures will fail CI and should be resolved before merging."
+    source:
+      path: "js/README.md"
+      lines: "65"
+      commit: "01352c78e560c3a6de728a4aec07027e96c27acc"
+  - rule: "TypeScript is used to provide static types to JavaScript code. Type checks are run in CI."
+    source:
+      path: "js/README.md"
+      lines: "81"
+      commit: "01352c78e560c3a6de728a4aec07027e96c27acc"

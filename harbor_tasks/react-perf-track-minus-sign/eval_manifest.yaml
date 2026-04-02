@@ -1,0 +1,30 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 0
+  base_commit: "ff191f24b5f49252672ac4d3c46ef1e79cf7290d"
+  merge_commit: ""
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "ReactPerformanceTrackProperties.js must parse without syntax errors"
+
+  - id: removed_constant_uses_minus_sign
+    type: fail_to_pass
+    origin: pr_diff
+    description: "REMOVED constant first character must be ASCII minus sign '-' (U+002D, codepoint 45)"
+
+  - id: removed_not_en_dash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "REMOVED constant must not contain en dash U+2013 in any form"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "File still defines REMOVED, ADDED, and UNCHANGED constants with non-empty values"
+
+rubric: []

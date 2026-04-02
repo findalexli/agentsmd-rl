@@ -1,0 +1,85 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 1003
+  base_commit: "6208006db64ac29aded7be33963e86503ba9e28e"
+  merge_commit: "eb494def6af8390b115ac2409dc86a221c9d3f83"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All modified files must parse as valid Python"
+
+  - id: memory_allocated_and_reserved
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CpuPlatform.memory_allocated() and memory_reserved() return 0"
+
+  - id: mem_get_info
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CpuPlatform.mem_get_info() returns a 2-tuple of zeros"
+
+  - id: empty_cache
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CpuPlatform.empty_cache() is callable and returns None"
+
+  - id: fsdp_engine_cpu_device
+    type: fail_to_pass
+    origin: pr_diff
+    description: "fsdp_engine._create_device_model creates cpu device when platform is cpu"
+
+  - id: archon_engine_cpu_device
+    type: fail_to_pass
+    origin: pr_diff
+    description: "archon_engine._create_device_model also handles cpu platform"
+
+  - id: scheduler_guards_env_var
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Scheduler guards device_control_env_var assignment with a conditional"
+
+  - id: existing_cpu_platform_api
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing CpuPlatform API preserved (clear_memory, get_visible_devices, attrs)"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No wildcard imports in modified files"
+    source:
+      path: "CLAUDE.md"
+      lines: "93"
+      commit: "6208006db64ac29aded7be33963e86503ba9e28e"
+
+  - id: no_bare_print
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare print() calls — use areal.utils.logging.getLogger instead"
+    source:
+      path: "AGENTS.md"
+      lines: "89-91"
+      commit: "6208006db64ac29aded7be33963e86503ba9e28e"
+
+rubric:
+  - rule: "Prefer composition over inheritance: Avoid deep class hierarchies"
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "6208006db64ac29aded7be33963e86503ba9e28e"
+
+  - rule: "Use areal.utils.logging.getLogger(name) with PascalCase descriptive name, NOT print or stdlib logging"
+    source:
+      path: "AGENTS.md"
+      lines: "89-91"
+      commit: "6208006db64ac29aded7be33963e86503ba9e28e"
+
+  - rule: "Explicit type hints on new method signatures; reuse existing project type conventions"
+    source:
+      path: "AGENTS.md"
+      lines: "99"
+      commit: "6208006db64ac29aded7be33963e86503ba9e28e"

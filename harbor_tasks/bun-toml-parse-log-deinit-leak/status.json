@@ -1,0 +1,69 @@
+{
+  "validations": [
+    {
+      "timestamp": "2026-03-30T13:02:43.965312",
+      "runner": "run_pipeline.py validate (20260330)",
+      "docker_build": false,
+      "gold_score": null,
+      "nop_score": null,
+      "verdict": "error",
+      "notes": "timeout"
+    },
+    {
+      "timestamp": "2026-03-30T11:48:11.528386",
+      "runner": "audit (audit-tests_20260330_114811)",
+      "phase": "audit",
+      "status": "success",
+      "output_tokens": 12398
+    },
+    {
+      "timestamp": "2026-03-31T13:37:29-07:00",
+      "runner": "validate_and_fix.sh",
+      "docker_build": false,
+      "gold_score": null,
+      "nop_score": null,
+      "verdict": "fail_build",
+      "notes": "Docker build failed"
+    },
+    {
+      "timestamp": "2026-03-31T09:10:27.424811",
+      "runner": "audit (audit-tests_20260331_091027)",
+      "phase": "audit",
+      "status": "success",
+      "output_tokens": 14856
+    },
+    {
+      "timestamp": "2026-04-01T20:15:41.659303",
+      "phase": "docker_validate_v2",
+      "runner": "scripts/docker_validate_all.sh",
+      "verdict": "fail",
+      "nop": "0",
+      "gold": "0",
+      "format": "pytest_binary"
+    },
+    {
+      "timestamp": "2026-04-02T12:58:21.145653",
+      "phase": "e2b_post_remake",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail_build",
+      "notes": "Sandbox create: 404: template 'wfj8fu34ra2v83c125sy' not found"
+    },
+    {
+      "timestamp": "2026-04-02T14:06:36.420267",
+      "phase": "e2b_sandbox404_retry",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail_build",
+      "notes": "Sandbox rebuild+create: failed to run command 'python3 -m pip install --no-cache-dir --break-system-packages pytest pytest-json-ctrf': exit status 1"
+    },
+    {
+      "timestamp": "2026-04-02T14:28:08.941532",
+      "phase": "e2b_full_validation",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail_build",
+      "notes": "Sandbox rebuild+create: failed to run command 'python3 -m pip install --no-cache-dir --break-system-packages pytest pytest-json-ctrf': exit status 1"
+    }
+  ]
+}

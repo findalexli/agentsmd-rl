@@ -1,0 +1,136 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 506
+  base_commit: "26382c6216797e65a1b43dea8646725332f62e07"
+
+checks:
+  # Gates
+  - id: file_exists_and_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Target file exists and has substantial content (not stubbed)"
+
+  - id: syntax_balanced_braces
+    type: pass_to_pass
+    origin: static
+    description: "File has balanced curly braces"
+
+  - id: memo_block_exists
+    type: pass_to_pass
+    origin: static
+    description: "const values = createMemo block exists and is non-trivial"
+
+  # Core behavioral (fail-to-pass) — executed via Node.js with mocks
+  - id: kv_fallback_when_active_missing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When active theme is missing, KV-saved theme is used as fallback"
+
+  - id: kv_fallback_varied_themes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "KV fallback works with multiple different saved theme names"
+
+  - id: buggy_direct_fallback_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Buggy store.themes[store.active] ?? store.themes.opencode pattern removed"
+
+  # Behavioral regression (pass-to-pass) — executed via Node.js with mocks
+  - id: active_theme_used_when_present
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When active theme exists in map, it is used directly (KV ignored)"
+
+  - id: opencode_fallback_when_kv_invalid
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Falls back to opencode when active missing and KV names nonexistent theme"
+
+  - id: opencode_fallback_when_kv_not_string
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Falls back to opencode when KV value is null, number, or boolean"
+
+  # Export preservation (pass-to-pass)
+  - id: resolve_theme_exported
+    type: pass_to_pass
+    origin: repo_tests
+    description: "resolveTheme function export preserved"
+
+  - id: use_theme_provider_exported
+    type: pass_to_pass
+    origin: repo_tests
+    description: "useTheme and ThemeProvider exports preserved"
+
+  - id: default_themes_exported
+    type: pass_to_pass
+    origin: repo_tests
+    description: "DEFAULT_THEMES export preserved"
+
+  # Config-derived (pass-to-pass)
+  - id: no_any_type_in_memo
+    type: pass_to_pass
+    origin: agent_config
+    description: "No 'any' type used in the values memo"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "26382c6216797e65a1b43dea8646725332f62e07"
+
+  - id: no_try_catch_in_memo
+    type: pass_to_pass
+    origin: agent_config
+    description: "No try/catch in the values memo"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "26382c6216797e65a1b43dea8646725332f62e07"
+
+  - id: prefer_const_in_memo
+    type: pass_to_pass
+    origin: agent_config
+    description: "No let declarations in the values memo — prefer const with early returns"
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "26382c6216797e65a1b43dea8646725332f62e07"
+
+rubric:
+  - rule: "Keep things in one function unless composable or reusable"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "26382c6216797e65a1b43dea8646725332f62e07"
+
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "26382c6216797e65a1b43dea8646725332f62e07"
+
+  - rule: "Use single word names by default for new locals, params, and helper functions"
+    source:
+      path: "AGENTS.md"
+      lines: "27"
+      commit: "26382c6216797e65a1b43dea8646725332f62e07"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once"
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "26382c6216797e65a1b43dea8646725332f62e07"
+
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "26382c6216797e65a1b43dea8646725332f62e07"
+
+  - rule: "Avoid else statements. Prefer early returns."
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "26382c6216797e65a1b43dea8646725332f62e07"

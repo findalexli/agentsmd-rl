@@ -105,4 +105,5 @@ index f308f0cbd24be..ab6ccb04e5f85 100644
  /// Returns `true` if the `if` statement contains a comment
  fn if_contains_comments(stmt: &StmtIf, checker: &Checker) -> bool {
      let source = checker.source();
+
 PATCH

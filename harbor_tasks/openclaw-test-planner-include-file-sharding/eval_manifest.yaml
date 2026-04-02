@@ -1,0 +1,115 @@
+version: "2.0"
+
+source:
+  repo: "openclaw/openclaw"
+  pr: 57807
+  base_commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
+  merge_commit: "aff6883f93abcbfd18ebb743871bc804b10f5728"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified .mjs files must parse without syntax errors"
+
+  - id: filter_helper_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both files define a helper combining countExplicitEntryFilters with includeFiles fallback"
+
+  - id: include_files_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Helper returns includeFiles.length when explicit CLI filters are null"
+
+  - id: explicit_filters_take_priority
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Helper prefers explicit CLI filter count over includeFiles count"
+
+  - id: executor_call_sites_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "executor.mjs call sites no longer use raw countExplicitEntryFilters(unit.args)"
+
+  - id: planner_call_sites_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "planner.mjs call sites no longer use raw countExplicitEntryFilters(unit.args)"
+
+  - id: null_for_no_include_files
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Helper returns null when includeFiles is empty, undefined, or null"
+
+  - id: explicit_filter_import_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "countExplicitEntryFilters still imported from vitest-args.mjs in both files"
+
+  - id: helper_not_inlined
+    type: pass_to_pass
+    origin: agent_config
+    description: "includeFiles fallback uses a helper, not inlined at each call site"
+    source:
+      path: "CLAUDE.md"
+      lines: "164"
+      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
+
+  - id: no_lint_suppressions
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files must not add inline lint suppressions (@ts-nocheck, eslint-disable, etc.)"
+    source:
+      path: "CLAUDE.md"
+      lines: "146"
+      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
+
+  - id: no_explicit_any_disable
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files must not disable no-explicit-any"
+    source:
+      path: "CLAUDE.md"
+      lines: "147"
+      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
+
+  - id: no_prototype_mutation
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files must not share behavior via prototype mutation"
+    source:
+      path: "CLAUDE.md"
+      lines: "160"
+      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
+
+rubric:
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    source:
+      path: "CLAUDE.md"
+      lines: "163"
+      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
+
+  - rule: "Aim to keep files under ~700 LOC; guideline only. Split/refactor when it improves clarity or testability."
+    source:
+      path: "CLAUDE.md"
+      lines: "165"
+      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
+
+  - rule: "Do not use freeform strings as the source of truth for internal branching; keep human-readable strings for logs and UI only."
+    source:
+      path: "CLAUDE.md"
+      lines: "151"
+      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
+
+  - rule: "Avoid ?? 0, empty-string, empty-object, or magic-string sentinels when they can change runtime meaning silently."
+    source:
+      path: "CLAUDE.md"
+      lines: "152"
+      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
+
+  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings."
+    source:
+      path: "CLAUDE.md"
+      lines: "167"
+      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"

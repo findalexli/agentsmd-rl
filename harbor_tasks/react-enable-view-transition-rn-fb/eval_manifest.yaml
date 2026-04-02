@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 36106
+  base_commit: "b4546cd0d4db2b913d8e7503bee86e1844073b2e"
+  merge_commit: "d594643e5e5b662f064c584018ab3773754c792d"
+
+checks:
+  - id: enable_view_transition_native_fb
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableViewTransition is set to true in ReactFeatureFlags.native-fb.js"
+
+  - id: enable_view_transition_test_renderer_native_fb
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableViewTransition is set to true in ReactFeatureFlags.test-renderer.native-fb.js"
+
+  - id: enable_view_transition_test_renderer_www
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableViewTransition is set to true in ReactFeatureFlags.test-renderer.www.js"
+
+  - id: no_unintended_flag_changes
+    type: pass_to_pass
+    origin: static
+    description: "Other flags (enableGestureTransition, enableSuspenseyImages, etc.) remain at base-commit values"
+
+  - id: all_fork_files_have_view_transition_enabled
+    type: fail_to_pass
+    origin: agent_config
+    description: "All three fork files have enableViewTransition enabled — not just the main one"
+    source:
+      path: ".claude/skills/feature-flags/SKILL.md"
+      lines: "78"
+      commit: "b4546cd0d4db2b913d8e7503bee86e1844073b2e"
+
+rubric:
+  - rule: "New flags should use inline gate() for behavior differences rather than @gate pragma (which skips the test entirely)."
+    source:
+      path: ".claude/skills/feature-flags/SKILL.md"
+      lines: "31-44"
+      commit: "b4546cd0d4db2b913d8e7503bee86e1844073b2e"
+
+  - rule: "Flag changes should maintain consistent value types — don't mix boolean true/false with __VARIANT__ for the same flag across fork files."
+    source:
+      path: ".claude/skills/feature-flags/SKILL.md"
+      lines: "58-65"
+      commit: "b4546cd0d4db2b913d8e7503bee86e1844073b2e"

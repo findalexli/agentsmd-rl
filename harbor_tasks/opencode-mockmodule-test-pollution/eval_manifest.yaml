@@ -1,0 +1,122 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19445
+  base_commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+  merge_commit: "ff13524a531ebd196224551199c3cb0833c44c3c"
+
+checks:
+  - id: mock_leakage_canary
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Thread test mocks do not leak to subsequent test files"
+
+  - id: no_mock_module_in_thread_test
+    type: fail_to_pass
+    origin: pr_diff
+    description: "thread.test.ts does not use mock.module() (leaks globally in Bun)"
+
+  - id: config_mock_filters_by_cwd
+    type: fail_to_pass
+    origin: pr_diff
+    description: "config.test.ts BunProc.run mock filters calls by working directory"
+
+  - id: thread_tests_pass
+    type: pass_to_pass
+    origin: pr_diff
+    description: "thread.test.ts runs successfully with bun test"
+
+  - id: config_tests_pass
+    type: pass_to_pass
+    origin: pr_diff
+    description: "config.test.ts runs successfully with bun test"
+
+  - id: mock_cleanup_in_lifecycle_hook
+    type: fail_to_pass
+    origin: agent_config
+    description: "thread.test.ts cleans up mocks in afterEach/afterAll"
+    source:
+      path: "AGENTS.md"
+      lines: "122"
+      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+
+  - id: no_any_type_added
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changes do not introduce the any type"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+
+  - id: no_try_catch_added
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changes do not introduce try/catch blocks"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+
+  - id: no_else_added
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changes do not introduce else statements"
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+
+  - id: thread_test_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "thread.test.ts is not stubbed out"
+
+  - id: config_test_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "config.test.ts is not stubbed and has substantive mock logic"
+
+rubric:
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+
+  - rule: "Prefer `const` over `let`. Use ternaries or early returns instead of reassignment."
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+
+  - rule: "Avoid mocks as much as possible"
+    source:
+      path: "AGENTS.md"
+      lines: "122"
+      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+
+  - rule: "Test actual implementation, do not duplicate logic into tests"
+    source:
+      path: "AGENTS.md"
+      lines: "123"
+      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+
+  - rule: "Prefer single word variable names where possible"
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+
+  - rule: "Prefer functional array methods (flatMap, filter, map) over for loops"
+    source:
+      path: "AGENTS.md"
+      lines: "17"
+      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"

@@ -1,0 +1,74 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 306574
+  base_commit: "3d91bf7907bba3f8f511a70ba352b2006c7b653a"
+  merge_commit: "99a7b4b0842dca767b056a303efa2412edfa16d8"
+
+checks:
+  - id: ts_compile
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript compilation must succeed after changes"
+
+  - id: no_dispose_session_called
+    type: fail_to_pass
+    origin: pr_diff
+    description: "disposeSession must not be called in the unsubscribe handler"
+
+  - id: mock_tracks_disposed_sessions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MockAgentHostService tracks disposeSession calls via disposedSessions array"
+
+  - id: disposing_chat_does_not_dispose_backend
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Regression test asserts disposing the UI session does not dispose the backend session"
+
+  - id: no_import_from_sessions
+    type: pass_to_pass
+    origin: agent_config
+    description: "vs/workbench files must never import from vs/sessions"
+    source:
+      path: ".github/skills/sessions/SKILL.md"
+      lines: "24"
+      commit: "3d91bf7907bba3f8f511a70ba352b2006c7b653a"
+
+rubric:
+  - rule: "Use arrow functions => over anonymous function expressions"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "147"
+      commit: "3d91bf7907bba3f8f511a70ba352b2006c7b653a"
+
+  - rule: "Only surround arrow function parameters when necessary"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "148"
+      commit: "3d91bf7907bba3f8f511a70ba352b2006c7b653a"
+
+  - rule: "Always surround loop and conditional bodies with curly braces"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "156"
+      commit: "3d91bf7907bba3f8f511a70ba352b2006c7b653a"
+
+  - rule: "Open curly braces always go on the same line as whatever necessitates them"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "157"
+      commit: "3d91bf7907bba3f8f511a70ba352b2006c7b653a"
+
+  - rule: "You MUST deal with disposables by registering them immediately after creation for later disposal"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "172"
+      commit: "3d91bf7907bba3f8f511a70ba352b2006c7b653a"
+
+  - rule: "Do NOT register a disposable to the containing class if the object is created within a method that is called repeatedly to avoid leaks"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "173"
+      commit: "3d91bf7907bba3f8f511a70ba352b2006c7b653a"

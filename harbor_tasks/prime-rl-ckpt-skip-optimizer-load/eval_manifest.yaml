@@ -1,0 +1,69 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 2087
+  base_commit: "d8030652042f38a019beffecd8aa5e07cfefe4c4"
+  merge_commit: "60f01a04681df563044cf3cb7c64ec480b608451"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (configs/trainer.py, trainer/ckpt.py) must parse without errors"
+
+  - id: config_field_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CheckpointConfig must have a boolean skip_optimizer field"
+
+  - id: config_default_false
+    type: fail_to_pass
+    origin: pr_diff
+    description: "skip_optimizer must default to False so existing behavior is preserved"
+
+  - id: config_accepts_true_and_roundtrips
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CheckpointConfig(skip_optimizer=True) must work and round-trip through model_dump"
+
+  - id: config_consistent_with_siblings
+    type: fail_to_pass
+    origin: pr_diff
+    description: "skip_optimizer follows same pattern as skip_progress, skip_scheduler, skip_dataloader"
+
+  - id: ckpt_conditional_skip
+    type: fail_to_pass
+    origin: pr_diff
+    description: "load_from_path must conditionally pass empty optimizers when skip_optimizer is set"
+
+  - id: ckpt_stores_skip_optimizer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CheckpointManager.__init__ must store skip_optimizer from config"
+
+  - id: existing_fields_work
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing CheckpointConfig fields (skip_progress, skip_scheduler, interval, etc.) still work"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files have expected content and are not stubbed out"
+
+  - id: no_try_except_in_config
+    type: pass_to_pass
+    origin: agent_config
+    description: "No unnecessary try/except blocks in configs/trainer.py"
+    source:
+      path: "AGENTS.md"
+      lines: "5"
+      commit: "d8030652042f38a019beffecd8aa5e07cfefe4c4"
+
+rubric:
+  - rule: "Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code."
+    source:
+      path: "AGENTS.md"
+      lines: "7"
+      commit: "d8030652042f38a019beffecd8aa5e07cfefe4c4"

@@ -1,0 +1,72 @@
+version: "2.0"
+
+source:
+  repo: "zeroclaw-labs/zeroclaw"
+  pr: 4825
+  base_commit: "753d4fc65f32b45797e7aba52db6c8eb3a24ad89"
+
+checks:
+  - id: compile
+    type: pass_to_pass
+    origin: static
+    description: "Both modified Rust files compile with cargo check"
+
+  - id: emergency_trim_no_orphaned_tools
+    type: fail_to_pass
+    origin: pr_diff
+    description: "emergency_history_trim drops assistant + consecutive tool messages as an atomic group"
+
+  - id: prune_budget_no_orphaned_tools
+    type: fail_to_pass
+    origin: pr_diff
+    description: "prune_history Phase 2 budget enforcement drops assistant+tool groups atomically"
+
+  - id: prune_collapse_then_budget_no_orphaned_tools
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Full prune cycle (collapse + budget) preserves tool pairing with multi-tool groups and 15-iteration stress test"
+
+  - id: existing_cargo_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing library tests still pass"
+
+  - id: cargo_fmt
+    type: pass_to_pass
+    origin: agent_config
+    description: "Code passes cargo fmt --all -- --check"
+    source:
+      path: "AGENTS.md"
+      lines: "8"
+      commit: "753d4fc65f32b45797e7aba52db6c8eb3a24ad89"
+
+  - id: cargo_clippy
+    type: pass_to_pass
+    origin: agent_config
+    description: "Code passes cargo clippy --all-targets -- -D warnings"
+    source:
+      path: "AGENTS.md"
+      lines: "9"
+      commit: "753d4fc65f32b45797e7aba52db6c8eb3a24ad89"
+
+rubric:
+  - rule: "Implement minimal patch — no speculative abstractions, no config keys without a concrete use case."
+    source:
+      path: "AGENTS.md"
+      lines: "66"
+      commit: "753d4fc65f32b45797e7aba52db6c8eb3a24ad89"
+  - rule: "Do not mix massive formatting-only changes with functional changes."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "753d4fc65f32b45797e7aba52db6c8eb3a24ad89"
+  - rule: "Do not modify unrelated modules 'while here'."
+    source:
+      path: "AGENTS.md"
+      lines: "83"
+      commit: "753d4fc65f32b45797e7aba52db6c8eb3a24ad89"
+  - rule: "Do not hide behavior-changing side effects in refactor commits."
+    source:
+      path: "AGENTS.md"
+      lines: "85"
+      commit: "753d4fc65f32b45797e7aba52db6c8eb3a24ad89"

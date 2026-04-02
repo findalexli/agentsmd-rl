@@ -1,0 +1,88 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24299
+  base_commit: "459f20220ac0f8467e47779f21420fecab154c9d"
+  merge_commit: "7c236fae3d6d889d76f31696a6c1f7ae06b84b8a"
+
+checks:
+  - id: cargo_check_ruff_dev
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Code compiles with imara-diff 0.2.x (cargo check -p ruff_dev)"
+
+  - id: imara_diff_version_upgraded
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Workspace Cargo.toml pins imara-diff to 0.2.x"
+
+  - id: cargo_check_ruff_cli
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Parent crate (ruff) still compiles — no public interface regressions"
+
+  - id: format_dev_not_truncated
+    type: pass_to_pass
+    origin: static
+    description: "format_dev.rs retains substantial content (>200 lines)"
+
+  - id: statistics_struct_intact
+    type: pass_to_pass
+    origin: static
+    description: "Statistics struct and diff-related methods still present"
+
+  - id: imports_at_file_top
+    type: pass_to_pass
+    origin: agent_config
+    description: "imara_diff imports at file top, not inside function bodies"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "459f20220ac0f8467e47779f21420fecab154c9d"
+
+  - id: no_new_unwrap
+    type: pass_to_pass
+    origin: agent_config
+    description: "No new .unwrap() calls added in format_dev.rs"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "459f20220ac0f8467e47779f21420fecab154c9d"
+
+  - id: no_new_panic_or_unreachable
+    type: pass_to_pass
+    origin: agent_config
+    description: "No new panic!() or unreachable!() macros in format_dev.rs"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "459f20220ac0f8467e47779f21420fecab154c9d"
+
+  - id: no_allow_attribute_over_expect
+    type: pass_to_pass
+    origin: agent_config
+    description: "New lint suppressions use #[expect()] not #[allow()]"
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "459f20220ac0f8467e47779f21420fecab154c9d"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "459f20220ac0f8467e47779f21420fecab154c9d"
+
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "459f20220ac0f8467e47779f21420fecab154c9d"
+
+  - rule: "Avoid writing significant amounts of new code. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "459f20220ac0f8467e47779f21420fecab154c9d"

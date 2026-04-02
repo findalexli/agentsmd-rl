@@ -1,0 +1,57 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 13126
+  base_commit: "8bc75137b24ba8a8571b49b9b006741819c0518b"
+  merge_commit: "a09c0e891709e007e4f265fc48f466175f5a2a22"
+
+checks:
+  - id: utils_syntax
+    type: pass_to_pass
+    origin: static
+    description: "utils.ts must have balanced braces (no syntax errors)"
+
+  - id: hsva_to_rgba_returns_hex
+    type: fail_to_pass
+    origin: pr_diff
+    description: "hsva_to_rgba must return #rrggbb hex strings, not rgba() strings"
+
+  - id: normalize_color_various_formats
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Color strings (rgb, hsl, named, shorthand hex) must be normalized to #rrggbb"
+
+  - id: normalize_color_invalid_input
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Normalization must not crash on invalid color strings"
+
+  - id: svelte_text_input_normalization
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Colorpicker.svelte text input handler must normalize color before setting value"
+
+  - id: format_color_regression
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing format_color function still produces correct output"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "8bc75137b24ba8a8571b49b9b006741819c0518b"
+
+  - rule: "Frontend code is formatted with prettier."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "8bc75137b24ba8a8571b49b9b006741819c0518b"
+
+  - rule: "TypeScript should be used to provide static types to JavaScript code."
+    source:
+      path: "js/README.md"
+      lines: "81"
+      commit: "8bc75137b24ba8a8571b49b9b006741819c0518b"

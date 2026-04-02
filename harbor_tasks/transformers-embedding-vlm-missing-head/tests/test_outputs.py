@@ -1,0 +1,198 @@
+"""
+Task: transformers-embedding-vlm-missing-head
+Repo: huggingface/transformers @ 05514c4bb641ba1537d17048fd93f50f45d5f19d
+PR:   45000
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import ast
+import sys
+from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, "/workspace/repo/src")
+REPO = Path("/workspace/repo")
+
+MODIFIED_FILES = [
+    "src/transformers/models/colpali/modeling_colpali.py",
+    "src/transformers/models/colqwen2/modeling_colqwen2.py",
+    "src/transformers/models/colqwen2/modular_colqwen2.py",
+    "src/transformers/models/colmodernvbert/modeling_colmodernvbert.py",
+    "src/transformers/conversion_mapping.py",
+]
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _get_class_method_source(filepath, class_name, method_name):
+    """Extract source text of a method within a class using AST."""
+    # AST-only because: VLM instantiation (vision+language model) exceeds 4GB container RAM
+    src = filepath.read_text()
+    tree = ast.parse(src)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == class_name:
+            for item in node.body:
+                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and item.name == method_name:
+                    return ast.get_source_segment(src, item)
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static)
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_syntax_check():
+    """Modified Python files must parse without syntax errors."""
+    for f in MODIFIED_FILES:
+        source = (REPO / f).read_text()
+        ast.parse(source)
+
+
+# [pr_diff] pass_to_pass
+def test_modules_import():
+    """All affected modules import without errors."""
+    from transformers.models.colpali.modeling_colpali import ColPaliForRetrieval
+    from transformers.models.colqwen2.modeling_colqwen2 import ColQwen2ForRetrieval
+    from transformers.models.colmodernvbert.modeling_colmodernvbert import (
+        ColModernVBertForRetrieval,
+    )
+    from transformers.conversion_mapping import _build_checkpoint_conversion_mapping
+
+    assert ColPaliForRetrieval is not None
+    assert ColQwen2ForRetrieval is not None
+    assert ColModernVBertForRetrieval is not None
+    assert callable(_build_checkpoint_conversion_mapping)
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — must use base model class, not causal LM
+# AST-only because: VLM instantiation (vision+language model) exceeds 4GB container RAM
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_colpali_uses_base_model_class():
+    """ColPali must not use AutoModelForImageTextToText (needs base model without LM head)."""
+    src = (REPO / "src/transformers/models/colpali/modeling_colpali.py").read_text()
+    assert "AutoModelForImageTextToText" not in src, (
+        "ColPali should not use AutoModelForImageTextToText — "
+        "retrieval models need a base model without the LM head"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_colqwen2_uses_base_model_class():
+    """ColQwen2 must not use AutoModelForImageTextToText (needs base model without LM head)."""
+    src = (REPO / "src/transformers/models/colqwen2/modeling_colqwen2.py").read_text()
+    assert "AutoModelForImageTextToText" not in src, (
+        "ColQwen2 should not use AutoModelForImageTextToText — "
+        "retrieval models need a base model without the LM head"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — forward() must call vlm directly, not through .model
+# AST-only because: VLM instantiation (vision+language model) exceeds 4GB container RAM
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_colpali_forward_no_model_indirection():
+    """ColPali forward must call self.vlm() directly, not self.vlm.model()."""
+    fpath = REPO / "src/transformers/models/colpali/modeling_colpali.py"
+    fwd = _get_class_method_source(fpath, "ColPaliForRetrieval", "forward")
+    assert fwd is not None, "Could not find ColPaliForRetrieval.forward()"
+    assert "self.vlm.model(" not in fwd, (
+        "forward() calls self.vlm.model() — with a base model (no head), "
+        "the VLM should be called directly via self.vlm()"
+    )
+    assert "self.vlm(" in fwd, (
+        "forward() should contain a call to self.vlm() for the VLM forward pass"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_colqwen2_forward_no_model_indirection():
+    """ColQwen2 forward must not go through self.vlm.model (use self.vlm directly)."""
+    fpath = REPO / "src/transformers/models/colqwen2/modeling_colqwen2.py"
+    fwd = _get_class_method_source(fpath, "ColQwen2ForRetrieval", "forward")
+    assert fwd is not None, "Could not find ColQwen2ForRetrieval.forward()"
+    assert "self.vlm.model(" not in fwd, (
+        "forward() calls self.vlm.model() — with a base model (no head), "
+        "the VLM should be called directly via self.vlm()"
+    )
+    assert "self.vlm.model.visual(" not in fwd, (
+        "forward() calls self.vlm.model.visual() — with a base model, "
+        "visual should be accessed via self.vlm.visual()"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — base_model_prefix must be set to 'vlm'
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_colpali_base_model_prefix():
+    """ColPaliForRetrieval.base_model_prefix must be 'vlm'."""
+    from transformers.models.colpali.modeling_colpali import ColPaliForRetrieval
+
+    assert ColPaliForRetrieval.base_model_prefix == "vlm", (
+        f"Expected base_model_prefix='vlm', got {ColPaliForRetrieval.base_model_prefix!r}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_colqwen2_base_model_prefix():
+    """ColQwen2ForRetrieval.base_model_prefix must be 'vlm'."""
+    from transformers.models.colqwen2.modeling_colqwen2 import ColQwen2ForRetrieval
+
+    assert ColQwen2ForRetrieval.base_model_prefix == "vlm", (
+        f"Expected base_model_prefix='vlm', got {ColQwen2ForRetrieval.base_model_prefix!r}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_colmodernvbert_base_model_prefix():
+    """ColModernVBertForRetrieval.base_model_prefix must be 'vlm'."""
+    from transformers.models.colmodernvbert.modeling_colmodernvbert import (
+        ColModernVBertForRetrieval,
+    )
+
+    assert ColModernVBertForRetrieval.base_model_prefix == "vlm", (
+        f"Expected base_model_prefix='vlm', got {ColModernVBertForRetrieval.base_model_prefix!r}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — conversion mapping changes
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_colqwen2_conversion_mapping():
+    """colqwen2 must exist in the checkpoint conversion mapping."""
+    from transformers.conversion_mapping import _build_checkpoint_conversion_mapping
+
+    mapping = _build_checkpoint_conversion_mapping()
+    assert "colqwen2" in mapping, (
+        f"colqwen2 not in conversion mapping; keys: {sorted(mapping.keys())}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_colpali_no_conversion_mapping():
+    """colpali entry must be removed from conversion mapping.
+
+    With AutoModel (base model), the old vlm->vlm.model weight renaming
+    is no longer needed and causes incorrect weight loading.
+    """
+    from transformers.conversion_mapping import _build_checkpoint_conversion_mapping
+
+    mapping = _build_checkpoint_conversion_mapping()
+    assert "colpali" not in mapping, (
+        "colpali should not have a conversion mapping entry — "
+        "with base model, no vlm->vlm.model renaming is needed"
+    )

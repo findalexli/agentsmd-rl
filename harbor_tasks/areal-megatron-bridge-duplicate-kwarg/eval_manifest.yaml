@@ -1,0 +1,73 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 1107
+  base_commit: "722e235a37e4a9f3e288e54629179befa494156b"
+  merge_commit: "fdca82dc09e76052fd6ee2fe22afcdc5ff044743"
+
+checks:
+  - id: file_parses
+    type: fail_to_pass
+    origin: pr_diff
+    description: "megatron_engine.py must be valid Python syntax (duplicate kwarg = SyntaxError)"
+
+  - id: no_duplicate_kwargs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No function call in the file has duplicate keyword arguments"
+
+  - id: from_hf_pretrained_trust_remote_code
+    type: fail_to_pass
+    origin: pr_diff
+    description: "from_hf_pretrained() passes trust_remote_code exactly once"
+
+  - id: from_hf_pretrained_has_dtype
+    type: fail_to_pass
+    origin: pr_diff
+    description: "from_hf_pretrained() passes a dtype argument"
+
+  - id: mbridge_path_has_trust_remote_code
+    type: pass_to_pass
+    origin: pr_diff
+    description: "mbridge from_pretrained call still passes trust_remote_code"
+
+  - id: megatron_bridge_path_exists
+    type: pass_to_pass
+    origin: pr_diff
+    description: "The megatron-bridge code path is still present"
+
+  - id: method_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "_build_hf_mcore_bridge has non-trivial body"
+
+  - id: file_not_gutted
+    type: pass_to_pass
+    origin: static
+    description: "File has not been gutted (> 300 lines)"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No wildcard imports (from x import *)"
+    source:
+      path: "AGENTS.md"
+      lines: "30"
+      commit: "722e235a37e4a9f3e288e54629179befa494156b"
+
+  - id: no_bare_print_in_method
+    type: pass_to_pass
+    origin: agent_config
+    description: "_build_hf_mcore_bridge uses self.logger, not bare print()"
+    source:
+      path: "AGENTS.md"
+      lines: "90"
+      commit: "722e235a37e4a9f3e288e54629179befa494156b"
+
+rubric:
+  - rule: "Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation."
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "722e235a37e4a9f3e288e54629179befa494156b"

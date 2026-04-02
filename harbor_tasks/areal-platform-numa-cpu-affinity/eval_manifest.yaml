@@ -1,0 +1,92 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 1083
+  base_commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
+  merge_commit: "aebe13d8a69dc9d23fc4faf6b57b4664149edb64"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All modified Python files must parse without errors"
+
+  - id: platform_base_set_numa_affinity
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Platform base class exposes set_numa_affinity as a callable no-op"
+
+  - id: cuda_handles_missing_pynvml
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CudaPlatform.set_numa_affinity handles missing pynvml gracefully"
+
+  - id: cuda_uses_nvml
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CudaPlatform.set_numa_affinity calls pynvml NVML functions (mock-verified)"
+
+  - id: cuda_nvml_shutdown
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CudaPlatform calls nvmlShutdown after NVML operations for cleanup"
+
+  - id: cuda_handles_nvml_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CudaPlatform catches NVML runtime errors without crashing"
+
+  - id: engines_call_set_numa_affinity
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All three engine files contain a call to set_numa_affinity (AST-verified)"
+
+  - id: platform_existing_methods
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Platform base class existing methods still present"
+
+  - id: cuda_existing_methods
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CudaPlatform existing methods still present"
+
+  - id: cuda_set_numa_affinity_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "CudaPlatform.set_numa_affinity has substantial implementation (not stub)"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No wildcard imports in modified platform files"
+    source:
+      path: "AGENTS.md"
+      lines: "30"
+      commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
+
+  - id: no_print_logging
+    type: pass_to_pass
+    origin: agent_config
+    description: "set_numa_affinity must not use print() — use areal.utils.logging.getLogger"
+    source:
+      path: "AGENTS.md"
+      lines: "90-91"
+      commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
+
+  - id: pynvml_imported_inside_function
+    type: fail_to_pass
+    origin: agent_config
+    description: "pynvml must be imported inside set_numa_affinity, not at module level"
+    source:
+      path: "AGENTS.md"
+      lines: "100-101"
+      commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
+
+rubric:
+  - rule: "Prefer composition over inheritance: Avoid deep class hierarchies"
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"

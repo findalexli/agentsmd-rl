@@ -1,0 +1,74 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44801
+  base_commit: "c55f65056becad6df5f7eef7ce74ac0811fdfac6"
+  merge_commit: "16a5b0936dcaae6efbc03ab1a4fd98dc324bfb9e"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "tokenization_auto.py must parse without syntax errors"
+
+  - id: deepseek_v2_in_incorrect_hub_set
+    type: fail_to_pass
+    origin: pr_diff
+    description: "deepseek_v2 must be in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS"
+
+  - id: deepseek_v3_in_incorrect_hub_set
+    type: fail_to_pass
+    origin: pr_diff
+    description: "deepseek_v3 must be in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS"
+
+  - id: modernbert_in_incorrect_hub_set
+    type: fail_to_pass
+    origin: pr_diff
+    description: "modernbert must be in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS"
+
+  - id: new_models_resolve_in_tokenizer_mapping
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All three new model types must have entries in TOKENIZER_MAPPING_NAMES"
+
+  - id: existing_incorrect_hub_entries_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-existing entries in the override set must not be removed"
+
+  - id: core_tokenizer_mapping_entries_intact
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core model types (bert, gpt2, etc.) still in TOKENIZER_MAPPING_NAMES"
+
+  - id: ruff_format
+    type: pass_to_pass
+    origin: agent_config
+    description: "Code passes ruff format check"
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "c55f65056becad6df5f7eef7ce74ac0811fdfac6"
+
+  - id: no_copied_from_blocks_modified
+    type: pass_to_pass
+    origin: agent_config
+    description: "'# Copied from' blocks must not be edited"
+    source:
+      path: "CLAUDE.md"
+      lines: "65"
+      commit: "c55f65056becad6df5f7eef7ce74ac0811fdfac6"
+
+rubric:
+  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`!"
+    source:
+      path: "CLAUDE.md"
+      lines: "66"
+      commit: "c55f65056becad6df5f7eef7ce74ac0811fdfac6"
+
+  - rule: "Bugfix PRs should be as brief as possible and minimize the size of the diff. Do not add large comments, docstrings or new functions for brief fixes."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "c55f65056becad6df5f7eef7ce74ac0811fdfac6"

@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 90304
+  base_commit: "cfd5f533b08df3038476dcd54f1d6d660d85f069"
+  merge_commit: "962e5b166cea3fdb6589837a8fd3ea62031be17d"
+
+checks:
+  - id: string_render_result_enables_headers
+    type: pass_to_pass
+    origin: pr_diff
+    description: "RenderResult with string arg has isDynamic=false, enabling Content-Length and ETag headers"
+
+  - id: data_response_path_no_buffer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No Buffer.from(JSON.stringify(result.value.pageData)) in handler — data response uses string directly"
+
+  - id: isr_fallback_path_no_buffer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No Buffer.from(previousCacheEntry.value.html) in handler — ISR fallback uses string directly"
+
+  - id: send_payload_header_chain
+    type: pass_to_pass
+    origin: pr_diff
+    description: "sendRenderResult retains isDynamic -> Content-Length + ETag header chain"
+
+  - id: handler_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Handler retains core code paths and has substantial content"
+
+rubric: []

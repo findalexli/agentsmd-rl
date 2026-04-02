@@ -38,4 +38,5 @@ index 1930774ae3e0..ff56e2db03ac 100644
              return t.dtype
 
      # if no floating dtype was found return whatever the first dtype is
+
 PATCH

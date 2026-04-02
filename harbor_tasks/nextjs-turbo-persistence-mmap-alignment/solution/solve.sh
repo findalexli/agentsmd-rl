@@ -88,4 +88,5 @@ index be6a951f0cd6a6..c9ebc3ecb60dc6 100644
 +        .context("Failed to advise mmap Unmergeable")?;
      Ok(())
  }
+
 PATCH

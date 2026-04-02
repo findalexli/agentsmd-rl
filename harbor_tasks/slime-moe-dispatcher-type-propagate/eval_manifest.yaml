@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1737
+  base_commit: "7f2a03b5d390f93a90776b8d99ace6b82fa61738"
+  merge_commit: "73a1f4d935baf1619bf764eadd199a77cecf55cf"
+
+checks:
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "model_provider.py must parse without syntax errors"
+
+  - id: moe_dispatcher_propagated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Bridge provider receives moe_token_dispatcher_type from args"
+
+  - id: moe_dispatcher_various_values
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Propagation works for different dispatcher type values"
+
+  - id: moe_dispatcher_absent_no_error
+    type: pass_to_pass
+    origin: pr_diff
+    description: "No error when args lacks moe_token_dispatcher_type"
+
+  - id: existing_attrs_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing provider attribute assignments are not broken"
+
+rubric: []

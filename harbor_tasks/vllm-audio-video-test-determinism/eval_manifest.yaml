@@ -1,0 +1,53 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38492
+  base_commit: "c133f3374625652c88e122fff995e4126c4635c0"
+  merge_commit: "bea23536f627b2b4153f2e672753b6034b78dedb"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Target test file must be valid Python"
+
+  - id: temperature_deterministic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both flaky test functions must set temperature=0.0 for deterministic output"
+
+  - id: max_tokens_reduced
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both flaky test functions must use max_tokens <= 8 to force length cutoff"
+
+  - id: debug_output_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both flaky test functions must include debug output referencing finish_reason"
+
+  - id: interleaved_test_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Third test function (interleaved) must still exist with a real body"
+
+  - id: assertions_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Both flaky functions must still assert finish_reason=='length' and len(choices)==1"
+
+  - id: not_stubs
+    type: pass_to_pass
+    origin: static
+    description: "Both flaky functions must have substantial bodies (loop, await, assert)"
+
+  - id: mm_processor_kwargs_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Both flaky functions must pass mm_processor_kwargs with use_audio_in_video"
+
+rubric: []
+# No applicable soft rules — AGENTS.md rules are process-oriented
+# (duplicate checks, PR descriptions, commit trailers, tooling requirements)
+# and not verifiable from code diffs.

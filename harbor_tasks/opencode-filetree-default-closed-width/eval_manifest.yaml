@@ -1,0 +1,115 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19426
+  base_commit: "d36b38e4a6f5b778644669ba281fb5a35cf2f028"
+  merge_commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+
+checks:
+  - id: layout_module_structure
+    type: pass_to_pass
+    origin: static
+    description: "layout.tsx exists with core module structure (not a stub)"
+
+  - id: filetree_defaults_closed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "fileTree must default to opened: false in createStore initial state"
+
+  - id: filetree_width_less_than_sidebar
+    type: fail_to_pass
+    origin: pr_diff
+    description: "fileTree default width must be less than sidebar default width"
+
+  - id: helper_methods_use_filetree_width
+    type: fail_to_pass
+    origin: pr_diff
+    description: "open/close/toggle/setTab setStore calls must use narrower width"
+
+  - id: memo_fallback_uses_filetree_width
+    type: fail_to_pass
+    origin: pr_diff
+    description: "createMemo fallback for fileTree width must use narrow default"
+
+  - id: sidebar_width_unchanged
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Sidebar default width must remain at 344"
+
+  - id: store_structure_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Other store panels (terminal, review, session) must not be broken"
+
+  - id: session_keyboard_handling
+    type: pass_to_pass
+    origin: static
+    description: "session.tsx must preserve onMount keyboard event handling"
+
+  - id: no_any_type_in_diff
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changed lines must not introduce the any type"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "d36b38e4a6f5b778644669ba281fb5a35cf2f028"
+
+  - id: prefer_const_no_else
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changed lines should prefer const over let and avoid else"
+    source:
+      path: "AGENTS.md"
+      lines: "70,84"
+      commit: "d36b38e4a6f5b778644669ba281fb5a35cf2f028"
+
+  - id: no_try_catch_in_diff
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changed lines must not introduce try/catch blocks"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "d36b38e4a6f5b778644669ba281fb5a35cf2f028"
+
+  - id: no_for_loops_in_diff
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changed lines should use functional array methods, not for loops"
+    source:
+      path: "AGENTS.md"
+      lines: "17"
+      commit: "d36b38e4a6f5b778644669ba281fb5a35cf2f028"
+
+rubric:
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "d36b38e4a6f5b778644669ba281fb5a35cf2f028"
+
+  - rule: "Prefer single word names for variables and functions. Only use multiple words if necessary."
+    source:
+      path: "AGENTS.md"
+      lines: "21"
+      commit: "d36b38e4a6f5b778644669ba281fb5a35cf2f028"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "d36b38e4a6f5b778644669ba281fb5a35cf2f028"
+
+  - rule: "Always prefer createStore over multiple createSignal calls"
+    source:
+      path: "packages/app/AGENTS.md"
+      lines: "15"
+      commit: "d36b38e4a6f5b778644669ba281fb5a35cf2f028"
+
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "d36b38e4a6f5b778644669ba281fb5a35cf2f028"

@@ -27,4 +27,5 @@ index 11840bdd95..b243bf1bf8 100644
      sys.modules[reloader.watch_module_name] = module
 
      while reloader.should_watch():
+
 PATCH

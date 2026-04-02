@@ -1,0 +1,99 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24162
+  base_commit: "b491f7ebed9ea3be8ff7990dd6119c77c57baa74"
+  merge_commit: "32f644c3bfa09271cc54ca04f7259fbf8a99b81f"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "ruff_linter crate compiles without errors"
+
+  - id: fstring_percent_variable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "f-string with % and variable RHS is flagged as RUF073"
+
+  - id: fstring_percent_tuple
+    type: fail_to_pass
+    origin: pr_diff
+    description: "f-string with % and tuple RHS is flagged as RUF073"
+
+  - id: fstring_percent_dict
+    type: fail_to_pass
+    origin: pr_diff
+    description: "f-string with % and dict RHS is flagged as RUF073"
+
+  - id: fstring_percent_literal_and_nested
+    type: fail_to_pass
+    origin: pr_diff
+    description: "f-string with nested expressions and literal both flagged"
+
+  - id: no_false_positives
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Plain strings, byte strings, non-% f-strings, and integer modulo not flagged"
+
+  - id: existing_ruf07x_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing RUF07x snapshot tests still pass"
+
+  - id: existing_f50x_still_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing F507 percent-format rules still fire on plain strings"
+
+  - id: rule_requires_preview
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RUF073 is a preview rule — must not fire without --preview flag"
+
+  - id: schema_updated
+    type: fail_to_pass
+    origin: agent_config
+    description: "ruff.schema.json must include RUF073 after cargo dev generate-all"
+    source:
+      path: "AGENTS.md"
+      lines: "85"
+      commit: "b491f7ebed9ea3be8ff7990dd6119c77c57baa74"
+
+  - id: no_local_rust_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Rust imports at file top, not locally in functions"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "b491f7ebed9ea3be8ff7990dd6119c77c57baa74"
+
+  - id: no_new_unwrap_panic
+    type: pass_to_pass
+    origin: agent_config
+    description: "No new .unwrap()/.expect()/panic!/unreachable! added"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "b491f7ebed9ea3be8ff7990dd6119c77c57baa74"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "b491f7ebed9ea3be8ff7990dd6119c77c57baa74"
+
+  - rule: "Avoid writing significant amounts of new code. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "b491f7ebed9ea3be8ff7990dd6119c77c57baa74"
+
+  - rule: "Use comments purposefully. Don't narrate code, but explain invariants and unusual choices."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "b491f7ebed9ea3be8ff7990dd6119c77c57baa74"

@@ -28,4 +28,5 @@ index 6c78a080d93e..17972005ffed 100644
 +        if manager is not None:
 +            manager.maybe_clear_socket_mapping()
          parent_process.send_signal(signal.SIGQUIT)
+
 PATCH

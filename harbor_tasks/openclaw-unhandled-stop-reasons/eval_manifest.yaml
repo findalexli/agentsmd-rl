@@ -1,0 +1,130 @@
+version: "2.0"
+
+source:
+  repo: "openclaw/openclaw"
+  pr: 56639
+  base_commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"
+  merge_commit: "468185d1b507aa58fda7f6a871d58ce593faaa0e"
+
+checks:
+  - id: recovery_module_exists
+    type: pass_to_pass
+    origin: static
+    description: "Recovery module file exists and exports wrapStreamFnHandleSensitiveStopReason"
+
+  - id: sync_throw_normalized
+    type: fail_to_pass
+    origin: pr_diff
+    description: "normalizeUnhandledStopReasonMessage converts 'Unhandled stop reason: sensitive' into user-friendly message"
+
+  - id: varied_stop_reasons
+    type: fail_to_pass
+    origin: pr_diff
+    description: "normalizeUnhandledStopReasonMessage works for sensitive, refusal_policy, unknown_xyz, content_filter, safety, and case-insensitive input"
+
+  - id: patch_mutates_assistant_message
+    type: fail_to_pass
+    origin: pr_diff
+    description: "patchUnhandledStopReasonInAssistantMessage rewrites errorMessage and sets stopReason to error for multiple stop reasons"
+
+  - id: nonmatching_errors_ignored
+    type: pass_to_pass
+    origin: pr_diff
+    description: "normalizeUnhandledStopReasonMessage returns undefined for non-matching strings and non-string inputs"
+
+  - id: patch_skips_nonmatching_message
+    type: pass_to_pass
+    origin: pr_diff
+    description: "patchUnhandledStopReasonInAssistantMessage leaves non-matching messages untouched"
+
+  - id: attempt_wires_wrapper
+    type: fail_to_pass
+    origin: pr_diff
+    description: "attempt.ts imports stop-reason-recovery module and calls wrapStreamFnHandleSensitiveStopReason"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Recovery module has real logic with catch blocks, re-throws, and stream handling"
+
+  - id: no_ts_nocheck
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files must not contain @ts-nocheck or @ts-ignore"
+    source:
+      path: "CLAUDE.md"
+      lines: "104"
+      commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"
+
+  - id: no_lint_suppressions
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files must not contain inline lint suppression comments (eslint-disable, oxlint-ignore)"
+    source:
+      path: "CLAUDE.md"
+      lines: "104"
+      commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"
+
+  - id: no_prototype_mutation
+    type: pass_to_pass
+    origin: agent_config
+    description: "Recovery module must not share behavior via prototype mutation"
+    source:
+      path: "CLAUDE.md"
+      lines: "111"
+      commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"
+
+  - id: esm_imports_only
+    type: pass_to_pass
+    origin: agent_config
+    description: "Recovery module must use ESM imports, not CommonJS require()"
+    source:
+      path: "CLAUDE.md"
+      lines: "102"
+      commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"
+
+  - id: file_size_limit
+    type: pass_to_pass
+    origin: agent_config
+    description: "Recovery module must stay under ~700 LOC"
+    source:
+      path: "CLAUDE.md"
+      lines: "116"
+      commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"
+
+rubric:
+  - rule: "Language: TypeScript (ESM). Prefer strict typing; avoid `any`."
+    source:
+      path: "CLAUDE.md"
+      lines: "102"
+      commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"
+
+  - rule: "Do not disable `no-explicit-any`; prefer real types, `unknown`, or a narrow adapter/helper instead."
+    source:
+      path: "CLAUDE.md"
+      lines: "105"
+      commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"
+
+  - rule: "Never share class behavior via prototype mutation. Use explicit inheritance/composition or helper composition so TypeScript can typecheck."
+    source:
+      path: "CLAUDE.md"
+      lines: "111"
+      commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"
+
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    source:
+      path: "CLAUDE.md"
+      lines: "114"
+      commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"
+
+  - rule: "Keep files concise; extract helpers instead of 'V2' copies."
+    source:
+      path: "CLAUDE.md"
+      lines: "115"
+      commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"
+
+  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings."
+    source:
+      path: "CLAUDE.md"
+      lines: "118"
+      commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"

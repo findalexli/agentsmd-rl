@@ -1,0 +1,56 @@
+{
+  "validations": [
+    {
+      "timestamp": "2026-04-01T12:00:00-07:00",
+      "runner": "manual v2 remake",
+      "docker_build": true,
+      "gold_score": 1,
+      "nop_score": 0,
+      "verdict": "pass",
+      "notes": "v2 remake: 11 tests (5 f2p, 6 p2p), fixed Dockerfile (removed COPY, added unzip), fixed routing harness (extract provider fn), fixed codex-mini test case"
+    },
+    {
+      "timestamp": "2026-03-30T13:02:43.981080",
+      "runner": "run_pipeline.py validate (20260330)",
+      "docker_build": false,
+      "gold_score": null,
+      "nop_score": null,
+      "verdict": "error",
+      "notes": "timeout"
+    },
+    {
+      "timestamp": "2026-03-31T13:44:49-07:00",
+      "runner": "validate_and_fix.sh",
+      "docker_build": false,
+      "gold_score": null,
+      "nop_score": null,
+      "verdict": "fail_build",
+      "notes": "Docker build failed"
+    },
+    {
+      "timestamp": "2026-04-01T20:15:41.706468",
+      "phase": "docker_validate_v2",
+      "runner": "scripts/docker_validate_all.sh",
+      "verdict": "fail",
+      "nop": "0",
+      "gold": "0",
+      "format": "pytest_binary"
+    },
+    {
+      "timestamp": "2026-04-02T12:58:21.150113",
+      "phase": "e2b_post_remake",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail_build",
+      "notes": "Template build: failed to run command 'bun install --frozen-lockfile || bun install': signal: killed"
+    },
+    {
+      "timestamp": "2026-04-02T14:28:08.953091",
+      "phase": "e2b_full_validation",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail_build",
+      "notes": "Sandbox rebuild+create: failed to run command 'bun install --frozen-lockfile || bun install': signal: killed"
+    }
+  ]
+}

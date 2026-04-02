@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 0  # Hand-crafted task; no single source PR
+  base_commit: "b0bba2d832f3cfd94b339a407f2b3e5b90ce3499"
+
+checks:
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (import_utils.py, __init__.py) parse without syntax errors"
+
+  - id: function_importable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "is_flash_attn_greater_or_equal_2_10 is importable from transformers.utils"
+
+  - id: delegation_with_versions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Function returns correct bool for multiple flash_attn versions (>=2.1.0 True, <2.1.0 False)"
+
+  - id: returns_false_without_flash_attn
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Returns False (bool) when flash_attn is not installed"
+
+  - id: deprecation_warning_emitted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Function emits FutureWarning or DeprecationWarning on call"
+
+  - id: existing_version_check_works
+    type: pass_to_pass
+    origin: pr_diff
+    description: "is_flash_attn_greater_or_equal still works and returns bool"
+
+  - id: utils_core_exports
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Core utility functions (is_torch_available, is_flash_attn_2_available) still importable"
+
+  - id: no_bare_type_ignore
+    type: pass_to_pass
+    origin: agent_config
+    description: "Any # type: ignore added in the diff includes a specific error code"
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "185-186"
+      commit: "b0bba2d832f3cfd94b339a407f2b3e5b90ce3499"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "b0bba2d832f3cfd94b339a407f2b3e5b90ce3499"
+
+  - rule: "Do not add helper methods or abstractions just to satisfy the type checker (especially for only 1-2 occurrences)."
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "196-197"
+      commit: "b0bba2d832f3cfd94b339a407f2b3e5b90ce3499"

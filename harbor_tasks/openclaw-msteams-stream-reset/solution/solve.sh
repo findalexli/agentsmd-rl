@@ -44,4 +44,5 @@ index 20299caac6b9..f0299f14b998 100644
 +      await pendingFinalize;
        await stream?.finalize();
      },
+
 PATCH

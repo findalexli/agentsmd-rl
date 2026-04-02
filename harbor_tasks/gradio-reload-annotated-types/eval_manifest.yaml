@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12940
+  base_commit: "c4986883b267570d76b442899c6fc09d14e3e222"
+  merge_commit: "d610464e0eff5f200543c6bbc5fac616b1620b1e"
+
+checks:
+  - id: utils_syntax
+    type: pass_to_pass
+    origin: static
+    description: "gradio/utils.py must parse without syntax errors"
+
+  - id: skills_syntax
+    type: pass_to_pass
+    origin: static
+    description: "gradio/cli/commands/skills.py must parse without syntax errors"
+
+  - id: watchfn_no_future_annotations_flag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "watchfn code object must not carry CO_FUTURE_ANNOTATIONS flag"
+
+  - id: annotated_class_hints_resolve
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Annotated class type hints resolve after exec with watchfn's compile flags"
+
+  - id: annotations_not_stringified_after_exec
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Function annotations are real type objects, not strings, after exec with watchfn's flags"
+
+  - id: forward_refs_are_quoted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Forward-reference annotations (App, Blocks, etc.) must be string literals after removing from __future__ import annotations"
+
+  - id: utils_compiles_cleanly
+    type: pass_to_pass
+    origin: pr_diff
+    description: "gradio/utils.py compiles without syntax errors after annotation changes"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "utils.py retains full implementation (watchfn, BaseReloader, safe_join present)"
+
+rubric: []

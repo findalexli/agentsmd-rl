@@ -1,0 +1,78 @@
+version: "2.0"
+
+source:
+  repo: "openclaw/openclaw"
+  pr: 57739
+  base_commit: "f011d0be28afbc7868f5e55c1117c779bd0a9f10"
+  merge_commit: "09bb93c6e046ecc2c588c56f513ff4a33351d302"
+
+checks:
+  - id: seconds_precision
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Sub-minute durations (5s, 30s, 45s) display second-level precision instead of rounding to 1m"
+
+  - id: minute_second_precision
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mixed durations (90s, 150s) show combined minute+second format (1m30s, 2m30s)"
+
+  - id: hour_format
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Hour-level durations display as hours (rejects trivial seconds-only stub)"
+
+  - id: edge_cases_no_crash
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Edge inputs (0, undefined, negative) don't crash and don't show positive duration"
+
+  - id: callers_handle_undefined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both callers (subagent-control.ts, shared.ts) guard against undefined return"
+
+  - id: other_exports_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Other exports (formatTokenShort, truncateLine) still present in subagents-format.ts"
+
+  - id: no_any_types
+    type: pass_to_pass
+    origin: agent_config
+    description: "No 'any' type annotations in subagents-format.ts"
+    source:
+      path: "CLAUDE.md"
+      lines: "144"
+      commit: "f011d0be28afbc7868f5e55c1117c779bd0a9f10"
+
+  - id: no_lint_suppressions
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @ts-nocheck or inline lint suppressions in modified files"
+    source:
+      path: "CLAUDE.md"
+      lines: "146"
+      commit: "f011d0be28afbc7868f5e55c1117c779bd0a9f10"
+
+  - id: no_duplicate_implementation
+    type: fail_to_pass
+    origin: agent_config
+    description: "No full duplicate formatDurationCompact — uses re-export or thin wrapper"
+    source:
+      path: "CLAUDE.md"
+      lines: "164"
+      commit: "f011d0be28afbc7868f5e55c1117c779bd0a9f10"
+
+rubric:
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    source:
+      path: "CLAUDE.md"
+      lines: "163"
+      commit: "f011d0be28afbc7868f5e55c1117c779bd0a9f10"
+
+  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings."
+    source:
+      path: "CLAUDE.md"
+      lines: "167"
+      commit: "f011d0be28afbc7868f5e55c1117c779bd0a9f10"

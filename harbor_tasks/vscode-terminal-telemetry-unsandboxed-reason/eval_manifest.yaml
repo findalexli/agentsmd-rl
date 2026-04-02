@@ -1,0 +1,71 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 306330
+  base_commit: "a2d7b9e13bdbe52233ea06b2ca6bc69a81083772"
+  merge_commit: "0705ebef87428a3a1d38df65b38da286a7b9174c"
+
+checks:
+  - id: state_interface_has_property
+    type: fail_to_pass
+    origin: pr_diff
+    description: "State interface declares requestUnsandboxedExecutionReason: string | undefined"
+
+  - id: data_interface_has_property
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RunInTerminalToolData interface includes requestUnsandboxedExecutionReason"
+
+  - id: classification_has_property
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Telemetry event classification includes requestUnsandboxedExecutionReason with SystemMetaData/FeatureInsight"
+
+  - id: mapping_includes_property
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Telemetry data construction maps requestUnsandboxedExecutionReason from state"
+
+  - id: tool_passes_property
+    type: fail_to_pass
+    origin: pr_diff
+    description: "runInTerminalTool.ts passes requestUnsandboxedExecutionReason to telemetry reporter"
+
+  - id: existing_properties_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-existing telemetry mappings (isBackground, isNewSession, isSandbox) still present"
+
+  - id: files_have_copyright_header
+    type: pass_to_pass
+    origin: static
+    description: "Both modified files retain the Microsoft copyright header"
+
+  - id: property_indented_with_tabs
+    type: fail_to_pass
+    origin: agent_config
+    description: "New property lines use tab indentation, not spaces"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "89"
+      commit: "a2d7b9e13bdbe52233ea06b2ca6bc69a81083772"
+
+rubric:
+  - rule: "Use JSDoc style comments for functions, interfaces, enums, and classes"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "106"
+      commit: "a2d7b9e13bdbe52233ea06b2ca6bc69a81083772"
+
+  - rule: "Do not use any or unknown as the type for variables, parameters, or return values unless absolutely necessary"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "167"
+      commit: "a2d7b9e13bdbe52233ea06b2ca6bc69a81083772"
+
+  - rule: "Do not duplicate code. Always look for existing utility functions, helpers, or patterns in the codebase before implementing new functionality"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "171"
+      commit: "a2d7b9e13bdbe52233ea06b2ca6bc69a81083772"

@@ -1,0 +1,49 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28309
+  base_commit: "9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8"
+  merge_commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
+
+checks:
+  - id: exception_guard_between_tojs_and_jscast
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Exception or null guard must exist after toJSNewlyCreated and before jsCast"
+
+  - id: guard_prevents_null_deref_on_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Guard must divert control flow (return/branch) so jsCast is skipped on error"
+
+  - id: success_path_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "jsCast, reportExtraMemoryAllocated, RELEASE_AND_RETURN still present in order"
+
+  - id: file_not_gutted
+    type: pass_to_pass
+    origin: static
+    description: "BunString.cpp retains substantial content (>400 lines)"
+
+  - id: uses_return_if_exception_macro
+    type: fail_to_pass
+    origin: agent_config
+    description: "Fix uses RETURN_IF_EXCEPTION macro per JSC bindings idiom in SKILL.md"
+    source:
+      path: ".claude/skills/implementing-jsc-classes-cpp/SKILL.md"
+      lines: "1-80"
+      commit: "9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8"
+
+rubric:
+  - rule: "Return early with `return {};` (empty encoded JS value) when error conditions are detected in binding functions, rather than continuing with potentially null pointers."
+    source:
+      path: ".claude/skills/implementing-jsc-classes-cpp/SKILL.md"
+      lines: "93-101"
+      commit: "9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8"
+  - rule: "Follow WebCore/JavaScriptCore patterns and conventions established in the codebase when modifying C++ bindings code."
+    source:
+      path: "CLAUDE.md"
+      lines: "109-110"
+      commit: "9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8"

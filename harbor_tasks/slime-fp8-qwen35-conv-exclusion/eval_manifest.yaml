@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1769
+  base_commit: "f9f7b566cca476aeeb963b67a44d663da79e0484"
+  merge_commit: "353ac7bdcadfff9f3eabc957d2bb0e5dc1eaf018"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "convert_hf_to_fp8.py must be valid Python"
+
+  - id: mamba_keys_excluded
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mamba-style keys (conv1d, A_log, dt_bias, in_proj_a, in_proj_b) excluded from FP8 quantization"
+
+  - id: mamba_keys_varied_layers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mamba exclusions work across varied layer indices (not hardcoded)"
+
+  - id: preexisting_exclusions_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Pre-existing exclusions (layernorm, embed, gate, lm_head) still work"
+
+  - id: nonweight_keys_skipped
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Keys without 'weight' (e.g., bias) are not quantized"
+
+  - id: excluded_keys_preserved_in_output
+    type: pass_to_pass
+    origin: pr_diff
+    description: "All keys (quantized and excluded) appear in the output file"
+
+  - id: process_file_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "process_file has non-trivial implementation"
+
+rubric: []

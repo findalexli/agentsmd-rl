@@ -1,0 +1,106 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19220
+  base_commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
+  merge_commit: "da1d37274fcc6dcb81ff76ebcf2818100239aa87"
+
+checks:
+  - id: system_ts_parseable
+    type: pass_to_pass
+    origin: static
+    description: "system.ts must be valid TypeScript that bun can parse"
+
+  - id: generic_gpt_not_codex
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Generic GPT models (gpt-5.4, gpt-5, gpt-3.5-turbo) must not receive the codex prompt"
+
+  - id: generic_gpt_gets_dedicated_prompt
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Generic GPT models must get a dedicated GPT prompt, not the default fallback"
+
+  - id: gpt_prompt_file_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A GPT-specific prompt file must exist in the prompt directory with real content (>=50 chars)"
+
+  - id: gpt_codex_routes_differ
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Generic GPT (gpt-5.4) and codex GPT (gpt-codex-test) must route to different prompts"
+
+  - id: codex_model_gets_codex
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Models with 'codex' in their ID must still receive the codex prompt"
+
+  - id: existing_routing_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "gpt-4o routes to BEAST, gemini to GEMINI, claude to ANTHROPIC"
+
+  - id: gpt_prompt_distinct_from_codex
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A GPT prompt file must exist and not be a near-copy of the codex prompt (similarity <= 0.90)"
+
+  - id: no_any_type
+    type: pass_to_pass
+    origin: agent_config
+    description: "system.ts must not use the 'any' type annotation"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
+
+  - id: no_else_in_provider
+    type: pass_to_pass
+    origin: agent_config
+    description: "provider() must not use else statements — prefer early returns"
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
+
+  - id: no_let_in_system_ts
+    type: pass_to_pass
+    origin: agent_config
+    description: "system.ts must prefer const over let"
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
+
+rubric:
+  - rule: "Prefer single word variable names where possible"
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
+
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
+
+  - rule: "Keep things in one function unless composable or reusable"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once"
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
+
+  - rule: "Avoid unnecessary destructuring; use dot notation to preserve context"
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"

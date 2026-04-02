@@ -1,0 +1,87 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28488
+  base_commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
+  merge_commit: "639bc4351cd7b5daa38b99d47a506dec68e95353"
+
+checks:
+  - id: create_error_instance_clears_exception
+    type: fail_to_pass
+    origin: pr_diff
+    description: "createErrorInstance catch must call clearExceptionExceptTermination before return"
+
+  - id: create_type_error_clears_and_returns_typed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "createTypeErrorInstance catch must clear exception and return TypeError, not generic Error"
+
+  - id: create_syntax_error_clears_and_returns_typed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "createSyntaxErrorInstance catch must clear exception and return SyntaxError"
+
+  - id: create_range_error_clears_and_returns_typed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "createRangeErrorInstance catch must clear exception and return RangeError"
+
+  - id: dom_exception_not_modified
+    type: pass_to_pass
+    origin: pr_diff
+    description: "createDOMExceptionInstance must NOT gain clearExceptionExceptTermination"
+
+  - id: file_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "Target file retains substantial content (not gutted)"
+
+  - id: all_four_functions_exist
+    type: pass_to_pass
+    origin: static
+    description: "All four create*ErrorInstance functions must still exist"
+
+  - id: no_inline_imports_in_error_functions
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @import() calls inline inside the four create*ErrorInstance function bodies"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
+
+  - id: no_forbidden_std_apis_in_error_functions
+    type: pass_to_pass
+    origin: agent_config
+    description: "No std.fs, std.posix, std.os, std.process usage — must use bun.* equivalents"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16-28"
+      commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
+
+  - id: no_catch_out_of_memory_pattern
+    type: pass_to_pass
+    origin: agent_config
+    description: "No 'catch bun.outOfMemory()' — use bun.handleOom() instead"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "234-238"
+      commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
+
+rubric:
+  - rule: "Memory management - In Zig code, be careful with allocators and use defer for cleanup"
+    source:
+      path: "CLAUDE.md"
+      lines: "232"
+      commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
+  - rule: "Never use @import() inline inside of functions. Always put them at the bottom of the file or containing struct."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
+  - rule: "Use bun.handleOom(expr) instead of catch bun.outOfMemory() — handleOom converts error.OutOfMemory into a crash without swallowing other errors"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "234-238"
+      commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"

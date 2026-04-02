@@ -1,0 +1,84 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 18536
+  base_commit: "17afca33e9d7d678a1e00df280247eed39d8231d"
+  merge_commit: "7b3170d69d9fffc5c4f484f5f9d578551074bf84"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified crate must compile without errors"
+
+  - id: abi3_lower_bound_markers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "abi3 wheels (cp39-abi3, cp312-abi3, cp310-abi3) produce >= version markers"
+
+  - id: abi3_major_only_tag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "abi3 wheel with major-only python tag (cp3-abi3) produces >= major version"
+
+  - id: abi3_with_platform_markers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "abi3 wheel with platform-specific tags produces correct combined >= markers"
+
+  - id: non_abi3_exact_match
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Non-abi3 wheels (cp39-cp39, py3-none, cp311-cp311) still use exact version markers"
+
+  - id: existing_implied_marker_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing test_implied_python_markers and test_implied_markers pass"
+
+  - id: no_forbidden_patterns_in_changed_function
+    type: pass_to_pass
+    origin: agent_config
+    description: "implied_python_markers must not use .unwrap(), panic!, unreachable!, unsafe, or clippy ignores"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "17afca33e9d7d678a1e00df280247eed39d8231d"
+
+rubric:
+  - rule: "PREFER patterns like `if let` to handle fallibility"
+    source:
+      path: "CLAUDE.md"
+      lines: "8"
+      commit: "17afca33e9d7d678a1e00df280247eed39d8231d"
+
+  - rule: "PREFER let chains (`if let` combined with `&&`) over nested `if let` statements"
+    source:
+      path: "CLAUDE.md"
+      lines: "11"
+      commit: "17afca33e9d7d678a1e00df280247eed39d8231d"
+
+  - rule: "PREFER `#[expect()]` over `#[allow()]` if clippy must be disabled"
+    source:
+      path: "CLAUDE.md"
+      lines: "10"
+      commit: "17afca33e9d7d678a1e00df280247eed39d8231d"
+
+  - rule: "PREFER top-level imports over local imports or fully qualified names"
+    source:
+      path: "CLAUDE.md"
+      lines: "16"
+      commit: "17afca33e9d7d678a1e00df280247eed39d8231d"
+
+  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
+    source:
+      path: "CLAUDE.md"
+      lines: "17-18"
+      commit: "17afca33e9d7d678a1e00df280247eed39d8231d"
+
+  - rule: "ALWAYS read and copy the style of similar tests when adding new cases"
+    source:
+      path: "CLAUDE.md"
+      lines: "15"
+      commit: "17afca33e9d7d678a1e00df280247eed39d8231d"

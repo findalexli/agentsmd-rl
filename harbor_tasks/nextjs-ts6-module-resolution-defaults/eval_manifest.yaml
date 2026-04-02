@@ -1,0 +1,83 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 0  # synthetic task — no single source PR
+  base_commit: "7dd1fcfc924be23cf2785054f5a2ad4f5affb692"
+
+checks:
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Both modified TypeScript files parse without errors"
+
+  - id: bundler_default_esnext
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Modern TS (>=5.0) with default/esnext module defaults moduleResolution to 'bundler'"
+
+  - id: bundler_default_es2020
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Modern TS (>=5.0) with module=ES2020 also gets moduleResolution='bundler'"
+
+  - id: bundler_default_preserve
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Modern TS (>=5.0) with module=Preserve also gets moduleResolution='bundler'"
+
+  - id: ts6_target_rewrite_es5
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TS6 getTypeScriptConfiguration rewrites es5 target to es2015+"
+
+  - id: ts6_target_rewrite_es3
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TS6 getTypeScriptConfiguration rewrites es3 target to es2015+"
+
+  - id: ts6_baseurl_migration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TS6 getTypeScriptConfiguration migrates baseUrl='.' to explicit paths entries"
+
+  - id: ts6_baseurl_with_existing_paths
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TS6 migrates baseUrl with existing paths — rewrites values and adds wildcard fallback"
+
+  - id: ts6_target_keeps_es2015
+    type: pass_to_pass
+    origin: pr_diff
+    description: "TS6 does NOT rewrite es2015 target — only es3/es5 are deprecated"
+
+  - id: commonjs_keeps_node_resolution
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When module is commonjs, moduleResolution stays 'node'"
+
+  - id: amd_keeps_node_resolution
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When module is amd, moduleResolution stays 'node'"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files have substantive implementations"
+
+  - id: no_secret_files
+    type: pass_to_pass
+    origin: agent_config
+    description: "No secret files committed in agent changes"
+    source:
+      path: "AGENTS.md"
+      lines: "309"
+      commit: "7dd1fcfc924be23cf2785054f5a2ad4f5affb692"
+
+rubric:
+  - rule: "Keep `require()` behind compile-time `if/else` branches for DCE (avoid early-return/throw patterns)."
+    source:
+      path: "AGENTS.md"
+      lines: "396"
+      commit: "7dd1fcfc924be23cf2785054f5a2ad4f5affb692"

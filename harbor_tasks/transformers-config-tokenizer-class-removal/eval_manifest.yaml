@@ -1,0 +1,78 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44971
+  base_commit: "18f88de7f575410f3ad8a64418abf2572fecb259"
+  merge_commit: "692d187dc7b1091717bfe941785d272f7d575563"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All modified files must parse without syntax errors"
+
+  - id: pretrained_config_no_tokenizer_class
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PreTrainedConfig().to_dict() must not contain a default tokenizer_class key"
+
+  - id: mt5_config_no_tokenizer_class
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MT5Config must not declare tokenizer_class as a class-level attribute"
+
+  - id: umt5_config_no_tokenizer_class
+    type: fail_to_pass
+    origin: pr_diff
+    description: "UMT5Config must not declare tokenizer_class as a class-level attribute"
+
+  - id: no_tokenizer_base_in_config_module
+    type: fail_to_pass
+    origin: pr_diff
+    description: "configuration_utils must not import PreTrainedTokenizerBase at module level"
+
+  - id: config_roundtrip
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Config creation, serialization, and round-trip must still work"
+
+  - id: tokenizer_class_kwarg_passthrough
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Users can still pass tokenizer_class as a kwarg through **kwargs"
+
+  - id: ruff_check_changed_files
+    type: pass_to_pass
+    origin: agent_config
+    description: "ruff check passes on all changed files"
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "18f88de7f575410f3ad8a64418abf2572fecb259"
+
+  - id: no_cross_model_inheritance
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified model configs must not directly inherit from other model-specific configs"
+    source:
+      path: "CLAUDE.md"
+      lines: "64"
+      commit: "18f88de7f575410f3ad8a64418abf2572fecb259"
+
+rubric:
+  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`."
+    source:
+      path: "CLAUDE.md"
+      lines: "66"
+      commit: "18f88de7f575410f3ad8a64418abf2572fecb259"
+  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`!"
+    source:
+      path: "CLAUDE.md"
+      lines: "67"
+      commit: "18f88de7f575410f3ad8a64418abf2572fecb259"
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "18f88de7f575410f3ad8a64418abf2572fecb259"

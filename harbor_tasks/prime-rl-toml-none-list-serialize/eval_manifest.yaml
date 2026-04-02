@@ -1,0 +1,93 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 2094
+  base_commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
+  merge_commit: "4f612601f6447b3df1ee17e535ac698b5cc3d16c"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "config.py must parse without syntax errors"
+
+  - id: none_inside_flat_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "None values inside a flat list are converted to 'None' strings"
+
+  - id: none_inside_dict_in_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "None inside a dict nested in a list is converted"
+
+  - id: deeply_nested_list_of_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Deeply nested None (list of list) is converted"
+
+  - id: toml_roundtrip_with_none_in_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TOML serialization succeeds after converting None in lists"
+
+  - id: top_level_none_converted
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Top-level None values are still converted"
+
+  - id: nested_dict_none_converted
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Nested dict None values are still converted"
+
+  - id: non_none_values_unchanged
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Non-None values pass through without modification"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "none_to_none_str returns meaningful output, not a trivial stub"
+
+  - id: no_unnecessary_try_except
+    type: pass_to_pass
+    origin: agent_config
+    description: "No try/except blocks in config.py — let errors propagate"
+    source:
+      path: "AGENTS.md"
+      lines: "5"
+      commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
+
+  - id: no_work_process_comments
+    type: pass_to_pass
+    origin: agent_config
+    description: "No comments referencing old code or work process"
+    source:
+      path: "AGENTS.md"
+      lines: "7"
+      commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
+
+rubric:
+  - rule: "Simple is better than complex."
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
+  - rule: "Flat is better than nested."
+    source:
+      path: "AGENTS.md"
+      lines: "18"
+      commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
+  - rule: "Readability counts."
+    source:
+      path: "AGENTS.md"
+      lines: "20"
+      commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
+  - rule: "Errors should never pass silently."
+    source:
+      path: "AGENTS.md"
+      lines: "23"
+      commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"

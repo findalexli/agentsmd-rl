@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: vercel/next.js
+  pr: 91997
+  base_commit: "904501127c9ed2e0a7ffd51bd192537b7c398fb3"
+  merge_commit: "1e73fa94ac0fbdd2827b79085f7223c1268e4848"
+
+checks:
+  - id: typescript_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without TypeScript syntax errors"
+
+  - id: files_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "build-complete.ts and index.ts retain substantial content (not stubbed)"
+
+  - id: no_has_fallback_root_params_in_build_complete
+    type: fail_to_pass
+    origin: pr_diff
+    description: "hasFallbackRootParams destructuring removed from build-complete.ts"
+
+  - id: no_should_skip_suffixes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "shouldSkipSuffixes variable removed from build-complete.ts"
+
+  - id: no_dead_ternary_around_rsc_suffix
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Ternary with identical branches around rscSuffix regex removed"
+
+  - id: no_has_fallback_root_params_in_manifest_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "hasFallbackRootParams removed from ManifestRoute type in index.ts"
+
+  - id: handle_build_complete_export_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "handleBuildComplete async function export preserved"
+
+  - id: manifest_route_type_exported
+    type: pass_to_pass
+    origin: pr_diff
+    description: "ManifestRoute type still exported from index.ts"
+
+  - id: rsc_suffix_regex_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "rscSuffix named capture regex pattern preserved"
+
+  - id: source_regex_replace_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "sourceRegex.replace call preserved (core rewrite logic)"
+
+  - id: surrounding_code_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Key surrounding code patterns preserved (anti-gutting)"
+
+rubric: []

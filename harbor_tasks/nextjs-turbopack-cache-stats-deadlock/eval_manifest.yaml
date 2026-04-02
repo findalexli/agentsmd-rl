@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91742
+  base_commit: "b5cb015c5f94088cf0211613051fb696b67cddda"
+  merge_commit: "78f162568634798de281a27889fa313bae8513d6"
+
+checks:
+  - id: source_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "Required source files exist and mod.rs is not stubbed"
+
+  - id: deadlock_pattern_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "self.get_task_name removed from stats.entry() calls and cfg blocks; stats code preserved"
+
+  - id: task_name_from_storage
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Task name derived from storage reference (inner), not self (which re-locks)"
+
+  - id: cargo_feature_split
+    type: fail_to_pass
+    origin: pr_diff
+    description: "print_cache_item_size decoupled from lzzzz; separate feature for compressed reporting"
+
+  - id: add_counts_covers_data
+    type: fail_to_pass
+    origin: pr_diff
+    description: "add_counts triggered on data OR meta modified, not meta-only"
+
+  - id: persist_snapshot_and_stats_struct_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "snapshot_and_persist method and TaskCacheStats struct with core fields still exist"
+
+  - id: cfg_blocks_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "cfg(print_cache_item_size) blocks have meaningful code, stats infrastructure intact"
+
+rubric: []

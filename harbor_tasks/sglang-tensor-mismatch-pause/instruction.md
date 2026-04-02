@@ -15,14 +15,7 @@ In `python/sglang/srt/managers/scheduler.py`, the `pause_generation` method call
 
 ## Expected Behavior
 
-Add the same `is_empty()` guard that `get_next_batch_to_run` already uses, replacing the unconditional merge with:
-```python
-if not self.last_batch.is_empty():
-    if self.running_batch.is_empty():
-        self.running_batch = self.last_batch
-    else:
-        self.running_batch.merge_batch(self.last_batch)
-```
+After `filter_batch` completes, any merge into `running_batch` should only happen when `last_batch` still contains live requests. An analogous guard already exists in `get_next_batch_to_run` — the same defensive pattern should be applied in `pause_generation`.
 
 ## File to Modify
 

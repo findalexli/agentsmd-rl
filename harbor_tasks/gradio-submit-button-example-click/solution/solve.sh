@@ -62,4 +62,5 @@ index 529b6a0626..c1e96b3fe0 100644
              ],
              events_to_cancel=events_to_cancel,
              after_success=user_submit,
+
 PATCH

@@ -1,0 +1,47 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38415
+  base_commit: "b2bc736b1247a76e6ab1cfbe38ae39c3c307de40"
+  merge_commit: "af89140efc06c462ae531999b9f2db6ba0c7a528"
+
+checks:
+  - id: dockerfile_exists
+    type: pass_to_pass
+    origin: static
+    description: "docker/Dockerfile.rocm must exist and contain UV install command"
+
+  - id: curl_failure_propagates
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When curl fails, the UV install command must exit non-zero instead of masking the error via curl|sh pipe"
+
+  - id: retry_flag_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The curl command must include --retry for transient failure recovery"
+
+  - id: verifies_uv_installed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "After install, the command must verify uv is actually available (e.g., uv --version)"
+
+  - id: successful_install_works
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When curl succeeds, the UV install command must complete with exit 0"
+
+  - id: settings_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "UV_INSTALL_DIR and astral.sh URL must be preserved in the Dockerfile"
+
+  - id: command_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "The UV install command must have real download + execute logic"
+
+rubric: []
+# No applicable soft rules — AGENTS.md rules are process-oriented or Python-specific,
+# not applicable to Dockerfile shell syntax fixes.

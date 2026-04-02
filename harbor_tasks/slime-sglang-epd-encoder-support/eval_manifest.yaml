@@ -1,0 +1,60 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1704
+  base_commit: "5182e2d85c06827d57d0bbce98b5d39efeb5ae45"
+  merge_commit: "6f11313004dbe71f4194536335b891371eefd0e9"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (sglang_config.py, sglang_engine.py, rollout.py) must parse without errors"
+
+  - id: encoder_worker_type_accepted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ServerGroupConfig accepts 'encoder' as a valid worker_type with various GPU configs"
+
+  - id: has_encoder_disaggregation_positive
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ModelConfig.has_encoder_disaggregation returns True when encoder groups are present"
+
+  - id: has_encoder_disaggregation_negative
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ModelConfig.has_encoder_disaggregation returns False when no encoder groups exist"
+
+  - id: existing_worker_types_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-existing worker_type values (regular, prefill, decode, placeholder) still accepted"
+
+  - id: invalid_worker_type_rejected
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Invalid worker_type values still raise AssertionError"
+
+  - id: has_pd_disaggregation_unaffected
+    type: pass_to_pass
+    origin: repo_tests
+    description: "has_pd_disaggregation property still works correctly after encoder changes"
+
+  - id: compute_server_args_encoder_handling
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_compute_server_args sets encoder_only=True for encoder worker_type (AST: torch/CUDA barrier)"
+
+  - id: override_key_normalization
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_compute_server_args normalizes override keys from hyphens to underscores (AST: torch/CUDA barrier)"
+
+  - id: rollout_phased_startup
+    type: fail_to_pass
+    origin: pr_diff
+    description: "start_rollout_servers implements phased EPD startup with encoder URL collection (AST: ray/GPU barrier)"
+
+rubric: []

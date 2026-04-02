@@ -1,0 +1,66 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44894
+  base_commit: "55cc1a7fb8e53a5e7e35ca9cf9759498f20abb93"
+  merge_commit: "a8683756653094e3fc3016df8abcdeaaec758f9a"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "processing_utils.py must parse without errors"
+
+  - id: import_processor_mixin
+    type: pass_to_pass
+    origin: static
+    description: "ProcessorMixin.to_dict must be importable"
+
+  - id: tokenizer_not_deepcopied
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tokenizer attributes excluded from deepcopy call"
+
+  - id: tokenizer_excluded_varied_vocabs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tokenizer excluded regardless of vocabulary size"
+
+  - id: output_excludes_tokenizer
+    type: pass_to_pass
+    origin: pr_diff
+    description: "to_dict output does not contain tokenizer key"
+
+  - id: output_excludes_chat_template
+    type: pass_to_pass
+    origin: pr_diff
+    description: "to_dict output does not contain chat_template"
+
+  - id: output_has_processor_class
+    type: pass_to_pass
+    origin: pr_diff
+    description: "to_dict output contains correct processor_class"
+
+  - id: tokenizer_only_processor
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Processor with only tokenizer attribute produces valid output"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "to_dict has real logic, not a stub"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "55cc1a7fb8e53a5e7e35ca9cf9759498f20abb93"
+
+  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`."
+    source:
+      path: "CLAUDE.md"
+      lines: "66"
+      commit: "55cc1a7fb8e53a5e7e35ca9cf9759498f20abb93"

@@ -1,0 +1,39 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 36055
+  base_commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"
+  merge_commit: "12ba7d81297abac61012a36f20d4a9d22b9210d9"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "ReactFlightReplyServer.js must parse without syntax errors"
+
+  - id: blob_validation_rejects_string
+    type: fail_to_pass
+    origin: pr_diff
+    description: "String-backed $B reference must throw 'Referenced Blob is not a Blob.'"
+
+  - id: instanceof_blob_check_in_source
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReactFlightReplyServer.js must guard the $B deserialization path with instanceof Blob"
+
+  - id: existing_blob_deserialization_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Valid Blob references still serialize and deserialize correctly"
+
+  - id: error_code_582_registered
+    type: fail_to_pass
+    origin: agent_config
+    description: "New error 'Referenced Blob is not a Blob.' must be registered in scripts/error-codes/codes.json"
+    source:
+      path: ".claude/skills/extract-errors/SKILL.md"
+      lines: "8"
+      commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"
+
+rubric: []

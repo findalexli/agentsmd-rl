@@ -1,0 +1,49 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 0
+  base_commit: "3003e17b102699bffca325257ae7be53fda69052"
+
+checks:
+  - id: app_page_route_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "app-page.ts route falls back to page identifier when next.route absent"
+
+  - id: app_route_route_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "app-route.ts route falls back to page identifier when next.route absent"
+
+  - id: pages_api_route_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pages-api.ts route falls back to page identifier when next.route absent"
+
+  - id: pages_handler_route_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pages-handler.ts route falls back to page identifier when next.route absent"
+
+  - id: wrapped_by_server_detection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pages-handler.ts gates activeSpan path by server-wrapper detection"
+
+  - id: route_uses_next_route_when_present
+    type: pass_to_pass
+    origin: pr_diff
+    description: "All handler files use next.route value when rootSpanAttributes has it"
+
+  - id: parent_span_propagation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parentSpan http.route set unconditionally, not gated by route truthiness"
+
+  - id: span_logic_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "All handler files contain real span logic (setAttributes + updateName)"
+
+rubric: []

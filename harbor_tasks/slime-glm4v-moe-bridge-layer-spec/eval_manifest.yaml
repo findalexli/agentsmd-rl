@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1738
+  base_commit: "e4d22dc929169fcc2cdf538d1798d9a5473f4d1d"
+  merge_commit: "f71f7103dfdffdc65064d5798a4b68a242461084"
+
+checks:
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "glm4v_moe.py must parse without syntax errors"
+
+  - id: moe_layer_freq_is_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "moe_layer_freq must evaluate to a list, not a string expression"
+
+  - id: moe_layer_freq_values_correct
+    type: fail_to_pass
+    origin: pr_diff
+    description: "moe_layer_freq list has correct dense/MoE pattern for varied configs"
+
+  - id: provide_uses_decoder_block_spec
+    type: fail_to_pass
+    origin: pr_diff
+    description: "provide() must call get_gpt_decoder_block_spec, not the old function"
+
+  - id: provide_passes_config_to_spec
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_gpt_decoder_block_spec must receive a config argument"
+
+  - id: imports_decoder_block_spec
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Must import get_gpt_decoder_block_spec, not the old function"
+
+  - id: key_classes_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core classes (Glm4vMoeVLModel, Glm4vMoeVLModelProvider, Glm4vMoeBridge) still defined"
+
+  - id: key_methods_not_stubbed
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core methods (provide, provider_bridge, __init__, forward) have real logic"
+
+  - id: file_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "File has substantial content (>150 non-empty non-comment lines)"
+
+rubric: []

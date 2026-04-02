@@ -56,4 +56,5 @@ index d2b2d3dd9e..6ee26f006c 100644
 
      def api_info(self) -> dict[str, Any]:
          return {"type": {}, "description": "any json-serializable value"}
+
 PATCH

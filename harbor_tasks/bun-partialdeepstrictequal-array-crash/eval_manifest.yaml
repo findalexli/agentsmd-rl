@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28525
+  base_commit: "e59a147d615a0b95d446c75ba836717cf0dbc513"
+  merge_commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "assert.ts must exist and parse without fatal syntax errors"
+
+  - id: direct_buggy_calls_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Direct .$set/.$delete calls on expectedCounts removed from compareBranch"
+
+  - id: prototype_calls_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Prototype-based .$call invocations replace direct map method calls (>=3 calls)"
+
+  - id: prototype_extraction_available
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SafeMap.prototype.set and .delete available via extraction or inline .$call"
+
+  - id: null_proto_map_set_delete
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Prototype-call pattern works correctly on null-prototype Maps (behavioral simulation)"
+
+  - id: null_proto_map_counting_pattern
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Exact counting pattern from compareBranch works with prototype calls on varied inputs"
+
+  - id: array_branch_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Array comparison branch still has expectedCounts creation, iteration, and deepEqual"
+
+  - id: existing_prototype_refs_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "SafeMapPrototypeHas, SafeMapPrototypeGet, and partialDeepStrictEqual still exist"
+
+  - id: dollar_call_convention
+    type: fail_to_pass
+    origin: agent_config
+    description: "New prototype calls use .$call/$apply, not plain .call/.apply"
+    source:
+      path: "src/js/CLAUDE.md"
+      lines: "56-65"
+      commit: "e59a147d615a0b95d446c75ba836717cf0dbc513"
+
+  - id: no_es_module_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No non-type import statements — src/js/ modules use require(), not import"
+    source:
+      path: "src/js/CLAUDE.md"
+      lines: "15-28"
+      commit: "e59a147d615a0b95d446c75ba836717cf0dbc513"
+
+rubric: []

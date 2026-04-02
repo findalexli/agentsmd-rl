@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21430
+  base_commit: "7c7b2a8c97816b84c6c90ebe28e7e1a9ea334888"
+  merge_commit: "dbe871efdd978e0f6a0663869a93eed5ccb6f79a"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Both target files exist and Python file parses without errors"
+
+  - id: git_tag_rolled_back
+    type: fail_to_pass
+    origin: pr_diff
+    description: "cmake pins older stable FlashMLA commit, not the broken newer one"
+
+  - id: source_files_flat_layout
+    type: fail_to_pass
+    origin: pr_diff
+    description: "cmake lists flat source files (sm90 + sm100) from older FlashMLA, not nested instantiation dirs"
+
+  - id: sm103a_patch_targets_flashmla_utils
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SM103a patch targets csrc/flashmla_utils.h, not the renamed csrc/utils.h"
+
+  - id: import_error_guards_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_flashmla_import_error guard removed from all 3 public Python functions"
+
+  - id: cpp20_flags_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "C++20 compile flags removed (older FlashMLA does not require them)"
+
+  - id: kerutils_include_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "kerutils include path removed (older FlashMLA has no kerutils directory)"
+
+  - id: cutlass_sm103a_patch_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Cutlass SM103a patching section survives the rollback"
+
+  - id: cmake_core_structure_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "FetchContent, CUDA flags, extension sources, link/install targets preserved"
+
+  - id: python_function_signatures_and_dispatch
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Public Python functions keep parameter signatures and dispatch to torch.ops"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files have substantive content (not stubs)"
+
+rubric: []

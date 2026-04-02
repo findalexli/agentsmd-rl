@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28173
+  base_commit: "1628bfeceb07085263b5da5adb1ec3b094e4b188"
+  merge_commit: "47826b3be95745dfac7b4d199e05f7fc47447307"
+
+checks:
+  - id: is_star_not_hardcoded_false
+    type: fail_to_pass
+    origin: pr_diff
+    description: "BFS queue append uses dynamic is_star value, not hardcoded false"
+
+  - id: star_flag_sourced_from_import_data
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Star-import flag originates from import record data (alias_is_star, name.len, or equivalent)"
+
+  - id: resolution_carries_star_info
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Resolution mechanism carries star-import info from resolveBarrelExport to BFS site"
+
+  - id: core_functions_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "resolveBarrelExport and scheduleBarrelDeferredImports still exist with BFS logic"
+
+  - id: original_fields_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "BarrelExportResolution retains import_record_index and original_alias fields"
+
+  - id: no_std_api_in_new_code
+    type: pass_to_pass
+    origin: agent_config
+    description: "No prohibited std.fs/posix/os usage in agent's new code"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16"
+      commit: "1628bfeceb07085263b5da5adb1ec3b094e4b188"
+
+  - id: no_inline_import_in_new_code
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @import() inline inside functions in agent's new code"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "1628bfeceb07085263b5da5adb1ec3b094e4b188"
+
+rubric:
+  - rule: "Decl literals in Zig are recommended. `const decl: Decl = .{ .binding = 0, .value = 0 };`"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "6"
+      commit: "1628bfeceb07085263b5da5adb1ec3b094e4b188"
+
+  - rule: "Prefer `@import` at the bottom of the file, but the auto formatter will move them so you don't need to worry about it."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "10"
+      commit: "1628bfeceb07085263b5da5adb1ec3b094e4b188"

@@ -1,0 +1,42 @@
+{
+  "task": "prime-rl-sft-hybrid-cp-model-ordering",
+  "validations": [
+    {
+      "timestamp": "2026-04-01T20:15:41.715862",
+      "phase": "docker_validate_v2",
+      "runner": "scripts/docker_validate_all.sh",
+      "verdict": "fail",
+      "nop": "0",
+      "gold": "0",
+      "format": "pytest_binary"
+    },
+    {
+      "timestamp": "2026-04-01T22:29:55-07:00",
+      "runner": "validate_and_fix.sh",
+      "docker_build": true,
+      "gold_score": 0.0,
+      "nop_score": 0.0,
+      "verdict": "fail_gold",
+      "notes": ""
+    },
+    {
+      "timestamp": "2026-04-02T12:58:21.153432",
+      "phase": "e2b_post_remake",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail",
+      "nop": "0.0",
+      "gold": "0.0",
+      "notes": "guarded_by_cp_enabled\nPASSED ../tests/test_outputs.py::test_no_try_except_around_hybrid_cp\nFAILED ../tests/test_outputs.py::test_no_nameerror_on_model - AssertionError:...\n1 failed, 9 passed in 0.12s\n"
+    },
+    {
+      "timestamp": "2026-04-02T14:28:08.956004",
+      "phase": "e2b_full_validation",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail",
+      "nop": "0.0",
+      "gold": "0.0"
+    }
+  ]
+}

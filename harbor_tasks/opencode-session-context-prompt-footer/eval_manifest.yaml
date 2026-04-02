@@ -1,0 +1,152 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19486
+  base_commit: "15a8c22a263b072a23e2fc0b2e840b2e12c220aa"
+  merge_commit: "8446719b13a1c9566bccd206cb522f7e524b1867"
+
+checks:
+  - id: typescript_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse as valid TypeScript"
+
+  - id: header_file_deleted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "header.tsx must be deleted — core refactor removes this file"
+
+  - id: session_no_header_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: "session/index.tsx must not import or render the Header component"
+
+  - id: session_no_header_toggle
+    type: fail_to_pass
+    origin: pr_diff
+    description: "session/index.tsx must not have header toggle state (showHeader/header_visible)"
+
+  - id: session_no_toggle_header_command
+    type: fail_to_pass
+    origin: pr_diff
+    description: "session/index.tsx must not have the toggle header command palette entry"
+
+  - id: variant_cycle_not_hidden
+    type: fail_to_pass
+    origin: pr_diff
+    description: "variant.cycle command must not be hidden in app.tsx"
+
+  - id: prompt_has_usage_computation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "prompt/index.tsx must compute token usage (tokens, context %, aggregation)"
+
+  - id: prompt_formats_cost_as_currency
+    type: fail_to_pass
+    origin: pr_diff
+    description: "prompt/index.tsx must format cost as currency (USD)"
+
+  - id: prompt_displays_usage_in_footer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "prompt/index.tsx must render usage data conditionally in the footer area"
+
+  - id: prompt_exports_prompt_function
+    type: pass_to_pass
+    origin: static
+    description: "prompt/index.tsx must export the Prompt function"
+
+  - id: session_exports_session_function
+    type: pass_to_pass
+    origin: static
+    description: "session/index.tsx must export the Session function"
+
+  - id: prompt_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "prompt/index.tsx must have substantial content (>500 lines)"
+
+  - id: session_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "session/index.tsx must have substantial content (>300 lines)"
+
+  - id: no_try_catch_in_new_code
+    type: pass_to_pass
+    origin: agent_config
+    description: "Avoid try/catch where possible in prompt component"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "15a8c22a263b072a23e2fc0b2e840b2e12c220aa"
+
+  - id: minimal_any_type
+    type: pass_to_pass
+    origin: agent_config
+    description: "New/modified code should avoid using the any type"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "15a8c22a263b072a23e2fc0b2e840b2e12c220aa"
+
+  - id: const_preferred_over_let
+    type: pass_to_pass
+    origin: agent_config
+    description: "New/modified code should prefer const over let"
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "15a8c22a263b072a23e2fc0b2e840b2e12c220aa"
+
+  - id: no_else_in_prompt
+    type: pass_to_pass
+    origin: agent_config
+    description: "Avoid else statements; prefer early returns"
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "15a8c22a263b072a23e2fc0b2e840b2e12c220aa"
+
+rubric:
+  - rule: "Keep things in one function unless composable or reusable"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "15a8c22a263b072a23e2fc0b2e840b2e12c220aa"
+
+  - rule: "Prefer single word variable names where possible"
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "15a8c22a263b072a23e2fc0b2e840b2e12c220aa"
+
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "15a8c22a263b072a23e2fc0b2e840b2e12c220aa"
+
+  - rule: "Prefer functional array methods (flatMap, filter, map) over for loops"
+    source:
+      path: "AGENTS.md"
+      lines: "17"
+      commit: "15a8c22a263b072a23e2fc0b2e840b2e12c220aa"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "15a8c22a263b072a23e2fc0b2e840b2e12c220aa"
+
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "15a8c22a263b072a23e2fc0b2e840b2e12c220aa"
+
+  - rule: "Avoid else statements. Prefer early returns."
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "15a8c22a263b072a23e2fc0b2e840b2e12c220aa"

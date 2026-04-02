@@ -1,0 +1,47 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21514
+  base_commit: "279e7738c5857ce8664a77b1ffcb59d46960f1e4"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "scheduler.py must parse without syntax errors"
+
+  - id: empty_batch_not_merged
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All-finished single-req last_batch must not corrupt running_batch tensors after filter"
+
+  - id: larger_empty_batch_not_merged
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Same invariant with a multi-request batch where all finish"
+
+  - id: nonempty_batch_still_merged
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When last_batch has live requests after filter, merge must still happen"
+
+  - id: all_alive_batch_merged
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When no requests are finished, all should be merged unchanged"
+
+  - id: empty_running_batch_assignment
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When running_batch is empty but last_batch has live reqs, assignment replaces merge"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "pause_generation has a meaningful body, not a stub"
+
+rubric: []
+# No applicable soft rules. Repo agent configs are specialized skill tutorials
+# (JIT kernel, AOT sgl-kernel, CI workflow, CUDA debugging, profiling, bisection,
+# test writing) — none contain general coding rules for this Python bugfix.

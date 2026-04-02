@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38410
+  base_commit: "43cc5138e5145752413235a2a8aa303886077327"
+  merge_commit: "8c0b6267d7fa5c8a07e318809180fc021a0afbf2"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All 4 modified files must parse without syntax errors"
+
+  - id: pixtral_processor_init_signature
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MistralCommonPixtralProcessor.__init__ must have image_processor as a named parameter for Transformers v5 signature introspection"
+
+  - id: voxtral_processor_init_signature
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MistralCommonVoxtralProcessor.__init__ must have feature_extractor as a named parameter for Transformers v5 signature introspection"
+
+  - id: pixtral_processor_stores_image_processor
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MistralCommonPixtralProcessor.__init__ must store image_processor from the parameter (not create internally)"
+
+  - id: voxtral_processor_stores_feature_extractor
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MistralCommonVoxtralProcessor.__init__ must store feature_extractor from the parameter (not create internally)"
+
+  - id: pixtral_model_passes_image_processor
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Pixtral model's get_hf_processor must pass image_processor to the processor constructor"
+
+  - id: voxtral_model_passes_feature_extractor
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Voxtral model's get_hf_processor must pass feature_extractor to the processor constructor"
+
+  - id: get_hf_processor_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "get_hf_processor must exist in both pixtral and voxtral model files"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must not be trivially small (>= 50 lines each)"
+
+rubric: []

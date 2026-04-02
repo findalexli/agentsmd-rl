@@ -1,0 +1,122 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44943
+  base_commit: "eb3d67aaafe368863afc77e4b60fa60c2077c8b5"
+  merge_commit: "ed003b4482aabdf8377250f22826dd31f378269c"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without syntax errors"
+
+  - id: validate_rope_empty_dict_no_crash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "validate_rope handles empty rope_parameters dict without crashing or mutating"
+
+  - id: validate_rope_empty_dict_multiple_configs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "validate_rope handles empty dict on multiple sequential configs"
+
+  - id: transformers_version_not_classvar
+    type: fail_to_pass
+    origin: pr_diff
+    description: "transformers_version must be an instance field, not ClassVar, with per-instance isolation"
+
+  - id: architectures_not_classvar
+    type: fail_to_pass
+    origin: pr_diff
+    description: "architectures must be an instance field, not ClassVar, with per-instance isolation"
+
+  - id: auto_docstring_parameter_filtering
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_process_regular_parameters, _process_parameters_section, and auto_method_docstring accept allowed_params"
+
+  - id: auto_docstring_filtering_behavior
+    type: fail_to_pass
+    origin: pr_diff
+    description: "allowed_params actually filters out parameters not in the set"
+
+  - id: validate_rope_none_still_works
+    type: pass_to_pass
+    origin: pr_diff
+    description: "validate_rope still returns cleanly when rope_parameters is None"
+
+  - id: validate_rope_dispatches_for_real_config
+    type: pass_to_pass
+    origin: pr_diff
+    description: "validate_rope still validates non-empty rope configs (anti-stub)"
+
+  - id: upstream_config_kwargs_complete
+    type: fail_to_pass
+    origin: repo_tests
+    description: "config_common_kwargs completeness check accounts for transformers_version as instance field"
+
+  - id: check_config_attributes_allowlist
+    type: fail_to_pass
+    origin: agent_config
+    description: "ATTRIBUTES_TO_ALLOW must include transformers_version and architectures"
+    source:
+      path: "CLAUDE.md"
+      lines: "5"
+      commit: "eb3d67aaafe368863afc77e4b60fa60c2077c8b5"
+
+  - id: ruff_lint_clean
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changed files must pass ruff lint"
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "eb3d67aaafe368863afc77e4b60fa60c2077c8b5"
+
+  - id: no_bare_type_ignore
+    type: pass_to_pass
+    origin: agent_config
+    description: "# type: ignore comments must include specific error codes"
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "180-186"
+      commit: "eb3d67aaafe368863afc77e4b60fa60c2077c8b5"
+
+rubric:
+  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`."
+    source:
+      path: "CLAUDE.md"
+      lines: "66"
+      commit: "eb3d67aaafe368863afc77e4b60fa60c2077c8b5"
+
+  - rule: "Never use `assert` for type narrowing. Asserts are stripped by `python -O` and must not be relied on for correctness. Use `if ...: raise` instead."
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "189"
+      commit: "eb3d67aaafe368863afc77e4b60fa60c2077c8b5"
+
+  - rule: "Keep shared Protocols and type aliases in `src/transformers/_typing.py`"
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "204"
+      commit: "eb3d67aaafe368863afc77e4b60fa60c2077c8b5"
+
+  - rule: "PRs should be as brief as possible. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "eb3d67aaafe368863afc77e4b60fa60c2077c8b5"
+
+  - rule: "Do not add helper methods or abstractions just to satisfy the type checker, especially for only 1-2 occurrences."
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "196-197"
+      commit: "eb3d67aaafe368863afc77e4b60fa60c2077c8b5"
+
+  - rule: "Do not pollute base classes with domain-specific fields; use Protocols."
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "198"
+      commit: "eb3d67aaafe368863afc77e4b60fa60c2077c8b5"

@@ -1,0 +1,86 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21620
+  base_commit: "b2462694441412ad209c361dfa87f3f37a3d29f3"
+  merge_commit: "1d6424d5ad2dd1edb5ce9bb477be81dcf2b06eef"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "server_args.py must parse without syntax errors"
+
+  - id: mistral_small_4_both_files_returns_true
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mistral-Small-4 with both params.json and config.json returns native=True"
+
+  - id: mistral_large_3_both_files_returns_true
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mistral-Large-3 with both params.json and config.json returns native=True"
+
+  - id: leanstral_both_files_returns_true
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Leanstral with both params.json and config.json returns native=True"
+
+  - id: mistral_small_4_variant_both_files_returns_true
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mistral-Small-4 variant name with both files returns native=True"
+
+  - id: params_only_returns_true
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Any model with only params.json (no config.json) returns native=True"
+
+  - id: mistral_7b_params_only_returns_true
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Mistral-7B with only params.json returns True (regression)"
+
+  - id: mistral_7b_both_files_returns_false
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Mistral-7B-Instruct with both files returns False (not native)"
+
+  - id: codestral_mamba_both_files_returns_false
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Codestral-Mamba with both files returns False"
+
+  - id: pixtral_both_files_returns_false
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Pixtral with both files returns False"
+
+  - id: mistral_small_3_both_files_returns_false
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Mistral-Small-3 (not 4) with both files returns False"
+
+  - id: mistral_nemo_both_files_returns_false
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Mistral-Nemo with both files returns False"
+
+  - id: no_params_json_returns_false
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Model with config.json only (no params.json) returns False"
+
+  - id: neither_file_returns_false
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Model with neither file returns False"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "_is_mistral_native_format has real logic, not just pass/return"
+
+rubric: []
+# No applicable code-quality rules found in agent config files at base commit.

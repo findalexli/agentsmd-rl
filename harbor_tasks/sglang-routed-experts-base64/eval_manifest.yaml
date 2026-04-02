@@ -1,0 +1,61 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 0  # synthetic task — no single upstream PR
+  base_commit: "2acdda1d850122129c6ff21b6d07b2a4c9eb31bd"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All four modified files must parse without syntax errors"
+
+  - id: tensor_no_crash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "encode_image_base64 accepts torch.Tensor (multiple sizes) without crashing"
+
+  - id: tensor_valid_png
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tensor encoding produces valid base64-encoded PNG with correct dimensions"
+
+  - id: tensor_pixel_roundtrip
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CHW tensor pixel values survive encode/decode round-trip (red and blue solids)"
+
+  - id: bytes_input_unchanged
+    type: pass_to_pass
+    origin: pr_diff
+    description: "encode_image_base64 still handles bytes input correctly"
+
+  - id: detokenizer_no_extract_method
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_extract_routed_experts method removed from detokenizer_manager"
+
+  - id: detokenizer_no_pybase64_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Detokenizer no longer imports pybase64 at module level"
+
+  - id: tokenizer_manager_has_base64
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tokenizer manager imports pybase64 and calls b64encode for routed_experts"
+
+  - id: numa_debug_not_warning
+    type: fail_to_pass
+    origin: pr_diff
+    description: "numactl-not-found message uses logger.debug instead of logger.warning"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files retain expected symbols and minimum line counts"
+
+rubric: []
+  # No applicable soft rules — agent configs contain only test-authoring and kernel
+  # conventions, none relevant to the runtime files modified in this task.

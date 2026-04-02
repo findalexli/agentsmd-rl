@@ -1,0 +1,101 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 18567
+  base_commit: "bd2e0c9b09551c6570b14c4da80364fe90805b78"
+  merge_commit: "d7da792648a6e8bc2e56162f5890f44333df9ab8"
+
+checks:
+  - id: cargo_check_uv_python
+    type: pass_to_pass
+    origin: static
+    description: "uv-python crate must compile after refactoring"
+
+  - id: cargo_check_uv
+    type: pass_to_pass
+    origin: static
+    description: "All call sites in the uv crate compile with updated API"
+
+  - id: free_function_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "satisfies_python_preference free function removed from discovery.rs, lib.rs, and callers"
+
+  - id: is_system_interpreter_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "is_system_interpreter free function removed from discovery.rs"
+
+  - id: list_inline_preference_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "list.rs no longer reimplements preference logic with inline variant match"
+
+  - id: preference_method_on_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PythonPreference has allows_installation(&PythonInstallation) method"
+
+  - id: installation_has_is_managed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PythonInstallation has pub fn is_managed(&self) method"
+
+  - id: allows_interpreter_method
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PythonPreference has pub fn allows_interpreter(&Interpreter) method"
+
+  - id: cargo_test_uv_python
+    type: pass_to_pass
+    origin: repo_tests
+    description: "uv-python crate unit tests still pass"
+
+  - id: lib_exports_core_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: "lib.rs still exports PythonPreference, PythonSource, find_python_installations, PythonRequest"
+
+  - id: no_allow_attr_in_modified_files
+    type: pass_to_pass
+    origin: agent_config
+    description: "No #[allow()] in PythonPreference/PythonInstallation impl blocks"
+    source:
+      path: "CLAUDE.md"
+      lines: "10"
+      commit: "bd2e0c9b09551c6570b14c4da80364fe90805b78"
+
+  - id: no_unwrap_panic_in_preference_impl
+    type: pass_to_pass
+    origin: agent_config
+    description: "No unwrap/panic/unreachable in PythonPreference impl block"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "bd2e0c9b09551c6570b14c4da80364fe90805b78"
+
+rubric:
+  - rule: "PREFER patterns like `if let` to handle fallibility"
+    source:
+      path: "CLAUDE.md"
+      lines: "8"
+      commit: "bd2e0c9b09551c6570b14c4da80364fe90805b78"
+
+  - rule: "PREFER let chains (`if let` combined with `&&`) over nested `if let` statements"
+    source:
+      path: "CLAUDE.md"
+      lines: "11"
+      commit: "bd2e0c9b09551c6570b14c4da80364fe90805b78"
+
+  - rule: "PREFER top-level imports over local imports or fully qualified names"
+    source:
+      path: "CLAUDE.md"
+      lines: "16"
+      commit: "bd2e0c9b09551c6570b14c4da80364fe90805b78"
+
+  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
+    source:
+      path: "CLAUDE.md"
+      lines: "17"
+      commit: "bd2e0c9b09551c6570b14c4da80364fe90805b78"

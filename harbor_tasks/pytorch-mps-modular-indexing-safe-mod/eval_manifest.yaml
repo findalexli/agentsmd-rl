@@ -1,0 +1,80 @@
+version: "2.0"
+
+source:
+  repo: "pytorch/pytorch"
+  pr: 178009
+  base_commit: "483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc"
+  merge_commit: "db741c72097871e384b22ee6fff1d6083adf23cc"
+
+checks:
+  - id: mps_syntax
+    type: pass_to_pass
+    origin: static
+    description: "mps.py must parse without syntax errors"
+
+  - id: utils_h_balanced_braces
+    type: pass_to_pass
+    origin: static
+    description: "c10/metal/utils.h must have balanced braces"
+
+  - id: buggy_pattern_not_bare_modulo
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_print_ModularIndexing with div=65536 + non-power-of-2 mod must not return bare (x/div) % (mod)"
+
+  - id: buggy_pattern_uses_function_call
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Buggy-pattern output must use a function call, not bare % operator"
+
+  - id: utils_h_new_mod_safety_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "utils.h must have a new modulo-safety function with optimization barrier"
+
+  - id: non_buggy_patterns_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Non-buggy patterns (div=1, power-of-2 mod) and FloorDiv still produce valid output"
+
+  - id: existing_functions_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "floor_divide and fmod still present in utils.h; files not gutted"
+
+rubric:
+  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
+    source:
+      path: "CLAUDE.md"
+      lines: "48"
+      commit: "483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc"
+
+  - rule: "Comments should be useful — remind the reader about non-obvious global context that can't be inferred locally."
+    source:
+      path: "CLAUDE.md"
+      lines: "49-50"
+      commit: "483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc"
+
+  - rule: "If uncertain, choose the simpler, more concise implementation."
+    source:
+      path: "CLAUDE.md"
+      lines: "59"
+      commit: "483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc"
+
+  - rule: "Match existing code style and architectural patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "57"
+      commit: "483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc"
+
+  - rule: "Variable and function names convey intent; minimal comments needed."
+    source:
+      path: ".claude/skills/pr-review/review-checklist.md"
+      lines: "28"
+      commit: "483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc"
+
+  - rule: "Solutions are as simple as possible for the current requirements; no over-engineering."
+    source:
+      path: ".claude/skills/pr-review/review-checklist.md"
+      lines: "11"
+      commit: "483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc"

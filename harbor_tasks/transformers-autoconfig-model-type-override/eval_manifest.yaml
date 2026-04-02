@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 45058
+  base_commit: "ce4a791c5277840c4c1d74eed03431b674869da5"
+  merge_commit: "44686173b26bb174f3c7eb6e59f08a338d1adf54"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "configuration_utils.py must parse without errors"
+
+  - id: override_model_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Passing model_type kwarg overrides config_dict value when they differ"
+
+  - id: warning_on_override
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A warning is logged when model_type is overridden"
+
+  - id: no_warning_when_matching
+    type: pass_to_pass
+    origin: pr_diff
+    description: "No warning is logged when model_type kwarg matches config"
+
+  - id: no_override_when_matching
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Passing model_type that matches config does not change anything"
+
+  - id: normal_load_without_model_type_kwarg
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Loading config without model_type kwarg works unchanged"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "configuration_utils.py is not stubbed out"
+
+  - id: minimal_diff
+    type: fail_to_pass
+    origin: agent_config
+    description: "Fix should be brief — under 30 lines added"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "ce4a791c5277840c4c1d74eed03431b674869da5"
+
+rubric:
+  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`."
+    source:
+      path: "CLAUDE.md"
+      lines: "66"
+      commit: "ce4a791c5277840c4c1d74eed03431b674869da5"
+
+  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`!"
+    source:
+      path: "CLAUDE.md"
+      lines: "67"
+      commit: "ce4a791c5277840c4c1d74eed03431b674869da5"

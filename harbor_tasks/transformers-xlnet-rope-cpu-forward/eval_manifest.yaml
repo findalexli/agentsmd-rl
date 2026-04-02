@@ -1,0 +1,67 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44782
+  base_commit: "be6cf0848668852e3267d297211eb7e983e6c786"
+  merge_commit: "70e454c97368fcc5183066d86d37d1b493a72f8c"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "modeling_xlnet.py must parse without syntax errors"
+
+  - id: device_param_uni
+    type: fail_to_pass
+    origin: pr_diff
+    description: "relative_positional_encoding accepts device= with attn_type='bi', bi_data=False, multiple input combos"
+
+  - id: device_param_bi_data
+    type: fail_to_pass
+    origin: pr_diff
+    description: "relative_positional_encoding works with bi_data=True and device='cpu', multiple input combos"
+
+  - id: device_param_clamp
+    type: fail_to_pass
+    origin: pr_diff
+    description: "relative_positional_encoding respects clamp_len with device= on CPU"
+
+  - id: forward_passes_device_no_redundant_to
+    type: fail_to_pass
+    origin: pr_diff
+    description: "forward() passes device= to relative_positional_encoding, no redundant .to() call"
+
+  - id: file_structure_intact
+    type: pass_to_pass
+    origin: repo_tests
+    description: "modeling_xlnet.py retains expected classes and key methods"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "relative_positional_encoding has substantial logic, not a stub"
+
+  - id: device_keyword_in_signature
+    type: pass_to_pass
+    origin: static
+    description: "relative_positional_encoding signature includes device parameter"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "be6cf0848668852e3267d297211eb7e983e6c786"
+
+  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`. Edit the code it's copying from and propagate the change, or break the link if needed."
+    source:
+      path: "CLAUDE.md"
+      lines: "65"
+      commit: "be6cf0848668852e3267d297211eb7e983e6c786"
+
+  - rule: "When a modular file is present, generated files should not be edited directly. Instead, edit the modular file."
+    source:
+      path: "CLAUDE.md"
+      lines: "66"
+      commit: "be6cf0848668852e3267d297211eb7e983e6c786"

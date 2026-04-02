@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12976
+  base_commit: "41e98f9468bcf322ed55d1470e31e7b4021d0480"
+  merge_commit: "7fb33fc3b80b421817c1d1ddea19c8858a9f2924"
+
+checks:
+  - id: file_exists_and_parses
+    type: pass_to_pass
+    origin: static
+    description: "Target Svelte file exists and has substantial script + template sections"
+
+  - id: level_field_in_slug_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "guide_slug type declaration includes a numeric level/depth field for heading hierarchy"
+
+  - id: right_sidebar_with_slug_links
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Right-side TOC iterates guide_slug with clickable anchor links in a sidebar container"
+
+  - id: scroll_tracking
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Reactive scroll tracking highlights the currently visible section in the TOC"
+
+  - id: layout_no_mx_auto
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Content area no longer uses mx-auto centering, making room for right sidebar"
+
+  - id: heading_level_indentation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TOC entries indented based on heading level/depth for hierarchy"
+
+  - id: left_sidebar_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Left sidebar iterating guide_names with categories still exists"
+
+  - id: prev_next_navigation_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Previous/next guide navigation links still exist"
+
+  - id: sidebar_uses_tailwind
+    type: fail_to_pass
+    origin: agent_config
+    description: "New sidebar uses Tailwind CSS utilities, consistent with surrounding code"
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "41e98f9468bcf322ed55d1470e31e7b4021d0480"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "41e98f9468bcf322ed55d1470e31e7b4021d0480"

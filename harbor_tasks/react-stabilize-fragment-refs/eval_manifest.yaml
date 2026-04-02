@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35642
+  base_commit: "e6f1c33acf81d9865863ab149d24726f43a56db0"
+  merge_commit: "9c0323e2cf9be543d6eaa44419598af56922603f"
+
+checks:
+  - id: files_exist
+    type: pass_to_pass
+    origin: static
+    description: "All three modified files are present in the workspace"
+
+  - id: dom_config_type_uses_stable_name
+    type: fail_to_pass
+    origin: pr_diff
+    description: "InstanceWithFragmentHandles type in ReactFiberConfigDOM.js uses reactFragments (not unstable_reactFragments)"
+
+  - id: dom_config_add_uses_stable_name
+    type: fail_to_pass
+    origin: pr_diff
+    description: "addFragmentHandleToInstance in DOM config accesses instance.reactFragments"
+
+  - id: dom_config_delete_uses_stable_name
+    type: fail_to_pass
+    origin: pr_diff
+    description: "deleteChildFromFragmentInstance in DOM config calls instance.reactFragments.delete"
+
+  - id: fabric_config_type_uses_stable_name
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PublicInstanceWithFragmentHandles type in ReactFiberConfigFabric.js uses reactFragments"
+
+  - id: fabric_config_functions_use_stable_name
+    type: fail_to_pass
+    origin: pr_diff
+    description: "addFragmentHandleToInstance and deleteChildFromFragmentInstance in Fabric use reactFragments"
+
+  - id: test_file_uses_stable_name
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReactDOMFragmentRefs-test.js assertions reference childA.reactFragments (not unstable_)"
+
+  - id: no_unstable_refs_in_modified_files
+    type: pass_to_pass
+    origin: static
+    description: "No occurrences of unstable_reactFragments remain in any of the three modified files"
+
+  - id: coverage_nontrivial
+    type: pass_to_pass
+    origin: static
+    description: "Both DOM and Fabric configs have >= 4 reactFragments references (rename is complete)"
+
+rubric: []

@@ -1,0 +1,83 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28271
+  base_commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+  merge_commit: "923690e923b2f13e0815e8cf342748082058bede"
+
+checks:
+  # Gate
+  - id: dns_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "dns.zig must exist and be non-empty"
+
+  # Core behavioral fixes (fail-to-pass)
+  - id: isexpired_no_refcount_gate
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isExpired must not gate expiry on refcount > 0"
+
+  - id: get_refcount_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get() must guard deinit of expired entries on zero refcount"
+
+  - id: freeaddrinfo_conditional_valid
+    type: fail_to_pass
+    origin: pr_diff
+    description: "freeaddrinfo must not unconditionally assign valid = (err == 0)"
+
+  # Regression (pass-to-pass)
+  - id: isexpired_result_null
+    type: pass_to_pass
+    origin: pr_diff
+    description: "isExpired still checks result == null"
+
+  - id: get_calls_isexpired
+    type: pass_to_pass
+    origin: pr_diff
+    description: "get() still calls isExpired for cache entries"
+
+  - id: get_calls_deinit
+    type: pass_to_pass
+    origin: pr_diff
+    description: "get() still calls deinit for expired unreferenced entries"
+
+  - id: isexpired_ttl_comparison
+    type: pass_to_pass
+    origin: pr_diff
+    description: "isExpired still performs TTL comparison"
+
+  # Anti-stub (pass-to-pass)
+  - id: isexpired_not_stub
+    type: pass_to_pass
+    origin: pr_diff
+    description: "isExpired has meaningful body (>= 4 non-blank code lines)"
+
+  - id: freeaddrinfo_refcount_dec
+    type: pass_to_pass
+    origin: pr_diff
+    description: "freeaddrinfo still decrements refcount"
+
+  # Config-derived (agent_config)
+  - id: no_std_apis
+    type: pass_to_pass
+    origin: agent_config
+    description: "No std.* usage in modified functions (use bun.* instead)"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "14-16"
+      commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
+  - id: no_inline_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No inline @import() in modified functions"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
+rubric: []

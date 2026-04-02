@@ -1,0 +1,96 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19212
+  base_commit: "2d502d6ffe1aaf8c02d26b863ad4fd8d82bf28b5"
+  merge_commit: "d500a8432a690e802edcc065df84a9c9ec8c3652"
+
+checks:
+  - id: extra_fields_preserved
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Extra OAuth fields (enterpriseUrl, arbitrary) are forwarded to auth.set"
+
+  - id: enterprise_url_in_type_definition
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enterpriseUrl declared as optional string in both AuthOuathResult branches"
+
+  - id: type_overwritten_provider_excluded
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Stored auth entry has type='oauth' (not 'success') and no provider field"
+
+  - id: account_id_forwarded
+    type: pass_to_pass
+    origin: pr_diff
+    description: "accountId is still forwarded when present in the callback result"
+
+  - id: core_token_fields
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Core token fields (access, refresh, expires) are always stored correctly"
+
+  - id: key_auth_branch_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "API key auth branch still works correctly"
+
+  - id: no_new_any_types
+    type: pass_to_pass
+    origin: agent_config
+    description: "No new 'any' type annotations introduced in modified files (AGENTS.md:13)"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "2d502d6ffe1aaf8c02d26b863ad4fd8d82bf28b5"
+
+  - id: no_gratuitous_function_extraction
+    type: pass_to_pass
+    origin: agent_config
+    description: "Fix doesn't extract callback logic to unnecessary new functions (AGENTS.md:11)"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "2d502d6ffe1aaf8c02d26b863ad4fd8d82bf28b5"
+
+  - id: no_new_try_catch
+    type: pass_to_pass
+    origin: agent_config
+    description: "No new try/catch blocks introduced in auth.ts (AGENTS.md:12)"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "2d502d6ffe1aaf8c02d26b863ad4fd8d82bf28b5"
+
+  - id: prefer_const_over_let
+    type: pass_to_pass
+    origin: agent_config
+    description: "No new 'let' declarations introduced in auth.ts (AGENTS.md:70)"
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "2d502d6ffe1aaf8c02d26b863ad4fd8d82bf28b5"
+
+rubric:
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "2d502d6ffe1aaf8c02d26b863ad4fd8d82bf28b5"
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "2d502d6ffe1aaf8c02d26b863ad4fd8d82bf28b5"
+  - rule: "Prefer single word variable names where possible"
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "2d502d6ffe1aaf8c02d26b863ad4fd8d82bf28b5"
+  - rule: "Reduce total variable count by inlining when a value is only used once"
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "2d502d6ffe1aaf8c02d26b863ad4fd8d82bf28b5"

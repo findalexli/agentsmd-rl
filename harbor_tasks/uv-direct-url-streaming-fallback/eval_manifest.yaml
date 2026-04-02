@@ -1,0 +1,103 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 18688
+  base_commit: "5ad8577ff847d0bf115d45dd05a1efecf6fd797f"
+  merge_commit: "cde48c8ac8eb13e8eff5cfb5c9fc39dad69c4f19"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified crate must compile without errors"
+
+  - id: direct_url_err_matches_extract_not_client
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DirectUrl Err arm matches Error::Extract, not Error::Client"
+
+  - id: streaming_failed_handled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DirectUrl block handles is_http_streaming_failed() for mid-stream failures"
+
+  - id: both_streaming_errors_fallback_to_download
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both streaming error types present alongside download_wheel fallback"
+
+  - id: non_streaming_errors_reraise
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Non-streaming Extract errors re-raised, not swallowed"
+
+  - id: registry_arm_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Registry arm still handles streaming errors and has download_wheel fallback"
+
+  - id: stream_wheel_called_first
+    type: pass_to_pass
+    origin: pr_diff
+    description: "DirectUrl arm still calls stream_wheel before error handling"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "DirectUrl block has substantial code (not hollowed out)"
+
+  - id: no_panic_unwrap_in_direct_url
+    type: pass_to_pass
+    origin: agent_config
+    description: "No unwrap()/panic!/unreachable! in the DirectUrl error handler"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "5ad8577ff847d0bf115d45dd05a1efecf6fd797f"
+
+  - id: no_unsafe_in_direct_url
+    type: pass_to_pass
+    origin: agent_config
+    description: "No unsafe blocks in the DirectUrl error handler"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "5ad8577ff847d0bf115d45dd05a1efecf6fd797f"
+
+  - id: no_clippy_ignores_in_direct_url
+    type: pass_to_pass
+    origin: agent_config
+    description: "No #[allow(clippy::...)] in the DirectUrl error handler"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "5ad8577ff847d0bf115d45dd05a1efecf6fd797f"
+
+  - id: prefer_expect_over_allow
+    type: pass_to_pass
+    origin: agent_config
+    description: "Use #[expect()] not #[allow()] if clippy must be disabled"
+    source:
+      path: "CLAUDE.md"
+      lines: "10"
+      commit: "5ad8577ff847d0bf115d45dd05a1efecf6fd797f"
+
+rubric:
+  - rule: "PREFER patterns like `if let` to handle fallibility"
+    source:
+      path: "CLAUDE.md"
+      lines: "8"
+      commit: "5ad8577ff847d0bf115d45dd05a1efecf6fd797f"
+
+  - rule: "PREFER let chains (`if let` combined with `&&`) over nested `if let` statements"
+    source:
+      path: "CLAUDE.md"
+      lines: "11"
+      commit: "5ad8577ff847d0bf115d45dd05a1efecf6fd797f"
+
+  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
+    source:
+      path: "CLAUDE.md"
+      lines: "17-18"
+      commit: "5ad8577ff847d0bf115d45dd05a1efecf6fd797f"

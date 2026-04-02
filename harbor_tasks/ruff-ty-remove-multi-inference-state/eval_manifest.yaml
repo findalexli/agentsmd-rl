@@ -1,0 +1,89 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24184
+  base_commit: "1535879415566fab7be4e8aef233579aa89801ed"
+  merge_commit: "55c5d90699afabf3e01340b7ff8e645fe4a237a2"
+
+checks:
+  - id: compiles
+    type: pass_to_pass
+    origin: static
+    description: "ty_python_semantic crate compiles without errors"
+
+  - id: multi_inference_state_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MultiInferenceState enum and all references removed from crate"
+
+  - id: inner_expression_inference_state_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "InnerExpressionInferenceState enum and all references removed from crate"
+
+  - id: multi_inference_context_flag_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "multi_inference field and methods removed from InferContext"
+
+  - id: overload_mdtests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Overload/multi-inference related mdtests pass"
+
+  - id: narrowing_mdtests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypedDict/narrowing mdtests pass"
+
+  - id: annotation_mdtests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Annotation inference mdtests pass"
+
+  - id: subscript_mdtests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Subscript/type expression mdtests pass"
+
+  - id: discard_method_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "discard() method removed from TypeInferenceBuilder — speculative builders safe to drop"
+
+  - id: defuse_method_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "defuse() method added to InferContext for speculative builder cleanup"
+
+  - id: no_local_imports_in_builder
+    type: pass_to_pass
+    origin: agent_config
+    description: "No use statements inside function bodies in builder.rs"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "1535879415566fab7be4e8aef233579aa89801ed"
+
+rubric:
+  - rule: "Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism that could help solve the problem. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "1535879415566fab7be4e8aef233579aa89801ed"
+  - rule: "Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`. Instead, try to encode those constraints in the type system."
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "1535879415566fab7be4e8aef233579aa89801ed"
+  - rule: "Prefer let chains (`if let` combined with `&&`) over nested `if let` statements to reduce indentation and improve readability."
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "1535879415566fab7be4e8aef233579aa89801ed"
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "1535879415566fab7be4e8aef233579aa89801ed"

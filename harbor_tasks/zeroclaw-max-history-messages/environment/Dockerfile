@@ -1,10 +1,10 @@
-FROM rust:1.82-slim
+FROM rust:1.85-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-install-recommends \
     git curl ca-certificates build-essential tmux python3 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -16,9 +16,8 @@ RUN git clone https://github.com/zeroclaw-labs/zeroclaw.git /workspace/zeroclaw 
     cd /workspace/zeroclaw && \
     git checkout 5b6d0585dd635a719f47c97f761dbaae817f6daa
 
-# Install minimal deps (agent fills in specifics)
-
-
+# Pre-fetch Rust dependencies so cargo check is fast at test time
+RUN cd /workspace/zeroclaw && cargo fetch
 
 RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Test Agent"

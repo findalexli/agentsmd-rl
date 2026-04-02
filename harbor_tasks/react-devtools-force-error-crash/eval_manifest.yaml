@@ -1,0 +1,41 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 0
+  base_commit: "4610359651fa10247159e2050f8ec222cb7faa91"
+  merge_commit: ""
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified JS files (renderer.js, ReactFiberBeginWork.js) must parse without syntax errors"
+
+  - id: storeForceError_regression
+    type: fail_to_pass
+    origin: pr_diff
+    description: "storeForceError regression test passes — end-to-end crash fix validation"
+
+  - id: renderer_null_return_for_unknown_fiber
+    type: fail_to_pass
+    origin: pr_diff
+    description: "shouldErrorFiberAccordingToMap returns null (not false) when fiber has no forced-error entry"
+
+  - id: renderer_flow_type_boolean_null
+    type: fail_to_pass
+    origin: pr_diff
+    description: "shouldErrorFiberAccordingToMap Flow return type is 'boolean | null', not just 'boolean'"
+
+rubric:
+  - rule: "Comments in the fix should explain WHY the change was made (e.g., why returning null is correct, what happens if the instance doesn't exist yet)."
+    source:
+      path: "CLAUDE.md"
+      lines: "1"
+      commit: "4610359651fa10247159e2050f8ec222cb7faa91"
+
+  - rule: "DevTools integration code should handle edge cases gracefully — when a fiber has no forced-error entry, the code should be a no-op rather than attempting operations on a potentially null instance."
+    source:
+      path: "CLAUDE.md"
+      lines: "1"
+      commit: "4610359651fa10247159e2050f8ec222cb7faa91"

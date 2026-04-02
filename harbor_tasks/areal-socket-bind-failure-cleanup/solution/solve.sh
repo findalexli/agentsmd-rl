@@ -53,4 +53,5 @@ index 199998a7a..7f1effd7c 100644
          return False
 +    finally:
 +        sock.close()
+
 PATCH

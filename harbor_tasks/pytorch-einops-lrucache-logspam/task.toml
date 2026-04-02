@@ -1,0 +1,30 @@
+version = "1.0"
+
+[metadata]
+author_name = "Alex Li"
+author_email = "alex@example.com"
+difficulty = "medium"
+category = "bugfix"
+tags = ["pytorch", "dynamo", "einops", "lru_cache", "warnings"]
+expert_time_estimate_min = 10.0
+junior_time_estimate_min = 30.0
+
+[verifier]
+env = { LLM_JUDGE = "${LLM_JUDGE:-0}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }
+timeout_sec = 60.0
+
+[agent]
+timeout_sec = 1200.0
+
+[environment]
+build_timeout_sec = 600.0
+cpus = 1
+memory_mb = 4096
+storage_mb = 10240
+allow_internet = true
+
+[source]
+repo = "pytorch/pytorch"
+pr_number = 175442
+base_commit = "98e35020c7423c304778a7044f6baa3c8a98ba6d"
+merge_commit = "ef5c69dec13056e58810a59663db7f8a6b8bebbd"

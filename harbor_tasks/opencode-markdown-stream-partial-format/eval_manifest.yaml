@@ -1,0 +1,123 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19403
+  base_commit: "771525270a0c4d1394b3117e5842847a51caf72d"
+  merge_commit: "d3414996845bb05e27059902c2bcca21e8ef6c36"
+
+checks:
+  - id: syntax_check
+    type: fail_to_pass
+    origin: static
+    description: "markdown-stream.ts must exist and export stream(); markdown.tsx must be intact"
+
+  - id: bold_emphasis_healed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Unclosed ** markers are temporarily closed during streaming"
+
+  - id: backtick_code_healed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Unclosed inline backtick is temporarily closed during streaming"
+
+  - id: italic_emphasis_healed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Unclosed * markers are temporarily closed during streaming"
+
+  - id: underscore_bold_healed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Unclosed __ markers are temporarily closed during streaming"
+
+  - id: incomplete_link_plain_text
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Partially streamed links render as plain text, not clickable markup"
+
+  - id: non_streaming_skips_healing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When live=false, incomplete markers are NOT healed"
+
+  - id: code_fence_splitting
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Trailing open code fence is split into a separate block from stable content"
+
+  - id: non_streaming_preserves_content
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Complete markdown passes through unchanged in non-streaming mode"
+
+  - id: no_any_type
+    type: pass_to_pass
+    origin: agent_config
+    description: "No use of the `any` type in agent-changed files"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "771525270a0c4d1394b3117e5842847a51caf72d"
+
+  - id: no_try_catch
+    type: pass_to_pass
+    origin: agent_config
+    description: "No try/catch blocks in agent-changed files"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "771525270a0c4d1394b3117e5842847a51caf72d"
+
+  - id: no_else_statements
+    type: pass_to_pass
+    origin: agent_config
+    description: "No else statements in agent-changed files"
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "771525270a0c4d1394b3117e5842847a51caf72d"
+
+rubric:
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "771525270a0c4d1394b3117e5842847a51caf72d"
+
+  - rule: "Prefer single word names for variables and functions. Only use multiple words if necessary."
+    source:
+      path: "AGENTS.md"
+      lines: "21"
+      commit: "771525270a0c4d1394b3117e5842847a51caf72d"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "771525270a0c4d1394b3117e5842847a51caf72d"
+
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "771525270a0c4d1394b3117e5842847a51caf72d"
+
+  - rule: "Prefer `const` over `let`. Use ternaries or early returns instead of reassignment."
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "771525270a0c4d1394b3117e5842847a51caf72d"
+
+  - rule: "Avoid `else` statements. Prefer early returns."
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "771525270a0c4d1394b3117e5842847a51caf72d"
+
+  - rule: "Prefer functional array methods (flatMap, filter, map) over for loops; use type guards on filter to maintain type inference downstream"
+    source:
+      path: "AGENTS.md"
+      lines: "17"
+      commit: "771525270a0c4d1394b3117e5842847a51caf72d"

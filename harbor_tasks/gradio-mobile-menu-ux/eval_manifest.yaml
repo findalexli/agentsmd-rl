@@ -1,0 +1,57 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  base_commit: "7760161258abe6329b754dd6d2511fc3b61fed95"
+
+checks:
+  - id: svelte_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Header.svelte HTML template must parse without errors"
+
+  - id: fullscreen_overlay
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mobile menu renders as a full-screen overlay inside a conditional block"
+
+  - id: close_button_accessible
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Overlay has a close button with aria-label containing 'close' or 'dismiss'"
+
+  - id: search_and_theme_on_mobile
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Search and ThemeToggle components appear in both desktop and mobile sections"
+
+  - id: overlay_has_nav_links
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mobile overlay contains at least 2 internal navigation links"
+
+  - id: state_decoupled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Desktop/mobile visibility is not coupled via reactive show_nav = click_nav || store"
+
+  - id: desktop_elements_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Logo, nav links (/docs, /guides), and Community section still exist"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Header.svelte has real content (>100 lines, >15 elements)"
+
+  - id: prettier_formatting
+    type: pass_to_pass
+    origin: agent_config
+    description: "Frontend code is formatted with prettier"
+    source:
+      path: "AGENTS.md"
+      lines: "307"
+      commit: "7760161258abe6329b754dd6d2511fc3b61fed95"
+
+rubric: []

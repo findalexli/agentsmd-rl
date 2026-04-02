@@ -1,0 +1,249 @@
+"""
+Task: opencode-theme-kv-default-fallback
+Repo: anomalyco/opencode @ 26382c6216797e65a1b43dea8646725332f62e07
+PR:   506
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+
+WHY NODE EXEC: The target is a SolidJS createMemo callback inside a
+ThemeProvider that requires the full reactive runtime, useKV/useRenderer
+providers, and @opentui/core. None of these are installable without a
+full monorepo build.  We extract the memo body and execute it in Node.js
+with lightweight mocks for store, kv, and resolveTheme.
+"""
+
+import json
+import re
+import subprocess
+from pathlib import Path
+
+REPO = "/repo"
+FILE = f"{REPO}/packages/opencode/src/cli/cmd/tui/context/theme.tsx"
+
+
+def _read_file():
+    return Path(FILE).read_text()
+
+
+def _extract_values_memo(src: str) -> str:
+    """Extract the body of `const values = createMemo(...)` using brace counting.
+    Comments are stripped to prevent comment-injection gaming."""
+    stripped = re.sub(r"//[^\n]*", "", src)
+    stripped = re.sub(r"/\*[\s\S]*?\*/", "", stripped)
+    idx = stripped.find("const values = createMemo")
+    if idx == -1:
+        return ""
+    brace = stripped.find("{", idx)
+    if brace == -1:
+        return ""
+    depth = 1
+    i = brace + 1
+    while i < len(stripped) and depth > 0:
+        if stripped[i] == "{":
+            depth += 1
+        elif stripped[i] == "}":
+            depth -= 1
+        i += 1
+    return stripped[brace + 1 : i - 1]
+
+
+def _run_memo(themes: dict, active: str, kv_theme, mode: str = "dark") -> str:
+    """Execute the extracted memo body in Node.js with mocks.
+
+    Each theme value is a unique marker string (e.g. "T:dracula").
+    resolveTheme is an identity mock, so the return value tells us
+    which theme was selected.
+    """
+    memo = _extract_values_memo(_read_file())
+    assert memo, "Could not extract createMemo body"
+
+    js = (
+        "const store = {themes: %s, active: %s, mode: %s};\n"
+        "const kv = {get(key) {return %s;}};\n"
+        "function resolveTheme(t, m) {return t;}\n"
+        "const result = (function() {\n%s\n})();\n"
+        "console.log(result);\n"
+        % (
+            json.dumps(themes),
+            json.dumps(active),
+            json.dumps(mode),
+            json.dumps(kv_theme),
+            memo,
+        )
+    )
+
+    r = subprocess.run(
+        ["node"], input=js, capture_output=True, text=True, timeout=10
+    )
+    assert r.returncode == 0, f"Node.js execution failed:\n{r.stderr}"
+    return r.stdout.strip()
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static)
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_file_exists_and_not_stub():
+    """Target file exists and has substantial content."""
+    src = _read_file()
+    assert len(src.splitlines()) >= 200, "File has too few lines — likely stubbed"
+
+
+# [static] pass_to_pass
+def test_syntax_balanced_braces():
+    """File has balanced curly braces (basic syntax sanity)."""
+    r = subprocess.run(
+        [
+            "node", "-e",
+            "const s=require('fs').readFileSync(process.argv[1],'utf8');"
+            "let d=0;for(const c of s){if(c==='{')d++;if(c==='}')d--;if(d<0)process.exit(1);}"
+            "if(d!==0)process.exit(1);",
+            FILE,
+        ],
+        capture_output=True, timeout=10,
+    )
+    assert r.returncode == 0, "File has unbalanced braces"
+
+
+# [static] pass_to_pass
+def test_memo_block_exists():
+    """The `const values = createMemo` block exists and is non-trivial."""
+    memo = _extract_values_memo(_read_file())
+    assert len(memo) > 10, "createMemo 'values' block not found or too small"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_kv_fallback_when_active_missing():
+    """When active theme is not in themes map, the KV-saved theme is used."""
+    themes = {"opencode": "T:opencode", "dracula": "T:dracula"}
+    result = _run_memo(themes, active="custom-removed", kv_theme="dracula")
+    assert result == "T:dracula", (
+        f"Expected KV-saved 'dracula' theme but got {result!r}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_kv_fallback_varied_themes():
+    """KV fallback works with multiple different saved theme names."""
+    for name in ["catppuccin", "nord", "solarized"]:
+        themes = {"opencode": "T:opencode", name: f"T:{name}"}
+        result = _run_memo(themes, active="deleted-theme", kv_theme=name)
+        assert result == f"T:{name}", (
+            f"Expected KV-saved '{name}' but got {result!r}"
+        )
+
+
+# [pr_diff] fail_to_pass
+def test_buggy_direct_fallback_removed():
+    """The buggy `store.themes[store.active] ?? store.themes.opencode`
+    one-liner (which skips KV entirely) must not be present."""
+    memo = _extract_values_memo(_read_file())
+    buggy = re.search(
+        r"store\.themes\[store\.active\]\s*(\?\?|\|\|)\s*store\.themes[.\[]"
+        r'["\']?opencode',
+        memo,
+    )
+    assert not buggy, "Buggy direct-to-opencode fallback pattern still present"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (pr_diff) — behavioral regression checks
+# ---------------------------------------------------------------------------
+
+# [pr_diff] pass_to_pass
+def test_active_theme_used_when_present():
+    """When active theme exists in the map, it is used (KV ignored)."""
+    for active_name in ["dracula", "nord", "opencode"]:
+        themes = {
+            "opencode": "T:opencode",
+            "dracula": "T:dracula",
+            "nord": "T:nord",
+        }
+        result = _run_memo(themes, active=active_name, kv_theme="solarized")
+        assert result == f"T:{active_name}", (
+            f"Expected active '{active_name}' but got {result!r}"
+        )
+
+
+# [pr_diff] pass_to_pass
+def test_opencode_fallback_when_kv_invalid():
+    """Falls back to opencode when active is missing AND KV names a
+    theme not in the map."""
+    themes = {"opencode": "T:opencode", "dracula": "T:dracula"}
+    result = _run_memo(themes, active="gone", kv_theme="nonexistent")
+    assert result == "T:opencode", (
+        f"Expected 'opencode' fallback but got {result!r}"
+    )
+
+
+# [pr_diff] pass_to_pass
+def test_opencode_fallback_when_kv_not_string():
+    """Falls back to opencode when KV value is not a string."""
+    themes = {"opencode": "T:opencode"}
+    for kv_val in [None, 42, True]:
+        result = _run_memo(themes, active="gone", kv_theme=kv_val)
+        assert result == "T:opencode", (
+            f"Expected 'opencode' for kv={kv_val!r} but got {result!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — export preservation
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_resolve_theme_exported():
+    """resolveTheme function must still be exported."""
+    assert "export function resolveTheme" in _read_file()
+
+
+# [repo_tests] pass_to_pass
+def test_use_theme_provider_exported():
+    """useTheme and ThemeProvider must still be exported."""
+    src = _read_file()
+    assert re.search(
+        r"use:\s*useTheme.*provider:\s*ThemeProvider"
+        r"|provider:\s*ThemeProvider.*use:\s*useTheme",
+        src,
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_default_themes_exported():
+    """DEFAULT_THEMES record must still be exported."""
+    assert "export const DEFAULT_THEMES" in _read_file()
+
+
+# ---------------------------------------------------------------------------
+# Config-derived (agent_config)
+# ---------------------------------------------------------------------------
+
+# [agent_config] pass_to_pass — AGENTS.md:13 @ 26382c6
+def test_no_any_type_in_memo():
+    """No 'any' type in the values memo (AGENTS.md: Avoid using the any type)."""
+    memo = _extract_values_memo(_read_file())
+    assert not re.search(r":\s*any\b|as\s+any\b|<any>", memo), (
+        "'any' type found in values memo"
+    )
+
+
+# [agent_config] pass_to_pass — AGENTS.md:12 @ 26382c6
+def test_no_try_catch_in_memo():
+    """No try/catch in the values memo (AGENTS.md: Avoid try/catch)."""
+    memo = _extract_values_memo(_read_file())
+    assert not re.search(r"\btry\s*\{", memo), "try/catch found in values memo"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:70 @ 26382c6
+def test_prefer_const_in_memo():
+    """No 'let' declarations in the values memo (AGENTS.md: Prefer const over let)."""
+    memo = _extract_values_memo(_read_file())
+    assert not re.search(r"\blet\s+\w+", memo), (
+        "'let' found in values memo — prefer const with early returns"
+    )

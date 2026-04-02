@@ -1,0 +1,95 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24185
+  base_commit: "7973118f777bee32466a4fdb54f0816268f942ea"
+  merge_commit: "a84a58fef88968e36c0b070f0ab9a4bff7a05389"
+
+checks:
+  - id: build_compiles
+    type: pass_to_pass
+    origin: static
+    description: "All Rust changes must compile (cargo build --bin ty)"
+
+  - id: typeis_narrowing_performance
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ty check on TypeIs narrowing + match/assert_never completes within 60s (hangs on base)"
+
+  - id: typeis_variant_performance
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Variant TypeIs narrowing pattern also completes within 45s (hangs on base)"
+
+  - id: noreturn_detection
+    type: pass_to_pass
+    origin: pr_diff
+    description: "NoReturn/Never narrowing still works correctly after optimization"
+
+  - id: many_statement_calls
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Many statement-level function calls don't cause hang"
+
+  - id: upstream_narrowing_mdtests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing narrowing mdtests still pass"
+
+  - id: upstream_reachability_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Reachability-related tests still pass"
+
+  - id: no_local_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Rust imports at top of file, never locally in functions"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "7973118f777bee32466a4fdb54f0816268f942ea"
+
+  - id: prefer_expect_over_allow
+    type: pass_to_pass
+    origin: agent_config
+    description: "Use #[expect()] over #[allow()] for Clippy lint suppression"
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "7973118f777bee32466a4fdb54f0816268f942ea"
+
+  - id: no_panic_unwrap
+    type: pass_to_pass
+    origin: agent_config
+    description: "No new panic!/unwrap()/unreachable!() in changes"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "7973118f777bee32466a4fdb54f0816268f942ea"
+
+rubric:
+  - rule: "Prefer let chains (if let combined with &&) over nested if let statements to reduce indentation and improve readability."
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "7973118f777bee32466a4fdb54f0816268f942ea"
+
+  - rule: "Any method that accesses .node() must be #[salsa::tracked], or it will break incrementality. Prefer higher-level semantic APIs over raw AST access."
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "7973118f777bee32466a4fdb54f0816268f942ea"
+
+  - rule: "Avoid writing significant amounts of new code. Look for existing utilities and methods that could help solve the problem before writing new abstractions."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "7973118f777bee32466a4fdb54f0816268f942ea"
+
+  - rule: "Use comments purposefully — explain invariants and why something unusual was done, but do not narrate code."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "7973118f777bee32466a4fdb54f0816268f942ea"

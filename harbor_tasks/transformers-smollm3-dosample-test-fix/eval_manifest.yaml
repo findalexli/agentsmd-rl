@@ -1,0 +1,63 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 45048
+  base_commit: "9cd278715c5154597a44110d6e0c114a7e90d6f5"
+  merge_commit: "cc4ef19bb88ce7c49607a98fc8214b5c8bdb5342"
+
+checks:
+  - id: syntax
+    type: pass_to_pass
+    origin: static
+    description: "Target test file must parse without errors"
+
+  - id: dosample_false_in_generate
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All generate() calls in SmolLM3IntegrationTest must use do_sample=False"
+
+  - id: no_temperature_in_generate
+    type: fail_to_pass
+    origin: pr_diff
+    description: "generate() calls must not use temperature kwarg (temperature=0 does not override do_sample=True)"
+
+  - id: expected_text_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Old buggy expected text from non-deterministic sampling must be replaced"
+
+  - id: class_structure_preserved
+    type: pass_to_pass
+    origin: static
+    description: "All original test classes and integration test methods must still exist"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Integration test methods must have real bodies, not stubs"
+
+  - id: no_new_test_files
+    type: pass_to_pass
+    origin: agent_config
+    description: "Tests must be added to existing files, not new ones"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "16"
+      commit: "9cd278715c5154597a44110d6e0c114a7e90d6f5"
+
+  - id: code_style
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified test file must pass ruff linting"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "17"
+      commit: "9cd278715c5154597a44110d6e0c114a7e90d6f5"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "9cd278715c5154597a44110d6e0c114a7e90d6f5"

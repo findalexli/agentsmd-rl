@@ -1,0 +1,62 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44881
+  base_commit: "6a056a16a856097cb0400ce9a48e96ab9d469e30"
+  merge_commit: "9ef15d7016bd5fb307e961b2e8e56f14748913da"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (processing_utils.py, chat_template_utils.py, processing_smolvlm.py, processing_voxtral.py) must parse without errors"
+
+  - id: template_variable_extraction
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A function in chat_template_utils extracts undeclared Jinja2 variables from template strings, handling custom vars, loop exclusion, empty templates, and nested conditionals"
+
+  - id: extraction_varies_by_template
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Extraction is dynamic (not a hardcoded list) — different templates yield different variable sets"
+
+  - id: kwargs_separation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Template introspection correctly separates template-level kwargs (messages, add_generation_prompt) from processor kwargs (padding, max_length)"
+
+  - id: apply_chat_template_uses_introspection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ProcessorMixin.apply_chat_template imports and calls the extraction function for kwarg routing"
+
+  - id: extraction_cached
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Extraction function caches results (via lru_cache or equivalent) for performance"
+
+  - id: render_jinja_template_backward_compat
+    type: pass_to_pass
+    origin: repo_tests
+    description: "render_jinja_template still works correctly for single and batched conversations"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "14"
+      commit: "6a056a16a856097cb0400ce9a48e96ab9d469e30"
+
+  - rule: "We try to avoid direct inheritance between model-specific files in src/transformers/models/."
+    source:
+      path: "CLAUDE.md"
+      lines: "64"
+      commit: "6a056a16a856097cb0400ce9a48e96ab9d469e30"
+
+  - rule: "When a modular file is present, generated files should not be edited, as changes will be overwritten by make fix-repo. Instead, edit the modular file."
+    source:
+      path: "CLAUDE.md"
+      lines: "67"
+      commit: "6a056a16a856097cb0400ce9a48e96ab9d469e30"

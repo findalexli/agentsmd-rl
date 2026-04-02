@@ -1,0 +1,109 @@
+version: "2.0"
+
+source:
+  repo: "openclaw/openclaw"
+  pr: 57729
+  base_commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+  merge_commit: "7a953a52271b9188a5fa830739a4366614ff9916"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must parse without errors"
+
+  - id: scan_failure_blocks_install
+    type: fail_to_pass
+    origin: pr_diff
+    description: "install.ts must block (not warn-and-continue) when scan fails"
+
+  - id: error_codes_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PLUGIN_INSTALL_ERROR_CODE has security_scan_blocked and security_scan_failed entries"
+
+  - id: error_codes_used_in_handling
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Security scan error codes are used in error-handling logic, not just defined"
+
+  - id: runtime_blocks_critical_findings
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Runtime sets code: security_scan_blocked for critical scan findings"
+
+  - id: runtime_blocks_scan_errors
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Runtime sets code: security_scan_failed for scan exceptions"
+
+  - id: hook_precedence_over_builtin_block
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Hook block takes precedence; builtin block is fallback only"
+
+  - id: blocked_type_has_code_field
+    type: fail_to_pass
+    origin: agent_config
+    description: "Scan result blocked type has structured code field (closed error-code union)"
+    source:
+      path: "CLAUDE.md"
+      lines: "150"
+      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+
+  - id: no_ts_nocheck
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files must not contain @ts-nocheck or @ts-ignore"
+    source:
+      path: "CLAUDE.md"
+      lines: "146"
+      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+
+  - id: upstream_install_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream install.test.ts vitest suite passes"
+
+rubric:
+  - rule: "Keep loader behavior aligned with the documented Plugin SDK and manifest contracts. Do not create private backdoors that bundled plugins can use but external plugins cannot."
+    source:
+      path: "src/plugins/AGENTS.md"
+      lines: "23-24"
+      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+
+  - rule: "Compatibility: new plugin seams are allowed, but they must be added as documented, backwards-compatible, versioned contracts."
+    source:
+      path: "CLAUDE.md"
+      lines: "43"
+      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    source:
+      path: "CLAUDE.md"
+      lines: "163"
+      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+
+  - rule: "Keep human-readable strings for logs, CLI output, and UI; do not use freeform strings as the source of truth for internal branching."
+    source:
+      path: "CLAUDE.md"
+      lines: "151"
+      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+
+  - rule: "Prefer discriminated unions when parameter shape changes runtime behavior."
+    source:
+      path: "CLAUDE.md"
+      lines: "149"
+      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+
+  - rule: "New runtime control-flow code should not branch on error: string or reason: string when a closed code union would be reasonable."
+    source:
+      path: "CLAUDE.md"
+      lines: "154"
+      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+
+  - rule: "If a loader or registry change affects plugin authors, update the public SDK, docs, and contract tests instead of relying on incidental internals."
+    source:
+      path: "src/plugins/AGENTS.md"
+      lines: "26-27"
+      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"

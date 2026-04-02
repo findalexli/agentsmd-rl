@@ -1,0 +1,57 @@
+version: "1.0"
+
+task:
+  name: "react-rn-event-timing-fabric"
+  source:
+    repo: "facebook/react"
+    pr_number: 35947
+    merge_commit: "4cc5b7a90bac7e1f8ac51a9ac570d3ada3bddcb3"
+    base_commit: "aac12ce597b49093a5add54b00deee3d8980f874"
+    file_changed: "packages/react-native-renderer/src/ReactFiberConfigFabric.js"
+
+graders:
+  - name: "behavioral"
+    type: "deterministic"
+    weight: 0.80
+    checks:
+      - origin: "pr_diff"
+        weight: 0.20
+        description: "trackSchedulerEvent stores global.event in module-level variable"
+      - origin: "pr_diff"
+        weight: 0.20
+        description: "resolveEventType extracts modern event.type property"
+      - origin: "pr_diff"
+        weight: 0.15
+        description: "resolveEventType handles legacy dispatchConfig format"
+      - origin: "pr_diff"
+        weight: 0.15
+        description: "resolveEventTimeStamp extracts event.timeStamp"
+      - origin: "pr_diff"
+        weight: 0.10
+        description: "Both resolution functions filter out schedulerEvent"
+
+  - name: "regression"
+    type: "deterministic"
+    weight: 0.10
+    checks:
+      - origin: "static"
+        weight: 0.10
+        description: "Function signatures remain unchanged (backwards compatible)"
+
+  - name: "config"
+    type: "deterministic"
+    weight: 0.10
+    checks:
+      - origin: "agent_config"
+        source: "CLAUDE.md:linting"
+        weight: 0.05
+        description: "No wildcard imports"
+      - origin: "agent_config"
+        source: "compiler/CLAUDE.md:Flow type checking"
+        weight: 0.05
+        description: "Flow type annotations maintained"
+
+rubric:
+  rules_file: "rubric.yaml"
+  weight: 0.15
+  model: "claude-sonnet-4-6"

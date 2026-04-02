@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44903
+  base_commit: "a8683756653094e3fc3016df8abcdeaaec758f9a"
+  merge_commit: "687a70daa99d1e1cce4a681291a5348890843254"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "image_processing_utils.py must parse without syntax errors"
+
+  - id: sizedict_height_width
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_size_dict accepts SizeDict with height/width and returns a plain dict"
+
+  - id: sizedict_shortest_edge
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_size_dict accepts SizeDict with shortest_edge key"
+
+  - id: sizedict_shortest_longest_edge
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_size_dict accepts SizeDict with shortest_edge + longest_edge"
+
+  - id: sizedict_no_convert_fallthrough
+    type: pass_to_pass
+    origin: pr_diff
+    description: "SizeDict input must not fall through to convert_to_size_dict path"
+
+  - id: plain_dict_input
+    type: pass_to_pass
+    origin: repo_tests
+    description: "get_size_dict still works with plain dict input"
+
+  - id: int_input
+    type: pass_to_pass
+    origin: repo_tests
+    description: "get_size_dict still works with int input"
+
+  - id: tuple_input
+    type: pass_to_pass
+    origin: repo_tests
+    description: "get_size_dict still works with tuple input"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "18"
+      commit: "a8683756653094e3fc3016df8abcdeaaec758f9a"

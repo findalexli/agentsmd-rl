@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12944
+  base_commit: "e5ba4fa992c0ac389c6af2d143c9ad4c33eea360"
+  merge_commit: "2c769c71628730fbf06c6ba9b70d672b3d052b0f"
+
+checks:
+  - id: no_array_destructure_from_derived
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Buggy array destructuring `let [input_text, selected_index] = $derived.by(...)` must be removed"
+
+  - id: input_text_reactive_variable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "input_text must be a standalone $state or $derived variable"
+
+  - id: selected_index_reactive_variable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "selected_index must be a standalone $state or $derived variable"
+
+  - id: variables_update_on_value_change
+    type: fail_to_pass
+    origin: pr_diff
+    description: "input_text and selected_index must reactively track value prop changes via $effect or $derived"
+
+  - id: template_no_inline_selected_indices
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Template must not compute selected_indices inline as a ternary"
+
+  - id: selected_indices_derived
+    type: fail_to_pass
+    origin: pr_diff
+    description: "selected_indices must be a pre-computed $derived variable"
+
+  - id: template_uses_selected_indices
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Template must reference the selected_indices variable instead of inline computation"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Dropdown.svelte retains substantial implementation logic"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "e5ba4fa992c0ac389c6af2d143c9ad4c33eea360"

@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 37958
+  base_commit: "9d0351c91d3115215f84f3bd4b9f366d3fbd13b3"
+  merge_commit: "6b39bc5ec404"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "serving.py must parse without syntax errors"
+
+  - id: index_always_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "index must be unconditionally defined before if tool_parser block, even when prev_tool_call_arr raises"
+
+  - id: guard_prevents_empty_arr_access
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The should_check guard must include auto_tools_called so prev_tool_call_arr[-1] is not accessed when empty"
+
+  - id: correct_index_with_tool_calls
+    type: pass_to_pass
+    origin: pr_diff
+    description: "index equals the last tool call's index when calls are present, 0 otherwise"
+
+  - id: function_preserved
+    type: pass_to_pass
+    origin: static
+    description: "chat_completion_stream_generator exists with core identifiers"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "serving.py is not replaced with a stub"
+
+rubric: []

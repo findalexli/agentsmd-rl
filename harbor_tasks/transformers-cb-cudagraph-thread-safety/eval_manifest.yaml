@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44924
+  base_commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"
+  merge_commit: "dda546845f97eb4c6e22df6a2b7fbd865199ada4"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Target file must parse without syntax errors"
+
+  - id: capture_error_mode_thread_safe
+    type: fail_to_pass
+    origin: pr_diff
+    description: "torch.cuda.graph() must be called with a non-global capture_error_mode for thread safety"
+
+  - id: capture_error_mode_recognized_safe
+    type: fail_to_pass
+    origin: pr_diff
+    description: "capture_error_mode must be a recognized thread-safe mode (thread_local or relaxed)"
+
+  - id: generation_step_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "_generation_step has meaningful logic (not stubbed or deleted)"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: static
+    description: "No wildcard imports in modified file"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"

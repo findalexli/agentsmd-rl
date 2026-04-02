@@ -1,0 +1,100 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44983
+  base_commit: "12b6b57cac0397db0afda56f3ab0101729bc5f0f"
+  merge_commit: "ecdf95c66c88e08f5e2aaadeb7a7c03739565aa8"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All four modified files must parse without syntax errors"
+
+  - id: identity_op_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_IdentityOp class exists in core_model_loading and is a ConversionOps subclass"
+
+  - id: identity_op_passthrough
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_IdentityOp.convert returns input dict unchanged for varied inputs and dtypes"
+
+  - id: fp8_dequantize_reverse_op
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Fp8Dequantize.reverse_op returns a working ConversionOps instead of raising NotImplementedError"
+
+  - id: metal_dequantize_reverse_op
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MetalDequantize.reverse_op returns a working ConversionOps instead of raising NotImplementedError"
+
+  - id: mxfp4_dequantize_reverse_op
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mxfp4Dequantize.reverse_op returns a working ConversionOps instead of raising NotImplementedError"
+
+  - id: reverse_op_identity_multiple_entries
+    type: fail_to_pass
+    origin: pr_diff
+    description: "reverse_op.convert preserves all keys, values, and dtypes for multi-entry dicts"
+
+  - id: existing_chunk_cat_reverse_op
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing Chunk/Cat reverse_op pair still works correctly"
+
+  - id: ruff_check
+    type: pass_to_pass
+    origin: agent_config
+    description: "ruff check passes on all modified files"
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "12b6b57cac0397db0afda56f3ab0101729bc5f0f"
+
+  - id: no_copied_from_blocks_edited
+    type: pass_to_pass
+    origin: agent_config
+    description: "No '# Copied from' blocks were modified"
+    source:
+      path: "CLAUDE.md"
+      lines: "66"
+      commit: "12b6b57cac0397db0afda56f3ab0101729bc5f0f"
+
+  - id: no_modular_generated_files_edited
+    type: pass_to_pass
+    origin: agent_config
+    description: "Generated modeling files with a modular_ source not edited directly"
+    source:
+      path: "CLAUDE.md"
+      lines: "67"
+      commit: "12b6b57cac0397db0afda56f3ab0101729bc5f0f"
+
+  - id: no_bare_type_ignore
+    type: pass_to_pass
+    origin: agent_config
+    description: "Any # type: ignore must include a specific error code"
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "180-186"
+      commit: "12b6b57cac0397db0afda56f3ab0101729bc5f0f"
+
+  - id: no_assert_for_type_narrowing
+    type: pass_to_pass
+    origin: agent_config
+    description: "Do not use assert for type narrowing — use if/raise instead"
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "189-190"
+      commit: "12b6b57cac0397db0afda56f3ab0101729bc5f0f"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "12b6b57cac0397db0afda56f3ab0101729bc5f0f"

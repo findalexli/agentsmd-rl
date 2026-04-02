@@ -1,0 +1,304 @@
+"""
+Task: fbr-fiber-context-suspense-fallback
+Repo: facebook/react @ f944b4c5352be02623d2d7415c0806350f875114
+PR:   36160
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+
+This is a JavaScript/React repo. All behavioral tests write a temporary Jest
+test file into the react-reconciler __tests__ directory, run it via yarn jest,
+and clean up. The jest infrastructure handles JSX transforms, React module
+resolution, and async act() — no browser needed (ReactNoop renderer).
+"""
+
+import subprocess
+from pathlib import Path
+
+REPO = "/workspace/react"
+TARGET = f"{REPO}/packages/react-reconciler/src/ReactFiberNewContext.js"
+TESTS_DIR = Path(REPO) / "packages/react-reconciler/src/__tests__"
+
+
+def _run_jest(tmp_name: str, content: str) -> subprocess.CompletedProcess:
+    """Write a temporary jest file, run it, always delete it."""
+    tmp = TESTS_DIR / f"{tmp_name}.js"
+    tmp.write_text(content)
+    try:
+        return subprocess.run(
+            ["yarn", "jest", "--no-watchman", "--testPathPattern", tmp_name],
+            cwd=REPO, capture_output=True, timeout=180,
+        )
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static) — syntax checks
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_syntax_check():
+    """ReactFiberNewContext.js must parse without syntax errors."""
+    r = subprocess.run(
+        ["node", "--check", TARGET],
+        capture_output=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax error in ReactFiberNewContext.js:\n{r.stderr.decode()}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_context_propagates_to_fallback_simple():
+    """Context change above a suspended Suspense boundary reaches fallback consumers."""
+    # Without the fix: propagateContextChanges sets nextFiber = null when it
+    # encounters a SuspenseComponent during lazy propagation, skipping the
+    # fallback subtree entirely. The FallbackConsumer never re-renders.
+    # With the fix: nextFiber = primaryChildFragment.sibling, so context
+    # propagates into the fallback fragment.
+    jest_code = """\
+'use strict';
+
+let React;
+let ReactNoop;
+let act;
+
+describe('_tmp_ctx_fallback_simple', () => {
+    beforeEach(() => {
+        jest.resetModules();
+        React = require('react');
+        ReactNoop = require('react-noop-renderer');
+        act = require('internal-test-utils').act;
+    });
+
+    it('context change updates fallback consumer while suspended', async () => {
+        const {useState, useContext, Suspense} = React;
+        const Context = React.createContext('A');
+        let setContext;
+        let renderedValue = null;
+        const pendingPromise = new Promise(() => {}); // never resolves
+
+        function App() {
+            const [value, setValue] = useState('A');
+            setContext = setValue;
+            return React.createElement(
+                Context.Provider, {value},
+                React.createElement(
+                    Suspense, {fallback: React.createElement(FallbackConsumer)},
+                    React.createElement(AsyncChild)
+                )
+            );
+        }
+
+        function FallbackConsumer() {
+            renderedValue = useContext(Context);
+            return null;
+        }
+
+        function AsyncChild() {
+            throw pendingPromise;
+        }
+
+        const root = ReactNoop.createRoot();
+        await act(() => { root.render(React.createElement(App)); });
+
+        // Fallback is showing — initial context value
+        expect(renderedValue).toBe('A');
+
+        // Update context while still suspended
+        await act(() => { setContext('B'); });
+
+        // Without fix: renderedValue stays 'A' (fallback skipped during propagation)
+        // With fix:    renderedValue updates to 'B'
+        expect(renderedValue).toBe('B');
+    });
+
+    it('multiple context updates all reach fallback consumer', async () => {
+        const {useState, useContext, Suspense} = React;
+        const Context = React.createContext('v0');
+        let setContext;
+        const renderLog = [];
+        const pendingPromise = new Promise(() => {});
+
+        function App() {
+            const [value, setValue] = useState('v0');
+            setContext = setValue;
+            return React.createElement(
+                Context.Provider, {value},
+                React.createElement(
+                    Suspense, {fallback: React.createElement(FallbackConsumer)},
+                    React.createElement(AsyncChild)
+                )
+            );
+        }
+
+        function FallbackConsumer() {
+            renderLog.push(useContext(Context));
+            return null;
+        }
+
+        function AsyncChild() {
+            throw pendingPromise;
+        }
+
+        const root = ReactNoop.createRoot();
+        await act(() => { root.render(React.createElement(App)); });
+        await act(() => { setContext('v1'); });
+        await act(() => { setContext('v2'); });
+
+        // Each context update must trigger a re-render of the fallback consumer
+        const lastValue = renderLog[renderLog.length - 1];
+        expect(lastValue).toBe('v2');
+        // At minimum initial + 2 updates = 3 renders
+        expect(renderLog.length).toBeGreaterThanOrEqual(3);
+    });
+});
+"""
+    r = _run_jest("_tmp_ctx_fallback_simple", jest_code)
+    assert r.returncode == 0, (
+        f"test_context_propagates_to_fallback_simple failed:\n"
+        f"{r.stdout.decode()[-3000:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_context_propagates_to_fallback_memo_boundary():
+    """Context reaches fallback consumer even when React.memo prevents Suspense wrapper re-render."""
+    # This is the exact scenario from PR #36160: a React.memo between the
+    # Context.Provider and the Suspense boundary means the Suspense wrapper
+    # itself doesn't re-render when context changes. The only path for context
+    # to reach FallbackConsumer is through fiber-level propagation — which is
+    # exactly what the fix corrects.
+    jest_code = """\
+'use strict';
+
+let React;
+let ReactNoop;
+let act;
+
+describe('_tmp_ctx_fallback_memo', () => {
+    beforeEach(() => {
+        jest.resetModules();
+        React = require('react');
+        ReactNoop = require('react-noop-renderer');
+        act = require('internal-test-utils').act;
+    });
+
+    it('context change reaches fallback through memo boundary', async () => {
+        const {useState, useContext, Suspense, memo} = React;
+        const Context = React.createContext('X');
+        let setContext;
+        let renderedValue = null;
+        const pendingPromise = new Promise(() => {});
+
+        // memo() means MemoSuspense won't re-render when context changes —
+        // React.memo only re-renders on prop changes, not context changes.
+        // Fiber-level context propagation is the only mechanism that can
+        // reach FallbackConsumer through the memo boundary.
+        const MemoSuspense = memo(function MemoSuspense() {
+            return React.createElement(
+                Suspense, {fallback: React.createElement(FallbackConsumer)},
+                React.createElement(AsyncChild)
+            );
+        });
+
+        function App() {
+            const [value, setValue] = useState('X');
+            setContext = setValue;
+            return React.createElement(
+                Context.Provider, {value},
+                React.createElement(MemoSuspense)
+            );
+        }
+
+        function FallbackConsumer() {
+            renderedValue = useContext(Context);
+            return null;
+        }
+
+        function AsyncChild() {
+            throw pendingPromise;
+        }
+
+        const root = ReactNoop.createRoot();
+        await act(() => { root.render(React.createElement(App)); });
+        expect(renderedValue).toBe('X');
+
+        await act(() => { setContext('Y'); });
+        // Without fix: memo prevents re-render of MemoSuspense, AND fiber
+        // propagation skips the fallback → renderedValue stays 'X'
+        // With fix: fiber propagation traverses into fallback → renderedValue = 'Y'
+        expect(renderedValue).toBe('Y');
+    });
+
+    it('context change with multiple memo layers still reaches fallback', async () => {
+        const {useState, useContext, Suspense, memo} = React;
+        const Context = React.createContext('p');
+        let setContext;
+        let renderedValue = null;
+        const pendingPromise = new Promise(() => {});
+
+        const Inner = memo(function Inner() {
+            return React.createElement(
+                Suspense, {fallback: React.createElement(FallbackConsumer)},
+                React.createElement(AsyncChild)
+            );
+        });
+
+        const Outer = memo(function Outer() {
+            return React.createElement(Inner);
+        });
+
+        function App() {
+            const [value, setValue] = useState('p');
+            setContext = setValue;
+            return React.createElement(
+                Context.Provider, {value},
+                React.createElement(Outer)
+            );
+        }
+
+        function FallbackConsumer() {
+            renderedValue = useContext(Context);
+            return null;
+        }
+
+        function AsyncChild() {
+            throw pendingPromise;
+        }
+
+        const root = ReactNoop.createRoot();
+        await act(() => { root.render(React.createElement(App)); });
+        expect(renderedValue).toBe('p');
+
+        await act(() => { setContext('q'); });
+        expect(renderedValue).toBe('q');
+    });
+});
+"""
+    r = _run_jest("_tmp_ctx_fallback_memo", jest_code)
+    assert r.returncode == 0, (
+        f"test_context_propagates_to_fallback_memo_boundary failed:\n"
+        f"{r.stdout.decode()[-3000:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — regression guard
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_existing_context_propagation_tests():
+    """Existing ReactContextPropagation test suite must still pass after the fix."""
+    r = subprocess.run(
+        ["yarn", "jest", "--no-watchman", "--testPathPattern",
+         "ReactContextPropagation-test"],
+        cwd=REPO, capture_output=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"Regression in ReactContextPropagation suite:\n"
+        f"{r.stdout.decode()[-3000:]}\n{r.stderr.decode()[-500:]}"
+    )

@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12979
+  base_commit: "f1cd0644d2608b493db07cd204c0831a111f9fb2"
+  merge_commit: "4a4c7f3b0d6fd8009fdafc580d5852984f961db1"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified file must parse without errors"
+
+  - id: empty_stem_gets_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Filename with entirely-stripped stem preserves the extension"
+
+  - id: partial_strip_keeps_original_stem
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When some stem chars survive sanitization, no fallback is injected"
+
+  - id: bare_dotfile_not_produced
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Result is never just the extension (a bare dotfile)"
+
+  - id: existing_strip_behavior
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing sanitization cases still produce correct results"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified function has real logic, not just pass/return"
+
+rubric: []

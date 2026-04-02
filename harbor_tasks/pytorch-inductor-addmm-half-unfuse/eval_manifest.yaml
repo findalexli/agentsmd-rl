@@ -1,0 +1,98 @@
+version: "2.0"
+
+source:
+  repo: "pytorch/pytorch"
+  pr: 177144
+  base_commit: "bac7b59c6fe3241bb6d6cca89cb4bf1da0662788"
+  merge_commit: "e04ddeaf45651e14b819f232af8e19d5615adfcd"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "post_grad.py must parse without syntax errors"
+
+  - id: bfloat16_not_unfused
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bfloat16 addmm must not be unfused (guard prevents replacement)"
+
+  - id: float16_not_unfused
+    type: fail_to_pass
+    origin: pr_diff
+    description: "float16 addmm must not be unfused (guard prevents replacement)"
+
+  - id: guard_returns_early
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Guard returns early (None) before replacement logic for both half dtypes"
+
+  - id: float32_still_unfused
+    type: pass_to_pass
+    origin: pr_diff
+    description: "float32 addmm must still be unfused (guard is not overbroad)"
+
+  - id: float64_still_unfused
+    type: pass_to_pass
+    origin: pr_diff
+    description: "float64 addmm must still be unfused (guard is not overbroad)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "unfuse_bias_add_to_pointwise has real logic (>= 3 top-level statements)"
+
+  - id: no_trivial_single_use_helpers
+    type: pass_to_pass
+    origin: agent_config
+    description: "No trivial 1-2 LOC helper functions introduced that are only used once"
+    source:
+      path: "CLAUDE.md"
+      lines: "51"
+      commit: "bac7b59c6fe3241bb6d6cca89cb4bf1da0662788"
+
+  - id: python310_compat
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified function must be Python 3.10 compatible"
+    source:
+      path: ".claude/skills/pr-review/bc-guidelines.md"
+      lines: "46-48"
+      commit: "bac7b59c6fe3241bb6d6cca89cb4bf1da0662788"
+
+rubric:
+  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
+    source:
+      path: "CLAUDE.md"
+      lines: "48"
+      commit: "bac7b59c6fe3241bb6d6cca89cb4bf1da0662788"
+
+  - rule: "If uncertain, choose the simpler, more concise implementation."
+    source:
+      path: "CLAUDE.md"
+      lines: "62"
+      commit: "bac7b59c6fe3241bb6d6cca89cb4bf1da0662788"
+
+  - rule: "Match existing code style and architectural patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "57"
+      commit: "bac7b59c6fe3241bb6d6cca89cb4bf1da0662788"
+
+  - rule: "Comments should be useful — only for non-obvious global context that can't be inferred locally."
+    source:
+      path: "CLAUDE.md"
+      lines: "49-50"
+      commit: "bac7b59c6fe3241bb6d6cca89cb4bf1da0662788"
+
+  - rule: "No over-engineering — only requested changes are made; no speculative features."
+    source:
+      path: ".claude/skills/pr-review/review-checklist.md"
+      lines: "11"
+      commit: "bac7b59c6fe3241bb6d6cca89cb4bf1da0662788"
+
+  - rule: "Passes must not cause additional inputs/outputs to alias if they did not alias in the original graph."
+    source:
+      path: "torch/_inductor/fx_passes/README.md"
+      lines: "14"
+      commit: "bac7b59c6fe3241bb6d6cca89cb4bf1da0662788"

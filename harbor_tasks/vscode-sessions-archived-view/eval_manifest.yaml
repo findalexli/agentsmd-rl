@@ -1,0 +1,79 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 306265
+  base_commit: "3d5035e98791181f4fb04962a8a7b127106d2626"
+  merge_commit: "d55c8eb9f133854f1abe897a484a7a97155d6239"
+
+checks:
+  - id: disposable_store_imported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DisposableStore is imported from lifecycle.js to manage active session disposables"
+
+  - id: autorun_imported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "autorun is imported from observable.js for reactive archive-state observation"
+
+  - id: active_session_disposables_field
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_activeSessionDisposables DisposableStore field is registered on the class"
+
+  - id: buggy_immediate_archive_check_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Immediate updated?.isArchived.get() check removed from _onSessionsChanged (was the bug)"
+
+  - id: early_return_unchanged_session
+    type: fail_to_pass
+    origin: pr_diff
+    description: "setActiveSession early-returns when called with the already-active session"
+
+  - id: archive_state_observed_reactively
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Archive state watched via autorun so openNewSessionView() fires only on transition"
+
+  - id: active_session_disposables_cleared_on_set
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_activeSessionDisposables.clear() called in setActiveSession to drop stale observers"
+
+  - id: copyright_header
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified file includes Microsoft copyright header"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "130"
+      commit: "3d5035e98791181f4fb04962a8a7b127106d2626"
+
+  - id: tabs_not_spaces
+    type: pass_to_pass
+    origin: agent_config
+    description: "File uses tabs for indentation, not spaces"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "72"
+      commit: "3d5035e98791181f4fb04962a8a7b127106d2626"
+
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript sources compile without errors"
+
+rubric:
+  - rule: "Avoid using events to drive control flow between components. Instead, prefer direct method calls or service interactions to ensure clearer dependencies and easier traceability of logic. Events should be reserved for broadcasting state changes or notifications rather than orchestrating behavior across components."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "148"
+      commit: "3d5035e98791181f4fb04962a8a7b127106d2626"
+
+  - rule: "You MUST deal with disposables by registering them immediately after creation for later disposal. Use helpers such as DisposableStore, MutableDisposable or DisposableMap. Do NOT register a disposable to the containing class if the object is created within a method that is called repeatedly to avoid leaks."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "144"
+      commit: "3d5035e98791181f4fb04962a8a7b127106d2626"

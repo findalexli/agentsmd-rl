@@ -1,0 +1,91 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 976
+  base_commit: "6860e70c08eae3014e12d9adf5411d648f7fceac"
+  merge_commit: "cd559a26b40989b50092864ea98b0ff4925e3ae6"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "areal/api/cli_args.py must parse as valid Python"
+
+  - id: omegaconf_structured_works
+    type: fail_to_pass
+    origin: pr_diff
+    description: "OmegaConf.structured(SchedulingSpec()) succeeds without ValidationError"
+
+  - id: invalid_strategy_rejected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Invalid ray_placement_strategy values raise error at runtime"
+
+  - id: omegaconf_roundtrip
+    type: fail_to_pass
+    origin: pr_diff
+    description: "OmegaConf structured -> YAML -> reload roundtrip preserves strategy values"
+
+  - id: default_instantiation
+    type: pass_to_pass
+    origin: pr_diff
+    description: "SchedulingSpec() default works with ray_placement_strategy='shared'"
+
+  - id: valid_strategies_accepted
+    type: pass_to_pass
+    origin: pr_diff
+    description: "All three valid strategies (shared, separate, deferred) are accepted"
+
+  - id: core_fields_present
+    type: pass_to_pass
+    origin: pr_diff
+    description: "SchedulingSpec retains all expected dataclass fields"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No wildcard imports in cli_args.py"
+    source:
+      path: "AGENTS.md"
+      lines: "25"
+      commit: "6860e70c08eae3014e12d9adf5411d648f7fceac"
+
+  - id: unused_literal_cleaned
+    type: pass_to_pass
+    origin: agent_config
+    description: "Unused Literal import should be removed after fix"
+    source:
+      path: "AGENTS.md"
+      lines: "94-95"
+      commit: "6860e70c08eae3014e12d9adf5411d648f7fceac"
+
+  - id: no_print_statements
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare print() calls in cli_args.py — use logging module"
+    source:
+      path: "AGENTS.md"
+      lines: "84-86"
+      commit: "6860e70c08eae3014e12d9adf5411d648f7fceac"
+
+  - id: validation_raises_valueerror
+    type: fail_to_pass
+    origin: agent_config
+    description: "Validation must raise ValueError (not assert/RuntimeError) with clear message"
+    source:
+      path: "AGENTS.md"
+      lines: "156"
+      commit: "6860e70c08eae3014e12d9adf5411d648f7fceac"
+
+rubric:
+  - rule: "Follow existing code patterns in the same module."
+    source:
+      path: "AGENTS.md"
+      lines: "35"
+      commit: "6860e70c08eae3014e12d9adf5411d648f7fceac"
+  - rule: "Public config dataclasses should have docstrings describing their constraints."
+    source:
+      path: "AGENTS.md"
+      lines: "159-160"
+      commit: "6860e70c08eae3014e12d9adf5411d648f7fceac"

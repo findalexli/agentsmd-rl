@@ -6,6 +6,32 @@ cd /workspace/pytorch
 grep -q 'PyList_New' torch/csrc/Stream.cpp && exit 0
 
 git apply --whitespace=fix - <<'PATCH'
+diff --git a/test/test_accelerator.py b/test/test_accelerator.py
+index 7daebc01adfe9..67b92969aefd0 100644
+--- a/test/test_accelerator.py
++++ b/test/test_accelerator.py
+@@ -111,6 +111,21 @@ def test_stream_context_manager(self):
+             self.assertEqual(torch.accelerator.current_stream(), s)
+         self.assertEqual(torch.accelerator.current_stream(), prev_stream)
+
++    def test_stream_context_manager_reentrance(self):
++        prev_stream = torch.accelerator.current_stream()
++        s0 = torch.Stream()
++        with s0, s0:
++            self.assertEqual(torch.accelerator.current_stream(), s0)
++        self.assertEqual(torch.accelerator.current_stream(), prev_stream)
++        s1 = torch.Stream()
++        with s0:
++            self.assertEqual(torch.accelerator.current_stream(), s0)
++            with s1:
++                self.assertEqual(torch.accelerator.current_stream(), s1)
++                with s0:
++                    self.assertEqual(torch.accelerator.current_stream(), s0)
++        self.assertEqual(torch.accelerator.current_stream(), prev_stream)
++
+     @unittest.skipIf(not TEST_MULTIACCELERATOR, "only one accelerator detected")
+     def test_multi_device_stream_context_manager(self):
+         src_device = 0
 diff --git a/torch/csrc/Stream.cpp b/torch/csrc/Stream.cpp
 index fc1ca916cfbed..c5a8e343e6b27 100644
 --- a/torch/csrc/Stream.cpp
@@ -29,6 +55,17 @@ index fc1ca916cfbed..c5a8e343e6b27 100644
      return _self;
    }
 +
++  // Note [Reentrant Stream Context Manager]
++  //
++  // We maintain a stack of context entries to support nested/reentrant
++  // stream context managers. Each entry records the previously active
++  // stream and device so that they can be restored in __exit__.
++  //
++  // The stack is stored as a Python list where each entry is either:
++  //   - Py_None: no-op enter (stream was already current);
++  //   - dict:    {_ctx_stream, _ctx_device_index} saved before switching.
++  //
++  // self->context is initialized lazily as a PyList on first __enter__.
 +  if (!self->context) {
 +    auto list = THPObjectPtr(PyList_New(0));
 +    if (!list) {
@@ -42,6 +79,7 @@ index fc1ca916cfbed..c5a8e343e6b27 100644
        static_cast<c10::DeviceIndex>(self->device_index);
 +  c10::Stream cur_stream = at::accelerator::getCurrentStream(stream_device_idx);
 +
++  // If the stream is already current, push None as a no-op sentinel.
 +  if (cur_stream.id() == self->stream_id &&
 +      cur_stream.device_index() == stream_device_idx) {
 +    if (PyList_Append(self->context, Py_None) < 0) {
@@ -61,6 +99,7 @@ index fc1ca916cfbed..c5a8e343e6b27 100644
        self->stream_id, stream_device_idx, stream_device_type));
 -  // Save the current device index and previous stream to the context.
 +
++  // Save the current device index and previous stream as a dict on the stack.
    auto ctx_device_index =
        THPObjectPtr(THPUtils_packDeviceIndex(cur_device_idx));
    auto ctx_stream = THPObjectPtr(THPStream_Wrap(cur_stream));
@@ -95,10 +134,12 @@ index fc1ca916cfbed..c5a8e343e6b27 100644
      Py_RETURN_NONE;
    }
 +
++  // Pop the top entry from the stack.
 +  Py_ssize_t stack_size = PyList_Size(self->context);
 +  TORCH_INTERNAL_ASSERT(stack_size > 0, "Stream context stack is empty.");
 +  PyObject* top = PyList_GET_ITEM(self->context, stack_size - 1);
 +
++  // Sentinel: this __enter__ was a no-op, nothing to restore.
 +  if (top == Py_None) {
 +    if (PyList_SetSlice(self->context, stack_size - 1, stack_size, nullptr) <
 +        0) {

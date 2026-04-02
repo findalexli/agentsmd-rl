@@ -24,4 +24,5 @@ index 53a8c6762953..ed48bd4f2e47 100644
              cpu_info.append((cpu, core, socket, node))
 
      # [(0,0,0,0),(1,1,0,0),...,(43,43,0,1),...,(256,0,0,0),...]
+
 PATCH

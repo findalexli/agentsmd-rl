@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28314
+  base_commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
+  merge_commit: "9933f7a9aa375150947ab3e4bf725e46a7348c64"
+
+checks:
+  - id: no_bare_putdirect_in_tojson
+    type: fail_to_pass
+    origin: pr_diff
+    description: "toJSON must not use bare putDirect — crashes on numeric cookie names"
+
+  - id: all_insertion_paths_safe
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both modified-cookie and original-cookie insertion paths must be index-safe"
+
+  - id: dedup_avoids_hasproperty
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Deduplication must not call hasProperty on JSObject (also crashes on numeric keys)"
+
+  - id: tojson_preserves_functionality
+    type: pass_to_pass
+    origin: pr_diff
+    description: "toJSON still constructs JS object, handles exceptions, iterates cookies"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "toJSON has a real implementation (>=8 non-blank lines), not a stub"
+
+  - id: other_methods_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Other CookieMap methods still present — file not replaced wholesale"
+
+  - id: put_inside_loop
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Property insertion occurs inside iteration loop — coherent implementation"
+
+  - id: root_h_included
+    type: pass_to_pass
+    origin: agent_config
+    description: "C++ files in bindings layer must include root.h"
+    source:
+      path: ".claude/skills/implementing-jsc-classes-cpp/SKILL.md"
+      lines: "184"
+      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
+
+  - id: exception_scope_in_tojson
+    type: pass_to_pass
+    origin: agent_config
+    description: "toJSON must use JSC exception scope pattern (DECLARE_THROW_SCOPE)"
+    source:
+      path: ".claude/skills/implementing-jsc-classes-cpp/SKILL.md"
+      lines: "94-101"
+      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
+
+rubric:
+  - rule: "Follow existing code style — check neighboring files for patterns (e.g., FormData, FetchHeaders, NodeHTTP use putDirectMayBeIndex for user-controlled property names)."
+    source:
+      path: "AGENTS.md"
+      lines: "228"
+      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"

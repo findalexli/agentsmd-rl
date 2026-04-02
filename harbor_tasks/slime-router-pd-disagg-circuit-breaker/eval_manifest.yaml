@@ -1,0 +1,44 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 0  # internal sync — no public PR
+  base_commit: "183e525f60fcf435f82f273e9eb69702d3ce431a"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "rollout.py must parse without syntax errors"
+
+  - id: slime_router_pd_disagg_no_crash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Slime router + PD disagg no longer crashes and spawns a Process returning (ip, port)"
+
+  - id: slime_router_pd_flag_set
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Slime router with PD disagg sets slime_router_pd_disaggregation=True on router_args"
+
+  - id: circuit_breaker_disabled_with_pd
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Non-slime router with PD disagg sets disable_circuit_breaker=True on router_args"
+
+  - id: slime_router_without_pd_still_works
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Slime router without PD disagg still launches normally (regression)"
+
+  - id: no_circuit_breaker_without_pd
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Non-slime router without PD disagg does not set disable_circuit_breaker (regression)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "_start_router has real logic, not stubbed out"
+
+rubric: []

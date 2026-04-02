@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12925
+  base_commit: "dcfc429a8125204c3aafeabcab251dd7580f9a60"
+  merge_commit: "ccff8b8cacffe36a270fcea9fc8ba29b78c31c8d"
+
+checks:
+  - id: file_integrity
+    type: pass_to_pass
+    origin: static
+    description: "Index.svelte must exist and retain original structure (8+ of 10 patterns)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "File must not be truncated (>= 50 lines)"
+
+  - id: walkthrough_bind_selected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Walkthrough uses bind:selected (two-way binding) in the {#if walkthrough} block"
+
+  - id: no_oneway_selected_on_walkthrough
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Buggy one-way selected= removed from Walkthrough tag"
+
+  - id: tabs_retains_bind_selected
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Tabs component in {:else} branch keeps bind:selected"
+
+  - id: event_dispatches_both_branches
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Both Walkthrough and Tabs branches fire on:change and on:select events"
+
+  - id: effect_gradio_tab_select
+    type: pass_to_pass
+    origin: pr_diff
+    description: "$effect block dispatching gradio_tab_select on selected change is preserved"
+
+rubric: []

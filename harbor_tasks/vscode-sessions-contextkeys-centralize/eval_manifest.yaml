@@ -1,0 +1,75 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 0  # derived from solve.sh gold patch
+  base_commit: "dfd3b4dcb3884a3de67abfa72adfb54ba462797d"
+  merge_commit: ""
+
+checks:
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript compilation must succeed after the refactor"
+
+  - id: context_keys_centralized
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All 6 session context keys exported from contextkeys.ts (IsNewChatSessionContext, ActiveSessionProviderIdContext, ActiveSessionTypeContext, IsActiveSessionBackgroundProviderContext, ActiveSessionHasGitRepositoryContext, ChatSessionProviderIdContext)"
+
+  - id: keys_removed_from_management_service
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RawContextKey definitions removed from sessionsManagementService.ts"
+
+  - id: key_removed_from_copilot_actions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ActiveSessionHasGitRepositoryContext local definition removed from copilotChatSessionsActions.ts"
+
+  - id: hardcoded_strings_replaced
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Hardcoded context key string literals replaced with .key property access in copilotChatSessionsActions.ts, sessionsList.ts, sessionsTitleBarWidget.ts"
+
+  - id: consumer_imports_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All consumer files import centralized context keys from contextkeys.js"
+
+  - id: no_duplicate_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No file has multiple import statements from the same contextkeys module"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "89"
+      commit: "dfd3b4dcb3884a3de67abfa72adfb54ba462797d"
+
+  - id: microsoft_copyright_header
+    type: pass_to_pass
+    origin: agent_config
+    description: "All modified TypeScript files include the Microsoft copyright header"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "114"
+      commit: "dfd3b4dcb3884a3de67abfa72adfb54ba462797d"
+
+rubric:
+  - rule: "Use arrow functions `=>` over anonymous function expressions"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "96"
+      commit: "dfd3b4dcb3884a3de67abfa72adfb54ba462797d"
+
+  - rule: "When removing an import, do not leave behind blank lines where the import was. Ensure the surrounding code remains compact."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "90"
+      commit: "dfd3b4dcb3884a3de67abfa72adfb54ba462797d"
+
+  - rule: "Prefer `async` and `await` over `Promise` and `then` calls"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "115"
+      commit: "dfd3b4dcb3884a3de67abfa72adfb54ba462797d"

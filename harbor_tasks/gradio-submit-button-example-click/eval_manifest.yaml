@@ -1,0 +1,49 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12975
+  base_commit: "fe955348f24115744015d85639e170b8518b28c1"
+  merge_commit: "c1e96b3fe0"
+
+checks:
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "chat_interface.py must parse as valid Python"
+
+  - id: example_select_not_in_stop_triggers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "example_select must not be in _setup_stop_events event_triggers — removes the separate handler causing the race"
+
+  - id: submit_btn_false_in_example_chain
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A .then() step with submit_btn=False must exist in the example select chain — keeps restore sequential"
+
+  - id: events_to_cancel_conditional
+    type: fail_to_pass
+    origin: pr_diff
+    description: "events_to_cancel must use compound condition, not just is-not-None — populate-only examples should not be cancelled"
+
+  - id: setup_events_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "_setup_events must have substantial implementation, not a stub"
+
+  - id: ruff_formatting
+    type: pass_to_pass
+    origin: agent_config
+    description: "Python code must be formatted with ruff"
+    source:
+      path: "AGENTS.md"
+      lines: "43"
+      commit: "fe955348f24115744015d85639e170b8518b28c1"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "fe955348f24115744015d85639e170b8518b28c1"

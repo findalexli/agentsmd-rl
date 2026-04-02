@@ -390,4 +390,5 @@ index 5da760c9cc788c..2de0435dd5251f 100644
                      ChunkGroupKey::SharedMerged { parent, merge_tag } => ChunkGroup::SharedMerged {
                          parent: parent.0 as usize,
                          merge_tag,
+
 PATCH

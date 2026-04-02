@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "storybookjs/storybook"
+  pr: 34425
+  base_commit: "15180fa049e683c4a58d69615dde12e33456512c"
+  merge_commit: "f8950318a6f05658e576e345a73c9609a5145176"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must parse without syntax errors"
+
+  - id: output_option_in_types
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AiPrepareOptions interface must include an output field"
+
+  - id: file_write_with_output_option
+    type: fail_to_pass
+    origin: pr_diff
+    description: "aiPrepare imports writeFile and writes to file when output is set"
+
+  - id: output_flag_registered_in_cli
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The ai or prepare command registers -o/--output option"
+
+  - id: prepare_receives_output_option
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Prepare subcommand action has access to the output option"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "aiPrepare function contains real logic, not a stub"
+
+  - id: uses_storybook_logger
+    type: pass_to_pass
+    origin: agent_config
+    description: "Output messages use storybook logger instead of console.log"
+    source:
+      path: "AGENTS.md"
+      lines: "242-249"
+      commit: "15180fa049e683c4a58d69615dde12e33456512c"
+
+rubric:
+  - rule: "Use Storybook loggers instead of raw console.* in normal code paths. Server-side: storybook/internal/node-logger."
+    source:
+      path: "AGENTS.md"
+      lines: "242-249"
+      commit: "15180fa049e683c4a58d69615dde12e33456512c"

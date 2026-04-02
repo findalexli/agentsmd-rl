@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21582
+  base_commit: "5ef56682b800c3905973c86beeddf1318cedb2a9"
+  merge_commit: "8edd4fa802f7"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "runners.py must parse without syntax errors"
+
+  - id: dead_process_raises_runtime_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "forward() raises RuntimeError with exit code info when subprocess dies (exitcodes 1, 42, 137)"
+
+  - id: dead_process_negative_exitcode
+    type: fail_to_pass
+    origin: pr_diff
+    description: "forward() raises RuntimeError when subprocess killed by signal (exitcodes -9, -15, -11)"
+
+  - id: no_hang_on_dead_process
+    type: fail_to_pass
+    origin: pr_diff
+    description: "forward() completes within 15s when subprocess is dead instead of hanging forever"
+
+  - id: forward_returns_when_alive
+    type: pass_to_pass
+    origin: pr_diff
+    description: "forward() returns queued result when subprocess is healthy (normal operation unchanged)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "runners.py is not gutted: has expected classes, functions, and line count"
+
+rubric: []

@@ -1,0 +1,127 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19361
+  base_commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
+  merge_commit: "e96eead32eb28c8b78be9def46cb1688d49468ae"
+
+checks:
+  - id: vcs_file_nontrivial
+    type: pass_to_pass
+    origin: static
+    description: "vcs.ts must exist with >= 40 lines of implementation"
+
+  - id: no_effect_promise
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Effect.promise must not appear — it bypasses Effect's scope model"
+
+  - id: no_util_git_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The old @/util/git async utility must not be imported"
+
+  - id: imports_child_process_spawner
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Must import ChildProcess/ChildProcessSpawner from effect/unstable/process"
+
+  - id: generator_git_helper_complete
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A generator must spawn a child process, read exit code, and extract stdout"
+
+  - id: layer_declares_spawner_dependency
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Layer type signature must include ChildProcessSpawner as a dependency"
+
+  - id: default_layer_provides_spawner
+    type: fail_to_pass
+    origin: pr_diff
+    description: "defaultLayer must wire in a concrete spawner implementation"
+
+  - id: uses_child_process_make
+    type: fail_to_pass
+    origin: agent_config
+    description: "Must use ChildProcess.make() to construct child process descriptors"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "47"
+      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
+
+  - id: no_raw_platform_api
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must not use raw Node.js child_process — use Effect services instead"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "45"
+      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
+
+  - id: public_api_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Service public API (layer, defaultLayer, Service, init, branch) must remain"
+
+  - id: no_any_type
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must not use the 'any' type"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
+
+  - id: no_try_catch
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must not use try/catch — prefer Effect error handling"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
+
+rubric:
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
+
+  - rule: "Prefer single word names for variables and functions. Only use multiple words if necessary."
+    source:
+      path: "AGENTS.md"
+      lines: "21"
+      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
+
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
+
+  - rule: "Use Effect.fn(\"Domain.method\") for named/traced effects and Effect.fnUntraced for internal helpers."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "21"
+      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
+
+  - rule: "Use Effect.gen(function* () { ... }) for composition."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "20"
+      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
+
+  - rule: "Keep things in one function unless composable or reusable."
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"

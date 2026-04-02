@@ -1,0 +1,97 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 306184
+  base_commit: "94c7bf8213beb59e3181fdb61992a032fc65e9a2"
+  merge_commit: "24982fe88918092ea75d6572ef227338f6d07758"
+
+checks:
+  # Structural — fail_to_pass
+  - id: interface_has_getFinalResponse
+    type: fail_to_pass
+    origin: pr_diff
+    description: "IResponse interface declares getFinalResponse(): string"
+
+  - id: action_registered
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CopyFinalResponseAction registered in chatCopyActions.ts"
+
+  - id: context_key_in_overlay
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isResponse key added to createOverlay() in chatListWidget.ts"
+
+  # Behavioral (mocha) — fail_to_pass
+  - id: getFinalResponse_returns_last_markdown
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getFinalResponse returns last contiguous markdown after a tool call"
+
+  - id: getFinalResponse_skips_empty_trailing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getFinalResponse skips trailing empty markdown and tool calls"
+
+  - id: getFinalResponse_includes_inline_refs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getFinalResponse includes inline references in the final block"
+
+  - id: getFinalResponse_empty_when_no_markdown
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getFinalResponse returns empty string when response has no markdown"
+
+  - id: getFinalResponse_all_markdown_no_tools
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getFinalResponse returns all markdown when there are no tool calls"
+
+  # Regression — pass_to_pass
+  - id: existing_response_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-existing Response test suite still passes after the fix"
+
+  # Agent config checks — fail_to_pass
+  - id: getFinalResponse_has_jsdoc
+    type: fail_to_pass
+    origin: agent_config
+    description: "getFinalResponse method has a JSDoc comment (/** ... */)"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "101"
+      commit: "94c7bf8213beb59e3181fdb61992a032fc65e9a2"
+
+  - id: no_any_in_getFinalResponse
+    type: fail_to_pass
+    origin: agent_config
+    description: "getFinalResponse body does not use 'any' or 'unknown' types"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "147"
+      commit: "94c7bf8213beb59e3181fdb61992a032fc65e9a2"
+
+  - id: action_label_title_case
+    type: fail_to_pass
+    origin: agent_config
+    description: "Copy Final Response action label uses title-case capitalization"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "108"
+      commit: "94c7bf8213beb59e3181fdb61992a032fc65e9a2"
+
+rubric:
+  - rule: "Do not duplicate code. Always look for existing utility functions, helpers, or patterns in the codebase before implementing new functionality."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "150"
+      commit: "94c7bf8213beb59e3181fdb61992a032fc65e9a2"
+
+  - rule: "Use arrow functions => over anonymous function expressions."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "112"
+      commit: "94c7bf8213beb59e3181fdb61992a032fc65e9a2"

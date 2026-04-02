@@ -1,0 +1,64 @@
+{
+  "validations": [
+    {
+      "timestamp": "2026-04-01T10:30:00-07:00",
+      "runner": "manual_remake_v2",
+      "phase": "remake",
+      "status": "remade",
+      "notes": "Remade to v2 format: pytest test_outputs.py, eval_manifest.yaml v2.0, standardized test.sh. 15 checks (8 f2p, 7 p2p), 6 rubric rules. PR #57797 identified."
+    },
+    {
+      "timestamp": "2026-03-30T13:02:43.965590",
+      "runner": "run_pipeline.py validate (20260330)",
+      "docker_build": false,
+      "gold_score": null,
+      "nop_score": null,
+      "verdict": "error",
+      "notes": "timeout"
+    },
+    {
+      "timestamp": "2026-03-30T11:48:15.959348",
+      "runner": "audit (audit-tests_20260330_114815)",
+      "phase": "audit",
+      "status": "success",
+      "output_tokens": 12809
+    },
+    {
+      "timestamp": "2026-03-31T13:38:39-07:00",
+      "runner": "validate_and_fix.sh",
+      "docker_build": false,
+      "gold_score": null,
+      "nop_score": null,
+      "verdict": "fail_build",
+      "notes": "Docker build failed"
+    },
+    {
+      "timestamp": "2026-04-01T20:15:41.689425",
+      "phase": "docker_validate_v2",
+      "runner": "scripts/docker_validate_all.sh",
+      "verdict": "fail",
+      "nop": "0",
+      "gold": "0",
+      "format": "pytest_binary"
+    },
+    {
+      "timestamp": "2026-04-02T12:00:00.000000",
+      "phase": "docker_validate_v2",
+      "runner": "manual_remake_v2_fix",
+      "verdict": "pass",
+      "nop": "0",
+      "gold": "1",
+      "format": "pytest_binary",
+      "notes": "Fixed base_commit from 555a4d8 (post-fix) to 17d0be02f2 (pre-fix). Fixed test_both_ssrf_tests_canonicalize to target path-comparing it() blocks instead of first 2. 15 checks (8 f2p, 7 p2p), 6 rubric rules."
+    },
+    {
+      "timestamp": "2026-04-02T14:28:08.950562",
+      "phase": "e2b_full_validation",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "pass",
+      "nop": "0",
+      "gold": "1"
+    }
+  ]
+}

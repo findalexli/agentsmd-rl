@@ -1,0 +1,100 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28196
+  base_commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
+  merge_commit: "af24e281ebacd6ac77c0f14b4206599cf4ae1c9f"
+
+checks:
+  # --- fail_to_pass (pr_diff) ---
+  - id: catch_all_produces_output
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Empty else => {} catch-all in scanner error switch replaced with Output.* error messages"
+
+  - id: error_variant_coverage
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All error variants (3+ named or dynamic catch-all) produce diagnostic output"
+
+  - id: error_printing_centralized
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error printing removed from security_scanner.zig, centralized in install_with_manager.zig"
+
+  - id: error_variant_propagated
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".error variant from retry result propagated instead of collapsed into SecurityScannerRetryFailed"
+
+  - id: uses_err_generic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error messages use Output.errGeneric, not Output.pretty with raw <red> formatting"
+
+  # --- fail_to_pass (agent_config) ---
+  - id: regression_test_location
+    type: fail_to_pass
+    origin: agent_config
+    description: "Regression test placed at test/regression/issue/28193.test.ts per CLAUDE.md rule"
+    source:
+      path: "CLAUDE.md"
+      lines: "28"
+      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
+
+  - id: regression_test_uses_harness
+    type: fail_to_pass
+    origin: agent_config
+    description: "Regression test imports bunExe/bunEnv from 'harness' per test/CLAUDE.md rule"
+    source:
+      path: "test/CLAUDE.md"
+      lines: "28"
+      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
+
+  - id: regression_test_uses_tempdir
+    type: fail_to_pass
+    origin: agent_config
+    description: "Regression test uses tempDir from 'harness', not tmpdirSync/mkdtempSync"
+    source:
+      path: "CLAUDE.md"
+      lines: "100"
+      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
+
+  # --- pass_to_pass ---
+  - id: workspace_error_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "SecurityScannerInWorkspace error handling still present in install_with_manager.zig"
+
+  - id: error_types_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "security_scanner.zig still returns proper error types (InvalidPackageID, etc.)"
+
+  - id: anti_stub
+    type: pass_to_pass
+    origin: static
+    description: "Both Zig source files have substantial content (not stubbed out)"
+
+rubric:
+  - rule: "Always use `bun.*` APIs instead of `std.*`. The `bun` namespace provides cross-platform wrappers that preserve OS error info and never use `unreachable`."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "15"
+      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
+  - rule: "Do not write flaky tests. Do not use `setTimeout` in tests."
+    source:
+      path: "CLAUDE.md"
+      lines: "102"
+      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
+  - rule: "Use `await using` or `using` for proper resource cleanup (Bun.spawn, Bun.serve, etc.)."
+    source:
+      path: "test/CLAUDE.md"
+      lines: "100"
+      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
+  - rule: "Prefer concurrent tests (`test.concurrent` / `describe.concurrent`) over sequential when tests are independent."
+    source:
+      path: "test/CLAUDE.md"
+      lines: "22"
+      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"

@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: "pytorch/pytorch"
+  pr: 176436
+  base_commit: "036b25f5a29dc58cbc62e7b976efb860ff128c3f"
+  merge_commit: "b9a01d7873cd980602db0b1ca1ca530de7833a59"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "mps.py must parse without syntax errors"
+
+  - id: where_casts_false_branch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "where() must cast the false-branch value to match the true-branch type"
+
+  - id: where_casts_special_values
+    type: fail_to_pass
+    origin: pr_diff
+    description: "where() must cast special float values (inf, -inf, nan) with type cast"
+
+  - id: masked_casts_both_branches
+    type: fail_to_pass
+    origin: pr_diff
+    description: "masked() must add static_cast<decltype(...)> to both if-body and else-branch"
+
+  - id: value_to_metal_special_values
+    type: pass_to_pass
+    origin: repo_tests
+    description: "value_to_metal() preserves correct Metal representations for special values"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "masked() and where() must not be stubs"
+
+rubric:
+  - rule: "Match existing code style and architectural patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "57"
+      commit: "036b25f5a29dc58cbc62e7b976efb860ff128c3f"
+  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
+    source:
+      path: "CLAUDE.md"
+      lines: "48-50"
+      commit: "036b25f5a29dc58cbc62e7b976efb860ff128c3f"
+  - rule: "If uncertain, choose the simpler, more concise implementation."
+    source:
+      path: "CLAUDE.md"
+      lines: "62"
+      commit: "036b25f5a29dc58cbc62e7b976efb860ff128c3f"
+  - rule: "Don't make trivial (1-2 LOC) helper functions that are only used once unless it significantly improves code readability."
+    source:
+      path: "CLAUDE.md"
+      lines: "51-52"
+      commit: "036b25f5a29dc58cbc62e7b976efb860ff128c3f"
+  - rule: "No over-engineering — only requested changes are made; no speculative features."
+    source:
+      path: ".claude/skills/pr-review/review-checklist.md"
+      lines: "11"
+      commit: "036b25f5a29dc58cbc62e7b976efb860ff128c3f"

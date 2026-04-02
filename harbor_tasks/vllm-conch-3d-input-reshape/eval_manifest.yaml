@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38178
+  base_commit: "b9dbc5c4ab2b01f626376ffaeb68e575e70ff58c"
+  merge_commit: "a8e48a7b85f035df401cab03dfb11b16f98aa413"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "conch.py must be valid Python"
+
+  - id: 3d_input_produces_3d_output
+    type: fail_to_pass
+    origin: pr_diff
+    description: "3D input (batch, seq_len, hidden) must produce 3D output with correct shape"
+
+  - id: gemm_receives_flattened_2d
+    type: fail_to_pass
+    origin: pr_diff
+    description: "mixed_precision_gemm must receive a 2D tensor even for 3D input"
+
+  - id: value_preservation_through_reshape
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Reshape round-trip must preserve output values in correct positions"
+
+  - id: 2d_input_still_works
+    type: pass_to_pass
+    origin: pr_diff
+    description: "2D input (M, K) must still produce correct 2D output (backward compat)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "apply_weights must contain real reshape logic, not a stub"
+
+rubric: []

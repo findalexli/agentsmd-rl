@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12999
+  base_commit: "7874d0411c81dcde9c4b08e7e064ca0dbef94e2e"
+  merge_commit: "f32d9d6fd610f5aa06957afb8de4cf66102ee27e"
+
+checks:
+  - id: recorder_state_variables_reactive
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Recording state vars (record, seconds, is_recording, has_started, mic_devices, selected_device_id, show_device_selection) must use $state() for Svelte 5 reactivity"
+
+  - id: player_state_variables_reactive
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Playback state vars (playing, duration, currentTime, waveform_ready) must use $state()"
+
+  - id: stop_button_conditional_logic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Stop button must check is_recording: stop if recording, call onclear if not"
+
+  - id: startmic_error_handling
+    type: fail_to_pass
+    origin: pr_diff
+    description: "startMic() call must have .catch() or try/catch error handling"
+
+  - id: recorder_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "MinimalAudioRecorder.svelte must have substantial implementation"
+
+  - id: player_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "MinimalAudioPlayer.svelte must have substantial implementation"
+
+rubric: []

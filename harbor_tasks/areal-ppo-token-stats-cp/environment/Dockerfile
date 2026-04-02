@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-install-recommends \
     git curl ca-certificates build-essential tmux \
     && rm -rf /var/lib/apt/lists/*
 
@@ -16,8 +16,9 @@ RUN git clone https://github.com/inclusionAI/AReaL.git /workspace/AReaL && \
     cd /workspace/AReaL && \
     git checkout d1cdac3442585565f902f1e69b9d7399c50b9b34
 
-# Install minimal deps (agent fills in specifics)
-RUN pip install --no-cache-dir numpy 2>/dev/null || true
+# Install torch (CPU-only) and test deps
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir pytest pytest-json-ctrf
 
 ENV PYTHONPATH="/workspace/AReaL"
 

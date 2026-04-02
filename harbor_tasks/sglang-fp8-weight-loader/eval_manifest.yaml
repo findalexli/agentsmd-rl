@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21662
+  base_commit: "e6071e60c0975e6c47f056e96d324918c3e5aed5"
+  merge_commit: "62a63eeff76da85a951bb686447e09c25ee66b1a"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Target file must parse without syntax errors"
+
+  - id: override_property_backed_param
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_override_weight_loader correctly sets loader on property-backed ModelWeightParameter"
+
+  - id: override_plain_attribute_param
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_override_weight_loader correctly sets loader on plain attribute param (non-quantized)"
+
+  - id: override_plain_then_property
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_override_weight_loader handles mixed param types in sequence"
+
+  - id: override_independent_across_modules
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Calling _override_weight_loader on two modules doesn't cross-contaminate"
+
+  - id: make_packed_weight_loader_exists
+    type: pass_to_pass
+    origin: pr_diff
+    description: "_make_packed_weight_loader must still be defined (regression)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Target file must not be stubbed out or emptied"
+
+rubric: []

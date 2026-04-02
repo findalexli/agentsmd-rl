@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12903
+  base_commit: "d720b25b575fb9817311212e1c0afa82abf27468"
+  merge_commit: "57707c72edd0e9fee9821882f75ab322ce110fe3"
+
+checks:
+  - id: file_exists
+    type: pass_to_pass
+    origin: static
+    description: "Target file init.svelte.ts exists and contains _gather_initial_tabs"
+
+  - id: function_extractable
+    type: pass_to_pass
+    origin: static
+    description: "_gather_initial_tabs can be extracted from source and loaded by Node"
+
+  - id: i18n_translation_applied
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tab labels are translated when i18n function is present on tab nodes"
+
+  - id: i18n_function_actually_called
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The i18n function is invoked (not just existence-checked) — spy verifies call"
+
+  - id: multiple_tabs_all_translated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Three tabs with different i18n translations all produce correct translated labels"
+
+  - id: no_i18n_raw_label_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When no i18n function is present, raw label string is preserved unchanged"
+
+  - id: other_tab_properties_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Tab properties (id, elem_id, visible, interactive, component_id) still collected"
+
+  - id: nested_tabs_traversal
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Nested tabs inside tabitem children are collected via recursive traversal"
+
+  - id: non_tabitem_nodes_skipped
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Non-tabitem children of tabs node are skipped without error"
+
+rubric: []

@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38152
+  base_commit: "74056039b776776ed29eb0649e51ac6780592a4c"
+  merge_commit: "9704a5c3106a1d42c8f5b2dd51d8585ecc7db482"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Both model files must be valid Python"
+
+  - id: qwen3next_forward_no_custom_op
+    type: fail_to_pass
+    origin: pr_diff
+    description: "qwen3_next GatedDeltaNet.forward must not call gdn_in_proj custom op"
+
+  - id: qwen35_forward_no_custom_op
+    type: fail_to_pass
+    origin: pr_diff
+    description: "qwen3_5 GatedDeltaNet.forward must not call gdn_in_proj custom op"
+
+  - id: gdn_in_proj_not_registered
+    type: fail_to_pass
+    origin: pr_diff
+    description: "gdn_in_proj must not be registered as a custom op at module level"
+
+  - id: no_dual_stream_infra
+    type: fail_to_pass
+    origin: pr_diff
+    description: "__init__ must not set up aux_stream or cuda Events for dual-stream"
+
+  - id: dead_code_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "gdn_in_proj, gdn_in_proj_fake, and _forward_in_proj must be removed"
+
+  - id: unused_imports_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Imports only needed for dual-stream (maybe_execute_in_parallel, aux_stream) must be removed"
+
+  - id: qwen3next_direct_projection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "qwen3_next forward must call in_proj_qkvz and in_proj_ba directly"
+
+  - id: qwen35_direct_projection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "qwen3_5 forward must call in_proj_qkvz and in_proj_ba directly"
+
+  - id: attention_core_op_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "gdn_attention_core custom op must still be registered (not over-deleted)"
+
+  - id: forward_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "GatedDeltaNet.forward must have real logic (anti-stub guard)"
+
+rubric: []

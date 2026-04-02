@@ -5,14 +5,16 @@ See [README.md](README.md) for project overview, research question, and task lis
 ## Repository Structure
 
 ```
-agentsmd_rl/            # Python package (placeholder)
+taskforge/              # Python package — models, lint, filters, status
+  templates/task_template/  # Task template with placeholders (copied by /scaffold-task)
 harbor_tasks/           # Harbor-compatible benchmark tasks
   <task>/
     instruction.md      # Agent reads this (bug description, not the fix)
     task.toml           # Metadata (difficulty, timeouts, resources)
-    eval_manifest.yaml  # Declares graders, checks, weights, and source attribution
+    eval_manifest.yaml  # What we test, where each check came from, rubric rules
     environment/Dockerfile  # Clones repo at pre-fix commit
-    tests/test.sh       # Deterministic graders → reward.txt / reward.json
+    solution/solve.sh   # Gold patch (idempotent)
+    tests/test.sh       # Deterministic tests → /logs/verifier/reward.txt
 research/               # Research docs and analysis
 ```
 
@@ -28,52 +30,67 @@ And satisfy standard requirements:
 
 ## Adding a New Task
 
-1. `/scaffold-task owner/repo#PR_NUMBER` — create task from a PR
-2. `/audit-tests <task-name>` — audit tests for gaming/narrowness, rewrite if needed
-3. `/validate-task <task-name>` — final sign-off (instruction quality, environment, alignment)
+1. `/scaffold-task owner/repo#PR_NUMBER` — create task from a PR (includes test audit + rubric extraction)
+2. `/validate-task <task-name>` — Docker oracle test (build, nop=0, gold=1)
 
 ## Evaluation Architecture
 
-Three grader types, unified attribution. See `research/grading-schema-comparison.md` for full rationale.
+### Scoring: Binary
+
+All checks must pass → reward `1`. Any check fails → reward `0`.
+This matches every major SWE benchmark (SWE-bench, Terminal Bench, SWE-smith, R2E-Gym).
 
 ### The atom: Check
 
-Every assertion — behavioral test, lint check, LLM rubric rule — is a `Check` with:
-- `origin`: where it came from (`pr_diff`, `repo_tests`, `agent_config`, `static`)
-- `source`: optional `SourceRef` pointing to exact file + lines + commit in the repo
-- `weight`: how much it contributes to its grader's score
+Every assertion in test.sh is a `Check` (Pydantic model in `taskforge/models.py`) with:
+- `id`: slug identifier (e.g., `empty_stem_gets_fallback`)
+- `type`: `fail_to_pass` (must fail on base, pass on fix) or `pass_to_pass` (must pass always)
+- `origin`: where it came from — `pr_diff`, `repo_tests`, `agent_config`, `static`
+- `source`: `SourceRef` (path + lines + commit) — **required** when `origin == agent_config`
 
-### Graders compose checks
+### eval_manifest.yaml
 
-| Grader | Type | What it runs | Weight budget |
-|--------|------|-------------|---------------|
-| `behavioral` | deterministic | Fail-to-pass tests from the PR | >=0.60 |
-| `regression` | deterministic | Pass-to-pass + anti-stub | ~0.10–0.20 |
-| `config` | deterministic | Programmatic rules from agent configs | <=0.15 |
-| `style_rubric` | model_based | LLM judge on soft rules | ~0.10–0.15 |
+Declares all checks and rubric rules. Schema version `2.0`. See `taskforge/models.py` for the Pydantic models: `EvalManifest`, `Check`, `RubricRule`, `SourceRef`, `SourcePR`.
 
-A grader can be a **gate** — if it scores 0, the whole task scores 0 (e.g., syntax check).
+```yaml
+version: "2.0"
+source:
+  repo: owner/repo
+  pr: 123
+  base_commit: abc123
+
+checks:
+  - id: crash_on_none
+    type: fail_to_pass
+    origin: pr_diff
+    description: Function crashes when input is None
+
+  - id: no_wildcard_imports
+    type: fail_to_pass
+    origin: agent_config
+    description: No wildcard imports
+    source:
+      path: AGENTS.md
+      lines: "30"
+      commit: abc123
+
+rubric:  # Soft rules → LLM judge (when LLM_JUDGE=1)
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: AGENTS.md
+      lines: "45"
+      commit: abc123
+```
 
 ### Source attribution
 
-Every check with `origin: agent_config` MUST have a `source` pointing to the exact markdown file and line range. Use **full repo-relative paths** (`extensions/CLAUDE.md`, not `CLAUDE.md`).
-
-In test.sh, every check MUST have a comment:
-```bash
-# [pr_diff] (0.20): Malformed lines don't crash
-# [agent_config] (0.05): "Run ruff format" — AGENTS.md:32-33 @ abc123
-```
+Every check with `origin: agent_config` MUST have a `source` pointing to the exact file and line range. Use **full repo-relative paths** (`extensions/CLAUDE.md`, not `CLAUDE.md`).
 
 ### Output
 
-test.sh writes to `/logs/verifier/reward.txt` (single float) and optionally `/logs/verifier/reward.json`:
-```json
-{"reward": 0.85, "behavioral": 0.65, "regression": 0.10, "config": 0.05, "style_rubric": 0.05}
-```
+test.sh writes `1` or `0` to `/logs/verifier/reward.txt`.
 
-**CRITICAL**: Reward MUST be written to `/logs/verifier/reward.txt` — this is a Docker bind mount that Harbor's verifier reads. Writing to `/tests/reward.txt`, `/workspace/reward.txt`, or any other path will silently fail (Harbor won't find the file).
-
-For RL: `execution_bucket` (deterministic) + `model_reward` (LLM judge) follow the SWE-RM additive pattern.
+**CRITICAL**: Reward MUST be written to `/logs/verifier/reward.txt` — this is a Docker bind mount that Harbor's verifier reads. Writing to `/tests/reward.txt`, `/workspace/reward.txt`, or any other path will silently fail.
 
 ## Rubric Source Traceability
 

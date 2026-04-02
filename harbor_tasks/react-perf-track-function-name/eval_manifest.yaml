@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35659
+  base_commit: "230772f99dac80be6dda9c59441fb4928612f18e"
+  merge_commit: "da64117876002bd60baa9e93cad77421bbf0293f"
+
+checks:
+  - id: import_ok
+    type: pass_to_pass
+    origin: static
+    description: "Target file imports without syntax errors"
+
+  - id: class_nonstring_name
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Class with static non-string name property (object, number, null) treated as anonymous"
+
+  - id: proxy_nonstring_name
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Proxy returning non-string .name (number, object, boolean) treated as anonymous without crashing"
+
+  - id: named_function_unchanged
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Normal named functions still produce 'fnName() {}'"
+
+  - id: anonymous_and_empty_name
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Anonymous functions and empty-name functions produce '() => {}'"
+
+rubric: []

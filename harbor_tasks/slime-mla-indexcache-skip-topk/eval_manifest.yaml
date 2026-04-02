@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1736
+  base_commit: "6e3699c83ac65c119e755ccec1a14ac87644489f"
+  merge_commit: "02fef7e9da800d78a91cab5debe9a537071d0e3e"
+
+checks:
+  - id: patch_targets_deepseek_v2
+    type: pass_to_pass
+    origin: static
+    description: "Patch file exists and modifies deepseek_v2.py"
+
+  - id: skip_topk_init_unconditional
+    type: fail_to_pass
+    origin: pr_diff
+    description: "self.skip_topk accessible on MLA models without NSA enabled"
+
+  - id: next_skip_topk_init_unconditional
+    type: fail_to_pass
+    origin: pr_diff
+    description: "self.next_skip_topk accessible on MLA models without NSA enabled"
+
+  - id: config_attrs_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "index_topk_freq, index_topk_pattern, index_skip_topk_offset still present in NSA branch"
+
+  - id: forward_skip_logic_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "forward_absorb_prepare conditionally skips indexer via skip_topk with prev_topk_indices fallback"
+
+  - id: return_includes_topk_indices
+    type: pass_to_pass
+    origin: pr_diff
+    description: "forward_absorb_prepare returns tuple with topk_indices for cross-layer caching"
+
+  - id: decoder_layer_threads_topk
+    type: pass_to_pass
+    origin: pr_diff
+    description: "DecoderLayer returns and model unpacks topk_indices across layers"
+
+rubric: []

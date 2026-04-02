@@ -1,0 +1,271 @@
+"""
+Task: opencode-variant-menu-subagent-info
+Repo: anomalyco/opencode @ 860531c275cf845f80ccf26bba5bad745fe98398
+PR:   19537
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import json
+import re
+import subprocess
+from pathlib import Path
+
+REPO = "/workspace/opencode"
+APP = f"{REPO}/packages/opencode/src/cli/cmd/tui/app.tsx"
+SESSION = f"{REPO}/packages/opencode/src/cli/cmd/tui/routes/session/index.tsx"
+FOOTER = f"{REPO}/packages/opencode/src/cli/cmd/tui/routes/session/subagent-footer.tsx"
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static)
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_files_exist_and_not_truncated():
+    """All three modified files must exist and have meaningful content."""
+    for f in [APP, SESSION, FOOTER]:
+        p = Path(f)
+        assert p.exists(), f"{f} does not exist"
+        assert p.stat().st_size > 200, f"{f} is truncated (< 200 bytes)"
+
+
+# [static] pass_to_pass
+def test_core_exports_intact():
+    """Key exports and components must still exist after changes."""
+    session_src = Path(SESSION).read_text()
+    footer_src = Path(FOOTER).read_text()
+    app_src = Path(APP).read_text()
+
+    assert "export function Session" in session_src, "Session export missing"
+    assert "export function SubagentFooter" in footer_src, "SubagentFooter export missing"
+    assert "function App(" in app_src, "App function missing"
+    assert "function InlineTool(" in session_src, "InlineTool function missing"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_cycle_direction_fixed():
+    """cycleSession must subtract direction from index, not add it.
+
+    Extracts the cycling arithmetic and evaluates it with multiple inputs
+    to verify the direction is inverted.
+    """
+    result = subprocess.run(
+        ["node", "-e", r"""
+const fs = require('fs');
+const src = fs.readFileSync(process.argv[1], 'utf8');
+
+const lines = src.split('\n');
+let opLine = null;
+for (const line of lines) {
+    if (/findIndex/.test(line) && /direction/.test(line)) {
+        opLine = line;
+        break;
+    }
+}
+if (!opLine) { console.log(JSON.stringify({ok: false, reason: "no findIndex+direction line"})); process.exit(0); }
+
+const m = opLine.match(/findIndex\([^)]*\)\s*([+\-])\s*direction/);
+if (!m) { console.log(JSON.stringify({ok: false, reason: "can't parse operator from: " + opLine.trim()})); process.exit(0); }
+
+const op = m[1];
+const cycle = new Function('idx', 'len', 'dir', `
+    let next = idx ${op} dir;
+    if (next >= len) next = 0;
+    if (next < 0) next = len - 1;
+    return next;
+`);
+
+// After fix (- direction): dir=1 means go to lower index
+const tests = [
+    [2, 5, 1, 1],
+    [0, 5, 1, 4],
+    [4, 5, -1, 0],
+    [3, 5, 1, 2],
+    [1, 5, -1, 2],
+    [0, 3, 1, 2],
+    [1, 4, 1, 0],
+    [3, 4, -1, 0],
+];
+
+let passed = 0;
+for (const [ci, total, dir, expected] of tests) {
+    if (cycle(ci, total, dir) === expected) passed++;
+}
+console.log(JSON.stringify({ok: passed === tests.length, passed, total: tests.length, op}));
+""", SESSION],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert result.stdout.strip(), f"node produced no output; stderr: {result.stderr[:300]}"
+    data = json.loads(result.stdout.strip())
+    assert data["ok"], (
+        f"Cycling direction wrong: operator='{data.get('op')}', "
+        f"passed {data.get('passed')}/{data.get('total')}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_variant_opens_dialog():
+    """Variant cycle command must open a dialog component, not call cycle() directly."""
+    src = Path(APP).read_text()
+
+    # Must import a variant dialog component
+    has_dialog_import = bool(
+        re.search(r"import[^;]*DialogVariant", src)
+        or re.search(r"import[^;]*[Vv]ariant[Dd]ialog", src)
+    )
+    assert has_dialog_import, "No variant dialog component imported"
+
+    # Find the variant.cycle onSelect handler
+    m = re.search(
+        r"""['"]variant\.cycle['"][\s\S]{0,500}?onSelect\s*:\s*\(\)\s*=>\s*\{""",
+        src,
+    )
+    assert m, "variant.cycle onSelect handler not found"
+
+    # Get 300 chars after onSelect opening brace
+    start = m.end()
+    handler = src[start : start + 300]
+
+    # Must use dialog (replace, open, show, push, set)
+    assert re.search(r"dialog\.\w+|setDialog|openDialog|showDialog", handler), \
+        "Handler doesn't open a dialog"
+
+    # Must NOT directly call .cycle()
+    assert ".cycle()" not in handler, "Handler still calls .cycle() directly"
+
+
+# [pr_diff] fail_to_pass
+def test_subagent_footer_shows_type():
+    """Footer must extract agent type from session title via regex and display it."""
+    result = subprocess.run(
+        ["node", "-e", r"""
+const fs = require('fs');
+const src = fs.readFileSync(process.argv[1], 'utf8');
+
+// Must have a regex to extract agent type from title
+const regexMatch = src.match(/\.match\(\s*(\/[^/]+\/[gimsuy]*)\s*\)/);
+if (!regexMatch) { console.log(JSON.stringify({ok: false, reason: "no regex found"})); process.exit(0); }
+
+try {
+    const re = eval(regexMatch[1]);
+
+    const tests = [
+        ['@coder subagent session #3', 'coder'],
+        ['@explorer subagent', 'explorer'],
+        ['@writer subagent task', 'writer'],
+        ['plain session title', null],
+        ['@planner subagent review', 'planner'],
+    ];
+
+    let passed = 0;
+    for (const [title, expected] of tests) {
+        const m = title.match(re);
+        if (expected === null) {
+            if (!m || !m[1]) passed++;
+        } else {
+            if (m && m[1] && m[1].toLowerCase() === expected) passed++;
+        }
+    }
+
+    const noStatic = !src.includes('<b>Subagent session</b>');
+    console.log(JSON.stringify({ok: passed >= 4 && noStatic, passed, total: tests.length, noStatic}));
+} catch(e) {
+    console.log(JSON.stringify({ok: false, reason: e.message}));
+}
+""", FOOTER],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert result.stdout.strip(), f"node produced no output; stderr: {result.stderr[:300]}"
+    data = json.loads(result.stdout.strip())
+    assert data["ok"], f"Subagent type extraction failed: {data}"
+
+
+# [pr_diff] fail_to_pass
+def test_subagent_footer_shows_index():
+    """Footer must compute sibling index from parentID and display 'X of Y'."""
+    result = subprocess.run(
+        ["node", "-e", r"""
+const fs = require('fs');
+const src = fs.readFileSync(process.argv[1], 'utf8');
+
+const checks = {
+    parentID: /parentID/.test(src),
+    filter: /\.filter\(/.test(src),
+    findIndex: /\.findIndex\(/.test(src) || /\.indexOf\(/.test(src),
+    ofPattern: / of /.test(src) || /"of"/.test(src) || /'of'/.test(src),
+    oneBased: /index\s*[\+]\s*1|idx\s*[\+]\s*1|\+\s*1/.test(src),
+    lengthRef: /\.length/.test(src),
+    filterParent: /\.filter\(\s*\(?(\w+)\)?\s*=>\s*\1\.parentID\s*===/.test(src),
+};
+
+const ok = checks.parentID && checks.filter && checks.findIndex
+    && checks.ofPattern && checks.oneBased && checks.filterParent;
+
+console.log(JSON.stringify({ok, checks}));
+""", FOOTER],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert result.stdout.strip(), f"node produced no output; stderr: {result.stderr[:300]}"
+    data = json.loads(result.stdout.strip())
+    assert data["ok"], f"Sibling index computation missing or incorrect: {data}"
+
+
+# [pr_diff] fail_to_pass
+def test_task_content_includes_subagent_type():
+    """Task component must include subagent_type in content with capitalization and fallback."""
+    src = Path(SESSION).read_text()
+
+    # Must reference subagent_type (only used in Task's content memo)
+    assert "subagent_type" in src, "subagent_type not referenced in session/index.tsx"
+
+    # Must have a fallback for missing subagent_type (nullish coalescing or logical OR)
+    assert re.search(r'subagent_type\s*\?\?|subagent_type\s*\|\|', src), \
+        "No fallback when subagent_type is missing (expected ?? or ||)"
+
+    # Must apply capitalization (titlecase, toUpperCase, capitalize, etc.)
+    assert re.search(r'titlecase|capitalize|toUpperCase|charAt\(0\)', src), \
+        "No capitalization applied to subagent_type"
+
+    # Must combine subagent_type with description in the same expression
+    assert re.search(
+        r'subagent_type[\s\S]{0,150}description|description[\s\S]{0,150}subagent_type',
+        src
+    ), "subagent_type and description not combined in Task content"
+
+    # Must no longer show plain 'Task ${description}' without a type prefix
+    assert not re.search(r'`Task\s+\$\{', src), \
+        "Still uses plain 'Task ${...}' without subagent type prefix"
+
+
+# [pr_diff] fail_to_pass
+def test_dead_code_removed():
+    """Unused ToolTitle function should be removed from session/index.tsx."""
+    src = Path(SESSION).read_text()
+    assert "function ToolTitle(" not in src, "Unused ToolTitle function still present"
+
+
+# ---------------------------------------------------------------------------
+# Config-derived (agent_config) — AGENTS.md rules
+# ---------------------------------------------------------------------------
+
+# [agent_config] fail_to_pass — AGENTS.md:17 @ 860531c275cf845f80ccf26bba5bad745fe98398
+def test_functional_array_methods():
+    """New sibling computation in footer must use functional array methods
+    (filter/map/flatMap), not C-style for loops. Per AGENTS.md:17."""
+    src = Path(FOOTER).read_text()
+
+    has_functional = ".filter(" in src or ".reduce(" in src or ".flatMap(" in src
+    has_index = ".findIndex(" in src or ".indexOf(" in src
+
+    # Must NOT use imperative for loops for sibling computation
+    has_imperative = bool(re.search(r"for\s*\(\s*(let|var)\s+\w+[\s\S]{0,100}parentID", src))
+
+    assert has_functional, "No functional array methods (filter/reduce/flatMap) found in footer"
+    assert has_index, "No index computation method (findIndex/indexOf) found in footer"
+    assert not has_imperative, "Imperative for loop used near parentID logic"

@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: facebook/react
+  pr: 35685
+  base_commit: "3ce1316b05968d2a8cffe42a110f2726f2c44c3e"
+  merge_commit: "c9ff56ec74393373dbe0f58c3e24d1846b469317"
+
+checks:
+  - id: flag_false_in_fb_configs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Facebook build configs (core-fb, extension-fb) export enableActivitySlices = false"
+
+  - id: flag_dev_in_oss_configs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "OSS build configs (core-oss, extension-oss, default) export enableActivitySlices = __DEV__"
+
+  - id: suspense_tab_imports_flag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SuspenseTab.js imports enableActivitySlices from react-devtools-feature-flags"
+
+  - id: suspense_tab_uses_flag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SuspenseTab.js gates activityListDisabled on !enableActivitySlices"
+
+  - id: flag_present_in_all_fork_files
+    type: fail_to_pass
+    origin: agent_config
+    description: "enableActivitySlices is declared in all 5 fork config files"
+    source:
+      path: ".claude/skills/feature-flags/SKILL.md"
+      lines: "45"
+      commit: "3ce1316b05968d2a8cffe42a110f2726f2c44c3e"
+
+  - id: flag_files_maintain_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All 5 feature flag config files still export enableLogger (no regressions)"
+
+rubric:
+  - rule: "New code should follow the formatting conventions of the surrounding file (indentation, spacing, semicolons)"
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "7"
+      commit: "3ce1316b05968d2a8cffe42a110f2726f2c44c3e"
+
+  - rule: "No lint errors should be introduced; new code should follow the lint rules of the project"
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "8"
+      commit: "3ce1316b05968d2a8cffe42a110f2726f2c44c3e"

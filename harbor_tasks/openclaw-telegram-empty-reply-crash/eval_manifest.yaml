@@ -1,0 +1,117 @@
+version: "2.0"
+
+source:
+  repo: "openclaw/openclaw"
+  pr: 56620
+  base_commit: "eec290e68d6191b4bb85538dd301d50cdbc6650a"
+  merge_commit: "4d6c8edd7484f72e058a882b7bf26c75ec9cfdbd"
+
+checks:
+  - id: filter_removes_empty_and_whitespace
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Filter function correctly removes empty/whitespace-only text chunks"
+
+  - id: all_delivery_paths_protected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All 3 text delivery paths (deliverTextReply, sendPendingFollowUpText, sendTelegramVoiceFallbackText) filter empty chunks"
+
+  - id: core_delivery_logic_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Core delivery functions and send/progress patterns still exist"
+
+  - id: no_cross_boundary_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Extension code must not import core src/ internals"
+    source:
+      path: "CLAUDE.md"
+      lines: "16"
+      commit: "eec290e68d6191b4bb85538dd301d50cdbc6650a"
+
+  - id: no_any_type_annotation
+    type: pass_to_pass
+    origin: agent_config
+    description: "No any type annotations — prefer real types or unknown"
+    source:
+      path: "CLAUDE.md"
+      lines: "102"
+      commit: "eec290e68d6191b4bb85538dd301d50cdbc6650a"
+
+  - id: no_lint_suppressions
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @ts-nocheck or inline lint suppressions without justification"
+    source:
+      path: "CLAUDE.md"
+      lines: "104"
+      commit: "eec290e68d6191b4bb85538dd301d50cdbc6650a"
+
+  - id: extension_package_boundary
+    type: pass_to_pass
+    origin: agent_config
+    description: "No relative imports escaping the extension package root"
+    source:
+      path: "CLAUDE.md"
+      lines: "109"
+      commit: "eec290e68d6191b4bb85538dd301d50cdbc6650a"
+
+  - id: no_extension_sdk_self_import
+    type: pass_to_pass
+    origin: agent_config
+    description: "Extension must not import itself via openclaw/plugin-sdk/telegram"
+    source:
+      path: "CLAUDE.md"
+      lines: "108"
+      commit: "eec290e68d6191b4bb85538dd301d50cdbc6650a"
+
+  - id: no_prototype_mutation
+    type: pass_to_pass
+    origin: agent_config
+    description: "No prototype mutation to share class behavior"
+    source:
+      path: "CLAUDE.md"
+      lines: "111"
+      commit: "eec290e68d6191b4bb85538dd301d50cdbc6650a"
+
+  - id: no_streaming_partial_replies
+    type: pass_to_pass
+    origin: agent_config
+    description: "No streaming/partial replies sent to Telegram — only final replies"
+    source:
+      path: "CLAUDE.md"
+      lines: "228"
+      commit: "eec290e68d6191b4bb85538dd301d50cdbc6650a"
+
+rubric:
+  - rule: "Prefer strict typing; avoid `any`."
+    source:
+      path: "CLAUDE.md"
+      lines: "102"
+      commit: "eec290e68d6191b4bb85538dd301d50cdbc6650a"
+
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    source:
+      path: "CLAUDE.md"
+      lines: "114"
+      commit: "eec290e68d6191b4bb85538dd301d50cdbc6650a"
+
+  - rule: "Keep files concise; extract helpers instead of 'V2' copies."
+    source:
+      path: "CLAUDE.md"
+      lines: "115"
+      commit: "eec290e68d6191b4bb85538dd301d50cdbc6650a"
+
+  - rule: "Use American spelling and grammar in code, comments, and UI strings."
+    source:
+      path: "CLAUDE.md"
+      lines: "118"
+      commit: "eec290e68d6191b4bb85538dd301d50cdbc6650a"
+
+  - rule: "Never share class behavior via prototype mutation; use explicit inheritance or composition."
+    source:
+      path: "CLAUDE.md"
+      lines: "111"
+      commit: "eec290e68d6191b4bb85538dd301d50cdbc6650a"

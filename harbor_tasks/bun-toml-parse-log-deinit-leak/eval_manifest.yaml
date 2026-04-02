@@ -1,0 +1,89 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28492
+  base_commit: "36f17caa987d130788b97a6e9d7c9aea7895b6ed"
+  merge_commit: "e94c3035c6f9d7868fb814cfeaf27b219d00e565"
+
+checks:
+  - id: log_deinit_after_init
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Log.init must be paired with defer log.deinit() to prevent memory leak"
+
+  - id: modern_argument_api
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Argument access must use callframe.argument(), not deprecated arguments_old"
+
+  - id: input_validation_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Input validation for empty/null/undefined preserved with error throw"
+
+  - id: parse_chain_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "TOML parse call chain (toSlice + TOML.parse) remains intact"
+
+  - id: peer_parsers_unmodified
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Peer parsers (JSONC, JSON5, YAML) not modified"
+
+  - id: changes_scoped
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Only TOMLObject.zig has substantial changes"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "TOMLObject.zig retains real structure (not stubbed)"
+
+  - id: no_inline_import_in_functions
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @import() calls inside function bodies"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11"
+      commit: "36f17caa987d130788b97a6e9d7c9aea7895b6ed"
+
+  - id: bun_apis_over_std
+    type: pass_to_pass
+    origin: agent_config
+    description: "Uses bun.* APIs, not std.fs/posix/os/process"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "16-28"
+      commit: "36f17caa987d130788b97a6e9d7c9aea7895b6ed"
+
+  - id: defer_cleanup_for_inits
+    type: fail_to_pass
+    origin: agent_config
+    description: "Every resource .init() in parse() has a corresponding defer .deinit()"
+    source:
+      path: "CLAUDE.md"
+      lines: "232"
+      commit: "36f17caa987d130788b97a6e9d7c9aea7895b6ed"
+
+rubric:
+  - rule: "Prefer @import at the bottom of the file, but the auto formatter will move them so you don't need to worry about it."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "10"
+      commit: "36f17caa987d130788b97a6e9d7c9aea7895b6ed"
+
+  - rule: "Decl literals in Zig are recommended."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "6"
+      commit: "36f17caa987d130788b97a6e9d7c9aea7895b6ed"
+
+  - rule: "Follow existing code style — check neighboring files (JSONCObject.zig, JSON5Object.zig) for patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "228"
+      commit: "36f17caa987d130788b97a6e9d7c9aea7895b6ed"

@@ -1,0 +1,85 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12941
+  base_commit: "380d35ae1164289c85c253eefefda6d8511e614e"
+  merge_commit: "50e9c84749aff9da985a79c8a88292fac62fa1d6"
+
+checks:
+  - id: utils_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "utils.ts must exist (gate for behavioral tests)"
+
+  - id: needs_iframe_detects_fixed_css
+    type: fail_to_pass
+    origin: pr_diff
+    description: "needs_iframe returns true for position:fixed CSS with varied spacing/casing"
+
+  - id: needs_iframe_rejects_non_fixed_css
+    type: fail_to_pass
+    origin: pr_diff
+    description: "needs_iframe returns false for non-fixed CSS (bidirectional check)"
+
+  - id: needs_iframe_handles_falsy_input
+    type: fail_to_pass
+    origin: pr_diff
+    description: "needs_iframe returns false for undefined/null/empty without crashing"
+
+  - id: build_srcdoc_produces_valid_html
+    type: fail_to_pass
+    origin: pr_diff
+    description: "build_srcdoc returns complete HTML documents with rendered props (varied inputs)"
+
+  - id: build_srcdoc_dark_mode
+    type: fail_to_pass
+    origin: pr_diff
+    description: "build_srcdoc adds dark class when dark=true, omits for light"
+
+  - id: build_srcdoc_escapes_script_tags
+    type: fail_to_pass
+    origin: pr_diff
+    description: "build_srcdoc escapes </script in JS content without dropping code"
+
+  - id: build_srcdoc_includes_head_and_css
+    type: fail_to_pass
+    origin: pr_diff
+    description: "build_srcdoc includes component CSS and head content in output"
+
+  - id: click_outside_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "clickOutside Svelte action returns {update, destroy} interface"
+
+  - id: svelte_components_use_iframe
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both +page.svelte and ComponentEntry.svelte have iframe rendering paths"
+
+  - id: svelte_components_handle_children_slot
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both Svelte files handle @children slot for components that use it"
+
+  - id: guide_documents_push_to_hub
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Guide documents push_to_hub method for sharing components"
+
+  - id: guide_documents_authentication
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Guide documents authentication requirements for push_to_hub"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "380d35ae1164289c85c253eefefda6d8511e614e"
+  - rule: "Frontend code is formatted with prettier."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "380d35ae1164289c85c253eefefda6d8511e614e"

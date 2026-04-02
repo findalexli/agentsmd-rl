@@ -1,0 +1,59 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38414
+  base_commit: "171775f306a333a9cf105bfd533bf3e113d401d9"
+  merge_commit: "6dad4c57226d522b1af0b12ae6a2ba66e4fc7d5d"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified file must parse without errors"
+
+  - id: no_standalone_fixed_sleep
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Buggy asyncio.sleep(0.1) outside any loop is removed"
+
+  - id: polling_loop_with_file_read
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A while loop that reads the status file exists in the test function"
+
+  - id: timeout_mechanism_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Polling loop has a timeout to avoid hanging forever"
+
+  - id: polling_captures_delayed_status
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Polling loop captures FINISHED_ABORTED written after a 300ms delay"
+
+  - id: finished_aborted_assertion_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "FINISHED_ABORTED assertion still exists in test function"
+
+  - id: function_signature_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Test function and async_scheduling parametrize preserved"
+
+  - id: timeout_completes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Polling completes within timeout when status never appears (no hang)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "File has substantial content (not trivially emptied)"
+
+rubric:
+  []
+  # AGENTS.md contains only process/workflow rules (duplicate-work checks,
+  # commit message format, use uv, run pre-commit, etc.) — none are
+  # evaluable from a code diff alone. No rubric rules apply.

@@ -1,0 +1,61 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 13134
+  base_commit: "a09c0e891709e007e4f265fc48f466175f5a2a22"
+  merge_commit: "75f8dceb679b505c8887f0a3c3b9fee98a931db9"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "gradio/utils.py parses without syntax errors"
+
+  - id: aclose_retries_on_already_executing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "aclose() retries when close() raises ValueError('generator already executing')"
+
+  - id: aclose_retries_higher_fail_count
+    type: fail_to_pass
+    origin: pr_diff
+    description: "aclose() retries correctly with higher failure counts (fail_count=5)"
+
+  - id: aclose_timeout_raises
+    type: fail_to_pass
+    origin: pr_diff
+    description: "aclose() raises ValueError after timeout is exceeded"
+
+  - id: aclose_race_condition
+    type: fail_to_pass
+    origin: pr_diff
+    description: "aclose() handles time-based race where close() fails temporarily"
+
+  - id: aclose_propagates_non_matching_valueerror
+    type: pass_to_pass
+    origin: pr_diff
+    description: "aclose() does not retry on ValueError without 'already executing'"
+
+  - id: safe_aclose_works_with_async_generator
+    type: pass_to_pass
+    origin: pr_diff
+    description: "safe_aclose_iterator() works with native async generators"
+
+  - id: not_stub
+    type: fail_to_pass
+    origin: static
+    description: "aclose() has real retry logic, not just self.iterator.close()"
+
+rubric:
+  - rule: "Python code is formatted with `ruff`. Run `bash scripts/format_backend.sh`."
+    source:
+      path: "AGENTS.md"
+      lines: "43"
+      commit: "a09c0e891709e007e4f265fc48f466175f5a2a22"
+
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "a09c0e891709e007e4f265fc48f466175f5a2a22"

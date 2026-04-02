@@ -1,0 +1,96 @@
+version: "2.0"
+
+source:
+  repo: "openclaw/openclaw"
+  pr: 57770
+  base_commit: "aff6883f93abcbfd18ebb743871bc804b10f5728"
+  merge_commit: "1ca4261d7e055d0be141ed79ebb1365d0fbc7364"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without TypeScript syntax errors"
+
+  - id: append_no_widening
+    type: fail_to_pass
+    origin: pr_diff
+    description: "appendLocalMediaParentRoots must not add media source parent dirs to roots"
+
+  - id: append_no_widening_varied_inputs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "appendLocalMediaParentRoots ignores media sources regardless of root contents"
+
+  - id: resolve_media_tool_no_widening
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resolveMediaToolLocalRoots must not widen roots from media source paths"
+
+  - id: resolve_media_tool_modes
+    type: pass_to_pass
+    origin: pr_diff
+    description: "resolveMediaToolLocalRoots handles default, workspace, and workspaceOnly modes"
+
+  - id: append_deduplicates_and_preserves
+    type: pass_to_pass
+    origin: pr_diff
+    description: "appendLocalMediaParentRoots deduplicates and preserves all input roots"
+
+  - id: agent_scoped_no_widening
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getAgentScopedMediaLocalRootsForSources must not widen roots from mediaSources"
+
+  - id: no_expansion_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: "media-tool-shared.ts must not import appendLocalMediaParentRoots"
+
+  - id: no_source_expansion_helpers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "local-roots.ts must not contain source-path expansion utilities"
+
+  - id: no_type_safety_bypasses
+    type: pass_to_pass
+    origin: agent_config
+    description: "No explicit any annotations or @ts-nocheck in modified files"
+    source:
+      path: "CLAUDE.md"
+      lines: "144-146"
+      commit: "aff6883f93abcbfd18ebb743871bc804b10f5728"
+
+  - id: no_lint_suppressions
+    type: pass_to_pass
+    origin: agent_config
+    description: "No inline lint suppression comments in modified files"
+    source:
+      path: "CLAUDE.md"
+      lines: "146-147"
+      commit: "aff6883f93abcbfd18ebb743871bc804b10f5728"
+
+rubric:
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    source:
+      path: "CLAUDE.md"
+      lines: "163"
+      commit: "aff6883f93abcbfd18ebb743871bc804b10f5728"
+
+  - rule: "Prefer discriminated unions when parameter shape changes runtime behavior."
+    source:
+      path: "CLAUDE.md"
+      lines: "149"
+      commit: "aff6883f93abcbfd18ebb743871bc804b10f5728"
+
+  - rule: "Keep files concise; extract helpers instead of V2 copies."
+    source:
+      path: "CLAUDE.md"
+      lines: "164"
+      commit: "aff6883f93abcbfd18ebb743871bc804b10f5728"
+
+  - rule: "Use American spelling and grammar in code, comments, docs, and UI strings."
+    source:
+      path: "CLAUDE.md"
+      lines: "167"
+      commit: "aff6883f93abcbfd18ebb743871bc804b10f5728"

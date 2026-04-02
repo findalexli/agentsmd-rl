@@ -1,0 +1,102 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28205
+  base_commit: "a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d"
+  merge_commit: "256bba7b0cc7ac17faf3708eecddfac68985fef8"
+
+checks:
+  - id: file_parses
+    type: pass_to_pass
+    origin: static
+    description: "Test file exists, is substantive, and has balanced braces"
+
+  - id: loop_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Sequential for-loop over invalidVersions with Bun.spawn is removed"
+
+  - id: versions_parameterized
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Each invalid version gets its own test case via test.each or similar"
+
+  - id: substantive_bodies
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Invalid-version test bodies contain Bun.spawn + await exited + expect (not stubs)"
+
+  - id: all_invalid_versions_present
+    type: pass_to_pass
+    origin: pr_diff
+    description: "All 5 invalid version strings still present in the test file"
+
+  - id: exit_code_assertion
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Non-zero exit code assertion preserved"
+
+  - id: valid_version_tests_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Valid version parsing tests (1.0.0.0, 2.0.0.0, 3.0.0.0) still present"
+
+  - id: describe_structure_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Main describe blocks (Windows/compile/metadata + CLI flags) preserved"
+
+  - id: other_tests_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Other test blocks (all metadata flags, partial metadata flags) intact"
+
+  - id: no_flaky_patterns
+    type: pass_to_pass
+    origin: agent_config
+    description: "No setTimeout or sleep calls added"
+    source:
+      path: "test/AGENTS.md"
+      lines: "4265"
+      commit: "a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d"
+
+  - id: concurrent_pattern_preserved
+    type: pass_to_pass
+    origin: agent_config
+    description: "describe.concurrent pattern must remain"
+    source:
+      path: "test/AGENTS.md"
+      lines: "4266"
+      commit: "a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d"
+
+  - id: no_test_timeout
+    type: pass_to_pass
+    origin: agent_config
+    description: "No explicit test timeout set — Bun already has timeouts"
+    source:
+      path: "test/AGENTS.md"
+      lines: "4364"
+      commit: "a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d"
+
+  - id: uses_harness_helpers
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must use bunExe(), bunEnv, and tempDir from harness"
+    source:
+      path: "test/AGENTS.md"
+      lines: "4272"
+      commit: "a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d"
+
+rubric:
+  - rule: "Use describe.each() or test.each() for parameterized tests rather than loops"
+    source:
+      path: "test/AGENTS.md"
+      lines: "4488"
+      commit: "a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d"
+
+  - rule: "Prefer concurrent tests over sequential tests when tests spawn processes or write files"
+    source:
+      path: "test/AGENTS.md"
+      lines: "4266"
+      commit: "a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d"

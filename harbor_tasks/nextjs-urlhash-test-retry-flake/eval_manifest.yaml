@@ -1,0 +1,58 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91649
+  base_commit: "78f73b27069ffe2dc1ddfb2b16013220d2a86569"
+  merge_commit: "4693685be18ace1818d9c1ade1dae77902013a6f"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Test file exists and has balanced braces/parens"
+
+  - id: flaky_click_chains_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Flaky .click().text()/.eval() chains are broken apart"
+
+  - id: retry_wraps_browser_assertions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "retry/polling wrappers surround browser assertions (>=5 with proximity check)"
+
+  - id: retry_mechanism_imported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A retry/polling mechanism (retry, waitFor, toPass, etc.) is imported or defined"
+
+  - id: names_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing describe blocks and test names are preserved"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "File has substantial content (>=150 lines, >=10 it blocks, >=10 expects, >=15 browser refs)"
+
+  - id: no_deprecated_check
+    type: pass_to_pass
+    origin: agent_config
+    description: "No deprecated check() usage — must use retry() + expect() instead"
+    source:
+      path: "AGENTS.md"
+      lines: "194"
+      commit: "78f73b27069ffe2dc1ddfb2b16013220d2a86569"
+
+  - id: no_settimeout_waiting
+    type: pass_to_pass
+    origin: agent_config
+    description: "No setTimeout-based waiting — must use retry() instead"
+    source:
+      path: "AGENTS.md"
+      lines: "180"
+      commit: "78f73b27069ffe2dc1ddfb2b16013220d2a86569"
+
+rubric: []

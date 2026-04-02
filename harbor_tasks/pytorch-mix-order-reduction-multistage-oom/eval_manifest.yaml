@@ -1,0 +1,83 @@
+version: "2.0"
+
+source:
+  repo: "pytorch/pytorch"
+  pr: 176495
+  base_commit: "5d919bfe0f2ba7c7aabdb75ef6a20512f163e662"
+  merge_commit: "3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (config.py, codegen/triton.py, triton_heuristics.py) parse without errors"
+
+  - id: config_default_false
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New config attribute mix_order_reduction_allow_multi_stages defaults to False"
+
+  - id: config_env_var_enables
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Setting TORCHINDUCTOR_MIX_ORDER_REDUCTION_ALLOW_MULTI_STAGES=1 enables multi-stages"
+
+  - id: heuristics_single_stage_when_disabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "persistent_reduction sets MAX_NUM_STAGES=1 when multi-stages disabled"
+
+  - id: heuristics_single_stage_small_rnumel
+    type: fail_to_pass
+    origin: pr_diff
+    description: "persistent_reduction sets MAX_NUM_STAGES=1 with small rnumel when disabled"
+
+  - id: heuristics_multi_stage_when_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "persistent_reduction allows >1 stages when multi-stages enabled"
+
+  - id: heuristics_large_rnumel_caps_at_two
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When enabled with large rnumel (>8192), MAX_NUM_STAGES caps at 2"
+
+  - id: codegen_propagates_config_key
+    type: fail_to_pass
+    origin: pr_diff
+    description: "inductor_meta_common includes mix_order_reduction_allow_multi_stages as a dict key"
+
+  - id: existing_configs_intact
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing mix_order_reduction config attributes still present"
+
+  - id: config_not_hardcoded_false
+    type: pass_to_pass
+    origin: static
+    description: "Config reads env var, not a trivial hardcoded False"
+
+rubric:
+  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
+    source:
+      path: "CLAUDE.md"
+      lines: "48"
+      commit: "5d919bfe0f2ba7c7aabdb75ef6a20512f163e662"
+
+  - rule: "Comments should be useful, for example, comments that remind the reader about some global context that is non-obvious and can't be inferred locally."
+    source:
+      path: "CLAUDE.md"
+      lines: "49-50"
+      commit: "5d919bfe0f2ba7c7aabdb75ef6a20512f163e662"
+
+  - rule: "Match existing code style and architectural patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "57"
+      commit: "5d919bfe0f2ba7c7aabdb75ef6a20512f163e662"
+
+  - rule: "If uncertain, choose the simpler, more concise implementation."
+    source:
+      path: "CLAUDE.md"
+      lines: "62"
+      commit: "5d919bfe0f2ba7c7aabdb75ef6a20512f163e662"

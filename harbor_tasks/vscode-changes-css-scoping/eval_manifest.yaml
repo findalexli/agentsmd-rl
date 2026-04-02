@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 0
+  base_commit: "96b97550f6c2316dae1e45be6f3f1ce9364bd99d"
+  merge_commit: ""
+
+checks:
+  - id: ts_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript file must parse without syntax errors"
+
+  - id: ts_uses_changes_file_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "changesView.ts must reference 'changes-file-list' class"
+
+  - id: css_uses_changes_file_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "changesView.css must have >= 20 occurrences of 'changes-file-list'"
+
+  - id: no_old_class_in_ts
+    type: fail_to_pass
+    origin: pr_diff
+    description: "changesView.ts must have 0 occurrences of 'chat-editing-session-list'"
+
+  - id: no_old_class_in_css
+    type: fail_to_pass
+    origin: pr_diff
+    description: "changesView.css must have 0 occurrences of 'chat-editing-session-list'"
+
+  - id: css_standalone_selectors
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Key CSS selectors must be standalone (de-nested from .changes-view-body)"
+
+  - id: css_has_real_rules
+    type: pass_to_pass
+    origin: static
+    description: "CSS file must still contain real style rules (not emptied)"
+
+rubric:
+  - rule: "Use PascalCase for type names and PascalCase for enum values"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "80-82"
+      commit: "96b97550f6c2316dae1e45be6f3f1ce9364bd99d"
+
+  - rule: "Use camelCase for function and method names"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "82"
+      commit: "96b97550f6c2316dae1e45be6f3f1ce9364bd99d"
+
+  - rule: "Use arrow functions => over anonymous function expressions"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "143"
+      commit: "96b97550f6c2316dae1e45be6f3f1ce9364bd99d"
+
+  - rule: "Always surround loop and conditional bodies with curly braces"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "152"
+      commit: "96b97550f6c2316dae1e45be6f3f1ce9364bd99d"

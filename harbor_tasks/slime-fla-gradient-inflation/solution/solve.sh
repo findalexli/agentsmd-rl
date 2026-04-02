@@ -216,4 +216,5 @@ index 482dcfe92f..c6026af869 100644
 
      for layer_id in range(num_layers_to_build):
          if hf_config.layer_types[layer_id + offset] == "linear_attention":
+
 PATCH

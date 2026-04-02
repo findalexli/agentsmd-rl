@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44930
+  base_commit: "a8732d5546d84bfb4519b6dbf461c947a5de45f6"
+  merge_commit: "82106705eb34848411be8dd12e61c98b9224e979"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "quantizer_mxfp4.py must parse without errors"
+
+  - id: warning_triton_missing_mentions_triton
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pre_quantized + triton missing → warning mentions triton specifically, not combined"
+
+  - id: warning_kernels_missing_mentions_kernels
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pre_quantized + kernels missing → warning mentions kernels specifically, not combined"
+
+  - id: error_triton_missing_raises_for_triton
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Not pre_quantized + triton missing → ValueError mentions triton specifically"
+
+  - id: error_kernels_missing_raises_for_kernels
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Not pre_quantized + kernels missing → ValueError mentions kernels specifically"
+
+  - id: validate_environment_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "validate_environment has substantial implementation with essential references"
+
+  - id: ruff_lint
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified file must pass ruff linting (code style enforced by CI)"
+    source:
+      path: ".ai/AGENTS.md"
+      lines: "2"
+      commit: "a8732d5546d84bfb4519b6dbf461c947a5de45f6"
+
+rubric:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "a8732d5546d84bfb4519b6dbf461c947a5de45f6"

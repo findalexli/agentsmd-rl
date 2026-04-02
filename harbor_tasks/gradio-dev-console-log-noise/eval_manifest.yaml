@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12970
+  base_commit: "424a4e4bcfeace96f7f5a678b56a578ad2002cf4"
+  merge_commit: "7326ea312bee7ccdaf4a1e4e11ace8f11b607ca5"
+
+checks:
+  - id: mount_component_log_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MountCustomComponent.svelte console.log({ el, comp, runtime }) removed"
+
+  - id: plugins_init_log_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "plugins.ts console.log('init gradio') removed"
+
+  - id: main_mode_log_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "main.ts console.log('mode', mode) removed"
+
+  - id: svelte_core_mounting_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "MountCustomComponent.svelte core mounting logic preserved (5 markers)"
+
+  - id: plugins_core_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "plugins.ts plugin factory and module resolution preserved (6 markers)"
+
+  - id: main_core_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "main.ts custom element registration and lifecycle preserved (6 markers)"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "424a4e4bcfeace96f7f5a678b56a578ad2002cf4"

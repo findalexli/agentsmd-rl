@@ -1,0 +1,30 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: null
+  base_commit: "ba833da405d44260e94bd47c13eec90816bf44f1"
+  merge_commit: null
+
+checks:
+  - id: infer_mutation_typo_fixed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "InferMutationAliasingEffects.ts error message says 'initialized' not 'intialized'"
+
+  - id: claude_md_typo_fixed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "compiler/CLAUDE.md says 'explicitly added/removed' not 'explicitlyu added/removed'"
+
+  - id: reactive_scope_typo_fixed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "InferReactiveScopeVariables.ts comment says 'initialized' not 'intialized'"
+
+  - id: files_intact
+    type: pass_to_pass
+    origin: static
+    description: "Modified files still exist and retain their structural content"
+
+rubric: []

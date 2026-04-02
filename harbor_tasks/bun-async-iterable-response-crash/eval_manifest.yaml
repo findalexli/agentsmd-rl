@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28457
+  base_commit: "9ead1e121d5cca2eaddad66d439ab3c0a74225f2"
+  merge_commit: "2e610b1402f5cc17f11803b01b87cbc59f563fab"
+
+checks:
+  - id: source_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "Core source files (ReadableStream.ts, ReadableStreamInternals.ts, ReadableStream.cpp) must exist"
+
+  - id: null_excluded_from_direct_stream_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "readableStreamTo* functions must exclude null underlyingSource from the direct-stream path"
+
+  - id: close_direct_stream_sink_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "onCloseDirectStream must guard against null/undefined sink before sink.end()"
+
+  - id: flush_direct_stream_sink_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "onFlushDirectStream must guard against null/undefined sink before sink.flush()"
+
+  - id: stream_locked_on_direct_consumption
+    type: fail_to_pass
+    origin: pr_diff
+    description: "readableStreamToArrayBufferDirect must lock the stream to prevent double-consumption"
+
+  - id: cpp_exception_handling_after_call
+    type: fail_to_pass
+    origin: pr_diff
+    description: "C++ readableStreamTo* wrappers must handle exceptions after call() to JS builtins"
+
+  - id: core_functions_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Key ReadableStream functions still exist with substantial content"
+
+  - id: no_bare_call_apply
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare .call/.apply in JS builtins — must use .$call/.$apply"
+    source:
+      path: "src/js/CLAUDE.md"
+      lines: "56"
+      commit: "9ead1e121d5cca2eaddad66d439ab3c0a74225f2"
+
+  - id: no_dynamic_require
+    type: pass_to_pass
+    origin: agent_config
+    description: "require() calls in JS builtins must use string literals only"
+    source:
+      path: "src/js/CLAUDE.md"
+      lines: "103"
+      commit: "9ead1e121d5cca2eaddad66d439ab3c0a74225f2"
+
+rubric:
+  - rule: "Use JSC intrinsics for performance"
+    source:
+      path: "src/js/CLAUDE.md"
+      lines: "105"
+      commit: "9ead1e121d5cca2eaddad66d439ab3c0a74225f2"

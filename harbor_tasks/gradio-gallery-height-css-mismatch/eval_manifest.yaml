@@ -1,0 +1,60 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12927
+  base_commit: "611d40b529b6c97e41e09ae0a60804ad71a9bf58"
+  merge_commit: "ca84f3e36c6a3f3c3f0b57084b6f514d6cded1d4"
+
+checks:
+  - id: css_class_consistency
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CSS selectors in <style> must match class names used in the template"
+
+  - id: string_height_preserved
+    type: fail_to_pass
+    origin: pr_diff
+    description: "style:height must preserve CSS string values like '300px' and '50vh'"
+
+  - id: height_forwarding_accepts_strings
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Index.svelte must forward string heights to Gallery component"
+
+  - id: height_type_accepts_string
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GalleryProps.height type must accept CSS string values"
+
+  - id: upload_wrapper_height
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Upload wrapper area must have height styling so it doesn't collapse"
+
+  - id: numeric_height_still_works
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Numeric height (e.g. 300) must still produce '300px'"
+
+  - id: auto_height_returns_null
+    type: pass_to_pass
+    origin: pr_diff
+    description: "height='auto' must produce null (no inline style override)"
+
+  - id: hidden_upload_input_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "hidden-upload-input class must still exist for webcam mode"
+
+  - id: gallery_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Gallery.svelte must be a real Svelte component, not a stub"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "611d40b529b6c97e41e09ae0a60804ad71a9bf58"

@@ -40,4 +40,5 @@ index 71d0c0128372..d5f162cc7273 100644
          padding = tok_kwargs.pop("padding", "max_length")
          truncation = tok_kwargs.pop("truncation", True)
          return_tensors = tok_kwargs.pop("return_tensors", "pt")
+
 PATCH

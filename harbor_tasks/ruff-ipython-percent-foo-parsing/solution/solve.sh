@@ -115,4 +115,5 @@ index fb1927775479e..20cc04c7011cf 100644
 
  % foo
  foo = %foo  # comment
+
 PATCH

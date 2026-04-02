@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38168
+  base_commit: "0ae89f18fd75c5fcac48ff711ed84464c3da5d33"
+  merge_commit: "4e54d75b4b6f"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Both modified parser files must parse without syntax errors"
+
+  - id: partial_tag_overlap
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_partial_tag_overlap function exists and correctly handles partial XML tag detection"
+
+  - id: is_valid_json
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_is_valid_json function exists and correctly validates JSON completeness"
+
+  - id: extract_content
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_extract_content method returns unsent text and holds back partial <tool_call> tags"
+
+  - id: extract_tool_call_jsons
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_extract_tool_call_jsons parses complete and partial <tool_call> regions"
+
+  - id: extract_tool_name
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_extract_tool_name extracts function name from tool call JSON via regex"
+
+  - id: extract_tool_args
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_extract_tool_args extracts arguments portion, stripping outer brace when complete"
+
+  - id: old_buffer_approach_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Buggy tool_call_delta_buffer method and buffered_delta_text state removed"
+
+  - id: longcat_token_arrays_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Longcat parser no longer defines redundant token array attributes"
+
+  - id: nonstreaming_extract_intact
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Non-streaming extract_tool_calls and core init remain intact"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Both parser files have real implementation with all required identifiers"
+
+rubric: []

@@ -1,0 +1,97 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21503
+  base_commit: "8a56a7b04d553ecb76fca04eb89bbc20772e2051"
+  merge_commit: "e8d46f145c98f21149c28a23a2f6146250b85130"
+
+checks:
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Target file must be substantial (>= 80 non-empty lines), not a stub"
+
+  - id: blockidx_y_dispatch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Kernel uses blockIdx.y to dispatch between Q and K processing"
+
+  - id: shared_memory_halved
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Shared memory reduced from 64 to <= 32 (one buffer per CTA)"
+
+  - id: register_vectors_unified
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dual Q/K vec_t variables replaced with unified generic vectors (<= 3 decls)"
+
+  - id: 2d_grid_launch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "LaunchKernel uses 2D grid (dim3 with y=2) instead of 1D"
+
+  - id: rms_const_params
+    type: fail_to_pass
+    origin: pr_diff
+    description: "rms() helper parameters are const-qualified (read-only)"
+
+  - id: rms_helper_exists
+    type: pass_to_pass
+    origin: pr_diff
+    description: "rms() helper function still exists with a real body"
+
+  - id: launcher_struct_exists
+    type: pass_to_pass
+    origin: pr_diff
+    description: "QKNormAcrossHeadsKernel struct with run() method still exists"
+
+  - id: sgl_device_macro
+    type: pass_to_pass
+    origin: agent_config
+    description: "Device helper functions use SGL_DEVICE macro, not raw __device__"
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "51"
+      commit: "8a56a7b04d553ecb76fca04eb89bbc20772e2051"
+
+  - id: uses_launch_kernel
+    type: pass_to_pass
+    origin: agent_config
+    description: "Kernel launched via LaunchKernel helper, no raw <<<>>> syntax"
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "300"
+      commit: "8a56a7b04d553ecb76fca04eb89bbc20772e2051"
+
+  - id: device_cast_used
+    type: pass_to_pass
+    origin: agent_config
+    description: "Type conversions use device::cast, not raw C-style casts"
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "304"
+      commit: "8a56a7b04d553ecb76fca04eb89bbc20772e2051"
+
+  - id: syncthreads_after_smem_write
+    type: pass_to_pass
+    origin: agent_config
+    description: "__syncthreads() called after shared memory writes before reads (>= 2 sync points)"
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "156"
+      commit: "8a56a7b04d553ecb76fca04eb89bbc20772e2051"
+
+rubric:
+  - rule: "Prefer project abstractions over raw CUDA primitives for safety, readability, and consistency."
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "28"
+      commit: "8a56a7b04d553ecb76fca04eb89bbc20772e2051"
+
+  - rule: "Prefer passing runtime scalars directly unless compile-time specialisation is genuinely required."
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "302"
+      commit: "8a56a7b04d553ecb76fca04eb89bbc20772e2051"

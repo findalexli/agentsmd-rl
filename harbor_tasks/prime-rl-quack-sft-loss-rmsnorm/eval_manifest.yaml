@@ -1,0 +1,88 @@
+version: "2.0"
+
+source:
+  repo: PrimeIntellect-ai/prime-rl
+  pr: 2102
+  base_commit: d7afbaa6f39930f801912e1ebb78e0c04ba18ff8
+  merge_commit: 8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All modified Python files must parse without errors"
+
+  - id: quack_fused_ce_class_and_interface
+    type: fail_to_pass
+    origin: pr_diff
+    description: "QuackFusedCrossEntropyOutputLinear exists, is nn.Linear subclass, shares FUSED_CE_IGNORE_INDEX, labels=None returns logits"
+
+  - id: quack_fused_ce_labels_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Forward with labels invokes quack chunked_linear_cross_entropy backend"
+
+  - id: inject_lm_head_dispatches_quack
+    type: fail_to_pass
+    origin: pr_diff
+    description: "inject_prime_lm_head dispatches to QuackFusedCE for 'quack', FusedCE for True/'liger'"
+
+  - id: gemma_softcapping_rejects_quack
+    type: fail_to_pass
+    origin: pr_diff
+    description: "quack + Gemma softcapping raises ValueError"
+
+  - id: rmsnorm_quack_fallback_cpu
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_get_quack_rmsnorm returns None on CPU, RMSNorm forward still works via torch fallback"
+
+  - id: contiguous_grad_identity
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_contiguous_grad is identity in forward for grad and non-grad tensors"
+
+  - id: config_accepts_quack_fused
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SFT config loss_impl Literal includes 'quack_fused' alongside existing values"
+
+  - id: existing_lm_head_cpu
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing FusedOutputLinear/VanillaOutputLinear still work on CPU"
+
+  - id: pyproject_quack_extra
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pyproject.toml has quack optional extra with quack-kernels>=0.3.3"
+
+  - id: train_wiring_quack
+    type: fail_to_pass
+    origin: pr_diff
+    description: "train.py references FUSED_CE_IGNORE_INDEX and handles quack_fused in dispatch"
+
+rubric:
+  - rule: "Avoid try/except blocks unless it's really necessary."
+    source:
+      path: AGENTS.md
+      lines: "5"
+      commit: d7afbaa6f39930f801912e1ebb78e0c04ba18ff8
+
+  - rule: "Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code."
+    source:
+      path: AGENTS.md
+      lines: "7"
+      commit: d7afbaa6f39930f801912e1ebb78e0c04ba18ff8
+
+  - rule: "Errors should never pass silently. Unless explicitly silenced."
+    source:
+      path: AGENTS.md
+      lines: "23-24"
+      commit: d7afbaa6f39930f801912e1ebb78e0c04ba18ff8
+
+  - rule: "Simple is better than complex."
+    source:
+      path: AGENTS.md
+      lines: "16"
+      commit: d7afbaa6f39930f801912e1ebb78e0c04ba18ff8

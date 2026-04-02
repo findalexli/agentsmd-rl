@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21729
+  base_commit: "33cca495ae75e745be62b5b009f4c87fb40dd044"
+  merge_commit: "f4505e2ee395a581439839ef6e4383c0b308e8fc"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "hf_transformers_utils.py must parse without syntax errors"
+
+  - id: ci_patches_is_base_mistral
+    type: fail_to_pass
+    origin: pr_diff
+    description: "In CI mode, get_tokenizer patches is_base_mistral to return False"
+
+  - id: no_patch_without_ci_env
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Without SGLANG_IS_IN_CI, is_base_mistral is NOT replaced"
+
+  - id: idempotent_multiple_calls
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Calling get_tokenizer multiple times in CI doesn't break the patch"
+
+  - id: patch_before_from_pretrained
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Patch is applied BEFORE AutoTokenizer.from_pretrained is called"
+
+  - id: version_guard_skips_on_mismatch
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Mismatched transformers version constant causes patch to be skipped"
+
+  - id: get_tokenizer_signature
+    type: pass_to_pass
+    origin: pr_diff
+    description: "get_tokenizer function exists with expected signature"
+
+  - id: tokenizer_warnings_filter_exists
+    type: pass_to_pass
+    origin: pr_diff
+    description: "TokenizerWarningsFilter still exists as a logging.Filter"
+
+  - id: not_stub
+    type: fail_to_pass
+    origin: static
+    description: "File has non-trivial CI patching logic (not a stub)"
+
+rubric: []

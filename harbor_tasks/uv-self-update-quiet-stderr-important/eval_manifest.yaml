@@ -1,0 +1,107 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 18645
+  base_commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
+  merge_commit: "8b1a15eae6aa51f25f7dfefd247d5592201b78a0"
+
+checks:
+  - id: rust_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Modified Rust files must parse without syntax errors"
+
+  - id: new_method_quiet_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New Printer method returns Stderr::Enabled for Quiet variant (the core fix)"
+
+  - id: new_method_silent_disabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New method returns Stderr::Disabled for Silent (double-quiet suppresses all)"
+
+  - id: new_method_all_non_silent_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New method returns Enabled for Default, Verbose, and NoProgress"
+
+  - id: stderr_quiet_still_disabled
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Original stderr() still returns Disabled for Quiet and Silent (no regression)"
+
+  - id: self_update_wiring
+    type: fail_to_pass
+    origin: pr_diff
+    description: "self_update.rs uses the new method for important messages in ≥3 call sites"
+
+  - id: new_method_not_stub
+    type: fail_to_pass
+    origin: static
+    description: "New method has real branching logic with match/if, not a trivial stub"
+
+  - id: no_panic_unwrap_in_new_method
+    type: fail_to_pass
+    origin: agent_config
+    description: "New method must not use panic!, unreachable!, or .unwrap()"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
+
+  - id: no_unsafe_in_new_method
+    type: fail_to_pass
+    origin: agent_config
+    description: "New method must not use unsafe code"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
+
+  - id: no_allow_attribute_in_new_code
+    type: fail_to_pass
+    origin: agent_config
+    description: "New code must not use #[allow(...)] — prefer #[expect()]"
+    source:
+      path: "CLAUDE.md"
+      lines: "10"
+      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
+
+rubric:
+  - rule: "PREFER patterns like `if let` to handle fallibility"
+    source:
+      path: "CLAUDE.md"
+      lines: "8"
+      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
+
+  - rule: "PREFER `#[expect()]` over `[allow()]` if clippy must be disabled"
+    source:
+      path: "CLAUDE.md"
+      lines: "10"
+      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
+
+  - rule: "PREFER let chains (`if let` combined with `&&`) over nested `if let` statements"
+    source:
+      path: "CLAUDE.md"
+      lines: "11"
+      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
+
+  - rule: "PREFER top-level imports over local imports or fully qualified names"
+    source:
+      path: "CLAUDE.md"
+      lines: "16"
+      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
+
+  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`"
+    source:
+      path: "CLAUDE.md"
+      lines: "17-18"
+      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
+
+  - rule: "PREFER [`TypeName`] references when writing Rust doc comments"
+    source:
+      path: "CLAUDE.md"
+      lines: "19"
+      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"

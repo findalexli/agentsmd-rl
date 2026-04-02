@@ -73,4 +73,8 @@ index 9df61638c40f5..4c5e1140434b2 100644
 +        }
      }
  }
+
 PATCH
+
+# Rebuild ruff with the fix applied (incremental — only strings.rs changed).
+cargo build --bin ruff

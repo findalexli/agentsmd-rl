@@ -1,0 +1,61 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 0
+  base_commit: "74568e8627aa43469b74f2972f427a209639d0b6"
+  merge_commit: ""
+
+checks:
+  - id: no_new_function_xss
+    type: fail_to_pass
+    origin: pr_diff
+    description: "new Function() XSS vulnerability removed from lib/compilation.ts"
+
+  - id: parse_config_overrides_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parseConfigOverrides function exported from lib/compilation.ts"
+
+  - id: json5_parse_used
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSON5.parse() used inside parseConfigOverrides in compilation.ts"
+
+  - id: json5_import_in_compilation_ts
+    type: fail_to_pass
+    origin: pr_diff
+    description: "import JSON5 from 'json5' present in lib/compilation.ts"
+
+  - id: json5_dependency_in_package_json
+    type: fail_to_pass
+    origin: pr_diff
+    description: "json5 declared as dependency in compiler/apps/playground/package.json"
+
+  - id: parse_options_calls_parse_config_overrides
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parseOptions calls parseConfigOverrides(configOverrides) instead of new Function"
+
+  - id: defaultstore_ts_syntax_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "defaultStore.ts uses plain JSON5 format — TypeScript import type and satisfies removed"
+
+  - id: parse_config_overrides_behavior
+    type: pass_to_pass
+    origin: pr_diff
+    description: "parseConfigOverrides logic: empty→{}, JSON5 features parse correctly, XSS payloads throw"
+
+rubric:
+  - rule: "Exported functions should have proper TypeScript type annotations for parameters and return types."
+    source:
+      path: "compiler/CLAUDE.md"
+      lines: "1"
+      commit: "74568e8627aa43469b74f2972f427a209639d0b6"
+
+  - rule: "The default config string format should be plain JSON/JSON5 syntax, not TypeScript syntax with type imports or satisfies expressions."
+    source:
+      path: "compiler/CLAUDE.md"
+      lines: "1"
+      commit: "74568e8627aa43469b74f2972f427a209639d0b6"

@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21448
+  base_commit: "c06ca1526cb6008a8dacb4fdb06567e648134664"
+  merge_commit: "9b4dd274787ce4a778b7688c65c33598282a6559"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (memory_pool.py, model_runner, qwen3_5.py, qwen3_vl.py, decode.py) must parse"
+
+  - id: get_layer_id
+    type: pass_to_pass
+    origin: pr_diff
+    description: "get_layer_id must exist and correctly extract layer IDs from weight names"
+
+  - id: pp_weight_filtering
+    type: pass_to_pass
+    origin: pr_diff
+    description: "PP filtering using get_layer_id correctly skips out-of-range layers across multiple ranges"
+
+  - id: decode_pp_parameters
+    type: fail_to_pass
+    origin: pr_diff
+    description: "HybridMambaDecodeReqToTokenPool.__init__ accepts mamba_layer_ids and start_layer parameters"
+
+  - id: qwen3_vl_pp_properties
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Qwen3VLForConditionalGeneration has start_layer/end_layer properties that delegate to inner model"
+
+  - id: qwen3_5_load_weights_pp_filtering
+    type: fail_to_pass
+    origin: pr_diff
+    description: "load_weights and load_fused_expert_weights in qwen3_5.py use get_layer_id + continue for PP skip"
+
+  - id: memory_pool_pp_support
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No hardcoded start_layer=0 in pool classes; MambaPool accepts mamba_layer_ids parameter"
+
+rubric: []

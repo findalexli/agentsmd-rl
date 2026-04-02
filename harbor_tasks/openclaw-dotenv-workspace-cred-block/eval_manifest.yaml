@@ -1,0 +1,98 @@
+version: "2.0"
+
+source:
+  repo: "openclaw/openclaw"
+  pr: 57767
+  base_commit: "29cb1e3c7edd54a3d060419ffa153eecbd19c133"
+  merge_commit: "7a5c5f33d05c4b874644f6371749ce3c848468a0"
+
+checks:
+  - id: file_exists_and_parses
+    type: pass_to_pass
+    origin: static
+    description: "Target file exists and has no obvious syntax errors"
+
+  - id: core_credential_keys_blocked
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ANTHROPIC_API_KEY and OPENAI_API_KEY blocked from workspace .env"
+
+  - id: oauth_and_secondary_keys_blocked
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ANTHROPIC_OAUTH_TOKEN and OPENAI_API_KEYS blocked"
+
+  - id: gateway_auth_vars_blocked
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Gateway auth vars (TOKEN, PASSWORD, SECRET) blocked from workspace .env"
+
+  - id: live_provider_keys_blocked
+    type: fail_to_pass
+    origin: pr_diff
+    description: "OPENCLAW_LIVE_* provider keys blocked from workspace .env"
+
+  - id: prefix_based_blocking
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Suffixed key variants (e.g. _SECONDARY) blocked via prefix matching"
+
+  - id: original_blocked_keys_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Pre-existing blocked keys (proxy, state-dir) still blocked"
+
+  - id: safe_keys_allowed
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Unrelated env vars (MY_CUSTOM_VAR, DATABASE_URL) not blocked"
+
+  - id: base_url_suffix_still_blocked
+    type: pass_to_pass
+    origin: pr_diff
+    description: "_BASE_URL suffix blocking still works"
+
+  - id: case_insensitive_blocking
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Blocking is case-insensitive (uppercased comparison)"
+
+  - id: function_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "shouldBlockWorkspaceDotEnvKey has real logic, not a trivial stub"
+
+  - id: no_inline_lint_suppressions
+    type: pass_to_pass
+    origin: agent_config
+    description: "No inline lint suppressions (@ts-nocheck, @ts-ignore, eslint-disable, oxlint-disable) in dotenv.ts"
+    source:
+      path: "CLAUDE.md"
+      lines: "146"
+      commit: "29cb1e3c7edd54a3d060419ffa153eecbd19c133"
+
+  - id: no_bare_any_type
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare 'any' type annotations in dotenv.ts"
+    source:
+      path: "CLAUDE.md"
+      lines: "144"
+      commit: "29cb1e3c7edd54a3d060419ffa153eecbd19c133"
+
+rubric:
+  - rule: "Aim to keep files under ~700 LOC; guideline only (not a hard guardrail). Split/refactor when it improves clarity or testability."
+    source:
+      path: "CLAUDE.md"
+      lines: "165"
+      commit: "29cb1e3c7edd54a3d060419ffa153eecbd19c133"
+  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings."
+    source:
+      path: "CLAUDE.md"
+      lines: "167"
+      commit: "29cb1e3c7edd54a3d060419ffa153eecbd19c133"
+  - rule: "Add brief code comments for tricky or non-obvious logic."
+    source:
+      path: "CLAUDE.md"
+      lines: "163"
+      commit: "29cb1e3c7edd54a3d060419ffa153eecbd19c133"

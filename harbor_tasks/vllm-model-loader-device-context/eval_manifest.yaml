@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38426
+  base_commit: "af89140efc06c462ae531999b9f2db6ba0c7a528"
+  merge_commit: "aa4eb0db78ec469438a7a18147b0372fe2eb7cf4"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "base_loader.py must parse without syntax errors"
+
+  - id: log_inspection_outside_device_context
+    type: fail_to_pass
+    origin: pr_diff
+    description: "log_model_inspection must NOT run inside the target_device context manager"
+
+  - id: device_context_narrower_than_dtype
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Device context must be a strict subset of dtype context (nested, not combined)"
+
+  - id: initialize_model_inside_device_context
+    type: pass_to_pass
+    origin: pr_diff
+    description: "initialize_model must still run inside the target_device context manager"
+
+  - id: log_inspection_inside_dtype_context
+    type: pass_to_pass
+    origin: pr_diff
+    description: "log_model_inspection must remain inside the set_default_torch_dtype context"
+
+  - id: key_structure_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "BaseModelLoader class, load_model, load_weights, and key calls preserved"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "base_loader.py has real content — not a gutted stub"
+
+  - id: no_bare_pip_install
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changed files must not introduce bare pip install (must use uv)"
+    source:
+      path: "AGENTS.md"
+      lines: "42"
+      commit: "af89140efc06c462ae531999b9f2db6ba0c7a528"
+
+rubric: []

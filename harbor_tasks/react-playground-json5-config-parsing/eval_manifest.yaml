@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 36159
+  base_commit: "74568e8627aa43469b74f2972f427a209639d0b6"
+  merge_commit: "2c2fd9d12c7159efef81e7ea6ec899943cf7ca33"
+
+checks:
+  - id: json5_parses_valid_config
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parseConfigOverrides correctly parses JSON5 config like { compilationMode: \"all\" }"
+
+  - id: xss_iife_rejected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Malicious IIFE expressions are rejected by config parser instead of being executed"
+
+  - id: xss_function_call_rejected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Function calls like eval() in config values are rejected"
+
+  - id: json5_comments_supported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSON5 comments and trailing commas are supported in config"
+
+  - id: default_config_json5_format
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Default config uses JSON5 object format, not TypeScript import/satisfies wrapper"
+
+  - id: no_new_function_for_config
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Config parsing does not use new Function() or eval()"
+
+  - id: json5_dependency_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "json5 package is listed as a dependency in playground package.json"
+
+rubric: []

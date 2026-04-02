@@ -1,0 +1,61 @@
+{
+  "validations": [
+    {
+      "timestamp": "2026-03-30T13:02:43.977917",
+      "runner": "run_pipeline.py validate (20260330)",
+      "docker_build": false,
+      "gold_score": null,
+      "nop_score": null,
+      "verdict": "error",
+      "notes": "timeout"
+    },
+    {
+      "timestamp": "2026-03-30T11:48:20.105907",
+      "runner": "audit (audit-tests_20260330_114820)",
+      "phase": "audit",
+      "status": "success",
+      "output_tokens": 9718
+    },
+    {
+      "timestamp": "2026-03-31T09:10:27.425097",
+      "runner": "audit (audit-tests_20260331_091027)",
+      "phase": "audit",
+      "status": "success",
+      "output_tokens": 2540
+    },
+    {
+      "timestamp": "2026-04-01T20:15:41.764773",
+      "phase": "docker_validate_v2",
+      "runner": "scripts/docker_validate_all.sh",
+      "verdict": "fail_build",
+      "nop": null,
+      "gold": null,
+      "format": "pytest_binary"
+    },
+    {
+      "timestamp": "2026-04-02T03:54:30-07:00",
+      "runner": "validate_and_fix.sh",
+      "docker_build": true,
+      "gold_score": 0.0,
+      "nop_score": 0.0,
+      "verdict": "fail_gold",
+      "notes": ""
+    },
+    {
+      "timestamp": "2026-04-02T12:58:21.159172",
+      "phase": "e2b_post_remake",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail_build",
+      "notes": "Template build: failed to run command 'pip install --no-cache-dir -e \".[testing]\"     && pip install --no-cache-dir ruff': exit status 1"
+    },
+    {
+      "timestamp": "2026-04-02T14:28:08.971543",
+      "phase": "e2b_full_validation",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail_build",
+      "notes": "Sandbox rebuild+create: failed to run command 'pip install --no-cache-dir -e \".[testing]\"     && pip install --no-cache-dir ruff': exit status 1"
+    }
+  ]
+}

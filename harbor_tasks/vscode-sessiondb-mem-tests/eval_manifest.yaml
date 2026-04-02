@@ -1,0 +1,44 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/vscode"
+  pr: 0  # PR number unknown; identified from base commit c1f3775929102459145d7a93175005e7e90b216e
+  base_commit: "c1f3775929102459145d7a93175005e7e90b216e"
+  merge_commit: ""
+
+checks:
+  - id: session_database_class_exported
+    type: pass_to_pass
+    origin: static
+    description: "SessionDatabase class must still be exported (regression guard)"
+
+  - id: run_migrations_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "runMigrations function must be exported for test subclasses to call it"
+
+  - id: db_promise_protected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_dbPromise must be changed from private to protected for subclass access"
+
+  - id: closed_protected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_closed must be changed from private to protected for subclass access"
+
+  - id: ensure_db_protected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_ensureDb must be changed from private to protected for subclass override/access"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "runMigrations still contains real migration logic (PRAGMA statements present)"
+
+rubric:
+  []
+  # No applicable soft rules: the fix only changes visibility modifiers and adds
+  # one export keyword. The copilot-instructions.md naming/style rules do not
+  # apply to these specific changes (no new types, functions, or expressions introduced).

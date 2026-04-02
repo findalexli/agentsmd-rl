@@ -1,0 +1,106 @@
+version: "2.0"
+
+source:
+  repo: anomalyco/opencode
+  pr: 19537
+  base_commit: "860531c275cf845f80ccf26bba5bad745fe98398"
+  merge_commit: "aa2d753e7edbf323baf635aec7972b673d2b64a3"
+
+checks:
+  - id: files_exist_and_not_truncated
+    type: pass_to_pass
+    origin: static
+    description: "All three modified files must exist and have meaningful content"
+
+  - id: core_exports_intact
+    type: pass_to_pass
+    origin: static
+    description: "Key exports (Session, SubagentFooter, App, InlineTool) still exist"
+
+  - id: cycle_direction_fixed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "cycleSession must subtract direction from index (inverted arithmetic)"
+
+  - id: variant_opens_dialog
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Variant cycle command must open DialogVariant, not call cycle() directly"
+
+  - id: subagent_footer_shows_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Footer extracts agent type from session title via regex and displays it"
+
+  - id: subagent_footer_shows_index
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Footer computes and displays sibling index (e.g. '2 of 5')"
+
+  - id: task_content_includes_subagent_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Task component includes subagent_type with capitalization and fallback"
+
+  - id: dead_code_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Unused ToolTitle function removed from session/index.tsx"
+
+  - id: functional_array_methods
+    type: fail_to_pass
+    origin: agent_config
+    description: "Sibling computation uses functional array methods per AGENTS.md:17"
+    source:
+      path: "AGENTS.md"
+      lines: "17"
+      commit: "860531c275cf845f80ccf26bba5bad745fe98398"
+
+rubric:
+  - rule: "Avoid using the `any` type"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "860531c275cf845f80ccf26bba5bad745fe98398"
+
+  - rule: "Prefer single word variable names where possible"
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "860531c275cf845f80ccf26bba5bad745fe98398"
+
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "860531c275cf845f80ccf26bba5bad745fe98398"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once"
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "860531c275cf845f80ccf26bba5bad745fe98398"
+
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "860531c275cf845f80ccf26bba5bad745fe98398"
+
+  - rule: "Prefer `const` over `let`. Use ternaries or early returns instead of reassignment."
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "860531c275cf845f80ccf26bba5bad745fe98398"
+
+  - rule: "Keep things in one function unless composable or reusable"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "860531c275cf845f80ccf26bba5bad745fe98398"
+
+  - rule: "Avoid `else` statements. Prefer early returns."
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "860531c275cf845f80ccf26bba5bad745fe98398"

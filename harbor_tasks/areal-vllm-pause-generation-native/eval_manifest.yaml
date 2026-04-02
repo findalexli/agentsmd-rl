@@ -1,0 +1,85 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 1091
+  base_commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
+  merge_commit: "6113c022595ac5ff538292c46060f771b486d4bc"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified file must parse without errors"
+
+  - id: weight_update_call_ordering
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Weight update endpoints call pause_generation -> collective_rpc -> resume_generation in order (x4 endpoints, parametrized)"
+
+  - id: weight_update_pause_kwargs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pause_generation called with wait_for_inflight_requests=False, clear_cache=True (x4 endpoints, parametrized)"
+
+  - id: weight_update_error_resilience
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resume_generation called even when collective_rpc raises, pause called before attempt (x4 endpoints, parametrized)"
+
+  - id: pause_endpoint_uses_native_api
+    type: fail_to_pass
+    origin: pr_diff
+    description: "areal_pause_generation calls llm.pause_generation instead of abort_all_reqs"
+
+  - id: continue_endpoint_calls_resume
+    type: fail_to_pass
+    origin: pr_diff
+    description: "areal_continue_generation calls llm.resume_generation on engine client"
+
+  - id: no_monkey_patching
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No setattr(EngineCore, ...) or hook() function remains"
+
+  - id: no_abort_all_reqs_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Standalone abort_all_reqs function definition removed"
+
+  - id: removed_vllm_internals_imports
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Imports of EngineCore, EngineCoreOutput, EngineCoreOutputs, FinishReason, RequestStatus, LoRARequestStates removed"
+
+  - id: routes_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "All original API route decorator paths still declared"
+
+  - id: request_models_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Pydantic request model classes still defined"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No wildcard imports (from x import *)"
+    source:
+      path: "CLAUDE.md"
+      lines: "93"
+      commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
+
+rubric:
+  - rule: "Use `areal.utils.logging.getLogger(name)` with PascalCase descriptive name, NOT print or stdlib logging"
+    source:
+      path: "AGENTS.md"
+      lines: "90-92"
+      commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
+
+  - rule: "No hardcoded secrets, paths, or endpoints"
+    source:
+      path: "AGENTS.md"
+      lines: "31"
+      commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"

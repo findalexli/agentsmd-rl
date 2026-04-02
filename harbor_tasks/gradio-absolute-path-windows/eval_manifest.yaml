@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12926
+  base_commit: "e29e1ccd5874cb98b813ed4f7f72d9fef2935016"
+  merge_commit: "6011b00d0154b85532fa901dd73cf8fa7d86fd04"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "gradio/utils.py must parse without errors"
+
+  - id: slash_path_rejected_simulated_win314
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Path /etc/passwd rejected even when os.path.isabs returns False (Py3.14 Windows sim)"
+
+  - id: various_slash_paths_rejected_simulated_win314
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Multiple /-prefixed paths rejected under Py3.14 Windows simulation"
+
+  - id: relative_paths_allowed
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Normal relative paths must not be rejected by safe_join"
+
+  - id: traversal_paths_still_rejected
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing traversal guards (.. and ../) still work"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "safe_join has real logic with security checks"
+
+rubric: []

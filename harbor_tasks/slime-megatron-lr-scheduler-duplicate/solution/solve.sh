@@ -20,4 +20,5 @@ index 4995b948b..39f6125fc 100644
 -    opt_param_scheduler.step(increment=iteration * args.global_batch_size)
 -
      return model, optimizer, opt_param_scheduler, iteration
+
 PATCH

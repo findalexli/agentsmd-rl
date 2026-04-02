@@ -1,0 +1,101 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28633
+  base_commit: "9a27ef75697d713dba18b7a9762308197014ecca"
+  merge_commit: "d7b37496a94e8594a2e199e226690b7e1335722b"
+
+checks:
+  # --- Gates (pass_to_pass, static) ---
+  - id: modified_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "All four modified Zig files must exist"
+
+  - id: balanced_braces
+    type: pass_to_pass
+    origin: static
+    description: "Modified files have balanced braces (basic syntax gate)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "ColumnDefinition41.deinit has >=6 cleanup calls (not a stub)"
+
+  # --- Fail-to-pass (pr_diff) — core behavioral ---
+  - id: coldef_deinit_all_fields
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ColumnDefinition41.deinit() frees ALL heap-owning fields including name_or_index"
+
+  - id: decode_frees_before_reassign
+    type: fail_to_pass
+    origin: pr_diff
+    description: "decodeInternal() frees name_or_index before reassignment (prevents per-query leak)"
+
+  - id: execute_deinit_frees_params_slice
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Execute.deinit() frees the params slice allocation (not just individual values)"
+
+  - id: duplicate_fields_frees_before_overwrite
+    type: fail_to_pass
+    origin: pr_diff
+    description: "checkForDuplicateFields frees name_or_index before .duplicate overwrite"
+
+  # --- Pass-to-pass (pr_diff) — regression ---
+  - id: coldef_existing_deinit_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "ColumnDefinition41.deinit() still frees all original Data fields"
+
+  - id: execute_individual_param_deinit
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Execute.deinit() still frees individual param values"
+
+  - id: mystmt_deinit_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "MySQLStatement.deinit() still frees columns array"
+
+  - id: coldef_has_name_or_index_field
+    type: pass_to_pass
+    origin: static
+    description: "ColumnDefinition41 struct still defines name_or_index field"
+
+  # --- Config-derived (agent_config) ---
+  - id: uses_bun_allocator
+    type: pass_to_pass
+    origin: agent_config
+    description: "Params slice freed with bun.default_allocator, not std.* (src/CLAUDE.md:230-232)"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "230-232"
+      commit: "9a27ef75697d713dba18b7a9762308197014ecca"
+
+  - id: columns_zero_initialized
+    type: fail_to_pass
+    origin: agent_config
+    description: "Newly allocated ColumnDefinition41 arrays are zero-initialized after alloc"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "230-232"
+      commit: "9a27ef75697d713dba18b7a9762308197014ecca"
+
+  - id: no_inline_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No @import() calls inline inside function bodies in modified files"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "11-12"
+      commit: "9a27ef75697d713dba18b7a9762308197014ecca"
+
+rubric:
+  - rule: "Decl literals in Zig are recommended. `const decl: Decl = .{ .binding = 0, .value = 0 };`"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "6"
+      commit: "9a27ef75697d713dba18b7a9762308197014ecca"

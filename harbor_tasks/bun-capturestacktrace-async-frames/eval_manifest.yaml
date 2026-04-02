@@ -1,0 +1,83 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28651
+  base_commit: "9804f55e762ada50e595e693361e3ed770d7796a"
+  merge_commit: "17616ae2444f1cc3c55fe5106119c9c79bc41bf3"
+
+checks:
+  - id: source_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "ErrorStackTrace.cpp must exist and be non-empty"
+
+  - id: delegates_to_async_aware_collector
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getFramesForCaller must call getStackTrace (async-aware) and remove old StackVisitor::visit walk"
+
+  - id: async_frame_boundary_in_caller_search
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Must stop at async frame boundaries (isAsyncFrame) when scanning for caller"
+
+  - id: stack_trace_limit_after_caller_removal
+    type: fail_to_pass
+    origin: pr_diff
+    description: "stackTraceLimit applied after caller removal, not during raw collection"
+
+  - id: interpreter_header_included
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Must #include <JavaScriptCore/Interpreter.h> for getStackTrace delegation"
+
+  - id: post_filter_implementation_visibility
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Must filter frames with isImplementationVisibilityPrivate (regression guard)"
+
+  - id: function_signature_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "getFramesForCaller function signature must be preserved"
+
+  - id: sibling_functions_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "fromExisting, getStackTraceForThrownValue, captureCurrentJSStackTrace must not be deleted"
+
+  - id: caller_dual_matching
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Caller matching uses both cell identity and name-based matching"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "getFramesForCaller has substantial non-trivial implementation"
+
+  - id: no_tabs_in_function
+    type: pass_to_pass
+    origin: agent_config
+    description: "No tabs in getFramesForCaller — Bun C++ uses 4-space indent"
+    source:
+      path: "CLAUDE.md"
+      lines: "245"
+      commit: "9804f55e762ada50e595e693361e3ed770d7796a"
+
+  - id: root_h_included
+    type: pass_to_pass
+    origin: agent_config
+    description: "C++ files must #include root.h (Bun convention)"
+    source:
+      path: ".claude/skills/implementing-jsc-classes-cpp/SKILL.md"
+      lines: "184"
+      commit: "9804f55e762ada50e595e693361e3ed770d7796a"
+
+rubric:
+  - rule: "Follow existing code style - check neighboring files for patterns"
+    source:
+      path: "CLAUDE.md"
+      lines: "245"
+      commit: "9804f55e762ada50e595e693361e3ed770d7796a"
