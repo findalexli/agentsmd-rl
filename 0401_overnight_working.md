@@ -205,9 +205,29 @@ Using E2B sandboxes (~5x faster than local Docker):
 
 **Progress: 188 → 288 passing (+53%), 439 → 531 total tasks**
 
-### Remaining work (future sessions)
-- [ ] Debug 118 fail_build (76 Docker failures, 27 patch failures, 15 other)
-- [ ] Fix 122 fail tests (wrong assertions, need re-remake with better prompts)
-- [ ] Convert remaining 19 kimi_drafts (missing test.sh — highest effort)
-- [ ] Regenerate corrupt patches from PRs
+### Hour 8-10: Continued execution (2026-04-02 evening)
+- [x] Regenerated 8 corrupt patches from PRs → 6 new passes (294 total)
+- [x] Local Docker retry: 42 timeout tasks with 600s → 13 new passes (321)
+- [x] E2B high-res (4 CPU, 4GB RAM) → 6 more passes on npm/bun tasks
+- [x] Converted final 19 kimi_drafts (550 total tasks)
+- [x] Remake wave 3: 166 tasks with opus/1200s → 148 OK, 18 FAIL
+- [x] Git snapshot migration: 388 Dockerfiles → git init+fetch --depth=1 (faster builds, smaller .git)
+
+### Current Scoreboard (2026-04-02 22:00)
+
+| Status | Count | % |
+|--------|-------|---|
+| **pass** | **~340** | **~62%** |
+| fail | ~120 | ~22% |
+| fail_build | ~60 | ~11% |
+| other | ~30 | ~5% |
+| **Total** | **550** | |
+
+**Progress: 188 → ~340 passing (+81%), 439 → 550 total tasks (+25%)**
+
+### Next steps
+- [ ] Full E2B validation on all 550 tasks (fresh templates after Dockerfile migration)
+- [ ] Rubric enrichment pass: review agent_configs.md for all tasks, add missing checks (~$15-20 sonnet)
+- [ ] Fix remaining 33 Dockerfiles with non-standard git patterns
+- [ ] Debug persistent fail_build tasks locally
 - [ ] Target: 400+ passing
