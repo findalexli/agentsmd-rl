@@ -17,30 +17,72 @@ REPO = "/workspace/AReaL"
 SERVER = f"{REPO}/areal/infra/rpc/rpc_server.py"
 RTENSOR = f"{REPO}/areal/infra/rpc/rtensor.py"
 
-# Preamble that mocks heavy deps not installed in the container.
-# These are only needed for transitive imports (ray, transformers, hydra, etc.)
-# and are NOT used by the batch endpoint or HttpRTensorBackend logic under test.
-_MOCK_PREAMBLE = """
-import sys
+# Mock preamble that creates lightweight package stubs to avoid the heavy
+# areal/__init__.py → areal/infra/__init__.py import cascades (which pull in
+# ray, transformers, hydra, CUDA engines, etc.).  Only the modules actually
+# needed for the code under test are imported for real.
+_MOCK_PREAMBLE = """\
+import sys, types
 from unittest.mock import MagicMock
 
-_HEAVY = [
-    'ray', 'ray.internal',
-    'transformers', 'transformers.utils', 'transformers.utils.import_utils',
-    'transformers.integrations', 'transformers.integrations.hub_kernels',
+# --- 1. Mock heavy external deps not installed in the container ---
+for _m in [
+    'ray', 'ray.internal', 'ray.util', 'ray.actor',
     'uvloop',
     'hydra', 'hydra.core', 'hydra.core.global_hydra',
     'omegaconf',
-]
-for _m in _HEAVY:
+    'transformers', 'transformers.utils', 'transformers.utils.import_utils',
+    'transformers.integrations', 'transformers.integrations.hub_kernels',
+    'sglang', 'vllm',
+]:
     sys.modules.setdefault(_m, MagicMock())
 
-# transformers.utils.import_utils.is_torch_npu_available must return False
 sys.modules['transformers.utils.import_utils'].is_torch_npu_available = lambda: False
-# transformers.integrations.hub_kernels.is_kernel must be callable
 sys.modules['transformers.integrations.hub_kernels'].is_kernel = lambda x: False
-# omegaconf needs MISSING sentinel, DictConfig, OmegaConf
 sys.modules['omegaconf'].MISSING = object()
+sys.modules['omegaconf'].DictConfig = MagicMock
+sys.modules['omegaconf'].OmegaConf = MagicMock()
+
+# Provide real sentinel types so isinstance() works in serialization.py
+class _FakeTokenizer: pass
+class _FakeTokenizerFast: pass
+class _FakeProcessorMixin: pass
+_tf = sys.modules['transformers']
+_tf.PreTrainedTokenizer = _FakeTokenizer
+_tf.PreTrainedTokenizerFast = _FakeTokenizerFast
+_tf.ProcessorMixin = _FakeProcessorMixin
+_tf.AutoTokenizer = MagicMock()
+_tf.AutoProcessor = MagicMock()
+
+# --- 2. Create real package stubs to bypass heavy __init__.py cascades ---
+# areal/__init__.py imports from areal.infra which cascades into controllers,
+# launchers, schedulers, etc.  We short-circuit by inserting empty packages
+# with correct __path__ so submodule lookups still find the .py files.
+for _pkg in ['areal', 'areal.infra', 'areal.utils', 'areal.infra.utils',
+             'areal.infra.rpc']:
+    _mod = types.ModuleType(_pkg)
+    _mod.__path__ = ['/workspace/AReaL/' + _pkg.replace('.', '/')]
+    _mod.__package__ = _pkg
+    sys.modules[_pkg] = _mod
+
+# --- 3. Mock internal modules with heavy transitive deps ---
+# These are imported by rpc_server.py but irrelevant to the endpoint under test.
+for _m in [
+    'areal.api', 'areal.api.cli_args', 'areal.api.engine_api',
+    'areal.infra.platforms', 'areal.infra.platforms.cpu',
+    'areal.infra.platforms.cuda', 'areal.infra.platforms.npu',
+    'areal.infra.platforms.platform', 'areal.infra.platforms.unknown',
+    'areal.utils.data', 'areal.utils.dynamic_import',
+    'areal.utils.name_resolve', 'areal.utils.names',
+    'areal.utils.perf_tracer', 'areal.utils.seeding',
+    'areal.utils.network', 'areal.utils.pkg_version',
+    'areal.utils.constants',
+    'areal.infra.utils.proc',
+    'areal.engine', 'areal.engine.fsdp_utils',
+    'areal.engine.fsdp_utils.attn_impl',
+    'areal.version', 'areal.trainer',
+]:
+    sys.modules.setdefault(_m, MagicMock())
 """
 
 
@@ -79,9 +121,7 @@ def test_syntax_check():
 def test_batch_endpoint_returns_data():
     """POST /data/batch returns stored tensor data for valid shard IDs."""
     _run_python(f"""
-import sys, builtins, torch, orjson
-sys.path.insert(0, '{REPO}')
-
+import torch, orjson
 from areal.infra.rpc.rpc_server import app
 from areal.infra.rpc.serialization import serialize_value, deserialize_value
 
@@ -114,9 +154,7 @@ with app.test_client() as client:
 def test_batch_endpoint_preserves_order():
     """Batch fetch returns shards in the exact order requested."""
     _run_python(f"""
-import sys, builtins, torch, orjson
-sys.path.insert(0, '{REPO}')
-
+import torch, orjson
 from areal.infra.rpc.rpc_server import app
 from areal.infra.rpc.serialization import serialize_value, deserialize_value
 
@@ -154,9 +192,7 @@ with app.test_client() as client:
 def test_batch_endpoint_missing_shards():
     """Batch endpoint returns 400 with missing_shard_ids for absent shards."""
     _run_python(f"""
-import sys, builtins, torch, orjson
-sys.path.insert(0, '{REPO}')
-
+import torch, orjson
 from areal.infra.rpc.rpc_server import app
 from areal.infra.rpc.serialization import serialize_value
 
@@ -187,9 +223,7 @@ with app.test_client() as client:
 def test_batch_endpoint_empty_request():
     """Batch endpoint handles empty shard_ids list gracefully."""
     _run_python(f"""
-import sys, builtins, orjson
-sys.path.insert(0, '{REPO}')
-
+import orjson
 from areal.infra.rpc.rpc_server import app
 from areal.infra.rpc.serialization import deserialize_value
 
@@ -213,9 +247,7 @@ with app.test_client() as client:
 def test_single_shard_retrieval():
     """Existing single-shard GET /data/<shard_id> still works."""
     _run_python(f"""
-import sys, builtins, torch, orjson
-sys.path.insert(0, '{REPO}')
-
+import torch, orjson
 from areal.infra.rpc.rpc_server import app
 from areal.infra.rpc.serialization import serialize_value, deserialize_value
 
@@ -242,8 +274,6 @@ with app.test_client() as client:
 def test_backend_max_shards_configurable():
     """HttpRTensorBackend accepts and validates max_shards_per_request."""
     _run_python(f"""
-import sys
-sys.path.insert(0, '{REPO}')
 from areal.infra.rpc.rtensor import HttpRTensorBackend
 
 # Default construction
@@ -275,8 +305,7 @@ except (ValueError, TypeError):
 def test_backend_groups_by_node():
     """fetch() groups shards by node_addr into batch requests."""
     _run_python(f"""
-import sys, torch
-sys.path.insert(0, '{REPO}')
+import torch
 from areal.infra.rpc.rtensor import HttpRTensorBackend, TensorShardInfo
 
 backend = HttpRTensorBackend(max_shards_per_request=100)
@@ -321,8 +350,7 @@ for node, ids in group_calls:
 def test_backend_chunks_large_requests():
     """Same-node shards exceeding max_shards_per_request are chunked."""
     _run_python(f"""
-import sys, torch
-sys.path.insert(0, '{REPO}')
+import torch
 from areal.infra.rpc.rtensor import HttpRTensorBackend, TensorShardInfo
 
 cases = [
@@ -361,8 +389,7 @@ for max_per_req, n_shards, expected_chunks in cases:
 def test_backend_preserves_original_order():
     """Results maintain original request order across grouped/chunked fetches."""
     _run_python(f"""
-import sys, torch
-sys.path.insert(0, '{REPO}')
+import torch
 from areal.infra.rpc.rtensor import HttpRTensorBackend, TensorShardInfo
 
 backend = HttpRTensorBackend(max_shards_per_request=2)
@@ -400,7 +427,7 @@ for i, t in enumerate(results):
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — AGENTS.md:30 @ 3142b88a5e93e991df727c81892d6cb8bd65d06e
+# [agent_config] pass_to_pass — AGENTS.md:10937 @ 3142b88a5e93e991df727c81892d6cb8bd65d06e
 def test_no_wildcard_imports():
     """No wildcard imports (from x import *) in modified files."""
     for path in [SERVER, RTENSOR]:
@@ -409,7 +436,7 @@ def test_no_wildcard_imports():
         assert not matches, f"Wildcard import in {path}: {matches}"
 
 
-# [agent_config] pass_to_pass — AGENTS.md:90-92 @ 3142b88a5e93e991df727c81892d6cb8bd65d06e
+# [agent_config] pass_to_pass — AGENTS.md:10997 @ 3142b88a5e93e991df727c81892d6cb8bd65d06e
 def test_no_bare_print():
     """No bare print() calls in production code (must use logger)."""
     for path in [SERVER, RTENSOR]:

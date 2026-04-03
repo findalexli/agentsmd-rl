@@ -8,6 +8,7 @@ jsCast in BunString__toJSDOMURL (src/bun.js/bindings/BunString.cpp).
 
 Building Bun requires Zig + WebKit (~30min, ~32GB RAM), so all tests are
 structural — they inspect the C++ source to verify the fix is applied.
+# AST-only because: C++ code requires full Bun build chain (Zig + WebKit + CMake)
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each def test_*() maps 1:1 to a check in eval_manifest.yaml.
@@ -42,13 +43,16 @@ def _func_region() -> str:
     return rest[: min(end, 2000)]
 
 
-def _after_tojs_call(region: str) -> str:
-    """Return code between the semicolon ending toJSNewlyCreated and the jsCast call."""
+def _between_tojs_and_domurl_cast(region: str) -> str:
+    """Return code between the semicolon ending toJSNewlyCreated and jsCast<...JSDOMURL*>."""
     jsn = region.find("toJSNewlyCreated")
-    jsc = region.find("jsCast")
     assert jsn >= 0, "toJSNewlyCreated not found in BunString__toJSDOMURL"
-    assert jsc >= 0, "jsCast not found in BunString__toJSDOMURL"
-    assert jsn < jsc, "toJSNewlyCreated must come before jsCast"
+
+    # Find jsCast<WebCore::JSDOMURL*> or jsCast<JSDOMURL*> — the DOMURL-specific cast
+    # that comes AFTER toJSNewlyCreated (not the earlier GlobalObject cast)
+    jsc_match = re.search(r"jsCast<[^>]*JSDOMURL\*>", region[jsn:])
+    assert jsc_match is not None, "jsCast<...JSDOMURL*> not found after toJSNewlyCreated"
+    jsc = jsn + jsc_match.start()
 
     between = region[jsn:jsc]
     semi = between.find(";")
@@ -63,7 +67,7 @@ def _after_tojs_call(region: str) -> str:
 
 # [pr_diff] fail_to_pass
 def test_exception_guard_between_tojs_and_jscast():
-    """An exception guard must exist between toJSNewlyCreated and jsCast.
+    """An exception guard must exist between toJSNewlyCreated and jsCast<JSDOMURL>.
 
     On the base commit, no guard is present: toJSNewlyCreated can propagate
     an exception (for an invalid URL) but the code proceeds to call
@@ -71,7 +75,7 @@ def test_exception_guard_between_tojs_and_jscast():
 
     The fix inserts a check that returns early when an exception is pending.
     """
-    after = _after_tojs_call(_func_region())
+    after = _between_tojs_and_domurl_cast(_func_region())
 
     guard_patterns = [
         "RETURN_IF_EXCEPTION",
@@ -84,7 +88,7 @@ def test_exception_guard_between_tojs_and_jscast():
     ]
     found = next((p for p in guard_patterns if p in after), None)
     assert found is not None, (
-        "No exception/null guard found between toJSNewlyCreated and jsCast. "
+        "No exception/null guard found between toJSNewlyCreated and jsCast<JSDOMURL>. "
         "Must check for exceptions before dereferencing the result."
     )
 
@@ -97,7 +101,7 @@ def test_guard_prevents_null_deref_on_error():
     (or branch) before reaching jsCast<JSDOMURL*>(jsValue.asCell()).
     RETURN_IF_EXCEPTION(throwScope, {}) both checks and returns.
     """
-    after = _after_tojs_call(_func_region())
+    after = _between_tojs_and_domurl_cast(_func_region())
 
     # RETURN_IF_EXCEPTION is a single-macro solution (check + return)
     if "RETURN_IF_EXCEPTION" in after:
@@ -119,30 +123,31 @@ def test_guard_prevents_null_deref_on_error():
 
 
 # ---------------------------------------------------------------------------
-# pass_to_pass — pr_diff
+# pass_to_pass — pr_diff / static
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] pass_to_pass
 def test_success_path_preserved():
     """The success path must still reach jsCast, reportExtraMemoryAllocated,
-    and RELEASE_AND_RETURN — in that order.
+    and RELEASE_AND_RETURN — in that order after toJSNewlyCreated.
 
     The fix adds a guard but must not remove or reorder the existing code.
     """
     region = _func_region()
 
     jsn = region.find("toJSNewlyCreated")
-    jsc = region.find("jsCast")
-    rma = region.find("reportExtraMemoryAllocated")
-    rar = region.find("RELEASE_AND_RETURN")
-
+    # Search for the DOMURL-specific jsCast after toJSNewlyCreated
+    jsc_match = re.search(r"jsCast<[^>]*JSDOMURL\*>", region[jsn:])
     assert jsn >= 0, "toJSNewlyCreated not found"
-    assert jsc >= 0, "jsCast not found"
-    assert rma >= 0, "reportExtraMemoryAllocated not found"
-    assert rar >= 0, "RELEASE_AND_RETURN not found"
+    assert jsc_match is not None, "jsCast<JSDOMURL*> not found after toJSNewlyCreated"
+    jsc = jsn + jsc_match.start()
 
-    assert jsn < jsc, "jsCast must come after toJSNewlyCreated"
+    rma = region.find("reportExtraMemoryAllocated", jsc)
+    rar = region.find("RELEASE_AND_RETURN", jsc)
+
+    assert rma >= 0, "reportExtraMemoryAllocated not found after jsCast"
+    assert rar >= 0, "RELEASE_AND_RETURN not found after jsCast"
     assert jsc < rma, "reportExtraMemoryAllocated must come after jsCast"
     assert rma < rar, "RELEASE_AND_RETURN must come after reportExtraMemoryAllocated"
 
@@ -172,7 +177,7 @@ def test_uses_return_if_exception_macro():
     functions that return an encoded JSValue. Using a manual if-check instead
     is non-idiomatic and inconsistent with patterns in the same file.
     """
-    after = _after_tojs_call(_func_region())
+    after = _between_tojs_and_domurl_cast(_func_region())
     assert "RETURN_IF_EXCEPTION" in after, (
         "Fix does not use RETURN_IF_EXCEPTION. "
         "Per .claude/skills/implementing-jsc-classes-cpp/SKILL.md, use "

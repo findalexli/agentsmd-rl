@@ -6,7 +6,8 @@ ENV LC_ALL=C.UTF-8
 
 RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-install-recommends \
     git curl ca-certificates build-essential tmux python3 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rustup component add rustfmt
 
 RUN mkdir -p /workspace /logs/verifier
 

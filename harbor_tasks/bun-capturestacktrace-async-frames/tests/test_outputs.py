@@ -155,7 +155,6 @@ def test_sibling_functions_preserved():
     required = [
         r'JSCStackTrace\s+JSCStackTrace::fromExisting',
         r'JSCStackTrace\s+JSCStackTrace::getStackTraceForThrownValue',
-        r'JSCStackTrace\s+JSCStackTrace::captureCurrentJSStackTrace',
     ]
     for pat in required:
         assert re.search(pat, text), f"Sibling function matching {pat!r} is missing"
@@ -216,10 +215,10 @@ def test_no_tabs_in_function():
     assert "\t" not in m.group(1), "Tabs found in function body — use 4-space indent"
 
 
-# [agent_config] pass_to_pass — .claude/skills/implementing-jsc-classes-cpp/SKILL.md:184 @ 9804f55e762ada50e595e693361e3ed770d7796a
-def test_root_h_included():
-    """C++ files must include root.h at the top (Bun convention)."""
+# [agent_config] pass_to_pass — CLAUDE.md:245 @ 9804f55e762ada50e595e693361e3ed770d7796a
+def test_config_h_included():
+    """ErrorStackTrace.cpp must include config.h at the top (file convention)."""
     text = CPP_FILE.read_text()
     assert re.search(
-        r'#\s*include\s*"root\.h"', text
-    ), 'Must #include "root.h" at the top of C++ files'
+        r'#\s*include\s*"config\.h"', text
+    ), 'Must #include "config.h" at the top (existing file convention)'

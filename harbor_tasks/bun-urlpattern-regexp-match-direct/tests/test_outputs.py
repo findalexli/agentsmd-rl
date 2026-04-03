@@ -259,7 +259,7 @@ def test_api_surface_preserved():
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from CLAUDE.md
+# Config-derived (agent_config) — rules from agent config files
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -271,3 +271,15 @@ def test_no_regexp_object_include():
     assert not re.search(r"#include.*RegExpObject\.h", src), (
         "Still includes RegExpObject.h"
     )
+
+
+# [agent_config] pass_to_pass — .claude/skills/implementing-jsc-classes-cpp/SKILL.md:184 @ 2920fac
+def test_root_h_included():
+    """C++ files must include root.h — required by JSC classes skill."""
+    # root.h is already present in all modified .cpp files at the base commit;
+    # an agent must not remove it.
+    for f in [COMP_CPP, PAT_CPP, CONSTR_CPP]:
+        raw = f.read_text()
+        assert re.search(r'#include\s+"root\.h"', raw), (
+            f"Missing #include \"root.h\" in {f.name}"
+        )

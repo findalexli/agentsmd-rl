@@ -30,12 +30,17 @@ checks:
   - id: heartbeat_function_exists
     type: pass_to_pass
     origin: repo_tests
-    description: "async heartbeat() function still defined in routes.py"
+    description: "async heartbeat() coroutine still defined in routes.py"
 
   - id: sse_stream_returns_streaming_response
     type: pass_to_pass
     origin: repo_tests
     description: "sse_stream function and StreamingResponse usage intact"
+
+  - id: no_bare_create_task_in_sse_stream
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No fire-and-forget create_task calls in sse_stream — all must capture returned task"
 
   - id: ruff_format_routes
     type: pass_to_pass

@@ -9,9 +9,26 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock
 
 REPO = "/repos/AReaL"
 sys.path.insert(0, REPO)
+
+# ---------------------------------------------------------------------------
+# Pre-mock heavy transitive deps before importing any areal modules.
+# types.py does `from areal.api import ModelResponse` which triggers
+# areal.api.__getattr__ → areal.api.io_struct → transformers (not installed).
+# ModelResponse is only used as a type annotation (with `from __future__ import
+# annotations`), so a MagicMock is safe.
+# ---------------------------------------------------------------------------
+for _mod in [
+    "areal.api",
+    "areal.api.io_struct",
+    "areal.api.cli_args",
+    "areal.api.alloc_mode",
+    "areal.infra.platforms",
+]:
+    sys.modules.setdefault(_mod, MagicMock())
 
 MODIFIED_FILES = [
     "areal/experimental/openai/types.py",
@@ -21,7 +38,7 @@ MODIFIED_FILES = [
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) -- syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -35,7 +52,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) -- core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -47,7 +64,7 @@ def test_interaction_id_setter_getter():
     # Initially None (no completion, no response, no stored ID)
     assert i.interaction_id is None
 
-    # Set and read back — multiple distinct values
+    # Set and read back -- multiple distinct values
     for test_id in ["test-id-123", "updated-id-456", "uuid-7890-abcd"]:
         i.interaction_id = test_id
         assert i.interaction_id == test_id
@@ -66,14 +83,14 @@ def test_interaction_id_setter_getter():
 # [pr_diff] fail_to_pass
 def test_setter_rejects_completion_and_response():
     """Cannot overwrite interaction_id on completion or response objects."""
-    from unittest.mock import MagicMock
+    from unittest.mock import MagicMock as Mock
 
     import pytest
     from areal.experimental.openai.types import InteractionWithTokenLogpReward
 
     # Completion instance
     ic = InteractionWithTokenLogpReward()
-    ic.completion = MagicMock()
+    ic.completion = Mock()
     ic.completion.id = "comp-123"
     assert ic.interaction_id == "comp-123"  # reads from completion
     with pytest.raises(ValueError, match="[Cc]omplet|[Cc]annot set|[Rr]espon"):
@@ -81,7 +98,7 @@ def test_setter_rejects_completion_and_response():
 
     # Response instance
     ir = InteractionWithTokenLogpReward()
-    ir.response = MagicMock()
+    ir.response = Mock()
     ir.response.id = "resp-456"
     assert ir.interaction_id == "resp-456"  # reads from response
     with pytest.raises(ValueError, match="[Cc]omplet|[Cc]annot set|[Rr]espon"):
@@ -177,7 +194,7 @@ def test_roundtrip_preserves_tensor_data():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
+# Pass-to-pass (repo_tests / static) -- regression + anti-stub
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -199,10 +216,10 @@ def test_serialize_value_roundtrip():
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from AGENTS.md / CLAUDE.md
+# Config-derived (agent_config) -- rules from AGENTS.md / CLAUDE.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — AGENTS.md:30 @ 3bf10c9
+# [agent_config] pass_to_pass -- AGENTS.md:30 @ 3bf10c9
 def test_no_wildcard_imports():
     """No wildcard imports (from x import *) in modified files."""
     for f in MODIFIED_FILES:
@@ -215,7 +232,7 @@ def test_no_wildcard_imports():
                 )
 
 
-# [agent_config] pass_to_pass — AGENTS.md:99 @ 3bf10c9
+# [agent_config] pass_to_pass -- AGENTS.md:99 @ 3bf10c9
 def test_type_hints_on_new_fields():
     """New dataclass fields and function signatures use explicit type hints."""
     # AST-only because: checking type annotations requires parsing, not execution
@@ -238,3 +255,48 @@ def test_type_hints_on_new_fields():
             break
     else:
         raise AssertionError("InteractionWithTokenLogpReward class not found")
+
+
+# [agent_config] pass_to_pass -- AGENTS.md:162-163 @ 3bf10c9
+def test_new_fields_have_defaults():
+    """New dataclass fields must have default values for backward compatibility."""
+    # AST-only because: checking defaults requires parsing the dataclass definition
+    import ast
+
+    src = Path(f"{REPO}/areal/experimental/openai/types.py").read_text()
+    tree = ast.parse(src)
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "InteractionWithTokenLogpReward":
+            for stmt in node.body:
+                if (
+                    isinstance(stmt, ast.AnnAssign)
+                    and isinstance(stmt.target, ast.Name)
+                    and stmt.target.id == "_interaction_id"
+                ):
+                    assert stmt.value is not None, (
+                        "_interaction_id must have a default value "
+                        "(backward compat: AGENTS.md:162-163)"
+                    )
+                    return
+            # Field doesn't exist yet (base commit) -- vacuously passes
+            return
+    raise AssertionError("InteractionWithTokenLogpReward class not found")
+
+
+# [agent_config] pass_to_pass -- AGENTS.md:89-91 @ 3bf10c9
+def test_no_bare_print():
+    """Modified files must not use bare print() -- use areal.utils.logging instead."""
+    import ast
+
+    for f in MODIFIED_FILES:
+        src = Path(f"{REPO}/{f}").read_text()
+        tree = ast.parse(src)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                func = node.func
+                if isinstance(func, ast.Name) and func.id == "print":
+                    raise AssertionError(
+                        f"Bare print() call in {f}:{node.lineno} -- "
+                        "use areal.utils.logging instead (AGENTS.md:89-91)"
+                    )

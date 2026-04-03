@@ -8,7 +8,7 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:${PATH}"
 
-RUN git clone https://github.com/oven-sh/bun.git /workspace/bun \
+RUN git clone --filter=blob:none https://github.com/oven-sh/bun.git /workspace/bun \
     && cd /workspace/bun \
     && git checkout e94c3035c6f9d7868fb814cfeaf27b219d00e565
 

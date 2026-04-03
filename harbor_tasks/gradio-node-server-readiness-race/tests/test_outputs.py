@@ -6,31 +6,24 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import importlib.util
 import socket
 import subprocess
-import sys
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 REPO = "/workspace/gradio"
-
-# Ensure the repo is importable
-sys.path.insert(0, REPO)
+NODE_SERVER_PATH = f"{REPO}/gradio/node_server.py"
 
 
-def _clear_gradio_modules():
-    """Remove cached gradio modules so reimport picks up changes."""
-    for mod in list(sys.modules):
-        if "gradio" in mod:
-            del sys.modules[mod]
-
-
-def _get_verify_server_startup():
-    _clear_gradio_modules()
-    from gradio.node_server import verify_server_startup
-    return verify_server_startup
+def _load_node_server():
+    """Load node_server.py directly, bypassing gradio.__init__ (heavy deps)."""
+    spec = importlib.util.spec_from_file_location("node_server", NODE_SERVER_PATH)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def _make_handler(status_code):
@@ -66,7 +59,7 @@ def _start_http_server(port, status_code):
 def test_syntax_check():
     """node_server.py must be syntactically valid Python."""
     import py_compile
-    py_compile.compile(f"{REPO}/gradio/node_server.py", doraise=True)
+    py_compile.compile(NODE_SERVER_PATH, doraise=True)
 
 
 # ---------------------------------------------------------------------------
@@ -80,10 +73,10 @@ def test_http_500_server_not_ready():
     The base code only checks TCP connectivity, so any listening socket
     (including one returning 500) is wrongly reported as ready.
     """
-    verify = _get_verify_server_startup()
+    mod = _load_node_server()
     srv = _start_http_server(18902, 500)
     try:
-        result = verify("127.0.0.1", 18902, timeout=2.0)
+        result = mod.verify_server_startup("127.0.0.1", 18902, timeout=2.0)
         assert result is False, f"Expected False for HTTP 500 server, got {result}"
     finally:
         srv.shutdown()
@@ -115,9 +108,9 @@ def test_tcp_only_server_not_ready():
     t.start()
     time.sleep(0.1)
 
-    verify = _get_verify_server_startup()
+    mod = _load_node_server()
     try:
-        result = verify("127.0.0.1", 18910, timeout=3.0)
+        result = mod.verify_server_startup("127.0.0.1", 18910, timeout=3.0)
         assert result is False, f"Expected False for TCP-only server, got {result}"
     finally:
         for c in conns:
@@ -135,10 +128,10 @@ def test_tcp_only_server_not_ready():
 # [pr_diff] pass_to_pass
 def test_http_200_server_ready():
     """Server returning HTTP 200 must be detected as ready."""
-    verify = _get_verify_server_startup()
+    mod = _load_node_server()
     srv = _start_http_server(18901, 200)
     try:
-        result = verify("127.0.0.1", 18901, timeout=5.0)
+        result = mod.verify_server_startup("127.0.0.1", 18901, timeout=5.0)
         assert result is True, f"Expected True for HTTP 200 server, got {result}"
     finally:
         srv.shutdown()
@@ -150,10 +143,10 @@ def test_http_404_server_ready():
 
     The app is running and responding — a 404 is not a server error.
     """
-    verify = _get_verify_server_startup()
+    mod = _load_node_server()
     srv = _start_http_server(18903, 404)
     try:
-        result = verify("127.0.0.1", 18903, timeout=5.0)
+        result = mod.verify_server_startup("127.0.0.1", 18903, timeout=5.0)
         assert result is True, f"Expected True for HTTP 404 server, got {result}"
     finally:
         srv.shutdown()
@@ -162,10 +155,10 @@ def test_http_404_server_ready():
 # [pr_diff] pass_to_pass
 def test_http_302_server_ready():
     """Server returning HTTP 302 redirect (< 500) is still ready."""
-    verify = _get_verify_server_startup()
+    mod = _load_node_server()
     srv = _start_http_server(18905, 302)
     try:
-        result = verify("127.0.0.1", 18905, timeout=5.0)
+        result = mod.verify_server_startup("127.0.0.1", 18905, timeout=5.0)
         assert result is True, f"Expected True for HTTP 302 server, got {result}"
     finally:
         srv.shutdown()
@@ -174,19 +167,18 @@ def test_http_302_server_ready():
 # [pr_diff] pass_to_pass
 def test_no_server_returns_false():
     """No server listening on port must return False."""
-    verify = _get_verify_server_startup()
-    result = verify("127.0.0.1", 18999, timeout=1.0)
+    mod = _load_node_server()
+    result = mod.verify_server_startup("127.0.0.1", 18999, timeout=1.0)
     assert result is False, f"Expected False for no server, got {result}"
 
 
 # [pr_diff] pass_to_pass
 def test_attempt_connection_not_broken():
     """attempt_connection must still work after changes (regression guard)."""
-    _clear_gradio_modules()
-    from gradio.node_server import attempt_connection
+    mod = _load_node_server()
     srv = _start_http_server(18904, 200)
     try:
-        result = attempt_connection("127.0.0.1", 18904)
+        result = mod.attempt_connection("127.0.0.1", 18904)
         assert result is True, f"Expected True, got {result}"
     finally:
         srv.shutdown()
@@ -216,8 +208,7 @@ def test_ruff_node_server():
 def test_ts_launcher_uses_http_readiness():
     """app-launcher.ts must use HTTP (not just TCP) for readiness polling.
 
-    Structural check is justified: the container has no Node.js runtime,
-    so we cannot execute the TypeScript code.
+    # AST-only because: no Node.js runtime in container to execute TypeScript
     """
     ts_path = Path(f"{REPO}/js/tootils/src/app-launcher.ts")
     assert ts_path.exists(), "app-launcher.ts is missing"

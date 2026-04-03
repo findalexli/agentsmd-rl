@@ -14,98 +14,108 @@ from pathlib import Path
 REPO = "/workspace/bun"
 TARGET = f"{REPO}/src/js/builtins/ProcessObjectInternals.ts"
 
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-# Node.js script that extracts the _final function body and closure variables
-# from ProcessObjectInternals.ts so we can eval and test it in isolation.
-_EXTRACT_JS = r"""
+# Node.js helper module: extracts _final from the TS source file, polyfills
+# bun-specific globals ($isPromise etc.), and exposes the function for testing.
+# Cannot run ProcessObjectInternals.ts directly because it requires bun's
+# TypeScript preprocessor ($ intrinsics, internal require paths).
+_HELPER_JS = r"""
 const fs = require('fs');
-const source = fs.readFileSync(process.argv[2], 'utf8');
-let idx = source.indexOf('._final');
-if (idx < 0) idx = source.indexOf('["_final"]');
-if (idx < 0) { console.log(JSON.stringify({found:false})); process.exit(0); }
-const m = source.substring(idx).match(/_final['"]*\]?\s*=\s*(?:async\s+)?function\s*\((\w+)\)/);
-if (!m) { console.log(JSON.stringify({found:false})); process.exit(0); }
-const cbName = m[1];
-const braceStart = source.indexOf('{', idx + m.index);
-if (braceStart < 0) { console.log(JSON.stringify({found:false})); process.exit(0); }
-let d=1, p=braceStart+1;
-while(d>0 && p<source.length){ if(source[p]==='{')d++; else if(source[p]==='}')d--; p++; }
-const body = source.substring(braceStart+1, p-1);
-const isAsync = /async\s+function/.test(source.substring(idx, braceStart));
-const fsi = source.lastIndexOf('getStdioWriteStream', idx);
-const pre = fsi>=0 ? source.substring(fsi, idx) : '';
-const decls = [];
-const dr = /(?:const|let|var)\s+(\w+)\s*=\s*([^;]+);/g;
-let dm; while((dm=dr.exec(pre))!==null) decls.push({name:dm[1],init:dm[2].trim()});
-console.log(JSON.stringify({found:true, cbName, body, isAsync, constDecls:decls}));
-"""
+const source = fs.readFileSync(process.env.BUN_TARGET, 'utf8');
 
-# Common JS test harness: builds the _final function and a sink proxy
-_COMMON_JS = r"""
-const data = JSON.parse(require('fs').readFileSync('/tmp/bun_final_data.json','utf8'));
-const { cbName, body, constDecls } = data;
+// Find the _final assignment
+const match = source.match(/_final\s*=\s*(?:async\s+)?function\s*\((\w+)\)\s*\{/);
+if (!match) {
+    module.exports = { found: false };
+} else {
+    const cbArg = match[1];
+    const matchPos = source.indexOf(match[0]);
+    const braceStart = matchPos + match[0].length - 1;
+    let depth = 1, pos = braceStart + 1;
+    while (depth > 0 && pos < source.length) {
+        if (source[pos] === '{') depth++;
+        else if (source[pos] === '}') depth--;
+        pos++;
+    }
+    const body = source.substring(braceStart + 1, pos - 1);
 
-globalThis.$isPromise = (x) => x!=null && typeof x==='object' && typeof x.then==='function';
-globalThis.$isCallable = (x) => typeof x==='function';
-globalThis.$isObject = (x) => x!=null && typeof x==='object';
+    // Polyfill bun JSC intrinsics
+    globalThis.$isPromise = (x) => x != null && typeof x === 'object' && typeof x.then === 'function';
+    globalThis.$isCallable = (x) => typeof x === 'function';
+    globalThis.$isObject = (x) => x != null && typeof x === 'object';
 
-let closureSetup = '';
-for (const d of constDecls) {
-    closureSetup += d.init.includes('require(')
-        ? `var ${d.name} = Symbol('${d.name}');\n`
-        : `var ${d.name} = undefined;\n`;
-}
+    // Find closure variables referenced as this[VAR] in the body
+    const thisVarMatch = body.match(/this\[(\w+)\]/);
+    const closureVar = thisVarMatch ? thisVarMatch[1] : null;
+    const sinkKey = Symbol('sinkKey');
 
-function buildFinal() {
-    return eval('(' + (data.isAsync ? 'async ' : '') + 'function(' + cbName + ') {' + closureSetup + body + '})');
-}
-
-function makeProxy(sink) {
-    return new Proxy({}, {
-        get(t, p) {
-            if (p==='constructor') return Object;
-            if (p===Symbol.toPrimitive||p===Symbol.toStringTag) return undefined;
-            return sink;
+    let _final;
+    try {
+        if (closureVar) {
+            // Wrap so the closure variable resolves to our sinkKey symbol
+            _final = eval('(function(' + closureVar + ') { return function(' + cbArg + ') {' + body + '}; })')(sinkKey);
+        } else {
+            _final = eval('(function(' + cbArg + ') {' + body + '})');
         }
-    });
-}
+    } catch(e) {
+        _final = null;
+    }
 
-module.exports = { buildFinal, makeProxy, data };
+    function makeContext(sinkObj) {
+        if (closureVar) return { [sinkKey]: sinkObj };
+        return {};
+    }
+
+    module.exports = { found: true, _final, makeContext, sinkKey, body, cbArg };
+}
 """
 
-_extract_cache = None
+_helper_written = False
 
 
-def _extract_final():
-    """Extract _final function metadata from ProcessObjectInternals.ts."""
-    global _extract_cache
-    if _extract_cache is not None:
-        return _extract_cache
+def _ensure_helper():
+    global _helper_written
+    if not _helper_written:
+        Path("/tmp/bun_final_helper.js").write_text(_HELPER_JS)
+        _helper_written = True
+
+
+def _run_node_test(script: str, timeout: int = 15) -> str:
+    """Write a Node.js test script and run it. Returns first stdout line."""
+    _ensure_helper()
+    Path("/tmp/bun_test_run.js").write_text(script)
     r = subprocess.run(
-        ["node", "-e", _EXTRACT_JS, TARGET],
-        capture_output=True, text=True, timeout=10,
-    )
-    assert r.returncode == 0, f"Extraction script failed: {r.stderr}"
-    data = json.loads(r.stdout.strip())
-    Path("/tmp/bun_final_data.json").write_text(json.dumps(data))
-    Path("/tmp/bun_test_common.js").write_text(_COMMON_JS)
-    _extract_cache = data
-    return data
-
-
-def _run_node_test(name: str, script: str) -> str:
-    """Write and run a Node.js test script, return first stdout line."""
-    _extract_final()  # ensure extraction data + common module exist
-    path = Path(f"/tmp/bun_test_{name}.js")
-    path.write_text(script)
-    r = subprocess.run(
-        ["node", str(path)], capture_output=True, text=True, timeout=15,
+        ["node", "/tmp/bun_test_run.js"],
+        capture_output=True, text=True, timeout=timeout,
+        env={"PATH": "/usr/local/bin:/usr/bin:/bin", "BUN_TARGET": TARGET},
     )
     lines = r.stdout.strip().split("\n")
-    return lines[0] if lines and lines[0] else f"NO_OUTPUT: {r.stderr[:300]}"
+    first = lines[0] if lines and lines[0] else ""
+    if not first:
+        return f"NO_OUTPUT: {r.stderr[:300]}"
+    return first
+
+
+def _get_final_body():
+    """Extract _final function body from ProcessObjectInternals.ts using Python regex."""
+    source = Path(TARGET).read_text()
+    match = re.search(r'_final\s*=\s*(?:async\s+)?function\s*\(\w+\)\s*\{', source)
+    if not match:
+        return None
+    start = match.end() - 1  # position of opening {
+    depth = 1
+    pos = start + 1
+    while depth > 0 and pos < len(source):
+        if source[pos] == '{':
+            depth += 1
+        elif source[pos] == '}':
+            depth -= 1
+        pos += 1
+    return source[start + 1:pos - 1]
 
 
 # ---------------------------------------------------------------------------
@@ -115,26 +125,20 @@ def _run_node_test(name: str, script: str) -> str:
 # [pr_diff] fail_to_pass
 def test_final_sync_flush():
     """_final calls sink.flush() synchronously and invokes cb(null)."""
-    info = _extract_final()
-    assert info["found"], "_final hook not found in ProcessObjectInternals.ts"
-
-    result = _run_node_test("sync_flush", r"""
-const { buildFinal, makeProxy } = require('/tmp/bun_test_common.js');
-let flushCalled = false;
-const sink = {
-    flush() { flushCalled = true; return undefined; },
-    write() { return true; }, close(){}, ref(){}, unref(){}
-};
-const fn = buildFinal();
+    result = _run_node_test(r"""
+const h = require('/tmp/bun_final_helper.js');
+if (!h.found || !h._final) { console.log('NO_FINAL'); process.exit(0); }
+let flushed = false;
+const sink = { flush() { flushed = true; return undefined; } };
+const ctx = h.makeContext(sink);
 let cbResult = 'NOT_CALLED';
 try {
-    fn.call(makeProxy(sink), (err) => {
-        cbResult = (err === null || err === undefined) ? 'SUCCESS' : 'ERROR';
+    h._final.call(ctx, (err) => {
+        cbResult = (err === null || err === undefined) ? 'OK' : 'ERR:' + err;
     });
-} catch(e) { cbResult = 'EXEC_ERROR: ' + e.message; }
+} catch(e) { cbResult = 'THROW:' + e.message; }
 setTimeout(() => {
-    console.log(flushCalled && cbResult === 'SUCCESS'
-        ? 'PASS' : 'FAIL: flush=' + flushCalled + ' cb=' + cbResult);
+    console.log(flushed && cbResult === 'OK' ? 'PASS' : 'FAIL:flush=' + flushed + ',cb=' + cbResult);
 }, 200);
 """)
     assert result == "PASS", f"Sync flush: {result}"
@@ -143,33 +147,22 @@ setTimeout(() => {
 # [pr_diff] fail_to_pass
 def test_final_async_flush():
     """_final waits for async flush Promise before calling cb(null)."""
-    info = _extract_final()
-    assert info["found"], "_final hook not found in ProcessObjectInternals.ts"
-
-    result = _run_node_test("async_flush", r"""
-const { buildFinal, makeProxy } = require('/tmp/bun_test_common.js');
+    result = _run_node_test(r"""
+const h = require('/tmp/bun_final_helper.js');
+if (!h.found || !h._final) { console.log('NO_FINAL'); process.exit(0); }
 let resolveFlush;
 const flushPromise = new Promise(r => { resolveFlush = r; });
-const sink = {
-    flush() { return flushPromise; },
-    write() { return true; }, close(){}, ref(){}, unref(){}
-};
-const fn = buildFinal();
-let cbResult = 'NOT_CALLED';
-let cbBeforeResolve = false;
+let cbCalled = false, cbBeforeResolve = false;
+const ctx = h.makeContext({ flush() { return flushPromise; } });
 try {
-    fn.call(makeProxy(sink), (err) => {
-        cbResult = (err === null || err === undefined) ? 'SUCCESS' : 'ERROR';
-    });
-} catch(e) { cbResult = 'EXEC_ERROR: ' + e.message; }
+    h._final.call(ctx, (err) => { cbCalled = true; });
+} catch(e) { console.log('FAIL:THROW:' + e.message); process.exit(0); }
 
 setTimeout(() => {
-    if (cbResult !== 'NOT_CALLED') cbBeforeResolve = true;
+    if (cbCalled) cbBeforeResolve = true;
     resolveFlush();
     setTimeout(() => {
-        if (!cbBeforeResolve && cbResult === 'SUCCESS') console.log('PASS');
-        else if (cbBeforeResolve) console.log('FAIL: cb fired before flush Promise resolved');
-        else console.log('FAIL: cb=' + cbResult);
+        console.log(!cbBeforeResolve && cbCalled ? 'PASS' : 'FAIL:before=' + cbBeforeResolve + ',called=' + cbCalled);
     }, 200);
 }, 50);
 """)
@@ -179,27 +172,17 @@ setTimeout(() => {
 # [pr_diff] fail_to_pass
 def test_final_error_propagation():
     """_final propagates flush() errors to cb(err) without crashing."""
-    info = _extract_final()
-    assert info["found"], "_final hook not found in ProcessObjectInternals.ts"
-
-    result = _run_node_test("error_prop", r"""
-const { buildFinal, makeProxy } = require('/tmp/bun_test_common.js');
-const sink = {
-    flush() { throw new Error('pipe broken'); },
-    write() { return true; }, close(){}, ref(){}, unref(){}
-};
-const fn = buildFinal();
-let cbResult = 'NOT_CALLED';
-let uncaught = false;
+    result = _run_node_test(r"""
+const h = require('/tmp/bun_final_helper.js');
+if (!h.found || !h._final) { console.log('NO_FINAL'); process.exit(0); }
+let cbErr = 'NOT_CALLED', uncaught = false;
 process.on('uncaughtException', () => { uncaught = true; });
+const ctx = h.makeContext({ flush() { throw new Error('pipe_broken'); } });
 try {
-    fn.call(makeProxy(sink), (err) => {
-        cbResult = (err && err.message === 'pipe broken') ? 'ERROR_CAUGHT' : 'WRONG: ' + String(err);
-    });
-} catch(e) { cbResult = 'UNCAUGHT: ' + e.message; }
+    h._final.call(ctx, (err) => { cbErr = err ? err.message : 'null'; });
+} catch(e) { cbErr = 'THROW:' + e.message; }
 setTimeout(() => {
-    console.log(cbResult === 'ERROR_CAUGHT' && !uncaught
-        ? 'PASS' : 'FAIL: cb=' + cbResult + ' uncaught=' + uncaught);
+    console.log(cbErr === 'pipe_broken' && !uncaught ? 'PASS' : 'FAIL:cb=' + cbErr + ',uncaught=' + uncaught);
 }, 200);
 """)
     assert result == "PASS", f"Error propagation: {result}"
@@ -225,10 +208,11 @@ def test_existing_stream_setup():
 # [agent_config] fail_to_pass — src/js/CLAUDE.md:56 @ ba05a72939569c1a371a513c3bd64a2cab6a60ee
 def test_no_dot_call_apply():
     """_final must use .$call/.$apply, never .call/.apply (src/js/CLAUDE.md:56)."""
-    info = _extract_final()
-    assert info["found"], "_final hook not found in ProcessObjectInternals.ts"
+    # Structural check because: bun TS preprocessor converts $-prefixed calls at build time
+    body = _get_final_body()
+    assert body is not None, "_final hook not found in ProcessObjectInternals.ts"
     # Strip comments before checking
-    lines = [l for l in info["body"].split("\n") if not l.strip().startswith("//")]
+    lines = [l for l in body.split("\n") if not l.strip().startswith("//")]
     code = "\n".join(lines)
     assert not re.search(r'(?<!\$)\.call\s*\(', code), \
         "Uses .call() instead of .$call() — violates src/js/CLAUDE.md:56"
@@ -251,9 +235,10 @@ def test_string_literal_require():
 # [agent_config] fail_to_pass — src/js/CLAUDE.md:105 @ ba05a72939569c1a371a513c3bd64a2cab6a60ee
 def test_jsc_intrinsics_used():
     """_final must use $isPromise, not instanceof Promise (src/js/CLAUDE.md:105)."""
-    info = _extract_final()
-    assert info["found"], "_final hook not found in ProcessObjectInternals.ts"
-    lines = [l for l in info["body"].split("\n") if not l.strip().startswith("//")]
+    # Structural check because: $isPromise is a JSC intrinsic only available in bun runtime
+    body = _get_final_body()
+    assert body is not None, "_final hook not found in ProcessObjectInternals.ts"
+    lines = [l for l in body.split("\n") if not l.strip().startswith("//")]
     code = "\n".join(lines)
     assert "instanceof Promise" not in code, \
         "Uses 'instanceof Promise' instead of $isPromise — violates src/js/CLAUDE.md:105"

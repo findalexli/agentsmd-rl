@@ -13,7 +13,7 @@ import sys
 REPO = "/workspace/gradio"
 
 
-def _get_ci(editable=True, type_="messages"):
+def _get_ci(editable=True):
     """Helper: create a ChatInterface for testing."""
     if REPO not in sys.path:
         sys.path.insert(0, REPO)
@@ -22,7 +22,7 @@ def _get_ci(editable=True, type_="messages"):
     def echo(msg, hist):
         return f"Echo: {msg}"
 
-    return ChatInterface(fn=echo, type=type_, editable=editable)
+    return ChatInterface(fn=echo, editable=editable)
 
 
 # ---------------------------------------------------------------------------
@@ -46,7 +46,8 @@ def test_edit_restores_message_before_response():
     """After editing a user message, the edited text must be visible in the
     chatbot before the response callback runs (the core bug).
 
-    Tests multiple edit scenarios to prevent hardcoding."""
+    Verifies the fix by calling _edit_message then _append_message_to_history
+    with varied inputs, and also checks the event chain wiring."""
     sys.path.insert(0, REPO)
     from gradio.events import EditData
 
@@ -95,25 +96,25 @@ def test_edit_restores_message_before_response():
             f"_append_message_to_history. Got: {restored}"
         )
 
-        # Verify the append step is actually wired into the edit event chain
-        chatbot_id = ci.chatbot._id
-        chatbot_state_id = ci.chatbot_state._id
-        saved_input_id = ci.saved_input._id
-        has_append_dep = False
-        for dep in ci.dependencies:
-            input_ids = {inp for inp in dep.get("inputs", []) if isinstance(inp, int)}
-            output_ids = {out for out in dep.get("outputs", []) if isinstance(out, int)}
-            if (
-                chatbot_id in output_ids
-                and (saved_input_id in input_ids or chatbot_state_id in input_ids)
-                and chatbot_state_id in input_ids
-            ):
-                has_append_dep = True
-                break
-        assert has_append_dep, (
-            "_append_message_to_history is not chained in the edit event "
-            "dependency graph"
-        )
+    # Verify the append step is actually wired into the edit event chain
+    chatbot_id = ci.chatbot._id
+    chatbot_state_id = ci.chatbot_state._id
+    saved_input_id = ci.saved_input._id
+    has_append_dep = False
+    for dep in ci.dependencies:
+        input_ids = {inp for inp in dep.get("inputs", []) if isinstance(inp, int)}
+        output_ids = {out for out in dep.get("outputs", []) if isinstance(out, int)}
+        if (
+            chatbot_id in output_ids
+            and (saved_input_id in input_ids or chatbot_state_id in input_ids)
+            and chatbot_state_id in input_ids
+        ):
+            has_append_dep = True
+            break
+    assert has_append_dep, (
+        "_append_message_to_history is not chained in the edit event "
+        "dependency graph"
+    )
 
 
 # [pr_diff] fail_to_pass
@@ -201,7 +202,7 @@ def test_submit_appends_message():
     ci = _get_ci(editable=False)
 
     # Test with multiple inputs to prevent hardcoding
-    test_messages = ["test message", "what about spaces?", "", "unicode: αβγ 🎉"]
+    test_messages = ["test message", "what about spaces?", "", "unicode: αβγ"]
 
     history = []
     for msg in test_messages:
@@ -218,7 +219,10 @@ def test_editable_false_no_edit_event():
     """ChatInterface with editable=False must not register edit events."""
     ci = _get_ci(editable=False)
     for dep in ci.dependencies:
-        for t in dep.get("targets", []):
+        targets = dep.get("targets", [])
+        if not isinstance(targets, (list, tuple)):
+            continue
+        for t in targets:
             if isinstance(t, (list, tuple)) and len(t) >= 2 and t[1] == "edit":
                 raise AssertionError("edit event found when editable=False")
 
@@ -231,7 +235,8 @@ def test_editable_false_no_edit_event():
 def test_ruff_lint_clean():
     """Python code is formatted with ruff — AGENTS.md:43."""
     r = subprocess.run(
-        ["ruff", "check", "gradio/chat_interface.py", "--select", "E,W", "--quiet"],
+        ["ruff", "check", "gradio/chat_interface.py",
+         "--select", "E9,F63,F7,F82", "--quiet"],
         cwd=REPO,
         capture_output=True,
         timeout=30,

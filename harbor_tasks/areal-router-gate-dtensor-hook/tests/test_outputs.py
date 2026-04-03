@@ -11,10 +11,16 @@ chain (areal.experimental.models.archon.moe) triggers archon/__init__.py and
 moe/__init__.py, which pull in triton/GPU kernels and qwen2/3 model specs that
 are not available in the CPU-only Docker image. We load router.py directly with
 importlib.util.spec_from_file_location to bypass all __init__.py files.
+
+CPU compatibility note: torch.histc does not support int64 on CPU, but the
+router's forward() calls histc on topk indices (int64). We monkeypatch histc
+to cast to float where needed.
 """
 
 import importlib.util
-import sys
+from unittest.mock import patch
+
+import torch
 
 TARGET = "/workspace/AReaL/areal/experimental/models/archon/moe/router.py"
 
@@ -25,6 +31,21 @@ def _load_router():
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
+
+
+# CPU-safe histc wrapper: torch.histc doesn't support int64 on CPU
+_orig_histc = torch.histc
+
+
+def _safe_histc(input, bins=100, min=0, max=0):
+    return _orig_histc(input.float(), bins=bins, min=float(min), max=float(max))
+
+
+def _make_router(router_mod, dim=32, num_experts=4, top_k=2, score_func="sigmoid"):
+    """Create a router with CPU-safe defaults (router_dtype=None)."""
+    return router_mod.TokenChoiceTopKRouter(
+        dim=dim, num_experts=num_experts, top_k=top_k, score_func=score_func,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -52,12 +73,8 @@ def test_gate_hook_fires():
     level and only fire when the module is invoked, not when the underlying
     function is called directly.
     """
-    import torch
-
     router_mod = _load_router()
-    TokenChoiceTopKRouter = router_mod.TokenChoiceTopKRouter
-
-    router = TokenChoiceTopKRouter(dim=32, num_experts=4, top_k=2, score_func="sigmoid")
+    router = _make_router(router_mod)
     hook_called = {"count": 0}
 
     def hook_fn(module, input, output):
@@ -66,7 +83,8 @@ def test_gate_hook_fires():
     router.gate.register_forward_hook(hook_fn)
 
     x = torch.randn(8, 32)
-    router(x)
+    with patch.object(torch, "histc", _safe_histc):
+        router(x)
     assert hook_called["count"] == 1, (
         f"Expected gate forward hook to fire once, fired {hook_called['count']} times. "
         "forward() likely bypasses self.gate() with a direct function call."
@@ -76,17 +94,14 @@ def test_gate_hook_fires():
 # [pr_diff] fail_to_pass
 def test_gate_hook_with_varied_inputs():
     """Gate hook fires for different input shapes and score functions."""
-    import torch
-
     router_mod = _load_router()
-    TokenChoiceTopKRouter = router_mod.TokenChoiceTopKRouter
 
     for n_tokens, dim, n_experts, score_func in [
         (1, 16, 4, "softmax"),
         (32, 64, 8, "sigmoid"),
         (4, 32, 4, "softmax"),
     ]:
-        router = TokenChoiceTopKRouter(
+        router = router_mod.TokenChoiceTopKRouter(
             dim=dim, num_experts=n_experts, top_k=2, score_func=score_func,
         )
         fired = {"n": 0}
@@ -96,7 +111,8 @@ def test_gate_hook_with_varied_inputs():
 
         router.gate.register_forward_hook(_hook)
         x = torch.randn(n_tokens, dim)
-        router(x)
+        with patch.object(torch, "histc", _safe_histc):
+            router(x)
         assert fired["n"] == 1, (
             f"Hook not fired for shape ({n_tokens}, {dim}), score_func={score_func}"
         )
@@ -121,6 +137,18 @@ def test_router_gate_linear_class_exists():
     )
 
 
+# [pr_diff] fail_to_pass
+def test_gate_is_router_gate_linear():
+    """After the fix, router.gate must be an instance of RouterGateLinear, not plain nn.Linear."""
+    router_mod = _load_router()
+    router = _make_router(router_mod)
+    cls = getattr(router_mod, "RouterGateLinear", None)
+    assert cls is not None, "RouterGateLinear class not found"
+    assert isinstance(router.gate, cls), (
+        f"router.gate is {type(router.gate).__name__}, expected RouterGateLinear"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff / repo_tests) -- regression + anti-stub
 # ---------------------------------------------------------------------------
@@ -131,9 +159,7 @@ def test_state_dict_compat():
     import torch.nn as nn
 
     router_mod = _load_router()
-    TokenChoiceTopKRouter = router_mod.TokenChoiceTopKRouter
-
-    router = TokenChoiceTopKRouter(dim=16, num_experts=4, top_k=2)
+    router = _make_router(router_mod, dim=16, num_experts=4)
     ref = nn.Linear(16, 4, bias=False)
 
     gate_keys = set(router.gate.state_dict().keys())
@@ -146,17 +172,15 @@ def test_state_dict_compat():
 # [repo_tests] pass_to_pass
 def test_router_forward_shapes():
     """TokenChoiceTopKRouter.forward produces correct output shapes and valid values."""
-    import torch
-
     router_mod = _load_router()
-    TokenChoiceTopKRouter = router_mod.TokenChoiceTopKRouter
 
     for dim, n_experts, top_k, n_tokens in [(32, 4, 2, 8), (64, 8, 2, 16), (16, 4, 1, 4)]:
-        router = TokenChoiceTopKRouter(
+        router = router_mod.TokenChoiceTopKRouter(
             dim=dim, num_experts=n_experts, top_k=top_k, score_func="sigmoid",
         )
         x = torch.randn(n_tokens, dim)
-        top_scores, indices, counts = router(x)
+        with patch.object(torch, "histc", _safe_histc):
+            top_scores, indices, counts = router(x)
 
         assert top_scores.shape == (n_tokens, top_k), f"top_scores shape: {top_scores.shape}"
         assert indices.shape == (n_tokens, top_k), f"indices shape: {indices.shape}"
@@ -202,3 +226,28 @@ def test_no_wildcard_imports():
     src = open(TARGET).read()
     wildcards = re.findall(r"^\s*from\s+\S+\s+import\s+\*", src, re.MULTILINE)
     assert not wildcards, f"Wildcard imports found: {wildcards}"
+
+
+# [agent_config] pass_to_pass -- AGENTS.md:95 @ 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+def test_no_gpu_cpu_sync_in_hot_path():
+    """No GPU-CPU sync calls (.item(), .tolist(), print(tensor)) in router forward path."""
+    import re
+
+    src = open(TARGET).read()
+    # Check for .item() and .tolist() calls (GPU-CPU sync)
+    sync_calls = re.findall(r"\.\s*item\s*\(\s*\)|\.\s*tolist\s*\(\s*\)", src)
+    assert not sync_calls, f"GPU-CPU sync calls found in router.py: {sync_calls}"
+
+
+# [agent_config] pass_to_pass -- AGENTS.md:89-91 @ 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+def test_no_bare_print():
+    """No bare print() calls in router.py — must use areal.utils.logging.getLogger."""
+    import ast
+
+    src = open(TARGET).read()
+    tree = ast.parse(src)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            if isinstance(func, ast.Name) and func.id == "print":
+                assert False, f"Bare print() call at line {node.lineno} — use getLogger instead"

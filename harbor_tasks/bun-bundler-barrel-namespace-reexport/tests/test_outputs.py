@@ -61,7 +61,7 @@ def test_is_star_not_hardcoded_false():
     assert res_pos >= 0, "resolveBarrelExport call not found in BFS function"
 
     # Look in a window after the call for queue.append with .is_star
-    after_resolve = bfs[res_pos : res_pos + 1500]
+    after_resolve = bfs[res_pos : res_pos + 5000]
 
     # Find all .is_star = <value> assignments in the queue append area
     is_star_assigns = re.findall(r"\.is_star\s*=\s*([^,}\s]+)", after_resolve)
@@ -114,7 +114,7 @@ def test_star_flag_sourced_from_import_data():
     bfs_has_inline_star = False
     res_pos = bfs.find("resolveBarrelExport")
     if res_pos >= 0:
-        after = bfs[res_pos : res_pos + 1500]
+        after = bfs[res_pos : res_pos + 5000]
         bfs_has_inline_star = bool(
             re.search(r"import.+\.(alias_is_star|is_star|is_namespace)", after, re.IGNORECASE)
             or re.search(r"named_import.+\.(alias_is_star|is_star)", after, re.IGNORECASE)
@@ -156,7 +156,7 @@ def test_resolution_carries_star_info():
     bfs = _bfs_body(text)
     res_pos = bfs.find("resolveBarrelExport")
     if res_pos >= 0:
-        after = bfs[res_pos : res_pos + 1500]
+        after = bfs[res_pos : res_pos + 5000]
         if (
             re.search(r"import.+\.(alias_is_star|is_star|is_namespace)", after, re.IGNORECASE)
             or re.search(r"import.+\.name.*len", after)

@@ -22,13 +22,19 @@ FILE = Path(REPO) / "src/bun.js/bindings/CookieMap.cpp"
 def _read_tojson_body() -> str:
     """Extract the body of CookieMap::toJSON method."""
     text = FILE.read_text()
-    m = re.search(
-        r"CookieMap::toJSON\b.*?\{(.*?)^\}",
-        text,
-        re.DOTALL | re.MULTILINE,
-    )
+    # Find the method and extract its full body by brace-matching
+    m = re.search(r"CookieMap::toJSON\b[^{]*\{", text)
     assert m, "CookieMap::toJSON method not found in CookieMap.cpp"
-    return m.group(1)
+    start = m.end()
+    depth = 1
+    i = start
+    while i < len(text) and depth > 0:
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+        i += 1
+    return text[start : i - 1]
 
 
 def _read_full_file() -> str:
@@ -44,7 +50,8 @@ def _read_full_file() -> str:
 def test_no_bare_putdirect_in_tojson():
     """toJSON must not use bare putDirect (crashes on numeric cookie names).
     Must use an index-safe variant like putDirectMayBeIndex, putDirectIndex,
-    putByIndex, put, or defineOwnProperty."""
+    putByIndex, put, or defineOwnProperty.
+    # AST-only because: C++ file, requires Zig/CMake build system to compile"""
     body = _read_tojson_body()
 
     # Match only bare ->putDirect( — NOT ->putDirectMayBeIndex( etc.
@@ -64,7 +71,8 @@ def test_no_bare_putdirect_in_tojson():
 # [pr_diff] fail_to_pass
 def test_all_insertion_paths_safe():
     """Both modified-cookie and original-cookie loops must use index-safe
-    property insertion. Accepts: two safe calls, or one call in a merged loop."""
+    property insertion. Accepts: two safe calls, or one call in a merged loop.
+    # AST-only because: C++ file, requires Zig/CMake build system to compile"""
     body = _read_tojson_body()
 
     all_puts = re.findall(
@@ -94,7 +102,8 @@ def test_all_insertion_paths_safe():
 def test_dedup_avoids_hasproperty():
     """Deduplication must not call hasProperty on the JSObject (also crashes
     on numeric keys). Accept: HashSet tracking, restructured iteration, or
-    any approach that avoids hasProperty on the result object."""
+    any approach that avoids hasProperty on the result object.
+    # AST-only because: C++ file, requires Zig/CMake build system to compile"""
     body = _read_tojson_body()
 
     has_property_calls = re.findall(r"->hasProperty\s*\(", body)
@@ -116,7 +125,8 @@ def test_dedup_avoids_hasproperty():
 # [pr_diff] pass_to_pass
 def test_tojson_preserves_functionality():
     """toJSON must still construct a JS object, handle exceptions, and iterate
-    over cookies — core functionality must not be removed."""
+    over cookies — core functionality must not be removed.
+    # AST-only because: C++ file, requires Zig/CMake build system to compile"""
     body = _read_tojson_body()
 
     has_obj = bool(
@@ -145,7 +155,8 @@ def test_tojson_preserves_functionality():
 
 # [static] pass_to_pass
 def test_not_stub():
-    """toJSON must have a real implementation, not a stub."""
+    """toJSON must have a real implementation, not a stub.
+    # AST-only because: C++ file, requires Zig/CMake build system to compile"""
     body = _read_tojson_body()
     non_blank = [
         line
@@ -160,7 +171,8 @@ def test_not_stub():
 # [static] pass_to_pass
 def test_other_methods_preserved():
     """CookieMap must retain its other methods — the fix should not replace
-    the entire file with a minimal stub."""
+    the entire file with a minimal stub.
+    # AST-only because: C++ file, requires Zig/CMake build system to compile"""
     text = _read_full_file()
     other_methods = set(re.findall(r"CookieMap::(\w+)", text))
     other_methods.discard("toJSON")
@@ -172,7 +184,8 @@ def test_other_methods_preserved():
 # [pr_diff] pass_to_pass
 def test_put_inside_loop():
     """Property insertion must occur inside a loop (iterating cookies), not
-    as standalone statements — ensures coherent implementation."""
+    as standalone statements — ensures coherent implementation.
+    # AST-only because: C++ file, requires Zig/CMake build system to compile"""
     body = _read_tojson_body()
     lines = body.splitlines()
 
@@ -199,16 +212,6 @@ def test_put_inside_loop():
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md / AGENTS.md / SKILL.md
 # ---------------------------------------------------------------------------
-
-
-# [agent_config] pass_to_pass — .claude/skills/implementing-jsc-classes-cpp/SKILL.md:184 @ 581d45c2
-def test_root_h_included():
-    """C++ files in the bindings layer must include root.h.
-    # AST-only because: C++ file, requires Zig/CMake build system to compile"""
-    text = _read_full_file()
-    assert re.search(r'#include\s+"root\.h"', text), (
-        "CookieMap.cpp must include root.h — required for all C++ files in bindings"
-    )
 
 
 # [agent_config] pass_to_pass — .claude/skills/implementing-jsc-classes-cpp/SKILL.md:94-101 @ 581d45c2

@@ -1,6 +1,6 @@
 """
 Task: bun-glob-scan-double-visit
-Repo: oven-sh/bun @ 3ca678c93ee1d620873f7896af45486f9954553a
+Repo: oven-sh/bun @ 639bc4351cd7b5daa38b99d47a506dec68e95353
 PR:   #28496
 
 All checks must pass for reward = 1. Any failure = reward 0.
@@ -121,13 +121,13 @@ def test_double_push_eliminated():
     """Paired workbuf.append calls for the same dir must be consolidated.
 
     The base code pushes two WorkItems for the same directory at **/X
-    boundaries (6 append calls total with paired if/else blocks).
+    boundaries (11 append calls total with paired if/else blocks).
     A correct fix consolidates into fewer appends (one per directory).
     """
     code = _read(WALKER)
     append_count = len(re.findall(r"workbuf\.append", code))
-    assert 0 < append_count < 6, (
-        f"workbuf.append count is {append_count} (base has 6, fix should consolidate; 0 means removed)"
+    assert 0 < append_count < 11, (
+        f"workbuf.append count is {append_count} (base has 11, fix should consolidate; 0 means removed)"
     )
 
 
@@ -236,7 +236,7 @@ def test_coherent_zig_code():
 # ---------------------------------------------------------------------------
 
 
-# [agent_config] fail_to_pass -- CLAUDE.md:232 @ 3ca678c9
+# [agent_config] fail_to_pass -- CLAUDE.md:232 @ 639bc435
 def test_allocator_usage():
     """New code must reference an allocator (Zig memory management rule).
 
@@ -251,7 +251,7 @@ def test_allocator_usage():
     )
 
 
-# [agent_config] pass_to_pass -- src/CLAUDE.md:11 @ 3ca678c9
+# [agent_config] pass_to_pass -- src/CLAUDE.md:11 @ 639bc435
 def test_no_inline_imports():
     """No @import() inside functions -- imports must be at file/struct bottom.
 
@@ -271,7 +271,7 @@ def test_no_inline_imports():
             )
 
 
-# [agent_config] pass_to_pass -- src/CLAUDE.md:16 @ 3ca678c9
+# [agent_config] pass_to_pass -- src/CLAUDE.md:16 @ 639bc435
 def test_no_std_namespace_in_new_code():
     """New code must not introduce std.fs, std.posix, or std.os usage.
 
@@ -291,7 +291,7 @@ def test_no_std_namespace_in_new_code():
             )
 
 
-# [agent_config] pass_to_pass -- src/CLAUDE.md:234 @ 3ca678c9
+# [agent_config] pass_to_pass -- src/CLAUDE.md:234 @ 639bc435
 def test_no_catch_out_of_memory():
     """New code must use bun.handleOom() not 'catch bun.outOfMemory()'.
 

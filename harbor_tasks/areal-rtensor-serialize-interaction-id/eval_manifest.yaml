@@ -60,4 +60,37 @@ checks:
       lines: "99"
       commit: "3bf10c9c56eeae846b3de52dde8db42918f80690"
 
-rubric: []
+  - id: new_fields_have_defaults
+    type: pass_to_pass
+    origin: agent_config
+    description: "New dataclass fields have default values for backward compatibility"
+    source:
+      path: "AGENTS.md"
+      lines: "162-163"
+      commit: "3bf10c9c56eeae846b3de52dde8db42918f80690"
+
+  - id: no_bare_print
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files use areal.utils.logging, not bare print()"
+    source:
+      path: "AGENTS.md"
+      lines: "89-91"
+      commit: "3bf10c9c56eeae846b3de52dde8db42918f80690"
+
+rubric:
+  - rule: "Follow existing code patterns in the same module"
+    source:
+      path: "AGENTS.md"
+      lines: "40"
+      commit: "3bf10c9c56eeae846b3de52dde8db42918f80690"
+  - rule: "Heavy optional deps (torch, transformers) should be imported inside functions, not at module level"
+    source:
+      path: "AGENTS.md"
+      lines: "99-100"
+      commit: "3bf10c9c56eeae846b3de52dde8db42918f80690"
+  - rule: "Batch tensor operations over Python loops on tensor elements"
+    source:
+      path: "AGENTS.md"
+      lines: "96"
+      commit: "3bf10c9c56eeae846b3de52dde8db42918f80690"

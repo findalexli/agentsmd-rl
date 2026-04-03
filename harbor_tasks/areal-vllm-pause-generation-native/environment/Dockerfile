@@ -17,6 +17,7 @@ RUN git clone "$REPO" /workspace/AReaL && \
 
 # No heavy deps needed — tests are AST/source-level only
 # (vllm is not importable without GPU, and we only inspect the source file)
+RUN pip install --no-cache-dir pytest pytest-json-ctrf
 
 RUN mkdir -p /logs/verifier
 

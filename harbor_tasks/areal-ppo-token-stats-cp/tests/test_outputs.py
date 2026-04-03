@@ -30,10 +30,14 @@ def test_syntax_check():
 # ---------------------------------------------------------------------------
 
 def _import_helper():
-    import sys
-    sys.path.insert(0, REPO)
-    from areal.trainer.ppo.stats import infer_token_denominator
-    return infer_token_denominator
+    """Load stats.py directly to avoid areal package __init__ imports."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "stats", f"{REPO}/areal/trainer/ppo/stats.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.infer_token_denominator
 
 
 # [pr_diff] fail_to_pass

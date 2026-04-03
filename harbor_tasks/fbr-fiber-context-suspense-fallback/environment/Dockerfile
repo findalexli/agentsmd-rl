@@ -20,10 +20,10 @@ WORKDIR /workspace/react
 # Clean up git history and make it a fresh snapshot
 RUN rm -rf .git && \
     git init && \
-    git add -A && \
-    git commit -m "snapshot" && \
     git config user.email "test@example.com" && \
-    git config user.name "Test User"
+    git config user.name "Test User" && \
+    git add -A && \
+    git commit -m "snapshot"
 
 # Install dependencies (minimal - yarn should fetch what's needed)
 RUN yarn install --frozen-lockfile --network-timeout 100000

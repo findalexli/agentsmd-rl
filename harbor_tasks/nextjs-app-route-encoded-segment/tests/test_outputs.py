@@ -16,20 +16,77 @@ from pathlib import Path
 REPO = "/workspace/next.js"
 TARGET_FILE = "packages/next/src/shared/lib/router/routes/app.ts"
 
+# Mock dependencies for app.ts — faithful reproductions from the repo
+_MOCK_PREAMBLE = textwrap.dedent("""\
+    class InvariantError extends Error {
+      constructor(message: string, options?: ErrorOptions) {
+        super(`Invariant: ${message.endsWith('.') ? message : message + '.'} This is a bug in Next.js.`, options);
+        this.name = 'InvariantError';
+      }
+    }
+
+    const INTERCEPTION_ROUTE_MARKERS = ['(..)(..)', '(.)', '(..)', '(...)'] as const;
+    type InterceptionMarker = (typeof INTERCEPTION_ROUTE_MARKERS)[number];
+
+    type SegmentParam = { paramName: string; paramType: string };
+
+    function getSegmentParam(segment: string): SegmentParam | null {
+      const interceptionMarker = INTERCEPTION_ROUTE_MARKERS.find((marker) =>
+        segment.startsWith(marker)
+      );
+      if (interceptionMarker) {
+        segment = segment.slice(interceptionMarker.length);
+      }
+      if (segment.startsWith('[[...') && segment.endsWith(']]')) {
+        return { paramType: 'optional-catchall', paramName: segment.slice(5, -2) };
+      }
+      if (segment.startsWith('[...') && segment.endsWith(']')) {
+        return {
+          paramType: interceptionMarker ? 'catchall-intercepted-' + interceptionMarker : 'catchall',
+          paramName: segment.slice(4, -1),
+        };
+      }
+      if (segment.startsWith('[') && segment.endsWith(']')) {
+        return {
+          paramType: interceptionMarker ? 'dynamic-intercepted-' + interceptionMarker : 'dynamic',
+          paramName: segment.slice(1, -1),
+        };
+      }
+      return null;
+    }
+
+    function isCatchAll(type: string): boolean {
+      return type === 'catchall' || type === 'optional-catchall' ||
+             type.startsWith('catchall-intercepted-');
+    }
+""")
+
+
+def _create_patched_module() -> str:
+    """Create a patched version of app.ts with mock dependencies, return path."""
+    src = Path(f"{REPO}/{TARGET_FILE}").read_text()
+    # Remove import blocks (single-line and multi-line)
+    patched = re.sub(r"import\s*\{[^}]*\}\s*from\s*['\"][^'\"]*['\"];?", "", src)
+    patched = re.sub(r"import\s+[^\n{]*from\s*['\"][^'\"]*['\"];?", "", patched)
+    patched = _MOCK_PREAMBLE + "\n" + patched
+    patched_path = "/tmp/_patched_app.ts"
+    Path(patched_path).write_text(patched)
+    return patched_path
+
 
 def _parse_route(pathname: str) -> dict:
-    """Run parseAppRoute via tsx and return {names, types, segmentCount}."""
-    # Escape backticks and backslashes for template literal safety
+    """Run parseAppRoute via tsx on a patched copy with mocked deps."""
+    patched = _create_patched_module()
     safe = pathname.replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$")
-    code = textwrap.dedent(f"""\
-        import {{ parseAppRoute }} from './packages/next/src/shared/lib/router/routes/app.js'
+    test_script = textwrap.dedent(f"""\
+        import {{ parseAppRoute }} from '{patched.replace(".ts", ".js")}'
         const route = parseAppRoute(`{safe}`, false)
         const names = route.dynamicSegments.map((s: any) => s.param.paramName)
-        const types = route.dynamicSegments.map((s: any) => s.param.type)
+        const types = route.dynamicSegments.map((s: any) => s.param.paramType)
         console.log(JSON.stringify({{ names, types, segmentCount: route.segments.length }}))
     """)
     script = Path("/tmp/_test_route.ts")
-    script.write_text(code)
+    script.write_text(test_script)
     r = subprocess.run(
         ["tsx", str(script)],
         cwd=REPO,
@@ -47,8 +104,9 @@ def _parse_route(pathname: str) -> dict:
 # [static] pass_to_pass
 def test_syntax_check():
     """Modified TypeScript file must parse without errors."""
+    patched = _create_patched_module()
     r = subprocess.run(
-        ["tsx", "--eval", f"import './{TARGET_FILE}'; console.log('OK')"],
+        ["tsx", "--eval", f"import '{patched.replace('.ts', '.js')}'; console.log('OK')"],
         cwd=REPO,
         capture_output=True,
         timeout=30,
@@ -63,7 +121,6 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_encoded_single_dynamic():
     """Encoded single dynamic placeholder %5B...%5D is recognized."""
-    # Test with several different param names
     r1 = _parse_route("/vercel/%5BprojectSlug%5D")
     assert "projectSlug" in r1["names"]
 
@@ -198,4 +255,3 @@ def test_no_hardcoded_secrets():
         content,
         re.IGNORECASE,
     ), "Hardcoded secret values found"
-

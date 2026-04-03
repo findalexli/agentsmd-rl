@@ -177,6 +177,9 @@ def test_lora_payload_forwarded():
         "HttpRequest": HttpRequest,
         "WeightUpdateRequests": WeightUpdateRequests,
         "get_versioned_lora_name": get_versioned_lora_name,
+        # Type stubs for annotations evaluated at function def time (Python 3.12)
+        "WeightUpdateMeta": type("WeightUpdateMeta", (), {}),
+        "ParamSpec": type("ParamSpec", (), {}),
     }
     exec(method_src, ns)
     fn = ns["build_distributed_weight_update_requests"]
@@ -242,6 +245,9 @@ def test_non_lora_payload_unchanged():
         "HttpRequest": HttpRequest,
         "WeightUpdateRequests": WeightUpdateRequests,
         "get_versioned_lora_name": get_versioned_lora_name,
+        # Type stubs for annotations evaluated at function def time (Python 3.12)
+        "WeightUpdateMeta": type("WeightUpdateMeta", (), {}),
+        "ParamSpec": type("ParamSpec", (), {}),
     }
     exec(method_src, ns)
     fn = ns["build_distributed_weight_update_requests"]

@@ -123,21 +123,28 @@ def test_textbox_await_tick_active():
     before assertions can check the emitted value.
     """
     content = Path(TEST_FILE).read_text()
-    lines = content.split("\n")
+    lines = content.splitlines()
 
-    in_copy_test = False
+    # Find the copy test block boundaries
+    start = None
+    end = None
     for i, line in enumerate(lines):
         if "copy: emitted when copy button is clicked" in line:
-            in_copy_test = True
-        elif in_copy_test:
-            stripped = line.strip()
-            if "await tick()" in stripped:
-                assert not stripped.startswith("//"), (
-                    f"await tick() is commented out on line {i + 1}"
-                )
-                return
-            if stripped.startswith("test(") or stripped == "});":
-                break
+            start = i
+        elif start is not None and re.match(r'^\t\}\);', line):
+            # Top-level test closer (one tab indent) ends the block
+            end = i
+            break
+
+    assert start is not None, "Copy test block not found"
+    block = lines[start:(end or len(lines))]
+
+    # Find await tick() in the block — must be present and not commented
+    for line in block:
+        stripped = line.strip()
+        if "await tick()" in stripped:
+            assert not stripped.startswith("//"), "await tick() is commented out"
+            return
 
     raise AssertionError("await tick() not found in copy test block")
 

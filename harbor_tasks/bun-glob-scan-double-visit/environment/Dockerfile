@@ -10,7 +10,7 @@ ENV PATH="/root/.bun/bin:${PATH}"
 
 RUN git clone https://github.com/oven-sh/bun.git /workspace/bun \
     && cd /workspace/bun \
-    && git checkout 3ca678c93ee1d620873f7896af45486f9954553a
+    && git checkout 639bc4351cd7b5daa38b99d47a506dec68e95353
 
 RUN mkdir -p /logs/verifier
 

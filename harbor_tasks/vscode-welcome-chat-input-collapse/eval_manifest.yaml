@@ -1,0 +1,131 @@
+# Evaluation Manifest for vscode-welcome-chat-input-collapse
+# Source: microsoft/vscode#306454
+
+source:
+  repo: microsoft/vscode
+  pr_number: 306454
+  pr_title: "sessions: fix welcome page chat input collapsing on first keystroke"
+  merge_commit: 4ebc211cda9e32010ab4770859156e9a95583559
+  base_commit: abea71e2b7c1daecf68232d5d2a96efe3a6bc7f0
+  issue: "https://github.com/microsoft/vscode/issues/304544"
+
+attribution:
+  files_changed:
+    - path: src/vs/workbench/contrib/welcomeAgentSessions/browser/agentSessionsWelcome.ts
+      additions: 7
+      deletions: 3
+
+  agent_configs_consulted:
+    - .github/copilot-instructions.md
+    - .github/skills/sessions/SKILL.md
+    - .github/skills/agent-sessions-layout/SKILL.md
+
+graders:
+  - name: behavioral
+    type: deterministic
+    weight: 0.70
+    source: pr_diff
+    description: |
+      Tests that the fix is correctly applied: setInputPartMaxHeightOverride
+      is called before layout(), constants are defined for height calculation,
+      and the old fixed height pattern is removed.
+
+  - name: regression
+    type: deterministic
+    weight: 0.00
+    source: repo_tests
+    description: |
+      No separate regression tests - the TypeScript compilation gate ensures
+      no syntax errors are introduced.
+
+  - name: config
+    type: deterministic
+    weight: 0.15
+    source: agent_config
+    description: |
+      Code quality checks from .github/copilot-instructions.md:
+      tabs for indentation, copyright header, proper documentation.
+
+  - name: style_rubric
+    type: model_based
+    weight: 0.15
+    source: derived
+    description: |
+      LLM judge evaluates: code quality (meaningful names, clear calculation,
+      explanatory comments), correctness pattern (follows compact chat surface
+      pattern, proper call sequence).
+
+checks:
+  - id: gate_typescript_compile
+    tier: gate
+    origin: repo_tests
+    description: TypeScript compilation passes without errors
+
+  - id: f2p_override_call
+    tier: fail_to_pass
+    weight: 0.14
+    origin: pr_diff
+    description: setInputPartMaxHeightOverride is called in layoutChatWidget
+
+  - id: f2p_constants_defined
+    tier: fail_to_pass
+    weight: 0.14
+    origin: pr_diff
+    description: All height constants are defined (LAYOUT_HEIGHT, RESERVED_LIST_HEIGHT, RESERVED_CHROME_HEIGHT)
+
+  - id: f2p_override_constant
+    tier: fail_to_pass
+    weight: 0.14
+    origin: pr_diff
+    description: MAX_HEIGHT_OVERRIDE constant is calculated from component heights
+
+  - id: f2p_old_pattern_removed
+    tier: fail_to_pass
+    weight: 0.14
+    origin: pr_diff
+    description: Old fixed height variable pattern is removed
+
+  - id: f2p_layout_with_constant
+    tier: fail_to_pass
+    weight: 0.14
+    origin: pr_diff
+    description: layout() is called with named constant instead of literal
+
+  - id: structural_explanatory_comment
+    tier: structural
+    weight: 0.05
+    origin: pr_diff
+    description: Explanatory comment about compact-surface sizing is present
+
+  - id: structural_call_sequence
+    tier: structural
+    weight: 0.05
+    origin: pr_diff
+    description: setInputPartMaxHeightOverride called before layout()
+
+  - id: structural_constant_scope
+    tier: structural
+    weight: 0.05
+    origin: pr_diff
+    description: Constants defined at file-level scope
+
+  - id: config_indentation
+    tier: config
+    weight: 0.05
+    origin: agent_config
+    source_ref: ".github/copilot-instructions.md:134"
+    description: Uses tabs for indentation
+
+  - id: config_copyright
+    tier: config
+    weight: 0.05
+    origin: agent_config
+    source_ref: ".github/copilot-instructions.md:188"
+    description: Copyright header present
+
+  - id: config_documentation
+    tier: config
+    weight: 0.05
+    origin: agent_config
+    source_ref: ".github/copilot-instructions.md:148"
+    description: Proper JSDoc comments for classes

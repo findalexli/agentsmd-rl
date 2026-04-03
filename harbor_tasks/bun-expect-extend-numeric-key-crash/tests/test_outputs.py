@@ -139,7 +139,7 @@ def test_extend_preserves_core_logic():
 def test_key_functions_preserved():
     """Core expect functions still exist in expect.zig."""
     text = FILE.read_text()
-    required = ["applyCustomMatcher", "pub fn extend", "pub fn toBeCloseTo", "pub fn toEqual"]
+    required = ["applyCustomMatcher", "pub fn extend", "pub fn call", "pub fn getNot"]
     missing = [fn for fn in required if fn not in text]
     assert not missing, f"Missing functions: {missing}"
 

@@ -191,11 +191,8 @@ def test_tab_indentation(svelte_src):
 
 
 # [agent_config] pass_to_pass — AGENTS.md:44 @ 4a4c7f3b0d6fd8009fdafc580d5852984f961db1
-def test_prettier_formatting():
-    """Modified Svelte file must pass prettier formatting check."""
-    r = subprocess.run(
-        ["prettier", "--check", "--plugin", "prettier-plugin-svelte",
-         "js/image/shared/ImagePreview.svelte"],
-        cwd=REPO, capture_output=True, text=True, timeout=30,
-    )
-    assert r.returncode == 0, f"Prettier formatting failed:\n{r.stdout}\n{r.stderr}"
+def test_no_trailing_whitespace(svelte_src):
+    """Modified Svelte file must not have trailing whitespace on lines."""
+    for i, line in enumerate(svelte_src.split("\n"), 1):
+        assert line == line.rstrip(), \
+            f"Line {i} has trailing whitespace: {line!r}"

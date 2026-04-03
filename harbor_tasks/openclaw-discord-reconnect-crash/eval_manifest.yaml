@@ -87,6 +87,33 @@ checks:
       lines: "111"
       commit: "496a1a35bd7ac7a1719d39a3723a731e2d131e8b"
 
+  - id: no_mixed_dynamic_static_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must not mix await import() and static import for the same module"
+    source:
+      path: "CLAUDE.md"
+      lines: "106"
+      commit: "496a1a35bd7ac7a1719d39a3723a731e2d131e8b"
+
+  - id: no_relative_imports_escaping_extension
+    type: pass_to_pass
+    origin: agent_config
+    description: "Relative imports must not resolve outside the extension package root"
+    source:
+      path: "CLAUDE.md"
+      lines: "109"
+      commit: "496a1a35bd7ac7a1719d39a3723a731e2d131e8b"
+
+  - id: no_direct_plugin_sdk_relative
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must not reach into src/plugin-sdk/ by relative path"
+    source:
+      path: "CLAUDE.md"
+      lines: "110"
+      commit: "496a1a35bd7ac7a1719d39a3723a731e2d131e8b"
+
 rubric:
   - rule: "Prefer strict typing; avoid `any`."
     source:
@@ -104,4 +131,10 @@ rubric:
     source:
       path: "CLAUDE.md"
       lines: "118"
+      commit: "496a1a35bd7ac7a1719d39a3723a731e2d131e8b"
+
+  - rule: "Aim to keep files under ~700 LOC; split/refactor when it improves clarity or testability."
+    source:
+      path: "CLAUDE.md"
+      lines: "116"
       commit: "496a1a35bd7ac7a1719d39a3723a731e2d131e8b"

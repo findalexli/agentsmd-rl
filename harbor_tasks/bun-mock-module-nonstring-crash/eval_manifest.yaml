@@ -17,15 +17,10 @@ checks:
     origin: pr_diff
     description: "Error thrown and early return when first argument is not a string"
 
-  - id: nonstring_throws_typeerror
-    type: pass_to_pass
+  - id: error_message_descriptive
+    type: fail_to_pass
     origin: pr_diff
-    description: "mock.module() throws TypeError for non-string args (number, object, symbol, bool, null)"
-
-  - id: string_arg_accepted
-    type: pass_to_pass
-    origin: pr_diff
-    description: "mock.module() works correctly with a valid string argument"
+    description: "Error message mentions 'string' or 'module' so the user knows what went wrong"
 
   - id: existing_guards_preserved
     type: pass_to_pass
@@ -80,6 +75,15 @@ checks:
     source:
       path: "CLAUDE.md"
       lines: "99"
+      commit: "e94c3035c6f9d7868fb814cfeaf27b219d00e565"
+
+  - id: agent_test_no_timeout_option
+    type: fail_to_pass
+    origin: agent_config
+    description: "Test does not set a custom timeout (Bun has built-in timeouts)"
+    source:
+      path: "test/AGENTS.md"
+      lines: "120"
       commit: "e94c3035c6f9d7868fb814cfeaf27b219d00e565"
 
 rubric:

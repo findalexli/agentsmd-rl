@@ -17,7 +17,7 @@ index 78d15107cb7..1565a8842a4 100644
 @@ -1280,6 +1280,38 @@ pub const AutoBitSet = union(enum) {
          }
      }
-
+ 
 +    pub fn count(this: *const AutoBitSet) usize {
 +        return switch (this.*) {
 +            inline else => |*bitset| bitset.count(),
@@ -60,7 +60,7 @@ index 2d275a3faab..29aa10ee2dd 100644
 @@ -386,6 +386,15 @@ pub fn GlobWalker_(
              }
          }, true);
-
+ 
 +        /// Set of active component indices during traversal. At `**/X`
 +        /// boundaries the walker needs to both advance past X and keep the
 +        /// outer `**` alive; rather than visiting the directory twice, both
@@ -76,7 +76,7 @@ index 2d275a3faab..29aa10ee2dd 100644
 @@ -415,10 +424,9 @@ pub fn GlobWalker_(
                  path: bun.PathBuffer,
                  dir_path: [:0]const u8,
-
+ 
 -                component_idx: u32,
 -                pattern: *Component,
 -                next_pattern: ?*Component,
@@ -84,20 +84,20 @@ index 2d275a3faab..29aa10ee2dd 100644
 +                /// Active component indices. Multiple indices mean one readdir
 +                /// evaluates all of them instead of revisiting the directory.
 +                active: ComponentSet,
-
+ 
                  iter_closed: bool = false,
                  at_cwd: bool = false,
 @@ -445,7 +453,7 @@ pub fn GlobWalker_(
                          break :is_absolute std.fs.path.isAbsolutePosix(this.walker.pattern);
                      };
-
+ 
 -                    if (!is_absolute) break :brk WorkItem.new(this.walker.cwd, 0, .directory);
 +                    if (!is_absolute) break :brk WorkItem.new(this.walker.cwd, this.walker.singleSet(0), .directory);
-
+ 
                      was_absolute = true;
-
+ 
 @@ -495,7 +503,7 @@ pub fn GlobWalker_(
-
+ 
                      break :brk WorkItem.new(
                          path_without_special_syntax,
 -                        starting_component_idx,
@@ -119,7 +119,7 @@ index 2d275a3faab..29aa10ee2dd 100644
                  } };
 @@ -607,17 +612,23 @@ pub fn GlobWalker_(
                  };
-
+ 
                  var had_dot_dot = false;
 -                const component_idx = this.walker.skipSpecialComponents(work_item.idx, &dir_path, &this.iter_state.directory.path, &had_dot_dot);
 -
@@ -148,13 +148,13 @@ index 2d275a3faab..29aa10ee2dd 100644
 +                    // Multi-index sets are already normalized by evalDir.
 +                    break :set work_item.active;
 +                };
-
+ 
                  const fd: Accessor.Handle = fd: {
                      if (work_item.fd) |fd| break :fd fd;
 @@ -647,59 +658,49 @@ pub fn GlobWalker_(
                      };
                  };
-
+ 
 -                // Optimization:
 -                // If we have a pattern like:
 -                // `packages/*/package.json`
@@ -227,7 +227,7 @@ index 2d275a3faab..29aa10ee2dd 100644
                      }
 -                    return .success;
                  }
-
+ 
                  this.iter_state.directory.dir_path = dir_path;
 -                this.iter_state.directory.component_idx = component_idx;
 -                this.iter_state.directory.pattern = &this.walker.patternComponents.items[component_idx];
@@ -236,15 +236,15 @@ index 2d275a3faab..29aa10ee2dd 100644
 +                this.iter_state.directory.active = active;
                  this.iter_state.directory.at_cwd = false;
                  this.iter_state.directory.fd = .empty;
-
+ 
 -                log("Transition(dirpath={s}, component_idx={d})", .{ dir_path, component_idx });
 +                log("Transition(dirpath={s}, active_count={d})", .{ dir_path, active.count() });
-
+ 
                  this.iter_state.directory.fd = fd;
                  const iterator = Accessor.DirIter.iterate(fd);
 @@ -736,17 +737,15 @@ pub fn GlobWalker_(
                                      const entry_name = symlink_full_path_z[work_item.entry_start..symlink_full_path_z.len];
-
+ 
                                      var has_dot_dot = false;
 -                                    const component_idx = this.walker.skipSpecialComponents(work_item.idx, &symlink_full_path_z, scratch_path_buf, &has_dot_dot);
 -
@@ -266,7 +266,7 @@ index 2d275a3faab..29aa10ee2dd 100644
 +                                        }
 +                                        break :blk this.walker.singleSet(norm);
 +                                    } else work_item.active;
-
+ 
                                      this.iter_state = .get_next;
                                      const maybe_dir_fd: ?Accessor.Handle = switch (try Accessor.openat(this.cwd_fd, symlink_full_path_z)) {
 @@ -755,21 +754,8 @@ pub fn GlobWalker_(
@@ -295,7 +295,7 @@ index 2d275a3faab..29aa10ee2dd 100644
                                          },
 @@ -780,43 +766,22 @@ pub fn GlobWalker_(
                                      };
-
+ 
                                      const dir_fd = maybe_dir_fd orelse {
 -                                        // No directory file descriptor, it's a file
 -                                        if (is_last)
@@ -313,7 +313,7 @@ index 2d275a3faab..29aa10ee2dd 100644
 -
                                          continue;
                                      };
-
+ 
                                      var add_dir: bool = false;
 -                                    // TODO this function calls `matchPatternImpl(pattern,
 -                                    // entry_name)` which is redundant because we already called
@@ -345,12 +345,12 @@ index 2d275a3faab..29aa10ee2dd 100644
 +                                    } else {
 +                                        this.closeDisallowingCwd(dir_fd);
                                      }
-
+ 
                                      if (add_dir and !this.walker.only_files) {
 @@ -843,13 +808,11 @@ pub fn GlobWalker_(
                              };
                              log("dir: {s} entry: {s}", .{ dir.dir_path, entry.name.slice() });
-
+ 
 -                            const dir_iter_state: *const IterState.Directory = &this.iter_state.directory;
 -
 +                            const active = dir.active;
@@ -415,7 +415,7 @@ index 2d275a3faab..29aa10ee2dd 100644
 -                                        const matches = this.walker.matchPatternImpl(dir_iter_state.pattern, entry_name);
 -                                        if (!matches) continue;
 +                                        if (!this.walker.evalImpl(active, entry_name)) continue;
-
+ 
                                          const subdir_parts: []const []const u8 = &[_][]const u8{
                                              dir.dir_path[0..dir.dir_path.len],
                                              entry_name,
@@ -424,7 +424,7 @@ index 2d275a3faab..29aa10ee2dd 100644
 -
 -                                        // const subdir_entry_name = try this.arena.allocator().dupe(u8, ResolvePath.join(subdir_parts, .auto));
                                          const subdir_entry_name = try this.walker.join(subdir_parts);
-
+ 
                                          try this.walker.workbuf.append(
                                              this.walker.arena.allocator(),
 -                                            WorkItem.newSymlink(subdir_entry_name, dir_iter_state.component_idx, entry_start),
@@ -433,9 +433,9 @@ index 2d275a3faab..29aa10ee2dd 100644
 -
                                          continue;
                                      }
-
+ 
                                      if (this.walker.only_files) continue;
-
+ 
 -                                    const matches = this.walker.matchPatternFile(entry_name, dir_iter_state.component_idx, dir_iter_state.is_last, dir_iter_state.pattern, dir_iter_state.next_pattern);
 -                                    if (matches) {
 +                                    if (this.walker.evalFile(active, entry_name)) {
@@ -453,7 +453,7 @@ index 2d275a3faab..29aa10ee2dd 100644
 -                                    const might_match = this.walker.matchPatternImpl(dir_iter_state.pattern, entry_name);
 -                                    if (!might_match) continue;
 +                                    if (!this.walker.evalImpl(active, entry_name)) continue;
-
+ 
 -                                    // Need to stat to determine actual kind (lstatat to not follow symlinks)
 -                                    // Use stack fallback for short names (typical case) to avoid arena allocation
                                      const stackbuf_size = 256;
@@ -465,7 +465,7 @@ index 2d275a3faab..29aa10ee2dd 100644
 -                                        .err => continue, // Skip entries we can't stat
 +                                        .err => continue,
                                      };
-
+ 
 -                                    // Process based on actual kind
                                      switch (real_kind) {
                                          .file => {
@@ -539,7 +539,7 @@ index 2d275a3faab..29aa10ee2dd 100644
                                      continue;
                                  },
 @@ -1023,7 +935,8 @@ pub fn GlobWalker_(
-
+ 
          const WorkItem = struct {
              path: []const u8,
 -            idx: u32,
@@ -551,7 +551,7 @@ index 2d275a3faab..29aa10ee2dd 100644
 @@ -1033,30 +946,16 @@ pub fn GlobWalker_(
                  symlink,
              };
-
+ 
 -            fn new(path: []const u8, idx: u32, kind: Kind) WorkItem {
 -                return .{
 -                    .path = path,
@@ -561,7 +561,7 @@ index 2d275a3faab..29aa10ee2dd 100644
 +            fn new(path: []const u8, active: ComponentSet, kind: Kind) WorkItem {
 +                return .{ .path = path, .active = active, .kind = kind };
              }
-
+ 
 -            fn newWithFd(path: []const u8, idx: u32, kind: Kind, fd: Accessor.Handle) WorkItem {
 -                return .{
 -                    .path = path,
@@ -572,7 +572,7 @@ index 2d275a3faab..29aa10ee2dd 100644
 +            fn newWithFd(path: []const u8, active: ComponentSet, kind: Kind, fd: Accessor.Handle) WorkItem {
 +                return .{ .path = path, .active = active, .kind = kind, .fd = fd };
              }
-
+ 
 -            fn newSymlink(path: []const u8, idx: u32, entry_start: u32) WorkItem {
 -                return .{
 -                    .path = path,
@@ -584,11 +584,11 @@ index 2d275a3faab..29aa10ee2dd 100644
 +                return .{ .path = path, .active = active, .kind = .symlink, .entry_start = entry_start };
              }
          };
-
+ 
 @@ -1439,6 +1338,78 @@ pub fn GlobWalker_(
              ).matches();
          }
-
+ 
 +        /// Create an empty ComponentSet sized for this pattern.
 +        fn makeSet(this: *GlobWalker) ComponentSet {
 +            return bun.handleOom(ComponentSet.initEmpty(
@@ -705,5 +705,4 @@ index 54b23bda26c..2975ff2aa5d 100644
 +    "/*.txt";
 +  expect([...new Bun.Glob(sandwich).scanSync({ cwd: dir })].length).toBe(1);
 +});
-
 PATCH

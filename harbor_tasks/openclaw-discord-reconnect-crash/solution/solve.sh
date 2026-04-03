@@ -2,14 +2,7 @@
 set -euo pipefail
 cd /workspace/openclaw
 
-TARGET="extensions/discord/src/monitor/provider.lifecycle.ts"
-
-# Replace the condition that gates reconnect-exhausted on lifecycleStopping
-sed -i 's/event.type === "disallowed-intents" ||$/event.type === "disallowed-intents" || event.type === "reconnect-exhausted") {/' "$TARGET" 2>/dev/null || true
-
-# More precise fix using the actual diff
-if grep -q 'lifecycleStopping && event.type === "reconnect-exhausted"' "$TARGET" 2>/dev/null; then
-    git apply - <<'PATCH'
+git apply - <<'PATCH'
 diff --git a/extensions/discord/src/monitor/provider.lifecycle.ts b/extensions/discord/src/monitor/provider.lifecycle.ts
 index 5f455b61b901..5b61ed2b4836 100644
 --- a/extensions/discord/src/monitor/provider.lifecycle.ts
@@ -32,6 +25,4 @@ index 5f455b61b901..5b61ed2b4836 100644
          return "stop";
        }
        throw event.err;
-
 PATCH
-fi

@@ -160,7 +160,7 @@ async def validate_one(
                 async def _build():
                     await AsyncTemplate.build(
                         template=tpl, alias=tpl_name,
-                        cpu_count=2, memory_mb=1024,
+                        cpu_count=4, memory_mb=4096,
                     )
 
                 _, retries = await retry_on_429(_build)
@@ -195,7 +195,7 @@ async def validate_one(
                         tpl = Template().from_dockerfile(dockerfile_content_or_path=str(dockerfile_path))
                         await AsyncTemplate.build(
                             template=tpl, alias=tpl_name,
-                            cpu_count=2, memory_mb=1024,
+                            cpu_count=4, memory_mb=4096,
                         )
                         r.template_status = "rebuilt"
                         (sandbox, retries) = await retry_on_429(

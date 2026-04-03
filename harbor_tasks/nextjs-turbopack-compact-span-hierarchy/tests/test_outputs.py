@@ -13,22 +13,15 @@ from pathlib import Path
 DB_FILE = Path("/workspace/next.js/turbopack/crates/turbo-persistence/src/db.rs")
 MOD_FILE = Path("/workspace/next.js/turbopack/crates/turbo-tasks-backend/src/backend/mod.rs")
 
-# Matches any tracing span macro whose string arg contains "compact"
-COMPACT_SPAN_RE = re.compile(
-    r"(?:info_span!|trace_span!|debug_span!|warn_span!|error_span!|span!)"
-    r'\s*\([^)]*"[^"]*compact[^"]*"',
-    re.IGNORECASE,
-)
 
-SPAN_MACRO_RE = re.compile(
-    r"(?:info_span!|trace_span!|debug_span!|warn_span!|error_span!|span!)\s*\("
-)
+def _strip_comments(text: str) -> str:
+    """Remove single-line // comments from Rust source."""
+    return re.sub(r"//[^\n]*", "", text)
 
 
-def _read_code_lines(path: Path) -> list[str]:
-    """Read file, return non-comment lines."""
-    lines = path.read_text().splitlines(keepends=True)
-    return [l for l in lines if not l.lstrip().startswith("//")]
+def _read_stripped(path: Path) -> str:
+    """Read file and strip // comments."""
+    return _strip_comments(path.read_text())
 
 
 # ---------------------------------------------------------------------------
@@ -38,53 +31,101 @@ def _read_code_lines(path: Path) -> list[str]:
 # [pr_diff] fail_to_pass
 def test_compact_span_removed_from_db():
     """compact() in db.rs must no longer create its own tracing span."""
-    code = "".join(_read_code_lines(DB_FILE))
-    matches = COMPACT_SPAN_RE.findall(code)
-    assert not matches, (
-        f"Found compact-related span(s) still in db.rs: {[m.strip()[:80] for m in matches[:3]]}"
-    )
+    src = _read_stripped(DB_FILE)
+    # Look for any tracing span macro with "compact" in its string argument.
+    # We search line-by-line in the compact() function region to avoid
+    # regex issues with nested parentheses across multiple lines.
+    in_compact_fn = False
+    brace_depth = 0
+    for line in src.splitlines():
+        stripped = line.strip()
+        # Detect the compact function definition
+        if re.search(r"fn\s+compact\b", stripped):
+            in_compact_fn = True
+            brace_depth = 0
+        if in_compact_fn:
+            brace_depth += stripped.count("{") - stripped.count("}")
+            # Check for any span macro with "compact" on this line
+            if re.search(
+                r"(?:info_span!|trace_span!|debug_span!|warn_span!|error_span!|span!)",
+                stripped,
+            ) and re.search(r'"[^"]*compact[^"]*"', stripped, re.IGNORECASE):
+                assert False, f"Found compact-related span still in db.rs: {stripped[:80]}"
+            # Also check if span macro + compact string are on separate lines
+            # by looking for span macro assignment with compact in the string arg
+            if brace_depth <= 0 and in_compact_fn and "{" in src[:src.find(stripped) + 1]:
+                # We've exited the function
+                pass
+    # Also do a broad multiline search as a safety net
+    # Match span macros where "compact" appears in the same macro invocation
+    for m in re.finditer(
+        r"(?:info_span!|trace_span!|debug_span!|warn_span!|error_span!|span!)\s*\(",
+        src,
+    ):
+        # Find the matching close paren (handle nesting)
+        start = m.end()
+        depth = 1
+        i = start
+        while i < len(src) and depth > 0:
+            if src[i] == "(":
+                depth += 1
+            elif src[i] == ")":
+                depth -= 1
+            i += 1
+        macro_body = src[start : i - 1] if depth == 0 else src[start : start + 200]
+        if re.search(r'"[^"]*compact[^"]*"', macro_body, re.IGNORECASE):
+            # This span macro references "compact" — it shouldn't be in db.rs
+            assert False, f"Found compact-related span in db.rs: {macro_body[:80]}"
 
 
 # [pr_diff] fail_to_pass
 def test_compact_span_added_to_mod():
     """A compact-related tracing span must exist in mod.rs (the call site)."""
-    lines = MOD_FILE.read_text().splitlines(keepends=True)
-    code_lines = [l for l in lines if not l.lstrip().startswith("//")]
-    code = "".join(code_lines)
+    src = _read_stripped(MOD_FILE)
+    # Search for span macros and check if any reference "compact"
+    for m in re.finditer(
+        r"(?:info_span!|trace_span!|debug_span!|warn_span!|error_span!|span!)\s*\(",
+        src,
+    ):
+        start = m.end()
+        depth = 1
+        i = start
+        while i < len(src) and depth > 0:
+            if src[i] == "(":
+                depth += 1
+            elif src[i] == ")":
+                depth -= 1
+            i += 1
+        macro_body = src[start : i - 1] if depth == 0 else src[start : start + 300]
+        if re.search(r'"[^"]*compact[^"]*"', macro_body, re.IGNORECASE):
+            return  # Found a compact span in mod.rs
 
-    # Strategy A: span macro with "compact" in its name
-    if COMPACT_SPAN_RE.search(code):
-        return
-
-    # Strategy B: a tracing span macro within 15 lines of a .compact() call
-    compact_call_indices = [
-        i for i, l in enumerate(lines)
-        if ".compact()" in l and not l.lstrip().startswith("//")
-    ]
-    for idx in compact_call_indices:
-        window = "".join(
-            l for l in lines[max(0, idx - 15) : idx + 5]
-            if not l.lstrip().startswith("//")
-        )
-        if SPAN_MACRO_RE.search(window):
-            return
-
-    raise AssertionError("No compact-related tracing span found in mod.rs")
+    # Fallback: check if there's a span macro within 15 lines of .compact() call
+    lines = src.splitlines()
+    for idx, line in enumerate(lines):
+        if ".compact()" in line:
+            window = "\n".join(lines[max(0, idx - 15) : idx + 5])
+            if re.search(
+                r"(?:info_span!|trace_span!|debug_span!|warn_span!|error_span!|span!)\s*\(",
+                window,
+            ):
+                return
+    assert False, "No compact-related tracing span found in mod.rs"
 
 
 # [pr_diff] fail_to_pass
 def test_root_span_in_mod():
     """A root span (parent: None) must exist in mod.rs for background work."""
-    code = "".join(_read_code_lines(MOD_FILE))
+    src = _read_stripped(MOD_FILE)
     patterns = [
         r"(?:info_span!|trace_span!|debug_span!|span!)\s*\(\s*parent\s*:\s*None",
-        r'parent\s*:\s*None\s*,\s*"',
+        r"parent\s*:\s*None\s*,\s*\"",
         r"Span::none\(\)",
     ]
     for pat in patterns:
-        if re.search(pat, code):
+        if re.search(pat, src):
             return
-    raise AssertionError("No root span (parent: None) found in mod.rs")
+    assert False, "No root span (parent: None) found in mod.rs"
 
 
 # [pr_diff] fail_to_pass
@@ -92,36 +133,32 @@ def test_sync_span_not_info_level():
     """'sync new files' span in db.rs must not be at info level."""
     src = DB_FILE.read_text()
 
-    # Removed entirely is fine
+    # Removed entirely is acceptable
     if '"sync new files"' not in src:
         return
 
-    for line in src.splitlines():
-        if '"sync new files"' not in line:
-            continue
-        assert not re.search(r"info_span!|warn_span!", line), (
-            "'sync new files' still at info level or higher"
-        )
-        if re.search(r"trace_span!|debug_span!|Level::TRACE|Level::DEBUG", line):
-            return
-
-    # Check context around the span
+    # Find lines with the span string and check the macro level
     lines = src.splitlines()
     for i, line in enumerate(lines):
-        if '"sync new files"' in line:
-            context = "\n".join(lines[max(0, i - 3) : i + 1])
-            assert not re.search(r"info_span!|warn_span!", context), (
-                "'sync new files' still at info level"
-            )
+        if '"sync new files"' not in line:
+            continue
+        # Check this line and a few lines before for the macro
+        context = "\n".join(lines[max(0, i - 3) : i + 1])
+        context_no_comments = _strip_comments(context)
+        assert not re.search(r"info_span!|warn_span!", context_no_comments), (
+            "'sync new files' still at info level or higher"
+        )
+        if re.search(r"trace_span!|debug_span!|Level::TRACE|Level::DEBUG", context_no_comments):
             return
 
-    raise AssertionError("Could not determine 'sync new files' span level")
+    assert False, "Could not determine 'sync new files' span level"
 
 
 # [pr_diff] fail_to_pass
 def test_snapshot_and_persist_not_called_with_none():
     """snapshot_and_persist must not be called with None as first arg."""
-    src = MOD_FILE.read_text()
+    src = _read_stripped(MOD_FILE)
+    # Find all calls and extract the first argument
     calls = re.findall(r"snapshot_and_persist\(\s*([^,)]+)", src)
     if not calls:
         # Function restructured / renamed — acceptable if "None" isn't passed

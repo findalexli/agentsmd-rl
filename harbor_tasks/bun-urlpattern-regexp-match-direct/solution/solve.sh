@@ -10,39 +10,6 @@ if grep -q 'componentMatch' src/bun.js/bindings/webcore/URLPatternComponent.h; t
 fi
 
 git apply - <<'PATCH'
-diff --git a/bench/snippets/urlpattern-detailed.mjs b/bench/snippets/urlpattern-detailed.mjs
-new file mode 100644
-index 00000000000..d7dd5137d95
---- /dev/null
-+++ b/bench/snippets/urlpattern-detailed.mjs
-@@ -0,0 +1,27 @@
-+import { bench, group, run } from "../runner.mjs";
-+
-+// Common real-world pattern: routing with named params
-+const routePattern = new URLPattern({ pathname: "/api/users/:id/posts/:postId" });
-+const matchURL = "https://example.com/api/users/42/posts/123";
-+const noMatchURL = "https://example.com/static/image.png";
-+
-+// Simple pathname pattern (most common)
-+const simplePattern = new URLPattern({ pathname: "/api/:resource" });
-+
-+// Full URL string pattern
-+const stringPattern = new URLPattern("https://*.example.com/foo/*");
-+
-+group("URLPattern.test() - hot path", () => {
-+  bench("test() match - named groups", () => routePattern.test(matchURL));
-+  bench("test() no-match - named groups", () => routePattern.test(noMatchURL));
-+  bench("test() match - simple", () => simplePattern.test("https://example.com/api/items"));
-+  bench("test() match - string pattern", () => stringPattern.test("https://sub.example.com/foo/bar"));
-+});
-+
-+group("URLPattern.exec() - hot path", () => {
-+  bench("exec() match - named groups", () => routePattern.exec(matchURL));
-+  bench("exec() no-match - named groups", () => routePattern.exec(noMatchURL));
-+  bench("exec() match - simple", () => simplePattern.exec("https://example.com/api/items"));
-+});
-+
-+await run();
 diff --git a/src/bun.js/bindings/webcore/URLPattern.cpp b/src/bun.js/bindings/webcore/URLPattern.cpp
 index 17884dfe8af..17320b78bd7 100644
 --- a/src/bun.js/bindings/webcore/URLPattern.cpp
@@ -126,7 +93,7 @@ index 17884dfe8af..17320b78bd7 100644
 +    return { WTF::move(result) };
  }
 
- // https://urlpattern.spec.whatmeans.org/#url-pattern-has-regexp-groups
+ // https://urlpattern.spec.whatwg.org/#url-pattern-has-regexp-groups
 diff --git a/src/bun.js/bindings/webcore/URLPatternComponent.cpp b/src/bun.js/bindings/webcore/URLPatternComponent.cpp
 index 0d7d8458fa9..81b9d4ced70 100644
 --- a/src/bun.js/bindings/webcore/URLPatternComponent.cpp
@@ -151,7 +118,7 @@ index 0d7d8458fa9..81b9d4ced70 100644
 @@ -76,65 +73,41 @@ ExceptionOr<URLPatternComponent> URLPatternComponent::compile(Ref<JSC::VM> vm, S
  }
 
- // https://urlpattern.spec.whatmeans.org/#protocol-component-matches-a-special-scheme
+ // https://urlpattern.spec.whatwg.org/#protocol-component-matches-a-special-scheme
 -bool URLPatternComponent::matchSpecialSchemeProtocol(ScriptExecutionContext& context) const
 +bool URLPatternComponent::matchSpecialSchemeProtocol(JSC::JSGlobalObject* globalObject) const
  {
@@ -193,7 +160,7 @@ index 0d7d8458fa9..81b9d4ced70 100644
  }
 
 +// Implements both "regexp matching" and "create a component match result":
- // https://urlpattern.spec.whatmeans.org/#create-a-component-match-result
+ // https://urlpattern.spec.whatwg.org/#create-a-component-match-result
 -URLPatternComponentResult URLPatternComponent::createComponentMatchResult(JSC::JSGlobalObject* globalObject, String&& input, const JSC::JSValue& execResult) const
 +std::optional<URLPatternComponentResult> URLPatternComponent::componentMatch(JSC::JSGlobalObject* globalObject, String&& input) const
  {
@@ -284,5 +251,4 @@ index 914b72a450d..4c97a465065 100644
 
      return {};
  }
-
 PATCH

@@ -256,3 +256,41 @@ def test_no_prototype_mutation():
     assert ".prototype" not in src or re.search(
         r'\.\s*prototype\s*[.=\[]', src
     ) is None, "Found prototype mutation — use explicit inheritance/composition"
+
+
+# [agent_config] pass_to_pass — CLAUDE.md:106 @ 496a1a35bd7ac7a1719d39a3723a731e2d131e8b
+def test_no_mixed_dynamic_static_imports():
+    """Must not mix await import() and static import for the same module."""
+    src = _read_target()
+    # Find all static imports
+    static_modules = set(re.findall(r'from\s+["\']([^"\']+)["\']', src))
+    # Find all dynamic imports
+    dynamic_modules = set(re.findall(r'await\s+import\s*\(\s*["\']([^"\']+)["\']\s*\)', src))
+    overlap = static_modules & dynamic_modules
+    assert not overlap, (
+        f"Mixed dynamic and static imports for: {overlap} — "
+        "use one import style per module in production code"
+    )
+
+
+# [agent_config] pass_to_pass — CLAUDE.md:109 @ 496a1a35bd7ac7a1719d39a3723a731e2d131e8b
+def test_no_relative_imports_escaping_extension():
+    """Relative imports must not resolve outside the extension package root."""
+    src = _read_target()
+    # extensions/discord/src/monitor/ — going up 4+ levels escapes the extension
+    # ../../../../ would leave extensions/discord/
+    escaping = re.findall(r'from\s+["\'](\.\./\.\./\.\./\.\.[^"\']*)["\']', src)
+    assert not escaping, (
+        f"Relative imports escape extension root: {escaping} — "
+        "use openclaw/plugin-sdk/* for cross-package imports"
+    )
+
+
+# [agent_config] pass_to_pass — CLAUDE.md:110 @ 496a1a35bd7ac7a1719d39a3723a731e2d131e8b
+def test_no_direct_plugin_sdk_relative():
+    """Must not reach into src/plugin-sdk/ by relative path."""
+    src = _read_target()
+    assert not re.search(r'from\s+["\'][^"\']*src/plugin-sdk/', src), (
+        "Found direct relative import into src/plugin-sdk/ — "
+        "use openclaw/plugin-sdk/<subpath> instead"
+    )

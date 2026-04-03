@@ -24,6 +24,24 @@ TABS_FILE = Path(REPO) / "js/tabs/shared/Tabs.svelte"
 _NODE_ENV = {**os.environ, "NODE_PATH": "/tmp/ts/node_modules"}
 
 
+def _get_tabs_instance_script() -> str:
+    """Extract the instance <script lang="ts"> block from Tabs.svelte,
+    skipping the module <script context="module"> block."""
+    src = TABS_FILE.read_text()
+    # Find all script blocks; the instance script is the one without context="module"
+    blocks = list(re.finditer(
+        r'<script(?P<attrs>[^>]*)>(.*?)</script>', src, re.DOTALL
+    ))
+    for m in blocks:
+        attrs = m.group("attrs")
+        if "context" not in attrs:
+            return m.group(2)
+    # Fallback: return the last script block (instance script is always last)
+    if blocks:
+        return blocks[-1].group(2)
+    raise AssertionError("No <script> block found in Tabs.svelte")
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -55,10 +73,14 @@ if (sf.statements.length === 0) process.exit(1);
 var ts = require('typescript');
 var fs = require('fs');
 var src = fs.readFileSync('{TABS_FILE}', 'utf8');
-var m = src.match(/<script[^>]*>([\\s\\S]*?)<\\/script>/);
-if (!m) {{ process.exit(1); }}
-var sf = ts.createSourceFile('Tabs.svelte.ts', m[1], ts.ScriptTarget.Latest, true);
-if (sf.statements.length === 0) process.exit(1);
+var m = src.match(/<script[^>]*>([\\s\\S]*?)<\\/script>/g);
+if (!m || m.length === 0) process.exit(1);
+// Parse each script block
+for (var block of m) {{
+    var inner = block.replace(/<script[^>]*>/, '').replace(/<\\/script>/, '');
+    var sf = ts.createSourceFile('Tabs.svelte.ts', inner, ts.ScriptTarget.Latest, true);
+    if (sf.statements.length === 0) process.exit(1);
+}}
 """],
         capture_output=True, timeout=30, env=_NODE_ENV,
     )
@@ -84,8 +106,7 @@ def test_update_state_detects_tabitem():
     # Verify update_state method exists
     assert "update_state" in src, "update_state method not found in init.svelte.ts"
 
-    # Find update_state method body: from its opening brace to the class-level
-    # closing brace (one-tab indentation). Use a broad capture.
+    # Find update_state method body
     us_match = re.search(
         r'update_state\s*\([^)]*\)\s*\{(.+?)(?=\n\t(?:\w|#\w|/\*\*))',
         src, re.DOTALL,
@@ -146,17 +167,11 @@ def test_tabs_reactive_sync():
     triggers *on* initial_tabs changes. The fix adds a $: block that fires specifically
     when initial_tabs changes, so tab buttons reflect updated non-mounted tab props.
     """
-    src = TABS_FILE.read_text()
-
-    # Extract script block
-    script_match = re.search(r'<script[^>]*>(.*?)</script>', src, re.DOTALL)
-    assert script_match, "No <script> block in Tabs.svelte"
-    script = script_match.group(1)
+    script = _get_tabs_instance_script()
 
     # The fix must add a reactive statement ($: or $effect) that is directly
     # triggered by initial_tabs — i.e. initial_tabs appears on the RHS of $:
     # or inside $effect(() => { ... }) where initial_tabs is referenced.
-    # This is the key signal that distinguishes the fix from the base.
     has_reactive_on_initial_tabs = bool(re.search(
         r'\$:\s+\w+\s*\(\s*initial_tabs\b|'      # $: fn(initial_tabs)
         r'\$:\s*\{[^}]*\binitial_tabs\b|'          # $: { ... initial_tabs ... }
@@ -184,11 +199,7 @@ def test_mounted_tab_tracking():
     Without this tracking, the reactive sync would overwrite tab entries
     that mounted TabItem components already manage via register_tab.
     """
-    src = TABS_FILE.read_text()
-
-    script_match = re.search(r'<script[^>]*>(.*?)</script>', src, re.DOTALL)
-    assert script_match, "No <script> block in Tabs.svelte"
-    script = script_match.group(1)
+    script = _get_tabs_instance_script()
 
     # Strip comments
     clean = re.sub(r'//.*$', '', script, flags=re.MULTILINE)
@@ -244,14 +255,14 @@ def test_files_not_gutted():
     """Both files must retain substantial content (reject gutting/rewriting)."""
     init_lines = len(INIT_FILE.read_text().splitlines())
     tabs_lines = len(TABS_FILE.read_text().splitlines())
-    # Base: init ~520 lines, tabs ~180 lines. Fix adds ~50 and ~20.
-    assert init_lines >= 400, f"init.svelte.ts too short ({init_lines} lines, need >=400)"
+    # Base: init ~914 lines, tabs ~180 lines. Fix adds ~50 and ~20.
+    assert init_lines >= 800, f"init.svelte.ts too short ({init_lines} lines, need >=800)"
     assert tabs_lines >= 80, f"Tabs.svelte too short ({tabs_lines} lines, need >=80)"
 
 
-# [static] pass_to_pass
+# [static] fail_to_pass
 def test_init_file_grew():
-    """init.svelte.ts must be longer than the base (~520 lines) since the fix adds code."""
+    """init.svelte.ts must be longer than the base (~914 lines) since the fix adds ~50 lines of code."""
     init_lines = len(INIT_FILE.read_text().splitlines())
-    assert init_lines >= 530, \
-        f"init.svelte.ts has {init_lines} lines (base had ~520, fix should add ~50)"
+    assert init_lines >= 950, \
+        f"init.svelte.ts has {init_lines} lines (base had ~914, fix should add ~50)"

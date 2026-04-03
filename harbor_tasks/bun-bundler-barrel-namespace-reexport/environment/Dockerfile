@@ -11,7 +11,6 @@ ENV PATH="/root/.bun/bin:${PATH}"
 # Clone bun repo at the base commit (before the fix)
 RUN git clone --filter=blob:none https://github.com/oven-sh/bun.git /workspace/bun \
     && cd /workspace/bun \
-    && git fetch --depth 1 origin 1628bfeceb07085263b5da5adb1ec3b094e4b188 \
     && git checkout 1628bfeceb07085263b5da5adb1ec3b094e4b188
 
 RUN mkdir -p /logs/verifier

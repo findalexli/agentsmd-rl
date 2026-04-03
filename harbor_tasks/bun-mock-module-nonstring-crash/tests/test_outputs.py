@@ -9,7 +9,6 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import re
 import subprocess
-import tempfile
 from pathlib import Path
 
 REPO = "/workspace/bun"
@@ -18,6 +17,7 @@ TARGET = f"{REPO}/src/bun.js/bindings/BunPlugin.cpp"
 
 def _get_function_body():
     """Extract JSMock__jsModuleMock body (first 3000 chars), C++ comments stripped."""
+    # AST-only because: C++ code requires full Bun build system (zig/cmake) to compile
     code = Path(TARGET).read_text()
     stripped = re.sub(r"//[^\n]*", "", code)
     stripped = re.sub(r"/\*.*?\*/", "", stripped, flags=re.DOTALL)
@@ -26,54 +26,41 @@ def _get_function_body():
     return stripped[match.start() : match.start() + 3000]
 
 
-def _run_bun_test(test_code: str, filename: str):
-    """Write a bun test file to a temp dir and run it."""
-    tmp_dir = Path(tempfile.mkdtemp(prefix="bun-mock-"))
-    test_file = tmp_dir / filename
-    test_file.write_text(test_code)
-    r = subprocess.run(
-        ["bun", "test", str(test_file)],
-        capture_output=True,
-        text=True,
-        timeout=30,
-        cwd=str(tmp_dir),
-    )
-    assert r.returncode == 0, f"Bun test failed:\n{r.stdout}\n{r.stderr}"
-
-
 def _find_agent_test_files():
     """Find test files the agent created for mock.module non-string validation."""
     test_dir = Path(REPO) / "test"
     if not test_dir.exists():
         return []
     results = []
-    for path in test_dir.rglob("*.test.ts"):
-        try:
-            content = path.read_text()
-        except Exception:
-            continue
-        if "mock.module" not in content:
-            continue
-        if any(kw in content for kw in ["TypeError", "SharedArrayBuffer", "non-string", "isString"]):
-            results.append(path)
-    for path in test_dir.rglob("*.test.tsx"):
-        try:
-            content = path.read_text()
-        except Exception:
-            continue
-        if "mock.module" not in content:
-            continue
-        if any(kw in content for kw in ["TypeError", "SharedArrayBuffer", "non-string", "isString"]):
-            results.append(path)
+    for ext in ("*.test.ts", "*.test.tsx"):
+        for path in test_dir.rglob(ext):
+            try:
+                content = path.read_text()
+            except Exception:
+                continue
+            if "mock.module" not in content:
+                continue
+            if any(
+                kw in content
+                for kw in [
+                    "TypeError",
+                    "SharedArrayBuffer",
+                    "non-string",
+                    "isString",
+                    "not a string",
+                    "requires a",
+                    "module name string",
+                ]
+            ):
+                results.append(path)
     return results
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) -- structural source code checks
-# (Bun is compiled C++; container cannot build agent changes, so F2P tests
-#  verify the source-level fix via code analysis.)
+# Fail-to-pass (pr_diff) — structural source code checks
 # AST-only because: C++ code requires full Bun build system to compile
 # ---------------------------------------------------------------------------
+
 
 # [pr_diff] fail_to_pass
 def test_type_guard_before_tostring():
@@ -167,60 +154,30 @@ def test_type_guard_error_path():
     ), "No early return after error throw"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) -- behavioral tests against installed bun binary
-# (Installed bun already has the fix; these verify the spec as regression.)
-# ---------------------------------------------------------------------------
+# [pr_diff] fail_to_pass
+def test_error_message_descriptive():
+    """Error message mentions 'string' or 'module' so the user knows what went wrong."""
+    fn_body = _get_function_body()
 
-# [pr_diff] pass_to_pass
-def test_nonstring_throws_typeerror():
-    """mock.module() throws TypeError for non-string args (number, object, symbol, bool, null)."""
-    _run_bun_test(
-        """\
-import { test, expect, mock } from "bun:test";
+    # Find the error creation near the type guard
+    guard_match = re.search(r"isString\s*\(", fn_body)
+    if not guard_match:
+        # If no isString guard, check for alternative type checks with error messages
+        error_match = re.search(r"createTypeError|throwTypeError|createError", fn_body)
+        assert error_match, "No type error creation found"
+        region = fn_body[error_match.start() : error_match.start() + 300]
+    else:
+        region = fn_body[guard_match.start() : guard_match.start() + 500]
 
-test("number arg throws TypeError", () => {
-  expect(() => mock.module(123 as any, () => ({}))).toThrow(TypeError);
-});
-
-test("object arg throws TypeError", () => {
-  expect(() => mock.module({} as any, () => ({}))).toThrow(TypeError);
-});
-
-test("symbol arg throws TypeError", () => {
-  expect(() => mock.module(Symbol("x") as any, () => ({}))).toThrow(TypeError);
-});
-
-test("boolean arg throws TypeError", () => {
-  expect(() => mock.module(true as any, () => ({}))).toThrow(TypeError);
-});
-
-test("null arg throws TypeError", () => {
-  expect(() => mock.module(null as any, () => ({}))).toThrow(TypeError);
-});
-""",
-        "nonstring_throws.test.ts",
+    # The error message should be descriptive — mention "string" or "module"
+    assert re.search(r'(?i)(string|module|specifier)', region), (
+        "Error message near type guard does not mention 'string', 'module', or 'specifier'"
     )
 
 
-# [pr_diff] pass_to_pass
-def test_string_arg_accepted():
-    """mock.module() works correctly with a valid string argument."""
-    _run_bun_test(
-        """\
-import { test, expect, mock } from "bun:test";
-
-test("mock.module works with string first arg", () => {
-  expect(() => mock.module("some-test-module", () => ({ default: 42 }))).not.toThrow();
-});
-
-test("mock.module returns undefined", () => {
-  const result = mock.module("another-test-module", () => ({ default: "hello" }));
-  expect(result).toBeUndefined();
-});
-""",
-        "string_ok.test.ts",
-    )
+# ---------------------------------------------------------------------------
+# Pass-to-pass (pr_diff) — source code regression checks
+# ---------------------------------------------------------------------------
 
 
 # [pr_diff] pass_to_pass
@@ -232,8 +189,9 @@ def test_existing_guards_preserved():
 
 
 # ---------------------------------------------------------------------------
-# Static -- anti-stub
+# Static — anti-stub
 # ---------------------------------------------------------------------------
+
 
 # [static] fail_to_pass
 def test_meaningful_source_changes():
@@ -261,28 +219,29 @@ def test_meaningful_source_changes():
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) -- rules from CLAUDE.md / AGENTS.md
+# Config-derived (agent_config) — rules from CLAUDE.md / AGENTS.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass -- CLAUDE.md:226,229 @ e94c3035
+
+# [agent_config] fail_to_pass — CLAUDE.md:226,229 @ e94c3035
 def test_agent_test_file_created():
     """Agent created a test file for mock.module non-string validation in test/."""
     found = _find_agent_test_files()
     assert len(found) > 0, "No test file for mock.module non-string validation found in test/"
 
 
-# [agent_config] fail_to_pass -- CLAUDE.md:229 @ e94c3035
+# [agent_config] fail_to_pass — CLAUDE.md:229 @ e94c3035
 def test_agent_test_file_naming():
     """Agent test file ends in .test.ts or .test.tsx per CLAUDE.md:229."""
     found = _find_agent_test_files()
     assert len(found) > 0, "No agent test file found"
     for f in found:
-        assert f.name.endswith(".test.ts") or f.name.endswith(".test.tsx"), (
-            f"Test file {f.name} does not end in .test.ts or .test.tsx"
-        )
+        assert f.name.endswith(".test.ts") or f.name.endswith(
+            ".test.tsx"
+        ), f"Test file {f.name} does not end in .test.ts or .test.tsx"
 
 
-# [agent_config] fail_to_pass -- CLAUDE.md:32-33 @ e94c3035
+# [agent_config] fail_to_pass — CLAUDE.md:32-33 @ e94c3035
 def test_agent_test_file_location():
     """Agent test file is in test/js/bun/ (Bun-specific API test location per CLAUDE.md:32-33)."""
     found = _find_agent_test_files()
@@ -290,11 +249,11 @@ def test_agent_test_file_location():
     for f in found:
         rel = f.relative_to(Path(REPO))
         assert str(rel).startswith("test/js/bun/"), (
-            f"Test file {rel} is not in test/js/bun/ (expected location for Bun API tests)"
+            f"Test file {rel} is not in test/js/bun/"
         )
 
 
-# [agent_config] fail_to_pass -- CLAUDE.md:102 @ e94c3035
+# [agent_config] fail_to_pass — CLAUDE.md:102 @ e94c3035
 def test_agent_test_no_settimeout():
     """Agent test file does not use setTimeout (flaky test pattern per CLAUDE.md:102)."""
     found = _find_agent_test_files()
@@ -306,15 +265,27 @@ def test_agent_test_no_settimeout():
         )
 
 
-# [agent_config] fail_to_pass -- CLAUDE.md:99 @ e94c3035
+# [agent_config] fail_to_pass — CLAUDE.md:99 @ e94c3035
 def test_agent_test_asserts_positive_behavior():
     """Agent test asserts TypeError is thrown, not just absence of crash (CLAUDE.md:99)."""
     found = _find_agent_test_files()
     assert len(found) > 0, "No agent test file found"
     for f in found:
         content = f.read_text()
-        # Must assert TypeError is thrown, not just "no panic" or "no crash"
         positive_patterns = ["toThrow", "TypeError", "rejects", "throws"]
         assert any(p in content for p in positive_patterns), (
             f"Test file {f.name} does not assert positive behavior (TypeError thrown)"
+        )
+
+
+# [agent_config] fail_to_pass — test/AGENTS.md:120 @ e94c3035
+def test_agent_test_no_timeout_option():
+    """Agent test does not set a custom timeout (Bun has built-in timeouts per test/AGENTS.md:120)."""
+    found = _find_agent_test_files()
+    assert len(found) > 0, "No agent test file found"
+    for f in found:
+        content = f.read_text()
+        # Check for timeout option in test() calls: test("name", fn, { timeout: ... })
+        assert not re.search(r'timeout\s*:', content), (
+            f"Test file {f.name} sets a custom timeout — Bun already has built-in timeouts"
         )

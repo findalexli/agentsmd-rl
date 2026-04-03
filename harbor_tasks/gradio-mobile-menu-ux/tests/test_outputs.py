@@ -268,18 +268,13 @@ def test_not_stub():
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) — AGENTS.md:307
+# Config-derived (agent_config) — AGENTS.md:44, js/README.md:65
 # ---------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass — AGENTS.md:307 @ 7760161258abe6329b754dd6d2511fc3b61fed95
+# [agent_config] pass_to_pass — AGENTS.md:44, js/README.md:65 @ 7760161258abe6329b754dd6d2511fc3b61fed95
 def test_prettier_formatting():
-    """Frontend code is formatted with prettier (AGENTS.md line 307)."""
-    # Install prettier + svelte plugin into the isolated tool dir
-    # Must run npx from /svelte-tools so node resolves the plugin correctly
-    subprocess.run(
-        ["npm", "install", "--no-save", "prettier", "prettier-plugin-svelte"],
-        cwd="/svelte-tools", capture_output=True, timeout=60,
-    )
+    """Frontend code is formatted with prettier (AGENTS.md line 44)."""
+    # prettier + prettier-plugin-svelte are pre-installed in /svelte-tools (Dockerfile)
     r = subprocess.run(
         ["npx", "prettier", "--check", "--plugin", "prettier-plugin-svelte",
          HEADER],
