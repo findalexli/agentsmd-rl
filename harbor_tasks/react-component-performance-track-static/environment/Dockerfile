@@ -28,9 +28,6 @@ RUN rm -rf .git && \
     git add -A && \
     git commit -m "snapshot"
 
-# Install minimal dependencies for testing (just what's needed to parse/validate)
-RUN yarn install --frozen-lockfile --network-timeout 600000 2>/dev/null || npm install
-
 # Create verifier directory
 RUN mkdir -p /logs/verifier
 
