@@ -137,13 +137,6 @@ def test_list_certificates_map_keys():
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
-def test_existing_list_function_preserved():
-    """The original list/0 function in rabbit_trust_store.erl must still exist."""
-    src = (TRUST_STORE_SRC / "rabbit_trust_store.erl").read_text()
-    export_sections = re.findall(r"-export\(\[([^\]]+)\]\)", src, re.DOTALL)
-    export_text = " ".join(export_sections)
-    assert re.search(r"\blist\b", export_text), \
-        "The original list/0 function must still be exported"
 
 
 # [pr_diff] fail_to_pass

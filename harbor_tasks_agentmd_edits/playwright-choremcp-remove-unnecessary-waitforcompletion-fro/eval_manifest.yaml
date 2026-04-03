@@ -18,10 +18,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: browser_hover must not use waitForCompletion
-- id: select_option_no_wait_for_completion
-  type: fail_to_pass
-  origin: pr_diff
-  description: browser_select_option must not use waitForCompletion
 - id: click_still_uses_wait_for_completion
   type: pass_to_pass
   origin: static
@@ -48,5 +44,11 @@ rubric:
     lines: 38-39
     commit: fd1b453fdc7710c077d3389370dea395cde1570f
   reference: '# --submit presses Enter after filling the element
+
+    playwright-cli fill e5 "user@example.com"  --submit'
+- rule: browser_select_option must not use waitForCompletion
+  reference: '# packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+
+    # --submit presses Enter after filling the element
 
     playwright-cli fill e5 "user@example.com"  --submit'

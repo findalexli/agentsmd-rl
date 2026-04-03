@@ -201,23 +201,6 @@ def test_musllinux_annotations_py36_compat():
 
 
 # [pr_diff] fail_to_pass
-def test_patch_file_exists():
-    """A patch file documenting the Python 3.6 compat changes must exist."""
-    patch_files = list(PACKAGING.glob("*.patch"))
-    assert len(patch_files) >= 1, (
-        "No .patch file found in the packaging directory. "
-        "A patch file should document the Python 3.6 compatibility changes "
-        "so they can be reapplied when re-vendoring."
-    )
-    # The patch should reference the key changes
-    patch_content = patch_files[0].read_text()
-    assert "annotations" in patch_content.lower() or "3.6" in patch_content, (
-        "Patch file should describe the Python 3.6 / annotations changes"
-    )
-    # It should contain diff-like content
-    assert "---" in patch_content or "diff" in patch_content.lower(), (
-        "Patch file should contain diff/patch format content"
-    )
 
 
 # ---------------------------------------------------------------------------

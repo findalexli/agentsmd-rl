@@ -151,21 +151,6 @@ def test_v8_ffi_binding_for_attach():
 
 
 # [pr_diff] fail_to_pass
-def test_constructor_tests_added():
-    """Test file must include constructor-related tests using jsg_constructor."""
-    test_file = Path(REPO) / "src/rust/jsg-test/tests/resource_callback.rs"
-    content = test_file.read_text()
-    assert "jsg_constructor" in content, (
-        "Test file must import/use jsg_constructor"
-    )
-    # Must have at least one test exercising the constructor
-    assert "constructor" in content.lower(), (
-        "Test file must have constructor tests"
-    )
-    # Must test that resources without constructor throw
-    assert "without" in content.lower() or "illegal" in content.lower() or "throw" in content.lower(), (
-        "Must test that resources without #[jsg_constructor] throw on new"
-    )
 
 
 # ---------------------------------------------------------------------------

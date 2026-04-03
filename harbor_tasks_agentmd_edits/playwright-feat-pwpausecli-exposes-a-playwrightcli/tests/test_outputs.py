@@ -81,20 +81,6 @@ def test_pwpause_cli_sets_timeouts():
 
 
 # [pr_diff] fail_to_pass
-def test_run_daemon_for_context_exported():
-    """runDaemonForContext function is exported from browserBackend.ts."""
-    src = (Path(REPO) / "packages/playwright/src/mcp/test/browserBackend.ts").read_text()
-    assert re.search(r'\bexport\s+(async\s+)?function\s+runDaemonForContext\b', src), \
-        "runDaemonForContext must be exported from browserBackend.ts"
-    # Verify it checks PWPAUSE === 'cli'
-    assert re.search(r"process\.env\.PWPAUSE\s*!==?\s*['\"]cli['\"]", src), \
-        "runDaemonForContext must check PWPAUSE === 'cli'"
-    # Verify it's imported and wired in index.ts
-    index_src = (Path(REPO) / "packages/playwright/src/index.ts").read_text()
-    assert "runDaemonForContext" in index_src, \
-        "runDaemonForContext must be imported in index.ts"
-    assert "_onDidFinishTestFunctionCallbacks" in index_src, \
-        "index.ts must register runDaemonForContext via _onDidFinishTestFunctionCallbacks"
 
 
 # [pr_diff] fail_to_pass

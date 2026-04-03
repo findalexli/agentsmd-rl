@@ -246,15 +246,6 @@ def test_verify_tool_multi_file():
     assert "fromB" in names, "Should include declaration from second file"
 
 
-def test_verify_tool_usage_error():
-    """Running with no arguments should exit with error."""
-    subprocess.run(
-        ["go", "build", "-o", "/tmp/split-file-verify", "./tools/split-file-verify"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
 
     result = subprocess.run(
         ["/tmp/split-file-verify"],

@@ -135,7 +135,7 @@ def scout_repo(
     print(f"{'='*60}")
 
     # Fetch many more since most PRs won't touch config files
-    fetch_limit = max(target * 15, 500)
+    fetch_limit = max(target * 15, 1000)
 
     # Fetch merged PRs with file info
     prs = gh_json([

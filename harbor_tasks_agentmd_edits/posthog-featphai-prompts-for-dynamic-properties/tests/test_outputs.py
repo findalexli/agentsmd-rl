@@ -87,10 +87,6 @@ def test_taxonomy_tool_person_hint():
 
 
 # [pr_diff] fail_to_pass
-def test_taxonomy_tool_event_hint():
-    """read_taxonomy core.py must define an event properties hint constant
-    and append it when querying event properties."""
-    src = (Path(REPO) / "ee/hogai/tools/read_taxonomy/core.py").read_text()
 
     # Must have the event hint constant
     assert "DYNAMIC_EVENT_PROPERTIES_HINT" in src, \

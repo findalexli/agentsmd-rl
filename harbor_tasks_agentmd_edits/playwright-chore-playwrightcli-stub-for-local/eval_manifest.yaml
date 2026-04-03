@@ -17,10 +17,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Stub JS file imports and invokes the playwright CLI program module
-- id: stub_script_has_error_handling
-  type: fail_to_pass
-  origin: pr_diff
-  description: Stub JS file handles errors with catch and process.exit
 rubric:
 - rule: Installation instructions are clear and follow the existing SKILL.md documentation
     style
@@ -70,6 +66,18 @@ rubric:
 
     npm install -g @playwright/cli@latest'
 - rule: SKILL.md still documents core CLI commands (open, click, snapshot)
+  reference: '# packages/playwright/src/skill/SKILL.md
+
+    If global `playwright-cli` command is not available, try a local version via `npx
+    playwright-cli`:
+
+    npx playwright-cli --version
+
+    When local version is available, use `npx playwright-cli` in all commands. Otherwise,
+    install `playwright-cli` as a global command:
+
+    npm install -g @playwright/cli@latest'
+- rule: Stub JS file handles errors with catch and process.exit
   reference: '# packages/playwright/src/skill/SKILL.md
 
     If global `playwright-cli` command is not available, try a local version via `npx

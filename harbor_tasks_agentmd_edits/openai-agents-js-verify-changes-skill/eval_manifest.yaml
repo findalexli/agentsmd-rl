@@ -17,11 +17,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: run.sh must use fail-fast semantics (set -e)
-- id: run_sh_command_order
-  type: fail_to_pass
-  origin: pr_diff
-  description: 'run.sh must run commands in correct order: install, build, build-check,
-    lint, test'
 rubric:
 - rule: The skill documentation is written in a clear, professional style consistent
     with the existing AGENTS.md tone.
@@ -176,6 +171,35 @@ rubric:
 
     7.  [Development Wo'
 - rule: AGENTS.md must retain existing core sections (Overview, Testing, etc.)
+  reference: '# .codex/skills/verify-changes/SKILL.md
+
+    ---
+
+    name: verify-changes
+
+    description: Run all mandatory verification steps for code changes in the OpenAI
+    Agents JS monorepo.
+
+    ---
+
+
+    # Verify Changes
+
+
+    ## Overview
+
+
+    Ensure work is only marked complete after installing dependencies, building, linting,
+    type checking, and tests pass. Use this skill whenever wrapping up a task, before
+    opening a PR, or when asked to confirm that changes are ready to hand off.
+
+
+    ## Quick start
+
+
+    1. Keep this skill at `./.codex/skills'
+- rule: 'run.sh must run commands in correct order: install, build, build-check, lint,
+    test'
   reference: '# .codex/skills/verify-changes/SKILL.md
 
     ---

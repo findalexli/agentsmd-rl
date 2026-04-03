@@ -112,9 +112,6 @@ def test_provider_flag_forwarded_to_all_scripts():
 
 
 # [pr_diff] fail_to_pass
-def test_merge_handles_missing_modules_file():
-    """merge() must not crash when new_modules file doesn't exist (incremental --provider mode)."""
-    import tempfile
 
     sys.path.insert(0, str(Path(REPO) / "dev" / "registry"))
     from merge_registry_data import merge

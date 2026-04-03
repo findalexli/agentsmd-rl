@@ -1,0 +1,43 @@
+version: '2.0'
+source:
+  repo: triggerdotdev/trigger.dev
+  pr: 2064
+  base_commit: ad4daa3301f63354745cdcb8e911950d9fa5a93f
+  merge_commit: a69621bdcc948ab9855554a6e4b36fbf1d690779
+checks:
+- id: api_origin_preferred_over_app_origin
+  type: fail_to_pass
+  origin: pr_diff
+  description: Env endpoint prefers API_ORIGIN over APP_ORIGIN for apiUrl
+- id: normalize_localhost_darwin
+  type: fail_to_pass
+  origin: pr_diff
+  description: normalizeApiUrlForBuild replaces localhost with host.docker.internal
+    on macOS
+- id: normalize_preserves_localhost_linux
+  type: fail_to_pass
+  origin: pr_diff
+  description: normalizeApiUrlForBuild preserves localhost on Linux
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files exist and contain valid structure
+rubric:
+- rule: CONTRIBUTING.md build instructions are clear and follow the style of surrounding
+    steps
+  source:
+    path: CONTRIBUTING.md
+    lines: 68-76
+    commit: ad4daa3301f63354745cdcb8e911950d9fa5a93f
+- rule: Code comments explaining the localhost normalization are clear and helpful
+  source:
+    path: .cursor/rules/webapp.mdc
+    lines: 1-10
+    commit: ad4daa3301f63354745cdcb8e911950d9fa5a93f
+- rule: CONTRIBUTING.md build step includes CLI and SDK packages
+  source:
+    path: CONTRIBUTING.md
+    lines: 71-73
+    commit: a69621bdcc948ab9855554a6e4b36fbf1d690779
+  reference: "10. Build everything\n    pnpm run build --filter webapp && pnpm run\
+    \ build --filter trigger.dev && pnpm run build --filter @trigger.dev/sdk"

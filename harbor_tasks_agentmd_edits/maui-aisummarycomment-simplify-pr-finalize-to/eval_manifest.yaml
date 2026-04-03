@@ -25,10 +25,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: $overallStatus variable computation removed
-- id: comment_replaces_not_merges
-  type: fail_to_pass
-  origin: pr_diff
-  description: Comment body fully replaces existing comment, no review merging
 - id: script_has_param_block
   type: pass_to_pass
   origin: static
@@ -91,6 +87,20 @@ rubric:
     commit: 62894e405b36c5b6cede44fdfe56832e26cdc8af
   reference: 'The `post-pr-finalize-comment.ps1` script posts a **separate comment**
     identified by `<!-- PR-FINALIZE-COMMENT -->`. This comment contains two sections:
+
+    - **Title**: Shows the suggested PR title with comparison to current
+
+    - **Description**: Shows the suggested PR description
+
+
+    If an existing finalize comment exists, it will be replaced with the updated Title
+    and Description sections. This keeps finalization reviews distinct from automated
+    analysis.'
+- rule: Comment body fully replaces existing comment, no review merging
+  reference: '# .github/skills/ai-summary-comment/SKILL.md
+
+    The `post-pr-finalize-comment.ps1` script posts a **separate comment** identified
+    by `<!-- PR-FINALIZE-COMMENT -->`. This comment contains two sections:
 
     - **Title**: Shows the suggested PR title with comparison to current
 

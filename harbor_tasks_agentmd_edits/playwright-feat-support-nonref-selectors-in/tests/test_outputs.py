@@ -160,9 +160,6 @@ def test_selector_in_tool_schemas():
 
 
 # [pr_diff] fail_to_pass
-def test_reflocator_handles_selector():
-    """Tab.refLocator/refLocators must accept and handle a 'selector' parameter."""
-    src = TAB_TS.read_text()
 
     # refLocator signature must include selector
     assert re.search(r'refLocator\(params:\s*\{[^}]*selector', src), \

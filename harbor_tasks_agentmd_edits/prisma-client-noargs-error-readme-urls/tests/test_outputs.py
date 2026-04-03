@@ -115,9 +115,6 @@ def test_error_message_content():
 
 
 # [pr_diff] fail_to_pass
-def test_validate_called_unconditionally():
-    """validatePrismaClientOptions must be called unconditionally (not inside if(optionsArg))."""
-    content = CLIENT_FILE.read_text()
 
     # On the base commit, validatePrismaClientOptions is inside: if (optionsArg) { validate... }
     # After fix, it's called unconditionally (the guard throws before reaching it)

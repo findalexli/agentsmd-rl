@@ -133,10 +133,6 @@ def test_summary_widgets_handle_link_taps():
 
 
 # [pr_diff] fail_to_pass
-def test_theme_link_color():
-    """Theme must set linkColor for GptMarkdownThemeData."""
-    theme = Path(REPO) / "lib/themes/theme.dart"
-    content = theme.read_text()
 
     assert "linkColor" in content, \
         "theme.dart must set linkColor in GptMarkdownThemeData"

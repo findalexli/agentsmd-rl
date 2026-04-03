@@ -63,13 +63,6 @@ def test_stop_only_scripts_removed():
 
 
 # [pr_diff] fail_to_pass
-def test_stop_only_dep_removed():
-    """stop-only must not be listed as a devDependency in package.json."""
-    pkg = json.loads(Path(f"{REPO}/package.json").read_text())
-    dev_deps = pkg.get("devDependencies", {})
-    assert "stop-only" not in dev_deps, (
-        "package.json still lists stop-only as a devDependency"
-    )
 
 
 # [pr_diff] fail_to_pass

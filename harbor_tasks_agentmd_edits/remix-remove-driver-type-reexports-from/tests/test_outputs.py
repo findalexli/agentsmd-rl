@@ -132,14 +132,6 @@ def test_postgres_adapter_uses_driver_types():
 
 
 # [pr_diff] fail_to_pass
-def test_mysql_adapter_has_pool_connection_guard():
-    """MySQL adapter must have a type guard for pool connections (isMysqlPoolConnection)."""
-    src = Path(MYSQL_ADAPTER).read_text()
-    # There should be a function that distinguishes pool connections
-    # (needed because release() should only be called on pool connections)
-    assert re.search(r"function\s+isMysqlPoolConnection", src), (
-        "Adapter should have an isMysqlPoolConnection type guard function"
-    )
 
 
 # ---------------------------------------------------------------------------

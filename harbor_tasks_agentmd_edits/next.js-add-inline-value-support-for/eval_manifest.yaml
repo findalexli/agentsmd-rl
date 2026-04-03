@@ -1,0 +1,66 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 89271
+  base_commit: fc13ca90ab14987da0b9bc556fc4c7e9e1b531af
+  merge_commit: b9e9f1112f6bb3bc20ae57ec5f8138e11331a5b6
+checks:
+- id: cargo_check
+  type: pass_to_pass
+  origin: static
+  description: turbo-persistence crate compiles without errors
+- id: inline_value_size_constant
+  type: fail_to_pass
+  origin: pr_diff
+  description: MAX_INLINE_VALUE_SIZE constant (8 bytes) defined in constants.rs
+- id: entry_value_has_inline_variant
+  type: fail_to_pass
+  origin: pr_diff
+  description: EntryValue enum has an Inline variant for key-block-stored values
+- id: inline_entry_type_constant
+  type: fail_to_pass
+  origin: pr_diff
+  description: KEY_BLOCK_ENTRY_TYPE_INLINE_MIN constant (8) defined in static_sorted_file.rs
+- id: handle_key_match_returns_slice_for_inline
+  type: fail_to_pass
+  origin: pr_diff
+  description: handle_key_match returns LookupValue::Slice for inline entries instead
+    of bailing
+- id: entry_val_size_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: entry_val_size function computes value byte sizes for all entry types
+    including inline
+- id: put_inline_method
+  type: fail_to_pass
+  origin: pr_diff
+  description: KeyBlockBuilder has put_inline method that writes inline values to
+    key blocks
+- id: slice_from_subslice_method
+  type: fail_to_pass
+  origin: pr_diff
+  description: ArcSlice has slice_from_subslice for zero-copy inline value access
+rubric:
+- rule: Documentation update is consistent with the technical style of the existing
+    README
+  source:
+    path: turbopack/crates/turbo-persistence/README.md
+    lines: 1-10
+    commit: fc13ca90ab14987da0b9bc556fc4c7e9e1b531af
+- rule: README.md documents that types 8..255 store inlined values with size threshold
+  source:
+    path: turbopack/crates/turbo-persistence/README.md
+    lines: 128-131
+    commit: b9e9f1112f6bb3bc20ae57ec5f8138e11331a5b6
+  reference: "- 8..255: inlined value (currently only values \u22648 bytes are inlined,\
+    \ though the format supports up to 247)\n  - (type - 8) bytes value data (inline,\
+    \ no separate value block)"
+- rule: README.md indicates inline values are stored directly, not in separate value
+    blocks
+  source:
+    path: turbopack/crates/turbo-persistence/README.md
+    lines: 128-131
+    commit: b9e9f1112f6bb3bc20ae57ec5f8138e11331a5b6
+  reference: "- 8..255: inlined value (currently only values \u22648 bytes are inlined,\
+    \ though the format supports up to 247)\n  - (type - 8) bytes value data (inline,\
+    \ no separate value block)"

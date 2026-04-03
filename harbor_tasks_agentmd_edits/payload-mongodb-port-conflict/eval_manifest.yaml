@@ -37,10 +37,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: MongoDB run-test-connection uses port 27018
-- id: connection_test_mongodb_atlas_url
-  type: fail_to_pass
-  origin: pr_diff
-  description: MongoDB Atlas run-test-connection uses port 27019
 rubric:
 - rule: "Port changes should be consistent across all files \u2014 every reference\
     \ to the old port should be updated."
@@ -132,6 +128,22 @@ rubric:
     path: CLAUDE.md
     lines: 42-44
     commit: 4c91d049c2a76b41ca10b770ec67338a9f97904b
+  reference: '# CONTRIBUTING.md
+
+    Then use Docker to start your database.
+
+
+    On MacOS, the easiest way to install Docker is to use brew. Simply run `pnpm install
+    --cask docker`, open the docker desktop app, apply the recommended settings and
+    you''re good to go.
+
+    URL: `mongodb://payload:payload@localhost:27018/payload?authSource=admin&directConnection=true&replicaSet=rs0`
+
+    URL: `mongodb://localhost:27019/payload?directConnection=true&replicaSet=mongodb-atlas-local`
+    (no auth required)
+
+    If you wish to use your own Mongo'
+- rule: MongoDB Atlas run-test-connection uses port 27019
   reference: '# CONTRIBUTING.md
 
     Then use Docker to start your database.

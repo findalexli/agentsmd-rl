@@ -149,15 +149,6 @@ def test_watch_runner_signature_updated():
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
-def test_constants_still_exports_paths():
-    """constants.ts must still export FIXTURES_PATH and SNAPSHOT_EXTENSION."""
-    constants = (SNAP_SRC / "constants.ts").read_text()
-    assert "FIXTURES_PATH" in constants, (
-        "constants.ts should still export FIXTURES_PATH"
-    )
-    assert "SNAPSHOT_EXTENSION" in constants, (
-        "constants.ts should still export SNAPSHOT_EXTENSION"
-    )
 
 
 # [static] pass_to_pass

@@ -25,10 +25,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: apps/supervisor/.nvmrc should not specify v22.22.0
-- id: dockerfile_has_from_instruction
-  type: pass_to_pass
-  origin: static
-  description: docker/Dockerfile is valid with FROM instruction
 rubric:
 - rule: Docker image guidelines section is placed logically near other infrastructure/Docker
     documentation
@@ -123,3 +119,22 @@ rubric:
     architecture-specific digests are listed under "OS/ARCH"
 
     - Example: Use `node:20.20-bullseye-slim@sha256:'
+- rule: docker/Dockerfile is valid with FROM instruction
+  reference: '# CLAUDE.md
+
+    ## Docker Image Guidelines
+
+
+    When updating Docker image references in `docker/Dockerfile` or other container
+    files:
+
+
+    - **Always use multiplatform/index digests**, not architecture-specific digests
+
+    - Architecture-specific digests (e.g., for `linux/amd64` only) will cause CI failures
+    on different build environments
+
+    - On Docker Hub, the multiplatform digest is shown on the main image page, while
+    architecture-specific digests are listed under "OS/ARCH"
+
+    - Example: Use `node:20.20-bullseye-'

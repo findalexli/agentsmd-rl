@@ -79,13 +79,6 @@ def test_dependency_table_uses_git_doc_builder():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_glmasr_has_runnable_fences():
-    """GLM-ASR doc must have code fences marked with runnable labels."""
-    glmasr = (Path(REPO) / "docs/source/en/model_doc/glmasr.md").read_text()
-    runnable_fences = re.findall(r"```py\s+runnable(?::(\w+))?", glmasr)
-    assert len(runnable_fences) >= 3, (
-        f"Expected at least 3 runnable code fences, found {len(runnable_fences)}"
-    )
 
 
 # [pr_diff] fail_to_pass

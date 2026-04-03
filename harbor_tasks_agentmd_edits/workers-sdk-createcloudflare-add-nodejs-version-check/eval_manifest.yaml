@@ -21,10 +21,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: bin/c3.js does not show version error when Node >= 20
-- id: package_json_bin_points_to_shim
-  type: fail_to_pass
-  origin: pr_diff
-  description: package.json bin field points to bin shim, not dist/cli.js
 rubric:
 - rule: AGENTS.md update is consistent with the style and structure of the existing
     file
@@ -76,3 +72,11 @@ rubric:
     \ `main` and `exports[\".\"]` point at `dist/cli.js`; `bin` points at `bin/c3.js`\n\
     - `bin/c3.js` is a plain CommonJS shim that gates on Node.js version (read from\
     \ `package.json` `engines.node`) before"
+- rule: package.json bin field points to bin shim, not dist/cli.js
+  reference: "# packages/create-cloudflare/AGENTS.md\nProject scaffolding CLI for\
+    \ Cloudflare Workers. Main source entry: `src/cli.ts`. Bin entry: `bin/c3.js`\
+    \ (Node.js version gate shim).\n- `bin/c3.js` \u2014 Bin shim that checks Node.js\
+    \ version before requiring `dist/cli.js`\n- `src/cli.ts` \u2014 Main entry. Exports\
+    \ `main(argv)` for programmatic use\n- `package.json` `main` and `exports[\".\"\
+    ]` point at `dist/cli.js`; `bin` points at `bin/c3.js`\n- `bin/c3.js` is a plain\
+    \ CommonJS shim that gates on Node.js version (read fro"

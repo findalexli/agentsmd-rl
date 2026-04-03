@@ -30,10 +30,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Postgres adapter imports from pg instead of defining custom types
-- id: mysql_adapter_has_pool_connection_guard
-  type: fail_to_pass
-  origin: pr_diff
-  description: MySQL adapter has isMysqlPoolConnection type guard for safe release()
 rubric:
 - rule: README updates are consistent with the style of the existing documentation
     in each package.
@@ -95,6 +91,25 @@ rubric:
     path: AGENTS.md
     lines: '12'
     commit: 1c0176eae3dd77d18e293c53d54237357ffc8efd
+  reference: '# packages/data-table-mysql/README.md
+
+    - **Native `mysql2` Integration**: Works with `mysql2/promise` `Pool` and `PoolConnection`
+    instances
+
+    Import any driver-specific types you need directly from `mysql2/promise`.
+
+
+    # packages/data-table-postgres/README.md
+
+    - **Native `pg` Integration**: Works with `pg` `Pool` and `PoolClient` instances
+
+    Import any driver-specific types you need directly from `pg`.
+
+
+    # packages/data-table-sqlite/README.md
+
+    Import any driver-specific types you need directly from `bette'
+- rule: MySQL adapter has isMysqlPoolConnection type guard for safe release()
   reference: '# packages/data-table-mysql/README.md
 
     - **Native `mysql2` Integration**: Works with `mysql2/promise` `Pool` and `PoolConnection`

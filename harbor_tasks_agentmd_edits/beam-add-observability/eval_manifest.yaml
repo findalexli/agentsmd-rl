@@ -33,10 +33,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: deploy.sh helper script exists with apply/destroy support
-- id: enable_metrics_default_true
-  type: fail_to_pass
-  origin: pr_diff
-  description: enable_metrics variable defaults to true
 - id: deploy_script_has_license_header
   type: fail_to_pass
   origin: agent_config
@@ -130,6 +126,26 @@ rubric:
 
     If you prefer running Ter'
 - rule: README.md preserves existing Prerequisites and architecture sections
+  reference: '# examples/terraform/envoy-ratelimiter/README.md
+
+    - **Prometheus Metrics**: Exposes Prometheus metrics on port `9090`. These metrics
+    are exported to Google Cloud Monitoring.
+
+    enable_metrics        = true                        # Enable metrics export to
+    Google Cloud Monitoring
+
+
+    1. **Deploy Script (Recommended)**:
+
+    Run the helper script to handle the deployment process automatically:
+
+    ./deploy.sh
+
+    The script will provide the ip address of the load balancer once the deployment
+    is complete.
+
+    2. **Deploy '
+- rule: enable_metrics variable defaults to true
   reference: '# examples/terraform/envoy-ratelimiter/README.md
 
     - **Prometheus Metrics**: Exposes Prometheus metrics on port `9090`. These metrics

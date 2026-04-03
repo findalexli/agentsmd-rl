@@ -27,11 +27,6 @@ checks:
   origin: pr_diff
   description: BuildBun.cmake adds jsc as a build dependency when WEBKIT_LOCAL is
     set
-- id: buildbun_system_icu_linux
-  type: fail_to_pass
-  origin: pr_diff
-  description: BuildBun.cmake uses system ICU via find_package on Linux when WEBKIT_LOCAL
-    is set
 rubric:
 - rule: Documentation update is consistent with the style of existing CONTRIBUTING.md
     content
@@ -77,3 +72,12 @@ rubric:
     \ first build, and will build Bun+JSC.\n\nThe build output goes to `./build/debug-local`\
     \ (instead of `./build/debug`), so you'll need to update a couple of places:\n\
     Note that if you make changes to o"
+- rule: BuildBun.cmake uses system ICU via find_package on Linux when WEBKIT_LOCAL
+    is set
+  reference: "# CONTRIBUTING.md\n# Build bun with the local JSC build \u2014 this\
+    \ automatically configures and builds JSC\n`bun run build:local` handles everything:\
+    \ configuring JSC, building JSC, and building Bun. On subsequent runs, JSC will\
+    \ incrementally rebuild if any WebKit sources changed. `ninja -Cbuild/debug-local`\
+    \ also works after the first build, and will build Bun+JSC.\n\nThe build output\
+    \ goes to `./build/debug-local` (instead of `./build/debug`), so you'll need to\
+    \ update a couple of places:\nNote that if you"

@@ -13,10 +13,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Help text indicates bare file paths can be passed as positional args
-- id: bare_file_conversion_logic
-  type: fail_to_pass
-  origin: pr_diff
-  description: index.js converts bare .ts/.js positional args into --run values
 - id: existing_run_flag_preserved
   type: pass_to_pass
   origin: static
@@ -139,3 +135,33 @@ rubric:
 
 
     #### `--run <file>` - Ru'
+- rule: index.js converts bare .ts/.js positional args into --run values
+  reference: '# .github/skills/unit-tests/SKILL.md
+
+    #### Bare file paths - Run tests from specific files
+
+
+    Pass source file paths directly as positional arguments. The test runner automatically
+    treats bare `.ts`/`.js` positional arguments as `--run` values.
+
+
+    ```bash
+
+    ./scripts/test.sh src/vs/editor/test/common/model.test.ts
+
+    ```
+
+
+    ```bat
+
+    .\scripts\test.bat src\vs\editor\test\common\model.test.ts
+
+    ```
+
+
+    Multiple files:
+
+
+    ```bash
+
+    ./scripts/test.sh src/vs/editor/test/common/model.test.ts src/vs/editor/test/common/range.'

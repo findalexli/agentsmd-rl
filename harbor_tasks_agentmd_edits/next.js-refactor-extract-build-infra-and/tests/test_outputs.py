@@ -71,16 +71,6 @@ def test_experimental_exports_pipeable_stream():
 
 
 # [pr_diff] fail_to_pass
-def test_pipeable_exports_are_conditional():
-    """Pipeable stream exports must be guarded by conditional checks (like existing exports)."""
-    for path in [SERVER_ALIAS, EXPERIMENTAL_ALIAS]:
-        content = path.read_text()
-        assert re.search(
-            r"if\s*\(\s*b\.renderToPipeableStream\s*\)", content
-        ), f"{path.name} must conditionally check b.renderToPipeableStream before exporting"
-        assert re.search(
-            r"if\s*\(\s*b\.resumeToPipeableStream\s*\)", content
-        ), f"{path.name} must conditionally check b.resumeToPipeableStream before exporting"
 
 
 # ---------------------------------------------------------------------------

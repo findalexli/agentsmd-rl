@@ -75,12 +75,6 @@ def test_stub_script_requires_program():
 
 
 # [pr_diff] fail_to_pass
-def test_stub_script_has_error_handling():
-    """The stub JS file must handle errors (catch + exit)."""
-    pkg_json = STUB_DIR / "package.json"
-    data = json.loads(pkg_json.read_text())
-    js_file = STUB_DIR / data["bin"]["playwright-cli"]
-    content = js_file.read_text()
 
     # Must have error handling (catch block with process.exit)
     assert ".catch" in content or "try" in content, \

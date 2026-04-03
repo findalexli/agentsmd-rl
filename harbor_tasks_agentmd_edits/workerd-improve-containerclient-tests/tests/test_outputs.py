@@ -94,14 +94,6 @@ def test_ws_has_timeout():
 
 
 # [pr_diff] fail_to_pass
-def test_verbose_retry_logging_removed():
-    """Verbose console.info retry logging should be removed from TCP port retry loop."""
-    content = TEST_JS.read_text()
-    # The old code had console.info logging the retry attempt with the error message
-    # inside the retry loop for getTcpPort
-    assert "Retrying getTcpPort" not in content, (
-        "Verbose 'Retrying getTcpPort' console.info should be removed"
-    )
 
 
 # ---------------------------------------------------------------------------

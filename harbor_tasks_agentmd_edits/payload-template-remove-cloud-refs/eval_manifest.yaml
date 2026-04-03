@@ -1,0 +1,88 @@
+version: '2.0'
+source:
+  repo: payloadcms/payload
+  pr: 14484
+  base_commit: 39bead7e4c6c05644ad9987a6224fb8de34928de
+  merge_commit: d4d9622dfa0f36e8df40c4be3f1e8902a67d7a89
+checks:
+- id: website_dashboard_no_cloud_mention
+  type: fail_to_pass
+  origin: pr_diff
+  description: Website BeforeDashboard component must not reference Payload Cloud
+- id: vercel_website_dashboard_no_cloud_mention
+  type: fail_to_pass
+  origin: pr_diff
+  description: with-vercel-website BeforeDashboard must not reference Payload Cloud
+- id: website_dashboard_preserves_other_items
+  type: pass_to_pass
+  origin: static
+  description: BeforeDashboard preserves other list items (seed, modify, commit)
+rubric:
+- rule: "Removal is consistent \u2014 all Payload Cloud references removed, not just\
+    \ some"
+  source:
+    path: templates/website/README.md
+    lines: 1-10
+    commit: 39bead7e4c6c05644ad9987a6224fb8de34928de
+- rule: Website README must not contain Payload Cloud clone or git sparse-checkout
+  source:
+    path: templates/website/README.md
+    lines: 34-56
+    commit: d4d9622dfa0f36e8df40c4be3f1e8902a67d7a89
+- rule: Website README must not have 'Deploying to Payload Cloud' section
+  source:
+    path: templates/website/README.md
+    lines: 242-245
+    commit: d4d9622dfa0f36e8df40c4be3f1e8902a67d7a89
+- rule: Ecommerce README must not contain git clone method
+  source:
+    path: templates/ecommerce/README.md
+    lines: 38-48
+    commit: d4d9622dfa0f36e8df40c4be3f1e8902a67d7a89
+- rule: Blank template README must not reference Payload Cloud
+  source:
+    path: templates/_template/README.md
+    lines: 1-40
+    commit: d4d9622dfa0f36e8df40c4be3f1e8902a67d7a89
+  reference: 'A blank template for [Payload](https://github.com/payloadcms/payload)
+    to help you get up and running quickly. This repo may have been created by running
+    `npx create-payload-app@latest` and selecting the "blank" template.
+
+    Check out the [deployment documentation](https://payloadcms.com/docs/production/deployment)
+    for details on how to deploy your project.'
+- rule: Website README still documents create-payload-app
+  reference: '# templates/_template/README.md
+
+    A blank template for [Payload](https://github.com/payloadcms/payload) to help
+    you get up and running quickly. This repo may have been created by running `npx
+    create-payload-app@latest` and selecting the "blank" template.
+
+    Check out the [deployment documentation](https://payloadcms.com/docs/production/deployment)
+    for details on how to deploy your project.'
+- rule: Website README still has Vercel deployment section
+  reference: '# templates/_template/README.md
+
+    A blank template for [Payload](https://github.com/payloadcms/payload) to help
+    you get up and running quickly. This repo may have been created by running `npx
+    create-payload-app@latest` and selecting the "blank" template.
+
+    Check out the [deployment documentation](https://payloadcms.com/docs/production/deployment)
+    for details on how to deploy your project.'
+- rule: Blank template README still links to deployment docs
+  reference: '# templates/_template/README.md
+
+    A blank template for [Payload](https://github.com/payloadcms/payload) to help
+    you get up and running quickly. This repo may have been created by running `npx
+    create-payload-app@latest` and selecting the "blank" template.
+
+    Check out the [deployment documentation](https://payloadcms.com/docs/production/deployment)
+    for details on how to deploy your project.'
+- rule: Ecommerce README still documents create-payload-app
+  reference: '# templates/_template/README.md
+
+    A blank template for [Payload](https://github.com/payloadcms/payload) to help
+    you get up and running quickly. This repo may have been created by running `npx
+    create-payload-app@latest` and selecting the "blank" template.
+
+    Check out the [deployment documentation](https://payloadcms.com/docs/production/deployment)
+    for details on how to deploy your project.'

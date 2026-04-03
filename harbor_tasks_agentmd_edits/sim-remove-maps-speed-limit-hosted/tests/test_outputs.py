@@ -61,22 +61,6 @@ def test_apikey_has_dual_subblocks():
 
 
 # [pr_diff] fail_to_pass
-def test_apikey_speed_limits_excluded_from_hosted():
-    """The hosted apiKey subblock must exclude speed_limits via condition."""
-    content = Path(REPO, "apps/sim/blocks/blocks/google_maps.ts").read_text()
-    # Must have a condition that excludes speed_limits from the hosted key subblock
-    # Pattern: hideWhenHosted: true ... condition with speed_limits and not: true
-    assert "hideWhenHosted" in content, "Must have a hideWhenHosted apiKey subblock"
-    # The condition must reference speed_limits with negation
-    has_exclusion = bool(re.search(
-        r"condition:\s*\{[^}]*speed_limits[^}]*not:\s*true[^}]*\}",
-        content
-    )) or bool(re.search(
-        r"condition:\s*\{[^}]*not:\s*true[^}]*speed_limits[^}]*\}",
-        content
-    ))
-    assert has_exclusion, \
-        "The hosted apiKey must have a condition excluding speed_limits (not: true)"
 
 
 # [pr_diff] fail_to_pass

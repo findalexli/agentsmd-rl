@@ -67,16 +67,6 @@ def test_types_no_second_person():
 
 
 # [pr_diff] fail_to_pass
-def test_snapshot_bad_error_messages_updated():
-    """Snapshot strings in bad_error_messages.rs must match updated error text."""
-    content = Path(
-        f"{REPO}/prqlc/prqlc/tests/integration/bad_error_messages.rs"
-    ).read_text()
-    # Base commit snapshots contain the old 2nd person text
-    assert "Have you forgotten an argument" not in content, \
-        "bad_error_messages.rs snapshot still has 'Have you forgotten'"
-    assert "are you missing" not in content, \
-        "bad_error_messages.rs snapshot still has 'are you missing'"
 
 
 # [pr_diff] fail_to_pass

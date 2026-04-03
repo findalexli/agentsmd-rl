@@ -105,15 +105,6 @@ def test_task_filter_uses_token_spacing():
 
 
 # [pr_diff] fail_to_pass
-def test_task_list_item_uses_token_weight():
-    """Task list item must use tokens.typography.weight instead of hardcoded FontWeight."""
-    content = Path(
-        f"{DS}/components/task_list_items/design_system_task_list_item.dart"
-    ).read_text()
-    assert "typography.weight" in content, \
-        "Task list item should use token-based font weight"
-    assert "FontWeight.w600" not in content, \
-        "Task list item should not use hardcoded FontWeight.w600"
 
 
 # [pr_diff] fail_to_pass

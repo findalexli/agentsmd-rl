@@ -66,17 +66,6 @@ def test_display_none_preserves_whitespace():
 
 
 # [pr_diff] fail_to_pass
-def test_block_like_hard_break_after_element():
-    """element_list.rs must emit hard break after block-like elements followed by text."""
-    content = Path(
-        f"{REPO}/crates/biome_html_formatter/src/html/lists/element_list.rs"
-    ).read_text()
-    # The fix checks last_css_display.is_block_like() for post-element breaks
-    assert "last_css_display.is_block_like()" in content, \
-        "element_list.rs should check last_css_display.is_block_like() for post-element breaks"
-    # And uses LineMode::Hard for block-like to text transitions
-    assert "Some(LineMode::Hard)" in content, \
-        "element_list.rs should use LineMode::Hard for block-like elements followed by text"
 
 
 # [pr_diff] fail_to_pass

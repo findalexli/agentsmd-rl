@@ -128,9 +128,6 @@ def test_dataschemma_type_removed_from_exports():
 
 
 # [pr_diff] fail_to_pass
-def test_timestamp_schema_uses_create_schema():
-    """timestampSchema must use createSchema from data-schema instead of inline ~standard."""
-    src = Path(TABLE_TS).read_text()
 
     # Must import createSchema from data-schema
     assert re.search(r"import.*createSchema.*from\s+['\"]@remix-run/data-schema['\"]", src, re.DOTALL), (

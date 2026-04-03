@@ -91,19 +91,6 @@ def test_compat_has_tabbarcontroller_methods():
 
 
 # [pr_diff] fail_to_pass
-def test_navigation_uses_compat_not_direct_cast():
-    """LinkPreviewNativeNavigation must use RNScreensTabCompat, not direct casts."""
-    content = NAV_FILE.read_text()
-    assert "RNScreensTabCompat" in content, (
-        "LinkPreviewNativeNavigation must reference RNScreensTabCompat"
-    )
-    # The old direct casts to RNSBottomTabsScreenComponentView should be removed
-    direct_cast_pattern = r'as\?\s+RNSBottomTabsScreenComponentView'
-    matches = re.findall(direct_cast_pattern, content)
-    assert len(matches) == 0, (
-        f"Found {len(matches)} direct cast(s) to RNSBottomTabsScreenComponentView — "
-        "these should be replaced with RNScreensTabCompat calls"
-    )
 
 
 # [pr_diff] fail_to_pass

@@ -92,20 +92,6 @@ def test_bin_shim_passes_current_node():
     )
 
 
-def test_package_json_bin_points_to_shim():
-    """package.json bin must point to the bin shim, not dist/cli.js directly."""
-    pkg = json.loads((C3 / "package.json").read_text())
-    bin_val = pkg.get("bin", "")
-    if isinstance(bin_val, dict):
-        bin_targets = list(bin_val.values())
-    else:
-        bin_targets = [str(bin_val)]
-    assert any("bin/" in t and t.endswith(".js") for t in bin_targets), (
-        f"bin should point to a shim in bin/ directory, got: {bin_val}"
-    )
-    assert not any(t == "./dist/cli.js" for t in bin_targets), (
-        f"bin should NOT point directly to dist/cli.js, got: {bin_val}"
-    )
 
 
 

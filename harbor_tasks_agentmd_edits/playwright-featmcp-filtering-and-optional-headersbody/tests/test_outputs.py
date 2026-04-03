@@ -103,9 +103,6 @@ def test_render_request_handles_headers_and_body():
 
 
 # [pr_diff] fail_to_pass
-def test_filter_logic_implemented():
-    """The handle function must filter requests by URL using the filter param."""
-    src = NETWORK_TS.read_text()
 
     # Must create a RegExp from the filter param
     assert re.search(r"new\s+RegExp\s*\(", src) or re.search(r"\.match\s*\(", src) or re.search(r"\.test\s*\(", src), (

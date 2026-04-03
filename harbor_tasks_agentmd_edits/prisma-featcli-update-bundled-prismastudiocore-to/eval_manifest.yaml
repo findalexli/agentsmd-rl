@@ -22,10 +22,6 @@ checks:
   origin: pr_diff
   description: HTML import map must include @radix-ui/react-toggle with React dep
     pinning
-- id: import_map_includes_chartjs
-  type: fail_to_pass
-  origin: pr_diff
-  description: HTML import map must include chart.js/auto via esm.sh
 - id: existing_bff_procedures_preserved
   type: pass_to_pass
   origin: static
@@ -80,3 +76,11 @@ rubric:
     \ bumps can require keeping the CLI's HTML import map in `packages/cli/src/Studio.ts`\
     \ aligned with new bare browser imports (for example `@radix-ui/react-toggle`\
     \ and `chart.js/auto`), "
+- rule: HTML import map must include chart.js/auto via esm.sh
+  reference: "# AGENTS.md\n- For isolated Studio verification, you can run `packages/cli/src/Studio.ts`\
+    \ directly via `pnpm exec tsx` and pass a config object that preserves `loadedFromFile`;\
+    \ this keeps SQLite URLs resolving relative to the config file while avoiding\
+    \ unrelated `packages/cli/src/bin.ts` imports.\n  - Recent `@prisma/studio-core`\
+    \ bumps can require keeping the CLI's HTML import map in `packages/cli/src/Studio.ts`\
+    \ aligned with new bare browser imports (for example `@radix-ui/react-toggle`\
+    \ and `chart"

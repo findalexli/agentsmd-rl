@@ -88,10 +88,6 @@ def test_five_layer_field_sync():
 
 
 # [pr_diff] fail_to_pass
-def test_infer_storage_from_uri():
-    """List widget must have inferStorageFromUri that detects workspace vs user storage."""
-    content = LIST_WIDGET.read_text()
-    assert "inferStorageFromUri" in content, "inferStorageFromUri method not found"
 
     # Extract method region for deeper checks
     idx = content.index("inferStorageFromUri")

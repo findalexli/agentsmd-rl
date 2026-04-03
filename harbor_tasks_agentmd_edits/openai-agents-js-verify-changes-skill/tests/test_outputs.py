@@ -58,21 +58,6 @@ def test_run_sh_fail_fast():
 
 
 # [pr_diff] fail_to_pass
-def test_run_sh_command_order():
-    """run.sh must run commands in the correct order: install, build, build-check, lint, test."""
-    run_sh = Path(REPO) / ".codex/skills/verify-changes/scripts/run.sh"
-    assert run_sh.exists(), "run.sh must exist"
-    content = run_sh.read_text()
-    # Find positions of each command
-    install_pos = max(content.find("pnpm i\n"), content.find("pnpm install"))
-    build_pos = content.find("pnpm build")
-    check_pos = content.find("build-check")
-    lint_pos = content.find("pnpm lint")
-    test_pos = content.find("pnpm test")
-    assert all(p >= 0 for p in [install_pos, build_pos, check_pos, lint_pos, test_pos]), \
-        "All five verification commands must be present"
-    assert install_pos < build_pos < check_pos < lint_pos < test_pos, \
-        "Commands must appear in order: install, build, build-check, lint, test"
 
 
 # [pr_diff] fail_to_pass

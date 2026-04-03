@@ -13,10 +13,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: OnBindViewHolder checks IsHeader/IsFooter before selection tracking
-- id: guard_returns_before_click_subscription
-  type: fail_to_pass
-  origin: pr_diff
-  description: Header/footer guard returns before Clicked += subscription
 - id: existing_selection_logic_intact
   type: pass_to_pass
   origin: static
@@ -83,3 +79,11 @@ rubric:
     \ \u2014 the BOM bytes (`0xEF 0xBB 0xBF`) sort after ASCII characters under `LC_ALL=C`,\
     \ pushing `#nullable enable` to the bottom of the file.\n\nWhen resolving merge\
     \ conflicts or adding entri"
+- rule: Header/footer guard returns before Clicked += subscription
+  reference: "# .github/copilot-instructions.md\n**CRITICAL: `#nullable enable` must\
+    \ be line 1**\n\nEvery `PublicAPI.Unshipped.txt` file starts with `#nullable enable`\
+    \ (often BOM-prefixed) on the **first line**. If this line is moved or removed,\
+    \ the analyzer treats it as a declared API symbol and emits **RS0017** errors.\n\
+    \n**Never sort these files with plain `sort`** \u2014 the BOM bytes (`0xEF 0xBB\
+    \ 0xBF`) sort after ASCII characters under `LC_ALL=C`, pushing `#nullable enable`\
+    \ to the bottom of the file.\n\nWhen resolvi"

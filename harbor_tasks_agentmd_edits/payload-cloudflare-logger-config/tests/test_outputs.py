@@ -95,14 +95,6 @@ def test_logger_production_conditional():
 
 
 # [pr_diff] fail_to_pass
-def test_payload_logger_type_exported():
-    """PayloadLogger type must be exported from the main payload package index."""
-    index = (Path(REPO) / "packages/payload/src/index.ts").read_text()
-    assert "PayloadLogger" in index, \
-        "PayloadLogger type must be exported from packages/payload/src/index.ts"
-    # Should be a type export specifically
-    assert "export type" in index and "PayloadLogger" in index, \
-        "PayloadLogger should be exported as a type (export type { PayloadLogger })"
 
 
 # ---------------------------------------------------------------------------

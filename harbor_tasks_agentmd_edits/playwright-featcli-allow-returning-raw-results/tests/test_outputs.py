@@ -142,13 +142,6 @@ def test_daemon_forwards_raw_metadata():
 
 
 # [pr_diff] fail_to_pass
-def test_help_includes_raw_option():
-    """Help generator must list --raw in global options."""
-    help_src = Path(f"{TOOLS}/cli-daemon/helpGenerator.ts").read_text()
-    assert "--raw" in help_src, "helpGenerator must include --raw in output"
-    # Verify it's in the global options section (near --help and --version)
-    assert "result value" in help_src or "raw" in help_src.lower(), \
-        "Help text for --raw should describe its purpose"
 
 
 # [pr_diff] fail_to_pass

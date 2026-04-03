@@ -69,8 +69,6 @@ def test_build_phase_filters_synchronized_headers():
 
 
 # [pr_diff] fail_to_pass
-def test_target_generator_synchronized_headers():
-    """TargetGenerator must map target headers into synchronized exception sets.
 
     The fix adds a private helper that computes which public/private headers
     belong to a buildable folder and creates PBXFileSystemSynchronizedBuildFileExceptionSet

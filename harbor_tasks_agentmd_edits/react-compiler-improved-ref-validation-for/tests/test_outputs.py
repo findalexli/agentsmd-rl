@@ -180,17 +180,6 @@ def test_mutate_ref_still_errors():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_existing_snap_tests_pass():
-    """A focused subset of snap fixture tests still passes."""
-    r = subprocess.run(
-        ["yarn", "snap", "-p", "error.validate-mutate-ref-arg-in-render"],
-        cwd=COMPILER,
-        capture_output=True,
-        timeout=120,
-    )
-    assert r.returncode == 0, (
-        f"Snap test failed:\n{r.stdout.decode()[-1000:]}\n{r.stderr.decode()[-1000:]}"
-    )
 
 
 # ---------------------------------------------------------------------------

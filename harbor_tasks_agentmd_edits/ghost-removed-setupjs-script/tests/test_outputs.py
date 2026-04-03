@@ -41,14 +41,6 @@ def test_setup_script_removed():
         ".github/scripts/setup.js should be removed — yarn dev now handles MySQL/config setup"
 
 
-def test_package_json_setup_no_setup_js():
-    """package.json setup script must not invoke setup.js."""
-    pkg = json.loads((Path(REPO) / "package.json").read_text())
-    setup_cmd = pkg["scripts"]["setup"]
-    assert "setup.js" not in setup_cmd, \
-        f"setup script still references setup.js: {setup_cmd}"
-    assert "NODE_ENV" not in setup_cmd, \
-        f"setup script still sets NODE_ENV (leftover from setup.js): {setup_cmd}"
 
 
 

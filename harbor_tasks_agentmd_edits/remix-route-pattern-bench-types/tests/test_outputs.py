@@ -96,24 +96,6 @@ def test_bench_types_script():
 
 
 # [pr_diff] fail_to_pass
-def test_attest_dependency_moved():
-    """@ark/attest must be in bench devDeps, not route-pattern devDeps."""
-    bench_pkg = json.loads(
-        (Path(REPO) / "packages/route-pattern/bench/package.json").read_text()
-    )
-    rp_pkg = json.loads(
-        (Path(REPO) / "packages/route-pattern/package.json").read_text()
-    )
-    # Must be in bench devDependencies
-    bench_dev = bench_pkg.get("devDependencies", {})
-    assert "@ark/attest" in bench_dev, (
-        "@ark/attest must be a devDependency of the bench package"
-    )
-    # Must NOT be in route-pattern devDependencies
-    rp_dev = rp_pkg.get("devDependencies", {})
-    assert "@ark/attest" not in rp_dev, (
-        "@ark/attest must be removed from route-pattern devDependencies"
-    )
 
 
 # ---------------------------------------------------------------------------

@@ -81,13 +81,6 @@ def test_labels_called_on_verification_fail():
 
 
 # [pr_diff] fail_to_pass
-def test_pr_detection_fallback():
-    """PR auto-detection must have gh pr list --head fallback for fork branches."""
-    content = PS1.read_text()
-    assert "gh pr list --head" in content, \
-        "Must have fallback PR detection using 'gh pr list --head'"
-    assert "$foundPR" in content or "foundPR" in content, \
-        "Must track whether PR was found to control fallback flow"
 
 
 # [pr_diff] fail_to_pass

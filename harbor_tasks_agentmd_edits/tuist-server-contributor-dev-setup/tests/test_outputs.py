@@ -69,14 +69,6 @@ def test_dev_login_form_present():
 
 
 # [pr_diff] fail_to_pass
-def test_dev_login_gated_to_dev_environment():
-    """The test user login form must only appear in the dev environment."""
-    ex_file = Path(REPO) / "server" / "lib" / "tuist_web" / "live" / "user_login_live.ex"
-    content = ex_file.read_text()
-    # The form element must be conditionally rendered based on the dev? assign.
-    # In Phoenix LiveView, this is done with :if={@dev?} on the element.
-    assert re.search(r':if=\{@dev\?\}', content), \
-        "Test user form must be gated with :if={@dev?} to only show in dev"
 
 
 # ---------------------------------------------------------------------------

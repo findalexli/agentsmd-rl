@@ -1,0 +1,48 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 89819
+  base_commit: def0e3aabfa112ada22ece9297501c52471d34bd
+  merge_commit: 9a7733ed83bce9cc1264454ddc7335fdcfb0c1eb
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: scripts/build-native.ts parses and contains writeTypes function
+- id: maybe_build_native_skips_in_ci
+  type: fail_to_pass
+  origin: pr_diff
+  description: maybe-build-native.mjs skips the build when CI env var is set
+- id: maybe_build_native_has_rust_change_detection
+  type: fail_to_pass
+  origin: pr_diff
+  description: maybe-build-native.mjs detects Rust source changes via git diff
+- id: package_json_build_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/next-swc/package.json has build script invoking maybe-build-native
+- id: turbo_json_build_task
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/next-swc/turbo.json defines build task with Rust inputs and
+    CI env
+- id: maybe_build_native_not_stub
+  type: fail_to_pass
+  origin: pr_diff
+  description: maybe-build-native.mjs has real logic, not a trivial stub
+rubric:
+- rule: The AGENTS.md rebuild instructions are clear and consistent with the new automated
+    build behavior
+  source:
+    path: AGENTS.md
+    lines: 365-375
+    commit: def0e3aabfa112ada22ece9297501c52471d34bd
+- rule: scripts/build-native.ts uses prettier --stdin-filepath instead of --write
+  reference: "# AGENTS.md\n- **Edited Next.js code or Turbopack (Rust)?** \u2192 `pnpm\
+    \ build`"
+- rule: AGENTS.md updated to remove separate swc-build-native instructions
+  source:
+    path: AGENTS.md
+    lines: 367-371
+    commit: 9a7733ed83bce9cc1264454ddc7335fdcfb0c1eb
+  reference: "- **Edited Next.js code or Turbopack (Rust)?** \u2192 `pnpm build`"

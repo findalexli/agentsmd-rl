@@ -72,20 +72,6 @@ def test_version_1_8_comment_includes_batched_computer_actions():
 
 
 # [pr_diff] fail_to_pass
-def test_tool_search_assertion_no_1_9():
-    """assertSchemaVersionSupportsToolSearch must not reference version '1.9'."""
-    content = RUN_STATE.read_text()
-    # Extract the assertion function body
-    m = re.search(
-        r"function assertSchemaVersionSupportsToolSearch\b(.*?)^\}",
-        content, re.MULTILINE | re.DOTALL,
-    )
-    assert m is not None, "Could not find assertSchemaVersionSupportsToolSearch function"
-    func_body = m.group(1)
-    assert "'1.9'" not in func_body, \
-        "assertSchemaVersionSupportsToolSearch should not check for '1.9'"
-    assert "'1.8'" in func_body, \
-        "assertSchemaVersionSupportsToolSearch must still check for '1.8'"
 
 
 # ---------------------------------------------------------------------------

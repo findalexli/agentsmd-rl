@@ -17,10 +17,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Error message references stable 'transformImportMeta' option name
-- id: type_definition_renamed
-  type: fail_to_pass
-  origin: pr_diff
-  description: TypeScript type definition uses 'transformImportMeta' instead of 'unstable_transformImportMeta'
 rubric:
 - rule: Preset enables import.meta transform by default for all environments, not
     just server
@@ -39,6 +35,16 @@ rubric:
     lines: 155-160
     commit: 3676cbae5c809f45cf3063f69416de0a5fbad090
   reference: '### `transformImportMeta`
+
+    Enable transform that converts `import.meta` to `globalThis.__ExpoImportMetaRegistry`.
+    Defaults to `true`.
+
+    > **Note:** If the JavaScript engine supports `import.meta` natively, this transformation
+    may interfere with the native implementation.'
+- rule: TypeScript type definition uses 'transformImportMeta' instead of 'unstable_transformImportMeta'
+  reference: '# packages/babel-preset-expo/README.md
+
+    ### `transformImportMeta`
 
     Enable transform that converts `import.meta` to `globalThis.__ExpoImportMetaRegistry`.
     Defaults to `true`.

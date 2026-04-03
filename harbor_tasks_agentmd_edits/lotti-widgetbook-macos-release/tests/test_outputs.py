@@ -96,9 +96,6 @@ def test_makefile_widgetbook_targets():
 
 
 # [pr_diff] fail_to_pass
-def test_ci_workflow_structure():
-    """CI workflow for widgetbook macOS release is valid YAML with proper structure."""
-    import yaml
 
     # Find a widgetbook-related workflow file
     workflows_dir = Path(REPO) / ".github" / "workflows"

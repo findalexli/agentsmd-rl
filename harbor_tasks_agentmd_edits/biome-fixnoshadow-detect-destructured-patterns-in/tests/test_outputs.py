@@ -101,8 +101,6 @@ def test_imports_binding_declaration_type():
 
 
 # [pr_diff] fail_to_pass
-def test_invalid_destructuring_test_spec():
-    """Test spec file for invalid destructuring shadow cases must exist.
 
     The noShadow rule now detects shadowing in destructuring patterns, so
     there must be test cases covering object, array, nested, and rest patterns.

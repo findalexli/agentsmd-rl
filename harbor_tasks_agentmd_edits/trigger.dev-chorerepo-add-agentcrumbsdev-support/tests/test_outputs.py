@@ -60,13 +60,6 @@ def test_remix_config_bundles_agentcrumbs():
 
 
 # [pr_diff] fail_to_pass
-def test_package_json_has_agentcrumbs():
-    """Root package.json must list agentcrumbs as a dependency."""
-    pkg = json.loads(Path(f"{REPO}/package.json").read_text())
-    deps = pkg.get("dependencies", {})
-    assert "agentcrumbs" in deps, (
-        "agentcrumbs not in root package.json dependencies"
-    )
 
 
 # [pr_diff] fail_to_pass

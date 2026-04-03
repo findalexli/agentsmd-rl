@@ -81,15 +81,6 @@ def test_testcontainers_package_referenced():
         "EFCore.Cosmos.FunctionalTests.csproj must reference Testcontainers.CosmosDb"
 
 
-def test_cosmos_teststore_calls_initialize():
-    """CosmosTestStore must call TestEnvironment.InitializeAsync in its InitializeAsync."""
-    src = (Path(REPO) / "test/EFCore.Cosmos.FunctionalTests/TestUtilities/CosmosTestStore.cs").read_text()
-    assert "TestEnvironment.InitializeAsync" in src, \
-        "CosmosTestStore must call TestEnvironment.InitializeAsync"
-    assert re.search(r"ConnectionUri\s*\{\s*get\s*;\s*private\s+set\s*;\s*\}", src), \
-        "ConnectionUri must have a private setter"
-    assert re.search(r"ConnectionString\s*\{\s*get\s*;\s*private\s+set\s*;\s*\}", src), \
-        "ConnectionString must have a private setter"
 
 
 

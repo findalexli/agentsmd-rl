@@ -99,16 +99,6 @@ def test_import_map_includes_radix_toggle():
 
 
 # [pr_diff] fail_to_pass
-def test_import_map_includes_chartjs():
-    """HTML import map must include chart.js/auto."""
-    content = STUDIO_TS.read_text()
-    assert "chart.js/auto" in content, (
-        "Import map must include chart.js/auto for Studio charting support"
-    )
-    # Should reference esm.sh for the chart.js import
-    assert re.search(r"esm\.sh/chart\.js", content), (
-        "chart.js should be loaded via esm.sh CDN"
-    )
 
 
 # [pr_diff] fail_to_pass

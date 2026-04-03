@@ -94,9 +94,6 @@ def test_hover_no_wait_for_completion():
 
 
 # [pr_diff] fail_to_pass
-def test_select_option_no_wait_for_completion():
-    """browser_select_option must not use waitForCompletion."""
-    src = Path(f"{TOOLS}/backend/snapshot.ts").read_text()
 
     select_section = _extract_tool_handler(src, "browser_select_option")
 

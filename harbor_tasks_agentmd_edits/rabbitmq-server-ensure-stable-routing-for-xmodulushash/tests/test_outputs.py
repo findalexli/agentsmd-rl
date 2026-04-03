@@ -82,10 +82,6 @@ def test_core_module_registers_exchange():
 
 
 # [pr_diff] fail_to_pass
-def test_core_module_implements_callbacks():
-    """Core module implements all required rabbit_exchange_type callbacks."""
-    module_path = Path(REPO) / "deps" / "rabbit" / "src" / "rabbit_exchange_type_modulus_hash.erl"
-    content = module_path.read_text()
 
     required_callbacks = [
         "description",

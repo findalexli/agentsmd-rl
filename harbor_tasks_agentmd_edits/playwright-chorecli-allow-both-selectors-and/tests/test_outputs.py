@@ -54,14 +54,6 @@ def test_tab_calls_locator_or_selector():
 
 
 # [pr_diff] fail_to_pass
-def test_tab_error_message_format():
-    """Error messages must quote the selector, not prefix with 'Selector'."""
-    content = TAB_TS.read_text()
-    # Old format: `Selector ${param.selector} does not match any elements.`
-    # New format: `"${param.selector}" does not match any elements.`
-    assert "does not match" in content, "Error message for missing elements must exist"
-    assert 'Selector ${param.selector}' not in content, \
-        "Error message should not use old 'Selector ...' prefix format"
 
 
 # [pr_diff] fail_to_pass

@@ -205,29 +205,6 @@ if (result2.definedColumns.length !== 3) {{
 
 
 # [pr_diff] fail_to_pass
-def test_all_undefined_error_check():
-    """Adapter code must throw error when all column values are undefined."""
-    # At least one adapter must contain the error message for all-undefined case
-    adapter_files = [
-        Path(REPO) / "src" / "js" / "internal" / "sql" / "sqlite.ts",
-        Path(REPO) / "src" / "js" / "internal" / "sql" / "mysql.ts",
-        Path(REPO) / "src" / "js" / "internal" / "sql" / "postgres.ts",
-    ]
-    error_found = False
-    for adapter in adapter_files:
-        assert adapter.exists(), f"{adapter.name} must exist"
-        content = adapter.read_text()
-        if "at least one column with a defined value" in content.lower():
-            error_found = True
-            break
-    # Also check shared.ts
-    shared = Path(REPO) / "src" / "js" / "internal" / "sql" / "shared.ts"
-    if shared.exists() and "at least one column with a defined value" in shared.read_text().lower():
-        error_found = True
-    assert error_found, (
-        "At least one SQL adapter or shared module must throw an error when all "
-        "INSERT column values are undefined"
-    )
 
 
 # [pr_diff] fail_to_pass

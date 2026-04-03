@@ -1,0 +1,87 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 88938
+  base_commit: d5a88ba4eb50fa9fcc2c06a68da54783d615b017
+  merge_commit: 03899db53a83d7ca665c3f56273595f3dca195a6
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Rust files exist and contain valid structure
+- id: two_key_block_types_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both BLOCK_TYPE_KEY_WITH_HASH (1) and BLOCK_TYPE_KEY_NO_HASH (2) constants
+    defined
+- id: compare_hash_key_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: compare_hash_key function exists to handle hashless entry comparison
+- id: get_key_entry_variable_hash_len
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_key_entry accepts hash_len parameter for variable hash sizes
+- id: use_hash_threshold
+  type: fail_to_pass
+  origin: pr_diff
+  description: Builder has use_hash function with 32-byte key length threshold
+- id: builder_conditional_hash_write
+  type: fail_to_pass
+  origin: pr_diff
+  description: KeyBlockBuilder conditionally writes hashes via write_hash method
+- id: lookup_handles_both_block_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: Lookup path matches on both KEY_WITH_HASH and KEY_NO_HASH block types
+- id: index_block_type_preserved
+  type: pass_to_pass
+  origin: static
+  description: BLOCK_TYPE_INDEX constant still defined for index blocks
+- id: entry_types_preserved
+  type: pass_to_pass
+  origin: static
+  description: Key block entry type constants (SMALL, MEDIUM, BLOB, DELETED) still
+    defined
+rubric:
+- rule: README documentation style is consistent with the existing format specification
+  source:
+    path: turbopack/crates/turbo-persistence/README.md
+    lines: 1-10
+    commit: d5a88ba4eb50fa9fcc2c06a68da54783d615b017
+- rule: README documents block type 2 (key block without hash)
+  source:
+    path: turbopack/crates/turbo-persistence/README.md
+    lines: 88-103
+    commit: 03899db53a83d7ca665c3f56273595f3dca195a6
+  reference: "- 1 byte block type (1: key block with hash, 2: key block without hash)\n\
+    The block type determines whether the key hash is stored per entry:\n\n- Block\
+    \ type 1 (with hash): Full 8-byte hash stored per entry\n- Block type 2 (no hash):\
+    \ No hash stored (for keys \u2264 32 bytes)\n\nDuring lookup, if block type is\
+    \ 2, the full hash is recomputed from the key data.\n\n  - 8 bytes key hash (if\
+    \ block type 1)\n  - 8 bytes key hash (if block type 1)\n  - 8 bytes key hash\
+    \ (if block type 1)\n  - 8 bytes key hash (if block ty"
+- rule: README removes the TODO about hash inefficiency for small keys
+  source:
+    path: turbopack/crates/turbo-persistence/README.md
+    lines: '131'
+    commit: d5a88ba4eb50fa9fcc2c06a68da54783d615b017
+  reference: "- 1 byte block type (1: key block with hash, 2: key block without hash)\n\
+    The block type determines whether the key hash is stored per entry:\n\n- Block\
+    \ type 1 (with hash): Full 8-byte hash stored per entry\n- Block type 2 (no hash):\
+    \ No hash stored (for keys \u2264 32 bytes)\n\nDuring lookup, if block type is\
+    \ 2, the full hash is recomputed from the key data.\n\n  - 8 bytes key hash (if\
+    \ block type 1)\n  - 8 bytes key hash (if block type 1)\n  - 8 bytes key hash\
+    \ (if block type 1)\n  - 8 bytes key hash (if block ty"
+- rule: README explains hash recomputation for no-hash blocks and key size threshold
+  source:
+    path: turbopack/crates/turbo-persistence/README.md
+    lines: 96-100
+    commit: 03899db53a83d7ca665c3f56273595f3dca195a6
+  reference: "- 1 byte block type (1: key block with hash, 2: key block without hash)\n\
+    The block type determines whether the key hash is stored per entry:\n\n- Block\
+    \ type 1 (with hash): Full 8-byte hash stored per entry\n- Block type 2 (no hash):\
+    \ No hash stored (for keys \u2264 32 bytes)\n\nDuring lookup, if block type is\
+    \ 2, the full hash is recomputed from the key data.\n\n  - 8 bytes key hash (if\
+    \ block type 1)\n  - 8 bytes key hash (if block type 1)\n  - 8 bytes key hash\
+    \ (if block type 1)\n  - 8 bytes key hash (if block ty"

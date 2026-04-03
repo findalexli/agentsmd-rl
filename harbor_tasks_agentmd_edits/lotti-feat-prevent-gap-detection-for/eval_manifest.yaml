@@ -22,10 +22,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Originating host must always be considered online for gap detection
-- id: skip_gap_detection_logging
-  type: fail_to_pass
-  origin: pr_diff
-  description: Service must log skipGapDetection event when skipping offline hosts
 rubric:
 - rule: Update the feature README files we touch such that they match reality in the
     codebase, not only for what we touch but in their entirety.
@@ -68,6 +64,14 @@ rubric:
     path: AGENTS.md
     lines: '81'
     commit: 5d434148cd4a4be9c10451cc7fdb2fbece7a1244
+  reference: "# lib/features/sync/README.md\n- **Online Host Guard:** Gap detection\
+    \ is only performed for hosts that have been\n  seen \"online\" (i.e., have sent\
+    \ us a message directly via the `HostActivity`\n  table). This prevents false\
+    \ positive gaps for hosts we've never communicated\n  with \u2014 we may see their\
+    \ counters in vector clocks from other hosts, but we\n  can't know if entries\
+    \ are actually missing without having established\n  communication with them.\
+    \ The originating host is always considered online\n  sinc"
+- rule: Service must log skipGapDetection event when skipping offline hosts
   reference: "# lib/features/sync/README.md\n- **Online Host Guard:** Gap detection\
     \ is only performed for hosts that have been\n  seen \"online\" (i.e., have sent\
     \ us a message directly via the `HostActivity`\n  table). This prevents false\

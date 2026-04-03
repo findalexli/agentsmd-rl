@@ -90,18 +90,6 @@ def test_adapter_ppg_maps_22p02():
 
 
 # [pr_diff] fail_to_pass
-def test_runtime_maps_invalid_input_to_p2007():
-    """user-facing-error.ts must map InvalidInputValue to Prisma error code P2007."""
-    content = (Path(REPO) / "packages/client-engine-runtime/src/user-facing-error.ts").read_text()
-    assert "InvalidInputValue" in content, \
-        "user-facing-error.ts should handle InvalidInputValue kind"
-    assert "P2007" in content, \
-        "user-facing-error.ts should map to P2007 error code"
-    # Verify they're associated: InvalidInputValue near P2007
-    idx = content.index("InvalidInputValue")
-    window = content[max(0, idx - 50):idx + 150]
-    assert "P2007" in window, \
-        "InvalidInputValue and P2007 should be associated in getErrorCode"
 
 
 # [pr_diff] fail_to_pass

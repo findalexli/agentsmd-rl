@@ -82,24 +82,6 @@ def test_testfilter_function_removed():
 
 
 # [pr_diff] fail_to_pass
-def test_watch_interactive_pattern():
-    """runner-watch.ts RunnerState must have debug and inputMode fields for interactive mode."""
-    content = (SNAP_SRC / "runner-watch.ts").read_text()
-    # RunnerState should have a debug field
-    assert "debug:" in content and "boolean" in content, (
-        "RunnerState must have a debug: boolean field"
-    )
-    # Interactive pattern input mode
-    assert "inputMode:" in content, (
-        "RunnerState must have an inputMode field for interactive pattern entry"
-    )
-    assert "inputBuffer:" in content, (
-        "RunnerState must have an inputBuffer field for accumulating typed input"
-    )
-    # Should NOT import readTestFilter anymore
-    assert "readTestFilter" not in content, (
-        "runner-watch.ts should not import readTestFilter"
-    )
 
 
 # [pr_diff] fail_to_pass

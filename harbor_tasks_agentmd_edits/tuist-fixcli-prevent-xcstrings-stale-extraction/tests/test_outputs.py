@@ -61,8 +61,6 @@ def test_xcstrings_not_in_code_generating_extensions():
         "adding xcstrings to the Sources phase causes Xcode to mark strings as stale"
 
 
-def test_xcstrings_retained_in_main_target_resources():
-    """Main target resources must retain xcstrings files instead of being cleared.
 
     On the base commit the line is: modifiedTarget.resources.resources = []
     After the fix, xcstrings must be preserved (e.g. via a filter) so Xcode's

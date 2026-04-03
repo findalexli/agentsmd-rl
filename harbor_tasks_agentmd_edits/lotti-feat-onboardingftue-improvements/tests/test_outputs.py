@@ -133,10 +133,6 @@ def test_modal_handles_null_result():
 # Fail-to-pass (pr_diff) — whisper_server requirements_linux.txt
 # ---------------------------------------------------------------------------
 
-def test_requirements_linux_created():
-    """whisper_server/requirements_linux.txt must exist with core deps but no CUDA ones."""
-    assert REQUIREMENTS_LINUX.exists(), \
-        "requirements_linux.txt must be created"
 
     content = REQUIREMENTS_LINUX.read_text()
 

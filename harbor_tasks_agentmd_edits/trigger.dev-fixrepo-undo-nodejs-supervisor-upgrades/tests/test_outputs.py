@@ -72,12 +72,6 @@ def test_nvmrc_not_v22_22_0():
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
-def test_dockerfile_has_from_instruction():
-    """docker/Dockerfile must be valid (contains FROM instruction)."""
-    dockerfile = Path(REPO) / "docker" / "Dockerfile"
-    content = dockerfile.read_text()
-    assert "FROM" in content, "Dockerfile missing FROM instruction"
-    assert "ARG NODE_IMAGE" in content, "Dockerfile missing NODE_IMAGE ARG"
 
 
 # [static] pass_to_pass

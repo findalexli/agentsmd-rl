@@ -18,11 +18,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: buildCollectionSchema passes flattenedFields to buildSchema
-- id: afterread_preserves_hidden_toplevel_id
-  type: fail_to_pass
-  origin: pr_diff
-  description: afterRead hook does not strip hidden custom ID fields at the top level
-    (depth 0)
 rubric:
 - rule: Test cleanup documentation is consistent with the style of existing CLAUDE.md
     sections
@@ -50,3 +45,12 @@ rubric:
     \ resources (IDs, files, etc.) in a shared array within the `describe` block\n\
     \n**Example pattern:**\n\n```typescript\ndescribe('My Feature', () => {\n  const\
     \ createdIDs: number[] = []\n\n  afterEach(async "
+- rule: afterRead hook does not strip hidden custom ID fields at the top level (depth
+    0)
+  reference: "# CLAUDE.md\n### Writing Tests - Required Practices\n\n**Tests MUST\
+    \ be self-contained and clean up after themselves:**\n\n- If you create a database\
+    \ record in a test, you MUST delete it before the test completes\n- For multiple\
+    \ tests with similar cleanup needs, use `afterEach` to centralize cleanup logic\n\
+    - Track created resources (IDs, files, etc.) in a shared array within the `describe`\
+    \ block\n\n**Example pattern:**\n\n```typescript\ndescribe('My Feature', () =>\
+    \ {\n  const createdIDs: number[] = []\n\n  afte"

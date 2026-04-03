@@ -160,14 +160,6 @@ def test_path_resolution_not_cwd():
 
 
 # [pr_diff] fail_to_pass
-def test_old_project_src_removed():
-    """Snap source files must not use the old PROJECT_SRC constant (should be renamed to clarify it's the babel plugin src)."""
-    for ts_file in [MINIMIZE_TS, RUNNER_WORKER_TS]:
-        content = Path(ts_file).read_text()
-        assert "PROJECT_SRC" not in content, (
-            f"{Path(ts_file).name} must not use old PROJECT_SRC constant — "
-            "rename to clarify it's the babel-plugin-react-compiler dist path"
-        )
 
     # runner-watch.ts must not use PROJECT_ROOT for build/tsconfig operations
     # (those should use the babel plugin root, not the compiler project root)

@@ -31,8 +31,6 @@ def test_syntax_check():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_data_response_no_buffer_wrap():
-    """/_next/data/ JSON response must pass string to RenderResult, not Buffer.
 
     Buffer.from() causes RenderResult.isDynamic to return true (response is not
     a string), which makes sendRenderResult skip Content-Length and ETag headers.

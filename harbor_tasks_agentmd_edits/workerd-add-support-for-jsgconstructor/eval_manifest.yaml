@@ -37,10 +37,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: v8.rs declares FFI binding and WrappableRc method for attach_to_this
-- id: constructor_tests_added
-  type: fail_to_pass
-  origin: pr_diff
-  description: resource_callback.rs includes constructor tests using jsg_constructor
 - id: existing_macros_preserved
   type: pass_to_pass
   origin: static
@@ -88,3 +84,11 @@ rubric:
     \ mark a static method with `#[jsg_constructor]`:\n\n```rust\nuse jsg_macros::{jsg_resource,\
     \ jsg_method, jsg_constructor};\n\n#[jsg_resource]\nstruct Greeting {\n    message:\
     \ String,\n}\n\n#[jsg_"
+- rule: resource_callback.rs includes constructor tests using jsg_constructor
+  reference: "# src/rust/jsg-macros/README.md\n## `#[jsg_constructor]`\n\nMarks a\
+    \ static method as the JavaScript constructor for a `#[jsg_resource]`. When JavaScript\
+    \ calls `new MyClass(args)`, V8 invokes this method, creates a `jsg::Rc<Self>`,\
+    \ and attaches it to the `this` object.\n\n```rust\n#[jsg_resource]\nimpl MyResource\
+    \ {\n    #[jsg_constructor]\n    fn constructor(name: String) -> Self {\n    \
+    \    Self { name }\n    }\n}\n// JS: let r = new MyResource(\"hello\");\n```\n\
+    \nThe method must be static (no `self` receiver) and"

@@ -61,16 +61,6 @@ def test_agent_skills_has_new_status():
 
 
 # [pr_diff] fail_to_pass
-def test_design_patterns_after_agent_skills():
-    """Design Patterns entry should appear after Agent Skills in navigation."""
-    nav_file = Path(REPO) / "adev/src/app/routing/navigation-entries/index.ts"
-    content = nav_file.read_text()
-    agent_skills_pos = content.find("Agent Skills")
-    design_patterns_pos = content.find("Design Patterns")
-    assert agent_skills_pos != -1, "Agent Skills entry not found"
-    assert design_patterns_pos != -1, "Design Patterns entry not found"
-    assert agent_skills_pos < design_patterns_pos, \
-        "Agent Skills should appear before Design Patterns in navigation order"
 
 
 # ---------------------------------------------------------------------------

@@ -23,10 +23,6 @@ checks:
   origin: pr_diff
   description: Version 1.8 comment must describe batched computer actions (folded
     from 1.9)
-- id: tool_search_assertion_no_1_9
-  type: fail_to_pass
-  origin: pr_diff
-  description: assertSchemaVersionSupportsToolSearch must not reference '1.9'
 rubric:
 - rule: Config updates should be consistent with the existing style and tone of AGENTS.md
     and the implementation-strategy SKILL.md
@@ -84,3 +80,14 @@ rubric:
     introduced or changed after the latest release tag may be rewritten without compatibility
     shims unless they already have a released or otherwise supported durable-state
     c
+- rule: assertSchemaVersionSupportsToolSearch must not reference '1.9'
+  reference: '# .agents/skills/implementation-strategy/SKILL.md
+
+    Use this skill before editing code when the task changes runtime behavior or anything
+    that might look like a compatibility concern. The goal is to keep implementations
+    simple while protecting real released contracts and genuinely supported external
+    state.
+
+    5. Add a compatibility layer only when there is a concrete released consumer,
+    an otherwise supported durable external state that requires it, or when the user
+    explicitly asks for a migration pat'

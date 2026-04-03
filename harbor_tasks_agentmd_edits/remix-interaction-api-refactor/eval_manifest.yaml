@@ -1,0 +1,89 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 10823
+  base_commit: 90016e313b24a05c5862a853a3b518290d9017ba
+  merge_commit: e3f244b484622a0f6be1b1f215a4153474e96806
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: TypeScript files in packages/interaction compile without errors
+- id: removed_exports
+  type: fail_to_pass
+  origin: pr_diff
+  description: capture and listenWith removed from public exports
+- id: new_type_exports
+  type: fail_to_pass
+  origin: pr_diff
+  description: Interaction and ContainerOptions types exported
+- id: interaction_interface
+  type: fail_to_pass
+  origin: pr_diff
+  description: Interaction interface defines target, signal, raise, on members
+- id: create_container_options_object
+  type: fail_to_pass
+  origin: pr_diff
+  description: createContainer accepts options object instead of bare AbortSignal
+- id: on_no_signal_overload
+  type: fail_to_pass
+  origin: pr_diff
+  description: "on() function simplified \u2014 no AbortSignal overload"
+- id: interaction_setup_this_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'InteractionSetup type uses this: Interaction pattern'
+- id: onerror_support
+  type: fail_to_pass
+  origin: pr_diff
+  description: Containers support onError handler for listener errors
+- id: descriptor_extends_options
+  type: fail_to_pass
+  origin: pr_diff
+  description: Descriptor interface extends AddEventListenerOptions directly
+- id: builtin_interactions_use_this
+  type: fail_to_pass
+  origin: pr_diff
+  description: Built-in interactions (form, keys, popover, press) use this context
+rubric:
+- rule: Code changes are consistent with the style of the surrounding codebase (let
+    not var, single quotes, no semicolons, .ts extensions in imports)
+  source:
+    path: AGENTS.md
+    lines: 16-20
+    commit: 90016e313b24a05c5862a853a3b518290d9017ba
+- rule: README examples are clear, correct, and follow existing documentation style
+  source:
+    path: packages/interaction/README.md
+    lines: 1-10
+    commit: 90016e313b24a05c5862a853a3b518290d9017ba
+- rule: CHANGELOG entries are well-formatted with code examples showing before/after
+  source:
+    path: CONTRIBUTING.md
+    lines: 36-42
+    commit: 90016e313b24a05c5862a853a3b518290d9017ba
+- rule: README.md updated to remove capture/listenWith and show new descriptor pattern
+  source:
+    path: packages/interaction/README.md
+    lines: 36-145
+    commit: e3f244b484622a0f6be1b1f215a4153474e96806
+- rule: 'README.md shows this: Interaction pattern for custom interactions'
+  source:
+    path: packages/interaction/README.md
+    lines: 215-240
+    commit: e3f244b484622a0f6be1b1f215a4153474e96806
+- rule: CHANGELOG.md documents breaking changes in Unreleased section
+  source:
+    path: packages/interaction/CHANGELOG.md
+    lines: 4-78
+    commit: e3f244b484622a0f6be1b1f215a4153474e96806
+- rule: Type-only imports use 'import type' syntax per AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: 90016e313b24a05c5862a853a3b518290d9017ba
+- rule: Changelog uses '## Unreleased' heading format per AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: 24-25
+    commit: 90016e313b24a05c5862a853a3b518290d9017ba

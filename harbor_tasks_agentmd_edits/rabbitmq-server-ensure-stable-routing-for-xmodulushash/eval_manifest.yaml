@@ -17,10 +17,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Core module registers x-modulus-hash as a rabbit boot step
-- id: core_module_implements_callbacks
-  type: fail_to_pass
-  origin: pr_diff
-  description: Core module implements all rabbit_exchange_type callbacks
 rubric:
 - rule: Only add very important comments, both in tests and in the implementation
   source:
@@ -75,6 +71,22 @@ rubric:
     path: CLAUDE.md
     lines: '111'
     commit: f5c203919fe89ebe26d7a5650a58cced4ab807a6
+  reference: '# deps/rabbitmq_sharding/README.md
+
+    RabbitMQ provides a built-in exchange type, `"x-modulus-hash"`, that will use
+
+    across a number of regular queues (shards). This exchange type is available
+
+    in core RabbitMQ and does not require enabling this plugin to be used.
+
+    This exchange guarantees stable routing. As long as the bindings to the exchange
+    remain the same,
+
+    messages with the same routing key will always be routed to exactly the same destination
+    queue,
+
+    even across node restarts.'
+- rule: Core module implements all rabbit_exchange_type callbacks
   reference: '# deps/rabbitmq_sharding/README.md
 
     RabbitMQ provides a built-in exchange type, `"x-modulus-hash"`, that will use

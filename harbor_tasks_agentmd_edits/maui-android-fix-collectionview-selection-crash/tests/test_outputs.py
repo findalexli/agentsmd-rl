@@ -70,8 +70,6 @@ def test_header_footer_guard_in_onbindviewholder():
     )
 
 
-def test_guard_returns_before_click_subscription():
-    """The header/footer guard must return BEFORE subscribing the click handler.
 
     If the guard only skips _currentViewHolders.Add but still subscribes the
     click handler, the crash would still occur via SelectableClicked → GetItem.

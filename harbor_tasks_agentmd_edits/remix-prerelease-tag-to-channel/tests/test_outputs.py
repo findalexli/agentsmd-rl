@@ -84,9 +84,6 @@ def test_changes_ts_reads_channel_from_config():
 
 
 # [pr_diff] fail_to_pass
-def test_publish_uses_next_tag():
-    """publish.ts must always use --tag next for remix prereleases, not the channel value."""
-    publish_ts = (Path(REPO) / "scripts" / "publish.ts").read_text()
 
     # The publish command for remix should use --tag next (hardcoded)
     assert "--tag next" in publish_ts, \

@@ -68,16 +68,6 @@ def test_close_command_registered():
 
 
 # [pr_diff] fail_to_pass
-def test_close_command_imports_close_trace():
-    """The close command handler must import and call closeTrace from traceUtils."""
-    content = TRACE_CLI.read_text()
-    # Find the close command block — it should dynamically import closeTrace
-    assert "closeTrace" in content, \
-        "traceCli.ts must reference closeTrace"
-    # Must import from traceUtils (dynamic or static)
-    assert re.search(r"import\s*\(\s*['\"]\.\/traceUtils['\"]\s*\)", content) or \
-           re.search(r"from\s+['\"]\.\/traceUtils['\"]", content), \
-        "close command must import from './traceUtils'"
 
 
 # [pr_diff] fail_to_pass

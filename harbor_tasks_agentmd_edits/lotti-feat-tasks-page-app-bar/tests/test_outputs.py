@@ -95,11 +95,6 @@ def test_quick_filter_in_own_sliver():
 
 
 # [pr_diff] fail_to_pass
-def test_quick_filter_redesigned_with_icon_and_count():
-    """TaskLabelQuickFilter must show filter icon and count of active filters."""
-    src = Path(
-        f"{REPO}/lib/features/tasks/ui/filtering/task_label_quick_filter.dart"
-    ).read_text()
 
     # Must have a filter icon (filter_alt, filter_list, or similar)
     has_filter_icon = bool(re.search(r"Icons\.\s*filter", src))

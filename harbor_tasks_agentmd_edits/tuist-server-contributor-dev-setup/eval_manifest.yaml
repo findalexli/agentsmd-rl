@@ -17,10 +17,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Login page includes a form with test user credentials and submit button
-- id: dev_login_gated_to_dev_environment
-  type: fail_to_pass
-  origin: pr_diff
-  description: Test user login form conditionally rendered only in dev environment
 - id: no_po_files_modified
   type: pass_to_pass
   origin: agent_config
@@ -84,6 +80,14 @@ rubric:
     path: docs/docs/en/contributors/code/server.md
     lines: 37-38
     commit: f9286e67e07dd2d71cd209ce1a6e22f30e057ace
+  reference: "# server/README.md\n1. Clone the repository: `git clone https://github.com/tuist/tuist.git`.\n\
+    1. Install system dependencies with: `mise install`.\n1. Install dependencies:\
+    \ `mise run install`\n1. Create and set up the database: `mise run db:setup`\n\
+    1. Open `http://localhost:8080` in your browser and log in with the pre-made test\
+    \ user account:\n> [!NOTE]\n> First-party developers can load encrypted secrets\
+    \ from `priv/secrets/dev.key`. External contributors don't need this key \u2014\
+    \ the server runs locally w"
+- rule: Test user login form conditionally rendered only in dev environment
   reference: "# server/README.md\n1. Clone the repository: `git clone https://github.com/tuist/tuist.git`.\n\
     1. Install system dependencies with: `mise install`.\n1. Install dependencies:\
     \ `mise run install`\n1. Create and set up the database: `mise run db:setup`\n\

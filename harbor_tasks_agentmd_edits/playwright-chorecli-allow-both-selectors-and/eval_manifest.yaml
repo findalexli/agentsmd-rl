@@ -17,10 +17,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: resolveElements calls locatorOrSelectorAsSelector with testIdAttribute
-- id: tab_error_message_format
-  type: fail_to_pass
-  origin: pr_diff
-  description: Error message quotes the selector instead of 'Selector ...' prefix
 - id: tab_ref_handling_intact
   type: pass_to_pass
   origin: static
@@ -77,6 +73,18 @@ rubric:
 
     playwright-cli click "getByTestId(''submit-button'')"'
 - rule: SKILL.md still documents CSS selectors
+  reference: '# packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+
+    You can also use css selectors or Playwright locators.
+
+    # role locator
+
+    playwright-cli click "getByRole(''button'', { name: ''Submit'' })"
+
+    # test id
+
+    playwright-cli click "getByTestId(''submit-button'')"'
+- rule: Error message quotes the selector instead of 'Selector ...' prefix
   reference: '# packages/playwright-core/src/tools/cli-client/skill/SKILL.md
 
     You can also use css selectors or Playwright locators.

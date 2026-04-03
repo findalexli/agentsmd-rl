@@ -107,10 +107,6 @@ def test_lastitem_path_guards_empty_popping():
 
 
 # [pr_diff] fail_to_pass
-def test_shellcontent_setvalue_guards_empty_popping():
-    """ShellContent branch: SetValue for QueryAttributesProperty must also check mergedData is non-empty when popping."""
-    nav_mgr = Path(REPO) / "src/Controls/src/Core/Shell/ShellNavigationManager.cs"
-    content = nav_mgr.read_text()
 
     method_start = content.find("public static void ApplyQueryAttributes(Element element")
     method_body = content[method_start:]

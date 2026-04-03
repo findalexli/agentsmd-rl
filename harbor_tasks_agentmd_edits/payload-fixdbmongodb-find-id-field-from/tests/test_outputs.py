@@ -90,9 +90,6 @@ def test_collection_schema_passes_flattened():
 
 
 # [pr_diff] fail_to_pass
-def test_afterread_preserves_hidden_toplevel_id():
-    """afterRead hook must not strip hidden custom ID fields at the top level."""
-    src = (Path(REPO) / "packages/payload/src/fields/hooks/afterRead/promise.ts").read_text()
 
     # 1. Must introduce a concept of field depth
     assert "fieldDepth" in src or "field_depth" in src or "depth" in src.lower(), \

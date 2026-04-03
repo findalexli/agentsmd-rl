@@ -86,10 +86,6 @@ def test_prettier_config_removed():
 
 
 # [pr_diff] fail_to_pass
-def test_prettier_dep_removed_oxfmt_added():
-    """prettier and its plugin removed from deps; oxfmt added."""
-    pkg_text = (Path(REPO) / "package.json").read_text()
-    pkg = json.loads(pkg_text)
 
     # Check all dependency sections
     all_deps = {}

@@ -29,10 +29,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Logger is conditionally applied only in production, not development
-- id: payload_logger_type_exported
-  type: fail_to_pass
-  origin: pr_diff
-  description: PayloadLogger type is exported from the main payload package index
 rubric:
 - rule: Custom logger output format should be consistent with Cloudflare Workers observability
     patterns (structured JSON with level and msg fields)
@@ -112,6 +108,25 @@ rubric:
     path: CLAUDE.md
     lines: '68'
     commit: 23d52a0d7d5780954bf5b027e537cabb008b8a0a
+  reference: '# templates/with-cloudflare-d1/README.md
+
+    ### Logger Configuration
+
+
+    This template includes a custom console-based logger compatible with Cloudflare
+    Workers. Payload''s default logger uses `pino-pretty`, which relies on Node.js
+    APIs not available in Workers and would cause `fs.write is not implemented` errors.
+
+
+    The custom logger in `payload.config.ts`:
+
+
+    - Routes logs through `console.*` methods which Workers handles correctly
+
+    - Outputs JSON-formatted logs for Cloudflare observability
+
+    - Only active '
+- rule: PayloadLogger type is exported from the main payload package index
   reference: '# templates/with-cloudflare-d1/README.md
 
     ### Logger Configuration

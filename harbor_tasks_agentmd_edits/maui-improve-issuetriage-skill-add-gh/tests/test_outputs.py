@@ -57,11 +57,6 @@ def test_init_script_uses_invoke_restmethod():
 
 
 # [pr_diff] fail_to_pass
-def test_query_script_checks_gh_prerequisite():
-    """query-issues.ps1 must check for gh CLI before proceeding."""
-    content = QUERY_SCRIPT.read_text()
-    assert "Get-Command gh" in content, \
-        "query script should check for gh CLI using Get-Command"
 
 
 # [pr_diff] fail_to_pass

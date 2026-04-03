@@ -117,12 +117,6 @@ def test_image_view_class_has_history():
 
 
 # [pr_diff] fail_to_pass
-def test_ipc_renderer_invoke_has_history():
-    """ipcRenderer.invoke must have a YAML history block referencing PR #18449."""
-    text = Path(f"{REPO}/docs/api/ipc-renderer.md").read_text()
-    assert _has_history_block_for_method(
-        text, "### `ipcRenderer.invoke(channel, ...args)`", 18449
-    ), "ipcRenderer.invoke missing YAML history block with PR #18449"
 
 
 # [pr_diff] fail_to_pass

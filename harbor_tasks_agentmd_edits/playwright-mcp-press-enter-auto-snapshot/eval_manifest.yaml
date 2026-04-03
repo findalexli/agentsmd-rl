@@ -1,0 +1,54 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 38934
+  base_commit: 3cdf7ca18324b9a0aa0ec80d818c2f9602b0ef60
+  merge_commit: 56d7bbfd89e10f304bb6f26547ef8a33fc34d3e6
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript and Markdown files exist and are non-empty
+- id: enter_key_has_special_handling
+  type: fail_to_pass
+  origin: pr_diff
+  description: press handler branches on Enter key to add wait-for-completion logic
+- id: enter_key_triggers_snapshot
+  type: fail_to_pass
+  origin: pr_diff
+  description: press handler calls setIncludeSnapshot when Enter is pressed
+- id: non_enter_keys_still_press_directly
+  type: fail_to_pass
+  origin: pr_diff
+  description: Non-Enter keys still call page.keyboard.press without waitForCompletion
+- id: press_tool_still_exported
+  type: pass_to_pass
+  origin: static
+  description: press tool is still part of the default export array
+- id: press_sequentially_submit_unchanged
+  type: pass_to_pass
+  origin: static
+  description: pressSequentially with submit still uses waitForCompletion and setIncludeSnapshot
+rubric:
+- rule: SKILL.md core workflow instructions are clear and concise, consistent with
+    existing style
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 1-10
+    commit: 3cdf7ca18324b9a0aa0ec80d818c2f9602b0ef60
+- rule: SKILL.md core workflow no longer lists snapshot as a separate numbered step
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 20-24
+    commit: 56d7bbfd89e10f304bb6f26547ef8a33fc34d3e6
+  reference: '2. Interact using refs from the snapshot
+
+    3. Re-snapshot after significant changes'
+- rule: SKILL.md core workflow has 3 or fewer steps instead of 4
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 20-24
+    commit: 56d7bbfd89e10f304bb6f26547ef8a33fc34d3e6
+  reference: '2. Interact using refs from the snapshot
+
+    3. Re-snapshot after significant changes'

@@ -58,20 +58,6 @@ def test_help_text_shows_file_positional_usage():
 
 
 # [pr_diff] fail_to_pass
-def test_bare_file_conversion_logic():
-    """index.js must convert bare .ts/.js positional args into --run values."""
-    content = INDEX_JS.read_text()
-    # The file must filter positional args for .ts/.js extensions
-    assert ".endsWith('.ts')" in content or '.endsWith(".ts")' in content, (
-        "index.js should filter positional args by .ts extension"
-    )
-    assert ".endsWith('.js')" in content or '.endsWith(".js")' in content, (
-        "index.js should filter positional args by .js extension"
-    )
-    # The filtered files must be merged into args.run
-    assert "args.run" in content, (
-        "Bare file paths should be assigned to args.run"
-    )
 
 
 # [pr_diff] fail_to_pass

@@ -17,11 +17,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: logAndExec uses stdio:'pipe' when capturing output
-- id: setup_script_operations
-  type: fail_to_pass
-  origin: pr_diff
-  description: setup-installable-branch.ts implements gitignore and package dep update
-    operations
 rubric:
 - rule: New code uses let for local variables, const only at module scope (per AGENTS.md
     Code Style)
@@ -102,6 +97,20 @@ rubric:
     path: AGENTS.md
     lines: '23'
     commit: 598a92e3dc3488b02da7e4edafd1ff2498cc4c34
+  reference: '# CONTRIBUTING.md
+
+    ## Nightly Builds
+
+
+    We also maintain installable nightly builds in a `nightly` branch as a way for
+    folks to test out the latest `main` branch without needing to publish nightly
+    releases to npm and clutter up the npm registry and version history UI.
+
+
+    This is managed via the [`nightly` workflow](/.github/workflows/nightly.yaml)
+    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
+    script to build and commit the build and required `package.json` chan'
+- rule: setup-installable-branch.ts implements gitignore and package dep update operations
   reference: '# CONTRIBUTING.md
 
     ## Nightly Builds

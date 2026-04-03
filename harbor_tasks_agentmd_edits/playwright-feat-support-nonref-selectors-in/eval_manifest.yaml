@@ -24,11 +24,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: MCP tool schemas (elementSchema, verify tools) include 'selector' field
-- id: reflocator_handles_selector
-  type: fail_to_pass
-  origin: pr_diff
-  description: Tab.refLocator/refLocators accepts and handles selector parameter for
-    CSS/role targeting
 rubric:
 - rule: SKILL.md targeting documentation is consistent with the style of existing
     command documentation sections
@@ -125,3 +120,44 @@ rubric:
     # chaining css and role selectors
 
     playwright-cli click "#footer >> role=butto'
+- rule: Tab.refLocator/refLocators accepts and handles selector parameter for CSS/role
+    targeting
+  reference: '# packages/playwright-core/src/skill/SKILL.md
+
+    ## Targeting elements
+
+
+    By default, use refs from the snapshot to interact with page elements.
+
+
+    ```bash
+
+    # get snapshot with refs
+
+    playwright-cli snapshot
+
+
+    # interact using a ref
+
+    playwright-cli click e15
+
+    ```
+
+
+    You can also use css or role selectors, for example when explicitly asked for
+    it.
+
+
+    ```bash
+
+    # css selector
+
+    playwright-cli click "#main > button.submit"
+
+
+    # role selector
+
+    playwright-cli click "role=button[name=Submit]"
+
+
+    # chaining css and role selecto'

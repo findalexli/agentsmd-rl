@@ -1,0 +1,88 @@
+version: '2.0'
+source:
+  repo: triggerdotdev/trigger.dev
+  pr: 2032
+  base_commit: 37aadfc80bf72b71cfc98cd3fb8a76717aea143e
+  merge_commit: 1b1ad16d94e753fe5b947ce6f58c2001f3e8bb9a
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript file exists and has valid structure
+- id: schema_uses_project_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: Request schema uses 'projectId' instead of 'makeDefaultForProjectId'
+- id: schema_has_boolean_flags
+  type: fail_to_pass
+  origin: pr_diff
+  description: Schema has makeDefaultForProject and removeDefaultFromProject as boolean
+    fields
+- id: remove_default_handling
+  type: fail_to_pass
+  origin: pr_diff
+  description: Route handles removeDefaultFromProject by clearing the project's default
+    worker group
+- id: existing_group_check
+  type: fail_to_pass
+  origin: pr_diff
+  description: Route checks for existing worker groups before creating new ones
+- id: helper_functions
+  type: fail_to_pass
+  origin: pr_diff
+  description: Route extracts helper functions for create, remove-default, and set-default
+    operations
+- id: outcome_field_in_responses
+  type: fail_to_pass
+  origin: pr_diff
+  description: API responses include an 'outcome' field describing what happened
+rubric:
+- rule: README documentation is consistent with the style and formatting of the existing
+    supervisor README
+  source:
+    path: apps/supervisor/README.md
+    lines: 1-44
+    commit: 37aadfc80bf72b71cfc98cd3fb8a76717aea143e
+- rule: Code follows the project convention of using types over interfaces and uses
+    zod for validation
+  source:
+    path: .github/copilot-instructions.md
+    lines: 1-5
+    commit: 37aadfc80bf72b71cfc98cd3fb8a76717aea143e
+- rule: README has 'Worker group management' section replacing 'Additional worker
+    groups'
+  source:
+    path: apps/supervisor/README.md
+    lines: '48'
+    commit: 1b1ad16d94e753fe5b947ce6f58c2001f3e8bb9a
+  reference: "If the worker group is newly created, the response will include a `token`\
+    \ field. If the group already exists, no token is returned.\n\n## Worker group\
+    \ management\n### Shared variables\nadmin_pat=tr_pat_... # edit this\n```\n\n\
+    - These are used by all commands\n\n### Create a worker group\n\n```sh\ncurl -sS\
+    \ \\\n    -X POST \\\n    \"$api_url/admin/api/v1/workers\" \\\n    -H \"Authorization:\
+    \ Bearer $admin_pat\" \\\n    -H \"Content-Type: application/json\" \\\n    -d\
+    \ \"{\\\"name\\\": \\\"$wg_name\\\"}\"\n```\n\n- If the worker group alre"
+- rule: README documents how to remove the default worker group from a project
+  source:
+    path: apps/supervisor/README.md
+    lines: 88-107
+    commit: 1b1ad16d94e753fe5b947ce6f58c2001f3e8bb9a
+  reference: "If the worker group is newly created, the response will include a `token`\
+    \ field. If the group already exists, no token is returned.\n\n## Worker group\
+    \ management\n### Shared variables\nadmin_pat=tr_pat_... # edit this\n```\n\n\
+    - These are used by all commands\n\n### Create a worker group\n\n```sh\ncurl -sS\
+    \ \\\n    -X POST \\\n    \"$api_url/admin/api/v1/workers\" \\\n    -H \"Authorization:\
+    \ Bearer $admin_pat\" \\\n    -H \"Content-Type: application/json\" \\\n    -d\
+    \ \"{\\\"name\\\": \\\"$wg_name\\\"}\"\n```\n\n- If the worker group alre"
+- rule: README has shared variables section for reusable api_url and admin_pat
+  source:
+    path: apps/supervisor/README.md
+    lines: 49-55
+    commit: 1b1ad16d94e753fe5b947ce6f58c2001f3e8bb9a
+  reference: "If the worker group is newly created, the response will include a `token`\
+    \ field. If the group already exists, no token is returned.\n\n## Worker group\
+    \ management\n### Shared variables\nadmin_pat=tr_pat_... # edit this\n```\n\n\
+    - These are used by all commands\n\n### Create a worker group\n\n```sh\ncurl -sS\
+    \ \\\n    -X POST \\\n    \"$api_url/admin/api/v1/workers\" \\\n    -H \"Authorization:\
+    \ Bearer $admin_pat\" \\\n    -H \"Content-Type: application/json\" \\\n    -d\
+    \ \"{\\\"name\\\": \\\"$wg_name\\\"}\"\n```\n\n- If the worker group alre"

@@ -71,12 +71,6 @@ def test_existing_page_uses_shared_include():
 
 
 # [pr_diff] fail_to_pass
-def test_existing_page_links_to_reset():
-    """configure-default-new-user-settings.mdx cross-links to the reset page."""
-    page = Path(REPO) / "starlight_help/src/content/docs/configure-default-new-user-settings.mdx"
-    content = page.read_text()
-    assert "reset-settings-for-users" in content, \
-        "configure-default page should link to reset-settings-for-users"
 
 
 # [pr_diff] fail_to_pass

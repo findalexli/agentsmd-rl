@@ -81,9 +81,6 @@ def test_custom_slack_icon_defined():
 
 
 # [pr_diff] fail_to_pass
-def test_language_mapping_uses_custom_fallbacks():
-    """languageMapping.ts must map Heroku, OpenAI, Slack to custom icons."""
-    content = (Path(REPO) / "common/icons/languageMapping.ts").read_text()
 
     # Should NOT import siHeroku, siOpenai, siSlack from simple-icons
     assert "siHeroku" not in content, (

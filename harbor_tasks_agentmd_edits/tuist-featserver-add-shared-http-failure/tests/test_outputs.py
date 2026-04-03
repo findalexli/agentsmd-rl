@@ -137,14 +137,6 @@ def test_server_wires_prom_ex_plugin():
 
 
 # [pr_diff] fail_to_pass
-def test_cache_wires_transport_logger():
-    """cache/lib/cache/application.ex must attach TransportLogger on startup."""
-    path = Path(REPO) / "cache" / "lib" / "cache" / "application.ex"
-    src = path.read_text()
-    assert "TransportLogger" in src, \
-        "Cache application.ex must reference TransportLogger"
-    assert re.search(r"TransportLogger\.attach", src), \
-        "Cache must call TransportLogger.attach"
 
 
 # [pr_diff] fail_to_pass

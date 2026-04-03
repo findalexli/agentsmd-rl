@@ -1,0 +1,84 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 38971
+  base_commit: 71e5079b735eda08a72b0fac58a3dd02fde6bb9f
+  merge_commit: fe5b234f4e2a0607d4d000ee3886d5b44291cc55
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must be readable and non-empty
+- id: config_command_declared
+  type: fail_to_pass
+  origin: pr_diff
+  description: A 'config' command must be declared in commands.ts with category 'config'
+- id: config_category_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: Category type union must include 'config'
+- id: config_category_in_help
+  type: fail_to_pass
+  origin: pr_diff
+  description: Help generator must list 'config' category with title 'Configuration'
+- id: configure_method_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: SessionManager must have an async configure() method
+- id: program_routes_config_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: Program must route 'config' commandName to handleSessionCommand
+- id: configure_not_stub
+  type: pass_to_pass
+  origin: static
+  description: configure() method must have real logic, not just pass/return
+rubric:
+- rule: Configuration documentation is consistent with the style of existing command
+    sections in SKILL.md
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 1-105
+    commit: 71e5079b735eda08a72b0fac58a3dd02fde6bb9f
+- rule: Default daemon config must set contextOptions with viewport 1280x720
+  reference: '# packages/playwright/src/mcp/terminal/SKILL.md
+
+    ### Configuration
+
+    ```bash
+
+    # configure the session
+
+    playwright-cli config my-config.json
+
+    # Configure named session
+
+    playwright-cli --session=mysession config my-config.json
+
+    # Start with configured session
+
+    playwright-cli open --config=my-config.json
+
+    ```'
+- rule: SKILL.md must document the config command with usage examples
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 108-117
+    commit: fe5b234f4e2a0607d4d000ee3886d5b44291cc55
+  reference: '### Configuration
+
+    ```bash
+
+    # configure the session
+
+    playwright-cli config my-config.json
+
+    # Configure named session
+
+    playwright-cli --session=mysession config my-config.json
+
+    # Start with configured session
+
+    playwright-cli open --config=my-config.json
+
+    ```'

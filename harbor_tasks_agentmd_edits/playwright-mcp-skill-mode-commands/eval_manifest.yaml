@@ -1,0 +1,172 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 38932
+  base_commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
+  merge_commit: 3cdf7ca18324b9a0aa0ec80d818c2f9602b0ef60
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without syntax errors
+- id: command_names_renamed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Terminal commands renamed to short form (press, keydown, mousemove,
+    etc.)
+- id: modal_state_cleared_by_is_object
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'ModalState clearedBy is typed as { tool: string; skill: string }'
+- id: render_modal_states_accepts_config
+  type: fail_to_pass
+  origin: pr_diff
+  description: renderModalStates function accepts config parameter for skill mode
+- id: render_modal_uses_skill_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: Modal state rendering uses skill name in skill mode, tool name otherwise
+- id: eval_auto_wraps_expression
+  type: fail_to_pass
+  origin: pr_diff
+  description: evaluate tool auto-wraps expressions without => into arrow functions
+- id: help_json_uses_new_command_names
+  type: fail_to_pass
+  origin: pr_diff
+  description: help.json updated with new command names
+- id: build_script_copies_md_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: Build script updated to copy terminal .md files to lib output
+rubric:
+- rule: SKILL.md documentation should be comprehensive and cover common workflows
+    with examples
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 1-159
+    commit: 3cdf7ca18324b9a0aa0ec80d818c2f9602b0ef60
+- rule: FullConfig type includes skillMode field
+  reference: '# packages/playwright/src/mcp/terminal/SKILL.md
+
+    ---
+
+    name: playwright-cli
+
+    description: Automates browser interactions for web testing, form filling, screenshots,
+    and data extraction. Use when the user needs to navigate websites, interact with
+    web pages, fill forms, take screenshots, test web applications, or extract information
+    from web pages.
+
+    allowed-tools: Bash(playwright-cli:*)
+
+    ---
+
+
+    # Browser Automation with playwright-cli
+
+
+    ## Quick start
+
+
+    ```bash
+
+    playwright-cli open https://playwright.dev
+
+    pla'
+- rule: SKILL.md created in terminal directory with valid frontmatter
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 1-7
+    commit: 3cdf7ca18324b9a0aa0ec80d818c2f9602b0ef60
+  reference: '---
+
+    name: playwright-cli
+
+    description: Automates browser interactions for web testing, form filling, screenshots,
+    and data extraction. Use when the user needs to navigate websites, interact with
+    web pages, fill forms, take screenshots, test web applications, or extract information
+    from web pages.
+
+    allowed-tools: Bash(playwright-cli:*)
+
+    ---
+
+
+    # Browser Automation with playwright-cli
+
+
+    ## Quick start
+
+
+    ```bash
+
+    playwright-cli open https://playwright.dev
+
+    playwright-cli click e15
+
+    playwright-cli type "page.'
+- rule: SKILL.md documents CLI using new command names (press, keydown, etc.)
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 1-159
+    commit: 3cdf7ca18324b9a0aa0ec80d818c2f9602b0ef60
+  reference: '---
+
+    name: playwright-cli
+
+    description: Automates browser interactions for web testing, form filling, screenshots,
+    and data extraction. Use when the user needs to navigate websites, interact with
+    web pages, fill forms, take screenshots, test web applications, or extract information
+    from web pages.
+
+    allowed-tools: Bash(playwright-cli:*)
+
+    ---
+
+
+    # Browser Automation with playwright-cli
+
+
+    ## Quick start
+
+
+    ```bash
+
+    playwright-cli open https://playwright.dev
+
+    playwright-cli click e15
+
+    playwright-cli type "page.'
+- rule: SKILL.md covers multiple command categories (keyboard, mouse, navigation,
+    tabs)
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 1-159
+    commit: 3cdf7ca18324b9a0aa0ec80d818c2f9602b0ef60
+  reference: '---
+
+    name: playwright-cli
+
+    description: Automates browser interactions for web testing, form filling, screenshots,
+    and data extraction. Use when the user needs to navigate websites, interact with
+    web pages, fill forms, take screenshots, test web applications, or extract information
+    from web pages.
+
+    allowed-tools: Bash(playwright-cli:*)
+
+    ---
+
+
+    # Browser Automation with playwright-cli
+
+
+    ## Quick start
+
+
+    ```bash
+
+    playwright-cli open https://playwright.dev
+
+    playwright-cli click e15
+
+    playwright-cli type "page.'

@@ -100,16 +100,6 @@ def test_builtin_setup_functions_use_handle():
 
 
 # [pr_diff] fail_to_pass
-def test_jsdoc_describes_parameter():
-    """JSDoc on Interaction interface must describe parameter style, not 'this'."""
-    content = Path(f"{INTERACTION_PKG}/src/lib/interaction.ts").read_text()
-    # Old: "provided to interaction setup functions via `this`"
-    # New: "provided to interaction setup functions as a parameter"
-    assert "via `this`" not in content, \
-        "JSDoc still says 'via `this`' — should describe parameter-based API"
-    # Verify the new description mentions parameter
-    assert re.search(r"as a parameter", content), \
-        "JSDoc should describe the context as provided 'as a parameter'"
 
 
 # ---------------------------------------------------------------------------

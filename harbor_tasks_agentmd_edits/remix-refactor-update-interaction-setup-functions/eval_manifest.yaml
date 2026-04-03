@@ -26,10 +26,6 @@ checks:
   origin: pr_diff
   description: All built-in setup functions (Press, Popover, FormReset, keys) use
     handle parameter
-- id: jsdoc_describes_parameter
-  type: fail_to_pass
-  origin: pr_diff
-  description: JSDoc on Interaction interface describes parameter-based API, not 'this'
 rubric:
 - rule: Code examples in README.md are consistent with the actual API signatures in
     source code
@@ -66,6 +62,11 @@ rubric:
     path: AGENTS.md
     lines: '17'
     commit: 0b0ca631198af88cda1ecceef5a51d20e1b3b3e2
+  reference: "# packages/interaction/README.md\nfunction KeydownEnter(handle: Interaction)\
+    \ {\n  if (!(handle.target instanceof HTMLElement)) return\n  handle.on(handle.target,\
+    \ {\n        handle.target.dispatchEvent(new KeyboardEvent(keydownEnter, { key:\
+    \ 'Enter' }))"
+- rule: JSDoc on Interaction interface describes parameter-based API, not 'this'
   reference: "# packages/interaction/README.md\nfunction KeydownEnter(handle: Interaction)\
     \ {\n  if (!(handle.target instanceof HTMLElement)) return\n  handle.on(handle.target,\
     \ {\n        handle.target.dispatchEvent(new KeyboardEvent(keydownEnter, { key:\

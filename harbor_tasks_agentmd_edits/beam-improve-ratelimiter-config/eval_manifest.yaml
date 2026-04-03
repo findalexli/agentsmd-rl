@@ -25,10 +25,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: At least 6 Kubernetes resources set namespace = var.namespace
-- id: statsd_sidecar_conditional
-  type: fail_to_pass
-  origin: pr_diff
-  description: statsd-exporter sidecar uses dynamic block gated on enable_metrics
 rubric:
 - rule: README variable documentation is consistent with the style of the existing
     table
@@ -106,3 +102,19 @@ rubric:
     enable_metrics        = false                       # Deploy statsd-exporter sidecar
 
     |namespace              |Kubernetes namespace to deploy resources into        |envoy-ratelimiter'
+- rule: statsd-exporter sidecar uses dynamic block gated on enable_metrics
+  reference: '# examples/terraform/envoy-ratelimiter/README.md
+
+    Example Beam Python Pipelines using it:
+
+    Example Beam Java Pipelines using it:
+
+    *   [Simple DoFn RateLimiter](https://github.com/apache/beam/blob/master/examples/java/src/main/java/org/apache/beam/examples/RateLimiterSimple.java)
+
+
+    namespace             = "envoy-ratelimiter"         # Kubernetes namespace for
+    deployment
+
+    enable_metrics        = false                       # Deploy statsd-exporter sidecar
+
+    |namespace              |Kubernetes namespace t'

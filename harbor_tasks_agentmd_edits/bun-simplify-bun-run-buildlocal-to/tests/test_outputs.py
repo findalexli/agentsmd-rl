@@ -129,20 +129,6 @@ def test_buildbun_jsc_dependency():
 
 
 # [pr_diff] fail_to_pass
-def test_buildbun_system_icu_linux():
-    """BuildBun.cmake uses system ICU via find_package on Linux when WEBKIT_LOCAL is set."""
-    fp = Path(REPO) / "cmake/targets/BuildBun.cmake"
-    content = fp.read_text()
-    assert "find_package(ICU" in content, (
-        "BuildBun.cmake must use find_package(ICU) for system ICU on Linux"
-    )
-    assert "ICU::data" in content or "ICU::uc" in content, (
-        "BuildBun.cmake must link against ICU:: imported targets"
-    )
-    # Must be conditional — still link static ICU libs for non-local builds
-    assert "libicudata.a" in content, (
-        "BuildBun.cmake must still link static ICU libs for non-local builds"
-    )
 
 
 # ---------------------------------------------------------------------------

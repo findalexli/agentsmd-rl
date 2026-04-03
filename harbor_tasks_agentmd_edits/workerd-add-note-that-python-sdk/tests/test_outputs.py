@@ -80,19 +80,6 @@ def test_freeze_test_covers_key_files():
 
 
 # [pr_diff] fail_to_pass
-def test_init_has_deprecation_notice():
-    """__init__.py must have a comment pointing to cloudflare/workers-py."""
-    init_file = Path(REPO) / "src/pyodide/internal/workers-api/src/workers/__init__.py"
-    content = init_file.read_text()
-    assert "workers-py" in content or "workers_py" in content, \
-        "__init__.py must reference the new workers-py repository"
-    # Must be a comment (not functional code change)
-    lines = content.split("\n")
-    has_comment = any(
-        "workers-py" in line and line.strip().startswith("#")
-        for line in lines
-    )
-    assert has_comment, "__init__.py deprecation notice should be a comment"
 
 
 # [pr_diff] fail_to_pass

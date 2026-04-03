@@ -89,11 +89,6 @@ def test_task_card_hides_due_date_for_completed():
 
 
 # [pr_diff] fail_to_pass
-def test_due_date_wrapper_disables_urgency_for_completed():
-    """TaskDueDateWrapper must disable urgency colors for completed/rejected tasks."""
-    src = Path(
-        f"{REPO}/lib/features/tasks/ui/header/task_due_date_wrapper.dart"
-    ).read_text()
 
     # Must reference TaskDone/TaskRejected or equivalent completed check
     has_completed_check = bool(

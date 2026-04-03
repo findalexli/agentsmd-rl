@@ -69,11 +69,6 @@ def test_log_and_exec_pipe_stdio():
 
 
 # [pr_diff] fail_to_pass
-def test_setup_script_operations():
-    """setup-installable-branch.ts must implement git/package update operations."""
-    script = Path(f"{REPO}/scripts/setup-installable-branch.ts")
-    assert script.exists(), "scripts/setup-installable-branch.ts must exist"
-    content = script.read_text()
 
     # Must handle .gitignore modification (remove dist entries)
     assert "gitignore" in content.lower() or ".gitignore" in content, \

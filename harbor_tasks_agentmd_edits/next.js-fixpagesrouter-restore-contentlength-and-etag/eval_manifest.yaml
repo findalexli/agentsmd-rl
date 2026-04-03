@@ -9,10 +9,6 @@ checks:
   type: pass_to_pass
   origin: static
   description: pages-handler.ts has balanced braces (basic TS syntax sanity)
-- id: data_response_no_buffer_wrap
-  type: fail_to_pass
-  origin: pr_diff
-  description: /_next/data/ JSON response passes string to RenderResult, not Buffer
 rubric:
 - rule: AGENTS.md edits are consistent with the surrounding documentation style and
     formatting
@@ -52,3 +48,11 @@ rubric:
     \ true <name> e2e`, then run the dev server directly with `node packages/next/dist/bin/next\
     \ dev --port <port>` and `curl --max-time 10`. This avoids the overhead of the\
     \ full test harness and gives i"
+- rule: /_next/data/ JSON response passes string to RenderResult, not Buffer
+  reference: "# AGENTS.md\n# Use --args for non-interactive mode (forward args to\
+    \ the script using `--`)\n# Format: pnpm new-test -- --args <appDir> <name> <type>\n\
+    pnpm new-test -- --args true my-feature e2e\n  -- **Quick smoke testing with toy\
+    \ apps**: For fast feedback, generate a minimal test fixture with `pnpm new-test\
+    \ -- --args true <name> e2e`, then run the dev server directly with `node packages/next/dist/bin/next\
+    \ dev --port <port>` and `curl --max-time 10`. This avoids the overhead of the\
+    \ full test harness"

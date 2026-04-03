@@ -1,0 +1,51 @@
+version: '2.0'
+source:
+  repo: PostHog/posthog
+  pr: 51901
+  base_commit: 283294a8e1c595e5762fa55a8d18b844c4667f2c
+  merge_commit: fbb9c7007733c5b1f4905d963d48bff47b45ec0e
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: JSON schema files must be valid JSON
+- id: schema_feature_names_use_underscores
+  type: fail_to_pass
+  origin: pr_diff
+  description: Feature fields in schema JSON files use underscores not hyphens
+- id: feature_name_normalization_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: toolDefinitions.ts has logic to replace hyphens with underscores in
+    feature names
+- id: feature_filtering_uses_normalization
+  type: fail_to_pass
+  origin: pr_diff
+  description: Feature filtering uses normalized comparison instead of direct includes()
+- id: tool_definitions_structure
+  type: pass_to_pass
+  origin: static
+  description: Tool definitions have required fields (feature, category, description)
+rubric:
+- rule: Feature names in YAML tool definitions should use snake_case_name matching
+    the product folder name
+  source:
+    path: .agents/skills/implementing-mcp-tools/SKILL.md
+    lines: '70'
+    commit: 283294a8e1c595e5762fa55a8d18b844c4667f2c
+- rule: README documentation should be consistent with the style of existing documentation
+    sections
+  source:
+    path: services/mcp/README.md
+    lines: 258-280
+    commit: 283294a8e1c595e5762fa55a8d18b844c4667f2c
+- rule: README.md documents at least 20 of the 28 available MCP features
+  source:
+    path: services/mcp/README.md
+    lines: 261-306
+    commit: fbb9c7007733c5b1f4905d963d48bff47b45ec0e
+- rule: README.md notes that hyphens and underscores are equivalent in feature names
+  source:
+    path: services/mcp/README.md
+    lines: '307'
+    commit: fbb9c7007733c5b1f4905d963d48bff47b45ec0e

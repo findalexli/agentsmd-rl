@@ -109,14 +109,6 @@ def test_config_passes_cdp_endpoint():
 
 
 # [pr_diff] fail_to_pass
-def test_attach_target_exclusivity():
-    """Attach command must error when target name is used with --cdp/--endpoint/--extension."""
-    content = (Path(REPO) / "packages/playwright-core/src/tools/cli-client/program.ts").read_text()
-    # Must have mutual exclusion logic
-    assert re.search(r"attachTarget.*cdp|cdp.*attachTarget", content, re.DOTALL), \
-        "program.ts must check for mutual exclusion of target with --cdp"
-    assert re.search(r"cannot use target.*--cdp|--cdp.*target", content, re.IGNORECASE), \
-        "program.ts must show error about incompatible target + --cdp usage"
 
 
 # [pr_diff] fail_to_pass

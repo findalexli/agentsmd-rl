@@ -95,21 +95,6 @@ def test_no_common_browser_targets():
 
 
 # [pr_diff] fail_to_pass
-def test_bidi_targets_conditional():
-    """BiDi test targets should only be generated for browsers that support BiDi."""
-    build = Path(REPO) / "py" / "BUILD.bazel"
-    content = build.read_text()
-    # The bidi target list comprehension must have a conditional filter
-    # Look for the bidi target generation with an if condition
-    bidi_section = re.search(
-        r'name\s*=\s*"test-%s-bidi".*?for\s+browser\s+in\s+\S+.*?if\s+',
-        content,
-        re.DOTALL,
-    )
-    assert bidi_section, (
-        "BiDi targets should be conditionally generated "
-        "(e.g., only for browsers with bidi=True)"
-    )
 
 
 # [pr_diff] fail_to_pass

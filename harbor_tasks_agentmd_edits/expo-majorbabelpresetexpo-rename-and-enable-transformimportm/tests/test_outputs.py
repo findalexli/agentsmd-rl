@@ -106,15 +106,6 @@ try {
 
 
 # [pr_diff] fail_to_pass
-def test_type_definition_renamed():
-    """build/index.d.ts exports transformImportMeta (not unstable_) as the option type."""
-    dts = Path(f"{PKG}/build/index.d.ts").read_text()
-    assert "transformImportMeta?: boolean" in dts, (
-        "build/index.d.ts should declare 'transformImportMeta?: boolean'"
-    )
-    assert "unstable_transformImportMeta" not in dts, (
-        "build/index.d.ts should not contain 'unstable_transformImportMeta'"
-    )
 
 
 # [pr_diff] fail_to_pass

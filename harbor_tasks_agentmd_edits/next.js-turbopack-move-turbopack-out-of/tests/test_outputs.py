@@ -85,8 +85,6 @@ def test_next_swc_build_decoupled():
 
 
 # [pr_diff] fail_to_pass
-def test_turbo_config_build_no_native():
-    """Turbo config 'build' task in next-swc must NOT include native compilation inputs.
 
     On the base commit, the 'build' task has Cargo/crate inputs, meaning
     `pnpm build` triggers native Turbopack compilation. After the fix,

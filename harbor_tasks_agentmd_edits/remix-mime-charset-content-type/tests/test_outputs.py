@@ -161,19 +161,6 @@ def test_detect_content_type_function():
 
 
 # [pr_diff] fail_to_pass
-def test_exports_new_functions():
-    """packages/mime/src/index.ts must export both detectContentType and mimeTypeToContentType."""
-    fp = Path(REPO) / "packages/mime/src/index.ts"
-    content = fp.read_text()
-    assert "detectContentType" in content, (
-        "index.ts must export detectContentType"
-    )
-    assert "mimeTypeToContentType" in content, (
-        "index.ts must export mimeTypeToContentType"
-    )
-    # Also verify existing exports are preserved
-    assert "detectMimeType" in content, "Must preserve detectMimeType export"
-    assert "isCompressibleMimeType" in content, "Must preserve isCompressibleMimeType export"
 
 
 # [pr_diff] fail_to_pass

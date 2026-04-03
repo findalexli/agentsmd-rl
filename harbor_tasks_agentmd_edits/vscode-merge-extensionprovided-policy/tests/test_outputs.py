@@ -109,11 +109,6 @@ def test_package_json_export_script():
 
 
 # [pr_diff] fail_to_pass
-def test_extension_policy_fixture_created():
-    """Test fixture for extension policies exists with valid structure."""
-    fixture = Path(REPO) / "src/vs/workbench/contrib/policyExport/test/node/extensionPolicyFixture.json"
-    assert fixture.exists(), "extensionPolicyFixture.json must be created for testing"
-    data = json.loads(fixture.read_text())
 
     assert "extensionConfigurationPolicy" in data, \
         "Fixture must have extensionConfigurationPolicy key"

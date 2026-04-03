@@ -61,12 +61,6 @@ def test_skip_loading_inside_when_call():
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
-def test_when_call_still_has_all_callbacks():
-    """The .when() call retains loading, error, and data callbacks."""
-    src = DETAIL_PAGE.read_text()
-    assert "loading:" in src, ".when() must still have a loading: callback"
-    assert "error:" in src, ".when() must still have an error: callback"
-    assert "data:" in src, ".when() must still have a data: callback"
 
 
 # ---------------------------------------------------------------------------

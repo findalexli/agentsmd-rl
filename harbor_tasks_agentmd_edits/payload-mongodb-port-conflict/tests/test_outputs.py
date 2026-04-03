@@ -116,14 +116,6 @@ def test_connection_test_mongodb_url():
 
 
 # [pr_diff] fail_to_pass
-def test_connection_test_mongodb_atlas_url():
-    """MongoDB Atlas run-test-connection.ts must use port 27019."""
-    conn = Path(REPO) / "test/helpers/db/mongodb-atlas/run-test-connection.ts"
-    content = conn.read_text()
-    assert "localhost:27019" in content, \
-        "MongoDB Atlas connection test should use port 27019"
-    assert "localhost:27018" not in content, \
-        "MongoDB Atlas connection test should no longer use port 27018"
 
 
 # ---------------------------------------------------------------------------

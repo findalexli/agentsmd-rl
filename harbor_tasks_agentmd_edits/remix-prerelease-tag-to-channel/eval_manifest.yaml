@@ -21,10 +21,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: readRemixPrereleaseConfig must validate and return 'channel', not 'tag'
-- id: publish_uses_next_tag
-  type: fail_to_pass
-  origin: pr_diff
-  description: publish.ts must always use --tag next for remix prereleases
 - id: changes_ts_still_validates_config
   type: pass_to_pass
   origin: static
@@ -75,3 +71,11 @@ rubric:
     \ on npm. All other packages in this monorepo are new and publish directly as\
     \ `latest`.\n#### Transitioning between `remix` prerelease channels\nTo transition\
     \ between channels (e.g. `alpha` \u2192 `beta`):\n1"
+- rule: publish.ts must always use --tag next for remix prereleases
+  reference: "# AGENTS.md\n- **Prerelease mode**: An optional `.changes/prerelease.json`\
+    \ file denotes that the package is in prerelease mode. The `channel` field (e.g.\
+    \ `\"alpha\"`, `\"beta\"`, `\"rc\"`) determines the version suffix, while the\
+    \ npm dist-tag is always `\"next\"`. **This is only supported for the `remix`\
+    \ package.**\n    - **Transitioning between prerelease channels** (e.g. `alpha`\
+    \ \u2192 `beta`): Update `prerelease.json` channel and add a change file. Version\
+    \ resets to new channel (e.g. `3.0.0-alpha.7` \u2192 `3.0."

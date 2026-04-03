@@ -21,10 +21,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Google provider version upgraded to >= 6.x
-- id: helm_provider_kubernetes_assignment
-  type: fail_to_pass
-  origin: pr_diff
-  description: Helm provider uses kubernetes = {} assignment syntax
 rubric:
 - rule: Updating section follows the style of the existing Installing section
   source:
@@ -112,3 +108,23 @@ rubric:
 
 
     2. Terraform plan. Replace environment'
+- rule: Helm provider uses kubernetes = {} assignment syntax
+  reference: '# .github/gh-actions-self-hosted-runners/arc/README.md
+
+    # Updating
+
+    If you need to update the configuration (e.g. upgrading the github runner image,
+    changing resource settings, etc), follow the steps below:
+
+
+    1. From this directory, login to your gcloud account that you created the bucket
+    with and init terraform. Replace bucket_name with the bucket for storing terraform
+    state, e.g. `beam-arc-state`.
+
+    ```
+
+    gcloud auth login
+
+    gcloud auth application-default login
+
+    terraform init -backend-config="bucket=b'

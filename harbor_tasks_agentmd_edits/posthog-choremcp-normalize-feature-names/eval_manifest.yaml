@@ -1,0 +1,25 @@
+version: '2.0'
+source:
+  repo: '{{OWNER}}/{{REPO}}'
+  pr: 0
+  base_commit: '{{BASE_COMMIT}}'
+  merge_commit: '{{MERGE_COMMIT}}'
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: core_bug_fixed
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'TODO: describe the core behavioral change'
+- id: edge_case
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'TODO: describe a second input or edge case'
+- id: existing_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream test suite still passes
+rubric:
+- rule: Modified function has real logic, not just pass/return

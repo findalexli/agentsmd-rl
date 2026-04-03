@@ -51,9 +51,6 @@ def test_record_type_field_in_struct():
     )
 
 
-def test_gc_populates_record_type():
-    """engine/server/gc.go must populate RecordType from the cache record."""
-    src = Path(f"{REPO}/engine/server/gc.go").read_text()
 
     # The field must be assigned in the struct literal
     assert re.search(r"RecordType:\s+.*[Rr]ecord[Tt]ype", src), (

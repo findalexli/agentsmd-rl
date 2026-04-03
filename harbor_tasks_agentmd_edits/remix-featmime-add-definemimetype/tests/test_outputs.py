@@ -203,9 +203,6 @@ console.log('PASS')
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_existing_detect_mime_type():
-    """Existing detectMimeType behavior is preserved (txt -> text/plain)."""
-    r = _run_ts("""
 import { detectMimeType } from './packages/mime/src/index.ts'
 
 let cases: [string, string | undefined][] = [

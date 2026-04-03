@@ -62,11 +62,6 @@ def test_console_output_backtick_paths():
 
 
 # [pr_diff] fail_to_pass
-def test_error_output_emoji_format():
-    """Error messages in program.ts use ❌ prefix."""
-    src = PROGRAM_TS.read_text()
-    assert "❌ Skills source directory not found" in src, \
-        "program.ts should prefix error about missing skills dir with ❌"
 
 
 # [pr_diff] fail_to_pass

@@ -26,11 +26,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Testcontainers.CosmosDb added as package dependency
-- id: cosmos_teststore_calls_initialize
-  type: fail_to_pass
-  origin: pr_diff
-  description: CosmosTestStore calls TestEnvironment.InitializeAsync and has mutable
-    connection properties
 rubric:
 - rule: SKILL.md update is consistent with the style of existing skill documentation
   source:
@@ -70,6 +65,17 @@ rubric:
     path: .github/copilot-instructions.md
     lines: '135'
     commit: dd9da572feeb9851a0c4a6579b05163c48574c29
+  reference: '# .agents/skills/cosmos-provider/SKILL.md
+
+    ## Azure Cosmos DB Emulator for Tests
+
+    - `TestEnvironment.InitializeAsync()` auto-starts a `Testcontainers.CosmosDb`
+    container when `Test__Cosmos__DefaultConnection` is not set. Set the env var to
+    use an existing emulator instead.
+
+    - Skip tests requiring unsupported features on the Linux emulator with `[CosmosCondition(CosmosCondition.IsNotLinuxEmulator)]`.'
+- rule: CosmosTestStore calls TestEnvironment.InitializeAsync and has mutable connection
+    properties
   reference: '# .agents/skills/cosmos-provider/SKILL.md
 
     ## Azure Cosmos DB Emulator for Tests

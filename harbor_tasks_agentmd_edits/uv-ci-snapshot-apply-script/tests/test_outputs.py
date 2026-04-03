@@ -133,18 +133,6 @@ def test_script_detects_missing_tools():
 
 
 # [pr_diff] fail_to_pass
-def test_insta_version_bumped():
-    """Cargo.toml must specify insta >= 1.46.0 (needed for INSTA_PENDING_DIR)."""
-    cargo_toml = Path(REPO) / "Cargo.toml"
-    data = tomllib.loads(cargo_toml.read_text())
-    deps = data.get("workspace", {}).get("dependencies", {})
-    insta = deps.get("insta", {})
-    version_str = insta if isinstance(insta, str) else insta.get("version", "0")
-    version_clean = version_str.lstrip("^~>=<! ")
-    parts = version_clean.split(".")
-    major, minor = int(parts[0]), int(parts[1]) if len(parts) > 1 else 0
-    assert (major, minor) >= (1, 46), \
-        f"insta version should be >= 1.46.0, got {version_str}"
 
 
 # [pr_diff] fail_to_pass

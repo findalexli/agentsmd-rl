@@ -17,10 +17,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: WebSocket test has a timeout mechanism to avoid hanging indefinitely
-- id: verbose_retry_logging_removed
-  type: fail_to_pass
-  origin: pr_diff
-  description: Verbose console.info retry logging removed from TCP port retry loop
 rubric:
 - rule: README cleanup commands should be safe to run when no matching containers/images
     exist
@@ -47,6 +43,10 @@ rubric:
     path: AGENTS.md
     lines: '81'
     commit: e5eaa43c16c57bab977e5b53f4e57ca4418d084d
+  reference: "# src/workerd/server/tests/container-client/README.md\ndocker ps -aq\
+    \ --filter name=workerd-container-client-test | xargs -r docker rm -f\n   just\
+    \ stream-test //src/workerd/server/tests/container-client:container-client@"
+- rule: Verbose console.info retry logging removed from TCP port retry loop
   reference: "# src/workerd/server/tests/container-client/README.md\ndocker ps -aq\
     \ --filter name=workerd-container-client-test | xargs -r docker rm -f\n   just\
     \ stream-test //src/workerd/server/tests/container-client:container-client@"

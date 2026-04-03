@@ -28,10 +28,6 @@ checks:
   origin: pr_diff
   description: list_certificates returns maps with name, serial, subject, issuer,
     validity keys
-- id: existing_list_function_preserved
-  type: pass_to_pass
-  origin: static
-  description: The original list/0 function in rabbit_trust_store.erl is still exported
 rubric:
 - rule: README documentation is consistent with the style of the existing trust store
     README
@@ -94,6 +90,14 @@ rubric:
     path: CLAUDE.md
     lines: 133-134
     commit: 95cfcbac9099290f72f99665a8b9ba7f63a8c266
+  reference: "# deps/rabbitmq_trust_store/README.md\nTo list the currently loaded\
+    \ certificates, use `rabbitmqctl`:\n``` sh\n# Available as of RabbitMQ `4.3.0`,\
+    \ `4.2.6`\nrabbitmqctl list_trust_store_certificates\nThis will output a table\
+    \ of certificates similar to:\nListing trust store certificates on node rabbit@hostname...\n\
+    name\tserial\tsubject\tissuer\tvalidity\ncert.pem\t0x1\tO=client,CN=snowman.local\t\
+    L=87613,CN=MyTestRootCA\t2016-05-24T15:28:25Z - 2026-05-22T15:28:25Z\n### Refreshing\
+    \ certificates\n\nTo trigger a manual re"
+- rule: The original list/0 function in rabbit_trust_store.erl is still exported
   reference: "# deps/rabbitmq_trust_store/README.md\nTo list the currently loaded\
     \ certificates, use `rabbitmqctl`:\n``` sh\n# Available as of RabbitMQ `4.3.0`,\
     \ `4.2.6`\nrabbitmqctl list_trust_store_certificates\nThis will output a table\

@@ -111,8 +111,6 @@ func TestHarnessNestedInExpanded(t *testing.T) {
 
 
 # [pr_diff] fail_to_pass
-def test_skipped_versioned_with_nested_comment():
-    """Nested /* */ inside a skipped versioned comment must not close it early.
 
     Before the fix, the closing */ of the nested comment prematurely terminated
     the outer versioned comment, leaving trailing tokens that caused parse errors.

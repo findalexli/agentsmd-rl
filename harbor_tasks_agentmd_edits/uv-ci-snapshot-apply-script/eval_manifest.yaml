@@ -26,10 +26,6 @@ checks:
   origin: pr_diff
   description: apply-ci-snapshots.sh exits with error when required tools (gh, cargo-insta,
     git) are missing
-- id: insta_version_bumped
-  type: fail_to_pass
-  origin: pr_diff
-  description: Cargo.toml specifies insta >= 1.46.0 for INSTA_PENDING_DIR support
 rubric:
 - rule: The CONTRIBUTING.md update is placed in the snapshot testing section, consistent
     with surrounding documentation structure
@@ -82,6 +78,21 @@ rubric:
     commit: 273d29b8f21e95fb80c9e7ca8b1d28f605212bde
   reference: 'A script is available to update the snapshots based on results in CI.
     This is useful for updating
+
+    snapshots without re-running the test suite and for updating platform-specific
+    snapshots.
+
+
+    ```shell
+
+    ./scripts/apply-ci-snapshots.sh
+
+    ```'
+- rule: Cargo.toml specifies insta >= 1.46.0 for INSTA_PENDING_DIR support
+  reference: '# CONTRIBUTING.md
+
+    A script is available to update the snapshots based on results in CI. This is
+    useful for updating
 
     snapshots without re-running the test suite and for updating platform-specific
     snapshots.

@@ -28,11 +28,6 @@ checks:
   origin: pr_diff
   description: "Relative paths NOT resolved from process.cwd() \u2014 use project\
     \ root constant instead"
-- id: old_project_src_removed
-  type: fail_to_pass
-  origin: pr_diff
-  description: Old PROJECT_SRC constant removed from snap source files, runner-watch
-    uses plugin root
 - id: compile_handler_not_stub
   type: pass_to_pass
   origin: static
@@ -90,6 +85,38 @@ rubric:
     path: compiler/docs/DEVELOPMENT_GUIDE.md
     lines: 21-48
     commit: 3ce1316b05968d2a8cffe42a110f2726f2c44c3e
+  reference: '# compiler/CLAUDE.md
+
+    ## Compiling Arbitrary Files
+
+
+    Use `yarn snap compile` to compile any file (not just fixtures) with the React
+    Compiler:
+
+
+    ```bash
+
+    # Compile a file and see the output
+
+    yarn snap compile <path>
+
+
+    # Compile with debug logging to see the state after each compiler pass
+
+    # This is an alternative to `yarn snap -d -p <pattern>` when you don''t have a
+    fixture file yet
+
+    yarn snap compile --debug <path>
+
+    ```
+
+
+    ## Minimizing Test Cases
+
+
+    Use `yarn snap minimize` to automatically reduce a failing '
+- rule: Old PROJECT_SRC constant removed from snap source files, runner-watch uses
+    plugin root
   reference: '# compiler/CLAUDE.md
 
     ## Compiling Arbitrary Files

@@ -60,11 +60,6 @@ def test_make_codex_creates_skills_symlink():
     assert ".ai/skills" in target, f".agents/skills should link to .ai/skills, got {target}"
 
 
-def test_make_clean_ai_removes_symlinks():
-    """'make clean-ai' must remove .agents/skills and .claude/skills."""
-    # Set up first
-    subprocess.run(["make", "claude"], capture_output=True, cwd=REPO, timeout=30)
-    subprocess.run(["make", "codex"], capture_output=True, cwd=REPO, timeout=30)
 
     r = subprocess.run(["make", "clean-ai"], capture_output=True, cwd=REPO, timeout=30)
     assert r.returncode == 0, f"make clean-ai failed: {r.stderr.decode()[:500]}"

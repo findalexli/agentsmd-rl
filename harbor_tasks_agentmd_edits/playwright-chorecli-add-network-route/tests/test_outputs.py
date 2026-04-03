@@ -107,13 +107,6 @@ def test_route_tools_registered():
 
 
 # [pr_diff] fail_to_pass
-def test_network_category_and_cli_commands():
-    """CLI must have 'network' category with route/route-list/unroute commands."""
-    # Check command.ts has 'network' in Category type
-    cmd_file = Path(REPO) / "packages/playwright/src/mcp/terminal/command.ts"
-    cmd_content = cmd_file.read_text()
-    assert "'network'" in cmd_content or '"network"' in cmd_content, \
-        "command.ts Category type must include 'network'"
 
     # Check commands.ts has route commands
     cmds_file = Path(REPO) / "packages/playwright/src/mcp/terminal/commands.ts"

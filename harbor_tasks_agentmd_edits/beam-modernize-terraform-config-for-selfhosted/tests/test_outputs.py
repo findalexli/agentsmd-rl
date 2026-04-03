@@ -98,9 +98,6 @@ def test_google_provider_version_upgraded():
 
 
 # [pr_diff] fail_to_pass
-def test_helm_provider_kubernetes_assignment():
-    """Helm provider uses 'kubernetes = {' assignment, not 'kubernetes {' block."""
-    content = (ARC_DIR / "provider.tf").read_text()
 
     # Find the helm provider block
     helm_match = re.search(

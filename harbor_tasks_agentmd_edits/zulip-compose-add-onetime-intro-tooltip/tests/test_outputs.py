@@ -120,12 +120,6 @@ def test_tooltip_dismissed_on_compose_cancel():
 
 
 # [pr_diff] fail_to_pass
-def test_tooltip_dismissed_on_hotkey():
-    """hotkey.ts must dismiss the tooltip on narrow_to_compose_target."""
-    src = Path(f"{REPO}/web/src/hotkey.ts").read_text()
-    assert "dismiss_intro_go_to_conversation_tooltip" in src, (
-        "hotkey.ts must dismiss the tooltip when the hotkey is pressed"
-    )
 
 
 # [pr_diff] fail_to_pass

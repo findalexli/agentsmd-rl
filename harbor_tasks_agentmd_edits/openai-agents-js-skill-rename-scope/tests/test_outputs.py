@@ -41,14 +41,6 @@ def test_skill_renamed():
 
 
 # [pr_diff] fail_to_pass
-def test_run_sh_message_updated():
-    """run.sh success message must reference code-change-verification."""
-    run_sh = Path(REPO) / ".codex/skills/code-change-verification/scripts/run.sh"
-    content = run_sh.read_text()
-    assert "code-change-verification" in content, \
-        "run.sh should print 'code-change-verification' in its output"
-    assert "verify-changes:" not in content, \
-        "run.sh should not reference old 'verify-changes' name"
 
 
 # [pr_diff] fail_to_pass

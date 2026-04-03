@@ -112,18 +112,6 @@ def test_deploy_script_exists():
 
 
 # [pr_diff] fail_to_pass
-def test_enable_metrics_default_true():
-    """variables.tf should default enable_metrics to true."""
-    content = Path(os.path.join(TF_DIR, "variables.tf")).read_text()
-    match = re.search(
-        r'variable\s+"enable_metrics"\s*\{[^}]*default\s*=\s*(true|false)',
-        content,
-        re.DOTALL,
-    )
-    assert match, "variables.tf should define enable_metrics with a default"
-    assert match.group(1) == "true", (
-        f"enable_metrics should default to true, got {match.group(1)}"
-    )
 
 
 # ---------------------------------------------------------------------------

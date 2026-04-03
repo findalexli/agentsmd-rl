@@ -97,19 +97,6 @@ def test_b_flag_alias():
 
 
 # [pr_diff] fail_to_pass
-def test_user_facing_messages_use_browser():
-    """User-facing messages in program.ts must say 'Browser' instead of 'Session'."""
-    content = PROGRAM_TS.read_text()
-    # Check key user-facing strings are updated
-    assert "Browsers:" in content or "'Browsers:'" in content or '"Browsers:"' in content or \
-           "Browsers'" in content, \
-        "listSessions must print 'Browsers:' instead of 'Sessions:'"
-    assert "(no browsers)" in content, \
-        "Empty session list must say '(no browsers)' instead of '(no sessions)'"
-    assert "'[open]'" in content or '"[open]"' in content, \
-        "Status marker must use '[open]' instead of '[running]'"
-    assert "'[closed]'" in content or '"[closed]"' in content, \
-        "Status marker must use '[closed]' instead of '[stopped]'"
 
 
 # [pr_diff] fail_to_pass

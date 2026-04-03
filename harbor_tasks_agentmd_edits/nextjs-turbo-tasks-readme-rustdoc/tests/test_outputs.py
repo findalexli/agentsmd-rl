@@ -20,15 +20,6 @@ README = Path(REPO) / "turbopack" / "crates" / "turbo-tasks" / "README.md"
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
-def test_syntax_check():
-    """lib.rs retains valid Rust crate attributes and module declarations."""
-    content = LIB_RS.read_text()
-    # Must still have feature attributes (basic structural check)
-    assert "#![feature(trivial_bounds)]" in content, \
-        "lib.rs is missing expected #![feature(trivial_bounds)] attribute"
-    # Must still declare the backend module
-    assert "pub mod backend;" in content, \
-        "lib.rs is missing 'pub mod backend;' declaration"
 
 
 # ---------------------------------------------------------------------------

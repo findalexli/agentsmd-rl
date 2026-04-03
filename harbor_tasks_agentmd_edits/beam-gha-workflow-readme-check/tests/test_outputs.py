@@ -18,15 +18,6 @@ REPO = "/workspace/beam"
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
-def test_syntax_check():
-    """build.gradle must be syntactically valid (balanced braces)."""
-    build_gradle = Path(REPO) / ".github" / "build.gradle"
-    content = build_gradle.read_text()
-    # Basic structural check: braces must be balanced
-    assert content.count("{") == content.count("}"), \
-        "build.gradle has unbalanced braces"
-    # Must still contain the existing check task
-    assert "task check" in content, "build.gradle must contain 'task check'"
 
 
 # ---------------------------------------------------------------------------

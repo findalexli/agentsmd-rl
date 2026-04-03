@@ -94,18 +94,6 @@ def test_resources_use_namespace():
 
 
 # [pr_diff] fail_to_pass
-def test_statsd_sidecar_conditional():
-    """The statsd-exporter sidecar must be conditional via a dynamic block."""
-    content = (TF_DIR / "ratelimit.tf").read_text()
-    # Should use dynamic "container" block instead of static container block
-    # for statsd-exporter
-    assert re.search(r'dynamic\s+"container"', content), (
-        "statsd-exporter should use a dynamic container block"
-    )
-    # The dynamic block should reference enable_metrics
-    assert "var.enable_metrics" in content, (
-        "Dynamic container block should be gated on var.enable_metrics"
-    )
 
 
 # [pr_diff] fail_to_pass

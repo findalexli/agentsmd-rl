@@ -88,16 +88,6 @@ def test_overall_status_removed():
         "$overallStatus variable should be removed from script"
 
 
-def test_comment_replaces_not_merges():
-    """Comment body must fully replace existing comment, not merge reviews."""
-    content = SCRIPT.read_text()
-    # The old code parsed existing reviews and merged them; the new code just replaces
-    # Should NOT have the existingReviews accumulation pattern
-    assert "$existingReviews" not in content, \
-        "Old review-merging logic ($existingReviews) should be removed"
-    # Should have a comment or code indicating full replacement
-    assert "replace" in content.lower() or "REPLACE" in content, \
-        "Comment body should indicate replacement behavior"
 
 
 

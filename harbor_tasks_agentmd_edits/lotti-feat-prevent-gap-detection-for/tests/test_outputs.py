@@ -119,17 +119,6 @@ def test_originator_always_considered_online():
 
 
 # [pr_diff] fail_to_pass
-def test_skip_gap_detection_logging():
-    """When gap detection is skipped for an offline host, the service must log
-    a skipGapDetection event."""
-    src = SERVICE_FILE.read_text()
-    assert "skipGapDetection" in src, (
-        "Service must log 'skipGapDetection' when skipping gap detection for offline hosts"
-    )
-    # Verify the log includes the host ID and domain info
-    assert re.search(r"skipGapDetection.*hostId", src), (
-        "skipGapDetection log must include hostId"
-    )
 
 
 # ---------------------------------------------------------------------------

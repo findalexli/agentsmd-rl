@@ -1,0 +1,54 @@
+version: '2.0'
+source:
+  repo: prisma/prisma
+  pr: 27631
+  base_commit: 057e587d5f31ad2361dfbc66d8c57406a13f86bc
+  merge_commit: ddc10462458afc88069d8d8e04411f8c3397f225
+checks:
+- id: mcp_moved_to_subdirectory
+  type: fail_to_pass
+  origin: pr_diff
+  description: MCP.ts must exist at packages/cli/src/mcp/MCP.ts
+- id: old_mcp_file_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old MCP.ts at packages/cli/src/MCP.ts must be removed
+- id: bin_imports_from_mcp_directory
+  type: fail_to_pass
+  origin: pr_diff
+  description: bin.ts must import Mcp from ./mcp/MCP path
+- id: pdp_tools_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: PDP MCP tools removed from local server
+- id: relative_imports_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Relative imports in MCP.ts adjusted for mcp/ subdirectory
+- id: mcp_keyword_in_package_json
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/cli/package.json keywords include MCP
+rubric:
+- rule: README is consistent with the style of existing documentation in the repo
+    (packages/cli/README.md)
+  source:
+    path: packages/cli/README.md
+    lines: 1-10
+    commit: 057e587d5f31ad2361dfbc66d8c57406a13f86bc
+- rule: Core MCP tools (migrate-status, migrate-dev, Prisma-Studio) preserved
+- rule: README.md created in packages/cli/src/mcp/ directory
+  source:
+    path: packages/cli/src/mcp/README.md
+    lines: 1-13
+    commit: ddc10462458afc88069d8d8e04411f8c3397f225
+- rule: README explains MCP (Model Context Protocol) and Prisma
+  source:
+    path: packages/cli/src/mcp/README.md
+    lines: 1-4
+    commit: ddc10462458afc88069d8d8e04411f8c3397f225
+- rule: README documents how to start the local MCP server
+  source:
+    path: packages/cli/src/mcp/README.md
+    lines: 11-13
+    commit: ddc10462458afc88069d8d8e04411f8c3397f225
