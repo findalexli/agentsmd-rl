@@ -35,10 +35,10 @@ checks:
   - id: no_std_api_in_new_code
     type: pass_to_pass
     origin: agent_config
-    description: "No prohibited std.fs/posix/os usage in agent's new code"
+    description: "No prohibited std.* API usage (fs, posix, os, process, base64, crypto.sha, mem string ops) in agent's new code"
     source:
       path: "src/CLAUDE.md"
-      lines: "16"
+      lines: "16-36"
       commit: "1628bfeceb07085263b5da5adb1ec3b094e4b188"
 
   - id: no_inline_import_in_new_code
@@ -61,4 +61,10 @@ rubric:
     source:
       path: "src/CLAUDE.md"
       lines: "10"
+      commit: "1628bfeceb07085263b5da5adb1ec3b094e4b188"
+
+  - rule: "Use `bun.default_allocator` for almost everything (backed by mimalloc). Don't use other allocators without reason."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "232"
       commit: "1628bfeceb07085263b5da5adb1ec3b094e4b188"

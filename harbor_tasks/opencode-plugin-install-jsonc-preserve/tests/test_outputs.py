@@ -24,7 +24,7 @@ INSTALL_TS = f"{REPO}/packages/opencode/src/plugin/install.ts"
 def test_syntax_check():
     """install.ts must parse without syntax errors."""
     r = subprocess.run(
-        ["bun", "build", "--no-bundle", "src/plugin/install.ts", "--outdir", "/tmp/gate-check"],
+        ["bun", "build", "--no-bundle", "src/plugin/install.ts", "--outfile", "/tmp/gate-check.js"],
         cwd=f"{REPO}/packages/opencode",
         capture_output=True,
         timeout=30,

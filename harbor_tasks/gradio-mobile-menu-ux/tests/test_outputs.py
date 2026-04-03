@@ -6,6 +6,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import re
 import subprocess
 import json
@@ -13,6 +14,10 @@ from pathlib import Path
 
 REPO = "/workspace"
 HEADER = f"{REPO}/js/_website/src/lib/components/Header.svelte"
+SVELTE_TOOLS = "/svelte-tools"
+
+# Ensure NODE_PATH is set for subprocess calls (E2B may not inherit Dockerfile ENV)
+_NODE_ENV = {**os.environ, "NODE_PATH": f"{SVELTE_TOOLS}/node_modules"}
 
 # Node.js script that parses the Svelte file's HTML template via the compiler
 # AST and returns a JSON object with structural properties.
@@ -102,14 +107,12 @@ walk(ast.html, (node) => {
 results.searchDual = searchCount >= 2;
 results.themeDual = themeCount >= 2;
 
-// Check: Overlay contains internal navigation links (>= 2 <a href="/...">)
+// Check: Overlay contains navigation links (>= 2 <a> elements)
+// Count all <a> elements — dynamic {href} from {#each} won't have static text
 let overlayLinkCount = 0;
 if (overlayIfNode) {
   walk({type: 'Fragment', children: overlayIfNode.children || []}, (node) => {
-    if (node.type === 'Element' && node.name === 'a') {
-      const href = attrStaticText(getAttr(node, 'href'));
-      if (href && href.startsWith('/')) overlayLinkCount++;
-    }
+    if (node.type === 'Element' && node.name === 'a') overlayLinkCount++;
   });
 }
 results.overlayHasLinks = overlayLinkCount >= 2;
@@ -151,6 +154,7 @@ def _get_ast_results():
     r = subprocess.run(
         ["node", "-e", _AST_SCRIPT, HEADER],
         capture_output=True, text=True, timeout=30,
+        env=_NODE_ENV,
     )
     assert r.returncode == 0, f"AST analysis failed:\n{r.stderr}"
     _cached_ast = json.loads(r.stdout.strip())
@@ -279,6 +283,6 @@ def test_prettier_formatting():
         ["npx", "prettier", "--check", "--plugin", "prettier-plugin-svelte",
          HEADER],
         capture_output=True, text=True, timeout=30,
-        cwd="/svelte-tools",
+        cwd=SVELTE_TOOLS, env=_NODE_ENV,
     )
     assert r.returncode == 0, f"File does not pass prettier:\n{r.stdout}\n{r.stderr}"

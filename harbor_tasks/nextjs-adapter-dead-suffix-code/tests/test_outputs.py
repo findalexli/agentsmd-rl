@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 from pathlib import Path
 
 REPO = "/repo"
@@ -23,20 +24,28 @@ def test_typescript_syntax():
     """Modified files must parse without TypeScript syntax errors."""
     import subprocess
 
-    # process.argv[0]=node, process.argv[1]='[eval]', process.argv[2+]=our args
     script = (
         "const fs = require('fs');"
         "const ts = require('typescript');"
+        "let errors = 0;"
         "for (const f of process.argv.slice(2)) {"
         "  const src = fs.readFileSync(f, 'utf8');"
-        "  ts.createSourceFile(f, src, ts.ScriptTarget.Latest, true);"
+        "  const sf = ts.createSourceFile(f, src, ts.ScriptTarget.Latest, true);"
+        "  const diags = sf.parseDiagnostics || [];"
+        "  if (diags.length > 0) {"
+        "    console.error(f + ': ' + diags.length + ' parse error(s)');"
+        "    diags.forEach(d => console.error('  ' + ts.flattenDiagnosticMessageText(d.messageText, '\\n')));"
+        "    errors++;"
+        "  }"
         "}"
-        "console.log('syntax ok');"
+        "process.exit(errors > 0 ? 1 : 0);"
     )
+    env = {**os.environ, "NODE_PATH": "/usr/local/lib/node_modules"}
     r = subprocess.run(
         ["node", "-e", script, str(BUILD_COMPLETE), str(BUILD_INDEX)],
         capture_output=True,
         timeout=30,
+        env=env,
     )
     assert r.returncode == 0, f"TypeScript syntax error:\n{r.stderr.decode()}"
 
@@ -123,8 +132,8 @@ def test_rsc_suffix_regex_preserved():
     """The rscSuffix named capture regex must still be present."""
     src = BUILD_COMPLETE.read_text()
     assert "rscSuffix" in src, "rscSuffix regex pattern is missing"
-    # The actual regex string must be intact
-    assert ".segment.rsc" in src, "RSC suffix regex string is altered or missing"
+    # The actual regex string must be intact (file has literal backslash escapes)
+    assert r"\\.segment\\.rsc" in src, "RSC suffix regex string is altered or missing"
 
 
 # [pr_diff] pass_to_pass

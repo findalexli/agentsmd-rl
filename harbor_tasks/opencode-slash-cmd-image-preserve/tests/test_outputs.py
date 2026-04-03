@@ -55,7 +55,7 @@ while (i < src.length) {
 const fnBody = src.slice(bodyStart, i + 1);
 const wrapped = "function handleSlashSelect(" + param + ") " + fnBody;
 const result = ts.transpileModule(wrapped, {
-  compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleTarget.CommonJS }
+  compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }
 });
 const fnCode = result.outputText;
 

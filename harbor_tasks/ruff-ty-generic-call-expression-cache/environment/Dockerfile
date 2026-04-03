@@ -1,4 +1,4 @@
-FROM rust:1.86-slim-bookworm
+FROM rust:1.87-slim-bookworm
 
 RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     git curl ca-certificates build-essential tmux python3 \

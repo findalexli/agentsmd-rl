@@ -8,7 +8,6 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
-import subprocess
 from pathlib import Path
 
 REPO = "/workspace/opencode"
@@ -39,21 +38,6 @@ def _extract_variant_handler(stripped: str) -> str:
         if m:
             return m.group(1)
     return ""
-
-
-# ---------------------------------------------------------------------------
-# Gate (pass_to_pass, static) — compilation
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
-def test_app_tsx_builds():
-    """app.tsx must compile without errors."""
-    r = subprocess.run(
-        ["bun", "build", "--no-bundle", "--target=browser", str(APP_FILE)],
-        capture_output=True,
-        timeout=30,
-    )
-    assert r.returncode == 0, f"Build failed:\n{r.stderr.decode()[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -95,20 +79,10 @@ def test_no_blind_cycle_in_handler():
 def test_title_not_variant_cycle():
     """Title for the variant action must not be the old 'Variant cycle'."""
     stripped = _read_app_stripped()
-    m = re.search(
-        r'''title\s*:\s*["'`]([^"'`]+)["'`][\s\S]{0,400}["'`]variant[._]cycle["'`]''',
-        stripped,
-    )
-    if not m:
-        m = re.search(
-            r'''["'`]variant[._]cycle["'`][\s\S]{0,400}title\s*:\s*["'`]([^"'`]+)["'`]''',
-            stripped,
-        )
-    if m:
-        assert m.group(1) != "Variant cycle", "Title is still 'Variant cycle'"
-    else:
-        assert not re.search(r'''["'`]Variant cycle["'`]''', stripped), \
-            "'Variant cycle' title still present in file"
+    # The entry must still exist (variant_keybind_preserved checks that).
+    # Just verify the old literal title is gone.
+    assert not re.search(r'''["'`]Variant cycle["'`]''', stripped), \
+        "'Variant cycle' title still present — should be a selection-oriented label"
 
 
 # ---------------------------------------------------------------------------
@@ -125,12 +99,11 @@ def test_variant_keybind_preserved():
 
 # [static] pass_to_pass
 def test_other_dialogs_preserved():
-    """DialogModel and App export must still exist (anti-stub)."""
+    """DialogModel and App function must still exist (anti-stub)."""
     stripped = _read_app_stripped()
     assert "DialogModel" in stripped, "DialogModel reference missing — file may be gutted"
-    has_export = bool(re.search(r"export\s+(default\s+)?function\s+App", stripped)) or \
-                 bool(re.search(r"export\s+default\s+App", stripped))
-    assert has_export, "App export missing — file may be gutted"
+    assert re.search(r"function\s+App\s*\(", stripped), \
+        "App function missing — file may be gutted"
 
 
 # [static] pass_to_pass

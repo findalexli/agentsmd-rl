@@ -25,8 +25,19 @@ def _get_ci(editable=True):
     return ChatInterface(fn=echo, editable=editable)
 
 
+def _make_edit_data(ci, index, value, previous_value):
+    """Create an EditData with correct constructor signature."""
+    sys.path.insert(0, REPO)
+    from gradio.events import EditData
+
+    return EditData(
+        target=ci.chatbot,
+        data={"index": index, "value": value, "previous_value": previous_value},
+    )
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -43,14 +54,11 @@ def test_syntax_check():
 
 # [pr_diff] fail_to_pass
 def test_edit_restores_message_before_response():
-    """After editing a user message, the edited text must be visible in the
-    chatbot before the response callback runs (the core bug).
+    """After editing, the edited user message is visible in the chatbot
+    before the response callback runs (the core bug).
 
-    Verifies the fix by calling _edit_message then _append_message_to_history
-    with varied inputs, and also checks the event chain wiring."""
-    sys.path.insert(0, REPO)
-    from gradio.events import EditData
-
+    Traces the edit event chain to verify it includes an _append step,
+    then calls the functions to verify the mechanism works."""
     ci = _get_ci(editable=True)
 
     test_cases = [
@@ -64,125 +72,123 @@ def test_edit_restores_message_before_response():
             {"role": "user", "content": original},
             {"role": "assistant", "content": f"Echo: {original}"},
         ]
-        edit_data = EditData(
-            target=ci.chatbot,
-            value=edited,
-            index=0,
-            _data={"index": 0, "value": edited},
-        )
-        result = ci._edit_message(history, edit_data)
-        chatbot_after_edit, state_after_edit, saved_input = result
+        ed = _make_edit_data(ci, index=0, value=edited, previous_value=original)
+        chatbot_after, state_after, saved = ci._edit_message(history, ed)
 
-        # Path A: _edit_message itself already includes the edited message
-        if (
-            isinstance(chatbot_after_edit, list)
-            and any(
-                isinstance(m, dict) and m.get("content") == edited
-                for m in chatbot_after_edit
-            )
+        # Path A: _edit_message itself returns the edited message
+        if isinstance(chatbot_after, list) and any(
+            isinstance(m, dict) and m.get("content") == edited
+            for m in chatbot_after
         ):
             continue
 
-        # Path B: A chained _append_message_to_history restores the message
-        restored = ci._append_message_to_history(saved_input, state_after_edit, "user")
-        assert isinstance(restored, list), (
-            f"_append_message_to_history returned {type(restored)}, expected list"
-        )
-        found = any(
-            isinstance(m, dict) and m.get("content") == edited for m in restored
-        )
-        assert found, (
-            f"Edited message '{edited}' not restored after _edit_message + "
-            f"_append_message_to_history. Got: {restored}"
+        # Path B: the edit chain must wire _append_message_to_history after _edit_message
+        chatbot_id = ci.chatbot._id
+        saved_id = ci.saved_input._id
+        state_id = ci.chatbot_state._id
+
+        # Find edit event root
+        root_fn = None
+        for fn in ci.fns.values():
+            for tid, ename in fn.targets:
+                if tid == chatbot_id and ename == "edit":
+                    root_fn = fn
+                    break
+        assert root_fn is not None, "No edit event registered"
+
+        # Trace the chain; look for an append dep:
+        # inputs ⊇ {saved_input, chatbot_state}, outputs == {chatbot}
+        has_append = False
+        cur_id = root_fn._id
+        visited = {cur_id}
+        while True:
+            next_fns = [
+                f for f in ci.fns.values()
+                if f.trigger_after == cur_id and f._id not in visited
+            ]
+            if not next_fns:
+                break
+            for fn in next_fns:
+                visited.add(fn._id)
+                fn_in = {c._id for c in fn.inputs}
+                fn_out = {c._id for c in fn.outputs}
+                if saved_id in fn_in and state_id in fn_in and fn_out == {chatbot_id}:
+                    has_append = True
+            cur_id = next_fns[0]._id
+
+        assert has_append, (
+            f"Edited message '{edited}' not restored: _edit_message truncates "
+            f"history and the edit chain has no _append_message_to_history step"
         )
 
-    # Verify the append step is actually wired into the edit event chain
-    chatbot_id = ci.chatbot._id
-    chatbot_state_id = ci.chatbot_state._id
-    saved_input_id = ci.saved_input._id
-    has_append_dep = False
-    for dep in ci.dependencies:
-        input_ids = {inp for inp in dep.get("inputs", []) if isinstance(inp, int)}
-        output_ids = {out for out in dep.get("outputs", []) if isinstance(out, int)}
-        if (
-            chatbot_id in output_ids
-            and (saved_input_id in input_ids or chatbot_state_id in input_ids)
-            and chatbot_state_id in input_ids
-        ):
-            has_append_dep = True
-            break
-    assert has_append_dep, (
-        "_append_message_to_history is not chained in the edit event "
-        "dependency graph"
-    )
+        # Verify the append mechanism actually works
+        restored = ci._append_message_to_history(saved, state_after, "user")
+        assert any(
+            isinstance(m, dict) and m.get("content") == edited for m in restored
+        ), f"_append_message_to_history did not restore '{edited}'"
 
 
 # [pr_diff] fail_to_pass
 def test_edit_chain_has_append_step():
-    """editable=True must register more append-to-chatbot deps than
-    editable=False, proving the edit chain includes a restore step."""
+    """editable=True registers an additional pure-append dep (outputs==[chatbot])
+    compared to editable=False, proving the edit chain includes a restore step.
+
+    Uses exact output matching to distinguish _append_message_to_history
+    (outputs=[chatbot]) from submit_fn (outputs=[null_component, chatbot, ...])."""
     ci_edit = _get_ci(editable=True)
     ci_no_edit = _get_ci(editable=False)
 
-    def count_append_deps(ci):
-        chatbot_id = ci.chatbot._id
-        chatbot_state_id = ci.chatbot_state._id
-        count = 0
-        for dep in ci.dependencies:
-            input_ids = {inp for inp in dep.get("inputs", []) if isinstance(inp, int)}
-            output_ids = {out for out in dep.get("outputs", []) if isinstance(out, int)}
-            if chatbot_state_id in input_ids and chatbot_id in output_ids:
-                count += 1
-        return count
+    def count_pure_append_deps(ci):
+        """Count fns where inputs ⊇ {saved_input, chatbot_state} and outputs == {chatbot}."""
+        saved_id = ci.saved_input._id
+        state_id = ci.chatbot_state._id
+        bot_id = ci.chatbot._id
+        return sum(
+            1
+            for fn in ci.fns.values()
+            if {saved_id, state_id} <= {c._id for c in fn.inputs}
+            and {c._id for c in fn.outputs} == {bot_id}
+        )
 
-    edit_count = count_append_deps(ci_edit)
-    no_edit_count = count_append_deps(ci_no_edit)
+    edit_count = count_pure_append_deps(ci_edit)
+    no_edit_count = count_pure_append_deps(ci_no_edit)
 
     if edit_count > no_edit_count:
-        return  # The edit chain adds at least one extra append dep — good
+        return  # The edit chain adds at least one extra pure-append dep
 
     # Alternative fix: _edit_message itself restores the message (no new dep)
-    sys.path.insert(0, REPO)
-    from gradio.events import EditData
-
     for original, edited in [("hi", "hi edited"), ("foo", "bar")]:
         history = [
             {"role": "user", "content": original},
             {"role": "assistant", "content": f"Echo: {original}"},
         ]
-        edit_data = EditData(
-            target=ci_edit.chatbot,
-            value=edited,
-            index=0,
-            _data={"index": 0, "value": edited},
-        )
-        result = ci_edit._edit_message(history, edit_data)
-        chatbot_out = result[0]
+        ed = _make_edit_data(ci_edit, index=0, value=edited, previous_value=original)
+        chatbot_out = ci_edit._edit_message(history, ed)[0]
         assert isinstance(chatbot_out, list) and any(
             isinstance(m, dict) and m.get("content") == edited for m in chatbot_out
         ), (
-            f"editable=True has {edit_count} append deps (same as "
+            f"editable=True has {edit_count} pure-append deps (same as "
             f"{no_edit_count}) and _edit_message does not restore '{edited}'"
         )
 
 
 # [pr_diff] fail_to_pass
 def test_edit_chain_toggles_textbox_interactivity():
-    """editable=True must register more textbox-output deps than editable=False,
+    """editable=True registers more textbox-output deps than editable=False,
     proving the edit chain adds disable/enable textbox interactivity steps."""
     ci_edit = _get_ci(editable=True)
     ci_no_edit = _get_ci(editable=False)
 
-    def count_textbox_deps(ci):
+    def count_textbox_output_deps(ci):
         textbox_id = ci.textbox._id
         return sum(
             1
-            for dep in ci.dependencies
-            if textbox_id in {out for out in dep.get("outputs", []) if isinstance(out, int)}
+            for fn in ci.fns.values()
+            if textbox_id in {c._id for c in fn.outputs}
         )
 
-    edit_count = count_textbox_deps(ci_edit)
-    no_edit_count = count_textbox_deps(ci_no_edit)
+    edit_count = count_textbox_output_deps(ci_edit)
+    no_edit_count = count_textbox_output_deps(ci_no_edit)
 
     assert edit_count > no_edit_count, (
         f"editable=True has {edit_count} textbox-output deps, "
@@ -193,7 +199,7 @@ def test_edit_chain_toggles_textbox_interactivity():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff / static) — regression + anti-stub
+# Pass-to-pass (pr_diff) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
@@ -201,7 +207,6 @@ def test_submit_appends_message():
     """_append_message_to_history still works for normal submit flow."""
     ci = _get_ci(editable=False)
 
-    # Test with multiple inputs to prevent hardcoding
     test_messages = ["test message", "what about spaces?", "", "unicode: αβγ"]
 
     history = []
@@ -218,12 +223,10 @@ def test_submit_appends_message():
 def test_editable_false_no_edit_event():
     """ChatInterface with editable=False must not register edit events."""
     ci = _get_ci(editable=False)
-    for dep in ci.dependencies:
-        targets = dep.get("targets", [])
-        if not isinstance(targets, (list, tuple)):
-            continue
-        for t in targets:
-            if isinstance(t, (list, tuple)) and len(t) >= 2 and t[1] == "edit":
+    chatbot_id = ci.chatbot._id
+    for fn in ci.fns.values():
+        for target_id, event_name in fn.targets:
+            if target_id == chatbot_id and event_name == "edit":
                 raise AssertionError("edit event found when editable=False")
 
 

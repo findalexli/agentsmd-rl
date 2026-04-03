@@ -30,6 +30,6 @@ RUN mkdir -p /workspace && cd /workspace && \
 WORKDIR /workspace/react
 
 # Install minimal dependencies (yarn, no heavy packages needed)
-RUN npm install -g yarn
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 
 RUN mkdir -p /logs/verifier

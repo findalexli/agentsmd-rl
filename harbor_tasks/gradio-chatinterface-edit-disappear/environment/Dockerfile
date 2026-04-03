@@ -15,9 +15,6 @@ RUN git init /workspace/gradio && \
 RUN cd /workspace/gradio && pip install --no-cache-dir -e ".[dev]" 2>&1 | tail -5
 
 ENV PYTHONPATH=/workspace/gradio
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
-
-RUN pip install --no-cache-dir numpy Pillow
 
 RUN pip install --no-cache-dir ruff
 

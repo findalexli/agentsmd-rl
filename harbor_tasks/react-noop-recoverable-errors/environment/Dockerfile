@@ -23,9 +23,10 @@ RUN git clone --depth=1 https://github.com/facebook/react.git && \
     git add -A && \
     git commit -m "snapshot"
 
-# Install minimal dependencies for testing (yarn is already in node:22-slim)
+# Install yarn via corepack and dependencies
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 WORKDIR /workspace/react
-RUN yarn install --frozen-lockfile --prefer-offline
+RUN yarn install --frozen-lockfile --network-timeout=600000 || yarn install
 
 # Configure git for any future operations
 RUN git config --global user.email "agent@example.com" && \

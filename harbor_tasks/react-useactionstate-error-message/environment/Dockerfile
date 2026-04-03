@@ -29,8 +29,8 @@ RUN rm -rf .git && \
     git add -A && \
     git commit -m "snapshot"
 
-# Install minimal dependencies for testing (yarn needed for React)
-RUN npm install -g yarn
+# Install yarn via corepack
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 
 # Install dependencies (React uses yarn)
 RUN yarn install --frozen-lockfile 2>&1 || yarn install

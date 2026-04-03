@@ -20,8 +20,8 @@ REPO = "/workspace/opencode"
 # ---------------------------------------------------------------------------
 
 def _run_usage_test(ts_code: str) -> dict | list:
-    """Write a temp .ts file, run it with bun, parse JSON output."""
-    tmp = Path("/tmp/test_usage.ts")
+    """Write a temp .ts file inside the repo, run it with bun, parse JSON output."""
+    tmp = Path(f"{REPO}/test_usage.ts")
     tmp.write_text(ts_code)
     r = subprocess.run(
         ["bun", "run", str(tmp)],
@@ -40,8 +40,8 @@ def _run_usage_test(ts_code: str) -> dict | list:
 
 
 _MODEL_HELPER = '''
-import { Session } from "../../packages/opencode/src/session"
-import type { Provider } from "../../packages/opencode/src/provider/provider"
+import { Session } from "./packages/opencode/src/session"
+import type { Provider } from "./packages/opencode/src/provider/provider"
 
 function createModel(opts: { npm?: string, cost?: any }): Provider.Model {
   return {
@@ -65,7 +65,13 @@ function createModel(opts: { npm?: string, cost?: any }): Provider.Model {
 def _get_getusage_region() -> str:
     """Extract the getUsage function region from session/index.ts."""
     src = Path(f"{REPO}/packages/opencode/src/session/index.ts").read_text()
-    match = re.search(r'export const getUsage.*?^  \}', src, re.MULTILINE | re.DOTALL)
+    # Match from 'export const getUsage' to the closing '  }' that is followed
+    # by a blank line or another top-level export (greedy to capture the full body).
+    match = re.search(
+        r'export const getUsage.*?^  \}(?=\n\n|\n  export |\Z)',
+        src,
+        re.MULTILINE | re.DOTALL,
+    )
     assert match, "Could not find getUsage function"
     return match.group(0)
 
@@ -77,6 +83,8 @@ def _get_getusage_region() -> str:
 # [static] pass_to_pass
 def test_syntax_check():
     """session/index.ts must parse without errors."""
+    import os
+    os.makedirs("/tmp/gate_check", exist_ok=True)
     r = subprocess.run(
         ["bun", "build", "--no-bundle", "./src/session/index.ts", "--outdir", "/tmp/gate_check"],
         cwd=f"{REPO}/packages/opencode",
@@ -357,4 +365,14 @@ def test_no_try_catch_in_getusage():
     region = _get_getusage_region()
     assert not re.search(r'\btry\s*\{', region), (
         "getUsage contains try/catch — AGENTS.md:12 says avoid try/catch"
+    )
+
+
+# [agent_config] pass_to_pass — AGENTS.md:17 @ 5c15755a10fecf15630232c478302a766d295012
+def test_no_for_loops_in_getusage():
+    """getUsage region must use functional array methods, not for loops (AGENTS.md:17)."""
+    # AST-only because: TypeScript cannot be imported in Python
+    region = _get_getusage_region()
+    assert not re.search(r'\bfor\s*\(', region), (
+        "getUsage contains a for loop — AGENTS.md:17 says prefer functional array methods"
     )

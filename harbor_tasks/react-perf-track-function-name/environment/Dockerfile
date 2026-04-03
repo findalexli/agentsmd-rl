@@ -19,8 +19,9 @@ RUN git init && \
     git add -A && \
     git commit -m "snapshot"
 
-# Install minimal dependencies for testing (just the shared package)
-RUN npm install --legacy-peer-deps 2>&1 || true
+# Install yarn via corepack and dependencies
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
+RUN yarn install --frozen-lockfile --network-timeout=600000 || yarn install || true
 
 # Configure git user for solve.sh
 RUN git config --global user.email "agent@example.com" && \

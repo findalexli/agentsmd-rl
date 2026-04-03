@@ -76,8 +76,9 @@ class Check(BaseModel):
 
 class RubricRule(BaseModel):
     """A soft rule evaluated by LLM judge — not programmatically verifiable."""
-    rule: str                        # Verbatim text from config file
-    source: SourceRef                # Where it came from
+    rule: str                        # What the agent should do
+    source: SourceRef | None = None  # Where rule came from (optional)
+    reference: str | None = None     # Gold answer extracted from solve.sh (optional)
 
 
 class SourcePR(BaseModel):

@@ -22,8 +22,8 @@ RUN rm -rf .git && \
     git add -A && \
     git commit -m "snapshot"
 
-# Install minimal dependencies (yarn, just what we need to run tests)
-RUN npm install -g yarn
+# Install minimal dependencies (yarn via corepack, just what we need to run tests)
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 
 # Install dependencies (but skip heavy native build tools not needed for JS flag checking)
 RUN yarn install --frozen-lockfile --network-timeout=600000 || yarn install

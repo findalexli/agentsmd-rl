@@ -32,11 +32,9 @@ RUN git init && \
     git add -A && \
     git commit -m "snapshot at base commit"
 
-# Install dependencies (yarn is the primary package manager for React)
-RUN npm install -g yarn
-
-# Install React dependencies
-RUN yarn install --frozen-lockfile
+# Install yarn via corepack and dependencies
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
+RUN yarn install --frozen-lockfile --network-timeout=600000 || yarn install
 
 # Ensure test logs directory exists
 RUN mkdir -p /logs/verifier

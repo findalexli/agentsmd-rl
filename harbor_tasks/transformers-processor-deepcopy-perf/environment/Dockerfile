@@ -22,9 +22,12 @@ RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Agent" && \
     git config --global --add safe.directory /workspace/transformers
 
+# Install tokenizers binary wheel first (avoids Rust build requirement)
+RUN pip install --no-cache-dir tokenizers
+
 # Install minimal deps needed for testing (no torch/GPU)
-RUN pip install --no-cache-dir -e ".[dev]" jinja2 tokenizers && \
-    pip install --no-cache-dir ruff
+RUN pip install --no-cache-dir -e ".[dev]" jinja2 || pip install --no-cache-dir -e . jinja2 tokenizers
+RUN pip install --no-cache-dir ruff
 
 ENV PYTHONPATH="/workspace/transformers/src:${PYTHONPATH}"
 

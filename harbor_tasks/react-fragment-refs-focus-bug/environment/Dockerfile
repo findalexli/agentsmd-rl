@@ -24,12 +24,9 @@ RUN git clone --filter=blob:none --no-checkout https://github.com/facebook/react
 
 WORKDIR /workspace/react
 
-# Install dependencies (React uses yarn)
-RUN npm install -g yarn
-
-# Install minimal dependencies for testing
-# Note: Running the full test suite requires extensive setup, we'll use a simpler approach
-RUN yarn install --frozen-lockfile || yarn install
+# Install yarn via corepack and dependencies
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
+RUN yarn install --frozen-lockfile --network-timeout=600000 || yarn install
 
 # Configure git user for any potential git operations
 RUN git config user.email "agent@example.com" && git config user.name "Agent"

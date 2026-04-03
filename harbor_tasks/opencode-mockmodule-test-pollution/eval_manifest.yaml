@@ -7,30 +7,25 @@ source:
   merge_commit: "ff13524a531ebd196224551199c3cb0833c44c3c"
 
 checks:
-  - id: mock_leakage_canary
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Thread test mocks do not leak to subsequent test files"
-
   - id: no_mock_module_in_thread_test
     type: fail_to_pass
     origin: pr_diff
     description: "thread.test.ts does not use mock.module() (leaks globally in Bun)"
 
+  - id: uses_spyon_for_mocking
+    type: fail_to_pass
+    origin: pr_diff
+    description: "thread.test.ts uses spyOn() on imported modules instead of mock.module()"
+
+  - id: setup_per_test_pattern
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mocking happens per-test (in setup function/hook), not at module level"
+
   - id: config_mock_filters_by_cwd
     type: fail_to_pass
     origin: pr_diff
     description: "config.test.ts BunProc.run mock filters calls by working directory"
-
-  - id: thread_tests_pass
-    type: pass_to_pass
-    origin: pr_diff
-    description: "thread.test.ts runs successfully with bun test"
-
-  - id: config_tests_pass
-    type: pass_to_pass
-    origin: pr_diff
-    description: "config.test.ts runs successfully with bun test"
 
   - id: mock_cleanup_in_lifecycle_hook
     type: fail_to_pass
@@ -79,18 +74,6 @@ checks:
     description: "config.test.ts is not stubbed and has substantive mock logic"
 
 rubric:
-  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
-
-  - rule: "Prefer `const` over `let`. Use ternaries or early returns instead of reassignment."
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
-
   - rule: "Avoid mocks as much as possible"
     source:
       path: "AGENTS.md"
@@ -101,6 +84,18 @@ rubric:
     source:
       path: "AGENTS.md"
       lines: "123"
+      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+
+  - rule: "Prefer `const` over `let`. Use ternaries or early returns instead of reassignment."
+    source:
+      path: "AGENTS.md"
+      lines: "70"
       commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
 
   - rule: "Prefer single word variable names where possible"

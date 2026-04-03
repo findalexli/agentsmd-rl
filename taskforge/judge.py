@@ -1,30 +1,27 @@
 #!/usr/bin/env python3
 """LLM judge for agent config rule compliance.
 
-Reads rubric.yaml (list of rules from agent config files),
-diffs the agent's changes, asks the LLM to evaluate each rule.
-Returns a float score to stdout for test.sh to consume.
+Two modes:
+1. Legacy: reads rubric.yaml with simple rule strings
+2. Manifest: reads eval_manifest.yaml rubric rules with optional gold references
 
-Usage in test.sh:
-    ICR=$(python3 /judge.py /path/to/rubric.yaml /workspace/repo 2>/dev/null || echo "0.0")
-    SCORE=$(python3 -c "print($SCORE + 0.15 * float('$ICR'))")
+For rubric rules with `reference` (extracted from solve.sh gold patch),
+the judge compares the agent's actual file content against the gold
+reference semantically — not exact string match.
 
-Rubric format (dead simple, LLM-writable):
-    rules:
-      - "Functions parsing external input must handle malformed lines gracefully"
-      - "New code must match surrounding style"
-      - "No wildcard imports"
+Usage:
+    # From eval_manifest.yaml (preferred)
+    python3 judge.py --manifest /path/to/eval_manifest.yaml --repo /workspace/repo
 
-Or with source attribution:
-    rules:
-      - rule: "Functions parsing external input must handle malformed lines gracefully"
-        from: ".claude/skills/write-sglang-test/SKILL.md:8"
-      - rule: "New code must match surrounding style"
-        from: "AGENTS.md:45"
+    # Legacy rubric.yaml
+    python3 judge.py /path/to/rubric.yaml /workspace/repo
+
+Output: float score to stdout (0.0–1.0), details to stderr.
 """
 
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -32,18 +29,45 @@ from pathlib import Path
 try:
     import yaml
 except ImportError:
-    # Inline YAML parser for the simple format we use
     yaml = None
 
 
-def parse_rubric(path: str) -> list[dict]:
-    """Parse rubric.yaml into a list of {rule, from} dicts."""
-    text = Path(path).read_text()
+# ── Config file patterns (same as scout) ──────────────────────────────────
 
+CONFIG_PATTERNS = [
+    r"README\.md", r"CLAUDE\.md", r"AGENTS\.md", r"SKILL\.md",
+    r"CONTRIBUTING\.md", r"CONVENTIONS\.md", r"CHANGELOG\.md",
+    r"copilot-instructions\.md", r"\.cursorrules",
+]
+CONFIG_RE = re.compile("|".join(CONFIG_PATTERNS), re.IGNORECASE)
+
+
+# ── Rubric loading ────────────────────────────────────────────────────────
+
+def load_manifest_rubric(manifest_path: str) -> list[dict]:
+    """Load rubric rules from eval_manifest.yaml."""
+    if not yaml:
+        return []
+    data = yaml.safe_load(Path(manifest_path).read_text())
+    rules = []
+    for r in data.get("rubric", []):
+        if isinstance(r, dict):
+            rules.append({
+                "rule": r.get("rule", ""),
+                "source": r.get("source"),
+                "reference": r.get("reference"),
+            })
+        elif isinstance(r, str):
+            rules.append({"rule": r, "source": None, "reference": None})
+    return rules
+
+
+def parse_rubric(path: str) -> list[dict]:
+    """Parse legacy rubric.yaml into a list of {rule, from, reference} dicts."""
+    text = Path(path).read_text()
     if yaml:
         data = yaml.safe_load(text)
     else:
-        # Minimal parser: extract lines starting with "- " under "rules:"
         data = {"rules": []}
         in_rules = False
         for line in text.splitlines():
@@ -54,7 +78,6 @@ def parse_rubric(path: str) -> list[dict]:
             if in_rules and stripped.startswith("- "):
                 val = stripped[2:].strip().strip('"').strip("'")
                 if val.startswith("rule:"):
-                    # Complex form: - rule: "..." \n   from: "..."
                     data["rules"].append({"rule": val[5:].strip().strip('"')})
                 else:
                     data["rules"].append(val)
@@ -66,20 +89,49 @@ def parse_rubric(path: str) -> list[dict]:
     rules = []
     for r in data.get("rules", []):
         if isinstance(r, str):
-            rules.append({"rule": r, "from": None})
+            rules.append({"rule": r, "source": None, "reference": None})
         elif isinstance(r, dict):
-            # Handle both new simple format and old complex format
             rule_text = r.get("rule") or r.get("text") or r.get("id", "")
-            source = r.get("from")
-            if not source and "source" in r:
-                # Old format: source: {file: "...", lines: [N, M]}
-                src = r["source"]
-                if isinstance(src, dict):
-                    f = src.get("file", "")
-                    lines = src.get("lines", [0, 0])
-                    source = f"{f}:{lines[0]}" if f else None
-            rules.append({"rule": rule_text, "from": source})
+            source = r.get("from") or r.get("source")
+            reference = r.get("reference")
+            rules.append({"rule": rule_text, "source": source, "reference": reference})
     return rules
+
+
+# ── Agent file reading ────────────────────────────────────────────────────
+
+def extract_config_hunks(diff_text: str) -> dict[str, str]:
+    """Extract config file hunks from a unified diff.
+
+    Returns {filepath: hunk_text} for each config file modified.
+    Same logic used to parse both the gold patch and the agent's diff.
+    """
+    hunks: dict[str, str] = {}
+    current_file = None
+    current_lines: list[str] = []
+
+    for line in diff_text.split("\n"):
+        if line.startswith("diff --git"):
+            if current_file and CONFIG_RE.search(current_file):
+                hunks[current_file] = "\n".join(current_lines)
+            match = re.match(r"diff --git a/(.*?) b/(.*)", line)
+            current_file = match.group(2) if match else None
+            current_lines = [line]
+        else:
+            current_lines.append(line)
+
+    if current_file and CONFIG_RE.search(current_file):
+        hunks[current_file] = "\n".join(current_lines)
+
+    return hunks
+
+
+def extract_added_lines(hunk: str) -> str:
+    """Get just the added lines from a diff hunk."""
+    return "\n".join(
+        line[1:] for line in hunk.split("\n")
+        if line.startswith("+") and not line.startswith("+++")
+    ).strip()
 
 
 def get_diff(repo_dir: str) -> str:
@@ -90,14 +142,12 @@ def get_diff(repo_dir: str) -> str:
     )
     diff = result.stdout
     if not diff:
-        # Maybe changes are staged
         result = subprocess.run(
             ["git", "diff", "--cached"],
             cwd=repo_dir, capture_output=True, text=True
         )
         diff = result.stdout
     if not diff:
-        # Maybe committed — diff against original checkout
         result = subprocess.run(
             ["git", "log", "--oneline", "-1"],
             cwd=repo_dir, capture_output=True, text=True
@@ -108,37 +158,85 @@ def get_diff(repo_dir: str) -> str:
                 cwd=repo_dir, capture_output=True, text=True
             )
             diff = result.stdout
-    return diff[:50000]  # Cap at 50k chars
+    return diff[:50000]
 
 
-def call_judge(rules: list[dict], diff: str, api_key: str) -> list[dict]:
-    """Call the LLM to evaluate each rule against the diff."""
+# ── LLM judge call ────────────────────────────────────────────────────────
+
+def call_judge(rules: list[dict], diff: str, config_files: dict[str, str], api_key: str) -> list[dict]:
+    """Evaluate whether the agent made the right config file edits.
+
+    Core question: "As a result of these code changes, did the agent also
+    make the appropriate edits to the agent config / documentation files?
+    Here's the reference edit from the gold solution."
+    """
     import urllib.request
 
-    rules_text = "\n".join(
-        f"{i+1}. {r['rule']}" + (f" (from {r['from']})" if r['from'] else "")
-        for i, r in enumerate(rules)
-    )
+    # Extract the agent's config file changes using the same parser as gold
+    agent_config_hunks = extract_config_hunks(diff)
 
-    prompt = f"""You are evaluating whether a code patch follows repository guidelines.
+    # Build per-file comparison: gold reference vs agent's actual diff
+    eval_items = []
+    for i, r in enumerate(rules):
+        source_path = "unknown"
+        if isinstance(r.get("source"), dict):
+            source_path = r["source"].get("path", "unknown")
 
-RULES (from the repo's agent config files):
-{rules_text}
+        # Gold reference: what the correct solution adds
+        gold_ref = r.get("reference", "")
 
-PATCH:
-```diff
-{diff}
-```
+        # Agent's actual edit to this file (find best match)
+        agent_edit = ""
+        for agent_path, agent_hunk in agent_config_hunks.items():
+            if source_path in agent_path or agent_path in source_path:
+                agent_edit = extract_added_lines(agent_hunk)
+                break
+        # Broader match: same filename anywhere in path
+        if not agent_edit:
+            fname = source_path.rsplit("/", 1)[-1] if "/" in source_path else source_path
+            for agent_path, agent_hunk in agent_config_hunks.items():
+                if fname in agent_path:
+                    agent_edit = extract_added_lines(agent_hunk)
+                    break
 
-For each rule, respond with ONLY a JSON array. Each element:
-{{"rule_num": N, "pass": true/false, "reason": "one sentence"}}
+        item = f"Check {i+1}: {r['rule']}\n  Target file: {source_path}"
+        if gold_ref:
+            item += f"\n  Gold solution added:\n    {gold_ref[:500]}"
+        if agent_edit:
+            item += f"\n  Agent added:\n    {agent_edit[:500]}"
+        else:
+            item += f"\n  Agent added: (nothing — file not modified)"
+        eval_items.append(item)
 
-If a rule is not applicable to this patch, set "pass": true.
-Respond with ONLY the JSON array, no other text."""
+    eval_text = "\n\n".join(eval_items)
+
+    # Summary of which files the agent touched
+    if agent_config_hunks:
+        touched = ", ".join(sorted(agent_config_hunks.keys()))
+    else:
+        touched = "(none)"
+
+    prompt = f"""You are evaluating whether a coding agent made the right documentation/config file edits alongside a code change.
+
+The agent was given a task that requires both CODE changes and DOCUMENTATION updates (to files like CLAUDE.md, AGENTS.md, README.md, SKILL.md, etc.). Below is a side-by-side comparison of what the gold solution added vs what the agent actually added to each config file.
+
+Config files the agent modified: {touched}
+
+{eval_text}
+
+For each check, decide: did the agent make a SEMANTICALLY EQUIVALENT edit to the right file?
+- Same meaning in different words = PASS
+- Right information in the right file but different structure = PASS
+- Agent didn't touch the file at all = FAIL
+- Agent touched the file but added unrelated/wrong content = FAIL
+- Agent added partial information (some but not all key points) = FAIL if major points missing, PASS if minor wording differs
+
+Respond with ONLY a JSON array:
+[{{"rule_num": N, "pass": true/false, "reason": "one sentence"}}]"""
 
     body = json.dumps({
         "model": "claude-haiku-4-5-20251001",
-        "max_tokens": 1024,
+        "max_tokens": 2048,
         "messages": [{"role": "user", "content": prompt}]
     }).encode()
 
@@ -152,14 +250,12 @@ Respond with ONLY the JSON array, no other text."""
         },
     )
 
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    with urllib.request.urlopen(req, timeout=60) as resp:
         data = json.loads(resp.read())
 
     text = data["content"][0]["text"].strip()
-    # Extract JSON from response
     if text.startswith("["):
         return json.loads(text)
-    # Try to find JSON array in the response
     start = text.find("[")
     end = text.rfind("]") + 1
     if start >= 0 and end > start:
@@ -167,55 +263,86 @@ Respond with ONLY the JSON array, no other text."""
     return []
 
 
+# ── Main ──────────────────────────────────────────────────────────────────
+
 def main():
-    if len(sys.argv) < 3:
-        print("Usage: judge.py <rubric.yaml> <repo_dir>", file=sys.stderr)
+    # Parse args
+    manifest_path = None
+    rubric_path = None
+    repo_dir = None
+
+    args = sys.argv[1:]
+    i = 0
+    while i < len(args):
+        if args[i] == "--manifest" and i + 1 < len(args):
+            manifest_path = args[i + 1]
+            i += 2
+        elif args[i] == "--repo" and i + 1 < len(args):
+            repo_dir = args[i + 1]
+            i += 2
+        elif not rubric_path:
+            rubric_path = args[i]
+            i += 1
+        elif not repo_dir:
+            repo_dir = args[i]
+            i += 1
+        else:
+            i += 1
+
+    if not repo_dir:
+        print("Usage: judge.py --manifest <eval_manifest.yaml> --repo <repo_dir>", file=sys.stderr)
+        print("   or: judge.py <rubric.yaml> <repo_dir>", file=sys.stderr)
         print("0.0")
         sys.exit(0)
 
-    rubric_path = sys.argv[1]
-    repo_dir = sys.argv[2]
-
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     if not api_key:
-        # Try .env file
         env_file = Path(__file__).parent.parent / ".env"
         if env_file.exists():
             for line in env_file.read_text().splitlines():
                 if line.startswith("ANTHROPIC_API_KEY="):
                     api_key = line.split("=", 1)[1].strip().strip('"')
         if not api_key:
-            print("0.5", file=sys.stderr)  # No API key = neutral score
+            print("0.5", file=sys.stderr)
             print("0.5")
             sys.exit(0)
 
-    rules = parse_rubric(rubric_path)
-    if not rules:
-        print("1.0")  # No rules = perfect compliance
+    # Load rules
+    if manifest_path:
+        rules = load_manifest_rubric(manifest_path)
+    elif rubric_path:
+        rules = parse_rubric(rubric_path)
+    else:
+        print("1.0")
         sys.exit(0)
 
+    if not rules:
+        print("1.0")  # No rules = perfect
+        sys.exit(0)
+
+    # Get agent's work
     diff = get_diff(repo_dir)
+
     if not diff:
-        print("0.5")  # No diff = can't evaluate
+        print("0.0")  # No changes at all
         sys.exit(0)
 
     try:
-        results = call_judge(rules, diff, api_key)
+        results = call_judge(rules, diff, {}, api_key)
     except Exception as e:
         print(f"Judge error: {e}", file=sys.stderr)
-        print("0.5")  # API failure = neutral
+        print("0.5")
         sys.exit(0)
 
-    # Compute ICR: fraction of rules that pass
     if not results:
         print("0.5")
         sys.exit(0)
 
+    # Compute ICR: fraction of rules that pass
     passed = sum(1 for r in results if r.get("pass", False))
     total = len(results)
     icr = passed / total if total > 0 else 0.5
 
-    # Print details to stderr, score to stdout
     for r in results:
         status = "PASS" if r.get("pass") else "FAIL"
         print(f"  Rule {r.get('rule_num', '?')}: {status} — {r.get('reason', '')}", file=sys.stderr)

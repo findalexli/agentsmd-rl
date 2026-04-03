@@ -18,7 +18,8 @@ RUN git init /workspace/storybook && \
 WORKDIR /workspace/storybook
 
 # Enable corepack for Yarn Berry and install dependencies
-RUN corepack enable && yarn install
+RUN corepack enable
+RUN yarn install --immutable || yarn install || true
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

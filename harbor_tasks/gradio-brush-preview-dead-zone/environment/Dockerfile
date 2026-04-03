@@ -18,4 +18,4 @@ WORKDIR /workspace
 # Copy test files
 
 # Install TypeScript compiler API (needed by test_outputs.py AST checks)
-RUN cd /tests && npm install typescript
+RUN mkdir -p /tests && cd /tests && npm install typescript

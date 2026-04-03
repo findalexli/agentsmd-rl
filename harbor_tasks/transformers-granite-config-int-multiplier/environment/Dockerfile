@@ -15,9 +15,12 @@ RUN mkdir -p /logs/verifier
 
 WORKDIR /repo
 
+# Install tokenizers binary wheel first (avoids Rust build requirement)
+RUN pip install --no-cache-dir tokenizers
+
 # Install transformers in editable mode (minimal — no torch/GPU deps)
-RUN pip install --no-cache-dir -e ".[testing]" \
-    && pip install --no-cache-dir ruff
+RUN pip install --no-cache-dir -e ".[testing]" || pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir ruff
 
 # Configure git user for any commits agents might make
 RUN git config --global user.email "test@test.com" \

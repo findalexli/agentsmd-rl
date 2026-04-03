@@ -211,10 +211,12 @@ def test_original_fields_preserved():
 # Config-derived (agent_config) — rules from src/CLAUDE.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — src/CLAUDE.md:16 @ 1628bfeceb07085263b5da5adb1ec3b094e4b188
+# [agent_config] pass_to_pass — src/CLAUDE.md:16-36 @ 1628bfeceb07085263b5da5adb1ec3b094e4b188
 def test_no_std_api_in_new_code():
-    """New code must not use std.fs, std.posix, std.os, or std.process
-    directly (use bun.* wrappers instead). Only checks agent's diff."""
+    """New code must not use prohibited std.* APIs directly — use bun.*
+    wrappers instead. Covers: std.fs, std.posix, std.os, std.process,
+    std.base64, std.crypto.sha, std.mem.eql/indexOf/startsWith.
+    Only checks agent's diff."""
     result = subprocess.run(
         ["git", "diff", "HEAD", "--", "src/bundler/barrel_imports.zig"],
         capture_output=True, text=True, cwd=REPO,
@@ -225,8 +227,17 @@ def test_no_std_api_in_new_code():
     ]
     bad = []
     for line in added_lines:
-        # Match std.fs, std.posix, std.os, std.process usage
+        stripped = line.strip()
+        if stripped.startswith("//"):
+            continue
+        # std.fs, std.posix, std.os, std.process (use bun.sys.*, bun.FD.*, etc.)
         bad.extend(re.findall(r"std\.(fs|posix|os|process)\.", line))
+        # std.base64 (use bun.base64)
+        bad.extend(re.findall(r"std\.base64\b", line))
+        # std.crypto.sha (use bun.sha.Hashers)
+        bad.extend(re.findall(r"std\.crypto\.sha\b", line))
+        # std.mem string ops (use bun.strings.*)
+        bad.extend(re.findall(r"std\.mem\.(eql|indexOf|startsWith)\b", line))
     assert not bad, f"Prohibited std.* API usage in new code: {bad}"
 
 

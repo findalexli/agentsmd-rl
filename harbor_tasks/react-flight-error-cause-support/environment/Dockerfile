@@ -32,12 +32,12 @@ WORKDIR /workspace/react
 RUN git config user.email "agent@example.com" && \
     git config user.name "Agent"
 
-# Install dependencies (minimal for React Flight testing)
-# React uses yarn workspace, need to bootstrap
-RUN yarn install --frozen-lockfile
+# Install yarn via corepack and dependencies
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
+RUN yarn install --frozen-lockfile --network-timeout=600000 || yarn install
 
 # Build packages needed for Flight tests (ReactNoop builds)
-RUN yarn build react/index,react-dom/index,react-server/react-flight --type=NODE_DEV
+RUN yarn build react/index,react-dom/index,react-server/react-flight --type=NODE_DEV || true
 
 # Create verifier logs directory
 RUN mkdir -p /logs/verifier

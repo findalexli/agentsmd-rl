@@ -17,7 +17,7 @@ RUN cd /workspace/gradio && \
     git config user.name "Test"
 
 # Install TypeScript locally so tests can require() it
-RUN npm install --prefix /workspace/gradio typescript@5
+RUN cd /workspace/gradio && npm install typescript@5 --no-save || true
 
 RUN mkdir -p /logs/verifier
 

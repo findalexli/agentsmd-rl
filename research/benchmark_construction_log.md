@@ -249,10 +249,22 @@ Using E2B sandboxes (~5x faster than local Docker):
 
 **Full session progress: 188 → 394 passing (+206, +110%), 439 → 550 tasks (+111)**
 
-### Remaining (next session)
-- [ ] Final E2B validation to verify enrichment didn't break passing tasks (~20 min)
-- [ ] E2B validate 18 regenerated patches (~5 min, could add ~10 passes)
-- [ ] Fix 33 non-standard Dockerfiles (regex missed these git patterns)
-- [ ] Git commit enrichment results + plan update
-- [ ] 74 fail tasks abandoned (wrong test assertions, diminishing returns)
-- [ ] 64 fail_build abandoned (persistent Docker issues)
+### Phase 10: Triage + cleanup (2026-04-03 09:00-09:30)
+- [x] 10 parallel agents eyeballed all 138 failing tasks
+- [x] Result: 65 salvageable, 73 delete
+- [x] Deleted 58 low-quality tasks (43 + 15), 17 stuck with root-owned cache
+- [x] Pass rate: 394 / 507 = 76.2%
+
+### Phase 11: Salvage 65 remaining tasks (2026-04-03 in progress)
+
+**Salvageable fail (gold=0) — 30 tasks:**
+- Tests are close but have 1-2 assertion bugs, missing imports, or path issues
+- Fix: targeted re-remake or manual fix per task
+
+**Salvageable fail_build — 35 tasks:**
+- Obvious Dockerfile fixes: missing yarn, apt retry, timeout increase, variable quoting
+- 12 react tasks: all need `npm install -g yarn` added
+- 8 ruff/uv tasks: apt-get exit 100 (transient) or already passing locally
+- Fix: batch Dockerfile fixes + re-validate
+
+### Target: 394 + ~40 salvaged = ~430+ passing

@@ -20,9 +20,9 @@ RUN pip install --no-cache-dir \
 
 # Stub transformers module so processing_utils can be imported
 # (only encode_image_for_rollout_engine is needed; it uses only PIL + base64)
-RUN mkdir -p /workspace /logs/verifier/stubs/transformers && \
-    echo "class AutoProcessor:\n    @classmethod\n    def from_pretrained(cls, *a, **kw): pass" > /workspace/stubs/transformers/__init__.py && \
-    echo "AutoTokenizer = AutoProcessor\nPreTrainedTokenizerBase = object\nProcessorMixin = object" >> /workspace/stubs/transformers/__init__.py
+RUN mkdir -p /workspace/stubs/transformers /logs/verifier && \
+    printf 'class AutoProcessor:\n    @classmethod\n    def from_pretrained(cls, *a, **kw): pass\n' > /workspace/stubs/transformers/__init__.py && \
+    printf 'AutoTokenizer = AutoProcessor\nPreTrainedTokenizerBase = object\nProcessorMixin = object\n' >> /workspace/stubs/transformers/__init__.py
 
 ENV PYTHONPATH="/workspace/slime:/workspace/stubs"
 

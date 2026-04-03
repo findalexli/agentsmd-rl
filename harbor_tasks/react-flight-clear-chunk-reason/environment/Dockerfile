@@ -28,9 +28,9 @@ RUN git init . && \
 RUN git config --global user.email "agent@example.com" && \
     git config --global user.name "Agent"
 
-# Install dependencies (React uses yarn)
-RUN npm install -g yarn
-RUN yarn install --frozen-lockfile
+# Install dependencies (React uses yarn via corepack)
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
+RUN yarn install --frozen-lockfile --network-timeout=600000 || yarn install
 
 # Create logs directory
 RUN mkdir -p /logs/verifier

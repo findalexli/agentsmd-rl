@@ -1,4 +1,4 @@
-FROM golang:1.24-bookworm
+FROM golang:1.23-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8

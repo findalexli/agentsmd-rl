@@ -15,31 +15,6 @@ RUST_FILE = Path(REPO) / "crates/next-core/src/app_page_loader_tree.rs"
 TS_FILE = Path(REPO) / "packages/next/src/lib/metadata/resolve-metadata.ts"
 
 
-def _rust_code_lines(src: str) -> list[str]:
-    """Return non-comment lines from Rust source (strips // and /* */ comments)."""
-    lines = []
-    in_block = False
-    for line in src.splitlines():
-        s = line.strip()
-        if in_block:
-            if "*/" in s:
-                in_block = False
-            continue
-        if s.startswith("//"):
-            continue
-        if "/*" in s and "*/" not in s:
-            in_block = True
-            continue
-        # strip trailing comments
-        code = re.split(r"\s*//", line, maxsplit=1)[0]
-        lines.append(code)
-    return lines
-
-
-def _rust_code(src: str) -> str:
-    return "\n".join(_rust_code_lines(src))
-
-
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
@@ -59,37 +34,29 @@ def test_target_files_exist():
 def test_lazy_require_wrappers():
     """Eager requires replaced with lazy arrow-function wrappers in Rust codegen.
 
-    Base: const {id} = require(/*turbopackChunkingType: shared*/"...")
-    Fix:  const {id} = () => require(/*turbopackChunkingType: shared*/"...")
+    Base: "const {identifier} = require(/*turbopackChunkingType: ..."
+    Fix:  "const {identifier} = () => require(/*turbopackChunkingType: ..."
 
-    All turbopackChunkingType require patterns must be wrapped in () =>.
+    The turbopackChunkingType patterns live inside Rust format!() strings,
+    so we search the raw source (not comment-stripped).
     """
-    code = _rust_code(RUST_FILE.read_text())
+    src = RUST_FILE.read_text()
 
-    # Find all lines that assign a require with turbopackChunkingType
-    # These appear inside format!() strings in the Rust source
-    require_lines = [
-        ln for ln in code.splitlines()
-        if "require(" in ln and "turbopackChunkingType" in ln
-    ]
-    assert len(require_lines) >= 2, (
-        f"Expected >=2 turbopackChunkingType require lines, found {len(require_lines)}"
+    # Count all occurrences of the lazy pattern: () => require(/*turbopackChunkingType
+    lazy_matches = re.findall(r"\(\)\s*=>\s*require\(\s*/\*\s*turbopackChunkingType", src)
+    assert len(lazy_matches) >= 2, (
+        f"Expected >=2 '() => require(/*turbopackChunkingType...' patterns, found {len(lazy_matches)}"
     )
 
-    # Every such line must have an arrow function wrapper: () => require(
-    # or =>\n require( across format string lines
-    for ln in require_lines:
-        assert "=>" in ln and "require(" in ln, (
-            f"require with turbopackChunkingType not wrapped in arrow function: {ln.strip()}"
-        )
-
-    # Verify the wrapping is specifically () => require pattern (not some other arrow)
-    lazy_count = sum(
-        1 for ln in require_lines
-        if re.search(r"=>\s*require\(", ln)
+    # The eager (buggy) pattern must NOT exist: = require(/*turbopackChunkingType
+    # without the () => wrapper. Match "= require(" not preceded by "=> "
+    eager_matches = re.findall(
+        r'=\s*require\(\s*/\*\s*turbopackChunkingType', src
     )
-    assert lazy_count >= 2, (
-        f"Expected >=2 '() => require(...)' patterns, found {lazy_count}"
+    # Subtract lazy matches (which also contain "= require" after "=>")
+    pure_eager = len(eager_matches) - len(lazy_matches)
+    assert pure_eager == 0, (
+        f"Found {pure_eager} eager require(/*turbopackChunkingType...) without () => wrapper"
     )
 
 
@@ -99,21 +66,21 @@ def test_await_lazy_loaders():
 
     The fix adds patterns like:
       interopDefault(await {identifier}())
-    There must be await on a function invocation (not just await props.params).
+    in the writeln!/format! strings. Search raw source since these are
+    inside Rust string literals.
     """
-    code = _rust_code(RUST_FILE.read_text())
+    src = RUST_FILE.read_text()
 
-    # Must have "await" followed by an identifier and "()" — i.e. awaiting a call
-    # This pattern appears in the writeln! strings for generated JS
-    await_call_matches = re.findall(r"await\s+\w+\(\)", code)
-    assert len(await_call_matches) >= 2, (
-        f"Expected >=2 'await <fn>()' patterns in generated code, found {len(await_call_matches)}"
+    # Must have "interopDefault(await" pattern — the awaited lazy call wrapped in interop
+    interop_await = re.findall(r"interopDefault\s*\(\s*await\s+", src)
+    assert len(interop_await) >= 2, (
+        f"Expected >=2 'interopDefault(await ...)' patterns, found {len(interop_await)}"
     )
 
-    # The awaited result must be passed to interopDefault
-    interop_await = re.findall(r"interopDefault\s*\(\s*await\s+\w+\(\)\s*\)", code)
-    assert len(interop_await) >= 2, (
-        f"Expected >=2 'interopDefault(await fn())' patterns, found {len(interop_await)}"
+    # Must have "await" followed by an identifier call "()" — awaiting a lazy loader
+    await_call = re.findall(r"await\s+\{?\w+\}?\(\)", src)
+    assert len(await_call) >= 2, (
+        f"Expected >=2 'await <fn>()' patterns in generated code, found {len(await_call)}"
     )
 
 
@@ -149,17 +116,17 @@ def test_metadata_image_async_function():
 
     Must have async (props) => patterns AND no synchronous {identifier}.default access.
     """
-    code = _rust_code(RUST_FILE.read_text())
+    src = RUST_FILE.read_text()
 
     # Fix introduces "async (props) =>" in writeln!/format! strings
-    async_props = re.findall(r"async\s*\(props\)\s*=>", code)
+    async_props = re.findall(r"async\s*\(props\)\s*=>", src)
     assert len(async_props) >= 2, (
         f"Expected >=2 'async (props) =>' patterns, found {len(async_props)}"
     )
 
     # The buggy pattern: {identifier}.default directly accessed in writeln!/format!
     # After fix, metadata properties use 'mod.' instead of '{identifier}.default.'
-    sync_default = re.findall(r"\{identifier\}\.default[,.\s]", code)
+    sync_default = re.findall(r"\{identifier\}\.default[,.\s]", src)
     assert len(sync_default) == 0, (
         f"Found {len(sync_default)} synchronous {{identifier}}.default accesses — "
         "these should be replaced with 'mod.' references"
