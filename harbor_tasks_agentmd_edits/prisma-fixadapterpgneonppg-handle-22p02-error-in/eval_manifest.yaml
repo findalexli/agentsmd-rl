@@ -1,0 +1,76 @@
+version: '2.0'
+source:
+  repo: prisma/prisma
+  pr: 28849
+  base_commit: 857400baec117a7acd8be8799fa285d146329a33
+  merge_commit: 0c6db1591fd30fa9f6ed096bd8b24782c149b25b
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files exist and are non-empty
+- id: mapped_error_type_includes_invalid_input
+  type: fail_to_pass
+  origin: pr_diff
+  description: MappedError type includes InvalidInputValue kind with message field
+- id: adapter_pg_maps_22p02
+  type: fail_to_pass
+  origin: pr_diff
+  description: adapter-pg maps PostgreSQL error code 22P02 to InvalidInputValue
+- id: adapter_neon_maps_22p02
+  type: fail_to_pass
+  origin: pr_diff
+  description: adapter-neon maps PostgreSQL error code 22P02 to InvalidInputValue
+- id: adapter_ppg_maps_22p02
+  type: fail_to_pass
+  origin: pr_diff
+  description: adapter-ppg maps PostgreSQL error code 22P02 to InvalidInputValue
+- id: runtime_maps_invalid_input_to_p2007
+  type: fail_to_pass
+  origin: pr_diff
+  description: user-facing-error.ts maps InvalidInputValue to Prisma error code P2007
+rubric:
+- rule: Error handling documentation is consistent with the style of existing AGENTS.md
+    entries
+  source:
+    path: AGENTS.md
+    lines: 1-10
+    commit: 857400baec117a7acd8be8799fa285d146329a33
+- rule: The new MappedError kind name is descriptive and follows the naming convention
+    of existing kinds (PascalCase, descriptive)
+  source:
+    path: packages/driver-adapter-utils/src/types.ts
+    lines: 120-160
+    commit: 857400baec117a7acd8be8799fa285d146329a33
+- rule: user-facing-error.ts renders error message for InvalidInputValue
+  reference: "# AGENTS.md\n- **Client functional tests structure**:\n  - Each test\
+    \ lives in its own folder under `packages/client/tests/functional/` (or `issues/`\
+    \ for regression tests).\n  - Required files: `_matrix.ts` (test configurations),\
+    \ `test.ts` or `tests.ts` (test code), `prisma/_schema.ts` (schema template).\n\
+    \  - `_matrix.ts` defines provider/adapter combinations using `defineMatrix(()\
+    \ => [[{provider: Providers.POSTGRESQL}, ...]])`.\n  - `prisma/_schema.ts` exports\
+    \ `testMatrix.setupSchema(({ provider }) ="
+- rule: AGENTS.md documents the driver adapter error handling flow
+  source:
+    path: AGENTS.md
+    lines: 62-68
+    commit: 0c6db1591fd30fa9f6ed096bd8b24782c149b25b
+  reference: "- **Client functional tests structure**:\n  - Each test lives in its\
+    \ own folder under `packages/client/tests/functional/` (or `issues/` for regression\
+    \ tests).\n  - Required files: `_matrix.ts` (test configurations), `test.ts` or\
+    \ `tests.ts` (test code), `prisma/_schema.ts` (schema template).\n  - `_matrix.ts`\
+    \ defines provider/adapter combinations using `defineMatrix(() => [[{provider:\
+    \ Providers.POSTGRESQL}, ...]])`.\n  - `prisma/_schema.ts` exports `testMatrix.setupSchema(({\
+    \ provider }) => ...)` retu"
+- rule: AGENTS.md documents client functional test structure
+  source:
+    path: AGENTS.md
+    lines: 12-21
+    commit: 0c6db1591fd30fa9f6ed096bd8b24782c149b25b
+  reference: "- **Client functional tests structure**:\n  - Each test lives in its\
+    \ own folder under `packages/client/tests/functional/` (or `issues/` for regression\
+    \ tests).\n  - Required files: `_matrix.ts` (test configurations), `test.ts` or\
+    \ `tests.ts` (test code), `prisma/_schema.ts` (schema template).\n  - `_matrix.ts`\
+    \ defines provider/adapter combinations using `defineMatrix(() => [[{provider:\
+    \ Providers.POSTGRESQL}, ...]])`.\n  - `prisma/_schema.ts` exports `testMatrix.setupSchema(({\
+    \ provider }) => ...)` retu"

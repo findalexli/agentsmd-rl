@@ -1,0 +1,61 @@
+version: '2.0'
+source:
+  repo: angular/angular
+  pr: 67666
+  base_commit: 5e21431ba34d82c189dc4a7536f49dcfbc5bda4d
+  merge_commit: 2e3492464769b468b7471ee0b7d17a56f253344b
+checks:
+- id: review_scripts_exist_and_validate_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: All 5 review scripts exist, are executable, and reject missing args
+- id: post_inline_comment_stages_to_local_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: post_inline_comment.sh stages comments to a local JSON file
+- id: submit_review_supports_event_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: submit_pr_review.sh handles COMMENT, APPROVE, and REQUEST_CHANGES
+- id: existing_skills_preserved
+  type: pass_to_pass
+  origin: static
+  description: Existing agent skills remain accessible under .agent/skills/
+rubric:
+- rule: The PR review guidelines should be consistent with the tone and thoroughness
+    of existing Angular contributing docs
+  source:
+    path: CONTRIBUTING.md
+    lines: 1-10
+    commit: 5e21431ba34d82c189dc4a7536f49dcfbc5bda4d
+- rule: Scripts should follow defensive bash conventions (set -euo pipefail, argument
+    validation, clear error messages)
+  source:
+    path: .agent/rules/agents.md
+    lines: 1-5
+    commit: 5e21431ba34d82c189dc4a7536f49dcfbc5bda4d
+- rule: SKILL.md exists under pr_review with substantial PR review guidelines
+  source:
+    path: .agent/skills/pr_review/SKILL.md
+    lines: 1-133
+    commit: 2e3492464769b468b7471ee0b7d17a56f253344b
+- rule: SKILL.md requires comprehensive review of the entire PR
+  source:
+    path: .agent/skills/pr_review/SKILL.md
+    lines: 15-16
+    commit: 2e3492464769b468b7471ee0b7d17a56f253344b
+- rule: SKILL.md documents both local and remote review workflows
+  source:
+    path: .agent/skills/pr_review/SKILL.md
+    lines: 50-90
+    commit: 2e3492464769b468b7471ee0b7d17a56f253344b
+- rule: SKILL.md explains batching comments into a single review
+  source:
+    path: .agent/skills/pr_review/SKILL.md
+    lines: 67-72
+    commit: 2e3492464769b468b7471ee0b7d17a56f253344b
+- rule: Router reference doc mentions timing sensitivity for router PRs
+  source:
+    path: .agent/skills/pr_review/reference/router.md
+    lines: 1-7
+    commit: 2e3492464769b468b7471ee0b7d17a56f253344b

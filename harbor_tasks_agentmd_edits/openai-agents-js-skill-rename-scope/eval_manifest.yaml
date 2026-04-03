@@ -1,0 +1,52 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 836
+  base_commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+  merge_commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+checks:
+- id: skill_renamed
+  type: fail_to_pass
+  origin: pr_diff
+  description: verify-changes skill directory renamed to code-change-verification
+- id: run_sh_message_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: run.sh success message references code-change-verification
+- id: run_sh_has_verification_commands
+  type: pass_to_pass
+  origin: static
+  description: run.sh still contains core pnpm verification commands
+rubric:
+- rule: The updated AGENTS.md is consistent in tone and style with the existing documentation
+    structure.
+  source:
+    path: AGENTS.md
+    lines: 1-25
+    commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+- rule: The new openai-knowledge SKILL.md follows the same structural conventions
+    as the existing code-change-verification SKILL.md.
+  source:
+    path: .codex/skills/verify-changes/SKILL.md
+    lines: 1-30
+    commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+- rule: Skill YAML frontmatter must be valid
+- rule: SKILL.md frontmatter name field updated to code-change-verification
+- rule: SKILL.md description scoped to runtime code/tests/build changes
+- rule: New openai-knowledge skill created with correct frontmatter
+- rule: openai-knowledge skill documents MCP server integration
+- rule: AGENTS.md references $code-change-verification, not $verify-changes
+  source:
+    path: AGENTS.md
+    lines: 28-36
+    commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+- rule: AGENTS.md documents when to skip code-change-verification for docs-only changes
+  source:
+    path: AGENTS.md
+    lines: 36-38
+    commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+- rule: AGENTS.md documents the new $openai-knowledge skill and MCP usage
+  source:
+    path: AGENTS.md
+    lines: 40-42
+    commit: ece9cd964494339dbb5e76e0389cc527a81384aa

@@ -1,0 +1,73 @@
+version: '2.0'
+source:
+  repo: matthiasn/lotti
+  pr: 2371
+  base_commit: 392b12196ef1c1c1b7fb7d49fac0635da9a60b61
+  merge_commit: 074bb34d44e596b238ea082a89617cc0e96dfb05
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Dart files have balanced braces
+- id: catchup_escalates_when_snapshot_full
+  type: fail_to_pass
+  origin: pr_diff
+  description: needsMore() continues escalating when snapshot is full (events.length
+    >= limit)
+- id: signal_driven_catchup_with_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: Stream consumer uses _catchUpInFlight guard and always triggers catch-up
+    on signals
+- id: self_origin_suppression
+  type: fail_to_pass
+  origin: pr_diff
+  description: Consumer suppresses self-origin events using senderId comparison
+rubric:
+- rule: Update the feature README files we touch such that they match reality in the
+    codebase, not only for what we touch but in their entirety.
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: 392b12196ef1c1c1b7fb7d49fac0635da9a60b61
+- rule: Maintain feature READMEs and update them alongside code changes.
+  source:
+    path: AGENTS.md
+    lines: '73'
+    commit: 392b12196ef1c1c1b7fb7d49fac0635da9a60b61
+- rule: lib/features/sync/README.md documents signal-driven ingestion behavior
+  source:
+    path: lib/features/sync/README.md
+    lines: 60-67
+    commit: 074bb34d44e596b238ea082a89617cc0e96dfb05
+  reference: "| **MatrixStreamConsumer** (`matrix/pipeline/matrix_stream_consumer.dart`)\
+    \ | Stream-first consumer: attach-time catch-up (SDK pagination/backfill with\
+    \ graceful fallback), micro-batched streaming, attachment prefetch, monotonic\
+    \ marker advancement, retries with TTL + size cap, circuit breaker, and metrics.\
+    \ |\n- Signal-driven ingestion (2025-10-28):\n  - Client stream events are treated\
+    \ as signals that always trigger a\n    `forceRescan()` with catch-up. An in-flight\
+    \ guard prevents overlapping\n    cat"
+- rule: README references matrix/pipeline/ paths, not old pipeline_v2/
+  source:
+    path: lib/features/sync/README.md
+    lines: 113-116
+    commit: 074bb34d44e596b238ea082a89617cc0e96dfb05
+  reference: "| **MatrixStreamConsumer** (`matrix/pipeline/matrix_stream_consumer.dart`)\
+    \ | Stream-first consumer: attach-time catch-up (SDK pagination/backfill with\
+    \ graceful fallback), micro-batched streaming, attachment prefetch, monotonic\
+    \ marker advancement, retries with TTL + size cap, circuit breaker, and metrics.\
+    \ |\n- Signal-driven ingestion (2025-10-28):\n  - Client stream events are treated\
+    \ as signals that always trigger a\n    `forceRescan()` with catch-up. An in-flight\
+    \ guard prevents overlapping\n    cat"
+- rule: docs/sync/sync_summary.md documents signal-driven catch-up and backlog completion
+  source:
+    path: docs/sync/sync_summary.md
+    lines: 19-28
+    commit: 074bb34d44e596b238ea082a89617cc0e96dfb05
+  reference: "# lib/features/sync/README.md\n| **MatrixStreamConsumer** (`matrix/pipeline/matrix_stream_consumer.dart`)\
+    \ | Stream-first consumer: attach-time catch-up (SDK pagination/backfill with\
+    \ graceful fallback), micro-batched streaming, attachment prefetch, monotonic\
+    \ marker advancement, retries with TTL + size cap, circuit breaker, and metrics.\
+    \ |\n- Signal-driven ingestion (2025-10-28):\n  - Client stream events are treated\
+    \ as signals that always trigger a\n    `forceRescan()` with catch-up. An in-flight\
+    \ guar"

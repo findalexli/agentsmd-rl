@@ -1,0 +1,78 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 44277
+  base_commit: bb8031052cbd88f8b30c75df84b9703eee80200f
+  merge_commit: a118714602774818c3a003b18d83ab48548e51d7
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files must parse without errors
+- id: docs_extra_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: setup.py defines extras["docs"] for doc-builder
+- id: docs_extra_in_testing
+  type: fail_to_pass
+  origin: pr_diff
+  description: Testing extras include the docs extra so CI installs doc-builder
+- id: dependency_table_uses_git_doc_builder
+  type: fail_to_pass
+  origin: pr_diff
+  description: dependency_versions_table.py references doc-builder via git+main URL
+- id: glmasr_has_runnable_fences
+  type: fail_to_pass
+  origin: pr_diff
+  description: GLM-ASR doc code fences are marked with runnable labels
+rubric:
+- rule: Documentation updates should be consistent with the existing style and formatting
+    of CONTRIBUTING.md and testing.md
+  source:
+    path: CONTRIBUTING.md
+    lines: 380-410
+    commit: bb8031052cbd88f8b30c75df84b9703eee80200f
+- rule: Runnable code examples should include appropriate pytest-decorator annotations
+  source:
+    path: docs/source/en/model_doc/glmasr.md
+    lines: 49-70
+    commit: a118714602774818c3a003b18d83ab48548e51d7
+- rule: Advanced example uses AutoProcessor for processor, not GlmAsrForConditionalGeneration
+  reference: "# CONTRIBUTING.md\npip install \".[docs]\"\n   If you're adding or editing\
+    \ runnable examples in Markdown docs, mark Python fences with `runnable` or\n\
+    \   `runnable:<label>` and run them locally with `pytest`:\n\n   ```bash\n   pytest\
+    \ -q docs/source/en/my_page.md\n   pytest -q docs/source/en/\n   ```\n\n   For\
+    \ the full runnable syntax, including continuation blocks, `# pytest-decorator:`,\
+    \ and\n   `# doc-builder: hide`, see the\n   [doc-builder runnable code blocks\
+    \ guide](https://github.com/huggingface/doc-build"
+- rule: CONTRIBUTING.md documents the runnable examples workflow with pytest
+  source:
+    path: CONTRIBUTING.md
+    lines: 406-417
+    commit: a118714602774818c3a003b18d83ab48548e51d7
+  reference: "pip install \".[docs]\"\n   If you're adding or editing runnable examples\
+    \ in Markdown docs, mark Python fences with `runnable` or\n   `runnable:<label>`\
+    \ and run them locally with `pytest`:\n\n   ```bash\n   pytest -q docs/source/en/my_page.md\n\
+    \   pytest -q docs/source/en/\n   ```\n\n   For the full runnable syntax, including\
+    \ continuation blocks, `# pytest-decorator:`, and\n   `# doc-builder: hide`, see\
+    \ the\n   [doc-builder runnable code blocks guide](https://github.com/huggingface/doc-builder/blob/main/docs/"
+- rule: testing.md documents how to run runnable Markdown blocks
+  source:
+    path: docs/source/en/testing.md
+    lines: 219-231
+    commit: a118714602774818c3a003b18d83ab48548e51d7
+  reference: "# CONTRIBUTING.md\npip install \".[docs]\"\n   If you're adding or editing\
+    \ runnable examples in Markdown docs, mark Python fences with `runnable` or\n\
+    \   `runnable:<label>` and run them locally with `pytest`:\n\n   ```bash\n   pytest\
+    \ -q docs/source/en/my_page.md\n   pytest -q docs/source/en/\n   ```\n\n   For\
+    \ the full runnable syntax, including continuation blocks, `# pytest-decorator:`,\
+    \ and\n   `# doc-builder: hide`, see the\n   [doc-builder runnable code blocks\
+    \ guide](https://github.com/huggingface/doc-build"
+- rule: CONTRIBUTING.md install instruction updated from hf-doc-builder to .[docs]
+  reference: "# CONTRIBUTING.md\npip install \".[docs]\"\n   If you're adding or editing\
+    \ runnable examples in Markdown docs, mark Python fences with `runnable` or\n\
+    \   `runnable:<label>` and run them locally with `pytest`:\n\n   ```bash\n   pytest\
+    \ -q docs/source/en/my_page.md\n   pytest -q docs/source/en/\n   ```\n\n   For\
+    \ the full runnable syntax, including continuation blocks, `# pytest-decorator:`,\
+    \ and\n   `# doc-builder: hide`, see the\n   [doc-builder runnable code blocks\
+    \ guide](https://github.com/huggingface/doc-build"

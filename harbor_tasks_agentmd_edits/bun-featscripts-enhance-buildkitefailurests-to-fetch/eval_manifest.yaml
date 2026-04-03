@@ -1,0 +1,50 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 26177
+  base_commit: 6f6f76f0c07d592ad14b1d64a2e7037deb587c21
+  merge_commit: 7e9fa4ab08d9250c72795565c173cf7349de4018
+checks:
+- id: help_flag_exits_zero
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script supports --help flag that prints usage and exits 0
+- id: help_documents_wait_option
+  type: fail_to_pass
+  origin: pr_diff
+  description: --help output documents the --wait polling option
+- id: help_documents_log_saving
+  type: fail_to_pass
+  origin: pr_diff
+  description: --help output mentions log file saving to /tmp/bun-build-*
+- id: help_documents_input_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: --help output documents supported input types (build number, PR, branch)
+- id: existing_flags_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: Script still supports existing --flaky and --warnings flags
+rubric:
+- rule: Documentation in CLAUDE.md is consistent with the style and formatting of
+    existing sections
+  source:
+    path: CLAUDE.md
+    lines: 1-213
+    commit: 6f6f76f0c07d592ad14b1d64a2e7037deb587c21
+- rule: Help text follows CLI conventions with clear option descriptions and examples
+  source:
+    path: scripts/buildkite-failures.ts
+    lines: 52-84
+    commit: 7e9fa4ab08d9250c72795565c173cf7349de4018
+- rule: CLAUDE.md has a section documenting CI failure debugging with buildkite-failures
+    script
+  source:
+    path: CLAUDE.md
+    lines: 214-234
+    commit: 7e9fa4ab08d9250c72795565c173cf7349de4018
+- rule: CLAUDE.md shows usage examples and documents --wait flag
+  source:
+    path: CLAUDE.md
+    lines: 218-232
+    commit: 7e9fa4ab08d9250c72795565c173cf7349de4018

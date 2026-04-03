@@ -1,0 +1,60 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 44489
+  base_commit: 7cd2dd86ce3b2e598535f9aa1a40f79d6894f80a
+  merge_commit: 670f3c85fde62cede8206d7ade43a8eaa1edc205
+checks:
+- id: makefile_syntax
+  type: pass_to_pass
+  origin: static
+  description: Makefile is syntactically valid and parseable by make
+- id: make_claude_creates_skills_symlink
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''make claude'' creates .claude/skills symlink to .ai/skills'
+- id: make_codex_creates_skills_symlink
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''make codex'' creates .agents/skills symlink to .ai/skills'
+- id: make_clean_ai_removes_symlinks
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''make clean-ai'' removes generated skill symlinks'
+rubric:
+- rule: The .ai/ directory structure is used as the single source of truth, with symlinks
+    providing backwards compatibility
+  source:
+    path: .ai/AGENTS.md
+    lines: 1-14
+    commit: 670f3c85fde62cede8206d7ade43a8eaa1edc205
+- rule: .ai/AGENTS.md centralizes agent guidance with setup instructions
+  source:
+    path: .ai/AGENTS.md
+    lines: 1-66
+    commit: 670f3c85fde62cede8206d7ade43a8eaa1edc205
+- rule: .ai/skills/add-or-fix-type-checking/SKILL.md exists with ty check guidance
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 1-215
+    commit: 670f3c85fde62cede8206d7ade43a8eaa1edc205
+- rule: Root AGENTS.md is a symlink to .ai/AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: '1'
+    commit: 670f3c85fde62cede8206d7ade43a8eaa1edc205
+- rule: Root CLAUDE.md is a symlink to .ai/AGENTS.md
+  source:
+    path: CLAUDE.md
+    lines: '1'
+    commit: 670f3c85fde62cede8206d7ade43a8eaa1edc205
+- rule: CONTRIBUTING.md documents AI agent setup with make targets
+  source:
+    path: CONTRIBUTING.md
+    lines: 243-251
+    commit: 670f3c85fde62cede8206d7ade43a8eaa1edc205
+- rule: .gitignore excludes .agents/skills and .claude/skills
+  source:
+    path: .gitignore
+    lines: 179-182
+    commit: 670f3c85fde62cede8206d7ade43a8eaa1edc205

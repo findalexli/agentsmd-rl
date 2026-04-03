@@ -1,0 +1,59 @@
+version: '2.0'
+source:
+  repo: PostHog/posthog
+  pr: 52913
+  base_commit: 14b7a8edebb1b574414ac9866a417fbe7c8170c0
+  merge_commit: cac99ad21d1846b0b3fa496f97ff68f6dc8394f7
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files parse without errors
+- id: prompt_documents_dynamic_properties
+  type: fail_to_pass
+  origin: pr_diff
+  description: PROPERTY_TYPES_PROMPT contains dynamic_person_properties section with
+    all 8 patterns
+- id: taxonomy_tool_person_hint
+  type: fail_to_pass
+  origin: pr_diff
+  description: read_taxonomy core.py defines DYNAMIC_PERSON_PROPERTIES_HINT and appends
+    it for person entities
+- id: taxonomy_tool_event_hint
+  type: fail_to_pass
+  origin: pr_diff
+  description: read_taxonomy core.py defines DYNAMIC_EVENT_PROPERTIES_HINT and appends
+    it for event properties
+- id: dynamic_properties_reference_doc
+  type: fail_to_pass
+  origin: agent_config
+  description: Reference doc exists documenting all dynamic property patterns with
+    types
+  source:
+    path: products/posthog_ai/skills/query-examples/references/taxonomy-dynamic-properties.md
+    lines: 1-78
+    commit: cac99ad21d1846b0b3fa496f97ff68f6dc8394f7
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: execute_taxonomy_query has real match/case logic
+rubric:
+- rule: Dynamic property documentation should be consistent with the style of existing
+    SKILL.md references
+  source:
+    path: products/posthog_ai/skills/query-examples/SKILL.md
+    lines: 1-30
+    commit: 14b7a8edebb1b574414ac9866a417fbe7c8170c0
+- rule: Hint text appended to tool results should be concise and actionable for an
+    AI agent
+  source:
+    path: products/posthog_ai/skills/query-examples/SKILL.md
+    lines: 1-5
+    commit: 14b7a8edebb1b574414ac9866a417fbe7c8170c0
+- rule: event_taxonomy_query_runner omit filter excludes feature_enrollment, feature_interaction,
+    product_tour
+- rule: SKILL.md references the dynamic properties documentation
+  source:
+    path: products/posthog_ai/skills/query-examples/SKILL.md
+    lines: '30'
+    commit: cac99ad21d1846b0b3fa496f97ff68f6dc8394f7

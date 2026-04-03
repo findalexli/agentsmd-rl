@@ -1,0 +1,62 @@
+version: '2.0'
+source:
+  repo: payloadcms/payload
+  pr: 16000
+  base_commit: a188556e99d94c96266671b2129e5c8cb05e46a5
+  merge_commit: 2646018559ce984407587c2f059d1341c6e27a60
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: docker-clean.js must parse as valid JavaScript
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: docker-clean.js has real cleanup logic, not a stub
+- id: docker_clean_script_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: A Node.js cleanup script exists at scripts/docker-clean.js using child_process
+- id: docker_clean_removes_named_containers
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cleanup script force-removes named test containers (postgres-payload-test,
+    mongodb-payload-test)
+- id: docker_clean_runs_compose_down
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cleanup script runs docker compose down for full cleanup
+- id: package_json_has_docker_clean
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json defines a docker:clean script invoking the cleanup script
+- id: docker_start_calls_clean
+  type: fail_to_pass
+  origin: pr_diff
+  description: docker:start calls docker:clean before starting services
+- id: docker_stop_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: docker:stop script removed from package.json
+rubric:
+- rule: Config update descriptions are consistent with the style of existing documentation
+  source:
+    path: CONTRIBUTING.md
+    lines: 1-10
+    commit: a188556e99d94c96266671b2129e5c8cb05e46a5
+- rule: CLAUDE.md references docker:clean instead of docker:stop
+  source:
+    path: CLAUDE.md
+    lines: '85'
+    commit: 2646018559ce984407587c2f059d1341c6e27a60
+  reference: '- Docker services: `pnpm docker:start` / `pnpm docker:clean` / `pnpm
+    docker:test`'
+- rule: CONTRIBUTING.md references docker:clean instead of docker:stop
+  source:
+    path: CONTRIBUTING.md
+    lines: 148-149
+    commit: 2646018559ce984407587c2f059d1341c6e27a60
+  reference: 'pnpm docker:start  # Clean + start all services (PostgreSQL, MongoDB,
+    storage emulators) with fresh data
+
+    pnpm docker:clean  # Stop and remove all services'

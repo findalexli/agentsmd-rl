@@ -1,0 +1,78 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11088
+  base_commit: 64b3a160dc25bbb082b96673e12bb55935f3528d
+  merge_commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+checks:
+- id: syntax_check
+  type: fail_to_pass
+  origin: pr_diff
+  description: TypeScript files in skills/ parse without errors
+- id: script_shows_help
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script outputs usage info when called with --help
+- id: script_rejects_no_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script exits non-zero when called without arguments
+- id: script_rejects_non_numeric_pr
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script rejects non-numeric PR number arguments
+- id: script_rejects_same_pr_numbers
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script rejects when old_pr and new_pr are the same number
+- id: script_has_shebang
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script has executable shebang line for node
+- id: tsconfig_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: tsconfig.json exists for supersede-pr skill with correct settings
+rubric:
+- rule: One-off scripts rule in AGENTS.md is consistent with the style of surrounding
+    Code Style entries
+  source:
+    path: AGENTS.md
+    lines: 23-30
+    commit: 64b3a160dc25bbb082b96673e12bb55935f3528d
+- rule: SKILL.md files follow consistent YAML frontmatter format with name and description
+    fields
+  source:
+    path: skills/supersede-pr/SKILL.md
+    lines: 1-4
+    commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+- rule: AGENTS.md Code Style section includes one-off scripts guidance
+  source:
+    path: AGENTS.md
+    lines: '25'
+    commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+- rule: AGENTS.md has a Skills section explaining the concept
+  source:
+    path: AGENTS.md
+    lines: 65-72
+    commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+- rule: AGENTS.md lists the supersede-pr skill
+  source:
+    path: AGENTS.md
+    lines: '71'
+    commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+- rule: AGENTS.md lists the make-pr skill
+  source:
+    path: AGENTS.md
+    lines: '72'
+    commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+- rule: supersede-pr SKILL.md exists with proper frontmatter and content
+  source:
+    path: skills/supersede-pr/SKILL.md
+    lines: 1-54
+    commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+- rule: make-pr SKILL.md exists with proper frontmatter and content
+  source:
+    path: skills/make-pr/SKILL.md
+    lines: 1-65
+    commit: 27765d6ff3fc9671802defcc69693cebd554ce6d

@@ -1,0 +1,62 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 10905
+  base_commit: 848194ecde3f143b5d0d1fde9b11fa713b7c142e
+  merge_commit: d0ee7eb0e1dd485a9c707eaaf97e58c420e181ee
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: New TypeScript files must parse without syntax errors
+- id: mime_type_to_content_type_text_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: mimeTypeToContentType adds charset to text/* MIME types
+- id: mime_type_to_content_type_json_and_js
+  type: fail_to_pass
+  origin: pr_diff
+  description: mimeTypeToContentType adds charset to application/json, application/javascript,
+    +json types
+- id: mime_type_to_content_type_exclusions
+  type: fail_to_pass
+  origin: pr_diff
+  description: mimeTypeToContentType excludes text/xml, binary types, and already-charset
+    types
+- id: detect_content_type_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: detectContentType function exists, composing detectMimeType with mimeTypeToContentType
+- id: exports_new_functions
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/mime/src/index.ts exports both new functions
+rubric:
+- rule: README documentation style is consistent with existing function docs (detectMimeType,
+    isCompressibleMimeType)
+  source:
+    path: packages/mime/README.md
+    lines: 1-55
+    commit: 848194ecde3f143b5d0d1fde9b11fa713b7c142e
+- rule: 'Code comments follow AGENTS.md rule: only non-JSDoc comments when the code
+    is doing something surprising or non-obvious'
+  source:
+    path: AGENTS.md
+    lines: '24'
+    commit: 848194ecde3f143b5d0d1fde9b11fa713b7c142e
+- rule: packages/response/src/lib/file.ts uses mimeTypeToContentType for Content-Type
+- rule: New code uses let for local variables per AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: '19'
+    commit: 848194ecde3f143b5d0d1fde9b11fa713b7c142e
+- rule: packages/mime/README.md documents the detectContentType function
+  source:
+    path: packages/mime/README.md
+    lines: 28-40
+    commit: d0ee7eb0e1dd485a9c707eaaf97e58c420e181ee
+- rule: packages/mime/README.md documents the mimeTypeToContentType function
+  source:
+    path: packages/mime/README.md
+    lines: 63-75
+    commit: d0ee7eb0e1dd485a9c707eaaf97e58c420e181ee

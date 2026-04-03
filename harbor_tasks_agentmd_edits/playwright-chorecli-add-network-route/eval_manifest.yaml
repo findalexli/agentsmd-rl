@@ -1,0 +1,122 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39071
+  base_commit: 824f63da57edf990c6eeab6301d5f1b65dcb4ca8
+  merge_commit: 8d91d675afb863c1953af92d3b4d2837a7ef6ab7
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified/new TypeScript files parse without syntax errors
+- id: route_tool_definitions
+  type: fail_to_pass
+  origin: pr_diff
+  description: route.ts defines browser_route, browser_route_list, browser_unroute
+    tools with pattern/body/status params
+- id: context_route_management
+  type: fail_to_pass
+  origin: pr_diff
+  description: context.ts exports RouteEntry type and has addRoute/removeRoute/routes
+    methods
+- id: route_tools_registered
+  type: fail_to_pass
+  origin: pr_diff
+  description: tools.ts imports route module and spreads it into browserTools array
+- id: network_category_and_cli_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLI has 'network' category in command.ts/helpGenerator.ts with route/route-list/unroute
+    commands in commands.ts
+rubric:
+- rule: SKILL.md updates are consistent with the existing documentation style and
+    structure
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 1-40
+    commit: 824f63da57edf990c6eeab6301d5f1b65dcb4ca8
+- rule: Route tool implementation follows the same patterns as existing MCP tools
+    (e.g., navigate, network)
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 4-7
+    commit: 824f63da57edf990c6eeab6301d5f1b65dcb4ca8
+- rule: route.ts handler supports both response mocking (fulfill) and header modification
+    (continue)
+  reference: '# .claude/skills/playwright-mcp-dev/SKILL.md
+
+    ## Building
+
+    - Assume watch is running at all times, run lint to see type errors
+
+
+    - Do not run test --debug
+
+    ## Building
+
+    - Assume watch is running at all times, run lint to see type errors
+
+
+    - Do not run test --debug
+
+    - run `npm run flint` to lint everything before commit'
+- rule: SKILL.md has Building section documenting watch + lint workflow
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 14-15
+    commit: 8d91d675afb863c1953af92d3b4d2837a7ef6ab7
+  reference: '## Building
+
+    - Assume watch is running at all times, run lint to see type errors
+
+
+    - Do not run test --debug
+
+    ## Building
+
+    - Assume watch is running at all times, run lint to see type errors
+
+
+    - Do not run test --debug
+
+    - run `npm run flint` to lint everything before commit'
+- rule: SKILL.md lint command corrected from 'npm run flint:mcp' to 'npm run flint'
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '41'
+    commit: 8d91d675afb863c1953af92d3b4d2837a7ef6ab7
+  reference: '## Building
+
+    - Assume watch is running at all times, run lint to see type errors
+
+
+    - Do not run test --debug
+
+    ## Building
+
+    - Assume watch is running at all times, run lint to see type errors
+
+
+    - Do not run test --debug
+
+    - run `npm run flint` to lint everything before commit'
+- rule: SKILL.md warns against using test --debug flag
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '18'
+    commit: 8d91d675afb863c1953af92d3b4d2837a7ef6ab7
+  reference: '## Building
+
+    - Assume watch is running at all times, run lint to see type errors
+
+
+    - Do not run test --debug
+
+    ## Building
+
+    - Assume watch is running at all times, run lint to see type errors
+
+
+    - Do not run test --debug
+
+    - run `npm run flint` to lint everything before commit'

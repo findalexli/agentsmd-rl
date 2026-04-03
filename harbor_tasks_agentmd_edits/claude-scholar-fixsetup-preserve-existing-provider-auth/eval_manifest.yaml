@@ -1,0 +1,85 @@
+version: '2.0'
+source:
+  repo: Galaxy-Dawn/claude-scholar
+  pr: 14
+  base_commit: d6fa24e0597692c21e16f976ec159a1482adcc2d
+  merge_commit: 03377801a8089f52a664217ab34e4f5dc9512eb3
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: setup.sh must parse without bash syntax errors
+- id: mask_secret_hides_long_keys
+  type: fail_to_pass
+  origin: pr_diff
+  description: mask_secret shows first 8 and last 4 chars of long secrets
+- id: mask_secret_preserves_short
+  type: fail_to_pass
+  origin: pr_diff
+  description: mask_secret returns short secrets (<=12 chars) unchanged
+- id: normalize_env_prefix
+  type: fail_to_pass
+  origin: pr_diff
+  description: normalize_env_prefix uppercases and replaces separators
+- id: collect_api_key_candidates_provider_first
+  type: fail_to_pass
+  origin: pr_diff
+  description: collect_api_key_candidates puts provider-specific key first
+- id: detect_existing_preserves_silently
+  type: fail_to_pass
+  origin: pr_diff
+  description: detect_existing sets SKIP_PROVIDER=true without interactive prompts
+- id: check_deps_requires_node
+  type: fail_to_pass
+  origin: pr_diff
+  description: check_deps requires node instead of python3
+- id: write_auth_custom_env_creates_dual_keys
+  type: fail_to_pass
+  origin: pr_diff
+  description: write_auth with custom env var writes both custom and OPENAI_API_KEY
+    entries
+rubric:
+- rule: README update should be consistent with the style and structure of the existing
+    Quick Start section
+  source:
+    path: README.md
+    lines: 360-390
+    commit: d6fa24e0597692c21e16f976ec159a1482adcc2d
+- rule: Chinese README update should accurately mirror the English README changes
+  source:
+    path: README.zh-CN.md
+    lines: 355-380
+    commit: d6fa24e0597692c21e16f976ec159a1482adcc2d
+- rule: README.md documents auto-detection of *_API_KEY env vars and silent preservation
+  source:
+    path: README.md
+    lines: 374-381
+    commit: 03377801a8089f52a664217ab34e4f5dc9512eb3
+  reference: '- Silently preserve existing `config.toml` provider/model and existing
+    `auth.json` credentials, and auto-detect common `*_API_KEY` env vars when `auth.json`
+    is absent
+
+    - For fresh installs, choose API provider (OpenAI or custom), model, and a custom
+    API key env var name
+
+    - Reuse an already-exported env var when available, then merge Scholar-specific
+    sections (features, agents, MCP) into config
+
+    - Copy skills, agents, scripts, and utils to `~/.codex/`'
+- rule: README.zh-CN.md documents auto-detection of API key env vars in Chinese
+  source:
+    path: README.zh-CN.md
+    lines: 367-374
+    commit: 03377801a8089f52a664217ab34e4f5dc9512eb3
+  reference: '# README.md
+
+    - Silently preserve existing `config.toml` provider/model and existing `auth.json`
+    credentials, and auto-detect common `*_API_KEY` env vars when `auth.json` is absent
+
+    - For fresh installs, choose API provider (OpenAI or custom), model, and a custom
+    API key env var name
+
+    - Reuse an already-exported env var when available, then merge Scholar-specific
+    sections (features, agents, MCP) into config
+
+    - Copy skills, agents, scripts, and utils to `~/.codex/`'

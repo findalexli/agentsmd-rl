@@ -1,0 +1,78 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 1120
+  base_commit: 05dd513231c04ffb6013a25118605a7a72a9a063
+  merge_commit: 78df492ba6c02a382b740abdf396726ce3b0d9eb
+checks:
+- id: run_mjs_syntax_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: run.mjs must exist and parse without JavaScript syntax errors
+- id: run_mjs_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: The new Node runner script run.mjs must exist
+- id: run_mjs_exports_create_default_plan
+  type: fail_to_pass
+  origin: pr_diff
+  description: run.mjs must export createDefaultPlan returning sequential and parallel
+    steps
+- id: run_mjs_sequential_barriers
+  type: fail_to_pass
+  origin: pr_diff
+  description: Install and build must be sequential barrier steps in the plan
+- id: run_mjs_parallel_validation_steps
+  type: fail_to_pass
+  origin: pr_diff
+  description: Build-check, dist-check, lint, and test must be parallel steps
+- id: run_sh_delegates_to_mjs
+  type: fail_to_pass
+  origin: pr_diff
+  description: run.sh must delegate to run.mjs instead of running pnpm steps directly
+- id: run_ps1_delegates_to_mjs
+  type: fail_to_pass
+  origin: pr_diff
+  description: run.ps1 must delegate to run.mjs instead of running pnpm steps directly
+- id: run_mjs_has_fail_fast
+  type: fail_to_pass
+  origin: pr_diff
+  description: run.mjs must implement fail-fast cancellation with signal handling
+rubric:
+- rule: Config updates in SKILL.md and AGENTS.md are consistent with the style of
+    the existing documentation
+  source:
+    path: AGENTS.md
+    lines: 1-10
+    commit: 05dd513231c04ffb6013a25118605a7a72a9a063
+- rule: SKILL.md must document parallel execution after barriers
+  source:
+    path: .agents/skills/code-change-verification/SKILL.md
+    lines: 22-33
+    commit: 78df492ba6c02a382b740abdf396726ce3b0d9eb
+  reference: '- Run from the repository root in these phases: `pnpm i`, `pnpm build`,
+    then `pnpm -r build-check`, `pnpm -r -F "@openai/*" dist:check`, `pnpm lint`,
+    and `pnpm test`.
+
+    - The skill may execute the final validation phase in parallel, but every step
+    above must still pass.
+
+    - Do not skip steps; stop and fix issues immediately when any step fails.
+
+    - Re-run the full stack after applying fixes so the commands execute with the
+    same barriers and coverage.
+
+    - Keeps `pnpm i` and `pnpm build` as barriers, then'
+- rule: AGENTS.md must document skill-defined phase barriers
+  source:
+    path: AGENTS.md
+    lines: 110-180
+    commit: 78df492ba6c02a382b740abdf396726ce3b0d9eb
+  reference: '5.  When `$code-change-verification` applies (see Mandatory Skill Usage),
+    run it to execute the full verification stack with the skill-defined phase barriers
+    before considering the work complete.
+
+    When `$code-change-verification` applies (see Mandatory Skill Usage), run the
+    full validation sequence locally via the `$code-change-verification` skill; do
+    not skip any step, and preserve the skill-defined barriers (`pnpm i`, `pnpm build`,
+    then the remaining validation steps).'

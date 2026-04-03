@@ -1,0 +1,61 @@
+version: '2.0'
+source:
+  repo: apache/beam
+  pr: 38008
+  base_commit: c8e45e79c699ef6df8847824833aeefab3b5767a
+  merge_commit: f7bdf517ccb9d7ff9a1a71f6850ceeaa3f4085ef
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: parse_args_default_max_num_seqs
+  type: fail_to_pass
+  origin: pr_diff
+  description: parse_known_args exposes --vllm_max_num_seqs with a reasonable int
+    default
+- id: parse_args_default_gpu_memory_utilization
+  type: fail_to_pass
+  origin: pr_diff
+  description: parse_known_args exposes --vllm_gpu_memory_utilization with a reasonable
+    float default
+- id: parse_args_custom_overrides
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLI flags accept custom values for max_num_seqs and gpu_memory_utilization
+- id: build_vllm_server_kwargs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Helper builds a dict of vLLM server CLI flags from parsed args
+- id: build_vllm_server_kwargs_propagates_values
+  type: fail_to_pass
+  origin: pr_diff
+  description: build_vllm_server_kwargs converts numeric args to string CLI flags
+    correctly
+- id: run_accepts_vllm_server_kwargs
+  type: fail_to_pass
+  origin: pr_diff
+  description: run() accepts a vllm_server_kwargs parameter for programmatic use
+rubric:
+- rule: Documentation update is consistent with the tone and format of the existing
+    README
+  source:
+    path: sdks/python/apache_beam/examples/inference/README.md
+    lines: 1-50
+    commit: c8e45e79c699ef6df8847824833aeefab3b5767a
+- rule: README.md documents GPU memory constraints and vLLM tuning flags
+  source:
+    path: sdks/python/apache_beam/examples/inference/README.md
+    lines: 933-937
+    commit: f7bdf517ccb9d7ff9a1a71f6850ceeaa3f4085ef
+  reference: 'On GPUs with about 16GiB of memory (for example NVIDIA T4), vLLM''s
+    defaults can fail
+
+    during engine startup with CUDA out of memory. The example therefore passes conservative
+
+    ``--max-num-seqs`` and ``--gpu-memory-utilization`` values by default (overridable
+    with
+
+    ``--vllm_max_num_seqs`` and ``--vllm_gpu_memory_utilization``) via
+
+    `vllm_server_kwargs`, matching the pattern used in other vLLM examples.'

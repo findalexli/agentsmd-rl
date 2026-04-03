@@ -1,0 +1,52 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39769
+  base_commit: b6f860d846146f072f5a804017d89f2deb737b39
+  merge_commit: fd1b453fdc7710c077d3389370dea395cde1570f
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files and SKILL.md must exist
+- id: type_tool_conditional_wait
+  type: fail_to_pass
+  origin: pr_diff
+  description: browser_type (fill) must only use waitForCompletion when submit or
+    slowly is set
+- id: hover_no_wait_for_completion
+  type: fail_to_pass
+  origin: pr_diff
+  description: browser_hover must not use waitForCompletion
+- id: select_option_no_wait_for_completion
+  type: fail_to_pass
+  origin: pr_diff
+  description: browser_select_option must not use waitForCompletion
+- id: click_still_uses_wait_for_completion
+  type: pass_to_pass
+  origin: static
+  description: browser_click must still use waitForCompletion (clicks cause navigation)
+- id: press_enter_still_uses_wait_for_completion
+  type: pass_to_pass
+  origin: static
+  description: browser_press_key for Enter must still use waitForCompletion
+rubric:
+- rule: SKILL.md update is consistent with the style of existing documentation
+  source:
+    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+    lines: 1-10
+    commit: b6f860d846146f072f5a804017d89f2deb737b39
+- rule: browser_mouse_move_xy must not use waitForCompletion
+  reference: '# packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+
+    # --submit presses Enter after filling the element
+
+    playwright-cli fill e5 "user@example.com"  --submit'
+- rule: SKILL.md must document the --submit flag for the fill command
+  source:
+    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+    lines: 38-39
+    commit: fd1b453fdc7710c077d3389370dea395cde1570f
+  reference: '# --submit presses Enter after filling the element
+
+    playwright-cli fill e5 "user@example.com"  --submit'

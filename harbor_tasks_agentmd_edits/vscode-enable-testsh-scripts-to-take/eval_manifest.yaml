@@ -1,0 +1,141 @@
+version: '2.0'
+source:
+  repo: microsoft/vscode
+  pr: 306039
+  base_commit: 73b0fb29377f401a4e2b792b9065e77b9fa19e9e
+  merge_commit: 23c0b41d69d42b85e1ae7ee4b99801dc4e21e232
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified JS file must parse without syntax errors
+- id: help_text_shows_file_positional_usage
+  type: fail_to_pass
+  origin: pr_diff
+  description: Help text indicates bare file paths can be passed as positional args
+- id: bare_file_conversion_logic
+  type: fail_to_pass
+  origin: pr_diff
+  description: index.js converts bare .ts/.js positional args into --run values
+- id: existing_run_flag_preserved
+  type: pass_to_pass
+  origin: static
+  description: The existing --run flag handling is still present in minimist config
+    and help
+rubric:
+- rule: The SKILL.md update is consistent with the style of existing documentation
+    sections
+  source:
+    path: .github/skills/unit-tests/SKILL.md
+    lines: 1-25
+    commit: 73b0fb29377f401a4e2b792b9065e77b9fa19e9e
+- rule: Code comments in index.js are clear and explain the purpose of the bareFiles
+    logic
+  source:
+    path: .github/copilot-instructions.md
+    lines: 70-72
+    commit: 73b0fb29377f401a4e2b792b9065e77b9fa19e9e
+- rule: JSDoc type for args.run accepts string[] for multiple bare file args
+  reference: '# .github/skills/unit-tests/SKILL.md
+
+    #### Bare file paths - Run tests from specific files
+
+
+    Pass source file paths directly as positional arguments. The test runner automatically
+    treats bare `.ts`/`.js` positional arguments as `--run` values.
+
+
+    ```bash
+
+    ./scripts/test.sh src/vs/editor/test/common/model.test.ts
+
+    ```
+
+
+    ```bat
+
+    .\scripts\test.bat src\vs\editor\test\common\model.test.ts
+
+    ```
+
+
+    Multiple files:
+
+
+    ```bash
+
+    ./scripts/test.sh src/vs/editor/test/common/model.test.ts src/vs/editor/test/common/range.'
+- rule: SKILL.md documents the bare file path positional argument feature
+  source:
+    path: .github/skills/unit-tests/SKILL.md
+    lines: 29-44
+    commit: 23c0b41d69d42b85e1ae7ee4b99801dc4e21e232
+  reference: '#### Bare file paths - Run tests from specific files
+
+
+    Pass source file paths directly as positional arguments. The test runner automatically
+    treats bare `.ts`/`.js` positional arguments as `--run` values.
+
+
+    ```bash
+
+    ./scripts/test.sh src/vs/editor/test/common/model.test.ts
+
+    ```
+
+
+    ```bat
+
+    .\scripts\test.bat src\vs\editor\test\common\model.test.ts
+
+    ```
+
+
+    Multiple files:
+
+
+    ```bash
+
+    ./scripts/test.sh src/vs/editor/test/common/model.test.ts src/vs/editor/test/common/range.test.ts
+
+    ```
+
+
+    #### `--run <file>` - Ru'
+- rule: SKILL.md shows an example of passing a file path without --run
+  source:
+    path: .github/skills/unit-tests/SKILL.md
+    lines: 33-43
+    commit: 23c0b41d69d42b85e1ae7ee4b99801dc4e21e232
+  reference: '#### Bare file paths - Run tests from specific files
+
+
+    Pass source file paths directly as positional arguments. The test runner automatically
+    treats bare `.ts`/`.js` positional arguments as `--run` values.
+
+
+    ```bash
+
+    ./scripts/test.sh src/vs/editor/test/common/model.test.ts
+
+    ```
+
+
+    ```bat
+
+    .\scripts\test.bat src\vs\editor\test\common\model.test.ts
+
+    ```
+
+
+    Multiple files:
+
+
+    ```bash
+
+    ./scripts/test.sh src/vs/editor/test/common/model.test.ts src/vs/editor/test/common/range.test.ts
+
+    ```
+
+
+    #### `--run <file>` - Ru'

@@ -1,0 +1,39 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 746
+  base_commit: 85b6c896ea19d8f859ba86f3993054a832a93c64
+  merge_commit: 5750d8a6ffe548fc799adf22de41eaf47e251415
+checks:
+- id: providerdata_propagated
+  type: fail_to_pass
+  origin: pr_diff
+  description: function_call providerData fields appear on the converted assistant
+    message
+- id: providerdata_multiple_calls_merged
+  type: fail_to_pass
+  origin: pr_diff
+  description: providerData from multiple function_calls merged into single assistant
+    message
+- id: function_call_without_providerdata
+  type: pass_to_pass
+  origin: pr_diff
+  description: function_call items without providerData still convert correctly
+- id: existing_converter_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream converter test suite still passes
+rubric:
+- rule: The CONTRIBUTING.md update is consistent with AGENTS.md which already documents
+    the build-check step
+  source:
+    path: AGENTS.md
+    lines: 47-50
+    commit: 85b6c896ea19d8f859ba86f3993054a832a93c64
+- rule: CONTRIBUTING.md PR checklist instructs running pnpm -r build-check
+  source:
+    path: CONTRIBUTING.md
+    lines: 107-109
+    commit: 5750d8a6ffe548fc799adf22de41eaf47e251415
+  reference: "3. Make your changes, add or update tests, and ensure that the following\
+    \ succeeds:\n   pnpm build && pnpm -r build-check && pnpm test && pnpm lint"

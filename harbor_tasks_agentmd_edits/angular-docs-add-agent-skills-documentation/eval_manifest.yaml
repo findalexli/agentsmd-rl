@@ -1,0 +1,59 @@
+version: '2.0'
+source:
+  repo: angular/angular
+  pr: 67831
+  base_commit: 9d79ec6866645393bc8b01881e7e2165dd29d02d
+  merge_commit: 86bbc9474ce6490b37bc0225f38d8e7bd0e45714
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Navigation entries TypeScript file has balanced braces
+- id: agent_skills_nav_entry
+  type: fail_to_pass
+  origin: pr_diff
+  description: Navigation includes Agent Skills entry with correct path
+- id: agent_skills_has_new_status
+  type: fail_to_pass
+  origin: pr_diff
+  description: Agent Skills nav entry is marked with status 'new'
+- id: design_patterns_after_agent_skills
+  type: fail_to_pass
+  origin: pr_diff
+  description: Design Patterns entry appears after Agent Skills in navigation order
+- id: commit_guidelines_reference
+  type: pass_to_pass
+  origin: agent_config
+  description: Commit guidelines doc still exists (referenced by AGENTS.md)
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 9d79ec6866645393bc8b01881e7e2165dd29d02d
+rubric:
+- rule: Agent Skills documentation should be written in a style consistent with existing
+    Angular AI documentation pages.
+  source:
+    path: adev/src/content/ai/overview.md
+    lines: 1-10
+    commit: 9d79ec6866645393bc8b01881e7e2165dd29d02d
+- rule: 'Documentation should follow the adev writing guide: second person, active
+    voice, concise sentences, descriptive link text.'
+  source:
+    path: .agent/skills/adev-writing-guide/SKILL.md
+    lines: 1-30
+    commit: 9d79ec6866645393bc8b01881e7e2165dd29d02d
+- rule: New agent-skills.md doc page exists with content about available skills
+  source:
+    path: adev/src/content/ai/agent-skills.md
+    lines: 1-24
+    commit: 86bbc9474ce6490b37bc0225f38d8e7bd0e45714
+- rule: AI overview page links to agent-skills documentation
+  source:
+    path: adev/src/content/ai/overview.md
+    lines: '118'
+    commit: 86bbc9474ce6490b37bc0225f38d8e7bd0e45714
+- rule: skills/dev-skills/README.md documents Angular skills and contributions
+  source:
+    path: skills/dev-skills/README.md
+    lines: 1-24
+    commit: 86bbc9474ce6490b37bc0225f38d8e7bd0e45714

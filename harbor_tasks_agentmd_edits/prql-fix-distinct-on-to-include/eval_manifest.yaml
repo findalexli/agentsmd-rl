@@ -1,0 +1,56 @@
+version: '2.0'
+source:
+  repo: PRQL/prql
+  pr: 5562
+  base_commit: 7b0d983ead8d91921252ad835a3c43b2288b7fe1
+  merge_commit: ed4eba8c8b74485da87be318453edf041c800c6f
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Rust files must compile without errors
+- id: distinct_on_wildcard
+  type: fail_to_pass
+  origin: pr_diff
+  description: DISTINCT ON with group/take produces * not NULL in SQL output
+- id: distinct_on_aggregate_wildcard
+  type: fail_to_pass
+  origin: pr_diff
+  description: DISTINCT ON with group/take + aggregate produces * not NULL
+rubric:
+- rule: Test strategy guidance is consistent with the style and tone of the existing
+    CLAUDE.md content
+  source:
+    path: CLAUDE.md
+    lines: 1-47
+    commit: 7b0d983ead8d91921252ad835a3c43b2288b7fe1
+- rule: Test strategy appropriately references the project's existing test tooling
+    (insta, nextest, cargo)
+  source:
+    path: CLAUDE.md
+    lines: 1-47
+    commit: 7b0d983ead8d91921252ad835a3c43b2288b7fe1
+- rule: CLAUDE.md updated with test strategy section (inline vs integration)
+  source:
+    path: CLAUDE.md
+    lines: 49-79
+    commit: ed4eba8c8b74485da87be318453edf041c800c6f
+  reference: "### Test Strategy\n\n**Prefer small inline `insta` snapshot tests**\
+    \ over full integration tests:\n\n- **Use inline tests** for most bug fixes and\
+    \ small features\n  - Add `#[test]` functions in a `#[cfg(test)]` module at the\
+    \ end of the file\n  - Use `insta::assert_snapshot!` for compact, readable test\
+    \ assertions\n  - Fast to run, easy to review in PRs\n\n- **Use integration tests**\
+    \ (`prqlc/tests/integration/queries/*.prql`) only\n  when:\n  - Developing large,\
+    \ complex features that need comprehensive testin"
+- rule: CLAUDE.md explains when to use inline tests vs integration tests
+  source:
+    path: CLAUDE.md
+    lines: 49-79
+    commit: ed4eba8c8b74485da87be318453edf041c800c6f
+  reference: "### Test Strategy\n\n**Prefer small inline `insta` snapshot tests**\
+    \ over full integration tests:\n\n- **Use inline tests** for most bug fixes and\
+    \ small features\n  - Add `#[test]` functions in a `#[cfg(test)]` module at the\
+    \ end of the file\n  - Use `insta::assert_snapshot!` for compact, readable test\
+    \ assertions\n  - Fast to run, easy to review in PRs\n\n- **Use integration tests**\
+    \ (`prqlc/tests/integration/queries/*.prql`) only\n  when:\n  - Developing large,\
+    \ complex features that need comprehensive testin"

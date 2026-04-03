@@ -1,0 +1,50 @@
+version: '2.0'
+source:
+  repo: angular/angular
+  pr: 67875
+  base_commit: c1261b02dbe1d995d5a6fccb5556aca4d67b529f
+  merge_commit: 43ef7171b324f3dc1beb34d16d687276229fe375
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without syntax errors
+- id: constants_onpush_default_note
+  type: fail_to_pass
+  origin: pr_diff
+  description: OnPush JSDoc in constants.ts notes it is enabled by default
+- id: directives_eager_reference
+  type: fail_to_pass
+  origin: pr_diff
+  description: directives.ts JSDoc references Eager instead of Default and notes OnPush
+    is default
+- id: skipping_subtrees_onpush_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: skipping-subtrees.md describes OnPush as the default strategy
+- id: advanced_config_onpush_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: advanced-configuration.md describes OnPush as the default strategy
+rubric:
+- rule: Documentation updates are consistent with the style of surrounding content
+    in each file
+  source:
+    path: adev/src/content/best-practices/runtime-performance/skipping-subtrees.md
+    lines: 1-10
+    commit: c1261b02dbe1d995d5a6fccb5556aca4d67b529f
+- rule: airules.md no longer instructs setting OnPush in @Component decorator
+  source:
+    path: adev/src/context/airules.md
+    lines: '89'
+    commit: c1261b02dbe1d995d5a6fccb5556aca4d67b529f
+- rule: guidelines.md no longer instructs setting OnPush in @Component decorator
+  source:
+    path: adev/src/context/guidelines.md
+    lines: '95'
+    commit: c1261b02dbe1d995d5a6fccb5556aca4d67b529f
+- rule: angular-20.mdc no longer instructs always setting OnPush
+  source:
+    path: adev/src/context/angular-20.mdc
+    lines: '67'
+    commit: c1261b02dbe1d995d5a6fccb5556aca4d67b529f

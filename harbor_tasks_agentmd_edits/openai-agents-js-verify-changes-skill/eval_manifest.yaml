@@ -1,0 +1,205 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 826
+  base_commit: b54fc4a3222ea8b14b1c3a8e45457b4905354bee
+  merge_commit: f122a605e9d9ac7cc035444dfd73e015369633a2
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Shell scripts must have valid bash syntax
+- id: run_sh_exists_with_verification_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: run.sh must exist with full pnpm verification sequence
+- id: run_sh_fail_fast
+  type: fail_to_pass
+  origin: pr_diff
+  description: run.sh must use fail-fast semantics (set -e)
+- id: run_sh_command_order
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'run.sh must run commands in correct order: install, build, build-check,
+    lint, test'
+rubric:
+- rule: The skill documentation is written in a clear, professional style consistent
+    with the existing AGENTS.md tone.
+  source:
+    path: AGENTS.md
+    lines: 1-10
+    commit: b54fc4a3222ea8b14b1c3a8e45457b4905354bee
+- rule: The verify-changes skill covers all five verification steps (install, build,
+    build-check, lint, test) and explains fail-fast behavior.
+  source:
+    path: .codex/skills/verify-changes/SKILL.md
+    lines: 1-36
+    commit: f122a605e9d9ac7cc035444dfd73e015369633a2
+- rule: SKILL.md must exist with name and description frontmatter
+  reference: '# .codex/skills/verify-changes/SKILL.md
+
+    ---
+
+    name: verify-changes
+
+    description: Run all mandatory verification steps for code changes in the OpenAI
+    Agents JS monorepo.
+
+    ---
+
+
+    # Verify Changes
+
+
+    ## Overview
+
+
+    Ensure work is only marked complete after installing dependencies, building, linting,
+    type checking, and tests pass. Use this skill whenever wrapping up a task, before
+    opening a PR, or when asked to confirm that changes are ready to hand off.
+
+
+    ## Quick start
+
+
+    1. Keep this skill at `./.codex/skills'
+- rule: run.ps1 must exist with pnpm verification commands
+  reference: '# .codex/skills/verify-changes/SKILL.md
+
+    ---
+
+    name: verify-changes
+
+    description: Run all mandatory verification steps for code changes in the OpenAI
+    Agents JS monorepo.
+
+    ---
+
+
+    # Verify Changes
+
+
+    ## Overview
+
+
+    Ensure work is only marked complete after installing dependencies, building, linting,
+    type checking, and tests pass. Use this skill whenever wrapping up a task, before
+    opening a PR, or when asked to confirm that changes are ready to hand off.
+
+
+    ## Quick start
+
+
+    1. Keep this skill at `./.codex/skills'
+- rule: AGENTS.md must reference the verify-changes skill
+  source:
+    path: AGENTS.md
+    lines: 10-12
+    commit: f122a605e9d9ac7cc035444dfd73e015369633a2
+  reference: 'Call out potential backward compatibility or public API risks in your
+    plan and confirm the approach when changes could impact package consumers.
+
+    1.  [Mandatory Skill Usage](#mandatory-skill-usage)
+
+    2.  [Overview](#overview)
+
+    3.  [Repo Structure & Important Files](#repo-structure--important-files)
+
+    4.  [Testing & Automated Checks](#testing--automated-checks)
+
+    5.  [Repo-Specific Utilities](#repo-specific-utilities)
+
+    6.  [Style, Linting & Type Checking](#style-linting--type-checking)
+
+    7.  [Development Wo'
+- rule: AGENTS.md must have a section mandating the verify-changes skill
+  source:
+    path: AGENTS.md
+    lines: 23-25
+    commit: f122a605e9d9ac7cc035444dfd73e015369633a2
+  reference: 'Call out potential backward compatibility or public API risks in your
+    plan and confirm the approach when changes could impact package consumers.
+
+    1.  [Mandatory Skill Usage](#mandatory-skill-usage)
+
+    2.  [Overview](#overview)
+
+    3.  [Repo Structure & Important Files](#repo-structure--important-files)
+
+    4.  [Testing & Automated Checks](#testing--automated-checks)
+
+    5.  [Repo-Specific Utilities](#repo-specific-utilities)
+
+    6.  [Style, Linting & Type Checking](#style-linting--type-checking)
+
+    7.  [Development Wo'
+- rule: AGENTS.md must note that translated docs should not be edited manually
+  source:
+    path: AGENTS.md
+    lines: '47'
+    commit: f122a605e9d9ac7cc035444dfd73e015369633a2
+  reference: 'Call out potential backward compatibility or public API risks in your
+    plan and confirm the approach when changes could impact package consumers.
+
+    1.  [Mandatory Skill Usage](#mandatory-skill-usage)
+
+    2.  [Overview](#overview)
+
+    3.  [Repo Structure & Important Files](#repo-structure--important-files)
+
+    4.  [Testing & Automated Checks](#testing--automated-checks)
+
+    5.  [Repo-Specific Utilities](#repo-specific-utilities)
+
+    6.  [Style, Linting & Type Checking](#style-linting--type-checking)
+
+    7.  [Development Wo'
+- rule: AGENTS.md must mention backward compatibility or API risk guidance
+  source:
+    path: AGENTS.md
+    lines: '10'
+    commit: f122a605e9d9ac7cc035444dfd73e015369633a2
+  reference: 'Call out potential backward compatibility or public API risks in your
+    plan and confirm the approach when changes could impact package consumers.
+
+    1.  [Mandatory Skill Usage](#mandatory-skill-usage)
+
+    2.  [Overview](#overview)
+
+    3.  [Repo Structure & Important Files](#repo-structure--important-files)
+
+    4.  [Testing & Automated Checks](#testing--automated-checks)
+
+    5.  [Repo-Specific Utilities](#repo-specific-utilities)
+
+    6.  [Style, Linting & Type Checking](#style-linting--type-checking)
+
+    7.  [Development Wo'
+- rule: AGENTS.md must retain existing core sections (Overview, Testing, etc.)
+  reference: '# .codex/skills/verify-changes/SKILL.md
+
+    ---
+
+    name: verify-changes
+
+    description: Run all mandatory verification steps for code changes in the OpenAI
+    Agents JS monorepo.
+
+    ---
+
+
+    # Verify Changes
+
+
+    ## Overview
+
+
+    Ensure work is only marked complete after installing dependencies, building, linting,
+    type checking, and tests pass. Use this skill whenever wrapping up a task, before
+    opening a PR, or when asked to confirm that changes are ready to hand off.
+
+
+    ## Quick start
+
+
+    1. Keep this skill at `./.codex/skills'

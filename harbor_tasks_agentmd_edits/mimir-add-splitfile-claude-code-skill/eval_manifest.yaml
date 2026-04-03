@@ -1,0 +1,77 @@
+version: '2.0'
+source:
+  repo: grafana/mimir
+  pr: 14847
+  base_commit: 0de2c7d947b81573a2c13bf4b931f9a2a04891ec
+  merge_commit: 915dc42e42b4b3bf1a5350090469eb77470adb91
+checks:
+- id: verify_tool_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: The split-file-verify Go tool compiles without errors
+- id: verify_tool_extracts_func_decls
+  type: fail_to_pass
+  origin: pr_diff
+  description: Tool extracts function declarations and outputs name + hash TSV
+- id: verify_tool_extracts_methods
+  type: fail_to_pass
+  origin: pr_diff
+  description: Tool formats method names with receiver type like (Server).Start
+- id: verify_tool_extracts_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: Tool extracts type declarations (struct, interface)
+- id: verify_tool_produces_consistent_hashes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Same source content produces identical SHA-256 hashes
+- id: verify_tool_sorted_output
+  type: fail_to_pass
+  origin: pr_diff
+  description: Output is sorted alphabetically by declaration name
+- id: verify_tool_multi_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: Tool combines declarations from multiple input files
+- id: verify_tool_usage_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: Running with no arguments prints usage and exits non-zero
+rubric:
+- rule: The SKILL.md should follow the same frontmatter format as other Claude skills
+    (name, description, argument-hint fields)
+  source:
+    path: .claude/skills/split-file/SKILL.md
+    lines: 1-5
+    commit: 915dc42e42b4b3bf1a5350090469eb77470adb91
+- rule: The verify tool should use idiomatic Go style consistent with the rest of
+    the Mimir codebase (goimports grouping, comment style)
+  source:
+    path: CLAUDE.md
+    lines: 35-50
+    commit: 0de2c7d947b81573a2c13bf4b931f9a2a04891ec
+- rule: SKILL.md exists at .claude/skills/split-file/ with correct YAML frontmatter
+  source:
+    path: .claude/skills/split-file/SKILL.md
+    lines: 1-5
+    commit: 915dc42e42b4b3bf1a5350090469eb77470adb91
+- rule: SKILL.md documents the git rename/rename conflict technique for history preservation
+  source:
+    path: .claude/skills/split-file/SKILL.md
+    lines: 30-60
+    commit: 915dc42e42b4b3bf1a5350090469eb77470adb91
+- rule: SKILL.md references the split-file-verify tool for declaration hash verification
+  source:
+    path: .claude/skills/split-file/SKILL.md
+    lines: 95-113
+    commit: 915dc42e42b4b3bf1a5350090469eb77470adb91
+- rule: SKILL.md describes a multi-phase workflow (analyze, split, verify)
+  source:
+    path: .claude/skills/split-file/SKILL.md
+    lines: 8-113
+    commit: 915dc42e42b4b3bf1a5350090469eb77470adb91
+- rule: SKILL.md warns about goimports alias resolution issues
+  source:
+    path: .claude/skills/split-file/SKILL.md
+    lines: 68-75
+    commit: 915dc42e42b4b3bf1a5350090469eb77470adb91

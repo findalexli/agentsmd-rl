@@ -1,0 +1,63 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11045
+  base_commit: 3921f065331f6b28e0c29750f1e757a4e09feebc
+  merge_commit: 2fa272cdd372dea3382ddc23fb63f2ca1d32b063
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Package JSON files must be valid JSON
+- id: runtime_benchmarks_in_src
+  type: fail_to_pass
+  origin: pr_diff
+  description: Runtime benchmark files must be reorganized into bench/src/ subdirectory
+- id: type_benchmarks_exist
+  type: fail_to_pass
+  origin: pr_diff
+  description: Type benchmark files must exist in bench/types/ with @ark/attest imports
+- id: type_bench_covers_key_apis
+  type: fail_to_pass
+  origin: pr_diff
+  description: Type benchmarks must cover href, join, params, and constructor APIs
+- id: bench_types_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: bench/package.json must have a bench:types script
+- id: attest_dependency_moved
+  type: fail_to_pass
+  origin: pr_diff
+  description: '@ark/attest must be in bench devDeps, removed from route-pattern devDeps'
+rubric:
+- rule: Config update is consistent with the style of existing bench/README.md documentation
+  source:
+    path: packages/route-pattern/bench/README.md
+    lines: 1-22
+    commit: 3921f065331f6b28e0c29750f1e757a4e09feebc
+- rule: Type benchmark files follow the same code style conventions as the repo (let
+    over const for locals, no semicolons)
+  source:
+    path: AGENTS.md
+    lines: 34-35
+    commit: 3921f065331f6b28e0c29750f1e757a4e09feebc
+- rule: bench/README.md must document the new type benchmarks section
+  source:
+    path: packages/route-pattern/bench/README.md
+    lines: 25-33
+    commit: 2fa272cdd372dea3382ddc23fb63f2ca1d32b063
+- rule: bench/README.md must reference ArkType Attest as the type benchmarking tool
+  source:
+    path: packages/route-pattern/bench/README.md
+    lines: '27'
+    commit: 2fa272cdd372dea3382ddc23fb63f2ca1d32b063
+- rule: bench/README.md must distinguish runtime benchmarks from type benchmarks
+  source:
+    path: packages/route-pattern/bench/README.md
+    lines: 1-33
+    commit: 2fa272cdd372dea3382ddc23fb63f2ca1d32b063
+- rule: Type-only imports must use 'import type' syntax per AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: '32'
+    commit: 3921f065331f6b28e0c29750f1e757a4e09feebc

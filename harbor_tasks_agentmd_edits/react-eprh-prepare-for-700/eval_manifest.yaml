@@ -1,0 +1,95 @@
+version: '2.0'
+source:
+  repo: facebook/react
+  pr: 34757
+  base_commit: 9724e3e66e4ad3cc82c728e5c732c21986825b06
+  merge_commit: 7568e718549b85f60e3943f02d079d20d077077f
+checks:
+- id: legacy_configs_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: recommended-legacy and recommended-latest-legacy configs removed from
+    index.ts
+- id: flat_recommended_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: flat/recommended config removed from index.ts
+- id: recommended_uses_all_rules
+  type: fail_to_pass
+  origin: pr_diff
+  description: recommended config uses allRuleConfigs instead of basicRuleConfigs
+- id: plugin_meta_has_version
+  type: fail_to_pass
+  origin: pr_diff
+  description: Plugin meta object includes a version field
+- id: recommended_latest_still_exists
+  type: pass_to_pass
+  origin: static
+  description: recommended-latest config still defined in index.ts
+- id: plugin_exports_structure
+  type: pass_to_pass
+  origin: static
+  description: Plugin still exports rules, configs, and meta
+rubric:
+- rule: Modified files exist and are non-empty
+  reference: '# packages/eslint-plugin-react-hooks/CHANGELOG.md
+
+    ## 7.0.0
+
+
+    This release slims down presets to just 2 configurations (`recommended` and `recommended-latest`),
+    and all compiler rules are enabled by default.
+
+
+    - **Breaking:** Removed `recommended-latest-legacy` and `flat/recommended` configs.
+    The plugin now provides `recommended` (legacy and flat configs with all recommended
+    rules),  and `recommended-latest` (legacy and flat configs with all recommended
+    rules plus new bleeding edge experimental com'
+- rule: README removes version-specific subsection headings (>= 6.0.0, 5.2.0, etc.)
+  source:
+    path: packages/eslint-plugin-react-hooks/README.md
+    lines: 16-55
+    commit: 7568e718549b85f60e3943f02d079d20d077077f
+  reference: "Add the `recommended` config for all recommended rules:\n  reactHooks.configs.flat.recommended,\n\
+    If you want to try bleeding edge experimental compiler rules, use `recommended-latest`.\n\
+    // eslint.config.js\n  reactHooks.configs.flat['recommended-latest'],\nIf you\
+    \ are still using ESLint below 9.0.0, the `recommended` preset can also be used\
+    \ to enable all recommended rules.\n  \"extends\": [\"plugin:react-hooks/recommended\"\
+    ],\n  // ...\nimport reactHooks from 'eslint-plugin-react-hooks';\n      // Core\
+    \ hooks "
+- rule: README flat config example uses reactHooks.configs.flat directly
+  source:
+    path: packages/eslint-plugin-react-hooks/README.md
+    lines: 24-28
+    commit: 7568e718549b85f60e3943f02d079d20d077077f
+  reference: "Add the `recommended` config for all recommended rules:\n  reactHooks.configs.flat.recommended,\n\
+    If you want to try bleeding edge experimental compiler rules, use `recommended-latest`.\n\
+    // eslint.config.js\n  reactHooks.configs.flat['recommended-latest'],\nIf you\
+    \ are still using ESLint below 9.0.0, the `recommended` preset can also be used\
+    \ to enable all recommended rules.\n  \"extends\": [\"plugin:react-hooks/recommended\"\
+    ],\n  // ...\nimport reactHooks from 'eslint-plugin-react-hooks';\n      // Core\
+    \ hooks "
+- rule: README custom configuration section lists React Compiler rules
+  source:
+    path: packages/eslint-plugin-react-hooks/README.md
+    lines: 67-95
+    commit: 7568e718549b85f60e3943f02d079d20d077077f
+  reference: "Add the `recommended` config for all recommended rules:\n  reactHooks.configs.flat.recommended,\n\
+    If you want to try bleeding edge experimental compiler rules, use `recommended-latest`.\n\
+    // eslint.config.js\n  reactHooks.configs.flat['recommended-latest'],\nIf you\
+    \ are still using ESLint below 9.0.0, the `recommended` preset can also be used\
+    \ to enable all recommended rules.\n  \"extends\": [\"plugin:react-hooks/recommended\"\
+    ],\n  // ...\nimport reactHooks from 'eslint-plugin-react-hooks';\n      // Core\
+    \ hooks "
+- rule: README does not reference removed config names like recommended-legacy
+  source:
+    path: packages/eslint-plugin-react-hooks/README.md
+    lines: 1-130
+    commit: 7568e718549b85f60e3943f02d079d20d077077f
+  reference: "Add the `recommended` config for all recommended rules:\n  reactHooks.configs.flat.recommended,\n\
+    If you want to try bleeding edge experimental compiler rules, use `recommended-latest`.\n\
+    // eslint.config.js\n  reactHooks.configs.flat['recommended-latest'],\nIf you\
+    \ are still using ESLint below 9.0.0, the `recommended` preset can also be used\
+    \ to enable all recommended rules.\n  \"extends\": [\"plugin:react-hooks/recommended\"\
+    ],\n  // ...\nimport reactHooks from 'eslint-plugin-react-hooks';\n      // Core\
+    \ hooks "

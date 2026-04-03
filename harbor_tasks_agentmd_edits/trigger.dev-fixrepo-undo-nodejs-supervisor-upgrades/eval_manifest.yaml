@@ -1,0 +1,125 @@
+version: '2.0'
+source:
+  repo: triggerdotdev/trigger.dev
+  pr: 2895
+  base_commit: 0b0df071bff0ffb91a4ff90767b32289608480c0
+  merge_commit: aa69b9027d6e7128d6a634bc15960a945e5bf00d
+checks:
+- id: dockerfile_no_arch_specific_digest
+  type: fail_to_pass
+  origin: pr_diff
+  description: docker/Dockerfile must not use the architecture-specific digest
+- id: dockerfile_uses_minor_version_tag
+  type: fail_to_pass
+  origin: pr_diff
+  description: docker/Dockerfile should use minor version tag, not patch
+- id: containerfile_no_arch_specific_digest
+  type: fail_to_pass
+  origin: pr_diff
+  description: apps/supervisor/Containerfile must not use architecture-specific digest
+- id: containerfile_not_pinned_to_22_22_0
+  type: fail_to_pass
+  origin: pr_diff
+  description: apps/supervisor/Containerfile should not pin to node 22.22.0
+- id: nvmrc_not_v22_22_0
+  type: fail_to_pass
+  origin: pr_diff
+  description: apps/supervisor/.nvmrc should not specify v22.22.0
+- id: dockerfile_has_from_instruction
+  type: pass_to_pass
+  origin: static
+  description: docker/Dockerfile is valid with FROM instruction
+rubric:
+- rule: Docker image guidelines section is placed logically near other infrastructure/Docker
+    documentation
+  source:
+    path: CLAUDE.md
+    lines: 1-200
+    commit: 0b0df071bff0ffb91a4ff90767b32289608480c0
+- rule: Guidelines are clear and actionable for a developer updating Docker images
+  source:
+    path: CLAUDE.md
+    lines: 136-144
+    commit: aa69b9027d6e7128d6a634bc15960a945e5bf00d
+- rule: apps/supervisor/Containerfile is valid with FROM instruction
+  reference: '# CLAUDE.md
+
+    ## Docker Image Guidelines
+
+
+    When updating Docker image references in `docker/Dockerfile` or other container
+    files:
+
+
+    - **Always use multiplatform/index digests**, not architecture-specific digests
+
+    - Architecture-specific digests (e.g., for `linux/amd64` only) will cause CI failures
+    on different build environments
+
+    - On Docker Hub, the multiplatform digest is shown on the main image page, while
+    architecture-specific digests are listed under "OS/ARCH"
+
+    - Example: Use `node:20.20-bullseye-'
+- rule: CLAUDE.md must have a Docker image guidelines section
+  source:
+    path: CLAUDE.md
+    lines: 136-144
+    commit: aa69b9027d6e7128d6a634bc15960a945e5bf00d
+  reference: '## Docker Image Guidelines
+
+
+    When updating Docker image references in `docker/Dockerfile` or other container
+    files:
+
+
+    - **Always use multiplatform/index digests**, not architecture-specific digests
+
+    - Architecture-specific digests (e.g., for `linux/amd64` only) will cause CI failures
+    on different build environments
+
+    - On Docker Hub, the multiplatform digest is shown on the main image page, while
+    architecture-specific digests are listed under "OS/ARCH"
+
+    - Example: Use `node:20.20-bullseye-slim@sha256:'
+- rule: CLAUDE.md must document multiplatform/index digest requirement
+  source:
+    path: CLAUDE.md
+    lines: '138'
+    commit: aa69b9027d6e7128d6a634bc15960a945e5bf00d
+  reference: '## Docker Image Guidelines
+
+
+    When updating Docker image references in `docker/Dockerfile` or other container
+    files:
+
+
+    - **Always use multiplatform/index digests**, not architecture-specific digests
+
+    - Architecture-specific digests (e.g., for `linux/amd64` only) will cause CI failures
+    on different build environments
+
+    - On Docker Hub, the multiplatform digest is shown on the main image page, while
+    architecture-specific digests are listed under "OS/ARCH"
+
+    - Example: Use `node:20.20-bullseye-slim@sha256:'
+- rule: CLAUDE.md must warn against architecture-specific digests in Docker context
+  source:
+    path: CLAUDE.md
+    lines: '139'
+    commit: aa69b9027d6e7128d6a634bc15960a945e5bf00d
+  reference: '## Docker Image Guidelines
+
+
+    When updating Docker image references in `docker/Dockerfile` or other container
+    files:
+
+
+    - **Always use multiplatform/index digests**, not architecture-specific digests
+
+    - Architecture-specific digests (e.g., for `linux/amd64` only) will cause CI failures
+    on different build environments
+
+    - On Docker Hub, the multiplatform digest is shown on the main image page, while
+    architecture-specific digests are listed under "OS/ARCH"
+
+    - Example: Use `node:20.20-bullseye-slim@sha256:'

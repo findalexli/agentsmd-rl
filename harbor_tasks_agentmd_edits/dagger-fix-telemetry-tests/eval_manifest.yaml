@@ -1,0 +1,52 @@
+version: '2.0'
+source:
+  repo: dagger/dagger
+  pr: 11939
+  base_commit: 02b858d8f7368cb107374df899af3a90ffff9bbd
+  merge_commit: 2e9b7781d299a05bfbb28448a6604343e49a1a8d
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Go file must compile without errors
+- id: error_includes_original
+  type: fail_to_pass
+  origin: pr_diff
+  description: ExitError.Error() includes the original error message when Original
+    is set
+- id: error_includes_original_varied
+  type: fail_to_pass
+  origin: pr_diff
+  description: ExitError.Error() preserves the full original message for different
+    error types
+- id: error_without_original
+  type: pass_to_pass
+  origin: pr_diff
+  description: ExitError.Error() still works correctly when Original is nil
+rubric:
+- rule: SKILL.md updated with section about regenerating golden/telemetry tests
+  source:
+    path: skills/dagger-chores/SKILL.md
+    lines: 40-45
+    commit: 2e9b7781d299a05bfbb28448a6604343e49a1a8d
+  reference: '## Regenerate Golden Tests
+
+
+    Use this checklist when asked to regenerate telemetry golden tests.
+
+
+    1. From the Dagger repo root, run `dagger -c ''engine-dev | test-telemetry --update
+    | export .''`'
+- rule: SKILL.md includes the test-telemetry command for golden test regeneration
+  source:
+    path: skills/dagger-chores/SKILL.md
+    lines: '45'
+    commit: 2e9b7781d299a05bfbb28448a6604343e49a1a8d
+  reference: '## Regenerate Golden Tests
+
+
+    Use this checklist when asked to regenerate telemetry golden tests.
+
+
+    1. From the Dagger repo root, run `dagger -c ''engine-dev | test-telemetry --update
+    | export .''`'

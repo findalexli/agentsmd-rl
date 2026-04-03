@@ -1,0 +1,55 @@
+version: '2.0'
+source:
+  repo: dotnet/runtime
+  pr: 125614
+  base_commit: 0f8072851a62a1e1cbb90f0372a20961ce8991f0
+  merge_commit: ffdfb260b6ea228194da6ca1e3cbf081233e3e67
+checks:
+- id: slnx_valid_xml
+  type: fail_to_pass
+  origin: pr_diff
+  description: cdac.slnx must exist and be valid XML with Solution root element
+- id: slnx_includes_all_library_projects
+  type: fail_to_pass
+  origin: pr_diff
+  description: Solution must include all five cDAC library projects
+- id: slnx_includes_legacy_project
+  type: fail_to_pass
+  origin: pr_diff
+  description: Solution must include Legacy project (missing from old README template)
+- id: slnx_includes_both_test_projects
+  type: fail_to_pass
+  origin: pr_diff
+  description: Solution must include both unit test and dump test projects
+- id: slnx_uses_relative_paths
+  type: fail_to_pass
+  origin: pr_diff
+  description: Project paths must be relative to cdac directory, not repo root
+rubric:
+- rule: The README update is consistent with the style and tone of the existing documentation
+  source:
+    path: src/native/managed/cdac/README.md
+    lines: 1-10
+    commit: 0f8072851a62a1e1cbb90f0372a20961ce8991f0
+- rule: The solution file organizes projects logically (e.g., libraries vs tests in
+    separate folders)
+  source:
+    path: src/native/managed/cdac/README.md
+    lines: 40-50
+    commit: 0f8072851a62a1e1cbb90f0372a20961ce8991f0
+- rule: README.md must preserve the existing architecture overview section
+- rule: README.md must reference the checked-in cdac.slnx instead of manual creation
+  source:
+    path: src/native/managed/cdac/README.md
+    lines: 71-76
+    commit: ffdfb260b6ea228194da6ca1e3cbf081233e3e67
+- rule: README.md should not contain the old XML template for manual solution setup
+  source:
+    path: src/native/managed/cdac/README.md
+    lines: 71-96
+    commit: 0f8072851a62a1e1cbb90f0372a20961ce8991f0
+- rule: Markdown files must have no trailing whitespace
+  source:
+    path: .github/copilot-instructions.md
+    lines: '47'
+    commit: 0f8072851a62a1e1cbb90f0372a20961ce8991f0

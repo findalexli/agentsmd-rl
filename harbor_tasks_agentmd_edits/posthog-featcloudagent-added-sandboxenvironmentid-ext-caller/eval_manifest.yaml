@@ -1,0 +1,73 @@
+version: '2.0'
+source:
+  repo: PostHog/posthog
+  pr: 53163
+  base_commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
+  merge_commit: 3cce0ef6d910d304d205b9b4654952b3fdc0678f
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: create_and_run_accepts_sandbox_environment_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: create_and_run() accepts sandbox_environment_id parameter
+- id: sandbox_env_validated_against_team
+  type: fail_to_pass
+  origin: pr_diff
+  description: sandbox_environment_id is validated against the team's SandboxEnvironment
+- id: invalid_sandbox_env_raises_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: Invalid sandbox_environment_id raises ValueError
+- id: sandbox_env_id_stored_in_extra_state
+  type: fail_to_pass
+  origin: pr_diff
+  description: sandbox_environment_id is stored in extra_state for the task run
+- id: not_stub_create_and_run
+  type: pass_to_pass
+  origin: static
+  description: create_and_run() has real logic, not just pass/return
+rubric:
+- rule: Config update is consistent with the style of existing documentation in sandboxed-agents.md
+  source:
+    path: docs/published/handbook/engineering/ai/sandboxed-agents.md
+    lines: 1-10
+    commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
+- rule: Code follows the existing patterns in models.py (type hints, error handling
+    style)
+  source:
+    path: AGENTS.md
+    lines: '1'
+    commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
+- rule: sandboxed-agents.md parameters table includes sandbox_environment_id
+  source:
+    path: docs/published/handbook/engineering/ai/sandboxed-agents.md
+    lines: '82'
+    commit: 3cce0ef6d910d304d205b9b4654952b3fdc0678f
+  reference: '| Parameter                | Required | Description                                                                |
+
+    | ------------------------ | -------- | --------------------------------------------------------------------------
+    |
+
+    | `team`                   | Yes      | The team this task belongs to                                              |
+
+    | `title`                  | Yes      | Human-readable task title                                                  |
+
+    | `description`            | Yes'
+- rule: sandboxed-agents.md has usage example for sandbox_environment_id
+  source:
+    path: docs/published/handbook/engineering/ai/sandboxed-agents.md
+    lines: 192-227
+    commit: 3cce0ef6d910d304d205b9b4654952b3fdc0678f
+  reference: '| Parameter                | Required | Description                                                                |
+
+    | ------------------------ | -------- | --------------------------------------------------------------------------
+    |
+
+    | `team`                   | Yes      | The team this task belongs to                                              |
+
+    | `title`                  | Yes      | Human-readable task title                                                  |
+
+    | `description`            | Yes'

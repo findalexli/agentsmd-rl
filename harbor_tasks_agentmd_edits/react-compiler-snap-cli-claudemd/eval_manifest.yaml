@@ -1,0 +1,59 @@
+version: '2.0'
+source:
+  repo: facebook/react
+  pr: 35537
+  base_commit: 2d8e7f1ce358e8cddc3aae862007269b6bac04ba
+  merge_commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+checks:
+- id: typescript_files_parseable
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have balanced braces
+- id: filter_file_mechanism_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: FILTER_FILENAME, FILTER_PATH, readTestFilter removed from snap
+- id: filter_option_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: runner.ts removes --filter option and readTestFilter/FILTER_PATH usage
+- id: debug_cli_option
+  type: fail_to_pass
+  origin: pr_diff
+  description: runner.ts defines --debug / -d CLI option via yargs
+- id: interactive_watch_mode
+  type: fail_to_pass
+  origin: pr_diff
+  description: runner-watch.ts supports interactive pattern entry and debug toggle
+    via keyboard
+- id: watch_runner_signature_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: makeWatchRunner accepts debugMode and initialPattern instead of filterMode
+- id: constants_still_exports_paths
+  type: pass_to_pass
+  origin: static
+  description: constants.ts still exports FIXTURES_PATH and SNAPSHOT_EXTENSION
+rubric:
+- rule: CLAUDE.md documentation style is consistent with the content and detail level
+    appropriate for an AI agent knowledge base
+  source:
+    path: compiler/CLAUDE.md
+    lines: 1-5
+    commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+- rule: fixture-utils.ts still exports getFixtures and TestFilter
+- rule: compiler/CLAUDE.md exists with substantial documentation
+  source:
+    path: compiler/CLAUDE.md
+    lines: 1-221
+    commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+- rule: CLAUDE.md documents yarn snap with -p, -d, -u flags
+  source:
+    path: compiler/CLAUDE.md
+    lines: 27-40
+    commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+- rule: CLAUDE.md documents React Compiler project structure, HIR, and fixtures
+  source:
+    path: compiler/CLAUDE.md
+    lines: 7-19
+    commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b

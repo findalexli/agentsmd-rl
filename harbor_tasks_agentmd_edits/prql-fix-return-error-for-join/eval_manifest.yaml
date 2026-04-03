@@ -1,0 +1,56 @@
+version: '2.0'
+source:
+  repo: PRQL/prql
+  pr: 5587
+  base_commit: 76deaddd5dbbe8548672777ed5a4d6ac10d92171
+  merge_commit: 75d6b8b2af24bf3e5033ab0655e6df4794304cbd
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: The prqlc crate must compile without errors
+- id: join_group_returns_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: Join inside group clause returns error instead of panicking
+- id: error_mentions_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error message explains why the join fails (scope/context/group)
+- id: existing_gen_query_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing prqlc gen_query tests still pass
+rubric:
+- rule: Error handling section is consistent with the style of existing CLAUDE.md
+    sections (uses emoji markers, code examples)
+  source:
+    path: CLAUDE.md
+    lines: 1-120
+    commit: 76deaddd5dbbe8548672777ed5a4d6ac10d92171
+- rule: Error message follows the tone guidelines in the existing Error Messages section
+    (avoids 2nd person)
+  source:
+    path: CLAUDE.md
+    lines: 109-118
+    commit: 76deaddd5dbbe8548672777ed5a4d6ac10d92171
+- rule: CLAUDE.md includes an error handling section
+  source:
+    path: CLAUDE.md
+    lines: 103-108
+    commit: 75d6b8b2af24bf3e5033ab0655e6df4794304cbd
+  reference: "## Error Handling\n\nNever panic on user input or recoverable errors.\
+    \ Use proper error returns:\n\n- \u274C `.unwrap()` on operations that can fail\
+    \ with user input\n- \u2705 `?` operator or `return Err(Error::new_simple(\"message\"\
+    ))`\n- \u2705 `.expect(\"reason\")` or `unreachable!()` only for compiler-bug\
+    \ invariants"
+- rule: CLAUDE.md documents .unwrap() avoidance and proper error handling alternatives
+  source:
+    path: CLAUDE.md
+    lines: 103-108
+    commit: 75d6b8b2af24bf3e5033ab0655e6df4794304cbd
+  reference: "## Error Handling\n\nNever panic on user input or recoverable errors.\
+    \ Use proper error returns:\n\n- \u274C `.unwrap()` on operations that can fail\
+    \ with user input\n- \u2705 `?` operator or `return Err(Error::new_simple(\"message\"\
+    ))`\n- \u2705 `.expect(\"reason\")` or `unreachable!()` only for compiler-bug\
+    \ invariants"

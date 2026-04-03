@@ -1,0 +1,65 @@
+version: '2.0'
+source:
+  repo: biomejs/biome
+  pr: 9613
+  base_commit: eb57e3a1df36bf1bbe612f84a68ded658d9b7d00
+  merge_commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+checks:
+- id: justfile_syntax
+  type: pass_to_pass
+  origin: static
+  description: justfile is parseable and retains existing recipes
+- id: justfile_has_new_changeset_empty_recipe
+  type: fail_to_pass
+  origin: pr_diff
+  description: justfile defines a new-changeset-empty recipe
+- id: justfile_changeset_empty_uses_pnpm
+  type: fail_to_pass
+  origin: pr_diff
+  description: new-changeset-empty recipe invokes pnpm changeset --empty
+- id: existing_skills_intact
+  type: pass_to_pass
+  origin: static
+  description: Other existing skill files remain present
+rubric:
+- rule: New skill files follow the established frontmatter format (name, description,
+    compatibility)
+  source:
+    path: .claude/skills/README.md
+    lines: 150-165
+    commit: eb57e3a1df36bf1bbe612f84a68ded658d9b7d00
+- rule: Code Comments guidance is general and not tied to specific issues or PRs
+  source:
+    path: .claude/skills/biome-developer/SKILL.md
+    lines: 140-178
+    commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+- rule: Dedicated changeset skill created at .claude/skills/changeset/SKILL.md
+  source:
+    path: .claude/skills/changeset/SKILL.md
+    lines: 1-128
+    commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+- rule: Dedicated pull-request skill created at .claude/skills/pull-request/SKILL.md
+  source:
+    path: .claude/skills/pull-request/SKILL.md
+    lines: 1-127
+    commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+- rule: biome-developer SKILL.md gains a Code Comments guidance section
+  source:
+    path: .claude/skills/biome-developer/SKILL.md
+    lines: 140-178
+    commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+- rule: Skills README.md updated to list changeset and pull-request skills
+  source:
+    path: .claude/skills/README.md
+    lines: 30-32
+    commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+- rule: testing-codegen SKILL.md no longer contains Create Changeset section
+  source:
+    path: .claude/skills/testing-codegen/SKILL.md
+    lines: 1-13
+    commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+- rule: testing-codegen references new changeset skill instead of CONTRIBUTING.md
+  source:
+    path: .claude/skills/testing-codegen/SKILL.md
+    lines: '425'
+    commit: 9e3df0c40f45297fad3321344353b135e8d36f75

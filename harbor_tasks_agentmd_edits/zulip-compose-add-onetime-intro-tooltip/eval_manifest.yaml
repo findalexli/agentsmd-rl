@@ -1,0 +1,137 @@
+version: '2.0'
+source:
+  repo: zulip/zulip
+  pr: 38207
+  base_commit: a0fa7deed9a8c379055a2c896dcfebafa9ca1616
+  merge_commit: a14cc6bc6cc2315d2a3d5c913b43d3d7a3565843
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files parse without errors
+- id: onboarding_step_registered
+  type: fail_to_pass
+  origin: pr_diff
+  description: intro_go_to_conversation_tooltip registered as OneTimeNotice in onboarding_steps.py
+- id: tooltip_template_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: Handlebars template for intro tooltip exists with conversation text
+    and hotkey hints
+- id: compose_tooltips_show_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: compose_tooltips.ts exports maybe_show_intro_go_to_conversation_tooltip
+- id: compose_tooltips_dismiss_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: compose_tooltips.ts exports dismiss_intro_go_to_conversation_tooltip
+- id: tooltip_shown_for_existing_conversations
+  type: fail_to_pass
+  origin: pr_diff
+  description: compose_recipient.ts shows tooltip only for existing conversations
+    (stream topics / DMs)
+- id: tooltip_dismissed_on_compose_cancel
+  type: fail_to_pass
+  origin: pr_diff
+  description: compose_actions.ts dismisses tooltip when compose is cancelled
+- id: tooltip_dismissed_on_hotkey
+  type: fail_to_pass
+  origin: pr_diff
+  description: hotkey.ts dismisses tooltip on narrow_to_compose_target
+- id: tooltip_function_not_stub
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Tooltip show function has real logic: marks onboarding step as read,
+    uses manual trigger'
+rubric:
+- rule: SKILL.md update is consistent with the style and formatting of the existing
+    documentation
+  source:
+    path: .claude/skills/visual-test/SKILL.md
+    lines: 1-35
+    commit: a0fa7deed9a8c379055a2c896dcfebafa9ca1616
+- rule: "Code follows existing Zulip patterns \u2014 use clear, greppable names for\
+    \ functions"
+  source:
+    path: .claude/CLAUDE.md
+    lines: 50-55
+    commit: a0fa7deed9a8c379055a2c896dcfebafa9ca1616
+- rule: onboarding_steps.ts initialize accepts update_recipient_row_attention_level
+    callback
+  reference: '# .claude/skills/visual-test/SKILL.md
+
+    Runs a real browser against the Zulip test server and takes
+
+    screenshots you can read as images to verify layout, colors,
+
+    positioning, text content, etc.
+
+    Create `web/e2e-tests/_claude_<feature>_test.test.ts` using this template:
+
+    **Important patterns:**
+
+
+    These patterns are derived from the existing Puppeteer tests in
+
+    `web/e2e-tests/`. Follow them to write reliable, non-flaky tests.
+
+
+    #### Waiting: never use hardcoded timeouts
+
+
+    The existing test suite has essent'
+- rule: SKILL.md documents Puppeteer waiting patterns (waitForSelector, waitForFunction)
+  source:
+    path: .claude/skills/visual-test/SKILL.md
+    lines: 40-100
+    commit: a14cc6bc6cc2315d2a3d5c913b43d3d7a3565843
+  reference: 'Runs a real browser against the Zulip test server and takes
+
+    screenshots you can read as images to verify layout, colors,
+
+    positioning, text content, etc.
+
+    Create `web/e2e-tests/_claude_<feature>_test.test.ts` using this template:
+
+    **Important patterns:**
+
+
+    These patterns are derived from the existing Puppeteer tests in
+
+    `web/e2e-tests/`. Follow them to write reliable, non-flaky tests.
+
+
+    #### Waiting: never use hardcoded timeouts
+
+
+    The existing test suite has essentially zero `setTimeout` calls
+
+    (the two'
+- rule: SKILL.md documents element interaction patterns (click, type, hover, keyboard)
+  source:
+    path: .claude/skills/visual-test/SKILL.md
+    lines: 100-180
+    commit: a14cc6bc6cc2315d2a3d5c913b43d3d7a3565843
+  reference: 'Runs a real browser against the Zulip test server and takes
+
+    screenshots you can read as images to verify layout, colors,
+
+    positioning, text content, etc.
+
+    Create `web/e2e-tests/_claude_<feature>_test.test.ts` using this template:
+
+    **Important patterns:**
+
+
+    These patterns are derived from the existing Puppeteer tests in
+
+    `web/e2e-tests/`. Follow them to write reliable, non-flaky tests.
+
+
+    #### Waiting: never use hardcoded timeouts
+
+
+    The existing test suite has essentially zero `setTimeout` calls
+
+    (the two'

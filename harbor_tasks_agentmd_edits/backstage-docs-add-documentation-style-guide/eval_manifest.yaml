@@ -1,0 +1,74 @@
+version: '2.0'
+source:
+  repo: backstage/backstage
+  pr: 33538
+  base_commit: 7c99d4f3021c375b4dea1bae6156ccbf527580e3
+  merge_commit: 7f26ea88c58c9e6f14d83a4c6b216c4f9260b412
+checks:
+- id: style_guide_exists_with_frontmatter
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/contribute/doc-style-guide.md exists with Docusaurus frontmatter
+- id: style_guide_covers_tone
+  type: fail_to_pass
+  origin: pr_diff
+  description: Style guide covers tone/voice guidelines (friendly, professional)
+- id: style_guide_covers_formatting
+  type: fail_to_pass
+  origin: pr_diff
+  description: Style guide covers formatting standards (bold, code style, backticks)
+- id: style_guide_covers_writing_practices
+  type: fail_to_pass
+  origin: pr_diff
+  description: Style guide covers active voice, present tense, addressing reader as
+    you
+- id: style_guide_has_word_list
+  type: fail_to_pass
+  origin: pr_diff
+  description: Style guide includes Backstage-specific word/terminology list
+- id: sidebar_includes_style_guide
+  type: fail_to_pass
+  origin: pr_diff
+  description: microsite/sidebars.ts includes doc-style-guide in contribute section
+rubric:
+- rule: The documentation style guide content is consistent with the style and tone
+    of the existing Backstage documentation.
+  source:
+    path: CONTRIBUTING.md
+    lines: 165-175
+    commit: 7c99d4f3021c375b4dea1bae6156ccbf527580e3
+- rule: The style guide is adapted to the Backstage project specifically, not a generic
+    writing guide.
+  source:
+    path: AGENTS.md
+    lines: 1-5
+    commit: 7c99d4f3021c375b4dea1bae6156ccbf527580e3
+- rule: AGENTS.md updated with Writing Standards section referencing style guide
+  source:
+    path: AGENTS.md
+    lines: 12-14
+    commit: 7f26ea88c58c9e6f14d83a4c6b216c4f9260b412
+  reference: 'Packages prefixed with `core-` (e.g., `@backstage/core-plugin-api`)
+    are part of the old frontend system. Packages prefixed with `frontend-` (e.g.,
+    `@backstage/frontend-plugin-api`) are part of the new frontend system. Packages
+    prefixed with `backend-` (e.g., `@backstage/backend-plugin-api`) are part of the
+    backend system.
+
+
+    ## Writing Standards
+
+
+    Changes to the docs should follow the documentation style guide at `/docs/contribute/doc-style-guide.md`.'
+- rule: CONTRIBUTING.md updated to reference the documentation style guide
+  source:
+    path: CONTRIBUTING.md
+    lines: '173'
+    commit: 7f26ea88c58c9e6f14d83a4c6b216c4f9260b412
+  reference: 'Ready to get started? You can find all the documentation files in the
+    [docs](docs) directory!
+
+    Please take a look through [our style guide](./docs/contribute/doc-style-guide.md)
+    as well for writing style tips.
+
+    If you have any questions or need help, feel free to reach out in the [Backstage
+    Discord Docs Channel](https://discord.com/channels/687207715902193673/687994765559463940).'

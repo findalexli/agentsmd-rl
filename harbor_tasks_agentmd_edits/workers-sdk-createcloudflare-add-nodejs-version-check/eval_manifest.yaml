@@ -1,0 +1,78 @@
+version: '2.0'
+source:
+  repo: cloudflare/workers-sdk
+  pr: 13243
+  base_commit: 0de69890c8503bb67e391e7ad5578c7001b7798e
+  merge_commit: 448fec88a19cad5a3ab7a4d7ff99e166cd485ea2
+checks:
+- id: bin_shim_rejects_old_node
+  type: fail_to_pass
+  origin: pr_diff
+  description: bin/c3.js exits with error when Node.js version is too old
+- id: bin_shim_error_mentions_user_version
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error message tells the user which Node version they are running
+- id: bin_shim_suggests_version_manager
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error message suggests a Node version manager (volta/nvm)
+- id: bin_shim_passes_current_node
+  type: fail_to_pass
+  origin: pr_diff
+  description: bin/c3.js does not show version error when Node >= 20
+- id: package_json_bin_points_to_shim
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json bin field points to bin shim, not dist/cli.js
+rubric:
+- rule: AGENTS.md update is consistent with the style and structure of the existing
+    file
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 1-25
+    commit: 0de69890c8503bb67e391e7ad5578c7001b7798e
+- rule: engines.node requires at least Node.js 20
+  reference: "# packages/create-cloudflare/AGENTS.md\nProject scaffolding CLI for\
+    \ Cloudflare Workers. Main source entry: `src/cli.ts`. Bin entry: `bin/c3.js`\
+    \ (Node.js version gate shim).\n- `bin/c3.js` \u2014 Bin shim that checks Node.js\
+    \ version before requiring `dist/cli.js`\n- `src/cli.ts` \u2014 Main entry. Exports\
+    \ `main(argv)` for programmatic use\n- `package.json` `main` and `exports[\".\"\
+    ]` point at `dist/cli.js`; `bin` points at `bin/c3.js`\n- `bin/c3.js` is a plain\
+    \ CommonJS shim that gates on Node.js version (read fro"
+- rule: AGENTS.md documents the new bin/c3.js shim entry point
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 5-11
+    commit: 448fec88a19cad5a3ab7a4d7ff99e166cd485ea2
+  reference: "Project scaffolding CLI for Cloudflare Workers. Main source entry: `src/cli.ts`.\
+    \ Bin entry: `bin/c3.js` (Node.js version gate shim).\n- `bin/c3.js` \u2014 Bin\
+    \ shim that checks Node.js version before requiring `dist/cli.js`\n- `src/cli.ts`\
+    \ \u2014 Main entry. Exports `main(argv)` for programmatic use\n- `package.json`\
+    \ `main` and `exports[\".\"]` point at `dist/cli.js`; `bin` points at `bin/c3.js`\n\
+    - `bin/c3.js` is a plain CommonJS shim that gates on Node.js version (read from\
+    \ `package.json` `engines.node`) before"
+- rule: AGENTS.md mentions the Node.js version gate/check
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 4-18
+    commit: 448fec88a19cad5a3ab7a4d7ff99e166cd485ea2
+  reference: "Project scaffolding CLI for Cloudflare Workers. Main source entry: `src/cli.ts`.\
+    \ Bin entry: `bin/c3.js` (Node.js version gate shim).\n- `bin/c3.js` \u2014 Bin\
+    \ shim that checks Node.js version before requiring `dist/cli.js`\n- `src/cli.ts`\
+    \ \u2014 Main entry. Exports `main(argv)` for programmatic use\n- `package.json`\
+    \ `main` and `exports[\".\"]` point at `dist/cli.js`; `bin` points at `bin/c3.js`\n\
+    - `bin/c3.js` is a plain CommonJS shim that gates on Node.js version (read from\
+    \ `package.json` `engines.node`) before"
+- rule: AGENTS.md no longer says there is no separate bin shim
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 15-16
+    commit: 0de69890c8503bb67e391e7ad5578c7001b7798e
+  reference: "Project scaffolding CLI for Cloudflare Workers. Main source entry: `src/cli.ts`.\
+    \ Bin entry: `bin/c3.js` (Node.js version gate shim).\n- `bin/c3.js` \u2014 Bin\
+    \ shim that checks Node.js version before requiring `dist/cli.js`\n- `src/cli.ts`\
+    \ \u2014 Main entry. Exports `main(argv)` for programmatic use\n- `package.json`\
+    \ `main` and `exports[\".\"]` point at `dist/cli.js`; `bin` points at `bin/c3.js`\n\
+    - `bin/c3.js` is a plain CommonJS shim that gates on Node.js version (read from\
+    \ `package.json` `engines.node`) before"

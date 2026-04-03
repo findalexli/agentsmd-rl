@@ -1,0 +1,154 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39144
+  base_commit: 08752e9a9be05e5d11173977c8651cf105c1aace
+  merge_commit: c4a4efa50a02f404829c8cf8a169d5b70e8e35ae
+checks:
+- id: kill_all_renamed_to_session_kill_all
+  type: fail_to_pass
+  origin: pr_diff
+  description: kill-all command renamed to session-kill-all in commands.ts
+- id: install_command_initializes_workspace
+  type: fail_to_pass
+  origin: pr_diff
+  description: install command exists and described as workspace initialization
+- id: workspace_scoping_replaces_installation_dir
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts uses workspaceDirHash instead of installationDirHash
+- id: find_workspace_dir_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: findWorkspaceDir function traverses up looking for .playwright marker
+- id: config_path_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Default config path changed to .playwright/cli.config.json
+- id: install_creates_playwright_dir
+  type: fail_to_pass
+  origin: pr_diff
+  description: install() function creates .playwright directory as workspace marker
+- id: session_kill_all_in_switch
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts switch routes session-kill-all command
+- id: commands_ts_has_install_browser
+  type: pass_to_pass
+  origin: static
+  description: install-browser command still exists for browser installation
+rubric:
+- rule: Skill documentation updates are consistent with the command naming style used
+    elsewhere in the file
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 1-10
+    commit: 08752e9a9be05e5d11173977c8651cf105c1aace
+- rule: Update skill file at packages/playwright/src/skill/SKILL.md and references
+    if necessary in packages/playwright/src/skill/references/
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 22-23
+    commit: 08752e9a9be05e5d11173977c8651cf105c1aace
+- rule: SKILL.md updated to reference session-kill-all command
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 190-196
+    commit: c4a4efa50a02f404829c8cf8a169d5b70e8e35ae
+  reference: '# Close the browser
+
+    playwright-cli close
+
+    # Delete user data for the default session
+
+    playwright-cli delete-data
+
+    # Close all browsers
+
+    playwright-cli session-close-all
+
+    # Forcefully kill all browser processes
+
+    playwright-cli session-kill-all'
+- rule: SKILL.md Configuration section includes delete-data (moved from Sessions)
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 178-182
+    commit: c4a4efa50a02f404829c8cf8a169d5b70e8e35ae
+  reference: '# Close the browser
+
+    playwright-cli close
+
+    # Delete user data for the default session
+
+    playwright-cli delete-data
+
+    # Close all browsers
+
+    playwright-cli session-close-all
+
+    # Forcefully kill all browser processes
+
+    playwright-cli session-kill-all'
+- rule: session-management.md uses session-kill-all everywhere
+  source:
+    path: packages/playwright/src/skill/references/session-management.md
+    lines: 44-45
+    commit: c4a4efa50a02f404829c8cf8a169d5b70e8e35ae
+  reference: '# packages/playwright/src/skill/SKILL.md
+
+    # Close the browser
+
+    playwright-cli close
+
+    # Delete user data for the default session
+
+    playwright-cli delete-data
+
+    # Close all browsers
+
+    playwright-cli session-close-all
+
+    # Forcefully kill all browser processes
+
+    playwright-cli session-kill-all'
+- rule: session-management.md no longer references playwright-cli.json
+  source:
+    path: packages/playwright/src/skill/references/session-management.md
+    lines: '125'
+    commit: c4a4efa50a02f404829c8cf8a169d5b70e8e35ae
+  reference: '# packages/playwright/src/skill/SKILL.md
+
+    # Close the browser
+
+    playwright-cli close
+
+    # Delete user data for the default session
+
+    playwright-cli delete-data
+
+    # Close all browsers
+
+    playwright-cli session-close-all
+
+    # Forcefully kill all browser processes
+
+    playwright-cli session-kill-all'
+- rule: SKILL.md still documents session-list and session-close-all
+  reference: '# packages/playwright/src/skill/SKILL.md
+
+    # Close the browser
+
+    playwright-cli close
+
+    # Delete user data for the default session
+
+    playwright-cli delete-data
+
+    # Close all browsers
+
+    playwright-cli session-close-all
+
+    # Forcefully kill all browser processes
+
+    playwright-cli session-kill-all'

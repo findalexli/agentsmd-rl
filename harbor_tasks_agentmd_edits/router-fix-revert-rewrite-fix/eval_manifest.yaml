@@ -1,0 +1,45 @@
+version: '2.0'
+source:
+  repo: TanStack/router
+  pr: 6211
+  base_commit: aa68f71febbfc2f751fd3f2252bc42c27c939835
+  merge_commit: af9ef262a9753bbe4b1befdc269b36077e269a2d
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must exist and contain valid code
+- id: router_publicHref_not_output_rewritten
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseLocation must not apply output rewrite to compute publicHref (causes
+    redirect loops)
+- id: router_pathname_uses_url_pathname
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseLocation must decode pathname from url.pathname directly, not
+    internalPathname
+- id: server_uses_original_request
+  type: fail_to_pass
+  origin: pr_diff
+  description: i18n paraglide server.ts must pass original req to handler, not middleware-modified
+    request
+rubric:
+- rule: README changes are consistent with the style and formatting of existing documentation
+  source:
+    path: AGENTS.md
+    lines: 75-76
+    commit: aa68f71febbfc2f751fd3f2252bc42c27c939835
+- rule: 'Start example READMEs must show correct middleware pattern: () => handler.fetch(req)'
+  source:
+    path: examples/react/start-i18n-paraglide/README.md
+    lines: '84'
+    commit: af9ef262a9753bbe4b1befdc269b36077e269a2d
+  reference: "This example shows how to use Paraglide with TanStack Start.\n    return\
+    \ paraglideMiddleware(req, () => handler.fetch(req))"
+- rule: i18n paraglide READMEs must not link to dead Paraglide monorepo (github.com/opral/monorepo)
+  source:
+    path: examples/react/i18n-paraglide/README.md
+    lines: '3'
+    commit: af9ef262a9753bbe4b1befdc269b36077e269a2d
+  reference: This example shows how to use Paraglide with TanStack Router.

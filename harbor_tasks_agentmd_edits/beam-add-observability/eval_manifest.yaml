@@ -1,0 +1,151 @@
+version: '2.0'
+source:
+  repo: apache/beam
+  pr: 37716
+  base_commit: 67c3183913af13afa3c98d219f8882e278cdea0b
+  merge_commit: 9524b56c148f3dfe01ba12fff2b9d02ab576a160
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Terraform files have balanced braces
+- id: prometheus_env_configured
+  type: fail_to_pass
+  origin: pr_diff
+  description: ratelimit.tf configures USE_PROMETHEUS env var
+- id: statsd_sidecar_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: ratelimit.tf no longer contains statsd-exporter sidecar
+- id: monitoring_api_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: prerequisites.tf includes monitoring API
+- id: pod_monitoring_resource
+  type: fail_to_pass
+  origin: pr_diff
+  description: ratelimit.tf defines PodMonitoring CRD for Cloud Monitoring
+- id: metrics_port_9090
+  type: fail_to_pass
+  origin: pr_diff
+  description: Metrics exposed on port 9090, old port 9102 removed
+- id: deploy_script_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: deploy.sh helper script exists with apply/destroy support
+- id: enable_metrics_default_true
+  type: fail_to_pass
+  origin: pr_diff
+  description: enable_metrics variable defaults to true
+- id: deploy_script_has_license_header
+  type: fail_to_pass
+  origin: agent_config
+  description: deploy.sh includes Apache 2.0 license header
+  source:
+    path: .agent/skills/license-compliance/SKILL.md
+    lines: 26-46
+    commit: 67c3183913af13afa3c98d219f8882e278cdea0b
+rubric:
+- rule: README observability documentation is consistent with the style of existing
+    sections
+  source:
+    path: examples/terraform/envoy-ratelimiter/README.md
+    lines: 1-40
+    commit: 67c3183913af13afa3c98d219f8882e278cdea0b
+- rule: deploy.sh follows shell script conventions used elsewhere in the repo
+  source:
+    path: .agent/skills/license-compliance/SKILL.md
+    lines: 26-46
+    commit: 67c3183913af13afa3c98d219f8882e278cdea0b
+- rule: README.md documents Prometheus and Cloud Monitoring
+  source:
+    path: examples/terraform/envoy-ratelimiter/README.md
+    lines: 38-41
+    commit: 9524b56c148f3dfe01ba12fff2b9d02ab576a160
+  reference: '- **Prometheus Metrics**: Exposes Prometheus metrics on port `9090`.
+    These metrics are exported to Google Cloud Monitoring.
+
+    enable_metrics        = true                        # Enable metrics export to
+    Google Cloud Monitoring
+
+
+    1. **Deploy Script (Recommended)**:
+
+    Run the helper script to handle the deployment process automatically:
+
+    ./deploy.sh
+
+    The script will provide the ip address of the load balancer once the deployment
+    is complete.
+
+    2. **Deploy (Manual Alternative)**:
+
+    If you prefer running Ter'
+- rule: README.md has observability section with sample metric names
+  source:
+    path: examples/terraform/envoy-ratelimiter/README.md
+    lines: 162-192
+    commit: 9524b56c148f3dfe01ba12fff2b9d02ab576a160
+  reference: '- **Prometheus Metrics**: Exposes Prometheus metrics on port `9090`.
+    These metrics are exported to Google Cloud Monitoring.
+
+    enable_metrics        = true                        # Enable metrics export to
+    Google Cloud Monitoring
+
+
+    1. **Deploy Script (Recommended)**:
+
+    Run the helper script to handle the deployment process automatically:
+
+    ./deploy.sh
+
+    The script will provide the ip address of the load balancer once the deployment
+    is complete.
+
+    2. **Deploy (Manual Alternative)**:
+
+    If you prefer running Ter'
+- rule: README.md documents the deploy.sh helper script
+  source:
+    path: examples/terraform/envoy-ratelimiter/README.md
+    lines: 113-120
+    commit: 9524b56c148f3dfe01ba12fff2b9d02ab576a160
+  reference: '- **Prometheus Metrics**: Exposes Prometheus metrics on port `9090`.
+    These metrics are exported to Google Cloud Monitoring.
+
+    enable_metrics        = true                        # Enable metrics export to
+    Google Cloud Monitoring
+
+
+    1. **Deploy Script (Recommended)**:
+
+    Run the helper script to handle the deployment process automatically:
+
+    ./deploy.sh
+
+    The script will provide the ip address of the load balancer once the deployment
+    is complete.
+
+    2. **Deploy (Manual Alternative)**:
+
+    If you prefer running Ter'
+- rule: README.md preserves existing Prerequisites and architecture sections
+  reference: '# examples/terraform/envoy-ratelimiter/README.md
+
+    - **Prometheus Metrics**: Exposes Prometheus metrics on port `9090`. These metrics
+    are exported to Google Cloud Monitoring.
+
+    enable_metrics        = true                        # Enable metrics export to
+    Google Cloud Monitoring
+
+
+    1. **Deploy Script (Recommended)**:
+
+    Run the helper script to handle the deployment process automatically:
+
+    ./deploy.sh
+
+    The script will provide the ip address of the load balancer once the deployment
+    is complete.
+
+    2. **Deploy '

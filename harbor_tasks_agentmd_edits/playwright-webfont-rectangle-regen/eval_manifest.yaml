@@ -1,0 +1,39 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39092
+  base_commit: c1385dc133b5846ffdaf3eafdbb9b46a1be1575d
+  merge_commit: 0e23c4c0be1b5e80d67df0a884dfee913a342541
+checks:
+- id: svg_valid_xml
+  type: pass_to_pass
+  origin: static
+  description: iconfont.svg must be valid XML
+- id: generate_font_script_runs
+  type: fail_to_pass
+  origin: pr_diff
+  description: generate_font.py must exist and produce a valid woff2 file
+- id: font_glyphs_are_rectangles
+  type: fail_to_pass
+  origin: pr_diff
+  description: SVG glyph paths must be simple rectangles, not complex bezier curves
+- id: generated_font_compact
+  type: fail_to_pass
+  origin: pr_diff
+  description: Generated woff2 must be much smaller than the old octicons font
+- id: route_spec_font_size_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: route.spec.tsx must not reference old font body.length of 2656
+rubric:
+- rule: Documentation update should be consistent with the style of existing project
+    documentation
+  source:
+    path: CONTRIBUTING.md
+    lines: 40-43
+    commit: c1385dc133b5846ffdaf3eafdbb9b46a1be1575d
+- rule: README.md must document the new font generation approach and dependencies
+  source:
+    path: tests/assets/webfont/README.md
+    lines: 1-17
+    commit: 0e23c4c0be1b5e80d67df0a884dfee913a342541

@@ -1,0 +1,121 @@
+version: '2.0'
+source:
+  repo: matthiasn/lotti
+  pr: 2534
+  base_commit: d06454c02bf8e57a854521890a0c5c9582d6b9ed
+  merge_commit: 743b4c7b4f18ea140249d114463130858e8648c3
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Dart files must exist and contain valid structure
+- id: prompt_includes_links_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: Task summary prompt must instruct AI to include a Links section
+- id: prompt_link_format_and_examples
+  type: fail_to_pass
+  origin: pr_diff
+  description: Prompt must specify Markdown link format and provide examples
+- id: prompt_conditional_links_omission
+  type: fail_to_pass
+  origin: pr_diff
+  description: Prompt must instruct to omit Links section when no URLs found
+- id: prompt_unique_urls
+  type: fail_to_pass
+  origin: pr_diff
+  description: Prompt must instruct to extract unique (deduplicated) URLs
+- id: expandable_summary_link_handling
+  type: fail_to_pass
+  origin: pr_diff
+  description: Expandable summary must handle link taps with url_launcher and custom
+    link builder
+- id: summary_widgets_handle_link_taps
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both summary and modal widgets must handle link taps via onLinkTap
+- id: theme_link_color
+  type: fail_to_pass
+  origin: pr_diff
+  description: Theme must set linkColor for GptMarkdownThemeData
+rubric:
+- rule: Update the feature README files we touch such that they match reality in the
+    codebase, not only for what we touch but in their entirety.
+  source:
+    path: AGENTS.md
+    lines: 92-93
+    commit: d06454c02bf8e57a854521890a0c5c9582d6b9ed
+- rule: Config update is consistent with the style of existing documentation in lib/features/ai/README.md
+  source:
+    path: lib/features/ai/README.md
+    lines: 1-10
+    commit: d06454c02bf8e57a854521890a0c5c9582d6b9ed
+- rule: lib/features/ai/README.md must document Automatic Link Extraction
+  source:
+    path: lib/features/ai/README.md
+    lines: 455-476
+    commit: 743b4c7b4f18ea140249d114463130858e8648c3
+  reference: '- Automatic link extraction appends a Links section (see below)
+
+    ### 5. Automatic Link Extraction
+
+
+    Task summaries include AI-driven link extraction that aggregates URLs found within
+    the task''s entries:
+
+
+    - **Scanning**: AI is instructed to scan log entries for URLs (http://, https://,
+    or other valid URL schemes)
+
+    - **Unique URLs**: AI extracts every unique URL found across all entries
+
+    - **Succinct Titles**: AI generates short, descriptive titles (2-5 words) for
+    each link
+
+    - **Markdown Format**: Link'
+- rule: README must describe link format, scanning, and conditional display
+  source:
+    path: lib/features/ai/README.md
+    lines: 458-476
+    commit: 743b4c7b4f18ea140249d114463130858e8648c3
+  reference: '- Automatic link extraction appends a Links section (see below)
+
+    ### 5. Automatic Link Extraction
+
+
+    Task summaries include AI-driven link extraction that aggregates URLs found within
+    the task''s entries:
+
+
+    - **Scanning**: AI is instructed to scan log entries for URLs (http://, https://,
+    or other valid URL schemes)
+
+    - **Unique URLs**: AI extracts every unique URL found across all entries
+
+    - **Succinct Titles**: AI generates short, descriptive titles (2-5 words) for
+    each link
+
+    - **Markdown Format**: Link'
+- rule: 'CHANGELOG.md must contain entries (AGENTS.md rule: add CHANGELOG entry)'
+  source:
+    path: AGENTS.md
+    lines: '91'
+    commit: d06454c02bf8e57a854521890a0c5c9582d6b9ed
+  reference: '# lib/features/ai/README.md
+
+    - Automatic link extraction appends a Links section (see below)
+
+    ### 5. Automatic Link Extraction
+
+
+    Task summaries include AI-driven link extraction that aggregates URLs found within
+    the task''s entries:
+
+
+    - **Scanning**: AI is instructed to scan log entries for URLs (http://, https://,
+    or other valid URL schemes)
+
+    - **Unique URLs**: AI extracts every unique URL found across all entries
+
+    - **Succinct Titles**: AI generates short, descriptive titles (2-5 words) for
+    each link'

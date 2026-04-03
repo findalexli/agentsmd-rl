@@ -1,0 +1,86 @@
+version: '2.0'
+source:
+  repo: dotnet/maui
+  pr: 33723
+  base_commit: a633cc9b508792fbcf5daa2df9cd8a4fa98a0efe
+  merge_commit: 5ade6a2863c4c3313b13d50bda1faa70d89ef472
+checks:
+- id: build_props_valid_xml
+  type: pass_to_pass
+  origin: static
+  description: eng/Build.props must parse as valid MSBuild XML
+- id: build_props_pack_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: Build.props has dedicated Pack-conditioned ItemGroup for pack-only
+    builds
+- id: build_props_full_build_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: Build.props has full-build section with .sln reference and ValidateXcodeVersion=false
+- id: provision_xcode_cascading_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: provision.yml Xcode selection uses cascading fallback (exact -> major.minor
+    -> major)
+- id: ci_uses_aces_pool
+  type: fail_to_pass
+  origin: pr_diff
+  description: ci.yml uses AcesShared pool instead of Azure Pipelines for macOS builds
+- id: stage_build_no_explicit_sln_project
+  type: fail_to_pass
+  origin: pr_diff
+  description: stage-build.yml main build relies on Build.props for project selection
+- id: device_tests_use_arcade_build
+  type: fail_to_pass
+  origin: pr_diff
+  description: stage-device-tests.yml uses Arcade build script instead of Cake
+rubric:
+- rule: Documentation updates are consistent with the style and structure of existing
+    docs
+  source:
+    path: .github/copilot-instructions.md
+    lines: '128'
+    commit: a633cc9b508792fbcf5daa2df9cd8a4fa98a0efe
+- rule: DevelopmentTips.md recommends build.sh -restore for provisioning
+  source:
+    path: docs/DevelopmentTips.md
+    lines: 57-94
+    commit: 5ade6a2863c4c3313b13d50bda1faa70d89ef472
+  reference: '# src/Workload/README.md
+
+    ```bash
+
+    # Restore .NET SDK and workloads, then pack
+
+    ./build.sh -restore -pack
+
+    ```
+
+
+    or on Windows:
+
+
+    ```cmd
+
+    .\build.cmd -restore -pack'
+- rule: src/Workload/README.md uses build.sh instead of dotnet cake
+  source:
+    path: src/Workload/README.md
+    lines: 123-134
+    commit: 5ade6a2863c4c3313b13d50bda1faa70d89ef472
+  reference: '```bash
+
+    # Restore .NET SDK and workloads, then pack
+
+    ./build.sh -restore -pack
+
+    ```
+
+
+    or on Windows:
+
+
+    ```cmd
+
+    .\build.cmd -restore -pack'

@@ -1,0 +1,104 @@
+version: '2.0'
+source:
+  repo: facebook/react
+  pr: 35893
+  base_commit: c0060cf2a695d719152c939cfc3cced8f7da3e52
+  merge_commit: e33071c6142ae5212483a63b87d5d962860e535a
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without errors
+- id: panresponder_fixture_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: PanResponder fixture compiles without false ref-access error
+- id: panresponder_type_provider
+  type: fail_to_pass
+  origin: pr_diff
+  description: PanResponder.create registered in shared-runtime type provider with
+    Freeze aliasing
+- id: panresponder_shared_runtime
+  type: fail_to_pass
+  origin: pr_diff
+  description: PanResponder exported from shared-runtime for test fixtures
+- id: validation_uses_effects
+  type: fail_to_pass
+  origin: pr_diff
+  description: ValidateNoRefAccessInRender uses instruction effects for non-hook function
+    calls
+- id: mutate_ref_still_errors
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mutating a ref arg in render still produces a compiler error
+- id: existing_snap_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing snap fixture tests still pass
+rubric:
+- rule: "CLAUDE.md documentation sections should follow the existing style \u2014\
+    \ use ## heading, code block with bash, and a comment explaining the command."
+  source:
+    path: compiler/CLAUDE.md
+    lines: 1-35
+    commit: c0060cf2a695d719152c939cfc3cced8f7da3e52
+- rule: When modifying the compiler, you MUST read the documentation about that pass
+    in compiler/packages/babel-plugin-react-compiler/docs/passes/
+  source:
+    path: compiler/CLAUDE.md
+    lines: '7'
+    commit: c0060cf2a695d719152c939cfc3cced8f7da3e52
+- rule: compiler/CLAUDE.md documents how to run the compiler linter
+  source:
+    path: compiler/CLAUDE.md
+    lines: 37-43
+    commit: e33071c6142ae5212483a63b87d5d962860e535a
+  reference: '## Linting
+
+
+    ```bash
+
+    # Run lint on the compiler source
+
+    yarn workspace babel-plugin-react-compiler lint
+
+    ```
+
+
+    ## Formatting
+
+
+    ```bash
+
+    # Run prettier on all files (from the react root directory, not compiler/)
+
+    yarn prettier-all
+
+    ```'
+- rule: compiler/CLAUDE.md documents how to run prettier formatting
+  source:
+    path: compiler/CLAUDE.md
+    lines: 45-51
+    commit: e33071c6142ae5212483a63b87d5d962860e535a
+  reference: '## Linting
+
+
+    ```bash
+
+    # Run lint on the compiler source
+
+    yarn workspace babel-plugin-react-compiler lint
+
+    ```
+
+
+    ## Formatting
+
+
+    ```bash
+
+    # Run prettier on all files (from the react root directory, not compiler/)
+
+    yarn prettier-all
+
+    ```'

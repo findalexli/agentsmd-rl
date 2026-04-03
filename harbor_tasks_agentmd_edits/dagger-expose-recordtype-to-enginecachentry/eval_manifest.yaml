@@ -1,0 +1,45 @@
+version: '2.0'
+source:
+  repo: dagger/dagger
+  pr: 11899
+  base_commit: 267017813dfa4a570c29b516288eef01b6fcf100
+  merge_commit: e515daf836bf80c664d2bd95bf2ead200c5cf9ed
+checks:
+- id: record_type_field_in_struct
+  type: fail_to_pass
+  origin: pr_diff
+  description: EngineCacheEntry struct has RecordType string field with field:true
+    and doc tags
+- id: gc_populates_record_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: engine/server/gc.go assigns RecordType from the buildkit cache record
+rubric:
+- rule: RecordType field documentation is consistent with the style of existing field
+    docs in the struct
+  source:
+    path: core/engine.go
+    lines: 72-79
+    commit: 267017813dfa4a570c29b516288eef01b6fcf100
+- rule: CONTRIBUTING.md command updates follow the existing formatting and markdown
+    style
+  source:
+    path: CONTRIBUTING.md
+    lines: 60-100
+    commit: 267017813dfa4a570c29b516288eef01b6fcf100
+- rule: 'GraphQL schema exposes recordType: String on EngineCacheEntry type'
+- rule: CONTRIBUTING.md playground command updated to use engine-dev subcommand
+  source:
+    path: CONTRIBUTING.md
+    lines: 64-65
+    commit: e515daf836bf80c664d2bd95bf2ead200c5cf9ed
+- rule: CONTRIBUTING.md integration test commands updated to current CLI syntax
+  source:
+    path: CONTRIBUTING.md
+    lines: 78-82
+    commit: e515daf836bf80c664d2bd95bf2ead200c5cf9ed
+- rule: CONTRIBUTING.md generate and lint commands updated to current CLI syntax
+  source:
+    path: CONTRIBUTING.md
+    lines: 92-93
+    commit: e515daf836bf80c664d2bd95bf2ead200c5cf9ed

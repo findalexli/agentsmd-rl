@@ -1,0 +1,76 @@
+version: '2.0'
+source:
+  repo: backstage/backstage
+  pr: 32978
+  base_commit: 1ee5b28e41c274ea38c16a07290387763b5e2284
+  merge_commit: dc81af158f3ec81acd6e4bf7dd73e27b625f2cfe
+checks:
+- id: typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: All modified TypeScript files parse without syntax errors
+- id: metrics_module_exports_bucket_boundaries
+  type: fail_to_pass
+  origin: pr_diff
+  description: New metrics.ts exports bucketBoundaries with OTel-standard values
+- id: metrics_module_defines_operation_attributes
+  type: fail_to_pass
+  origin: pr_diff
+  description: metrics.ts defines McpServerOperationAttributes interface with required
+    fields
+- id: metrics_module_defines_session_attributes
+  type: fail_to_pass
+  origin: pr_diff
+  description: metrics.ts defines McpServerSessionAttributes interface
+- id: mcpservice_creates_operation_duration_histogram
+  type: fail_to_pass
+  origin: pr_diff
+  description: McpService creates mcp.server.operation.duration histogram via metrics
+    service
+- id: mcpservice_records_metrics_for_tools_list
+  type: fail_to_pass
+  origin: pr_diff
+  description: tools/list handler records operation duration with method name in finally
+    block
+- id: mcpservice_records_metrics_for_tools_call
+  type: fail_to_pass
+  origin: pr_diff
+  description: tools/call handler records duration with tool name, operation name,
+    and error type
+- id: streamable_router_creates_session_duration_histogram
+  type: fail_to_pass
+  origin: pr_diff
+  description: createStreamableRouter creates mcp.server.session.duration histogram
+- id: plugin_injects_metrics_service
+  type: fail_to_pass
+  origin: pr_diff
+  description: plugin.ts imports metricsServiceRef and passes metrics to services
+- id: mcpservice_still_has_core_api
+  type: pass_to_pass
+  origin: static
+  description: McpService still exports create() and getServer() methods
+rubric:
+- rule: Metrics follow OTel semantic conventions for MCP (method names, attribute
+    keys)
+  source:
+    path: plugins/mcp-actions-backend/src/metrics.ts
+    lines: 1-73
+    commit: dc81af158f3ec81acd6e4bf7dd73e27b625f2cfe
+- rule: README metrics documentation is consistent with the style of the existing
+    README sections
+  source:
+    path: plugins/mcp-actions-backend/README.md
+    lines: 1-10
+    commit: 1ee5b28e41c274ea38c16a07290387763b5e2284
+- rule: README.md has a Metrics section documenting both metric names
+  source:
+    path: plugins/mcp-actions-backend/README.md
+    lines: 181-187
+    commit: dc81af158f3ec81acd6e4bf7dd73e27b625f2cfe
+- rule: README metrics section describes what each metric measures (duration, operation,
+    session)
+  source:
+    path: plugins/mcp-actions-backend/README.md
+    lines: 181-187
+    commit: dc81af158f3ec81acd6e4bf7dd73e27b625f2cfe
+- rule: A changeset file exists for the mcp-actions-backend version bump

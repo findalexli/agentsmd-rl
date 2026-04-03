@@ -1,0 +1,45 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 25830
+  base_commit: ce9788716f66e2782c0ce5ae46a179fbb9f7c447
+  merge_commit: bf937f7294762d5e1a11a0d72f63fbeb00de9468
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have balanced braces
+- id: build_defined_columns_filters_undefined
+  type: fail_to_pass
+  origin: pr_diff
+  description: buildDefinedColumnsAndQuery filters out columns with undefined values
+    for single item inserts
+- id: build_defined_columns_bulk_union
+  type: fail_to_pass
+  origin: pr_diff
+  description: buildDefinedColumnsAndQuery checks ALL items for defined columns in
+    bulk inserts, preventing data loss
+- id: all_undefined_error_check
+  type: fail_to_pass
+  origin: pr_diff
+  description: SQL adapter throws error when all INSERT column values are undefined
+rubric:
+- rule: 'The test/CLAUDE.md update is consistent with the existing documentation style
+    (uses ### headings, code blocks, <example> tags)'
+  source:
+    path: test/CLAUDE.md
+    lines: 1-10
+    commit: ce9788716f66e2782c0ce5ae46a179fbb9f7c447
+- rule: All three SQL adapters (sqlite, mysql, postgres) import the shared undefined-filtering
+    function
+- rule: test/CLAUDE.md documents using .toEqual over multiple .toBe for nested/complex
+    objects
+  source:
+    path: test/CLAUDE.md
+    lines: 155-183
+    commit: bf937f7294762d5e1a11a0d72f63fbeb00de9468
+- rule: test/CLAUDE.md includes good/bad code examples for the .toEqual guidance
+  source:
+    path: test/CLAUDE.md
+    lines: 155-183
+    commit: bf937f7294762d5e1a11a0d72f63fbeb00de9468

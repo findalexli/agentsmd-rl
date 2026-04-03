@@ -1,0 +1,44 @@
+version: '2.0'
+source:
+  repo: PostHog/posthog
+  pr: 53158
+  base_commit: 6ffa23dc367bd7935376dde246fdd7b986ebf8b8
+  merge_commit: 2499a0b60e1b6e3357937435635be179392039ee
+checks:
+- id: function_exports
+  type: pass_to_pass
+  origin: static
+  description: getToolsForFeatures is exported and has filtering logic
+- id: tools_filter_by_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'getToolsForFeatures({tools: [...]}) returns only named tools'
+- id: tools_union_with_features
+  type: fail_to_pass
+  origin: pr_diff
+  description: features + tools compose as OR union
+- id: nonexistent_tool_returns_empty
+  type: fail_to_pass
+  origin: pr_diff
+  description: Nonexistent tool name yields empty result when tools param is set
+- id: existing_feature_filtering
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing feature-based filtering tests still pass
+rubric:
+- rule: Documentation update is consistent with the style of the existing README sections
+  source:
+    path: services/mcp/README.md
+    lines: 1-10
+    commit: 6ffa23dc367bd7935376dde246fdd7b986ebf8b8
+- rule: services/mcp/README.md documents the tools query parameter and union behavior
+  source:
+    path: services/mcp/README.md
+    lines: 303-318
+    commit: 2499a0b60e1b6e3357937435635be179392039ee
+  reference: "### Tool filtering\n\nFor finer-grained control you can allowlist specific\
+    \ tools by name using the `tools` query parameter. Only the exact tool names listed\
+    \ will be exposed, regardless of their feature category.\n\n```text\nhttps://mcp.posthog.com/mcp?tools=dashboard-get,feature-flag-get-all,execute-sql\n\
+    ```\n\nWhen `features` and `tools` are both provided they are combined as a **union**\
+    \ \u2014 a tool is included if it matches a feature category **or** is in the\
+    \ tools list. This lets you select a feature gr"

@@ -1,0 +1,41 @@
+version: '2.0'
+source:
+  repo: vitessio/vitess
+  pr: 19725
+  base_commit: 9a3646f7f16d38cec2efabc13cef5da800a72280
+  merge_commit: 9e5141afd5c3488cb4a0aea8168b48bf198790db
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Go files in sqlparser package compile without errors
+- id: short_version_digits_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: Versioned comment with <5 digits produces parse error (MySQL 8.4)
+- id: nested_comment_in_expanded_versioned
+  type: fail_to_pass
+  origin: pr_diff
+  description: Nested /* */ inside expanded versioned comment consumed correctly
+- id: skipped_versioned_with_nested_comment
+  type: fail_to_pass
+  origin: pr_diff
+  description: Nested /* */ inside skipped versioned comment does not close it early
+rubric:
+- rule: AGENTS.md is consistent with the style of existing repo documentation (CLAUDE.md,
+    AGENTS.md at root)
+  source:
+    path: AGENTS.md
+    lines: 1-10
+    commit: 9a3646f7f16d38cec2efabc13cef5da800a72280
+- rule: Scan helper methods should advance scanner state and return to Scan's main
+    loop, not call Scan() recursively
+  source:
+    path: go/vt/sqlparser/AGENTS.md
+    lines: 6-9
+    commit: 9e5141afd5c3488cb4a0aea8168b48bf198790db
+- rule: go/vt/sqlparser/AGENTS.md warns about scan method recursion risks
+  source:
+    path: go/vt/sqlparser/AGENTS.md
+    lines: 1-9
+    commit: 9e5141afd5c3488cb4a0aea8168b48bf198790db

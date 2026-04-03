@@ -1,0 +1,70 @@
+version: '2.0'
+source:
+  repo: prisma/prisma
+  pr: 29218
+  base_commit: 3fd1431decb1013969c9ef061f8c391e715fe973
+  merge_commit: 77bfc96b9f61b0fd8405fc9515707bf8fd9c5c53
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: New resolve module must be valid TypeScript (parseable by esbuild)
+- id: resolve_empty_datapath_returns_root
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolveResultExtensionContext returns root context for empty dataPath
+- id: resolve_one_hop_select
+  type: fail_to_pass
+  origin: pr_diff
+  description: One-hop select dataPath resolves to the related model (e.g. User->Post)
+- id: resolve_multi_hop
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multi-hop dataPath traverses through chained relations correctly
+- id: resolve_keyword_named_relation
+  type: fail_to_pass
+  origin: pr_diff
+  description: Relation fields named 'select'/'include' are not confused with selector
+    keywords
+rubric:
+- rule: AGENTS.md updates are consistent with the existing documentation style (bullet
+    points under architecture sections, backtick-quoted paths)
+  source:
+    path: AGENTS.md
+    lines: 1-10
+    commit: 3fd1431decb1013969c9ef061f8c391e715fe973
+- rule: 'The resolve function follows Prisma coding conventions: kebab-case filename,
+    no barrel export, doc comment on exported function'
+  source:
+    path: AGENTS.md
+    lines: 91-95
+    commit: 3fd1431decb1013969c9ef061f8c391e715fe973
+- rule: getPrismaClient.ts uses resolveResultExtensionContext before applyAllResultExtensions
+  reference: "# AGENTS.md\n- Fluent API `dataPath` is built in `packages/client/src/runtime/core/model/applyFluent.ts`\
+    \ by appending `['select', <relationName>]` on each hop; runtime unpacking in\
+    \ `packages/client/src/runtime/RequestHandler.ts` currently strips `'select'`/`'include'`\
+    \ segments before `deepGet`.\n  - In extension context resolution, `dataPath`\
+    \ should be interpreted as selector/field pairs (`select|include`, relation field).\
+    \ Do not strip by raw string value or relation fields literally named `select"
+- rule: AGENTS.md documents dataPath selector/field pair interpretation for extensions
+  source:
+    path: AGENTS.md
+    lines: 39-40
+    commit: 77bfc96b9f61b0fd8405fc9515707bf8fd9c5c53
+  reference: "- Fluent API `dataPath` is built in `packages/client/src/runtime/core/model/applyFluent.ts`\
+    \ by appending `['select', <relationName>]` on each hop; runtime unpacking in\
+    \ `packages/client/src/runtime/RequestHandler.ts` currently strips `'select'`/`'include'`\
+    \ segments before `deepGet`.\n  - In extension context resolution, `dataPath`\
+    \ should be interpreted as selector/field pairs (`select|include`, relation field).\
+    \ Do not strip by raw string value or relation fields literally named `select`/`include` "
+- rule: AGENTS.md documents .generated functional test clients importing runtime bundles
+  source:
+    path: AGENTS.md
+    lines: '74'
+    commit: 77bfc96b9f61b0fd8405fc9515707bf8fd9c5c53
+  reference: "- Fluent API `dataPath` is built in `packages/client/src/runtime/core/model/applyFluent.ts`\
+    \ by appending `['select', <relationName>]` on each hop; runtime unpacking in\
+    \ `packages/client/src/runtime/RequestHandler.ts` currently strips `'select'`/`'include'`\
+    \ segments before `deepGet`.\n  - In extension context resolution, `dataPath`\
+    \ should be interpreted as selector/field pairs (`select|include`, relation field).\
+    \ Do not strip by raw string value or relation fields literally named `select`/`include` "

@@ -1,0 +1,70 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11060
+  base_commit: 649aecadeb54fc3027a2b6a85020dd31421b5327
+  merge_commit: 0951cf4968a8332220a10df37ee0bdb0ed0bab2e
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files exist and parse without errors
+- id: update_returns_promise
+  type: fail_to_pass
+  origin: pr_diff
+  description: handle.update() returns Promise<AbortSignal> instead of accepting task
+    callback
+- id: update_implementation_creates_promise
+  type: fail_to_pass
+  origin: pr_diff
+  description: update() implementation creates a new Promise that resolves with AbortSignal
+- id: cascading_update_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: scheduler.ts detects and prevents infinite cascading handle.update()
+    loops
+- id: schedule_update_no_task_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: Internal scheduleUpdate function no longer accepts a task parameter
+- id: existing_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Component package vitest suite passes after changes
+rubric:
+- rule: Documentation updates are consistent with the style of existing AGENTS.md
+    content
+  source:
+    path: packages/component/AGENTS.md
+    lines: 1-10
+    commit: 649aecadeb54fc3027a2b6a85020dd31421b5327
+- rule: Code examples in docs are syntactically correct and demonstrate the new API
+    clearly
+  source:
+    path: packages/component/README.md
+    lines: 1-10
+    commit: 649aecadeb54fc3027a2b6a85020dd31421b5327
+- rule: AGENTS.md updated to document await handle.update() and AbortSignal return
+  source:
+    path: packages/component/AGENTS.md
+    lines: 151-200
+    commit: 0951cf4968a8332220a10df37ee0bdb0ed0bab2e
+  reference: "### `handle.update()`\nSchedules a component update and returns a promise\
+    \ that resolves with an `AbortSignal` after\nthe update completes.\nWaiting for\
+    \ the update:\n        async click() {\n          await handle.update()\n    \
+    \      stopButton.focus()\n**Pattern: await `handle.update()` when showing loading\
+    \ state before async work:**\nWhen you need to show loading UI before async work\
+    \ starts, set loading state, call\n`await handle.update()`, and use the returned\
+    \ signal for async APIs.\nfunction GoodAsyncE"
+- rule: README.md updated to document handle.update() Promise<AbortSignal> return
+  source:
+    path: packages/component/README.md
+    lines: 423-490
+    commit: 0951cf4968a8332220a10df37ee0bdb0ed0bab2e
+  reference: "- **`handle.update()`** - Schedule an update and await completion to\
+    \ get an `AbortSignal`.\n### `handle.update()`\nSchedule an update and optionally\
+    \ await completion to coordinate post-update work.\nYou can await the update before\
+    \ doing DOM work:\n          async click() {\n            await handle.update()\n\
+    \            // Focus the enabled button after update completes\n            stopButton.focus()\n\
+    \          async click() {\n            await handle.update()\n            //\
+    \ Focus the enabled button af"

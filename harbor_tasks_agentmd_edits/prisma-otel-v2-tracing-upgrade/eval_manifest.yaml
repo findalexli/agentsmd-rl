@@ -1,0 +1,80 @@
+version: '2.0'
+source:
+  repo: prisma/prisma
+  pr: 28268
+  base_commit: 423b58507879080bdc1273ca5d30b3de87e5b766
+  merge_commit: c5249341dc04490c790e535062224821be4c39b0
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified TypeScript files exist and are non-empty
+- id: resource_from_attributes_in_test_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: Tracing test files use resourceFromAttributes instead of new Resource
+- id: semantic_conventions_v2_in_test_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test files use ATTR_SERVICE_NAME/VERSION instead of SEMRESATTRS_*
+- id: set_global_tracer_provider_in_test_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test files use trace.setGlobalTracerProvider() instead of .register()
+- id: span_processors_constructor_option
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test files pass spanProcessors in constructor instead of addSpanProcessor
+- id: parent_span_context_property
+  type: fail_to_pass
+  origin: pr_diff
+  description: tracing/tests.ts uses parentSpanContext?.spanId instead of parentSpanId
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Test files retain full logic (not stubbed out)
+rubric:
+- rule: README.md example uses resourceFromAttributes (OTel v2)
+  source:
+    path: packages/instrumentation/README.md
+    lines: 42-44
+    commit: c5249341dc04490c790e535062224821be4c39b0
+  reference: "import { context, trace } from '@opentelemetry/api'\nimport { resourceFromAttributes\
+    \ } from '@opentelemetry/resources'\nimport { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION\
+    \ } from '@opentelemetry/semantic-conventions'\n  resource: resourceFromAttributes({\n\
+    \    [ATTR_SERVICE_NAME]: 'test-tracing-service',\n    [ATTR_SERVICE_VERSION]:\
+    \ '1.0.0',\n  spanProcessors: [new SimpleSpanProcessor(otlpTraceExporter)],\n\
+    trace.setGlobalTracerProvider(provider)"
+- rule: README.md example uses ATTR_SERVICE_NAME/VERSION instead of SEMRESATTRS_*
+  source:
+    path: packages/instrumentation/README.md
+    lines: 40-46
+    commit: c5249341dc04490c790e535062224821be4c39b0
+  reference: "import { context, trace } from '@opentelemetry/api'\nimport { resourceFromAttributes\
+    \ } from '@opentelemetry/resources'\nimport { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION\
+    \ } from '@opentelemetry/semantic-conventions'\n  resource: resourceFromAttributes({\n\
+    \    [ATTR_SERVICE_NAME]: 'test-tracing-service',\n    [ATTR_SERVICE_VERSION]:\
+    \ '1.0.0',\n  spanProcessors: [new SimpleSpanProcessor(otlpTraceExporter)],\n\
+    trace.setGlobalTracerProvider(provider)"
+- rule: README.md example uses trace.setGlobalTracerProvider()
+  source:
+    path: packages/instrumentation/README.md
+    lines: '64'
+    commit: c5249341dc04490c790e535062224821be4c39b0
+  reference: "import { context, trace } from '@opentelemetry/api'\nimport { resourceFromAttributes\
+    \ } from '@opentelemetry/resources'\nimport { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION\
+    \ } from '@opentelemetry/semantic-conventions'\n  resource: resourceFromAttributes({\n\
+    \    [ATTR_SERVICE_NAME]: 'test-tracing-service',\n    [ATTR_SERVICE_VERSION]:\
+    \ '1.0.0',\n  spanProcessors: [new SimpleSpanProcessor(otlpTraceExporter)],\n\
+    trace.setGlobalTracerProvider(provider)"
+- rule: README.md example passes spanProcessors in constructor
+  source:
+    path: packages/instrumentation/README.md
+    lines: '60'
+    commit: c5249341dc04490c790e535062224821be4c39b0
+  reference: "import { context, trace } from '@opentelemetry/api'\nimport { resourceFromAttributes\
+    \ } from '@opentelemetry/resources'\nimport { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION\
+    \ } from '@opentelemetry/semantic-conventions'\n  resource: resourceFromAttributes({\n\
+    \    [ATTR_SERVICE_NAME]: 'test-tracing-service',\n    [ATTR_SERVICE_VERSION]:\
+    \ '1.0.0',\n  spanProcessors: [new SimpleSpanProcessor(otlpTraceExporter)],\n\
+    trace.setGlobalTracerProvider(provider)"

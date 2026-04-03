@@ -1,0 +1,51 @@
+version: '2.0'
+source:
+  repo: gradio-app/gradio
+  pr: 13045
+  base_commit: 1bd5fa898de569bd14ac069d338eb4bd82b72716
+  merge_commit: a35f5896e43d2585d9206e8256b4d7e321fcd0fe
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: file_schema_returns_filepath
+  type: fail_to_pass
+  origin: pr_diff
+  description: FileData-like JSON schema produces 'filepath' instead of verbose dict
+- id: image_like_schema_returns_filepath
+  type: fail_to_pass
+  origin: pr_diff
+  description: ImageData-like schema (meta via default) also returns 'filepath'
+- id: nested_file_shows_filepath_in_dict
+  type: fail_to_pass
+  origin: pr_diff
+  description: Object wrapping a file field shows 'filepath' in its dict representation
+- id: non_file_object_still_dict
+  type: pass_to_pass
+  origin: static
+  description: Plain object schemas still render as dict(...)
+rubric:
+- rule: SKILL.md documentation is consistent with the style and format of the existing
+    skill file content
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: 1-158
+    commit: 1bd5fa898de569bd14ac069d338eb4bd82b72716
+- rule: Code changes follow the project's Python style conventions (ruff-formatted)
+  source:
+    path: AGENTS.md
+    lines: '63'
+    commit: 1bd5fa898de569bd14ac069d338eb4bd82b72716
+- rule: SKILL.md updated to document gradio info and gradio predict CLI commands
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: 159-216
+    commit: a35f5896e43d2585d9206e8256b4d7e321fcd0fe
+  reference: "## Prediction CLI\n\nThe `gradio` CLI includes `info` and `predict`\
+    \ commands for interacting with Gradio apps programmatically. These are especially\
+    \ useful for coding agents that need to use Spaces in their workflows.\n\n###\
+    \ `gradio info` \u2014 Discover endpoints and parameters\n\n```bash\ngradio info\
+    \ <space_id_or_url>\n```\n\nReturns a JSON payload describing all endpoints, their\
+    \ parameters (with types and defaults), and return values.\n\n```bash\ngradio\
+    \ info gradio/calculator\n#    {\n#   \"/predict\": {\n#     \"pa"

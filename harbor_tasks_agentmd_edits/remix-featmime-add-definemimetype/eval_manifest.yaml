@@ -1,0 +1,62 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 10921
+  base_commit: 9c05f82591c422ffc958bd61deb1b29c181ae225
+  merge_commit: e658e9a62492d06306bc74bb783ccce26c41b238
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified and new TypeScript files parse without errors
+- id: registers_custom_extension
+  type: fail_to_pass
+  origin: pr_diff
+  description: defineMimeType registers a custom extension that detectMimeType resolves
+- id: overrides_builtin_extension
+  type: fail_to_pass
+  origin: pr_diff
+  description: defineMimeType can override a built-in extension mapping
+- id: custom_compressible
+  type: fail_to_pass
+  origin: pr_diff
+  description: defineMimeType compressible option affects isCompressibleMimeType
+- id: custom_charset
+  type: fail_to_pass
+  origin: pr_diff
+  description: defineMimeType charset option affects mimeTypeToContentType
+- id: multiple_extensions
+  type: fail_to_pass
+  origin: pr_diff
+  description: defineMimeType accepts an array of extensions
+- id: existing_detect_mime_type
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing detectMimeType behavior is preserved (txt -> text/plain)
+rubric:
+- rule: README documentation for defineMimeType should be consistent with the style
+    of existing API documentation sections in the same file
+  source:
+    path: packages/mime/README.md
+    lines: 1-77
+    commit: 9c05f82591c422ffc958bd61deb1b29c181ae225
+- rule: Code should use let for locals, const only at module scope; never use var
+  source:
+    path: AGENTS.md
+    lines: '23'
+    commit: 9c05f82591c422ffc958bd61deb1b29c181ae225
+- rule: Imports should include .ts extensions and use import type for type-only imports
+  source:
+    path: AGENTS.md
+    lines: '22'
+    commit: 9c05f82591c422ffc958bd61deb1b29c181ae225
+- rule: packages/mime/README.md must document the defineMimeType API
+  source:
+    path: packages/mime/README.md
+    lines: 78-101
+    commit: e658e9a62492d06306bc74bb783ccce26c41b238
+- rule: A .changes/ changeset file must exist for the new feature
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 9c05f82591c422ffc958bd61deb1b29c181ae225

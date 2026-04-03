@@ -1,0 +1,84 @@
+version: '2.0'
+source:
+  repo: apache/beam
+  pr: 37883
+  base_commit: ae6d624c2b6d1fed15e4e96bf40e707808ad652b
+  merge_commit: d51177b9cee212cba5d82d968611f328292b8678
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: build.gradle must be syntactically valid (balanced braces)
+- id: precommit_lightweight_jobs_use_small_runner
+  type: fail_to_pass
+  origin: pr_diff
+  description: PreCommit GHA, RAT, Whitespace jobs use 'small' runner instead of 'main'
+rubric:
+- rule: New README entries should follow the existing table format with workflow name,
+    versions, trigger phrase, and badge columns
+  source:
+    path: .github/workflows/README.md
+    lines: 260-297
+    commit: ae6d624c2b6d1fed15e4e96bf40e707808ad652b
+- rule: Workflows should be listed in the correct section (PreCommit, PostCommit,
+    LoadTests, Other) based on their naming convention
+  source:
+    path: .agent/skills/ci-cd/SKILL.md
+    lines: 30-50
+    commit: ae6d624c2b6d1fed15e4e96bf40e707808ad652b
+- rule: build.gradle check task loads README.md content for validation
+  reference: '# .github/workflows/README.md
+
+    | [ PreCommit Flink Container ](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml)
+    | N/A |`Run Flink Container PreCommit`| [![.github/workflows/beam_PreCommit_Flink_Container.yml](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml/badge.svg?event=schedule)](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml?query=event%3Aschedule)
+    |
+
+    | [ PreCommit GoPrism ](https://git'
+- rule: build.gradle checks that beam_* workflow filenames appear in README.md
+  reference: '# .github/workflows/README.md
+
+    | [ PreCommit Flink Container ](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml)
+    | N/A |`Run Flink Container PreCommit`| [![.github/workflows/beam_PreCommit_Flink_Container.yml](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml/badge.svg?event=schedule)](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml?query=event%3Aschedule)
+    |
+
+    | [ PreCommit GoPrism ](https://git'
+- rule: Every beam_*.yml file has a corresponding entry in workflows/README.md
+  reference: '# .github/workflows/README.md
+
+    | [ PreCommit Flink Container ](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml)
+    | N/A |`Run Flink Container PreCommit`| [![.github/workflows/beam_PreCommit_Flink_Container.yml](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml/badge.svg?event=schedule)](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml?query=event%3Aschedule)
+    |
+
+    | [ PreCommit GoPrism ](https://git'
+- rule: README.md lists missing PreCommit workflows (Flink_Container, GoPrism, ItFramework)
+  source:
+    path: .github/workflows/README.md
+    lines: 297-309
+    commit: d51177b9cee212cba5d82d968611f328292b8678
+  reference: '| [ PreCommit Flink Container ](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml)
+    | N/A |`Run Flink Container PreCommit`| [![.github/workflows/beam_PreCommit_Flink_Container.yml](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml/badge.svg?event=schedule)](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml?query=event%3Aschedule)
+    |
+
+    | [ PreCommit GoPrism ](https://github.com/apache/beam/actions/wo'
+- rule: README.md lists missing PostCommit workflows (Streaming_Engine, Portable_Flink,
+    Xlang_IO_Direct)
+  source:
+    path: .github/workflows/README.md
+    lines: 412-421
+    commit: d51177b9cee212cba5d82d968611f328292b8678
+  reference: '| [ PreCommit Flink Container ](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml)
+    | N/A |`Run Flink Container PreCommit`| [![.github/workflows/beam_PreCommit_Flink_Container.yml](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml/badge.svg?event=schedule)](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml?query=event%3Aschedule)
+    |
+
+    | [ PreCommit GoPrism ](https://github.com/apache/beam/actions/wo'
+- rule: README.md lists missing infrastructure workflows (Metrics_Report, SecurityLogging,
+    PolicyEnforcer)
+  source:
+    path: .github/workflows/README.md
+    lines: 540-547
+    commit: d51177b9cee212cba5d82d968611f328292b8678
+  reference: '| [ PreCommit Flink Container ](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml)
+    | N/A |`Run Flink Container PreCommit`| [![.github/workflows/beam_PreCommit_Flink_Container.yml](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml/badge.svg?event=schedule)](https://github.com/apache/beam/actions/workflows/beam_PreCommit_Flink_Container.yml?query=event%3Aschedule)
+    |
+
+    | [ PreCommit GoPrism ](https://github.com/apache/beam/actions/wo'

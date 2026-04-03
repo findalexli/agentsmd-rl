@@ -1,0 +1,114 @@
+version: '2.0'
+source:
+  repo: apache/beam
+  pr: 37127
+  base_commit: afbbf5355303b60da4cb19085dc2970a7c9f72b1
+  merge_commit: 1b4e0c2a5603bc171a85f67ac5fc0e9a08009eef
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: HCL files parse without errors
+- id: certmanager_set_list_syntax
+  type: fail_to_pass
+  origin: pr_diff
+  description: cert-manager helm release uses set = [] list syntax
+- id: arc_no_dynamic_set_block
+  type: fail_to_pass
+  origin: pr_diff
+  description: ARC helm release uses for expression instead of dynamic set block
+- id: google_provider_version_upgraded
+  type: fail_to_pass
+  origin: pr_diff
+  description: Google provider version upgraded to >= 6.x
+- id: helm_provider_kubernetes_assignment
+  type: fail_to_pass
+  origin: pr_diff
+  description: Helm provider uses kubernetes = {} assignment syntax
+rubric:
+- rule: Updating section follows the style of the existing Installing section
+  source:
+    path: .github/gh-actions-self-hosted-runners/arc/README.md
+    lines: 22-97
+    commit: afbbf5355303b60da4cb19085dc2970a7c9f72b1
+- rule: README.md has an Updating section
+  source:
+    path: .github/gh-actions-self-hosted-runners/arc/README.md
+    lines: 99-118
+    commit: 1b4e0c2a5603bc171a85f67ac5fc0e9a08009eef
+  reference: '# Updating
+
+    If you need to update the configuration (e.g. upgrading the github runner image,
+    changing resource settings, etc), follow the steps below:
+
+
+    1. From this directory, login to your gcloud account that you created the bucket
+    with and init terraform. Replace bucket_name with the bucket for storing terraform
+    state, e.g. `beam-arc-state`.
+
+    ```
+
+    gcloud auth login
+
+    gcloud auth application-default login
+
+    terraform init -backend-config="bucket=bucket_name"
+
+    ```
+
+
+    2. Terraform plan. Replace environment'
+- rule: Updating section documents terraform plan and apply steps
+  source:
+    path: .github/gh-actions-self-hosted-runners/arc/README.md
+    lines: 108-118
+    commit: 1b4e0c2a5603bc171a85f67ac5fc0e9a08009eef
+  reference: '# Updating
+
+    If you need to update the configuration (e.g. upgrading the github runner image,
+    changing resource settings, etc), follow the steps below:
+
+
+    1. From this directory, login to your gcloud account that you created the bucket
+    with and init terraform. Replace bucket_name with the bucket for storing terraform
+    state, e.g. `beam-arc-state`.
+
+    ```
+
+    gcloud auth login
+
+    gcloud auth application-default login
+
+    terraform init -backend-config="bucket=bucket_name"
+
+    ```
+
+
+    2. Terraform plan. Replace environment'
+- rule: Updating section documents gcloud auth and terraform init steps
+  source:
+    path: .github/gh-actions-self-hosted-runners/arc/README.md
+    lines: 102-107
+    commit: 1b4e0c2a5603bc171a85f67ac5fc0e9a08009eef
+  reference: '# Updating
+
+    If you need to update the configuration (e.g. upgrading the github runner image,
+    changing resource settings, etc), follow the steps below:
+
+
+    1. From this directory, login to your gcloud account that you created the bucket
+    with and init terraform. Replace bucket_name with the bucket for storing terraform
+    state, e.g. `beam-arc-state`.
+
+    ```
+
+    gcloud auth login
+
+    gcloud auth application-default login
+
+    terraform init -backend-config="bucket=bucket_name"
+
+    ```
+
+
+    2. Terraform plan. Replace environment'

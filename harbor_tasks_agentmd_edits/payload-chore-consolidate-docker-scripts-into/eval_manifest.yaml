@@ -1,0 +1,55 @@
+version: '2.0'
+source:
+  repo: payloadcms/payload
+  pr: 15974
+  base_commit: 5efc2ffa032b6b5f908b9c94c34276f23a62b71d
+  merge_commit: f89e7361463f08e6ee90a99d44d3dd8626ae560a
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: package.json parses as valid JSON
+- id: docker_start_uses_profiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: docker:start script uses --profile all with volume cleanup
+- id: old_docker_scripts_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Per-database docker scripts (docker:mongodb:start, etc.) removed from
+    package.json
+- id: compose_profiles_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: test/docker-compose.yml defines profiles for postgres, mongodb, mongodb-atlas,
+    storage
+- id: old_compose_files_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Separate per-database docker-compose files deleted
+- id: ci_action_uses_unified_compose
+  type: fail_to_pass
+  origin: pr_diff
+  description: CI start-database action uses unified test/docker-compose.yml with
+    --profile
+rubric:
+- rule: Docker documentation is clear and consistent with the actual scripts in package.json
+  source:
+    path: CONTRIBUTING.md
+    lines: 143-168
+    commit: f89e7361463f08e6ee90a99d44d3dd8626ae560a
+- rule: Connection URLs are preserved and documented for all database types
+  source:
+    path: CONTRIBUTING.md
+    lines: 155-165
+    commit: f89e7361463f08e6ee90a99d44d3dd8626ae560a
+- rule: CLAUDE.md lists docker:test instead of docker:restart
+  source:
+    path: CLAUDE.md
+    lines: '85'
+    commit: f89e7361463f08e6ee90a99d44d3dd8626ae560a
+- rule: CONTRIBUTING.md documents unified docker commands instead of per-DB commands
+  source:
+    path: CONTRIBUTING.md
+    lines: 143-168
+    commit: f89e7361463f08e6ee90a99d44d3dd8626ae560a

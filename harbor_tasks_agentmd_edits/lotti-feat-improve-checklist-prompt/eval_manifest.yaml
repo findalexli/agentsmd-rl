@@ -1,0 +1,80 @@
+version: '2.0'
+source:
+  repo: matthiasn/lotti
+  pr: 2417
+  base_commit: 4978e0e2c96dd001d509380f100486a54ca4b811
+  merge_commit: 7fb77c80a41ae9236c119cc58884c95f509f24b1
+checks:
+- id: dart_file_parseable
+  type: pass_to_pass
+  origin: static
+  description: preconfigured_prompts.dart is not corrupted
+- id: system_message_entry_scoped_directives
+  type: fail_to_pass
+  origin: pr_diff
+  description: System message contains ENTRY-SCOPED DIRECTIVES section with ignore
+    and plan-only phrases
+- id: directive_isolation_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: System message instructs model not to blend directives across entries
+- id: user_message_directive_reminder
+  type: fail_to_pass
+  origin: pr_diff
+  description: User message contains a directive reminder section
+- id: readme_checklist_section_preserved
+  type: pass_to_pass
+  origin: agent_config
+  description: Existing README checklist section preserved per AGENTS.md feature README
+    rule
+  source:
+    path: AGENTS.md
+    lines: '72'
+    commit: 4978e0e2c96dd001d509380f100486a54ca4b811
+rubric:
+- rule: Update the feature README files we touch such that they match reality in the
+    codebase, not only for what we touch but in their entirety.
+  source:
+    path: AGENTS.md
+    lines: '92'
+    commit: 4978e0e2c96dd001d509380f100486a54ca4b811
+- rule: Directive documentation in README is consistent with the style of the existing
+    documentation sections.
+  source:
+    path: lib/features/ai/README.md
+    lines: 1-10
+    commit: 4978e0e2c96dd001d509380f100486a54ca4b811
+- rule: lib/features/ai/README.md documents per-entry directive behavior
+  source:
+    path: lib/features/ai/README.md
+    lines: 578-593
+    commit: 7fb77c80a41ae9236c119cc58884c95f509f24b1
+  reference: '#### Per-Entry Directive Behavior (Checklist Updates)
+
+
+    When running Checklist Updates, the user''s request is provided as a list of entries.
+    Directives are scoped per entry:
+
+
+    - Ignore for checklist: If an entry contains phrases like "Don''t consider this
+    for checklist items" or "Ignore for checklist", that entry is ignored for item
+    extraction.
+
+    - Plan-only single item: If an entry contains phrases like "The rest is an implementation
+    plan" or "Single checklist item for this plan", that entire entry '
+- rule: Existing checklist prompt tools and rules sections are preserved
+  reference: '# lib/features/ai/README.md
+
+    #### Per-Entry Directive Behavior (Checklist Updates)
+
+
+    When running Checklist Updates, the user''s request is provided as a list of entries.
+    Directives are scoped per entry:
+
+
+    - Ignore for checklist: If an entry contains phrases like "Don''t consider this
+    for checklist items" or "Ignore for checklist", that entry is ignored for item
+    extraction.
+
+    - Plan-only single item: If an entry contains phrases like "The rest is an implementation
+    plan" or "Single checklist item for th'

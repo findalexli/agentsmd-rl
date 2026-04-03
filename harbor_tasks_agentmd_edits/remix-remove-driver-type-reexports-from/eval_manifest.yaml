@@ -1,0 +1,115 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11160
+  base_commit: 1c0176eae3dd77d18e293c53d54237357ffc8efd
+  merge_commit: cc7f6c360d86c1448cfec7cf0c67cdbcf01c6719
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified TypeScript files must be valid
+- id: mysql_driver_types_not_reexported
+  type: fail_to_pass
+  origin: pr_diff
+  description: MySQL index.ts must not re-export driver-shaped types
+- id: postgres_driver_types_not_reexported
+  type: fail_to_pass
+  origin: pr_diff
+  description: Postgres index.ts must not re-export driver-shaped types
+- id: sqlite_driver_type_not_reexported
+  type: fail_to_pass
+  origin: pr_diff
+  description: SQLite index.ts must not re-export SqliteDatabaseConnection
+- id: mysql_adapter_uses_driver_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: MySQL adapter imports from mysql2/promise instead of defining custom
+    types
+- id: postgres_adapter_uses_driver_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: Postgres adapter imports from pg instead of defining custom types
+- id: mysql_adapter_has_pool_connection_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: MySQL adapter has isMysqlPoolConnection type guard for safe release()
+rubric:
+- rule: README updates are consistent with the style of the existing documentation
+    in each package.
+  source:
+    path: .agents/skills/write-readme/SKILL.md
+    lines: 1-10
+    commit: 1c0176eae3dd77d18e293c53d54237357ffc8efd
+- rule: Adapter types that wrap a single driver type should be replaced with the driver
+    type directly, not with a new wrapper.
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 1c0176eae3dd77d18e293c53d54237357ffc8efd
+- rule: MySQL README tells users to import types from mysql2/promise
+  source:
+    path: packages/data-table-mysql/README.md
+    lines: '37'
+    commit: cc7f6c360d86c1448cfec7cf0c67cdbcf01c6719
+  reference: '- **Native `mysql2` Integration**: Works with `mysql2/promise` `Pool`
+    and `PoolConnection` instances
+
+    Import any driver-specific types you need directly from `mysql2/promise`.'
+- rule: Postgres README tells users to import types from pg
+  source:
+    path: packages/data-table-postgres/README.md
+    lines: '40'
+    commit: cc7f6c360d86c1448cfec7cf0c67cdbcf01c6719
+  reference: '- **Native `pg` Integration**: Works with `pg` `Pool` and `PoolClient`
+    instances
+
+    Import any driver-specific types you need directly from `pg`.'
+- rule: SQLite README tells users to import types from better-sqlite3
+  source:
+    path: packages/data-table-sqlite/README.md
+    lines: '37'
+    commit: cc7f6c360d86c1448cfec7cf0c67cdbcf01c6719
+  reference: Import any driver-specific types you need directly from `better-sqlite3`.
+- rule: All three adapter classes and factory functions remain exported
+  reference: '# packages/data-table-mysql/README.md
+
+    - **Native `mysql2` Integration**: Works with `mysql2/promise` `Pool` and `PoolConnection`
+    instances
+
+    Import any driver-specific types you need directly from `mysql2/promise`.
+
+
+    # packages/data-table-postgres/README.md
+
+    - **Native `pg` Integration**: Works with `pg` `Pool` and `PoolClient` instances
+
+    Import any driver-specific types you need directly from `pg`.
+
+
+    # packages/data-table-sqlite/README.md
+
+    Import any driver-specific types you need directly from `bette'
+- rule: Index files do not re-export raw driver types (AGENTS.md cross-package rule)
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 1c0176eae3dd77d18e293c53d54237357ffc8efd
+  reference: '# packages/data-table-mysql/README.md
+
+    - **Native `mysql2` Integration**: Works with `mysql2/promise` `Pool` and `PoolConnection`
+    instances
+
+    Import any driver-specific types you need directly from `mysql2/promise`.
+
+
+    # packages/data-table-postgres/README.md
+
+    - **Native `pg` Integration**: Works with `pg` `Pool` and `PoolClient` instances
+
+    Import any driver-specific types you need directly from `pg`.
+
+
+    # packages/data-table-sqlite/README.md
+
+    Import any driver-specific types you need directly from `bette'

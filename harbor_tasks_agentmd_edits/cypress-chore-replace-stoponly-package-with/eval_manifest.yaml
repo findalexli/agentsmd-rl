@@ -1,0 +1,50 @@
+version: '2.0'
+source:
+  repo: cypress-io/cypress
+  pr: 33492
+  base_commit: d9cf1844842203937859811c814845fb42d7683a
+  merge_commit: a87bfe6429a2e8bc35dd71bff7edc05d86f45d34
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: baseConfig.ts is valid TypeScript (bracket balance)
+- id: eslint_rule_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: mocha/no-exclusive-tests must be 'error' in ESLint base config
+- id: stop_only_scripts_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json must not contain stop-only or stop-only-all scripts
+- id: stop_only_dep_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: stop-only must not be a devDependency in package.json
+- id: ci_no_stop_only_step
+  type: fail_to_pass
+  origin: pr_diff
+  description: CircleCI pipeline should not reference the stop-only step
+rubric:
+- rule: AGENTS.md update is consistent with the style and tone of the existing documentation
+  source:
+    path: AGENTS.md
+    lines: 1-10
+    commit: d9cf1844842203937859811c814845fb42d7683a
+- rule: The eslint-disable comment in cypress-tests.ts includes a brief explanation
+    of why it is needed
+  source:
+    path: AGENTS.md
+    lines: '204'
+    commit: a87bfe6429a2e8bc35dd71bff7edc05d86f45d34
+- rule: cypress-tests.ts must have eslint-disable for mocha/no-exclusive-tests
+- rule: AGENTS.md must not list yarn stop-only commands
+  source:
+    path: AGENTS.md
+    lines: 85-92
+    commit: a87bfe6429a2e8bc35dd71bff7edc05d86f45d34
+- rule: AGENTS.md must describe ESLint-based .only enforcement
+  source:
+    path: AGENTS.md
+    lines: '204'
+    commit: a87bfe6429a2e8bc35dd71bff7edc05d86f45d34

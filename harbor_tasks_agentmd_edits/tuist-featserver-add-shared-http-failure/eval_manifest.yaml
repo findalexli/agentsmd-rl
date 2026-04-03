@@ -1,0 +1,84 @@
+version: '2.0'
+source:
+  repo: tuist/tuist
+  pr: 9935
+  base_commit: 10f2ade970563161cd32699f45d87c8b891417e0
+  merge_commit: 4a493433e8d1ca1b8cf87fb2c6f0e02e19cba0e2
+checks:
+- id: elixir_syntax_transport
+  type: pass_to_pass
+  origin: static
+  description: transport.ex must be valid Elixir (balanced do/end, defmodule present)
+- id: elixir_syntax_prom_ex_plugin
+  type: pass_to_pass
+  origin: static
+  description: transport_prom_ex_plugin.ex must be valid Elixir
+- id: transport_classifies_body_read_timeout
+  type: fail_to_pass
+  origin: pr_diff
+  description: Transport module classifies Bandit body read timeouts and failure reasons
+- id: transport_classifies_thousand_island_drops
+  type: fail_to_pass
+  origin: pr_diff
+  description: Transport module classifies Thousand Island connection drop reasons
+- id: prom_ex_plugin_defines_event_metrics
+  type: fail_to_pass
+  origin: pr_diff
+  description: TransportPromExPlugin implements PromEx event_metrics with four counter
+    groups
+- id: transport_logger_attaches_to_telemetry
+  type: fail_to_pass
+  origin: pr_diff
+  description: TransportLogger attaches to Bandit and Thousand Island telemetry events
+- id: server_wires_transport_logger
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server application.ex attaches TransportLogger on startup
+- id: server_wires_prom_ex_plugin
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server prom_ex.ex includes TransportPromExPlugin
+- id: cache_wires_transport_logger
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cache application.ex attaches TransportLogger on startup
+rubric:
+- rule: AGENTS.md update is consistent with the style of surrounding AGENTS.md files
+    in the repo (heading structure, tone, bullet format)
+  source:
+    path: AGENTS.md
+    lines: 1-15
+    commit: 10f2ade970563161cd32699f45d87c8b891417e0
+- rule: "New modules follow the shared responsibility pattern described in tuist_common/AGENTS.md\
+    \ \u2014 cross-service helpers live in tuist_common, app-specific wiring stays\
+    \ in the owning app"
+  source:
+    path: tuist_common/AGENTS.md
+    lines: 1-10
+    commit: 10f2ade970563161cd32699f45d87c8b891417e0
+- rule: Cache prom_ex.ex includes TransportPromExPlugin
+- rule: AGENTS.md documents shared transport observability from tuist_common
+  source:
+    path: server/lib/tuist/http/AGENTS.md
+    lines: 3-6
+    commit: 4a493433e8d1ca1b8cf87fb2c6f0e02e19cba0e2
+- rule: AGENTS.md responsibilities reflect server-owned + shared transport split
+  source:
+    path: server/lib/tuist/http/AGENTS.md
+    lines: 5-6
+    commit: 4a493433e8d1ca1b8cf87fb2c6f0e02e19cba0e2
+- rule: AGENTS.md boundaries section references tuist_common for shared observability
+  source:
+    path: server/lib/tuist/http/AGENTS.md
+    lines: '11'
+    commit: 4a493433e8d1ca1b8cf87fb2c6f0e02e19cba0e2
+- rule: AGENTS.md preserves the data-export guardrail from the original file
+  source:
+    path: server/lib/tuist/http/AGENTS.md
+    lines: '14'
+    commit: 10f2ade970563161cd32699f45d87c8b891417e0
+- rule: AGENTS.md preserves Related Context links to parent and sibling nodes
+  source:
+    path: server/lib/tuist/http/AGENTS.md
+    lines: 16-18
+    commit: 10f2ade970563161cd32699f45d87c8b891417e0

@@ -1,0 +1,56 @@
+version: '2.0'
+source:
+  repo: apache/beam
+  pr: 37601
+  base_commit: b9d48fa1750f6427cb86fa1de9d52e4d1849a433
+  merge_commit: dfb3f872192e8f74571b4979b97a267ee13e5137
+checks:
+- id: base_pipeline_has_inheritance_block
+  type: fail_to_pass
+  origin: pr_diff
+  description: Base pipeline YAML must define a {% block extra_steps %} injection
+    point
+- id: base_pipeline_has_core_transforms
+  type: fail_to_pass
+  origin: pr_diff
+  description: Base pipeline must include ReadFromText, MapToFields, Explode, WriteToText
+- id: child_pipeline_extends_base
+  type: fail_to_pass
+  origin: pr_diff
+  description: Child pipeline must use {% extends %} to inherit from base
+- id: child_injects_combine_into_block
+  type: fail_to_pass
+  origin: pr_diff
+  description: Child pipeline must override extra_steps block with Combine transform
+- id: preprocessor_registers_inheritance
+  type: fail_to_pass
+  origin: pr_diff
+  description: examples_test.py registers test_wordCountInheritance_yaml in jinja
+    preprocessor
+- id: input_data_returns_base_pipeline
+  type: fail_to_pass
+  origin: pr_diff
+  description: input_data.py returns the base pipeline path for inheritance test
+rubric:
+- rule: README follows the style and structure of sibling jinja example READMEs (include/,
+    import/)
+  source:
+    path: sdks/python/apache_beam/yaml/examples/transforms/jinja/include/README.md
+    lines: 1-10
+    commit: b9d48fa1750f6427cb86fa1de9d52e4d1849a433
+- rule: YAML pipeline files follow the same formatting conventions as existing jinja
+    examples
+  source:
+    path: sdks/python/apache_beam/yaml/examples/transforms/jinja/include
+    lines: '1'
+    commit: b9d48fa1750f6427cb86fa1de9d52e4d1849a433
+- rule: README.md documents the Jinja inheritance example
+  source:
+    path: sdks/python/apache_beam/yaml/examples/transforms/jinja/inheritance/README.md
+    lines: 1-77
+    commit: dfb3f872192e8f74571b4979b97a267ee13e5137
+- rule: All new YAML files must have Apache license headers
+  source:
+    path: .agent/skills/license-compliance/SKILL.md
+    lines: '1'
+    commit: b9d48fa1750f6427cb86fa1de9d52e4d1849a433

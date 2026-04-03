@@ -1,0 +1,51 @@
+version: '2.0'
+source:
+  repo: facebook/react
+  pr: 35207
+  base_commit: ba5b843692519a226347aecfb789d90fcb24b4bc
+  merge_commit: bcf97c7564cbe0c903a16a8d6ff52f124f2f06ff
+checks:
+- id: hook_settings_type_has_dimming_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: DevToolsHookSettings type includes disableSecondConsoleLogDimmingInStrictMode
+- id: hook_checks_dimming_setting
+  type: fail_to_pass
+  origin: pr_diff
+  description: installHook checks disableSecondConsoleLogDimmingInStrictMode before
+    dimming
+- id: hook_default_settings_include_dimming
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Default settings include disableSecondConsoleLogDimmingInStrictMode:
+    false'
+- id: debugging_settings_ui_has_dimming_control
+  type: fail_to_pass
+  origin: pr_diff
+  description: DebuggingSettings component has state and UI for dimming control
+- id: hook_settings_injector_validates_dimming
+  type: fail_to_pass
+  origin: pr_diff
+  description: hookSettingsInjector validates the new boolean setting
+- id: inline_backend_passes_dimming_setting
+  type: fail_to_pass
+  origin: pr_diff
+  description: react-devtools-inline backend passes dimming setting to window global
+rubric:
+- rule: The README Settings table update should be consistent with the existing table
+    format and style
+  source:
+    path: packages/react-devtools-core/README.md
+    lines: 32-35
+    commit: ba5b843692519a226347aecfb789d90fcb24b4bc
+- rule: Modified JS files exist and are non-empty
+- rule: README.md documents the disableSecondConsoleLogDimmingInStrictMode setting
+  source:
+    path: packages/react-devtools-core/README.md
+    lines: '35'
+    commit: bcf97c7564cbe0c903a16a8d6ff52f124f2f06ff
+- rule: README.md shows the default value for the dimming setting as false
+  source:
+    path: packages/react-devtools-core/README.md
+    lines: '35'
+    commit: bcf97c7564cbe0c903a16a8d6ff52f124f2f06ff

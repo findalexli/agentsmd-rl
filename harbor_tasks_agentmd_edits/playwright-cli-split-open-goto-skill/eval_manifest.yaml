@@ -1,0 +1,252 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39164
+  base_commit: 0f542ecb2d37ec5bcf4e987d20ac379ccdba9033
+  merge_commit: 8b80c851215e3c21909da6cf0e78ee31fc3492a4
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without syntax errors
+- id: console_output_emoji_format
+  type: fail_to_pass
+  origin: pr_diff
+  description: "Console output messages use emoji status prefixes (\u2705/\u274C)"
+- id: console_output_backtick_paths
+  type: fail_to_pass
+  origin: pr_diff
+  description: Console output wraps file paths in backticks for readability
+- id: error_output_emoji_format
+  type: fail_to_pass
+  origin: pr_diff
+  description: "Error messages use \u274C prefix"
+- id: program_ts_not_stub
+  type: pass_to_pass
+  origin: static
+  description: program.ts install function has real logic, not stubs
+- id: upstream_test_matches_output
+  type: fail_to_pass
+  origin: repo_tests
+  description: Upstream test expects the new backtick-wrapped output format
+rubric:
+- rule: SKILL.md updates are consistent with the documentation style of existing command
+    examples
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 1-20
+    commit: 0f542ecb2d37ec5bcf4e987d20ac379ccdba9033
+- rule: Console output formatting (emoji + backticks) is consistent across all messages
+    in the install flow
+  source:
+    path: packages/playwright/src/mcp/terminal/program.ts
+    lines: 573-640
+    commit: 0f542ecb2d37ec5bcf4e987d20ac379ccdba9033
+- rule: "Default config creation and browser-found messages use \u2705 prefix"
+  reference: '# packages/playwright/src/skill/SKILL.md
+
+    # open new browser
+
+    playwright-cli open
+
+    # navigate to a page
+
+    playwright-cli goto https://playwright.dev
+
+    # interact with the page using refs from the snapshot
+
+    # take a screenshot
+
+    playwright-cli screenshot
+
+    # close the browser
+
+    playwright-cli close
+
+    playwright-cli open
+
+    # open and navigate right away
+
+    playwright-cli goto https://playwright.dev
+
+    playwright-cli close
+
+    playwright-cli install --skills
+
+    # create new browser session named "mysession" with persistent profi'
+- rule: SKILL.md documents 'goto' as a separate navigation command
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 12-14
+    commit: 8b80c851215e3c21909da6cf0e78ee31fc3492a4
+  reference: '# open new browser
+
+    playwright-cli open
+
+    # navigate to a page
+
+    playwright-cli goto https://playwright.dev
+
+    # interact with the page using refs from the snapshot
+
+    # take a screenshot
+
+    playwright-cli screenshot
+
+    # close the browser
+
+    playwright-cli close
+
+    playwright-cli open
+
+    # open and navigate right away
+
+    playwright-cli goto https://playwright.dev
+
+    playwright-cli close
+
+    playwright-cli install --skills
+
+    # create new browser session named "mysession" with persistent profile
+
+    playwright-cli -s=mysession open examp'
+- rule: SKILL.md shows 'playwright-cli open' without URL as standalone
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: '11'
+    commit: 8b80c851215e3c21909da6cf0e78ee31fc3492a4
+  reference: '# open new browser
+
+    playwright-cli open
+
+    # navigate to a page
+
+    playwright-cli goto https://playwright.dev
+
+    # interact with the page using refs from the snapshot
+
+    # take a screenshot
+
+    playwright-cli screenshot
+
+    # close the browser
+
+    playwright-cli close
+
+    playwright-cli open
+
+    # open and navigate right away
+
+    playwright-cli goto https://playwright.dev
+
+    playwright-cli close
+
+    playwright-cli install --skills
+
+    # create new browser session named "mysession" with persistent profile
+
+    playwright-cli -s=mysession open examp'
+- rule: SKILL.md examples end with 'playwright-cli close'
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 214-245
+    commit: 8b80c851215e3c21909da6cf0e78ee31fc3492a4
+  reference: '# open new browser
+
+    playwright-cli open
+
+    # navigate to a page
+
+    playwright-cli goto https://playwright.dev
+
+    # interact with the page using refs from the snapshot
+
+    # take a screenshot
+
+    playwright-cli screenshot
+
+    # close the browser
+
+    playwright-cli close
+
+    playwright-cli open
+
+    # open and navigate right away
+
+    playwright-cli goto https://playwright.dev
+
+    playwright-cli close
+
+    playwright-cli install --skills
+
+    # create new browser session named "mysession" with persistent profile
+
+    playwright-cli -s=mysession open examp'
+- rule: SKILL.md uses 'install --skills' instead of old 'install-skills'
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: '160'
+    commit: 8b80c851215e3c21909da6cf0e78ee31fc3492a4
+  reference: '# open new browser
+
+    playwright-cli open
+
+    # navigate to a page
+
+    playwright-cli goto https://playwright.dev
+
+    # interact with the page using refs from the snapshot
+
+    # take a screenshot
+
+    playwright-cli screenshot
+
+    # close the browser
+
+    playwright-cli close
+
+    playwright-cli open
+
+    # open and navigate right away
+
+    playwright-cli goto https://playwright.dev
+
+    playwright-cli close
+
+    playwright-cli install --skills
+
+    # create new browser session named "mysession" with persistent profile
+
+    playwright-cli -s=mysession open examp'
+- rule: SKILL.md still documents all core CLI commands
+  reference: '# packages/playwright/src/skill/SKILL.md
+
+    # open new browser
+
+    playwright-cli open
+
+    # navigate to a page
+
+    playwright-cli goto https://playwright.dev
+
+    # interact with the page using refs from the snapshot
+
+    # take a screenshot
+
+    playwright-cli screenshot
+
+    # close the browser
+
+    playwright-cli close
+
+    playwright-cli open
+
+    # open and navigate right away
+
+    playwright-cli goto https://playwright.dev
+
+    playwright-cli close
+
+    playwright-cli install --skills
+
+    # create new browser session named "mysession" with persistent profi'

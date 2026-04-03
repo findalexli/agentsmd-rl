@@ -1,0 +1,78 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 90422
+  base_commit: f922882fac7026198e1d95d936047aad72350358
+  merge_commit: 58fb9635cee59935bc15262aff92e5b41619fe39
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified JS alias files parse without syntax errors
+- id: server_exports_pipeable_stream
+  type: fail_to_pass
+  origin: pr_diff
+  description: react-dom-server.js re-exports renderToPipeableStream and resumeToPipeableStream
+- id: experimental_exports_pipeable_stream
+  type: fail_to_pass
+  origin: pr_diff
+  description: react-dom-server-experimental.js re-exports renderToPipeableStream
+    and resumeToPipeableStream
+- id: pipeable_exports_are_conditional
+  type: fail_to_pass
+  origin: pr_diff
+  description: Pipeable stream exports are guarded by conditional availability checks
+- id: existing_server_exports_preserved
+  type: pass_to_pass
+  origin: static
+  description: Existing exports (renderToReadableStream, resume, etc.) still present
+rubric:
+- rule: "The V8 JIT skill should follow the conventions in .agents/skills/authoring-skills/SKILL.md\
+    \ \u2014 well-structured sections, specific description field, practical code\
+    \ examples."
+  source:
+    path: .agents/skills/authoring-skills/SKILL.md
+    lines: 1-80
+    commit: f922882fac7026198e1d95d936047aad72350358
+- rule: New alias exports should follow the same conditional pattern (if (b.X) { exports.X
+    = b.X }) used by existing exports in the same files.
+  source:
+    path: packages/next/src/build/webpack/alias/react-dom-server.js
+    lines: 26-29
+    commit: f922882fac7026198e1d95d936047aad72350358
+- rule: .agents/skills/v8-jit/SKILL.md created with correct frontmatter
+  source:
+    path: .agents/skills/v8-jit/SKILL.md
+    lines: 1-11
+    commit: 58fb9635cee59935bc15262aff92e5b41619fe39
+  reference: "---\nname: v8-jit\ndescription: >\n  V8 JIT optimization patterns for\
+    \ writing high-performance JavaScript in\n  Next.js server internals. Use when\
+    \ writing or reviewing hot-path code in\n  app-render, stream-utils, routing,\
+    \ caching, or any per-request code path.\n  Covers hidden classes / shapes, monomorphic\
+    \ call sites, inline caches,\n  megamorphic deopt, closure allocation, array packing,\
+    \ and profiling with\n  --trace-opt / --trace-deopt.\nuser-invocable: false\n\
+    ---\n\n# V8 JIT Optimization\n\nUse this skill"
+- rule: SKILL.md covers hidden classes, monomorphism, and tiered compilation
+  source:
+    path: .agents/skills/v8-jit/SKILL.md
+    lines: 1-440
+    commit: 58fb9635cee59935bc15262aff92e5b41619fe39
+  reference: "---\nname: v8-jit\ndescription: >\n  V8 JIT optimization patterns for\
+    \ writing high-performance JavaScript in\n  Next.js server internals. Use when\
+    \ writing or reviewing hot-path code in\n  app-render, stream-utils, routing,\
+    \ caching, or any per-request code path.\n  Covers hidden classes / shapes, monomorphic\
+    \ call sites, inline caches,\n  megamorphic deopt, closure allocation, array packing,\
+    \ and profiling with\n  --trace-opt / --trace-deopt.\nuser-invocable: false\n\
+    ---\n\n# V8 JIT Optimization\n\nUse this skill"
+- rule: SKILL.md includes code examples and Next.js-specific context
+  source:
+    path: .agents/skills/v8-jit/SKILL.md
+    lines: 1-440
+    commit: 58fb9635cee59935bc15262aff92e5b41619fe39
+  reference: "---\nname: v8-jit\ndescription: >\n  V8 JIT optimization patterns for\
+    \ writing high-performance JavaScript in\n  Next.js server internals. Use when\
+    \ writing or reviewing hot-path code in\n  app-render, stream-utils, routing,\
+    \ caching, or any per-request code path.\n  Covers hidden classes / shapes, monomorphic\
+    \ call sites, inline caches,\n  megamorphic deopt, closure allocation, array packing,\
+    \ and profiling with\n  --trace-opt / --trace-deopt.\nuser-invocable: false\n\
+    ---\n\n# V8 JIT Optimization\n\nUse this skill"

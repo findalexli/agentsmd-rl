@@ -1,0 +1,58 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39974
+  base_commit: 3aba395f2d151d2345de3182b8b3e9564507c9e5
+  merge_commit: 69924568b93f2f37609fa2a617baf83d6ff11838
+checks:
+- id: wkbrowser_version_constant
+  type: fail_to_pass
+  origin: pr_diff
+  description: BROWSER_VERSION in wkBrowser.ts must be '26.4'
+- id: browsers_json_webkit_version
+  type: fail_to_pass
+  origin: pr_diff
+  description: browsers.json WebKit browserVersion must be '26.4'
+- id: device_descriptors_version
+  type: fail_to_pass
+  origin: pr_diff
+  description: Device descriptor user-agent strings must use Version/26.4
+- id: release_notes_webkit_version
+  type: fail_to_pass
+  origin: pr_diff
+  description: Release notes across all languages must list WebKit 26.4
+- id: wkbrowser_ts_valid_syntax
+  type: pass_to_pass
+  origin: static
+  description: wkBrowser.ts must have well-formed BROWSER_VERSION declaration
+- id: browsers_json_valid
+  type: pass_to_pass
+  origin: static
+  description: browsers.json must be valid JSON
+- id: device_descriptors_valid_json
+  type: pass_to_pass
+  origin: static
+  description: deviceDescriptorsSource.json must be valid JSON
+rubric:
+- rule: The skill document should explain how to find the latest stable Safari version
+    (not Technology Preview)
+  source:
+    path: .claude/skills/playwright-dev/webkit-safari-version.md
+    lines: 1-22
+    commit: 69924568b93f2f37609fa2a617baf83d6ff11838
+- rule: 'Commit message should follow the repo convention: label(scope): description'
+  source:
+    path: CLAUDE.md
+    lines: 73-82
+    commit: 3aba395f2d151d2345de3182b8b3e9564507c9e5
+- rule: README.md WebKit badge must show version 26.4
+- rule: Skill doc for updating WebKit Safari version must exist with correct content
+  source:
+    path: .claude/skills/playwright-dev/webkit-safari-version.md
+    lines: 1-22
+    commit: 69924568b93f2f37609fa2a617baf83d6ff11838
+- rule: SKILL.md must link to the webkit-safari-version skill doc
+  source:
+    path: .claude/skills/playwright-dev/SKILL.md
+    lines: '16'
+    commit: 69924568b93f2f37609fa2a617baf83d6ff11838

@@ -1,0 +1,90 @@
+version: '2.0'
+source:
+  repo: microsoft/vscode
+  pr: 306874
+  base_commit: 4eab4042e5814c2921da2d236ef73086dc5629d0
+  merge_commit: fcbabe4c7359d5c8fc6e1cd1b732ddbd60f8f161
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Pre-existing TypeScript files still have valid structure
+- id: export_script_handles_auth
+  type: fail_to_pass
+  origin: pr_diff
+  description: exportPolicyData.ts handles GitHub authentication (token + device flow)
+- id: contribution_merges_extension_policies
+  type: fail_to_pass
+  origin: pr_diff
+  description: policyExport.contribution.ts fetches distro product.json and merges
+    extension policies
+- id: contribution_supports_test_fixture
+  type: fail_to_pass
+  origin: pr_diff
+  description: policyExport.contribution.ts supports DISTRO_PRODUCT_JSON env var for
+    testing
+- id: package_json_export_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json has an export-policy-data npm script
+- id: extension_policy_fixture_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test fixture for extension policies exists with valid structure
+rubric:
+- rule: SKILL.md documentation is consistent with the style and structure of the existing
+    skill file
+  source:
+    path: .github/skills/add-policy/SKILL.md
+    lines: 1-130
+    commit: 4eab4042e5814c2921da2d236ef73086dc5629d0
+- rule: 'Code follows VS Code coding guidelines: tabs for indentation, PascalCase
+    for types, camelCase for functions'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 54-68
+    commit: 4eab4042e5814c2921da2d236ef73086dc5629d0
+- rule: Integration test passes DISTRO_PRODUCT_JSON env var pointing to fixture
+  reference: "# .github/skills/add-policy/SKILL.md\nnpm run export-policy-data\nThis\
+    \ script handles transpilation, sets up `GITHUB_TOKEN` (via `gh` CLI or GitHub\
+    \ OAuth device flow), and runs `--export-policy-data`. The export command reads\
+    \ extension configuration policies from the distro's `product.json` via the GitHub\
+    \ API and merges them into the output.\n\nExtension authors cannot add `policy:`\
+    \ fields directly\u2014their settings are defined in the extension's `package.json`,\
+    \ not in VS Code core. Instead, policies f"
+- rule: SKILL.md explains how extension policies work end-to-end
+  source:
+    path: .github/skills/add-policy/SKILL.md
+    lines: 137-152
+    commit: fcbabe4c7359d5c8fc6e1cd1b732ddbd60f8f161
+  reference: "npm run export-policy-data\nThis script handles transpilation, sets\
+    \ up `GITHUB_TOKEN` (via `gh` CLI or GitHub OAuth device flow), and runs `--export-policy-data`.\
+    \ The export command reads extension configuration policies from the distro's\
+    \ `product.json` via the GitHub API and merges them into the output.\n\nExtension\
+    \ authors cannot add `policy:` fields directly\u2014their settings are defined\
+    \ in the extension's `package.json`, not in VS Code core. Instead, policies for\
+    \ extension settings are defined in "
+- rule: SKILL.md documents the required fields for extension policy entries
+  source:
+    path: .github/skills/add-policy/SKILL.md
+    lines: 153-171
+    commit: fcbabe4c7359d5c8fc6e1cd1b732ddbd60f8f161
+  reference: "npm run export-policy-data\nThis script handles transpilation, sets\
+    \ up `GITHUB_TOKEN` (via `gh` CLI or GitHub OAuth device flow), and runs `--export-policy-data`.\
+    \ The export command reads extension configuration policies from the distro's\
+    \ `product.json` via the GitHub API and merges them into the output.\n\nExtension\
+    \ authors cannot add `policy:` fields directly\u2014their settings are defined\
+    \ in the extension's `package.json`, not in VS Code core. Instead, policies for\
+    \ extension settings are defined in "
+- rule: SKILL.md references npm run export-policy-data as the export workflow
+  source:
+    path: .github/skills/add-policy/SKILL.md
+    lines: 126-130
+    commit: fcbabe4c7359d5c8fc6e1cd1b732ddbd60f8f161
+  reference: "npm run export-policy-data\nThis script handles transpilation, sets\
+    \ up `GITHUB_TOKEN` (via `gh` CLI or GitHub OAuth device flow), and runs `--export-policy-data`.\
+    \ The export command reads extension configuration policies from the distro's\
+    \ `product.json` via the GitHub API and merges them into the output.\n\nExtension\
+    \ authors cannot add `policy:` fields directly\u2014their settings are defined\
+    \ in the extension's `package.json`, not in VS Code core. Instead, policies for\
+    \ extension settings are defined in "

@@ -1,0 +1,83 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39432
+  base_commit: 23b2c1599085bb6dad0f8fb916b631e3cb50ba4b
+  merge_commit: 03d79f60d61f8abea8f2c557524bd4af87380247
+checks:
+- id: root_package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: Root package.json remains valid JSON with scripts and workspaces
+- id: stub_package_has_bin_entry
+  type: fail_to_pass
+  origin: pr_diff
+  description: Stub package under packages/ declares playwright-cli as bin entry
+- id: stub_script_requires_program
+  type: fail_to_pass
+  origin: pr_diff
+  description: Stub JS file imports and invokes the playwright CLI program module
+- id: stub_script_has_error_handling
+  type: fail_to_pass
+  origin: pr_diff
+  description: Stub JS file handles errors with catch and process.exit
+rubric:
+- rule: Installation instructions are clear and follow the existing SKILL.md documentation
+    style
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 1-10
+    commit: 23b2c1599085bb6dad0f8fb916b631e3cb50ba4b
+- rule: Root package.json no longer has the old playwright-cli npm script
+  reference: '# packages/playwright/src/skill/SKILL.md
+
+    If global `playwright-cli` command is not available, try a local version via `npx
+    playwright-cli`:
+
+    npx playwright-cli --version
+
+    When local version is available, use `npx playwright-cli` in all commands. Otherwise,
+    install `playwright-cli` as a global command:
+
+    npm install -g @playwright/cli@latest'
+- rule: SKILL.md Installation does not lead with global install, references local/npx
+    first
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 218-226
+    commit: 03d79f60d61f8abea8f2c557524bd4af87380247
+  reference: 'If global `playwright-cli` command is not available, try a local version
+    via `npx playwright-cli`:
+
+    npx playwright-cli --version
+
+    When local version is available, use `npx playwright-cli` in all commands. Otherwise,
+    install `playwright-cli` as a global command:
+
+    npm install -g @playwright/cli@latest'
+- rule: SKILL.md recommends local npx approach before global npm install
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 218-228
+    commit: 03d79f60d61f8abea8f2c557524bd4af87380247
+  reference: 'If global `playwright-cli` command is not available, try a local version
+    via `npx playwright-cli`:
+
+    npx playwright-cli --version
+
+    When local version is available, use `npx playwright-cli` in all commands. Otherwise,
+    install `playwright-cli` as a global command:
+
+    npm install -g @playwright/cli@latest'
+- rule: SKILL.md still documents core CLI commands (open, click, snapshot)
+  reference: '# packages/playwright/src/skill/SKILL.md
+
+    If global `playwright-cli` command is not available, try a local version via `npx
+    playwright-cli`:
+
+    npx playwright-cli --version
+
+    When local version is available, use `npx playwright-cli` in all commands. Otherwise,
+    install `playwright-cli` as a global command:
+
+    npm install -g @playwright/cli@latest'

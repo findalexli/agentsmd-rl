@@ -1,0 +1,52 @@
+version: '2.0'
+source:
+  repo: cloudflare/workerd
+  pr: 6217
+  base_commit: e5eaa43c16c57bab977e5b53f4e57ca4418d084d
+  merge_commit: 5722c9fd916552cdb2a5e7c6ab66d563d925bcaf
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified JS files parse without syntax errors
+- id: ws_promise_not_wrapped
+  type: fail_to_pass
+  origin: pr_diff
+  description: WebSocket message listener not wrapped in new Promise() constructor
+- id: ws_has_timeout
+  type: fail_to_pass
+  origin: pr_diff
+  description: WebSocket test has a timeout mechanism to avoid hanging indefinitely
+- id: verbose_retry_logging_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verbose console.info retry logging removed from TCP port retry loop
+rubric:
+- rule: README cleanup commands should be safe to run when no matching containers/images
+    exist
+  source:
+    path: src/workerd/server/tests/container-client/README.md
+    lines: 1-39
+    commit: e5eaa43c16c57bab977e5b53f4e57ca4418d084d
+- rule: README uses xargs-based docker cleanup instead of $() subshell
+  source:
+    path: src/workerd/server/tests/container-client/README.md
+    lines: '20'
+    commit: 5722c9fd916552cdb2a5e7c6ab66d563d925bcaf
+  reference: "docker ps -aq --filter name=workerd-container-client-test | xargs -r\
+    \ docker rm -f\n   just stream-test //src/workerd/server/tests/container-client:container-client@"
+- rule: README documents correct Bazel target with :container-client@ suffix
+  source:
+    path: src/workerd/server/tests/container-client/README.md
+    lines: '38'
+    commit: 5722c9fd916552cdb2a5e7c6ab66d563d925bcaf
+  reference: "docker ps -aq --filter name=workerd-container-client-test | xargs -r\
+    \ docker rm -f\n   just stream-test //src/workerd/server/tests/container-client:container-client@"
+- rule: Test target in README ends with @ suffix per AGENTS.md conventions
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: e5eaa43c16c57bab977e5b53f4e57ca4418d084d
+  reference: "# src/workerd/server/tests/container-client/README.md\ndocker ps -aq\
+    \ --filter name=workerd-container-client-test | xargs -r docker rm -f\n   just\
+    \ stream-test //src/workerd/server/tests/container-client:container-client@"

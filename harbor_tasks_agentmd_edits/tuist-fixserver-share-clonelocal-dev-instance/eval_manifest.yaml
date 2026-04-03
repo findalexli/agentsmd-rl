@@ -1,0 +1,83 @@
+version: '2.0'
+source:
+  repo: tuist/tuist
+  pr: 9979
+  base_commit: 729c4d6361931ac3612f2440bb643e340fd9e5a2
+  merge_commit: 305327caea381917bef0ab9f913e4e91a678d37f
+checks:
+- id: dev_instance_script_generates_suffix
+  type: fail_to_pass
+  origin: pr_diff
+  description: dev_instance_env.sh creates .tuist-dev-instance and exports TUIST_DEV_INSTANCE
+- id: dev_instance_script_port_arithmetic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Port env vars computed as base_port + suffix (server, cache, minio)
+- id: dev_instance_script_persists_and_reuses_suffix
+  type: fail_to_pass
+  origin: pr_diff
+  description: Running script twice produces same suffix via .tuist-dev-instance file
+- id: dev_instance_script_validates_bad_suffix
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script rejects non-numeric or out-of-range suffix values
+- id: dev_instance_script_db_names
+  type: fail_to_pass
+  origin: pr_diff
+  description: Database name env vars include the instance suffix
+- id: server_runtime_reads_port_env
+  type: fail_to_pass
+  origin: pr_diff
+  description: server/config/runtime.exs reads TUIST_SERVER_PORT, TUIST_SERVER_POSTGRES_DB,
+    TUIST_SERVER_CLICKHOUSE_DB
+- id: cache_runtime_reads_port_env
+  type: fail_to_pass
+  origin: pr_diff
+  description: cache/config/runtime.exs reads TUIST_CACHE_PORT and TUIST_CACHE_SERVER_URL
+- id: environment_reads_minio_port
+  type: fail_to_pass
+  origin: pr_diff
+  description: environment.ex reads TUIST_MINIO_API_PORT and TUIST_MINIO_CONSOLE_PORT
+- id: environment_default_app_url_reads_server_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: environment.ex uses TUIST_SERVER_URL for dev app URL
+- id: gitignore_includes_instance_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: .gitignore includes .tuist-dev-instance
+rubric:
+- rule: README updates are consistent with the documentation style of the existing
+    server/README.md and cache/README.md
+  source:
+    path: server/README.md
+    lines: 1-40
+    commit: 729c4d6361931ac3612f2440bb643e340fd9e5a2
+- rule: 'The CLAUDE.md ''Intent Layer Maintenance'' rule is followed: if a new subsystem
+    boundary is introduced, relevant AGENTS.md nodes are kept up to date'
+  source:
+    path: CLAUDE.md
+    lines: 23-24
+    commit: 729c4d6361931ac3612f2440bb643e340fd9e5a2
+- rule: server/README.md documents clone-specific URL and .tuist-dev-instance
+  source:
+    path: server/README.md
+    lines: 26-39
+    commit: 305327caea381917bef0ab9f913e4e91a678d37f
+  reference: '1. Open the clone-specific local URL in your browser and log in with
+    the pre-made test user account. With `mise activate` enabled, each repo clone
+    persists its own numeric suffix in `.tuist-dev-instance`, which scopes the local
+    service ports, MinIO ports, and server databases. For example, a suffix of `443`
+    yields `http://localhost:8523`:
+
+    1. Change the url in `Tuist/Config.swift` to the clone-specific local URL, for
+    example `http://localhost:8523`.'
+- rule: cache/README.md documents clone-local dev instance suffix mechanism
+  source:
+    path: cache/README.md
+    lines: '61'
+    commit: 305327caea381917bef0ab9f913e4e91a678d37f
+  reference: The service uses a clone-local suffix from `.tuist-dev-instance` in development
+    mode through mise shell env. That suffix scopes the cache port and the main server
+    URL it talks to, so one repo clone can run its own paired `server/` and `cache/`
+    instances without colliding with other clones.

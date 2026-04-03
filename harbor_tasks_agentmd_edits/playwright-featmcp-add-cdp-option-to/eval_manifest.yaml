@@ -1,0 +1,82 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 40017
+  base_commit: 9d81a6754d9426295ac10bd33278fb2af476c8a9
+  merge_commit: bf7d912bd5974f9dc6a1a470af7b65896af4dc14
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have balanced braces and parentheses
+- id: attach_command_has_cdp_option
+  type: fail_to_pass
+  origin: pr_diff
+  description: attach command declaration has a cdp option for CDP endpoint URL
+- id: attach_name_arg_optional
+  type: fail_to_pass
+  origin: pr_diff
+  description: attach command name argument is optional (no longer required)
+- id: open_command_no_extension_option
+  type: fail_to_pass
+  origin: pr_diff
+  description: open command no longer has extension option (moved to attach)
+- id: attach_command_has_extension_option
+  type: fail_to_pass
+  origin: pr_diff
+  description: attach command has extension option
+- id: session_passes_cdp_arg
+  type: fail_to_pass
+  origin: pr_diff
+  description: Session passes --cdp argument to daemon process
+- id: config_passes_cdp_endpoint
+  type: fail_to_pass
+  origin: pr_diff
+  description: Config resolution passes cdpEndpoint and considers it for isolated
+    check
+- id: attach_target_exclusivity
+  type: fail_to_pass
+  origin: pr_diff
+  description: Attach errors when target name used with --cdp/--endpoint/--extension
+- id: open_command_still_has_browser_option
+  type: pass_to_pass
+  origin: static
+  description: open command retains browser, headed, persistent options
+- id: attach_command_has_endpoint_option
+  type: pass_to_pass
+  origin: static
+  description: attach command has endpoint option
+rubric:
+- rule: SKILL.md documentation update should be consistent with existing command documentation
+    style
+  source:
+    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+    lines: 1-10
+    commit: 9d81a6754d9426295ac10bd33278fb2af476c8a9
+- rule: Never add Co-Authored-By agents in commit message
+  source:
+    path: CLAUDE.md
+    lines: '83'
+    commit: 9d81a6754d9426295ac10bd33278fb2af476c8a9
+- rule: Daemon program.ts registers the --cdp option
+  reference: '# packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+
+    # Connect to browser via extension
+
+    playwright-cli attach --extension'
+- rule: SKILL.md documents 'attach --extension' and removes 'open --extension'
+  source:
+    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+    lines: 191-192
+    commit: bf7d912bd5974f9dc6a1a470af7b65896af4dc14
+  reference: '# Connect to browser via extension
+
+    playwright-cli attach --extension'
+- rule: SKILL.md places extension command under attach, not under open parameters
+  source:
+    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+    lines: 191-192
+    commit: bf7d912bd5974f9dc6a1a470af7b65896af4dc14
+  reference: '# Connect to browser via extension
+
+    playwright-cli attach --extension'

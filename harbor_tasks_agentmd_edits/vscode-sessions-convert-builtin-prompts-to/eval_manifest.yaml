@@ -1,0 +1,145 @@
+version: '2.0'
+source:
+  repo: microsoft/vscode
+  pr: 305347
+  base_commit: 6e1a95ed840d8dc312792b228f0e8b2d365a60ae
+  merge_commit: 201c439f3bd29d8be5b6f25cd9fb446ddb5061fb
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Key TypeScript files parse without obvious syntax errors
+- id: interface_has_skill_ui_integrations
+  type: fail_to_pass
+  origin: pr_diff
+  description: IAICustomizationWorkspaceService declares getSkillUIIntegrations returning
+    ReadonlyMap
+- id: sessions_service_has_skill_ui_mappings
+  type: fail_to_pass
+  origin: pr_diff
+  description: Sessions workspace service provides skill-to-UI mappings for act-on-feedback,
+    generate-run-commands
+- id: prompts_service_no_builtin_prompts
+  type: fail_to_pass
+  origin: pr_diff
+  description: AgenticPromptsService removes old built-in prompts system (BUILTIN_PROMPTS_URI,
+    discoverBuiltinPrompts)
+- id: list_widget_shows_ui_badge
+  type: fail_to_pass
+  origin: pr_diff
+  description: List widget calls getSkillUIIntegrations and displays UI Integration
+    badge
+- id: core_service_implements_empty_integrations
+  type: fail_to_pass
+  origin: pr_diff
+  description: Core VS Code workspace service implements getSkillUIIntegrations with
+    empty Map
+- id: old_prompt_files_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old .prompt.md files in vs/sessions/prompts/ are removed
+rubric:
+- rule: Documentation update is consistent with the style and structure of existing
+    AI_CUSTOMIZATIONS.md content
+  source:
+    path: src/vs/sessions/AI_CUSTOMIZATIONS.md
+    lines: 1-10
+    commit: 6e1a95ed840d8dc312792b228f0e8b2d365a60ae
+- rule: Use JSDoc style comments for functions, interfaces, enums, and classes
+  source:
+    path: .github/copilot-instructions.md
+    lines: '66'
+    commit: 6e1a95ed840d8dc312792b228f0e8b2d365a60ae
+- rule: 6 built-in prompts converted to SKILL.md files with name frontmatter
+  reference: '# src/vs/sessions/skills/act-on-feedback/SKILL.md
+
+    name: act-on-feedback
+
+    description: Act on user feedback attached to the current session. Use when the
+    user submits feedback on the session''s changes via the Submit Feedback button.
+
+    <!-- Customize this skill and select save to override its behavior. Delete that
+    copy to restore the built-in behavior. -->
+
+
+    # Act on Feedback
+
+
+    # src/vs/sessions/skills/create-draft-pr/SKILL.md
+
+    name: create-draft-pr
+
+    description: Create a draft pull request for the curre'
+- rule: AI_CUSTOMIZATIONS.md updated to document 'Built-in Skills' instead of 'Built-in
+    Prompts'
+  source:
+    path: src/vs/sessions/AI_CUSTOMIZATIONS.md
+    lines: 185-196
+    commit: 201c439f3bd29d8be5b6f25cd9fb446ddb5061fb
+  reference: '# src/vs/sessions/skills/act-on-feedback/SKILL.md
+
+    name: act-on-feedback
+
+    description: Act on user feedback attached to the current session. Use when the
+    user submits feedback on the session''s changes via the Submit Feedback button.
+
+    <!-- Customize this skill and select save to override its behavior. Delete that
+    copy to restore the built-in behavior. -->
+
+
+    # Act on Feedback
+
+
+    # src/vs/sessions/skills/create-draft-pr/SKILL.md
+
+    name: create-draft-pr
+
+    description: Create a draft pull request for the curre'
+- rule: AI_CUSTOMIZATIONS.md documents the new UI Integration badge feature and getSkillUIIntegrations
+  source:
+    path: src/vs/sessions/AI_CUSTOMIZATIONS.md
+    lines: 193-195
+    commit: 201c439f3bd29d8be5b6f25cd9fb446ddb5061fb
+  reference: '# src/vs/sessions/skills/act-on-feedback/SKILL.md
+
+    name: act-on-feedback
+
+    description: Act on user feedback attached to the current session. Use when the
+    user submits feedback on the session''s changes via the Submit Feedback button.
+
+    <!-- Customize this skill and select save to override its behavior. Delete that
+    copy to restore the built-in behavior. -->
+
+
+    # Act on Feedback
+
+
+    # src/vs/sessions/skills/create-draft-pr/SKILL.md
+
+    name: create-draft-pr
+
+    description: Create a draft pull request for the curre'
+- rule: User-facing strings use nls.localize per coding guidelines
+  source:
+    path: .github/copilot-instructions.md
+    lines: '102'
+    commit: 6e1a95ed840d8dc312792b228f0e8b2d365a60ae
+  reference: '# src/vs/sessions/skills/act-on-feedback/SKILL.md
+
+    name: act-on-feedback
+
+    description: Act on user feedback attached to the current session. Use when the
+    user submits feedback on the session''s changes via the Submit Feedback button.
+
+    <!-- Customize this skill and select save to override its behavior. Delete that
+    copy to restore the built-in behavior. -->
+
+
+    # Act on Feedback
+
+
+    # src/vs/sessions/skills/create-draft-pr/SKILL.md
+
+    name: create-draft-pr
+
+    description: Create a draft pull request for the curre'

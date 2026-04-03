@@ -1,0 +1,52 @@
+version: '2.0'
+source:
+  repo: SeleniumHQ/selenium
+  pr: 16784
+  base_commit: fb478af81bafa330a1bb71a2eb8ace6b207bfe46
+  merge_commit: 15947c3eb99b95c5b1c164f69c8fe182e5a6f84d
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All three BUILD.bazel files still declare a closure_test_suite
+- id: atoms_target_no_collision
+  type: fail_to_pass
+  origin: pr_diff
+  description: javascript/atoms closure_test_suite name != 'test'
+- id: chrome_driver_target_no_collision
+  type: fail_to_pass
+  origin: pr_diff
+  description: javascript/chrome-driver closure_test_suite name != 'test'
+- id: webdriver_target_no_collision
+  type: fail_to_pass
+  origin: pr_diff
+  description: javascript/webdriver closure_test_suite name != 'test'
+rubric:
+- rule: README.md debug server command references renamed target
+  source:
+    path: javascript/atoms/README.md
+    lines: '17'
+    commit: 15947c3eb99b95c5b1c164f69c8fe182e5a6f84d
+  reference: 'bazel run javascript/atoms:closure-test_debug_server
+
+    bazel test //javascript/atoms:closure-test{,-chrome,-edge,-safari}
+
+    bazel test --test_filter=shown_test --//common:headless=false javascript/atoms:closure-test-chrome'
+- rule: README.md bazel test commands reference renamed target
+  source:
+    path: javascript/atoms/README.md
+    lines: 35-43
+    commit: 15947c3eb99b95c5b1c164f69c8fe182e5a6f84d
+  reference: 'bazel run javascript/atoms:closure-test_debug_server
+
+    bazel test //javascript/atoms:closure-test{,-chrome,-edge,-safari}
+
+    bazel test --test_filter=shown_test --//common:headless=false javascript/atoms:closure-test-chrome'
+- rule: README.md example commands match the actual BUILD target name
+  reference: '# javascript/atoms/README.md
+
+    bazel run javascript/atoms:closure-test_debug_server
+
+    bazel test //javascript/atoms:closure-test{,-chrome,-edge,-safari}
+
+    bazel test --test_filter=shown_test --//common:headless=false javascript/atoms:closure-test-chrome'

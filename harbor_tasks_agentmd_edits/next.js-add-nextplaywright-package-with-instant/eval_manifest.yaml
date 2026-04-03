@@ -1,0 +1,51 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 90470
+  base_commit: 0f851c5ecd1872a209595770c5fe8b2b24274715
+  merge_commit: 574ac9f0f81379acbdac0054e76876c726af1c73
+checks:
+- id: root_tsconfig_valid_json
+  type: pass_to_pass
+  origin: static
+  description: Root tsconfig.json must remain valid JSON
+- id: package_json_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: '@next/playwright package.json must exist with correct name and dist
+    fields'
+- id: instant_function_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: index.ts must export an async function named 'instant' taking page
+    + callback
+- id: instant_cookie_protocol
+  type: fail_to_pass
+  origin: pr_diff
+  description: instant() must use the 'next-instant-navigation-testing' cookie to
+    control navigation
+- id: instant_cleanup_on_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: instant() must clean up the cookie even if the callback throws (try/finally)
+- id: tsconfig_path_mapping
+  type: fail_to_pass
+  origin: pr_diff
+  description: Root tsconfig.json must map '@next/playwright' to the package source
+rubric:
+- rule: README documentation should be consistent with the style of other package
+    READMEs in the monorepo
+  source:
+    path: CLAUDE.md
+    lines: 28-36
+    commit: 0f851c5ecd1872a209595770c5fe8b2b24274715
+- rule: README.md must document the instant() testing helper with usage examples
+  source:
+    path: packages/next-playwright/README.md
+    lines: 1-107
+    commit: 574ac9f0f81379acbdac0054e76876c726af1c73
+- rule: README.md must explain the cookie-based protocol so others can replicate it
+  source:
+    path: packages/next-playwright/README.md
+    lines: 82-107
+    commit: 574ac9f0f81379acbdac0054e76876c726af1c73

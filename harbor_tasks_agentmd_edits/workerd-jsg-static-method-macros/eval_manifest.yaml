@@ -1,0 +1,77 @@
+version: '2.0'
+source:
+  repo: cloudflare/workerd
+  pr: 6279
+  base_commit: d7dc27c438f7ea1fd5eb28a0258d5dbae265a99d
+  merge_commit: 287d33c71dc9dcbb1a12a9c30b562fb5c28238ec
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Rust and C++ files exist and are non-empty
+- id: jsg_method_detects_receiver
+  type: fail_to_pass
+  origin: pr_diff
+  description: jsg_method macro detects whether a method has a self receiver
+- id: static_method_invocation_uses_type_call
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Static method callbacks invoke via Self:: not via self_'
+- id: member_static_method_variant
+  type: fail_to_pass
+  origin: pr_diff
+  description: Resource impl uses Member::StaticMethod for receiver-less methods
+- id: ffi_function_template_get_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: FFI layer exposes function_template_get_function for constructor access
+- id: v8_function_type_and_conversion
+  type: fail_to_pass
+  origin: pr_diff
+  description: v8.rs defines Function type with Value conversion and FunctionTemplate
+    accessor
+rubric:
+- rule: Documentation updates are consistent with the style and formatting of existing
+    content in each file
+  source:
+    path: src/rust/AGENTS.md
+    lines: 1-30
+    commit: d7dc27c438f7ea1fd5eb28a0258d5dbae265a99d
+- rule: Code comments follow the SAFETY comment convention for unsafe blocks
+  source:
+    path: docs/reference/rust-review-checklist.md
+    lines: 20-25
+    commit: d7dc27c438f7ea1fd5eb28a0258d5dbae265a99d
+- rule: src/rust/AGENTS.md documents receiver-less methods become static
+  source:
+    path: src/rust/AGENTS.md
+    lines: '28'
+    commit: 287d33c71dc9dcbb1a12a9c30b562fb5c28238ec
+  reference: "- **JSG resources**: must include `_state: jsg::ResourceState` field;\
+    \ `#[jsg_method]` auto-converts `snake_case` \u2192 `camelCase`; methods with\
+    \ `&self`/`&mut self` become instance methods, methods without a receiver become\
+    \ static methods"
+- rule: src/rust/jsg-macros/README.md distinguishes static vs instance methods
+  source:
+    path: src/rust/jsg-macros/README.md
+    lines: 27-41
+    commit: 287d33c71dc9dcbb1a12a9c30b562fb5c28238ec
+  reference: "The macro automatically detects whether a method is an instance method\
+    \ or a static method based on the presence of a receiver (`&self` or `&mut self`):\n\
+    \n- **Instance methods** (with `&self`/`&mut self`) are placed on the prototype,\
+    \ called on instances (e.g., `obj.getName()`).\n- **Static methods** (without\
+    \ a receiver) are placed on the constructor, called on the class itself (e.g.,\
+    \ `MyClass.create()`).\n\n    // Instance method: called as obj.parseCaaRecord(...)\n\
+    \    // Instance method: called as ob"
+- rule: docs/reference/rust-review-checklist.md explains receiver-based method registration
+  source:
+    path: docs/reference/rust-review-checklist.md
+    lines: 67-68
+    commit: 287d33c71dc9dcbb1a12a9c30b562fb5c28238ec
+  reference: "# src/rust/AGENTS.md\n- **JSG resources**: must include `_state: jsg::ResourceState`\
+    \ field; `#[jsg_method]` auto-converts `snake_case` \u2192 `camelCase`; methods\
+    \ with `&self`/`&mut self` become instance methods, methods without a receiver\
+    \ become static methods\n\n# src/rust/jsg-macros/README.md\nThe macro automatically\
+    \ detects whether a method is an instance method or a static method based on the\
+    \ presence of a receiver (`&self` or `&mut self`):\n\n- **Instance methods** (with\
+    \ `&self`/`&mut self`) are plac"

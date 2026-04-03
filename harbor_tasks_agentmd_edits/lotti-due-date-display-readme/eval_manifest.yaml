@@ -1,0 +1,68 @@
+version: '2.0'
+source:
+  repo: matthiasn/lotti
+  pr: 2565
+  base_commit: 88b2b0e5c762e01aeeefbf27dcc339c05a63a0a4
+  merge_commit: 48f5da393b2006f134fc55a77fbe8983135e0fb8
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Dart files have balanced braces and parens
+- id: task_card_hides_due_date_for_completed
+  type: fail_to_pass
+  origin: pr_diff
+  description: ModernTaskCard._buildDateRow skips due date display for completed/rejected
+    tasks
+- id: due_date_wrapper_disables_urgency_for_completed
+  type: fail_to_pass
+  origin: pr_diff
+  description: TaskDueDateWrapper disables urgency colors for completed/rejected tasks
+rubric:
+- rule: Update the feature README files we touch such that they match reality in the
+    codebase, not only for what we touch but in their entirety.
+  source:
+    path: AGENTS.md
+    lines: '92'
+    commit: 88b2b0e5c762e01aeeefbf27dcc339c05a63a0a4
+- rule: Config update is consistent with the style of existing documentation in README.md
+  source:
+    path: README.md
+    lines: 1-10
+    commit: 88b2b0e5c762e01aeeefbf27dcc339c05a63a0a4
+- rule: README.md updated from 'Coming Soon' to live Meet Lotti blog series with link
+  source:
+    path: README.md
+    lines: 15-22
+    commit: 48f5da393b2006f134fc55a77fbe8983135e0fb8
+  reference: "## Blog Series: Meet Lotti\nThe beginning of a [**multi-part blog series\
+    \ with video walkthroughs**](https://matthiasnehlsen.substack.com/p/meet-lotti)\
+    \ exploring everything Lotti can do is now live! From task management to AI-powered\
+    \ insights \u2014 learn how to take control of your productivity while keeping\
+    \ your data private.\nStart reading: [**Meet Lotti**](https://matthiasnehlsen.substack.com/p/meet-lotti)\
+    \ | [**Project Background**](docs/BACKGROUND.md)"
+- rule: CHANGELOG.md documents due date visibility changes for completed/rejected
+    tasks
+  source:
+    path: CHANGELOG.md
+    lines: 11-19
+    commit: 48f5da393b2006f134fc55a77fbe8983135e0fb8
+  reference: "## [0.9.794] - 2026-01-02\n### Changed\n- Due Date Visibility Refinements:\
+    \ Improved UX for completed and rejected tasks\n  - Due dates are now hidden on\
+    \ task cards for completed and rejected tasks\n  - Due dates in entry details\
+    \ view show grayed-out styling for completed/rejected tasks (no red/orange urgency\
+    \ colors)\n- Updated README and Flatpak metainfo to reference the launched \"\
+    Meet Lotti\" blog series\n\n### Added\n- Tests for due date visibility behavior\
+    \ based on task status"
+- rule: AGENTS.md requires adding a CHANGELOG entry for changes
+  source:
+    path: AGENTS.md
+    lines: '91'
+    commit: 88b2b0e5c762e01aeeefbf27dcc339c05a63a0a4
+  reference: "# CHANGELOG.md\n## [0.9.794] - 2026-01-02\n### Changed\n- Due Date Visibility\
+    \ Refinements: Improved UX for completed and rejected tasks\n  - Due dates are\
+    \ now hidden on task cards for completed and rejected tasks\n  - Due dates in\
+    \ entry details view show grayed-out styling for completed/rejected tasks (no\
+    \ red/orange urgency colors)\n- Updated README and Flatpak metainfo to reference\
+    \ the launched \"Meet Lotti\" blog series\n\n### Added\n- Tests for due date visibility\
+    \ behavior based on task status\n\n# README"

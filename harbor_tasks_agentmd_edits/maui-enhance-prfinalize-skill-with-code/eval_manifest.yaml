@@ -1,0 +1,109 @@
+version: '2.0'
+source:
+  repo: dotnet/maui
+  pr: 33861
+  base_commit: 64d90e3ca4e83cf44a7a75c5ffa95a3e7c3147b7
+  merge_commit: bd35efb83f04758a0435bc6e4af9b1a0727009e6
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified PowerShell and Markdown files exist and are non-empty
+- id: review_pr_run_finalize_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: Review-PR.ps1 declares and uses a -RunFinalize switch parameter
+- id: review_pr_post_summary_comment_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: Review-PR.ps1 declares and uses a -PostSummaryComment switch parameter
+- id: review_pr_default_non_interactive
+  type: fail_to_pass
+  origin: pr_diff
+  description: Review-PR.ps1 defaults to non-interactive mode (Interactive is opt-in
+    switch)
+- id: review_pr_git_safety_rules
+  type: fail_to_pass
+  origin: pr_diff
+  description: Review-PR.ps1 includes git safety rules warning against checkout/push/reset
+- id: finalize_comment_code_review_params
+  type: fail_to_pass
+  origin: pr_diff
+  description: post-pr-finalize-comment.ps1 accepts CodeReviewStatus and CodeReviewFindings
+    parameters
+- id: finalize_comment_builds_code_review_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: post-pr-finalize-comment.ps1 builds a Code Review HTML section in the
+    comment
+- id: review_pr_multi_phase_execution
+  type: pass_to_pass
+  origin: static
+  description: Review-PR.ps1 has multi-phase execution logic, not just parameter declarations
+rubric:
+- rule: Config updates are consistent with the style of existing documentation in
+    the repo
+  source:
+    path: .github/copilot-instructions.md
+    lines: 1-10
+    commit: 64d90e3ca4e83cf44a7a75c5ffa95a3e7c3147b7
+- rule: Safety rules use clear, unambiguous language (NEVER, CRITICAL) and include
+    rationale
+  source:
+    path: .github/skills/pr-finalize/SKILL.md
+    lines: 1-15
+    commit: bd35efb83f04758a0435bc6e4af9b1a0727009e6
+- rule: pr-finalize SKILL.md documents a two-phase workflow including code review
+  source:
+    path: .github/skills/pr-finalize/SKILL.md
+    lines: 7-10
+    commit: bd35efb83f04758a0435bc6e4af9b1a0727009e6
+  reference: 'description: Finalizes any PR for merge by verifying title/description
+    match implementation AND performing code review for best practices. Use when asked
+    to "finalize PR", "check PR description", "review commit message", before merging
+    any PR, or when PR implementation changed during review. Do NOT use for extracting
+    lessons (use learn-from-pr), writing tests (use write-tests-agent), or investigating
+    build failures (use pr-build-status).
+
+    Ensures PR title and description accurately reflect the im'
+- rule: pr-finalize SKILL.md has safety rules against --approve and --request-changes
+  source:
+    path: .github/skills/pr-finalize/SKILL.md
+    lines: 14-28
+    commit: bd35efb83f04758a0435bc6e4af9b1a0727009e6
+  reference: 'description: Finalizes any PR for merge by verifying title/description
+    match implementation AND performing code review for best practices. Use when asked
+    to "finalize PR", "check PR description", "review commit message", before merging
+    any PR, or when PR implementation changed during review. Do NOT use for extracting
+    lessons (use learn-from-pr), writing tests (use write-tests-agent), or investigating
+    build failures (use pr-build-status).
+
+    Ensures PR title and description accurately reflect the im'
+- rule: copilot-instructions.md has a CRITICAL note about never approving PRs near
+    pr-finalize
+  source:
+    path: .github/copilot-instructions.md
+    lines: '243'
+    commit: bd35efb83f04758a0435bc6e4af9b1a0727009e6
+  reference: "- **Purpose**: Verifies PR title and description match actual implementation,\
+    \ AND performs code review for best practices before merge.\n   - **\U0001F6A8\
+    \ CRITICAL**: NEVER use `--approve` or `--request-changes` - only post comments.\
+    \ Approval is a human decision."
+- rule: ai-summary-comment SKILL.md documents three sections including Code Review
+  source:
+    path: .github/skills/ai-summary-comment/SKILL.md
+    lines: 59-67
+    commit: bd35efb83f04758a0435bc6e4af9b1a0727009e6
+  reference: 'The `post-pr-finalize-comment.ps1` script posts a **separate comment**
+    identified by `<!-- PR-FINALIZE-COMMENT -->`. This comment contains three sections:
+
+    - **Title**: Shows the current vs recommended PR title
+
+    - **Description**: Shows description assessment, missing elements, and **recommended
+    description**
+
+    - **Code Review**: Shows code review findings (critical issues, suggestions, positive
+    observations)
+
+    If an existing finalize comment exists, it will be replaced with the updated sections.
+    This'

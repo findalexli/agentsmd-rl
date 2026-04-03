@@ -1,0 +1,117 @@
+version: '2.0'
+source:
+  repo: electron/electron
+  pr: 50194
+  base_commit: 378659c535b2b0a92bdbe82a790fa0799e53df9f
+  merge_commit: 1f6dbb09172fce997f1d088583ad320ecc92002a
+checks:
+- id: existing_api_descriptions_preserved
+  type: pass_to_pass
+  origin: static
+  description: Core API descriptions in modified docs are not clobbered
+- id: global_shortcut_register_has_history
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'globalShortcut.register has YAML history block with PR #534'
+- id: global_shortcut_register_all_has_history
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'globalShortcut.registerAll has YAML history block with PR #15542'
+- id: in_app_purchase_purchaseproduct_has_changes
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'inAppPurchase.purchaseProduct has changes entries including promisification
+    PR #17355'
+- id: ipc_main_handle_has_history
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'ipcMain.handle has YAML history block with PR #18449'
+- id: image_view_class_has_history
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'ImageView class has YAML history block with PR #46760'
+- id: ipc_renderer_invoke_has_history
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'ipcRenderer.invoke has YAML history block with PR #18449'
+rubric:
+- rule: YAML history blocks are placed directly after the Markdown header, before
+    parameters, matching the style guide
+  source:
+    path: docs/CLAUDE.md
+    lines: 12-24
+    commit: 1f6dbb09172fce997f1d088583ad320ecc92002a
+- rule: docs/CLAUDE.md guide is consistent with the style and structure of other Electron
+    documentation
+  source:
+    path: docs/README.md
+    lines: 1-10
+    commit: 378659c535b2b0a92bdbe82a790fa0799e53df9f
+- rule: All YAML history blocks in modified docs parse as valid YAML with required
+    keys
+  reference: '# CLAUDE.md
+
+    npm run lint:api-history  # Validate API history YAML blocks in docs
+
+
+    # docs/CLAUDE.md
+
+    # Electron Documentation Guide
+
+
+    ## API History Migration
+
+
+    Guide: `docs/development/api-history-migration-guide.md`
+
+    Style rules: `docs/development/style-guide.md` (see "API History" section)
+
+    Schema: `docs/api-history.schema.json`
+
+    Lint: `npm run lint:api-history`
+
+
+    ### Format
+
+
+    Place YAML history block directly after the Markdown header, before parameters:
+
+
+    ````md
+
+    ### `module.method(args)`
+
+
+    <!--
+
+    ```YAM'
+- rule: docs/CLAUDE.md created with API history migration guide
+  source:
+    path: docs/CLAUDE.md
+    lines: 1-58
+    commit: 1f6dbb09172fce997f1d088583ad320ecc92002a
+  reference: "# Electron Documentation Guide\n\n## API History Migration\n\nGuide:\
+    \ `docs/development/api-history-migration-guide.md`\nStyle rules: `docs/development/style-guide.md`\
+    \ (see \"API History\" section)\nSchema: `docs/api-history.schema.json`\nLint:\
+    \ `npm run lint:api-history`\n\n### Format\n\nPlace YAML history block directly\
+    \ after the Markdown header, before parameters:\n\n````md\n### `module.method(args)`\n\
+    \n<!--\n```YAML history\nadded:\n  - pr-url: https://github.com/electron/electron/pull/XXXXX\n\
+    ```\n-->\n\n* `arg` type "
+- rule: docs/CLAUDE.md includes git research commands and backport guidance
+  source:
+    path: docs/CLAUDE.md
+    lines: 27-33
+    commit: 1f6dbb09172fce997f1d088583ad320ecc92002a
+  reference: "# Electron Documentation Guide\n\n## API History Migration\n\nGuide:\
+    \ `docs/development/api-history-migration-guide.md`\nStyle rules: `docs/development/style-guide.md`\
+    \ (see \"API History\" section)\nSchema: `docs/api-history.schema.json`\nLint:\
+    \ `npm run lint:api-history`\n\n### Format\n\nPlace YAML history block directly\
+    \ after the Markdown header, before parameters:\n\n````md\n### `module.method(args)`\n\
+    \n<!--\n```YAML history\nadded:\n  - pr-url: https://github.com/electron/electron/pull/XXXXX\n\
+    ```\n-->\n\n* `arg` type "
+- rule: Root CLAUDE.md documents the lint:api-history command
+  source:
+    path: CLAUDE.md
+    lines: '195'
+    commit: 1f6dbb09172fce997f1d088583ad320ecc92002a
+  reference: 'npm run lint:api-history  # Validate API history YAML blocks in docs'

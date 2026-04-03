@@ -1,0 +1,60 @@
+version: '2.0'
+source:
+  repo: dotnet/maui
+  pr: 33750
+  base_commit: 62894e405b36c5b6cede44fdfe56832e26cdc8af
+  merge_commit: 44a8f306c7d5649b96403e6227de359be6b18922
+checks:
+- id: scripts_exist
+  type: pass_to_pass
+  origin: static
+  description: Both PowerShell scripts must exist
+- id: init_script_checks_gh_prerequisite
+  type: fail_to_pass
+  origin: pr_diff
+  description: init-triage-session.ps1 checks for gh CLI before proceeding
+- id: init_script_uses_invoke_restmethod
+  type: fail_to_pass
+  origin: pr_diff
+  description: init-triage-session.ps1 uses Invoke-RestMethod for milestones instead
+    of gh api
+- id: query_script_checks_gh_prerequisite
+  type: fail_to_pass
+  origin: pr_diff
+  description: query-issues.ps1 checks for gh CLI before proceeding
+rubric:
+- rule: Config documentation updates are consistent with the style of the existing
+    SKILL.md
+  source:
+    path: .github/skills/issue-triage/SKILL.md
+    lines: 1-15
+    commit: 62894e405b36c5b6cede44fdfe56832e26cdc8af
+- rule: PowerShell prerequisite checks provide actionable error messages with install
+    instructions
+  source:
+    path: .github/copilot-instructions.md
+    lines: 1-10
+    commit: 62894e405b36c5b6cede44fdfe56832e26cdc8af
+- rule: SKILL.md must exist and be non-empty
+- rule: SKILL.md retains the core Triage Workflow section
+- rule: query-issues.ps1 verifies gh CLI authentication status
+- rule: SKILL.md has Prerequisites section with install instructions
+  source:
+    path: .github/skills/issue-triage/SKILL.md
+    lines: 19-41
+    commit: 44a8f306c7d5649b96403e6227de359be6b18922
+- rule: SKILL.md has Common Mistakes section with anti-patterns
+  source:
+    path: .github/skills/issue-triage/SKILL.md
+    lines: 222-232
+    commit: 44a8f306c7d5649b96403e6227de359be6b18922
+- rule: SKILL.md documents automatic batch reload (Step 6) with -Skip
+  source:
+    path: .github/skills/issue-triage/SKILL.md
+    lines: 119-147
+    commit: 44a8f306c7d5649b96403e6227de359be6b18922
+- rule: SKILL.md has CRITICAL rule about always using skill scripts
+  source:
+    path: .github/skills/issue-triage/SKILL.md
+    lines: 48-50
+    commit: 44a8f306c7d5649b96403e6227de359be6b18922

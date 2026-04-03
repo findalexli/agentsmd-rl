@@ -1,0 +1,94 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 44790
+  base_commit: aa1c36f1a9f454e69c4eac83071ced235942c7ed
+  merge_commit: 2cd52c267ce4d0212eaa40c0ec7192a11654336f
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files must parse without errors
+- id: cache_functions_exist
+  type: fail_to_pass
+  origin: pr_diff
+  description: check_modeling_structure.py must define _content_hash, _load_cache,
+    _save_cache
+- id: content_hash_uses_rules
+  type: fail_to_pass
+  origin: pr_diff
+  description: _content_hash incorporates both file content and enabled rules into
+    hash
+- id: no_cache_cli_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script must accept --no-cache CLI flag to bypass caching
+- id: cache_file_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cache stored as .check_modeling_structure_cache.json in utils/
+- id: makefile_typing_target
+  type: fail_to_pass
+  origin: pr_diff
+  description: Makefile must have a separate 'typing' target for type checking
+- id: style_target_no_type_checking
+  type: fail_to_pass
+  origin: pr_diff
+  description: style target must not run check_types.py (moved to typing)
+- id: check_repo_runs_modeling_structure_hard
+  type: fail_to_pass
+  origin: pr_diff
+  description: check-repo must run check_modeling_structure.py without soft-fail prefix
+- id: cache_load_has_real_logic
+  type: pass_to_pass
+  origin: static
+  description: _load_cache must have real logic using JSON serialization
+- id: gitignore_has_cache_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: .gitignore must exclude the modeling structure cache file
+rubric:
+- rule: Agent config updates are consistent with the style of existing .ai/AGENTS.md
+    entries
+  source:
+    path: .ai/AGENTS.md
+    lines: 1-10
+    commit: aa1c36f1a9f454e69c4eac83071ced235942c7ed
+- rule: SKILL.md updates preserve the existing workflow structure and only change
+    command references
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 1-25
+    commit: aa1c36f1a9f454e69c4eac83071ced235942c7ed
+- rule: .ai/AGENTS.md must document 'make typing' and update 'make style' description
+  source:
+    path: .ai/AGENTS.md
+    lines: 1-4
+    commit: 2cd52c267ce4d0212eaa40c0ec7192a11654336f
+  reference: "- `make style`: runs formatters and linters (ruff), necessary to pass\
+    \ code style checks\n- `make typing`: runs the ty type checker and model structure\
+    \ rules\n- `make check-repo` \u2014 CI-style consistency checks (includes `make\
+    \ typing`)"
+- rule: SKILL.md must reference 'make typing' instead of 'make style' for type checks
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 1-20
+    commit: 2cd52c267ce4d0212eaa40c0ec7192a11654336f
+  reference: "description: Fixes broken typing checks detected by ty, make typing,\
+    \ or make check-repo. Use when typing errors appear in local runs, CI, or PR logs.\n\
+    - Optional `make typing` or CI output showing typing failures.\n   - If you already\
+    \ have `make typing` or CI output, extract the failing file/module paths.\n  \
+    \   make typing\n   - Re-run `make typing` to confirm the type/model-rules step\
+    \ passes"
+- rule: docs/source/en/pr_checks.md must document 'make typing' command
+  source:
+    path: docs/source/en/pr_checks.md
+    lines: 93-100
+    commit: 2cd52c267ce4d0212eaa40c0ec7192a11654336f
+  reference: "# .ai/AGENTS.md\n- `make style`: runs formatters and linters (ruff),\
+    \ necessary to pass code style checks\n- `make typing`: runs the ty type checker\
+    \ and model structure rules\n- `make check-repo` \u2014 CI-style consistency checks\
+    \ (includes `make typing`)\n\n# .ai/skills/add-or-fix-type-checking/SKILL.md\n\
+    description: Fixes broken typing checks detected by ty, make typing, or make check-repo.\
+    \ Use when typing errors appear in local runs, CI, or PR logs.\n- Optional `make\
+    \ typing` or CI output showing typing fa"

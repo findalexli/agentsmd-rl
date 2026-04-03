@@ -1,0 +1,93 @@
+version: '2.0'
+source:
+  repo: tuist/tuist
+  pr: 9852
+  base_commit: 37e098781f47d8ba89bf9afe88817671dddecfc2
+  merge_commit: f9286e67e07dd2d71cd209ce1a6e22f30e057ace
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Elixir file has balanced defmodule/end structure
+- id: dev_environment_check_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: user_login_live.ex queries Environment.dev?() and assigns it to socket
+- id: dev_login_form_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: Login page includes a form with test user credentials and submit button
+- id: dev_login_gated_to_dev_environment
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test user login form conditionally rendered only in dev environment
+- id: no_po_files_modified
+  type: pass_to_pass
+  origin: agent_config
+  description: Translation .po files must not be modified (only tuistit bot)
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 37e098781f47d8ba89bf9afe88817671dddecfc2
+rubric:
+- rule: Documentation updates are consistent with the style and tone of existing setup
+    instructions
+  source:
+    path: server/README.md
+    lines: 1-15
+    commit: 37e098781f47d8ba89bf9afe88817671dddecfc2
+- rule: The dev-only login form follows Phoenix LiveView conventions and the existing
+    code style in user_login_live.ex
+  source:
+    path: CLAUDE.md
+    lines: 120-130
+    commit: 37e098781f47d8ba89bf9afe88817671dddecfc2
+- rule: server/README.md no longer requires 1Password or dev.key for setup
+  source:
+    path: server/README.md
+    lines: 18-21
+    commit: f9286e67e07dd2d71cd209ce1a6e22f30e057ace
+  reference: "1. Clone the repository: `git clone https://github.com/tuist/tuist.git`.\n\
+    1. Install system dependencies with: `mise install`.\n1. Install dependencies:\
+    \ `mise run install`\n1. Create and set up the database: `mise run db:setup`\n\
+    1. Open `http://localhost:8080` in your browser and log in with the pre-made test\
+    \ user account:\n> [!NOTE]\n> First-party developers can load encrypted secrets\
+    \ from `priv/secrets/dev.key`. External contributors don't need this key \u2014\
+    \ the server runs locally without it. OAuth, S"
+- rule: server/README.md explains dev.key is optional for external contributors
+  source:
+    path: server/README.md
+    lines: 30-31
+    commit: f9286e67e07dd2d71cd209ce1a6e22f30e057ace
+  reference: "1. Clone the repository: `git clone https://github.com/tuist/tuist.git`.\n\
+    1. Install system dependencies with: `mise install`.\n1. Install dependencies:\
+    \ `mise run install`\n1. Create and set up the database: `mise run db:setup`\n\
+    1. Open `http://localhost:8080` in your browser and log in with the pre-made test\
+    \ user account:\n> [!NOTE]\n> First-party developers can load encrypted secrets\
+    \ from `priv/secrets/dev.key`. External contributors don't need this key \u2014\
+    \ the server runs locally without it. OAuth, S"
+- rule: docs/contributors/code/server.md no longer requires TUIST_SECRET_KEY_BASE
+    export
+  source:
+    path: docs/docs/en/contributors/code/server.md
+    lines: 27-35
+    commit: f9286e67e07dd2d71cd209ce1a6e22f30e057ace
+  reference: "# server/README.md\n1. Clone the repository: `git clone https://github.com/tuist/tuist.git`.\n\
+    1. Install system dependencies with: `mise install`.\n1. Install dependencies:\
+    \ `mise run install`\n1. Create and set up the database: `mise run db:setup`\n\
+    1. Open `http://localhost:8080` in your browser and log in with the pre-made test\
+    \ user account:\n> [!NOTE]\n> First-party developers can load encrypted secrets\
+    \ from `priv/secrets/dev.key`. External contributors don't need this key \u2014\
+    \ the server runs locally w"
+- rule: docs/contributors/code/server.md mentions the dev test user login button
+  source:
+    path: docs/docs/en/contributors/code/server.md
+    lines: 37-38
+    commit: f9286e67e07dd2d71cd209ce1a6e22f30e057ace
+  reference: "# server/README.md\n1. Clone the repository: `git clone https://github.com/tuist/tuist.git`.\n\
+    1. Install system dependencies with: `mise install`.\n1. Install dependencies:\
+    \ `mise run install`\n1. Create and set up the database: `mise run db:setup`\n\
+    1. Open `http://localhost:8080` in your browser and log in with the pre-made test\
+    \ user account:\n> [!NOTE]\n> First-party developers can load encrypted secrets\
+    \ from `priv/secrets/dev.key`. External contributors don't need this key \u2014\
+    \ the server runs locally w"

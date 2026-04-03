@@ -1,0 +1,80 @@
+version: '2.0'
+source:
+  repo: grafana/mimir
+  pr: 14458
+  base_commit: 1ab789daf1b3d9393386b302622d2906bc08b2dc
+  merge_commit: 2f66c682807a07dba95f7979aba2def41836a14c
+checks:
+- id: external_dashboard_url_helper
+  type: fail_to_pass
+  origin: pr_diff
+  description: alerts-utils.libsonnet defines externalDashboardURL using std.md5 for
+    UID and cluster_labels for var params
+- id: dashboard_url_annotation_helper
+  type: fail_to_pass
+  origin: pr_diff
+  description: alerts-utils.libsonnet defines dashboardURLAnnotation returning dashboard_url
+    field
+- id: with_dashboard_url_helper
+  type: fail_to_pass
+  origin: pr_diff
+  description: alerts-utils.libsonnet defines withDashboardURL bulk-apply function
+    for alert groups
+- id: config_external_grafana_url_prefix
+  type: fail_to_pass
+  origin: pr_diff
+  description: config.libsonnet declares externalGrafanaURLPrefix defaulting to empty
+    string
+- id: alerts_apply_dashboard_urls
+  type: fail_to_pass
+  origin: pr_diff
+  description: At least 3 alert files use dashboardURLAnnotation or withDashboardURL
+- id: alertmanager_uses_with_dashboard_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: alertmanager.libsonnet uses withDashboardURL for bulk dashboard URL
+    application
+- id: alerts_utils_valid_structure
+  type: pass_to_pass
+  origin: static
+  description: alerts-utils.libsonnet is a valid non-empty file with balanced braces
+rubric:
+- rule: Dashboard URL helper functions should include clear comments explaining usage
+    patterns
+  source:
+    path: operations/mimir-mixin/alerts/alerts-utils.libsonnet
+    lines: 62-115
+    commit: 2f66c682807a07dba95f7979aba2def41836a14c
+- rule: Contributing documentation updates should be consistent with the style of
+    the existing document
+  source:
+    path: docs/internal/contributing/README.md
+    lines: 1-10
+    commit: 1ab789daf1b3d9393386b302622d2906bc08b2dc
+- rule: Contributing README documents jsonnet formatting with make format-mixin and
+    make build-mixin
+  source:
+    path: docs/internal/contributing/README.md
+    lines: 34-44
+    commit: 2f66c682807a07dba95f7979aba2def41836a14c
+  reference: '### Go
+
+
+    Grafana Mimir uses `goimports` tool (`go get golang.org/x/tools/cmd/goimports`
+    to install) to format the Go files, and sort imports.
+
+    We use goimports with `-local github.com/grafana/mimir` parameter, to put Grafana
+    Mimir internal imports into a separate group.
+
+
+    We try to keep imports sorted into three groups:
+
+
+    - imports from standard library
+
+    - imports of 3rd party packages and
+
+    - internal Grafana Mimir imports.
+
+
+    Goimports will fix the order, but will keep existing newlines between imports'

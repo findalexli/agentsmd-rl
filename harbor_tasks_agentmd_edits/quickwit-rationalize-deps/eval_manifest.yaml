@@ -1,0 +1,71 @@
+version: '2.0'
+source:
+  repo: quickwit-oss/quickwit
+  pr: 6125
+  base_commit: eca4f763214604006262fc6a29dcf59c754813e3
+  merge_commit: 73877d1402ab9c294ab7f7a4ee02fb6c0c0f2f85
+checks:
+- id: cargo_toml_valid
+  type: pass_to_pass
+  origin: static
+  description: Cargo.toml must be valid TOML after modifications
+- id: hyper_util_not_full
+  type: fail_to_pass
+  origin: pr_diff
+  description: hyper-util must not use 'full' feature, should list specific features
+- id: tokio_util_not_full
+  type: fail_to_pass
+  origin: pr_diff
+  description: tokio-util must not use 'full' feature, should list specific features
+- id: prometheus_defaults_disabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: prometheus must have default-features = false (protobuf not needed)
+- id: dialoguer_defaults_disabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: dialoguer must have default-features = false
+- id: zstd_defaults_disabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: zstd must have default-features = false
+- id: env_logger_defaults_disabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: env_logger must have default-features = false
+- id: essential_deps_unchanged
+  type: pass_to_pass
+  origin: static
+  description: Critical dependencies must still be present in workspace
+- id: hyper_util_has_required_features
+  type: pass_to_pass
+  origin: static
+  description: hyper-util must retain essential features (tokio, service)
+rubric:
+- rule: The SKILL.md should be well-structured with clear step-by-step instructions,
+    consistent with the style of existing skills in .claude/skills/
+  source:
+    path: .claude/skills/bump-tantivy/SKILL.md
+    lines: 1-5
+    commit: eca4f763214604006262fc6a29dcf59c754813e3
+- rule: Cargo.toml changes should only disable features that are genuinely unused,
+    preserving all features required for compilation
+  source:
+    path: CONTRIBUTING.md
+    lines: 1-10
+    commit: eca4f763214604006262fc6a29dcf59c754813e3
+- rule: rationalize-deps SKILL.md must exist with proper frontmatter
+  source:
+    path: .claude/skills/rationalize-deps/SKILL.md
+    lines: 1-125
+    commit: 73877d1402ab9c294ab7f7a4ee02fb6c0c0f2f85
+- rule: SKILL.md must document dependency rationalization workflow
+  source:
+    path: .claude/skills/rationalize-deps/SKILL.md
+    lines: 1-125
+    commit: 73877d1402ab9c294ab7f7a4ee02fb6c0c0f2f85
+- rule: SKILL.md must describe iterative try-check-fix approach
+  source:
+    path: .claude/skills/rationalize-deps/SKILL.md
+    lines: 60-80
+    commit: 73877d1402ab9c294ab7f7a4ee02fb6c0c0f2f85

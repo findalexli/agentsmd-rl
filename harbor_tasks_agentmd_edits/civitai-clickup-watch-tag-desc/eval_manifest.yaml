@@ -1,0 +1,143 @@
+version: '2.0'
+source:
+  repo: civitai/civitai
+  pr: 1948
+  base_commit: 76f8944088d812aaab4e6780fc742d1d213df287
+  merge_commit: 15503613a51260aff05d281110c5937163ee73fd
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified .mjs files parse without Node.js syntax errors
+- id: help_lists_new_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLI help output includes watch, tag, and description as commands
+- id: add_watcher_api_limitation
+  type: fail_to_pass
+  origin: pr_diff
+  description: addWatcher function throws error about ClickUp API not supporting watchers
+- id: add_tag_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: addTag function is exported from tasks.mjs as a callable function
+- id: tag_command_missing_arg_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: tag command is recognized and shows tag-specific error when arg missing
+- id: description_command_missing_arg_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: description command is recognized and shows description-specific error
+    when arg missing
+- id: watch_command_missing_arg_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: watch command is recognized and shows watch-specific error when arg
+    missing
+rubric:
+- rule: Documentation examples in SKILL.md are consistent with the style of existing
+    examples (using the same task ID format 86a1b2c3d, similar formatting)
+  source:
+    path: .claude/skills/clickup/SKILL.md
+    lines: 85-215
+    commit: 76f8944088d812aaab4e6780fc742d1d213df287
+- rule: The watch command workaround (using @mention comments) is clearly explained
+    so users understand why direct watcher addition isn't possible
+  source:
+    path: .claude/skills/clickup/SKILL.md
+    lines: 218-225
+    commit: 15503613a51260aff05d281110c5937163ee73fd
+- rule: SKILL.md documents the watch command for notifying users
+  source:
+    path: .claude/skills/clickup/SKILL.md
+    lines: 59-60
+    commit: 15503613a51260aff05d281110c5937163ee73fd
+  reference: '| `watch <task> <user>` | Notify user via @mention comment (watchers
+    not supported in API) |
+
+    | `tag <task> "tag_name"` | Add a tag to task |
+
+    | `description <task> "text"` | Update task description (markdown supported) |
+
+    ### Notify Users (Watch)
+
+
+    ```bash
+
+    # Notify user via @mention comment (ClickUp API doesn''t support adding watchers
+    directly)
+
+    node .claude/skills/clickup/query.mjs watch 86a1b2c3d koen
+
+
+    # Notify by email
+
+    node .claude/skills/clickup/query.mjs watch 86a1b2c3d jane@example.com
+
+    ```
+
+
+    ##'
+- rule: SKILL.md documents the tag command for adding tags to tasks
+  source:
+    path: .claude/skills/clickup/SKILL.md
+    lines: 60-61
+    commit: 15503613a51260aff05d281110c5937163ee73fd
+  reference: '| `watch <task> <user>` | Notify user via @mention comment (watchers
+    not supported in API) |
+
+    | `tag <task> "tag_name"` | Add a tag to task |
+
+    | `description <task> "text"` | Update task description (markdown supported) |
+
+    ### Notify Users (Watch)
+
+
+    ```bash
+
+    # Notify user via @mention comment (ClickUp API doesn''t support adding watchers
+    directly)
+
+    node .claude/skills/clickup/query.mjs watch 86a1b2c3d koen
+
+
+    # Notify by email
+
+    node .claude/skills/clickup/query.mjs watch 86a1b2c3d jane@example.com
+
+    ```
+
+
+    ##'
+- rule: SKILL.md documents the description command with markdown support
+  source:
+    path: .claude/skills/clickup/SKILL.md
+    lines: 61-62
+    commit: 15503613a51260aff05d281110c5937163ee73fd
+  reference: '| `watch <task> <user>` | Notify user via @mention comment (watchers
+    not supported in API) |
+
+    | `tag <task> "tag_name"` | Add a tag to task |
+
+    | `description <task> "text"` | Update task description (markdown supported) |
+
+    ### Notify Users (Watch)
+
+
+    ```bash
+
+    # Notify user via @mention comment (ClickUp API doesn''t support adding watchers
+    directly)
+
+    node .claude/skills/clickup/query.mjs watch 86a1b2c3d koen
+
+
+    # Notify by email
+
+    node .claude/skills/clickup/query.mjs watch 86a1b2c3d jane@example.com
+
+    ```
+
+
+    ##'

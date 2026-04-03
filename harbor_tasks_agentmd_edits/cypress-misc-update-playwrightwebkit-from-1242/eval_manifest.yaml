@@ -1,0 +1,54 @@
+version: '2.0'
+source:
+  repo: cypress-io/cypress
+  pr: 32852
+  base_commit: b92dcdb405dc8b2b417988b947b30a976c64f6fb
+  merge_commit: 34fe1ae8e2973b720a633ff201bfb4ec58288f35
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have balanced braces
+- id: cookie_matches_strict_domain_option
+  type: fail_to_pass
+  origin: pr_diff
+  description: cookieMatches accepts an options parameter with strictDomain
+- id: strict_domain_uses_exact_comparison
+  type: fail_to_pass
+  origin: pr_diff
+  description: strictDomain mode uses exact domain equality, not domainMatch
+- id: webkit_getcookie_strict_then_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: WebKit getCookie tries strict domain match first, then falls back to
+    apex
+- id: webkit_getcookie_uses_let_not_const
+  type: fail_to_pass
+  origin: pr_diff
+  description: getCookie cookie variable is 'let' (reassigned in fallback path)
+- id: cookie_matches_backward_compat
+  type: pass_to_pass
+  origin: static
+  description: cookieMatches still works without options (domainMatch, pathMatch,
+    name)
+- id: getcookies_unchanged
+  type: pass_to_pass
+  origin: static
+  description: getCookies (plural) does not use strictDomain
+rubric:
+- rule: The Cursor rules update is consistent with the style of the existing electron-upgrade.mdc
+    documentation
+  source:
+    path: packages/electron/.cursor/rules/electron-upgrade.mdc
+    lines: 1-10
+    commit: b92dcdb405dc8b2b417988b947b30a976c64f6fb
+- rule: electron-upgrade.mdc references trixie for Docker Compose images
+  source:
+    path: packages/electron/.cursor/rules/electron-upgrade.mdc
+    lines: 67-69
+    commit: 34fe1ae8e2973b720a633ff201bfb4ec58288f35
+- rule: electron-upgrade.mdc references trixie for CircleCI images
+  source:
+    path: packages/electron/.cursor/rules/electron-upgrade.mdc
+    lines: 73-76
+    commit: 34fe1ae8e2973b720a633ff201bfb4ec58288f35

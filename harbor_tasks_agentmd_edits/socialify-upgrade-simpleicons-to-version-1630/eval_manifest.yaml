@@ -1,0 +1,58 @@
+version: '2.0'
+source:
+  repo: wei/socialify
+  pr: 765
+  base_commit: a4782705076144332a7ca53d4d35afdcd0ddb93e
+  merge_commit: 82318706ac78e64ba3d99129fdc41e0c44570c0c
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without errors
+- id: existing_custom_icons_preserved
+  type: pass_to_pass
+  origin: static
+  description: Pre-existing custom icons (Amazon, AWS, C#, Java, etc.) still defined
+- id: language_mapping_structure
+  type: pass_to_pass
+  origin: static
+  description: LANGUAGE_ICON_MAPPING still exported with common language entries
+- id: custom_heroku_icon_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: customIcons.ts exports a Heroku icon with correct hex/slug/path
+- id: custom_openai_icon_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: customIcons.ts exports an OpenAI icon with correct hex/slug/path
+- id: custom_slack_icon_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: customIcons.ts exports a Slack icon with correct hex/slug/path
+- id: language_mapping_uses_custom_fallbacks
+  type: fail_to_pass
+  origin: pr_diff
+  description: languageMapping.ts maps Heroku/OpenAI/Slack to custom icons, not si*
+    imports
+rubric:
+- rule: Documentation updates are consistent with the style of existing AGENTS.md
+    content
+  source:
+    path: AGENTS.md
+    lines: 1-10
+    commit: a4782705076144332a7ca53d4d35afdcd0ddb93e
+- rule: SKILL.md follows a clear step-by-step workflow format
+  source:
+    path: .github/skills/upgrade-simple-icons/SKILL.md
+    lines: 1-23
+    commit: 82318706ac78e64ba3d99129fdc41e0c44570c0c
+- rule: AGENTS.md references .github/skills/ and the simple-icons upgrade skill
+  source:
+    path: AGENTS.md
+    lines: 48-99
+    commit: 82318706ac78e64ba3d99129fdc41e0c44570c0c
+- rule: SKILL.md under .github/skills/ documents simple-icons upgrade workflow
+  source:
+    path: .github/skills/upgrade-simple-icons/SKILL.md
+    lines: 1-23
+    commit: 82318706ac78e64ba3d99129fdc41e0c44570c0c

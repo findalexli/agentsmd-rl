@@ -1,0 +1,108 @@
+version: '2.0'
+source:
+  repo: TryGhost/Ghost
+  pr: 26552
+  base_commit: 3ad6d52705c5e7b49831900424000b93fa41e90f
+  merge_commit: 3369a6c03a0edb631d686e8ad39a6aca8a3a546c
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: create-migration.js parses without syntax errors
+- id: script_exports_functions
+  type: pass_to_pass
+  origin: static
+  description: create-migration.js exports isValidSlug, getNextMigrationVersion, createMigration
+- id: slug_validation_accepts_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: isValidSlug accepts valid kebab-case slugs
+- id: slug_validation_rejects_invalid
+  type: fail_to_pass
+  origin: pr_diff
+  description: isValidSlug rejects invalid slugs (uppercase, underscores, spaces)
+- id: version_folder_stable
+  type: fail_to_pass
+  origin: pr_diff
+  description: getNextMigrationVersion bumps minor for stable versions
+- id: version_folder_prerelease
+  type: fail_to_pass
+  origin: pr_diff
+  description: getNextMigrationVersion uses current minor for prerelease versions
+- id: stable_and_rc_same_folder
+  type: fail_to_pass
+  origin: pr_diff
+  description: Stable 6.18.0 and RC 6.19.0-rc.0 both target folder 6.19
+- id: migration_creates_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: createMigration creates a timestamped file in the correct version folder
+- id: rc_bump_on_stable
+  type: fail_to_pass
+  origin: pr_diff
+  description: createMigration bumps package.json to RC when version is stable
+- id: no_bump_on_prerelease
+  type: fail_to_pass
+  origin: pr_diff
+  description: createMigration does not bump when version is already a prerelease
+rubric:
+- rule: The SKILL.md update is consistent with the style and structure of the existing
+    instructions.
+  source:
+    path: .claude/skills/create-database-migration/SKILL.md
+    lines: 1-20
+    commit: 3ad6d52705c5e7b49831900424000b93fa41e90f
+- rule: The create-migration.js script follows Ghost's existing code conventions (CommonJS,
+    JSDoc, etc.).
+  source:
+    path: CLAUDE.md
+    lines: 1-10
+    commit: 3ad6d52705c5e7b49831900424000b93fa41e90f
+- rule: ghost/core/package.json has a migrate:create script entry
+  reference: '# .claude/skills/create-database-migration/SKILL.md
+
+    1. Create a new, empty migration file: `cd ghost/core && yarn migrate:create <kebab-case-slug>`.
+    IMPORTANT: do not create the migration file manually; always use this script to
+    create the initial empty migration file. The slug must be kebab-case (e.g. `add-column-to-posts`).
+
+    2. The above command will create a new directory in `ghost/core/core/server/data/migrations/versions`
+    if needed, create the empty migration file with the appropriate name, '
+- rule: SKILL.md references yarn migrate:create as the migration command
+  source:
+    path: .claude/skills/create-database-migration/SKILL.md
+    lines: '10'
+    commit: 3369a6c03a0edb631d686e8ad39a6aca8a3a546c
+  reference: '1. Create a new, empty migration file: `cd ghost/core && yarn migrate:create
+    <kebab-case-slug>`. IMPORTANT: do not create the migration file manually; always
+    use this script to create the initial empty migration file. The slug must be kebab-case
+    (e.g. `add-column-to-posts`).
+
+    2. The above command will create a new directory in `ghost/core/core/server/data/migrations/versions`
+    if needed, create the empty migration file with the appropriate name, and bump
+    the core and admin package versions to RC i'
+- rule: SKILL.md no longer references slimer
+  source:
+    path: .claude/skills/create-database-migration/SKILL.md
+    lines: 10-11
+    commit: 3369a6c03a0edb631d686e8ad39a6aca8a3a546c
+  reference: '1. Create a new, empty migration file: `cd ghost/core && yarn migrate:create
+    <kebab-case-slug>`. IMPORTANT: do not create the migration file manually; always
+    use this script to create the initial empty migration file. The slug must be kebab-case
+    (e.g. `add-column-to-posts`).
+
+    2. The above command will create a new directory in `ghost/core/core/server/data/migrations/versions`
+    if needed, create the empty migration file with the appropriate name, and bump
+    the core and admin package versions to RC i'
+- rule: SKILL.md documents the RC version bump behavior
+  source:
+    path: .claude/skills/create-database-migration/SKILL.md
+    lines: '11'
+    commit: 3369a6c03a0edb631d686e8ad39a6aca8a3a546c
+  reference: '1. Create a new, empty migration file: `cd ghost/core && yarn migrate:create
+    <kebab-case-slug>`. IMPORTANT: do not create the migration file manually; always
+    use this script to create the initial empty migration file. The slug must be kebab-case
+    (e.g. `add-column-to-posts`).
+
+    2. The above command will create a new directory in `ghost/core/core/server/data/migrations/versions`
+    if needed, create the empty migration file with the appropriate name, and bump
+    the core and admin package versions to RC i'

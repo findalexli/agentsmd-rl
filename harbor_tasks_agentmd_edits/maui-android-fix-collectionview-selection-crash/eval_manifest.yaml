@@ -1,0 +1,85 @@
+version: '2.0'
+source:
+  repo: dotnet/maui
+  pr: 34275
+  base_commit: ecd6428d324e395ca07f8d375600c0fc93d0dd3c
+  merge_commit: 84e28fac0179cc829e166eb1f40d69a5cec4578b
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified C# files have balanced braces
+- id: header_footer_guard_in_onbindviewholder
+  type: fail_to_pass
+  origin: pr_diff
+  description: OnBindViewHolder checks IsHeader/IsFooter before selection tracking
+- id: guard_returns_before_click_subscription
+  type: fail_to_pass
+  origin: pr_diff
+  description: Header/footer guard returns before Clicked += subscription
+- id: existing_selection_logic_intact
+  type: pass_to_pass
+  origin: static
+  description: Click handler subscription, viewholder tracking, and IsSelected remain
+- id: copilot_existing_publicapi_section_intact
+  type: pass_to_pass
+  origin: static
+  description: Original PublicAPI.Unshipped.txt guidance not removed
+rubric:
+- rule: 'The #nullable enable warning section is placed logically near the existing
+    PublicAPI.Unshipped.txt guidance, not in an unrelated section.'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 130-138
+    commit: ecd6428d324e395ca07f8d375600c0fc93d0dd3c
+- rule: Code comments explain WHY header/footer ViewHolders are excluded, not just
+    WHAT the guard does.
+  source:
+    path: src/Controls/src/Core/Handlers/Items/Android/Adapters/SelectableItemsViewAdapter.cs
+    lines: 28-35
+    commit: 84e28fac0179cc829e166eb1f40d69a5cec4578b
+- rule: Header/footer guard returns before _currentViewHolders.Add
+  reference: "# .github/copilot-instructions.md\n**CRITICAL: `#nullable enable` must\
+    \ be line 1**\n\nEvery `PublicAPI.Unshipped.txt` file starts with `#nullable enable`\
+    \ (often BOM-prefixed) on the **first line**. If this line is moved or removed,\
+    \ the analyzer treats it as a declared API symbol and emits **RS0017** errors.\n\
+    \n**Never sort these files with plain `sort`** \u2014 the BOM bytes (`0xEF 0xBB\
+    \ 0xBF`) sort after ASCII characters under `LC_ALL=C`, pushing `#nullable enable`\
+    \ to the bottom of the file.\n\nWhen resolvi"
+- rule: 'copilot-instructions.md warns #nullable enable must be line 1 of PublicAPI
+    files'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 141-146
+    commit: 84e28fac0179cc829e166eb1f40d69a5cec4578b
+  reference: "**CRITICAL: `#nullable enable` must be line 1**\n\nEvery `PublicAPI.Unshipped.txt`\
+    \ file starts with `#nullable enable` (often BOM-prefixed) on the **first line**.\
+    \ If this line is moved or removed, the analyzer treats it as a declared API symbol\
+    \ and emits **RS0017** errors.\n\n**Never sort these files with plain `sort`**\
+    \ \u2014 the BOM bytes (`0xEF 0xBB 0xBF`) sort after ASCII characters under `LC_ALL=C`,\
+    \ pushing `#nullable enable` to the bottom of the file.\n\nWhen resolving merge\
+    \ conflicts or adding entri"
+- rule: copilot-instructions.md warns against plain sort due to BOM bytes
+  source:
+    path: .github/copilot-instructions.md
+    lines: 148-149
+    commit: 84e28fac0179cc829e166eb1f40d69a5cec4578b
+  reference: "**CRITICAL: `#nullable enable` must be line 1**\n\nEvery `PublicAPI.Unshipped.txt`\
+    \ file starts with `#nullable enable` (often BOM-prefixed) on the **first line**.\
+    \ If this line is moved or removed, the analyzer treats it as a declared API symbol\
+    \ and emits **RS0017** errors.\n\n**Never sort these files with plain `sort`**\
+    \ \u2014 the BOM bytes (`0xEF 0xBB 0xBF`) sort after ASCII characters under `LC_ALL=C`,\
+    \ pushing `#nullable enable` to the bottom of the file.\n\nWhen resolving merge\
+    \ conflicts or adding entri"
+- rule: copilot-instructions.md includes safe script for PublicAPI merge conflicts
+  source:
+    path: .github/copilot-instructions.md
+    lines: 151-163
+    commit: 84e28fac0179cc829e166eb1f40d69a5cec4578b
+  reference: "**CRITICAL: `#nullable enable` must be line 1**\n\nEvery `PublicAPI.Unshipped.txt`\
+    \ file starts with `#nullable enable` (often BOM-prefixed) on the **first line**.\
+    \ If this line is moved or removed, the analyzer treats it as a declared API symbol\
+    \ and emits **RS0017** errors.\n\n**Never sort these files with plain `sort`**\
+    \ \u2014 the BOM bytes (`0xEF 0xBB 0xBF`) sort after ASCII characters under `LC_ALL=C`,\
+    \ pushing `#nullable enable` to the bottom of the file.\n\nWhen resolving merge\
+    \ conflicts or adding entri"

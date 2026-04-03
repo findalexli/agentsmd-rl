@@ -1,0 +1,66 @@
+version: '2.0'
+source:
+  repo: simstudioai/sim
+  pr: 3521
+  base_commit: f161c261ef8fd77ff327a4e41104317ad00b7b08
+  merge_commit: a29717e7aabda3c7dddb1eda78cbdc472540da65
+checks:
+- id: hosting_removed_from_speed_limits
+  type: fail_to_pass
+  origin: pr_diff
+  description: Speed limits tool hosting config removed (deprecated Roads API)
+- id: apikey_has_dual_subblocks
+  type: fail_to_pass
+  origin: pr_diff
+  description: Google Maps block has two apiKey subblocks for conditional hosted key
+- id: apikey_speed_limits_excluded_from_hosted
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hosted apiKey subblock excludes speed_limits operation via condition
+rubric:
+- rule: The SKILL.md documentation is consistent with the style and structure of the
+    existing hosted key guide
+  source:
+    path: .cursor/skills/add-hosted-key/SKILL.md
+    lines: 1-194
+    commit: f161c261ef8fd77ff327a4e41104317ad00b7b08
+- rule: Modified TypeScript files exist and contain expected exports
+  reference: "# .cursor/skills/add-hosted-key/SKILL.md\n### Excluding Specific Operations\
+    \ from Hosted Key Support\n\nWhen a block has multiple operations but some operations\
+    \ should **not** use a hosted key (e.g., the underlying API is deprecated, unsupported,\
+    \ or too expensive), use the **duplicate apiKey subblock** pattern. This is the\
+    \ same pattern Exa uses for its `research` operation:\n\n1. **Remove the `hosting`\
+    \ config** from the tool definition for that operation \u2014 it must not have\
+    \ a `hosting` object at all.\n2"
+- rule: Non-hosted apiKey subblock shows for speed_limits operation
+  reference: "# .cursor/skills/add-hosted-key/SKILL.md\n### Excluding Specific Operations\
+    \ from Hosted Key Support\n\nWhen a block has multiple operations but some operations\
+    \ should **not** use a hosted key (e.g., the underlying API is deprecated, unsupported,\
+    \ or too expensive), use the **duplicate apiKey subblock** pattern. This is the\
+    \ same pattern Exa uses for its `research` operation:\n\n1. **Remove the `hosting`\
+    \ config** from the tool definition for that operation \u2014 it must not have\
+    \ a `hosting` object at all.\n2"
+- rule: SKILL.md documents the pattern for excluding operations from hosted key support
+  source:
+    path: .cursor/skills/add-hosted-key/SKILL.md
+    lines: 195-233
+    commit: a29717e7aabda3c7dddb1eda78cbdc472540da65
+  reference: "### Excluding Specific Operations from Hosted Key Support\n\nWhen a\
+    \ block has multiple operations but some operations should **not** use a hosted\
+    \ key (e.g., the underlying API is deprecated, unsupported, or too expensive),\
+    \ use the **duplicate apiKey subblock** pattern. This is the same pattern Exa\
+    \ uses for its `research` operation:\n\n1. **Remove the `hosting` config** from\
+    \ the tool definition for that operation \u2014 it must not have a `hosting` object\
+    \ at all.\n2. **Duplicate the `apiKey` subblock** in "
+- rule: SKILL.md references concrete implementations of the exclusion pattern
+  source:
+    path: .cursor/skills/add-hosted-key/SKILL.md
+    lines: 230-233
+    commit: a29717e7aabda3c7dddb1eda78cbdc472540da65
+  reference: "### Excluding Specific Operations from Hosted Key Support\n\nWhen a\
+    \ block has multiple operations but some operations should **not** use a hosted\
+    \ key (e.g., the underlying API is deprecated, unsupported, or too expensive),\
+    \ use the **duplicate apiKey subblock** pattern. This is the same pattern Exa\
+    \ uses for its `research` operation:\n\n1. **Remove the `hosting` config** from\
+    \ the tool definition for that operation \u2014 it must not have a `hosting` object\
+    \ at all.\n2. **Duplicate the `apiKey` subblock** in "

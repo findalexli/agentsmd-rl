@@ -1,0 +1,35 @@
+version: '2.0'
+source:
+  repo: tuist/tuist
+  pr: 9907
+  base_commit: 48207131f1e248413d59a0dab0044fd3c2dbb48a
+  merge_commit: 59a252d0e94871f20e5a6f4f2a7acfe1bb3abaae
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: ResourcesProjectMapper.swift exists and has balanced braces
+- id: xcassets_still_code_generating
+  type: pass_to_pass
+  origin: static
+  description: xcassets remains in codeGeneratingResourceExtensions
+- id: xcstrings_not_in_code_generating_extensions
+  type: fail_to_pass
+  origin: pr_diff
+  description: xcstrings removed from codeGeneratingResourceExtensions to prevent
+    stale extraction
+- id: xcstrings_retained_in_main_target_resources
+  type: fail_to_pass
+  origin: pr_diff
+  description: Main target resources retain xcstrings instead of being cleared
+rubric:
+- rule: README content is consistent with the style of other example READMEs in examples/xcode/
+  source:
+    path: examples/xcode/generated_ios_app_with_static_framework_with_xcstrings/README.md
+    lines: 1-17
+    commit: 59a252d0e94871f20e5a6f4f2a7acfe1bb3abaae
+- rule: README.md created for the new xcstrings example fixture
+  source:
+    path: examples/xcode/generated_ios_app_with_static_framework_with_xcstrings/README.md
+    lines: 1-17
+    commit: 59a252d0e94871f20e5a6f4f2a7acfe1bb3abaae

@@ -1,0 +1,104 @@
+version: '2.0'
+source:
+  repo: angular/angular
+  pr: 67189
+  base_commit: f30ed6bbf6706790437a6e4dbfffed3fa8708f57
+  merge_commit: 8af73eb3245a563cc943f4344cee64900da3b835
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified .bzl and BUILD.bazel files have balanced syntax
+- id: package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: package.json is valid JSON with scripts object
+- id: defaults_bzl_esbuild_wrapper
+  type: fail_to_pass
+  origin: pr_diff
+  description: defaults.bzl defines custom esbuild() wrapper with minify/sourcemap
+- id: debug_flag_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: devtools/BUILD.bazel defines debug bool_flag and config_setting
+- id: package_json_debug_scripts
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json has devtools:build:chrome:debug and firefox:debug scripts
+- id: sourcemap_inline_for_injected_scripts
+  type: fail_to_pass
+  origin: pr_diff
+  description: Injected script esbuild targets use sourcemap = inline
+- id: no_hardcoded_minify_in_shell_browser_src
+  type: fail_to_pass
+  origin: pr_diff
+  description: shell-browser/src/BUILD.bazel no longer hardcodes minify = True
+- id: existing_release_scripts_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing release build scripts still present in package.json
+rubric:
+- rule: Documentation additions in devtools/README.md should be consistent with the
+    existing style and structure of the file
+  source:
+    path: devtools/README.md
+    lines: 1-52
+    commit: f30ed6bbf6706790437a6e4dbfffed3fa8708f57
+- rule: devtools/README.md documents how to build and load a dev extension
+  source:
+    path: devtools/README.md
+    lines: 53-66
+    commit: 8af73eb3245a563cc943f4344cee64900da3b835
+  reference: '#### Dev Install
+
+
+    To actually build and install as a real browser extension in dev mode, use:
+
+
+    ```shell
+
+    pnpm devtools:build:chrome:debug
+
+    ```
+
+
+    This will build the extension at `dist/bin/devtools/projects/shell-browser/src/prodapp`.
+    Then go to `chrome://extensions`,
+
+    enable developer mode, and click "Load unpacked" to load the extension from that
+    directory.
+
+
+    Whenever you rebuild the extension, make sure to reload the extension in `chrome://extensions`,
+    right click on the
+
+    Angular DevTools panel and '
+- rule: devtools/README.md documents where to find scripts for debugging
+  source:
+    path: devtools/README.md
+    lines: 68-89
+    commit: 8af73eb3245a563cc943f4344cee64900da3b835
+  reference: '#### Dev Install
+
+
+    To actually build and install as a real browser extension in dev mode, use:
+
+
+    ```shell
+
+    pnpm devtools:build:chrome:debug
+
+    ```
+
+
+    This will build the extension at `dist/bin/devtools/projects/shell-browser/src/prodapp`.
+    Then go to `chrome://extensions`,
+
+    enable developer mode, and click "Load unpacked" to load the extension from that
+    directory.
+
+
+    Whenever you rebuild the extension, make sure to reload the extension in `chrome://extensions`,
+    right click on the
+
+    Angular DevTools panel and '

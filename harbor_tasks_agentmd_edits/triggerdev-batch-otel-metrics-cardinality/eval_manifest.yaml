@@ -1,0 +1,82 @@
+version: '2.0'
+source:
+  repo: triggerdotdev/trigger.dev
+  pr: 2846
+  base_commit: 6dfbe1d7628aefc894708a752d45aedb249ed5e7
+  merge_commit: 7c2e78c9de709c73659fcb0ff182bf43e9b288e2
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript file exists and is non-empty
+- id: no_env_id_in_metric_attributes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Metric attributes must not use envId (high cardinality UUID)
+- id: no_item_count_in_metric_attributes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Metric attributes must not use itemCount (high cardinality unbounded
+    integer)
+- id: metrics_use_environment_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: Metric attributes must use environment_type (low cardinality enum)
+- id: queue_time_histogram_after_meta_lookup
+  type: fail_to_pass
+  origin: pr_diff
+  description: itemQueueTimeHistogram must be recorded after meta is available, not
+    before
+- id: batch_queue_has_metric_counters
+  type: pass_to_pass
+  origin: static
+  description: batch-queue/index.ts must still have all metric counter/histogram fields
+rubric:
+- rule: The OTel metrics cursor rule should include a concrete code example showing
+    bad vs good metric attribute usage
+  source:
+    path: .cursor/rules/otel-metrics.mdc
+    lines: 33-46
+    commit: 7c2e78c9de709c73659fcb0ff182bf43e9b288e2
+- rule: Follow the existing project conventions. Test files live beside the files
+    under test.
+  source:
+    path: AGENTS.md
+    lines: '54'
+    commit: 6dfbe1d7628aefc894708a752d45aedb249ed5e7
+- rule: A .cursor/rules file for OTel metric cardinality guidelines must exist
+  source:
+    path: .cursor/rules/otel-metrics.mdc
+    lines: 1-53
+    commit: 7c2e78c9de709c73659fcb0ff182bf43e9b288e2
+  reference: "---\ndescription: Guidelines for creating OpenTelemetry metrics to avoid\
+    \ cardinality issues\nglobs:\n  - \"**/*.ts\"\n---\n\n# OpenTelemetry Metrics\
+    \ Guidelines\n\nWhen creating or editing OTEL metrics (counters, histograms, gauges),\
+    \ always ensure metric attributes have **low cardinality**.\n\n## What is Cardinality?\n\
+    \nCardinality refers to the number of unique values an attribute can have. Each\
+    \ unique combination of attribute values creates a new time series, which consumes\
+    \ memory and storage in your metrics"
+- rule: OTel metrics rule must document high vs low cardinality attribute types
+  source:
+    path: .cursor/rules/otel-metrics.mdc
+    lines: 17-30
+    commit: 7c2e78c9de709c73659fcb0ff182bf43e9b288e2
+  reference: "---\ndescription: Guidelines for creating OpenTelemetry metrics to avoid\
+    \ cardinality issues\nglobs:\n  - \"**/*.ts\"\n---\n\n# OpenTelemetry Metrics\
+    \ Guidelines\n\nWhen creating or editing OTEL metrics (counters, histograms, gauges),\
+    \ always ensure metric attributes have **low cardinality**.\n\n## What is Cardinality?\n\
+    \nCardinality refers to the number of unique values an attribute can have. Each\
+    \ unique combination of attribute values creates a new time series, which consumes\
+    \ memory and storage in your metrics"
+- rule: OTel metrics rule must apply to TypeScript files via glob or alwaysApply
+  source:
+    path: .cursor/rules/otel-metrics.mdc
+    lines: 3-4
+    commit: 7c2e78c9de709c73659fcb0ff182bf43e9b288e2
+  reference: "---\ndescription: Guidelines for creating OpenTelemetry metrics to avoid\
+    \ cardinality issues\nglobs:\n  - \"**/*.ts\"\n---\n\n# OpenTelemetry Metrics\
+    \ Guidelines\n\nWhen creating or editing OTEL metrics (counters, histograms, gauges),\
+    \ always ensure metric attributes have **low cardinality**.\n\n## What is Cardinality?\n\
+    \nCardinality refers to the number of unique values an attribute can have. Each\
+    \ unique combination of attribute values creates a new time series, which consumes\
+    \ memory and storage in your metrics"

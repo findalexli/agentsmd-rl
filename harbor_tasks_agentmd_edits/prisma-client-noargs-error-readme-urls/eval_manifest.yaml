@@ -1,0 +1,52 @@
+version: '2.0'
+source:
+  repo: prisma/prisma
+  pr: 28737
+  base_commit: 58fec5e43a794832bb4c5ec3f5f3f9513bbaa657
+  merge_commit: ba98f988e5bb7c59fb4107a368a40933d7af8cc0
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without syntax errors
+- id: noargs_error_thrown
+  type: fail_to_pass
+  origin: pr_diff
+  description: Constructor throws PrismaClientInitializationError when called without
+    args
+- id: error_message_content
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error message guides users on correct PrismaClient construction
+- id: validate_called_unconditionally
+  type: fail_to_pass
+  origin: pr_diff
+  description: validatePrismaClientOptions called unconditionally, not inside if(optionsArg)
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: getPrismaClient.ts constructor has real logic, not just pass/return
+rubric:
+- rule: Keep changes ASCII unless a file already uses Unicode (docs sometimes include
+    emojis).
+  source:
+    path: CLAUDE.md
+    lines: '27'
+    commit: 58fec5e43a794832bb4c5ec3f5f3f9513bbaa657
+- rule: 'Respect existing structure: modifications often require updating both command
+    implementation and tests/fixtures.'
+  source:
+    path: CLAUDE.md
+    lines: '25'
+    commit: 58fec5e43a794832bb4c5ec3f5f3f9513bbaa657
+- rule: optionsArg?.adapter becomes optionsArg.adapter after null guard
+- rule: README.md documentation URLs use current /docs/orm/ paths
+  source:
+    path: README.md
+    lines: 33-34,64,163,171-176,247,263,277,328
+    commit: ba98f988e5bb7c59fb4107a368a40933d7af8cc0
+- rule: README.md notes Prisma 7 requires driver adapters for client instantiation
+  source:
+    path: README.md
+    lines: '263'
+    commit: ba98f988e5bb7c59fb4107a368a40933d7af8cc0

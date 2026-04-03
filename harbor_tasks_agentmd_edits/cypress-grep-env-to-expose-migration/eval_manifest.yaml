@@ -1,0 +1,120 @@
+version: '2.0'
+source:
+  repo: cypress-io/cypress
+  pr: 33242
+  base_commit: eb60ddcec6d92dad8ba1a1d776b249171384aa5e
+  merge_commit: 49aa0bbab1af77be3f6431d2252c4d7cac6bff26
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must be valid
+- id: plugin_reads_from_expose
+  type: fail_to_pass
+  origin: pr_diff
+  description: plugin.ts must read config from config.expose instead of config.env
+- id: register_calls_expose
+  type: fail_to_pass
+  origin: pr_diff
+  description: register.ts must use Cypress.expose() instead of Cypress.env()
+- id: peer_dep_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json peerDependencies.cypress must require >=15.10.0
+- id: package_json_scripts_use_expose
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json npm scripts must use --expose instead of --env
+- id: plugin_has_real_logic
+  type: pass_to_pass
+  origin: static
+  description: plugin.ts must contain real filtering logic
+- id: register_has_real_logic
+  type: pass_to_pass
+  origin: static
+  description: register.ts must contain real registration logic
+rubric:
+- rule: README migration guide clearly explains the env() to expose() transition with
+    before/after examples
+  source:
+    path: npm/grep/README.md
+    lines: 422-436
+    commit: 49aa0bbab1af77be3f6431d2252c4d7cac6bff26
+- rule: "Code changes are consistent \u2014 all env references replaced with expose,\
+    \ no partial migration"
+  source:
+    path: npm/grep/src/plugin.ts
+    lines: 1-130
+    commit: 49aa0bbab1af77be3f6431d2252c4d7cac6bff26
+- rule: README.md must include v5-to-v6 migration section for env->expose change
+  source:
+    path: npm/grep/README.md
+    lines: 422-436
+    commit: 49aa0bbab1af77be3f6431d2252c4d7cac6bff26
+  reference: 'npx cypress run --expose grep="login"
+
+    npx cypress run --expose grep="user authentication"
+
+    npx cypress run --expose grep="login; logout; signup"
+
+    npx cypress run --expose grepTags="@smoke"
+
+    npx cypress run --expose grepTags="@smoke @critical"
+
+    npx cypress run --expose grepTags="@smoke+@critical"
+
+    npx cypress run --expose grepTags="@smoke+-@slow"
+
+    npx cypress run --expose grep="login",grepTags="@smoke"
+
+    npx cypress run --expose grep="user",grepTags="@critical @smoke"
+
+    npx cypress run --expose grep="login'
+- rule: README CLI usage examples must use --expose instead of --env
+  source:
+    path: npm/grep/README.md
+    lines: 91-240
+    commit: 49aa0bbab1af77be3f6431d2252c4d7cac6bff26
+  reference: 'npx cypress run --expose grep="login"
+
+    npx cypress run --expose grep="user authentication"
+
+    npx cypress run --expose grep="login; logout; signup"
+
+    npx cypress run --expose grepTags="@smoke"
+
+    npx cypress run --expose grepTags="@smoke @critical"
+
+    npx cypress run --expose grepTags="@smoke+@critical"
+
+    npx cypress run --expose grepTags="@smoke+-@slow"
+
+    npx cypress run --expose grep="login",grepTags="@smoke"
+
+    npx cypress run --expose grep="user",grepTags="@critical @smoke"
+
+    npx cypress run --expose grep="login'
+- rule: 'README cypress.config example must use expose: key instead of env:'
+  source:
+    path: npm/grep/README.md
+    lines: 248-260
+    commit: 49aa0bbab1af77be3f6431d2252c4d7cac6bff26
+  reference: 'npx cypress run --expose grep="login"
+
+    npx cypress run --expose grep="user authentication"
+
+    npx cypress run --expose grep="login; logout; signup"
+
+    npx cypress run --expose grepTags="@smoke"
+
+    npx cypress run --expose grepTags="@smoke @critical"
+
+    npx cypress run --expose grepTags="@smoke+@critical"
+
+    npx cypress run --expose grepTags="@smoke+-@slow"
+
+    npx cypress run --expose grep="login",grepTags="@smoke"
+
+    npx cypress run --expose grep="user",grepTags="@critical @smoke"
+
+    npx cypress run --expose grep="login'

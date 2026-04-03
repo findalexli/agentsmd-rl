@@ -1,0 +1,65 @@
+version: '2.0'
+source:
+  repo: storybookjs/storybook
+  pr: 33930
+  base_commit: 5a9c6ecd7559ee8c7adbe30fb4b0894e369d144b
+  merge_commit: 2b6c4da20192051b2d0f1c719a1eda841d2fd306
+checks:
+- id: debounce_trailing_only
+  type: fail_to_pass
+  origin: pr_diff
+  description: STORY_INDEX_INVALIDATED debounce uses trailing edge only, not leading+trailing
+- id: vite_no_after_update_listener
+  type: fail_to_pass
+  origin: pr_diff
+  description: Vite codegen does not use vite:afterUpdate listener for STORY_HOT_UPDATED
+- id: vite_emit_before_stories_changed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Vite stories accept callback emits STORY_HOT_UPDATED before onStoriesChanged
+- id: webpack_no_status_handler_emit
+  type: fail_to_pass
+  origin: pr_diff
+  description: Webpack HMR does not use addStatusHandler to emit STORY_HOT_UPDATED
+- id: webpack_emit_before_stories_changed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Webpack stories accept callback emits STORY_HOT_UPDATED before onStoriesChanged
+- id: project_annotations_emit_hot_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Vite project annotations accept callback emits STORY_HOT_UPDATED before
+    onGetProjectAnnotationsChanged
+rubric:
+- rule: The lint-fix instruction is consistent with the style and formatting of the
+    existing copilot-instructions.md document
+  source:
+    path: .github/copilot-instructions.md
+    lines: 1-67
+    commit: 5a9c6ecd7559ee8c7adbe30fb4b0894e369d144b
+- rule: Modified source files exist and are non-trivial
+  reference: '# .github/copilot-instructions.md
+
+    Fix linting on all touched files by running the following command before commiting:
+
+
+    ```bash
+
+    yarn --cwd code lint:js:cmd <file> --fix
+
+    ```'
+- rule: copilot-instructions.md documents the lint --fix command for auto-fixing touched
+    files
+  source:
+    path: .github/copilot-instructions.md
+    lines: 68-73
+    commit: 2b6c4da20192051b2d0f1c719a1eda841d2fd306
+  reference: 'Fix linting on all touched files by running the following command before
+    commiting:
+
+
+    ```bash
+
+    yarn --cwd code lint:js:cmd <file> --fix
+
+    ```'

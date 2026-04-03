@@ -1,0 +1,149 @@
+version: '2.0'
+source:
+  repo: payloadcms/payload
+  pr: 14993
+  base_commit: 4c91d049c2a76b41ca10b770ec67338a9f97904b
+  merge_commit: b4abd04704834c18e83f320813f1f527a5661934
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Docker compose YAML files are valid
+- id: mongodb_docker_compose_port
+  type: fail_to_pass
+  origin: pr_diff
+  description: MongoDB docker-compose maps host port 27018 to container 27017
+- id: mongodb_atlas_docker_compose_port
+  type: fail_to_pass
+  origin: pr_diff
+  description: MongoDB Atlas docker-compose maps host port 27019 to container 27017
+- id: adapter_mongodb_url_port
+  type: fail_to_pass
+  origin: pr_diff
+  description: generateDatabaseAdapter uses port 27018 for MongoDB default URL
+- id: adapter_mongodb_atlas_url_port
+  type: fail_to_pass
+  origin: pr_diff
+  description: generateDatabaseAdapter uses port 27019 for MongoDB Atlas default URL
+- id: ci_action_mongodb_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: GitHub Actions start-database uses port 27018 for MongoDB
+- id: ci_action_mongodb_atlas_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: GitHub Actions start-database uses port 27019 for MongoDB Atlas
+- id: connection_test_mongodb_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: MongoDB run-test-connection uses port 27018
+- id: connection_test_mongodb_atlas_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: MongoDB Atlas run-test-connection uses port 27019
+rubric:
+- rule: "Port changes should be consistent across all files \u2014 every reference\
+    \ to the old port should be updated."
+  source:
+    path: CLAUDE.md
+    lines: '37'
+    commit: 4c91d049c2a76b41ca10b770ec67338a9f97904b
+- rule: Documentation updates should match the style of the existing CONTRIBUTING.md.
+  source:
+    path: CONTRIBUTING.md
+    lines: 1-10
+    commit: 4c91d049c2a76b41ca10b770ec67338a9f97904b
+- rule: CONTRIBUTING.md documents MongoDB URL with port 27018
+  source:
+    path: CONTRIBUTING.md
+    lines: '109'
+    commit: b4abd04704834c18e83f320813f1f527a5661934
+  reference: 'Then use Docker to start your database.
+
+
+    On MacOS, the easiest way to install Docker is to use brew. Simply run `pnpm install
+    --cask docker`, open the docker desktop app, apply the recommended settings and
+    you''re good to go.
+
+    URL: `mongodb://payload:payload@localhost:27018/payload?authSource=admin&directConnection=true&replicaSet=rs0`
+
+    URL: `mongodb://localhost:27019/payload?directConnection=true&replicaSet=mongodb-atlas-local`
+    (no auth required)
+
+    If you wish to use your own MongoDB database for th'
+- rule: CONTRIBUTING.md documents MongoDB Atlas URL with port 27019
+  source:
+    path: CONTRIBUTING.md
+    lines: '119'
+    commit: b4abd04704834c18e83f320813f1f527a5661934
+  reference: 'Then use Docker to start your database.
+
+
+    On MacOS, the easiest way to install Docker is to use brew. Simply run `pnpm install
+    --cask docker`, open the docker desktop app, apply the recommended settings and
+    you''re good to go.
+
+    URL: `mongodb://payload:payload@localhost:27018/payload?authSource=admin&directConnection=true&replicaSet=rs0`
+
+    URL: `mongodb://localhost:27019/payload?directConnection=true&replicaSet=mongodb-atlas-local`
+    (no auth required)
+
+    If you wish to use your own MongoDB database for th'
+- rule: CONTRIBUTING.md documents MONGODB_URL and POSTGRES_URL env vars
+  source:
+    path: CONTRIBUTING.md
+    lines: 127-135
+    commit: b4abd04704834c18e83f320813f1f527a5661934
+  reference: 'Then use Docker to start your database.
+
+
+    On MacOS, the easiest way to install Docker is to use brew. Simply run `pnpm install
+    --cask docker`, open the docker desktop app, apply the recommended settings and
+    you''re good to go.
+
+    URL: `mongodb://payload:payload@localhost:27018/payload?authSource=admin&directConnection=true&replicaSet=rs0`
+
+    URL: `mongodb://localhost:27019/payload?directConnection=true&replicaSet=mongodb-atlas-local`
+    (no auth required)
+
+    If you wish to use your own MongoDB database for th'
+- rule: .env.example includes commented MONGODB_URL and POSTGRES_URL
+  source:
+    path: .env.example
+    lines: 12-16
+    commit: b4abd04704834c18e83f320813f1f527a5661934
+  reference: '# CONTRIBUTING.md
+
+    Then use Docker to start your database.
+
+
+    On MacOS, the easiest way to install Docker is to use brew. Simply run `pnpm install
+    --cask docker`, open the docker desktop app, apply the recommended settings and
+    you''re good to go.
+
+    URL: `mongodb://payload:payload@localhost:27018/payload?authSource=admin&directConnection=true&replicaSet=rs0`
+
+    URL: `mongodb://localhost:27019/payload?directConnection=true&replicaSet=mongodb-atlas-local`
+    (no auth required)
+
+    If you wish to use your own Mongo'
+- rule: Comment explains why port is non-default (per CLAUDE.md commenting guidelines)
+  source:
+    path: CLAUDE.md
+    lines: 42-44
+    commit: 4c91d049c2a76b41ca10b770ec67338a9f97904b
+  reference: '# CONTRIBUTING.md
+
+    Then use Docker to start your database.
+
+
+    On MacOS, the easiest way to install Docker is to use brew. Simply run `pnpm install
+    --cask docker`, open the docker desktop app, apply the recommended settings and
+    you''re good to go.
+
+    URL: `mongodb://payload:payload@localhost:27018/payload?authSource=admin&directConnection=true&replicaSet=rs0`
+
+    URL: `mongodb://localhost:27019/payload?directConnection=true&replicaSet=mongodb-atlas-local`
+    (no auth required)
+
+    If you wish to use your own Mongo'

@@ -1,0 +1,49 @@
+version: '2.0'
+source:
+  repo: wasp-lang/wasp
+  pr: 3292
+  base_commit: 02e17a0faa6c5297d0f22fc89a84be5ffa6c6665
+  merge_commit: c080c10a9becb8c2bfe61d0217a406588d68e637
+checks:
+- id: package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: All modified package.json files are valid JSON with scripts
+- id: kitchen_sink_auto_installs_playwright_deps
+  type: fail_to_pass
+  origin: pr_diff
+  description: kitchen-sink test script auto-installs playwright deps before running
+- id: starters_auto_installs_playwright_deps
+  type: fail_to_pass
+  origin: pr_diff
+  description: starters-e2e-tests test and test:dev scripts auto-install playwright
+    deps
+- id: multiple_examples_auto_install
+  type: fail_to_pass
+  origin: pr_diff
+  description: At least 5 example package.json files auto-install playwright deps
+- id: run_script_no_manual_playwright_install
+  type: fail_to_pass
+  origin: pr_diff
+  description: waspc/run no longer manually runs npx playwright install --with-deps
+- id: ci_no_explicit_playwright_install_step
+  type: fail_to_pass
+  origin: pr_diff
+  description: CI workflow files no longer have separate playwright install steps
+- id: golden_snapshot_package_json_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Golden snapshot package.json also has auto-install script
+rubric:
+- rule: kitchen-sink README no longer documents manual playwright install step
+  source:
+    path: examples/kitchen-sink/README.md
+    lines: 84-98
+    commit: c080c10a9becb8c2bfe61d0217a406588d68e637
+  reference: 'Run the e2e tests with:'
+- rule: Golden snapshot README also updated with simplified e2e instructions
+  source:
+    path: waspc/e2e-tests/snapshots/kitchen-sink-golden/wasp-app/README.md
+    lines: 84-90
+    commit: c080c10a9becb8c2bfe61d0217a406588d68e637
+  reference: 'Run the e2e tests with:'

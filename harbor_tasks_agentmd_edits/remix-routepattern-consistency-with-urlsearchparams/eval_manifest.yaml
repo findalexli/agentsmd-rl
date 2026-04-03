@@ -1,0 +1,59 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11200
+  base_commit: 92a9b9df4ef4c7096973a6d1df040f512e7ccee2
+  merge_commit: ed39106b15827744b72c7f7416434668747b975d
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TS source files are non-empty and structurally valid
+- id: key_only_and_key_equals_match_equivalently
+  type: fail_to_pass
+  origin: pr_diff
+  description: Pattern '?q=' must match URL with just '?q' (key present, no value)
+- id: plus_decoded_as_space
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseSearch must decode '+' as space, consistent with URLSearchParams
+- id: serialize_key_only_includes_equals
+  type: fail_to_pass
+  origin: pr_diff
+  description: Serializing a key-only constraint (?q) must produce 'q=' with equals
+    sign
+rubric:
+- rule: Documentation update is consistent with the style of the existing README
+  source:
+    path: packages/route-pattern/README.md
+    lines: 1-10
+    commit: 92a9b9df4ef4c7096973a6d1df040f512e7ccee2
+- rule: Code examples in the README are accurate and runnable
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: 92a9b9df4ef4c7096973a6d1df040f512e7ccee2
+- rule: README.md must mention URLSearchParams consistency for search param parsing
+  source:
+    path: packages/route-pattern/README.md
+    lines: '64'
+    commit: ed39106b15827744b72c7f7416434668747b975d
+  reference: "**Search params** narrow matches using `?key`, `?key=`, or `?key=value`.\
+    \ Parsing and serialization follow `URLSearchParams` (`application/x-www-form-urlencoded`):\
+    \ `?key` and `?key=` are the same constraint (stored as an empty `Set` in `ast.search`:\
+    \ key must be present; empty value is OK), and spaces use `+` / `%20` like in\
+    \ real query strings.\nnew RoutePattern('search?q') // same constraint as ?q=\
+    \ \u2014 key must be present\n// More constrained search params = more specific\
+    \ (`?q` and `?q=` tie)"
+- rule: README.md must not present ?q= as a separate 'any value' constraint
+  source:
+    path: packages/route-pattern/README.md
+    lines: 64-69
+    commit: ed39106b15827744b72c7f7416434668747b975d
+  reference: "**Search params** narrow matches using `?key`, `?key=`, or `?key=value`.\
+    \ Parsing and serialization follow `URLSearchParams` (`application/x-www-form-urlencoded`):\
+    \ `?key` and `?key=` are the same constraint (stored as an empty `Set` in `ast.search`:\
+    \ key must be present; empty value is OK), and spaces use `+` / `%20` like in\
+    \ real query strings.\nnew RoutePattern('search?q') // same constraint as ?q=\
+    \ \u2014 key must be present\n// More constrained search params = more specific\
+    \ (`?q` and `?q=` tie)"

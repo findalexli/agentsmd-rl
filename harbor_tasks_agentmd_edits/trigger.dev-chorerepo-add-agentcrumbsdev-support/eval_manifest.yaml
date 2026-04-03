@@ -1,0 +1,57 @@
+version: '2.0'
+source:
+  repo: triggerdotdev/trigger.dev
+  pr: 3206
+  base_commit: d4d8d9fabc45c48c75b7d89f3d2773b426dc5b28
+  merge_commit: 440c16c4aa8a7c173a8114bbbdaaa1a19380286b
+checks:
+- id: remix_config_valid_js
+  type: pass_to_pass
+  origin: static
+  description: remix.config.js must be valid JavaScript
+- id: package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: Root package.json must be valid JSON
+- id: remix_config_bundles_agentcrumbs
+  type: fail_to_pass
+  origin: pr_diff
+  description: remix.config.js must include agentcrumbs in serverDependenciesToBundle
+- id: package_json_has_agentcrumbs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Root package.json must list agentcrumbs as a dependency
+rubric:
+- rule: Agentcrumbs documentation style should be consistent with existing CLAUDE.md
+    sections
+  source:
+    path: CLAUDE.md
+    lines: 1-10
+    commit: d4d8d9fabc45c48c75b7d89f3d2773b426dc5b28
+- rule: Namespace table should cover the major project packages without inventing
+    namespaces
+  source:
+    path: CLAUDE.md
+    lines: 188-210
+    commit: 440c16c4aa8a7c173a8114bbbdaaa1a19380286b
+- rule: pnpm-workspace.yaml must exclude agentcrumbs from minimum release age
+- rule: CLAUDE.md must have an agentcrumbs section with skill mappings
+  source:
+    path: CLAUDE.md
+    lines: 169-224
+    commit: 440c16c4aa8a7c173a8114bbbdaaa1a19380286b
+- rule: CLAUDE.md must document agentcrumbs namespaces for the project
+  source:
+    path: CLAUDE.md
+    lines: 188-210
+    commit: 440c16c4aa8a7c173a8114bbbdaaa1a19380286b
+- rule: CLAUDE.md must document @crumbs marker usage
+  source:
+    path: CLAUDE.md
+    lines: 180-186
+    commit: 440c16c4aa8a7c173a8114bbbdaaa1a19380286b
+- rule: CLAUDE.md must document agentcrumbs CLI commands
+  source:
+    path: CLAUDE.md
+    lines: 218-224
+    commit: 440c16c4aa8a7c173a8114bbbdaaa1a19380286b

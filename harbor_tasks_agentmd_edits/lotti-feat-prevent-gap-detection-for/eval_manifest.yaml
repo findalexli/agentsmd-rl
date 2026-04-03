@@ -1,0 +1,77 @@
+version: '2.0'
+source:
+  repo: matthiasn/lotti
+  pr: 2508
+  base_commit: 5d434148cd4a4be9c10451cc7fdb2fbece7a1244
+  merge_commit: f9b2029416face1c38eae51fd54a0545548f60ee
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Dart files must be syntactically valid (balanced braces)
+- id: gap_detection_checks_host_online_status
+  type: fail_to_pass
+  origin: pr_diff
+  description: Gap detection must call getHostLastSeen to check host online status
+- id: gap_detection_gated_by_online_status
+  type: fail_to_pass
+  origin: pr_diff
+  description: Gap detection condition must be gated so offline hosts do not trigger
+    gaps
+- id: originator_always_considered_online
+  type: fail_to_pass
+  origin: pr_diff
+  description: Originating host must always be considered online for gap detection
+- id: skip_gap_detection_logging
+  type: fail_to_pass
+  origin: pr_diff
+  description: Service must log skipGapDetection event when skipping offline hosts
+rubric:
+- rule: Update the feature README files we touch such that they match reality in the
+    codebase, not only for what we touch but in their entirety.
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: 5d434148cd4a4be9c10451cc7fdb2fbece7a1244
+- rule: Config update is consistent with the style and structure of the existing sync
+    README documentation.
+  source:
+    path: lib/features/sync/README.md
+    lines: 1-10
+    commit: 5d434148cd4a4be9c10451cc7fdb2fbece7a1244
+- rule: Sync README must document the Online Host Guard behavior
+  source:
+    path: lib/features/sync/README.md
+    lines: 155-162
+    commit: f9b2029416face1c38eae51fd54a0545548f60ee
+  reference: "- **Online Host Guard:** Gap detection is only performed for hosts that\
+    \ have been\n  seen \"online\" (i.e., have sent us a message directly via the\
+    \ `HostActivity`\n  table). This prevents false positive gaps for hosts we've\
+    \ never communicated\n  with \u2014 we may see their counters in vector clocks\
+    \ from other hosts, but we\n  can't know if entries are actually missing without\
+    \ having established\n  communication with them. The originating host is always\
+    \ considered online\n  since they just sent us the curren"
+- rule: Sync README Logging section must document the skipGapDetection log format
+  source:
+    path: lib/features/sync/README.md
+    lines: '227'
+    commit: f9b2029416face1c38eae51fd54a0545548f60ee
+  reference: "- **Online Host Guard:** Gap detection is only performed for hosts that\
+    \ have been\n  seen \"online\" (i.e., have sent us a message directly via the\
+    \ `HostActivity`\n  table). This prevents false positive gaps for hosts we've\
+    \ never communicated\n  with \u2014 we may see their counters in vector clocks\
+    \ from other hosts, but we\n  can't know if entries are actually missing without\
+    \ having established\n  communication with them. The originating host is always\
+    \ considered online\n  since they just sent us the curren"
+- rule: README must match codebase reality per AGENTS.md rule
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: 5d434148cd4a4be9c10451cc7fdb2fbece7a1244
+  reference: "# lib/features/sync/README.md\n- **Online Host Guard:** Gap detection\
+    \ is only performed for hosts that have been\n  seen \"online\" (i.e., have sent\
+    \ us a message directly via the `HostActivity`\n  table). This prevents false\
+    \ positive gaps for hosts we've never communicated\n  with \u2014 we may see their\
+    \ counters in vector clocks from other hosts, but we\n  can't know if entries\
+    \ are actually missing without having established\n  communication with them.\
+    \ The originating host is always considered online\n  sinc"

@@ -1,0 +1,52 @@
+version: '2.0'
+source:
+  repo: payloadcms/payload
+  pr: 15110
+  base_commit: 5ebda61c74724cf68d2b1b1dc9886dde5f55b0ff
+  merge_commit: 40081f457d3b89ea0acdb43042926e343de81342
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files exist and are not truncated
+- id: buildschema_searches_flattened_for_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: buildSchema uses flattenedFields to find custom ID fields nested in
+    tabs/groups
+- id: collection_schema_passes_flattened
+  type: fail_to_pass
+  origin: pr_diff
+  description: buildCollectionSchema passes flattenedFields to buildSchema
+- id: afterread_preserves_hidden_toplevel_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: afterRead hook does not strip hidden custom ID fields at the top level
+    (depth 0)
+rubric:
+- rule: Test cleanup documentation is consistent with the style of existing CLAUDE.md
+    sections
+  source:
+    path: CLAUDE.md
+    lines: 1-82
+    commit: 5ebda61c74724cf68d2b1b1dc9886dde5f55b0ff
+- rule: traverseFields accepts and propagates fieldDepth to promise calls
+  reference: "# CLAUDE.md\n### Writing Tests - Required Practices\n\n**Tests MUST\
+    \ be self-contained and clean up after themselves:**\n\n- If you create a database\
+    \ record in a test, you MUST delete it before the test completes\n- For multiple\
+    \ tests with similar cleanup needs, use `afterEach` to centralize cleanup logic\n\
+    - Track created resources (IDs, files, etc.) in a shared array within the `describe`\
+    \ block\n\n**Example pattern:**\n\n```typescript\ndescribe('My Feature', () =>\
+    \ {\n  const createdIDs: number[] = []\n\n  afte"
+- rule: CLAUDE.md updated to document test cleanup and self-contained test practices
+  source:
+    path: CLAUDE.md
+    lines: 84-128
+    commit: 40081f457d3b89ea0acdb43042926e343de81342
+  reference: "### Writing Tests - Required Practices\n\n**Tests MUST be self-contained\
+    \ and clean up after themselves:**\n\n- If you create a database record in a test,\
+    \ you MUST delete it before the test completes\n- For multiple tests with similar\
+    \ cleanup needs, use `afterEach` to centralize cleanup logic\n- Track created\
+    \ resources (IDs, files, etc.) in a shared array within the `describe` block\n\
+    \n**Example pattern:**\n\n```typescript\ndescribe('My Feature', () => {\n  const\
+    \ createdIDs: number[] = []\n\n  afterEach(async "

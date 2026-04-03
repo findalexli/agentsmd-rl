@@ -1,0 +1,87 @@
+version: '2.0'
+source:
+  repo: TryGhost/Ghost
+  pr: 26663
+  base_commit: 85880f6f4b77a7624cd3b4482db107a508103777
+  merge_commit: 32096c82e5a46be01c3400aaa59f0489ca027f66
+checks:
+- id: existing_private_flags_preserved
+  type: pass_to_pass
+  origin: static
+  description: Existing PRIVATE_FEATURES entries must still be present in labs.js
+- id: flag_registered_in_labs_js
+  type: fail_to_pass
+  origin: pr_diff
+  description: welcomeEmailsDesignCustomization added to PRIVATE_FEATURES array in
+    labs.js
+- id: ui_toggle_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: UI toggle entry added in private-features.tsx with title, description,
+    and flag
+- id: flag_name_consistent_across_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: Flag string is identical in labs.js and private-features.tsx
+rubric:
+- rule: Skill file is consistent with the style and structure of existing skill files
+    in .claude/skills/
+  source:
+    path: .claude/skills/add-admin-api-endpoint/SKILL.md
+    lines: 1-20
+    commit: 85880f6f4b77a7624cd3b4482db107a508103777
+- rule: Flag name follows existing camelCase convention used by other private feature
+    flags
+  source:
+    path: ghost/core/core/shared/labs.js
+    lines: 44-53
+    commit: 85880f6f4b77a7624cd3b4482db107a508103777
+- rule: SKILL.md created at .claude/skills/add-private-feature-flag/ documenting the
+    process
+  source:
+    path: .claude/skills/add-private-feature-flag/SKILL.md
+    lines: 1-28
+    commit: 32096c82e5a46be01c3400aaa59f0489ca027f66
+  reference: "---\nname: add-private-feature-flag\ndescription: Use when adding a\
+    \ new private (developer experiments) feature flag to Ghost, including the backend\
+    \ registration and settings UI toggle.\n---\n\n# Add Private Feature Flag\n\n\
+    ## Overview\nAdds a new private feature flag to Ghost. Private flags appear in\
+    \ Labs settings under the \"Private features\" tab, visible only when developer\
+    \ experiments are enabled.\n\n## Steps\n\n1. **Add the flag to `ghost/core/core/shared/labs.js`**\n\
+    \   - Add the flag name (camelCase str"
+- rule: Skill file references labs.js and PRIVATE_FEATURES as the registration location
+  source:
+    path: .claude/skills/add-private-feature-flag/SKILL.md
+    lines: 13-14
+    commit: 32096c82e5a46be01c3400aaa59f0489ca027f66
+  reference: "---\nname: add-private-feature-flag\ndescription: Use when adding a\
+    \ new private (developer experiments) feature flag to Ghost, including the backend\
+    \ registration and settings UI toggle.\n---\n\n# Add Private Feature Flag\n\n\
+    ## Overview\nAdds a new private feature flag to Ghost. Private flags appear in\
+    \ Labs settings under the \"Private features\" tab, visible only when developer\
+    \ experiments are enabled.\n\n## Steps\n\n1. **Add the flag to `ghost/core/core/shared/labs.js`**\n\
+    \   - Add the flag name (camelCase str"
+- rule: Skill file references the private-features.tsx UI component
+  source:
+    path: .claude/skills/add-private-feature-flag/SKILL.md
+    lines: 16-17
+    commit: 32096c82e5a46be01c3400aaa59f0489ca027f66
+  reference: "---\nname: add-private-feature-flag\ndescription: Use when adding a\
+    \ new private (developer experiments) feature flag to Ghost, including the backend\
+    \ registration and settings UI toggle.\n---\n\n# Add Private Feature Flag\n\n\
+    ## Overview\nAdds a new private feature flag to Ghost. Private flags appear in\
+    \ Labs settings under the \"Private features\" tab, visible only when developer\
+    \ experiments are enabled.\n\n## Steps\n\n1. **Add the flag to `ghost/core/core/shared/labs.js`**\n\
+    \   - Add the flag name (camelCase str"
+- rule: Skill file documents at least 2 distinct steps for the process
+  source:
+    path: .claude/skills/add-private-feature-flag/SKILL.md
+    lines: 12-22
+    commit: 32096c82e5a46be01c3400aaa59f0489ca027f66
+  reference: "---\nname: add-private-feature-flag\ndescription: Use when adding a\
+    \ new private (developer experiments) feature flag to Ghost, including the backend\
+    \ registration and settings UI toggle.\n---\n\n# Add Private Feature Flag\n\n\
+    ## Overview\nAdds a new private feature flag to Ghost. Private flags appear in\
+    \ Labs settings under the \"Private features\" tab, visible only when developer\
+    \ experiments are enabled.\n\n## Steps\n\n1. **Add the flag to `ghost/core/core/shared/labs.js`**\n\
+    \   - Add the flag name (camelCase str"

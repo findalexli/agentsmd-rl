@@ -1,0 +1,90 @@
+version: '2.0'
+source:
+  repo: cloudflare/workerd
+  pr: 6353
+  base_commit: dce7afd9ef1c45cd56bda8ac393358d381e41dd5
+  merge_commit: 97e306bf6e2ab0351eb44370f9deb5e6da42877d
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Rust files have balanced braces
+- id: jsg_constructor_proc_macro_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'lib.rs defines #[proc_macro_attribute] pub fn jsg_constructor'
+- id: constructor_registration_logic
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'lib.rs scans impl blocks for #[jsg_constructor] and generates Constructor
+    member registration'
+- id: constructor_validates_no_self_receiver
+  type: fail_to_pass
+  origin: pr_diff
+  description: Constructor macro rejects methods with a self receiver and validates
+    return type is Self
+- id: ffi_attach_wrapper_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: C++ FFI provides wrappable_attach_wrapper to attach Wrappable to constructor
+    this object
+- id: rc_attach_to_this_method
+  type: fail_to_pass
+  origin: pr_diff
+  description: resource.rs exposes pub fn attach_to_this on Rc for constructor callback
+    use
+- id: v8_ffi_binding_for_attach
+  type: fail_to_pass
+  origin: pr_diff
+  description: v8.rs declares FFI binding and WrappableRc method for attach_to_this
+- id: constructor_tests_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: resource_callback.rs includes constructor tests using jsg_constructor
+- id: existing_macros_preserved
+  type: pass_to_pass
+  origin: static
+  description: Existing proc macros (jsg_struct, jsg_method, jsg_resource, etc.) still
+    present
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Constructor implementation has real logic, not a stub
+rubric:
+- rule: Documentation updates should be consistent with the existing style of the
+    jsg-macros and jsg READMEs
+  source:
+    path: src/rust/jsg-macros/README.md
+    lines: 1-10
+    commit: dce7afd9ef1c45cd56bda8ac393358d381e41dd5
+- rule: Proactively suggest updates to the documentation when it is missing or out
+    of date, but do not make edits without confirming accuracy
+  source:
+    path: AGENTS.md
+    lines: '299'
+    commit: dce7afd9ef1c45cd56bda8ac393358d381e41dd5
+- rule: 'jsg-macros/README.md documents #[jsg_constructor] with usage, rules, and
+    code example'
+  source:
+    path: src/rust/jsg-macros/README.md
+    lines: 128-149
+    commit: 97e306bf6e2ab0351eb44370f9deb5e6da42877d
+  reference: "## `#[jsg_constructor]`\n\nMarks a static method as the JavaScript constructor\
+    \ for a `#[jsg_resource]`. When JavaScript calls `new MyClass(args)`, V8 invokes\
+    \ this method, creates a `jsg::Rc<Self>`, and attaches it to the `this` object.\n\
+    \n```rust\n#[jsg_resource]\nimpl MyResource {\n    #[jsg_constructor]\n    fn\
+    \ constructor(name: String) -> Self {\n        Self { name }\n    }\n}\n// JS:\
+    \ let r = new MyResource(\"hello\");\n```\n\nThe method must be static (no `self`\
+    \ receiver) and must return `Self`. Only one `#"
+- rule: jsg/README.md has a Constructors section documenting jsg_constructor feature
+  source:
+    path: src/rust/jsg/README.md
+    lines: 140-172
+    commit: 97e306bf6e2ab0351eb44370f9deb5e6da42877d
+  reference: "// Create a resource\n// Convert to a JS object (uses cached FunctionTemplate)\n\
+    let js_obj = resource.to_js(&mut lock);\n// Convert from JS back to a Ref\nlet\
+    \ r: jsg::Rc<MyResource> = jsg::Rc::from_js(&mut lock, js_val)?;\n## Constructors\n\
+    \nTo allow JavaScript to create instances of a resource via `new MyResource(args)`,\
+    \ mark a static method with `#[jsg_constructor]`:\n\n```rust\nuse jsg_macros::{jsg_resource,\
+    \ jsg_method, jsg_constructor};\n\n#[jsg_resource]\nstruct Greeting {\n    message:\
+    \ String,\n}\n\n#[jsg_"

@@ -1,0 +1,62 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11067
+  base_commit: 89db125c56d3b0d637a283ac9122c6cb8f5542c3
+  merge_commit: 28d74aae012ca78b82fedaf6f7f5de53094fd002
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must parse without errors
+- id: table_standard_schema_property
+  type: fail_to_pass
+  origin: pr_diff
+  description: createTable must attach ~standard property with version, vendor, validate
+- id: table_validate_partial_row_input_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: validatePartialRowInput helper powers both ~standard and write validation
+- id: validate_partial_row_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: validatePartialRow must be exported from table.ts
+- id: write_path_uses_shared_validator
+  type: fail_to_pass
+  origin: pr_diff
+  description: database.ts must import and use validatePartialRow from table.ts
+- id: dataschemma_type_removed_from_exports
+  type: fail_to_pass
+  origin: pr_diff
+  description: DataSchema type no longer re-exported from data-table index
+- id: timestamp_schema_uses_create_schema
+  type: fail_to_pass
+  origin: pr_diff
+  description: timestampSchema uses createSchema from data-schema instead of inline
+    ~standard
+- id: table_still_exports_core_api
+  type: pass_to_pass
+  origin: static
+  description: Core table API (createTable, hasMany, etc.) still exported
+rubric:
+- rule: Config update is consistent with the style of existing AGENTS.md entries
+  source:
+    path: AGENTS.md
+    lines: 1-20
+    commit: 89db125c56d3b0d637a283ac9122c6cb8f5542c3
+- rule: README Data Validation section follows the structure and tone of existing
+    README sections
+  source:
+    path: packages/data-table/README.md
+    lines: 1-30
+    commit: 89db125c56d3b0d637a283ac9122c6cb8f5542c3
+- rule: AGENTS.md documents cross-package boundary rule about re-exports
+  source:
+    path: AGENTS.md
+    lines: '19'
+    commit: 28d74aae012ca78b82fedaf6f7f5de53094fd002
+- rule: data-table README documents data validation and Standard Schema compatibility
+  source:
+    path: packages/data-table/README.md
+    lines: 219-259
+    commit: 28d74aae012ca78b82fedaf6f7f5de53094fd002

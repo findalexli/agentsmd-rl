@@ -1,0 +1,148 @@
+version: '2.0'
+source:
+  repo: facebook/react
+  pr: 35688
+  base_commit: cd0c4879a2959db91f9bd51a09dafefedd95fb17
+  merge_commit: 3ce1316b05968d2a8cffe42a110f2726f2c44c3e
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have no obvious syntax errors
+- id: constants_renamed_to_babel_plugin
+  type: fail_to_pass
+  origin: pr_diff
+  description: constants.ts exports BABEL_PLUGIN_ROOT and BABEL_PLUGIN_SRC
+- id: compile_command_registered
+  type: fail_to_pass
+  origin: pr_diff
+  description: runner.ts registers a 'compile' subcommand via yargs
+- id: compile_function_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: runner.ts defines runCompileCommand with compilation logic
+- id: minimize_positional_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: minimize command accepts path as positional arg, not --path flag
+- id: path_resolution_uses_project_root
+  type: fail_to_pass
+  origin: pr_diff
+  description: Relative paths resolve from PROJECT_ROOT (compiler dir), not process.cwd()
+- id: consumer_files_use_renamed_constants
+  type: fail_to_pass
+  origin: pr_diff
+  description: runner-worker, runner-watch, minimize use BABEL_PLUGIN_ROOT/SRC
+rubric:
+- rule: Documentation for compile/minimize commands is consistent with the style of
+    existing CLAUDE.md sections
+  source:
+    path: compiler/CLAUDE.md
+    lines: 1-35
+    commit: cd0c4879a2959db91f9bd51a09dafefedd95fb17
+- rule: Config update mentions that compile works on arbitrary files, not just fixtures
+  source:
+    path: compiler/CLAUDE.md
+    lines: 38-48
+    commit: 3ce1316b05968d2a8cffe42a110f2726f2c44c3e
+- rule: compiler/CLAUDE.md documents the yarn snap compile command
+  source:
+    path: compiler/CLAUDE.md
+    lines: 38-60
+    commit: 3ce1316b05968d2a8cffe42a110f2726f2c44c3e
+  reference: '## Compiling Arbitrary Files
+
+
+    Use `yarn snap compile` to compile any file (not just fixtures) with the React
+    Compiler:
+
+
+    ```bash
+
+    # Compile a file and see the output
+
+    yarn snap compile <path>
+
+
+    # Compile with debug logging to see the state after each compiler pass
+
+    # This is an alternative to `yarn snap -d -p <pattern>` when you don''t have a
+    fixture file yet
+
+    yarn snap compile --debug <path>
+
+    ```
+
+
+    ## Minimizing Test Cases
+
+
+    Use `yarn snap minimize` to automatically reduce a failing test case to its mini'
+- rule: compiler/CLAUDE.md documents the yarn snap minimize command
+  source:
+    path: compiler/CLAUDE.md
+    lines: 52-65
+    commit: 3ce1316b05968d2a8cffe42a110f2726f2c44c3e
+  reference: '## Compiling Arbitrary Files
+
+
+    Use `yarn snap compile` to compile any file (not just fixtures) with the React
+    Compiler:
+
+
+    ```bash
+
+    # Compile a file and see the output
+
+    yarn snap compile <path>
+
+
+    # Compile with debug logging to see the state after each compiler pass
+
+    # This is an alternative to `yarn snap -d -p <pattern>` when you don''t have a
+    fixture file yet
+
+    yarn snap compile --debug <path>
+
+    ```
+
+
+    ## Minimizing Test Cases
+
+
+    Use `yarn snap minimize` to automatically reduce a failing test case to its mini'
+- rule: DEVELOPMENT_GUIDE.md documents compile and minimize commands
+  source:
+    path: compiler/docs/DEVELOPMENT_GUIDE.md
+    lines: 21-48
+    commit: 3ce1316b05968d2a8cffe42a110f2726f2c44c3e
+  reference: '# compiler/CLAUDE.md
+
+    ## Compiling Arbitrary Files
+
+
+    Use `yarn snap compile` to compile any file (not just fixtures) with the React
+    Compiler:
+
+
+    ```bash
+
+    # Compile a file and see the output
+
+    yarn snap compile <path>
+
+
+    # Compile with debug logging to see the state after each compiler pass
+
+    # This is an alternative to `yarn snap -d -p <pattern>` when you don''t have a
+    fixture file yet
+
+    yarn snap compile --debug <path>
+
+    ```
+
+
+    ## Minimizing Test Cases
+
+
+    Use `yarn snap minimize` to automatically reduce a failing '

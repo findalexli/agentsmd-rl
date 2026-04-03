@@ -1,0 +1,63 @@
+version: '2.0'
+source:
+  repo: matthiasn/lotti
+  pr: 2883
+  base_commit: fda7c15b3cd6b88a3d9d258d458ce202f4b025c8
+  merge_commit: e0ed1461a20edea9ea57c49fda29fb89d72d7882
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Dart files have balanced braces and parentheses
+- id: custom_scroll_view_in_detail_content
+  type: fail_to_pass
+  origin: pr_diff
+  description: Detail content uses CustomScrollView for sliver-based lazy rendering
+- id: sliver_task_panel_class_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: A sliver-compatible task panel widget class is defined
+- id: sliver_list_for_lazy_task_rows
+  type: fail_to_pass
+  origin: pr_diff
+  description: Task rows are rendered lazily via SliverList
+- id: detail_content_uses_sliver_task_panel
+  type: fail_to_pass
+  origin: pr_diff
+  description: Detail content renders tasks through the sliver panel
+- id: detail_content_uses_sliver_adapters
+  type: fail_to_pass
+  origin: pr_diff
+  description: Static header sections wrapped in SliverToBoxAdapter
+- id: sliver_panel_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Sliver panel has real build logic with itemBuilder and TaskSummaryRow
+rubric:
+- rule: README update is consistent with the architecture-first documentation style
+    used in existing feature READMEs
+  source:
+    path: CLAUDE.md
+    lines: 129-131
+    commit: fda7c15b3cd6b88a3d9d258d458ce202f4b025c8
+- rule: Feature README must use code-backed terminology over product fluff, matching
+    the existing README tone
+  source:
+    path: CLAUDE.md
+    lines: '130'
+    commit: fda7c15b3cd6b88a3d9d258d458ce202f4b025c8
+- rule: README documents the sliver-based lazy scroll architecture
+  source:
+    path: lib/features/projects/README.md
+    lines: 257-268
+    commit: e0ed1461a20edea9ea57c49fda29fb89d72d7882
+- rule: README mentions the sliver panel widget by name
+  source:
+    path: lib/features/projects/README.md
+    lines: 251-253
+    commit: e0ed1461a20edea9ea57c49fda29fb89d72d7882
+- rule: README documents the switch to CustomScrollView
+  source:
+    path: lib/features/projects/README.md
+    lines: 257-262
+    commit: e0ed1461a20edea9ea57c49fda29fb89d72d7882

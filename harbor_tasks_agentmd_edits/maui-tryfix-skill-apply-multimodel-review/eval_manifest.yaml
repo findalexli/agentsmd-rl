@@ -1,0 +1,109 @@
+version: '2.0'
+source:
+  repo: dotnet/maui
+  pr: 33762
+  base_commit: f6bafa6e590e1d1dba4b2df2e4dc20a6bad67b7a
+  merge_commit: fce7eca39b449e508cc76873c213a6fb79564f33
+checks:
+- id: ps1_github_comment_path_intact
+  type: pass_to_pass
+  origin: static
+  description: PS1 script still handles GitHub comment update path
+rubric:
+- rule: SKILL.md updates are consistent with the style and tone of the existing documentation
+  source:
+    path: .github/skills/try-fix/SKILL.md
+    lines: 1-20
+    commit: f6bafa6e590e1d1dba4b2df2e4dc20a6bad67b7a
+- rule: PowerShell code changes follow the same patterns and conventions as the existing
+    GitHub comment handling path in the script
+  source:
+    path: .github/skills/ai-summary-comment/scripts/post-try-fix-comment.ps1
+    lines: 1-50
+    commit: f6bafa6e590e1d1dba4b2df2e4dc20a6bad67b7a
+- rule: SKILL.md has valid markdown with YAML frontmatter
+  reference: "# .github/skills/try-fix/SKILL.md\ncompatibility: Requires PowerShell,\
+    \ git, .NET MAUI build environment, Android/iOS device or emulator\n## \u26A0\uFE0F\
+    \ CRITICAL: Sequential Execution Only\n\n\U0001F6A8 **Try-fix runs MUST be executed\
+    \ ONE AT A TIME - NEVER in parallel.**\n\n**Why:** Each try-fix run:\n- Modifies\
+    \ the same source files (SafeAreaExtensions.cs, etc.)\n- Uses the same device/emulator\
+    \ for testing\n- Runs EstablishBrokenBaseline.ps1 which reverts files to a known\
+    \ state\n\n**If run in parallel:**\n- Multiple agents w"
+- rule: Preview file update preserves previous try-fix attempts instead of replacing
+    entire section
+  reference: "# .github/skills/try-fix/SKILL.md\ncompatibility: Requires PowerShell,\
+    \ git, .NET MAUI build environment, Android/iOS device or emulator\n## \u26A0\uFE0F\
+    \ CRITICAL: Sequential Execution Only\n\n\U0001F6A8 **Try-fix runs MUST be executed\
+    \ ONE AT A TIME - NEVER in parallel.**\n\n**Why:** Each try-fix run:\n- Modifies\
+    \ the same source files (SafeAreaExtensions.cs, etc.)\n- Uses the same device/emulator\
+    \ for testing\n- Runs EstablishBrokenBaseline.ps1 which reverts files to a known\
+    \ state\n\n**If run in parallel:**\n- Multiple agents w"
+- rule: SKILL.md frontmatter includes compatibility field documenting requirements
+  source:
+    path: .github/skills/try-fix/SKILL.md
+    lines: '4'
+    commit: fce7eca39b449e508cc76873c213a6fb79564f33
+  reference: "compatibility: Requires PowerShell, git, .NET MAUI build environment,\
+    \ Android/iOS device or emulator\n## \u26A0\uFE0F CRITICAL: Sequential Execution\
+    \ Only\n\n\U0001F6A8 **Try-fix runs MUST be executed ONE AT A TIME - NEVER in\
+    \ parallel.**\n\n**Why:** Each try-fix run:\n- Modifies the same source files\
+    \ (SafeAreaExtensions.cs, etc.)\n- Uses the same device/emulator for testing\n\
+    - Runs EstablishBrokenBaseline.ps1 which reverts files to a known state\n\n**If\
+    \ run in parallel:**\n- Multiple agents will overwrite each other's code ch"
+- rule: SKILL.md documents Blocked as valid result and standardizes to title-case
+    Pass/Fail/Blocked
+  source:
+    path: .github/skills/try-fix/SKILL.md
+    lines: 60-62
+    commit: fce7eca39b449e508cc76873c213a6fb79564f33
+  reference: "compatibility: Requires PowerShell, git, .NET MAUI build environment,\
+    \ Android/iOS device or emulator\n## \u26A0\uFE0F CRITICAL: Sequential Execution\
+    \ Only\n\n\U0001F6A8 **Try-fix runs MUST be executed ONE AT A TIME - NEVER in\
+    \ parallel.**\n\n**Why:** Each try-fix run:\n- Modifies the same source files\
+    \ (SafeAreaExtensions.cs, etc.)\n- Uses the same device/emulator for testing\n\
+    - Runs EstablishBrokenBaseline.ps1 which reverts files to a known state\n\n**If\
+    \ run in parallel:**\n- Multiple agents will overwrite each other's code ch"
+- rule: SKILL.md warns that try-fix runs must execute sequentially, never in parallel
+  source:
+    path: .github/skills/try-fix/SKILL.md
+    lines: 19-38
+    commit: fce7eca39b449e508cc76873c213a6fb79564f33
+  reference: "compatibility: Requires PowerShell, git, .NET MAUI build environment,\
+    \ Android/iOS device or emulator\n## \u26A0\uFE0F CRITICAL: Sequential Execution\
+    \ Only\n\n\U0001F6A8 **Try-fix runs MUST be executed ONE AT A TIME - NEVER in\
+    \ parallel.**\n\n**Why:** Each try-fix run:\n- Modifies the same source files\
+    \ (SafeAreaExtensions.cs, etc.)\n- Uses the same device/emulator for testing\n\
+    - Runs EstablishBrokenBaseline.ps1 which reverts files to a known state\n\n**If\
+    \ run in parallel:**\n- Multiple agents will overwrite each other's code ch"
+- rule: Output structure reference file deleted and content inlined into SKILL.md
+  source:
+    path: .github/skills/try-fix/SKILL.md
+    lines: 60-113
+    commit: fce7eca39b449e508cc76873c213a6fb79564f33
+  reference: "compatibility: Requires PowerShell, git, .NET MAUI build environment,\
+    \ Android/iOS device or emulator\n## \u26A0\uFE0F CRITICAL: Sequential Execution\
+    \ Only\n\n\U0001F6A8 **Try-fix runs MUST be executed ONE AT A TIME - NEVER in\
+    \ parallel.**\n\n**Why:** Each try-fix run:\n- Modifies the same source files\
+    \ (SafeAreaExtensions.cs, etc.)\n- Uses the same device/emulator for testing\n\
+    - Runs EstablishBrokenBaseline.ps1 which reverts files to a known state\n\n**If\
+    \ run in parallel:**\n- Multiple agents will overwrite each other's code ch"
+- rule: Workflow steps use Tee-Object to capture output to log files
+  source:
+    path: .github/skills/try-fix/SKILL.md
+    lines: 195-196
+    commit: fce7eca39b449e508cc76873c213a6fb79564f33
+  reference: "compatibility: Requires PowerShell, git, .NET MAUI build environment,\
+    \ Android/iOS device or emulator\n## \u26A0\uFE0F CRITICAL: Sequential Execution\
+    \ Only\n\n\U0001F6A8 **Try-fix runs MUST be executed ONE AT A TIME - NEVER in\
+    \ parallel.**\n\n**Why:** Each try-fix run:\n- Modifies the same source files\
+    \ (SafeAreaExtensions.cs, etc.)\n- Uses the same device/emulator for testing\n\
+    - Runs EstablishBrokenBaseline.ps1 which reverts files to a known state\n\n**If\
+    \ run in parallel:**\n- Multiple agents will overwrite each other's code ch"
+- rule: SKILL.md retains core principles section
+  reference: "# .github/skills/try-fix/SKILL.md\ncompatibility: Requires PowerShell,\
+    \ git, .NET MAUI build environment, Android/iOS device or emulator\n## \u26A0\uFE0F\
+    \ CRITICAL: Sequential Execution Only\n\n\U0001F6A8 **Try-fix runs MUST be executed\
+    \ ONE AT A TIME - NEVER in parallel.**\n\n**Why:** Each try-fix run:\n- Modifies\
+    \ the same source files (SafeAreaExtensions.cs, etc.)\n- Uses the same device/emulator\
+    \ for testing\n- Runs EstablishBrokenBaseline.ps1 which reverts files to a known\
+    \ state\n\n**If run in parallel:**\n- Multiple agents w"

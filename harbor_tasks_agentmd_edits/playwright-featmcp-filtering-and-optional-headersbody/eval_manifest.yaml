@@ -1,0 +1,61 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39672
+  base_commit: 998f35dccb1de560350765493073dec5ec2c811c
+  merge_commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without syntax errors
+- id: schema_has_new_params
+  type: fail_to_pass
+  origin: pr_diff
+  description: browser_network_requests schema declares filter, requestBody, and requestHeaders
+    params
+- id: static_replaces_include_static
+  type: fail_to_pass
+  origin: pr_diff
+  description: includeStatic param renamed to static in tool schema
+- id: render_request_handles_headers_and_body
+  type: fail_to_pass
+  origin: pr_diff
+  description: renderRequest function accepts and renders optional headers and body
+- id: filter_logic_implemented
+  type: fail_to_pass
+  origin: pr_diff
+  description: Request list is filtered by URL using regexp from filter param
+rubric:
+- rule: PR review guidelines in copilot-instructions.md are concise, actionable, and
+    focus on substantive issues over style.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 1-9
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+- rule: New tool parameters have clear, helpful descriptions consistent with existing
+    param description style.
+  source:
+    path: packages/playwright-core/src/tools/backend/network.ts
+    lines: 27-33
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+- rule: CLI network command declares request-body, request-headers, and filter options
+  reference: "# .github/copilot-instructions.md\n## PR Review Guidelines\n\nWhen reviewing\
+    \ pull requests:\n\n- Only comment on semantically meaningful issues: bugs, incorrect\
+    \ logic, security problems, or API contract violations.\n- Skip style, formatting,\
+    \ naming, and whitespace observations unless they cause functional problems.\n\
+    - Keep each comment short \u2014 one or two sentences maximum.\n- Do not write\
+    \ long descriptions or summaries of what the code does.\n- Do not suggest refactors\
+    \ or improvements unrelated to the PR"
+- rule: .github/copilot-instructions.md created with PR review guidelines
+  source:
+    path: .github/copilot-instructions.md
+    lines: 1-9
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  reference: "## PR Review Guidelines\n\nWhen reviewing pull requests:\n\n- Only comment\
+    \ on semantically meaningful issues: bugs, incorrect logic, security problems,\
+    \ or API contract violations.\n- Skip style, formatting, naming, and whitespace\
+    \ observations unless they cause functional problems.\n- Keep each comment short\
+    \ \u2014 one or two sentences maximum.\n- Do not write long descriptions or summaries\
+    \ of what the code does.\n- Do not suggest refactors or improvements unrelated\
+    \ to the PR's stated goal."

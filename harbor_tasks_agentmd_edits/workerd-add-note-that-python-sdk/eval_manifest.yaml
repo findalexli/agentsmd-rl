@@ -1,0 +1,78 @@
+version: '2.0'
+source:
+  repo: cloudflare/workerd
+  pr: 6329
+  base_commit: c91cf4910046c3f4eeffa713cc15a5129ac2ad19
+  merge_commit: dc11a995d573abfea5b40beb4fdbb04bfdc7c02a
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified/new Python files parse without errors
+- id: freeze_test_exists_with_hash_logic
+  type: fail_to_pass
+  origin: pr_diff
+  description: A freeze test exists using cryptographic hashing to detect SDK modifications
+- id: freeze_test_passes
+  type: fail_to_pass
+  origin: pr_diff
+  description: "The freeze test runs successfully \u2014 hashes match actual SDK files"
+- id: freeze_test_covers_key_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: Freeze test covers at least pyproject.toml and __init__.py
+- id: init_has_deprecation_notice
+  type: fail_to_pass
+  origin: pr_diff
+  description: __init__.py has a comment pointing to cloudflare/workers-py
+rubric:
+- rule: AGENTS.md Python SDK section is consistent with the style of the surrounding
+    KEY COMPONENTS table
+  source:
+    path: src/pyodide/AGENTS.md
+    lines: 1-20
+    commit: c91cf4910046c3f4eeffa713cc15a5129ac2ad19
+- rule: Deprecation comment in __init__.py is clear and actionable for future developers
+  source:
+    path: src/pyodide/internal/workers-api/src/workers/__init__.py
+    lines: 1-3
+    commit: dc11a995d573abfea5b40beb4fdbb04bfdc7c02a
+- rule: BUILD.bazel registers a Bazel test target for the freeze test
+  reference: '# src/pyodide/AGENTS.md
+
+    | `internal/workers-api/`                       | Python SDK package (frozen)                                            |
+
+    ## Python SDK
+
+
+    Python SDK (`internal/workers-api/`) now lives in [cloudflare/workers-py](https://github.com/cloudflare/workers-py)
+    and is installed from PyPI. Keep existing code for backward compatibility; new
+    features go to workers-py.'
+- rule: AGENTS.md indicates the workers-api SDK is frozen
+  source:
+    path: src/pyodide/AGENTS.md
+    lines: '18'
+    commit: dc11a995d573abfea5b40beb4fdbb04bfdc7c02a
+  reference: '| `internal/workers-api/`                       | Python SDK package
+    (frozen)                                            |
+
+    ## Python SDK
+
+
+    Python SDK (`internal/workers-api/`) now lives in [cloudflare/workers-py](https://github.com/cloudflare/workers-py)
+    and is installed from PyPI. Keep existing code for backward compatibility; new
+    features go to workers-py.'
+- rule: AGENTS.md references workers-py as the new home for the Python SDK
+  source:
+    path: src/pyodide/AGENTS.md
+    lines: 21-23
+    commit: dc11a995d573abfea5b40beb4fdbb04bfdc7c02a
+  reference: '| `internal/workers-api/`                       | Python SDK package
+    (frozen)                                            |
+
+    ## Python SDK
+
+
+    Python SDK (`internal/workers-api/`) now lives in [cloudflare/workers-py](https://github.com/cloudflare/workers-py)
+    and is installed from PyPI. Keep existing code for backward compatibility; new
+    features go to workers-py.'

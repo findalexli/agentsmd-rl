@@ -1,0 +1,104 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11003
+  base_commit: 721dac4c6704d5b3e8428887af21accdcb3b23ea
+  merge_commit: 5d080eb4aa24c706915844a6ea2fa0606598aef8
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Key modified files exist and are non-empty
+- id: nightly_workflow_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old nightly.yml workflow is deleted
+- id: preview_workflow_has_push_trigger
+  type: fail_to_pass
+  origin: pr_diff
+  description: preview.yml triggers on push to main for continuous builds
+- id: preview_workflow_builds_on_push
+  type: fail_to_pass
+  origin: pr_diff
+  description: preview.yml builds and pushes a preview branch on push events
+- id: script_requires_branch_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: setup-installable-branch.ts requires positional arg, no nightly default
+- id: script_removes_overwrite_protection
+  type: fail_to_pass
+  origin: pr_diff
+  description: setup-installable-branch.ts removes nightly-specific overwrite protection
+- id: script_comments_reference_preview
+  type: fail_to_pass
+  origin: pr_diff
+  description: setup-installable-branch.ts JSDoc references preview, not nightly
+- id: preview_workflow_retains_pr_previews
+  type: pass_to_pass
+  origin: static
+  description: PR preview branches (preview/{number}) still supported
+- id: preview_workflow_retains_cleanup
+  type: pass_to_pass
+  origin: static
+  description: Workflow retains branch cleanup step for closed PRs
+rubric:
+- rule: Documentation updates are consistent in style with existing README and CONTRIBUTING
+    content
+  source:
+    path: AGENTS.md
+    lines: '26'
+    commit: 721dac4c6704d5b3e8428887af21accdcb3b23ea
+- rule: README.md install commands reference preview branch instead of nightly
+  source:
+    path: README.md
+    lines: 72-82
+    commit: 5d080eb4aa24c706915844a6ea2fa0606598aef8
+  reference: 'If you want to play around with the bleeding edge, we also build the
+    latest `main` branch into a `preview` branch which can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#preview&path:packages/remix"
+
+    pnpm install "remix-run/remix#preview&path:packages/@remix-run/fetch-router"'
+- rule: README.md prose describes preview branch, not nightly scheduling
+  source:
+    path: README.md
+    lines: '72'
+    commit: 5d080eb4aa24c706915844a6ea2fa0606598aef8
+  reference: 'If you want to play around with the bleeding edge, we also build the
+    latest `main` branch into a `preview` branch which can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#preview&path:packages/remix"
+
+    pnpm install "remix-run/remix#preview&path:packages/@remix-run/fetch-router"'
+- rule: CONTRIBUTING.md install commands reference preview instead of nightly
+  source:
+    path: CONTRIBUTING.md
+    lines: 163-176
+    commit: 5d080eb4aa24c706915844a6ea2fa0606598aef8
+  reference: '## Preview builds
+
+    We maintain installable builds of `main` in a `preview` branch as a way for folks
+    to test out the latest `main` branch without needing to publish releases to npm
+    and clutter up the npm registry and version history UI.
+
+    This is managed via the [`preview` workflow](/.github/workflows/preview.yaml)
+    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
+    script to build and commit the build and required `package.json` changes to the
+    `preview` branch on '
+- rule: CONTRIBUTING.md section heading says Preview builds, not Nightly Builds
+  source:
+    path: CONTRIBUTING.md
+    lines: '162'
+    commit: 5d080eb4aa24c706915844a6ea2fa0606598aef8
+  reference: '## Preview builds
+
+    We maintain installable builds of `main` in a `preview` branch as a way for folks
+    to test out the latest `main` branch without needing to publish releases to npm
+    and clutter up the npm registry and version history UI.
+
+    This is managed via the [`preview` workflow](/.github/workflows/preview.yaml)
+    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
+    script to build and commit the build and required `package.json` changes to the
+    `preview` branch on '

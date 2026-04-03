@@ -1,0 +1,68 @@
+version: '2.0'
+source:
+  repo: wasp-lang/wasp
+  pr: 3562
+  base_commit: ed8f009c79766e66767307ea00fff365c9f12eae
+  merge_commit: 83093180f7ec2a674b7569286d4de9a0b78db330
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified shell scripts must parse without errors
+- id: build_dispatches_all
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''build'' command dispatches to BUILD_ALL_CMD (packages + haskell)'
+- id: build_hs_command_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''build:hs'' command exists in the run script'
+- id: old_build_all_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''build:all'' and ''build:all:static'' case targets removed'
+- id: static_via_env_var
+  type: fail_to_pass
+  origin: pr_diff
+  description: Static builds controlled via BUILD_STATIC env var
+- id: ci_uses_new_build_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: CI workflow uses './run build' not './run build:all'
+- id: powershell_build_dispatches_all
+  type: fail_to_pass
+  origin: pr_diff
+  description: PowerShell 'build' dispatches to BUILD_ALL_CMD
+- id: build_packages_preserved
+  type: pass_to_pass
+  origin: static
+  description: '''build:packages'' command still exists in run script'
+rubric:
+- rule: README documents 'build:hs' command for Haskell-only builds
+  source:
+    path: waspc/README.md
+    lines: '161'
+    commit: 83093180f7ec2a674b7569286d4de9a0b78db330
+  reference: './run build
+
+    to run the `wasp-cli` executable (that you previously built with `./run build`)!
+
+    4. Use `./run build:hs` to build the Haskell/cabal project, and `./run wasp-cli`
+    to both build and run it. If you changed code in `data/packages/`, you will also
+    need to run `./run build:packages` (check [TypeScript Packages section](#typescript-packages)
+    for more details). Alternatively, you can also run slower `./run build` to at
+    the same time build Haskell, TS packages, and any other piece of the proj'
+- rule: README no longer references './run build:all'
+  source:
+    path: waspc/README.md
+    lines: 76,105,161
+    commit: 83093180f7ec2a674b7569286d4de9a0b78db330
+  reference: './run build
+
+    to run the `wasp-cli` executable (that you previously built with `./run build`)!
+
+    4. Use `./run build:hs` to build the Haskell/cabal project, and `./run wasp-cli`
+    to both build and run it. If you changed code in `data/packages/`, you will also
+    need to run `./run build:packages` (check [TypeScript Packages section](#typescript-packages)
+    for more details). Alternatively, you can also run slower `./run build` to at
+    the same time build Haskell, TS packages, and any other piece of the proj'

@@ -1,0 +1,52 @@
+version: '2.0'
+source:
+  repo: expo/expo
+  pr: 43514
+  base_commit: 9c5343ad06d7ecb11537d6c45e24086877a1fa08
+  merge_commit: 390ce6f9ccb47272eec1b9e7390c5d3b18d94a14
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified XML files must be well-formed
+- id: translucent_resource_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: expo_splash_screen_status_bar_translucent string removed from all apps'
+    strings.xml
+- id: splash_screen_no_translucent_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: SplashScreen.kt show/ensureShown no longer accept statusBarTranslucent
+    parameter
+- id: status_bar_set_translucent_simplified
+  type: fail_to_pass
+  origin: pr_diff
+  description: SplashScreenStatusBar renamed configureTranslucent to setTranslucent
+    with no boolean
+- id: experience_utils_set_translucent_no_boolean
+  type: fail_to_pass
+  origin: pr_diff
+  description: ExperienceActivityUtils.setTranslucent takes only activity, no boolean
+    param
+- id: get_status_bar_translucent_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: getStatusBarTranslucent helper removed from lifecycle listener
+- id: status_bar_still_applies_insets
+  type: pass_to_pass
+  origin: static
+  description: SplashScreenStatusBar.setTranslucent still applies window insets logic
+rubric:
+- rule: README.md no longer documents StatusBar translucent customization
+  source:
+    path: packages/expo-splash-screen/README.md
+    lines: 668-717
+    commit: 9c5343ad06d7ecb11537d6c45e24086877a1fa08
+  reference: 3. Override default `resizeMode` in strings.xml
+- rule: Migration section no longer references statusBarTranslucent
+  source:
+    path: packages/expo-splash-screen/README.md
+    lines: 757-769
+    commit: 9c5343ad06d7ecb11537d6c45e24086877a1fa08
+  reference: 3. Override default `resizeMode` in strings.xml

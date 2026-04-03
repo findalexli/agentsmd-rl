@@ -1,0 +1,88 @@
+version: '2.0'
+source:
+  repo: dotnet/maui
+  pr: 33451
+  base_commit: f73f0f7dabecaa2af50231522313e609ff78dcb7
+  merge_commit: d0e3fdb46cc7c3771ab5885c1fd7cf49469d3bcf
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified C# files must exist and contain valid class/method structure
+- id: shellcontent_path_guards_empty_popping
+  type: fail_to_pass
+  origin: pr_diff
+  description: ShellContent code path must skip ApplyQueryAttributes when mergedData
+    is empty and popping
+- id: lastitem_path_guards_empty_popping
+  type: fail_to_pass
+  origin: pr_diff
+  description: isLastItem code path must skip setting query attributes when mergedData
+    is empty and popping
+- id: shellcontent_setvalue_guards_empty_popping
+  type: fail_to_pass
+  origin: pr_diff
+  description: ShellContent SetValue for QueryAttributesProperty must check mergedData
+    non-empty when popping
+- id: nav_manager_method_signature_intact
+  type: pass_to_pass
+  origin: static
+  description: ApplyQueryAttributes method signature must remain unchanged
+rubric:
+- rule: "Config file removals should be clean \u2014 no leftover blank lines, broken\
+    \ numbering, or orphaned references to the NOTE block"
+  source:
+    path: .github/copilot-instructions.md
+    lines: 1-10
+    commit: f73f0f7dabecaa2af50231522313e609ff78dcb7
+- rule: Code changes should include comments explaining why the guard exists (respecting
+    query.Clear())
+  source:
+    path: src/Controls/src/Core/Shell/ShellNavigationManager.cs
+    lines: 313-341
+    commit: f73f0f7dabecaa2af50231522313e609ff78dcb7
+- rule: copilot-instructions.md must not require a NOTE block in PR descriptions
+  source:
+    path: .github/copilot-instructions.md
+    lines: 200-213
+    commit: d0e3fdb46cc7c3771ab5885c1fd7cf49469d3bcf
+- rule: pr-finalize SKILL.md must not include NOTE block in description requirements
+  source:
+    path: .github/skills/pr-finalize/SKILL.md
+    lines: 127-145
+    commit: d0e3fdb46cc7c3771ab5885c1fd7cf49469d3bcf
+  reference: '1. Include the base sections from `.github/PULL_REQUEST_TEMPLATE.md`
+    ("Description of Change" and "Issues Fixed"). The skill adds additional structured
+    fields (Root cause, Fix, Key insight, etc.) as recommended enhancements for better
+    agent context.
+
+    2. Match the actual implementation'
+- rule: pr-finalize complete-example.md must not include the NOTE block
+  source:
+    path: .github/skills/pr-finalize/references/complete-example.md
+    lines: 9-15
+    commit: d0e3fdb46cc7c3771ab5885c1fd7cf49469d3bcf
+  reference: '# .github/skills/pr-finalize/SKILL.md
+
+    1. Include the base sections from `.github/PULL_REQUEST_TEMPLATE.md` ("Description
+    of Change" and "Issues Fixed"). The skill adds additional structured fields (Root
+    cause, Fix, Key insight, etc.) as recommended enhancements for better agent context.
+
+    2. Match the actual implementation'
+- rule: copilot-instructions.md must retain Custom Agents and Skills section
+  reference: '# .github/skills/pr-finalize/SKILL.md
+
+    1. Include the base sections from `.github/PULL_REQUEST_TEMPLATE.md` ("Description
+    of Change" and "Issues Fixed"). The skill adds additional structured fields (Root
+    cause, Fix, Key insight, etc.) as recommended enhancements for better agent context.
+
+    2. Match the actual implementation'
+- rule: pr-finalize SKILL.md must still have description requirements and code review
+    sections
+  reference: '# .github/skills/pr-finalize/SKILL.md
+
+    1. Include the base sections from `.github/PULL_REQUEST_TEMPLATE.md` ("Description
+    of Change" and "Issues Fixed"). The skill adds additional structured fields (Root
+    cause, Fix, Key insight, etc.) as recommended enhancements for better agent context.
+
+    2. Match the actual implementation'

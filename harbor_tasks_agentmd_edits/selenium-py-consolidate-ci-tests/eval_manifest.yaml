@@ -1,0 +1,52 @@
+version: '2.0'
+source:
+  repo: SeleniumHQ/selenium
+  pr: 16766
+  base_commit: 175b59bd383fa5ae7b966e85b18cfdf41919a75d
+  merge_commit: 4d34904f8da74876d5f0a3199f5a9a25de5091f6
+checks:
+- id: build_files_valid
+  type: pass_to_pass
+  origin: static
+  description: BUILD.bazel and browsers.bzl exist and are non-empty
+- id: browser_config_dict_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: BUILD.bazel defines a browser config dict mapping browsers to test
+    sources
+- id: generated_targets_combine_sources
+  type: fail_to_pass
+  origin: pr_diff
+  description: Generated test-<browser> targets combine common and browser-specific
+    sources
+- id: no_standalone_browser_test_suites
+  type: fail_to_pass
+  origin: pr_diff
+  description: Individual hardcoded browser test suites consolidated into generated
+    targets
+- id: no_common_browser_targets
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old common-<browser> naming replaced with test-<browser>
+- id: bidi_targets_conditional
+  type: fail_to_pass
+  origin: pr_diff
+  description: BiDi test targets generated only for browsers that support BiDi
+rubric:
+- rule: README Python test documentation is consistent with the structure and style
+    of other language sections (Ruby, Java, .NET)
+  source:
+    path: README.md
+    lines: 350-420
+    commit: 175b59bd383fa5ae7b966e85b18cfdf41919a75d
+- rule: browsers.bzl uses --headless instead of --headless=true
+- rule: README.md no longer references obsolete //py:common-<browser> targets
+  source:
+    path: README.md
+    lines: 387-416
+    commit: 4d34904f8da74876d5f0a3199f5a9a25de5091f6
+- rule: README.md documents headless test execution with --//common:headless flag
+  source:
+    path: README.md
+    lines: 405-408
+    commit: 4d34904f8da74876d5f0a3199f5a9a25de5091f6

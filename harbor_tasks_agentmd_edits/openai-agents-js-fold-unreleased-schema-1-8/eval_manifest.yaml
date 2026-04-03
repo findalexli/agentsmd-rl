@@ -1,0 +1,86 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 1075
+  base_commit: 4e6b3fbd3355709831a1bb64472b3c947b694690
+  merge_commit: 94c18cd9b7d45e9b61c9e11e86d81c5471612463
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: runState.ts has balanced braces and valid const assignment
+- id: current_schema_version_is_1_8
+  type: fail_to_pass
+  origin: pr_diff
+  description: "CURRENT_SCHEMA_VERSION must be '1.8' \u2014 unreleased 1.9 folded\
+    \ back"
+- id: version_1_9_not_referenced
+  type: fail_to_pass
+  origin: pr_diff
+  description: Version '1.9' must not appear as a string literal in runState.ts
+- id: version_1_8_comment_includes_batched_computer_actions
+  type: fail_to_pass
+  origin: pr_diff
+  description: Version 1.8 comment must describe batched computer actions (folded
+    from 1.9)
+- id: tool_search_assertion_no_1_9
+  type: fail_to_pass
+  origin: pr_diff
+  description: assertSchemaVersionSupportsToolSearch must not reference '1.9'
+rubric:
+- rule: Config updates should be consistent with the existing style and tone of AGENTS.md
+    and the implementation-strategy SKILL.md
+  source:
+    path: AGENTS.md
+    lines: 1-10
+    commit: 4e6b3fbd3355709831a1bb64472b3c947b694690
+- rule: AGENTS.md clarifies unreleased RunState changes can fold into next version
+  source:
+    path: AGENTS.md
+    lines: '85'
+    commit: 94c18cd9b7d45e9b61c9e11e86d81c5471612463
+  reference: Before changing runtime code, exported APIs, external configuration,
+    persisted schemas, wire protocols, or other user-facing behavior, use `$implementation-strategy`
+    to decide the compatibility boundary and implementation shape. Judge breaking
+    changes against the latest release tag, not unreleased branch-local churn. Interfaces
+    introduced or changed after the latest release tag may be rewritten without compatibility
+    shims unless they already have a released or otherwise supported durable-state
+    c
+- rule: implementation-strategy SKILL.md clarifies unreleased durable state rewriting
+  source:
+    path: .agents/skills/implementation-strategy/SKILL.md
+    lines: 21-24
+    commit: 94c18cd9b7d45e9b61c9e11e86d81c5471612463
+  reference: 'Use this skill before editing code when the task changes runtime behavior
+    or anything that might look like a compatibility concern. The goal is to keep
+    implementations simple while protecting real released contracts and genuinely
+    supported external state.
+
+    5. Add a compatibility layer only when there is a concrete released consumer,
+    an otherwise supported durable external state that requires it, or when the user
+    explicitly asks for a migration path.
+
+    - Persisted schema, serialized state, wire prot'
+- rule: SUPPORTED_SCHEMA_VERSIONS lists versions in ascending order starting at 1.0
+  reference: '# .agents/skills/implementation-strategy/SKILL.md
+
+    Use this skill before editing code when the task changes runtime behavior or anything
+    that might look like a compatibility concern. The goal is to keep implementations
+    simple while protecting real released contracts and genuinely supported external
+    state.
+
+    5. Add a compatibility layer only when there is a concrete released consumer,
+    an otherwise supported durable external state that requires it, or when the user
+    explicitly asks for a migration pat'
+- rule: A changeset file covering @openai/agents-core must exist
+  source:
+    path: AGENTS.md
+    lines: 29-30
+    commit: 4e6b3fbd3355709831a1bb64472b3c947b694690
+  reference: Before changing runtime code, exported APIs, external configuration,
+    persisted schemas, wire protocols, or other user-facing behavior, use `$implementation-strategy`
+    to decide the compatibility boundary and implementation shape. Judge breaking
+    changes against the latest release tag, not unreleased branch-local churn. Interfaces
+    introduced or changed after the latest release tag may be rewritten without compatibility
+    shims unless they already have a released or otherwise supported durable-state
+    c

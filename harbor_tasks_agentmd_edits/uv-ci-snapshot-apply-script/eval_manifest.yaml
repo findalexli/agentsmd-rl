@@ -1,0 +1,94 @@
+version: '2.0'
+source:
+  repo: astral-sh/uv
+  pr: 18424
+  base_commit: dd0d76cd83821e22a7054de21eb73051eb23274d
+  merge_commit: 273d29b8f21e95fb80c9e7ca8b1d28f605212bde
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: CI workflow YAML parses without errors
+- id: workflow_sets_insta_env_vars
+  type: fail_to_pass
+  origin: pr_diff
+  description: CI test jobs set INSTA_UPDATE=new and INSTA_PENDING_DIR env vars
+- id: workflow_uploads_pending_snapshots
+  type: fail_to_pass
+  origin: pr_diff
+  description: CI test jobs upload pending snapshot artifacts on failure for linux/windows/macos
+- id: script_rejects_invalid_action
+  type: fail_to_pass
+  origin: pr_diff
+  description: apply-ci-snapshots.sh rejects invalid action argument with error
+- id: script_detects_missing_tools
+  type: fail_to_pass
+  origin: pr_diff
+  description: apply-ci-snapshots.sh exits with error when required tools (gh, cargo-insta,
+    git) are missing
+- id: insta_version_bumped
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cargo.toml specifies insta >= 1.46.0 for INSTA_PENDING_DIR support
+rubric:
+- rule: The CONTRIBUTING.md update is placed in the snapshot testing section, consistent
+    with surrounding documentation structure
+  source:
+    path: CONTRIBUTING.md
+    lines: 87-114
+    commit: dd0d76cd83821e22a7054de21eb73051eb23274d
+- rule: The script follows the coding style of existing scripts in the repo (set -euo
+    pipefail, proper error handling)
+  source:
+    path: CLAUDE.md
+    lines: 1-15
+    commit: dd0d76cd83821e22a7054de21eb73051eb23274d
+- rule: apply-ci-snapshots.sh exists with valid bash shebang and syntax
+  reference: '# CONTRIBUTING.md
+
+    A script is available to update the snapshots based on results in CI. This is
+    useful for updating
+
+    snapshots without re-running the test suite and for updating platform-specific
+    snapshots.
+
+
+    ```shell
+
+    ./scripts/apply-ci-snapshots.sh
+
+    ```'
+- rule: CONTRIBUTING.md documents the CI snapshot apply script
+  source:
+    path: CONTRIBUTING.md
+    lines: 117-123
+    commit: 273d29b8f21e95fb80c9e7ca8b1d28f605212bde
+  reference: 'A script is available to update the snapshots based on results in CI.
+    This is useful for updating
+
+    snapshots without re-running the test suite and for updating platform-specific
+    snapshots.
+
+
+    ```shell
+
+    ./scripts/apply-ci-snapshots.sh
+
+    ```'
+- rule: CONTRIBUTING.md shows how to run the apply-ci-snapshots script
+  source:
+    path: CONTRIBUTING.md
+    lines: 120-122
+    commit: 273d29b8f21e95fb80c9e7ca8b1d28f605212bde
+  reference: 'A script is available to update the snapshots based on results in CI.
+    This is useful for updating
+
+    snapshots without re-running the test suite and for updating platform-specific
+    snapshots.
+
+
+    ```shell
+
+    ./scripts/apply-ci-snapshots.sh
+
+    ```'

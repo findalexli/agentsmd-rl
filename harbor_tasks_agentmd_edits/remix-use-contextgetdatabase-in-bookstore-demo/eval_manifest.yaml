@@ -1,0 +1,64 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11186
+  base_commit: b29fc874293468babb25b90e95edc208f1d652be
+  merge_commit: d6c59a14dfba9f6c43d43c4a7bd17cc4ed6c7fb4
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files exist and are non-empty
+- id: database_middleware_uses_context_set
+  type: fail_to_pass
+  origin: pr_diff
+  description: database.ts uses context.set(Database, db) instead of context.db =
+    db
+- id: database_imported_in_middleware
+  type: fail_to_pass
+  origin: pr_diff
+  description: database.ts imports Database from remix/data-table
+- id: handlers_use_get_database
+  type: fail_to_pass
+  origin: pr_diff
+  description: Route handlers use get(Database) to retrieve the database
+- id: type_augmentation_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: The context.db.ts type augmentation file is removed
+- id: middleware_has_real_logic
+  type: pass_to_pass
+  origin: static
+  description: database.ts middleware has real logic (exports loadDatabase, calls
+    next)
+rubric:
+- rule: Documentation update is consistent with the style of existing README bullet
+    points
+  source:
+    path: demos/bookstore/README.md
+    lines: 1-45
+    commit: b29fc874293468babb25b90e95edc208f1d652be
+- rule: Code follows the same context key pattern used for Session and FormData elsewhere
+    in the demo
+  source:
+    path: AGENTS.md
+    lines: 1-10
+    commit: b29fc874293468babb25b90e95edc208f1d652be
+- rule: README.md describes the context.set/get(Database) pattern
+  source:
+    path: demos/bookstore/README.md
+    lines: '31'
+    commit: d6c59a14dfba9f6c43d43c4a7bd17cc4ed6c7fb4
+  reference: '- [`app/middleware/database.ts`](app/middleware/database.ts) stores
+    the bookstore database on request context with `context.set(Database, db)`, and
+    request handlers read it back with `get(Database)` just like they do for `Session`
+    and `FormData`.'
+- rule: README.md does not have duplicate bullet entries for database.ts
+  source:
+    path: demos/bookstore/README.md
+    lines: '37'
+    commit: b29fc874293468babb25b90e95edc208f1d652be
+  reference: '- [`app/middleware/database.ts`](app/middleware/database.ts) stores
+    the bookstore database on request context with `context.set(Database, db)`, and
+    request handlers read it back with `get(Database)` just like they do for `Session`
+    and `FormData`.'

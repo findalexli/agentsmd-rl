@@ -1,0 +1,50 @@
+version: '2.0'
+source:
+  repo: cloudflare/workerd
+  pr: 5874
+  base_commit: 87abde7e73188dd0543944255fa6c0632d857fe8
+  merge_commit: 9203f22a91e65d842ad96a65fc0bc7d97f0bd76f
+checks:
+- id: syntax_check
+  type: fail_to_pass
+  origin: static
+  description: streams-util.js is a valid ES module importable by Node.js
+- id: sync_stream_produces_chunks
+  type: fail_to_pass
+  origin: pr_diff
+  description: createSyncLoremStream(N) yields exactly N chunks of non-empty text
+- id: uppercase_transform
+  type: fail_to_pass
+  origin: pr_diff
+  description: createSyncUppercaseTransform converts text to all uppercase via pipeThrough
+- id: byte_stream_supports_byob
+  type: fail_to_pass
+  origin: pr_diff
+  description: createSyncLoremByteStream creates a byte-type stream supporting BYOB
+    reads
+- id: config_references_modules
+  type: fail_to_pass
+  origin: static
+  description: config.capnp declares both worker.js and streams-util.js modules
+rubric:
+- rule: Sample follows the same structure as existing samples in the samples/ directory
+  source:
+    path: CLAUDE.md
+    lines: '30'
+    commit: 87abde7e73188dd0543944255fa6c0632d857fe8
+- rule: README.md is consistent in style with other sample READMEs (e.g., samples/eventsource/README.md)
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: 87abde7e73188dd0543944255fa6c0632d857fe8
+- rule: README.md documents all four stream endpoints (/sync, /async, /bytes/sync,
+    /bytes/async)
+  source:
+    path: samples/web-streams/README.md
+    lines: 7-12
+    commit: 9203f22a91e65d842ad96a65fc0bc7d97f0bd76f
+- rule: README.md includes instructions for running the sample with workerd/bazel
+  source:
+    path: samples/web-streams/README.md
+    lines: 14-32
+    commit: 9203f22a91e65d842ad96a65fc0bc7d97f0bd76f

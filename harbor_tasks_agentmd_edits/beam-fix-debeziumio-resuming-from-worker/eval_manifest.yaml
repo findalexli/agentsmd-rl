@@ -1,0 +1,62 @@
+version: '2.0'
+source:
+  repo: apache/beam
+  pr: 37689
+  base_commit: 06dd48e9313ca81d8d0739b03d0850f129c08e56
+  merge_commit: 72027e11d1f2f613e53302394534b204182cc32c
+checks:
+- id: source_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Modified source files must exist and be non-empty
+- id: starttime_not_static
+  type: fail_to_pass
+  origin: pr_diff
+  description: startTime field must not be static to avoid NPE on worker restart
+- id: starttime_initialized_in_setup
+  type: fail_to_pass
+  origin: pr_diff
+  description: startTime must be initialized in @Setup lifecycle method, not getInitialRestriction
+- id: polling_timeout_configurable
+  type: fail_to_pass
+  origin: pr_diff
+  description: DebeziumIO.Read must expose withPollingTimeout public method
+- id: poll_loop_timeout_based
+  type: fail_to_pass
+  origin: pr_diff
+  description: Poll loop in process() must be timeout-based, not infinite re-poll
+- id: experimental_warning_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Experimental/known-issue warning removed from DebeziumIO javadoc since
+    restart is fixed
+- id: tryclaim_no_time_check
+  type: fail_to_pass
+  origin: pr_diff
+  description: "OffsetTracker.tryClaim must not reference startTime \u2014 time limits\
+    \ moved to process()"
+rubric:
+- rule: README update is consistent with the style of the existing KafkaSourceConsumerFn
+    documentation section
+  source:
+    path: sdks/java/io/debezium/src/README.md
+    lines: 140-170
+    commit: 06dd48e9313ca81d8d0739b03d0850f129c08e56
+- rule: README must not document the old KafkaSourceConsumerFn constructors that were
+    removed
+  source:
+    path: sdks/java/io/debezium/src/README.md
+    lines: 157-163
+    commit: 06dd48e9313ca81d8d0739b03d0850f129c08e56
+  reference: By default, DebeziumIO initializes it with the former, though user may
+    choose the latter by setting the amount of minutes as a parameter for DebeziumIO.Read
+    transform.
+- rule: README must reference DebeziumIO.Read transform for configuring time-based
+    restrictions
+  source:
+    path: sdks/java/io/debezium/src/README.md
+    lines: 157-163
+    commit: 72027e11d1f2f613e53302394534b204182cc32c
+  reference: By default, DebeziumIO initializes it with the former, though user may
+    choose the latter by setting the amount of minutes as a parameter for DebeziumIO.Read
+    transform.

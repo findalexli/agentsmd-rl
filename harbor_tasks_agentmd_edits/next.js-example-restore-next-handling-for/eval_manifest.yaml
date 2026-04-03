@@ -1,0 +1,112 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 90651
+  base_commit: 15fcfb9ce4ec73c6ff8d08d72201726b983127fa
+  merge_commit: 7643fc948398c38fe0792836fb4c014a45f6fb07
+checks:
+- id: dockerfile_no_buildkit_cache_on_next
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dockerfile build step must not use --mount=type=cache on .next/cache
+- id: dockerfile_runner_mkdir_next
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dockerfile runner stage creates writable .next dir owned by node
+- id: dockerfile_bun_runner_mkdir_next
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dockerfile.bun runner stage creates writable .next dir owned by bun
+- id: dockerfile_optional_fetch_cache_copy
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dockerfile has commented-out COPY for .next/cache as opt-in
+- id: dockerfile_bun_optional_fetch_cache_copy
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dockerfile.bun has commented-out COPY for .next/cache as opt-in
+- id: dockerfile_multistage_structure
+  type: pass_to_pass
+  origin: static
+  description: Dockerfile retains multi-stage build structure
+- id: dockerfile_bun_multistage_structure
+  type: pass_to_pass
+  origin: static
+  description: Dockerfile.bun retains multi-stage build structure
+- id: dockerfiles_copy_standalone_and_static
+  type: pass_to_pass
+  origin: static
+  description: Both Dockerfiles still COPY .next/standalone and .next/static
+rubric:
+- rule: README updates are consistent with the style of the existing documentation
+    in the file
+  source:
+    path: examples/with-docker/README.md
+    lines: 1-10
+    commit: 15fcfb9ce4ec73c6ff8d08d72201726b983127fa
+- rule: Before editing files in examples/with-docker/, read all README.md files in
+    the directory path per CLAUDE.md instructions
+  source:
+    path: CLAUDE.md
+    lines: 30-40
+    commit: 15fcfb9ce4ec73c6ff8d08d72201726b983127fa
+- rule: README.md documents the writable .next directory feature
+  source:
+    path: examples/with-docker/README.md
+    lines: 130-135
+    commit: 7643fc948398c38fe0792836fb4c014a45f6fb07
+  reference: '- Multi-stage Docker build for optimal image size
+
+    - Next.js standalone mode for minimal production builds
+
+    - Security best practices (non-root user)
+
+    - Slim Linux base image for optimal compatibility and smaller size
+
+    - BuildKit cache mounts for faster builds
+
+    - Production-ready configuration
+
+    - **BuildKit cache mounts**: Speeds up builds by caching package manager stores
+    (`/root/.npm`, `/usr/local/share/.cache/yarn`, `/root/.local/share/pnpm/store`).
+    See the Dockerfile for an optional `.next/cache` '
+- rule: README.md describes .next/cache BuildKit mount as optional
+  source:
+    path: examples/with-docker/README.md
+    lines: '129'
+    commit: 7643fc948398c38fe0792836fb4c014a45f6fb07
+  reference: '- Multi-stage Docker build for optimal image size
+
+    - Next.js standalone mode for minimal production builds
+
+    - Security best practices (non-root user)
+
+    - Slim Linux base image for optimal compatibility and smaller size
+
+    - BuildKit cache mounts for faster builds
+
+    - Production-ready configuration
+
+    - **BuildKit cache mounts**: Speeds up builds by caching package manager stores
+    (`/root/.npm`, `/usr/local/share/.cache/yarn`, `/root/.local/share/pnpm/store`).
+    See the Dockerfile for an optional `.next/cache` '
+- rule: README.md Bun section mentions writable .next for runtime cache
+  source:
+    path: examples/with-docker/README.md
+    lines: '143'
+    commit: 7643fc948398c38fe0792836fb4c014a45f6fb07
+  reference: '- Multi-stage Docker build for optimal image size
+
+    - Next.js standalone mode for minimal production builds
+
+    - Security best practices (non-root user)
+
+    - Slim Linux base image for optimal compatibility and smaller size
+
+    - BuildKit cache mounts for faster builds
+
+    - Production-ready configuration
+
+    - **BuildKit cache mounts**: Speeds up builds by caching package manager stores
+    (`/root/.npm`, `/usr/local/share/.cache/yarn`, `/root/.local/share/pnpm/store`).
+    See the Dockerfile for an optional `.next/cache` '

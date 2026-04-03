@@ -1,0 +1,59 @@
+version: '2.0'
+source:
+  repo: supabase/supabase
+  pr: 44221
+  base_commit: fba5a8a001b0fb775e3e8054e57b1c7a9cba8a0c
+  merge_commit: 5c98bb6c0f313ce336dfa1ecbf0f0eada0137b35
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must exist and be non-empty
+- id: forms_mdx_destructure_guidance
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'forms.mdx best practice #5 mentions destructuring isDirty from formState'
+- id: modality_code_example_destructures
+  type: fail_to_pass
+  origin: pr_diff
+  description: modality.mdx code example destructures isDirty from form.formState
+- id: modality_checkisdirty_uses_destructured
+  type: fail_to_pass
+  origin: pr_diff
+  description: modality.mdx checkIsDirty callback uses destructured isDirty variable
+- id: modality_formstate_proxy_comment
+  type: fail_to_pass
+  origin: pr_diff
+  description: modality.mdx explains why destructuring formState values is needed
+rubric:
+- rule: Documentation changes are consistent with the style of existing Supabase design
+    system docs
+  source:
+    path: apps/design-system/content/docs/ui-patterns/forms.mdx
+    lines: 1-10
+    commit: fba5a8a001b0fb775e3e8054e57b1c7a9cba8a0c
+- rule: Code examples in documentation should be complete and runnable snippets
+  source:
+    path: .cursor/rules/studio/forms/RULE.md
+    lines: 1-5
+    commit: fba5a8a001b0fb775e3e8054e57b1c7a9cba8a0c
+- rule: Cursor rule instructs destructuring isDirty from formState
+  source:
+    path: .cursor/rules/studio/forms/RULE.md
+    lines: '32'
+    commit: 5c98bb6c0f313ce336dfa1ecbf0f0eada0137b35
+  reference: 'description: ''Studio: form patterns (page layouts + side panels) and
+    react-hook-form conventions''
+
+    - Handle dirty state by destructuring `isDirty` from `formState` (`const { isDirty
+    } = form.formState`) then use it to show Cancel and to disable Save.'
+- rule: Cursor rule does not recommend bare form.formState.isDirty as primary pattern
+  source:
+    path: .cursor/rules/studio/forms/RULE.md
+    lines: '32'
+    commit: 5c98bb6c0f313ce336dfa1ecbf0f0eada0137b35
+  reference: 'description: ''Studio: form patterns (page layouts + side panels) and
+    react-hook-form conventions''
+
+    - Handle dirty state by destructuring `isDirty` from `formState` (`const { isDirty
+    } = form.formState`) then use it to show Cancel and to disable Save.'

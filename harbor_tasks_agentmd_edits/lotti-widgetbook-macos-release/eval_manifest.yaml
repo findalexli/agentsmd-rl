@@ -1,0 +1,56 @@
+version: '2.0'
+source:
+  repo: matthiasn/lotti
+  pr: 2835
+  base_commit: 70765a65c0428ad8086177d7affc53b7a7b9c420
+  merge_commit: 267f107483c1d7ca272b6a76fba12ea0da9de2a7
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Makefile parses correctly and build script has valid bash syntax
+- id: build_script_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: Build script exists with argument parsing, platform check, strict mode,
+    and flutter build
+- id: makefile_widgetbook_targets
+  type: fail_to_pass
+  origin: pr_diff
+  description: Makefile has widgetbook_macos_build, upload, and publish targets invoking
+    the build script
+- id: ci_workflow_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: CI workflow for widgetbook macOS release is valid YAML triggering on
+    main with build and release steps
+rubric:
+- rule: Update the feature README files we touch such that they match reality in the
+    codebase, not only for what we touch but in their entirety.
+  source:
+    path: AGENTS.md
+    lines: 139-140
+    commit: 70765a65c0428ad8086177d7affc53b7a7b9c420
+- rule: Config update is consistent with the style of the existing design system README
+    documentation.
+  source:
+    path: lib/features/design_system/README.md
+    lines: 1-68
+    commit: 70765a65c0428ad8086177d7affc53b7a7b9c420
+- rule: Build script supports creating/updating GitHub releases via gh CLI
+- rule: Build script uses fvm for flutter commands when available
+  source:
+    path: AGENTS.md
+    lines: '148'
+    commit: 70765a65c0428ad8086177d7affc53b7a7b9c420
+- rule: Design system README documents widgetbook export workflow with make commands
+    and usage notes
+  source:
+    path: lib/features/design_system/README.md
+    lines: 69-114
+    commit: 267f107483c1d7ca272b6a76fba12ea0da9de2a7
+- rule: Design system README documents where build artifacts are written
+  source:
+    path: lib/features/design_system/README.md
+    lines: 87-92
+    commit: 267f107483c1d7ca272b6a76fba12ea0da9de2a7

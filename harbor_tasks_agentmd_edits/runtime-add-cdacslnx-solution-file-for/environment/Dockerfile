@@ -1,0 +1,23 @@
+FROM python:3.12-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        git curl ca-certificates build-essential tmux && \
+    rm -rf /var/lib/apt/lists/*
+
+# dotnet/runtime is huge — use shallow snapshot
+RUN git init /workspace/runtime && \
+    cd /workspace/runtime && \
+    git remote add origin https://github.com/dotnet/runtime.git && \
+    git fetch --depth=1 origin 0f8072851a62a1e1cbb90f0372a20961ce8991f0 && \
+    git checkout FETCH_HEAD && \
+    git config user.email "agent@test" && \
+    git config user.name "Agent"
+
+WORKDIR /workspace/runtime
+
+# Verifier output directory (Harbor bind-mounts this)
+RUN mkdir -p /logs/verifier

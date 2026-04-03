@@ -1,0 +1,67 @@
+version: '2.0'
+source:
+  repo: facebook/react
+  pr: 35537
+  base_commit: 2af6822c2108eabc0228d7809aa27c00bb2ebb53
+  merge_commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without syntax errors
+- id: filter_constant_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: constants.ts no longer defines FILTER_FILENAME or FILTER_PATH
+- id: debug_cli_option_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: runner.ts defines a --debug / -d CLI option via yargs
+- id: testfilter_function_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: fixture-utils.ts no longer exports readTestFilter
+- id: watch_interactive_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: RunnerState has debug and inputMode fields for interactive watch mode
+rubric:
+- rule: CLAUDE.md documentation is clear, accurate, and consistent with the actual
+    CLI interface
+  source:
+    path: compiler/CLAUDE.md
+    lines: 1-221
+    commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+- rule: runner.ts no longer has --filter CLI option, replaced by --pattern and --debug
+  reference: "# compiler/CLAUDE.md\n# React Compiler Knowledge Base\n\nThis document\
+    \ contains knowledge about the React Compiler gathered during development sessions.\
+    \ It serves as a reference for understanding the codebase architecture and key\
+    \ concepts.\n\n## Project Structure\n\n- `packages/babel-plugin-react-compiler/`\
+    \ - Main compiler package\n  - `src/HIR/` - High-level Intermediate Representation\
+    \ types and utilities\n  - `src/Inference/` - Effect inference passes (aliasing,\
+    \ mutation, etc.)\n  - `src/Validation/` - "
+- rule: compiler/CLAUDE.md documents snap CLI with -p pattern and -d debug flags
+  source:
+    path: compiler/CLAUDE.md
+    lines: 21-35
+    commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+  reference: "# React Compiler Knowledge Base\n\nThis document contains knowledge\
+    \ about the React Compiler gathered during development sessions. It serves as\
+    \ a reference for understanding the codebase architecture and key concepts.\n\n\
+    ## Project Structure\n\n- `packages/babel-plugin-react-compiler/` - Main compiler\
+    \ package\n  - `src/HIR/` - High-level Intermediate Representation types and utilities\n\
+    \  - `src/Inference/` - Effect inference passes (aliasing, mutation, etc.)\n \
+    \ - `src/Validation/` - Validation passes tha"
+- rule: compiler/CLAUDE.md documents compiler project structure and key concepts (HIR,
+    fixtures)
+  source:
+    path: compiler/CLAUDE.md
+    lines: 1-20
+    commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+  reference: "# React Compiler Knowledge Base\n\nThis document contains knowledge\
+    \ about the React Compiler gathered during development sessions. It serves as\
+    \ a reference for understanding the codebase architecture and key concepts.\n\n\
+    ## Project Structure\n\n- `packages/babel-plugin-react-compiler/` - Main compiler\
+    \ package\n  - `src/HIR/` - High-level Intermediate Representation types and utilities\n\
+    \  - `src/Inference/` - Effect inference passes (aliasing, mutation, etc.)\n \
+    \ - `src/Validation/` - Validation passes tha"
