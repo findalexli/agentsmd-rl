@@ -2,6 +2,7 @@ version: "2.0"
 
 source:
   repo: "anomalyco/opencode"
+  pr: 19403
   base_commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"
 
 checks:
@@ -63,6 +64,24 @@ checks:
       lines: "70"
       commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"
 
+  - id: no_try_catch_in_diff
+    type: pass_to_pass
+    origin: agent_config
+    description: "Avoid try/catch blocks in added code"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"
+
+  - id: no_unnecessary_destructuring
+    type: pass_to_pass
+    origin: agent_config
+    description: "Avoid unnecessary destructuring; use dot notation to preserve context"
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"
+
 rubric:
   - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
     source:
@@ -98,4 +117,10 @@ rubric:
     source:
       path: "packages/app/AGENTS.md"
       lines: "15"
+      commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once"
+    source:
+      path: "AGENTS.md"
+      lines: "44"
       commit: "311ba4179a3c112a7e0cbbeae152a971284a3632"

@@ -301,6 +301,44 @@ def test_normconfig_postinit_not_stub():
     raise AssertionError("NormConfig missing __post_init__")
 
 
+# [agent_config] pass_to_pass — AGENTS.md:159-160 @ 03d71153
+def test_postinit_methods_have_docstrings():
+    """New/modified __post_init__ methods have docstrings (all public configs need docstrings)."""
+    src = Path(f"{REPO}/areal/api/cli_args.py").read_text()
+    tree = ast.parse(src)
+
+    target_classes = {"NormConfig", "PPOActorConfig", "BaseExperimentConfig"}
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name in target_classes:
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name == "__post_init__":
+                    has_docstring = (
+                        item.body
+                        and isinstance(item.body[0], ast.Expr)
+                        and isinstance(item.body[0].value, ast.Constant)
+                        and isinstance(item.body[0].value.value, str)
+                    )
+                    assert has_docstring, (
+                        f"{node.name}.__post_init__ is missing a docstring"
+                    )
+
+
+# [agent_config] pass_to_pass — AGENTS.md:84-86 @ 03d71153
+def test_no_print_calls_in_modified_files():
+    """No print() calls in modified files (use areal.utils.logging instead)."""
+    for fname in ["areal/api/cli_args.py", "areal/utils/data.py"]:
+        src = Path(f"{REPO}/{fname}").read_text()
+        tree = ast.parse(src)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                func = node.func
+                if isinstance(func, ast.Name) and func.id == "print":
+                    raise AssertionError(
+                        f"print() call found in {fname}; use areal.utils.logging instead"
+                    )
+
+
 # [pr_diff] pass_to_pass
 def test_ppo_postinit_calls_super():
     """PPOActorConfig.__post_init__ calls super().__post_init__()."""

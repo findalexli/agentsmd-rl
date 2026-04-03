@@ -375,6 +375,43 @@ def test_no_print_logging():
                                 )
 
 
+# [agent_config] fail_to_pass — AGENTS.md:100 @ 682d5640
+def test_type_hints_on_set_numa_affinity():
+    """set_numa_affinity must have explicit type hints (local_rank: int -> None) in both platform.py and cuda.py.
+
+    AST-only because: checking annotation presence is a static property.
+    """
+    files = [
+        "areal/infra/platforms/platform.py",
+        "areal/infra/platforms/cuda.py",
+    ]
+    for f in files:
+        source = (Path(REPO) / f).read_text()
+        tree = ast.parse(source)
+        found = False
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.ClassDef,)) and node.name in ("Platform", "CudaPlatform"):
+                for item in ast.walk(node):
+                    if isinstance(item, ast.FunctionDef) and item.name == "set_numa_affinity":
+                        found = True
+                        # Check local_rank parameter has int annotation
+                        params = item.args.args  # includes cls
+                        rank_param = next(
+                            (p for p in params if p.arg == "local_rank"), None
+                        )
+                        assert rank_param is not None, (
+                            f"set_numa_affinity in {f} missing local_rank parameter"
+                        )
+                        assert rank_param.annotation is not None, (
+                            f"set_numa_affinity in {f}: local_rank missing type annotation"
+                        )
+                        # Check return annotation is present (-> None)
+                        assert item.returns is not None, (
+                            f"set_numa_affinity in {f} missing return type annotation"
+                        )
+        assert found, f"set_numa_affinity not found in {f}"
+
+
 # [agent_config] fail_to_pass — AGENTS.md:100-101 @ 682d5640
 def test_pynvml_imported_inside_function():
     """Heavy optional deps (pynvml) must be imported inside functions, not at module level.

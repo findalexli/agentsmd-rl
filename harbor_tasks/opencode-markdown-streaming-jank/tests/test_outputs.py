@@ -269,3 +269,35 @@ def test_const_over_let_in_diff():
         and not l.strip().startswith("//")
     ]
     assert not let_lines, f"Added lines use `let` (prefer const, AGENTS.md:70): {let_lines[:5]}"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:12 @ 311ba4179a3c112a7e0cbbeae152a971284a3632
+def test_no_try_catch_in_diff():
+    """Agent config: avoid try/catch where possible (AGENTS.md:12)."""
+    added = _added_lines()
+    try_lines = [
+        l.strip()
+        for l in added
+        if re.search(r"^\s*try\s*\{", l)
+        and not l.strip().startswith("//")
+    ]
+    assert not try_lines, f"Added lines use try/catch (AGENTS.md:12): {try_lines[:5]}"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:57 @ 311ba4179a3c112a7e0cbbeae152a971284a3632
+def test_no_unnecessary_destructuring():
+    """Agent config: avoid unnecessary destructuring (AGENTS.md:57).
+
+    SolidJS splitProps is exempt (it's the idiomatic SolidJS pattern).
+    """
+    added = _added_lines()
+    destructure_lines = [
+        l.strip()
+        for l in added
+        if re.search(r"^\s*const\s*\{.*\}\s*=\s*", l)
+        and not l.strip().startswith("//")
+        and "splitProps" not in l  # SolidJS idiom, not regular destructuring
+    ]
+    assert not destructure_lines, (
+        f"Added lines use destructuring (prefer dot notation, AGENTS.md:57): {destructure_lines[:5]}"
+    )

@@ -2,9 +2,9 @@ version: "2.0"
 
 source:
   repo: "facebook/react"
-  pr: 0  # no upstream PR number; task derived from base commit refactoring
+  pr: 35641
   base_commit: "78f5c504b732aec0eb12514bc2cf3f27a8143dd2"
-  merge_commit: ""
+  merge_commit: "cd515d7e22636238adef912356f522168946313d"
 
 checks:
   - id: syntax_valid
@@ -43,14 +43,14 @@ checks:
     description: "compareDocumentPosition no longer declares a redundant firstInstance variable that duplicates the children[0] lookup already stored in firstNode/firstElement"
 
 rubric:
-  - rule: "Code changes should be consistent with surrounding style: use the same variable naming conventions (e.g. camelCase) and Flow type annotation patterns already present in the file."
-    source:
-      path: "CLAUDE.md"
-      lines: "1-6"
-      commit: "78f5c504b732aec0eb12514bc2cf3f27a8143dd2"
-
-  - rule: "Before committing, run yarn prettier to fix formatting and yarn linc to catch lint issues."
+  - rule: "Run yarn prettier to fix formatting and yarn linc to check for lint issues before committing."
     source:
       path: ".claude/skills/fix/SKILL.md"
-      lines: "1-20"
+      lines: "10-11"
+      commit: "78f5c504b732aec0eb12514bc2cf3f27a8143dd2"
+
+  - rule: "Do not add new $FlowFixMe suppressions to mask real type errors; check if existing suppressions are still needed."
+    source:
+      path: ".claude/skills/flow/SKILL.md"
+      lines: "29"
       commit: "78f5c504b732aec0eb12514bc2cf3f27a8143dd2"

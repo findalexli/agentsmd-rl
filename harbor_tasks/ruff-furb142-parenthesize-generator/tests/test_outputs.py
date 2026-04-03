@@ -10,25 +10,29 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import os
 import subprocess
 import tempfile
+
+import pytest
 from pathlib import Path
 
 REPO = "/workspace/ruff"
 RULE_FILE = Path(REPO) / "crates/ruff_linter/src/rules/refurb/rules/for_loop_set_mutations.rs"
-RUFF_BIN = Path(REPO) / "target/release/ruff"
 
 
-def _ensure_ruff_built():
-    """Compile ruff release binary (incremental after Docker pre-build)."""
+@pytest.fixture(scope="session")
+def ruff_bin():
+    """Build ruff (incremental) and return binary path."""
     r = subprocess.run(
         ["cargo", "build", "--release", "-p", "ruff"],
-        cwd=REPO, capture_output=True, timeout=600,
+        cwd=REPO, capture_output=True, text=True, timeout=600,
     )
-    assert r.returncode == 0, f"cargo build failed:\n{r.stderr.decode()[-2000:]}"
+    assert r.returncode == 0, f"cargo build failed:\n{r.stderr[-3000:]}"
+    binary = Path(REPO) / "target" / "release" / "ruff"
+    assert binary.exists(), f"Binary not found at {binary}"
+    return str(binary)
 
 
-def _ruff_fix(code: str) -> str:
+def _ruff_fix(ruff_bin: str, code: str) -> str:
     """Run ruff check --select FURB142 --fix on code, return fixed content."""
-    _ensure_ruff_built()
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".py", delete=False, dir="/tmp"
     ) as f:
@@ -36,7 +40,7 @@ def _ruff_fix(code: str) -> str:
         path = f.name
     try:
         subprocess.run(
-            [str(RUFF_BIN), "check", "--select", "FURB142", "--fix", "--quiet", path],
+            [ruff_bin, "check", "--select", "FURB142", "--fix", "--unsafe-fixes", "--quiet", path],
             capture_output=True, timeout=30,
         )
         return Path(path).read_text()
@@ -49,9 +53,9 @@ def _ruff_fix(code: str) -> str:
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
-def test_compiles():
+def test_compiles(ruff_bin):
     """Rust code in ruff_linter crate must compile."""
-    _ensure_ruff_built()
+    assert Path(ruff_bin).exists()
 
 
 # ---------------------------------------------------------------------------
@@ -59,14 +63,14 @@ def test_compiles():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_unparen_generator_parenthesized():
+def test_unparen_generator_parenthesized(ruff_bin):
     """Unparenthesized generator in s.add() gets wrapped in parens by FURB142 fix."""
     code = (
         "s = set()\n"
         'for x in ("abc", "def"):\n'
         "    s.add(c for c in x)\n"
     )
-    fixed = _ruff_fix(code)
+    fixed = _ruff_fix(ruff_bin, code)
     assert "(c for c in x)" in fixed, (
         f"Generator not parenthesized in output:\n{fixed}"
     )
@@ -78,28 +82,28 @@ def test_unparen_generator_parenthesized():
 
 
 # [pr_diff] fail_to_pass
-def test_varied_unparen_generator():
+def test_varied_unparen_generator(ruff_bin):
     """Different unparenthesized generator expression also gets parenthesized."""
     code = (
         "s = set()\n"
         'for item in [["a", "b"], ["c"]]:\n'
         "    s.add(v.upper() for v in item)\n"
     )
-    fixed = _ruff_fix(code)
+    fixed = _ruff_fix(ruff_bin, code)
     assert "(v.upper() for v in item)" in fixed, (
         f"Generator not parenthesized in output:\n{fixed}"
     )
 
 
 # [pr_diff] fail_to_pass
-def test_conditional_unparen_generator():
+def test_conditional_unparen_generator(ruff_bin):
     """Unparenthesized generator with if-clause also gets parenthesized."""
     code = (
         "s = set()\n"
         "for word in ['hello', 'world']:\n"
         "    s.add(ch for ch in word if ch != 'o')\n"
     )
-    fixed = _ruff_fix(code)
+    fixed = _ruff_fix(ruff_bin, code)
     assert "(ch for ch in word if ch != 'o')" in fixed, (
         f"Conditional generator not parenthesized in output:\n{fixed}"
     )
@@ -110,7 +114,7 @@ def test_conditional_unparen_generator():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
-def test_already_paren_preserved():
+def test_already_paren_preserved(ruff_bin):
     """Already-parenthesized generator in s.add() is not double-wrapped."""
     # Case 1: simple generator
     code1 = (
@@ -118,7 +122,7 @@ def test_already_paren_preserved():
         'for x in ("abc", "def"):\n'
         "    s.add((c for c in x))\n"
     )
-    fixed1 = _ruff_fix(code1)
+    fixed1 = _ruff_fix(ruff_bin, code1)
     assert "(c for c in x)" in fixed1, (
         f"Generator missing from output:\n{fixed1}"
     )
@@ -131,20 +135,19 @@ def test_already_paren_preserved():
         "for word in ['hello', 'world']:\n"
         "    s.add((ch for ch in word if ch != 'o'))\n"
     )
-    fixed2 = _ruff_fix(code2)
+    fixed2 = _ruff_fix(ruff_bin, code2)
     assert "((ch for ch in word" not in fixed2, (
         f"Conditional generator was double-wrapped:\n{fixed2}"
     )
 
 
 # [repo_tests] pass_to_pass
-def test_upstream_furb142_tests():
+def test_upstream_furb142_tests(ruff_bin):
     """Upstream tests for FURB142 run without panics or compile errors.
 
     Uses INSTA_UPDATE=always so new test fixtures added by the agent don't
-    cause snapshot-mismatch failures (the solve.sh doesn't update snapshots,
-    and snapshot diffs are evaluated separately). This still catches panics,
-    ICEs, and runtime failures.
+    cause snapshot-mismatch failures. Still catches panics, ICEs, and runtime
+    failures.
     """
     env = {**os.environ, "INSTA_UPDATE": "always", "INSTA_FORCE_PASS": "1"}
     r = subprocess.run(

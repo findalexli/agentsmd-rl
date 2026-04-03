@@ -8,12 +8,95 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import os
+import contextlib
+import logging
 import sys
+import textwrap
+import types
 from pathlib import Path
 
 REPO = "/repo"
 TARGET = f"{REPO}/python/sglang/srt/utils/hf_transformers_utils.py"
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _extract_source_range(source, tree, names):
+    """Extract module-level declarations (assignments + functions) by name."""
+    lines = source.splitlines(keepends=True)
+    chunks = []
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id in names:
+                    chunks.append("".join(lines[node.lineno - 1 : node.end_lineno]))
+        elif isinstance(node, ast.FunctionDef) and node.name in names:
+            chunks.append("".join(lines[node.lineno - 1 : node.end_lineno]))
+    return "\n\n".join(chunks)
+
+
+@contextlib.contextmanager
+def _patch_env(ci_mode, transformers_version="5.3.0"):
+    """Context manager: exec extracted patch code with mocked sglang/transformers deps.
+
+    Yields (namespace, mock_tut) where namespace has the extracted functions and
+    mock_tut is the mock transformers.tokenization_utils_tokenizers module.
+    """
+    source = Path(TARGET).read_text()
+    tree = ast.parse(source)
+
+    code = _extract_source_range(source, tree, {
+        "_is_base_mistral_patched",
+        "_TRANSFORMERS_PATCHED_VERSION",
+        "_patch_is_base_mistral_in_ci",
+    })
+    if not code.strip():
+        # Patch function doesn't exist (e.g. base commit) — yield None
+        yield None, None
+        return
+
+    # Mock sglang.srt.environ.envs.SGLANG_IS_IN_CI
+    mock_envs = types.SimpleNamespace(
+        SGLANG_IS_IN_CI=types.SimpleNamespace(get=lambda: ci_mode)
+    )
+
+    # Mock transformers and its submodule — use a single object so that
+    # `import transformers.tokenization_utils_tokenizers as tut` (which
+    # resolves via sys.modules["transformers"].tokenization_utils_tokenizers)
+    # and sys.modules["transformers.tokenization_utils_tokenizers"] are the same.
+    mock_tut = types.ModuleType("transformers.tokenization_utils_tokenizers")
+    mock_tut.is_base_mistral = lambda model_id: True  # original behavior
+
+    mock_transformers = types.ModuleType("transformers")
+    mock_transformers.__version__ = transformers_version
+    mock_transformers.tokenization_utils_tokenizers = mock_tut
+
+    # Temporarily install mocks in sys.modules
+    mock_modules = {
+        "sglang": types.ModuleType("sglang"),
+        "sglang.srt": types.ModuleType("sglang.srt"),
+        "sglang.srt.environ": types.SimpleNamespace(envs=mock_envs),
+        "transformers": mock_transformers,
+        "transformers.tokenization_utils_tokenizers": mock_tut,
+    }
+
+    saved = {}
+    for name, mod in mock_modules.items():
+        saved[name] = sys.modules.get(name)
+        sys.modules[name] = mod
+
+    try:
+        ns = {"logger": logging.getLogger("test_patch"), "__builtins__": __builtins__}
+        exec(compile(code, "<patch>", "exec"), ns)
+        yield ns, mock_tut
+    finally:
+        for name, orig in saved.items():
+            if orig is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = orig
 
 
 # ---------------------------------------------------------------------------
@@ -28,160 +111,92 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff / static) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_ci_patches_is_base_mistral():
-    """In CI mode, get_tokenizer patches is_base_mistral to return False."""
-    env = os.environ.copy()
-    env["SGLANG_IS_IN_CI"] = "true"
-    import subprocess
-
-    r = subprocess.run(
-        [
-            sys.executable, "-c", """
-import os
-os.environ['SGLANG_IS_IN_CI'] = 'true'
-
-import transformers.tokenization_utils_tokenizers as tut
-
-if not hasattr(tut, 'is_base_mistral'):
-    tut.is_base_mistral = lambda model_id: True
-
-from sglang.srt.utils.hf_transformers_utils import get_tokenizer
-
-try:
-    get_tokenizer('__nonexistent_ci_patch_test_model__')
-except Exception:
-    pass
-
-result = tut.is_base_mistral('any-model-id')
-assert result == False, f'Expected False in CI, got {result}'
-""",
-        ],
-        capture_output=True,
-        timeout=30,
-        cwd=REPO,
-        env={**env, "PYTHONPATH": f"{REPO}/python"},
-    )
-    assert r.returncode == 0, f"CI patch test failed:\n{r.stderr.decode()}"
+    """In CI mode, _patch_is_base_mistral_in_ci replaces is_base_mistral with False."""
+    with _patch_env(ci_mode=True) as (ns, mock_tut):
+        ns["_patch_is_base_mistral_in_ci"]()
+        for model_id in ["mistralai/Mistral-7B", "some-other-model", "", "x" * 100]:
+            assert mock_tut.is_base_mistral(model_id) is False, (
+                f"Expected False for {model_id!r} in CI mode"
+            )
 
 
 # [pr_diff] fail_to_pass
 def test_idempotent_multiple_calls():
-    """Calling get_tokenizer multiple times in CI doesn't break the patch."""
-    import subprocess
-
-    env = os.environ.copy()
-    env["SGLANG_IS_IN_CI"] = "true"
-
-    r = subprocess.run(
-        [
-            sys.executable, "-c", """
-import os
-os.environ['SGLANG_IS_IN_CI'] = 'true'
-
-import transformers.tokenization_utils_tokenizers as tut
-
-if not hasattr(tut, 'is_base_mistral'):
-    tut.is_base_mistral = lambda model_id: True
-
-from sglang.srt.utils.hf_transformers_utils import get_tokenizer
-
-for i in range(3):
-    try:
-        get_tokenizer('__nonexistent_ci_patch_test_model__')
-    except Exception:
-        pass
-
-result = tut.is_base_mistral('test')
-assert result == False, f'Expected False after repeated calls, got {result}'
-""",
-        ],
-        capture_output=True,
-        timeout=30,
-        cwd=REPO,
-        env={**env, "PYTHONPATH": f"{REPO}/python"},
-    )
-    assert r.returncode == 0, f"Idempotency test failed:\n{r.stderr.decode()}"
+    """Calling _patch_is_base_mistral_in_ci multiple times doesn't break the patch."""
+    with _patch_env(ci_mode=True) as (ns, mock_tut):
+        patch_fn = ns["_patch_is_base_mistral_in_ci"]
+        for _ in range(5):
+            patch_fn()
+        for model_id in ["model-a", "model-b", "model-c"]:
+            assert mock_tut.is_base_mistral(model_id) is False
 
 
 # [pr_diff] fail_to_pass
 def test_patch_before_from_pretrained():
-    """Patch is applied BEFORE AutoTokenizer.from_pretrained is called."""
-    import subprocess
+    """_patch_is_base_mistral_in_ci() is called before AutoTokenizer.from_pretrained in get_tokenizer."""
+    # AST-only because: get_tokenizer has heavy deps (vllm, torch) that can't be imported
+    source = Path(TARGET).read_text()
+    tree = ast.parse(source)
 
-    env = os.environ.copy()
-    env["SGLANG_IS_IN_CI"] = "true"
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "get_tokenizer":
+            patch_line = None
+            pretrained_line = None
 
-    r = subprocess.run(
-        [
-            sys.executable, "-c", """
-import os
-os.environ['SGLANG_IS_IN_CI'] = 'true'
+            for child in ast.walk(node):
+                if isinstance(child, ast.Call):
+                    # _patch_is_base_mistral_in_ci()
+                    if isinstance(child.func, ast.Name) and child.func.id == "_patch_is_base_mistral_in_ci":
+                        patch_line = child.lineno
+                    # AutoTokenizer.from_pretrained(...)
+                    if (isinstance(child.func, ast.Attribute)
+                            and child.func.attr == "from_pretrained"
+                            and isinstance(child.func.value, ast.Name)
+                            and child.func.value.id == "AutoTokenizer"):
+                        if pretrained_line is None:
+                            pretrained_line = child.lineno
 
-import transformers
-from transformers import AutoTokenizer
-import transformers.tokenization_utils_tokenizers as tut
+            assert patch_line is not None, (
+                "_patch_is_base_mistral_in_ci() not called in get_tokenizer"
+            )
+            assert pretrained_line is not None, (
+                "AutoTokenizer.from_pretrained not found in get_tokenizer"
+            )
+            assert patch_line < pretrained_line, (
+                f"Patch (line {patch_line}) must come before "
+                f"from_pretrained (line {pretrained_line})"
+            )
+            return
 
-if not hasattr(tut, 'is_base_mistral'):
-    tut.is_base_mistral = lambda model_id: True
-
-was_patched_before_call = [None]
-_orig = AutoTokenizer.from_pretrained
-
-def hooked(*args, **kwargs):
-    was_patched_before_call[0] = (tut.is_base_mistral('test') == False)
-    raise RuntimeError('hooked: stop')
-
-AutoTokenizer.from_pretrained = staticmethod(hooked)
-
-from sglang.srt.utils.hf_transformers_utils import get_tokenizer
-
-try:
-    get_tokenizer('__nonexistent_ci_patch_test_model__')
-except Exception:
-    pass
-
-assert was_patched_before_call[0] is not None, 'from_pretrained was never called'
-assert was_patched_before_call[0] == True, 'is_base_mistral not patched before from_pretrained'
-""",
-        ],
-        capture_output=True,
-        timeout=30,
-        cwd=REPO,
-        env={**env, "PYTHONPATH": f"{REPO}/python"},
-    )
-    assert r.returncode == 0, f"Ordering test failed:\n{r.stderr.decode()}"
+    raise AssertionError("get_tokenizer function not found")
 
 
 # [static] fail_to_pass
 def test_not_stub():
     """File has non-trivial CI patching logic (not a stub)."""
+    # AST-only because: module has heavy deps (torch, triton)
     source = Path(TARGET).read_text()
     tree = ast.parse(source)
 
     assert "is_base_mistral" in source, "File does not reference is_base_mistral"
 
-    func_defs = [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef):
+            body_types = {type(n).__name__ for n in ast.walk(node)}
+            has_conditional = "If" in body_types
+            has_import = "Import" in body_types or "ImportFrom" in body_types
+            has_assign_or_global = "Global" in body_types or "Assign" in body_types
+            stmt_count = sum(1 for n in ast.walk(node) if isinstance(n, ast.stmt))
 
-    found_patch_logic = False
-    for fn in func_defs:
-        body_types = set()
-        for n in ast.walk(fn):
-            body_types.add(type(n).__name__)
+            if has_conditional and has_import and has_assign_or_global and stmt_count >= 6:
+                return
 
-        has_conditional = "If" in body_types
-        has_import = "Import" in body_types or "ImportFrom" in body_types
-        has_assign_or_global = "Global" in body_types or "Assign" in body_types
-        stmt_count = sum(1 for n in ast.walk(fn) if isinstance(n, ast.stmt))
-
-        if has_conditional and has_import and has_assign_or_global and stmt_count >= 6:
-            found_patch_logic = True
-            break
-
-    assert found_patch_logic, (
+    raise AssertionError(
         "No function with CI patching logic found "
         "(need conditionals + imports + assignments, 6+ statements)"
     )
@@ -194,127 +209,59 @@ def test_not_stub():
 # [pr_diff] pass_to_pass
 def test_no_patch_without_ci_env():
     """Without SGLANG_IS_IN_CI, is_base_mistral is NOT replaced."""
-    import subprocess
-
-    env = os.environ.copy()
-    env.pop("SGLANG_IS_IN_CI", None)
-
-    r = subprocess.run(
-        [
-            sys.executable, "-c", """
-import os
-os.environ.pop('SGLANG_IS_IN_CI', None)
-
-import transformers.tokenization_utils_tokenizers as tut
-
-sentinel = '__sentinel_no_ci__'
-tut.is_base_mistral = lambda model_id: sentinel
-
-from sglang.srt.utils.hf_transformers_utils import get_tokenizer
-
-try:
-    get_tokenizer('__nonexistent_ci_patch_test_model__')
-except Exception:
-    pass
-
-result = tut.is_base_mistral('test')
-assert result == sentinel, f'Expected sentinel (no patch without CI), got {result}'
-""",
-        ],
-        capture_output=True,
-        timeout=30,
-        cwd=REPO,
-        env={**env, "PYTHONPATH": f"{REPO}/python"},
-    )
-    assert r.returncode == 0, f"No-CI test failed:\n{r.stderr.decode()}"
+    with _patch_env(ci_mode=False) as (ns, mock_tut):
+        if ns is None:
+            return  # Patch function doesn't exist on base → trivially correct
+        ns["_patch_is_base_mistral_in_ci"]()
+        for model_id in ["test-1", "test-2", "test-3"]:
+            assert mock_tut.is_base_mistral(model_id) is True, (
+                "is_base_mistral should NOT be patched without CI env"
+            )
 
 
 # [pr_diff] pass_to_pass
 def test_version_guard_skips_on_mismatch():
-    """With a mismatched transformers version constant, patch is skipped."""
-    import subprocess
-
-    env = os.environ.copy()
-    env["SGLANG_IS_IN_CI"] = "true"
-
-    r = subprocess.run(
-        [
-            sys.executable, "-c", """
-import os
-os.environ['SGLANG_IS_IN_CI'] = 'true'
-
-import transformers.tokenization_utils_tokenizers as tut
-
-sentinel = '__sentinel_version_guard__'
-tut.is_base_mistral = lambda model_id: sentinel
-
-import sglang.srt.utils.hf_transformers_utils as mod
-
-if hasattr(mod, '_TRANSFORMERS_PATCHED_VERSION'):
-    mod._TRANSFORMERS_PATCHED_VERSION = '0.0.0-never-match'
-
-# Reset patch state so it re-evaluates
-if hasattr(mod, '_is_base_mistral_patched'):
-    mod._is_base_mistral_patched = False
-
-try:
-    mod.get_tokenizer('__nonexistent_ci_patch_test_model__')
-except Exception:
-    pass
-
-result = tut.is_base_mistral('test')
-assert result == sentinel, f'Expected sentinel (version guard), got {result}'
-""",
-        ],
-        capture_output=True,
-        timeout=30,
-        cwd=REPO,
-        env={**env, "PYTHONPATH": f"{REPO}/python"},
-    )
-    assert r.returncode == 0, f"Version guard test failed:\n{r.stderr.decode()}"
+    """Mismatched transformers version causes patch to be skipped."""
+    with _patch_env(ci_mode=True, transformers_version="99.0.0") as (ns, mock_tut):
+        if ns is None:
+            return  # Patch function doesn't exist on base → trivially correct
+        ns["_patch_is_base_mistral_in_ci"]()
+        for model_id in ["test-1", "test-2"]:
+            assert mock_tut.is_base_mistral(model_id) is True, (
+                "is_base_mistral should NOT be patched when version mismatches"
+            )
 
 
 # [pr_diff] pass_to_pass
 def test_get_tokenizer_signature():
-    """get_tokenizer function exists with expected signature."""
-    import subprocess
+    """get_tokenizer function exists with expected parameters."""
+    # AST-only because: get_tokenizer has heavy deps
+    source = Path(TARGET).read_text()
+    tree = ast.parse(source)
 
-    r = subprocess.run(
-        [
-            sys.executable, "-c", """
-import inspect
-from sglang.srt.utils.hf_transformers_utils import get_tokenizer
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "get_tokenizer":
+            pos_params = [arg.arg for arg in node.args.args]
+            kw_params = [arg.arg for arg in node.args.kwonlyargs]
+            all_params = pos_params + kw_params
+            assert "tokenizer_name" in all_params, f"tokenizer_name not in params: {all_params}"
+            assert "tokenizer_mode" in all_params, f"tokenizer_mode not in params: {all_params}"
+            return
 
-sig = inspect.signature(get_tokenizer)
-params = list(sig.parameters.keys())
-assert 'tokenizer_name' in params, f'tokenizer_name not in params: {params}'
-assert 'tokenizer_mode' in params, f'tokenizer_mode not in params: {params}'
-""",
-        ],
-        capture_output=True,
-        timeout=30,
-        cwd=REPO,
-        env={**os.environ, "PYTHONPATH": f"{REPO}/python"},
-    )
-    assert r.returncode == 0, f"Signature test failed:\n{r.stderr.decode()}"
+    raise AssertionError("get_tokenizer function not found")
 
 
 # [pr_diff] pass_to_pass
 def test_tokenizer_warnings_filter_exists():
-    """TokenizerWarningsFilter still exists as a logging.Filter."""
-    import subprocess
+    """TokenizerWarningsFilter class exists with a filter() method."""
+    # AST-only because: module has heavy deps (torch, triton)
+    source = Path(TARGET).read_text()
+    tree = ast.parse(source)
 
-    r = subprocess.run(
-        [
-            sys.executable, "-c", """
-import logging
-from sglang.srt.utils.hf_transformers_utils import TokenizerWarningsFilter
-assert issubclass(TokenizerWarningsFilter, logging.Filter)
-""",
-        ],
-        capture_output=True,
-        timeout=30,
-        cwd=REPO,
-        env={**os.environ, "PYTHONPATH": f"{REPO}/python"},
-    )
-    assert r.returncode == 0, f"Filter test failed:\n{r.stderr.decode()}"
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "TokenizerWarningsFilter":
+            methods = [n.name for n in node.body if isinstance(n, ast.FunctionDef)]
+            assert "filter" in methods, "TokenizerWarningsFilter missing filter() method"
+            return
+
+    raise AssertionError("TokenizerWarningsFilter class not found")

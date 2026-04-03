@@ -3,58 +3,30 @@ set -euo pipefail
 
 cd /workspace/react
 
+TARGET="packages/shared/ReactPerformanceTrackProperties.js"
+
 # Check if already applied
-if grep -q "^const REMOVED = '-\\u00a0';" packages/shared/ReactPerformanceTrackProperties.js 2>/dev/null; then
+if grep -q "^const REMOVED = '-\\\\xa0';" "$TARGET" 2>/dev/null; then
     echo "Fix already applied"
     exit 0
 fi
 
-# Apply the patch
-git apply - <<'PATCH'
-diff --git a/packages/react-reconciler/src/__tests__/ReactPerformanceTrack-test.js b/packages/react-reconciler/src/__tests__/ReactPerformanceTrack-test.js
-index 703a69469c60..faaadb9cb617 100644
---- a/packages/react-reconciler/src/__tests__/ReactPerformanceTrack-test.js
-+++ b/packages/react-reconciler/src/__tests__/ReactPerformanceTrack-test.js
-@@ -231,7 +231,7 @@ describe('ReactPerformanceTracks', () => {
-               properties: [
-                 ['Changed Props', ''],
-                 ['  data', ''],
--                ['–   buffer', 'null'],
-+                ['-   buffer', 'null'],
-                 ['+   buffer', 'Uint8Array'],
-                 ['+     0', '0'],
-                 ['+     1', '0'],
-@@ -422,7 +422,7 @@ describe('ReactPerformanceTracks', () => {
-               color: 'error',
-               properties: [
-                 ['Changed Props', ''],
--                ['– value', '1'],
-+                ['- value', '1'],
-                 ['+ value', '2'],
-               ],
-               tooltipText: 'Left',
-@@ -510,7 +510,7 @@ describe('ReactPerformanceTracks', () => {
-                 ['  data', ''],
-                 ['    deeply', ''],
-                 ['      nested', ''],
--                ['–       numbers', 'Array'],
-+                ['-       numbers', 'Array'],
-                 ['+       numbers', 'Array'],
-               ],
-               tooltipText: 'App',
-diff --git a/packages/shared/ReactPerformanceTrackProperties.js b/packages/shared/ReactPerformanceTrackProperties.js
-index f088d51025b5..a2063584bdf0 100644
---- a/packages/shared/ReactPerformanceTrackProperties.js
-+++ b/packages/shared/ReactPerformanceTrackProperties.js
-@@ -279,7 +279,7 @@ export function addValueToProperties(
-   properties.push([prefix + '\xa0\xa0'.repeat(indent) + propertyName, desc]);
- }
+# Replace en dash (\u2013) with ASCII minus (-) in the REMOVED constant
+# Before: const REMOVED = '\u2013\xa0';
+# After:  const REMOVED = '-\xa0';
+sed -i "s/const REMOVED = '\\\\u2013\\\\xa0';/const REMOVED = '-\\\\xa0';/" "$TARGET"
 
--const REMOVED = '\u2013\xa0';
-+const REMOVED = '-\xa0';
- const ADDED = '+\xa0';
- const UNCHANGED = '\u2007\xa0';
-
-PATCH
+# Also update the test expectations to match
+TEST_FILE="packages/react-reconciler/src/__tests__/ReactPerformanceTrack-test.js"
+if [ -f "$TEST_FILE" ]; then
+    # Replace literal en dash (UTF-8: e2 80 93) with minus in test expectations
+    python3 -c "
+import pathlib
+p = pathlib.Path('$TEST_FILE')
+content = p.read_text()
+content = content.replace('\u2013', '-')
+p.write_text(content)
+"
+fi
 
 echo "Fix applied successfully"

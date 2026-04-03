@@ -277,3 +277,19 @@ def test_no_bare_any_type():
             line = line[:line.index("//")]
         if re.search(r":\s*any\b", line):
             raise AssertionError(f"Bare 'any' type at line {i}: {line.strip()}")
+
+
+# [agent_config] pass_to_pass — CLAUDE.md:155 @ 29cb1e3c7edd54a3d060419ffa153eecbd19c133
+def test_no_dynamic_imports():
+    """No dynamic imports (await import()) in dotenv.ts (CLAUDE.md:155)."""
+    import re
+    code = Path(TARGET).read_text()
+    for i, line in enumerate(code.split("\n"), 1):
+        stripped = line
+        if "//" in stripped:
+            stripped = stripped[:stripped.index("//")]
+        if re.search(r"\bawait\s+import\s*\(", stripped):
+            raise AssertionError(
+                f"Dynamic import found at line {i}: {line.strip()} — "
+                "CLAUDE.md:155 prohibits mixing dynamic and static imports for the same module"
+            )

@@ -164,6 +164,23 @@ def test_file_not_gutted():
 # ---------------------------------------------------------------------------
 
 
+# [agent_config] pass_to_pass
+# Source: .claude/skills/implementing-jsc-classes-cpp/SKILL.md line 184 @ 9e93bfa
+def test_includes_root_header():
+    """BunString.cpp must include root.h as required for C++ bindings files.
+
+    Per .claude/skills/implementing-jsc-classes-cpp/SKILL.md line 184,
+    C++ files in the bindings directory must include root.h at the top.
+    This verifies the convention is maintained after the fix is applied.
+    """
+    content = Path(TARGET).read_text()
+    assert '#include "root.h"' in content, (
+        'BunString.cpp must include "root.h". '
+        "Per .claude/skills/implementing-jsc-classes-cpp/SKILL.md line 184, "
+        'C++ bindings files must include "root.h" at the top.'
+    )
+
+
 # [agent_config] fail_to_pass
 # Source: .claude/skills/implementing-jsc-classes-cpp/SKILL.md @ 9e93bfa
 # The SKILL.md documents the established JSC exception-handling idiom:

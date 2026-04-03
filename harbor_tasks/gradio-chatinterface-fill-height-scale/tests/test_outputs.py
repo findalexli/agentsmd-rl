@@ -242,6 +242,33 @@ def test_chat_interface_not_stub():
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
+# [agent_config] pass_to_pass — AGENTS.md:44 @ bb127c74bd6301e3782e0ce4744161ae976a8481
+def test_prettier_format_frontend_files():
+    """Frontend files must be formatted with prettier (AGENTS.md line 44)."""
+    files = [
+        "js/core/src/Blocks.svelte",
+        "js/core/src/init.svelte.ts",
+        "js/core/src/types.ts",
+    ]
+    for f in files:
+        r = subprocess.run(
+            ["npx", "prettier", "--check", f],
+            cwd=REPO,
+            capture_output=True,
+            timeout=60,
+        )
+        if r.returncode != 0:
+            r = subprocess.run(
+                ["prettier", "--check", f],
+                cwd=REPO,
+                capture_output=True,
+                timeout=60,
+            )
+        assert r.returncode == 0, (
+            f"prettier check failed for {f}:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+        )
+
+
 # [agent_config] pass_to_pass — AGENTS.md:43 @ bb127c74bd6301e3782e0ce4744161ae976a8481
 def test_ruff_format_chat_interface():
     """Python code must be formatted with ruff (AGENTS.md line 43)."""

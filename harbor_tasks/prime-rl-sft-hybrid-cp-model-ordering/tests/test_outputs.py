@@ -8,9 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import sys
 from pathlib import Path
-from unittest.mock import MagicMock
 
 FILE = Path("/workspace/src/prime_rl/trainer/sft/train.py")
 
@@ -53,73 +51,41 @@ def test_syntax_check():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_no_nameerror_on_model():
-    """Mock-execute train() — setup_hybrid_cp must not trigger NameError on 'model'.
+def test_model_assigned_before_hybrid_cp():
+    """model must be assigned (via setup_model) before setup_hybrid_cp(model, ...) is called.
 
-    The base-commit bug: setup_hybrid_cp(model, ...) runs before model = setup_model(),
-    causing a NameError. The fix reorders so model is assigned first.
+    The base-commit bug: setup_hybrid_cp(model, ...) runs on ~line 108 but
+    model = setup_model(...) doesn't happen until ~line 125.
+    The fix moves setup_hybrid_cp after the model assignment.
     """
+    # AST-only because: train.py requires torch/distributed/CUDA — cannot import
+    _, train_node = _parse_train_func()
 
-    class _FallbackFinder:
-        @staticmethod
-        def find_module(name, path=None):
-            return _FallbackFinder
+    # Find lines where 'model' is assigned (model = ... or model, ... = ...)
+    model_assign_lines = []
+    for node in ast.walk(train_node):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == "model":
+                    model_assign_lines.append(node.lineno)
+                elif isinstance(target, ast.Tuple):
+                    for elt in target.elts:
+                        if isinstance(elt, ast.Name) and elt.id == "model":
+                            model_assign_lines.append(node.lineno)
 
-        @staticmethod
-        def load_module(name):
-            if name not in sys.modules:
-                m = MagicMock()
-                m.__name__ = name
-                m.__path__ = [name]
-                m.__file__ = "<mock:" + name + ">"
-                m.__loader__ = _FallbackFinder
-                m.__package__ = name.rsplit(".", 1)[0] if "." in name else name
-                sys.modules[name] = m
-            return sys.modules[name]
+    assert model_assign_lines, "No assignment to 'model' found in train()"
 
-    original_meta = sys.meta_path[:]
-    sys.meta_path.append(_FallbackFinder)
-    old_path = sys.path[:]
-    sys.path.insert(0, "/workspace/src")
-    try:
-        source = FILE.read_text()
-        ns = {"__builtins__": __builtins__, "__name__": "__test__", "__file__": str(FILE)}
-        try:
-            exec(compile(source, str(FILE), "exec"), ns)
-        except Exception:
-            pass
+    # Find setup_hybrid_cp call
+    hybrid_cp_calls = _find_calls(train_node, "setup_hybrid_cp")
+    assert hybrid_cp_calls, "setup_hybrid_cp() call not found in train()"
 
-        # Fallback: extract train() via AST if whole-module exec didn't define it
-        if "train" not in ns or not callable(ns.get("train")):
-            tree = ast.parse(source)
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef) and node.name == "train":
-                    lines = source.splitlines(keepends=True)
-                    func_src = "".join(lines[node.lineno - 1 : node.end_lineno])
-                    try:
-                        exec(compile(func_src, str(FILE), "exec"), ns)
-                    except Exception:
-                        pass
-                    break
+    hybrid_line = hybrid_cp_calls[0].lineno
 
-        train_fn = ns.get("train")
-        assert train_fn is not None and callable(train_fn), "Could not extract train()"
-
-        config = MagicMock()
-        try:
-            train_fn(config)
-        except NameError as e:
-            if "model" in str(e).lower():
-                raise AssertionError(
-                    f"NameError on 'model' — setup_hybrid_cp called before model assignment: {e}"
-                )
-        except (SystemExit, KeyboardInterrupt):
-            raise
-        except Exception:
-            pass  # Other errors expected with mocked deps
-    finally:
-        sys.meta_path[:] = original_meta
-        sys.path[:] = old_path
+    # At least one model assignment must come BEFORE setup_hybrid_cp
+    assert any(ml < hybrid_line for ml in model_assign_lines), (
+        f"model is not assigned before setup_hybrid_cp (line {hybrid_line}). "
+        f"Model assignments at lines: {model_assign_lines}"
+    )
 
 
 # [pr_diff] fail_to_pass

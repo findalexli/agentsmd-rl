@@ -182,6 +182,31 @@ def test_upstream_statuses_tests():
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
+# [agent_config] pass_to_pass — AGENTS.md:244-250 @ 95aa11484a255b1c7f6227f2c81e2d441bb28988
+def test_no_raw_console():
+    """Modified files must not use raw console.log/warn/error (AGENTS.md rule)."""
+    import re
+
+    files_to_check = [
+        "code/core/src/manager-api/lib/filter-param.ts",
+        "code/core/src/manager-api/modules/statuses.ts",
+        "code/core/src/manager-api/modules/tags.ts",
+    ]
+
+    console_re = re.compile(r"\bconsole\.(log|warn|error|info|debug)\b")
+
+    for f in files_to_check:
+        fp = Path(REPO) / f
+        if not fp.exists():
+            continue
+        content = fp.read_text()
+        matches = console_re.findall(content)
+        assert not matches, (
+            f"Found raw console.{matches[0]} in {f} — "
+            f"use Storybook loggers instead (AGENTS.md:244-250)"
+        )
+
+
 # [agent_config] pass_to_pass — AGENTS.md:246 @ 95aa11484a255b1c7f6227f2c81e2d441bb28988
 def test_explicit_ts_import_extensions():
     """New/modified files use explicit .ts extensions for relative imports (AGENTS.md rule)."""

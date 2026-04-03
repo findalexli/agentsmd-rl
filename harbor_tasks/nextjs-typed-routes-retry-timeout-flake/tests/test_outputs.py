@@ -223,3 +223,26 @@ def test_no_deprecated_check():
     assert not re.search(r"^\s*await\s+check\s*\(", content, re.MULTILINE), (
         "Found deprecated check() call — use retry() + expect() (AGENTS.md:194)"
     )
+
+
+# [agent_config] pass_to_pass — AGENTS.md:207-221 @ 0090db224d
+def test_uses_real_fixture_dir():
+    """nextTestSetup must use __dirname (real fixture dir), not an inline files object."""
+    content = _read_test_file()
+    setup_matches = list(re.finditer(r"nextTestSetup\s*\(", content))
+    assert setup_matches, "No nextTestSetup call found in test file"
+    for m in setup_matches:
+        # Extract the full argument passed to nextTestSetup
+        start = m.end()
+        depth = 1
+        i = start
+        while i < len(content) and depth > 0:
+            if content[i] in "({[":
+                depth += 1
+            elif content[i] in ")}]":
+                depth -= 1
+            i += 1
+        arg = content[m.start() : i]
+        assert not re.search(r"\bfiles\s*:\s*\{", arg), (
+            "nextTestSetup uses inline files object — prefer files: __dirname (AGENTS.md:207)"
+        )

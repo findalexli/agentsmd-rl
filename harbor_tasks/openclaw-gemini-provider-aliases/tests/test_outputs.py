@@ -311,6 +311,14 @@ def test_no_dynamic_import_mixing():
         )
 
 
+# [agent_config] pass_to_pass — CLAUDE.md:104 @ 6be14ab388eb74cd100e43bf975aad78146ac220
+def test_no_ts_ignore():
+    """No @ts-ignore inline TypeScript suppression directives in modified files."""
+    for f in [INDEX_FILE, MODELS_FILE]:
+        content = f.read_text()
+        assert "@ts-ignore" not in content, f"{f.name} contains @ts-ignore"
+
+
 # [agent_config] pass_to_pass — CLAUDE.md:111 @ 6be14ab388eb74cd100e43bf975aad78146ac220
 def test_no_prototype_mutation():
     """No prototype mutation in production code."""

@@ -12,50 +12,45 @@ checks:
     origin: static
     description: "Environment.ts and its imports must compile without TypeScript errors (tsc --noEmit)"
 
+  - id: all_methods_exist
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All 5 new methods (recordError, recordErrors, hasErrors, aggregateErrors, tryRecord) exist on Environment prototype at runtime"
+
   - id: errors_field_initialized
     type: fail_to_pass
     origin: pr_diff
     description: "Environment class has a private #errors field initialized to new CompilerError()"
-
-  - id: record_error_method_signature
-    type: fail_to_pass
-    origin: pr_diff
-    description: "recordError(error: CompilerDiagnostic | CompilerErrorDetail): void method exists with correct signature"
 
   - id: record_error_throws_invariants
     type: fail_to_pass
     origin: pr_diff
     description: "recordError immediately throws when error category is ErrorCategory.Invariant"
 
-  - id: record_errors_iterates_details
+  - id: record_errors_processes_details
     type: fail_to_pass
     origin: pr_diff
-    description: "recordErrors(error: CompilerError): void iterates over error.details and records each"
+    description: "recordErrors(error: CompilerError) iterates over error details and records each"
 
   - id: has_errors_method
     type: fail_to_pass
     origin: pr_diff
-    description: "hasErrors(): boolean method exists, delegates to this.#errors.hasAnyErrors()"
+    description: "hasErrors(): boolean delegates to the accumulated errors' hasAnyErrors()"
 
   - id: aggregate_errors_method
     type: fail_to_pass
     origin: pr_diff
-    description: "aggregateErrors(): CompilerError method exists, returns this.#errors"
+    description: "aggregateErrors(): CompilerError returns the accumulated #errors field"
 
-  - id: try_record_method_signature
+  - id: try_record_catches_compiler_errors
     type: fail_to_pass
     origin: pr_diff
-    description: "tryRecord(fn: () => void): void method exists with correct signature"
-
-  - id: try_record_rethrows_non_compiler_errors
-    type: fail_to_pass
-    origin: pr_diff
-    description: "tryRecord re-throws non-CompilerError exceptions and does not swallow them"
+    description: "tryRecord wraps a callback in try/catch; records non-invariant CompilerErrors, re-throws others"
 
   - id: required_imports
     type: fail_to_pass
     origin: pr_diff
-    description: "CompilerDiagnostic, CompilerErrorDetail, and ErrorCategory are imported as named imports"
+    description: "CompilerDiagnostic, CompilerErrorDetail, and ErrorCategory are named imports from CompilerError"
 
   - id: invariant_check_in_both_methods
     type: fail_to_pass
@@ -63,7 +58,7 @@ checks:
     description: "ErrorCategory.Invariant is checked in both recordError and tryRecord; invariants must never be silently accumulated"
     source:
       path: "compiler/CLAUDE.md"
-      lines: "232-248"
+      lines: "232-245"
       commit: "0dbb43bc57d27a79ecf4c78508089a36bd08ef5d"
 
   - id: private_field_uses_hash_prefix
@@ -72,18 +67,18 @@ checks:
     description: "Private error field uses TypeScript # prefix (#errors), not underscore convention (_errors)"
     source:
       path: "compiler/CLAUDE.md"
-      lines: "232-248"
+      lines: "232-245"
       commit: "0dbb43bc57d27a79ecf4c78508089a36bd08ef5d"
 
 rubric:
   - rule: "New public methods added to Environment should have JSDoc comments explaining their purpose and key behaviors (e.g., when they throw vs accumulate)."
     source:
       path: "compiler/CLAUDE.md"
-      lines: "232-248"
+      lines: "232-245"
       commit: "0dbb43bc57d27a79ecf4c78508089a36bd08ef5d"
 
   - rule: "tryRecord() should re-throw any CompilerError that contains at least one Invariant diagnostic, not record it — Invariant errors indicate internal compiler bugs that cannot be recovered from."
     source:
       path: "compiler/CLAUDE.md"
-      lines: "232-248"
+      lines: "232-245"
       commit: "0dbb43bc57d27a79ecf4c78508089a36bd08ef5d"

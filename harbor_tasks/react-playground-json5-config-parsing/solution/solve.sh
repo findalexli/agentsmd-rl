@@ -11,21 +11,21 @@ fi
 
 git apply - <<'PATCH'
 diff --git a/compiler/apps/playground/__tests__/e2e/__snapshots__/page.spec.ts/default-config.txt b/compiler/apps/playground/__tests__/e2e/__snapshots__/page.spec.ts/default-config.txt
-index a012d051ec04..2191397ae126 100644
+index a012d051e..2191397ae 100644
 --- a/compiler/apps/playground/__tests__/e2e/__snapshots__/page.spec.ts/default-config.txt
 +++ b/compiler/apps/playground/__tests__/e2e/__snapshots__/page.spec.ts/default-config.txt
 @@ -1,5 +1,3 @@
--import type { PluginOptions } from
+-import type { PluginOptions } from 
 -'babel-plugin-react-compiler/dist';
 -({
 +{
-   //compilationMode: "all"
--} satisfies PluginOptions);
+   //compilationMode: "all"
+-} satisfies PluginOptions);
 \ No newline at end of file
 +}
 \ No newline at end of file
 diff --git a/compiler/apps/playground/__tests__/e2e/page.spec.ts b/compiler/apps/playground/__tests__/e2e/page.spec.ts
-index 20596e5d93bf..1a7bf1def137 100644
+index 20596e5d9..1a7bf1def 100644
 --- a/compiler/apps/playground/__tests__/e2e/page.spec.ts
 +++ b/compiler/apps/playground/__tests__/e2e/page.spec.ts
 @@ -237,7 +237,7 @@ test('show internals button toggles correctly', async ({page}) => {
@@ -39,14 +39,14 @@ index 20596e5d93bf..1a7bf1def137 100644
    const hash = encodeStore(store);
 @@ -254,17 +254,17 @@ test('error is displayed when config has syntax error', async ({page}) => {
    const output = text.join('');
-
+ 
    // Remove hidden chars
 -  expect(output.replace(/\s+/g, ' ')).toContain('Invalid override format');
 +  expect(output.replace(/\s+/g, ' ')).toContain(
 +    'Unexpected failure when transforming configs',
 +  );
  });
-
+ 
  test('error is displayed when config has validation error', async ({page}) => {
    const store: Store = {
      source: TEST_SOURCE,
@@ -62,7 +62,7 @@ index 20596e5d93bf..1a7bf1def137 100644
    const hash = encodeStore(store);
 diff --git a/compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs b/compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs
 new file mode 100644
-index 000000000000..c48dbf7beb02
+index 000000000..c48dbf7be
 --- /dev/null
 +++ b/compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs
 @@ -0,0 +1,157 @@
@@ -224,18 +224,18 @@ index 000000000000..c48dbf7beb02
 +  });
 +});
 diff --git a/compiler/apps/playground/components/Editor/ConfigEditor.tsx b/compiler/apps/playground/components/Editor/ConfigEditor.tsx
-index e78ff35666b0..f17bec762820 100644
+index e78ff3566..f17bec762 100644
 --- a/compiler/apps/playground/components/Editor/ConfigEditor.tsx
 +++ b/compiler/apps/playground/components/Editor/ConfigEditor.tsx
 @@ -21,9 +21,6 @@ import {monacoConfigOptions} from './monacoOptions';
  import {IconChevron} from '../Icons/IconChevron';
  import {CONFIG_PANEL_TRANSITION} from '../../lib/transitionTypes';
-
+ 
 -// @ts-expect-error - webpack asset/source loader handles .d.ts files as strings
 -import compilerTypeDefs from 'babel-plugin-react-compiler/dist/index.d.ts';
 -
  loader.config({monaco});
-
+ 
  export default function ConfigEditor({
 @@ -105,22 +102,10 @@ function ExpandedEditor({
      _: editor.IStandaloneCodeEditor,
@@ -263,7 +263,7 @@ index e78ff35666b0..f17bec762820 100644
 +      trailingCommas: 'ignore',
      });
    };
-
+ 
 @@ -157,8 +142,8 @@ function ExpandedEditor({
              </div>
              <div className="flex-1 border border-gray-300">
@@ -276,7 +276,7 @@ index e78ff35666b0..f17bec762820 100644
                  onMount={handleMount}
                  onChange={handleChange}
 diff --git a/compiler/apps/playground/lib/compilation.ts b/compiler/apps/playground/lib/compilation.ts
-index f668c05dde2a..b2bee8bd66d4 100644
+index f668c05dd..b2bee8bd6 100644
 --- a/compiler/apps/playground/lib/compilation.ts
 +++ b/compiler/apps/playground/lib/compilation.ts
 @@ -25,6 +25,7 @@ import BabelPluginReactCompiler, {
@@ -290,7 +290,7 @@ index f668c05dde2a..b2bee8bd66d4 100644
 @@ -126,6 +127,14 @@ const COMMON_HOOKS: Array<[string, Hook]> = [
    ],
  ];
-
+ 
 +export function parseConfigOverrides(configOverrides: string): any {
 +  const trimmed = configOverrides.trim();
 +  if (!trimmed) {
@@ -304,7 +304,7 @@ index f668c05dde2a..b2bee8bd66d4 100644
    mode: 'compiler' | 'linter',
 @@ -156,16 +165,7 @@ function parseOptions(
    });
-
+ 
    // Parse config overrides from config editor
 -  let configOverrideOptions: any = {};
 -  const configMatch = configOverrides.match(/^\s*import.*?\n\n\((.*)\)/s);
@@ -317,16 +317,16 @@ index f668c05dde2a..b2bee8bd66d4 100644
 -    }
 -  }
 +  const configOverrideOptions = parseConfigOverrides(configOverrides);
-
+ 
    const opts: PluginOptions = parsePluginOptions({
      ...parsedPragmaOptions,
 diff --git a/compiler/apps/playground/lib/defaultStore.ts b/compiler/apps/playground/lib/defaultStore.ts
-index 2baada0b8179..9711249ff4f5 100644
+index 2baada0b8..9711249ff 100644
 --- a/compiler/apps/playground/lib/defaultStore.ts
 +++ b/compiler/apps/playground/lib/defaultStore.ts
 @@ -14,11 +14,9 @@ export default function MyApp() {
  `;
-
+ 
  export const defaultConfig = `\
 -import type { PluginOptions } from 'babel-plugin-react-compiler/dist';
 -
@@ -335,11 +335,11 @@ index 2baada0b8179..9711249ff4f5 100644
    //compilationMode: "all"
 -} satisfies PluginOptions);`;
 +}`;
-
+ 
  export const defaultStore: Store = {
    source: index,
 diff --git a/compiler/apps/playground/package.json b/compiler/apps/playground/package.json
-index 217153e6a219..65f27158d8f2 100644
+index 217153e6a..65f27158d 100644
 --- a/compiler/apps/playground/package.json
 +++ b/compiler/apps/playground/package.json
 @@ -32,6 +32,7 @@
@@ -350,7 +350,6 @@ index 217153e6a219..65f27158d8f2 100644
      "lru-cache": "^11.2.2",
      "lz-string": "^1.5.0",
      "monaco-editor": "^0.52.0",
-
 PATCH
 
 echo "Patch applied successfully."

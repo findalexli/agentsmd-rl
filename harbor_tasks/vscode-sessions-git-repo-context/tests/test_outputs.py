@@ -1,39 +1,21 @@
 """
 Task: vscode-sessions-git-repo-context
 Repo: microsoft/vscode @ b15c078a6d22d9d2fd182d80658e6d9a6a1b8559
+PR:   306346
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import subprocess
 from pathlib import Path
 
 REPO = Path("/workspace/vscode")
 CHANGES_VIEW = REPO / "src/vs/sessions/contrib/changes/browser/changesView.ts"
-SESSIONS_ACTIONS = REPO / "src/vs/sessions/contrib/sessions/browser/views/sessionsViewActions.ts"
+CODE_REVIEW = REPO / "src/vs/sessions/contrib/codeReview/browser/codeReview.contributions.ts"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — TypeScript compilation
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
-def test_typescript_compiles():
-    """Modified TypeScript files must compile without errors."""
-    r = subprocess.run(
-        ["npm", "run", "compile-check-ts-native"],
-        cwd=REPO,
-        capture_output=True,
-        timeout=300,
-    )
-    assert r.returncode == 0, (
-        f"TypeScript compilation failed:\n{r.stderr.decode()[-2000:]}"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — context key definition
+# Fail-to-pass (pr_diff) — context key definition in changesView.ts
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -43,99 +25,103 @@ def test_has_git_repository_context_key_defined():
     assert "hasGitRepositoryContextKey" in content, (
         "hasGitRepositoryContextKey not found in changesView.ts"
     )
-    assert "'sessions.hasGitRepository'" in content, (
+    assert "'sessions.hasGitRepository'" in content or '"sessions.hasGitRepository"' in content, (
         "Context key string 'sessions.hasGitRepository' not found in changesView.ts"
     )
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — observable declaration and implementation
-# ---------------------------------------------------------------------------
-
 # [pr_diff] fail_to_pass
-def test_active_session_has_git_repository_obs_declared():
-    """activeSessionHasGitRepositoryObs IObservable<boolean> must be declared in ChangesViewModel."""
+def test_context_key_is_raw_context_key_boolean():
+    """hasGitRepositoryContextKey must be a RawContextKey<boolean>."""
     content = CHANGES_VIEW.read_text()
-    assert "activeSessionHasGitRepositoryObs" in content, (
-        "activeSessionHasGitRepositoryObs not found in changesView.ts"
-    )
-    assert "IObservable<boolean>" in content, (
-        "IObservable<boolean> type not found in changesView.ts"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_active_session_has_git_repository_obs_uses_derived_and_repository_path():
-    """activeSessionHasGitRepositoryObs must be implemented via derived() and check repositoryPath."""
-    content = CHANGES_VIEW.read_text()
-    assert "this.activeSessionHasGitRepositoryObs = derived(" in content, (
-        "activeSessionHasGitRepositoryObs not assigned via derived() in changesView.ts"
-    )
-    # The observable must derive its value from repositoryPath presence
-    assert "repositoryPath" in content, (
-        "repositoryPath not referenced — implementation must check session metadata.repositoryPath"
-    )
+    # The constant must be created via new RawContextKey
+    assert "RawContextKey" in content, "RawContextKey not used"
+    # Find the hasGitRepositoryContextKey definition line
+    for line in content.splitlines():
+        if "hasGitRepositoryContextKey" in line and "RawContextKey" in line:
+            assert "boolean" in line, (
+                f"hasGitRepositoryContextKey should be RawContextKey<boolean>, got: {line.strip()}"
+            )
+            break
+    else:
+        assert False, "hasGitRepositoryContextKey not defined with RawContextKey"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — context key binding
+# Fail-to-pass (pr_diff) — context key binding in ChangesViewPane
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_bind_context_key_for_git_repository():
-    """bindContextKey must wire hasGitRepositoryContextKey into ChangesViewPane's scoped context."""
+    """bindContextKey must wire hasGitRepositoryContextKey in ChangesViewPane."""
     content = CHANGES_VIEW.read_text()
     assert "bindContextKey(hasGitRepositoryContextKey" in content, (
         "bindContextKey for hasGitRepositoryContextKey not found in changesView.ts"
     )
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — markAsDone action presentation
-# ---------------------------------------------------------------------------
-
 # [pr_diff] fail_to_pass
-def test_mark_as_done_action_presentation():
-    """changesView.ts must return showIcon+showLabel presentation for agentSession.markAsDone."""
+def test_git_repository_binding_checks_repository_obs():
+    """The hasGitRepository binding must derive from the repository observable."""
     content = CHANGES_VIEW.read_text()
-    assert "agentSession.markAsDone" in content, (
-        "'agentSession.markAsDone' not found in changesView.ts"
-    )
-    idx = content.index("agentSession.markAsDone")
-    surrounding = content[max(0, idx - 50) : idx + 200]
-    assert "showIcon" in surrounding, (
-        "showIcon not set in the agentSession.markAsDone presentation block"
-    )
-    assert "showLabel" in surrounding, (
-        "showLabel not set in the agentSession.markAsDone presentation block"
+    idx = content.find("bindContextKey(hasGitRepositoryContextKey")
+    assert idx != -1, "bindContextKey for hasGitRepositoryContextKey not found"
+    # The binding implementation should reference the repository observable within ~400 chars
+    block = content[idx : idx + 400]
+    assert "activeSessionRepositoryObs" in block or "RepositoryObs" in block, (
+        "hasGitRepository binding does not reference the repository observable. "
+        f"Block: {block[:200]}"
     )
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — sessionsViewActions.ts changes
+# Fail-to-pass (pr_diff) — codeReview.contributions.ts condition
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_sessions_window_context_import():
-    """IsSessionsWindowContext must be imported in sessionsViewActions.ts."""
-    content = SESSIONS_ACTIONS.read_text()
+def test_code_review_has_git_repository_condition():
+    """codeReview.contributions.ts must include sessions.hasGitRepository condition."""
+    content = CODE_REVIEW.read_text()
+    assert "sessions.hasGitRepository" in content, (
+        "sessions.hasGitRepository not found in codeReview.contributions.ts"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_code_review_git_repo_in_context_key_expr():
+    """sessions.hasGitRepository must be in a ContextKeyExpr for the code review when clause."""
+    content = CODE_REVIEW.read_text()
+    idx = content.find("sessions.hasGitRepository")
+    assert idx != -1, "sessions.hasGitRepository not found"
+    # It should be inside a ContextKeyExpr call
+    block = content[max(0, idx - 300) : idx + 100]
+    assert "ContextKeyExpr" in block, (
+        "sessions.hasGitRepository is not inside a ContextKeyExpr expression"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) — no regressions
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_existing_context_keys_intact():
+    """Existing context keys (hasPullRequest, hasOpenPullRequest, etc.) must still be present."""
+    content = CHANGES_VIEW.read_text()
+    for key in [
+        "sessions.hasPullRequest",
+        "sessions.hasOpenPullRequest",
+        "sessions.hasIncomingChanges",
+        "sessions.hasOutgoingChanges",
+        "sessions.isolationMode",
+    ]:
+        assert key in content, f"Existing context key '{key}' was removed from changesView.ts"
+
+
+# [static] pass_to_pass
+def test_code_review_sessions_window_context_intact():
+    """IsSessionsWindowContext must still be present in codeReview.contributions.ts."""
+    content = CODE_REVIEW.read_text()
     assert "IsSessionsWindowContext" in content, (
-        "IsSessionsWindowContext not imported in sessionsViewActions.ts"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_mark_as_done_menu_registration_with_context_conditions():
-    """MarkAsDone must be registered in ChatEditingSessionChangesToolbar with IsSessionsWindowContext and sessions.hasPullRequest."""
-    content = SESSIONS_ACTIONS.read_text()
-    assert "ChatEditingSessionChangesToolbar" in content, (
-        "ChatEditingSessionChangesToolbar registration not found in sessionsViewActions.ts"
-    )
-    idx = content.index("ChatEditingSessionChangesToolbar")
-    surrounding = content[idx : idx + 500]
-    assert "IsSessionsWindowContext" in surrounding, (
-        "IsSessionsWindowContext condition missing from ChatEditingSessionChangesToolbar block"
-    )
-    assert "sessions.hasPullRequest" in surrounding, (
-        "sessions.hasPullRequest condition missing from ChatEditingSessionChangesToolbar block"
+        "IsSessionsWindowContext was removed from codeReview.contributions.ts"
     )

@@ -244,3 +244,13 @@ def test_no_else_statements():
     assert not re.search(r"\belse\b", func), (
         "Function uses 'else' — prefer early returns (AGENTS.md:84)"
     )
+
+
+# [agent_config] pass_to_pass — AGENTS.md:15 @ b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+def test_uses_bun_glob_api():
+    """Function must use Bun.Glob for file scanning — prefer Bun APIs over native fs (AGENTS.md line 15)."""
+    # AST-only because: TypeScript source, API usage style rule
+    func = _extract_function_body()
+    assert re.search(r"\bBun\.Glob\b", func), (
+        "Function does not use Bun.Glob — prefer Bun APIs when possible (AGENTS.md:15)"
+    )

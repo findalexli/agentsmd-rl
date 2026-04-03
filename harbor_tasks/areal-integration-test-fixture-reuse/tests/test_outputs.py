@@ -264,6 +264,38 @@ def test_files_not_stubbed():
 # Pass-to-pass (agent_config) — config-derived regression
 # ---------------------------------------------------------------------------
 
+# [agent_config] pass_to_pass — AGENTS.md:202 @ dfeab639
+def test_gpu_skipif_has_reason():
+    """All @pytest.mark.skipif decorators that check GPU availability must have
+    an explicit reason= argument (AGENTS.md: 'GPU: skip gracefully')."""
+    for fpath in ALL_FILES:
+        tree = _parse(fpath)
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            for dec in node.decorator_list:
+                if not (
+                    isinstance(dec, ast.Call)
+                    and isinstance(dec.func, ast.Attribute)
+                    and dec.func.attr == "skipif"
+                ):
+                    continue
+                # Only care about GPU-conditional skipifs
+                dec_src = ast.unparse(dec)
+                if "has_gpu" not in dec_src and "_has_gpu" not in dec_src:
+                    continue
+                has_reason = any(
+                    kw.arg == "reason"
+                    and isinstance(kw.value, ast.Constant)
+                    and kw.value.value
+                    for kw in dec.keywords
+                )
+                assert has_reason, (
+                    f"{fpath}: {node.name} has @pytest.mark.skipif with GPU check "
+                    f"but no non-empty reason= argument"
+                )
+
+
 # [agent_config] pass_to_pass — AGENTS.md:30 @ dfeab639
 def test_no_wildcard_imports():
     """No wildcard imports (from x import *) in any test file."""

@@ -46,13 +46,31 @@ checks:
       lines: "76"
       commit: "929eb5238c82bfadad4549ff526f02efc0163dd0"
 
-  - id: no_new_unwrap_calls
+  - id: no_new_unsafe_patterns
     type: pass_to_pass
     origin: agent_config
-    description: "No new .unwrap() calls added to final_attribute.rs"
+    description: "No new .unwrap(), panic!(), or unreachable!() calls in modified files"
     source:
       path: "AGENTS.md"
       lines: "79"
+      commit: "929eb5238c82bfadad4549ff526f02efc0163dd0"
+
+  - id: no_allow_lint_attributes
+    type: pass_to_pass
+    origin: agent_config
+    description: "New #[allow(...)] attributes should use #[expect(...)] instead"
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "929eb5238c82bfadad4549ff526f02efc0163dd0"
+
+  - id: salsa_node_access_tracking
+    type: pass_to_pass
+    origin: agent_config
+    description: "Methods accessing .node() must be #[salsa::tracked] for incrementality"
+    source:
+      path: "AGENTS.md"
+      lines: "84"
       commit: "929eb5238c82bfadad4549ff526f02efc0163dd0"
 
 rubric:
@@ -78,4 +96,10 @@ rubric:
     source:
       path: "AGENTS.md"
       lines: "83"
+      commit: "929eb5238c82bfadad4549ff526f02efc0163dd0"
+
+  - rule: "Prefer higher-level semantic APIs over raw AST access for Salsa incrementality."
+    source:
+      path: "AGENTS.md"
+      lines: "84"
       commit: "929eb5238c82bfadad4549ff526f02efc0163dd0"

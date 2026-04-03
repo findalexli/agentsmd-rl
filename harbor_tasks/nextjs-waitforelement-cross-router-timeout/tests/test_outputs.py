@@ -237,3 +237,15 @@ def test_no_deprecated_check():
         assert not re.search(r"(?<!\w)check\s*\(", line), (
             f"Deprecated check() found: {line.strip()}"
         )
+
+
+# [agent_config] pass_to_pass — AGENTS.md:207-220 @ ad65b1bdcf3d10e5213c80bea56a73038bbf1c99
+def test_no_inline_fixture_files():
+    """createNext/nextTestSetup must use a real fixture directory, not an inline files object."""
+    src = _read_test_file()
+    # Inline files object pattern: files: { 'some/path': `...` or '...' }
+    assert not re.search(
+        r"(?:createNext|nextTestSetup)\s*\(\s*\{[^}]*files\s*:\s*\{",
+        src,
+        re.DOTALL,
+    ), "Inline files object found in createNext/nextTestSetup — use files: __dirname instead"

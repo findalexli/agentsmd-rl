@@ -80,6 +80,24 @@ checks:
     origin: pr_diff
     description: "PPOActorConfig.__post_init__ calls super().__post_init__()"
 
+  - id: postinit_methods_have_docstrings
+    type: pass_to_pass
+    origin: agent_config
+    description: "New/modified __post_init__ methods have docstrings"
+    source:
+      path: "AGENTS.md"
+      lines: "159-160"
+      commit: "03d71153a72581d83df72d69c30586a41ba71665"
+
+  - id: no_print_calls_in_modified_files
+    type: pass_to_pass
+    origin: agent_config
+    description: "No print() calls in modified files (use areal.utils.logging instead)"
+    source:
+      path: "AGENTS.md"
+      lines: "84-86"
+      commit: "03d71153a72581d83df72d69c30586a41ba71665"
+
 rubric:
   - rule: "Follow existing code patterns in the same module"
     source:

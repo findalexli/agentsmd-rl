@@ -37,6 +37,15 @@ checks:
     origin: repo_tests
     description: "Upstream vitest tests for parseStatusesParam still pass"
 
+  - id: no_raw_console
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files must not use raw console.log/warn/error — use Storybook loggers"
+    source:
+      path: "AGENTS.md"
+      lines: "244-250"
+      commit: "95aa11484a255b1c7f6227f2c81e2d441bb28988"
+
   - id: explicit_ts_import_extensions
     type: pass_to_pass
     origin: agent_config
@@ -46,9 +55,4 @@ checks:
       lines: "246"
       commit: "95aa11484a255b1c7f6227f2c81e2d441bb28988"
 
-rubric:
-  - rule: "Use Storybook loggers instead of raw console.* in normal code paths"
-    source:
-      path: "AGENTS.md"
-      lines: "241"
-      commit: "95aa11484a255b1c7f6227f2c81e2d441bb28988"
+rubric: []

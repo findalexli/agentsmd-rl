@@ -324,3 +324,21 @@ def test_no_streaming_partial_replies():
         "Streaming/partial reply patterns found (CLAUDE.md:228):\n"
         + "\n".join(violations)
     )
+
+
+# [agent_config] pass_to_pass — CLAUDE.md:106 @ eec290e68d6191b4bb85538dd301d50cdbc6650a
+def test_no_dynamic_import_mixing():
+    """Do not mix dynamic await import() and static import for the same module in production code."""
+    src = _read_target()
+
+    # Static import specifiers: `from 'x'` or side-effect `import 'x'`
+    static_imports = set(re.findall(r"""(?:from|import)\s+['"]([^'"]+)['"]""", src))
+
+    # Dynamic import specifiers: import('x') — includes `await import(...)`
+    dynamic_imports = set(re.findall(r"""(?<!\w)import\s*\(\s*['"]([^'"]+)['"]\s*\)""", src))
+
+    mixed = static_imports & dynamic_imports
+    assert not mixed, (
+        "Same modules imported both statically and dynamically violates CLAUDE.md:106:\n"
+        + "\n".join(sorted(mixed))
+    )

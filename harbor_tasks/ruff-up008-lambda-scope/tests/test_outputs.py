@@ -1,7 +1,7 @@
 """
 Task: ruff-up008-lambda-scope
 Repo: astral-sh/ruff @ 09f645d49f1337866d63e62570cb9a43a4a875b3
-PR:   24274
+PR:   #24274
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
@@ -11,21 +11,22 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+import pytest
+
 REPO = "/workspace/ruff"
 RUST_FILE = Path(REPO) / "crates/ruff_linter/src/rules/pyupgrade/rules/super_call_with_parameters.rs"
 FIXTURE = Path(REPO) / "crates/ruff_linter/resources/test/fixtures/pyupgrade/UP008.py"
-RUFF_BIN = Path(REPO) / "target/release/ruff"
 
 
-def _ensure_ruff_built():
-    """Compile ruff release binary (no-op if already cached)."""
-    if RUFF_BIN.exists():
-        return
+@pytest.fixture(scope="module")
+def ruff_bin():
+    """Build ruff once for all tests that need it."""
     r = subprocess.run(
-        ["cargo", "build", "--release", "-p", "ruff"],
+        ["cargo", "build", "--bin", "ruff"],
         cwd=REPO, capture_output=True, timeout=600,
     )
-    assert r.returncode == 0, f"cargo build failed:\n{r.stderr.decode()[-2000:]}"
+    assert r.returncode == 0, f"Build failed:\n{r.stderr.decode()[-2000:]}"
+    return f"{REPO}/target/debug/ruff"
 
 
 # ---------------------------------------------------------------------------
@@ -33,9 +34,9 @@ def _ensure_ruff_built():
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
-def test_build_compiles():
+def test_build_compiles(ruff_bin):
     """Modified ruff code compiles without errors."""
-    _ensure_ruff_built()
+    assert Path(ruff_bin).exists()
 
 
 # ---------------------------------------------------------------------------
@@ -43,12 +44,11 @@ def test_build_compiles():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_lambda_super_detected():
+def test_lambda_super_detected(ruff_bin):
     """UP008 detects super(ClassName, self) inside lambda class attributes."""
-    _ensure_ruff_built()
     r = subprocess.run(
-        [str(RUFF_BIN), "check", "--select", "UP008", "--output-format", "text",
-         str(FIXTURE)],
+        [ruff_bin, "check", "--select", "UP008", "--no-cache",
+         "--output-format", "text", str(FIXTURE)],
         capture_output=True, text=True, cwd=REPO, timeout=30,
     )
     output = r.stdout + r.stderr
@@ -58,12 +58,11 @@ def test_lambda_super_detected():
 
 
 # [pr_diff] fail_to_pass
-def test_lambda_super_fix_available():
+def test_lambda_super_fix_available(ruff_bin):
     """UP008 offers an autofix that simplifies lambda super(Cls, self) to super()."""
-    _ensure_ruff_built()
     r = subprocess.run(
-        [str(RUFF_BIN), "check", "--select", "UP008", "--fix", "--diff",
-         str(FIXTURE)],
+        [ruff_bin, "check", "--select", "UP008", "--fix", "--diff",
+         "--no-cache", str(FIXTURE)],
         capture_output=True, text=True, cwd=REPO, timeout=30,
     )
     output = r.stdout + r.stderr
@@ -73,9 +72,8 @@ def test_lambda_super_fix_available():
 
 
 # [pr_diff] fail_to_pass
-def test_lambda_super_varied_inputs():
+def test_lambda_super_varied_inputs(ruff_bin):
     """UP008 detects lambda super() across multiple class/nesting patterns."""
-    _ensure_ruff_built()
     test_code = '''\
 class Base:
     def method(self):
@@ -96,8 +94,8 @@ class Outer:
         tmp_path = f.name
     try:
         r = subprocess.run(
-            [str(RUFF_BIN), "check", "--select", "UP008", "--output-format", "text",
-             tmp_path],
+            [ruff_bin, "check", "--select", "UP008", "--no-cache",
+             "--output-format", "text", tmp_path],
             capture_output=True, text=True, cwd=REPO, timeout=30,
         )
         output = r.stdout + r.stderr
@@ -167,21 +165,14 @@ def test_no_excessive_panic_unwrap():
 # Text inspection because: Rust source cannot be imported/executed in Python
 def test_no_local_rust_imports():
     """Rust imports must be at top of file, not local in functions (AGENTS.md:76)."""
+    import re
     content = RUST_FILE.read_text()
-    local_imports = []
-    in_test_mod = False
-    for i, line in enumerate(content.splitlines(), 1):
-        stripped = line.strip()
-        # Skip #[cfg(test)] mod blocks — test modules conventionally use local imports
-        if stripped.startswith("#[cfg(test)]"):
-            in_test_mod = True
-            continue
-        if in_test_mod:
-            continue
-        # A `use` statement that is indented is a local import
-        if stripped.startswith("use ") and stripped.endswith(";") and line != stripped:
-            local_imports.append(f"  line {i}: {stripped}")
-    assert not local_imports, (
-        f"Found local imports (should be at top of file per AGENTS.md:76):\n"
-        + "\n".join(local_imports)
+    # Filter out 'use' inside mod tests {} which is acceptable
+    tests_start = content.find("mod tests")
+    main_section = content[:tests_start] if tests_start != -1 else content
+    # Top-level 'use' starts at column 0; local imports are indented inside fn bodies
+    local_uses = re.findall(r"^\s{4,}use\s+", main_section, re.MULTILINE)
+    assert len(local_uses) == 0, (
+        f"Found {len(local_uses)} local 'use' import(s) in function bodies; "
+        "Rust imports should go at the top of the file (AGENTS.md:76)"
     )

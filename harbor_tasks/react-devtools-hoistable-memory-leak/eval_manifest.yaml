@@ -12,7 +12,12 @@ checks:
     origin: static
     description: "renderer.js must parse without syntax errors"
 
-  - id: correct_map_set_order
+  - id: upstream_hoistable_cleanup
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Upstream Jest test for hoistable cleanup — unmount one of two components sharing a deduplicated <style> tag, verify remaining element is still tracked"
+
+  - id: correct_map_set_key
     type: fail_to_pass
     origin: pr_diff
     description: "publicInstanceToDevToolsInstanceMap.set() must use publicInstance as first arg (key), not firstInstance"
@@ -25,7 +30,12 @@ checks:
   - id: function_exists
     type: pass_to_pass
     origin: static
-    description: "releaseHostResource() function must still be defined (not deleted or renamed)"
+    description: "releaseHostResource() function must still be defined"
+
+  - id: map_set_call_exists
+    type: pass_to_pass
+    origin: static
+    description: "publicInstanceToDevToolsInstanceMap.set() call must still exist inside releaseHostResource"
 
 rubric:
   - rule: "Run yarn prettier to fix formatting before committing"

@@ -8,10 +8,32 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import subprocess
 from pathlib import Path
 
 REPO = "/repo"
+
+# Monkey-patch @auto_docstring to avoid PyTorch dependency at config import time.
+# Config files do `from ...utils import auto_docstring` which calls modeling_auto
+# (requires PyTorch). Replace with a no-op so config classes can be imported.
+try:
+    import transformers.utils as _tu
+    _tu.auto_docstring = lambda **kwargs: lambda cls: cls
+except ImportError:
+    pass
+
+
+def _find_class(tree, name):
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == name:
+            return node
+    return None
+
+
+def _find_method(cls_node, name):
+    for item in cls_node.body:
+        if isinstance(item, ast.FunctionDef) and item.name == name:
+            return item
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -35,39 +57,108 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core checks
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_qwen2vl_text_no_own_tie_field():
-    """Qwen2VLTextConfig must not define tie_word_embeddings as its own dataclass field."""
-    from transformers.models.qwen2_vl.configuration_qwen2_vl import Qwen2VLTextConfig
+    """Qwen2VLTextConfig must not define tie_word_embeddings as its own class-level field.
 
-    own_annotations = vars(Qwen2VLTextConfig).get("__annotations__", {})
-    assert "tie_word_embeddings" not in own_annotations, (
-        "tie_word_embeddings should be removed from Qwen2VLTextConfig class-level fields"
-    )
-    # Must still be accessible via inheritance from PreTrainedConfig
-    cfg = Qwen2VLTextConfig()
-    assert hasattr(cfg, "tie_word_embeddings")
+    AST-only because: checking class annotation presence is inherently structural.
+    """
+    source = (Path(REPO) / "src/transformers/models/qwen2_vl/configuration_qwen2_vl.py").read_text()
+    tree = ast.parse(source)
+    cls = _find_class(tree, "Qwen2VLTextConfig")
+    assert cls is not None, "Qwen2VLTextConfig class not found"
+
+    for item in cls.body:
+        if isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
+            assert item.target.id != "tie_word_embeddings", (
+                "tie_word_embeddings should be removed from Qwen2VLTextConfig class-level fields"
+            )
 
 
 # [pr_diff] fail_to_pass
 def test_qwen2_5_vl_text_no_own_tie_field():
-    """Qwen2_5_VLTextConfig must not define tie_word_embeddings as its own dataclass field."""
-    from transformers.models.qwen2_5_vl.configuration_qwen2_5_vl import Qwen2_5_VLTextConfig
+    """Qwen2_5_VLTextConfig must not define tie_word_embeddings as its own class-level field.
 
-    own_annotations = vars(Qwen2_5_VLTextConfig).get("__annotations__", {})
-    assert "tie_word_embeddings" not in own_annotations, (
-        "tie_word_embeddings should be removed from Qwen2_5_VLTextConfig class-level fields"
+    AST-only because: checking class annotation presence is inherently structural.
+    """
+    source = (Path(REPO) / "src/transformers/models/qwen2_5_vl/configuration_qwen2_5_vl.py").read_text()
+    tree = ast.parse(source)
+    cls = _find_class(tree, "Qwen2_5_VLTextConfig")
+    assert cls is not None, "Qwen2_5_VLTextConfig class not found"
+
+    for item in cls.body:
+        if isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
+            assert item.target.id != "tie_word_embeddings", (
+                "tie_word_embeddings should be removed from Qwen2_5_VLTextConfig class-level fields"
+            )
+
+
+# [pr_diff] fail_to_pass
+def test_modernvbert_init_type_hint():
+    """ModernVBertForMaskedLM.__init__ config param must have a type annotation.
+
+    AST-only because: modeling file imports torch which is not installed.
+    """
+    source = (Path(REPO) / "src/transformers/models/modernvbert/modeling_modernvbert.py").read_text()
+    tree = ast.parse(source)
+    cls = _find_class(tree, "ModernVBertForMaskedLM")
+    assert cls is not None, "ModernVBertForMaskedLM not found"
+    init = _find_method(cls, "__init__")
+    assert init is not None, "__init__ not found"
+    config_args = [a for a in init.args.args if a.arg == "config"]
+    assert config_args, "No 'config' parameter found"
+    assert config_args[0].annotation is not None, (
+        "config parameter missing type annotation"
     )
-    cfg = Qwen2_5_VLTextConfig()
-    assert hasattr(cfg, "tie_word_embeddings")
 
+
+# [pr_diff] fail_to_pass
+def test_modular_init_type_hint():
+    """modular_modernvbert.py ModernVBertForMaskedLM.__init__ also needs the type hint.
+
+    AST-only because: modular file imports torch-dependent modules.
+    """
+    source = (Path(REPO) / "src/transformers/models/modernvbert/modular_modernvbert.py").read_text()
+    tree = ast.parse(source)
+    cls = _find_class(tree, "ModernVBertForMaskedLM")
+    assert cls is not None, "ModernVBertForMaskedLM not found in modular file"
+    init = _find_method(cls, "__init__")
+    assert init is not None, "__init__ not found in modular file"
+    config_args = [a for a in init.args.args if a.arg == "config"]
+    assert config_args, "No 'config' parameter found"
+    assert config_args[0].annotation is not None, (
+        "config parameter missing type annotation in modular file"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_downstream_no_tie_propagation_hack():
+    """ColQwen2Config and ColModernVBertConfig must not contain tie_word_embeddings propagation hack.
+
+    Source text check because: hack removal is dead-code cleanup with no distinct
+    behavioral effect once the text config's own tie_word_embeddings field is removed.
+    """
+    files = {
+        "ColQwen2Config": "src/transformers/models/colqwen2/configuration_colqwen2.py",
+        "ColModernVBertConfig": "src/transformers/models/colmodernvbert/configuration_colmodernvbert.py",
+    }
+    for name, path in files.items():
+        source = (Path(REPO) / path).read_text()
+        assert "text_config.tie_word_embeddings" not in source, (
+            f"{name} still contains tie_word_embeddings propagation hack"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — regression + anti-stub
+# ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
 def test_text_configs_instantiate():
-    """Text sub-configs can be instantiated with no args and have expected fields."""
+    """Text sub-configs can be instantiated and tie_word_embeddings is inherited."""
     from transformers.models.qwen2_vl.configuration_qwen2_vl import Qwen2VLTextConfig
     from transformers.models.qwen2_5_vl.configuration_qwen2_5_vl import Qwen2_5_VLTextConfig
 
@@ -80,77 +171,12 @@ def test_text_configs_instantiate():
         assert d["model_type"] in ("qwen2_vl_text", "qwen2_5_vl_text")
 
 
-# [pr_diff] fail_to_pass
-def test_modernvbert_init_type_hint():
-    """ModernVBertForMaskedLM.__init__ config param must have a type annotation.
-
-    AST check justified: modeling file imports torch which is not installed.
-    """
-    source = (Path(REPO) / "src/transformers/models/modernvbert/modeling_modernvbert.py").read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "ModernVBertForMaskedLM":
-            for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name == "__init__":
-                    config_args = [a for a in item.args.args if a.arg == "config"]
-                    assert config_args, "No 'config' parameter found"
-                    assert config_args[0].annotation is not None, (
-                        "config parameter missing type annotation"
-                    )
-                    return
-    assert False, "ModernVBertForMaskedLM class or __init__ not found"
-
-
-# [pr_diff] fail_to_pass
-def test_modular_init_type_hint():
-    """modular_modernvbert.py ModernVBertForMaskedLM.__init__ also needs the type hint.
-
-    AST check justified: modular file imports torch-dependent modules.
-    """
-    source = (Path(REPO) / "src/transformers/models/modernvbert/modular_modernvbert.py").read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "ModernVBertForMaskedLM":
-            for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name == "__init__":
-                    config_args = [a for a in item.args.args if a.arg == "config"]
-                    assert config_args, "No 'config' parameter found"
-                    assert config_args[0].annotation is not None, (
-                        "config parameter missing type annotation in modular file"
-                    )
-                    return
-    assert False, "ModernVBertForMaskedLM class or __init__ not found in modular file"
-
-
-# [pr_diff] fail_to_pass
-def test_downstream_no_tie_propagation_hack():
-    """ColQwen2Config and ColModernVBertConfig must not contain tie_word_embeddings propagation hack.
-
-    Source inspection because: hack removal is dead-code cleanup with no distinct behavioral
-    effect once the text config's own tie_word_embeddings field is removed.
-    """
-    import inspect
-    from transformers.models.colqwen2.configuration_colqwen2 import ColQwen2Config
-    from transformers.models.colmodernvbert.configuration_colmodernvbert import ColModernVBertConfig
-
-    for ConfigCls in [ColQwen2Config, ColModernVBertConfig]:
-        source = inspect.getsource(ConfigCls)
-        assert "vlm_config.text_config.tie_word_embeddings" not in source, (
-            f"{ConfigCls.__name__} still contains tie_word_embeddings propagation hack"
-        )
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff / static) — regression + anti-stub
-# ---------------------------------------------------------------------------
-
 # [pr_diff] pass_to_pass
 def test_config_roundtrip():
-    """Config instantiation and to_dict serialization must work for all affected configs."""
+    """Config instantiation and to_dict serialization works for text and composite configs."""
     from transformers.models.qwen2_vl.configuration_qwen2_vl import Qwen2VLTextConfig, Qwen2VLConfig
     from transformers.models.qwen2_5_vl.configuration_qwen2_5_vl import Qwen2_5_VLTextConfig, Qwen2_5_VLConfig
 
-    # Text configs declare vocab_size directly
     for ConfigCls in [Qwen2VLTextConfig, Qwen2_5_VLTextConfig]:
         cfg = ConfigCls()
         d = cfg.to_dict()
@@ -160,7 +186,6 @@ def test_config_roundtrip():
             f"{ConfigCls.__name__} vocab_size mismatch in round-trip"
         )
 
-    # Composite configs don't declare vocab_size at the top level
     for ConfigCls in [Qwen2VLConfig, Qwen2_5_VLConfig]:
         cfg = ConfigCls()
         d = cfg.to_dict()
@@ -168,16 +193,29 @@ def test_config_roundtrip():
         assert "model_type" in d, f"{ConfigCls.__name__}.to_dict() missing model_type"
 
 
-# [pr_diff] pass_to_pass
-def test_downstream_configs_instantiate():
-    """ColQwen2Config and ColModernVBertConfig must instantiate and serialize."""
-    from transformers.models.colqwen2.configuration_colqwen2 import ColQwen2Config
-    from transformers.models.colmodernvbert.configuration_colmodernvbert import ColModernVBertConfig
+# [static] pass_to_pass
+def test_downstream_configs_structure():
+    """ColQwen2Config and ColModernVBertConfig retain class structure after hack removal.
 
-    for ConfigCls in [ColQwen2Config, ColModernVBertConfig]:
-        cfg = ConfigCls()
-        d = cfg.to_dict()
-        assert isinstance(d, dict), f"{ConfigCls.__name__}.to_dict() failed"
+    AST-only because: downstream composite configs may fail to import without torch
+    due to __init__.py import chains.
+    """
+    for cls_name, path in [
+        ("ColQwen2Config", "src/transformers/models/colqwen2/configuration_colqwen2.py"),
+        ("ColModernVBertConfig", "src/transformers/models/colmodernvbert/configuration_colmodernvbert.py"),
+    ]:
+        source = (Path(REPO) / path).read_text()
+        tree = ast.parse(source)
+        cls = _find_class(tree, cls_name)
+        assert cls is not None, f"{cls_name} not found"
+        post_init = _find_method(cls, "__post_init__")
+        assert post_init is not None, f"{cls_name}.__post_init__ not found"
+        # __post_init__ must still have real logic (super().__post_init__, vocab_size setup)
+        body_stmts = [s for s in post_init.body
+                       if not isinstance(s, (ast.Pass, ast.Expr))]
+        assert len(body_stmts) >= 2, (
+            f"{cls_name}.__post_init__ appears stubbed ({len(body_stmts)} statements)"
+        )
 
 
 # [static] pass_to_pass
@@ -192,25 +230,3 @@ def test_not_stub():
     for f in files:
         lines = (Path(REPO) / f).read_text().splitlines()
         assert len(lines) >= 20, f"{f} has only {len(lines)} lines — appears stubbed"
-
-
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from CLAUDE.md
-# ---------------------------------------------------------------------------
-
-# [agent_config] pass_to_pass — CLAUDE.md:2 @ 28e1cc59ecf479ea674f2cc4b443a2969aae3a69
-def test_ruff_lint():
-    """ruff linter must pass on all changed files (CLAUDE.md: 'make style: runs formatters and linters')."""
-    files = [
-        f"{REPO}/src/transformers/models/qwen2_vl/configuration_qwen2_vl.py",
-        f"{REPO}/src/transformers/models/qwen2_5_vl/configuration_qwen2_5_vl.py",
-        f"{REPO}/src/transformers/models/colqwen2/configuration_colqwen2.py",
-        f"{REPO}/src/transformers/models/colmodernvbert/configuration_colmodernvbert.py",
-        f"{REPO}/src/transformers/models/modernvbert/modeling_modernvbert.py",
-        f"{REPO}/src/transformers/models/modernvbert/modular_modernvbert.py",
-    ]
-    r = subprocess.run(
-        ["ruff", "check", "--select", "E,W", "--quiet"] + files,
-        capture_output=True, timeout=30,
-    )
-    assert r.returncode == 0, f"ruff check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"

@@ -366,6 +366,27 @@ def test_build_image_and_force_preserved():
 # Anti-stub (static) — turbo-cache.mjs is a real implementation
 # ---------------------------------------------------------------------------
 
+# [agent_config] pass_to_pass
+def test_no_hardcoded_secret_values():
+    """TURBO_TOKEN must be read from process.env only — no hardcoded literals or string fallbacks."""
+    for filepath in [CACHE_MJS, CACHE_JS]:
+        if not Path(filepath).exists():
+            continue
+        src = Path(filepath).read_text()
+        # Strip single-line and block comments
+        no_comments = re.sub(r"//.*$", "", src, flags=re.MULTILINE)
+        no_comments = re.sub(r"/\*[\s\S]*?\*/", "", no_comments)
+        # No literal string assigned directly to TURBO_TOKEN variable
+        assert not re.search(r'TURBO_TOKEN\s*=\s*["\'][^"\']{3,}["\']', no_comments), \
+            f"{filepath}: TURBO_TOKEN assigned a hardcoded string literal"
+        # No string fallback via || (e.g. TURBO_TOKEN || 'placeholder')
+        assert not re.search(r'TURBO_TOKEN\s*\|\|\s*["\']', no_comments), \
+            f"{filepath}: TURBO_TOKEN has a string fallback (inventing placeholder credentials)"
+        # No nullish-coalescing string fallback (e.g. TURBO_TOKEN ?? 'placeholder')
+        assert not re.search(r'TURBO_TOKEN\s*\?\?\s*["\']', no_comments), \
+            f"{filepath}: TURBO_TOKEN has a nullish-coalescing string fallback"
+
+
 # [static] fail_to_pass
 def test_turbo_cache_not_stub():
     """turbo-cache.mjs has real HTTP implementation (not a stub)."""

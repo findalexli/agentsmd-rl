@@ -127,9 +127,18 @@ def test_css_uses_tabs_not_spaces():
 
     Structural check (CSS text analysis — not executable code):
     Rule from .github/copilot-instructions.md:72 "We use tabs, not spaces."
+    Skips block comment lines (/* ... */ and continuation lines starting with ' *').
     """
     content = CSS_FILE.read_text()
+    in_block_comment = False
     for i, line in enumerate(content.splitlines(), 1):
+        stripped = line.lstrip()
+        if stripped.startswith("/*"):
+            in_block_comment = True
+        if in_block_comment:
+            if "*/" in stripped:
+                in_block_comment = False
+            continue
         if line and line[0] == " ":
             raise AssertionError(
                 f"Line {i} uses space indentation (expected tab): {line!r}"

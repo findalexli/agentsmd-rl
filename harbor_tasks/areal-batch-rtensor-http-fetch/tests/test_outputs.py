@@ -443,3 +443,19 @@ def test_no_bare_print():
         src = Path(path).read_text()
         matches = re.findall(r"^\s*print\(", src, re.MULTILINE)
         assert not matches, f"Bare print() in {path}: {matches}"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:31 @ 3142b88a5e93e991df727c81892d6cb8bd65d06e
+def test_no_hardcoded_endpoints():
+    """No hardcoded IP addresses or static URL strings in modified files."""
+    # Matches "http://..." or "https://..." literals that don't use an f-string variable,
+    # i.e., the hostname is a literal (not {something}).
+    hardcoded_url_re = re.compile(r'"https?://[^{"\s][^"\s]*"')
+    # Matches dotted-quad IP address literals like "192.168.1.1" or "127.0.0.1"
+    ip_literal_re = re.compile(r'"\d{1,3}(?:\.\d{1,3}){3}"')
+    for path in [SERVER, RTENSOR]:
+        src = Path(path).read_text()
+        url_matches = hardcoded_url_re.findall(src)
+        assert not url_matches, f"Hardcoded URL literal in {path}: {url_matches}"
+        ip_matches = ip_literal_re.findall(src)
+        assert not ip_matches, f"Hardcoded IP literal in {path}: {ip_matches}"

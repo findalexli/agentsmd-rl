@@ -35,12 +35,15 @@ def test_syntax_check():
 
 # [pr_diff] fail_to_pass
 def test_decorator_delegates_to_merge_with_config_defaults():
-    """check_model_inputs as decorator produces identical results to merge_with_config_defaults."""
+    """check_model_inputs as decorator produces identical results to merge_with_config_defaults.
+
+    merge_with_config_defaults only handles a hardcoded set of args (use_cache,
+    vision_feature_layer, etc.), so we test with use_cache which is the most common.
+    """
     from transformers.utils.generic import check_model_inputs, merge_with_config_defaults
 
     class FakeConfig:
         use_cache = True
-        output_attentions = False
 
     class Model1:
         def __init__(self):
@@ -48,8 +51,8 @@ def test_decorator_delegates_to_merge_with_config_defaults():
             self.training = False
 
         @check_model_inputs
-        def forward(self, use_cache=None, output_attentions=None):
-            return {"use_cache": use_cache, "output_attentions": output_attentions}
+        def forward(self, use_cache=None):
+            return {"use_cache": use_cache}
 
     class Model2:
         def __init__(self):
@@ -57,40 +60,41 @@ def test_decorator_delegates_to_merge_with_config_defaults():
             self.training = False
 
         @merge_with_config_defaults
-        def forward(self, use_cache=None, output_attentions=None):
-            return {"use_cache": use_cache, "output_attentions": output_attentions}
+        def forward(self, use_cache=None):
+            return {"use_cache": use_cache}
 
     m1 = Model1()
     m2 = Model2()
 
-    # No kwargs — should pull from config
+    # No kwargs — should pull use_cache from config
     r1 = m1.forward()
     r2 = m2.forward()
     assert r1 == r2, f"No-args results differ: {r1} vs {r2}"
     assert r1["use_cache"] is True
-    assert r1["output_attentions"] is False
 
-    # Explicit kwargs override config
+    # Explicit kwarg overrides config
     r1 = m1.forward(use_cache=False)
     r2 = m2.forward(use_cache=False)
     assert r1 == r2, f"Explicit kwarg results differ: {r1} vs {r2}"
     assert r1["use_cache"] is False
 
-    # Mixed — some explicit, some from config
-    r1 = m1.forward(output_attentions=True)
-    r2 = m2.forward(output_attentions=True)
-    assert r1 == r2, f"Mixed results differ: {r1} vs {r2}"
-    assert r1["use_cache"] is True
-    assert r1["output_attentions"] is True
+    # Different config value
+    FakeConfig.use_cache = False
+    m3 = Model1()
+    m4 = Model2()
+    r3 = m3.forward()
+    r4 = m4.forward()
+    assert r3 == r4, f"Config=False results differ: {r3} vs {r4}"
+    assert r3["use_cache"] is False
 
 
 # [pr_diff] fail_to_pass
 def test_decorator_returns_functional_wrapper():
-    """check_model_inputs returns a working wrapper, not None or the original function."""
+    """check_model_inputs returns a working wrapper that handles use_cache defaults."""
     from transformers.utils.generic import check_model_inputs
 
     class Cfg:
-        val = 42
+        use_cache = True
 
     class M:
         def __init__(self):
@@ -98,16 +102,19 @@ def test_decorator_returns_functional_wrapper():
             self.training = False
 
         @check_model_inputs
-        def forward(self, val=None):
-            return val
+        def forward(self, use_cache=None):
+            return use_cache
 
     m = M()
     # Must pull config default when no arg passed
-    assert m.forward() == 42, "Expected config default 42"
+    assert m.forward() is True, "Expected config default True"
     # Explicit override must take precedence
-    assert m.forward(val=99) == 99, "Expected explicit override 99"
-    # Different override value to verify not hardcoded
-    assert m.forward(val=0) == 0, "Expected explicit override 0"
+    assert m.forward(use_cache=False) is False, "Expected explicit override False"
+
+    # Test with different config value
+    m.config.use_cache = True
+    assert m.forward() is True, "Expected updated config default"
+    assert m.forward(use_cache=False) is False, "Explicit override still works"
 
 
 # [pr_diff] fail_to_pass
@@ -195,3 +202,17 @@ def test_generic_utilities_intact():
     from transformers.utils.generic import ExplicitEnum, PaddingStrategy
 
     assert PaddingStrategy("longest") == PaddingStrategy.LONGEST
+
+
+# ---------------------------------------------------------------------------
+# Config-derived (agent_config) — rules from .github/copilot-instructions.md
+# ---------------------------------------------------------------------------
+
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:17 @ 2620c4ddd41afcc8d3b1d1134803bd418ffa45a7
+def test_style_ruff_passes():
+    """Code style is enforced in the CI — ruff must pass on the modified file."""
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", "src/transformers/utils/generic.py"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"

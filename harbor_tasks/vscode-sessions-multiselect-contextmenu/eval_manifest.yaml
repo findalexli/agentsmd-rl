@@ -2,7 +2,7 @@ version: "2.0"
 
 source:
   repo: "microsoft/vscode"
-  pr: 0  # no PR number recorded; see solve.sh for gold patch; merge commit: 64e73b0
+  pr: 251059
   base_commit: "0705ebef87428a3a1d38df65b38da286a7b9174c"
   merge_commit: "64e73b0"
 
@@ -10,7 +10,7 @@ checks:
   - id: sessions_list_collects_selection
     type: fail_to_pass
     origin: pr_diff
-    description: "sessionsList.ts calls this.tree.getSelection() to read the multi-selection before showing the context menu"
+    description: "sessionsList.ts calls this.tree.getSelection() and filters non-session items before showing the context menu"
 
   - id: sessions_list_computes_selected_sessions
     type: fail_to_pass
@@ -25,22 +25,22 @@ checks:
   - id: actions_accept_array_parameter
     type: fail_to_pass
     origin: pr_diff
-    description: "All 7 session actions (Pin, Unpin, Archive, Unarchive, MarkRead, MarkUnread, OpenInNewWindow) accept ISession | ISession[]"
+    description: "All 7 session actions accept ISession | ISession[] in their run() signature"
 
   - id: actions_use_array_isarray_pattern
     type: fail_to_pass
     origin: pr_diff
-    description: "All 7 actions normalize context to array with Array.isArray(context) ? context : [context]"
+    description: "All 7 actions normalize context to array with Array.isArray"
 
   - id: actions_iterate_over_sessions
     type: fail_to_pass
     origin: pr_diff
-    description: "All 7 actions apply their operation to each session via 'for (const session of sessions)'"
+    description: "All 7 actions iterate over sessions with a for-of loop or equivalent"
 
   - id: copilot_bridge_accepts_array
     type: fail_to_pass
     origin: pr_diff
-    description: "CopilotSessionContextMenuBridge wrapper command accepts ISession | ISession[] and uses Array.isArray"
+    description: "CopilotSessionContextMenuBridge wrapper accepts ISession[] and uses Array.isArray"
 
   - id: copilot_bridge_uses_coalesce
     type: fail_to_pass
@@ -57,4 +57,39 @@ checks:
     origin: static
     description: "Modified files have real implementation bodies (not empty stubs)"
 
-rubric: []
+  - id: tabs_not_spaces
+    type: pass_to_pass
+    origin: agent_config
+    description: "New code uses tabs for indentation, not spaces"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "35"
+      commit: "0705ebef87428a3a1d38df65b38da286a7b9174c"
+
+  - id: curly_braces_on_loops
+    type: pass_to_pass
+    origin: agent_config
+    description: "Loop bodies are surrounded with curly braces"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "42"
+      commit: "0705ebef87428a3a1d38df65b38da286a7b9174c"
+
+rubric:
+  - rule: "Register disposables immediately after creation using DisposableStore, MutableDisposable, or DisposableMap. Do not register a disposable to the containing class from a repeatedly-called method."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "55-60"
+      commit: "0705ebef87428a3a1d38df65b38da286a7b9174c"
+
+  - rule: "Prefer async/await over Promise.then() chains."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "44"
+      commit: "0705ebef87428a3a1d38df65b38da286a7b9174c"
+
+  - rule: "Use single quotes for string literals except for user-facing externalized strings which use double quotes."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "37"
+      commit: "0705ebef87428a3a1d38df65b38da286a7b9174c"

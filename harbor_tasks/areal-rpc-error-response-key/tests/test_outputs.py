@@ -197,6 +197,23 @@ def test_no_wildcard_imports():
         assert len(wildcards) == 0, f"Wildcard import in {path}: {wildcards}"
 
 
+# [agent_config] pass_to_pass — AGENTS.md:31 @ a3e36d4
+# Grep-only because: detecting secret-like literals requires pattern matching
+def test_no_hardcoded_secrets():
+    """No hardcoded secrets (passwords, tokens, API keys) in modified files (AGENTS.md rule)."""
+    # Patterns that suggest hardcoded secrets: assignment of a string to a secret-named variable
+    secret_pattern = re.compile(
+        r'(?:password|passwd|secret|api_key|apikey|token|bearer|auth_token)\s*=\s*["\'][^"\']{4,}["\']',
+        re.IGNORECASE,
+    )
+    for path in MODIFIED_FILES:
+        source = Path(path).read_text()
+        matches = secret_pattern.findall(source)
+        assert len(matches) == 0, (
+            f"Hardcoded secret-like literal in {path}: {matches}"
+        )
+
+
 # [agent_config] pass_to_pass — AGENTS.md:89-91 @ a3e36d4
 # AST-only because: checking for print() calls requires source inspection
 def test_no_print_statements():

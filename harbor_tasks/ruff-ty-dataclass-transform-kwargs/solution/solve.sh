@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd /repo
+cd /workspace/ruff
 
-# Idempotency check: if the fix is already applied, skip
+# Idempotency check
 if grep -q 'call_arguments.iter().find_map' crates/ty_python_semantic/src/types/call/bind.rs 2>/dev/null; then
     echo "Patch already applied."
     exit 0
 fi
 
-git apply - <<'PATCH'
+git apply --3way - <<'PATCH'
 diff --git a/crates/ty_python_semantic/resources/mdtest/dataclasses/dataclass_transform.md b/crates/ty_python_semantic/resources/mdtest/dataclasses/dataclass_transform.md
-index e4254cccbdd49..992ee570d8a9d 100644
+index e4254cccbdd494..992ee570d8a9d5 100644
 --- a/crates/ty_python_semantic/resources/mdtest/dataclasses/dataclass_transform.md
 +++ b/crates/ty_python_semantic/resources/mdtest/dataclasses/dataclass_transform.md
 @@ -371,6 +371,62 @@ t = TestMeta(name="test")
@@ -78,7 +78,7 @@ index e4254cccbdd49..992ee570d8a9d 100644
 
  Combining several of these parameters also works as expected:
 diff --git a/crates/ty_python_semantic/src/types/call/bind.rs b/crates/ty_python_semantic/src/types/call/bind.rs
-index 5a81b9874cb3c..a1d4be82e9d9d 100644
+index 5a81b9874cb3c1..a1d4be82e9d9de 100644
 --- a/crates/ty_python_semantic/src/types/call/bind.rs
 +++ b/crates/ty_python_semantic/src/types/call/bind.rs
 @@ -1788,8 +1788,16 @@ impl<'db> Bindings<'db> {
@@ -100,7 +100,6 @@ index 5a81b9874cb3c..a1d4be82e9d9d 100644
                                          && let Some(LiteralValueTypeKind::Bool(value)) =
                                              ty.as_literal_value_kind()
                                      {
-
 PATCH
 
 echo "Patch applied successfully."

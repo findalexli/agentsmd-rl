@@ -287,6 +287,21 @@ def test_no_wildcard_imports():
                 )
 
 
+# [agent_config] pass_to_pass — AGENTS.md:90-92 @ f6556e88582e82b747ab1ac4038af2e106a464ee
+def test_no_print_statements():
+    """No bare print() calls in fsdp_engine.py — use areal.utils.logging logger."""
+    source = open(FILE).read()
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            if isinstance(func, ast.Name) and func.id == "print":
+                raise AssertionError(
+                    f"Bare print() call found at line {node.lineno} — "
+                    "use areal.utils.logging.getLogger() instead"
+                )
+
+
 # [agent_config] pass_to_pass — AGENTS.md:189 @ f6556e88582e82b747ab1ac4038af2e106a464ee
 # AST-only because: checking module-level code structure, not runtime behavior
 def test_no_global_process_groups():

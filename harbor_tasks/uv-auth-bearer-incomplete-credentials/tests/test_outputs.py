@@ -147,17 +147,31 @@ def test_edit_rs_error_message_updated():
 # [pr_diff] fail_to_pass
 # Structural-only because: Rust code — cannot import into Python, cargo check too slow for full uv build
 def test_trace_no_username_and_password():
-    """Trace/comments must not say 'username and password'.
+    """Trace message in complete_request_with_request_credentials must not say
+    'username and password'.
 
-    The old trace message in complete_request_with_request_credentials said
-    'username and password' which is misleading since the code handles Bearer too.
+    The old trace message said 'already contains username and password' which is
+    misleading since the code handles Bearer too. The PR updates both the trace!
+    call and the comment above it.
     """
     with open(MIDDLEWARE) as f:
-        src = f.read()
+        lines = f.readlines()
 
-    assert "username and password" not in src, (
-        "Still references 'username and password' in trace/comments"
-    )
+    # Find complete_request_with_request_credentials and check trace! calls
+    in_function = False
+    found_function = False
+    for line in lines:
+        if "fn complete_request_with_request_credentials(" in line:
+            in_function = True
+            found_function = True
+        elif in_function and line.strip().startswith("fn "):
+            break
+        elif in_function and "trace!" in line:
+            assert "username and password" not in line, (
+                f"Trace still says 'username and password': {line.strip()}"
+            )
+
+    assert found_function, "complete_request_with_request_credentials not found"
 
 
 # ---------------------------------------------------------------------------

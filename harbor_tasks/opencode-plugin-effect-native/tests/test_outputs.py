@@ -258,6 +258,32 @@ def test_no_try_catch_in_plugin_service():
         f"Found {len(try_blocks)} try/catch block(s) in InstanceState.make — use Effect.tryPromise instead"
 
 
+# [agent_config] pass_to_pass — AGENTS.md:70 @ bb8d2cdd108618c1057a8890ac1e655198db866e
+def test_no_let_in_instance_state():
+    """No let declarations in InstanceState.make body — prefer const.
+
+    AGENTS.md:70: 'Prefer const over let. Use ternaries or early returns instead of reassignment.'
+    """
+    src = _plugin_src()
+    body = _instance_state_body(src)
+    let_decls = list(re.finditer(r"\blet\s+\w", body))
+    assert len(let_decls) == 0, \
+        f"Found {len(let_decls)} 'let' declaration(s) in InstanceState.make — use const instead"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:84 @ bb8d2cdd108618c1057a8890ac1e655198db866e
+def test_no_else_in_instance_state():
+    """No else statements in InstanceState.make body — use early returns or continue.
+
+    AGENTS.md:84: 'Avoid else statements. Prefer early returns.'
+    """
+    src = _plugin_src()
+    body = _instance_state_body(src)
+    else_matches = list(re.finditer(r"\belse\b", body))
+    assert len(else_matches) == 0, \
+        f"Found {len(else_matches)} 'else' statement(s) in InstanceState.make — avoid else, use early return/continue"
+
+
 # [agent_config] pass_to_pass — AGENTS.md:13 @ bb8d2cdd108618c1057a8890ac1e655198db866e
 def test_limited_as_any_usage():
     """Usage of 'as any' should be minimal (max 3 in the plugin file).

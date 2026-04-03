@@ -450,6 +450,27 @@ def test_no_relative_imports_outside_package():
     )
 
 
+# [agent_config] pass_to_pass — AGENTS.md:146-147
+# Structural: suppression directives are compile-time/lint-time only
+def test_no_ts_suppress():
+    """No @ts-nocheck or inline lint suppressions in webhook-handler.ts."""
+    raw = _read(HANDLER)
+    assert not re.search(r"@ts-nocheck", raw), "Found @ts-nocheck in webhook-handler.ts"
+    assert not re.search(r"@ts-ignore", raw), "Found @ts-ignore in webhook-handler.ts"
+    assert not re.search(r"eslint-disable", raw), "Found eslint-disable in webhook-handler.ts"
+    assert not re.search(r"oxlint-disable", raw), "Found oxlint-disable in webhook-handler.ts"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:157
+# Structural: import paths are compile-time only
+def test_no_sdk_self_import():
+    """synology-chat extension does not import itself via openclaw/plugin-sdk/synology-chat."""
+    code = _handler_code()
+    assert not re.search(
+        r"""from\s*['"]openclaw/plugin-sdk/synology-chat['"]""", code
+    ), "webhook-handler.ts imports itself via openclaw/plugin-sdk/synology-chat (self-import)"
+
+
 # [agent_config] pass_to_pass — AGENTS.md:152
 # Structural: sentinel patterns are source-level
 # Scoped to the handler body and new inflight-related functions, since the

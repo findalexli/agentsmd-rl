@@ -203,6 +203,26 @@ def test_no_print_in_ppo_files():
                     )
 
 
+# [agent_config] fail_to_pass — AGENTS.md:26 @ d1cdac3442585565f902f1e69b9d7399c50b9b34
+def test_no_hardcoded_paths():
+    """No hardcoded absolute paths or http(s) endpoints in modified PPO files (AGENTS.md hard rule)."""
+    import re
+    # Gate: stats.py must exist (ensures fail on base commit)
+    assert PPO_FILES[2].exists(), "stats.py not created"
+    # Match absolute paths or http(s) URLs in non-comment, non-docstring source lines
+    pattern = re.compile(r'(?:/home/|/tmp/|/workspace/|/usr/local/|https?://\S)')
+    for fpath in PPO_FILES:
+        for lineno, line in enumerate(fpath.read_text().splitlines(), 1):
+            stripped = line.lstrip()
+            if stripped.startswith('#'):
+                continue
+            m = pattern.search(line)
+            if m:
+                raise AssertionError(
+                    f"Hardcoded path/endpoint in {fpath.name}:{lineno}: {line.strip()!r}"
+                )
+
+
 # [agent_config] fail_to_pass — AGENTS.md:94 @ d1cdac3442585565f902f1e69b9d7399c50b9b34
 def test_type_hints_on_helper():
     """infer_token_denominator must have type annotations on parameters and return."""

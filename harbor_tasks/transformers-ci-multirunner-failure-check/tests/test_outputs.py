@@ -411,7 +411,7 @@ def test_script_not_bloated():
 # Config-derived (agent_config) — rules from agent config files
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — .ai/skills/add-or-fix-type-checking/SKILL.md:185-186
+# [agent_config] pass_to_pass — .ai/skills/add-or-fix-type-checking/SKILL.md:185-186 @ 882ffdbbd6b8ad50feaa860d702e70950cfc95d0
 def test_no_bare_type_ignore():
     """No bare '# type: ignore' without error code in check_bad_commit.py.
 
@@ -425,4 +425,38 @@ def test_no_bare_type_ignore():
     assert len(bare_ignores) == 0, (
         f"Found {len(bare_ignores)} bare '# type: ignore' without error code in check_bad_commit.py. "
         "Use '# type: ignore[error-code]' instead."
+    )
+
+
+# [agent_config] pass_to_pass — .ai/skills/add-or-fix-type-checking/SKILL.md:188-189 @ 882ffdbbd6b8ad50feaa860d702e70950cfc95d0
+def test_no_assert_type_narrowing():
+    """No assert used for type narrowing in check_bad_commit.py.
+
+    Per SKILL.md: Never use assert for type narrowing. Asserts are stripped by
+    python -O and must not be relied on for correctness. Use 'if ...: raise' instead.
+    """
+    import ast
+
+    source = Path(SCRIPT).read_text()
+    tree = ast.parse(source)
+
+    violations = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assert):
+            test = node.test
+            # assert isinstance(x, T) — classic type-narrowing assert
+            if (isinstance(test, ast.Call)
+                    and isinstance(test.func, ast.Name)
+                    and test.func.id == "isinstance"):
+                snippet = ast.get_source_segment(source, node) or repr(node)
+                violations.append(snippet)
+            # assert x is not None — None-narrowing assert
+            elif (isinstance(test, ast.Compare)
+                    and any(isinstance(op, ast.IsNot) for op in test.ops)):
+                snippet = ast.get_source_segment(source, node) or repr(node)
+                violations.append(snippet)
+
+    assert len(violations) == 0, (
+        f"Found {len(violations)} assert(s) used for type narrowing in check_bad_commit.py. "
+        "Use 'if ...: raise' instead of assert for type narrowing."
     )

@@ -206,6 +206,19 @@ def test_no_std_api_in_changes():
                 assert False, f"Forbidden {f} usage: {s}"
 
 
+# [agent_config] pass_to_pass — src/CLAUDE.md:25 @ 047cedb
+def test_no_std_mem_for_strings():
+    """No std.mem string ops in added code; use bun.strings.* instead (src/CLAUDE.md:25)."""
+    forbidden = ("std.mem.eql(", "std.mem.startsWith(", "std.mem.endsWith(", "std.mem.indexOf(")
+    for line in _added_lines("src/bun.js/VirtualMachine.zig", "src/cli/Arguments.zig"):
+        s = line.strip()
+        if s.startswith("//"):
+            continue
+        for f in forbidden:
+            if f in s:
+                assert False, f"Use bun.strings.* instead of {f}: {s}"
+
+
 # [agent_config] pass_to_pass — src/CLAUDE.md:234 @ 047cedb
 def test_no_catch_out_of_memory():
     """Must use bun.handleOom() not 'catch bun.outOfMemory()' (src/CLAUDE.md:234-238)."""

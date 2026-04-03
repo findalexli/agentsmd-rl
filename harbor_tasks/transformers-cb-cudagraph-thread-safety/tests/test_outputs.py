@@ -225,3 +225,63 @@ def test_no_wildcard_imports():
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom) and node.names and node.names[0].name == "*":
             raise AssertionError(f"Wildcard import from {node.module}")
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (agent_config) — repo coding standards
+# ---------------------------------------------------------------------------
+
+
+# [agent_config] pass_to_pass
+def test_no_bare_type_ignore():
+    """Any # type: ignore must include a specific error code."""
+    import re
+
+    source = Path(TARGET).read_text()
+    bare_pattern = re.compile(r"#\s*type:\s*ignore\s*(?:\s*#|$)")
+    for i, line in enumerate(source.splitlines(), 1):
+        if bare_pattern.search(line):
+            # Check it doesn't have a bracketed code after it
+            if not re.search(r"#\s*type:\s*ignore\[", line):
+                raise AssertionError(
+                    f"Line {i}: bare '# type: ignore' without error code: {line.strip()}"
+                )
+
+
+# [agent_config] pass_to_pass — .ai/skills/add-or-fix-type-checking/SKILL.md:192-193 @ e5ad3946209fb96db5e9965b3eb67d69cc3749e0
+def test_no_getattr_torch_dynamic_backend():
+    """Do not use getattr(torch, 'backend') for dynamic device backends; use type guards."""
+    import re
+
+    source = Path(TARGET).read_text()
+    # Backends that must be accessed via type guards, not getattr(torch, ...)
+    dynamic_backends = {"npu", "xpu", "hpu", "musa", "mlu", "neuron", "compiler"}
+    pattern = re.compile(r'getattr\s*\(\s*torch\s*,\s*["\'](\w+)["\']')
+    for i, line in enumerate(source.splitlines(), 1):
+        m = pattern.search(line)
+        if m and m.group(1) in dynamic_backends:
+            raise AssertionError(
+                f"Line {i}: use a TypeGuard function instead of "
+                f"getattr(torch, {m.group(1)!r}): {line.strip()}"
+            )
+
+
+# [agent_config] pass_to_pass
+def test_no_assert_for_type_narrowing():
+    """Do not use assert for type narrowing (e.g. assert x is not None)."""
+    import re
+
+    source = Path(TARGET).read_text()
+    # Match assert patterns commonly used for type narrowing:
+    # assert x is not None, assert isinstance(x, ...), assert x is None
+    narrowing_patterns = [
+        re.compile(r"^\s*assert\s+\w+\s+is\s+not\s+None\b"),
+        re.compile(r"^\s*assert\s+\w+\s+is\s+None\b"),
+        re.compile(r"^\s*assert\s+isinstance\("),
+    ]
+    for i, line in enumerate(source.splitlines(), 1):
+        for pat in narrowing_patterns:
+            if pat.search(line):
+                raise AssertionError(
+                    f"Line {i}: assert used for type narrowing (use 'if ...: raise' instead): {line.strip()}"
+                )

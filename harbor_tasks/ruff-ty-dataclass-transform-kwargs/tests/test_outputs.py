@@ -8,24 +8,37 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import subprocess
-import tempfile
+import textwrap
 from pathlib import Path
 
-REPO = "/repo"
-TY = "ty"
+REPO = "/workspace/ruff"
 
 
-def run_ty(code: str) -> str:
-    """Write code to a temp file and run ty check on it."""
-    with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
-        f.write(code)
-        f.flush()
+def _build_ty():
+    """Build the ty binary once (cached by file existence)."""
+    bin_path = Path(REPO) / "target" / "debug" / "ty"
+    if not bin_path.exists():
         r = subprocess.run(
-            [TY, "check", f.name],
-            capture_output=True, text=True, timeout=120,
-            cwd=REPO,
+            ["cargo", "build", "--bin", "ty"],
+            cwd=REPO, capture_output=True, timeout=600,
         )
-        return r.stdout + r.stderr
+        assert r.returncode == 0, f"cargo build --bin ty failed:\n{r.stderr.decode()[-3000:]}"
+    assert bin_path.exists(), "ty binary not found after build"
+    return str(bin_path)
+
+
+def _run_ty(code: str) -> str:
+    """Write code to a temp file, run ty check, return combined output."""
+    ty = _build_ty()
+    tmp = Path("/tmp/ty_test")
+    tmp.mkdir(exist_ok=True)
+    test_file = tmp / "test_input.py"
+    test_file.write_text(textwrap.dedent(code))
+    r = subprocess.run(
+        [ty, "check", str(test_file)],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    return r.stdout.decode() + r.stderr.decode()
 
 
 # ---------------------------------------------------------------------------
@@ -34,13 +47,8 @@ def run_ty(code: str) -> str:
 
 # [static] pass_to_pass
 def test_compilation():
-    """Rust code must compile (cargo check --bin ty)."""
-    r = subprocess.run(
-        ["cargo", "check", "--bin", "ty"],
-        capture_output=True, text=True, timeout=600,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-2000:]}"
+    """Rust code must compile (cargo build --bin ty)."""
+    _build_ty()
 
 
 # ---------------------------------------------------------------------------
@@ -50,20 +58,20 @@ def test_compilation():
 # [pr_diff] fail_to_pass
 def test_func_transformer_kwargs_frozen():
     """Function-based transformer with **kwargs respects frozen=True."""
-    output = run_ty("""\
-from typing import dataclass_transform, Callable
+    output = _run_ty("""\
+        from typing import dataclass_transform, Callable
 
-@dataclass_transform()
-def create_model[T: type](**kwargs) -> Callable[[T], T]:
-    raise NotImplementedError
+        @dataclass_transform()
+        def create_model[T: type](**kwargs) -> Callable[[T], T]:
+            raise NotImplementedError
 
-@create_model(frozen=True)
-class Frozen:
-    name: str
+        @create_model(frozen=True)
+        class Frozen:
+            name: str
 
-f = Frozen("Alice")
-f.name = "Bob"
-""")
+        f = Frozen("Alice")
+        f.name = "Bob"
+    """)
     assert "invalid-assignment" in output, (
         f"Expected invalid-assignment for frozen field mutation, got:\n{output}"
     )
@@ -72,21 +80,21 @@ f.name = "Bob"
 # [pr_diff] fail_to_pass
 def test_metaclass_transformer_kwargs_frozen():
     """Metaclass-based transformer with **kwargs respects frozen=True."""
-    output = run_ty("""\
-from typing import dataclass_transform
+    output = _run_ty("""\
+        from typing import dataclass_transform
 
-@dataclass_transform()
-class ModelMeta(type):
-    def __new__(cls, name, bases, namespace, **kwargs): ...
+        @dataclass_transform()
+        class ModelMeta(type):
+            def __new__(cls, name, bases, namespace, **kwargs): ...
 
-class ModelBase(metaclass=ModelMeta): ...
+        class ModelBase(metaclass=ModelMeta): ...
 
-class Frozen(ModelBase, frozen=True):
-    name: str
+        class Frozen(ModelBase, frozen=True):
+            name: str
 
-f = Frozen(name="test")
-f.name = "new"
-""")
+        f = Frozen(name="test")
+        f.name = "new"
+    """)
     assert "invalid-assignment" in output, (
         f"Expected invalid-assignment for frozen field mutation, got:\n{output}"
     )
@@ -95,19 +103,19 @@ f.name = "new"
 # [pr_diff] fail_to_pass
 def test_base_class_transformer_kwargs_frozen():
     """Base-class-based transformer with __init_subclass__(**kwargs) respects frozen=True."""
-    output = run_ty("""\
-from typing import dataclass_transform
+    output = _run_ty("""\
+        from typing import dataclass_transform
 
-@dataclass_transform()
-class ModelBase:
-    def __init_subclass__(cls, **kwargs): ...
+        @dataclass_transform()
+        class ModelBase:
+            def __init_subclass__(cls, **kwargs): ...
 
-class Frozen(ModelBase, frozen=True):
-    name: str
+        class Frozen(ModelBase, frozen=True):
+            name: str
 
-f = Frozen(name="test")
-f.name = "new"
-""")
+        f = Frozen(name="test")
+        f.name = "new"
+    """)
     assert "invalid-assignment" in output, (
         f"Expected invalid-assignment for frozen field mutation, got:\n{output}"
     )
@@ -120,19 +128,19 @@ f.name = "new"
 # [pr_diff] pass_to_pass
 def test_explicit_params_still_work():
     """Explicit frozen param in function transformer still recognized."""
-    output = run_ty("""\
-from typing import dataclass_transform
+    output = _run_ty("""\
+        from typing import dataclass_transform
 
-@dataclass_transform()
-def create_model(*, frozen: bool = False): ...
+        @dataclass_transform()
+        def create_model(*, frozen: bool = False): ...
 
-@create_model(frozen=True)
-class ExplicitFrozen:
-    name: str
+        @create_model(frozen=True)
+        class ExplicitFrozen:
+            name: str
 
-f = ExplicitFrozen(name="test")
-f.name = "new"
-""")
+        f = ExplicitFrozen(name="test")
+        f.name = "new"
+    """)
     assert "invalid-assignment" in output, (
         f"Expected invalid-assignment for explicit frozen param, got:\n{output}"
     )
@@ -141,20 +149,20 @@ f.name = "new"
 # [pr_diff] pass_to_pass
 def test_non_frozen_allows_mutation():
     """Non-frozen dataclass via **kwargs allows field mutation (no false positive)."""
-    output = run_ty("""\
-from typing import dataclass_transform, Callable
+    output = _run_ty("""\
+        from typing import dataclass_transform, Callable
 
-@dataclass_transform()
-def create_model[T: type](**kwargs) -> Callable[[T], T]:
-    raise NotImplementedError
+        @dataclass_transform()
+        def create_model[T: type](**kwargs) -> Callable[[T], T]:
+            raise NotImplementedError
 
-@create_model()
-class Mutable:
-    name: str
+        @create_model()
+        class Mutable:
+            name: str
 
-m = Mutable("Alice")
-m.name = "Bob"
-""")
+        m = Mutable("Alice")
+        m.name = "Bob"
+    """)
     assert "invalid-assignment" not in output, (
         f"Unexpected invalid-assignment on non-frozen class:\n{output}"
     )
@@ -170,8 +178,6 @@ def test_mdtest_updated_with_kwargs():
     mdtest_path = Path(REPO) / "crates/ty_python_semantic/resources/mdtest/dataclasses/dataclass_transform.md"
     assert mdtest_path.exists(), "dataclass_transform.md mdtest file not found"
     content = mdtest_path.read_text()
-    # The PR adds a "### Transformers using `**kwargs`" section — this heading
-    # does not exist on the base commit, so the check is a valid fail_to_pass.
     assert "### Transformers using" in content, (
         "mdtest file should include a section testing kwargs transformer patterns"
     )
@@ -182,7 +188,6 @@ def test_no_unwrap_panic_in_dataclass_flags():
     """AGENTS.md:79 'Avoid panic!/unreachable!/.unwrap()' in DATACLASS_FLAGS section."""
     bind_rs = Path(REPO) / "crates/ty_python_semantic/src/types/call/bind.rs"
     content = bind_rs.read_text()
-    # Extract section from DATACLASS_FLAGS to end of the flags loop
     start = content.find("DATACLASS_FLAGS")
     assert start != -1, "DATACLASS_FLAGS not found in bind.rs"
     section = content[start:start + 2000]

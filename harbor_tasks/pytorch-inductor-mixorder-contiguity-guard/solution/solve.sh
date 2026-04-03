@@ -4,7 +4,7 @@ set -euo pipefail
 SCHEDULER="/workspace/torch/_inductor/scheduler.py"
 
 # Idempotency: check if the fix is already applied
-if grep -q 'MixOrderReduction.is_contiguous_node(node2)' "$SCHEDULER" 2>/dev/null; then
+if grep -q 'and not MixOrderReduction.is_contiguous_node(node2)' "$SCHEDULER" 2>/dev/null; then
     echo "Patch already applied."
     exit 0
 fi

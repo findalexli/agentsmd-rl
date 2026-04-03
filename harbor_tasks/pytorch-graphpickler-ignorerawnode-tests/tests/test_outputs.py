@@ -180,6 +180,50 @@ def test_uses_pytorch_test_class():
         )
 
 
+# [agent_config] pass_to_pass — .claude/skills/pr-review/review-checklist.md:57 @ e931ab4802816cec55aa5a25b51f27cb941c924e
+def test_has_owner_label():
+    """Test file must have a valid # Owner(s): label, not 'module: unknown'."""
+    src = _source()
+    import re
+    match = re.search(r"#\s*Owner\(s\):\s*\[([^\]]*)\]", src)
+    assert match, (
+        "Test file is missing a '# Owner(s): [...]' label — "
+        "see review-checklist.md:57"
+    )
+    owners = match.group(1)
+    assert "module: unknown" not in owners, (
+        "# Owner(s) label must not be 'module: unknown' — "
+        "see review-checklist.md:57"
+    )
+
+
+# [agent_config] pass_to_pass — .claude/skills/pr-review/review-checklist.md:60 @ e931ab4802816cec55aa5a25b51f27cb941c924e
+def test_has_run_tests():
+    """Test file must end with 'if __name__ == \"__main__\": run_tests()'."""
+    tree = _tree()
+    # Look for: if __name__ == "__main__": run_tests()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.If):
+            continue
+        test = node.test
+        if (isinstance(test, ast.Compare)
+                and isinstance(test.left, ast.Name) and test.left.id == "__name__"
+                and len(test.ops) == 1 and isinstance(test.ops[0], ast.Eq)
+                and len(test.comparators) == 1
+                and isinstance(test.comparators[0], ast.Constant)
+                and test.comparators[0].value == "__main__"):
+            # Check body contains run_tests()
+            for stmt in ast.walk(node):
+                if (isinstance(stmt, ast.Call)
+                        and isinstance(stmt.func, ast.Name)
+                        and stmt.func.id == "run_tests"):
+                    return
+    assert False, (
+        "Test file must end with 'if __name__ == \"__main__\": run_tests()' — "
+        "see review-checklist.md:60"
+    )
+
+
 # [agent_config] fail_to_pass — .claude/skills/pr-review/review-checklist.md:68 @ e931ab4802816cec55aa5a25b51f27cb941c924e
 def test_uses_assert_raises_for_errors():
     """Error tests must use assertRaises/assertRaisesRegex, not bare try/except — review-checklist.md:68."""

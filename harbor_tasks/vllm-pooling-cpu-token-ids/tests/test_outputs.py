@@ -9,6 +9,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import inspect
+import types
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import torch
@@ -24,22 +26,83 @@ MODIFIED_FILES = [
     "vllm/model_executor/models/gritlm.py",
 ]
 
+# ---------------------------------------------------------------------------
+# Helpers: extract PoolingMetadata via AST to avoid heavy vllm import chain
+# AST-only because: vllm's import chain (metadata -> pooling_params -> config
+# -> transformers/huggingface_hub/msgspec) requires many heavy deps not
+# installed in the CPU-only test container
+# ---------------------------------------------------------------------------
 
-def _make_pooling_metadata(**overrides):
-    """Construct a PoolingMetadata, adapting to whatever fields the dataclass expects."""
-    from vllm.v1.pool.metadata import PoolingMetadata
+# Stub types for dataclass fields (only used for type annotations & construction)
+PoolingTask = type("PoolingTask", (), {})
+# PoolingParams stub needs .task attribute — __post_init__ asserts all params have task
+PoolingParams = type("PoolingParams", (), {"task": PoolingTask()})
+PoolingStates = dict
+PoolingCursor = type("PoolingCursor", (), {})
 
-    sig = inspect.signature(PoolingMetadata)
-    defaults = dict(
-        prompt_lens=torch.tensor([0]),
-        prompt_token_ids=None,
-        pooling_params=[],
-        pooling_states=[],
+# Stub numpy module — only used for type annotations in build_pooling_cursor
+_np_stub = types.ModuleType("numpy")
+_np_stub.ndarray = type("ndarray", (), {})  # type: ignore[attr-defined]
+
+
+def _extract_class_source(filepath, class_name):
+    """Extract a class definition (including decorators) from source via AST."""
+    src = Path(filepath).read_text()
+    tree = ast.parse(src)
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.ClassDef) and node.name == class_name:
+            lines = src.splitlines()
+            start = (node.decorator_list[0].lineno if node.decorator_list else node.lineno) - 1
+            end = node.end_lineno
+            return "\n".join(lines[start:end])
+    return None
+
+
+_PM_CACHE = {}
+
+
+def _get_pooling_metadata_class():
+    """Extract PoolingMetadata class, compile and return it."""
+    if "cls" in _PM_CACHE:
+        return _PM_CACHE["cls"]
+
+    class_src = _extract_class_source(
+        f"{REPO}/vllm/v1/pool/metadata.py", "PoolingMetadata"
     )
+    assert class_src is not None, "PoolingMetadata class not found in metadata.py"
+
+    ns = {
+        "__builtins__": __builtins__,
+        "torch": torch,
+        "dataclass": dataclass,
+        "field": field,
+        "PoolingParams": PoolingParams,
+        "PoolingStates": PoolingStates,
+        "PoolingCursor": PoolingCursor,
+        "PoolingTask": PoolingTask,
+        "np": _np_stub,
+        "pin_memory": False,
+    }
+
+    exec(compile(class_src, "metadata.py", "exec"), ns)
+    _PM_CACHE["cls"] = ns["PoolingMetadata"]
+    return ns["PoolingMetadata"]
+
+
+def _make_pm(**kwargs):
+    """Create a PoolingMetadata instance with sensible defaults."""
+    PM = _get_pooling_metadata_class()
+    sig = inspect.signature(PM)
+    defaults = {
+        "prompt_lens": torch.tensor([0]),
+        "prompt_token_ids": None,
+        "pooling_params": [],
+        "pooling_states": [],
+    }
     if "prompt_token_ids_cpu" in sig.parameters:
         defaults["prompt_token_ids_cpu"] = None
-    defaults.update(overrides)
-    return PoolingMetadata(**defaults)
+    defaults.update(kwargs)
+    return PM(**defaults)
 
 
 # ---------------------------------------------------------------------------
@@ -62,7 +125,7 @@ def test_syntax_check():
 def test_get_prompt_token_ids_cpu():
     """get_prompt_token_ids_cpu slices token IDs per-sequence on CPU."""
     # Case 1: multiple sequences with varying lengths
-    m = _make_pooling_metadata(
+    m = _make_pm(
         prompt_lens=torch.tensor([3, 2, 1]),
         prompt_token_ids_cpu=torch.tensor([
             [10, 20, 30, 0],
@@ -80,29 +143,29 @@ def test_get_prompt_token_ids_cpu():
         assert t.device.type == "cpu", f"Expected CPU tensor, got {t.device}"
 
     # Case 2: single sequence
-    m2 = _make_pooling_metadata(
+    m2 = _make_pm(
         prompt_lens=torch.tensor([5]),
         prompt_token_ids_cpu=torch.tensor([[1, 2, 3, 4, 5, 0, 0]]),
     )
-    result2 = m2.get_prompt_token_ids_cpu()
-    assert len(result2) == 1
-    assert result2[0].tolist() == [1, 2, 3, 4, 5]
+    r2 = m2.get_prompt_token_ids_cpu()
+    assert len(r2) == 1
+    assert r2[0].tolist() == [1, 2, 3, 4, 5]
 
     # Case 3: all same length, no padding
-    m3 = _make_pooling_metadata(
+    m3 = _make_pm(
         prompt_lens=torch.tensor([2, 2]),
         prompt_token_ids_cpu=torch.tensor([[100, 200], [300, 400]]),
     )
-    result3 = m3.get_prompt_token_ids_cpu()
-    assert result3[0].tolist() == [100, 200]
-    assert result3[1].tolist() == [300, 400]
+    r3 = m3.get_prompt_token_ids_cpu()
+    assert r3[0].tolist() == [100, 200]
+    assert r3[1].tolist() == [300, 400]
 
 
 # [pr_diff] fail_to_pass
 def test_get_prompt_token_ids_cpu_full_length():
     """CPU method works when sequences fill the entire tensor width."""
     # Single sequence filling full width
-    m = _make_pooling_metadata(
+    m = _make_pm(
         prompt_lens=torch.tensor([4]),
         prompt_token_ids_cpu=torch.tensor([[7, 8, 9, 11]]),
     )
@@ -110,20 +173,20 @@ def test_get_prompt_token_ids_cpu_full_length():
     assert result[0].tolist() == [7, 8, 9, 11]
 
     # Multiple sequences all filling full width
-    m2 = _make_pooling_metadata(
+    m2 = _make_pm(
         prompt_lens=torch.tensor([3, 3]),
         prompt_token_ids_cpu=torch.tensor([[10, 20, 30], [40, 50, 60]]),
     )
-    result2 = m2.get_prompt_token_ids_cpu()
-    assert result2[0].tolist() == [10, 20, 30]
-    assert result2[1].tolist() == [40, 50, 60]
+    r2 = m2.get_prompt_token_ids_cpu()
+    assert r2[0].tolist() == [10, 20, 30]
+    assert r2[1].tolist() == [40, 50, 60]
 
 
 # [pr_diff] fail_to_pass
 def test_pooling_metadata_has_cpu_field():
     """PoolingMetadata accepts prompt_token_ids_cpu and stores it."""
     cpu_tensor = torch.tensor([[1, 2], [3, 4]])
-    m = _make_pooling_metadata(
+    m = _make_pm(
         prompt_lens=torch.tensor([2, 2]),
         prompt_token_ids_cpu=cpu_tensor,
     )
@@ -133,7 +196,7 @@ def test_pooling_metadata_has_cpu_field():
 
     # Larger tensor
     big = torch.arange(15).reshape(3, 5)
-    m2 = _make_pooling_metadata(
+    m2 = _make_pm(
         prompt_lens=torch.tensor([3, 5, 2]),
         prompt_token_ids_cpu=big,
     )
@@ -143,9 +206,7 @@ def test_pooling_metadata_has_cpu_field():
 # [pr_diff] fail_to_pass
 def test_getitem_preserves_cpu_field():
     """__getitem__ slicing on PoolingMetadata preserves prompt_token_ids_cpu."""
-    from vllm.pooling_params import PoolingParams
-
-    m = _make_pooling_metadata(
+    m = _make_pm(
         prompt_lens=torch.tensor([2, 3, 1]),
         prompt_token_ids=torch.tensor([[10, 20, 0], [30, 40, 50], [60, 0, 0]]),
         prompt_token_ids_cpu=torch.tensor([[10, 20, 0], [30, 40, 50], [60, 0, 0]]),
@@ -176,7 +237,7 @@ def test_getitem_preserves_cpu_field():
 # [pr_diff] pass_to_pass
 def test_get_prompt_token_ids_device_preserved():
     """Original device-side get_prompt_token_ids() still works correctly."""
-    m = _make_pooling_metadata(
+    m = _make_pm(
         prompt_lens=torch.tensor([2, 1]),
         prompt_token_ids=torch.tensor([[100, 200, 0], [300, 0, 0]]),
     )
@@ -187,12 +248,12 @@ def test_get_prompt_token_ids_device_preserved():
     assert result[1].tolist() == [300]
 
     # Verify with different shape
-    m2 = _make_pooling_metadata(
+    m2 = _make_pm(
         prompt_lens=torch.tensor([4]),
         prompt_token_ids=torch.tensor([[10, 20, 30, 40]]),
     )
-    result2 = m2.get_prompt_token_ids()
-    assert result2[0].tolist() == [10, 20, 30, 40]
+    r2 = m2.get_prompt_token_ids()
+    assert r2[0].tolist() == [10, 20, 30, 40]
 
 
 # ---------------------------------------------------------------------------

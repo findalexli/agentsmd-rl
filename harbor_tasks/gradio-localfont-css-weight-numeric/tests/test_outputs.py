@@ -175,3 +175,34 @@ def test_not_stub():
                 found = True
                 break
     assert found, "No non-trivial stylesheet() method found"
+
+
+# [agent_config] pass_to_pass
+def test_ruff_format_python():
+    """Modified Python files are formatted according to ruff (AGENTS.md line 43)."""
+    import shutil
+    ruff = shutil.which("ruff")
+    if ruff is None:
+        # ruff not installed — try running via the repo's Python environment
+        ruff_result = subprocess.run(
+            [sys.executable, "-m", "ruff", "--version"],
+            capture_output=True,
+        )
+        if ruff_result.returncode != 0:
+            import pytest
+            pytest.skip("ruff not available in this environment")
+        ruff_cmd = [sys.executable, "-m", "ruff"]
+    else:
+        ruff_cmd = [ruff]
+
+    files = [
+        f"{REPO}/gradio/themes/utils/fonts.py",
+        f"{REPO}/scripts/generate_theme.py",
+    ]
+    result = subprocess.run(
+        ruff_cmd + ["format", "--check"] + files,
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 0, (
+        f"ruff format --check failed on modified Python files:\n{result.stdout}\n{result.stderr}"
+    )

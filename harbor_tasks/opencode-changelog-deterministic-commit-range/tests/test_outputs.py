@@ -204,6 +204,31 @@ def test_single_word_function_names():
     )
 
 
+# [agent_config] fail_to_pass — AGENTS.md:27-32 @ ee018d5c82a593907bae9011bc074766e670d593
+def test_no_camelcase_locals():
+    """Local variable declarations in changelog.ts must not use multi-word camelCase names (AGENTS.md lines 27-32).
+
+    Base code declares camelCase locals: fromRef, toRef, commitData, sectionOrder,
+    revertPattern, revertMsg.  Fixed code replaces all of these with single-word names.
+    """
+    src = (Path(REPO) / "script/changelog.ts").read_text()
+    # Strip comment lines before scanning
+    non_comment = "\n".join(
+        l for l in src.splitlines()
+        if not l.strip().startswith("//") and not l.strip().startswith("*")
+    )
+    # Match `const <camelCase>` or `let <camelCase>` where camelCase has a
+    # lowercase-then-uppercase transition (e.g. fromRef, commitData)
+    camel_vars = re.findall(
+        r'\b(?:const|let)\s+([a-z][a-z]+[A-Z][a-zA-Z0-9]*)\b',
+        non_comment,
+    )
+    assert not camel_vars, (
+        f"Multi-word camelCase local variable names violate AGENTS.md naming rule: "
+        f"{', '.join(sorted(set(camel_vars)))}"
+    )
+
+
 # [agent_config] pass_to_pass — AGENTS.md:13 @ ee018d5c82a593907bae9011bc074766e670d593
 def test_no_any_type():
     """Changed files must not use the `any` type (AGENTS.md line 13)."""

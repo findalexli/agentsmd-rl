@@ -8,53 +8,7 @@ if grep -q "ActionListItemKind.Header" src/vs/platform/actionWidget/browser/acti
     exit 0
 fi
 
-# Apply the gold patch
-git apply - <<'PATCH'
-diff --git a/src/vs/platform/actionWidget/browser/actionList.ts b/src/vs/platform/actionWidget/browser/actionList.ts
-index 533246fb8dd5e..8ace9a35339c9 100644
---- a/src/vs/platform/actionWidget/browser/actionList.ts
-+++ b/src/vs/platform/actionWidget/browser/actionList.ts
-@@ -1243,13 +1243,20 @@ export class ActionListWidget<T> extends Disposable {
- 		const groupsWithActions = submenuGroups.filter(g => g.actions.length > 0);
- 		for (let gi = 0; gi < groupsWithActions.length; gi++) {
- 			const group = groupsWithActions[gi];
-+			if (group.label) {
-+				submenuItems.push({
-+					kind: ActionListItemKind.Header,
-+					group: { title: group.label },
-+					label: group.label,
-+				});
-+			}
- 			for (let ci = 0; ci < group.actions.length; ci++) {
- 				const child = group.actions[ci];
- 				submenuItems.push({
- 					item: child,
- 					kind: ActionListItemKind.Action,
- 					label: child.label,
--					description: ci === 0 && group.label ? group.label : (child.tooltip || undefined),
-+					description: child.tooltip || undefined,
- 					group: { title: '', icon: ThemeIcon.fromId(child.checked ? Codicon.check.id : Codicon.blank.id) },
- 					hideIcon: false,
- 					hover: {},
-diff --git a/src/vs/sessions/contrib/chat/browser/sessionWorkspacePicker.ts b/src/vs/sessions/contrib/chat/browser/sessionWorkspacePicker.ts
-index c97ee90fcf2b2..3e182eca1e948 100644
---- a/src/vs/sessions/contrib/chat/browser/sessionWorkspacePicker.ts
-+++ b/src/vs/sessions/contrib/chat/browser/sessionWorkspacePicker.ts
-@@ -343,11 +343,11 @@ export class WorkspacePicker extends Disposable {
- 		const submenuActions = [...providerMap.values()].map(({ provider, actions }) =>
- 			new SubmenuAction(
- 				`workspacePicker.browse.${provider.id}`,
--				provider.label,
--				actions.map(({ action, index }) => toAction({
-+				'',
-+				actions.map(({ action, index }, ci) => toAction({
- 					id: `workspacePicker.browse.${index}`,
- 					label: localize(`workspacePicker.browse`, "{0}...", action.label),
--					tooltip: '',
-+					tooltip: ci === 0 ? provider.label : '',
- 					run: () => this._executeBrowseAction(index),
- 				})),
- 			)
-PATCH
+# Apply the gold patch (base64-encoded to preserve tab indentation)
+echo 'ZGlmZiAtLWdpdCBhL3NyYy92cy9wbGF0Zm9ybS9hY3Rpb25XaWRnZXQvYnJvd3Nlci9hY3Rpb25MaXN0LnRzIGIvc3JjL3ZzL3BsYXRmb3JtL2FjdGlvbldpZGdldC9icm93c2VyL2FjdGlvbkxpc3QudHMKaW5kZXggNTMzMjQ2ZmI4ZGQ1ZS4uOGFjZTlhMzUzMzljOSAxMDA2NDQKLS0tIGEvc3JjL3ZzL3BsYXRmb3JtL2FjdGlvbldpZGdldC9icm93c2VyL2FjdGlvbkxpc3QudHMKKysrIGIvc3JjL3ZzL3BsYXRmb3JtL2FjdGlvbldpZGdldC9icm93c2VyL2FjdGlvbkxpc3QudHMKQEAgLTEyNDMsMTMgKzEyNDMsMjAgQEAgZXhwb3J0IGNsYXNzIEFjdGlvbkxpc3RXaWRnZXQ8VD4gZXh0ZW5kcyBEaXNwb3NhYmxlIHsKIAkJY29uc3QgZ3JvdXBzV2l0aEFjdGlvbnMgPSBzdWJtZW51R3JvdXBzLmZpbHRlcihnID0+IGcuYWN0aW9ucy5sZW5ndGggPiAwKTsKIAkJZm9yIChsZXQgZ2kgPSAwOyBnaSA8IGdyb3Vwc1dpdGhBY3Rpb25zLmxlbmd0aDsgZ2krKykgewogCQkJY29uc3QgZ3JvdXAgPSBncm91cHNXaXRoQWN0aW9uc1tnaV07CisJCQlpZiAoZ3JvdXAubGFiZWwpIHsKKwkJCQlzdWJtZW51SXRlbXMucHVzaCh7CisJCQkJCWtpbmQ6IEFjdGlvbkxpc3RJdGVtS2luZC5IZWFkZXIsCisJCQkJCWdyb3VwOiB7IHRpdGxlOiBncm91cC5sYWJlbCB9LAorCQkJCQlsYWJlbDogZ3JvdXAubGFiZWwsCisJCQkJfSk7CisJCQl9CiAJCQlmb3IgKGxldCBjaSA9IDA7IGNpIDwgZ3JvdXAuYWN0aW9ucy5sZW5ndGg7IGNpKyspIHsKIAkJCQljb25zdCBjaGlsZCA9IGdyb3VwLmFjdGlvbnNbY2ldOwogCQkJCXN1Ym1lbnVJdGVtcy5wdXNoKHsKIAkJCQkJaXRlbTogY2hpbGQsCiAJCQkJCWtpbmQ6IEFjdGlvbkxpc3RJdGVtS2luZC5BY3Rpb24sCiAJCQkJCWxhYmVsOiBjaGlsZC5sYWJlbCwKLQkJCQkJZGVzY3JpcHRpb246IGNpID09PSAwICYmIGdyb3VwLmxhYmVsID8gZ3JvdXAubGFiZWwgOiAoY2hpbGQudG9vbHRpcCB8fCB1bmRlZmluZWQpLAorCQkJCQlkZXNjcmlwdGlvbjogY2hpbGQudG9vbHRpcCB8fCB1bmRlZmluZWQsCiAJCQkJCWdyb3VwOiB7IHRpdGxlOiAnJywgaWNvbjogVGhlbWVJY29uLmZyb21JZChjaGlsZC5jaGVja2VkID8gQ29kaWNvbi5jaGVjay5pZCA6IENvZGljb24uYmxhbmsuaWQpIH0sCiAJCQkJCWhpZGVJY29uOiBmYWxzZSwKIAkJCQkJaG92ZXI6IHt9LApkaWZmIC0tZ2l0IGEvc3JjL3ZzL3Nlc3Npb25zL2NvbnRyaWIvY2hhdC9icm93c2VyL3Nlc3Npb25Xb3Jrc3BhY2VQaWNrZXIudHMgYi9zcmMvdnMvc2Vzc2lvbnMvY29udHJpYi9jaGF0L2Jyb3dzZXIvc2Vzc2lvbldvcmtzcGFjZVBpY2tlci50cwppbmRleCBjOTdlZTkwZmNmMmIyLi4zZTE4MmVjYTFlOTQ4IDEwMDY0NAotLS0gYS9zcmMvdnMvc2Vzc2lvbnMvY29udHJpYi9jaGF0L2Jyb3dzZXIvc2Vzc2lvbldvcmtzcGFjZVBpY2tlci50cworKysgYi9zcmMvdnMvc2Vzc2lvbnMvY29udHJpYi9jaGF0L2Jyb3dzZXIvc2Vzc2lvbldvcmtzcGFjZVBpY2tlci50cwpAQCAtMzQzLDExICszNDMsMTEgQEAgZXhwb3J0IGNsYXNzIFdvcmtzcGFjZVBpY2tlciBleHRlbmRzIERpc3Bvc2FibGUgewogCQkJY29uc3Qgc3VibWVudUFjdGlvbnMgPSBbLi4ucHJvdmlkZXJNYXAudmFsdWVzKCldLm1hcCgoeyBwcm92aWRlciwgYWN0aW9ucyB9KSA9PgogCQkJCW5ldyBTdWJtZW51QWN0aW9uKAogCQkJCQlgd29ya3NwYWNlUGlja2VyLmJyb3dzZS4ke3Byb3ZpZGVyLmlkfWAsCi0JCQkJCXByb3ZpZGVyLmxhYmVsLAotCQkJCQlhY3Rpb25zLm1hcCgoeyBhY3Rpb24sIGluZGV4IH0pID0+IHRvQWN0aW9uKHsKKwkJCQkJJycsCisJCQkJCWFjdGlvbnMubWFwKCh7IGFjdGlvbiwgaW5kZXggfSwgY2kpID0+IHRvQWN0aW9uKHsKIAkJCQkJCWlkOiBgd29ya3NwYWNlUGlja2VyLmJyb3dzZS4ke2luZGV4fWAsCiAJCQkJCQlsYWJlbDogbG9jYWxpemUoYHdvcmtzcGFjZVBpY2tlci5icm93c2VgLCAiezB9Li4uIiwgYWN0aW9uLmxhYmVsKSwKLQkJCQkJCXRvb2x0aXA6ICcnLAorCQkJCQkJdG9vbHRpcDogY2kgPT09IDAgPyBwcm92aWRlci5sYWJlbCA6ICcnLAogCQkJCQkJcnVuOiAoKSA9PiB0aGlzLl9leGVjdXRlQnJvd3NlQWN0aW9uKGluZGV4KSwKIAkJCQkJfSkpLAogCQkJCSkK' | base64 -d | git apply -
 
 echo "Patch applied successfully"

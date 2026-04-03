@@ -19,21 +19,21 @@ RENDERER = f"{REPO}/packages/react-devtools-shared/src/backend/fiber/renderer.js
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
-def test_syntax_check():
-    """renderer.js must parse without syntax errors."""
-    # AST-only because: JavaScript file cannot be imported in Python
-    r = subprocess.run(
-        ["node", "--check", RENDERER],
-        capture_output=True,
-        timeout=30,
+def test_renderer_file_valid():
+    """renderer.js must exist with substantial content (not truncated or emptied)."""
+    # AST-only because: JavaScript with Flow type annotations cannot be parsed by node --check
+    content = Path(RENDERER).read_text()
+    assert len(content) > 10000, (
+        f"renderer.js appears truncated or emptied ({len(content)} bytes)"
     )
-    assert r.returncode == 0, (
-        f"Syntax error in renderer.js:\n{r.stderr.decode()}"
+    # Verify core structure is intact
+    assert "export function attach(" in content, (
+        "renderer.js is missing the 'export function attach(' entry point"
     )
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core fix verification
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -42,13 +42,26 @@ def test_prevfiber_guard_profiling_loop():
 
     Without this guard, when a fiber bails out and React reuses it (prevFiber === fiber),
     the profiler incorrectly reports didRender: true for components behind filtered parents.
+    The fix adds a reference-equality check so bailed-out fibers skip the didFiberRender call.
     """
-    # AST-only because: JavaScript file cannot be imported in Python
+    # AST-only because: JavaScript with Flow types, deeply integrated with React internals
     content = Path(RENDERER).read_text()
-    assert "prevFiber !== fiber && didFiberRender" in content, (
+
+    # The fix changes:
+    #   if (prevFiber == null || didFiberRender(prevFiber, fiber))
+    # to:
+    #   if (prevFiber == null || (prevFiber !== fiber && didFiberRender(prevFiber, fiber)))
+    #
+    # Check for both possible formatting styles
+    has_guard = (
+        "prevFiber !== fiber && didFiberRender" in content
+        or "prevFiber !== fiber &&\n" in content
+        and "didFiberRender(prevFiber, fiber)" in content
+    )
+    assert has_guard, (
         "renderer.js is missing the 'prevFiber !== fiber && didFiberRender' guard "
-        "in the profiling data loop. Components behind filtered fibers (host elements, "
-        "keyless Fragments) will be falsely reported as re-rendered."
+        "in the profiling data loop. Components behind filtered fibers will be "
+        "falsely reported as re-rendered."
     )
 
 
@@ -57,16 +70,21 @@ def test_prevfiber_guard_trace_update():
     """Core fix: traceNearestHostComponentUpdate only set when prevFiber !== nextFiber.
 
     When prevFiber === nextFiber, the fiber bailed out and no render occurred.
-    The trace flag must not be set in this case.
+    Setting the trace flag in this case causes false render traces for
+    components whose fiber was reused without re-rendering.
     """
-    # AST-only because: JavaScript file cannot be imported in Python
+    # AST-only because: JavaScript with Flow types, deeply integrated with React internals
     content = Path(RENDERER).read_text()
     lines = content.split("\n")
 
-    # The fix wraps the traceNearestHostComponentUpdate assignment with if (prevFiber !== nextFiber)
+    # The fix wraps the traceNearestHostComponentUpdate assignment:
+    #   if (prevFiber !== nextFiber) {
+    #     traceNearestHostComponentUpdate = didFiberRender(prevFiber, nextFiber);
+    #   }
     found = False
     for i, line in enumerate(lines):
         if "prevFiber !== nextFiber" in line:
+            # Look ahead up to 6 lines for the trace flag assignment
             context = "\n".join(lines[i : i + 6])
             if "traceNearestHostComponentUpdate" in context:
                 found = True
@@ -74,8 +92,7 @@ def test_prevfiber_guard_trace_update():
 
     assert found, (
         "renderer.js is missing the 'if (prevFiber !== nextFiber)' guard around "
-        "traceNearestHostComponentUpdate. This causes false render traces for "
-        "components whose fiber was reused without re-rendering."
+        "traceNearestHostComponentUpdate assignment."
     )
 
 
@@ -84,13 +101,18 @@ def test_prevfiber_guard_inspect_update():
     """Core fix: hasElementUpdatedSinceLastInspected only set when prevFiber !== nextFiber.
 
     Setting this flag on a bailed-out fiber causes spurious cache invalidation
-    and can indirectly contribute to false re-render reports.
+    and can indirectly contribute to false re-render reports in the inspector.
     """
-    # AST-only because: JavaScript file cannot be imported in Python
+    # AST-only because: JavaScript with Flow types, deeply integrated with React internals
     content = Path(RENDERER).read_text()
     lines = content.split("\n")
 
-    # The fix wraps the hasElementUpdatedSinceLastInspected assignment with if (prevFiber !== nextFiber)
+    # The fix wraps the hasElementUpdatedSinceLastInspected block:
+    #   if (prevFiber !== nextFiber) {
+    #     if (mostRecentlyInspectedElement !== null && ... && didFiberRender(...)) {
+    #       hasElementUpdatedSinceLastInspected = true;
+    #     }
+    #   }
     found = False
     for i, line in enumerate(lines):
         if "prevFiber !== nextFiber" in line:
@@ -101,8 +123,7 @@ def test_prevfiber_guard_inspect_update():
 
     assert found, (
         "renderer.js is missing the 'if (prevFiber !== nextFiber)' guard around "
-        "hasElementUpdatedSinceLastInspected. This flag must not be set for "
-        "bailed-out fibers where prevFiber === nextFiber."
+        "hasElementUpdatedSinceLastInspected."
     )
 
 
@@ -112,35 +133,40 @@ def test_prevfiber_guard_inspect_update():
 
 # [repo_tests] pass_to_pass
 def test_existing_profiling_charts_pass():
-    """Regression: the profilingCharts test suite passes after the fix."""
+    """Regression: the existing profilingCharts test suite passes after any changes."""
     r = subprocess.run(
         [
-            "yarn",
-            "test",
-            "packages/react-devtools-shared/src/__tests__/profilingCharts-test.js",
-            "--ci",
-            "--forceExit",
+            "yarn", "test", "--no-watchman", "--forceExit",
+            "profilingCharts-test",
         ],
         cwd=REPO,
         capture_output=True,
         timeout=300,
     )
+    stdout = r.stdout.decode(errors="replace")
+    stderr = r.stderr.decode(errors="replace")
     assert r.returncode == 0, (
-        f"profilingCharts tests failed:\n"
-        f"{r.stdout.decode()[-3000:]}\n"
-        f"{r.stderr.decode()[-500:]}"
+        f"profilingCharts tests failed:\n{stdout[-3000:]}\n{stderr[-1000:]}"
     )
 
 
 # [static] pass_to_pass
 def test_didfiberrender_not_stubbed():
-    """Anti-stub: didFiberRender retains its switch-based logic and was not deleted."""
-    # AST-only because: JavaScript file cannot be imported in Python
+    """Anti-stub: didFiberRender retains its switch-based type dispatch logic.
+
+    The function must not be removed or replaced with a trivial stub.
+    It contains a switch statement over fiber tags (ClassComponent, etc.).
+    """
+    # AST-only because: JavaScript with Flow types, deeply integrated with React internals
     content = Path(RENDERER).read_text()
     assert "function didFiberRender" in content, (
         "didFiberRender function was removed from renderer.js"
     )
-    # The function must retain its type-dispatch logic (not just return true/false)
-    assert "ClassComponent" in content, (
-        "didFiberRender appears to have been stubbed — ClassComponent case is missing"
+    # Must retain the switch-case dispatch (not just return true/false)
+    # Find the function and verify it has ClassComponent in its body
+    idx = content.index("function didFiberRender")
+    # Look at the next 500 chars for the switch cases
+    snippet = content[idx : idx + 500]
+    assert "ClassComponent" in snippet, (
+        "didFiberRender appears stubbed — missing ClassComponent case in switch"
     )

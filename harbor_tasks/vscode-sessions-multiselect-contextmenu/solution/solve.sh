@@ -1,22 +1,21 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 cd /workspace/vscode
 
-# Check if fix already applied (look for the 'selectedSessions' variable)
+# Idempotency check
 if grep -q "const selectedSessions" src/vs/sessions/contrib/sessions/browser/views/sessionsList.ts 2>/dev/null; then
-    echo "Fix already applied"
+    echo "Patch already applied."
     exit 0
 fi
 
-# Apply the gold patch for multi-select context menu support
-git apply - <<'PATCH'
+git apply --3way - <<'PATCH'
 diff --git a/src/vs/sessions/contrib/copilotChatSessions/browser/copilotChatSessionsActions.ts b/src/vs/sessions/contrib/copilotChatSessions/browser/copilotChatSessionsActions.ts
 index 5bbb4042257cc..aca5d84560873 100644
 --- a/src/vs/sessions/contrib/copilotChatSessions/browser/copilotChatSessionsActions.ts
 +++ b/src/vs/sessions/contrib/copilotChatSessions/browser/copilotChatSessionsActions.ts
 @@ -4,6 +4,7 @@
- *--------------------------------------------------------------------------------------------*/
+  *--------------------------------------------------------------------------------------------*/
 
  import { Disposable } from '../../../../base/common/lifecycle.js';
 +import { coalesce } from '../../../../base/common/arrays.js';
@@ -71,7 +70,6 @@ index 4f630e2fc1546..7b6d8d72afca8 100644
  			getAnchor: () => e.anchor,
  			getKeyBinding: (action) => this.keybindingService.lookupKeybinding(action.id) ?? undefined,
  		});
-diff --git a/src/vs/sessions/contrib/sessions/browser/views/sessionsViewActions.ts b/src/vs/sessions/contrib/sessions/browser/views/sessionsViewActions.ts
 diff --git a/src/vs/sessions/contrib/sessions/browser/views/sessionsViewActions.ts b/src/vs/sessions/contrib/sessions/browser/views/sessionsViewActions.ts
 index e61aab4d12b1c..c409f6a06d709 100644
 --- a/src/vs/sessions/contrib/sessions/browser/views/sessionsViewActions.ts
@@ -211,4 +209,4 @@ index e61aab4d12b1c..c409f6a06d709 100644
  });
 PATCH
 
-echo "Patch applied successfully"
+echo "Patch applied successfully."

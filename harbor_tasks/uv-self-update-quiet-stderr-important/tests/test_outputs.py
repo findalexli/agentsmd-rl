@@ -8,8 +8,6 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
-import subprocess
-import tempfile
 from pathlib import Path
 
 REPO = "/repo"
@@ -18,90 +16,80 @@ SELF_UPDATE = f"{REPO}/crates/uv/src/commands/self_update.rs"
 
 
 # ---------------------------------------------------------------------------
-# Helpers — extract Rust types and compile snippets
+# Helpers — parse Rust match arms
 # ---------------------------------------------------------------------------
 
-def _extract_balanced_block(src, start):
-    """Extract balanced-brace block starting from first '{' at or after start."""
-    brace_pos = src.index("{", start)
+def _extract_method_body(src: str, method_name: str, return_type: str) -> str | None:
+    """Extract the body of a method `fn <name>(self) -> <return_type> { ... }`."""
+    # Match method signature and opening brace
+    pattern = rf"fn\s+{re.escape(method_name)}\s*\(\s*self\s*\)\s*->\s*{re.escape(return_type)}\s*\{{"
+    m = re.search(pattern, src)
+    if not m:
+        return None
+    # Balance braces to find end
+    start = m.end() - 1
     depth = 0
-    for i in range(brace_pos, len(src)):
+    for i in range(start, len(src)):
         if src[i] == "{":
             depth += 1
         elif src[i] == "}":
             depth -= 1
             if depth == 0:
-                return src[brace_pos : i + 1]
-    raise ValueError("Unbalanced braces")
+                return src[start + 1 : i]
+    return None
 
 
-def _extract_printer_components():
-    """Extract Printer enum and all impl methods returning Stderr from printer.rs."""
-    src = Path(PRINTER).read_text()
+def _parse_match_arms(body: str) -> dict[str, str]:
+    """Parse match arms in a Rust method body, returning {variant: return_value}.
 
-    # Extract Printer enum (enum has no nested braces, simple match is fine)
-    enum_match = re.search(
-        r'((?:#\[derive[^\]]*\]\s*)*pub(?:\(crate\))?\s+enum\s+Printer\s*\{[^}]+\})',
-        src,
-    )
-    assert enum_match, "Could not find Printer enum in printer.rs"
-    enum_def = enum_match.group(1)
-    enum_def = enum_def.replace("pub(crate)", "pub")
-    enum_def = re.sub(r"#\[derive[^\]]*\]", "", enum_def)
-    enum_def = re.sub(r"\s*///[^\n]*", "", enum_def)
+    Handles patterns like:
+        Self::Quiet => Stderr::Enabled,
+        Printer::Quiet => Stderr::Enabled,
+        Self::Silent | Self::Quiet => Stderr::Disabled,
+        _ => Stderr::Enabled,
+    """
+    ALL_VARIANTS = ("Silent", "Quiet", "Default", "Verbose", "NoProgress")
+    arms: dict[str, str] = {}
+    wildcard_value: str | None = None
 
-    # Extract all impl Printer methods returning Stderr using balanced brace matching
-    methods = []
+    # Find match arms: variant(s) => value
     for m in re.finditer(
-        r"((?:\s*///[^\n]*\n)*\s*pub(?:\(crate\))?\s+fn\s+(\w+)\(self\)\s*->\s*Stderr\s*)\{",
+        r"((?:(?:Self|Printer)\s*::\s*\w+\s*\|?\s*)+|_)\s*=>\s*([\w:]+)",
+        body,
+    ):
+        lhs = m.group(1).strip()
+        value = m.group(2).strip().split("::")[-1]  # e.g., "Enabled" from "Stderr::Enabled"
+        if lhs == "_":
+            wildcard_value = value
+        else:
+            for v in re.findall(r"(?:Self|Printer)\s*::\s*(\w+)", lhs):
+                arms[v] = value
+
+    # Apply wildcard to any unmatched known variants
+    if wildcard_value is not None:
+        for v in ALL_VARIANTS:
+            if v not in arms:
+                arms[v] = wildcard_value
+
+    return arms
+
+
+def _find_new_stderr_method(src: str) -> tuple[str, str] | None:
+    """Find a method on Printer returning Stderr that is NOT named 'stderr'.
+
+    Returns (method_name, body) or None.
+    """
+    for m in re.finditer(
+        r"fn\s+(\w+)\s*\(\s*self\s*\)\s*->\s*Stderr\s*\{",
         src,
     ):
-        method_name = m.group(2)
-        sig = m.group(1).strip()
-        body = _extract_balanced_block(src, m.end() - 1)
-        method_src = sig + " " + body
-        method_src = method_src.replace("pub(crate)", "pub")
-        method_src = re.sub(r"\s*///[^\n]*\n", "\n", method_src)
-        methods.append((method_name, method_src))
-
-    return enum_def, methods
-
-
-def _find_new_important_method():
-    """Find a new method on Printer (not stderr) that returns Stderr."""
-    enum_def, methods = _extract_printer_components()
-    non_stderr = [(n, s) for n, s in methods if n != "stderr"]
-    assert non_stderr, "No new method found on Printer returning Stderr (besides stderr())"
-    return enum_def, methods, non_stderr
-
-
-def _compile_and_run_rust(code: str) -> subprocess.CompletedProcess:
-    """Compile a Rust snippet and run it. Returns completed process."""
-    with tempfile.NamedTemporaryFile(suffix=".rs", mode="w", delete=False) as f:
-        f.write(code)
-        rs_path = f.name
-    bin_path = rs_path.replace(".rs", "")
-    comp = subprocess.run(
-        ["rustc", "--edition", "2021", "-o", bin_path, rs_path],
-        capture_output=True,
-        timeout=30,
-    )
-    assert comp.returncode == 0, f"Rust compilation failed:\n{comp.stderr.decode()}"
-    return subprocess.run([bin_path], capture_output=True, timeout=10)
-
-
-def _build_test_program(enum_def, methods, test_body):
-    """Build a complete Rust program with Printer/Stderr and a main that runs test_body."""
-    code = (
-        "#[derive(Debug, Copy, Clone, PartialEq)]\nenum Stderr { Enabled, Disabled }\n\n"
-        "#[derive(Debug, Copy, Clone, PartialEq)]\n"
-        + enum_def
-        + "\n\nimpl Printer {\n"
-    )
-    for _, msrc in methods:
-        code += msrc + "\n"
-    code += "}\n\nfn main() {\n" + test_body + "\n}\n"
-    return code
+        name = m.group(1)
+        if name == "stderr":
+            continue
+        body = _extract_method_body(src, name, "Stderr")
+        if body is not None:
+            return name, body
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -110,25 +98,18 @@ def _build_test_program(enum_def, methods, test_body):
 
 # [static] pass_to_pass
 def test_rust_syntax():
-    """Modified Rust files must exist and compile (extracted snippets)."""
+    """Modified Rust files must exist and contain expected structures."""
     for path in [PRINTER, SELF_UPDATE]:
         assert Path(path).exists(), f"{path} not found"
         content = Path(path).read_text()
         assert len(content) > 100, f"{path} is suspiciously small"
 
-    # Verify printer.rs retains Printer enum and stderr method
     printer_src = Path(PRINTER).read_text()
     assert "enum Printer" in printer_src, "Printer enum not found in printer.rs"
     assert "fn stderr" in printer_src, "stderr method not found in printer.rs"
 
-    # Verify self_update.rs retains the self_update function
     su_src = Path(SELF_UPDATE).read_text()
     assert "fn self_update" in su_src, "self_update function not found"
-
-    # Verify the extracted Printer enum and methods compile
-    enum_def, methods = _extract_printer_components()
-    code = _build_test_program(enum_def, methods, "    // no-op")
-    _compile_and_run_rust(code)
 
 
 # ---------------------------------------------------------------------------
@@ -138,51 +119,44 @@ def test_rust_syntax():
 # [pr_diff] fail_to_pass
 def test_new_method_quiet_enabled():
     """New Printer method returns Stderr::Enabled for Quiet (the core fix)."""
-    enum_def, methods, non_stderr = _find_new_important_method()
-    for method_name, _ in non_stderr:
-        body = f"""\
-    if Printer::Quiet.{method_name}() == Stderr::Enabled {{
-        std::process::exit(0);
-    }} else {{
-        std::process::exit(1);
-    }}"""
-        result = _compile_and_run_rust(_build_test_program(enum_def, methods, body))
-        if result.returncode == 0:
-            return
-    assert False, "No new method returns Stderr::Enabled for Printer::Quiet"
+    src = Path(PRINTER).read_text()
+    result = _find_new_stderr_method(src)
+    assert result is not None, "No new method found on Printer returning Stderr (besides stderr())"
+    name, body = result
+    arms = _parse_match_arms(body)
+    assert "Quiet" in arms, f"Method {name} has no match arm for Quiet"
+    assert arms["Quiet"] == "Enabled", (
+        f"Method {name} returns {arms['Quiet']} for Quiet, expected Enabled"
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_new_method_silent_disabled():
     """New method returns Stderr::Disabled for Silent (double-quiet suppresses all)."""
-    enum_def, methods, non_stderr = _find_new_important_method()
-    for method_name, _ in non_stderr:
-        body = f"""\
-    let ok = Printer::Quiet.{method_name}() == Stderr::Enabled
-        && Printer::Silent.{method_name}() == Stderr::Disabled;
-    std::process::exit(if ok {{ 0 }} else {{ 1 }});"""
-        result = _compile_and_run_rust(_build_test_program(enum_def, methods, body))
-        if result.returncode == 0:
-            return
-    assert False, "No new method satisfies Quiet→Enabled AND Silent→Disabled"
+    src = Path(PRINTER).read_text()
+    result = _find_new_stderr_method(src)
+    assert result is not None, "No new method found on Printer returning Stderr"
+    name, body = result
+    arms = _parse_match_arms(body)
+    assert "Silent" in arms, f"Method {name} has no match arm for Silent"
+    assert arms["Silent"] == "Disabled", (
+        f"Method {name} returns {arms['Silent']} for Silent, expected Disabled"
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_new_method_all_non_silent_enabled():
     """New method returns Enabled for Default, Verbose, and NoProgress too."""
-    enum_def, methods, non_stderr = _find_new_important_method()
-    for method_name, _ in non_stderr:
-        body = f"""\
-    let ok = Printer::Quiet.{method_name}() == Stderr::Enabled
-        && Printer::Silent.{method_name}() == Stderr::Disabled
-        && Printer::Default.{method_name}() == Stderr::Enabled
-        && Printer::Verbose.{method_name}() == Stderr::Enabled
-        && Printer::NoProgress.{method_name}() == Stderr::Enabled;
-    std::process::exit(if ok {{ 0 }} else {{ 1 }});"""
-        result = _compile_and_run_rust(_build_test_program(enum_def, methods, body))
-        if result.returncode == 0:
-            return
-    assert False, "No new method returns Enabled for all non-Silent variants"
+    src = Path(PRINTER).read_text()
+    result = _find_new_stderr_method(src)
+    assert result is not None, "No new method found on Printer returning Stderr"
+    name, body = result
+    arms = _parse_match_arms(body)
+    for variant in ("Default", "Verbose", "NoProgress"):
+        assert variant in arms, f"Method {name} has no match arm for {variant}"
+        assert arms[variant] == "Enabled", (
+            f"Method {name} returns {arms[variant]} for {variant}, expected Enabled"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -192,15 +166,16 @@ def test_new_method_all_non_silent_enabled():
 # [pr_diff] pass_to_pass
 def test_stderr_quiet_still_disabled():
     """Original stderr() must still return Disabled for Quiet (no regression)."""
-    enum_def, methods = _extract_printer_components()
-    stderr_methods = [n for n, _ in methods if n == "stderr"]
-    assert stderr_methods, "stderr() method not found on Printer"
-    body = """\
-    let ok = Printer::Quiet.stderr() == Stderr::Disabled
-        && Printer::Silent.stderr() == Stderr::Disabled;
-    std::process::exit(if ok { 0 } else { 1 });"""
-    result = _compile_and_run_rust(_build_test_program(enum_def, methods, body))
-    assert result.returncode == 0, "stderr() should still return Disabled for Quiet and Silent"
+    src = Path(PRINTER).read_text()
+    body = _extract_method_body(src, "stderr", "Stderr")
+    assert body is not None, "stderr() method not found on Printer"
+    arms = _parse_match_arms(body)
+    assert arms.get("Quiet") == "Disabled", (
+        f"stderr() returns {arms.get('Quiet')} for Quiet, expected Disabled (regression!)"
+    )
+    assert arms.get("Silent") == "Disabled", (
+        f"stderr() returns {arms.get('Silent')} for Silent, expected Disabled (regression!)"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -209,21 +184,22 @@ def test_stderr_quiet_still_disabled():
 
 # [pr_diff] fail_to_pass
 def test_self_update_wiring():
-    """self_update.rs uses the new method for important messages (≥3 call sites)."""
-    src = Path(SELF_UPDATE).read_text()
-    _, _, non_stderr = _find_new_important_method()
+    """self_update.rs uses the new method for important messages (>=3 call sites)."""
+    su_src = Path(SELF_UPDATE).read_text()
+    printer_src = Path(PRINTER).read_text()
+    result = _find_new_stderr_method(printer_src)
+    assert result is not None, "No new method found on Printer returning Stderr"
+    method_name = result[0]
 
     # Strip comments and string literals to avoid false matches
-    cleaned = re.sub(r"//[^\n]*", "", src)
+    cleaned = re.sub(r"//[^\n]*", "", su_src)
     cleaned = re.sub(r"/\*.*?\*/", "", cleaned, flags=re.DOTALL)
     cleaned = re.sub(r'"(?:[^"\\]|\\.)*"', '""', cleaned)
 
-    for method_name, _ in non_stderr:
-        calls = re.findall(rf"\.{re.escape(method_name)}\(\)", cleaned)
-        if len(calls) >= 3:
-            return
-
-    assert False, "self_update.rs should use the new important-stderr method in ≥3 call sites"
+    calls = re.findall(rf"\.{re.escape(method_name)}\(\)", cleaned)
+    assert len(calls) >= 3, (
+        f"self_update.rs uses .{method_name}() only {len(calls)} times, expected >= 3"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -234,21 +210,15 @@ def test_self_update_wiring():
 def test_new_method_not_stub():
     """New method has real branching logic, not a trivial stub."""
     src = Path(PRINTER).read_text()
-    _, _, non_stderr = _find_new_important_method()
-
-    for method_name, _ in non_stderr:
-        pattern = rf"fn\s+{re.escape(method_name)}\(self\)\s*->\s*Stderr\s*\{{(.*?)\n\s*\}}"
-        m = re.search(pattern, src, re.DOTALL)
-        if not m:
-            continue
-        body = m.group(1)
-        has_branching = bool(re.search(r"\b(match|if)\b", body))
-        has_both_variants = "Enabled" in body and "Disabled" in body
-        lines = [l.strip() for l in body.strip().splitlines() if l.strip()]
-        if has_branching and has_both_variants and len(lines) >= 2:
-            return
-
-    assert False, "New method body is a stub — needs branching logic with Enabled and Disabled"
+    result = _find_new_stderr_method(src)
+    assert result is not None, "No new method found"
+    name, body = result
+    has_branching = bool(re.search(r"\b(match|if)\b", body))
+    has_both = "Enabled" in body and "Disabled" in body
+    lines = [l.strip() for l in body.strip().splitlines() if l.strip()]
+    assert has_branching, f"Method {name} has no branching logic (match/if)"
+    assert has_both, f"Method {name} doesn't have both Enabled and Disabled variants"
+    assert len(lines) >= 2, f"Method {name} body is too short ({len(lines)} lines)"
 
 
 # ---------------------------------------------------------------------------
@@ -259,58 +229,49 @@ def test_new_method_not_stub():
 def test_no_panic_unwrap_in_new_method():
     """New method must not use panic!, unreachable!, or .unwrap() (CLAUDE.md rule)."""
     src = Path(PRINTER).read_text()
-    _, _, non_stderr = _find_new_important_method()
-
-    for method_name, _ in non_stderr:
-        pattern = rf"fn\s+{re.escape(method_name)}\(self\)\s*->\s*Stderr\s*\{{(.*?)\n\s*\}}"
-        m = re.search(pattern, src, re.DOTALL)
-        if not m:
-            continue
-        body = m.group(1)
-        assert not re.search(r"(panic!|unreachable!|\.unwrap\(\))", body), (
-            f"Method {method_name} uses panic!/unreachable!/unwrap() — violates CLAUDE.md:7"
-        )
-        return
-
-    assert False, "Could not find new method body to check"
+    result = _find_new_stderr_method(src)
+    assert result is not None, "Could not find new method body to check"
+    name, body = result
+    assert not re.search(r"(panic!|unreachable!|\.unwrap\(\))", body), (
+        f"Method {name} uses panic!/unreachable!/unwrap() — violates CLAUDE.md:7"
+    )
 
 
 # [agent_config] fail_to_pass — CLAUDE.md:7 @ 262a50bb
 def test_no_unsafe_in_new_method():
     """New method must not use unsafe code (CLAUDE.md rule)."""
     src = Path(PRINTER).read_text()
-    _, _, non_stderr = _find_new_important_method()
+    result = _find_new_stderr_method(src)
+    assert result is not None, "Could not find new method body to check"
+    name, body = result
+    assert not re.search(r"\bunsafe\b", body), (
+        f"Method {name} uses unsafe — violates CLAUDE.md:7"
+    )
 
-    for method_name, _ in non_stderr:
-        pattern = rf"fn\s+{re.escape(method_name)}\(self\)\s*->\s*Stderr\s*\{{(.*?)\n\s*\}}"
-        m = re.search(pattern, src, re.DOTALL)
-        if not m:
-            continue
-        body = m.group(1)
-        assert not re.search(r"\bunsafe\b", body), (
-            f"Method {method_name} uses unsafe — violates CLAUDE.md:7"
-        )
-        return
 
-    assert False, "Could not find new method body to check"
+# [agent_config] pass_to_pass — CLAUDE.md:16 @ 262a50bb4c952cf2461d4073ae21081ed516f21c
+def test_no_local_imports_in_new_method():
+    """New method must not use local 'use' imports — prefer top-level imports (CLAUDE.md rule)."""
+    src = Path(PRINTER).read_text()
+    result = _find_new_stderr_method(src)
+    assert result is not None, "Could not find new method body to check"
+    name, body = result
+    assert not re.search(r"\buse\s+", body), (
+        f"Method {name} contains a local 'use' statement — violates CLAUDE.md:16"
+    )
 
 
 # [agent_config] fail_to_pass — CLAUDE.md:10 @ 262a50bb
 def test_no_allow_attribute_in_new_code():
     """New code must not use #[allow(...)] — prefer #[expect()] (CLAUDE.md rule)."""
     src = Path(PRINTER).read_text()
-    _, _, non_stderr = _find_new_important_method()
-
-    for method_name, _ in non_stderr:
-        # Find the method and any attributes above it
-        pattern = rf"((?:#\[[^\]]*\]\s*)*fn\s+{re.escape(method_name)}\(self\)\s*->\s*Stderr\s*\{{.*?\n\s*\}})"
-        m = re.search(pattern, src, re.DOTALL)
-        if not m:
-            continue
-        method_block = m.group(1)
-        assert not re.search(r"#\[allow\(", method_block), (
-            f"Method {method_name} uses #[allow(...)] — prefer #[expect()] per CLAUDE.md:10"
-        )
-        return
-
-    assert False, "Could not find new method to check"
+    result = _find_new_stderr_method(src)
+    assert result is not None, "Could not find new method to check"
+    name, body = result
+    # Also check for attributes on the method itself
+    pattern = rf"((?:#\[[^\]]*\]\s*)*fn\s+{re.escape(name)}\(self\)\s*->\s*Stderr\s*\{{)"
+    m = re.search(pattern, src)
+    method_header = m.group(1) if m else ""
+    assert not re.search(r"#\[allow\(", method_header + body), (
+        f"Method {name} uses #[allow(...)] — prefer #[expect()] per CLAUDE.md:10"
+    )

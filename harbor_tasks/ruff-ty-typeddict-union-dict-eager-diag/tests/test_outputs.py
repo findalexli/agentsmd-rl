@@ -7,13 +7,20 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import subprocess
 import re
+import shutil
 import tempfile
 from pathlib import Path
 
 REPO = "/repo"
 BUILDER_FILE = f"{REPO}/crates/ty_python_semantic/src/types/infer/builder.rs"
+
+# Ensure cargo is in PATH (rust:slim images put it in /usr/local/cargo/bin)
+_ENV = os.environ.copy()
+_ENV["PATH"] = "/usr/local/cargo/bin:" + _ENV.get("PATH", "")
+_ENV["CARGO_PROFILE_DEV_OPT_LEVEL"] = "1"
 
 
 # ---------------------------------------------------------------------------
@@ -23,19 +30,21 @@ BUILDER_FILE = f"{REPO}/crates/ty_python_semantic/src/types/infer/builder.rs"
 def _build_ty():
     """Compile the ty binary. Returns path to binary or raises on failure."""
     ty_bin = Path(REPO) / "target" / "debug" / "ty"
+    cargo = shutil.which("cargo", path=_ENV["PATH"])
+    assert cargo is not None, (
+        "cargo not found in PATH; checked /usr/local/cargo/bin and system PATH"
+    )
     r = subprocess.run(
-        ["cargo", "build", "--bin", "ty"],
+        [cargo, "build", "--bin", "ty"],
         cwd=REPO,
         capture_output=True,
         timeout=480,
-        env={
-            **__import__("os").environ,
-            "CARGO_PROFILE_DEV_OPT_LEVEL": "1",
-        },
+        env=_ENV,
     )
     assert r.returncode == 0, (
         f"cargo build failed:\n{r.stderr.decode()[-2000:]}"
     )
+    assert ty_bin.exists(), f"ty binary not found at {ty_bin}"
     return str(ty_bin)
 
 
@@ -234,4 +243,15 @@ def test_no_local_imports():
     assert len(local_imports) == 0, (
         f"Found {len(local_imports)} local import(s) in builder.rs:\n"
         + "\n".join(local_imports[:5])
+    )
+
+
+# [agent_config] pass_to_pass — AGENTS.md:81 @ 6cff034
+def test_no_allow_lint_suppression():
+    """Clippy lint suppression should use #[expect()] not #[allow()] in modified code."""
+    content = Path(BUILDER_FILE).read_text()
+    # Check for new #[allow(clippy::...)] — should be #[expect(...)] instead
+    allow_matches = re.findall(r'#\[allow\(clippy::', content)
+    assert len(allow_matches) == 0, (
+        f"Found {len(allow_matches)} #[allow(clippy::...)] — use #[expect()] instead per AGENTS.md:81"
     )

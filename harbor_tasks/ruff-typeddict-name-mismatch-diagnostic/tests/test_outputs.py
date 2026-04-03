@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import subprocess
 import textwrap
 import tempfile
@@ -14,17 +15,33 @@ from pathlib import Path
 
 REPO = "/workspace/ruff"
 
+# Shared env for cargo commands: opt-level for speed, insta for snapshot updates
+CARGO_ENV = {
+    **os.environ,
+    "CARGO_PROFILE_DEV_OPT_LEVEL": "1",
+    "INSTA_FORCE_PASS": "1",
+    "INSTA_UPDATE": "always",
+}
+
+# Cache: build ty binary once across all tests
+_ty_binary = None
+
 
 def _build_ty():
-    """Build ty binary (incremental, should be fast after Dockerfile pre-build)."""
+    """Build ty binary once, return cached path."""
+    global _ty_binary
+    if _ty_binary is not None:
+        return _ty_binary
     r = subprocess.run(
         ["cargo", "build", "--bin", "ty"],
         cwd=REPO,
         capture_output=True,
         timeout=600,
+        env=CARGO_ENV,
     )
     assert r.returncode == 0, f"cargo build failed:\n{r.stderr.decode()[-2000:]}"
-    return Path(REPO) / "target" / "debug" / "ty"
+    _ty_binary = Path(REPO) / "target" / "debug" / "ty"
+    return _ty_binary
 
 
 def _run_ty(code: str) -> str:
@@ -53,6 +70,7 @@ def test_cargo_check():
         cwd=REPO,
         capture_output=True,
         timeout=600,
+        env=CARGO_ENV,
     )
     assert r.returncode == 0, f"cargo check failed:\n{r.stderr.decode()[-2000:]}"
 
@@ -144,10 +162,7 @@ def test_correct_name_not_flagged():
 
         GoodTypedDict = TypedDict("GoodTypedDict", {"name": str})
     """)
-    # Filter out informational lines, check for actual errors/warnings
-    has_diag = any(
-        x in output.lower() for x in ["error[", "warning["]
-    )
+    has_diag = any(x in output.lower() for x in ["error[", "warning["])
     assert not has_diag, f"False positive on matching TypedDict name:\n{output}"
 
 
@@ -161,20 +176,17 @@ def test_class_syntax_unaffected():
             name: str
             age: int
     """)
-    has_diag = any(
-        x in output.lower() for x in ["error[", "warning["]
-    )
+    has_diag = any(x in output.lower() for x in ["error[", "warning["])
     assert not has_diag, f"Class-based TypedDict incorrectly flagged:\n{output}"
 
 
 # [repo_tests] pass_to_pass
 def test_upstream_typed_dict_mdtest():
     """Existing typed_dict mdtest suite still passes."""
-    import os
-    env = os.environ.copy()
-    env["MDTEST_TEST_FILTER"] = "typed_dict"
+    env = {**CARGO_ENV, "MDTEST_TEST_FILTER": ""}
     r = subprocess.run(
-        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest"],
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest",
+         "--", "mdtest::typed_dict"],
         cwd=REPO,
         capture_output=True,
         timeout=600,

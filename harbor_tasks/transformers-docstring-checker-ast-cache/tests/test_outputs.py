@@ -247,3 +247,16 @@ def test_ruff_lint():
         timeout=30,
     )
     assert r.returncode == 0, f"ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:2 @ 1f553bdc
+def test_ruff_format():
+    """Code style check: ruff format must pass on modified file (make style runs formatters and linters)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "utils/check_docstrings.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout}\n{r.stderr}"

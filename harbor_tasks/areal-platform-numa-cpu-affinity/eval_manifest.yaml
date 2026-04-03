@@ -84,9 +84,24 @@ checks:
       lines: "100-101"
       commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
 
+  - id: type_hints_on_set_numa_affinity
+    type: fail_to_pass
+    origin: agent_config
+    description: "set_numa_affinity must have explicit type hints (local_rank: int) and return annotation (-> None) in both platform.py and cuda.py"
+    source:
+      path: "AGENTS.md"
+      lines: "100"
+      commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
+
 rubric:
   - rule: "Prefer composition over inheritance: Avoid deep class hierarchies"
     source:
       path: "AGENTS.md"
       lines: "81"
+      commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
+
+  - rule: "Logging calls in new code should use PascalCase logger names; per-rank log messages should follow the format [Component Rank N]"
+    source:
+      path: "AGENTS.md"
+      lines: "90-91"
       commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"

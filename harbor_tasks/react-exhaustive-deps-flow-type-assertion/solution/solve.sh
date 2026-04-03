@@ -1,21 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
-# Gold patch for react-exhaustive-deps-flow-type-assertion
-# PR: facebook/react#35691
+cd /workspace/react
 
-REPO_ROOT="/workspace/react"
-cd "$REPO_ROOT"
-
-# Check if patch already applied (idempotency check)
-# The fix adds a check for GenericTypeAnnotation
+# Idempotency check
 if grep -q "dependencyNode.parent?.type === 'GenericTypeAnnotation'" packages/eslint-plugin-react-hooks/src/rules/ExhaustiveDeps.ts 2>/dev/null; then
-    echo "Patch already applied (GenericTypeAnnotation check found)"
+    echo "Patch already applied."
     exit 0
 fi
 
-# Apply the patch
-git apply - <<'PATCH'
+git apply --3way - <<'PATCH'
 diff --git a/packages/eslint-plugin-react-hooks/__tests__/ESLintRuleExhaustiveDeps-test.js b/packages/eslint-plugin-react-hooks/__tests__/ESLintRuleExhaustiveDeps-test.js
 index b479ce48521c..29e956d314a2 100644
 --- a/packages/eslint-plugin-react-hooks/__tests__/ESLintRuleExhaustiveDeps-test.js
@@ -81,6 +75,6 @@ index 05321ffb46f6..6b790680608d 100644
 +          ) {
              continue;
            }
- PATCH
+PATCH
 
-echo "Patch applied successfully"
+echo "Patch applied successfully."

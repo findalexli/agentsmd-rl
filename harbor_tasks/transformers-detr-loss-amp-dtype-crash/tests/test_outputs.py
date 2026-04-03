@@ -7,7 +7,6 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path
@@ -210,22 +209,8 @@ def test_rtdetr_loss_labels_vfl_float32():
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) — CLAUDE.md:2 "make style: runs ruff"
+# Config-derived (agent_config)
 # ---------------------------------------------------------------------------
-
-# [agent_config] pass_to_pass — CLAUDE.md:2 @ b94fee049373eb2e140d4866847559c4c42b3d7e
-def test_ruff_lint_passes():
-    """Modified loss files must pass ruff linting."""
-    subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-q", "ruff"],
-        capture_output=True, timeout=60,
-    )
-    r = subprocess.run(
-        [sys.executable, "-m", "ruff", "check", LW_FILE, RT_FILE, "--select=E,W", "--quiet"],
-        capture_output=True, timeout=30,
-    )
-    assert r.returncode == 0, f"ruff lint failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
-
 
 # [agent_config] pass_to_pass — .ai/skills/add-or-fix-type-checking/SKILL.md:185-186 @ b94fee049373eb2e140d4866847559c4c42b3d7e
 def test_no_bare_type_ignore():

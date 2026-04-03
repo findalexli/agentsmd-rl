@@ -246,6 +246,15 @@ def test_malformed_encoding_no_crash():
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
+# [agent_config] pass_to_pass — AGENTS.md:396 @ 56d75a0
+def test_no_require_calls():
+    """No bare require() calls in shared lib file — ES imports only (AGENTS.md:396)."""
+    content = Path(f"{REPO}/{TARGET_FILE}").read_text()
+    assert not re.search(r'\brequire\s*\(', content), (
+        "Found require() call in shared lib file — use ES imports for DCE safety"
+    )
+
+
 # [agent_config] pass_to_pass — AGENTS.md:302-309 @ 56d75a0
 def test_no_hardcoded_secrets():
     """No hardcoded secret values in modified file (AGENTS.md:302-309)."""

@@ -141,29 +141,33 @@ console.log(JSON.stringify(results));
 """.strip()
     )
     try:
-        r = subprocess.run(
+        # Try pnpm exec tsx first, fall back to npx tsx, then global tsx
+        cmds = [
             ["pnpm", "exec", "tsx", str(script)],
-            cwd=REPO,
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        if r.returncode != 0:
-            _behavioral_cache = {
-                "_error": f"tsx failed (rc={r.returncode}):\n{r.stderr}\n{r.stdout}"
-            }
-        else:
-            # Parse the last JSON line from stdout (tsx might emit warnings before)
-            for line in reversed(r.stdout.strip().splitlines()):
-                try:
-                    _behavioral_cache = json.loads(line)
-                    break
-                except json.JSONDecodeError:
-                    continue
-            if _behavioral_cache is None:
-                _behavioral_cache = {"_error": f"No JSON in output:\n{r.stdout}"}
+            ["npx", "--yes", "tsx", str(script)],
+            ["tsx", str(script)],
+        ]
+        for cmd in cmds:
+            r = subprocess.run(
+                cmd,
+                cwd=REPO,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            if r.returncode == 0:
+                for line in reversed(r.stdout.strip().splitlines()):
+                    try:
+                        _behavioral_cache = json.loads(line)
+                        return _behavioral_cache
+                    except json.JSONDecodeError:
+                        continue
+        # All commands failed — report last error
+        _behavioral_cache = {
+            "_error": f"tsx failed (rc={r.returncode}):\n{r.stderr[:500]}\n{r.stdout[:500]}"
+        }
     except subprocess.TimeoutExpired:
-        _behavioral_cache = {"_error": "tsx timed out after 60s"}
+        _behavioral_cache = {"_error": "tsx timed out after 120s"}
     finally:
         script.unlink(missing_ok=True)
 
@@ -267,7 +271,7 @@ def test_not_stub():
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) — CLAUDE.md rules
+# Config-derived (agent_config) — AGENTS.md rules
 # ---------------------------------------------------------------------------
 
 
@@ -304,10 +308,37 @@ def test_no_explicit_any():
     """No 'any' type annotations or no-explicit-any disabling (AGENTS.md:105)."""
     src = _read_target()
     assert "no-explicit-any" not in src, f"Disabled no-explicit-any rule in {TARGET}"
-    # Check for ': any' type annotations (but not in comments)
     for i, line in enumerate(src.splitlines(), 1):
         stripped = line.lstrip()
         if stripped.startswith("//") or stripped.startswith("*"):
             continue
         if re.search(r":\s*any\b", line):
             assert False, f"Explicit 'any' type at {TARGET}:{i}: {line.strip()}"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:108 @ 865160e57292bfc32082fa885efe1a48e64bb06c
+def test_no_self_import_via_plugin_sdk():
+    """Extension must not import itself via openclaw/plugin-sdk/telegram (AGENTS.md:108)."""
+    ext_dir = Path(REPO) / "extensions" / "telegram" / "src"
+    if not ext_dir.exists():
+        return
+    for ts_file in ext_dir.rglob("*.ts"):
+        if ts_file.name.endswith(".test.ts") or ts_file.name.endswith(".d.ts"):
+            continue
+        content = ts_file.read_text()
+        assert "openclaw/plugin-sdk/telegram" not in content, (
+            f"Self-import via plugin-sdk found in {ts_file.relative_to(Path(REPO))}"
+        )
+
+
+# [agent_config] pass_to_pass — AGENTS.md:111 @ 865160e57292bfc32082fa885efe1a48e64bb06c
+def test_no_prototype_mutation():
+    """No prototype mutation patterns (AGENTS.md:111)."""
+    src = _read_target()
+    assert "applyPrototypeMixins" not in src, "applyPrototypeMixins found in target"
+    for i, line in enumerate(src.splitlines(), 1):
+        stripped = line.lstrip()
+        if stripped.startswith("//") or stripped.startswith("*"):
+            continue
+        if ".prototype." in line and ("=" in line or "defineProperty" in line):
+            assert False, f"Prototype mutation at {TARGET}:{i}: {stripped}"

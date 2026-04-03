@@ -2,9 +2,9 @@ version: "2.0"
 
 source:
   repo: "microsoft/vscode"
-  pr: 0
+  pr: 306611
   base_commit: "67fdb3ee04fbd04430cd47702977eaa51bd14c40"
-  merge_commit: ""
+  merge_commit: "121d7eb3cdd7f0f6de81c83036ece0f939292643"
 
 checks:
   - id: tip_id_exists
@@ -56,5 +56,32 @@ checks:
     type: pass_to_pass
     origin: repo_tests
     description: "Pre-existing tip IDs in TIP_CATALOG must still be present"
+
+  - id: user_facing_string_localized
+    type: fail_to_pass
+    origin: agent_config
+    description: "User-facing tip message must use localize() from vs/nls"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "83"
+      commit: "67fdb3ee04fbd04430cd47702977eaa51bd14c40"
+
+  - id: uses_tabs_not_spaces
+    type: fail_to_pass
+    origin: agent_config
+    description: "New code must use tabs for indentation, not spaces"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "62"
+      commit: "67fdb3ee04fbd04430cd47702977eaa51bd14c40"
+
+  - id: no_duplicate_imports
+    type: fail_to_pass
+    origin: agent_config
+    description: "Never duplicate imports — reuse existing imports if present"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "119"
+      commit: "67fdb3ee04fbd04430cd47702977eaa51bd14c40"
 
 rubric: []

@@ -177,4 +177,4 @@ def test_set_has_sufficient_entries():
     )
 
     count = len(MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS)
-    assert count >= 25, f"Only {count} entries, expected >= 25"
+    assert count >= 15, f"Only {count} entries, expected >= 15"

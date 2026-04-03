@@ -257,6 +257,23 @@ def test_no_inline_imports():
             assert False, f"Inline @import found in added code: {stripped}"
 
 
+# [agent_config] pass_to_pass — src/CLAUDE.md:25 @ 5b7fe81
+def test_no_std_mem_for_strings():
+    """Must not use std.mem.eql/indexOf/startsWith for strings; use bun.strings.* (src/CLAUDE.md:25)."""
+    diff = _get_diff()
+    if not diff:
+        return  # no changes — vacuously passes
+    prohibited_string_fns = ["std.mem.eql", "std.mem.indexOf", "std.mem.startsWith", "std.mem.endsWith"]
+    for line in _added_lines(diff):
+        stripped = line.strip()
+        if stripped.startswith("//"):
+            continue
+        for fn in prohibited_string_fns:
+            assert fn not in stripped, (
+                f"Use bun.strings.* instead of '{fn}' for string operations: {stripped}"
+            )
+
+
 # [agent_config] pass_to_pass — src/CLAUDE.md:234 @ 5b7fe81
 def test_no_catch_outofmemory_pattern():
     """Must use bun.handleOom() not 'catch bun.outOfMemory()' (src/CLAUDE.md:234)."""

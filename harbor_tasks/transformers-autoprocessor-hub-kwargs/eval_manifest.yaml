@@ -37,6 +37,15 @@ checks:
     origin: pr_diff
     description: "If inspect is imported it must actually be used; otherwise removed"
 
+  - id: ruff_clean
+    type: pass_to_pass
+    origin: agent_config
+    description: "processing_auto.py must pass ruff linting (no unused imports, style violations)"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "17"
+      commit: "c17877c2ad39f8f736d5ea8a34f98e562843fc83"
+
 rubric:
   - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
     source:

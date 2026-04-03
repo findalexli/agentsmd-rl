@@ -205,3 +205,32 @@ def test_no_try_catch():
     code = _code_lines(src)
     for line in code:
         assert not re.search(r"\btry\s*\{", line), f"Found try/catch: {line.strip()}"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:70 @ b242a8d8e42839496c7213d020e8cba19a76e111
+def test_no_let_declarations():
+    """Must not use let — prefer const with ternaries or early returns."""
+    src = _read_vcs()
+    code = _code_lines(src)
+    for line in code:
+        assert not re.search(r"\blet\b", line), f"Found let declaration: {line.strip()}"
+
+
+# [agent_config] pass_to_pass — packages/opencode/AGENTS.md:46 @ b242a8d8e42839496c7213d020e8cba19a76e111
+def test_no_raw_fs_import():
+    """Must not import raw fs/promises — use FileSystem.FileSystem service instead."""
+    src = _read_vcs()
+    for pattern, label in [
+        (r"""from\s+['"]fs/promises['"]""", "fs/promises import"),
+        (r"""from\s+['"]node:fs/promises['"]""", "node:fs/promises import"),
+        (r"""from\s+['"]node:fs['"]""", "node:fs import"),
+        (r"""from\s+['"]fs['"]""", "raw fs import"),
+    ]:
+        assert not re.search(pattern, src), f"vcs.ts uses {label} — prefer FileSystem.FileSystem"
+
+
+# [agent_config] pass_to_pass — packages/opencode/AGENTS.md:48 @ b242a8d8e42839496c7213d020e8cba19a76e111
+def test_no_raw_fetch():
+    """Must not use raw fetch() — use HttpClient.HttpClient service instead."""
+    src = _read_vcs()
+    assert not re.search(r"\bfetch\s*\(", src), "vcs.ts uses raw fetch() — prefer HttpClient.HttpClient"

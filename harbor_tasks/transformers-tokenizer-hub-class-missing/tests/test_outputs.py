@@ -134,6 +134,25 @@ def test_ruff_format():
     assert r.returncode == 0, f"ruff format failed:\n{r.stderr.decode()}"
 
 
+# [agent_config] pass_to_pass — CLAUDE.md:2 @ c55f65056becad6df5f7eef7ce74ac0811fdfac6
+def test_ruff_lint():
+    """Code passes ruff lint check (make style runs linters per CLAUDE.md)."""
+    r = subprocess.run(
+        [
+            "python3",
+            "-m",
+            "ruff",
+            "check",
+            "--quiet",
+            "src/transformers/models/auto/tokenization_auto.py",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
 # [agent_config] pass_to_pass — CLAUDE.md:65 @ c55f65056becad6df5f7eef7ce74ac0811fdfac6
 def test_no_copied_from_blocks_modified():
     """'# Copied from' blocks must not be edited (CLAUDE.md rule)."""

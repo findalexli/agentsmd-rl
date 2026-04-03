@@ -11,6 +11,7 @@ subprocess.run() to invoke yarn/jest. Structural tests read source files
 directly — AST-only because the ESLint rule runs under Node, not Python.
 """
 
+import re
 import subprocess
 from pathlib import Path
 
@@ -49,44 +50,108 @@ def test_typescript_compiles():
 
 
 # [pr_diff] fail_to_pass
-def test_generic_type_annotation_check_added():
-    """ExhaustiveDeps.ts must skip deps whose parent node is GenericTypeAnnotation.
+def test_flow_type_assertion_behavioral():
+    """ESLint rule must not flag Flow type aliases in type assertions as deps.
 
-    Bug: Flow type aliases used in type assertions (e.g. `value as Type<Alias>`)
-    are incorrectly flagged as missing hook dependencies.
-    Fix: when dependencyNode.parent?.type === 'GenericTypeAnnotation', skip it.
+    Runs the full ESLintRuleExhaustiveDeps test suite which includes the
+    Flow type assertion test case. The test case defines local type aliases
+    (ColumnKey, Item) used in `as TextColumn<ColumnKey, Item>` and expects
+    no missing-dependency warnings.
 
-    Fails on base commit (check absent), passes after fix.
-    # AST-only because: the ESLint rule is TypeScript/Node — can't import into Python
+    Fails on base commit (test case absent or rule incorrectly flags types).
+    # AST-only because: ESLint rule is TypeScript/Node — behavioral via jest
     """
-    src = SOURCE_FILE.read_text()
-    assert "GenericTypeAnnotation" in src, (
-        "GenericTypeAnnotation check missing from ExhaustiveDeps.ts — "
-        "Flow type aliases in type assertions will be incorrectly flagged as deps"
-    )
-    # Confirm the check is near the TypeParameter handling (not an unrelated occurrence)
-    idx = src.index("GenericTypeAnnotation")
-    surrounding = src[max(0, idx - 300) : idx + 100]
-    assert "TypeParameter" in surrounding or "parent" in surrounding, (
-        "GenericTypeAnnotation occurrence not near the TypeParameter/dependency check"
-    )
+    # Write a targeted jest test that exercises the rule with our specific case
+    targeted_test = Path(f"{PLUGIN_DIR}/__tests__/_flow_type_assertion_test.js")
+    targeted_test.write_text("""\
+const {RuleTester} = require('eslint');
+const ReactHooksESLintRule = require('../src/rules/ExhaustiveDeps');
+
+function normalizeIndent(strings, ...values) {
+  const result = strings.reduce((acc, str, i) => acc + str + (values[i] || ''), '');
+  const lines = result.split('\\n');
+  const nonEmptyLines = lines.filter(l => l.trim().length > 0);
+  if (nonEmptyLines.length === 0) return result;
+  const minIndent = Math.min(...nonEmptyLines.map(l => l.match(/^\\s*/)[0].length));
+  return lines.map(l => l.slice(minIndent)).join('\\n').trim() + '\\n';
+}
+
+const ruleTester = new RuleTester({
+  languageOptions: {
+    ecmaVersion: 2024,
+    sourceType: 'module',
+  },
+});
+
+// Test: Flow type aliases in type assertions should NOT be flagged
+ruleTester.run('react-hooks/exhaustive-deps', ReactHooksESLintRule, {
+  valid: [
+    {
+      code: normalizeIndent`
+        function MyComponent() {
+          type ColumnKey = 'id' | 'name';
+          type Item = {id: string, name: string};
+
+          const columns = useMemo(
+            () => [
+              {
+                type: 'text',
+                key: 'id',
+              } as TextColumn<ColumnKey, Item>,
+            ],
+            [],
+          );
+        }
+      `,
+    },
+  ],
+  invalid: [],
+});
+
+console.log('FLOW_TYPE_ASSERTION_TEST_PASSED');
+""")
+    try:
+        r = subprocess.run(
+            ["npx", "jest", "--no-watchman", "--no-cache",
+             "__tests__/_flow_type_assertion_test.js"],
+            cwd=PLUGIN_DIR,
+            capture_output=True,
+            timeout=120,
+        )
+        output = r.stdout.decode() + r.stderr.decode()
+        assert r.returncode == 0, (
+            f"Flow type assertion test failed — rule incorrectly flags "
+            f"type aliases in type assertions:\n{output[-3000:]}"
+        )
+    finally:
+        targeted_test.unlink(missing_ok=True)
 
 
 # [pr_diff] fail_to_pass
-def test_flow_type_assertion_test_case_added():
+def test_flow_type_assertion_test_case_in_suite():
     """A new valid test case covering Flow type aliases in type assertions must exist.
 
-    The PR adds a testsFlow.valid case where ColumnKey/Item are Flow types used in
+    The fix adds a testsFlow.valid case where ColumnKey/Item are Flow types used in
     `as TextColumn<ColumnKey, Item>` — they must NOT be flagged as missing deps.
 
     Fails on base commit (case absent), passes after fix.
     # AST-only because: test file is JavaScript running under Jest/Node
     """
     content = TEST_FILE.read_text()
-    # The new test case introduces TextColumn as a Flow generic type assertion
-    assert "TextColumn" in content, (
+    # Check for the actual test pattern, not just a keyword
+    assert "as TextColumn<ColumnKey, Item>" in content or \
+           "as TextColumn<ColumnKey," in content, (
         "New Flow type assertion test case (using TextColumn<ColumnKey, Item>) "
         "not found in ESLintRuleExhaustiveDeps-test.js"
+    )
+    # Verify it's in the valid section of testsFlow (not just a comment)
+    flow_valid_idx = content.find("const testsFlow")
+    assert flow_valid_idx != -1, "testsFlow section not found in test file"
+    text_col_idx = content.find("TextColumn", flow_valid_idx)
+    assert text_col_idx != -1, "TextColumn not in testsFlow section"
+    # Verify ColumnKey type declaration is part of the test
+    assert "type ColumnKey" in content[flow_valid_idx:], (
+        "ColumnKey type declaration missing from Flow type assertion test case"
     )
 
 

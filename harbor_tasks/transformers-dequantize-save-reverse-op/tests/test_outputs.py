@@ -234,16 +234,16 @@ def test_reverse_op_identity_multiple_entries():
 
 # [pr_diff] pass_to_pass
 def test_existing_chunk_cat_reverse_op():
-    """Existing Chunk/Cat reverse_op pair still works correctly."""
-    from transformers.core_model_loading import Chunk, Cat
+    """Existing Chunk/Concatenate reverse_op pair still works correctly."""
+    from transformers.core_model_loading import Chunk, Concatenate
 
     chunk = Chunk(dim=0)
     rev = chunk.reverse_op
-    assert isinstance(rev, Cat), f"Chunk.reverse_op should be Cat, got {type(rev)}"
+    assert isinstance(rev, Concatenate), f"Chunk.reverse_op should be Concatenate, got {type(rev)}"
 
-    cat = Cat(dim=0)
+    cat = Concatenate(dim=0)
     rev2 = cat.reverse_op
-    assert isinstance(rev2, Chunk), f"Cat.reverse_op should be Chunk, got {type(rev2)}"
+    assert isinstance(rev2, Chunk), f"Concatenate.reverse_op should be Chunk, got {type(rev2)}"
 
 
 # ---------------------------------------------------------------------------

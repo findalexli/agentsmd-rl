@@ -12,20 +12,20 @@ checks:
     origin: static
     description: "TypeScript compilation must succeed after changes"
 
-  - id: no_dispose_session_called
+  - id: no_dispose_session_on_connection
     type: fail_to_pass
     origin: pr_diff
-    description: "disposeSession must not be called in the unsubscribe handler"
+    description: "disposeSession must not be called on connection in unsubscribe handler; unsubscribe calls must remain"
 
   - id: mock_tracks_disposed_sessions
     type: fail_to_pass
     origin: pr_diff
-    description: "MockAgentHostService tracks disposeSession calls via disposedSessions array"
+    description: "MockAgentHostService.disposeSession must push to disposedSessions array (not a no-op)"
 
-  - id: disposing_chat_does_not_dispose_backend
+  - id: regression_test_asserts_no_dispose
     type: fail_to_pass
     origin: pr_diff
-    description: "Regression test asserts disposing the UI session does not dispose the backend session"
+    description: "Regression test asserts disposedSessions.length === 0 after disposing UI chat session"
 
   - id: no_import_from_sessions
     type: pass_to_pass

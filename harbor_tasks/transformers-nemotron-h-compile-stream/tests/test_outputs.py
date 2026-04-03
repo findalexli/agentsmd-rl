@@ -274,7 +274,7 @@ def test_block_forward_not_stub():
 def test_ruff_lint():
     """Ruff lint on modified files (CLAUDE.md: 'make style: runs formatters and linters (ruff)')."""
     r = subprocess.run(
-        ["ruff", "check", "--select=E,W", MODELING, MODULAR],
-        capture_output=True, text=True, timeout=30,
+        ["ruff", "check", MODELING, MODULAR, "--quiet"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
     )
     assert r.returncode == 0, f"Ruff errors:\n{r.stdout}\n{r.stderr}"

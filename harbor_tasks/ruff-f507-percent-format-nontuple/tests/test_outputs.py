@@ -197,6 +197,19 @@ def test_no_local_imports_in_target_function():
         )
 
 
+# [agent_config] pass_to_pass — AGENTS.md:79 @ b8fad8312fde560943653811ae3e16e22b99dfc7
+def test_no_unreachable_in_target_function():
+    """No unreachable! macro in percent_format_positional_count_mismatch (AGENTS.md:79)."""
+    func_body = _extract_target_function()
+    for i, line in enumerate(func_body.splitlines(), 1):
+        stripped = line.strip()
+        if stripped.startswith("//"):
+            continue
+        assert "unreachable!(" not in stripped, (
+            f"unreachable! in target function line {i}: {stripped}"
+        )
+
+
 # [agent_config] pass_to_pass — AGENTS.md:81 @ b8fad8312fde560943653811ae3e16e22b99dfc7
 def test_no_allow_lint_suppression():
     """Prefer #[expect()] over #[allow()] for lint suppression (AGENTS.md:81)."""

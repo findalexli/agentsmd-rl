@@ -55,6 +55,24 @@ checks:
       lines: "68"
       commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
 
+  - id: has_owner_label
+    type: pass_to_pass
+    origin: agent_config
+    description: "Test file has a valid # Owner(s): label (not 'module: unknown')"
+    source:
+      path: ".claude/skills/pr-review/review-checklist.md"
+      lines: "57"
+      commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
+
+  - id: has_run_tests
+    type: pass_to_pass
+    origin: agent_config
+    description: "Test file ends with 'if __name__ == \"__main__\": run_tests()'"
+    source:
+      path: ".claude/skills/pr-review/review-checklist.md"
+      lines: "60"
+      commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
+
 rubric:
   - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
     source:

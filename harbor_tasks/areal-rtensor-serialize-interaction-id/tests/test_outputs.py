@@ -284,6 +284,30 @@ def test_new_fields_have_defaults():
     raise AssertionError("InteractionWithTokenLogpReward class not found")
 
 
+# [agent_config] fail_to_pass -- AGENTS.md:95 @ 3bf10c9
+def test_no_tolist_in_serialize():
+    """serialize_interactions must not call .tolist() directly -- use serialize_value instead."""
+    import ast
+
+    src = Path(f"{REPO}/areal/experimental/openai/proxy/server.py").read_text()
+    tree = ast.parse(src)
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "serialize_interactions":
+            for inner in ast.walk(node):
+                if (
+                    isinstance(inner, ast.Call)
+                    and isinstance(inner.func, ast.Attribute)
+                    and inner.func.attr == "tolist"
+                ):
+                    raise AssertionError(
+                        f"serialize_interactions calls .tolist() at line {inner.lineno} -- "
+                        "use serialize_value instead (AGENTS.md:95)"
+                    )
+            return  # function found and checked
+    raise AssertionError("serialize_interactions function not found in server.py")
+
+
 # [agent_config] pass_to_pass -- AGENTS.md:89-91 @ 3bf10c9
 def test_no_bare_print():
     """Modified files must not use bare print() -- use areal.utils.logging instead."""

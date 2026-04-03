@@ -309,7 +309,7 @@ def test_ruff_lint():
     """Changed files pass ruff linting."""
     result = subprocess.run(
         [
-            "ruff", "check", "--select", "E,W",
+            "ruff", "check",
             "src/transformers/models/lfm2/modeling_lfm2.py",
             "src/transformers/models/lfm2/modular_lfm2.py",
             "src/transformers/models/lfm2_moe/modeling_lfm2_moe.py",

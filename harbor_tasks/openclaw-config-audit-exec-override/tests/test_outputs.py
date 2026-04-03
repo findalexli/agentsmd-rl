@@ -166,6 +166,30 @@ def test_no_lint_suppressions():
         )
 
 
+# [agent_config] pass_to_pass — AGENTS.md:220 @ 1ca4261d7e055d0be141ed79ebb1365d0fbc7364
+def test_no_real_credentials_in_tests():
+    """Added test config values must use obviously fake placeholders, not real credentials."""
+    added_lines = _get_agent_added_lines()
+    added_text = "\n".join(added_lines)
+
+    # Check for real-looking API keys / tokens (e.g. sk-..., ghp_..., or long hex/base64)
+    suspicious_patterns = [
+        (r'\b(sk-[A-Za-z0-9]{20,})', "OpenAI-style API key (sk-...)"),
+        (r'\b(ghp_[A-Za-z0-9]{36,}|ghs_[A-Za-z0-9]{36,})', "GitHub PAT (ghp_/ghs_...)"),
+        (r'["\'][0-9a-fA-F]{32,}["\']', "long hex string (possible real token)"),
+        # E.164 or NANP phone numbers
+        (r'\+?1?\s*\(?\d{3}\)?[\s.\-]\d{3}[\s.\-]\d{4}', "phone number"),
+    ]
+    for pattern, desc in suspicious_patterns:
+        matches = re.findall(pattern, added_text)
+        assert len(matches) == 0, (
+            f"Agent added what looks like a {desc} — AGENTS.md:220 requires "
+            f"obviously fake placeholders (e.g. 'secret', 'test-token') in tests, "
+            f"not real config values.\n"
+            f"Matches: {matches}"
+        )
+
+
 # [agent_config] pass_to_pass — AGENTS.md:162 @ 1ca4261d7e055d0be141ed79ebb1365d0fbc7364
 def test_no_prototype_mutation():
     """Agent's test must not use prototype mutation for sharing behavior."""

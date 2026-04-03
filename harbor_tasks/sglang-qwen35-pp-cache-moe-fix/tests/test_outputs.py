@@ -297,3 +297,23 @@ def test_memory_pool_pp_support():
                     )
                     break
             break
+
+
+# [agent_config] pass_to_pass — .claude/skills/write-sglang-test/SKILL.md:12 @ c06ca1526cb6008a8dacb4fdb06567e648134664
+def test_unit_test_uses_custom_test_case():
+    """test_mamba_unittest.py must use CustomTestCase, not raw unittest.TestCase."""
+    src = Path(f"{REPO}/test/registered/unit/mem_cache/test_mamba_unittest.py").read_text()
+    tree = ast.parse(src)
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            for base in node.bases:
+                is_raw_testcase = (
+                    isinstance(base, ast.Attribute)
+                    and isinstance(base.value, ast.Name)
+                    and base.value.id == "unittest"
+                    and base.attr == "TestCase"
+                )
+                assert not is_raw_testcase, (
+                    f"Class {node.name} must use CustomTestCase, not unittest.TestCase directly"
+                )

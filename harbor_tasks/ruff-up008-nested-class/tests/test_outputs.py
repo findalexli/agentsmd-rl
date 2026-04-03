@@ -196,3 +196,42 @@ def test_rust_imports_at_top():
             if brace_depth <= 0:
                 in_function = False
                 brace_depth = 0
+
+
+# [agent_config] pass_to_pass — AGENTS.md:80 @ 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
+def test_no_nested_if_let():
+    """Modified rule file must not use nested if-let blocks; prefer let chains (AGENTS.md line 80)."""
+    content = Path(RULE_FILE).read_text()
+    lines = content.splitlines()
+    # Track open if-let blocks by their indentation level.
+    # When we encounter another `if let` while one is already open at a shallower indent,
+    # that is a nested if-let pattern that should be a let chain instead.
+    if_let_indent_stack = []
+    for lineno, line in enumerate(lines, 1):
+        if not line.strip():
+            continue
+        indent = len(line) - len(line.lstrip())
+        # Remove closed blocks (returned to or past their opening indent)
+        if_let_indent_stack = [lvl for lvl in if_let_indent_stack if lvl < indent]
+        stripped = line.strip()
+        # Match bare `if let` openers (not `} else if let` which is a continuation)
+        if re.match(r'if let\b', stripped) and not re.match(r'\}.*if let\b', stripped):
+            if if_let_indent_stack:
+                assert False, (
+                    f"Line {lineno}: nested `if let` detected: {stripped!r} — "
+                    f"prefer let chains (if let A && let B) per AGENTS.md line 80"
+                )
+            if_let_indent_stack.append(indent)
+
+
+# [agent_config] pass_to_pass — AGENTS.md:81 @ 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
+def test_clippy_expect_not_allow():
+    """If suppressing a Clippy lint, must use #[expect()] not #[allow()]."""
+    content = Path(RULE_FILE).read_text()
+    for line in content.splitlines():
+        stripped = line.strip()
+        if re.match(r'#\[allow\(clippy::', stripped):
+            assert False, (
+                f"Found #[allow(clippy::...)] in rule file: {stripped!r} — "
+                f"AGENTS.md line 81 says to prefer #[expect()] over #[allow()]"
+            )

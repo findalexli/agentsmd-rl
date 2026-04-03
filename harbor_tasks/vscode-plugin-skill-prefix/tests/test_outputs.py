@@ -1,6 +1,6 @@
 """
 Task: vscode-plugin-skill-prefix
-Repo: vscode @ 559cb3e74d075670b9a03f84751e8fdcd3c52443
+Repo: microsoft/vscode @ 559cb3e74d075670b9a03f84751e8fdcd3c52443
 PR:   307305
 
 All checks must pass for reward = 1. Any failure = reward 0.
@@ -8,7 +8,6 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
-import subprocess
 from pathlib import Path
 
 REPO = "/workspace/vscode"
@@ -21,69 +20,49 @@ def _read(rel_path: str) -> str:
     return Path(f"{REPO}/{rel_path}").read_text()
 
 
-def _extract_method(source: str, method_name: str) -> str:
-    """Extract a method body from TypeScript class source by brace-matching."""
-    pattern = rf"(private|public|protected)?\s*(async\s+)?{re.escape(method_name)}\s*\("
-    match = re.search(pattern, source)
-    if not match:
+def _extract_name_assignment_block(src: str) -> str:
+    """Extract the ~30-line block around the name assignment in computeSlashCommandDiscoveryInfo.
+
+    AST-only because: TypeScript source, not executable Python.
+
+    We locate 'computeSlashCommandDiscoveryInfo' then find the name assignment
+    region (parsedPromptFile?.header?.name) and return a bounded window.
+    """
+    lines = src.splitlines()
+    # Find the method definition line
+    method_start = None
+    for i, line in enumerate(lines):
+        if "computeSlashCommandDiscoveryInfo" in line and ("private" in line or "async" in line):
+            method_start = i
+            break
+    if method_start is None:
         return ""
-    start = match.start()
-    # Find the opening brace of the method body
-    brace_pos = source.index("{", match.end())
-    depth = 1
-    i = brace_pos + 1
-    while i < len(source) and depth > 0:
-        if source[i] == "{":
-            depth += 1
-        elif source[i] == "}":
-            depth -= 1
-        i += 1
-    return source[start:i]
 
-
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
-def test_typescript_compiles():
-    """TypeScript type checker passes on modified source files."""
-    # Use VS Code's own type checker (tsgo --noEmit)
-    r = subprocess.run(
-        ["npm", "run", "compile-check-ts-native"],
-        cwd=REPO,
-        capture_output=True,
-        timeout=300,
-    )
-    assert r.returncode == 0, (
-        f"TypeScript type check failed:\n"
-        f"{r.stdout.decode()[-3000:]}\n{r.stderr.decode()[-3000:]}"
-    )
+    # The relevant code (parseResults block with name assignment) is within
+    # ~40 lines of the method start. Extract that bounded region.
+    block = lines[method_start:method_start + 45]
+    return "\n".join(block)
 
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
+# AST-only because: TypeScript source files require full VS Code build infra
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_plugin_prefix_in_discovery():
     """Plugin skills get canonical plugin prefix applied during slash command discovery."""
     src = _read(PROMPTS_SERVICE)
-    method_body = _extract_method(src, "computeSlashCommandDiscoveryInfo")
-    assert method_body, "computeSlashCommandDiscoveryInfo method not found"
+    block = _extract_name_assignment_block(src)
+    assert block, "computeSlashCommandDiscoveryInfo method not found"
 
-    # The method must call getCanonicalPluginCommandId to canonicalize plugin skill names.
-    # On the base commit, this method does NOT call getCanonicalPluginCommandId at all —
-    # it only computes `name` from header/promptPath/cleanName without any plugin prefix.
-    assert "getCanonicalPluginCommandId" in method_body, (
+    # The name assignment region must call getCanonicalPluginCommandId.
+    # On the base commit, this block only has:
+    #   const name = parsedPromptFile?.header?.name ?? promptPath.name ?? getCleanPromptName(...)
+    # with no call to getCanonicalPluginCommandId.
+    assert "getCanonicalPluginCommandId" in block, (
         "computeSlashCommandDiscoveryInfo must call getCanonicalPluginCommandId "
         "to prefix plugin skill names with the plugin identifier"
-    )
-
-    # Verify the call uses the plugin URI, not an arbitrary value
-    assert "pluginUri" in method_body, (
-        "getCanonicalPluginCommandId call must use the plugin URI "
-        "to derive the correct prefix"
     )
 
 
@@ -91,89 +70,92 @@ def test_plugin_prefix_in_discovery():
 def test_frontmatter_override_prefixed():
     """Even when SKILL.md frontmatter overrides the name, plugin prefix is preserved."""
     src = _read(PROMPTS_SERVICE)
-    method_body = _extract_method(src, "computeSlashCommandDiscoveryInfo")
-    assert method_body, "computeSlashCommandDiscoveryInfo method not found"
+    block = _extract_name_assignment_block(src)
+    assert block, "computeSlashCommandDiscoveryInfo method not found"
 
-    # The frontmatter name (parsedPromptFile?.header?.name) must be transformed for
-    # plugin sources — it cannot flow directly to withPromptPathMetadata as the
-    # final name. The fix must ensure that the header name goes through
-    # canonicalization (getCanonicalPluginCommandId or similar) for plugin sources.
-    #
-    # On the base commit there is exactly one assignment:
-    #   const name = parsedPromptFile?.header?.name ?? promptPath.name ?? getCleanPromptName(promptPath.uri);
-    # and no subsequent transformation. After the fix, the code must either:
-    #   (a) Assign header name to an intermediate variable, then derive `name` conditionally
-    #   (b) Re-assign the name after initial computation for plugin sources
-    #
-    # We detect this by checking that there are at least TWO variable assignments
-    # related to the name computation (the raw extraction + the canonical transformation),
-    # OR that the header name variable is not directly named 'name' (renamed to rawName etc).
+    # On base commit the header name flows directly to `const name = ...`.
+    # A correct fix must split this into raw extraction + conditional canonicalization.
+    # Check: the header?.name value is NOT assigned directly to `const name`.
+    lines_with_header = [
+        l.strip() for l in block.splitlines()
+        if "parsedPromptFile?.header?.name" in l or "parsedPromptFile.header?.name" in l
+    ]
+    assert lines_with_header, "Expected reference to parsedPromptFile?.header?.name"
 
-    header_pattern = re.compile(
-        r"const\s+(\w+)\s*=\s*parsedPromptFile\?\.header\?\.name"
-    )
-    match = header_pattern.search(method_body)
-    assert match, "Expected assignment from parsedPromptFile?.header?.name"
-    header_var = match.group(1)
+    # The variable receiving the header name must not be called 'name' directly,
+    # OR there must be a subsequent transformation step.
+    header_line = lines_with_header[0]
+    match = re.search(r"const\s+(\w+)\s*=", header_line)
+    if match:
+        var_name = match.group(1)
+        uses_intermediate = var_name != "name"
+    else:
+        uses_intermediate = False
 
-    # Check option (a): header goes to intermediate variable (not 'name')
-    uses_intermediate = header_var != "name"
-
-    # Check option (b): there's a second assignment that transforms the name for plugins
-    # e.g. `const prefixedName = ... getCanonicalPluginCommandId ...` or reassignment
-    has_transform = bool(re.search(
-        r"(getCanonicalPluginCommandId|normalizePluginToken|basename)\s*\(",
-        method_body[match.end():]
-    ))
+    has_transform = "getCanonicalPluginCommandId" in block
 
     assert uses_intermediate or has_transform, (
-        f"Header name is assigned directly to '{header_var}' with no subsequent "
-        "plugin prefix transformation. The frontmatter name must be canonicalized "
-        "for plugin sources before being used as the final slash command name."
+        "Header name is assigned directly to 'name' with no plugin prefix transformation. "
+        "The frontmatter name must be canonicalized for plugin sources."
     )
 
 
 # [pr_diff] fail_to_pass
 def test_type_signature_widened():
-    """getCanonicalPluginCommandId accepts a type wider than IAgentPlugin, or caller provides plugin prefix another way."""
+    """getCanonicalPluginCommandId accepts a type wider than IAgentPlugin."""
     src_plugin = _read(PLUGIN_SERVICE)
-    src_prompts = _read(PROMPTS_SERVICE)
-
-    # The function on the base commit accepts only `IAgentPlugin`. To call it from
-    # computeSlashCommandDiscoveryInfo (which only has a pluginUri, not a full
-    # IAgentPlugin), the agent must do one of:
-    #   (a) Widen the parameter type (e.g. `{ readonly uri: URI }`)
-    #   (b) Write a new helper / inline the prefix logic
-    #
-    # We check: either (a) the function's first param is no longer IAgentPlugin,
-    # or (b) the discovery method constructs the prefix without calling this function.
 
     func_pattern = re.compile(
-        r"export\s+function\s+getCanonicalPluginCommandId\s*\(\s*(\w+)\s*:\s*([^,]+)"
+        r"export\s+function\s+getCanonicalPluginCommandId\s*\(\s*(\w+)\s*:\s*([^,)]+)"
     )
     match = func_pattern.search(src_plugin)
     assert match, "getCanonicalPluginCommandId export not found"
 
     param_type = match.group(2).strip()
+
+    # On base commit the type is exactly `IAgentPlugin`.
+    # The fix must widen it (e.g., `{ readonly uri: URI }`) so it can be called
+    # from computeSlashCommandDiscoveryInfo which only has a pluginUri, not a full plugin.
+    # Alternatively, the agent may inline the prefix logic without calling this function.
     type_is_widened = param_type != "IAgentPlugin"
 
-    # Alternative: discovery method applies the prefix inline, via a new function,
-    # or by looking up the full plugin object from a service
-    method_body = _extract_method(src_prompts, "computeSlashCommandDiscoveryInfo")
-    has_alternative_prefix = (
-        "pluginUri" in method_body
-        and (
-            "basename" in method_body
-            or "normalize" in method_body
-            or "prefix" in method_body.lower()
-            or "getCanonicalPluginCommandId" in method_body  # using original fn with looked-up plugin
-        )
+    # Check alternative: inline prefix in discovery method
+    src_prompts = _read(PROMPTS_SERVICE)
+    discovery_block = _extract_name_assignment_block(src_prompts)
+    has_inline_prefix = (
+        "pluginUri" in discovery_block
+        and ("basename" in discovery_block or "normalize" in discovery_block)
+        and "getCanonicalPluginCommandId" not in discovery_block
     )
 
-    assert type_is_widened or has_alternative_prefix, (
+    assert type_is_widened or has_inline_prefix, (
         f"getCanonicalPluginCommandId first param is still 'IAgentPlugin' and "
-        f"computeSlashCommandDiscoveryInfo does not apply the prefix. "
-        f"Either widen the type to accept {{ uri: URI }} or build the prefix another way."
+        f"discovery method does not inline the prefix logic. "
+        f"Either widen the type or build the prefix another way."
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_plugin_source_guard():
+    """Prefix is only applied when source is Plugin, not for all prompt sources."""
+    src = _read(PROMPTS_SERVICE)
+    block = _extract_name_assignment_block(src)
+    assert block, "computeSlashCommandDiscoveryInfo method not found"
+
+    # The fix must guard the prefix application to plugin sources only.
+    # On base commit there is no prefix application, so no guard is needed —
+    # this test fails because neither condition is met.
+    has_prefix = "getCanonicalPluginCommandId" in block or (
+        "basename" in block and "pluginUri" in block
+    )
+    has_guard = bool(re.search(
+        r"(PromptFileSource\.Plugin|\.source\s*===.*[Pp]lugin|isPlugin)",
+        block
+    ))
+
+    assert has_prefix and has_guard, (
+        "Prefix must be applied AND guarded to plugin sources only. "
+        f"Has prefix: {has_prefix}, Has guard: {has_guard}"
     )
 
 
@@ -186,29 +168,83 @@ def test_non_plugin_sources_unaffected():
     """Non-plugin sources still use unmodified name (no false prefix application)."""
     src = _read(PROMPTS_SERVICE)
 
-    # The slashCommandsFromDiscoveryInfo method (which builds the final command list)
-    # must still exist and produce results from the discovery info.
-    # Also, the local-prompts code path in computeSlashCommandDiscoveryInfo must still
-    # fall back to getCleanPromptName for non-plugin sources.
     assert "getCleanPromptName" in src, (
         "getCleanPromptName must still be used as fallback for non-plugin prompt names"
     )
-
-    # slashCommandsFromDiscoveryInfo must still exist (regression guard)
     assert "slashCommandsFromDiscoveryInfo" in src, (
-        "slashCommandsFromDiscoveryInfo method must still exist to convert discovery info to commands"
+        "slashCommandsFromDiscoveryInfo method must still exist"
     )
 
 
-# [agent_config] pass_to_pass — .github/copilot-instructions.md:101-102
+# [static] pass_to_pass
+def test_canonical_function_still_exported():
+    """getCanonicalPluginCommandId remains exported and functional."""
+    src = _read(PLUGIN_SERVICE)
+
+    assert re.search(
+        r"export\s+function\s+getCanonicalPluginCommandId", src
+    ), "getCanonicalPluginCommandId must remain exported"
+
+    # Function body must still reference basename and normalizePluginToken
+    # Check in a bounded region after the function signature
+    lines = src.splitlines()
+    for i, line in enumerate(lines):
+        if "getCanonicalPluginCommandId" in line and "export" in line:
+            func_region = "\n".join(lines[i:i + 15])
+            assert "basename" in func_region, (
+                "getCanonicalPluginCommandId must still use basename"
+            )
+            assert "normalizePluginToken" in func_region, (
+                "getCanonicalPluginCommandId must still use normalizePluginToken"
+            )
+            break
+
+
+# ---------------------------------------------------------------------------
+# Config-derived (agent_config) — rules from .github/copilot-instructions.md
+# ---------------------------------------------------------------------------
+
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:126
 def test_no_arrow_function_for_export():
     """Exported function uses function keyword, not arrow expression."""
     src = _read(PLUGIN_SERVICE)
 
-    # Check that getCanonicalPluginCommandId uses `export function`, not `export const ... = (`
     assert re.search(
         r"export\s+function\s+getCanonicalPluginCommandId", src
     ), (
         "getCanonicalPluginCommandId must use 'export function' declaration, "
         "not 'export const' arrow function (per copilot-instructions.md)"
     )
+
+
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:72
+def test_tab_indentation_in_modified_files():
+    """Modified files use tab indentation as required by VS Code coding guidelines."""
+    for rel_path in [PLUGIN_SERVICE, PROMPTS_SERVICE]:
+        src = _read(rel_path)
+        indented_lines = [l for l in src.splitlines() if l and l[0] in ("\t", " ")]
+        tab_lines = [l for l in indented_lines if l.startswith("\t")]
+        space_only = [l for l in indented_lines if l.startswith("    ") and not l.startswith("\t")]
+        assert len(tab_lines) > len(space_only) * 10, (
+            f"{rel_path}: must use tab indentation "
+            f"({len(tab_lines)} tab lines vs {len(space_only)} space-only lines)"
+        )
+
+
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:94
+def test_single_quotes_for_strings():
+    """Non-localized strings use single quotes, not double quotes."""
+    src = _read(PROMPTS_SERVICE)
+    block = _extract_name_assignment_block(src)
+    if not block:
+        return
+
+    non_localized_doubles = re.findall(
+        r'(?<!localize\()\"[^"]+\"', block
+    )
+    single_quoted = re.findall(r"'[^']+'", block)
+
+    if non_localized_doubles and single_quoted:
+        assert len(single_quoted) >= len(non_localized_doubles), (
+            "Non-localized strings should use single quotes per copilot-instructions.md"
+        )

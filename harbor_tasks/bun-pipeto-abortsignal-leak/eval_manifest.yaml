@@ -66,6 +66,24 @@ checks:
       lines: "230"
       commit: "fe4a66e086bebd2c3c5a238effa801426d736278"
 
+  - id: test_file_no_settimeout
+    type: fail_to_pass
+    origin: agent_config
+    description: "Regression test file must exist and must not use setTimeout (use Bun.sleep or await patterns instead)"
+    source:
+      path: "test/AGENTS.md"
+      lines: "21"
+      commit: "fe4a66e086bebd2c3c5a238effa801426d736278"
+
+  - id: test_file_module_scope_imports
+    type: fail_to_pass
+    origin: agent_config
+    description: "Regression test file must use module-scope static imports only, not dynamic import() inside test bodies"
+    source:
+      path: "test/AGENTS.md"
+      lines: "218"
+      commit: "fe4a66e086bebd2c3c5a238effa801426d736278"
+
 rubric:
   - rule: "Follow existing code style — check neighboring files for patterns"
     source:
@@ -76,4 +94,9 @@ rubric:
     source:
       path: "src/bun.js/bindings/v8/AGENTS.md"
       lines: "285"
+      commit: "fe4a66e086bebd2c3c5a238effa801426d736278"
+  - rule: "Prefer concurrent tests over sequential tests when multiple tests in the same file spawn processes or write files; use test.concurrent or describe.concurrent."
+    source:
+      path: "test/AGENTS.md"
+      lines: "22"
       commit: "fe4a66e086bebd2c3c5a238effa801426d736278"

@@ -171,6 +171,20 @@ process.stdout.write('PASS');
     assert out == "PASS", f"Non-LLM fallthrough check failed: {out}"
 
 
+# [agent_config] pass_to_pass
+def test_prettier_formatting():
+    """Changed TypeScript file must be formatted with prettier (AGENTS.md line 44)."""
+    result = subprocess.run(
+        ["npx", "prettier", "--check", TARGET],
+        capture_output=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, (
+        f"prettier check failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
 # [static] pass_to_pass
 def test_exports_callable():
     """serveDocMarkdown and serveGuideMarkdown are exported async functions."""

@@ -241,7 +241,7 @@ reveal_type(gc["c"])
 def test_existing_typed_dict_mdtests():
     """Upstream TypedDict mdtests must still pass."""
     r = subprocess.run(
-        ["cargo", "nextest", "run", "-p", "ty_python_semantic",
+        ["cargo", "test", "-p", "ty_python_semantic",
          "--", "mdtest::typed_dict", "--no-fail-fast"],
         cwd=REPO,
         capture_output=True,
@@ -275,3 +275,23 @@ def test_no_unwrap_in_new_code():
     unwrap_lines = [l for l in added_lines if ".unwrap()" in l]
     assert len(unwrap_lines) == 0, \
         f"Found .unwrap() in new code (AGENTS.md:79 forbids this):\n" + "\n".join(unwrap_lines)
+
+
+# [agent_config] pass_to_pass — AGENTS.md:76 @ 3465d7f1
+def test_no_local_rust_imports():
+    """Rust imports must be at the top of the file, not locally in functions (AGENTS.md:76)."""
+    import re
+    r = subprocess.run(
+        ["git", "diff", "HEAD", "--", "*.rs"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    # Look for added lines that are `use` statements inside function bodies
+    # (indented use statements indicate local imports)
+    added_lines = [l for l in r.stdout.splitlines() if l.startswith("+") and not l.startswith("+++")]
+    # Local imports are indented `use` statements (4+ spaces of indentation)
+    local_imports = [l for l in added_lines if re.match(r"^\+\s{4,}use\s", l)]
+    assert len(local_imports) == 0, \
+        f"Found local imports in functions (AGENTS.md:76 requires top-level imports):\n" + "\n".join(local_imports)

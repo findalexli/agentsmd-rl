@@ -46,8 +46,11 @@ LOG_DIR = ROOT / "pipeline_logs"
 # Action → prompt file (check taskforge/prompts/ first, then .claude/commands/)
 PROMPT_FILES = {
     "scaffold": "scaffold.md",
+    "scaffold-agentmd": "scaffold_agentmd.md",
+    "enrich-config-edit": "enrich_config_edit.md",
     "validate": "validate.md",
     "remake": "remake.md",
+    "enrich-rubric": "enrich-rubric.md",
 }
 COMMAND_FILES = {
     "scaffold": "scaffold-task.md",
@@ -56,16 +59,22 @@ COMMAND_FILES = {
 
 DEFAULT_MODELS = {
     "scaffold": "opus",
+    "scaffold-agentmd": "opus",
+    "enrich-config-edit": "sonnet",
     "validate": "opus",
     "remake": "opus",
     "solve": "opus",
+    "enrich-rubric": "sonnet",
 }
 
 DEFAULT_BUDGETS = {
     "scaffold": 5.0,
+    "scaffold-agentmd": 6.0,
+    "enrich-config-edit": 2.0,
     "validate": 2.0,
     "remake": 5.0,
     "solve": 5.0,
+    "enrich-rubric": 1.0,
 }
 
 
@@ -89,10 +98,13 @@ def load_command(action: str, task: str) -> str:
     raise FileNotFoundError(f"No prompt found for action: {action}")
 
 
-def get_tasks(filter_tasks: str | None = None) -> list[str]:
+def get_tasks(filter_tasks: str | None = None, task_dir: Path | None = None) -> list[str]:
     """List all task directories, optionally filtered."""
+    base = task_dir or HARBOR_TASKS
+    if not base.exists():
+        return []
     all_tasks = sorted(
-        d.name for d in HARBOR_TASKS.iterdir()
+        d.name for d in base.iterdir()
         if d.is_dir() and (d / "task.toml").exists()
     )
     if filter_tasks:
@@ -186,6 +198,7 @@ async def main():
     all_actions = sorted(set(PROMPT_FILES) | set(COMMAND_FILES) | {"solve", "full"})
     parser.add_argument("action", choices=all_actions)
     parser.add_argument("--tasks", help="Comma-separated task names (default: all)")
+    parser.add_argument("--task-dir", help="Task directory (default: harbor_tasks)")
     parser.add_argument("--model", help="Override model (opus/sonnet/haiku)")
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--budget", type=float, help="Max USD per task")
@@ -193,8 +206,9 @@ async def main():
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
-    tasks = get_tasks(args.tasks)
-    print(f"Tasks: {len(tasks)}")
+    task_dir = ROOT / args.task_dir if args.task_dir else HARBOR_TASKS
+    tasks = get_tasks(args.tasks, task_dir=task_dir)
+    print(f"Tasks: {len(tasks)} (from {task_dir.name})")
 
     if args.action == "full":
         # Full pipeline: scaffold then validate
@@ -224,7 +238,7 @@ async def main():
     if args.action == "solve":
         prompts = {}
         for t in tasks:
-            inst = HARBOR_TASKS / t / "instruction.md"
+            inst = task_dir / t / "instruction.md"
             prompts[t] = (
                 f"You are solving a coding task. Read and fix the bug:\n\n"
                 f"{inst.read_text() if inst.exists() else 'No instruction.md found.'}"

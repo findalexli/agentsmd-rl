@@ -12,6 +12,8 @@ import tempfile
 import re
 from pathlib import Path
 
+import pytest
+
 REPO = "/workspace/ruff"
 TY = f"{REPO}/target/debug/ty"
 
@@ -23,16 +25,20 @@ MODIFIED_RS_FILES = [
     "crates/ty_python_semantic/src/types/infer/builder/type_expression.rs",
 ]
 
+_ty_built = False
+
 
 def _build_ty():
-    """Build ty binary if not already built."""
-    if Path(TY).exists():
+    """Build ty binary (incremental rebuild to pick up source changes)."""
+    global _ty_built
+    if _ty_built:
         return
     r = subprocess.run(
         ["cargo", "build", "--bin", "ty"],
         cwd=REPO, capture_output=True, timeout=600,
     )
     assert r.returncode == 0, f"cargo build failed:\n{r.stderr.decode()[-2000:]}"
+    _ty_built = True
 
 
 def _run_ty(code: str) -> str:

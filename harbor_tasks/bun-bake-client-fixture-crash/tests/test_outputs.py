@@ -243,3 +243,27 @@ def test_exit_code_propagation():
     # elsewhere but is never assigned to the output stream).
     assert re.search(r'output\.exitCode\s*=', src), \
         "Client exit code not forwarded to OutputLineStream (need output.exitCode = ...)"
+
+
+# ---------------------------------------------------------------------------
+# Agent-config (agent_config) — coding conventions from test/CLAUDE.md
+# ---------------------------------------------------------------------------
+
+# [agent_config] pass_to_pass
+def test_no_dynamic_import_in_client_fixture():
+    """client-fixture.mjs must not use unnecessary dynamic import() calls.
+
+    test/CLAUDE.md lines 218-220: only use dynamic import when specifically
+    testing dynamic import behaviour. All imports must be static top-level.
+    Structural justification: client-fixture.mjs is consumed as a subprocess
+    fixture; dynamic imports would silently alter its module graph and loading
+    behaviour without any observable runtime difference in the harness tests.
+    """
+    src = Path(CLIENT).read_text()
+    # Dynamic import() looks like `import(` in expression position.
+    # Static imports (`import foo from ...`) never have `(` directly after `import`.
+    dynamic = re.findall(r'\bimport\s*\(', src)
+    assert len(dynamic) == 0, (
+        f"client-fixture.mjs uses dynamic import() ({len(dynamic)} occurrence(s)); "
+        "use static top-level import statements instead (test/CLAUDE.md lines 218-220)"
+    )

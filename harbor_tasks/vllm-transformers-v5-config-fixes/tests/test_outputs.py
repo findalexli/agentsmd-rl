@@ -66,20 +66,27 @@ def test_step3p5_layer_types_cropping():
     mod = _load_config_module("step3p5", "step3p5.py")
     Step3p5Config = mod.Step3p5Config
 
+    # Valid layer type values (required by transformers v5 validation)
+    VALID = ["full_attention", "sliding_attention", "sparse", "dense", "moe", "hybrid"]
+
     # Longer than num_hidden_layers — must be cropped
-    c1 = Step3p5Config(
-        num_hidden_layers=4,
-        layer_types=["full", "full", "sparse", "full", "extra1", "extra2"],
-    )
+    c1 = Step3p5Config(num_hidden_layers=4, layer_types=VALID[:6])
     assert isinstance(c1, PretrainedConfig)
     assert len(c1.layer_types) == 4, f"Expected 4, got {len(c1.layer_types)}"
 
     # Different num_hidden_layers to prevent hardcoded length
-    c2 = Step3p5Config(num_hidden_layers=2, layer_types=["a", "b", "c", "d"])
+    c2 = Step3p5Config(
+        num_hidden_layers=2,
+        layer_types=["full_attention", "sparse", "dense", "moe"],
+    )
     assert len(c2.layer_types) == 2, f"Expected 2, got {len(c2.layer_types)}"
+    assert c2.layer_types == ["full_attention", "sparse"]
 
     # Exact length — should be preserved unchanged
-    c3 = Step3p5Config(num_hidden_layers=3, layer_types=["x", "y", "z"])
+    c3 = Step3p5Config(
+        num_hidden_layers=3,
+        layer_types=["full_attention", "dense", "moe"],
+    )
     assert len(c3.layer_types) == 3, f"Expected 3, got {len(c3.layer_types)}"
 
 
@@ -107,12 +114,16 @@ def test_config_classes_instantiate():
 
 # [pr_diff] fail_to_pass
 def test_deepseek_vlv2_nested_configs():
-    """DeepseekVLV2Config must pop nested config dicts from kwargs, not just get them."""
+    """DeepseekVLV2Config must pop nested config dicts from kwargs before super().__init__().
+
+    On the base commit, kwargs.get() leaves language_config in kwargs so
+    super().__init__(**kwargs) stores it as a raw dict attribute alongside
+    text_config. The fix uses kwargs.pop() to prevent this leak.
+    """
     from transformers import PretrainedConfig
 
     mod = _load_config_module("deepseek_vl2", "deepseek_vl2.py")
 
-    # Instantiate with nested config dicts — triggers the bug on base commit
     config = mod.DeepseekVLV2Config(
         vision_config={"image_size": 384},
         projector_config={},
@@ -120,14 +131,18 @@ def test_deepseek_vlv2_nested_configs():
     )
     assert isinstance(config, PretrainedConfig)
 
-    # Nested configs must be objects, not plain dicts
+    # Nested configs must be proper config objects, not plain dicts
     assert not isinstance(config.vision_config, dict), "vision_config still a dict"
     assert hasattr(config, "text_config"), "text_config not set"
-    assert not isinstance(config.text_config, dict), "text_config is a dict"
     assert isinstance(config.text_config, PretrainedConfig), "text_config not a PretrainedConfig"
 
-    # Must serialize without crashing
-    assert isinstance(config.to_dict(), dict)
+    # Key f2p check: language_config dict must NOT leak through super().__init__().
+    # On base, kwargs.get() leaves it in kwargs → super().__init__() stores it as dict.
+    # On fix, kwargs.pop() removes it before super().__init__() is called.
+    lang_attr = getattr(config, "language_config", None)
+    assert not isinstance(lang_attr, dict), (
+        "language_config is a raw dict — nested dicts must be popped from kwargs"
+    )
 
     # Verify with different values to resist hardcoding
     config2 = mod.DeepseekVLV2Config(
@@ -135,15 +150,18 @@ def test_deepseek_vlv2_nested_configs():
         projector_config={},
         language_config={"vocab_size": 64000, "hidden_size": 2048},
     )
-    if hasattr(config2.vision_config, "image_size"):
-        assert config2.vision_config.image_size == 512
+    lang_attr2 = getattr(config2, "language_config", None)
+    assert not isinstance(lang_attr2, dict), "language_config leaked as dict (second config)"
+
+    # Must serialize without crashing
+    assert isinstance(config.to_dict(), dict)
 
 
 # [pr_diff] fail_to_pass
 def test_autoconfig_registration():
     """config.py must register non-speculative custom configs via AutoConfig.register.
 
-    AST check justified: HFConfigParser.parse() requires HF Hub network access,
+    AST-only because: HFConfigParser.parse() requires HF Hub network access,
     so behavioral invocation is not feasible in this environment.
     """
     import ast

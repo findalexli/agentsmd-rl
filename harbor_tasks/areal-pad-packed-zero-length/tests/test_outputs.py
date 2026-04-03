@@ -205,6 +205,22 @@ def test_no_wildcard_imports():
                 assert alias.name != "*", f"Wildcard import from {node.module}"
 
 
+# [agent_config] pass_to_pass — AGENTS.md:90 @ c961323ec4d989a52c78e5b42fc32f665367949f
+def test_no_print_statements():
+    """No print() calls in areal/utils/data.py (AGENTS.md hard rule: use getLogger, never print)."""
+    import ast
+
+    src = Path(f"{REPO}/areal/utils/data.py").read_text()
+    tree = ast.parse(src)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            if isinstance(func, ast.Name) and func.id == "print":
+                raise AssertionError(
+                    f"print() call found at line {node.lineno} in areal/utils/data.py"
+                )
+
+
 # [agent_config] pass_to_pass — AGENTS.md:40 @ c961323ec4d989a52c78e5b42fc32f665367949f
 def test_returns_consistent_tuple():
     """Function returns 4-tuple for both padding and no-padding cases (existing pattern)."""

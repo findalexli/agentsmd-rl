@@ -218,3 +218,31 @@ def test_no_prototype_mutation():
     for fname in ["exec-inline-eval.ts", "exec-approvals-allowlist.ts"]:
         src = Path(f"{REPO}/src/infra/{fname}").read_text()
         assert not pattern.search(src), f"prototype mutation found in {fname}"
+
+
+# [agent_config] pass_to_pass -- CLAUDE.md:146 @ b7b46ad
+def test_no_inline_lint_suppressions():
+    """No inline lint suppressions (eslint-disable / oxlint-disable) in modified files (CLAUDE.md:146)."""
+    import re
+    pattern = re.compile(r"//\s*(eslint-disable|oxlint-disable)")
+    for fname in ["exec-inline-eval.ts", "exec-approvals-allowlist.ts"]:
+        src = Path(f"{REPO}/src/infra/{fname}").read_text()
+        assert not pattern.search(src), (
+            f"inline lint suppression found in {fname} — fix the root cause instead"
+        )
+
+
+# [agent_config] pass_to_pass -- CLAUDE.md:155 @ b7b46ad
+def test_no_dynamic_import_mixed_with_static():
+    """No dynamic import of exec-inline-eval mixed with its static import (CLAUDE.md:155)."""
+    import re
+    src = Path(f"{REPO}/src/infra/exec-approvals-allowlist.ts").read_text()
+    # The file must use a static import (already required by allowlist_imports_interpreter_check)
+    assert "from \"./exec-inline-eval.js\"" in src or "from './exec-inline-eval.js'" in src, (
+        "exec-approvals-allowlist.ts must statically import exec-inline-eval.js"
+    )
+    # Must not also dynamically import the same module
+    dynamic = re.compile(r"""await\s+import\s*\(\s*['"]\.\/exec-inline-eval""")
+    assert not dynamic.search(src), (
+        "exec-approvals-allowlist.ts must not mix await import() with static import of exec-inline-eval"
+    )

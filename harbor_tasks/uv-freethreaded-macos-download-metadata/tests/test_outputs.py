@@ -205,6 +205,30 @@ def test_linux_platform_unaffected():
 # ---------------------------------------------------------------------------
 
 
+# [agent_config] pass_to_pass — CLAUDE.md:16 @ 635a76cad321b1fe3593a71dc7533cabbca244aa
+def test_no_local_imports():
+    """fetch-download-metadata.py has no import statements inside function or method bodies."""
+    import ast
+
+    src = Path(SCRIPT).read_text()
+    tree = ast.parse(src)
+
+    violations = []
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            for child in ast.walk(node):
+                if child is node:
+                    continue
+                if isinstance(child, (ast.Import, ast.ImportFrom)):
+                    violations.append(
+                        f"line {child.lineno}: import inside function '{node.name}'"
+                    )
+    assert not violations, (
+        "Local imports found (CLAUDE.md:16 — prefer top-level imports):\n"
+        + "\n".join(violations)
+    )
+
+
 # [static] pass_to_pass
 def test_not_stub():
     """The suffix-stripping block has real logic, not just pass/return."""

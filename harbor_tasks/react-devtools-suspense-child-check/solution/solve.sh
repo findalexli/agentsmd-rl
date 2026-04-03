@@ -5,9 +5,10 @@ set -euo pipefail
 
 STORE_FILE="/workspace/react/packages/react-devtools-shared/src/devtools/store.js"
 
-# Check if already applied - look for the distinctive error message we add
-if grep -q "Cannot remove suspense node" "${STORE_FILE}" 2>/dev/null; then
-    echo "Fix already applied (suspense node check found)"
+# Check if already applied - use the NEW error message's distinctive phrase
+# (base commit already has "Cannot remove suspense node" for a different check)
+if grep -q "is not a child of the parent" "${STORE_FILE}" 2>/dev/null; then
+    echo "Fix already applied (child-of-parent check found)"
     exit 0
 fi
 

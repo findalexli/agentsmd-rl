@@ -15,7 +15,7 @@ checks:
   - id: versioned_render_imported
     type: fail_to_pass
     origin: pr_diff
-    description: "Test file imports getVersionedRenderImplementation from utils"
+    description: "Test file imports getVersionedRenderImplementation from utils via proper import statement"
 
   - id: old_render_helpers_removed
     type: fail_to_pass
@@ -37,9 +37,19 @@ checks:
     origin: pr_diff
     description: "Upper-bound version annotation '@reactVersion <= 18.2' removed after merging variants"
 
+  - id: unified_render_used_in_tests
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Unified render() destructured from getVersionedRenderImplementation and called ≥3 times in test bodies"
+
+  - id: jest_suite_passes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The profilingCommitTreeBuilder Jest test suite passes with the migrated code"
+
   - id: not_stub
     type: pass_to_pass
     origin: static
-    description: "Test file has substantial content and render() is called in test bodies"
+    description: "Test file has substantial content with describe blocks, expect assertions, and inline snapshots"
 
 rubric: []

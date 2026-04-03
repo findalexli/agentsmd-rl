@@ -9,7 +9,6 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import signal
-import textwrap
 from pathlib import Path
 
 import sympy
@@ -97,7 +96,7 @@ def test_max_with_identity():
         for val, expected in cases:
             expr = Identity(sympy.Integer(val))
             result = sympy.Max(0, expr)
-            assert result == expected, (
+            assert float(result) == expected, (
                 f"Max(0, Identity({val})) should be {expected}, got {result}"
             )
 
@@ -136,7 +135,7 @@ def test_min_with_identity():
         for val, expected in cases:
             expr = Identity(sympy.Integer(val))
             result = sympy.Min(0, expr)
-            assert result == expected, (
+            assert float(result) == expected, (
                 f"Min(0, Identity({val})) should be {expected}, got {result}"
             )
 
@@ -171,6 +170,34 @@ def test_all_comparison_operators():
         assert bool(c >= 0) is True
 
     _with_timeout(check)
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (agent_config) -- coding style
+# ---------------------------------------------------------------------------
+
+# [agent_config] pass_to_pass — CLAUDE.md:53-56 @ f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e
+def test_no_dynamic_attr_access_in_identity():
+    """Identity class must not use dynamic setattr/getattr for state management."""
+    source = Path(TARGET).read_text()
+    tree = ast.parse(source)
+
+    identity_class = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "Identity":
+            identity_class = node
+            break
+
+    assert identity_class is not None, "Identity class not found"
+
+    for node in ast.walk(identity_class):
+        if isinstance(node, ast.Call):
+            func = node.func
+            if isinstance(func, ast.Name) and func.id in ("setattr", "getattr"):
+                raise AssertionError(
+                    f"Identity class uses dynamic {func.id}() — "
+                    "prefer explicit class members (CLAUDE.md line 53-56)"
+                )
 
 
 # ---------------------------------------------------------------------------

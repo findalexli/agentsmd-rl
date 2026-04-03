@@ -62,6 +62,15 @@ checks:
     origin: pr_diff
     description: "colpali entry must be removed from conversion mapping (no longer needed with base model)"
 
+  - id: modular_colqwen2_no_model_indirection
+    type: fail_to_pass
+    origin: agent_config
+    description: "modular_colqwen2.py (source of truth) must also call self.vlm() directly, not self.vlm.model() — modular files are authoritative when present"
+    source:
+      path: "CLAUDE.md"
+      lines: "67"
+      commit: "05514c4bb641ba1537d17048fd93f50f45d5f19d"
+
 rubric:
   - rule: "We try to avoid direct inheritance between model-specific files in src/transformers/models/."
     source:

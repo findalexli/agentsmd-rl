@@ -8,7 +8,6 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
-import subprocess
 from pathlib import Path
 
 REPO = "/workspace/react"
@@ -17,98 +16,107 @@ FLOW_DOM = Path(REPO) / "flow-typed/environments/dom.js"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax checks
+# Gates (pass_to_pass, static) — file integrity checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
-def test_proxy_js_syntax_valid():
-    """proxy.js must be valid JavaScript (node --check)."""
+def test_proxy_js_exists_and_nontrivial():
+    """proxy.js must exist and contain core extension functions."""
+    # AST-only because: proxy.js uses Flow type annotations (@flow), node --check rejects Flow syntax
     assert PROXY.exists(), f"proxy.js not found at {PROXY}"
-    r = subprocess.run(
-        ["node", "--check", str(PROXY)],
-        capture_output=True, timeout=15,
-    )
-    assert r.returncode == 0, f"Syntax error in proxy.js:\n{r.stderr.decode()}"
+    content = PROXY.read_text()
+    assert "function injectProxy" in content, "injectProxy function missing from proxy.js"
+    assert "connectPort" in content, "connectPort function missing from proxy.js"
+    assert len(content) > 500, "proxy.js is suspiciously small — likely truncated or stubbed"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core fix verification
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_handle_pageshow_function_defined():
     """A handlePageShow function must be defined to guard against prerendering."""
+    # AST-only because: browser extension content script requires window/document/chrome APIs
     content = PROXY.read_text()
     assert re.search(r'\bfunction\s+handlePageShow\s*\(', content), (
         "handlePageShow function not found in proxy.js — "
-        "the fix requires extracting prerendering logic into a dedicated handler"
+        "the fix requires a dedicated handler that checks prerendering state"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_prerendering_checked_before_injection():
-    """handlePageShow must guard with if (document.prerendering) before injecting."""
+    """handlePageShow must check document.prerendering before calling injectProxy."""
+    # AST-only because: browser extension content script requires window/document/chrome APIs
     content = PROXY.read_text()
-    # The fix requires a conditional check, not just referencing the property
     assert re.search(r'if\s*\(\s*document\.prerendering\s*\)', content), (
         "No 'if (document.prerendering)' guard found in proxy.js — "
-        "the fix must check document.prerendering before calling injectProxy"
+        "the fix must check the prerendering state before injecting the proxy"
     )
 
 
 # [pr_diff] fail_to_pass
-def test_prerenderingchange_listener_registered():
-    """When prerendering, a prerenderingchange listener must defer injection."""
+def test_prerenderingchange_listener_defers_injection():
+    """When prerendering, a prerenderingchange listener must defer proxy injection."""
+    # AST-only because: browser extension content script requires window/document/chrome APIs
     content = PROXY.read_text()
-    assert "prerenderingchange" in content, (
-        "prerenderingchange not referenced in proxy.js"
+    assert re.search(
+        r"addEventListener\s*\(\s*['\"]prerenderingchange['\"]", content
+    ), (
+        "No addEventListener('prerenderingchange', ...) found — "
+        "the fix must listen for prerenderingchange to defer injection until prerendering ends"
     )
-    # Must be used as an addEventListener event name (not just in a comment)
-    assert re.search(r"addEventListener\s*\(\s*['\"]prerenderingchange['\"]", content), (
-        "prerenderingchange not used as an addEventListener event — "
-        "the fix must register a listener to defer injection until prerendering ends"
+    # The listener should use {once: true} to avoid duplicate injections
+    # Find the prerenderingchange addEventListener call and check for once: true nearby
+    match = re.search(
+        r"addEventListener\s*\(\s*['\"]prerenderingchange['\"][^)]*\{[^}]*once\s*:\s*true[^}]*\}",
+        content,
+    )
+    assert match, (
+        "prerenderingchange listener should use {once: true} to prevent duplicate injection"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_pageshow_listener_uses_handle_pageshow():
     """The pageshow event listener must call handlePageShow, not injectProxy directly."""
+    # AST-only because: browser extension content script requires window/document/chrome APIs
     content = PROXY.read_text()
-    # New handler is handlePageShow
-    assert (
-        "addEventListener('pageshow', handlePageShow)" in content
-        or 'addEventListener("pageshow", handlePageShow)' in content
+    # New: pageshow → handlePageShow
+    assert re.search(
+        r"""addEventListener\s*\(\s*['"]pageshow['"]\s*,\s*handlePageShow\s*\)""",
+        content,
     ), "pageshow listener not updated to use handlePageShow"
-    # Old direct call to injectProxy must be gone
-    assert (
-        "addEventListener('pageshow', injectProxy)" not in content
-        and 'addEventListener("pageshow", injectProxy)' not in content
+    # Old direct call must be gone
+    assert not re.search(
+        r"""addEventListener\s*\(\s*['"]pageshow['"]\s*,\s*injectProxy\s*\)""",
+        content,
     ), "pageshow listener still calls injectProxy directly — must use handlePageShow"
 
 
 # [pr_diff] fail_to_pass
-def test_inject_proxy_signature_updated():
-    """injectProxy must not destructure {target} from its argument."""
+def test_inject_proxy_no_target_parameter():
+    """injectProxy must not destructure {target} — signature updated to no parameters."""
+    # AST-only because: browser extension content script requires window/document/chrome APIs
     content = PROXY.read_text()
-    # Old signature: function injectProxy({target}: {target: any})
     assert not re.search(r'function\s+injectProxy\s*\(\s*\{', content), (
         "injectProxy still uses old {target} parameter destructuring — "
         "the fix removes this unused parameter"
     )
-    # New signature: function injectProxy()
     assert re.search(r'function\s+injectProxy\s*\(\s*\)', content), (
-        "injectProxy() with no parameters not found — "
+        "injectProxy() with empty parameter list not found — "
         "the fix changes the signature to take no arguments"
     )
 
 
 # [pr_diff] fail_to_pass
-def test_flow_prerendering_type_defined():
-    """flow-typed/environments/dom.js must declare prerendering on Document."""
-    assert FLOW_DOM.exists(), f"dom.js not found at {FLOW_DOM}"
+def test_flow_prerendering_type_declared():
+    """flow-typed/environments/dom.js must declare prerendering: boolean on Document."""
+    # AST-only because: Flow type definition file, not executable JavaScript
+    assert FLOW_DOM.exists(), f"Flow DOM type definitions not found at {FLOW_DOM}"
     content = FLOW_DOM.read_text()
-    # The fix adds: prerendering: boolean;
-    assert re.search(r'\bprerendering\s*:', content), (
-        "prerendering property not declared in flow-typed/environments/dom.js — "
-        "the fix adds a Flow type definition for document.prerendering"
+    assert re.search(r'\bprerendering\s*:\s*boolean\b', content), (
+        "prerendering: boolean not found in flow-typed/environments/dom.js — "
+        "the fix adds the Flow type for document.prerendering"
     )

@@ -60,6 +60,15 @@ checks:
       lines: "146"
       commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
 
+  - id: no_explicit_any
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified TypeScript files must not use explicit 'any' type annotations or assertions"
+    source:
+      path: "CLAUDE.md"
+      lines: "147"
+      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+
   - id: upstream_install_tests_pass
     type: pass_to_pass
     origin: repo_tests
@@ -102,8 +111,20 @@ rubric:
       lines: "154"
       commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
 
+  - rule: "If introducing a new optional field or nullable semantic in core logic, prefer an explicit union or dedicated type when the value changes behavior."
+    source:
+      path: "CLAUDE.md"
+      lines: "153"
+      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+
   - rule: "If a loader or registry change affects plugin authors, update the public SDK, docs, and contract tests instead of relying on incidental internals."
     source:
       path: "src/plugins/AGENTS.md"
       lines: "26-27"
+      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+
+  - rule: "Avoid ?? 0, empty-string, empty-object, or magic-string sentinels when they can change runtime meaning silently."
+    source:
+      path: "CLAUDE.md"
+      lines: "152"
       commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"

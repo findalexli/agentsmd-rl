@@ -7,10 +7,19 @@ source:
   merge_commit: "93f6b4e158337e2f4a78045a815c7595bf60a931"
 
 checks:
-  - id: typescript_compiles
+  - id: flint_passes
     type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files must compile without errors"
+    origin: agent_config
+    description: "npm run flint must pass (tsc + lint + DEPS.list import boundaries)"
+    source:
+      path: "CLAUDE.md"
+      lines: "57"
+      commit: "346b39c7895a7df03b50b087d503e9f2997fe2e0"
+
+  - id: shared_function_not_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "calculateUserAgentEmulation must no longer be exported from browserContext.ts"
 
   - id: firefox_no_platform_override
     type: fail_to_pass
@@ -32,14 +41,24 @@ checks:
     origin: static
     description: "Chromium must still send userAgentMetadata for client hints"
 
+  - id: chromium_metadata_has_platform_parsing
+    type: pass_to_pass
+    origin: static
+    description: "Chromium must still parse UA string for platform metadata (anti-stub)"
+
+  - id: firefox_no_import_calculate_emulation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Firefox must not import or reference calculateUserAgentEmulation"
+
+  - id: webkit_no_import_calculate_emulation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "WebKit must not import or reference calculateUserAgentEmulation"
+
 rubric:
   - rule: "For exported classes: private _method() — only used within the class itself; _method() (no private) — used by other code in the same file, but not outside the file; method() (public) — used in other files"
     source:
       path: "CLAUDE.md"
-      lines: "67-69"
-      commit: "346b39c7895a7df03b50b087d503e9f2997fe2e0"
-  - rule: "Client code NEVER imports server code. Server code NEVER imports client code. Communication is only through the protocol."
-    source:
-      path: "CLAUDE.md"
-      lines: "62"
+      lines: "99-104"
       commit: "346b39c7895a7df03b50b087d503e9f2997fe2e0"

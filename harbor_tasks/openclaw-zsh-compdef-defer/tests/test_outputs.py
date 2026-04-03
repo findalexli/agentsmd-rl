@@ -161,6 +161,34 @@ def test_zsh_completion_function_intact():
 # ---------------------------------------------------------------------------
 
 
+# [agent_config] pass_to_pass — CLAUDE.md:102 @ f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb
+def test_no_explicit_any():
+    """No explicit 'any' type annotations or assertions in completion-cli.ts (CLAUDE.md rule).
+
+    Checks for ': any' (type annotation) and 'as any' (type assertion) patterns
+    in TypeScript code. Template string content (the zsh script) is excluded
+    because it does not contain TypeScript type syntax.
+    """
+    src = TARGET.read_text()
+    violations = []
+    # Only check TypeScript lines, not lines inside the zsh template string.
+    # The template string starts with a backtick after generateZshCompletion/return
+    # and ends with a backtick. We detect TS context by tracking backtick depth.
+    in_template = False
+    for i, line in enumerate(src.splitlines(), 1):
+        # Toggle template string context on backtick (crude but sufficient here)
+        backtick_count = line.count("`")
+        if backtick_count % 2 == 1:
+            in_template = not in_template
+        if not in_template:
+            if re.search(r":\s*any\b", line) or re.search(r"\bas\s+any\b", line):
+                violations.append(f"completion-cli.ts:{i}: {line.strip()}")
+    assert not violations, (
+        "Found explicit 'any' types (CLAUDE.md: prefer strict typing; avoid any):\n"
+        + "\n".join(violations)
+    )
+
+
 # [agent_config] pass_to_pass — CLAUDE.md:104 @ f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb
 def test_no_ts_nocheck():
     """No @ts-nocheck or @ts-ignore in CLI source files (CLAUDE.md rule)."""

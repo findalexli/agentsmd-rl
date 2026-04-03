@@ -4,13 +4,13 @@ source:
   repo: "microsoft/vscode"
   pr: 306341
   base_commit: "d4b002af75f1878ead5b608beed470b9ae25b6f8"
-  merge_commit: "d4b002af75f1878ead5b608beed470b9ae25b6f8"
+  merge_commit: "e231798dee0a12ef1fec677d6453d14c18048de6"
 
 checks:
   - id: typescript_syntax
     type: pass_to_pass
     origin: static
-    description: "Modified file compiles without TypeScript errors"
+    description: "Modified file has no obvious syntax errors (balanced braces, class present)"
 
   - id: notification_method_removed
     type: fail_to_pass
@@ -27,10 +27,25 @@ checks:
     origin: pr_diff
     description: "Call to this.showThemeAutoUpdatedNotification() is removed from initialize()"
 
+  - id: revert_notification_string_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The 'newDefaultThemeAutoUpdated' localization key is removed"
+
   - id: new_default_notification_preserved
     type: pass_to_pass
     origin: pr_diff
     description: "showNewDefaultThemeNotification method is not accidentally removed"
+
+  - id: new_theme_notification_key_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "NEW_THEME_NOTIFICATION_KEY constant is not accidentally removed"
+
+  - id: initialize_method_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "initialize() still calls showNewDefaultThemeNotification but not showThemeAutoUpdatedNotification"
 
   - id: copyright_header
     type: pass_to_pass
@@ -70,4 +85,10 @@ rubric:
     source:
       path: ".github/copilot-instructions.md"
       lines: "139"
+      commit: "d4b002af75f1878ead5b608beed470b9ae25b6f8"
+
+  - rule: "Do not use `any` or `unknown` as the type for variables, parameters, or return values unless absolutely necessary."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "140"
       commit: "d4b002af75f1878ead5b608beed470b9ae25b6f8"

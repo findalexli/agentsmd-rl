@@ -36,8 +36,11 @@ def _parse_shorthand_map():
 def test_valid_js_syntax():
     """CSSShorthandProperty.js must parse without JS syntax errors."""
     assert Path(CSS_FILE).exists(), "CSSShorthandProperty.js not found"
+    # File uses ES module syntax (export const), so pipe via stdin with --input-type=module
+    content = Path(CSS_FILE).read_bytes()
     r = subprocess.run(
-        ["node", "--check", CSS_FILE],
+        ["node", "--input-type=module", "--check"],
+        input=content,
         capture_output=True, timeout=15,
     )
     assert r.returncode == 0, (

@@ -10,22 +10,17 @@ checks:
   - id: files_exist_and_not_truncated
     type: pass_to_pass
     origin: static
-    description: "All three modified files must exist and have meaningful content"
+    description: "Modified files must exist and have meaningful content"
 
   - id: core_exports_intact
     type: pass_to_pass
     origin: static
-    description: "Key exports (Session, SubagentFooter, App, InlineTool) still exist"
+    description: "Key exports (Session, SubagentFooter, InlineTool) still exist"
 
   - id: cycle_direction_fixed
     type: fail_to_pass
     origin: pr_diff
     description: "cycleSession must subtract direction from index (inverted arithmetic)"
-
-  - id: variant_opens_dialog
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Variant cycle command must open DialogVariant, not call cycle() directly"
 
   - id: subagent_footer_shows_type
     type: fail_to_pass
@@ -54,6 +49,15 @@ checks:
     source:
       path: "AGENTS.md"
       lines: "17"
+      commit: "860531c275cf845f80ccf26bba5bad745fe98398"
+
+  - id: no_try_catch_in_footer
+    type: pass_to_pass
+    origin: agent_config
+    description: "subagent-footer.tsx must not use try/catch blocks per AGENTS.md:12"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
       commit: "860531c275cf845f80ccf26bba5bad745fe98398"
 
 rubric:

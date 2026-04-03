@@ -1,7 +1,7 @@
 """
 Task: vscode-sessions-height-update
 Repo: microsoft/vscode @ 0dad7e0453d4d5a72113c59e8220aaf45020b9e7
-PR:   unknown
+PR:   306146
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
@@ -39,9 +39,9 @@ def test_delegate_extracted_as_variable():
     # Base: new SessionsTreeDelegate(approvalModel) is passed inline
     # Fix: const delegate = new SessionsTreeDelegate(approvalModel)
     content = Path(TARGET).read_text()
-    assert re.search(r'const\s+delegate\s*=\s*new\s+SessionsTreeDelegate', content), (
-        "Expected 'const delegate = new SessionsTreeDelegate(...)' but it was not found. "
-        "The delegate must be extracted to a named variable before tree construction."
+    assert re.search(r'(?:const|let)\s+\w+\s*=\s*new\s+SessionsTreeDelegate', content), (
+        "Expected SessionsTreeDelegate to be extracted to a named variable "
+        "before tree construction, but it was not found."
     )
 
 
@@ -69,8 +69,9 @@ def test_getheight_called_in_height_update_handler():
     # Base: this.tree.updateElementHeight(session, undefined)
     # Fix: this.tree.updateElementHeight(session, delegate.getHeight(session))
     content = Path(TARGET).read_text()
-    assert "delegate.getHeight(session)" in content, (
-        "Expected 'delegate.getHeight(session)' to be used as the height argument "
+    # Match any variable name for the delegate (not just "delegate")
+    assert re.search(r'\.getHeight\s*\(\s*session\s*\)', content), (
+        "Expected a .getHeight(session) call to compute the height argument "
         "in updateElementHeight, but it was not found."
     )
 
@@ -89,3 +90,38 @@ def test_undefined_not_passed_to_update_element_height():
         f"Found {len(bad_calls)} call(s) to updateElementHeight with undefined height: {bad_calls}. "
         "The height must be computed from the delegate, not passed as undefined."
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (agent_config) — coding guidelines
+# ---------------------------------------------------------------------------
+
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:72 @ 0dad7e0
+def test_tabs_not_spaces():
+    """Indentation must use tabs, not spaces (VS Code coding guideline)."""
+    content = Path(TARGET).read_text()
+    for i, line in enumerate(content.splitlines(), 1):
+        if line and line[0] == ' ' and line.strip():
+            # Lines starting with spaces (not tabs) indicate wrong indentation
+            # Allow lines inside template strings or comments that may use spaces
+            # But flag lines that look like indented code (common agent mistake)
+            if re.match(r'^    +\S', line):
+                assert False, (
+                    f"Line {i} uses spaces for indentation instead of tabs: {line[:60]!r}. "
+                    "VS Code requires tab indentation per .github/copilot-instructions.md."
+                )
+
+
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:138 @ 0dad7e0
+def test_no_duplicate_imports():
+    """No duplicate import statements in the target file."""
+    content = Path(TARGET).read_text()
+    import_lines = re.findall(r"^import\s+.+from\s+'([^']+)';", content, re.MULTILINE)
+    seen = {}
+    for module in import_lines:
+        if module in seen:
+            assert False, (
+                f"Duplicate import from '{module}' found. "
+                "Never duplicate imports per .github/copilot-instructions.md."
+            )
+        seen[module] = True

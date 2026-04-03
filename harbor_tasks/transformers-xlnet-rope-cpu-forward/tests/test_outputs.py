@@ -105,10 +105,11 @@ def test_device_param_bi_data():
     src, _, func_node = _get_method_node("XLNetModel", "relative_positional_encoding")
     func_src = _extract_method_source(src, func_node)
 
+    # bsz must be even for bi_data (code splits bsz//2 per direction)
     test_cases = [
         (8, 16, 4, 512),
         (12, 24, 2, 256),
-        (6, 10, 3, 128),
+        (6, 10, 8, 128),
     ]
     for qlen, klen, bsz, d_model in test_cases:
         exec_code = _build_mock_class(func_src, d_model, "bi", True, -1)
@@ -117,8 +118,8 @@ model = MockXLNet()
 result = model.relative_positional_encoding(qlen={qlen}, klen={klen}, bsz={bsz}, device='cpu')
 assert isinstance(result, torch.Tensor), f"Expected tensor, got {{type(result)}}"
 assert str(result.device) == 'cpu', f"Expected cpu device, got {{result.device}}"
-# bi_data=True produces concatenated fwd+bwd embeddings, dim=1 should be 2*bsz
-assert result.shape[1] == 2 * {bsz}, f"Expected dim1={{2 * {bsz}}} for bi_data, got {{result.shape[1]}}"
+# bi_data=True: fwd uses bsz//2, bwd uses bsz//2, cat on dim=1 → dim1 = 2*(bsz//2) = bsz
+assert result.shape[1] == {bsz}, f"Expected dim1={bsz} for bi_data, got {{result.shape[1]}}"
 assert result.shape[-1] == {d_model}, f"Expected last dim={d_model}, got {{result.shape[-1]}}"
 """
         exec(exec_code, {"__builtins__": __builtins__})
@@ -133,14 +134,14 @@ def test_device_param_clamp():
     func_src = _extract_method_source(src, func_node)
 
     # Test with clamp_len > 0, both bi_data modes
-    for bi_data, bsz_mult in [(False, 1), (True, 2)]:
+    for bi_data in [False, True]:
         exec_code = _build_mock_class(func_src, 256, "bi", bi_data, 4)
         exec_code += f"""
 model = MockXLNet()
 result = model.relative_positional_encoding(qlen=20, klen=30, bsz=2, device='cpu')
 assert isinstance(result, torch.Tensor), f"Expected tensor, got {{type(result)}}"
 assert str(result.device) == 'cpu', f"Expected cpu device, got {{result.device}}"
-assert result.shape[1] == {bsz_mult} * 2, f"Expected dim1={{{bsz_mult} * 2}}, got {{result.shape[1]}}"
+assert result.shape[1] == 2, f"Expected dim1=2 (bsz), got {{result.shape[1]}}"
 """
         exec(exec_code, {"__builtins__": __builtins__})
 
@@ -202,7 +203,7 @@ def test_not_stub():
     assert arange_count >= 3, f"Only {arange_count} torch.arange calls, expected >=3"
 
 
-# [static] pass_to_pass
+# [pr_diff] fail_to_pass
 def test_device_keyword_in_signature():
     """relative_positional_encoding signature includes device parameter."""
     _, _, func_node = _get_method_node("XLNetModel", "relative_positional_encoding")

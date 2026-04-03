@@ -86,9 +86,24 @@ checks:
       lines: "120"
       commit: "e94c3035c6f9d7868fb814cfeaf27b219d00e565"
 
+  - id: agent_test_no_shell_commands
+    type: fail_to_pass
+    origin: agent_config
+    description: "Test file does not spawn shell commands (find, grep) — uses Bun's Glob and built-in tools instead"
+    source:
+      path: "CLAUDE.md"
+      lines: "231"
+      commit: "e94c3035c6f9d7868fb814cfeaf27b219d00e565"
+
 rubric:
   - rule: "Follow existing code style - check neighboring files for patterns"
     source:
       path: "CLAUDE.md"
       lines: "228"
+      commit: "e94c3035c6f9d7868fb814cfeaf27b219d00e565"
+
+  - rule: "Prefer concurrent tests (test.concurrent / describe.concurrent) when multiple tests in the same file spawn processes or write files"
+    source:
+      path: "test/AGENTS.md"
+      lines: "22"
       commit: "e94c3035c6f9d7868fb814cfeaf27b219d00e565"

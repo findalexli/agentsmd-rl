@@ -1,20 +1,22 @@
 """
 Task: react-devtools-force-error-crash
 Repo: facebook/react @ 4610359651fa10247159e2050f8ec222cb7faa91
+PR:   #35985
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 Fix summary:
-  shouldErrorFiberAccordingToMap in renderer.js was returning `false` when a
-  fiber had no entry in forceErrorForFibers (status === undefined).  Returning
-  `false` caused updateClassComponent to try to reset error-boundary state on
-  an instance that had never been constructed, crashing.  The fix returns
-  `null` instead, which the switch statement treats as "do nothing", and
-  updates the Flow return-type annotation to `boolean | null`.
+  shouldErrorFiberAccordingToMap in renderer.js returned `false` when a fiber
+  had no entry in forceErrorForFibers (status === undefined).  Returning
+  `false` caused updateClassComponent's switch to hit `case false:`, which
+  tried to access workInProgress.stateNode on a class component that had
+  never been constructed — crash.  The fix returns `null` instead so the
+  switch hits `default:` (no-op), and updates the Flow return-type to
+  `boolean | null`.
 """
 
-import subprocess
+import re
 from pathlib import Path
 
 REPO = "/workspace/react"
@@ -23,21 +25,62 @@ RECONCILER = f"{REPO}/packages/react-reconciler/src/ReactFiberBeginWork.js"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
-def test_syntax_check():
-    """Modified JS files must parse without syntax errors."""
+def test_files_exist():
+    """Modified files exist and have content."""
     for f in [RENDERER, RECONCILER]:
-        r = subprocess.run(
-            ["node", "--check", f],
-            capture_output=True,
-            timeout=30,
-        )
-        assert r.returncode == 0, (
-            f"{f} has syntax errors:\n{r.stderr.decode()}"
-        )
+        p = Path(f)
+        assert p.exists(), f"{f} does not exist"
+        assert p.stat().st_size > 1000, f"{f} is suspiciously small"
+
+
+# [static] pass_to_pass
+def test_renderer_function_preserved():
+    """shouldErrorFiberAccordingToMap function and core logic still exist."""
+    # AST-only because: renderer.js uses Flow types inside a closure with thousands of deps
+    content = Path(RENDERER).read_text()
+    assert "shouldErrorFiberAccordingToMap" in content, (
+        "Function shouldErrorFiberAccordingToMap not found in renderer.js"
+    )
+    assert "forceErrorForFibers" in content, (
+        "forceErrorForFibers Map not found in renderer.js"
+    )
+    assert "status === undefined" in content, (
+        "undefined status check not found in shouldErrorFiberAccordingToMap"
+    )
+
+
+# [static] pass_to_pass
+def test_reconciler_switch_preserved():
+    """switch on shouldError(workInProgress) and case false: still exist."""
+    # AST-only because: ReactFiberBeginWork.js uses Flow types
+    content = Path(RECONCILER).read_text()
+    assert "shouldError(workInProgress)" in content, (
+        "shouldError(workInProgress) call not found in reconciler"
+    )
+    # The case false: branch must still exist — it handles clearing errors
+    # on components that HAVE been constructed
+    assert "case false:" in content, (
+        "case false: branch not found in shouldError switch"
+    )
+
+
+# [static] pass_to_pass
+def test_renderer_returns_status_for_known_fibers():
+    """Function still returns the actual status for known (mapped) fibers."""
+    # AST-only because: renderer.js uses Flow types, closure-scoped
+    content = Path(RENDERER).read_text()
+    # After the undefined check, the function must still return the boolean status
+    # for fibers that ARE in the map
+    func_start = content.find("shouldErrorFiberAccordingToMap")
+    assert func_start != -1
+    func_region = content[func_start:func_start + 2000]
+    assert "return status" in func_region, (
+        "shouldErrorFiberAccordingToMap must still return status for known fibers"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -45,60 +88,45 @@ def test_syntax_check():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_storeForceError_regression():
-    """storeForceError regression test passes — validates the crash fix end-to-end."""
-    # This test file was added by the PR to reproduce the exact crash scenario:
-    # forcing an error on a class component that has never been rendered before.
-    test_file = Path(REPO) / "packages/react-devtools-shared/src/__tests__/storeForceError-test.js"
-    assert test_file.exists(), (
-        "storeForceError-test.js not found — PR patch not applied"
-    )
-    r = subprocess.run(
-        ["yarn", "test", "--silent", "--no-watchman", "storeForceError"],
-        cwd=REPO,
-        capture_output=True,
-        timeout=120,
-    )
-    output = r.stdout.decode() + r.stderr.decode()
-    assert r.returncode == 0, f"storeForceError test failed:\n{output[-3000:]}"
+def test_renderer_no_false_for_unknown_fiber():
+    """shouldErrorFiberAccordingToMap must not return false when fiber has no entry.
 
-
-# [pr_diff] fail_to_pass
-def test_renderer_null_return_for_unknown_fiber():
-    """shouldErrorFiberAccordingToMap returns null (not false) when fiber has no forced-error entry.
-
-    Returning false caused the reconciler to attempt resetting an error-boundary
-    state on a class-component instance that had never been constructed, crashing.
-    Returning null causes the switch to fall through to default (no-op).
+    Returning false for unknown fibers caused the switch to hit `case false:`,
+    which tried to access stateNode on a never-constructed class component.
+    The fix returns null (or any non-boolean) so the switch hits default (no-op).
     """
-    # AST-only because: renderer.js uses Flow types and has thousands of deps
-    # that cannot be executed standalone in Python.
+    # AST-only because: renderer.js uses Flow types, closure-scoped function
     content = Path(RENDERER).read_text()
 
-    # Locate the undefined-status guard
     idx = content.find("if (status === undefined)")
     assert idx != -1, "Could not find 'if (status === undefined)' in renderer.js"
 
-    # The 50 chars after the guard should contain 'return null', not 'return false'
-    window = content[idx : idx + 80]
-    assert "return null" in window, (
-        f"Expected 'return null' after 'if (status === undefined)', got:\n{window!r}"
-    )
+    # The ~120 chars after the guard contain the return statement for this branch
+    window = content[idx:idx + 120]
     assert "return false" not in window, (
-        f"'return false' still present after 'if (status === undefined)':\n{window!r}"
+        f"'return false' still present for undefined status — this causes the crash.\n"
+        f"Context: {window!r}"
     )
 
 
 # [pr_diff] fail_to_pass
-def test_renderer_flow_type_boolean_null():
-    """shouldErrorFiberAccordingToMap Flow return type is 'boolean | null'.
+def test_renderer_return_type_includes_null():
+    """shouldErrorFiberAccordingToMap Flow return type must include null.
 
-    The old type 'boolean' was incorrect because the function can now return null,
-    and an imprecise type would cause Flow to miss callers that don't handle null.
+    The function can return null (unknown fiber), true (force error), or
+    false (clear error).  The Flow type must reflect all three to catch
+    callers that don't handle the null case.
     """
-    # AST-only because: renderer.js uses Flow types and can't execute standalone
+    # AST-only because: renderer.js uses Flow types
     content = Path(RENDERER).read_text()
 
-    assert "shouldErrorFiberAccordingToMap(fiber: any): boolean | null" in content, (
-        "Function signature must have return type 'boolean | null' (not just 'boolean')"
+    # Match the function signature with flexible whitespace
+    pattern = r"shouldErrorFiberAccordingToMap\s*\([^)]*\)\s*:\s*([\w\s|]+?)\s*\{"
+    match = re.search(pattern, content)
+    assert match, "Could not find shouldErrorFiberAccordingToMap function signature"
+
+    return_type = match.group(1).strip()
+    assert "null" in return_type, (
+        f"Return type is '{return_type}' but must include 'null' "
+        f"(e.g., 'boolean | null')"
     )

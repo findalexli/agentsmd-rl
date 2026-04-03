@@ -230,12 +230,15 @@ def test_not_stub():
     assert lines >= 400, f"File appears gutted ({lines} lines, expected >= 400)"
 
     result = _node(_PREAMBLE + _FIND_HELPER + """
-let stmts = 0;
-if (helperFunc?.body) stmts = helperFunc.body.statements.length;
-console.log(stmts);
+if (!helperFunc?.body) { console.log('0'); process.exit(0); }
+// Count total AST nodes in body to detect stubs vs real logic
+let nodes = 0;
+function count(n) { nodes++; ts.forEachChild(n, count); }
+count(helperFunc.body);
+console.log(nodes);
 """)
-    stmts = int(result) if result.isdigit() else 0
-    assert stmts >= 3, f"runResponsesAgentCommand body is a stub ({stmts} statements)"
+    nodes = int(result) if result.isdigit() else 0
+    assert nodes >= 10, f"runResponsesAgentCommand body is a stub ({nodes} AST nodes)"
 
 
 # ---------------------------------------------------------------------------

@@ -55,7 +55,7 @@ checks:
   - id: rewriter_registered_after_sandbox
     type: fail_to_pass
     origin: pr_diff
-    description: "BackgroundDetachRewriter registered after SandboxRewriter with ordering comment"
+    description: "BackgroundDetachRewriter registered after SandboxRewriter"
 
   - id: upstream_test_file_exists
     type: fail_to_pass
@@ -68,7 +68,25 @@ checks:
     description: "New rewriter file includes Microsoft copyright header"
     source:
       path: ".github/copilot-instructions.md"
-      lines: "32"
+      lines: "130"
+      commit: "a4855ab045eb06a0fbe50c1a91f5ff53b4cc990b"
+
+  - id: no_any_unknown_types
+    type: pass_to_pass
+    origin: agent_config
+    description: "New rewriter file must not use 'any' or 'unknown' as types"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "140"
+      commit: "a4855ab045eb06a0fbe50c1a91f5ff53b4cc990b"
+
+  - id: no_duplicate_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "New rewriter file must not have duplicate imports from the same module"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "138"
       commit: "a4855ab045eb06a0fbe50c1a91f5ff53b4cc990b"
 
   - id: existing_rewriters_preserved
@@ -80,35 +98,35 @@ rubric:
   - rule: "Use JSDoc style comments for functions, interfaces, enums, and classes"
     source:
       path: ".github/copilot-instructions.md"
-      lines: "12"
+      lines: "89"
       commit: "a4855ab045eb06a0fbe50c1a91f5ff53b4cc990b"
 
   - rule: "Prefer async and await over Promise and then calls"
     source:
       path: ".github/copilot-instructions.md"
-      lines: "33"
+      lines: "131"
       commit: "a4855ab045eb06a0fbe50c1a91f5ff53b4cc990b"
 
   - rule: "Use arrow functions => over anonymous function expressions"
     source:
       path: ".github/copilot-instructions.md"
-      lines: "22"
+      lines: "102"
       commit: "a4855ab045eb06a0fbe50c1a91f5ff53b4cc990b"
 
   - rule: "Always surround loop and conditional bodies with curly braces"
     source:
       path: ".github/copilot-instructions.md"
-      lines: "24"
+      lines: "113"
       commit: "a4855ab045eb06a0fbe50c1a91f5ff53b4cc990b"
 
   - rule: "You MUST deal with disposables by registering them immediately after creation for later disposal"
     source:
       path: ".github/copilot-instructions.md"
-      lines: "46"
+      lines: "144"
       commit: "a4855ab045eb06a0fbe50c1a91f5ff53b4cc990b"
 
   - rule: "Service dependencies MUST be declared in constructors and MUST NOT be accessed through the IInstantiationService at any other point in time"
     source:
       path: ".github/copilot-instructions.md"
-      lines: "52"
+      lines: "149"
       commit: "a4855ab045eb06a0fbe50c1a91f5ff53b4cc990b"

@@ -356,6 +356,26 @@ def test_no_print_in_rtensor():
                 )
 
 
+# [agent_config] fail_to_pass — AGENTS.md:99 @ 9639749e
+def test_create_session_has_return_type_annotation():
+    """_create_session has an explicit return type annotation (explicit type hints required)."""
+    import ast
+
+    # AST-only because: return type annotations are not visible at runtime via inspect
+    src = Path("/repo/areal/infra/rpc/rtensor.py").read_text()
+    tree = ast.parse(src)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "HttpRTensorBackend":
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name == "_create_session":
+                    assert item.returns is not None, (
+                        "_create_session must have a return type annotation — "
+                        "AGENTS.md requires explicit type hints"
+                    )
+                    return
+    raise AssertionError("_create_session method not found in HttpRTensorBackend")
+
+
 # [agent_config] pass_to_pass — AGENTS.md:31 @ 9639749e
 def test_no_hardcoded_endpoints():
     """No hardcoded IP addresses or URLs in rtensor.py (must use parameters)."""

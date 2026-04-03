@@ -225,9 +225,34 @@ Using E2B sandboxes (~5x faster than local Docker):
 
 **Progress: 188 → ~340 passing (+81%), 439 → 550 total tasks (+25%)**
 
-### Next steps
-- [ ] Full E2B validation on all 550 tasks (fresh templates after Dockerfile migration)
-- [ ] Rubric enrichment pass: review agent_configs.md for all tasks, add missing checks (~$15-20 sonnet)
-- [ ] Fix remaining 33 Dockerfiles with non-standard git patterns
-- [ ] Debug persistent fail_build tasks locally
-- [ ] Target: 400+ passing
+### Hour 10-12: Overnight (2026-04-02 23:00 → 04-03 09:00)
+
+**Completed:**
+- [x] Full E2B validation post git migration → 394 passing (71.6%)
+- [x] Rubric enrichment: 335 passing tasks reviewed for agent_config checks
+  - v1 prompt (158 tasks): correct tests but some line number misattribution
+  - v2 prompt (177 tasks): fixed line attribution + programmatic > rubric rule
+  - ~53% of tasks got new checks, ~47% correctly had no relevant rules
+- [x] Patch regeneration: 18 broken solve.sh regenerated with `git apply --3way`
+- [x] Local Docker rust builds: 30 tasks with 900s timeout (in progress overnight)
+- [x] All 111 kimi_drafts moved to harbor_tasks/ (550 total)
+
+### Scoreboard (2026-04-03 09:00)
+
+| Status | Count | % |
+|--------|-------|---|
+| **pass** | **394** | **71.6%** |
+| fail | 74 | 13.5% |
+| fail_build | 64 | 11.6% |
+| no_status/other | 18 | 3.3% |
+| **Total** | **550** | |
+
+**Full session progress: 188 → 394 passing (+206, +110%), 439 → 550 tasks (+111)**
+
+### Remaining (next session)
+- [ ] Final E2B validation to verify enrichment didn't break passing tasks (~20 min)
+- [ ] E2B validate 18 regenerated patches (~5 min, could add ~10 passes)
+- [ ] Fix 33 non-standard Dockerfiles (regex missed these git patterns)
+- [ ] Git commit enrichment results + plan update
+- [ ] 74 fail tasks abandoned (wrong test assertions, diminishing returns)
+- [ ] 64 fail_build abandoned (persistent Docker issues)

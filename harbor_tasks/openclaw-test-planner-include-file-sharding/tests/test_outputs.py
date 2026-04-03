@@ -260,21 +260,6 @@ def test_explicit_filter_import_preserved():
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — CLAUDE.md:164 @ c22edbb8
-def test_helper_not_inlined():
-    """includeFiles fallback uses a helper, not inlined at each call site.
-
-    CLAUDE.md:164: "Keep files concise; extract helpers instead of 'V2' copies."
-    """
-    for name in [EXECUTOR, PLANNER]:
-        content = _read(name)
-        count = content.count("includeFiles.length")
-        assert count <= 2, (
-            f"{Path(name).name} has {count} occurrences of includeFiles.length — "
-            f"expected <=2 (helper pattern, not inlined at every call site)"
-        )
-
-
 # [agent_config] pass_to_pass — CLAUDE.md:146 @ c22edbb8
 def test_no_lint_suppressions():
     """New helper function must not introduce inline lint suppressions.

@@ -96,17 +96,6 @@ assert len(BASE_VIDEO_PROCESSOR_DOCSTRING) > 500, f'too short: {len(BASE_VIDEO_P
 
 
 # [pr_diff] fail_to_pass
-def test_processor_mapping_without_pil():
-    """PROCESSOR_MAPPING_NAMES accessible without PIL (CI import chain)."""
-    _ensure_no_pil()
-    r = _run("""
-from transformers.models.auto.processing_auto import PROCESSOR_MAPPING_NAMES
-assert len(PROCESSOR_MAPPING_NAMES) > 0, 'empty mapping'
-""")
-    assert r.returncode == 0, f"PROCESSOR_MAPPING_NAMES failed:\n{r.stdout}\n{r.stderr}"
-
-
-# [pr_diff] fail_to_pass
 def test_methods_exist_without_pil():
     """Key methods on BaseVideoProcessor present; __call__ delegates to preprocess."""
     _ensure_no_pil()

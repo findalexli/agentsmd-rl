@@ -59,9 +59,24 @@ checks:
       lines: "234-238"
       commit: "047cedb2b3b05fb89b7081ab753d77a2f4df0135"
 
+  - id: no_std_mem_for_strings
+    type: pass_to_pass
+    origin: agent_config
+    description: "No std.mem.eql/startsWith/endsWith/indexOf for strings in added code — use bun.strings.* instead"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "25"
+      commit: "047cedb2b3b05fb89b7081ab753d77a2f4df0135"
+
 rubric:
   - rule: "Memory management — In Zig code, be careful with allocators and use defer for cleanup"
     source:
       path: "CLAUDE.md"
       lines: "232"
+      commit: "047cedb2b3b05fb89b7081ab753d77a2f4df0135"
+
+  - rule: "Prefer decl literals (`.{ .field = value }`) over explicit struct type initialization in new Zig code where the type can be inferred"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "6"
       commit: "047cedb2b3b05fb89b7081ab753d77a2f4df0135"

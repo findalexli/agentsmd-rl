@@ -12,24 +12,23 @@ checks:
     origin: static
     description: "ReactFlightClient.js exists and createFakeFunction has a catch block"
 
-  - id: defineProperty_sets_fn_name_in_csp_fallback
+  - id: csp_fallback_function_named
     type: fail_to_pass
     origin: pr_diff
-    description: "catch block in createFakeFunction sets fn.name via Object.defineProperty with {value: name}"
+    description: "CSP fallback in createFakeFunction produces correctly named functions (MyComponent, ServerAction, fetchData)"
 
-  - id: flowfixme_cannot_write_comment
+  - id: csp_fallback_special_names
     type: fail_to_pass
     origin: pr_diff
-    description: "$FlowFixMe[cannot-write] comment suppresses Flow type error on fn.name assignment inside catch block"
+    description: "CSP fallback handles edge-case names: single char, dotted, hyphenated, unicode"
 
-  - id: existing_flight_tests
+  - id: prettier_format
     type: pass_to_pass
-    origin: repo_tests
-    description: "Upstream ReactFlight test suite still passes after the fix"
-
-rubric:
-  - rule: "When using a non-obvious workaround (e.g. Object.defineProperty instead of the bind trick to name a function), include an explanatory comment describing why the more idiomatic approach does not work."
+    origin: agent_config
+    description: "Changed file passes yarn prettier formatting check"
     source:
-      path: "CLAUDE.md"
-      lines: ""
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "10"
       commit: "87ae75b33f71eb673c55ddb3a147a9e58b7d05bd"
+
+rubric: []

@@ -204,6 +204,19 @@ def test_all_nine_hub_kwargs():
         assert key not in result, f"non-hub kwarg '{key}' should not be forwarded"
 
 
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:17 @ c17877c2ad39f8f736d5ea8a34f98e562843fc83
+def test_ruff_clean():
+    """processing_auto.py must pass ruff linting (code style enforced in CI)."""
+    import subprocess
+
+    result = subprocess.run(
+        ["ruff", "check", TARGET],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"ruff check failed:\n{result.stdout}\n{result.stderr}"
+
+
 # [pr_diff] pass_to_pass
 def test_no_unused_inspect_import():
     """If inspect is imported it must be used; otherwise it should be removed."""

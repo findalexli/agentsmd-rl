@@ -10,7 +10,7 @@ checks:
   - id: syntax_check
     type: pass_to_pass
     origin: static
-    description: "src/plugins/tools.ts must parse without TypeScript errors"
+    description: "src/plugins/tools.ts must parse without errors (balanced braces, expected exports)"
 
   - id: active_registry_import
     type: fail_to_pass
@@ -25,17 +25,7 @@ checks:
   - id: resolve_tools_delegates_registry
     type: fail_to_pass
     origin: pr_diff
-    description: "resolvePluginTools must not call resolveRuntimePluginRegistry directly; must delegate through a helper that checks active registry"
-
-  - id: existing_optional_tool_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing vitest tests in tools.optional.test.ts still pass after the fix"
-
-  - id: loader_regression
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Upstream plugin loader tests (loader.test.ts) still pass after the fix"
+    description: "resolvePluginTools must not call resolveRuntimePluginRegistry directly; must delegate through logic that checks active registry"
 
   - id: no_ts_nocheck
     type: pass_to_pass
@@ -91,6 +81,15 @@ checks:
       lines: "147"
       commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
 
+  - id: no_direct_plugin_config_reads
+    type: pass_to_pass
+    origin: agent_config
+    description: "tools.ts must not read plugins.entries.<id>.config directly"
+    source:
+      path: "src/plugins/CLAUDE.md"
+      lines: "28-31"
+      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
+
 rubric:
   - rule: "Keep loader behavior aligned with the documented Plugin SDK and manifest contracts. Do not create private backdoors that bundled plugins can use but external plugins cannot."
     source:
@@ -132,4 +131,10 @@ rubric:
     source:
       path: "src/plugins/CLAUDE.md"
       lines: "26-27"
+      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
+
+  - rule: "Keep contract loading and contract tests on the dedicated bundled registry path. Do not make contract validation depend on activating providers through unrelated production resolution flows."
+    source:
+      path: "src/plugins/CLAUDE.md"
+      lines: "34-36"
       commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"

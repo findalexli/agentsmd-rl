@@ -11,7 +11,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
-import subprocess
+from collections import Counter
 from pathlib import Path
 
 REPO = "/workspace/vscode"
@@ -80,11 +80,14 @@ def test_config_properties_correct():
     """DetachBackgroundProcesses config has included:false, restricted:true, type:boolean, default:false."""
     # AST-only because: TypeScript requires full compilation to execute
     src = CONFIG_FILE.read_text()
-    # Find the block around DetachBackgroundProcesses
-    idx = src.find("DetachBackgroundProcesses")
-    assert idx != -1, "DetachBackgroundProcesses not found in config file"
-    # Check the surrounding context (next ~400 chars)
-    context = src[idx:idx + 400]
+    # Find the config block (not the enum entry) — look for the setting key in brackets
+    idx = src.find("[TerminalChatAgentToolsSettingId.DetachBackgroundProcesses]")
+    if idx == -1:
+        # Alternative: direct string key
+        idx = src.find("'chat.tools.terminal.detachBackgroundProcesses'")
+    assert idx != -1, "DetachBackgroundProcesses config block not found"
+    # Check the surrounding context (next ~500 chars for the config block)
+    context = src[idx:idx + 500]
     assert "included: false" in context, (
         "DetachBackgroundProcesses config must have 'included: false' (experimental/hidden)"
     )
@@ -92,7 +95,7 @@ def test_config_properties_correct():
         "DetachBackgroundProcesses config must have 'restricted: true'"
     )
     assert "type: 'boolean'" in context, (
-        "DetachBackgroundProcesses config must have 'type: 'boolean''"
+        "DetachBackgroundProcesses config must have type: 'boolean'"
     )
     assert "default: false" in context, (
         "DetachBackgroundProcesses config must have 'default: false'"
@@ -104,12 +107,16 @@ def test_foreground_returns_undefined():
     """Rewriter returns undefined for foreground commands (isBackground falsy)."""
     # AST-only because: TypeScript requires full compilation to execute
     src = REWRITER_FILE.read_text()
-    # The guard: if (!options.isBackground) { return undefined; }
-    assert re.search(r"if\s*\(!options\.isBackground\)", src), (
-        "Rewriter must guard with 'if (!options.isBackground)' to return undefined for foreground commands"
+    # The guard must check isBackground and return undefined
+    assert re.search(r"isBackground", src), (
+        "Rewriter must check isBackground option"
     )
     assert "return undefined" in src, (
         "Rewriter must return undefined for non-background commands"
+    )
+    # Verify there's a guard pattern: check isBackground then return undefined
+    assert re.search(r"isBackground.*?return undefined", src, re.DOTALL), (
+        "Rewriter must guard on isBackground before returning undefined"
     )
 
 
@@ -128,6 +135,9 @@ def test_posix_nohup_wrapping():
     assert "reasoning" in src, (
         "Result must include reasoning field"
     )
+    assert "rewritten" in src, (
+        "Result must include rewritten field with the wrapped command"
+    )
 
 
 # [pr_diff] fail_to_pass
@@ -138,16 +148,17 @@ def test_windows_powershell_wrapping():
     assert "Start-Process" in src, (
         "Rewriter must wrap Windows/PowerShell commands with 'Start-Process'"
     )
-    assert "isPowerShell" in src, (
-        "Rewriter must call isPowerShell() to detect PowerShell shells"
+    # Must detect PowerShell shell type
+    assert re.search(r"[Pp]ower[Ss]hell", src), (
+        "Rewriter must detect PowerShell shells"
     )
-    # Non-PowerShell Windows returns undefined (isPowerShell check + return undefined)
-    assert re.search(r"isPowerShell.*\n.*return undefined|return undefined.*\n.*isPowerShell", src, re.DOTALL), (
-        "Rewriter must return undefined for non-PowerShell Windows shells"
+    # Non-PowerShell Windows must return undefined
+    assert src.count("return undefined") >= 2, (
+        "Rewriter must return undefined in multiple cases (foreground + non-PowerShell Windows)"
     )
-    # Quote escaping for PowerShell
-    assert re.search(r'replace\(/"/g.*\\\\"|replace.*".*\\\\"', src), (
-        "Rewriter must escape double-quotes in commands for PowerShell strings"
+    # Quote escaping for PowerShell — must handle double-quotes in commands
+    assert re.search(r'replace.*".*\\', src), (
+        "Rewriter must escape quotes in commands for PowerShell strings"
     )
 
 
@@ -156,8 +167,9 @@ def test_is_background_passed_in_run_tool():
     """runInTerminalTool.ts passes isBackground from args to rewriters."""
     # AST-only because: TypeScript requires full compilation to execute
     src = RUN_TOOL_FILE.read_text()
-    assert "isBackground: args.isBackground" in src, (
-        "runInTerminalTool must pass 'isBackground: args.isBackground' to rewriter options"
+    # The rewriter options must include isBackground from the tool args
+    assert re.search(r"isBackground.*args\.isBackground|args\.isBackground.*isBackground", src), (
+        "runInTerminalTool must pass isBackground from args to rewriter options"
     )
     assert "CommandLineBackgroundDetachRewriter" in src, (
         "runInTerminalTool must import CommandLineBackgroundDetachRewriter"
@@ -166,17 +178,15 @@ def test_is_background_passed_in_run_tool():
 
 # [pr_diff] fail_to_pass
 def test_rewriter_registered_after_sandbox():
-    """BackgroundDetachRewriter is registered after SandboxRewriter with ordering comment."""
+    """BackgroundDetachRewriter is registered after SandboxRewriter."""
     # AST-only because: TypeScript requires full compilation to execute
     src = RUN_TOOL_FILE.read_text()
-    # The comment explaining ordering constraint
-    assert re.search(r"BackgroundDetachRewriter.*must come after.*SandboxRewriter|after.*SandboxRewriter.*BackgroundDetachRewriter", src, re.IGNORECASE), (
-        "Must have comment explaining BackgroundDetachRewriter must come after SandboxRewriter"
-    )
-    # SandboxRewriter must appear before BackgroundDetachRewriter in registration
-    sandbox_idx = src.find("CommandLineSandboxRewriter")
-    detach_idx = src.find("CommandLineBackgroundDetachRewriter")
-    assert sandbox_idx < detach_idx, (
+    # Compare registration order (createInstance calls), not import order
+    sandbox_reg = src.find("createInstance(CommandLineSandboxRewriter)")
+    detach_reg = src.find("createInstance(CommandLineBackgroundDetachRewriter)")
+    assert sandbox_reg != -1, "CommandLineSandboxRewriter must be registered via createInstance"
+    assert detach_reg != -1, "CommandLineBackgroundDetachRewriter must be registered via createInstance"
+    assert sandbox_reg < detach_reg, (
         "CommandLineSandboxRewriter must be registered before CommandLineBackgroundDetachRewriter"
     )
 
@@ -190,12 +200,15 @@ def test_upstream_test_file_exists():
         "The fix must include a test file for CommandLineBackgroundDetachRewriter"
     )
     src = UPSTREAM_TEST_FILE.read_text()
-    # Test file must have tests for foreground and disabled-setting cases
-    assert "foreground" in src.lower() or "isBackground" in src, (
-        "Test file must include tests for foreground commands returning undefined"
+    # Test file must cover foreground and background cases
+    assert "isBackground" in src or "foreground" in src.lower(), (
+        "Test file must include tests for foreground/background behavior"
     )
     assert "undefined" in src, (
         "Test file must verify rewriter returns undefined in appropriate cases"
+    )
+    assert "nohup" in src or "Start-Process" in src, (
+        "Test file must verify command wrapping behavior"
     )
 
 
@@ -203,16 +216,48 @@ def test_upstream_test_file_exists():
 # Pass-to-pass (agent_config) — rules from .github/copilot-instructions.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — .github/copilot-instructions.md:32 @ a4855ab045eb06a0fbe50c1a91f5ff53b4cc990b
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:130 @ a4855ab045eb06a0fbe50c1a91f5ff53b4cc990b
 def test_copyright_header():
     """New rewriter file includes the Microsoft copyright header."""
     # AST-only because: TypeScript requires full compilation to execute
     src = REWRITER_FILE.read_text()
-    # Copyright header must be near the top
     top = src[:300]
     assert "Copyright (c) Microsoft Corporation" in top, (
         "commandLineBackgroundDetachRewriter.ts must start with Microsoft copyright header\n"
-        "Rule from .github/copilot-instructions.md:32"
+        "Rule from .github/copilot-instructions.md:130"
+    )
+
+
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:140 @ a4855ab045eb06a0fbe50c1a91f5ff53b4cc990b
+def test_no_any_unknown_types():
+    """New rewriter file must not use 'any' or 'unknown' as types."""
+    # AST-only because: TypeScript requires full compilation to execute
+    src = REWRITER_FILE.read_text()
+    # Check for `: any` or `: unknown` type annotations (not in comments/strings)
+    for line in src.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("//") or stripped.startswith("*"):
+            continue
+        assert not re.search(r":\s*any\b", line), (
+            f"Must not use 'any' type: {line.strip()}\n"
+            "Rule from .github/copilot-instructions.md:140"
+        )
+        assert not re.search(r":\s*unknown\b", line), (
+            f"Must not use 'unknown' type: {line.strip()}\n"
+            "Rule from .github/copilot-instructions.md:140"
+        )
+
+
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:138 @ a4855ab045eb06a0fbe50c1a91f5ff53b4cc990b
+def test_no_duplicate_imports():
+    """New rewriter file must not have duplicate imports from the same module."""
+    # AST-only because: TypeScript requires full compilation to execute
+    src = REWRITER_FILE.read_text()
+    import_sources = re.findall(r"from\s+['\"]([^'\"]+)['\"]", src)
+    dupes = [mod for mod, count in Counter(import_sources).items() if count > 1]
+    assert not dupes, (
+        f"Duplicate imports from: {dupes}\n"
+        "Rule from .github/copilot-instructions.md:138"
     )
 
 

@@ -7,20 +7,25 @@ source:
   merge_commit: "b38bea427cca74f993c78213522a16a902b6046e"
 
 checks:
-  - id: compilation
-    type: pass_to_pass
-    origin: static
-    description: "All three affected crates (uv-audit, uv-cli, uv) must compile"
-
   - id: enum_copy_clone_debug
     type: fail_to_pass
     origin: pr_diff
     description: "VulnerabilityServiceFormat::Osv exists with Copy, Clone, Debug derives"
 
+  - id: enum_clap_valueenum
+    type: fail_to_pass
+    origin: pr_diff
+    description: "VulnerabilityServiceFormat has cfg_attr for clap::ValueEnum"
+
   - id: cli_fields_typed
     type: fail_to_pass
     origin: pr_diff
     description: "AuditArgs.service_format is VulnerabilityServiceFormat, service_url is Option<String>"
+
+  - id: cli_arg_attributes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "service_format has value_enum + default_value osv, service_url has ValueHint::Url"
 
   - id: audit_fn_accepts_service_params
     type: fail_to_pass
@@ -36,6 +41,11 @@ checks:
     type: fail_to_pass
     origin: pr_diff
     description: "uv-audit Cargo.toml has clap listed as optional dependency"
+
+  - id: uv_cli_depends_on_uv_audit
+    type: fail_to_pass
+    origin: pr_diff
+    description: "uv-cli Cargo.toml depends on uv-audit with clap feature enabled"
 
   - id: no_unwrap_in_audit
     type: pass_to_pass

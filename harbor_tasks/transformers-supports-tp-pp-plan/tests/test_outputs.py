@@ -301,3 +301,16 @@ def test_ruff_imports_clean():
     assert r.returncode == 0, (
         f"ruff import check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
     )
+
+
+# [agent_config] pass_to_pass — AGENTS.md:2 @ 09fea1e6e970a1051b1141ce320a3d696b2c15ed
+def test_ruff_check_clean():
+    """Changed file passes ruff check (all default rules) as required by make style."""
+    r = subprocess.run(
+        ["ruff", "check", TARGET],
+        capture_output=True, timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"ruff check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+    )

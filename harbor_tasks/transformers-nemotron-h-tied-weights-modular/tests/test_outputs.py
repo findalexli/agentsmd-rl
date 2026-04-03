@@ -188,9 +188,10 @@ def test_modular_not_stub():
 # [agent_config] pass_to_pass — CLAUDE.md:2 @ 2cd52c267ce4d0212eaa40c0ec7192a11654336f
 def test_ruff_clean():
     """Both files must pass ruff linting (CLAUDE.md: 'make style: runs formatters and linters')."""
+    # Use repo's pyproject.toml ruff config (cwd=REPO) — no --select override
     r = subprocess.run(
-        ["ruff", "check", MODELING, MODULAR, "--select", "E,F,W", "--quiet"],
-        capture_output=True, timeout=30,
+        ["ruff", "check", MODELING, MODULAR, "--no-fix"],
+        cwd=REPO, capture_output=True, timeout=30,
     )
     assert r.returncode == 0, f"ruff check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
 

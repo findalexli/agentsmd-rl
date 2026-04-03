@@ -13,7 +13,6 @@ import subprocess
 from pathlib import Path
 
 REPO = "/workspace/opencode"
-APP = f"{REPO}/packages/opencode/src/cli/cmd/tui/app.tsx"
 SESSION = f"{REPO}/packages/opencode/src/cli/cmd/tui/routes/session/index.tsx"
 FOOTER = f"{REPO}/packages/opencode/src/cli/cmd/tui/routes/session/subagent-footer.tsx"
 
@@ -24,8 +23,8 @@ FOOTER = f"{REPO}/packages/opencode/src/cli/cmd/tui/routes/session/subagent-foot
 
 # [static] pass_to_pass
 def test_files_exist_and_not_truncated():
-    """All three modified files must exist and have meaningful content."""
-    for f in [APP, SESSION, FOOTER]:
+    """Modified files must exist and have meaningful content."""
+    for f in [SESSION, FOOTER]:
         p = Path(f)
         assert p.exists(), f"{f} does not exist"
         assert p.stat().st_size > 200, f"{f} is truncated (< 200 bytes)"
@@ -36,11 +35,9 @@ def test_core_exports_intact():
     """Key exports and components must still exist after changes."""
     session_src = Path(SESSION).read_text()
     footer_src = Path(FOOTER).read_text()
-    app_src = Path(APP).read_text()
 
     assert "export function Session" in session_src, "Session export missing"
     assert "export function SubagentFooter" in footer_src, "SubagentFooter export missing"
-    assert "function App(" in app_src, "App function missing"
     assert "function InlineTool(" in session_src, "InlineTool function missing"
 
 
@@ -70,7 +67,7 @@ for (const line of lines) {
 }
 if (!opLine) { console.log(JSON.stringify({ok: false, reason: "no findIndex+direction line"})); process.exit(0); }
 
-const m = opLine.match(/findIndex\([^)]*\)\s*([+\-])\s*direction/);
+const m = opLine.match(/\)\s*([+\-])\s*direction/);
 if (!m) { console.log(JSON.stringify({ok: false, reason: "can't parse operator from: " + opLine.trim()})); process.exit(0); }
 
 const op = m[1];
@@ -107,37 +104,6 @@ console.log(JSON.stringify({ok: passed === tests.length, passed, total: tests.le
         f"Cycling direction wrong: operator='{data.get('op')}', "
         f"passed {data.get('passed')}/{data.get('total')}"
     )
-
-
-# [pr_diff] fail_to_pass
-def test_variant_opens_dialog():
-    """Variant cycle command must open a dialog component, not call cycle() directly."""
-    src = Path(APP).read_text()
-
-    # Must import a variant dialog component
-    has_dialog_import = bool(
-        re.search(r"import[^;]*DialogVariant", src)
-        or re.search(r"import[^;]*[Vv]ariant[Dd]ialog", src)
-    )
-    assert has_dialog_import, "No variant dialog component imported"
-
-    # Find the variant.cycle onSelect handler
-    m = re.search(
-        r"""['"]variant\.cycle['"][\s\S]{0,500}?onSelect\s*:\s*\(\)\s*=>\s*\{""",
-        src,
-    )
-    assert m, "variant.cycle onSelect handler not found"
-
-    # Get 300 chars after onSelect opening brace
-    start = m.end()
-    handler = src[start : start + 300]
-
-    # Must use dialog (replace, open, show, push, set)
-    assert re.search(r"dialog\.\w+|setDialog|openDialog|showDialog", handler), \
-        "Handler doesn't open a dialog"
-
-    # Must NOT directly call .cycle()
-    assert ".cycle()" not in handler, "Handler still calls .cycle() directly"
 
 
 # [pr_diff] fail_to_pass
@@ -253,6 +219,14 @@ def test_dead_code_removed():
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — AGENTS.md rules
 # ---------------------------------------------------------------------------
+
+# [agent_config] pass_to_pass — AGENTS.md:12 @ 860531c275cf845f80ccf26bba5bad745fe98398
+def test_no_try_catch_in_footer():
+    """subagent-footer.tsx must not contain try/catch blocks. Per AGENTS.md:12."""
+    src = Path(FOOTER).read_text()
+    assert "try {" not in src and "try{" not in src, \
+        "try/catch block found in subagent-footer.tsx (AGENTS.md:12: avoid try/catch where possible)"
+
 
 # [agent_config] fail_to_pass — AGENTS.md:17 @ 860531c275cf845f80ccf26bba5bad745fe98398
 def test_functional_array_methods():

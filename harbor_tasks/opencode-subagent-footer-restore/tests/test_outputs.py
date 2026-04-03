@@ -223,6 +223,16 @@ def test_no_try_catch_in_footer():
         "SubagentFooter uses try/catch (AGENTS.md:12: avoid try/catch)"
 
 
+# [agent_config] fail_to_pass — AGENTS.md:17 @ 41b0d03
+def test_no_for_loops_in_footer():
+    """SubagentFooter uses functional array methods, not for loops (AGENTS.md:17)."""
+    p = Path(FOOTER)
+    assert p.exists(), "subagent-footer.tsx does not exist"
+    code = _strip_comments(p.read_text())
+    assert not re.search(r"\bfor\s*\(", code), \
+        "SubagentFooter uses a for loop — prefer functional array methods (AGENTS.md:17)"
+
+
 # [agent_config] fail_to_pass — AGENTS.md:70 @ 41b0d03
 def test_prefer_const_in_footer():
     """SubagentFooter should use const, not let (AGENTS.md:70)."""

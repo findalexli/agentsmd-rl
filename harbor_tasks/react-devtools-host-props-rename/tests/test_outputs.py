@@ -9,7 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 Fix summary: In renderer.js `renamePath`, the `case 'props':` block incorrectly
 used `if (instance === null)` to dispatch. Host Components (e.g. <input>) have
 a non-null DOM instance but no `forceUpdate()`. The fix replaces the if/else
-with `switch (fiber.tag)`, routing ClassComponents to forceUpdate() and
+with dispatch based on `fiber.tag`, routing ClassComponents to forceUpdate() and
 everything else to overridePropsRenamePath().
 """
 
@@ -19,6 +19,7 @@ from pathlib import Path
 
 REPO = "/workspace/react"
 RENDERER = f"{REPO}/packages/react-devtools-shared/src/backend/fiber/renderer.js"
+EDITING_TEST = f"{REPO}/packages/react-devtools-shared/src/__tests__/editing-test.js"
 
 
 def _get_rename_path_props_section(content: str) -> str:
@@ -26,11 +27,11 @@ def _get_rename_path_props_section(content: str) -> str:
     Find the case 'props': block inside renamePath.
 
     The renamePath function has a `case 'props':` that references
-    overridePropsRenamePath (unlike the setInPath function). We find the
-    case 'props': whose 600-char window contains overridePropsRenamePath.
+    overridePropsRenamePath (unlike setInPath). We locate it by finding
+    the case 'props': whose 800-char window contains overridePropsRenamePath.
     """
     for m in re.finditer(r"case 'props':", content):
-        window = content[m.start() : m.start() + 600]
+        window = content[m.start() : m.start() + 800]
         if "overridePropsRenamePath" in window:
             return window
     return ""
@@ -53,72 +54,50 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — structural checks
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_switch_on_fiber_tag_replaces_instance_null_check():
+def test_dispatches_on_fiber_tag_not_instance():
     """
-    The props rename case now uses switch(fiber.tag) to dispatch, replacing
-    the old if(instance === null) / else pattern.
+    The props rename case dispatches based on fiber.tag (not instance === null).
+    Accepts switch(fiber.tag) or if(fiber.tag === ...) patterns.
     """
     content = Path(RENDERER).read_text()
     section = _get_rename_path_props_section(content)
     assert section, "Could not locate case 'props': section with overridePropsRenamePath"
 
-    assert "switch (fiber.tag)" in section, (
-        "Expected 'switch (fiber.tag)' in the renamePath props case, "
-        "but it was not found. Old if(instance===null) pattern may still be present."
+    assert "instance === null" not in section, (
+        "Old 'if (instance === null)' pattern still present in renamePath props case; "
+        "should dispatch based on fiber.tag instead"
     )
-    assert "if (instance === null)" not in section, (
-        "Old 'if (instance === null)' check still present in renamePath props case; "
-        "should be replaced by switch(fiber.tag)"
+    assert "fiber.tag" in section, (
+        "Expected dispatch on fiber.tag in the renamePath props case "
+        "(via switch or conditional), but fiber.tag not referenced"
     )
 
 
 # [pr_diff] fail_to_pass
-def test_class_component_case_calls_force_update():
+def test_class_component_preserves_force_update():
     """
-    A dedicated `case ClassComponent:` branch in the switch calls forceUpdate(),
-    preserving the original behaviour for Class Components.
-    """
-    content = Path(RENDERER).read_text()
-    section = _get_rename_path_props_section(content)
-    assert section, "Could not locate case 'props': section with overridePropsRenamePath"
-
-    assert "case ClassComponent:" in section, (
-        "Expected 'case ClassComponent:' inside switch(fiber.tag) in renamePath props case"
-    )
-    # forceUpdate() must appear in the ClassComponent sub-section
-    idx = section.find("case ClassComponent:")
-    class_snippet = section[idx : idx + 250]
-    assert "forceUpdate()" in class_snippet, (
-        "Expected instance.forceUpdate() within the case ClassComponent: block"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_default_branch_handles_non_class_components():
-    """
-    A `default:` branch in the switch calls overridePropsRenamePath() for Host
-    Components and Function Components (everything except ClassComponent).
+    ClassComponent fibers still use forceUpdate() for prop renaming.
+    The fix must preserve this behavior while changing the dispatch mechanism.
     """
     content = Path(RENDERER).read_text()
     section = _get_rename_path_props_section(content)
     assert section, "Could not locate case 'props': section with overridePropsRenamePath"
 
-    assert "default:" in section, (
-        "Expected a 'default:' case in switch(fiber.tag) within renamePath props case"
+    assert "ClassComponent" in section, (
+        "Expected ClassComponent reference in renamePath props case "
+        "to route class components to forceUpdate()"
     )
-    idx = section.find("default:")
-    default_snippet = section[idx : idx + 250]
-    assert "overridePropsRenamePath" in default_snippet, (
-        "Expected overridePropsRenamePath() call in the default: branch of switch(fiber.tag)"
+    assert "forceUpdate()" in section, (
+        "Expected forceUpdate() call for ClassComponent fibers in renamePath props case"
     )
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — regression
+# Pass-to-pass (repo_tests) — regression (runs BEFORE behavioral f2p test)
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -130,8 +109,7 @@ def test_editing_tests_pass():
     """
     r = subprocess.run(
         [
-            "yarn",
-            "test",
+            "yarn", "test", "--silent", "--no-watchman",
             "--testPathPattern=editing-test",
             "--testNamePattern=editing interface",
         ],
@@ -141,6 +119,72 @@ def test_editing_tests_pass():
     )
     assert r.returncode == 0, (
         "Editing interface tests failed after fix:\n"
+        f"STDOUT:\n{r.stdout.decode()[-3000:]}\n"
+        f"STDERR:\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — behavioral test
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_host_component_rename_works():
+    """
+    Behavioral: renaming a prop on a host component (<input>) must succeed.
+    Injects the PR's test case (data-foo → data-bar rename on <input>) into
+    editing-test.js and runs it. Fails on base commit because forceUpdate()
+    is called on the DOM node, which crashes.
+    """
+    test_file = Path(EDITING_TEST)
+    content = test_file.read_text()
+
+    if "data-foo" not in content:
+        # 1. Add data-foo="test" prop to the <input> host component fixture
+        content = content.replace(
+            '<input ref={inputRef} onChange={jest.fn()} value="initial" />',
+            '<input ref={inputRef} onChange={jest.fn()} value="initial" data-foo="test" />',
+        )
+
+        # 2. Inject host component rename assertion after the last rename check.
+        #    The anchor is the final assertion in the rename test:
+        #      after: 'initial',
+        #    });           <-- closes expect().toEqual()
+        #    });           <-- closes it('should rename...')
+        inject_code = (
+            "        after: 'initial',\n"
+            "      });\n"
+            "      renamePath(hostComponentID, ['data-foo'], ['data-bar']);\n"
+            "      expect({\n"
+            "        foo: inputRef.current.dataset.foo,\n"
+            "        bar: inputRef.current.dataset.bar,\n"
+            "      }).toEqual({\n"
+            "        foo: undefined,\n"
+            "        bar: 'test',\n"
+            "      });\n"
+            "    });"
+        )
+        content = content.replace(
+            "        after: 'initial',\n"
+            "      });\n"
+            "    });",
+            inject_code,
+            1,  # replace only first occurrence
+        )
+        test_file.write_text(content)
+
+    r = subprocess.run(
+        [
+            "yarn", "test", "--silent", "--no-watchman",
+            "--testPathPattern=editing-test",
+            "--testNamePattern=should rename",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, (
+        "Host component prop rename test failed (crash on Host Component?):\n"
         f"STDOUT:\n{r.stdout.decode()[-3000:]}\n"
         f"STDERR:\n{r.stderr.decode()[-500:]}"
     )

@@ -329,3 +329,28 @@ def test_no_bare_print():
                 func = node.func
                 if isinstance(func, ast.Name) and func.id == "print":
                     assert False, f"Bare print() call found in {f}:{node.lineno}"
+
+
+# [agent_config] fail_to_pass — AGENTS.md:99 @ 6208006
+def test_new_cpu_methods_have_return_types():
+    """New CpuPlatform methods must have explicit return type annotations.
+
+    AGENTS.md:99 requires explicit type hints on new method signatures.
+    AST-only: verify each new method has a 'returns' annotation node.
+    """
+    NEW_METHODS = {"memory_allocated", "memory_reserved", "mem_get_info", "empty_cache"}
+    source = Path(f"{REPO}/areal/infra/platforms/cpu.py").read_text()
+    tree = ast.parse(source)
+
+    found = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "CpuPlatform":
+            for item in ast.walk(node):
+                if isinstance(item, ast.FunctionDef) and item.name in NEW_METHODS:
+                    found[item.name] = item.returns
+
+    for method in NEW_METHODS:
+        assert method in found, f"CpuPlatform.{method}() not found in cpu.py"
+        assert found[method] is not None, (
+            f"CpuPlatform.{method}() has no return type annotation (AGENTS.md:99)"
+        )

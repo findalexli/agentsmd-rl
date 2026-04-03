@@ -2,20 +2,20 @@ version: "2.0"
 
 source:
   repo: "microsoft/vscode"
-  pr: 0
+  pr: 306436
   base_commit: "96b97550f6c2316dae1e45be6f3f1ce9364bd99d"
-  merge_commit: ""
+  merge_commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
 
 checks:
-  - id: ts_syntax_valid
+  - id: ts_file_parseable
     type: pass_to_pass
     origin: static
-    description: "TypeScript file must parse without syntax errors"
+    description: "TypeScript file must exist and contain ChangesViewPane class"
 
   - id: ts_uses_changes_file_list
     type: fail_to_pass
     origin: pr_diff
-    description: "changesView.ts must reference 'changes-file-list' class"
+    description: "changesView.ts must reference 'changes-file-list' in at least 2 places"
 
   - id: css_uses_changes_file_list
     type: fail_to_pass
@@ -37,10 +37,20 @@ checks:
     origin: pr_diff
     description: "Key CSS selectors must be standalone (de-nested from .changes-view-body)"
 
+  - id: css_decoration_selectors_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Decoration badge and line count selectors must use new class name"
+
   - id: css_has_real_rules
     type: pass_to_pass
     origin: static
     description: "CSS file must still contain real style rules (not emptied)"
+
+  - id: ts_has_real_logic
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript file must still contain real component logic (not stubbed)"
 
 rubric:
   - rule: "Use PascalCase for type names and PascalCase for enum values"

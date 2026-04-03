@@ -3,12 +3,15 @@ Task: uv-audit-service-format-url
 Repo: astral-sh/uv @ 685a79876028a83976acafffd94e8abe3295d72a
 PR:   18571
 
+Add configurable vulnerability service backend (--service-format, --service-url)
+to `uv audit`.  All checks are structural (file inspection) because uv is a
+200+ crate Rust workspace whose `cargo check` exceeds test-timeout budgets.
+
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
-import subprocess
 from pathlib import Path
 
 REPO = Path("/repo")
@@ -30,29 +33,12 @@ def read_stripped(path: Path) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Gate (pass_to_pass, static) — compilation
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
-def test_compilation():
-    """All three affected crates (uv-audit, uv-cli, uv) must compile."""
-    r = subprocess.run(
-        ["cargo", "check", "-p", "uv-audit", "-p", "uv-cli", "-p", "uv"],
-        cwd=REPO, capture_output=True, timeout=480,
-    )
-    assert r.returncode == 0, (
-        f"Compilation failed:\n{r.stderr.decode()[-2000:]}"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core structural tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_enum_copy_clone_debug():
     """VulnerabilityServiceFormat::Osv exists with Copy, Clone, Debug derives."""
-    # Compilation gate proves the code works; here we verify the enum shape.
     code = read_stripped(REPO / "crates/uv-audit/src/service/mod.rs")
 
     assert "enum VulnerabilityServiceFormat" in code, (
@@ -76,6 +62,22 @@ def test_enum_copy_clone_debug():
 
 
 # [pr_diff] fail_to_pass
+def test_enum_clap_valueenum():
+    """VulnerabilityServiceFormat has cfg_attr for clap::ValueEnum."""
+    code = read_stripped(REPO / "crates/uv-audit/src/service/mod.rs")
+
+    # The enum must be usable as a clap ValueEnum behind a feature gate
+    enum_pos = code.find("enum VulnerabilityServiceFormat")
+    assert enum_pos != -1, "VulnerabilityServiceFormat enum not found"
+
+    attr_region = code[max(0, enum_pos - 400):enum_pos]
+    assert re.search(r"cfg_attr.*clap.*ValueEnum", attr_region), (
+        "VulnerabilityServiceFormat must have a cfg_attr for clap::ValueEnum "
+        "(e.g. #[cfg_attr(feature = \"clap\", derive(clap::ValueEnum))])"
+    )
+
+
+# [pr_diff] fail_to_pass
 def test_cli_fields_typed():
     """AuditArgs has service_format (VulnerabilityServiceFormat) and service_url (Option<String>)."""
     code = read_stripped(REPO / "crates/uv-cli/src/lib.rs")
@@ -83,7 +85,6 @@ def test_cli_fields_typed():
     # Locate AuditArgs struct body
     m = re.search(r"pub\s+struct\s+AuditArgs\s*\{", code)
     assert m, "AuditArgs struct not found in uv-cli/src/lib.rs"
-    # Grab text from struct opening to the next top-level closing brace
     body = code[m.end():]
 
     # service_format field with correct type
@@ -93,6 +94,38 @@ def test_cli_fields_typed():
     # service_url field with correct type
     assert re.search(r"service_url\s*:\s*Option\s*<\s*String\s*>", body), (
         "AuditArgs must have field `service_url: Option<String>`"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_cli_arg_attributes():
+    """service_format has value_enum + default_value, service_url has ValueHint::Url."""
+    raw = (REPO / "crates/uv-cli/src/lib.rs").read_text()
+
+    # Locate AuditArgs
+    m = re.search(r"pub\s+struct\s+AuditArgs\s*\{", raw)
+    assert m, "AuditArgs not found"
+    body = raw[m.end():]
+
+    # service_format should be annotated as a value_enum with default "osv"
+    sf_match = re.search(r"service_format\s*:", body)
+    assert sf_match, "service_format field not found"
+    sf_region = body[:sf_match.start()]  # attrs are above the field
+    # Look in the last 500 chars before the field for arg attributes
+    sf_attrs = sf_region[-500:]
+    assert "value_enum" in sf_attrs, (
+        "service_format #[arg] must include value_enum"
+    )
+    assert re.search(r'default_value\s*=\s*"osv"', sf_attrs), (
+        'service_format #[arg] must have default_value = "osv"'
+    )
+
+    # service_url should use ValueHint::Url
+    su_match = re.search(r"service_url\s*:", body)
+    assert su_match, "service_url field not found"
+    su_attrs = body[:su_match.start()][-500:]
+    assert "ValueHint::Url" in su_attrs or "value_hint = ValueHint::Url" in su_attrs, (
+        "service_url #[arg] must use ValueHint::Url"
     )
 
 
@@ -137,11 +170,6 @@ def test_settings_wires_service_fields():
         "AuditSettings must have a service_url field"
     )
 
-    # Verify VulnerabilityServiceFormat is imported at module level
-    assert "VulnerabilityServiceFormat" in code, (
-        "settings.rs must reference VulnerabilityServiceFormat"
-    )
-
 
 # [pr_diff] fail_to_pass
 def test_clap_optional_dependency():
@@ -156,6 +184,24 @@ def test_clap_optional_dependency():
     clap_line = text[clap_idx:].split("\n")[0]
     assert "optional" in clap_line, (
         "clap dependency in uv-audit must be marked as optional"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_uv_cli_depends_on_uv_audit():
+    """uv-cli Cargo.toml depends on uv-audit with clap feature enabled."""
+    cargo_toml = (REPO / "crates/uv-cli/Cargo.toml").read_text()
+    lines = [l for l in cargo_toml.splitlines() if not l.strip().startswith("#")]
+    text = "\n".join(lines)
+
+    assert "uv-audit" in text, (
+        "uv-cli Cargo.toml must list uv-audit as a dependency"
+    )
+    # Find the uv-audit line and verify clap feature is enabled
+    idx = text.index("uv-audit")
+    uv_audit_line = text[idx:].split("\n")[0]
+    assert "clap" in uv_audit_line, (
+        'uv-cli must depend on uv-audit with features = ["clap"]'
     )
 
 

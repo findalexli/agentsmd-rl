@@ -3,13 +3,13 @@ set -euo pipefail
 
 cd /workspace/openclaw
 
-# Idempotency: check if already applied (contract type should lack assistantAgentId)
+# Idempotency: check if already applied
 if ! grep -q 'assistantAgentId' src/gateway/control-ui-contract.ts 2>/dev/null; then
     echo "Patch already applied."
     exit 0
 fi
 
-git apply - <<'PATCH'
+git apply --3way - <<'PATCH'
 diff --git a/src/gateway/control-ui-contract.ts b/src/gateway/control-ui-contract.ts
 index b53eca81db54..98cf3d74fd9b 100644
 --- a/src/gateway/control-ui-contract.ts
@@ -147,7 +147,6 @@ index e5a525f9ab76..77b50d200aeb 100644
                }),
              );
            });
-
 PATCH
 
 echo "Patch applied successfully."

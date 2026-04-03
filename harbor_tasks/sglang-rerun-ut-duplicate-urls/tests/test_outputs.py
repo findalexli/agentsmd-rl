@@ -35,7 +35,7 @@ def _capture_title(test_command=None, pr_head_sha=None, target_stage="rerun-ut")
     kwargs = dict(
         gh_repo=mock_repo,
         workflow_id=123,
-        branch="main",
+        ref="main",
         target_stage=target_stage,
         token="tok",
         dispatch_time=time.time(),

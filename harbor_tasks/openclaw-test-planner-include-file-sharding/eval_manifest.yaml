@@ -47,15 +47,6 @@ checks:
     origin: pr_diff
     description: "countExplicitEntryFilters still imported from vitest-args.mjs in both files"
 
-  - id: helper_not_inlined
-    type: pass_to_pass
-    origin: agent_config
-    description: "includeFiles fallback uses a helper, not inlined at each call site"
-    source:
-      path: "CLAUDE.md"
-      lines: "164"
-      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
-
   - id: no_lint_suppressions
     type: pass_to_pass
     origin: agent_config
@@ -84,6 +75,12 @@ checks:
       commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
 
 rubric:
+  - rule: "Keep files concise; extract helpers instead of 'V2' copies."
+    source:
+      path: "CLAUDE.md"
+      lines: "164"
+      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
+
   - rule: "Add brief code comments for tricky or non-obvious logic."
     source:
       path: "CLAUDE.md"

@@ -52,6 +52,15 @@ checks:
     origin: pr_diff
     description: "buildImage function and --force flag preserved in docker-image-cache.js"
 
+  - id: no_hardcoded_secret_values
+    type: pass_to_pass
+    origin: agent_config
+    description: "TURBO_TOKEN is only read from process.env — no hardcoded literal values or string fallbacks in changed scripts"
+    source:
+      path: "CLAUDE.md"
+      lines: "307-308"
+      commit: "7bce97d6485599cab2964ef58fde8a55d19904d3"
+
   - id: turbo_cache_not_stub
     type: fail_to_pass
     origin: static
@@ -68,4 +77,10 @@ rubric:
     source:
       path: "CLAUDE.md"
       lines: "306"
+      commit: "7bce97d6485599cab2964ef58fde8a55d19904d3"
+
+  - rule: "Mirror CI env names and modes exactly, but do not inline literal secret values in commands."
+    source:
+      path: "CLAUDE.md"
+      lines: "307"
       commit: "7bce97d6485599cab2964ef58fde8a55d19904d3"

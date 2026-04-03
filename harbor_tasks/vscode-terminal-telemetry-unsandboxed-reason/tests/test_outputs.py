@@ -33,17 +33,19 @@ def test_state_interface_has_property():
 
 
 # [pr_diff] fail_to_pass
-def test_data_interface_has_property():
-    """RunInTerminalToolData interface must include requestUnsandboxedExecutionReason."""
+def test_data_event_type_has_property():
+    """requestUnsandboxedExecutionReason: string | undefined must appear in both state param and TelemetryEvent type."""
     src = TELEMETRY_FILE.read_text()
-    match = re.search(
-        r'export interface RunInTerminalToolData\s*\{([^}]*)\}',
+    # The property declaration (string | undefined) must appear in both the logInvoke
+    # state parameter and the local TelemetryEvent type alias within that method.
+    matches = re.findall(
+        r'requestUnsandboxedExecutionReason\s*:\s*string\s*\|\s*undefined',
         src,
-        re.DOTALL,
     )
-    assert match, "RunInTerminalToolData interface not found"
-    assert 'requestUnsandboxedExecutionReason' in match.group(1), \
-        "RunInTerminalToolData interface missing requestUnsandboxedExecutionReason"
+    assert len(matches) >= 2, (
+        f"requestUnsandboxedExecutionReason: string | undefined should appear in both "
+        f"state parameter and TelemetryEvent type (found {len(matches)})"
+    )
 
 
 # [pr_diff] fail_to_pass
@@ -109,9 +111,9 @@ def test_files_have_copyright_header():
 # Config-derived (agent_config) — .github/copilot-instructions.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass — .github/copilot-instructions.md:89 @ a2d7b9e13bdbe52233ea06b2ca6bc69a81083772
+# [agent_config] fail_to_pass — .github/copilot-instructions.md:107 @ a2d7b9e13bdbe52233ea06b2ca6bc69a81083772
 def test_property_indented_with_tabs():
-    """New property lines must use tab indentation, not spaces (copilot-instructions.md:89)."""
+    """New property lines must use tab indentation, not spaces (copilot-instructions.md:107)."""
     src = TELEMETRY_FILE.read_text()
     lines = [l for l in src.splitlines() if 'requestUnsandboxedExecutionReason' in l]
     assert lines, "requestUnsandboxedExecutionReason not found in telemetry file"

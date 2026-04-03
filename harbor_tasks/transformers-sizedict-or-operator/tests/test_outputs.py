@@ -241,3 +241,24 @@ def test_no_bare_type_ignore():
         content = line[1:]  # strip leading '+'
         if "# type: ignore" in content and "# type: ignore[" not in content:
             assert False, f"Bare '# type: ignore' found (must specify error code): {content.strip()}"
+
+
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:16 @ b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+def test_no_new_test_files():
+    """Tests must be added to existing test files, not new ones."""
+    r = subprocess.run(["git", "diff", "--name-status", "HEAD"], capture_output=True, text=True, cwd=REPO)
+    diff_status = r.stdout
+    if not diff_status.strip():
+        r = subprocess.run(["git", "diff", "--name-status", "--cached"], capture_output=True, text=True, cwd=REPO)
+        diff_status = r.stdout
+    if not diff_status.strip():
+        r = subprocess.run(["git", "diff", "--name-status", "HEAD~1"], capture_output=True, text=True, cwd=REPO)
+        diff_status = r.stdout
+
+    new_test_files = []
+    for line in diff_status.splitlines():
+        parts = line.split("\t", 1)
+        if len(parts) == 2 and parts[0].startswith("A") and "test" in parts[1].lower():
+            new_test_files.append(parts[1])
+
+    assert not new_test_files, f"New test files created (must add to existing): {new_test_files}"

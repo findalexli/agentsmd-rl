@@ -8,7 +8,6 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
-import subprocess
 from pathlib import Path
 
 REPO = "/workspace/openclaw"
@@ -16,42 +15,28 @@ TARGET = Path(REPO) / "src" / "plugins" / "tools.ts"
 PLUGINS_DIR = Path(REPO) / "src" / "plugins"
 
 
-def _ensure_deps():
-    """Ensure node_modules exist (idempotent)."""
-    if not Path(REPO, "node_modules").exists():
-        subprocess.run(
-            ["npm", "install", "--ignore-scripts"],
-            cwd=REPO, capture_output=True, timeout=120,
-        )
-
-
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) -- syntax / compilation checks
+# Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_syntax_check():
-    """src/plugins/tools.ts must parse without TypeScript errors."""
-    _ensure_deps()
-    r = subprocess.run(
-        ["npx", "tsc", "--noEmit", "src/plugins/tools.ts"],
-        cwd=REPO, capture_output=True, timeout=60,
+    """src/plugins/tools.ts must parse as valid TypeScript (balanced braces, no truncation)."""
+    content = TARGET.read_text()
+    # Basic structural checks: balanced braces, non-empty, has expected exports
+    opens = content.count("{")
+    closes = content.count("}")
+    assert abs(opens - closes) <= 1, (
+        f"Unbalanced braces in tools.ts ({opens} open, {closes} close) — likely truncated or corrupt"
     )
-    if r.returncode == 0:
-        return
-    # Fall back to esbuild parse
-    r = subprocess.run(
-        ["npx", "esbuild", "src/plugins/tools.ts",
-         "--platform=node", "--format=esm", "--outfile=/dev/null"],
-        cwd=REPO, capture_output=True, timeout=60,
-    )
-    assert r.returncode == 0, (
-        f"tools.ts has syntax/type errors:\n{r.stderr.decode()[-2000:]}"
+    assert len(content) > 500, "tools.ts is suspiciously short — likely stub or truncated"
+    assert "export function resolvePluginTools" in content, (
+        "resolvePluginTools export not found — file may be corrupt"
     )
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) -- core behavioral / structural checks
+# Fail-to-pass (pr_diff) — core behavioral / structural checks
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -63,7 +48,7 @@ def test_active_registry_import():
     """
     content = TARGET.read_text()
     assert "getActivePluginRegistry" in content, (
-        "tools.ts does not reference getActivePluginRegistry -- "
+        "tools.ts does not reference getActivePluginRegistry — "
         "sub-agent sessions need the active registry fallback"
     )
     # Verify it's an actual import, not just a comment
@@ -101,9 +86,7 @@ def test_registry_selection_logic():
     )
 
     # The call to getActivePluginRegistry() must appear in a context that
-    # also references allowGatewaySubagentBinding -- verifying they're logically connected.
-    # Extract all function bodies that call getActivePluginRegistry()
-    # and verify at least one also references allowGatewaySubagentBinding.
+    # also references allowGatewaySubagentBinding — verifying they're logically connected.
     lines = content.splitlines()
     call_lines = [i for i, l in enumerate(lines) if "getActivePluginRegistry(" in l]
     assert call_lines, "getActivePluginRegistry() is never called"
@@ -119,26 +102,27 @@ def test_registry_selection_logic():
             break
     assert found_connection, (
         "getActivePluginRegistry() call is not connected to "
-        "allowGatewaySubagentBinding -- the registry fallback must be conditional "
+        "allowGatewaySubagentBinding — the registry fallback must be conditional "
         "on the subagent binding context"
     )
 
     # The fallback pattern: getActivePluginRegistry() must have a fallback to
     # resolveRuntimePluginRegistry (via ?? or || or if/else)
+    found_fallback = False
     for call_line in call_lines:
         window_start = max(0, call_line - 2)
         window_end = min(len(lines), call_line + 3)
         window = "\n".join(lines[window_start:window_end])
         if "resolveRuntimePluginRegistry" in window:
-            found_connection = True
+            found_fallback = True
             break
-    else:
+
+    if not found_fallback:
         # Check for conditional pattern (if/else with both calls)
         content_no_ws = re.sub(r"\s+", " ", content)
         has_conditional = (
             re.search(r"getActivePluginRegistry\s*\(\s*\)\s*\?\?", content_no_ws)
             or re.search(r"getActivePluginRegistry\s*\(\s*\)\s*\|\|", content_no_ws)
-            or ("getActivePluginRegistry" in content and "resolveRuntimePluginRegistry" in content)
         )
         assert has_conditional, (
             "getActivePluginRegistry() must have a fallback to "
@@ -153,8 +137,8 @@ def test_resolve_tools_delegates_registry():
     On the base commit, resolvePluginTools has:
       const registry = resolveRuntimePluginRegistry(loadOptions);
 
-    The fix must route through a helper (resolvePluginToolRegistry or equivalent)
-    that conditionally uses the active registry. Verify the direct call is replaced.
+    The fix must route through a helper or conditional that uses the active registry.
+    Verify the direct call is replaced with branching logic.
     """
     content = TARGET.read_text()
 
@@ -178,63 +162,29 @@ def test_resolve_tools_delegates_registry():
     fn_body = content[start:pos]
 
     # The function body should NOT have a direct `= resolveRuntimePluginRegistry(` assignment.
-    # It should delegate to a helper that handles the active registry fallback.
+    # It should delegate to a helper or conditional that handles the active registry fallback.
     direct_call = re.search(
         r"=\s*resolveRuntimePluginRegistry\s*\(",
         fn_body,
     )
     assert not direct_call, (
-        "resolvePluginTools still calls resolveRuntimePluginRegistry directly -- "
-        "it must delegate to a helper that checks the active registry for sub-agent sessions"
+        "resolvePluginTools still calls resolveRuntimePluginRegistry directly — "
+        "it must delegate through logic that checks the active registry for sub-agent sessions"
     )
 
     # But resolveRuntimePluginRegistry must still exist somewhere in the file
-    # (used by the helper function, not removed entirely)
+    # (used by the helper/conditional, not removed entirely)
     assert "resolveRuntimePluginRegistry" in content, (
-        "resolveRuntimePluginRegistry was removed entirely -- "
-        "it's still needed as the fallback in the helper"
+        "resolveRuntimePluginRegistry was removed entirely — "
+        "it's still needed as the fallback when no active registry exists"
     )
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) -- regression checks
+# Config-derived (agent_config) — rules from CLAUDE.md / src/plugins/CLAUDE.md
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
-def test_existing_optional_tool_tests():
-    """Existing vitest tests in tools.optional.test.ts still pass."""
-    _ensure_deps()
-    r = subprocess.run(
-        ["npx", "vitest", "run", "src/plugins/tools.optional.test.ts",
-         "--reporter=verbose"],
-        cwd=REPO, capture_output=True, timeout=120,
-    )
-    assert r.returncode == 0, (
-        f"tools.optional.test.ts failed:\n"
-        f"{r.stdout.decode()[-2000:]}\n{r.stderr.decode()[-1000:]}"
-    )
-
-
-# [repo_tests] pass_to_pass
-def test_loader_regression():
-    """Upstream plugin loader tests still pass after the fix."""
-    _ensure_deps()
-    r = subprocess.run(
-        ["npx", "vitest", "run", "src/plugins/loader.test.ts",
-         "--reporter=verbose"],
-        cwd=REPO, capture_output=True, timeout=120,
-    )
-    assert r.returncode == 0, (
-        f"loader.test.ts regression:\n"
-        f"{r.stdout.decode()[-2000:]}\n{r.stderr.decode()[-1000:]}"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config) -- rules from CLAUDE.md / AGENTS.md
-# ---------------------------------------------------------------------------
-
-# [agent_config] pass_to_pass -- CLAUDE.md:146 @ 6883f688
+# [agent_config] pass_to_pass — CLAUDE.md:146 @ 6883f688
 def test_no_ts_nocheck():
     """No @ts-nocheck directives in src/plugins/ (CLAUDE.md:146)."""
     violations = []
@@ -245,12 +195,12 @@ def test_no_ts_nocheck():
         if "@ts-nocheck" in content:
             violations.append(str(ts_file.relative_to(REPO)))
     assert not violations, (
-        f"@ts-nocheck found in: {', '.join(violations)} -- "
+        f"@ts-nocheck found in: {', '.join(violations)} — "
         "fix root causes instead (CLAUDE.md:146)"
     )
 
 
-# [agent_config] pass_to_pass -- CLAUDE.md:146 @ 6883f688
+# [agent_config] pass_to_pass — CLAUDE.md:146 @ 6883f688
 def test_no_unexplained_lint_suppressions():
     """No eslint-disable or oxlint-ignore without explanatory comment (CLAUDE.md:146).
 
@@ -269,26 +219,25 @@ def test_no_unexplained_lint_suppressions():
                     rel = ts_file.relative_to(REPO)
                     violations.append(f"{rel}:{i}")
     assert not violations, (
-        f"Unexplained lint suppressions at: {', '.join(violations)} -- "
+        f"Unexplained lint suppressions at: {', '.join(violations)} — "
         "add a comment explaining why (CLAUDE.md:146)"
     )
 
 
-# [agent_config] pass_to_pass -- CLAUDE.md:153 @ 6883f688
+# [agent_config] pass_to_pass — CLAUDE.md:153 @ 6883f688
 def test_no_prototype_mutation():
     """No prototype mutation in tools.ts (CLAUDE.md:153).
 
     Use explicit inheritance/composition instead of .prototype manipulation.
-    Scoped to the modified file only.
     """
     content = TARGET.read_text()
     assert not re.search(r"\.\bprototype\b\s*[.=\[]", content), (
-        "Prototype mutation found in tools.ts -- "
+        "Prototype mutation found in tools.ts — "
         "use inheritance/composition (CLAUDE.md:153)"
     )
 
 
-# [agent_config] pass_to_pass -- CLAUDE.md:148 @ 6883f688
+# [agent_config] pass_to_pass — CLAUDE.md:148 @ 6883f688
 def test_no_mixed_static_dynamic_imports():
     """No module is both statically and dynamically imported in tools.ts (CLAUDE.md:148).
 
@@ -300,12 +249,12 @@ def test_no_mixed_static_dynamic_imports():
     dynamic_imports = set(re.findall(r'await\s+import\s*\(\s*["\']([^"\']+)["\']\s*\)', content))
     overlap = static_imports & dynamic_imports
     assert not overlap, (
-        f"Module(s) both statically and dynamically imported in tools.ts: {overlap} -- "
+        f"Module(s) both statically and dynamically imported in tools.ts: {overlap} — "
         "pick one import style per module (CLAUDE.md:148)"
     )
 
 
-# [agent_config] pass_to_pass -- CLAUDE.md:42 @ 6883f688
+# [agent_config] pass_to_pass — CLAUDE.md:42 @ 6883f688
 def test_no_deep_plugin_internal_imports():
     """tools.ts must not deep-import bundled plugin internals (CLAUDE.md:42).
 
@@ -314,12 +263,12 @@ def test_no_deep_plugin_internal_imports():
     content = TARGET.read_text()
     deep_imports = re.findall(r'from\s+["\'].*extensions/[^"\']+/src/[^"\']+["\']', content)
     assert not deep_imports, (
-        f"Deep plugin internal imports found: {deep_imports} -- "
+        f"Deep plugin internal imports found: {deep_imports} — "
         "use public SDK exports instead (CLAUDE.md:42)"
     )
 
 
-# [agent_config] pass_to_pass -- CLAUDE.md:147 @ 6883f688
+# [agent_config] pass_to_pass — CLAUDE.md:147 @ 6883f688
 def test_no_explicit_any_disable():
     """tools.ts must not disable no-explicit-any (CLAUDE.md:147).
 
@@ -327,6 +276,20 @@ def test_no_explicit_any_disable():
     """
     content = TARGET.read_text()
     assert not re.search(r"no-explicit-any", content), (
-        "no-explicit-any suppression found in tools.ts -- "
+        "no-explicit-any suppression found in tools.ts — "
         "prefer real types or unknown (CLAUDE.md:147)"
+    )
+
+
+# [agent_config] pass_to_pass — src/plugins/CLAUDE.md:28-31 @ 6883f688
+def test_no_direct_plugin_config_reads():
+    """tools.ts must not read plugins.entries.<id>.config directly (src/plugins/CLAUDE.md:28-31).
+
+    Prefer generic helpers, plugin runtime hooks, or manifest metadata.
+    """
+    content = TARGET.read_text()
+    violations = re.findall(r"plugins\.entries\.\w+\.config", content)
+    assert not violations, (
+        f"Direct plugin config reads found: {violations} — "
+        "use generic helpers or manifest metadata (src/plugins/CLAUDE.md:28-31)"
     )

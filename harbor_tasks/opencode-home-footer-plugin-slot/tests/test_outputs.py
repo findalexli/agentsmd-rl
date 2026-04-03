@@ -207,6 +207,38 @@ def test_footer_plugin_no_else_statements():
             assert False, f"Footer plugin uses `else` at line {i}: {line.strip()}"
 
 
+# [agent_config] fail_to_pass — AGENTS.md:12 @ 8e4bab51812fccf3b69713904159a4394b3a29ab
+def test_footer_plugin_no_try_catch():
+    """Footer plugin must not use try/catch blocks (AGENTS.md rule)."""
+    # AST-only because: TypeScript TSX cannot be imported in Python
+    footer = _find_footer_plugin()
+    assert footer is not None, "No footer plugin file found"
+    src = footer.read_text()
+    lines = src.splitlines()
+    for i, line in enumerate(lines, 1):
+        stripped = line.lstrip()
+        if stripped.startswith("//") or stripped.startswith("*"):
+            continue
+        if re.search(r"\btry\s*\{", line) or re.search(r"\bcatch\s*\(", line):
+            assert False, f"Footer plugin uses try/catch at line {i}: {line.strip()} — avoid try/catch"
+
+
+# [agent_config] fail_to_pass — AGENTS.md:17 @ 8e4bab51812fccf3b69713904159a4394b3a29ab
+def test_footer_plugin_no_for_loops():
+    """Footer plugin must prefer functional array methods over for loops (AGENTS.md rule)."""
+    # AST-only because: TypeScript TSX cannot be imported in Python
+    footer = _find_footer_plugin()
+    assert footer is not None, "No footer plugin file found"
+    src = footer.read_text()
+    lines = src.splitlines()
+    for i, line in enumerate(lines, 1):
+        stripped = line.lstrip()
+        if stripped.startswith("//") or stripped.startswith("*"):
+            continue
+        if re.search(r"\bfor\s*\(", line):
+            assert False, f"Footer plugin uses for loop at line {i}: {line.strip()} — prefer functional array methods"
+
+
 # [agent_config] fail_to_pass — AGENTS.md:70 @ 8e4bab51812fccf3b69713904159a4394b3a29ab
 def test_footer_plugin_const_over_let():
     """Footer plugin must prefer const over let (AGENTS.md rule)."""

@@ -12,7 +12,7 @@ import subprocess
 from pathlib import Path
 
 REPO = Path("/repo")
-FILE = REPO / "crates/uv-client/src/registry_client.rs"
+FILE = REPO / "crates" / "uv-client" / "src" / "registry_client.rs"
 
 
 # ---------------------------------------------------------------------------
@@ -63,7 +63,7 @@ def test_compilation():
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
-# Structural checks because: Rust async crate, cannot import/call from Python
+# AST-only because: Rust async crate, cannot import/call from Python
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -85,8 +85,10 @@ def test_lock_not_held_across_fetch():
         return
 
     body = get_flat_single_index_body()
-    lines = body.split("\n")
+    code = strip_rust_comments(body)
+    lines = code.split("\n")
 
+    # Find lines with cache-level lock and fetch_index call
     lock_lines = []
     fetch_lines = []
     for i, line in enumerate(lines):
@@ -112,28 +114,74 @@ def test_lock_not_held_across_fetch():
         # Lock comes AFTER fetch — valid fix pattern
         return
 
-    # Check if lock is dropped before fetch_index
+    # The lock is acquired before fetch. Check if the MutexGuard is released
+    # before the fetch_index call. We look for evidence the guard's scope ends.
     between = "\n".join(lines[first_lock:first_fetch])
 
-    # Method 1: Brace depth returns to 0 or below (scoped block)
-    depth = 0
-    min_depth = 0
-    for ch in between:
-        if ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-            min_depth = min(min_depth, depth)
-    if min_depth <= 0:
-        return
+    # Extract the guard variable name (e.g., "cache" from "let mut cache = ...lock().await")
+    lock_line = lines[first_lock]
+    guard_match = re.search(r"let\s+(?:mut\s+)?(\w+)\s*=.*\.lock\(\)\.await", lock_line)
+    guard_name = guard_match.group(1) if guard_match else None
 
-    # Method 2: Explicit drop()
+    # Method 1: Explicit drop() of the guard
+    if guard_name and re.search(rf"drop\s*\(\s*{re.escape(guard_name)}\s*\)", between):
+        return
     if re.search(r"drop\s*\(", between):
         return
 
-    # Method 3: let binding with block expression
-    if re.search(r"let\s+\w+\s*=\s*\{", between):
-        return
+    # Method 2: Lock is inside a scoped block (`let x = { ... lock ... }; fetch_index`)
+    # The lock line must be inside a block expression that closes before fetch
+    if guard_name:
+        # Check if the guard binding is inside a `let x = { ... };` block
+        lock_line_stripped = lock_line.strip()
+        # Look backward from the lock line to see if we're inside a block
+        pre_lock = "\n".join(lines[:first_lock + 1])
+        # Pattern: `let something = {` ... `lock().await` ... `};`
+        # Find the innermost block containing the lock
+        block_start = None
+        depth = 0
+        for j in range(first_lock, -1, -1):
+            for ch in reversed(lines[j]):
+                if ch == "}":
+                    depth += 1
+                elif ch == "{":
+                    if depth == 0:
+                        block_start = j
+                        break
+                    depth -= 1
+            if block_start is not None:
+                break
+
+        if block_start is not None:
+            # Find matching close brace
+            depth = 0
+            block_end = None
+            for j in range(block_start, len(lines)):
+                for ch in lines[j]:
+                    if ch == "{":
+                        depth += 1
+                    elif ch == "}":
+                        depth -= 1
+                        if depth == 0:
+                            block_end = j
+                            break
+                if block_end is not None:
+                    break
+            if block_end is not None and block_end < first_fetch:
+                return
+
+    # Method 3: Guard variable is NOT referenced after the block where it's used
+    # (i.e., it's shadowed or the name doesn't appear between the lock's block
+    # and fetch_index). This handles `let slot = { let mut c = lock(); ... }; fetch()`
+    if guard_name:
+        # Find where the guard is last used
+        post_lock_lines = lines[first_lock + 1:first_fetch]
+        guard_used_after = any(guard_name in line for line in post_lock_lines
+                               if "drop" not in line and ".lock()" not in line)
+        if not guard_used_after:
+            # Guard may be in a scoped block with no further use — check brace scoping
+            # If the lock line is inside an expression block that ends before fetch
+            pass
 
     assert False, (
         "Cache-level lock is still held across fetch_index — "
@@ -153,8 +201,6 @@ def test_cache_restructured_for_concurrency():
     """
     source = FILE.read_text()
     code = strip_rust_comments(source)
-
-    reasons = []
 
     # Pattern 1: DashMap (inherently concurrent per-key)
     if "DashMap" in code:
@@ -176,7 +222,6 @@ def test_cache_restructured_for_concurrency():
         fields = cache_struct.group(1)
         if "PackageName" not in fields:
             return
-        reasons.append(f"FlatIndexCache still stores PackageName directly: {fields.strip()}")
 
     # Pattern 5: Type alias for a per-index slot
     if re.search(r"type\s+\w*(?:Slot|Entry|Cell)\w*\s*=\s*Arc<", code):
@@ -184,7 +229,7 @@ def test_cache_restructured_for_concurrency():
 
     assert False, (
         "FlatIndexCache not restructured for per-index concurrency. "
-        + (" ".join(reasons) if reasons else "Expected DashMap, per-index slots, or similar.")
+        "Expected DashMap, per-index slots, or similar."
     )
 
 
@@ -248,12 +293,12 @@ def test_not_stub():
 
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md
-# Structural checks because: Rust crate, cannot import/call from Python
+# AST-only because: Rust crate, cannot import/call from Python
 # ---------------------------------------------------------------------------
 
 # [agent_config] pass_to_pass — CLAUDE.md:7 @ 9d45e7f8177e6f60e084ba52b2a32a56edf237c7
 def test_no_unwrap_panic():
-    """No .unwrap(), panic!(), or unreachable!() in flat_single_index."""
+    """No .unwrap(), panic!(), or unreachable!() in flat_single_index (CLAUDE.md:7)."""
     body = strip_rust_comments(get_flat_single_index_body())
     for pattern, label in [
         (r"\.unwrap\(\)", ".unwrap()"),
@@ -266,9 +311,29 @@ def test_no_unwrap_panic():
         )
 
 
+# [agent_config] pass_to_pass — CLAUDE.md:7 @ 9d45e7f8177e6f60e084ba52b2a32a56edf237c7
+def test_no_unsafe_code():
+    """No unsafe blocks in flat_single_index (CLAUDE.md:7)."""
+    body = strip_rust_comments(get_flat_single_index_body())
+    assert not re.search(r"\bunsafe\s*\{", body), (
+        "Found unsafe block in flat_single_index — "
+        "CLAUDE.md:7 says to avoid unsafe code"
+    )
+
+
+# [agent_config] pass_to_pass — CLAUDE.md:7 @ 9d45e7f8177e6f60e084ba52b2a32a56edf237c7
+def test_no_clippy_ignores():
+    """No #[allow(clippy::...)] in flat_single_index (CLAUDE.md:7)."""
+    body = strip_rust_comments(get_flat_single_index_body())
+    assert not re.search(r"#\[allow\(clippy::", body), (
+        "Found #[allow(clippy::...)] in flat_single_index — "
+        "CLAUDE.md:7 says to avoid clippy rule ignores"
+    )
+
+
 # [agent_config] pass_to_pass — CLAUDE.md:16-17 @ 9d45e7f8177e6f60e084ba52b2a32a56edf237c7
 def test_no_shortened_names():
-    """No abbreviated variable names in flat_single_index."""
+    """No abbreviated variable names in flat_single_index (CLAUDE.md:16-17)."""
     body = strip_rust_comments(get_flat_single_index_body())
     short_names = re.findall(r"\blet\s+(idx|ent|pkg|res|val|ret|tmp|buf)\b", body)
     assert not short_names, (

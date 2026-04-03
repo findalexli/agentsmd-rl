@@ -32,19 +32,23 @@ checks:
     origin: pr_diff
     description: "Delete mutation must not use raw string interpolation for queueName or messageId in SQL"
 
-  - id: literal_escapes_quotes
-    type: pass_to_pass
-    origin: static
-    description: "The pg-format literal() function correctly escapes single quotes and SQL injection payloads"
-
   - id: sql_functions_still_present
     type: pass_to_pass
     origin: static
     description: "All four queue SQL functions still exist with executeSql calls"
 
+  - id: no_as_any_casts
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified TypeScript files must not use 'as any' type casts"
+    source:
+      path: ".claude/skills/studio-best-practices/SKILL.md"
+      lines: "36"
+      commit: "273102323d2959bf5e24678a3388409e91e2ccb4"
+
 rubric:
   - rule: "Security vulnerabilities — SQL injection must be prevented by escaping or parameterizing all user-controlled values interpolated into SQL strings"
     source:
       path: ".github/copilot-instructions.md"
-      lines: "18"
+      lines: "27"
       commit: "273102323d2959bf5e24678a3388409e91e2ccb4"

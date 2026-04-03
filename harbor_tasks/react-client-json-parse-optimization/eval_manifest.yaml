@@ -7,15 +7,20 @@ source:
   merge_commit: "f247ebaf44317ac6648b62f99ceaed1e4fc4dc01"
 
 checks:
-  - id: revive_model_function_defined
-    type: fail_to_pass
-    origin: pr_diff
-    description: "reviveModel function is added to replace the JSON.parse reviver approach"
+  - id: flight_client_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "React Flight client upstream tests still pass after the change"
 
-  - id: parse_model_two_step_parsing
+  - id: parse_model_no_reviver
     type: fail_to_pass
     origin: pr_diff
-    description: "parseModel uses JSON.parse(json) then reviveModel, not a reviver callback"
+    description: "parseModel calls JSON.parse without a reviver callback (two-step parsing)"
+
+  - id: revive_model_exists_with_walk_logic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "A manual walk function replaces the reviver, handling strings/arrays/objects with multiple return paths"
 
   - id: from_json_field_removed
     type: fail_to_pass
@@ -30,37 +35,41 @@ checks:
   - id: create_from_json_callback_removed
     type: fail_to_pass
     origin: pr_diff
-    description: "createFromJSONCallback function removed; reviveModel replaces it entirely"
+    description: "createFromJSONCallback function removed; walk function replaces it entirely"
 
-  - id: revive_model_proto_safety
+  - id: walk_function_proto_safety
     type: fail_to_pass
     origin: pr_diff
-    description: "reviveModel deletes __proto__ keys to prevent prototype pollution"
+    description: "Walk function deletes __proto__ keys to prevent prototype pollution"
 
   - id: noop_renderer_cleaned_up
     type: fail_to_pass
     origin: pr_diff
     description: "ReactNoopFlightClient parseModel override using _fromJSON removed"
 
-  - id: revive_model_handles_all_value_types
+  - id: walk_handles_dollar_prefix_strings
     type: fail_to_pass
     origin: pr_diff
-    description: "reviveModel has branches for strings ($ prefix), arrays (isArray), and plain objects"
+    description: "Walk function routes strings starting with '$' to parseModelString"
 
-  - id: revive_model_has_substantial_body
-    type: fail_to_pass
-    origin: static
-    description: "reviveModel is not a stub — multiple return paths, typeof checks, real walk logic"
+  - id: prettier_formatting
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files pass prettier formatting per React's verify workflow"
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "1-10"
+      commit: "3a2bee26d23a21cfb04313372a0c0ca46101b785"
 
 rubric:
+  - rule: "The wrapper object passed to the walk function for the root value must match the JSON.parse reviver contract — root's parent is {'':rootValue} and key is empty string, so that parseModelString receives a valid parentObject."
+    source:
+      path: "packages/react-client/src/ReactFlightClient.js"
+      lines: "5242-5294"
+      commit: "3a2bee26d23a21cfb04313372a0c0ca46101b785"
+
   - rule: "Preserve the __proto__ handling from the original reviver to prevent prototype pollution — the new walk function must skip or delete keys equal to __proto__."
     source:
       path: "packages/react-client/src/ReactFlightClient.js"
       lines: "2610-2640"
-      commit: "3a2bee26d23a21cfb04313372a0c0ca46101b785"
-
-  - rule: "The wrapper object passed to reviveModel for the root value must match the JSON.parse reviver contract — root's parent is {\"\":rootValue} and key is empty string, so that parseModelString receives a valid parentObject."
-    source:
-      path: "packages/react-client/src/ReactFlightClient.js"
-      lines: "5242-5294"
       commit: "3a2bee26d23a21cfb04313372a0c0ca46101b785"

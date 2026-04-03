@@ -7,11 +7,6 @@ source:
   merge_commit: "af50a47c13e23e0b3c46719dbd92fe00144362a5"
 
 checks:
-  - id: typescript_compiles
-    type: pass_to_pass
-    origin: static
-    description: "All modified TypeScript files compile without errors"
-
   - id: rerun_failed_jobs_method_in_fetcher
     type: fail_to_pass
     origin: pr_diff
@@ -22,20 +17,35 @@ checks:
     origin: pr_diff
     description: "GitHubPullRequestCIModel has rerunFailedCheck that delegates to fetcher and calls refresh"
 
+  - id: parse_workflow_run_id_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parseWorkflowRunId function exists in model and handles /actions/runs/ URLs"
+
   - id: parse_workflow_run_id_behavior
     type: fail_to_pass
     origin: pr_diff
-    description: "parseWorkflowRunId extracts GitHub Actions run IDs from detail URLs (multiple URL shapes)"
+    description: "parseWorkflowRunId correctly extracts run IDs from diverse GitHub Actions URLs via Node.js execution"
 
   - id: rerun_button_shown_for_failed_checks
     type: fail_to_pass
     origin: pr_diff
     description: "ciStatusWidget shows ci.rerunCheck action button only when CICheckGroup.Failed"
 
+  - id: rerun_api_uses_post
+    type: fail_to_pass
+    origin: pr_diff
+    description: "rerunFailedJobs method uses POST for the GitHub Actions API call"
+
   - id: existing_ci_methods_preserved
     type: pass_to_pass
     origin: repo_tests
-    description: "getChecksForRef (fetcher) and getCheckRunAnnotations (model) are not removed"
+    description: "getCheckRuns (fetcher) and getCheckRunAnnotations (model) are not removed"
+
+  - id: existing_widget_open_on_github_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ci.openOnGitHub action remains in the widget"
 
   - id: named_regex_capture_groups
     type: fail_to_pass

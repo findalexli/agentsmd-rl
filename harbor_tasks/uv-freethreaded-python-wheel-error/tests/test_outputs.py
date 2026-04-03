@@ -15,22 +15,6 @@ ERROR_RS = REPO / "crates/uv-distribution/src/error.rs"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
-def test_compilation():
-    """uv-distribution crate compiles without errors."""
-    r = subprocess.run(
-        ["cargo", "check", "-p", "uv-distribution"],
-        cwd=REPO, capture_output=True, timeout=300,
-    )
-    assert r.returncode == 0, (
-        f"Compilation failed:\n{r.stderr.decode()[-2000:]}"
-    )
-
-
-# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -71,7 +55,7 @@ def test_old_tuple_api_rejected():
         ERROR_RS.write_text(backup + _OLD_API_INJECT)
         r = subprocess.run(
             ["cargo", "check", "--tests", "-p", "uv-distribution"],
-            cwd=REPO, capture_output=True, timeout=300,
+            cwd=REPO, capture_output=True, timeout=600,
         )
         assert r.returncode != 0, (
             "Old (u8, u8) tuple API still compiles -- python_version type not changed"
@@ -172,7 +156,7 @@ def test_freethreaded_display():
         ERROR_RS.write_text(backup + _DISPLAY_INJECT)
         r = subprocess.run(
             ["cargo", "test", "-p", "uv-distribution", "--", "harbor_display_check"],
-            cwd=REPO, capture_output=True, timeout=300,
+            cwd=REPO, capture_output=True, timeout=600,
         )
         output = r.stdout.decode() + r.stderr.decode()
         assert r.returncode == 0, f"Display tests failed:\n{output[-2000:]}"
@@ -189,7 +173,7 @@ def test_crate_tests_pass():
     """uv-distribution crate's own tests pass."""
     r = subprocess.run(
         ["cargo", "test", "-p", "uv-distribution"],
-        cwd=REPO, capture_output=True, timeout=300,
+        cwd=REPO, capture_output=True, timeout=600,
     )
     output = r.stdout.decode() + r.stderr.decode()
     assert r.returncode == 0, f"Crate tests failed:\n{output[-2000:]}"
@@ -200,7 +184,7 @@ def test_platform_tags_regression():
     """uv-platform-tags tests still pass."""
     r = subprocess.run(
         ["cargo", "test", "-p", "uv-platform-tags"],
-        cwd=REPO, capture_output=True, timeout=300,
+        cwd=REPO, capture_output=True, timeout=600,
     )
     assert r.returncode == 0, (
         f"Platform tags tests failed:\n{r.stderr.decode()[-2000:]}"

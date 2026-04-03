@@ -350,8 +350,13 @@ def main():
     parser.add_argument("--build-concurrency", type=int, default=5, help="Max concurrent template builds")
     parser.add_argument("--tasks", type=int, default=None, help="Limit to first N tasks")
     parser.add_argument("--filter", type=str, default=None, help="Glob filter on task names (e.g. 'gradio-*')")
+    parser.add_argument("--task-dir", type=str, default=None, help="Task directory (default: harbor_tasks)")
     parser.add_argument("--resume", action="store_true", help="Skip tasks already validated in results file")
     args = parser.parse_args()
+    if args.task_dir:
+        global HARBOR_TASKS_DIR, RESULTS_FILE
+        HARBOR_TASKS_DIR = ROOT / args.task_dir
+        RESULTS_FILE = ROOT / "pipeline_logs" / f"e2b_validate_{args.task_dir}_results.json"
     asyncio.run(run(args))
 
 

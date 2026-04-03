@@ -381,6 +381,45 @@ def test_no_ts_nocheck():
     assert "eslint-disable" not in src, "Found eslint-disable suppression"
 
 
+# [agent_config] pass_to_pass — CLAUDE.md:109 @ 4752aca926624efdeb62f2f43b606f5090be8903
+def test_no_escaped_package_imports():
+    """Extension must not use relative imports that escape the extensions/msteams package root.
+
+    CLAUDE.md:109 — inside extensions/<id>/**, do not use relative imports that
+    resolve outside that same extensions/<id> package root. Files directly in
+    extensions/msteams/src/ need 3+ leading '../' segments to escape the package;
+    files in deeper subdirs need more.
+    """
+    ext_dir = os.path.join(REPO, "extensions/msteams")
+    pkg_root = os.path.join(REPO, "extensions/msteams")
+    violations = []
+
+    for root, _dirs, files in os.walk(ext_dir):
+        for fname in files:
+            if not fname.endswith(".ts") or fname.endswith((".test.ts", ".d.ts")):
+                continue
+            filepath = os.path.join(root, fname)
+            file_dir = os.path.dirname(filepath)
+            with open(filepath) as f:
+                for i, line in enumerate(f, 1):
+                    # Extract the import specifier (relative paths only)
+                    m = re.search(r"""from\s+['"](\./|\.\./)(.*?)['"]""", line)
+                    if not m:
+                        continue
+                    specifier = m.group(1) + m.group(2)
+                    if not specifier.startswith("."):
+                        continue
+                    # Resolve where this import would land
+                    resolved = os.path.normpath(os.path.join(file_dir, specifier))
+                    # Flag if it resolves outside the extensions/msteams package root
+                    if not resolved.startswith(pkg_root):
+                        violations.append(f"{filepath}:{i}: {line.strip()}")
+
+    assert not violations, (
+        "Relative imports escaping extensions/msteams package root:\n" + "\n".join(violations[:5])
+    )
+
+
 # [agent_config] pass_to_pass — CLAUDE.md:108 @ 4752aca926624efdeb62f2f43b606f5090be8903
 def test_no_sdk_self_import():
     """Extension must not self-import via openclaw/plugin-sdk/msteams.

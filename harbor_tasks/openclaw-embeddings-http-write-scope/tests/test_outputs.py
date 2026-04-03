@@ -171,6 +171,27 @@ def test_no_lint_suppressions():
     )
 
 
+# [agent_config] pass_to_pass — CLAUDE.md:155 @ 85647949a484957ba6bac00e47653b0acd4a92d7
+def test_no_mixed_dynamic_static_imports():
+    """Must not mix await import() and static import for the same module (CLAUDE.md:155)."""
+    content = _read_src()
+    # Extract statically imported module specifiers
+    static_modules = set(re.findall(
+        r"""^import\s+.*?\s+from\s+["']([^"']+)["']""",
+        content,
+        re.MULTILINE,
+    ))
+    # Find any dynamic import() specifiers
+    dynamic_modules = re.findall(
+        r"""await\s+import\s*\(\s*["']([^"']+)["']\s*\)""",
+        content,
+    )
+    conflicts = [m for m in dynamic_modules if m in static_modules]
+    assert not conflicts, (
+        f"Dynamic import() used for module(s) already statically imported: {conflicts}"
+    )
+
+
 # [agent_config] pass_to_pass — CLAUDE.md:144 @ 85647949a484957ba6bac00e47653b0acd4a92d7
 def test_no_new_explicit_any():
     """Must not introduce new explicit 'any' type annotations (CLAUDE.md:144)."""

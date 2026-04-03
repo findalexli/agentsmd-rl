@@ -2,9 +2,9 @@ version: "2.0"
 
 source:
   repo: "facebook/react"
-  pr: 0
+  pr: 35649
   base_commit: "ff191f24b5f49252672ac4d3c46ef1e79cf7290d"
-  merge_commit: ""
+  merge_commit: "87ae75b33f71eb673c55ddb3a147a9e58b7d05bd"
 
 checks:
   - id: syntax_check
@@ -21,6 +21,16 @@ checks:
     type: fail_to_pass
     origin: pr_diff
     description: "REMOVED constant must not contain en dash U+2013 in any form"
+
+  - id: removed_exact_value
+    type: fail_to_pass
+    origin: pr_diff
+    description: "REMOVED constant must be exactly '-\\xa0' (minus + non-breaking space)"
+
+  - id: prefix_consistency
+    type: pass_to_pass
+    origin: static
+    description: "REMOVED/ADDED/UNCHANGED prefixes are each 2 chars and end with non-breaking space"
 
   - id: not_stub
     type: pass_to_pass

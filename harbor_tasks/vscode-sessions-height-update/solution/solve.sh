@@ -1,17 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 cd /workspace/vscode
 
-# Check if patch already applied
-check_file="src/vs/sessions/contrib/sessions/browser/views/sessionsList.ts"
-if grep -q "delegate.getHeight(session)" "${check_file}"; then
-    echo "Patch already applied"
+# Idempotency check
+if grep -q "delegate.getHeight(session)" src/vs/sessions/contrib/sessions/browser/views/sessionsList.ts 2>/dev/null; then
+    echo "Patch already applied."
     exit 0
 fi
 
-# Apply the fix
-git apply - <<'PATCH'
+git apply --3way - <<'PATCH'
 diff --git a/src/vs/sessions/contrib/sessions/browser/views/sessionsList.ts b/src/vs/sessions/contrib/sessions/browser/views/sessionsList.ts
 index 1c5f706c7c734..4f630e2fc1546 100644
 --- a/src/vs/sessions/contrib/sessions/browser/views/sessionsList.ts
@@ -39,6 +37,6 @@ index 1c5f706c7c734..4f630e2fc1546 100644
 +				this.tree.updateElementHeight(session, delegate.getHeight(session));
  			}
  		}));
- PATCH
+PATCH
 
-echo "Patch applied successfully"
+echo "Patch applied successfully."

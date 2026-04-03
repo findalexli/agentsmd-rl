@@ -18,13 +18,23 @@ import pytest
 REPO = "/workspace/openclaw"
 HANDLER = f"{REPO}/extensions/msteams/src/monitor-handler/message-handler.ts"
 VITEST_FILE = f"{REPO}/extensions/msteams/src/monitor-handler/_harbor_thread_filter.test.ts"
+VITEST_FILE_REL = "src/monitor-handler/_harbor_thread_filter.test.ts"
 
-# Marker files written by vitest tests on success
-F2P_PARENT_MARKER = "/tmp/harbor_f2p_parent_pass"
-F2P_REPLY_MARKER = "/tmp/harbor_f2p_reply_pass"
-F2P_NAME_MATCH_MARKER = "/tmp/harbor_f2p_name_match_pass"
-P2P_ALL_MARKER = "/tmp/harbor_p2p_all_pass"
+# Marker files written by vitest on per-test success
+MARKERS = {
+    "f2p_parent": "/tmp/harbor_f2p_parent",
+    "f2p_reply": "/tmp/harbor_f2p_reply",
+    "f2p_name_match": "/tmp/harbor_f2p_name_match",
+    "p2p_all": "/tmp/harbor_p2p_all",
+}
 
+# ---------------------------------------------------------------------------
+# Vitest test source — written to the repo at runtime, deleted afterward.
+#
+# Modeled after the PR's own tests in message-handler.authz.test.ts.
+# Uses vi.mock to intercept runtime-api, graph-thread, and reply-dispatcher
+# so we can feed controlled thread data and inspect BodyForAgent output.
+# ---------------------------------------------------------------------------
 
 VITEST_SRC = textwrap.dedent(r'''
 import { describe, expect, it, vi } from "vitest";
@@ -151,20 +161,6 @@ function makeActivity(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function makeAllowlistCfg(extra: Record<string, unknown> = {}): OpenClawConfig {
-  return {
-    channels: {
-      msteams: {
-        groupPolicy: "allowlist",
-        groupAllowFrom: ["bob-aad"],
-        requireMention: false,
-        teams: { team456: { channels: { "19:channel@thread.tacv2": { requireMention: false } } } },
-        ...extra,
-      },
-    },
-  } as OpenClawConfig;
-}
-
 function extractBody(mock: typeof runtimeApiMock.dispatchReplyFromConfigWithSettledDispatcher): string {
   const dispatched = mock.mock.calls[0]?.[0];
   expect(dispatched).toBeTruthy();
@@ -196,7 +192,18 @@ describe("harbor: thread history allowlist filtering", () => {
       },
     ]);
 
-    const { deps } = makeDeps(makeAllowlistCfg());
+    const cfg = {
+      channels: {
+        msteams: {
+          groupPolicy: "allowlist",
+          groupAllowFrom: ["bob-aad"],
+          requireMention: false,
+          teams: { team456: { channels: { "19:channel@thread.tacv2": { requireMention: false } } } },
+        },
+      },
+    } as OpenClawConfig;
+
+    const { deps } = makeDeps(cfg);
     const handler = createMSTeamsMessageHandler(deps);
     await handler({
       activity: makeActivity(),
@@ -208,7 +215,7 @@ describe("harbor: thread history allowlist filtering", () => {
     expect(body).not.toContain("Injected payload");
     expect(body).toContain("Bob");
     expect(body).toContain("Legitimate context");
-    writeFileSync("''' + F2P_PARENT_MARKER + r'''", "1");
+    writeFileSync("''' + MARKERS["f2p_parent"] + r'''", "1");
   });
 
   // ── F2P: Non-allowlisted REPLY sender excluded ──
@@ -235,7 +242,18 @@ describe("harbor: thread history allowlist filtering", () => {
       },
     ]);
 
-    const { deps } = makeDeps(makeAllowlistCfg());
+    const cfg = {
+      channels: {
+        msteams: {
+          groupPolicy: "allowlist",
+          groupAllowFrom: ["bob-aad"],
+          requireMention: false,
+          teams: { team456: { channels: { "19:channel@thread.tacv2": { requireMention: false } } } },
+        },
+      },
+    } as OpenClawConfig;
+
+    const { deps } = makeDeps(cfg);
     const handler = createMSTeamsMessageHandler(deps);
     await handler({
       activity: makeActivity(),
@@ -247,18 +265,15 @@ describe("harbor: thread history allowlist filtering", () => {
     expect(body).not.toContain("Sneaky injection");
     expect(body).toContain("Bob");
     expect(body).toContain("Original question");
-    writeFileSync("''' + F2P_REPLY_MARKER + r'''", "1");
+    writeFileSync("''' + MARKERS["f2p_reply"] + r'''", "1");
   });
 
-  // ── F2P: dangerouslyAllowNameMatching works in filter ──
-  // A naive ID-only filter would exclude name-matched users; the correct fix
-  // must use resolveMSTeamsAllowlistMatch which honours display-name matching.
+  // ── F2P: dangerouslyAllowNameMatching honoured in filter ──
   it("includes name-matched user and excludes non-matched via dangerouslyAllowNameMatching", async () => {
     runtimeApiMock.dispatchReplyFromConfigWithSettledDispatcher.mockClear();
     graphThreadMock.fetchChannelMessage.mockReset();
     graphThreadMock.fetchThreadReplies.mockReset();
 
-    // Parent: Alice has no AAD id, only display name — matched via name matching
     graphThreadMock.fetchChannelMessage.mockResolvedValue({
       id: "parent-msg",
       from: { user: { displayName: "Alice" } },
@@ -277,7 +292,7 @@ describe("harbor: thread history allowlist filtering", () => {
       },
     ]);
 
-    const { deps } = makeDeps({
+    const cfg = {
       channels: {
         msteams: {
           groupPolicy: "allowlist",
@@ -287,8 +302,9 @@ describe("harbor: thread history allowlist filtering", () => {
           teams: { team456: { channels: { "19:channel@thread.tacv2": { requireMention: false } } } },
         },
       },
-    } as OpenClawConfig);
+    } as OpenClawConfig;
 
+    const { deps } = makeDeps(cfg);
     const handler = createMSTeamsMessageHandler(deps);
     await handler({
       activity: makeActivity({
@@ -298,15 +314,13 @@ describe("harbor: thread history allowlist filtering", () => {
     } as unknown as Parameters<typeof handler>[0]);
 
     const body = extractBody(runtimeApiMock.dispatchReplyFromConfigWithSettledDispatcher);
-    // Alice's parent message (matched by display name) should be included
     expect(body).toContain("Allowlisted by display name");
-    // Mallory (no ID or name match) should be excluded
     expect(body).not.toContain("Mallory");
     expect(body).not.toContain("Attack payload");
-    writeFileSync("''' + F2P_NAME_MATCH_MARKER + r'''", "1");
+    writeFileSync("''' + MARKERS["f2p_name_match"] + r'''", "1");
   });
 
-  // ── P2P: All-allowlisted senders' messages still included ──
+  // ── P2P: All-allowlisted senders included ──
   it("includes all messages when all senders are on the allowlist", async () => {
     runtimeApiMock.dispatchReplyFromConfigWithSettledDispatcher.mockClear();
     graphThreadMock.fetchChannelMessage.mockReset();
@@ -330,7 +344,7 @@ describe("harbor: thread history allowlist filtering", () => {
       },
     ]);
 
-    const { deps } = makeDeps({
+    const cfg = {
       channels: {
         msteams: {
           groupPolicy: "allowlist",
@@ -339,8 +353,9 @@ describe("harbor: thread history allowlist filtering", () => {
           teams: { team456: { channels: { "19:channel@thread.tacv2": { requireMention: false } } } },
         },
       },
-    } as OpenClawConfig);
+    } as OpenClawConfig;
 
+    const { deps } = makeDeps(cfg);
     const handler = createMSTeamsMessageHandler(deps);
     await handler({
       activity: makeActivity(),
@@ -352,46 +367,57 @@ describe("harbor: thread history allowlist filtering", () => {
     expect(body).toContain("Original question");
     expect(body).toContain("Bob");
     expect(body).toContain("Reply from Bob");
-    writeFileSync("''' + P2P_ALL_MARKER + r'''", "1");
+    writeFileSync("''' + MARKERS["p2p_all"] + r'''", "1");
   });
 });
 ''')
 
 
+def _run_vitest():
+    """Run vitest on the injected test file. Try workspace-filtered then root-level."""
+    cmds = [
+        # Method 1: run from the extension directory (workspace-scoped)
+        (
+            ["pnpm", "exec", "vitest", "run",
+             VITEST_FILE_REL,
+             "--reporter=verbose", "--no-color"],
+            f"{REPO}/extensions/msteams",
+        ),
+        # Method 2: run from repo root with full path
+        (
+            ["pnpm", "exec", "vitest", "run",
+             f"extensions/msteams/{VITEST_FILE_REL}",
+             "--reporter=verbose", "--no-color"],
+            REPO,
+        ),
+    ]
+    for cmd, cwd in cmds:
+        try:
+            r = subprocess.run(cmd, cwd=cwd, capture_output=True, timeout=180)
+            output = r.stdout.decode() + "\n" + r.stderr.decode()
+            # If vitest ran (even with test failures), accept this result
+            if "vitest" in output.lower() or r.returncode == 0:
+                return output
+        except subprocess.TimeoutExpired:
+            continue
+    return "All vitest invocations failed or timed out"
+
+
 @pytest.fixture(scope="module")
 def vitest_results():
-    """Write vitest test file, run it, return marker-file results, then clean up."""
-    for m in (F2P_PARENT_MARKER, F2P_REPLY_MARKER, F2P_NAME_MATCH_MARKER, P2P_ALL_MARKER):
-        try:
-            os.remove(m)
-        except FileNotFoundError:
-            pass
+    """Write vitest test file, run it, return marker-based results."""
+    for m in MARKERS.values():
+        Path(m).unlink(missing_ok=True)
 
     Path(VITEST_FILE).write_text(VITEST_SRC)
-
     try:
-        r = subprocess.run(
-            ["pnpm", "exec", "vitest", "run",
-             "extensions/msteams/src/monitor-handler/_harbor_thread_filter.test.ts",
-             "--reporter=verbose", "--no-color"],
-            cwd=REPO, capture_output=True, timeout=180,
-        )
-        output = r.stdout.decode() + "\n" + r.stderr.decode()
-    except subprocess.TimeoutExpired:
-        output = "vitest timed out"
+        output = _run_vitest()
     finally:
-        try:
-            os.remove(VITEST_FILE)
-        except FileNotFoundError:
-            pass
+        Path(VITEST_FILE).unlink(missing_ok=True)
 
     return {
-        "f2p_parent": os.path.exists(F2P_PARENT_MARKER),
-        "f2p_reply": os.path.exists(F2P_REPLY_MARKER),
-        "f2p_name_match": os.path.exists(F2P_NAME_MATCH_MARKER),
-        "p2p_all": os.path.exists(P2P_ALL_MARKER),
-        "output": output,
-    }
+        k: Path(v).exists() for k, v in MARKERS.items()
+    } | {"output": output}
 
 
 def _read_handler():
@@ -412,15 +438,15 @@ def _added_lines():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) -- core behavioral tests via vitest
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_thread_filter_excludes_nonallowlisted_parent(vitest_results):
     """Non-allowlisted parent message content must not appear in BodyForAgent."""
     assert vitest_results["f2p_parent"], (
-        "Vitest F2P (parent) failed — non-allowlisted parent message was not excluded "
-        f"from thread context.\n{vitest_results['output'][-2000:]}"
+        "Non-allowlisted parent message was not excluded from thread context.\n"
+        f"Vitest output (last 2000 chars):\n{vitest_results['output'][-2000:]}"
     )
 
 
@@ -428,8 +454,8 @@ def test_thread_filter_excludes_nonallowlisted_parent(vitest_results):
 def test_thread_filter_excludes_nonallowlisted_reply(vitest_results):
     """Non-allowlisted reply sender content must not appear in BodyForAgent."""
     assert vitest_results["f2p_reply"], (
-        "Vitest F2P (reply) failed — non-allowlisted reply message was not excluded "
-        f"from thread context.\n{vitest_results['output'][-2000:]}"
+        "Non-allowlisted reply message was not excluded from thread context.\n"
+        f"Vitest output (last 2000 chars):\n{vitest_results['output'][-2000:]}"
     )
 
 
@@ -438,21 +464,21 @@ def test_thread_filter_name_matching(vitest_results):
     """Filter must use resolveMSTeamsAllowlistMatch (not naive ID comparison)
     so that dangerouslyAllowNameMatching is honoured for thread history."""
     assert vitest_results["f2p_name_match"], (
-        "Vitest F2P (name matching) failed — dangerouslyAllowNameMatching not honoured "
-        f"in thread history filter.\n{vitest_results['output'][-2000:]}"
+        "dangerouslyAllowNameMatching not honoured in thread history filter.\n"
+        f"Vitest output (last 2000 chars):\n{vitest_results['output'][-2000:]}"
     )
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression
+# Pass-to-pass (pr_diff) -- regression
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
 def test_thread_filter_includes_all_allowlisted(vitest_results):
     """When all thread senders are allowlisted, all messages appear in BodyForAgent."""
     assert vitest_results["p2p_all"], (
-        "Vitest P2P failed — allowlisted messages were incorrectly excluded "
-        f"from thread context.\n{vitest_results['output'][-2000:]}"
+        "Allowlisted messages were incorrectly excluded from thread context.\n"
+        f"Vitest output (last 2000 chars):\n{vitest_results['output'][-2000:]}"
     )
 
 
@@ -466,7 +492,7 @@ def test_handler_export_exists():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub
+# Fail-to-pass (static) -- anti-stub
 # ---------------------------------------------------------------------------
 
 # [static] fail_to_pass
@@ -482,22 +508,21 @@ def test_handler_modified():
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) — CLAUDE.md / extensions/CLAUDE.md rules
+# Config-derived (agent_config) -- CLAUDE.md / extensions/CLAUDE.md rules
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — CLAUDE.md:146 @ 7e086697152920c48651276ed8ae9c27354c092d
+# [agent_config] pass_to_pass -- CLAUDE.md:146 @ 7e086697152920c48651276ed8ae9c27354c092d
 def test_no_ts_nocheck():
     """Must not add @ts-nocheck or @ts-ignore."""
     src = _read_handler()
-    assert "@ts-nocheck" not in src, "Found @ts-nocheck — fix root cause instead"
-    added = _added_lines()
-    for line in added:
+    assert "@ts-nocheck" not in src, "Found @ts-nocheck -- fix root cause instead"
+    for line in _added_lines():
         assert "@ts-ignore" not in line, (
-            f"New code adds @ts-ignore — use proper types instead: {line.strip()}"
+            f"New code adds @ts-ignore -- use proper types instead: {line.strip()}"
         )
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:144 @ 7e086697152920c48651276ed8ae9c27354c092d
+# [agent_config] pass_to_pass -- CLAUDE.md:144 @ 7e086697152920c48651276ed8ae9c27354c092d
 def test_no_new_any_type():
     """New code must not introduce explicit 'any' type annotations."""
     for line in _added_lines():
@@ -506,7 +531,7 @@ def test_no_new_any_type():
         )
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:146 @ 7e086697152920c48651276ed8ae9c27354c092d
+# [agent_config] pass_to_pass -- CLAUDE.md:146 @ 7e086697152920c48651276ed8ae9c27354c092d
 def test_no_inline_lint_suppression():
     """New code must not add eslint-disable or oxlint-ignore inline suppressions."""
     for line in _added_lines():
@@ -515,15 +540,14 @@ def test_no_inline_lint_suppression():
         )
 
 
-# [agent_config] pass_to_pass — extensions/CLAUDE.md:29-30 @ 7e086697152920c48651276ed8ae9c27354c092d
+# [agent_config] pass_to_pass -- extensions/CLAUDE.md:29-31 @ 7e086697152920c48651276ed8ae9c27354c092d
 def test_no_extension_boundary_violation():
-    """Extension code must not import from src/**, src/plugin-sdk-internal/**, or
-    escape the package root via deep relative imports."""
+    """Extension code must not import from src/** or escape the package root."""
     for line in _added_lines():
         if "import" not in line and "require" not in line:
             continue
         assert not re.search(r'''from\s+['"]src/''', line), (
-            f"Extension imports from src/ — use openclaw/plugin-sdk/* instead: {line.strip()}"
+            f"Extension imports from src/ -- use openclaw/plugin-sdk/* instead: {line.strip()}"
         )
         assert not re.search(r'''from\s+['"]\.\.\/\.\.\/\.\.\/\.\.\/?''', line), (
             f"Import escapes extension package root: {line.strip()}"

@@ -22,16 +22,6 @@ checks:
     origin: pr_diff
     description: "Qwen2_5_VLTextConfig must not define tie_word_embeddings as its own dataclass field"
 
-  - id: text_configs_instantiate
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Text sub-configs instantiate with no args and return expected vocab_size and model_type"
-
-  - id: downstream_no_tie_propagation_hack
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ColQwen2Config and ColModernVBertConfig must not contain tie_word_embeddings propagation hack"
-
   - id: modernvbert_init_type_hint
     type: fail_to_pass
     origin: pr_diff
@@ -42,29 +32,30 @@ checks:
     origin: pr_diff
     description: "modular_modernvbert.py ModernVBertForMaskedLM.__init__ config param has type annotation"
 
+  - id: downstream_no_tie_propagation_hack
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ColQwen2Config and ColModernVBertConfig must not contain tie_word_embeddings propagation hack"
+
+  - id: text_configs_instantiate
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Text sub-configs instantiate with expected vocab_size and model_type"
+
   - id: config_roundtrip
     type: pass_to_pass
     origin: pr_diff
-    description: "Config instantiation and to_dict serialization works for all affected configs"
+    description: "Config instantiation and to_dict serialization works for text and composite configs"
 
-  - id: downstream_configs_instantiate
+  - id: downstream_configs_structure
     type: pass_to_pass
-    origin: pr_diff
-    description: "ColQwen2Config and ColModernVBertConfig instantiate and serialize cleanly"
+    origin: static
+    description: "ColQwen2Config and ColModernVBertConfig retain class structure after hack removal"
 
   - id: not_stub
     type: pass_to_pass
     origin: static
     description: "Modified config files are not trivially emptied or stubbed"
-
-  - id: ruff_lint
-    type: pass_to_pass
-    origin: agent_config
-    description: "ruff linter passes on all changed files"
-    source:
-      path: "CLAUDE.md"
-      lines: "2"
-      commit: "28e1cc59ecf479ea674f2cc4b443a2969aae3a69"
 
 rubric:
   - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
@@ -83,4 +74,10 @@ rubric:
     source:
       path: "CLAUDE.md"
       lines: "66"
+      commit: "28e1cc59ecf479ea674f2cc4b443a2969aae3a69"
+
+  - rule: "Code style is enforced in the CI via ruff. Run make fixup to apply style and consistency fixes."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "17"
       commit: "28e1cc59ecf479ea674f2cc4b443a2969aae3a69"

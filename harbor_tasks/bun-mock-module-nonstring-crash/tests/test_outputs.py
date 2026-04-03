@@ -289,3 +289,18 @@ def test_agent_test_no_timeout_option():
         assert not re.search(r'timeout\s*:', content), (
             f"Test file {f.name} sets a custom timeout — Bun already has built-in timeouts"
         )
+
+
+# [agent_config] fail_to_pass — CLAUDE.md:231 @ e94c3035
+def test_agent_test_no_shell_commands():
+    """Agent test file does not use find/grep shell commands — use Bun's Glob and built-in tools (CLAUDE.md:231)."""
+    found = _find_agent_test_files()
+    assert len(found) > 0, "No agent test file found"
+    for f in found:
+        content = f.read_text()
+        assert not re.search(r'["\']find["\']', content), (
+            f"Test file {f.name} uses 'find' shell command — use Bun's Glob instead"
+        )
+        assert not re.search(r'["\']grep["\']', content), (
+            f"Test file {f.name} uses 'grep' shell command — use Bun's built-in tools instead"
+        )

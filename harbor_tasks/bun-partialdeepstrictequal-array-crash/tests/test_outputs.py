@@ -355,6 +355,24 @@ def test_dollar_call_convention():
     )
 
 
+# [agent_config] pass_to_pass — src/js/CLAUDE.md:103 @ e59a147
+def test_require_string_literals_only():
+    """require() calls in src/js/ must use string literals, not dynamic expressions.
+    # AST-only because: Bun cannot be compiled/run in Docker — source inspection only.
+
+    Rule: "String literal require() only" — src/js/CLAUDE.md:103
+    """
+    src, _ = _read_source()
+    # Find require() calls that are NOT followed immediately by a string literal
+    # Allow: require("..."), require('...'), require(`...`)
+    # Disallow: require(someVar), require(getPath()), etc.
+    dynamic_requires = re.findall(r'\brequire\s*\(\s*(?!["\'\`])', src)
+    assert len(dynamic_requires) == 0, (
+        f"Found {len(dynamic_requires)} dynamic require() call(s) — "
+        "src/js/ modules must use string literal require() only (src/js/CLAUDE.md:103)"
+    )
+
+
 # [agent_config] pass_to_pass — src/js/CLAUDE.md:15-28 @ e59a147
 def test_no_es_module_imports():
     """Modules under src/js/ are NOT ES modules — no import statements (except type imports).

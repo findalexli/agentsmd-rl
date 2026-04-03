@@ -25,6 +25,59 @@ def _util_section(src: str) -> str:
     return parts[0] if parts else src
 
 
+def _find_pacing_func(util: str) -> dict | None:
+    """Find the pacing/throttle factory function (handles nested parens in TS types)."""
+    # Match 'function NAME(' then balance parens for the full param list
+    for m in re.finditer(r"function\s+(\w+)\s*\(", util):
+        name = m.group(1)
+        paren_start = m.end() - 1  # index of '('
+        depth, i = 0, paren_start
+        for i in range(paren_start, len(util)):
+            if util[i] == "(":
+                depth += 1
+            elif util[i] == ")":
+                depth -= 1
+            if depth == 0:
+                break
+        params_str = util[paren_start + 1:i]
+        # Find opening brace of body
+        brace_match = re.search(r"\{", util[i:])
+        if not brace_match:
+            continue
+        body_start = i + brace_match.start()
+        depth, end = 0, body_start
+        for j in range(body_start, len(util)):
+            if util[j] == "{":
+                depth += 1
+            elif util[j] == "}":
+                depth -= 1
+            if depth == 0:
+                end = j
+                break
+        body = util[body_start:end + 1]
+        if "createSignal" in body and ("setTimeout" in body or "requestAnimationFrame" in body):
+            return {"name": name, "params": params_str, "body": body}
+
+    # Also check arrow functions
+    for m in re.finditer(r"(?:const|let)\s+(\w+)\s*=\s*\(", util):
+        name = m.group(1)
+        paren_start = m.end() - 1
+        depth, i = 0, paren_start
+        for i in range(paren_start, len(util)):
+            if util[i] == "(":
+                depth += 1
+            elif util[i] == ")":
+                depth -= 1
+            if depth == 0:
+                break
+        params_str = util[paren_start + 1:i]
+        ctx = util[m.start():min(m.start() + 3000, len(util))]
+        if "createSignal" in ctx and ("setTimeout" in ctx or "requestAnimationFrame" in ctx):
+            return {"name": name, "params": params_str, "body": ctx}
+
+    return None
+
+
 def _added_lines() -> list[str]:
     """Return '+' lines from the agent's diff of message-part.tsx."""
     for ref in ("HEAD", "HEAD~1"):
@@ -119,38 +172,7 @@ def test_pacing_is_streaming_aware():
     src = _read_file()
     util = _util_section(src)
 
-    # Find pacing/throttle factory: function with createSignal + setTimeout/RAF
-    func_pattern = re.compile(
-        r"function\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*[^{]+)?\{", re.S)
-    pacing_func = None
-    for m in func_pattern.finditer(util):
-        # Extract function body by matching braces
-        start = m.start()
-        body_start = util.index("{", start + len(m.group(0)) - 1)
-        depth, end = 0, body_start
-        for i in range(body_start, len(util)):
-            if util[i] == "{":
-                depth += 1
-            elif util[i] == "}":
-                depth -= 1
-            if depth == 0:
-                end = i
-                break
-        body = util[body_start:end + 1]
-        if "createSignal" in body and ("setTimeout" in body or "requestAnimationFrame" in body):
-            pacing_func = {"name": m.group(1), "params": m.group(2), "body": body}
-            break
-
-    # Also check arrow functions
-    if not pacing_func:
-        arrow_pattern = re.compile(
-            r"(?:const|let)\s+(\w+)\s*=\s*\(([^)]*)\)\s*(?::\s*[^=>{]+)?\s*=>")
-        for m in arrow_pattern.finditer(util):
-            ctx = util[m.start():min(m.start() + 3000, len(util))]
-            if "createSignal" in ctx and ("setTimeout" in ctx or "requestAnimationFrame" in ctx):
-                pacing_func = {"name": m.group(1), "params": m.group(2), "body": ctx}
-                break
-
+    pacing_func = _find_pacing_func(util)
     assert pacing_func, "No pacing function found (needs createSignal + setTimeout/RAF)"
 
     params = [p.strip() for p in pacing_func["params"].split(",") if p.strip()]
@@ -208,21 +230,9 @@ def test_both_displays_use_pacing():
     src = _read_file()
     util = _util_section(src)
 
-    # Find pacing function name
-    pacing_name = None
-    for m in re.finditer(r"function\s+(\w+)\s*\([^)]*\)", util):
-        ctx = util[m.start():min(m.start() + 3000, len(util))]
-        if "createSignal" in ctx and ("setTimeout" in ctx or "requestAnimationFrame" in ctx):
-            pacing_name = m.group(1)
-            break
-    if not pacing_name:
-        for m in re.finditer(r"(?:const|let)\s+(\w+)\s*=\s*\(", util):
-            ctx = util[m.start():min(m.start() + 3000, len(util))]
-            if "createSignal" in ctx and ("setTimeout" in ctx or "requestAnimationFrame" in ctx):
-                pacing_name = m.group(1)
-                break
-
-    assert pacing_name, "No pacing function found"
+    pacing_func = _find_pacing_func(util)
+    assert pacing_func, "No pacing function found"
+    pacing_name = pacing_func["name"]
 
     after_util = src[src.index("PART_MAPPING"):]
 
@@ -273,3 +283,16 @@ def test_no_else_blocks():
                   and not l.strip().startswith("//")]
     assert len(else_lines) == 0, \
         f"Found {len(else_lines)} else statement(s) in changed code"
+
+
+# [agent_config] pass_to_pass — packages/app/AGENTS.md:15 @ af2ccc94
+def test_no_multiple_create_signals():
+    """Pacing function must not use multiple createSignal calls; prefer createStore (packages/app/AGENTS.md:15)."""
+    src = _read_file()
+    util = _util_section(src)
+    pacing_func = _find_pacing_func(util)
+    if not pacing_func:
+        return  # No pacing function found, nothing to check
+    count = len(re.findall(r"\bcreateSignal\s*\(", pacing_func["body"]))
+    assert count <= 1, \
+        f"Pacing function uses {count} createSignal calls; use createStore for multiple signals (packages/app/AGENTS.md:15)"

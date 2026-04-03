@@ -379,6 +379,47 @@ def test_no_ts_nocheck():
             assert False, f"Line {i}: blanket lint suppression: {stripped}"
 
 
+# [agent_config] pass_to_pass — AGENTS.md:105 @ 756df2e9554da097679e6c4d3c75deff025098b9
+def test_no_explicit_any_in_helpers():
+    """New helper functions must not use explicit `any` type (AGENTS.md:105).
+
+    normalizeDebounceMessageText and sanitizeDebounceEntry must use `unknown`
+    or real types, not `any`.
+    """
+    import re
+
+    src = _read_target()
+    helper_names = ["normalizeDebounceMessageText", "sanitizeDebounceEntry"]
+    for fn_name in helper_names:
+        idx = src.find(f"function {fn_name}")
+        if idx == -1:
+            continue  # presence checked by other tests
+        # Extract the function body by counting braces
+        brace_count = 0
+        started = False
+        end = idx
+        for i in range(idx, len(src)):
+            if src[i] == "{":
+                brace_count += 1
+                started = True
+            elif src[i] == "}":
+                brace_count -= 1
+                if started and brace_count == 0:
+                    end = i + 1
+                    break
+        fn_body = src[idx:end]
+        for line in fn_body.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("//") or stripped.startswith("*"):
+                continue
+            assert not re.search(r":\s*any\b", line), (
+                f"{fn_name}: explicit `: any` type found (AGENTS.md:105 — use `unknown` or real types):\n  {stripped}"
+            )
+            assert not re.search(r"\bas\s+any\b", line), (
+                f"{fn_name}: `as any` cast found (AGENTS.md:105 — use `unknown` or real types):\n  {stripped}"
+            )
+
+
 # [agent_config] pass_to_pass — AGENTS.md:108 @ 756df2e9554da097679e6c4d3c75deff025098b9
 def test_no_self_import_via_plugin_sdk():
     """Target file must not import itself via openclaw/plugin-sdk/bluebubbles (AGENTS.md:108).

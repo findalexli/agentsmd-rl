@@ -201,3 +201,19 @@ def test_no_print_in_arun_episode():
             and isinstance(child.func, ast.Name)
             and child.func.id == "print"):
             assert False, "print() call found in arun_episode — use logger"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:90 @ 84eaef12
+def test_no_gpu_cpu_sync_in_arun_episode():
+    """No GPU-CPU sync calls (.item(), .tolist()) in arun_episode hot path (AGENTS.md rule)."""
+    source = Path(TARGET).read_text()
+    func_node, _ = _find_arun_episode(source)
+    assert func_node is not None, "arun_episode not found"
+    for child in ast.walk(func_node):
+        if (isinstance(child, ast.Call)
+                and isinstance(child.func, ast.Attribute)
+                and child.func.attr in ("item", "tolist")):
+            assert False, (
+                f"GPU-CPU sync call .{child.func.attr}() found in arun_episode — "
+                "avoid sync ops in hot paths (AGENTS.md:90)"
+            )

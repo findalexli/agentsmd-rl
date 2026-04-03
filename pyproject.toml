@@ -2,12 +2,26 @@
 name = "agentsmd-rl"
 version = "0.1.0"
 description = "RL environments from repos with agent instruction files (AGENTS.md, CLAUDE.md)."
-requires-python = ">=3.12,<3.13"
-dependencies = []
+requires-python = ">=3.9"
+dependencies = [
+    "pydantic>=2.0",
+    "unidiff>=0.7",
+]
+
+[project.optional-dependencies]
+scaffold = ["httpx>=0.27", "jinja2>=3.1"]
+e2b = ["e2b>=1.0"]
+test = ["pytest>=8.0", "pytest-asyncio>=0.23"]
 
 [build-system]
 requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["agentsmd_rl*"]
+include = ["taskforge*"]
+
+[tool.pytest.ini_options]
+testpaths = ["taskforge/tests"]
+markers = [
+    "integration: tests requiring network/API access",
+]

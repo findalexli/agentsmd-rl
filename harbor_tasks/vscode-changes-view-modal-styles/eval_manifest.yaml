@@ -2,7 +2,7 @@ version: "2.0"
 
 source:
   repo: "microsoft/vscode"
-  pr: 0
+  pr: 306421
   base_commit: "00356ebc69d09b93830f05eb4eabf872d425abdd"
   merge_commit: ""
 
@@ -17,24 +17,33 @@ checks:
     origin: pr_diff
     description: "openFileItem 6th argument must be 'items.length > 1', not hardcoded 'true', so single-item lists skip modal navigation"
 
-  - id: css_action_bar_visibility_uses_chat_editing_session_list
+  - id: css_action_bar_uses_broad_selector
     type: fail_to_pass
     origin: pr_diff
-    description: "CSS action bar hover/focus/select selectors use .chat-editing-session-list (not .changes-view-body)"
+    description: "CSS action bar hover/focus/select selectors must not use .changes-view-body — must use a broader parent selector"
 
-  - id: css_diff_stats_hide_uses_chat_editing_session_list
+  - id: css_diff_stats_hide_uses_broad_selector
     type: fail_to_pass
     origin: pr_diff
-    description: "CSS working-set-line-counts hiding selectors use .chat-editing-session-list for all three states"
+    description: "CSS working-set-line-counts hiding selectors must not use .changes-view-body for any of the three states"
 
-  - id: css_no_changes_view_body_selectors
+  - id: action_bar_default_hidden
     type: fail_to_pass
     origin: pr_diff
-    description: "All .changes-view-body selectors in the action bar / diff-stats blocks are removed from changesView.css"
+    description: "Base action bar CSS rule uses broad selector (not .changes-view-body) with display: none"
 
   - id: layering_rules
     type: pass_to_pass
     origin: repo_tests
     description: "VS Code module layering rules pass (no forbidden cross-layer imports)"
+
+  - id: css_uses_tabs_not_spaces
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified CSS lines use tabs for indentation, not spaces"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "72"
+      commit: "00356ebc69d09b93830f05eb4eabf872d425abdd"
 
 rubric: []

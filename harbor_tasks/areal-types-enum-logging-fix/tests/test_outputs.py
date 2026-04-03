@@ -279,6 +279,60 @@ def test_no_wildcard_imports():
                         )
 
 
+# [agent_config] fail_to_pass -- AGENTS.md:99 @ 4f5a294
+def test_reward_fn_has_return_annotation():
+    """clevr_count_70k_reward_fn must have an explicit -> float return type annotation."""
+    # AST-only because: checking annotation presence, not runtime behavior
+    tree = ast.parse(Path(CLEVR_PY).read_text())
+
+    fn_node = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "clevr_count_70k_reward_fn":
+            fn_node = node
+            break
+    assert fn_node is not None, "clevr_count_70k_reward_fn not found"
+
+    assert fn_node.returns is not None, (
+        "clevr_count_70k_reward_fn has no return type annotation (expected '-> float')"
+    )
+    ann = fn_node.returns
+    assert isinstance(ann, ast.Name) and ann.id == "float", (
+        f"clevr_count_70k_reward_fn return annotation is '{ast.unparse(ann)}', expected 'float'"
+    )
+
+
+# [agent_config] fail_to_pass -- AGENTS.md:99 @ 4f5a294
+def test_properties_annotated_with_enum_types():
+    """api_type and input_name_for_logging properties must be annotated with enum types, not str."""
+    # AST-only because: types.py imports torch and openai at module level
+    src = Path(TYPES_PY).read_text()
+    tree = ast.parse(src)
+
+    cls_node = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "InteractionWithTokenLogpReward":
+            cls_node = node
+            break
+    assert cls_node is not None, "InteractionWithTokenLogpReward class not found"
+
+    expected = {"api_type": "ApiType", "input_name_for_logging": "InputName"}
+    for method in cls_node.body:
+        if not isinstance(method, ast.FunctionDef):
+            continue
+        if method.name not in expected:
+            continue
+
+        expected_type = expected[method.name]
+        assert method.returns is not None, (
+            f"{method.name} has no return type annotation (expected '-> {expected_type}')"
+        )
+        ann = method.returns
+        ann_str = ast.unparse(ann)
+        assert ann_str == expected_type, (
+            f"{method.name} return annotation is '{ann_str}', expected '{expected_type}' not bare 'str'"
+        )
+
+
 # [agent_config] fail_to_pass -- AGENTS.md:89-91 @ 4f5a294
 def test_reward_uses_areal_logging():
     """clevr_count_70k.py must import logging from areal.utils, not stdlib."""

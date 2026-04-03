@@ -169,6 +169,21 @@ assert result2 == {'shortest_edge': 256}, f'Wrong: {result2}'
     assert r.returncode == 0, f"Failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [agent_config] pass_to_pass — AGENTS.md:2 @ a8683756653094e3fc3016df8abcdeaaec758f9a
+def test_ruff_style_check():
+    """image_processing_utils.py passes ruff linter (make style requirement)."""
+    # Install ruff if not already present
+    subprocess.run(
+        ["pip", "install", "--quiet", "ruff"],
+        cwd=REPO, capture_output=True,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", "src/transformers/image_processing_utils.py"],
+        cwd=REPO, capture_output=True, text=True,
+    )
+    assert r.returncode == 0, f"ruff style violations:\n{r.stdout}\n{r.stderr}"
+
+
 # [repo_tests] pass_to_pass
 def test_tuple_input():
     """get_size_dict still works with tuple input."""

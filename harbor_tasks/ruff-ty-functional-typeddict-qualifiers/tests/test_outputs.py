@@ -7,57 +7,76 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import re
 import subprocess
-import tempfile
+import textwrap
 from pathlib import Path
-
-import pytest
 
 REPO = "/workspace/ruff"
 
-
-@pytest.fixture(scope="session")
-def ty_binary():
-    """Build ty binary (incremental) and return its path."""
-    r = subprocess.run(
-        ["cargo", "build", "--bin", "ty", "--quiet"],
-        cwd=REPO,
-        capture_output=True,
-        timeout=300,
-    )
-    assert r.returncode == 0, f"Failed to build ty:\n{r.stderr.decode()}"
-    binary = Path(REPO) / "target" / "debug" / "ty"
-    assert binary.exists(), f"ty binary not found at {binary}"
-    return str(binary)
+# Files modified by the PR (where agent changes are expected)
+CHANGED_FILES = [
+    "crates/ty_python_semantic/src/types/typed_dict.rs",
+    "crates/ty_python_semantic/src/types/infer.rs",
+    "crates/ty_python_semantic/src/types/infer/builder.rs",
+    "crates/ty_python_semantic/src/types/infer/builder/annotation_expression.rs",
+    "crates/ty_python_semantic/src/types/infer/builder/typed_dict.rs",
+]
 
 
-def ty_check(ty_binary: str, code: str) -> str:
-    """Write code to a temp file and run ty check, return combined output."""
-    with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
-        f.write(code)
-        f.flush()
+def _build_ty():
+    """Build the ty binary once (cached by file existence)."""
+    bin_path = Path(REPO) / "target" / "debug" / "ty"
+    if not bin_path.exists():
         r = subprocess.run(
-            [ty_binary, "check", f.name],
-            capture_output=True,
-            timeout=60,
+            ["cargo", "build", "--bin", "ty"],
+            cwd=REPO, capture_output=True, timeout=600,
         )
+        assert r.returncode == 0, f"cargo build --bin ty failed:\n{r.stderr.decode()[-3000:]}"
+    assert bin_path.exists(), "ty binary not found after build"
+    return str(bin_path)
+
+
+def _run_ty(code: str) -> str:
+    """Write code to a temp file, run ty check, return combined output."""
+    ty = _build_ty()
+    tmp = Path("/tmp/ty_test")
+    tmp.mkdir(exist_ok=True)
+    test_file = tmp / "test_input.py"
+    test_file.write_text(textwrap.dedent(code))
+    r = subprocess.run(
+        [ty, "check", str(test_file)],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
     return r.stdout.decode() + r.stderr.decode()
 
 
+def _get_added_lines() -> str:
+    """Return only the '+' lines from git diff for changed files."""
+    r = subprocess.run(
+        ["git", "diff", "HEAD", "--unified=0", "--"] + CHANGED_FILES,
+        cwd=REPO, capture_output=True, timeout=30,
+    )
+    diff = r.stdout.decode()
+    added = []
+    for line in diff.splitlines():
+        if line.startswith("+") and not line.startswith("+++"):
+            added.append(line[1:])  # strip leading +
+    return "\n".join(added)
+
+
 # ---------------------------------------------------------------------------
-# Gate (pass_to_pass, static) — compilation
+# Gates (pass_to_pass, static) — compilation check
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_cargo_check():
-    """Modified Rust code must compile."""
+    """ty_python_semantic crate must compile."""
     r = subprocess.run(
-        ["cargo", "check", "-p", "ty_python_semantic", "--quiet"],
-        cwd=REPO,
-        capture_output=True,
-        timeout=300,
+        ["cargo", "check", "-p", "ty_python_semantic"],
+        cwd=REPO, capture_output=True, timeout=600,
     )
-    assert r.returncode == 0, f"cargo check failed:\n{r.stderr.decode()}"
+    assert r.returncode == 0, f"cargo check failed:\n{r.stderr.decode()[-3000:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -65,23 +84,21 @@ def test_cargo_check():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_readonly_enforced_functional(ty_binary):
+def test_readonly_enforced_functional():
     """Assigning to a ReadOnly field in functional TypedDict must error."""
-    # Test with multiple field types to avoid hardcoding
-    output = ty_check(ty_binary, """\
-from typing_extensions import TypedDict, ReadOnly
+    output = _run_ty("""\
+        from typing_extensions import TypedDict, ReadOnly
 
-TD1 = TypedDict("TD1", {"id": ReadOnly[int], "name": str})
-d1 = TD1(id=1, name="x")
-d1["id"] = 2     # should error: read-only
-d1["name"] = "y"  # fine: not read-only
+        TD1 = TypedDict("TD1", {"id": ReadOnly[int], "name": str})
+        d1 = TD1(id=1, name="x")
+        d1["id"] = 2     # should error: read-only
+        d1["name"] = "y"  # fine: not read-only
 
-TD2 = TypedDict("TD2", {"label": ReadOnly[str], "count": int})
-d2 = TD2(label="a", count=0)
-d2["label"] = "b"  # should error: read-only
-d2["count"] = 5    # fine
-""")
-    # Should see exactly 2 invalid-assignment errors (one per ReadOnly field mutation)
+        TD2 = TypedDict("TD2", {"label": ReadOnly[str], "count": int})
+        d2 = TD2(label="a", count=0)
+        d2["label"] = "b"  # should error: read-only
+        d2["count"] = 5    # fine
+    """)
     count = output.count("invalid-assignment")
     assert count >= 2, (
         f"Expected at least 2 invalid-assignment errors for ReadOnly fields, got {count}:\n{output}"
@@ -89,37 +106,36 @@ d2["count"] = 5    # fine
 
 
 # [pr_diff] fail_to_pass
-def test_notrequired_allows_omission(ty_binary):
+def test_notrequired_allows_omission():
     """Omitting a NotRequired field must not produce missing-typed-dict-key."""
-    output = ty_check(ty_binary, """\
-from typing_extensions import TypedDict, NotRequired
+    output = _run_ty("""\
+        from typing_extensions import TypedDict, NotRequired
 
-TD = TypedDict("TD", {"name": str, "year": NotRequired[int]})
-ok1 = TD(name="x")
-ok2 = TD(name="x", year=1)
+        TD = TypedDict("TD", {"name": str, "year": NotRequired[int]})
+        ok1 = TD(name="x")
+        ok2 = TD(name="x", year=1)
 
-TD2 = TypedDict("TD2", {"a": str, "b": NotRequired[str], "c": NotRequired[int]})
-ok3 = TD2(a="hello")
-ok4 = TD2(a="hello", b="world")
-ok5 = TD2(a="hello", b="world", c=42)
-""")
+        TD2 = TypedDict("TD2", {"a": str, "b": NotRequired[str], "c": NotRequired[int]})
+        ok3 = TD2(a="hello")
+        ok4 = TD2(a="hello", b="world")
+        ok5 = TD2(a="hello", b="world", c=42)
+    """)
     assert "missing-typed-dict-key" not in output, (
         f"NotRequired field wrongly treated as required:\n{output}"
     )
 
 
 # [pr_diff] fail_to_pass
-def test_required_enforced_total_false(ty_binary):
+def test_required_enforced_total_false():
     """Required field in total=False TypedDict must produce missing-typed-dict-key when omitted."""
-    output = ty_check(ty_binary, """\
-from typing_extensions import TypedDict, Required
+    output = _run_ty("""\
+        from typing_extensions import TypedDict, Required
 
-TD = TypedDict("TD", {"name": Required[str], "year": int}, total=False)
-ok = TD(name="x")
-bad1 = TD()
-bad2 = TD(year=1)
-""")
-    # bad1 and bad2 should both trigger missing-typed-dict-key for "name"
+        TD = TypedDict("TD", {"name": Required[str], "year": int}, total=False)
+        ok = TD(name="x")
+        bad1 = TD()
+        bad2 = TD(year=1)
+    """)
     count = output.count("missing-typed-dict-key")
     assert count >= 2, (
         f"Expected at least 2 missing-typed-dict-key errors, got {count}:\n{output}"
@@ -127,32 +143,32 @@ bad2 = TD(year=1)
 
 
 # [pr_diff] fail_to_pass
-def test_string_annotation_qualifier(ty_binary):
+def test_string_annotation_qualifier():
     """String annotation 'NotRequired[int]' must be respected as a qualifier."""
-    output = ty_check(ty_binary, """\
-from typing_extensions import TypedDict, NotRequired
+    output = _run_ty("""\
+        from typing_extensions import TypedDict, NotRequired
 
-TD = TypedDict("TD", {"required": str, "optional": "NotRequired[int]"})
-ok = TD(required="hello")
+        TD = TypedDict("TD", {"required": str, "optional": "NotRequired[int]"})
+        ok = TD(required="hello")
 
-TD2 = TypedDict("TD2", {"a": str, "b": "NotRequired[str]"})
-ok2 = TD2(a="world")
-""")
+        TD2 = TypedDict("TD2", {"a": str, "b": "NotRequired[str]"})
+        ok2 = TD2(a="world")
+    """)
     assert "missing-typed-dict-key" not in output, (
         f"String NotRequired wrongly treated as required:\n{output}"
     )
 
 
 # [pr_diff] fail_to_pass
-def test_string_annotation_required_total_false(ty_binary):
+def test_string_annotation_required_total_false():
     """String 'Required[str]' in total=False must enforce requiredness."""
-    output = ty_check(ty_binary, """\
-from typing_extensions import TypedDict, Required
+    output = _run_ty("""\
+        from typing_extensions import TypedDict, Required
 
-TD = TypedDict("TD", {"required": "Required[str]", "optional": int}, total=False)
-ok = TD(required="hello")
-bad = TD(optional=42)
-""")
+        TD = TypedDict("TD", {"required": "Required[str]", "optional": int}, total=False)
+        ok = TD(required="hello")
+        bad = TD(optional=42)
+    """)
     assert "missing-typed-dict-key" in output, (
         f"String Required not enforced with total=False:\n{output}"
     )
@@ -163,125 +179,122 @@ bad = TD(optional=42)
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_basic_functional_typeddict(ty_binary):
+def test_basic_functional_typeddict():
     """Basic functional TypedDict without qualifiers must not regress."""
-    output = ty_check(ty_binary, """\
-from typing_extensions import TypedDict
+    output = _run_ty("""\
+        from typing_extensions import TypedDict
 
-Movie = TypedDict("Movie", {"name": str, "year": int})
-m = Movie(name="The Matrix", year=1999)
+        Movie = TypedDict("Movie", {"name": str, "year": int})
+        m = Movie(name="The Matrix", year=1999)
 
-Point = TypedDict("Point", {"x": float, "y": float})
-p = Point(x=1.0, y=2.0)
-""")
+        Point = TypedDict("Point", {"x": float, "y": float})
+        p = Point(x=1.0, y=2.0)
+    """)
     error_lines = [l for l in output.splitlines() if "error" in l.lower()]
     assert not error_lines, f"Basic functional TypedDict has errors:\n{output}"
 
 
 # [repo_tests] pass_to_pass
-def test_class_based_qualifiers(ty_binary):
+def test_class_based_qualifiers():
     """Class-based TypedDict with qualifiers must still work correctly."""
-    output = ty_check(ty_binary, """\
-from typing_extensions import TypedDict, ReadOnly, NotRequired
+    output = _run_ty("""\
+        from typing_extensions import TypedDict, ReadOnly, NotRequired
 
-class Movie(TypedDict):
-    name: str
-    year: NotRequired[int]
-    id: ReadOnly[int]
+        class Movie(TypedDict):
+            name: str
+            year: NotRequired[int]
+            id: ReadOnly[int]
 
-m = Movie(name="The Matrix", id=1)
-m["id"] = 2  # should error: read-only
-""")
+        m = Movie(name="The Matrix", id=1)
+        m["id"] = 2  # should error: read-only
+    """)
     assert "invalid-assignment" in output, (
         f"Class-based ReadOnly not enforced:\n{output}"
     )
 
 
 # [repo_tests] pass_to_pass
-def test_total_false_without_qualifiers(ty_binary):
+def test_total_false_without_qualifiers():
     """total=False without Required/NotRequired must allow omitting all fields."""
-    output = ty_check(ty_binary, """\
-from typing_extensions import TypedDict
+    output = _run_ty("""\
+        from typing_extensions import TypedDict
 
-TD = TypedDict("TD", {"a": str, "b": int}, total=False)
-ok1 = TD()
-ok2 = TD(a="x")
-ok3 = TD(a="x", b=1)
-""")
+        TD = TypedDict("TD", {"a": str, "b": int}, total=False)
+        ok1 = TD()
+        ok2 = TD(a="x")
+        ok3 = TD(a="x", b=1)
+    """)
     assert "missing-typed-dict-key" not in output, (
         f"total=False fields wrongly treated as required:\n{output}"
     )
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) — AGENTS.md rules
+# Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
 # [agent_config] pass_to_pass — AGENTS.md:79 @ 8c2a9cfbd6d22fdfff452d7e899595d4fa6ecc92
 def test_no_unwrap_panic():
     """New code must not introduce .unwrap(), panic!(), or unreachable!()."""
-    r = subprocess.run(
-        ["git", "diff", "HEAD"],
-        cwd=REPO, capture_output=True, timeout=30,
-    )
-    diff = r.stdout.decode()
-    added = [l for l in diff.splitlines()
-             if l.startswith("+") and not l.startswith("+++")]
-    violations = [l for l in added
-                  if any(p in l for p in [".unwrap()", "panic!(", "unreachable!("])]
+    added = _get_added_lines()
+    if not added.strip():
+        return  # no changes yet (base commit) — pass
+    unwrap_hits = re.findall(r"\.unwrap\(\)", added)
+    panic_hits = re.findall(r"\bpanic!\s*\(", added)
+    unreachable_hits = re.findall(r"\bunreachable!\s*\(", added)
+    violations = []
+    if unwrap_hits:
+        violations.append(f".unwrap() x{len(unwrap_hits)}")
+    if panic_hits:
+        violations.append(f"panic!() x{len(panic_hits)}")
+    if unreachable_hits:
+        violations.append(f"unreachable!() x{len(unreachable_hits)}")
     assert not violations, (
-        "Found unwrap/panic in new code:\n" + "\n".join(violations)
+        f"Unsafe patterns in new code (AGENTS.md:79): {', '.join(violations)}"
     )
 
 
 # [agent_config] pass_to_pass — AGENTS.md:76 @ 8c2a9cfbd6d22fdfff452d7e899595d4fa6ecc92
 def test_imports_at_top():
-    """Rust imports must be at file top, not locally inside functions."""
-    r = subprocess.run(
-        ["git", "diff", "HEAD"],
-        cwd=REPO, capture_output=True, timeout=30,
-    )
-    diff = r.stdout.decode()
-    added = [l for l in diff.splitlines()
-             if l.startswith("+") and not l.startswith("+++")]
-    # Local imports are indented `use` statements (inside fn bodies)
-    local_imports = [l for l in added if "    use " in l]
-    assert not local_imports, (
-        "Found local imports (should be at top):\n" + "\n".join(local_imports)
+    """New code must not add `use` imports inside function bodies."""
+    added = _get_added_lines()
+    if not added.strip():
+        return  # no changes yet (base commit) — pass
+    local_use = re.findall(r"^(\s{12,}use\s+.+;)", added, re.MULTILINE)
+    assert not local_use, (
+        f"Local `use` imports found inside functions (AGENTS.md:76):\n"
+        + "\n".join(local_use)
     )
 
 
 # [agent_config] pass_to_pass — AGENTS.md:81 @ 8c2a9cfbd6d22fdfff452d7e899595d4fa6ecc92
 def test_expect_over_allow():
-    """Must use #[expect()] over #[allow()] for Clippy lint suppression."""
-    r = subprocess.run(
-        ["git", "diff", "HEAD"],
-        cwd=REPO, capture_output=True, timeout=30,
-    )
-    diff = r.stdout.decode()
-    added = [l for l in diff.splitlines()
-             if l.startswith("+") and not l.startswith("+++")]
-    violations = [l for l in added if "#[allow(" in l]
-    assert not violations, (
-        "Use #[expect()] instead of #[allow()]:\n" + "\n".join(violations)
+    """New lint suppressions must use #[expect()] not #[allow()]."""
+    added = _get_added_lines()
+    if not added.strip():
+        return  # no changes yet (base commit) — pass
+    allow_hits = re.findall(r"#\[allow\(", added)
+    assert not allow_hits, (
+        f"Use #[expect()] instead of #[allow()] for lint suppression "
+        f"(AGENTS.md:81): found {len(allow_hits)} occurrence(s)"
     )
 
 
 # [agent_config] pass_to_pass — AGENTS.md:84 @ 8c2a9cfbd6d22fdfff452d7e899595d4fa6ecc92
 def test_salsa_node_access():
     """Methods accessing .node() must be #[salsa::tracked] for incrementality."""
-    r = subprocess.run(
-        ["git", "diff", "HEAD"],
-        cwd=REPO, capture_output=True, timeout=30,
-    )
-    diff = r.stdout.decode()
-    added = [l for l in diff.splitlines()
-             if l.startswith("+") and not l.startswith("+++")]
-    node_calls = [l for l in added if ".node()" in l]
+    added = _get_added_lines()
+    if not added.strip():
+        return  # no changes yet (base commit) — pass
+    node_calls = re.findall(r"\.node\(\)", added)
     if not node_calls:
         return  # No .node() calls added, nothing to check
     # If .node() calls were added, verify there's a #[salsa::tracked] nearby
-    # This is a heuristic — check the full diff context for the attribute
+    r = subprocess.run(
+        ["git", "diff", "HEAD", "--"] + CHANGED_FILES,
+        cwd=REPO, capture_output=True, timeout=30,
+    )
+    diff = r.stdout.decode()
     assert "#[salsa::tracked]" in diff, (
-        "Added .node() call(s) without #[salsa::tracked]:\n" + "\n".join(node_calls)
+        f"Added .node() call(s) without #[salsa::tracked] (AGENTS.md:84)"
     )

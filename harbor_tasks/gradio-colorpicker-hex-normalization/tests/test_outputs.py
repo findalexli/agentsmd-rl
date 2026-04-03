@@ -272,6 +272,20 @@ def test_svelte_text_input_normalization():
 # Pass-to-pass (repo_tests) — regression
 # ---------------------------------------------------------------------------
 
+# [agent_config] fail_to_pass
+def test_normalize_color_has_typescript_types():
+    """normalize_color must have explicit TypeScript parameter and return type annotations."""
+    src = Path(UTILS_TS).read_text()
+    # Expect: function normalize_color(color: string): string
+    assert re.search(
+        r'function\s+normalize_color\s*\(\s*\w+\s*:\s*string\s*\)\s*:\s*string',
+        src,
+    ), (
+        "normalize_color must declare TypeScript types: (color: string): string — "
+        "js/README.md line 81 requires static types on JavaScript/TypeScript code"
+    )
+
+
 # [repo_tests] pass_to_pass
 def test_format_color_regression():
     """Existing format_color function must still produce correct output."""

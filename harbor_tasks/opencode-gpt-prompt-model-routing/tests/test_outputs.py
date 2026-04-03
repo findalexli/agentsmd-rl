@@ -269,3 +269,25 @@ def test_no_let_in_system_ts():
     src_clean = re.sub(r"/\*.*?\*/", "", src_clean, flags=re.DOTALL)
     matches = re.findall(r"\blet\b", src_clean)
     assert len(matches) == 0, f"Found {len(matches)} uses of 'let' in system.ts — prefer const"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:12 @ 17e8f577d681db858c7a24db2c91d1b45b7b85c9
+def test_no_try_catch_in_system_ts():
+    """system.ts must not use try/catch blocks (AGENTS.md rule)."""
+    src = Path(SYSTEM_TS).read_text()
+    # Strip comments
+    src_clean = re.sub(r"//.*$", "", src, flags=re.MULTILINE)
+    src_clean = re.sub(r"/\*.*?\*/", "", src_clean, flags=re.DOTALL)
+    matches = re.findall(r"\btry\s*\{", src_clean)
+    assert len(matches) == 0, f"Found {len(matches)} try/catch block(s) in system.ts — avoid try/catch where possible"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:17 @ 17e8f577d681db858c7a24db2c91d1b45b7b85c9
+def test_no_for_loops_in_system_ts():
+    """system.ts must prefer functional array methods over for loops (AGENTS.md rule)."""
+    src = Path(SYSTEM_TS).read_text()
+    # Strip comments
+    src_clean = re.sub(r"//.*$", "", src, flags=re.MULTILINE)
+    src_clean = re.sub(r"/\*.*?\*/", "", src_clean, flags=re.DOTALL)
+    matches = re.findall(r"\bfor\s*\(", src_clean)
+    assert len(matches) == 0, f"Found {len(matches)} for loop(s) in system.ts — prefer flatMap/filter/map"

@@ -119,9 +119,11 @@ def test_ops_h_generic_callable():
 
     # Base code only has from_blob(..., DeleterFnPtr deleter, ...).
     # A correct fix uses template<class F> or std::function to accept capturing lambdas.
+    # Note: [^{;]* instead of [^>]* to handle nested angle brackets like
+    # template <class F, std::enable_if_t<std::is_invocable_v<F, void*>, int> = 0>
     has_template = bool(
         re.search(
-            r'template\s*<[^>]*class\s+\w+[^>]*>\s*(?:inline\s+)?(?:\w+::)*\w+\s+from_blob\s*\(',
+            r'template\s*<[^{;]*>\s+(?:inline\s+)?(?:\w+::)*\w+\s+from_blob\s*\(',
             src,
         )
     )

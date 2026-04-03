@@ -1,14 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
-# Check if fix is already applied
-if grep -q "setInputPartMaxHeightOverride" /workspace/vscode/src/vs/workbench/contrib/welcomeAgentSessions/browser/agentSessionsWelcome.ts 2>/dev/null; then
-    echo "Fix already applied."
+cd /workspace/vscode
+
+# Idempotency check
+if grep -q "setInputPartMaxHeightOverride" src/vs/workbench/contrib/welcomeAgentSessions/browser/agentSessionsWelcome.ts 2>/dev/null; then
+    echo "Patch already applied."
     exit 0
 fi
 
-# Apply the gold patch to fix welcome page chat input collapsing
-git apply - <<'PATCH'
+git apply --3way - <<'PATCH'
 diff --git a/src/vs/workbench/contrib/welcomeAgentSessions/browser/agentSessionsWelcome.ts b/src/vs/workbench/contrib/welcomeAgentSessions/browser/agentSessionsWelcome.ts
 index 0f10d3f8f27b9..0e3e5ccdeb569 100644
 --- a/src/vs/workbench/contrib/welcomeAgentSessions/browser/agentSessionsWelcome.ts
@@ -26,17 +27,17 @@ index 0f10d3f8f27b9..0e3e5ccdeb569 100644
  /**
   * - visibleDurationMs: Do they close it right away or leave it open (#3)
 @@ -804,9 +809,8 @@ export class AgentSessionsWelcomePage extends EditorPane {
-		}
+ 		}
 
-		const chatWidth = Math.min(800, this.lastDimension.width - 80);
+ 		const chatWidth = Math.min(800, this.lastDimension.width - 80);
 -		// Use a reasonable height for the input part - the CSS will hide the list area
 -		const inputHeight = 150;
 -		this.chatWidget.layout(inputHeight, chatWidth);
 +		this.chatWidget.setInputPartMaxHeightOverride(WELCOME_CHAT_INPUT_MAX_HEIGHT_OVERRIDE);
 +		this.chatWidget.layout(WELCOME_CHAT_INPUT_LAYOUT_HEIGHT, chatWidth);
-	}
+ 	}
 
-	private layoutSessionsControl(): void {
+ 	private layoutSessionsControl(): void {
 PATCH
 
-echo "Fix applied successfully."
+echo "Patch applied successfully."

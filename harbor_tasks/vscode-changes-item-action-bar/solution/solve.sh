@@ -1,18 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
-
-# VS Code Changes View Action Bar Fix
-# PR: #306366 - Sessions - polish changes item action bar
 
 cd /workspace/vscode
 
-# Check if already applied (look for viewModel parameter in ChangesTreeRenderer constructor)
-if grep -q "private viewModel: ChangesViewModel," src/vs/sessions/contrib/changes/browser/changesView.ts; then
-    echo "Fix already applied"
+# Idempotency check
+if grep -q "private viewModel: ChangesViewModel," src/vs/sessions/contrib/changes/browser/changesView.ts 2>/dev/null; then
+    echo "Patch already applied."
     exit 0
 fi
 
-git apply - <<'PATCH'
+git apply --3way - <<'PATCH'
 diff --git a/src/vs/sessions/contrib/changes/browser/changesView.ts b/src/vs/sessions/contrib/changes/browser/changesView.ts
 index 3673c78dceb2b..80315bb486dfe 100644
 --- a/src/vs/sessions/contrib/changes/browser/changesView.ts
@@ -65,4 +62,4 @@ index c75c00fde3665..0cb63934128b6 100644
  }
 PATCH
 
-echo "Fix applied successfully"
+echo "Patch applied successfully."

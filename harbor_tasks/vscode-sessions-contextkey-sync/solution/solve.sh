@@ -3,14 +3,13 @@ set -euo pipefail
 
 cd /workspace/vscode
 
-# Check if already applied (idempotency check)
-if grep -q "workspaceGroupCappedContextKey: IContextKey<boolean>" src/vs/sessions/contrib/sessions/browser/views/sessionsView.ts; then
-    echo "Patch already applied, skipping"
+# Idempotency check
+if grep -q "workspaceGroupCappedContextKey: IContextKey<boolean>" src/vs/sessions/contrib/sessions/browser/views/sessionsView.ts 2>/dev/null; then
+    echo "Patch already applied."
     exit 0
 fi
 
-# Apply the fix for IsWorkspaceGroupCappedContext synchronization
-git apply - <<'PATCH'
+git apply --3way - <<'PATCH'
 diff --git a/src/vs/sessions/contrib/sessions/browser/views/sessionsView.ts b/src/vs/sessions/contrib/sessions/browser/views/sessionsView.ts
 index a92f893eb35ed..1d84b792353e1 100644
 --- a/src/vs/sessions/contrib/sessions/browser/views/sessionsView.ts
@@ -34,7 +33,9 @@ index a92f893eb35ed..1d84b792353e1 100644
 
  	protected override renderBody(parent: HTMLElement): void {
 @@ -187,6 +191,9 @@ export class SessionsView extends ViewPane {
- 		})); this._register(this.onDidChangeBodyVisibility(visible => sessionsControl.setVisible(visible)));
+ 		}));
+ 		this._register(this.onDidChangeBodyVisibility(visible => sessionsControl.setVisible(visible)));
+
 +		// Sync workspace group capped context key with persisted state
 +		this.workspaceGroupCappedContextKey?.set(sessionsControl.isWorkspaceGroupCapped());
 +
@@ -59,4 +60,4 @@ index a92f893eb35ed..1d84b792353e1 100644
  	}
 PATCH
 
-echo "Patch applied successfully"
+echo "Patch applied successfully."

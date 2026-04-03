@@ -7,34 +7,39 @@ source:
   merge_commit: "e6f1c33acf81d9865863ab149d24726f43a56db0"
 
 checks:
-  - id: syntax_check
+  - id: config_file_intact
     type: pass_to_pass
     origin: static
-    description: "ReactFiberConfigDOM.js must parse without JavaScript syntax errors"
+    description: "ReactFiberConfigDOM.js must contain createInstance and the warning message"
 
-  - id: isscriptdatablock_defined
+  - id: data_block_types_classified
     type: fail_to_pass
     origin: pr_diff
-    description: "isScriptDataBlock function must be defined in ReactFiberConfigDOM.js"
+    description: "Data block MIME types (application/json, ld+json, text/csv, etc.) must be classified as data blocks"
 
-  - id: warning_guarded_by_isscriptdatablock
+  - id: js_mime_types_excluded
     type: fail_to_pass
     origin: pr_diff
-    description: "The trusted-types script warning must be gated on !isScriptDataBlock(props)"
+    description: "JavaScript MIME types (text/javascript, application/javascript, etc.) must not be data blocks"
 
-  - id: js_mime_types_excluded_from_data_block
+  - id: special_keywords_excluded
     type: fail_to_pass
     origin: pr_diff
-    description: "isScriptDataBlock must enumerate standard JS MIME types (text/javascript, application/javascript, etc.) and return false for them"
+    description: "HTML spec special keywords (module, importmap, speculationrules) must not be data blocks"
 
-  - id: special_keywords_not_data_blocks
+  - id: empty_missing_type_excluded
     type: fail_to_pass
     origin: pr_diff
-    description: "isScriptDataBlock must handle HTML spec special keywords (module, importmap, speculationrules) as non-data-blocks"
+    description: "Empty, missing, or non-string type must not be classified as data blocks"
+
+  - id: data_block_no_warning_integration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Rendering data block script tags must not trigger the trustedTypes warning (Jest integration)"
 
   - id: existing_warning_test_passes
     type: pass_to_pass
     origin: repo_tests
-    description: "Pre-existing Jest test 'should warn when rendering script tag' must still pass (no regression)"
+    description: "Pre-existing 'should warn when rendering script tag' test must still pass"
 
 rubric: []

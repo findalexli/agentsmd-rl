@@ -8,18 +8,18 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import importlib.util
 import sys
 import textwrap
 from pathlib import Path
 from unittest.mock import MagicMock
 
 # Mock heavy dependencies before any prime_rl imports
-sys.modules.setdefault("verifiers", MagicMock())
+_vf_mock = MagicMock()
+sys.modules.setdefault("verifiers", _vf_mock)
 
 REPO = "/workspace/prime-rl"
 SRC = f"{REPO}/src"
-if SRC not in sys.path:
-    sys.path.insert(0, SRC)
 
 MONITOR_BASE = f"{SRC}/prime_rl/utils/monitor/base.py"
 MONITOR_MULTI = f"{SRC}/prime_rl/utils/monitor/multi.py"
@@ -28,6 +28,18 @@ MONITOR_PRIME = f"{SRC}/prime_rl/utils/monitor/prime.py"
 EVAL_UTILS = f"{SRC}/prime_rl/orchestrator/eval_utils.py"
 
 MODIFIED_FILES = [MONITOR_BASE, MONITOR_MULTI, MONITOR_WANDB, MONITOR_PRIME, EVAL_UTILS]
+
+
+def _load_base_module():
+    """Load base.py directly via importlib, bypassing monitor/__init__.py.
+
+    The __init__.py imports transformers, wandb, pandas, etc. which are not
+    installed. base.py only needs abc, typing, and verifiers (mocked).
+    """
+    spec = importlib.util.spec_from_file_location("_monitor_base", MONITOR_BASE)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def _extract_method(filepath, class_name, method_name):
@@ -41,6 +53,17 @@ def _extract_method(filepath, class_name, method_name):
                     lines = source.splitlines(keepends=True)
                     return "".join(lines[item.lineno - 1 : item.end_lineno])
     return None
+
+
+def _strip_type_hints(func_src):
+    """Remove type annotations from function source to avoid NameError on exec."""
+    tree = ast.parse(textwrap.dedent(func_src))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef):
+            node.returns = None
+            for arg in node.args.args + node.args.kwonlyargs:
+                arg.annotation = None
+    return ast.unparse(tree)
 
 
 def _exec_wandb_method(func_src):
@@ -58,11 +81,22 @@ def _exec_wandb_method(func_src):
     mock_self.config = FakeConfig()
     mock_self.eval_samples_table = table_mock
 
-    wrapper = "class _W:\n" + textwrap.indent(textwrap.dedent(func_src), "    ")
+    clean_src = _strip_type_hints(func_src)
+    wrapper = "class _W:\n" + textwrap.indent(clean_src, "    ")
     ns = {"wandb": wandb_mock, "WandbWithExtrasConfig": FakeConfig, "__builtins__": __builtins__}
     exec(wrapper, ns)
     method = ns["_W"].__dict__["log_eval_samples"]
     return method, mock_self, table_mock, wandb_mock
+
+
+def _exec_multi_method(func_src):
+    """Compile extracted MultiMonitor method into a callable with mocked globals."""
+    clean_src = _strip_type_hints(func_src)
+    wrapper = "class _M:\n" + textwrap.indent(clean_src, "    ")
+    ns = {"__builtins__": __builtins__}
+    exec(wrapper, ns)
+    method = ns["_M"].__dict__["log_eval_samples"]
+    return method
 
 
 # ---------------------------------------------------------------------------
@@ -83,7 +117,8 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_abc_enforces_log_eval_samples():
     """Monitor ABC requires log_eval_samples; omitting it raises TypeError."""
-    from prime_rl.utils.monitor.base import Monitor
+    mod = _load_base_module()
+    Monitor = mod.Monitor
 
     class Incomplete(Monitor):
         def log(self, metrics, step): pass
@@ -100,10 +135,10 @@ def test_abc_enforces_log_eval_samples():
 # [pr_diff] fail_to_pass
 def test_noop_monitor_accepts_log_eval_samples():
     """NoOpMonitor implements log_eval_samples without crashing, for varied inputs."""
-    from prime_rl.utils.monitor.base import NoOpMonitor
+    mod = _load_base_module()
+    NoOpMonitor = mod.NoOpMonitor
 
     noop = object.__new__(NoOpMonitor)
-    # Test with multiple different inputs to prevent hardcoding
     for rollouts, env_name, step in [
         ([{"example_id": "ex1", "completion": "hello", "reward": 1.0, "task": "math"}], "env_a", 1),
         ([{"example_id": "ex2", "completion": "world", "reward": 0.5, "task": "code"},
@@ -116,22 +151,22 @@ def test_noop_monitor_accepts_log_eval_samples():
 # [pr_diff] fail_to_pass
 def test_multi_monitor_delegates_eval_samples():
     """MultiMonitor forwards log_eval_samples to all sub-monitors with correct args."""
-    from prime_rl.utils.monitor.multi import MultiMonitor
+    # AST-only because: multi.py imports from prime_rl.utils.logger and monitor __init__
+    func_src = _extract_method(MONITOR_MULTI, "MultiMonitor", "log_eval_samples")
+    assert func_src is not None, "MultiMonitor.log_eval_samples not found"
 
-    mock_a, mock_b, mock_c = MagicMock(), MagicMock(), MagicMock()
-    mm = object.__new__(MultiMonitor)
-    mm.monitors = [mock_a, mock_b, mock_c]
-    mm.logger = MagicMock()
+    method = _exec_multi_method(func_src)
 
-    # Test with varied inputs
     for rollouts, env_name, step in [
         ([{"example_id": "1", "completion": "answer", "reward": 0.9}], "gsm8k", 42),
         ([{"example_id": "2", "completion": "x", "reward": 0.1},
           {"example_id": "3", "completion": "y", "reward": 0.7}], "humaneval", 200),
     ]:
-        for m in [mock_a, mock_b, mock_c]:
-            m.reset_mock()
-        mm.log_eval_samples(rollouts=rollouts, env_name=env_name, step=step)
+        mock_a, mock_b, mock_c = MagicMock(), MagicMock(), MagicMock()
+        mock_self = MagicMock()
+        mock_self.monitors = [mock_a, mock_b, mock_c]
+
+        method(mock_self, rollouts=rollouts, env_name=env_name, step=step)
         for m in [mock_a, mock_b, mock_c]:
             m.log_eval_samples.assert_called_once_with(
                 rollouts=rollouts, env_name=env_name, step=step,
@@ -141,6 +176,7 @@ def test_multi_monitor_delegates_eval_samples():
 # [pr_diff] fail_to_pass
 def test_wandb_log_eval_samples_processes_rollouts():
     """WandbMonitor.log_eval_samples adds rows to table and calls wandb.log."""
+    # AST-only because: WandbMonitor.__init__ requires wandb credentials and GPU context
     func_src = _extract_method(MONITOR_WANDB, "WandbMonitor", "log_eval_samples")
     assert func_src is not None, "WandbMonitor.log_eval_samples not found"
 
@@ -158,9 +194,7 @@ def test_wandb_log_eval_samples_processes_rollouts():
     )
     assert wandb_mock.log.called, "wandb.log not called"
 
-    # Verify actual data passed to add_data includes the env_name and rollout fields
     first_call_args = table_mock.add_data.call_args_list[0][0]
-    # The row should contain step, env_name, task, example_id, completion, reward
     assert 100 in first_call_args, f"step=100 not in row data: {first_call_args}"
     assert "gsm8k" in first_call_args, f"env_name 'gsm8k' not in row data: {first_call_args}"
     assert "ex1" in first_call_args, f"example_id 'ex1' not in row data: {first_call_args}"
@@ -169,6 +203,7 @@ def test_wandb_log_eval_samples_processes_rollouts():
 # [pr_diff] fail_to_pass
 def test_wandb_log_eval_samples_skips_empty_completion():
     """Rollouts with empty/missing completion are not added to the table."""
+    # AST-only because: WandbMonitor.__init__ requires wandb credentials and GPU context
     func_src = _extract_method(MONITOR_WANDB, "WandbMonitor", "log_eval_samples")
     assert func_src is not None, "WandbMonitor.log_eval_samples not found"
 
@@ -229,7 +264,8 @@ def test_prime_monitor_implements_log_eval_samples():
 # [repo_tests] pass_to_pass
 def test_existing_abstract_methods_preserved():
     """Original abstract methods (log, log_samples, log_final_samples) are still enforced."""
-    from prime_rl.utils.monitor.base import Monitor
+    mod = _load_base_module()
+    Monitor = mod.Monitor
 
     for missing in ["log", "log_samples", "log_final_samples"]:
         methods = {

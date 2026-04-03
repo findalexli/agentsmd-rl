@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -15,6 +16,9 @@ import pytest
 
 REPO = "/repo"
 WORKER = f"{REPO}/packages/opencode/src/cli/cmd/tui/worker.ts"
+
+# Node.js global modules path — typescript installed via npm install -g
+_NODE_ENV = {**os.environ, "NODE_PATH": "/usr/local/lib/node_modules"}
 
 # Node.js AST analysis script — runs once via session fixture.
 # Uses the TypeScript compiler API to walk real AST nodes (not string matching),
@@ -113,6 +117,7 @@ if (!streamDecl || !streamDecl.initializer) {
   checks.no_any_type = true;
   checks.const_over_let = true;
   checks.no_else = true;
+  checks.no_try_catch = true;
   console.log(JSON.stringify(checks));
   process.exit(0);
 }
@@ -232,6 +237,17 @@ checks.not_stub = countMeaningful(streamInit) >= 15;
   checks.no_else = elseCount === 0;
 }
 
+// No try/catch in startEventStream (AGENTS.md:12)
+{
+  let tryCatchCount = 0;
+  function visitTry(n) {
+    if (ts.isTryStatement(n)) tryCatchCount++;
+    ts.forEachChild(n, visitTry);
+  }
+  visitTry(streamInit);
+  checks.no_try_catch = tryCatchCount === 0;
+}
+
 console.log(JSON.stringify(checks));
 """
 
@@ -241,14 +257,10 @@ def ast_checks():
     """Run TypeScript AST analysis once, share results across all tests."""
     assert Path(WORKER).is_file(), f"worker.ts not found at {WORKER}"
 
-    subprocess.run(
-        ["npm", "install", "-g", "typescript"],
-        capture_output=True, timeout=60,
-    )
-
     r = subprocess.run(
         ["node", "-e", _AST_SCRIPT, WORKER],
         capture_output=True, text=True, timeout=30, cwd=REPO,
+        env=_NODE_ENV,
     )
     assert r.returncode == 0, f"AST analysis failed:\n{r.stderr}"
 
@@ -375,3 +387,11 @@ def test_no_else(ast_checks):
     # AST-only because: TypeScript module requires full bun/effect runtime
     assert ast_checks["no_else"], \
         "Found `else` statement in startEventStream — prefer early returns (AGENTS.md:84)"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:12 @ 1d363fa
+def test_no_try_catch(ast_checks):
+    """No try/catch blocks in startEventStream (AGENTS.md:12). Use .catch() on promises instead."""
+    # AST-only because: TypeScript module requires full bun/effect runtime
+    assert ast_checks["no_try_catch"], \
+        "Found try/catch block in startEventStream — use .catch() instead (AGENTS.md:12)"

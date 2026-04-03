@@ -163,6 +163,23 @@ def test_no_eslint_disable_explicit_any():
     )
 
 
+# [agent_config] pass_to_pass — CLAUDE.md:153 @ 7a16a481983e62bc3394c7c5f90d320b6be82f0e
+def test_no_prototype_mutation():
+    """No prototype mutation patterns in the target file."""
+    src = TARGET.read_text()
+    assert "applyPrototypeMixins" not in src, (
+        "applyPrototypeMixins found in clawhub.ts — use explicit inheritance/composition instead"
+    )
+    # Check for Object.defineProperty on .prototype
+    assert not re.search(r'Object\.defineProperty\s*\(\s*\w+\.prototype', src), (
+        "Object.defineProperty on .prototype found in clawhub.ts"
+    )
+    # Check for direct .prototype. assignment
+    assert not re.search(r'\w+\.prototype\.\w+\s*=', src), (
+        "Prototype mutation (.prototype.x =) found in clawhub.ts"
+    )
+
+
 # [agent_config] pass_to_pass — CLAUDE.md:148 @ 7a16a481983e62bc3394c7c5f90d320b6be82f0e
 def test_no_mixed_dynamic_static_imports():
     """Do not mix `await import("x")` and static `import ... from "x"` for the same module."""

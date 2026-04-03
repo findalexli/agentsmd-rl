@@ -11,35 +11,7 @@ if grep -q '\- direction$' packages/opencode/src/cli/cmd/tui/routes/session/inde
 fi
 
 git apply - <<'PATCH'
-diff --git a/packages/opencode/src/cli/cmd/tui/app.tsx b/packages/opencode/src/cli/cmd/tui/app.tsx
-index 5a2e1b15588..3cb383be48d 100644
---- a/packages/opencode/src/cli/cmd/tui/app.tsx
-+++ b/packages/opencode/src/cli/cmd/tui/app.tsx
-@@ -121,6 +121,7 @@ async function getTerminalBackgroundColor(): Promise<"dark" | "light"> {
- }
-
- import type { EventSource } from "./context/sdk"
-+import { DialogVariant } from "./component/dialog-variant"
-
- function rendererConfig(_config: TuiConfig.Info): CliRendererConfig {
-   return {
-@@ -580,12 +581,12 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
-       },
-     },
-     {
--      title: "Variant cycle",
-+      title: "Switch model variant",
-       value: "variant.cycle",
-       keybind: "variant_cycle",
-       category: "Agent",
-       onSelect: () => {
--        local.model.variant.cycle()
-+        dialog.replace(() => <DialogVariant />)
-       },
-     },
-     {
 diff --git a/packages/opencode/src/cli/cmd/tui/routes/session/index.tsx b/packages/opencode/src/cli/cmd/tui/routes/session/index.tsx
-index 50199b010e3..fb62de9acf5 100644
 --- a/packages/opencode/src/cli/cmd/tui/routes/session/index.tsx
 +++ b/packages/opencode/src/cli/cmd/tui/routes/session/index.tsx
 @@ -334,7 +334,7 @@ export function Session() {
@@ -98,7 +70,6 @@ index 50199b010e3..fb62de9acf5 100644
      if (isRunning() && tools().length > 0) {
        // content[0] += ` · ${tools().length} toolcalls`
 diff --git a/packages/opencode/src/cli/cmd/tui/routes/session/subagent-footer.tsx b/packages/opencode/src/cli/cmd/tui/routes/session/subagent-footer.tsx
-index 315cd1e88cd..70c6f6ea996 100644
 --- a/packages/opencode/src/cli/cmd/tui/routes/session/subagent-footer.tsx
 +++ b/packages/opencode/src/cli/cmd/tui/routes/session/subagent-footer.tsx
 @@ -13,6 +13,23 @@ export function SubagentFooter() {

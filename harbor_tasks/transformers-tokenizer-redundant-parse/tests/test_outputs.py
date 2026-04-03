@@ -308,6 +308,26 @@ def test_base_class_path_unchanged():
 # Anti-stub (static)
 # ---------------------------------------------------------------------------
 
+# [agent_config] pass_to_pass — CLAUDE.md:2 @ 9dc8d8aa3090ab3f39e6086d02b712f9274bc795
+def test_ruff_clean():
+    """Modified file passes ruff linting (make style enforced by CI)."""
+    import shutil
+    import subprocess
+
+    if not shutil.which("ruff"):
+        import pytest
+        pytest.skip("ruff not available in this environment")
+
+    result = subprocess.run(
+        ["ruff", "check", TARGET],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, (
+        f"ruff found style errors in {TARGET}:\n{result.stdout}{result.stderr}"
+    )
+
+
 # [static] pass_to_pass
 def test_not_stub():
     """Modified function has real logic — not a trivial stub."""

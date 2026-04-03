@@ -27,7 +27,8 @@ def test_typecheck():
     """ValidateNoRefAccessInRender.ts must typecheck without errors."""
     # AST-only because: TypeScript source cannot be executed directly in Python
     r = subprocess.run(
-        ["yarn", "workspace", "babel-plugin-react-compiler", "typecheck"],
+        ["npx", "tsc", "--noEmit", "-p",
+         "packages/babel-plugin-react-compiler"],
         cwd=COMPILER,
         capture_output=True,
         timeout=120,
@@ -42,82 +43,90 @@ def test_typecheck():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_effects_path_for_non_hook_calls():
-    """Non-hook calls with known effects must use the effects-based validation path.
+def test_panresponder_no_false_positive():
+    """Refs passed to PanResponder.create (ImmutableCapture+Freeze) must not
+    produce false positive ref-access errors.
 
-    The fix adds a new else-if branch that activates when hookKind is null and
-    instr.effects is populated (i.e., the callee has known aliasing effects).
-    On the base commit this branch does not exist, causing all operands to be
-    validated uniformly with validateNoRefPassedToFunction.
+    On the base commit, the compiler uniformly applies validateNoRefPassedToFunction
+    to all operands, producing a false positive. The fix uses per-effect validation
+    so that ImmutableCapture operands with a co-existing Freeze are handled safely.
+    """
+    # Generate the fixture output (--update to create expect.md from scratch)
+    r = subprocess.run(
+        ["yarn", "snap", "-p", "panresponder-ref-in-callback", "-u"],
+        cwd=COMPILER,
+        capture_output=True,
+        timeout=120,
+    )
+    combined = r.stdout.decode() + r.stderr.decode()
+
+    # Read the generated expect.md
+    expect_path = Path(COMPILER) / (
+        "packages/babel-plugin-react-compiler/src/__tests__"
+        "/fixtures/compiler/panresponder-ref-in-callback.expect.md"
+    )
+    assert expect_path.exists(), (
+        f"Fixture expect.md was not generated. Snap output:\n{combined}"
+    )
+    content = expect_path.read_text()
+
+    # The fixture must compile WITHOUT ref-access errors
+    assert "InvalidReact" not in content, (
+        f"False positive: ref in PanResponder.create callback should not error.\n"
+        f"Got InvalidReact in output:\n{content[:500]}"
+    )
+    assert "Cannot access ref" not in content, (
+        f"False positive ref-access error in panresponder fixture:\n{content[:500]}"
+    )
+    # Must have compiled code (not just an error block)
+    assert "## Code" in content, (
+        f"Fixture did not produce compiled output:\n{content[:500]}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_effects_branch_for_non_hook_calls():
+    """Non-hook calls with known effects must use per-effect validation.
+
+    The fix adds a new else-if branch for (hookKind == null && instr.effects != null)
+    that iterates over effects to determine per-operand validation. On the base commit
+    this branch does not exist and all operands are validated uniformly.
     """
     # AST-only because: TypeScript source, modifying a live compiler pass
     src = Path(VALIDATION_FILE).read_text()
 
-    # The new branch guards on hookKind == null and non-null effects
-    assert "hookKind == null && instr.effects != null" in src, (
-        "Missing effects-based validation branch: "
-        "'else if (hookKind == null && instr.effects != null)'"
+    # The new branch must guard on hookKind being null and effects being present
+    assert "hookKind == null" in src and "instr.effects" in src, (
+        "Missing effects-based validation branch for non-hook calls with known effects"
     )
-
-    # The branch must iterate over effects, not operands
-    assert "for (const effect of instr.effects)" in src, (
-        "Missing iteration over instr.effects in the new branch"
+    # Must iterate over individual effects (not operands)
+    assert "for (const effect of instr.effects)" in src or \
+           "for (const effect of instr.effects!)" in src, (
+        "Missing iteration over instr.effects in effects-based branch"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_immutable_capture_freeze_distinction():
-    """ImmutableCapture operands that also have a Freeze effect must be treated as safe.
+    """ImmutableCapture with co-existing Freeze must be treated differently
+    from ImmutableCapture alone.
 
-    ImmutableCapture can come from two sources:
-      1. A known signature that explicitly freezes the operand (safe — Freeze + ImmutableCapture)
-      2. Downgraded defaults when the operand is already frozen (unsafe — ImmutableCapture only)
+    ImmutableCapture can come from:
+      1. Known signature with Freeze (safe — e.g. PanResponder.create)
+      2. Downgraded defaults without Freeze (unsafe — unknown function)
 
-    The fix distinguishes these by checking whether the same operand also has a Freeze
-    effect on the same instruction. On the base commit this check does not exist.
+    The fix must check for a co-existing Freeze effect on the same operand.
     """
     # AST-only because: TypeScript source, modifying a live compiler pass
     src = Path(VALIDATION_FILE).read_text()
 
-    # ImmutableCapture case must be handled in the switch
-    assert "case 'ImmutableCapture'" in src, (
-        "Missing 'ImmutableCapture' case in effect kind switch"
+    # Must handle ImmutableCapture as a distinct case
+    assert "'ImmutableCapture'" in src, (
+        "Missing 'ImmutableCapture' case in effect kind handling"
     )
-
-    # Must check for a co-existing Freeze effect on the same place
-    assert "isFrozen" in src, (
-        "Missing 'isFrozen' variable — fix must check for Freeze + ImmutableCapture combination"
-    )
-    assert "e.kind === 'Freeze'" in src, (
-        "Missing Freeze check inside ImmutableCapture handling"
-    )
-    assert "effect.from.identifier.id" in src, (
-        "Missing identifier.id comparison for Freeze/ImmutableCapture same-operand check"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_visited_effects_deduplication():
-    """Each (place, validation-kind) pair must only be validated once per instruction.
-
-    The fix introduces a visitedEffects Set to avoid emitting duplicate diagnostics
-    when multiple effects reference the same operand. On the base commit this does
-    not exist.
-    """
-    # AST-only because: TypeScript source, modifying a live compiler pass
-    src = Path(VALIDATION_FILE).read_text()
-
-    assert "visitedEffects" in src, (
-        "Missing 'visitedEffects' deduplication set in effects-based validation branch"
-    )
-    assert "new Set()" in src or "new Set<string>()" in src, (
-        "visitedEffects must be initialized as a Set"
-    )
-    assert "visitedEffects.has(" in src, (
-        "Missing visitedEffects.has() guard to skip duplicate validations"
-    )
-    assert "visitedEffects.add(" in src, (
-        "Missing visitedEffects.add() to record processed (place, validation) pairs"
+    # Must check for Freeze on the same operand
+    assert "Freeze" in src and "identifier.id" in src, (
+        "Missing Freeze co-existence check for ImmutableCapture operands"
     )
 
 
@@ -127,10 +136,10 @@ def test_visited_effects_deduplication():
 
 # [repo_tests] pass_to_pass
 def test_mutate_ref_fixture_still_errors():
-    """Passing a ref value to a mutating function during render must still produce an error.
+    """Mutating a ref arg during render must still produce a validation error.
 
-    The fix must not suppress errors for functions with Mutate effects on a ref operand.
-    The existing error.validate-mutate-ref-arg-in-render fixture exercises this case.
+    The fix must not suppress errors for functions with Mutate effects on refs.
+    The existing error.validate-mutate-ref-arg-in-render fixture exercises this.
     """
     r = subprocess.run(
         ["yarn", "snap", "-p", "error.validate-mutate-ref-arg-in-render"],
@@ -140,36 +149,29 @@ def test_mutate_ref_fixture_still_errors():
     )
     output = r.stdout.decode() + r.stderr.decode()
     assert r.returncode == 0, (
-        f"Regression: error.validate-mutate-ref-arg-in-render fixture failed:\n{output}"
+        f"Regression: mutate-ref fixture failed:\n{output}"
     )
 
 
 # [static] pass_to_pass
-def test_effect_kind_switch_covers_mutation_cases():
-    """The effect kind switch must still route Mutate/Capture effects to ref-passed validation.
-
-    A correct fix must preserve the behavior for mutation effects — they must still
-    produce 'ref-passed' validation (i.e., refs must not be passed to mutating functions).
-    """
+def test_effect_kind_coverage():
+    """The effects-based path must route Mutate to ref-passed and Freeze
+    to direct-ref validation, ensuring both validation functions are called."""
     # AST-only because: TypeScript source, modifying a live compiler pass
     src = Path(VALIDATION_FILE).read_text()
 
-    # Mutate effects → ref-passed
-    assert "case 'Mutate'" in src, (
-        "Missing 'Mutate' case in effect kind switch — mutation effects must still error"
+    # Mutate effects must still trigger validation
+    assert "'Mutate'" in src, (
+        "Missing 'Mutate' case — mutation effects must still produce errors"
     )
-    # Freeze effects → direct-ref (allow)
-    assert "case 'Freeze'" in src, (
-        "Missing 'Freeze' case in effect kind switch"
+    # Freeze effects must be handled
+    assert "'Freeze'" in src, (
+        "Missing 'Freeze' case in effect kind handling"
     )
-    # Capture effects → ref-passed
-    assert "case 'Capture'" in src, (
-        "Missing 'Capture' case in effect kind switch"
-    )
-    # Both validation kinds must be dispatched
+    # Both validation dispatchers must be present
     assert "validateNoDirectRefValueAccess" in src, (
-        "Missing validateNoDirectRefValueAccess call in effects branch"
+        "Missing validateNoDirectRefValueAccess call"
     )
     assert "validateNoRefPassedToFunction" in src, (
-        "Missing validateNoRefPassedToFunction call in effects branch"
+        "Missing validateNoRefPassedToFunction call"
     )

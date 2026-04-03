@@ -215,6 +215,24 @@ def test_no_deprecated_check():
     )
 
 
+# [agent_config] pass_to_pass — AGENTS.md:207-221 @ 78f73b27069ffe2dc1ddfb2b16013220d2a86569
+def test_no_inline_files_object():
+    """nextTestSetup uses a real fixture directory, not inline file object literals.
+
+    AGENTS.md prefers `files: __dirname` over `files: { 'path': 'content' }`.
+    Inline file objects are harder to maintain and the existing test follows
+    the real-directory pattern — a correct fix must not regress this.
+    """
+    src = TEST_FILE.read_text()
+    # Detect the anti-pattern: nextTestSetup with an inline object as `files`
+    # i.e. files: { or files:{ (with optional whitespace)
+    assert not re.search(
+        r"nextTestSetup\s*\(\s*\{[^}]*\bfiles\s*:\s*\{",
+        src,
+        re.DOTALL,
+    ), "nextTestSetup uses inline files object — should use files: __dirname instead"
+
+
 # [agent_config] pass_to_pass — AGENTS.md:180 @ 78f73b27069ffe2dc1ddfb2b16013220d2a86569
 def test_no_settimeout_waiting():
     """No setTimeout-based waiting — must use retry() instead."""

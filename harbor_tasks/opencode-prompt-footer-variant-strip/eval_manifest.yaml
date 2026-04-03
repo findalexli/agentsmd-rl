@@ -55,7 +55,12 @@ checks:
   - id: jsx_tags_balanced
     type: pass_to_pass
     origin: static
-    description: "Common JSX tags are balanced (catches orphaned tags from partial deletion)"
+    description: "Common JSX tags (text, span, Switch, Match, For) are balanced"
+
+  - id: show_tags_balanced
+    type: pass_to_pass
+    origin: static
+    description: "Show tags are balanced after removing the variant <Show> block"
 
 rubric:
   - rule: "Avoid using the `any` type"
@@ -98,4 +103,22 @@ rubric:
     source:
       path: "AGENTS.md"
       lines: "44"
+      commit: "8446719b13a1c9566bccd206cb522f7e524b1867"
+
+  - rule: "Keep things in one function unless composable or reusable."
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "8446719b13a1c9566bccd206cb522f7e524b1867"
+
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity."
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "8446719b13a1c9566bccd206cb522f7e524b1867"
+
+  - rule: "Prefer functional array methods (flatMap, filter, map) over for loops; use type guards on filter to maintain type inference downstream."
+    source:
+      path: "AGENTS.md"
+      lines: "17"
       commit: "8446719b13a1c9566bccd206cb522f7e524b1867"

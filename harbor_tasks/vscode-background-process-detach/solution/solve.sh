@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+cd "${1:-/workspace/vscode}"
+
 # Check if already applied - look for the new file
 if [ -f "src/vs/workbench/contrib/terminalContrib/chatAgentTools/browser/tools/commandLineRewriter/commandLineBackgroundDetachRewriter.ts" ]; then
     echo "Patch already applied, skipping"

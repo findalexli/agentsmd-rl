@@ -240,6 +240,15 @@ def test_no_try_catch_in_memo():
     assert not re.search(r"\btry\s*\{", memo), "try/catch found in values memo"
 
 
+# [agent_config] pass_to_pass — AGENTS.md:17 @ 26382c6
+def test_no_for_loops_in_memo():
+    """No for/while loops in the values memo (AGENTS.md: prefer functional array methods over loops)."""
+    memo = _extract_values_memo(_read_file())
+    assert not re.search(r"\bfor\s*\(|\bwhile\s*\(", memo), (
+        "for/while loop found in values memo — prefer functional array methods"
+    )
+
+
 # [agent_config] pass_to_pass — AGENTS.md:70 @ 26382c6
 def test_prefer_const_in_memo():
     """No 'let' declarations in the values memo (AGENTS.md: Prefer const over let)."""

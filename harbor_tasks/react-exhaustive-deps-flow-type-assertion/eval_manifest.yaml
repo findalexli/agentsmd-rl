@@ -4,7 +4,7 @@ source:
   repo: "facebook/react"
   pr: 35691
   base_commit: "22a20e1f2f557b99115d82b639ff5a32b6453cb6"
-  merge_commit: ""
+  merge_commit: "c137dd6f5484f1bb68a64f07dd0e40d474a29759"
 
 checks:
   - id: typescript_compiles
@@ -12,12 +12,12 @@ checks:
     origin: static
     description: "ExhaustiveDeps.ts passes TypeScript compilation with no errors"
 
-  - id: generic_type_annotation_check_added
+  - id: flow_type_assertion_behavioral
     type: fail_to_pass
     origin: pr_diff
-    description: "ExhaustiveDeps.ts skips deps whose parent node is GenericTypeAnnotation (Flow type assertion fix)"
+    description: "ESLint rule does not flag Flow type aliases in type assertions as missing deps (behavioral jest test)"
 
-  - id: flow_type_assertion_test_case_added
+  - id: flow_type_assertion_test_case_in_suite
     type: fail_to_pass
     origin: pr_diff
     description: "New valid test case for Flow type aliases in type assertions (TextColumn<ColumnKey, Item>) added to test file"
@@ -39,8 +39,14 @@ rubric:
       lines: "1-30"
       commit: "22a20e1f2f557b99115d82b639ff5a32b6453cb6"
 
-  - rule: "TypeScript @ts-expect-error suppression comments should include an explanation of why the suppression is needed (e.g. 'Flow-specific AST node type')"
+  - rule: "TypeScript @ts-expect-error suppression comments should include an explanation of why the suppression is needed"
     source:
       path: "packages/eslint-plugin-react-hooks/src/rules/ExhaustiveDeps.ts"
       lines: "564-580"
+      commit: "22a20e1f2f557b99115d82b639ff5a32b6453cb6"
+
+  - rule: "Run yarn prettier to format changed files before committing"
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "10"
       commit: "22a20e1f2f557b99115d82b639ff5a32b6453cb6"

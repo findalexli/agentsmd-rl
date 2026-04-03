@@ -12,10 +12,10 @@ checks:
     origin: static
     description: "train.py must be valid Python"
 
-  - id: no_nameerror_on_model
+  - id: model_assigned_before_hybrid_cp
     type: fail_to_pass
     origin: pr_diff
-    description: "Mock-execute train() — setup_hybrid_cp must not trigger NameError on 'model'"
+    description: "model must be assigned (via setup_model) before setup_hybrid_cp(model, ...) is called"
 
   - id: hybrid_cp_after_model_init
     type: fail_to_pass

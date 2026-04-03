@@ -2,9 +2,9 @@ version: "2.0"
 
 source:
   repo: "microsoft/vscode"
-  pr: 0  # unknown — derived from solve.sh patch
+  pr: 306146
   base_commit: "0dad7e0453d4d5a72113c59e8220aaf45020b9e7"
-  merge_commit: ""
+  merge_commit: "2e2025216e6e7f58d021d9cc8589d65d5ca4bc74"
 
 checks:
   - id: target_file_exists
@@ -31,5 +31,23 @@ checks:
     type: fail_to_pass
     origin: pr_diff
     description: "updateElementHeight not called with undefined as height"
+
+  - id: tabs_not_spaces
+    type: pass_to_pass
+    origin: agent_config
+    description: "Indentation uses tabs, not spaces (VS Code coding guideline)"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "72"
+      commit: "0dad7e0453d4d5a72113c59e8220aaf45020b9e7"
+
+  - id: no_duplicate_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No duplicate import statements in target file"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "138"
+      commit: "0dad7e0453d4d5a72113c59e8220aaf45020b9e7"
 
 rubric: []

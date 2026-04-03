@@ -163,6 +163,13 @@ def test_effect_fn_usage():
     assert count >= 3, f"Effect.fn used only {count} times (expected >= 3)"
 
 
+# [agent_config] pass_to_pass — packages/opencode/AGENTS.md:21 @ d2bfa92
+def test_effect_fn_untraced_usage():
+    """Effect.fnUntraced must be used for internal/anonymous helper effects."""
+    code = _strip_comments(REGISTRY.read_text())
+    assert "Effect.fnUntraced" in code, "Effect.fnUntraced not found in registry.ts"
+
+
 # [agent_config] pass_to_pass — AGENTS.md:17 @ d2bfa92
 def test_filter_usage():
     """Tool filtering should use .filter() (functional array method)."""

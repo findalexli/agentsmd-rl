@@ -34,31 +34,24 @@ def test_syntax_check():
 
 # [pr_diff] fail_to_pass
 def test_blob_validation_rejects_string():
-    """String-backed $B reference must throw 'Referenced Blob is not a Blob.'"""
-    # On base commit: new test case doesn't exist → Jest finds 0 tests → exit nonzero.
-    # On fix: new test exists and the error is thrown → Jest exits 0 with PASS.
+    """String-backed $B reference must throw 'Referenced Blob is not a Blob.'
+
+    Runs the PR's Jest test via yarn test (React's proper test runner).
+    On base commit: test doesn't exist → Jest finds no match → exit nonzero.
+    On fix: test exists and the instanceof check throws → Jest PASS.
+    """
     r = subprocess.run(
         [
-            "node", "--experimental-vm-modules", "node_modules/.bin/jest",
-            "packages/react-server-dom-webpack/src/__tests__/ReactFlightDOMReply-test.js",
-            "--testNamePattern=cannot deserialize a Blob reference backed by a string",
-            "--silent", "--no-watchman", "--testTimeout=30000",
+            "yarn", "test", "--silent", "--no-watchman",
+            "--testPathPattern", "ReactFlightDOMReply-test",
+            "--testNamePattern", "cannot deserialize a Blob reference backed by a string",
         ],
-        cwd=REPO, capture_output=True, timeout=180,
+        cwd=REPO, capture_output=True, timeout=120,
     )
     output = r.stdout.decode() + r.stderr.decode()
-    assert r.returncode == 0 and "PASS" in output, (
-        f"Jest test 'cannot deserialize a Blob reference backed by a string' did not pass:\n{output}"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_instanceof_blob_check_in_source():
-    """ReactFlightReplyServer.js must validate backing entry with instanceof Blob."""
-    src = Path(f"{REPO}/packages/react-server/src/ReactFlightReplyServer.js").read_text()
-    assert "instanceof Blob" in src, (
-        "Missing `instanceof Blob` type check in ReactFlightReplyServer.js — "
-        "the fix must guard the $B deserialization path"
+    # Jest exits 0 on pass, nonzero on fail or no tests found
+    assert r.returncode == 0, (
+        f"Jest test 'cannot deserialize a Blob reference backed by a string' did not pass:\n{output[-2000:]}"
     )
 
 
@@ -71,36 +64,39 @@ def test_existing_blob_deserialization_works():
     """Valid Blob references must still serialize and deserialize correctly."""
     r = subprocess.run(
         [
-            "node", "--experimental-vm-modules", "node_modules/.bin/jest",
-            "packages/react-server-dom-webpack/src/__tests__/ReactFlightDOMReply-test.js",
-            "--testNamePattern=can serialize and deserialize a Blob",
-            "--silent", "--no-watchman", "--testTimeout=30000",
+            "yarn", "test", "--silent", "--no-watchman",
+            "--testPathPattern", "ReactFlightDOMReply-test",
+            "--testNamePattern", "can serialize and deserialize a Blob",
         ],
-        cwd=REPO, capture_output=True, timeout=180,
+        cwd=REPO, capture_output=True, timeout=120,
     )
     output = r.stdout.decode() + r.stderr.decode()
-    assert r.returncode == 0 and "PASS" in output, (
-        f"Existing Blob serialization/deserialization test broken:\n{output}"
+    assert r.returncode == 0, (
+        f"Existing Blob serialization/deserialization test broken:\n{output[-2000:]}"
     )
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rule from .claude/skills/extract-errors/SKILL.md:8
+# Config-derived (agent_config) — rules from .claude/skills/
 # ---------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass — .claude/skills/extract-errors/SKILL.md:8 @ c80a07509582daadf275f36ffe7a88c3b12e9db4
-def test_error_code_582_registered():
+# [agent_config] fail_to_pass — .claude/skills/extract-errors/SKILL.md:10 @ c80a07509582daadf275f36ffe7a88c3b12e9db4
+def test_error_code_registered():
     """New error 'Referenced Blob is not a Blob.' must be registered in codes.json.
 
     Rule: 'Run yarn extract-errors when adding new error messages'
-    (.claude/skills/extract-errors/SKILL.md:8)
+    (.claude/skills/extract-errors/SKILL.md:10)
     """
     codes_path = Path(f"{REPO}/scripts/error-codes/codes.json")
     codes = json.loads(codes_path.read_text())
-    assert "582" in codes, (
-        "Error code 582 not registered in scripts/error-codes/codes.json — "
-        "new error messages must be extracted via yarn extract-errors"
-    )
-    assert "Blob" in codes["582"], (
-        f"Error code 582 message doesn't mention Blob: {codes['582']!r}"
+    # Find the error message by content, not by hardcoded code number.
+    # The agent must register the error via yarn extract-errors, which assigns
+    # the next available code number.
+    blob_error_codes = [
+        code for code, msg in codes.items()
+        if "Referenced Blob is not a Blob" in msg
+    ]
+    assert len(blob_error_codes) >= 1, (
+        "Error message 'Referenced Blob is not a Blob.' not registered in "
+        "scripts/error-codes/codes.json — run yarn extract-errors"
     )

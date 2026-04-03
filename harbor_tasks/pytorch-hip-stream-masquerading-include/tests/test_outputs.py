@@ -27,9 +27,11 @@ def _strip_cpp_comments(text: str) -> str:
 
 
 def _extract_rocm_block(text: str) -> str:
-    """Extract content between #ifdef USE_ROCM and matching #endif."""
-    m = re.search(r"#ifdef\s+USE_ROCM\b(.*?)#endif", text, re.DOTALL)
-    return m.group(1) if m else ""
+    """Extract the c10::hip namespace USE_ROCM block (the last one in the file)."""
+    # There are multiple #ifdef USE_ROCM blocks; the one with c10::hip aliases
+    # is the last one — use findall and take the final match.
+    matches = re.findall(r"#ifdef\s+USE_ROCM\b(.*?)#endif", text, re.DOTALL)
+    return matches[-1] if matches else ""
 
 
 def _is_include_approach(rocm_block: str) -> bool:
@@ -168,6 +170,23 @@ def test_nonmasquerading_hip_aliases_preserved():
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — CLAUDE.md rules
 # ---------------------------------------------------------------------------
+
+# [agent_config] fail_to_pass — .claude/skills/pr-review/review-checklist.md:30 @ 4b8a514606230b60bb8f27be5f11612f21b4aec1
+def test_masquerading_fns_removed_from_hip_header():
+    """Old masquerading function definitions must be deleted from HIPStreamMasqueradingAsCUDA.h."""
+    src = _strip_cpp_comments(HIP_MASQ_H.read_text())
+    fns = [
+        "getCurrentHIPStreamMasqueradingAsCUDA",
+        "getDefaultHIPStreamMasqueradingAsCUDA",
+        "getStreamFromPoolMasqueradingAsCUDA",
+        "getStreamFromExternalMasqueradingAsCUDA",
+        "setCurrentHIPStreamMasqueradingAsCUDA",
+    ]
+    for fn in fns:
+        assert not re.search(rf"\b{fn}\s*[\(\n]", src), (
+            f"{fn} still defined in HIPStreamMasqueradingAsCUDA.h — should be deleted and moved to CUDAStream.h"
+        )
+
 
 # [agent_config] fail_to_pass — CLAUDE.md:57 @ 4b8a514606230b60bb8f27be5f11612f21b4aec1
 def test_functions_in_hip_namespace():

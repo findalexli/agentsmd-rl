@@ -2,78 +2,72 @@ version: "2.0"
 
 source:
   repo: "microsoft/vscode"
-  pr: 0
+  pr: 306346
   base_commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
   merge_commit: ""
 
 checks:
-  - id: typescript_compiles
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files compile without errors"
-
   - id: has_git_repository_context_key_defined
     type: fail_to_pass
     origin: pr_diff
     description: "sessions.hasGitRepository RawContextKey defined in changesView.ts"
 
-  - id: active_session_has_git_repository_obs_declared
+  - id: context_key_is_raw_context_key_boolean
     type: fail_to_pass
     origin: pr_diff
-    description: "activeSessionHasGitRepositoryObs IObservable<boolean> declared in ChangesViewModel"
-
-  - id: active_session_has_git_repository_obs_uses_derived_and_repository_path
-    type: fail_to_pass
-    origin: pr_diff
-    description: "activeSessionHasGitRepositoryObs implemented via derived() checking session metadata.repositoryPath"
+    description: "hasGitRepositoryContextKey is a RawContextKey<boolean>"
 
   - id: bind_context_key_for_git_repository
     type: fail_to_pass
     origin: pr_diff
-    description: "bindContextKey wires hasGitRepositoryContextKey into ChangesViewPane's scoped context service"
+    description: "bindContextKey wires hasGitRepositoryContextKey in ChangesViewPane"
 
-  - id: mark_as_done_action_presentation
+  - id: git_repository_binding_checks_repository_obs
     type: fail_to_pass
     origin: pr_diff
-    description: "changesView.ts returns showIcon+showLabel presentation for agentSession.markAsDone action"
+    description: "hasGitRepository binding derives from the repository observable"
 
-  - id: sessions_window_context_import
+  - id: code_review_has_git_repository_condition
     type: fail_to_pass
     origin: pr_diff
-    description: "IsSessionsWindowContext imported in sessionsViewActions.ts"
+    description: "codeReview.contributions.ts includes sessions.hasGitRepository condition"
 
-  - id: mark_as_done_menu_registration_with_context_conditions
+  - id: code_review_git_repo_in_context_key_expr
     type: fail_to_pass
     origin: pr_diff
-    description: "MarkAsDone registered in ChatEditingSessionChangesToolbar with IsSessionsWindowContext and sessions.hasPullRequest conditions"
+    description: "sessions.hasGitRepository used inside ContextKeyExpr in code review when clause"
+
+  - id: existing_context_keys_intact
+    type: pass_to_pass
+    origin: static
+    description: "Existing context keys (hasPullRequest, etc.) still present in changesView.ts"
+
+  - id: code_review_sessions_window_context_intact
+    type: pass_to_pass
+    origin: static
+    description: "IsSessionsWindowContext still present in codeReview.contributions.ts"
 
 rubric:
   - rule: "Use tabs, not spaces for indentation"
     source:
       path: ".github/copilot-instructions.md"
-      lines: "indentation"
+      lines: "71"
       commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
 
   - rule: "Use arrow functions => over anonymous function expressions"
     source:
       path: ".github/copilot-instructions.md"
-      lines: "style"
-      commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
-
-  - rule: "Service dependencies must be declared in constructors and not accessed through IInstantiationService"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "code-quality"
+      lines: "86"
       commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
 
   - rule: "vs/sessions may import from vs/workbench, but vs/workbench must never import from vs/sessions"
     source:
       path: ".github/skills/sessions/SKILL.md"
-      lines: "2.2"
+      lines: "22-27"
       commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
 
-  - rule: "Never use shared MenuId.* constants from vs/platform/actions for agent sessions UI"
+  - rule: "Never use shared MenuId.* constants from vs/platform/actions for agent sessions UI — use the Menus.* equivalents from browser/menus.ts instead"
     source:
       path: ".github/skills/sessions/SKILL.md"
-      lines: "6"
+      lines: "72-73"
       commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"

@@ -236,3 +236,18 @@ def test_uses_harness_helpers():
     assert "bunExe" in text, "bunExe() not used — must use harness helper for bun path"
     assert "bunEnv" in text, "bunEnv not used — must use harness helper for env"
     assert "tempDir" in text, "tempDir not used — must use harness helper for temp dirs"
+
+
+# [agent_config] pass_to_pass — test/AGENTS.md:100 @ a04817ce2b7f
+def test_uses_await_using_for_proc():
+    """Bun.spawn calls must use 'await using' for automatic resource cleanup."""
+    text = _read_test_file()
+    spawn_calls = list(re.finditer(r"Bun\.spawn\s*\(", text))
+    assert spawn_calls, "No Bun.spawn calls found in test file"
+    for m in spawn_calls:
+        start = max(0, m.start() - 100)
+        prefix = text[start : m.end()]
+        assert re.search(r"await\s+using\s+\w+\s*=\s*Bun\.spawn", prefix), (
+            "Bun.spawn not assigned with 'await using' — "
+            "use 'await using proc = Bun.spawn(...)' for resource cleanup"
+        )

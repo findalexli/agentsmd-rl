@@ -252,3 +252,21 @@ def test_error_handling_macros():
 
     # Must have python_error() throws for Python C API error propagation
     assert "python_error" in enter_body, "enter() missing python_error throws"
+
+
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:89 @ 3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c
+# Source-analysis because: C++ requiring full PyTorch build cannot compile here
+def test_python_h_included_first():
+    """Python.h must be the first #include in torch/csrc/ files to avoid _XOPEN_SOURCE redefinition errors."""
+    source = _read_source()
+    first_include = None
+    for line in source.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("#include"):
+            first_include = stripped
+            break
+    assert first_include is not None, "No #include found in source"
+    python_h_patterns = ["<Python.h>", '"Python.h"', "python_headers.h"]
+    assert any(p in first_include for p in python_h_patterns), (
+        f"First #include must be Python.h or a wrapper, got: {first_include}"
+    )

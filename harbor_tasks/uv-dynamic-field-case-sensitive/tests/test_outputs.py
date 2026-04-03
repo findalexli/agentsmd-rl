@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import re
 import subprocess
 import shutil
 from pathlib import Path
@@ -106,38 +107,47 @@ mod injected_case_tests {
 """
 
 
-@pytest.fixture(scope="session", autouse=True)
-def inject_rust_tests():
-    """Inject Rust test functions into the source, compile once, clean up after."""
+@pytest.fixture(scope="session")
+def rust_test_results():
+    """Inject Rust tests, compile and run ALL at once, parse per-test results."""
     backup = FILE_PATH.with_suffix(".rs.bak")
     shutil.copy2(FILE_PATH, backup)
 
     with open(FILE_PATH, "a") as f:
         f.write(INJECTED_TESTS)
 
-    # Compile injected tests once
-    r = subprocess.run(
-        ["cargo", "test", "-p", "uv-pypi-types", "--no-run"],
-        cwd=REPO,
-        capture_output=True,
-        timeout=600,
-    )
+    try:
+        # Run all injected tests in a single cargo invocation
+        r = subprocess.run(
+            [
+                "cargo", "test", "-p", "uv-pypi-types",
+                "--", "injected_case_tests", "--test-threads=1",
+            ],
+            cwd=REPO,
+            capture_output=True,
+            timeout=600,
+        )
+        output = r.stdout.decode(errors="replace") + r.stderr.decode(errors="replace")
 
-    yield r.returncode == 0
+        # Parse individual test results from cargo test output
+        # Lines look like: "test metadata::metadata_resolver::injected_case_tests::name ... ok"
+        results = {}
+        for line in output.splitlines():
+            m = re.search(r"injected_case_tests::(\w+)\s+\.\.\.\s+(ok|FAILED)", line)
+            if m:
+                results[m.group(1)] = (m.group(2) == "ok")
+
+        # returncode 0 = all pass, 101 = some tests failed (but compiled ok)
+        compiled = r.returncode in (0, 101) and len(results) > 0
+    except subprocess.TimeoutExpired:
+        compiled = False
+        results = {}
+        output = "TIMEOUT"
+
+    yield {"compiled": compiled, "results": results, "output": output}
 
     # Restore original file
     shutil.move(str(backup), str(FILE_PATH))
-
-
-def _run_rust_test(name: str, *, timeout: int = 120) -> bool:
-    """Run a single injected Rust test by name and return True if it passed."""
-    r = subprocess.run(
-        ["cargo", "test", "-p", "uv-pypi-types", "--", f"injected_case_tests::{name}", "--exact"],
-        cwd=REPO,
-        capture_output=True,
-        timeout=timeout,
-    )
-    return r.returncode == 0
 
 
 def _extract_function_body(content: str, func_name: str) -> str:
@@ -163,9 +173,11 @@ def _extract_function_body(content: str, func_name: str) -> str:
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
-def test_compile(inject_rust_tests):
+def test_compile(rust_test_results):
     """Crate compiles after modifications."""
-    assert inject_rust_tests, "cargo test --no-run failed; source does not compile"
+    assert rust_test_results["compiled"], (
+        f"cargo test failed to compile or run:\n{rust_test_results['output'][-1000:]}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -173,45 +185,52 @@ def test_compile(inject_rust_tests):
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_lowercase_requires_dist():
+def test_lowercase_requires_dist(rust_test_results):
     """parse_pkg_info detects lowercase 'requires-dist' as dynamic."""
-    assert _run_rust_test("lowercase_requires_dist")
+    assert rust_test_results["results"].get("lowercase_requires_dist", False), \
+        "Rust test lowercase_requires_dist failed"
 
 
 # [pr_diff] fail_to_pass
-def test_lowercase_requires_python():
+def test_lowercase_requires_python(rust_test_results):
     """parse_pkg_info detects lowercase 'requires-python' as dynamic."""
-    assert _run_rust_test("lowercase_requires_python")
+    assert rust_test_results["results"].get("lowercase_requires_python", False), \
+        "Rust test lowercase_requires_python failed"
 
 
 # [pr_diff] fail_to_pass
-def test_lowercase_provides_extra():
+def test_lowercase_provides_extra(rust_test_results):
     """parse_pkg_info detects lowercase 'provides-extra' as dynamic."""
-    assert _run_rust_test("lowercase_provides_extra")
+    assert rust_test_results["results"].get("lowercase_provides_extra", False), \
+        "Rust test lowercase_provides_extra failed"
 
 
 # [pr_diff] fail_to_pass
-def test_lowercase_version_dynamic():
+def test_lowercase_version_dynamic(rust_test_results):
     """parse_metadata detects lowercase 'version' as dynamic."""
-    assert _run_rust_test("lowercase_version_dynamic")
+    assert rust_test_results["results"].get("lowercase_version_dynamic", False), \
+        "Rust test lowercase_version_dynamic failed"
 
 
 # [pr_diff] fail_to_pass
-def test_uppercase_requires_dist():
+def test_uppercase_requires_dist(rust_test_results):
     """parse_pkg_info detects uppercase 'REQUIRES-DIST' as dynamic."""
-    assert _run_rust_test("uppercase_requires_dist")
+    assert rust_test_results["results"].get("uppercase_requires_dist", False), \
+        "Rust test uppercase_requires_dist failed"
 
 
 # [pr_diff] fail_to_pass
-def test_uppercase_version_dynamic():
+def test_uppercase_version_dynamic(rust_test_results):
     """parse_metadata detects uppercase 'VERSION' as dynamic."""
-    assert _run_rust_test("uppercase_version_dynamic")
+    assert rust_test_results["results"].get("uppercase_version_dynamic", False), \
+        "Rust test uppercase_version_dynamic failed"
 
 
 # [pr_diff] fail_to_pass
-def test_mixed_case_provides_extra():
+def test_mixed_case_provides_extra(rust_test_results):
     """parse_pkg_info detects mixed-case 'pRoViDeS-eXtRa' as dynamic."""
-    assert _run_rust_test("mixed_case_provides_extra")
+    assert rust_test_results["results"].get("mixed_case_provides_extra", False), \
+        "Rust test mixed_case_provides_extra failed"
 
 
 # ---------------------------------------------------------------------------
@@ -219,15 +238,17 @@ def test_mixed_case_provides_extra():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
-def test_canonical_requires_dist():
-    """Canonical 'Requires-Dist' is still rejected (regression guard)."""
-    assert _run_rust_test("canonical_requires_dist_still_rejected")
+def test_canonical_requires_dist(rust_test_results):
+    """Canonical 'Requires-Dist' is still rejected."""
+    assert rust_test_results["results"].get("canonical_requires_dist_still_rejected", False), \
+        "Rust test canonical_requires_dist_still_rejected failed"
 
 
 # [pr_diff] pass_to_pass
-def test_canonical_version_dynamic():
-    """Canonical 'Version' still sets dynamic=true (regression guard)."""
-    assert _run_rust_test("canonical_version_still_dynamic")
+def test_canonical_version_dynamic(rust_test_results):
+    """Canonical 'Version' still sets dynamic=true."""
+    assert rust_test_results["results"].get("canonical_version_still_dynamic", False), \
+        "Rust test canonical_version_still_dynamic failed"
 
 
 # ---------------------------------------------------------------------------
@@ -238,12 +259,12 @@ def test_canonical_version_dynamic():
 def test_upstream_unit_tests():
     """Upstream metadata_resolver unit tests still pass."""
     r = subprocess.run(
-        ["cargo", "test", "-p", "uv-pypi-types", "--", "metadata_resolver::tests"],
+        ["cargo", "test", "-p", "uv-pypi-types", "--", "metadata_resolver::tests", "--exact"],
         cwd=REPO,
         capture_output=True,
         timeout=120,
     )
-    assert r.returncode == 0, f"Upstream tests failed:\n{r.stderr.decode()[-500:]}"
+    assert r.returncode == 0, f"Upstream tests failed:\n{r.stderr.decode(errors='replace')[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -289,6 +310,5 @@ def test_expect_over_allow():
     """Uses #[expect()] instead of #[allow()] for clippy attributes in modified file."""
     # AST-only because: Rust code cannot be imported/called from Python
     content = FILE_PATH.read_text()
-    # Check that no new #[allow(clippy:: directives were added
     assert "#[allow(clippy::" not in content, \
         "Use #[expect()] instead of #[allow()] per CLAUDE.md"

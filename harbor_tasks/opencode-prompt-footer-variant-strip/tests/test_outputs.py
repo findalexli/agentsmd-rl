@@ -158,10 +158,26 @@ def test_jsx_control_flow_intact():
 def test_jsx_tags_balanced():
     """Common JSX tags must be balanced (catches orphaned tags from partial deletion)."""
     src = _read_file()
-    for tag in ["text", "span", "Switch", "Match", "Show", "For"]:
+    for tag in ["text", "span", "Switch", "Match", "For"]:
         opens = len(re.findall(rf"<{tag}[\s>]", src))
         closes = len(re.findall(rf"</{tag}>", src))
         self_closing = len(re.findall(rf"<{tag}\s[^>]*/>", src))
         assert (opens - self_closing) == closes, (
             f"Tag <{tag}> unbalanced: {opens - self_closing} opens vs {closes} closes"
         )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static + agent_config) — structural & style guard rails
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_show_tags_balanced():
+    """Show tags must be balanced after removing the variant <Show> block."""
+    src = _read_file()
+    opens = len(re.findall(r"<Show[\s>]", src))
+    closes = len(re.findall(r"</Show>", src))
+    self_closing = len(re.findall(r"<Show\s[^>]*/>", src))
+    assert (opens - self_closing) == closes, (
+        f"<Show> unbalanced: {opens - self_closing} opens vs {closes} closes"
+    )

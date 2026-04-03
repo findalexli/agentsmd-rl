@@ -217,3 +217,21 @@ def test_no_prototype_mutation():
     """Never share class behavior via prototype mutation."""
     src = TARGET.read_text()
     assert ".prototype" not in src, "Prototype mutation found in directive-tags.ts"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:106 @ 0d0d46f5e95f6f003861be33b4b9c6e3b493ea15
+def test_no_dynamic_import():
+    """Production utility files must not use dynamic await import() — use static imports only."""
+    import re
+    src = TARGET.read_text()
+    # Dynamic imports in a utility module would violate the guardrail against
+    # mixing static and dynamic imports of the same module in production paths.
+    matches = [
+        (i + 1, line.strip())
+        for i, line in enumerate(src.splitlines())
+        if re.search(r'\bawait\s+import\s*\(', line)
+    ]
+    assert not matches, (
+        f"Dynamic import(s) found in directive-tags.ts: "
+        + ", ".join(f"line {ln}: {txt}" for ln, txt in matches)
+    )

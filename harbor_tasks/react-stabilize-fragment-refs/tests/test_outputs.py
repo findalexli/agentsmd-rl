@@ -106,7 +106,7 @@ def test_test_file_uses_stable_name():
 # Pass-to-pass (static) — completeness / anti-stub
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+# [pr_diff] fail_to_pass
 def test_no_unstable_refs_in_modified_files():
     """No occurrences of unstable_reactFragments remain in any of the three modified files."""
     offenders = []

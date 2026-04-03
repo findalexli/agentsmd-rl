@@ -42,6 +42,15 @@ checks:
     origin: pr_diff
     description: "Client exit code must be forwarded to OutputLineStream in bake-harness.ts"
 
+  - id: no_dynamic_import_in_client_fixture
+    type: pass_to_pass
+    origin: agent_config
+    description: "client-fixture.mjs must not use unnecessary dynamic import() — only static top-level imports allowed"
+    source:
+      path: "test/CLAUDE.md"
+      lines: "218-220"
+      commit: "923690e923b2f13e0815e8cf342748082058bede"
+
 rubric:
   - rule: "Do not write flaky tests. Never wait for time to pass — always wait for the condition to be met."
     source:
@@ -59,4 +68,10 @@ rubric:
     source:
       path: "test/CLAUDE.md"
       lines: "104"
+      commit: "923690e923b2f13e0815e8cf342748082058bede"
+
+  - rule: "Prefer concurrent tests over sequential tests: when multiple tests in the same file spawn processes or write files, make them concurrent with test.concurrent or describe.concurrent unless it is very difficult to make them concurrent."
+    source:
+      path: "test/CLAUDE.md"
+      lines: "22"
       commit: "923690e923b2f13e0815e8cf342748082058bede"

@@ -171,6 +171,24 @@ def test_no_wildcard_imports():
     )
 
 
+# [agent_config] pass_to_pass — AGENTS.md:100-101 @ fdca82dc
+def test_explicit_type_hints_in_eval_sampler():
+    """EvalDistributedSampler.__init__ must have explicit type annotations on all parameters."""
+    tree = ast.parse(FILE.read_text())
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "EvalDistributedSampler":
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name == "__init__":
+                    for arg in item.args.args:
+                        if arg.arg == "self":
+                            continue
+                        assert arg.annotation is not None, (
+                            f"EvalDistributedSampler.__init__ parameter '{arg.arg}' missing type annotation"
+                        )
+                    return  # found and checked
+    assert False, "EvalDistributedSampler.__init__ not found in dataloader.py"
+
+
 # [agent_config] pass_to_pass — AGENTS.md:90-92 @ fdca82dc
 def test_no_print_statements():
     """No print() calls in dataloader.py — use areal.utils.logging.getLogger()."""

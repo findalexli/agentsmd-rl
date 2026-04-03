@@ -54,6 +54,15 @@ checks:
       lines: "84-86"
       commit: "84eaef1292b2a3184d4a565d4abb0758408be018"
 
+  - id: no_gpu_cpu_sync_in_arun_episode
+    type: pass_to_pass
+    origin: agent_config
+    description: "No GPU-CPU sync calls (.item(), .tolist()) in arun_episode hot path"
+    source:
+      path: "AGENTS.md"
+      lines: "90"
+      commit: "84eaef1292b2a3184d4a565d4abb0758408be018"
+
 rubric:
   - rule: "Async: rollout workflows must stay non-blocking (await + aiofiles); no sync I/O in arun_episode."
     source:
@@ -65,4 +74,10 @@ rubric:
     source:
       path: "AGENTS.md"
       lines: "35"
+      commit: "84eaef1292b2a3184d4a565d4abb0758408be018"
+
+  - rule: "Composition over inheritance -- keep class hierarchies <= 2 levels; prefer delegation."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
       commit: "84eaef1292b2a3184d4a565d4abb0758408be018"

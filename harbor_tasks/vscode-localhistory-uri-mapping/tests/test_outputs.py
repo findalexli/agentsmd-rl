@@ -1,15 +1,17 @@
 """
 Task: vscode-localhistory-uri-mapping
 Repo: microsoft/vscode @ 8c61afa3677cb13ce3071eac5326312fc4d2193a
+PR:   306147
 
 Fix: findLocalHistoryEntry must map vscode-local-history scheme URIs back to
 the original file URI before calling getEntries, so that local history commands
 work when triggered from a diff editor.
 
 AST-only because: TypeScript cannot be imported into Python; VS Code has
-massive dep graph. All checks use file content inspection via subprocess/read.
+massive dep graph. All checks use file content inspection.
 """
 
+import re
 from pathlib import Path
 
 REPO = "/workspace/vscode"
@@ -37,6 +39,17 @@ def _extract_function(src: str) -> str:
                 return src[brace_start : i + 1]
         i += 1
     return src[brace_start:]
+
+
+def _code_lines(func_body: str) -> str:
+    """Return only non-comment code lines from a function body."""
+    lines = []
+    for ln in func_body.splitlines():
+        stripped = ln.strip()
+        if stripped.startswith("//") or stripped.startswith("*") or stripped.startswith("/*"):
+            continue
+        lines.append(ln)
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
@@ -85,7 +98,8 @@ def test_associatedResource_used_for_original_uri():
     func = _extract_function(_read())
     assert "associatedResource" in func, (
         ".associatedResource not found in findLocalHistoryEntry; "
-        "the fix must call fromLocalHistoryFileSystem(uri).associatedResource to get the original file URI"
+        "the fix must call fromLocalHistoryFileSystem(uri).associatedResource "
+        "to get the original file URI"
     )
 
 
@@ -99,7 +113,24 @@ def test_getEntries_still_called_in_function():
     # AST-only because: TypeScript file, cannot be imported
     func = _extract_function(_read())
     assert "getEntries(" in func, (
-        "getEntries call is missing from findLocalHistoryEntry — fix accidentally removed core logic"
+        "getEntries call is missing from findLocalHistoryEntry — "
+        "fix accidentally removed core logic"
+    )
+
+
+# [static] pass_to_pass
+def test_function_signature_unchanged():
+    """findLocalHistoryEntry function signature must not be altered."""
+    # AST-only because: TypeScript file, cannot be imported
+    src = _read()
+    sig_pattern = (
+        r"export\s+async\s+function\s+findLocalHistoryEntry\s*\("
+        r"\s*workingCopyHistoryService\s*:\s*IWorkingCopyHistoryService\s*,"
+        r"\s*descriptor\s*:\s*ITimelineCommandArgument\s*\)"
+    )
+    assert re.search(sig_pattern, src), (
+        "findLocalHistoryEntry function signature has been altered; "
+        "only the body should change"
     )
 
 
@@ -107,19 +138,47 @@ def test_getEntries_still_called_in_function():
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass — .github/copilot-instructions.md @ 8c61afa3677cb13ce3071eac5326312fc4d2193a
+# [agent_config] fail_to_pass — .github/copilot-instructions.md:140 @ 8c61afa
 def test_uses_schema_constant_not_hardcoded_string():
     """The fix must use LocalHistoryFileSystemProvider.SCHEMA constant, not a hardcoded string literal."""
     # AST-only because: TypeScript file, cannot be imported
-    # copilot-instructions.md line ~162: "Do not use magic strings; use constants"
     func = _extract_function(_read())
-    # Allow the string in comments only; reject it in code lines
-    code_lines = [
-        ln for ln in func.splitlines()
-        if not ln.strip().startswith("//") and not ln.strip().startswith("*")
-    ]
-    code = "\n".join(code_lines)
-    assert '"vscode-local-history"' not in code, (
-        "Hardcoded 'vscode-local-history' string literal found in findLocalHistoryEntry. "
-        "Use LocalHistoryFileSystemProvider.SCHEMA constant instead."
+    code = _code_lines(func)
+    # Check multiple possible hardcoded variants
+    for variant in ['"vscode-local-history"', "'vscode-local-history'"]:
+        assert variant not in code, (
+            f"Hardcoded {variant} string literal found in findLocalHistoryEntry. "
+            "Use LocalHistoryFileSystemProvider.SCHEMA constant instead."
+        )
+
+
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:131 @ 8c61afa
+def test_no_then_chains_in_fix():
+    """Fix must use async/await, not .then() chains for the new getEntries call."""
+    # AST-only because: TypeScript file, cannot be imported
+    func = _extract_function(_read())
+    code = _code_lines(func)
+    # The getEntries call should use await, not .then()
+    assert ".then(" not in code, (
+        "Found .then() chain in findLocalHistoryEntry. "
+        "Prefer async/await over Promise.then() per copilot-instructions.md."
+    )
+
+
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:140 @ 8c61afa
+def test_no_any_unknown_in_fix():
+    """Fix must not introduce any/unknown type annotations."""
+    # AST-only because: TypeScript file, cannot be imported
+    func = _extract_function(_read())
+    code = _code_lines(func)
+    # Check for explicit 'any' or 'unknown' type annotations in the function
+    any_pattern = re.compile(r":\s*any\b|as\s+any\b")
+    unknown_pattern = re.compile(r":\s*unknown\b|as\s+unknown\b")
+    assert not any_pattern.search(code), (
+        "Found 'any' type annotation in findLocalHistoryEntry. "
+        "Do not use any/unknown unless absolutely necessary."
+    )
+    assert not unknown_pattern.search(code), (
+        "Found 'unknown' type annotation in findLocalHistoryEntry. "
+        "Do not use any/unknown unless absolutely necessary."
     )

@@ -203,6 +203,34 @@ def test_no_try_catch_in_changed_code():
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------
 
+# [agent_config] pass_to_pass — packages/opencode/AGENTS.md:21 @ 9f94bdb
+def test_effect_fn_domain_naming_retained():
+    """getGlobal and invalidate must retain Effect.fn('Config.*') named/traced wrappers."""
+    code = _read_code_stripped()
+
+    assert re.search(r'Effect\.fn\(["\']Config\.getGlobal["\']', code), (
+        "Effect.fn(\"Config.getGlobal\") not found — packages/opencode/AGENTS.md requires Effect.fn for named/traced effects"
+    )
+    assert re.search(r'Effect\.fn\(["\']Config\.invalidate["\']', code), (
+        "Effect.fn(\"Config.invalidate\") not found — packages/opencode/AGENTS.md requires Effect.fn for named/traced effects"
+    )
+
+
+# [agent_config] pass_to_pass — AGENTS.md:84 @ 9f94bdb
+def test_no_else_statements_near_cache_code():
+    """No else statements added near cache-related code (AGENTS.md: 'Avoid else statements. Prefer early returns.')."""
+    lines = FILE.read_text().splitlines()
+    keywords = {"cachedGlobal", "cachedInvalidateWithTTL", "invalidateGlobal", "invalidateCache"}
+    for i, line in enumerate(lines):
+        if any(kw in line for kw in keywords):
+            region = lines[max(0, i - 5) : i + 15]
+            for l in region:
+                stripped = re.sub(r"//.*", "", l)
+                assert not re.search(r"\belse\b", stripped), (
+                    f"'else' statement found near cache code: {l.strip()} — AGENTS.md requires early returns instead"
+                )
+
+
 # [static] pass_to_pass
 def test_not_stub():
     """config.ts must not be gutted — must retain original structure."""

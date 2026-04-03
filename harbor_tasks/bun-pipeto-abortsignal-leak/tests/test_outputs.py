@@ -15,6 +15,8 @@ from pathlib import Path
 
 REPO = "/workspace/bun"
 
+TEST_FILE = "test/js/web/streams/pipeTo-signal-leak.test.ts"
+
 ALGO_CPP = "src/bun.js/bindings/webcore/JSAbortAlgorithm.cpp"
 ALGO_H = "src/bun.js/bindings/webcore/JSAbortAlgorithm.h"
 SIGNAL_CPP = "src/bun.js/bindings/webcore/AbortSignal.cpp"
@@ -324,3 +326,44 @@ def test_visit_children_for_gc_objects():
     assert re.search(
         r"(?:visit|trace)\w*(?:Abort|Algorithm)", custom, re.IGNORECASE
     ), "JSAbortSignalCustom.cpp GC visitor not wired to algorithm visitor"
+
+
+# ---------------------------------------------------------------------------
+# Config-derived (agent_config) — from test/AGENTS.md
+# ---------------------------------------------------------------------------
+
+
+# [agent_config] fail_to_pass — test/AGENTS.md:21 @ fe4a66e
+def test_file_no_settimeout():
+    """Regression test file must exist and must not use setTimeout.
+
+    Rule: 'Do not write flaky tests. Never wait for time to pass in tests.'
+    Source: test/AGENTS.md:21
+    """
+    p = Path(f"{REPO}/{TEST_FILE}")
+    assert p.exists(), f"Regression test file {TEST_FILE} missing"
+    content = p.read_text()
+    assert not re.search(r"\bsetTimeout\b", content), (
+        "Test file uses setTimeout — use Bun.sleep() or await a condition instead"
+    )
+
+
+# [agent_config] fail_to_pass — test/AGENTS.md:218 @ fe4a66e
+def test_file_module_scope_imports():
+    """Regression test file must use module-scope static imports only,
+    not dynamic import() calls inside test function bodies.
+
+    Rule: 'Only use dynamic import or require when the test is specifically
+    testing something related to dynamic import or require. Otherwise, always
+    use module-scope import statements.'
+    Source: test/AGENTS.md:218
+    """
+    p = Path(f"{REPO}/{TEST_FILE}")
+    assert p.exists(), f"Regression test file {TEST_FILE} missing"
+    content = p.read_text()
+    assert not re.search(r"\bawait\s+import\s*\(", content), (
+        "Test file uses dynamic import() — use module-scope import statements instead"
+    )
+    assert not re.search(r"\brequire\s*\(", content), (
+        "Test file uses require() — use module-scope import statements instead"
+    )

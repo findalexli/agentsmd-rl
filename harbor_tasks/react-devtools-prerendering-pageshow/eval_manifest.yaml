@@ -7,37 +7,37 @@ source:
   merge_commit: "23b2d8514f13f109b980b0a1f4f3aab906ad51d0"
 
 checks:
-  - id: proxy_js_syntax_valid
+  - id: proxy_js_exists_and_nontrivial
     type: pass_to_pass
     origin: static
-    description: "proxy.js must be valid JavaScript (node --check)"
+    description: "proxy.js must exist and contain core extension functions"
 
   - id: handle_pageshow_function_defined
     type: fail_to_pass
     origin: pr_diff
-    description: "handlePageShow function must be defined to guard against prerendering"
+    description: "A handlePageShow function must be defined to guard against prerendering"
 
   - id: prerendering_checked_before_injection
     type: fail_to_pass
     origin: pr_diff
-    description: "handlePageShow must guard with if (document.prerendering) before injecting"
+    description: "handlePageShow must check document.prerendering before calling injectProxy"
 
-  - id: prerenderingchange_listener_registered
+  - id: prerenderingchange_listener_defers_injection
     type: fail_to_pass
     origin: pr_diff
-    description: "When prerendering, a prerenderingchange listener must defer injection"
+    description: "When prerendering, a prerenderingchange listener must defer proxy injection with {once: true}"
 
   - id: pageshow_listener_uses_handle_pageshow
     type: fail_to_pass
     origin: pr_diff
     description: "The pageshow event listener must call handlePageShow, not injectProxy directly"
 
-  - id: inject_proxy_signature_updated
+  - id: inject_proxy_no_target_parameter
     type: fail_to_pass
     origin: pr_diff
-    description: "injectProxy must not destructure {target} — signature updated to take no parameters"
+    description: "injectProxy must not destructure {target} — signature updated to no parameters"
 
-  - id: flow_prerendering_type_defined
+  - id: flow_prerendering_type_declared
     type: fail_to_pass
     origin: pr_diff
     description: "flow-typed/environments/dom.js must declare prerendering: boolean on Document"

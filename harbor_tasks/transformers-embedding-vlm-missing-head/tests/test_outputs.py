@@ -182,6 +182,26 @@ def test_colqwen2_conversion_mapping():
     )
 
 
+# [agent_config] fail_to_pass — CLAUDE.md:67 @ 05514c4bb641ba1537d17048fd93f50f45d5f19d
+def test_modular_colqwen2_no_model_indirection():
+    """modular_colqwen2.py (source of truth) must also call self.vlm() directly, not self.vlm.model().
+
+    CLAUDE.md line 67: when a modular file is present it is the authoritative source;
+    the fix must be present there, not only in the generated modeling file.
+    """
+    fpath = REPO / "src/transformers/models/colqwen2/modular_colqwen2.py"
+    fwd = _get_class_method_source(fpath, "ColQwen2ForRetrieval", "forward")
+    assert fwd is not None, "Could not find ColQwen2ForRetrieval.forward() in modular_colqwen2.py"
+    assert "self.vlm.model(" not in fwd, (
+        "modular_colqwen2.py forward() still calls self.vlm.model() — "
+        "the modular file is the source of truth and must also contain the fix"
+    )
+    assert "self.vlm.model.visual(" not in fwd, (
+        "modular_colqwen2.py forward() still calls self.vlm.model.visual() — "
+        "with a base model, visual should be accessed via self.vlm.visual()"
+    )
+
+
 # [pr_diff] fail_to_pass
 def test_colpali_no_conversion_mapping():
     """colpali entry must be removed from conversion mapping.

@@ -8,10 +8,21 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import importlib.util
 import textwrap
 from pathlib import Path
 
 REPO = "/workspace/slime"
+
+
+def _load_gpqa():
+    """Load gpqa.py directly via importlib to avoid __init__.py import chains."""
+    spec = importlib.util.spec_from_file_location(
+        "gpqa", f"{REPO}/slime/rollout/rm_hub/gpqa.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 # ---------------------------------------------------------------------------
@@ -37,29 +48,25 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_gpqa_label_8_letter_i():
     """Integer label 8 (letter I, 9th option) must score correctly."""
-    import sys
-    sys.path.insert(0, REPO)
-    from slime.rollout.rm_hub.gpqa import compute_gpqa_reward
+    gpqa = _load_gpqa()
 
     # Correct answer for label 8 (letter I)
-    assert compute_gpqa_reward("The answer is I", 8) == 1.0
+    assert gpqa.compute_gpqa_reward("The answer is I", 8) == 1.0
     # Wrong answers for label 8
-    assert compute_gpqa_reward("The answer is A", 8) == 0.0
-    assert compute_gpqa_reward("The answer is H", 8) == 0.0
+    assert gpqa.compute_gpqa_reward("The answer is A", 8) == 0.0
+    assert gpqa.compute_gpqa_reward("The answer is H", 8) == 0.0
 
 
 # [pr_diff] fail_to_pass
 def test_gpqa_label_9_letter_j():
     """Integer label 9 (letter J, 10th option) must score correctly."""
-    import sys
-    sys.path.insert(0, REPO)
-    from slime.rollout.rm_hub.gpqa import compute_gpqa_reward
+    gpqa = _load_gpqa()
 
     # Correct answer for label 9 (letter J)
-    assert compute_gpqa_reward("The answer is J", 9) == 1.0
+    assert gpqa.compute_gpqa_reward("The answer is J", 9) == 1.0
     # Wrong answers for label 9
-    assert compute_gpqa_reward("The answer is A", 9) == 0.0
-    assert compute_gpqa_reward("The answer is I", 9) == 0.0
+    assert gpqa.compute_gpqa_reward("The answer is A", 9) == 0.0
+    assert gpqa.compute_gpqa_reward("The answer is I", 9) == 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -69,18 +76,16 @@ def test_gpqa_label_9_letter_j():
 # [pr_diff] pass_to_pass
 def test_gpqa_existing_labels_a_through_h():
     """Existing A-H labels must still return correct rewards."""
-    import sys
-    sys.path.insert(0, REPO)
-    from slime.rollout.rm_hub.gpqa import compute_gpqa_reward
+    gpqa = _load_gpqa()
 
     for idx, letter in enumerate("ABCDEFGH"):
-        reward = compute_gpqa_reward(f"The answer is {letter}", idx)
+        reward = gpqa.compute_gpqa_reward(f"The answer is {letter}", idx)
         assert reward == 1.0, f"Expected 1.0 for label={idx} ({letter}), got {reward}"
 
     # Wrong answers should score 0 — test multiple pairs
-    assert compute_gpqa_reward("The answer is A", 1) == 0.0
-    assert compute_gpqa_reward("The answer is C", 5) == 0.0
-    assert compute_gpqa_reward("The answer is H", 0) == 0.0
+    assert gpqa.compute_gpqa_reward("The answer is A", 1) == 0.0
+    assert gpqa.compute_gpqa_reward("The answer is C", 5) == 0.0
+    assert gpqa.compute_gpqa_reward("The answer is H", 0) == 0.0
 
 
 # ---------------------------------------------------------------------------

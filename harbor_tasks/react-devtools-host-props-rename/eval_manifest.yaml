@@ -12,20 +12,15 @@ checks:
     origin: static
     description: "renderer.js must parse without syntax errors"
 
-  - id: switch_on_fiber_tag_replaces_instance_null_check
+  - id: dispatches_on_fiber_tag_not_instance
     type: fail_to_pass
     origin: pr_diff
-    description: "Props rename case uses switch(fiber.tag) instead of if(instance===null)"
+    description: "Props rename case dispatches on fiber.tag instead of instance===null"
 
-  - id: class_component_case_calls_force_update
+  - id: class_component_preserves_force_update
     type: fail_to_pass
     origin: pr_diff
-    description: "case ClassComponent: branch in switch still calls instance.forceUpdate()"
-
-  - id: default_branch_handles_non_class_components
-    type: fail_to_pass
-    origin: pr_diff
-    description: "default: branch handles Host/Function Components via overridePropsRenamePath"
+    description: "ClassComponent fibers still route to forceUpdate() for prop renaming"
 
   - id: editing_tests_pass
     type: pass_to_pass
@@ -35,5 +30,10 @@ checks:
       path: "packages/react-devtools-shared/src/__tests__/editing-test.js"
       lines: "82-267"
       commit: "4c9d62d2b47be424ad9050725d8bdd8df12fe2a3"
+
+  - id: host_component_rename_works
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Renaming a prop on a host component (<input>) succeeds without crash"
 
 rubric: []

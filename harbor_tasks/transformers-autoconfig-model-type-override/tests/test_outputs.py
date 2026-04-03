@@ -156,6 +156,22 @@ def test_not_stub():
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------
 
+# [agent_config] pass_to_pass — AGENTS.md:2 @ ce4a791
+def test_ruff_style_check():
+    """configuration_utils.py must pass ruff style checks (AGENTS.md:2)."""
+    import shutil
+    import pytest
+    if not shutil.which("ruff"):
+        pytest.skip("ruff not installed")
+    result = subprocess.run(
+        ["ruff", "check", "src/transformers/configuration_utils.py"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert result.returncode == 0, (
+        f"ruff check failed:\n{result.stdout}\n{result.stderr}"
+    )
+
+
 # [agent_config] fail_to_pass — .github/copilot-instructions.md:15 @ ce4a791
 def test_minimal_diff():
     """Fix should be brief — under 30 lines added (copilot-instructions.md:15)."""

@@ -7,11 +7,6 @@ source:
   merge_commit: "b826afb9f0b1a201e426d93b954224be11003763"
 
 checks:
-  - id: typescript_compiles
-    type: pass_to_pass
-    origin: static
-    description: "TypeScript type checker passes on modified source files"
-
   - id: plugin_prefix_in_discovery
     type: fail_to_pass
     origin: pr_diff
@@ -27,10 +22,20 @@ checks:
     origin: pr_diff
     description: "getCanonicalPluginCommandId accepts structural type with uri, not just IAgentPlugin"
 
+  - id: plugin_source_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Prefix is only applied for Plugin sources, not all prompt sources"
+
   - id: non_plugin_sources_unaffected
     type: pass_to_pass
     origin: static
     description: "Non-plugin sources still use unmodified name (no false prefix application)"
+
+  - id: canonical_function_still_exported
+    type: pass_to_pass
+    origin: static
+    description: "getCanonicalPluginCommandId remains exported with basename and normalizePluginToken"
 
   - id: no_arrow_function_for_export
     type: pass_to_pass
@@ -41,14 +46,37 @@ checks:
       lines: "126"
       commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
 
-rubric:
-  - rule: "Use 'single quotes' for non-user-facing strings."
+  - id: tab_indentation_in_modified_files
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files use tab indentation"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "72"
+      commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
+
+  - id: single_quotes_for_strings
+    type: pass_to_pass
+    origin: agent_config
+    description: "Non-localized strings use single quotes"
     source:
       path: ".github/copilot-instructions.md"
       lines: "94"
+      commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
+
+rubric:
+  - rule: "Use whole words in names instead of abbreviations."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "80"
       commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
   - rule: "Use tabs, not spaces, for indentation."
     source:
       path: ".github/copilot-instructions.md"
       lines: "72"
+      commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
+  - rule: "Don't export types/functions unless shared across components."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "84"
       commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"

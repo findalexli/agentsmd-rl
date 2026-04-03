@@ -371,3 +371,26 @@ def test_no_wildcard_imports():
             for alias in node.names:
                 if alias.name == "*":
                     pytest.fail(f"Wildcard import: from {node.module} import *")
+
+
+# [agent_config] pass_to_pass — AGENTS.md:100-101 @ 45e805ba8d274ec2c3cbb0699658449c2c6e163a
+# AST-only because: checking type annotation presence on function parameters
+def test_endpoint_functions_typed():
+    """Async endpoint functions must have explicit type annotations on all parameters."""
+    source = Path(FILE).read_text()
+    tree = ast.parse(source)
+
+    endpoint_names = {
+        "areal_update_weight", "areal_update_weight_lora",
+        "areal_update_weight_xccl", "areal_update_weight_lora_xccl",
+        "areal_pause_generation", "areal_continue_generation",
+    }
+
+    untyped = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.AsyncFunctionDef) and node.name in endpoint_names:
+            for arg in node.args.args:
+                if arg.annotation is None:
+                    untyped.append(f"{node.name}:{arg.arg}")
+
+    assert not untyped, f"Parameters missing type annotations: {untyped}"

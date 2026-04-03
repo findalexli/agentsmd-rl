@@ -10,7 +10,7 @@ checks:
   - id: syntax_check
     type: pass_to_pass
     origin: static
-    description: "All four ReactFlightDOMServerNode.js files parse without errors"
+    description: "All four ReactFlightDOMServerNode.js files exist and contain renderToPipeableStream + createRequest"
 
   - id: esm_uses_debugchannel_readable
     type: fail_to_pass
@@ -30,12 +30,17 @@ checks:
   - id: affected_files_do_not_use_wrong_variable
     type: fail_to_pass
     origin: pr_diff
-    description: "None of the three affected files use bare 'debugChannel !== undefined,' in createRequest"
+    description: "None of the three affected files pass bare 'debugChannel' (not 'debugChannelReadable') to createRequest"
 
   - id: webpack_reference_unchanged
     type: pass_to_pass
     origin: repo_tests
     description: "Webpack reference implementation still uses debugChannelReadable"
+
+  - id: all_four_files_consistent
+    type: pass_to_pass
+    origin: pr_diff
+    description: "All four bundler implementations use the same debugChannelReadable check"
 
 rubric:
   - rule: "The fix in each bundler-specific file should match the pattern already used in the webpack implementation at packages/react-server-dom-webpack/src/server/ReactFlightDOMServerNode.js."

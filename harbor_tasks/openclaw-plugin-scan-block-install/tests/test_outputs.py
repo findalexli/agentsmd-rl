@@ -168,6 +168,28 @@ def test_blocked_type_has_code_field():
     )
 
 
+# [agent_config] pass_to_pass — CLAUDE.md:147 @ 8db20c196598b12043886ddc1c3ec0fd7695b9b4
+def test_no_explicit_any():
+    """Modified TypeScript files must not use explicit 'any' type.
+
+    Rule: 'Do not disable no-explicit-any; prefer real types, unknown, or
+    a narrow adapter/helper instead.' — CLAUDE.md:147
+    """
+    any_pattern = re.compile(r"(?::\s*any\b|as\s+any\b)")
+    for f in MODIFIED_FILES:
+        code = _read(f)
+        violations = []
+        for lineno, line in enumerate(code.splitlines(), 1):
+            stripped = line.lstrip()
+            if stripped.startswith("//") or stripped.startswith("*"):
+                continue
+            if any_pattern.search(line):
+                violations.append(f"line {lineno}: {line.rstrip()}")
+        assert not violations, (
+            f"{f} contains explicit 'any' type:\n" + "\n".join(violations[:5])
+        )
+
+
 # [agent_config] pass_to_pass — CLAUDE.md:146 @ 8db20c196598b12043886ddc1c3ec0fd7695b9b4
 def test_no_ts_nocheck():
     """No @ts-nocheck or @ts-ignore in modified files.

@@ -233,6 +233,33 @@ def test_extraction_cached():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (agent_config) — style enforcement
+# ---------------------------------------------------------------------------
+
+
+# [agent_config] pass_to_pass — AGENTS.md:2 @ 6a056a16a856097cb0400ce9a48e96ab9d469e30
+def test_ruff_style_check():
+    """Modified Python files pass ruff linting (make style requirement from AGENTS.md)."""
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True,
+    )
+    files = [
+        f"{REPO}/src/transformers/processing_utils.py",
+        f"{REPO}/src/transformers/utils/chat_template_utils.py",
+        f"{REPO}/src/transformers/models/smolvlm/processing_smolvlm.py",
+        f"{REPO}/src/transformers/models/voxtral/processing_voxtral.py",
+    ]
+    result = subprocess.run(
+        [sys.executable, "-m", "ruff", "check"] + files,
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"ruff check failed:\n{result.stdout}\n{result.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — regression
 # ---------------------------------------------------------------------------
 

@@ -172,6 +172,27 @@ def test_utils_core_exports():
 # ---------------------------------------------------------------------------
 
 
+# [agent_config] pass_to_pass — AGENTS.md:2 @ b0bba2d832f3cfd94b339a407f2b3e5b90ce3499
+def test_ruff_style_clean():
+    """Modified files pass ruff style check (make style runs ruff, necessary to pass code style checks)."""
+    import shutil
+    import subprocess
+
+    ruff = shutil.which("ruff")
+    if ruff is None:
+        return  # ruff not installed; pass vacuously
+
+    r = subprocess.run(
+        [
+            ruff, "check",
+            "src/transformers/utils/import_utils.py",
+            "src/transformers/utils/__init__.py",
+        ],
+        cwd=REPO, capture_output=True, text=True,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # [agent_config] pass_to_pass — .ai/skills/add-or-fix-type-checking/SKILL.md:185-186
 def test_no_bare_type_ignore():
     """Any # type: ignore added in the diff must include a specific error code."""

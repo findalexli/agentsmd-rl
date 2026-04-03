@@ -140,6 +140,26 @@ def test_no_panic_unwrap():
     )
 
 
+# [agent_config] pass_to_pass — AGENTS.md:81 @ c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e
+def test_no_allow_prefer_expect():
+    """Use #[expect()] instead of #[allow()] for Clippy lint suppression."""
+    # AST-only because: Rust project, no cargo toolchain in test container
+    source = RUST_FILE.read_text()
+    violations = []
+    for i, line in enumerate(source.splitlines(), 1):
+        stripped = line.strip()
+        if stripped.startswith("//"):
+            continue
+        # Check for #[allow(clippy:: — these should be #[expect(clippy:: instead
+        if re.search(r"#\[allow\(clippy::", stripped):
+            violations.append(f"  Line {i}: {stripped[:80]}")
+    assert not violations, (
+        f"Found #[allow(clippy::...)] in unnecessary_if.rs — "
+        f"AGENTS.md:81 says prefer #[expect()] over #[allow()] for Clippy lints:\n"
+        + "\n".join(violations)
+    )
+
+
 # [agent_config] pass_to_pass — AGENTS.md:76 @ c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e
 def test_no_function_local_imports():
     """Rust imports should always go at the top of the file, never locally in functions."""

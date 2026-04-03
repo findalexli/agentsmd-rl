@@ -1,22 +1,23 @@
 #!/bin/bash
 set -euo pipefail
 
-# This patch refactors FragmentInstance methods for better performance and correctness:
+# PR #35641: Minor DOM FragmentInstance refactors
 # 1. Early return in indexOfEventListener when array is empty
-# 2. Early exit in blur() when activeElement is not within fragment's parent
-# 3. Pass activeElement to traversal callback to avoid redundant lookups
-# 4. Handle text nodes in blurActiveElementWithinFragment
-# 5. Rename variables for clarity (element -> node)
+# 2. Cache normalizeListenerOptions before the loop
+# 3. Early exit in blur() when activeElement is not within fragment's parent
+# 4. Pass activeElement to traversal callback to avoid redundant lookups
+# 5. Handle text nodes in blurActiveElementWithinFragment
+# 6. Remove redundant firstInstance variable, rename element -> node
 
 FILE="packages/react-dom-bindings/src/client/ReactFiberConfigDOM.js"
+
+cd /workspace/react
 
 # Check if already applied (grep for distinctive line from the patch)
 if grep -q "Early exit if activeElement is not within the fragment's parent" "$FILE" 2>/dev/null; then
     echo "Patch already applied, skipping..."
     exit 0
 fi
-
-cd /workspace/react
 
 git apply - <<'PATCH'
 diff --git a/packages/react-dom-bindings/src/client/ReactFiberConfigDOM.js b/packages/react-dom-bindings/src/client/ReactFiberConfigDOM.js
@@ -146,6 +147,7 @@ index 09653552aafe..c90d2a116c47 100644
 +    lastNodeIsContained &&
      firstResult & Node.DOCUMENT_POSITION_FOLLOWING &&
      lastResult & Node.DOCUMENT_POSITION_PRECEDING;
+
 PATCH
 
 echo "Patch applied successfully"

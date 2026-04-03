@@ -417,3 +417,27 @@ def test_file_size_limit():
     assert p.exists(), f"{RECOVERY_MODULE} does not exist"
     loc = len(p.read_text().splitlines())
     assert loc <= 700, f"{RECOVERY_MODULE} is {loc} lines (limit ~700)"
+
+
+# [agent_config] pass_to_pass — CLAUDE.md:106 @ 664680318eea98172c7d25405c20f5e3eadfd0e2
+def test_no_dynamic_import_mixing():
+    """Modified files must not use dynamic await import() alongside static imports
+    for the same module (CLAUDE.md:106 dynamic import guardrail)."""
+    targets = [RECOVERY_MODULE, ATTEMPT_MODULE]
+    violations = []
+    for t in targets:
+        p = Path(REPO) / t
+        if not p.exists():
+            continue
+        content = p.read_text()
+        for i, line in enumerate(content.splitlines(), 1):
+            stripped = line.strip()
+            # Skip comments
+            if stripped.startswith("//") or stripped.startswith("*"):
+                continue
+            if re.search(r'\bawait\s+import\s*\(', line):
+                violations.append(f"{t}:{i}: {stripped}")
+    assert not violations, (
+        "Found dynamic await import() in production files that use static imports "
+        "(violates CLAUDE.md:106 dynamic import guardrail):\n" + "\n".join(violations)
+    )

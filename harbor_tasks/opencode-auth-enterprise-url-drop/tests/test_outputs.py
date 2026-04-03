@@ -286,6 +286,46 @@ def test_no_new_try_catch():
         f"New try/catch blocks in auth.ts: {orig_count} → {curr_count}"
 
 
+# [agent_config] pass_to_pass — AGENTS.md:17 @ 2d502d6
+def test_no_new_for_loops():
+    """No new for loops introduced in modified files; prefer functional array methods (AGENTS.md:17)."""
+    for relpath in [
+        "packages/opencode/src/provider/auth.ts",
+        "packages/plugin/src/index.ts",
+    ]:
+        r = subprocess.run(
+            ["git", "show", f"HEAD:{relpath}"],
+            capture_output=True, cwd=REPO, timeout=10,
+        )
+        original = r.stdout.decode() if r.returncode == 0 else ""
+        current = Path(f"{REPO}/{relpath}").read_text()
+
+        orig_count = len(re.findall(r"\bfor\s*\(", original))
+        curr_count = len(re.findall(r"\bfor\s*\(", current))
+        assert curr_count <= orig_count, \
+            f"New for loop(s) introduced in {relpath}: {orig_count} → {curr_count}"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:84 @ 2d502d6
+def test_no_new_else_blocks():
+    """No new else statements introduced in modified files; prefer early returns (AGENTS.md:84)."""
+    for relpath in [
+        "packages/opencode/src/provider/auth.ts",
+        "packages/plugin/src/index.ts",
+    ]:
+        r = subprocess.run(
+            ["git", "show", f"HEAD:{relpath}"],
+            capture_output=True, cwd=REPO, timeout=10,
+        )
+        original = r.stdout.decode() if r.returncode == 0 else ""
+        current = Path(f"{REPO}/{relpath}").read_text()
+
+        orig_count = len(re.findall(r"\belse\b", original))
+        curr_count = len(re.findall(r"\belse\b", current))
+        assert curr_count <= orig_count, \
+            f"New else statement(s) introduced in {relpath}: {orig_count} → {curr_count}"
+
+
 # [agent_config] pass_to_pass — AGENTS.md:70 @ 2d502d6
 def test_prefer_const_over_let():
     """No new 'let' declarations introduced in auth.ts (AGENTS.md:70)."""

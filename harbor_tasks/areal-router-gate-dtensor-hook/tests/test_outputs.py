@@ -251,3 +251,71 @@ def test_no_bare_print():
             func = node.func
             if isinstance(func, ast.Name) and func.id == "print":
                 assert False, f"Bare print() call at line {node.lineno} — use getLogger instead"
+
+
+# [agent_config] pass_to_pass -- AGENTS.md:99 @ 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+def test_explicit_type_hints():
+    """RouterGateLinear.__init__ and forward must have explicit type annotations (AGENTS.md rule).
+
+    Checks that every parameter (except self) in __init__ and forward has an annotation,
+    and that forward declares a return annotation.
+    """
+    import ast
+
+    src = open(TARGET).read()
+    tree = ast.parse(src)
+
+    # Find RouterGateLinear class
+    linear_class = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "RouterGateLinear":
+            linear_class = node
+            break
+
+    if linear_class is None:
+        # Class absent on base commit — vacuously pass (class presence checked elsewhere)
+        return
+
+    for item in linear_class.body:
+        if not isinstance(item, ast.FunctionDef) or item.name not in ("__init__", "forward"):
+            continue
+        # Check all non-self args have annotations
+        for arg in item.args.args:
+            if arg.arg == "self":
+                continue
+            assert arg.annotation is not None, (
+                f"RouterGateLinear.{item.name}: parameter '{arg.arg}' missing type annotation"
+            )
+        # forward must have a return annotation
+        if item.name == "forward":
+            assert item.returns is not None, (
+                "RouterGateLinear.forward: missing return type annotation"
+            )
+
+
+# [agent_config] pass_to_pass -- AGENTS.md:173 @ 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+def test_no_module_level_process_group():
+    """No process groups created at module level in router.py (AGENTS.md distributed rule).
+
+    Applies to areal/experimental/**: process group creation must be inside functions/classes,
+    never at module top level.
+    """
+    import ast
+
+    src = open(TARGET).read()
+    tree = ast.parse(src)
+
+    # Walk only top-level statements (not inside function or class bodies)
+    for node in ast.iter_child_nodes(tree):
+        for subnode in ast.walk(node):
+            if isinstance(subnode, ast.Call):
+                func = subnode.func
+                # Match dist.init_process_group, dist.new_group, torch.distributed.*
+                if isinstance(func, ast.Attribute) and func.attr in (
+                    "init_process_group",
+                    "new_group",
+                ):
+                    assert False, (
+                        f"Module-level process group creation at line {subnode.lineno} — "
+                        "must be inside a function or class (AGENTS.md:173)"
+                    )

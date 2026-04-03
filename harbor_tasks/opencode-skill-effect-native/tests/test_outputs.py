@@ -191,6 +191,22 @@ def test_no_any_type():
         f"Found {len(any_annotations)} 'any' type annotation(s) -- use specific types instead"
 
 
+# [agent_config] pass_to_pass — packages/opencode/AGENTS.md:46 @ 21023337fa8011568b2570a3bd49fffed842ce86
+def test_no_raw_fs_imports():
+    """No raw 'fs/promises' imports (packages/opencode/AGENTS.md: 'Prefer FileSystem.FileSystem instead of raw fs/promises')."""
+    code, _ = _read_stripped()
+    assert not re.search(r"""["']fs/promises["']""", code), \
+        "Raw 'fs/promises' import found -- use FileSystem.FileSystem service instead"
+
+
+# [agent_config] pass_to_pass — packages/opencode/AGENTS.md:48 @ 21023337fa8011568b2570a3bd49fffed842ce86
+def test_no_raw_fetch_calls():
+    """No raw fetch() calls (packages/opencode/AGENTS.md: 'Prefer HttpClient.HttpClient instead of raw fetch')."""
+    _, stripped = _read_stripped()
+    assert not re.search(r"\bfetch\s*\(", stripped), \
+        "Raw fetch() call found -- use HttpClient.HttpClient service instead"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------

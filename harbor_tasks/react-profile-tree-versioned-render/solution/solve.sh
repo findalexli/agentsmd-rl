@@ -12,7 +12,7 @@ fi
 # Apply the gold patch
 git apply - <<'PATCH'
 diff --git a/packages/react-devtools-shared/src/__tests__/profilingCommitTreeBuilder-test.js b/packages/react-devtools-shared/src/__tests__/profilingCommitTreeBuilder-test.js
-index 968fda10dab5..f08629dd05df 100644
+index 968fda1..f08629d 100644
 --- a/packages/react-devtools-shared/src/__tests__/profilingCommitTreeBuilder-test.js
 +++ b/packages/react-devtools-shared/src/__tests__/profilingCommitTreeBuilder-test.js
 @@ -9,10 +9,7 @@
@@ -184,9 +184,9 @@ index 968fda10dab5..f08629dd05df 100644
 -      utils.act(() => modernRender(<App renderChildren={true} />));
 -      expect(store).toMatchInlineSnapshot(`
 -        [root]
--        ▾ <App>
--          ▾ <Suspense>
--              <LazyInnerComponent>
+-          ▾ <App>
+-            ▾ <Suspense>
+-                <LazyInnerComponent>
 -        [suspense-root]  rects={null}
 -          <Suspense name="App" rects={null}>
 -      `);
@@ -209,7 +209,7 @@ index 968fda10dab5..f08629dd05df 100644
 -      }
 -
 -      expect(commitTrees[0].nodes.size).toBe(3); // <Root> + <App> + <Suspense>
--      expect(commitTrees[1].nodes.size).toBe(4); // <Root> + <App> + <Suspense>
+-      expect(commitTrees[1].nodes.size).toBe(4); // <Root> + <App> + <Suspense> + <LazyInnerComponent>
 -      expect(commitTrees[2].nodes.size).toBe(2); // <Root> + <App>
 -    });
 -
@@ -223,7 +223,7 @@ index 968fda10dab5..f08629dd05df 100644
        expect(store).toMatchInlineSnapshot(`
          [root]
            ▾ <App>
-@@ -279,7 +169,7 @@ describe('commit tree', () => >= 16.9
+@@ -279,7 +169,7 @@ describe('commit tree', () => {
          [suspense-root]  rects={null}
            <Suspense name="App" rects={null}>
        `);

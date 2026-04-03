@@ -53,7 +53,7 @@ def test_no_hardcoded_max_channel_history():
     ), "MAX_CHANNEL_HISTORY redefined as let binding"
 
 
-# [pr_diff] pass_to_pass
+# [pr_diff] fail_to_pass
 def test_uses_config_max_history():
     """History trimming must use the config value (max_history_messages)."""
     src = TARGET.read_text()

@@ -12,12 +12,20 @@ import types
 import torch
 import torch.nn as nn
 from packaging import version as pkg_version
+from unittest.mock import patch
 
 REPO = "/repo"
 
 # ---------------------------------------------------------------------------
 # Mock preamble: set up minimal vllm stubs so Conv3dLayer can be imported
 # ---------------------------------------------------------------------------
+
+_PACKAGE_PATHS = {
+    "vllm": [f"{REPO}/vllm"],
+    "vllm.model_executor": [f"{REPO}/vllm/model_executor"],
+    "vllm.model_executor.layers": [f"{REPO}/vllm/model_executor/layers"],
+    "vllm.utils": [f"{REPO}/vllm/utils"],
+}
 
 for mod_name in [
     "vllm", "vllm.envs", "vllm.logger", "vllm.platforms",
@@ -26,7 +34,10 @@ for mod_name in [
     "vllm.utils",
 ]:
     if mod_name not in sys.modules:
-        sys.modules[mod_name] = types.ModuleType(mod_name)
+        m = types.ModuleType(mod_name)
+        if mod_name in _PACKAGE_PATHS:
+            m.__path__ = _PACKAGE_PATHS[mod_name]
+        sys.modules[mod_name] = m
 
 
 class FakeCustomOp(nn.Module):
@@ -94,12 +105,20 @@ def _make_layer(enable_linear=True):
     return layer
 
 
-def _run_with_version(layer, x, version):
-    """Run forward_cuda with a spoofed torch version string."""
+def _get_path_taken(layer, x, version):
+    """Run forward_cuda with a spoofed torch version, return which path was taken."""
     original = torch.__version__
     torch.__version__ = version
     try:
-        return layer.forward_cuda(x)
+        with patch.object(layer, '_forward_mulmat', wraps=layer._forward_mulmat) as mock_mm, \
+             patch.object(layer, '_forward_conv', wraps=layer._forward_conv) as mock_cv:
+            layer.forward_cuda(x)
+            if mock_mm.called:
+                return "mulmat"
+            elif mock_cv.called:
+                return "conv"
+            else:
+                return "unknown"
     finally:
         torch.__version__ = original
 
@@ -125,15 +144,8 @@ def test_torch_2_10_uses_mulmat():
     """forward_cuda uses mulmat path for torch 2.10.0 (>= 2.9.0)."""
     layer = _make_layer()
     x = torch.randn(1, 2, 4, 4, 4)
-    mulmat_ref = layer._forward_mulmat(x.clone())
-    conv_ref = layer._forward_conv(x.clone())
-
-    result = _run_with_version(layer, x.clone(), "2.10.0")
-
-    assert torch.allclose(result, mulmat_ref, atol=1e-6), \
+    assert _get_path_taken(layer, x, "2.10.0") == "mulmat", \
         "forward_cuda should use mulmat for torch 2.10.0"
-    assert not torch.allclose(result, conv_ref, atol=1e-6), \
-        "forward_cuda should NOT match conv path for torch 2.10.0"
 
 
 # [pr_diff] fail_to_pass
@@ -141,11 +153,7 @@ def test_torch_2_15_dev_uses_mulmat():
     """forward_cuda uses mulmat path for future dev versions (>= 2.9.0)."""
     layer = _make_layer()
     x = torch.randn(1, 2, 4, 4, 4)
-    mulmat_ref = layer._forward_mulmat(x.clone())
-
-    result = _run_with_version(layer, x.clone(), "2.15.0.dev20260101")
-
-    assert torch.allclose(result, mulmat_ref, atol=1e-6), \
+    assert _get_path_taken(layer, x, "2.15.0.dev20260101") == "mulmat", \
         "forward_cuda should use mulmat for torch 2.15.0.dev"
 
 
@@ -154,11 +162,7 @@ def test_torch_2_9_2_uses_mulmat():
     """forward_cuda uses mulmat path for torch 2.9.2 (>= 2.9.0 but not exact 2.9.0/2.9.1)."""
     layer = _make_layer()
     x = torch.randn(1, 2, 4, 4, 4)
-    mulmat_ref = layer._forward_mulmat(x.clone())
-
-    result = _run_with_version(layer, x.clone(), "2.9.2")
-
-    assert torch.allclose(result, mulmat_ref, atol=1e-6), \
+    assert _get_path_taken(layer, x, "2.9.2") == "mulmat", \
         "forward_cuda should use mulmat for torch 2.9.2"
 
 
@@ -171,11 +175,7 @@ def test_torch_2_9_0_uses_mulmat():
     """forward_cuda uses mulmat path for torch 2.9.0 (exact lower boundary)."""
     layer = _make_layer()
     x = torch.randn(1, 2, 4, 4, 4)
-    mulmat_ref = layer._forward_mulmat(x.clone())
-
-    result = _run_with_version(layer, x.clone(), "2.9.0")
-
-    assert torch.allclose(result, mulmat_ref, atol=1e-6), \
+    assert _get_path_taken(layer, x, "2.9.0") == "mulmat", \
         "forward_cuda should use mulmat for torch 2.9.0"
 
 
@@ -184,15 +184,8 @@ def test_torch_2_8_uses_conv():
     """forward_cuda uses conv path for torch < 2.9.0 (not affected by CUDNN bug)."""
     layer = _make_layer()
     x = torch.randn(1, 2, 4, 4, 4)
-    conv_ref = layer._forward_conv(x.clone())
-    mulmat_ref = layer._forward_mulmat(x.clone())
-
-    result = _run_with_version(layer, x.clone(), "2.8.0")
-
-    assert torch.allclose(result, conv_ref, atol=1e-6), \
+    assert _get_path_taken(layer, x, "2.8.0") == "conv", \
         "forward_cuda should use conv for torch 2.8.0"
-    assert not torch.allclose(result, mulmat_ref, atol=1e-6), \
-        "forward_cuda should NOT match mulmat for torch 2.8.0"
 
 
 # [pr_diff] pass_to_pass
@@ -200,11 +193,7 @@ def test_torch_2_8_1_uses_conv():
     """forward_cuda uses conv path for torch 2.8.1."""
     layer = _make_layer()
     x = torch.randn(1, 2, 4, 4, 4)
-    conv_ref = layer._forward_conv(x.clone())
-
-    result = _run_with_version(layer, x.clone(), "2.8.1")
-
-    assert torch.allclose(result, conv_ref, atol=1e-6), \
+    assert _get_path_taken(layer, x, "2.8.1") == "conv", \
         "forward_cuda should use conv for torch 2.8.1"
 
 
@@ -215,11 +204,7 @@ def test_enable_linear_false_uses_conv():
     assert not layer.enable_linear, "enable_linear should be False for kernel_size != stride"
 
     x = torch.randn(1, 2, 4, 4, 4)
-    conv_ref = layer._forward_conv(x.clone())
-
-    result = _run_with_version(layer, x.clone(), "2.10.0")
-
-    assert torch.allclose(result, conv_ref, atol=1e-6), \
+    assert _get_path_taken(layer, x, "2.10.0") == "conv", \
         "forward_cuda should use conv when enable_linear=False"
 
 

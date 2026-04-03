@@ -409,6 +409,39 @@ def test_no_gpu_cpu_sync():
                 )
 
 
+# [agent_config] pass_to_pass — AGENTS.md:188-189 @ cbe35f5
+def test_no_global_process_groups():
+    """No dist.new_group() or dist.init_process_group() at module level in optimizer.py.
+
+    AST-only because: need to distinguish module-level calls from calls inside
+    functions/classes; text search cannot make that distinction.
+    AGENTS.md distributed rule: 'Never create global process groups at module level'.
+    """
+    _, tree = _parse_source()
+    forbidden_calls = {"new_group", "init_process_group"}
+
+    for node in ast.iter_child_nodes(tree):
+        # Only check module-level statements (not inside class/function bodies)
+        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
+            call = node.value
+            # torch.distributed.new_group() or dist.new_group()
+            if isinstance(call.func, ast.Attribute) and call.func.attr in forbidden_calls:
+                raise AssertionError(
+                    f"Global process group created at module level: "
+                    f"{call.func.attr}() at line {node.lineno}"
+                )
+        elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+            # e.g. PG = dist.new_group(...)
+            value = node.value if isinstance(node, (ast.Assign, ast.AugAssign)) else node.value
+            if value is not None and isinstance(value, ast.Call):
+                if (isinstance(value.func, ast.Attribute)
+                        and value.func.attr in forbidden_calls):
+                    raise AssertionError(
+                        f"Global process group created at module level: "
+                        f"{value.func.attr}() at line {node.lineno}"
+                    )
+
+
 # [agent_config] pass_to_pass — AGENTS.md:100-101 @ cbe35f5
 def test_no_heavy_toplevel_imports():
     """Heavy optional deps must be imported inside functions, not at module level.

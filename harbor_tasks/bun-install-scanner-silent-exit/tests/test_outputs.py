@@ -234,6 +234,28 @@ def test_regression_test_uses_harness():
     )
 
 
+# [agent_config] pass_to_pass — CLAUDE.md:101 @ 1d50d640f8
+def test_exit_code_assertion_last():
+    """Regression test must assert stdout/stderr content before asserting exit code (CLAUDE.md:101)."""
+    test_file = Path(REPO) / "test/regression/issue/28193.test.ts"
+    assert test_file.exists(), "Regression test file does not exist"
+    content = test_file.read_text()
+    lines = content.splitlines()
+
+    exit_code_lines = [i for i, l in enumerate(lines) if re.search(r"expect\s*\(\s*exitCode\s*\)", l)]
+    content_lines = [i for i, l in enumerate(lines) if re.search(r"expect\s*\(\s*std(?:out|err)\s*\)", l)]
+
+    assert exit_code_lines, "No exit code assertions found in regression test"
+    assert content_lines, "No stdout/stderr content assertions found in regression test"
+
+    for ec_line in exit_code_lines:
+        has_prior = any(ca < ec_line for ca in content_lines)
+        assert has_prior, (
+            f"exit code assertion at line {ec_line + 1} has no prior stdout/stderr assertion — "
+            "CLAUDE.md:101 requires content assertions before exit code assertions"
+        )
+
+
 # [agent_config] fail_to_pass — CLAUDE.md:100 @ 1d50d640f8
 def test_regression_test_uses_tempdir():
     """Regression test must use tempDir from 'harness', not tmpdirSync/mkdtempSync per CLAUDE.md:100."""

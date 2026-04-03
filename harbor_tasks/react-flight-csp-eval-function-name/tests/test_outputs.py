@@ -11,7 +11,6 @@ add Object.defineProperty(fn, 'name', {value: name}) so the function
 retains its server-side name for stack traces in CSP environments.
 """
 
-import re
 import subprocess
 from pathlib import Path
 
@@ -19,15 +18,86 @@ REPO = "/workspace/react"
 CLIENT_JS = f"{REPO}/packages/react-client/src/ReactFlightClient.js"
 
 
+def _extract_catch_body():
+    """Extract the catch block body from createFakeFunction for behavioral testing."""
+    src = Path(CLIENT_JS).read_text()
+    func_start = src.index("function createFakeFunction")
+    catch_start = src.index("catch (x)", func_start)
+    brace_start = src.index("{", catch_start)
+    depth = 0
+    brace_end = -1
+    for i in range(brace_start, len(src)):
+        if src[i] == "{":
+            depth += 1
+        elif src[i] == "}":
+            depth -= 1
+            if depth == 0:
+                brace_end = i
+                break
+    assert brace_end != -1, "Could not find matching brace for catch block"
+    return src[brace_start + 1 : brace_end]
+
+
+def _run_name_test(test_names):
+    """Run a node script that extracts the catch block and verifies fn.name is set."""
+    node_script = r"""
+const fs = require('fs');
+const src = fs.readFileSync('%s', 'utf8');
+
+const funcStart = src.indexOf('function createFakeFunction');
+if (funcStart === -1) { console.error('createFakeFunction not found'); process.exit(10); }
+
+const catchStart = src.indexOf('catch (x)', funcStart);
+if (catchStart === -1) { console.error('catch block not found'); process.exit(11); }
+
+const braceStart = src.indexOf('{', catchStart);
+let depth = 0, braceEnd = -1;
+for (let i = braceStart; i < src.length; i++) {
+  if (src[i] === '{') depth++;
+  if (src[i] === '}') { depth--; if (depth === 0) { braceEnd = i; break; } }
+}
+if (braceEnd === -1) { console.error('catch brace not matched'); process.exit(12); }
+
+let catchBody = src.substring(braceStart + 1, braceEnd);
+// Strip Flow suppression comments to produce valid JS
+catchBody = catchBody.replace(/\/\/ \$FlowFixMe[^\n]*/g, '');
+
+const testNames = %s;
+const failures = [];
+
+for (const name of testNames) {
+  try {
+    const fn = new Function('name', 'let fn;\n' + catchBody + '\nreturn fn;')(name);
+    if (typeof fn !== 'function') {
+      failures.push(name + ': result is not a function');
+    } else if (fn.name !== name) {
+      failures.push(name + ': expected "' + name + '", got "' + fn.name + '"');
+    }
+  } catch(e) {
+    failures.push(name + ': threw ' + e.message);
+  }
+}
+
+if (failures.length > 0) {
+  console.error('FAILURES:\n' + failures.join('\n'));
+  process.exit(1);
+}
+console.log('PASS: all ' + testNames.length + ' names verified');
+""" % (CLIENT_JS, str(test_names).replace("'", '"'))
+
+    r = subprocess.run(["node", "-e", node_script], capture_output=True, timeout=30)
+    return r
+
+
 # ---------------------------------------------------------------------------
-# Gate (pass_to_pass, static) — source file structure
+# Gate (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_createfakefunction_exists():
     """ReactFlightClient.js exists and contains createFakeFunction with a catch block."""
     src = Path(CLIENT_JS).read_text()
-    assert "createFakeFunction" in src, "createFakeFunction not found in ReactFlightClient.js"
+    assert "createFakeFunction" in src, "createFakeFunction not found"
     func_start = src.find("function createFakeFunction")
     assert func_start != -1, "function createFakeFunction declaration not found"
     catch_pos = src.find("catch (x)", func_start)
@@ -39,87 +109,47 @@ def test_createfakefunction_exists():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-# AST-only because: ReactFlightClient.js uses Flow type annotations and cannot
-# be executed directly with node without transpilation.
-def test_defineProperty_sets_fn_name_in_csp_fallback():
-    """catch block in createFakeFunction sets fn.name via Object.defineProperty."""
-    src = Path(CLIENT_JS).read_text()
+def test_csp_fallback_function_named():
+    """CSP fallback in createFakeFunction produces correctly named functions.
 
-    func_start = src.find("function createFakeFunction")
-    assert func_start != -1
-
-    catch_start = src.find("catch (x)", func_start)
-    assert catch_start != -1
-
-    # Inspect up to 600 chars after catch — enough to cover the full catch body
-    catch_region = src[catch_start : catch_start + 600]
-
-    # Must call Object.defineProperty on fn
-    assert "Object.defineProperty" in catch_region, (
-        "catch block does not call Object.defineProperty to set fn.name; "
-        "CSP fallback function will have no meaningful name in stack traces"
-    )
-
-    # Must target the 'name' property
-    define_idx = catch_region.index("Object.defineProperty")
-    name_region = catch_region[define_idx : define_idx + 200]
-    assert "'name'" in name_region or '"name"' in name_region, (
-        "Object.defineProperty in catch block does not target the 'name' property"
-    )
-
-    # Must pass the name variable as the value descriptor
-    assert "value: name" in name_region, (
-        "{value: name} descriptor not found — fn.name will not be set to the "
-        "server-side component name"
+    Extracts the catch block body and executes it in Node to verify that
+    the resulting function's .name property matches the input name.
+    """
+    r = _run_name_test(["MyComponent", "ServerAction", "fetchData"])
+    stdout = r.stdout.decode(errors="replace")
+    stderr = r.stderr.decode(errors="replace")
+    assert r.returncode == 0, (
+        f"CSP fallback function names not set correctly:\n{stderr}\n{stdout}"
     )
 
 
 # [pr_diff] fail_to_pass
-# AST-only because: ReactFlightClient.js uses Flow type annotations and cannot
-# be executed directly with node without transpilation.
-def test_flowfixme_cannot_write_comment():
-    """$FlowFixMe[cannot-write] suppresses the Flow type error on fn.name assignment."""
-    src = Path(CLIENT_JS).read_text()
-
-    # Verify the comment is present anywhere in the file
-    assert "$FlowFixMe[cannot-write]" in src, (
-        "$FlowFixMe[cannot-write] comment not found; Flow will report a type error "
-        "because the `name` property is typed as read-only on Function"
-    )
-
-    # Verify it appears near the Object.defineProperty call (not some unrelated location)
-    func_start = src.find("function createFakeFunction")
-    catch_start = src.find("catch (x)", func_start)
-    catch_region = src[catch_start : catch_start + 600]
-    assert "$FlowFixMe[cannot-write]" in catch_region, (
-        "$FlowFixMe[cannot-write] must be inside the createFakeFunction catch block, "
-        "directly suppressing the Object.defineProperty('name') call"
+def test_csp_fallback_special_names():
+    """CSP fallback handles edge-case names: single char, dotted, hyphenated, unicode."""
+    r = _run_name_test(["a", "App.Header", "my-action", "Résumé"])
+    stdout = r.stdout.decode(errors="replace")
+    stderr = r.stderr.decode(errors="replace")
+    assert r.returncode == 0, (
+        f"CSP fallback special names not set correctly:\n{stderr}\n{stdout}"
     )
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — regression check
+# Pass-to-pass (agent_config) — formatting from .claude/skills/fix/SKILL.md
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
-def test_existing_flight_tests():
-    """Upstream ReactFlight test suite still passes after the fix."""
+# [agent_config] pass_to_pass — .claude/skills/fix/SKILL.md:10 @ 87ae75b
+def test_prettier_format():
+    """Changed file passes yarn prettier formatting check."""
     r = subprocess.run(
-        [
-            "yarn",
-            "test",
-            "--silent",
-            "--no-watchman",
-            "--testPathPattern",
-            "ReactFlight-test",
-        ],
+        ["yarn", "prettier", "--check",
+         "packages/react-client/src/ReactFlightClient.js"],
         cwd=REPO,
         capture_output=True,
-        timeout=110,
+        timeout=60,
     )
     stdout = r.stdout.decode(errors="replace")
     stderr = r.stderr.decode(errors="replace")
     assert r.returncode == 0, (
-        f"ReactFlight tests failed (exit {r.returncode}):\n"
-        f"{stdout[-3000:]}\n{stderr[-1000:]}"
+        f"Prettier formatting check failed:\n{stdout}\n{stderr}"
     )

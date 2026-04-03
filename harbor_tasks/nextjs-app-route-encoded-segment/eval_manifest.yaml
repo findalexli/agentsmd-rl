@@ -61,4 +61,18 @@ checks:
       lines: "302-309"
       commit: "56d75a0b77f2ceda8ea747810275da8e0a9a3d71"
 
-rubric: []
+  - id: no_require_calls
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare require() calls in shared lib file — use ES imports for DCE safety"
+    source:
+      path: "AGENTS.md"
+      lines: "396"
+      commit: "56d75a0b77f2ceda8ea747810275da8e0a9a3d71"
+
+rubric:
+  - rule: "Keep require() behind compile-time if/else branches for DCE; avoid early-return/throw patterns that prevent dead-code elimination."
+    source:
+      path: "AGENTS.md"
+      lines: "396"
+      commit: "56d75a0b77f2ceda8ea747810275da8e0a9a3d71"

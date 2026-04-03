@@ -141,7 +141,7 @@ def test_compiler_snap_passes():
         ["yarn", "snap", "-p", FIXTURE_NAME],
         cwd=COMPILER_DIR,
         capture_output=True,
-        timeout=120,
+        timeout=180,
     )
     output = r.stdout.decode() + r.stderr.decode()
     assert r.returncode == 0, f"yarn snap failed (rc={r.returncode}):\n{output[-2000:]}"

@@ -16,7 +16,7 @@ index 9cec3ce338c7..5d9c476b3bfd 100644
 +++ b/packages/react-devtools-shared/src/config/DevToolsFeatureFlags.core-fb.js
 @@ -13,6 +13,7 @@
   * It should always be imported from "react-devtools-feature-flags".
-  ******************************************************************************/
+  ************************************************************************/
 
 +export const enableActivitySlices: boolean = false;
  export const enableLogger: boolean = true;
@@ -28,7 +28,7 @@ index 326b0fd16cca..88b01afc3ee0 100644
 +++ b/packages/react-devtools-shared/src/config/DevToolsFeatureFlags.core-oss.js
 @@ -13,6 +13,7 @@
   * It should always be imported from "react-devtools-feature-flags".
-  ******************************************************************************/
+  ************************************************************************/
 
 +export const enableActivitySlices: boolean = __DEV__;
  export const enableLogger: boolean = false;
@@ -40,7 +40,7 @@ index e7355f8a3475..85f678a980cf 100644
 +++ b/packages/react-devtools-shared/src/config/DevToolsFeatureFlags.default.js
 @@ -13,6 +13,7 @@
   * It should always be imported from "react-devtools-feature-flags".
-  ******************************************************************************/
+  ************************************************************************/
 
 +export const enableActivitySlices: boolean = __DEV__;
  export const enableLogger: boolean = false;
@@ -52,7 +52,7 @@ index dc4f05d16fb8..734e7988c858 100644
 +++ b/packages/react-devtools-shared/src/config/DevToolsFeatureFlags.extension-fb.js
 @@ -13,6 +13,7 @@
   * It should always be imported from "react-devtools-feature-flags".
-  ******************************************************************************/
+  ************************************************************************/
 
 +export const enableActivitySlices: boolean = false;
  export const enableLogger: boolean = true;
@@ -64,7 +64,7 @@ index 71df63eef051..c9b665a9096e 100644
 +++ b/packages/react-devtools-shared/src/config/DevToolsFeatureFlags.extension-oss.js
 @@ -13,6 +13,7 @@
   * It should always be imported from "react-devtools-feature-flags".
-  ******************************************************************************/
+  ************************************************************************/
 
 +export const enableActivitySlices: boolean = __DEV__;
  export const enableLogger: boolean = false;

@@ -32,9 +32,48 @@ checks:
     origin: static
     description: "No wildcard imports in modified file"
 
+  - id: no_bare_type_ignore
+    type: pass_to_pass
+    origin: agent_config
+    description: "Any # type: ignore must include a specific error code (e.g. # type: ignore[call-arg])"
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "180-186"
+      commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"
+
+  - id: no_assert_for_type_narrowing
+    type: pass_to_pass
+    origin: agent_config
+    description: "Do not use assert for type narrowing; use if ...: raise instead"
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "188-190"
+      commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"
+
+  - id: no_getattr_torch_dynamic_backend
+    type: pass_to_pass
+    origin: agent_config
+    description: "Do not use getattr(torch, 'backend') to access dynamic device backends (npu, xpu, hpu, musa, mlu, neuron, compiler); use type guards instead"
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "192-193"
+      commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"
+
 rubric:
   - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
     source:
       path: ".github/copilot-instructions.md"
       lines: "15"
+      commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"
+
+  - rule: "Code style is enforced in the CI. Run make fixup to apply style and consistency fixes to your code."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "17"
+      commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"
+
+  - rule: "make style or make fix-repo should be run as the final step before opening a PR."
+    source:
+      path: "CLAUDE.md"
+      lines: "8"
       commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"

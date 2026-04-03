@@ -317,6 +317,19 @@ def test_columns_zero_initialized():
         )
 
 
+# [agent_config] pass_to_pass — src/CLAUDE.md:14-16 @ 9a27ef75
+def test_no_std_allocator():
+    """No std.heap or std.mem.Allocator in modified files (use bun.default_allocator)."""
+    for path in [COLDEF, PREPSTMT, MYSTMT, MYCONN]:
+        src = Path(path).read_text()
+        assert "std.heap" not in src, (
+            f"std.heap found in {Path(path).name} — use bun.default_allocator instead"
+        )
+        assert not re.search(r"std\.mem\.Allocator\b", src), (
+            f"std.mem.Allocator found in {Path(path).name} — use bun.default_allocator instead"
+        )
+
+
 # [agent_config] pass_to_pass — src/CLAUDE.md:11-12 @ 9a27ef75
 def test_no_inline_imports():
     """No @import() calls inline inside function bodies in modified files."""

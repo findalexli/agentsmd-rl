@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import re
 from pathlib import Path
 
 REPO = "/workspace/react"
@@ -103,13 +104,15 @@ def test_www_static_true():
 def test_www_not_destructured_from_dynamic():
     """enableComponentPerformanceTrack must not be destructured from the dynamic flags object in www.js."""
     content = (FORKS / "ReactFeatureFlags.www.js").read_text()
-    for line in content.splitlines():
-        stripped = line.strip()
-        # Destructured form is a bare identifier with trailing comma, no assignment operator
-        if stripped == "enableComponentPerformanceTrack," and "=" not in line:
-            assert False, (
-                f"Flag still destructured from dynamic flags in www.js: {line!r}"
-            )
+    # The www.js file imports some flags from www-dynamic via `export const { ... } = ...`
+    # enableComponentPerformanceTrack must not be in that destructuring block
+    match = re.search(r"export const \{([^}]+)\}", content, re.DOTALL)
+    if match:
+        destructured = match.group(1)
+        assert "enableComponentPerformanceTrack" not in destructured, (
+            "enableComponentPerformanceTrack must not be imported from "
+            "the dynamic module in www.js"
+        )
 
 
 # ---------------------------------------------------------------------------

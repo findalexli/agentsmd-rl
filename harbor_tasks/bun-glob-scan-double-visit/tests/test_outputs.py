@@ -291,6 +291,26 @@ def test_no_std_namespace_in_new_code():
             )
 
 
+# [agent_config] pass_to_pass -- src/CLAUDE.md:25 @ 639bc435
+def test_no_std_mem_for_strings():
+    """New code must not use std.mem string functions; use bun.strings.* instead.
+
+    From src/CLAUDE.md:25: 'std.mem.eql/indexOf/startsWith (for strings)
+    → bun.strings.eql/indexOf/startsWith'
+    """
+    added = _added_lines()
+    forbidden = ["std.mem.eql", "std.mem.indexOf", "std.mem.startsWith",
+                 "std.mem.endsWith", "std.mem.containsAtLeast"]
+    for line in added:
+        stripped = line.strip()
+        if stripped.startswith("//"):
+            continue
+        for pat in forbidden:
+            assert pat not in stripped, (
+                f"New code uses {pat} (should use bun.strings.* equivalent): {stripped}"
+            )
+
+
 # [agent_config] pass_to_pass -- src/CLAUDE.md:234 @ 639bc435
 def test_no_catch_out_of_memory():
     """New code must use bun.handleOom() not 'catch bun.outOfMemory()'.

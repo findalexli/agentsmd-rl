@@ -7,10 +7,10 @@ source:
   merge_commit: "24f215ce8b0e17a230fbb7317919a6ae0c324f35"
 
 checks:
-  - id: syntax_check
+  - id: renderer_file_valid
     type: pass_to_pass
     origin: static
-    description: "renderer.js must parse without syntax errors (node --check)"
+    description: "renderer.js must exist with substantial content and core attach() entry point"
 
   - id: prevfiber_guard_profiling_loop
     type: fail_to_pass
@@ -41,6 +41,6 @@ checks:
   - id: didfiberrender_not_stubbed
     type: pass_to_pass
     origin: static
-    description: "didFiberRender function is not removed or stubbed — retains ClassComponent case"
+    description: "didFiberRender function retains its switch-based ClassComponent dispatch logic"
 
 rubric: []

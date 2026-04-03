@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import re
 import subprocess
 from pathlib import Path
 
@@ -15,8 +16,7 @@ import pytest
 REPO = "/workspace/ruff"
 COMPLETION_RS = Path(REPO) / "crates/ty_ide/src/completion.rs"
 
-# These tests are injected INSIDE the mod tests block so they share scope
-# with the private completion_test_builder helper.
+# Injected INSIDE the mod tests block to share scope with completion_test_builder.
 INJECTED_TESTS = r"""
     // Injected by test harness — exercises the panic path from ty#3087
     #[test]
@@ -26,7 +26,6 @@ INJECTED_TESTS = r"""
 list[int]<CURSOR>()
 "#,
         );
-        // On base commit: panics. On fixed commit: returns without panic.
         let _ = builder.skip_keywords().skip_builtins().skip_auto_import().build();
     }
 
@@ -54,10 +53,12 @@ tuple[int, str]<CURSOR>()
 
 def _find_mod_tests_close(content: str) -> int:
     """Return the index of the closing } of the top-level mod tests block."""
-    start = content.find("\nmod tests {")
-    if start == -1:
-        start = content.find("mod tests {")
-    brace_pos = content.index("{", start)
+    idx = content.find("mod tests {")
+    assert idx != -1, (
+        f"Could not find 'mod tests {{' in {COMPLETION_RS}. "
+        f"File has {len(content)} chars."
+    )
+    brace_pos = content.index("{", idx)
     depth = 0
     for i in range(brace_pos, len(content)):
         if content[i] == "{":
@@ -66,12 +67,13 @@ def _find_mod_tests_close(content: str) -> int:
             depth -= 1
             if depth == 0:
                 return i
-    raise ValueError("Could not find closing } for mod tests block")
+    raise AssertionError("Unbalanced braces in mod tests block")
 
 
 @pytest.fixture(scope="module", autouse=True)
 def inject_rust_tests():
     """Inject test functions inside mod tests, restore after the session."""
+    assert COMPLETION_RS.exists(), f"Source file not found: {COMPLETION_RS}"
     original = COMPLETION_RS.read_text()
     close = _find_mod_tests_close(original)
     patched = original[:close] + INJECTED_TESTS + original[close:]
@@ -199,12 +201,10 @@ def test_no_local_use_statements():
         l for l in diff.splitlines()
         if l.startswith("+") and not l.startswith("+++")
     ]
-    local_imports = []
-    for l in added_lines:
-        content = l[1:]  # strip leading +
-        stripped = content.lstrip()
-        if stripped.startswith("use ") and content != stripped:
-            local_imports.append(l)
+    local_imports = [
+        l for l in added_lines
+        if l[1:].lstrip().startswith("use ") and l[1:] != l[1:].lstrip()
+    ]
     assert not local_imports, (
         "Local use statements found (imports must be at top of file):\n"
         + "\n".join(local_imports)

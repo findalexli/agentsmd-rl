@@ -2,60 +2,54 @@ version: "2.0"
 
 source:
   repo: "facebook/react"
-  pr: 0
+  pr: 36159
   base_commit: "74568e8627aa43469b74f2972f427a209639d0b6"
-  merge_commit: ""
+  merge_commit: "2c2fd9d12c7159efef81e7ea6ec899943cf7ca33"
 
 checks:
+  - id: bare_json5_object_accepted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Plain JSON5 objects (no import wrapper) parse successfully via parseConfigOverrides"
+
+  - id: xss_payloads_rejected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "XSS payloads (IIFE, eval, variable refs, fetch) throw instead of executing"
+
+  - id: empty_config_returns_empty_object
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Empty and whitespace-only config strings return {} via parseConfigOverrides"
+
+  - id: default_config_is_plain_json5
+    type: fail_to_pass
+    origin: pr_diff
+    description: "defaultStore.ts uses plain JSON5 format — TypeScript import/satisfies removed"
+
   - id: no_new_function_xss
     type: fail_to_pass
     origin: pr_diff
-    description: "new Function() XSS vulnerability removed from lib/compilation.ts"
-
-  - id: parse_config_overrides_exported
-    type: fail_to_pass
-    origin: pr_diff
-    description: "parseConfigOverrides function exported from lib/compilation.ts"
-
-  - id: json5_parse_used
-    type: fail_to_pass
-    origin: pr_diff
-    description: "JSON5.parse() used inside parseConfigOverrides in compilation.ts"
-
-  - id: json5_import_in_compilation_ts
-    type: fail_to_pass
-    origin: pr_diff
-    description: "import JSON5 from 'json5' present in lib/compilation.ts"
+    description: "new Function() XSS vulnerability removed from compilation.ts"
 
   - id: json5_dependency_in_package_json
     type: fail_to_pass
     origin: pr_diff
     description: "json5 declared as dependency in compiler/apps/playground/package.json"
 
-  - id: parse_options_calls_parse_config_overrides
+  - id: json5_comments_supported
     type: fail_to_pass
     origin: pr_diff
-    description: "parseOptions calls parseConfigOverrides(configOverrides) instead of new Function"
+    description: "JSON5 single-line and block comments parse correctly in config"
 
-  - id: defaultstore_ts_syntax_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "defaultStore.ts uses plain JSON5 format — TypeScript import type and satisfies removed"
-
-  - id: parse_config_overrides_behavior
+  - id: parse_config_overrides_not_stub
     type: pass_to_pass
-    origin: pr_diff
-    description: "parseConfigOverrides logic: empty→{}, JSON5 features parse correctly, XSS payloads throw"
+    origin: static
+    description: "parseConfigOverrides is exported, references JSON5, not a stub"
 
 rubric:
-  - rule: "Exported functions should have proper TypeScript type annotations for parameters and return types."
+  - rule: "Run prettier on all files (from the react root directory, not compiler/) — yarn prettier-all"
     source:
       path: "compiler/CLAUDE.md"
-      lines: "1"
-      commit: "74568e8627aa43469b74f2972f427a209639d0b6"
-
-  - rule: "The default config string format should be plain JSON/JSON5 syntax, not TypeScript syntax with type imports or satisfies expressions."
-    source:
-      path: "compiler/CLAUDE.md"
-      lines: "1"
+      lines: "27-30"
       commit: "74568e8627aa43469b74f2972f427a209639d0b6"
