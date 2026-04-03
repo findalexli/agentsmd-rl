@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/PrimeIntellect-ai/prime-rl.git /workspace/prime-rl && \
+RUN git init /workspace/prime-rl && \
     cd /workspace/prime-rl && \
-    git checkout 714d0ea90421ddfe4b5b5c6dca250e330f5ebe65
+    git remote add origin https://github.com/PrimeIntellect-ai/prime-rl.git && \
+    git fetch --depth=1 origin 714d0ea90421ddfe4b5b5c6dca250e330f5ebe65 && \
+    git checkout FETCH_HEAD
 
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir pytest pytest-json-ctrf pydantic pydantic-settings

@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/openclaw/openclaw.git /workspace/openclaw && \
+RUN git init /workspace/openclaw && \
     cd /workspace/openclaw && \
-    git checkout f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb
+    git remote add origin https://github.com/openclaw/openclaw.git && \
+    git fetch --depth=1 origin f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps (agent fills in specifics)
 

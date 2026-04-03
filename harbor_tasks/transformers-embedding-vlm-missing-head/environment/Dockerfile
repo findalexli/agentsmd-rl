@@ -5,7 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before the fix)
-RUN git clone https://github.com/huggingface/transformers.git /workspace/repo
+RUN git init /workspace/repo && \
+    cd /workspace/repo && \
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin 05514c4bb641ba1537d17048fd93f50f45d5f19d && \
+    git checkout FETCH_HEAD
 RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace/repo

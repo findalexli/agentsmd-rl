@@ -6,9 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone pytorch at the base commit (before the fix)
-RUN git clone --filter=blob:none https://github.com/pytorch/pytorch.git /workspace && \
+RUN git init /workspace && \
     cd /workspace && \
-    git checkout 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+    git remote add origin https://github.com/pytorch/pytorch.git && \
+    git fetch --depth=1 origin 63fcbe1040ffef63e82abd4e66da1d7554d23aa4 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

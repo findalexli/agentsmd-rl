@@ -6,9 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before fix)
-RUN git clone --filter=blob:none https://github.com/huggingface/transformers.git /repo && \
+RUN git init /repo && \
     cd /repo && \
-    git checkout ed003b4482aabdf8377250f22826dd31f378269c
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin ed003b4482aabdf8377250f22826dd31f378269c && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

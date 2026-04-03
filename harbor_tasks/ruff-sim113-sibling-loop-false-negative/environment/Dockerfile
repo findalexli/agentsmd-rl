@@ -11,10 +11,11 @@ RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone --filter=blob:none https://github.com/astral-sh/ruff.git ruff && \
-    cd ruff && \
-    git checkout 5f7e0346bc946d7fb484b285d49d351d3a54d526 && \
-    git checkout -b task-branch
+RUN git init /workspace/ruff && \
+    cd /workspace/ruff && \
+    git remote add origin https://github.com/astral-sh/ruff.git && \
+    git fetch --depth=1 origin 5f7e0346bc946d7fb484b285d49d351d3a54d526 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/ruff
 

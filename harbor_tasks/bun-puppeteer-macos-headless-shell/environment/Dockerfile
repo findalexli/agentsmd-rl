@@ -9,9 +9,11 @@ RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Agent"
 
 # Clone bun repo at the base commit (before the fix)
-RUN git clone --filter=blob:none https://github.com/oven-sh/bun.git /workspace/bun && \
+RUN git init /workspace/bun && \
     cd /workspace/bun && \
-    git checkout 5693fc1a98116743f16a7db2952d6e436bf9ec98
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin 5693fc1a98116743f16a7db2952d6e436bf9ec98 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

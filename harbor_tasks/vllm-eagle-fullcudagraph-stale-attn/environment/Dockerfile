@@ -8,9 +8,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 ARG REPO=vllm-project/vllm
 ARG BASE_COMMIT=44a6528028ad79951de08b6a7928f6c05788d00d
 
-RUN git clone --filter=blob:none https://github.com/${REPO}.git /repo && \
+RUN git init /repo && \
     cd /repo && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/${REPO}.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

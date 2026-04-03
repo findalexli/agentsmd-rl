@@ -5,9 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before fix)
-RUN git clone https://github.com/PrimeIntellect-ai/prime-rl.git /workspace/prime-rl \
-    && cd /workspace/prime-rl \
-    && git checkout b92c2128ddeb679c23954c2bf6825e4d6659d501
+RUN git init /workspace/prime-rl && \
+    cd /workspace/prime-rl && \
+    git remote add origin https://github.com/PrimeIntellect-ai/prime-rl.git && \
+    git fetch --depth=1 origin b92c2128ddeb679c23954c2bf6825e4d6659d501 && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps for testing (only pydantic needed for config classes)
 RUN cd /workspace/prime-rl && pip install --no-cache-dir pydantic

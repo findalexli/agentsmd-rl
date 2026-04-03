@@ -5,9 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
     && rm -rf /var/lib/apt/lists/*
 
 ARG BASE_COMMIT=7b00e3ba398d355d5f277a4896743b16f21049eb
-RUN git clone --filter=blob:none https://github.com/huggingface/transformers.git /repo \
-    && cd /repo \
-    && git checkout $BASE_COMMIT
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

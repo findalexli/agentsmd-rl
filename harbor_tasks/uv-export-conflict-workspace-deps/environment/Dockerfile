@@ -6,9 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone uv at the buggy base commit (parent of merge commit e169f431)
-RUN git clone https://github.com/astral-sh/uv.git /repo \
-    && cd /repo \
-    && git checkout 3d4cb95c809aef28c4c527435948c0aae5c2f3d2
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/astral-sh/uv.git && \
+    git fetch --depth=1 origin 3d4cb95c809aef28c4c527435948c0aae5c2f3d2 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

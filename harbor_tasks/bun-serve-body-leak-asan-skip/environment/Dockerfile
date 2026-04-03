@@ -11,8 +11,10 @@ RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone --filter=blob:none https://github.com/oven-sh/bun.git && \
-    cd bun && \
-    git checkout 66f7c41412e8a41c9686b0f4524b778a5f69b40e
+RUN git init /workspace/&& && \
+    cd /workspace/&& && \
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin 66f7c41412e8a41c9686b0f4524b778a5f69b40e && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/bun

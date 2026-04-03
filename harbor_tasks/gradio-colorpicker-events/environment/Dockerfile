@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/gradio-app/gradio.git /workspace/gradio && \
+RUN git init /workspace/gradio && \
     cd /workspace/gradio && \
-    git checkout 3f835cf9c6cdf570a107233e2a87e0dc5cd751cb
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin 3f835cf9c6cdf570a107233e2a87e0dc5cd751cb && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps
 RUN pip install --no-cache-dir numpy 2>/dev/null || true

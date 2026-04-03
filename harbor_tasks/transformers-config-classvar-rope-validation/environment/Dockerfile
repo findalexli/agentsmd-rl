@@ -6,11 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
 
 # Clone repo at base commit (before the fix)
 ARG BASE_COMMIT=eb3d67aaafe368863afc77e4b60fa60c2077c8b5
-RUN git clone --filter=blob:none https://github.com/huggingface/transformers.git /workspace/transformers \
-    && cd /workspace/transformers \
-    && git checkout ${BASE_COMMIT} \
-    && git config user.email "agent@test.local" \
-    && git config user.name "Agent"
+RUN git init /workspace/transformers && \
+    cd /workspace/transformers && \
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

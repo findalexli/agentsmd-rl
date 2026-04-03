@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
     && rm -rf /var/lib/apt/lists/*
 
 # Clone sglang at the base commit (before fix)
-RUN git clone https://github.com/sgl-project/sglang.git /workspace/sglang \
-    && cd /workspace/sglang \
-    && git checkout 9b29131961bb6c167e6956dae60a6269232ca694 \
-    && git config user.email "bench@test" \
-    && git config user.name "Benchmark"
+RUN git init /workspace/sglang && \
+    cd /workspace/sglang && \
+    git remote add origin https://github.com/sgl-project/sglang.git && \
+    git fetch --depth=1 origin 9b29131961bb6c167e6956dae60a6269232ca694 && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps for the LoRA module (no torch/GPU)
 # We only need enough to parse the Python and run AST/import checks

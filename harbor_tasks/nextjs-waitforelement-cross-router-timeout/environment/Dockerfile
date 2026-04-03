@@ -5,9 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Shallow clone at exact base commit (pre-fix)
-RUN git clone --filter=blob:none https://github.com/vercel/next.js.git /workspace/next.js \
-    && cd /workspace/next.js \
-    && git checkout ad65b1bdcf3d10e5213c80bea56a73038bbf1c99
+RUN git init /workspace/next.js && \
+    cd /workspace/next.js && \
+    git remote add origin https://github.com/vercel/next.js.git && \
+    git fetch --depth=1 origin ad65b1bdcf3d10e5213c80bea56a73038bbf1c99 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

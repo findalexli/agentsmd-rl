@@ -13,9 +13,11 @@ RUN mkdir -p /workspace /logs/verifier
 WORKDIR /workspace
 
 # Clone vllm at the commit BEFORE the fix
-RUN git clone --filter=blob:none https://github.com/vllm-project/vllm.git /workspace/vllm && \
+RUN git init /workspace/vllm && \
     cd /workspace/vllm && \
-    git checkout af89140efc06c462ae531999b9f2db6ba0c7a528
+    git remote add origin https://github.com/vllm-project/vllm.git && \
+    git fetch --depth=1 origin af89140efc06c462ae531999b9f2db6ba0c7a528 && \
+    git checkout FETCH_HEAD
 
 ENV PYTHONPATH="/workspace/vllm"
 

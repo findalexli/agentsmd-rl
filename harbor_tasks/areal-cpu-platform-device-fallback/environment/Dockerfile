@@ -7,9 +7,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 
 ARG BASE_COMMIT=6208006db64ac29aded7be33963e86503ba9e28e
 
-RUN git clone https://github.com/inclusionAI/AReaL.git /workspace/AReaL && \
+RUN git init /workspace/AReaL && \
     cd /workspace/AReaL && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

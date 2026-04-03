@@ -10,8 +10,11 @@ RUN mkdir -p /logs/verifier
 
 WORKDIR /repos/AReaL
 
-RUN git clone https://github.com/inclusionAI/AReaL.git . && \
-    git checkout 3bf10c9c56eeae846b3de52dde8db42918f80690
+RUN git init /repos/AReaL/. && \
+    cd /repos/AReaL/. && \
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin 3bf10c9c56eeae846b3de52dde8db42918f80690 && \
+    git checkout FETCH_HEAD
 
 # Install torch CPU-only and minimal deps for testing serialization
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \

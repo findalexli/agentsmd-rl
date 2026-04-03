@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/gradio-app/gradio.git /workspace/gradio && \
+RUN git init /workspace/gradio && \
     cd /workspace/gradio && \
-    git checkout a09c0e891709e007e4f265fc48f466175f5a2a22
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin a09c0e891709e007e4f265fc48f466175f5a2a22 && \
+    git checkout FETCH_HEAD
 
 # Install gradio and its dependencies
 RUN pip install --no-cache-dir -e /workspace/gradio 2>/dev/null || \

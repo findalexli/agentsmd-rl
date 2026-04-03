@@ -10,9 +10,11 @@ RUN pip install --no-cache-dir wheel
 
 # Clone repo at base commit (BEFORE the fix)
 ARG BASE_COMMIT=80389fec004394db409e9d04aef263465a3b235c
-RUN git clone --filter=blob:none https://github.com/sgl-project/sglang.git /repo && \
+RUN git init /repo && \
     cd /repo && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/sgl-project/sglang.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 # Configure git user for any patches
 RUN cd /repo && \

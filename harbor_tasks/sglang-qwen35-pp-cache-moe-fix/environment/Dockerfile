@@ -13,9 +13,11 @@ RUN mkdir -p /workspace /logs/verifier
 WORKDIR /workspace
 
 # Clone sglang at the commit BEFORE the fix
-RUN git clone https://github.com/sgl-project/sglang.git /workspace/sglang && \
+RUN git init /workspace/sglang && \
     cd /workspace/sglang && \
-    git checkout c06ca1526cb6008a8dacb4fdb06567e648134664
+    git remote add origin https://github.com/sgl-project/sglang.git && \
+    git fetch --depth=1 origin c06ca1526cb6008a8dacb4fdb06567e648134664 && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps for the modules to be parseable/importable
 RUN pip install --no-cache-dir psutil numpy && \

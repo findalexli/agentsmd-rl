@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone gradio at the base commit (before fix)
-RUN git clone https://github.com/gradio-app/gradio.git /workspace \
-    && cd /workspace \
-    && git checkout 911dc366e56e9210fd260300915d408058ae18c6 \
-    && git config user.email "test@test.com" \
-    && git config user.name "Test"
+RUN git init /workspace && \
+    cd /workspace && \
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin 911dc366e56e9210fd260300915d408058ae18c6 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

@@ -9,11 +9,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/microsoft/playwright.git /workspace/playwright && \
+RUN git init /workspace/playwright && \
     cd /workspace/playwright && \
-    git checkout f6e14f9d73b46ab319b334c013094d867d4ef149 && \
-    git config user.email "agent@test" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/microsoft/playwright.git && \
+    git fetch --depth=1 origin f6e14f9d73b46ab319b334c013094d867d4ef149 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/playwright
 

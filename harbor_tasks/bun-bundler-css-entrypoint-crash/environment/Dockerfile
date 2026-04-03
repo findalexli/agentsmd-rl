@@ -9,12 +9,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone bun repo at the base commit (treeless clone for speed on large repos)
-RUN git clone --filter=blob:none --no-checkout --single-branch \
-        https://github.com/oven-sh/bun.git /workspace/bun && \
+RUN git init /workspace/bun && \
     cd /workspace/bun && \
-    git checkout 7abe6c387d0746b26eeed7fe9175e14560840cbb && \
-    git config user.email "agent@test" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin 7abe6c387d0746b26eeed7fe9175e14560840cbb && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/bun
 

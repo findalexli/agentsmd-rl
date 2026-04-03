@@ -16,9 +16,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/astral-sh/ruff.git /workspace/ruff && \
+RUN git init /workspace/ruff && \
     cd /workspace/ruff && \
-    git checkout 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
+    git remote add origin https://github.com/astral-sh/ruff.git && \
+    git fetch --depth=1 origin 0f41bc554bd89d14dbeb7e1791b34dc7319339bc && \
+    git checkout FETCH_HEAD
 
 # Pre-build ruff binary + test harness to cache compiled dependencies.
 # After the agent's 1-2 file change, incremental rebuild takes ~30-60s.

@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/inclusionAI/AReaL.git /workspace/AReaL && \
+RUN git init /workspace/AReaL && \
     cd /workspace/AReaL && \
-    git checkout 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin 8d84d9f933a83ec2130a8873e8fe74d2cee7a742 && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps (CPU torch for testing)
 RUN pip install --no-cache-dir numpy torch --index-url https://download.pytorch.org/whl/cpu 2>/dev/null || true

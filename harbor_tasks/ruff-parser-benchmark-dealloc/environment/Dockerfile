@@ -9,9 +9,11 @@ RUN git config --global user.email "agent@test.com" \
     && git config --global user.name "Agent"
 
 # Clone repo at base commit (before the fix)
-RUN git clone --no-checkout https://github.com/astral-sh/ruff.git /repo \
-    && cd /repo \
-    && git checkout bd477d9535b5b83795e7eb42675faa8aa4fb954f
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/astral-sh/ruff.git && \
+    git fetch --depth=1 origin bd477d9535b5b83795e7eb42675faa8aa4fb954f && \
+    git checkout FETCH_HEAD
 
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 

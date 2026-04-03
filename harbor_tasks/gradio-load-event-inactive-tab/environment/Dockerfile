@@ -9,9 +9,11 @@ RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Agent"
 
 # Clone gradio at the base commit (before fix)
-RUN git clone https://github.com/gradio-app/gradio.git /workspace/gradio && \
+RUN git init /workspace/gradio && \
     cd /workspace/gradio && \
-    git checkout 6011b00d0154b85532fa901dd73cf8fa7d86fd04
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin 6011b00d0154b85532fa901dd73cf8fa7d86fd04 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

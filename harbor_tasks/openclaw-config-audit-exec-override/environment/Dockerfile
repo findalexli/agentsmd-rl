@@ -9,11 +9,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Clone repo at base commit (before fix)
-RUN git clone https://github.com/openclaw/openclaw.git /workspace/openclaw && \
+RUN git init /workspace/openclaw && \
     cd /workspace/openclaw && \
-    git checkout 1ca4261d7e055d0be141ed79ebb1365d0fbc7364 && \
-    git config user.email "agent@test.com" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/openclaw/openclaw.git && \
+    git fetch --depth=1 origin 1ca4261d7e055d0be141ed79ebb1365d0fbc7364 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

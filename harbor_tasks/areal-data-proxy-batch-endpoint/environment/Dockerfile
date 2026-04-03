@@ -7,11 +7,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 
 # Clone repo at base commit (BEFORE the fix)
 ARG BASE_COMMIT=0405b5c30c815044d858f15d04d2033c9a3d7760
-RUN git clone https://github.com/inclusionAI/AReaL.git /workspace/AReaL && \
+RUN git init /workspace/AReaL && \
     cd /workspace/AReaL && \
-    git checkout ${BASE_COMMIT} && \
-    git config user.email "agent@test.com" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps for testing (no torch/GPU — tests use source analysis)
 # Justification: the data proxy module transitively imports torch, transformers,

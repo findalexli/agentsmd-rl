@@ -8,9 +8,11 @@ RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test"
 
 # Clone repo at the base commit (BEFORE the fix)
-RUN git clone https://github.com/PrimeIntellect-ai/prime-rl.git /workspace/prime-rl && \
+RUN git init /workspace/prime-rl && \
     cd /workspace/prime-rl && \
-    git checkout 27c35b1ce136c85c120b0486128316ae022b53a5
+    git remote add origin https://github.com/PrimeIntellect-ai/prime-rl.git && \
+    git fetch --depth=1 origin 27c35b1ce136c85c120b0486128316ae022b53a5 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

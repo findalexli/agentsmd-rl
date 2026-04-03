@@ -12,11 +12,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 RUN corepack enable
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/storybookjs/storybook.git /workspace/storybook && \
+RUN git init /workspace/storybook && \
     cd /workspace/storybook && \
-    git checkout 95aa11484a255b1c7f6227f2c81e2d441bb28988 && \
-    git config user.email "agent@test" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/storybookjs/storybook.git && \
+    git fetch --depth=1 origin 95aa11484a255b1c7f6227f2c81e2d441bb28988 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/storybook
 

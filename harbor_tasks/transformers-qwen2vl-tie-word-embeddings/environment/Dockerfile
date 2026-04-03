@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at the base commit (BEFORE the fix)
-RUN git clone https://github.com/huggingface/transformers.git /repo \
-    && cd /repo \
-    && git checkout 28e1cc59ecf479ea674f2cc4b443a2969aae3a69 \
-    && git config user.email "test@test.com" \
-    && git config user.name "Test"
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin 28e1cc59ecf479ea674f2cc4b443a2969aae3a69 && \
+    git checkout FETCH_HEAD
 
 RUN pip install --no-cache-dir ruff
 

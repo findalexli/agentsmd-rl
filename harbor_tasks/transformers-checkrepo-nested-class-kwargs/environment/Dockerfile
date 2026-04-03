@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
     && rm -rf /var/lib/apt/lists/*
 
 # Clone at exact base commit (before the fix)
-RUN git clone https://github.com/huggingface/transformers.git /workspace/transformers \
-    && cd /workspace/transformers \
-    && git checkout 9a9997fd73c5eb29fb3677d3c489f5d3cd0765f6 \
-    && git config user.email "agent@test.com" \
-    && git config user.name "Agent"
+RUN git init /workspace/transformers && \
+    cd /workspace/transformers && \
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin 9a9997fd73c5eb29fb3677d3c489f5d3cd0765f6 && \
+    git checkout FETCH_HEAD
 
 # Install transformers with minimal deps (needed for check_repo.py imports)
 RUN cd /workspace/transformers && pip install --no-cache-dir -e "." \

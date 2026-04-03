@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/huggingface/transformers.git /workspace/transformers && \
+RUN git init /workspace/transformers && \
     cd /workspace/transformers && \
-    git checkout c532659b8734b88d2bbaac2542c2a5a8b525f3f7
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin c532659b8734b88d2bbaac2542c2a5a8b525f3f7 && \
+    git checkout FETCH_HEAD
 
 # Install torch CPU-only (no GPU needed for verification)
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu

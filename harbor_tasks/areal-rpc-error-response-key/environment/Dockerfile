@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/inclusionAI/AReaL.git /workspace/AReaL && \
+RUN git init /workspace/AReaL && \
     cd /workspace/AReaL && \
-    git checkout a3e36d4af66ac6fa88e723675060cde591ca133e
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin a3e36d4af66ac6fa88e723675060cde591ca133e && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps (agent fills in specifics)
 RUN pip install --no-cache-dir numpy 2>/dev/null || true

@@ -8,9 +8,11 @@ RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test"
 
 # Clone repo at base commit (before the fix)
-RUN git clone https://github.com/gradio-app/gradio.git /workspace/gradio && \
+RUN git init /workspace/gradio && \
     cd /workspace/gradio && \
-    git checkout 7fb33fc3b80b421817c1d1ddea19c8858a9f2924
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin 7fb33fc3b80b421817c1d1ddea19c8858a9f2924 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

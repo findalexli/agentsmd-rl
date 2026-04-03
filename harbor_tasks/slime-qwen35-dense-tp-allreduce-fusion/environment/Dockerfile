@@ -8,9 +8,11 @@ RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test"
 
 # Clone repo at base commit (before fix)
-RUN git clone https://github.com/THUDM/slime.git /workspace/slime && \
+RUN git init /workspace/slime && \
     cd /workspace/slime && \
-    git checkout 2640e6cd98c864231b570425e0877dcff295984c
+    git remote add origin https://github.com/THUDM/slime.git && \
+    git fetch --depth=1 origin 2640e6cd98c864231b570425e0877dcff295984c && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

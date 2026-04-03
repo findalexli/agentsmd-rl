@@ -10,11 +10,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/microsoft/vscode.git /workspace/vscode && \
+RUN git init /workspace/vscode && \
     cd /workspace/vscode && \
-    git checkout 559cb3e74d075670b9a03f84751e8fdcd3c52443 && \
-    git config user.email "agent@test" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/microsoft/vscode.git && \
+    git fetch --depth=1 origin 559cb3e74d075670b9a03f84751e8fdcd3c52443 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/vscode
 

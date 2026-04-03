@@ -6,11 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone bun at the base commit (BEFORE the fix)
-RUN git clone --no-checkout https://github.com/oven-sh/bun.git /workspace/bun && \
+RUN git init /workspace/bun && \
     cd /workspace/bun && \
-    git checkout 2d4c2beb23085873380840c9bd18eeca29645843 && \
-    git config user.email "agent@test" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin 2d4c2beb23085873380840c9bd18eeca29645843 && \
+    git checkout FETCH_HEAD
 
 # Install Node.js (needed for behavioral tests that eval extracted JS functions)
 RUN curl -fsSL https://nodejs.org/dist/v20.11.0/node-v20.11.0-linux-x64.tar.xz \

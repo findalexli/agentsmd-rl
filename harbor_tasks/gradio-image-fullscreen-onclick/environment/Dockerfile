@@ -5,9 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
     && rm -rf /var/lib/apt/lists/*
 
 # Clone gradio at the base commit (before the fix)
-RUN git clone --filter=blob:none https://github.com/gradio-app/gradio.git /workspace && \
+RUN git init /workspace && \
     cd /workspace && \
-    git checkout 4a4c7f3b0d6fd8009fdafc580d5852984f961db1
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin 4a4c7f3b0d6fd8009fdafc580d5852984f961db1 && \
+    git checkout FETCH_HEAD
 
 # Install prettier + svelte plugin for formatting checks
 RUN npm install -g prettier prettier-plugin-svelte

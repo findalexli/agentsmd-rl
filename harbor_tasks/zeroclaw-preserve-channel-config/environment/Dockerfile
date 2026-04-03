@@ -13,9 +13,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/zeroclaw-labs/zeroclaw.git /workspace/zeroclaw && \
+RUN git init /workspace/zeroclaw && \
     cd /workspace/zeroclaw && \
-    git checkout ce6dd7ca3740473e6414c3eee3d8172e15d79758
+    git remote add origin https://github.com/zeroclaw-labs/zeroclaw.git && \
+    git fetch --depth=1 origin ce6dd7ca3740473e6414c3eee3d8172e15d79758 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/zeroclaw
 

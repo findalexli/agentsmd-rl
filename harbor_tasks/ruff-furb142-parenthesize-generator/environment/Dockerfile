@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/astral-sh/ruff.git /workspace/ruff && \
+RUN git init /workspace/ruff && \
     cd /workspace/ruff && \
-    git checkout 20ca73626d71189ed000806938e1de688c1d3e55
+    git remote add origin https://github.com/astral-sh/ruff.git && \
+    git fetch --depth=1 origin 20ca73626d71189ed000806938e1de688c1d3e55 && \
+    git checkout FETCH_HEAD
 
 RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Test Agent"

@@ -7,9 +7,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update --allow-insecure-repositories 
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before fix)
-RUN git clone --no-checkout https://github.com/astral-sh/uv.git /repo \
-    && cd /repo \
-    && git checkout 867e535f2a5f7f2b1f22a0ccc52fc6da5b01ac3c
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/astral-sh/uv.git && \
+    git fetch --depth=1 origin 867e535f2a5f7f2b1f22a0ccc52fc6da5b01ac3c && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

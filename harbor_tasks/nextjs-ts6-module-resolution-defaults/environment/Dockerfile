@@ -13,9 +13,11 @@ RUN mkdir -p /workspace /logs/verifier
 WORKDIR /workspace
 
 # Clone at base commit (before fix)
-RUN git clone --filter=blob:none https://github.com/vercel/next.js.git /workspace/repo && \
+RUN git init /workspace/repo && \
     cd /workspace/repo && \
-    git checkout 7dd1fcfc924be23cf2785054f5a2ad4f5affb692
+    git remote add origin https://github.com/vercel/next.js.git && \
+    git fetch --depth=1 origin 7dd1fcfc924be23cf2785054f5a2ad4f5affb692 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/repo
 

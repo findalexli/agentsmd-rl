@@ -10,11 +10,11 @@ ENV PATH="/root/.bun/bin:$PATH"
 
 # Clone repo at the base commit (before the fix)
 ARG BASE_COMMIT=3c32013eb122d794089e011d2ec7077395d6f1c4
-RUN git clone https://github.com/anomalyco/opencode.git /workspace/opencode \
-    && cd /workspace/opencode \
-    && git checkout ${BASE_COMMIT} \
-    && git config user.email "agent@test.com" \
-    && git config user.name "Agent"
+RUN git init /workspace/opencode && \
+    cd /workspace/opencode && \
+    git remote add origin https://github.com/anomalyco/opencode.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

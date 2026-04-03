@@ -9,9 +9,11 @@ RUN git config --global user.email "test@test.com" && \
 
 # Clone repo at base commit (before the fix)
 ARG BASE_COMMIT=860531c275cf845f80ccf26bba5bad745fe98398
-RUN git clone https://github.com/anomalyco/opencode.git /workspace/opencode && \
+RUN git init /workspace/opencode && \
     cd /workspace/opencode && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/anomalyco/opencode.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

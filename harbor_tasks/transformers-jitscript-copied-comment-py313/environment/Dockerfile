@@ -6,11 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before the fix)
-RUN git clone --filter=blob:none --single-branch https://github.com/huggingface/transformers.git /workspace/huggingface__transformers && \
+RUN git init /workspace/huggingface__transformers && \
     cd /workspace/huggingface__transformers && \
-    git checkout 0e1978c9eb69ec64b55245212dbf63deab19d25b && \
-    git config user.email "agent@test.com" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin 0e1978c9eb69ec64b55245212dbf63deab19d25b && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps for testing (no torch — tests are source-level)
 RUN pip install --no-cache-dir ruff pytest pytest-json-ctrf

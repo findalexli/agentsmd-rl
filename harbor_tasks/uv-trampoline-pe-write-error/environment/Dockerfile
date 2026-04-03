@@ -11,10 +11,10 @@ RUN mkdir -p /logs/verifier
 WORKDIR /home/user
 
 # Clone uv at the base commit (before the fix)
-RUN git clone --no-checkout https://github.com/astral-sh/uv.git && \
-    cd uv && \
-    git checkout 8b1a15eae6aa51f25f7dfefd247d5592201b78a0 && \
-    git config user.email "bench@test.com" && \
-    git config user.name "Bench"
+RUN git init /home/user/&& && \
+    cd /home/user/&& && \
+    git remote add origin https://github.com/astral-sh/uv.git && \
+    git fetch --depth=1 origin 8b1a15eae6aa51f25f7dfefd247d5592201b78a0 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /home/user/uv

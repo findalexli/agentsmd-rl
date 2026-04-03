@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/sgl-project/sglang.git /workspace/sglang && \
+RUN git init /workspace/sglang && \
     cd /workspace/sglang && \
-    git checkout 5ef56682b800c3905973c86beeddf1318cedb2a9
+    git remote add origin https://github.com/sgl-project/sglang.git && \
+    git fetch --depth=1 origin 5ef56682b800c3905973c86beeddf1318cedb2a9 && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps
 RUN pip install --no-cache-dir numpy 2>/dev/null || true

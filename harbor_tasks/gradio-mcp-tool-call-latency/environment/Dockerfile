@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/gradio-app/gradio.git /workspace/gradio && \
+RUN git init /workspace/gradio && \
     cd /workspace/gradio && \
-    git checkout b1f62c0ebc09be80aee830e26689ab70b939cf44
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin b1f62c0ebc09be80aee830e26689ab70b939cf44 && \
+    git checkout FETCH_HEAD
 
 # Install gradio in editable mode (pulls all deps needed to import gradio.mcp)
 RUN pip install --no-cache-dir -e /workspace/gradio ruff pytest pytest-json-ctrf 2>/dev/null || true

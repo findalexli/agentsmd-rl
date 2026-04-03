@@ -6,9 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (BEFORE the fix)
-RUN git clone https://github.com/anomalyco/opencode.git /workspace/opencode && \
+RUN git init /workspace/opencode && \
     cd /workspace/opencode && \
-    git checkout 5c15755a10fecf15630232c478302a766d295012
+    git remote add origin https://github.com/anomalyco/opencode.git && \
+    git fetch --depth=1 origin 5c15755a10fecf15630232c478302a766d295012 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

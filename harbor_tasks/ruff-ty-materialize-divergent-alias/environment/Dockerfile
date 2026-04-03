@@ -9,9 +9,11 @@ RUN git config --global user.email "agent@test.com" \
     && git config --global user.name "Agent"
 
 # Clone repo at base commit (before the fix)
-RUN git clone --no-checkout https://github.com/astral-sh/ruff.git /repo \
-    && cd /repo \
-    && git checkout c4c6c22d7b73342b3dfebcd526c466fa1df759c8
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/astral-sh/ruff.git && \
+    git fetch --depth=1 origin c4c6c22d7b73342b3dfebcd526c466fa1df759c8 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

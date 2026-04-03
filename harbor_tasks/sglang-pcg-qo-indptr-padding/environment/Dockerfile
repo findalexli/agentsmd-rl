@@ -13,9 +13,11 @@ RUN mkdir -p /workspace /logs/verifier
 WORKDIR /workspace
 
 # Clone sglang at the commit BEFORE the fix
-RUN git clone https://github.com/sgl-project/sglang.git /workspace/sglang && \
+RUN git init /workspace/sglang && \
     cd /workspace/sglang && \
-    git checkout efebcab43ed851405bd41cfdf206245945dbb8ee
+    git remote add origin https://github.com/sgl-project/sglang.git && \
+    git fetch --depth=1 origin efebcab43ed851405bd41cfdf206245945dbb8ee && \
+    git checkout FETCH_HEAD
 
 ENV PYTHONPATH="/workspace/sglang/python"
 

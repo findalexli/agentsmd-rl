@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/gradio-app/gradio.git /workspace/gradio && \
+RUN git init /workspace/gradio && \
     cd /workspace/gradio && \
-    git checkout ac29df82a735c72c021c07e0816f78001147671b
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin ac29df82a735c72c021c07e0816f78001147671b && \
+    git checkout FETCH_HEAD
 
 # Install python3 for test scoring
 RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-install-recommends python3 && rm -rf /var/lib/apt/lists/*

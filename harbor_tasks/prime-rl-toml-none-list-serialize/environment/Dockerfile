@@ -8,9 +8,11 @@ RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test"
 
 # Clone repo at base commit (before fix)
-RUN git clone https://github.com/PrimeIntellect-ai/prime-rl.git /workspace/prime-rl && \
+RUN git init /workspace/prime-rl && \
     cd /workspace/prime-rl && \
-    git checkout a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
+    git remote add origin https://github.com/PrimeIntellect-ai/prime-rl.git && \
+    git fetch --depth=1 origin a25b3e7a18e76999558a888c1ab1f8e5cd0e3831 && \
+    git checkout FETCH_HEAD
 
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 

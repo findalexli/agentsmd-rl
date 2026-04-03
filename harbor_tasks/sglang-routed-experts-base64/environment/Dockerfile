@@ -13,9 +13,11 @@ RUN mkdir -p /workspace /logs/verifier
 WORKDIR /workspace
 
 # Clone sglang at the commit BEFORE the fix
-RUN git clone https://github.com/sgl-project/sglang.git /workspace/sglang && \
+RUN git init /workspace/sglang && \
     cd /workspace/sglang && \
-    git checkout 2acdda1d850122129c6ff21b6d07b2a4c9eb31bd
+    git remote add origin https://github.com/sgl-project/sglang.git && \
+    git fetch --depth=1 origin 2acdda1d850122129c6ff21b6d07b2a4c9eb31bd && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps for testing (CPU-only torch, pybase64, Pillow)
 RUN pip install --no-cache-dir \

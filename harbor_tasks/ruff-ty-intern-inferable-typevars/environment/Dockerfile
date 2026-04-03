@@ -5,9 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone ruff at the base commit (before fix)
-RUN git clone https://github.com/astral-sh/ruff.git /repo \
-    && cd /repo \
-    && git checkout 3a44cce48e2f9687c767a36b9af2da280ef68c64
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/astral-sh/ruff.git && \
+    git fetch --depth=1 origin 3a44cce48e2f9687c767a36b9af2da280ef68c64 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

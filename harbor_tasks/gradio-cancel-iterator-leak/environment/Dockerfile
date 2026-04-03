@@ -10,9 +10,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
 
 RUN mkdir -p /workspace /logs/verifier
 
-RUN git clone https://github.com/gradio-app/gradio.git /workspace/gradio \
-    && cd /workspace/gradio \
-    && git checkout 0a0378dee463fb10e5a95685d595801171cf641b
+RUN git init /workspace/gradio && \
+    cd /workspace/gradio && \
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin 0a0378dee463fb10e5a95685d595801171cf641b && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/gradio
 

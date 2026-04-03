@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/sgl-project/sglang.git /workspace/sglang && \
+RUN git init /workspace/sglang && \
     cd /workspace/sglang && \
-    git checkout a93065679b6395c07fd03249e2e99ccca293ac15
+    git remote add origin https://github.com/sgl-project/sglang.git && \
+    git fetch --depth=1 origin a93065679b6395c07fd03249e2e99ccca293ac15 && \
+    git checkout FETCH_HEAD
 
 # Install numpy for the benchmark module
 RUN pip install --no-cache-dir numpy tqdm requests aiohttp transformers pytest pytest-json-ctrf 2>/dev/null || true

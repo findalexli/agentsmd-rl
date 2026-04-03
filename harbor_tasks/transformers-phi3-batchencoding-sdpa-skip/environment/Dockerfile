@@ -7,9 +7,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 
 # Clone repo at base commit (before the fix)
 ARG BASE_COMMIT=44686173b26bb174f3c7eb6e59f08a338d1adf54
-RUN git clone --filter=blob:none https://github.com/huggingface/transformers.git /workspace/transformers && \
+RUN git init /workspace/transformers && \
     cd /workspace/transformers && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps needed for testing (no torch/GPU)
 RUN cd /workspace/transformers && \

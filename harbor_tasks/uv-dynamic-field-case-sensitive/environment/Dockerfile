@@ -6,9 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone uv at the buggy base commit (before the fix)
-RUN git clone https://github.com/astral-sh/uv.git /repo \
-    && cd /repo \
-    && git checkout b38bea427cca74f993c78213522a16a902b6046e
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/astral-sh/uv.git && \
+    git fetch --depth=1 origin b38bea427cca74f993c78213522a16a902b6046e && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

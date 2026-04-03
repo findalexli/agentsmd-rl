@@ -11,9 +11,11 @@ RUN git config --global user.email "test@test.com" && \
 
 # Clone repo at base commit (before the fix)
 ARG BASE_COMMIT=0090db224d177c51f6d5e45fe1be2527ce04e899
-RUN git clone --filter=blob:none --no-checkout https://github.com/vercel/next.js.git /repo && \
+RUN git init /repo && \
     cd /repo && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/vercel/next.js.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

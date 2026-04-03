@@ -8,9 +8,11 @@ RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Agent"
 
 # Clone repo at the base commit (before the fix)
-RUN git clone https://github.com/PrimeIntellect-ai/prime-rl.git /workspace/prime-rl && \
+RUN git init /workspace/prime-rl && \
     cd /workspace/prime-rl && \
-    git checkout 7ef29a76600d767e732c99c8eaaec768830a7bca
+    git remote add origin https://github.com/PrimeIntellect-ai/prime-rl.git && \
+    git fetch --depth=1 origin 7ef29a76600d767e732c99c8eaaec768830a7bca && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps needed for config validation tests
 # pydantic + pydantic-config (samsja fork) for BaseConfig, transformers for VLM utils

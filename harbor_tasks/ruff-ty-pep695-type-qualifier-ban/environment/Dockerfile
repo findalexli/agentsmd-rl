@@ -10,9 +10,11 @@ RUN git config --global user.email "agent@test.com" \
 
 # Clone ruff at the base commit (before fix)
 ARG BASE_COMMIT=6505b079d7b7eddbf27c8a2e60a647a085d1b8ff
-RUN git clone --no-checkout https://github.com/astral-sh/ruff.git /workspace/ruff \
-    && cd /workspace/ruff \
-    && git checkout ${BASE_COMMIT}
+RUN git init /workspace/ruff && \
+    cd /workspace/ruff && \
+    git remote add origin https://github.com/astral-sh/ruff.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

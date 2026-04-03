@@ -5,9 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at the base commit (before the fix)
-RUN git clone https://github.com/sgl-project/sglang.git /repo \
-    && cd /repo \
-    && git checkout 33cca495ae75e745be62b5b009f4c87fb40dd044
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/sgl-project/sglang.git && \
+    git fetch --depth=1 origin 33cca495ae75e745be62b5b009f4c87fb40dd044 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

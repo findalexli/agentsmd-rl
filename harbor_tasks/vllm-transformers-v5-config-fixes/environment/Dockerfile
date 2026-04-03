@@ -17,9 +17,11 @@ RUN pip install --no-cache-dir 'transformers>=5.0.0' 'huggingface_hub>=0.25.0' p
 WORKDIR /workspace
 
 # Clone vllm at the commit BEFORE the fix
-RUN git clone https://github.com/vllm-project/vllm.git /workspace/vllm && \
+RUN git init /workspace/vllm && \
     cd /workspace/vllm && \
-    git checkout 28048bd6b09cb164a934a8c134b7d7a7f4733b4f
+    git remote add origin https://github.com/vllm-project/vllm.git && \
+    git fetch --depth=1 origin 28048bd6b09cb164a934a8c134b7d7a7f4733b4f && \
+    git checkout FETCH_HEAD
 
 RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Test Agent"

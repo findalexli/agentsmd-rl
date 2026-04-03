@@ -5,10 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone next.js at the base commit (before the fix)
-RUN git clone --filter=blob:none https://github.com/vercel/next.js.git /workspace/next.js \
-    && cd /workspace/next.js \
-    && git fetch --depth=1 origin 04cc2f2ed2a2a65cf5ba78ea251be22a5f41e7c9 \
-    && git checkout 04cc2f2ed2a2a65cf5ba78ea251be22a5f41e7c9
+RUN git init /workspace/next.js && \
+    cd /workspace/next.js && \
+    git remote add origin https://github.com/vercel/next.js.git && \
+    git fetch --depth=1 origin 04cc2f2ed2a2a65cf5ba78ea251be22a5f41e7c9 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

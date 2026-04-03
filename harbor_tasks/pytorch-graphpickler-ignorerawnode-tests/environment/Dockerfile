@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/pytorch/pytorch.git /workspace/pytorch && \
+RUN git init /workspace/pytorch && \
     cd /workspace/pytorch && \
-    git checkout e931ab4802816cec55aa5a25b51f27cb941c924e
+    git remote add origin https://github.com/pytorch/pytorch.git && \
+    git fetch --depth=1 origin e931ab4802816cec55aa5a25b51f27cb941c924e && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps needed for fx graph pickling tests
 RUN pip install --no-cache-dir numpy sympy dill 2>/dev/null || true

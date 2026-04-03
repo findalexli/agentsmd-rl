@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/openclaw/openclaw.git /workspace/openclaw && \
+RUN git init /workspace/openclaw && \
     cd /workspace/openclaw && \
-    git checkout 847912f3e2cfefad5b383603ec53525ae599b48c
+    git remote add origin https://github.com/openclaw/openclaw.git && \
+    git fetch --depth=1 origin 847912f3e2cfefad5b383603ec53525ae599b48c && \
+    git checkout FETCH_HEAD
 
 RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Test Agent"

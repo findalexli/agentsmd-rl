@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/openclaw/openclaw.git /workspace/openclaw && \
+RUN git init /workspace/openclaw && \
     cd /workspace/openclaw && \
-    git checkout 865160e57292bfc32082fa885efe1a48e64bb06c
+    git remote add origin https://github.com/openclaw/openclaw.git && \
+    git fetch --depth=1 origin 865160e57292bfc32082fa885efe1a48e64bb06c && \
+    git checkout FETCH_HEAD
 
 # Install pnpm via corepack and project dependencies (needed for behavioral tests)
 RUN corepack enable && corepack prepare pnpm@10.32.1 --activate

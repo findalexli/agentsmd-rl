@@ -5,9 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone uv at the base commit (before the fix)
-RUN git clone https://github.com/astral-sh/uv.git /repo \
-    && cd /repo \
-    && git checkout 5e25583c42b01fe8b1fae3b8ef05057cfdb4090c
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/astral-sh/uv.git && \
+    git fetch --depth=1 origin 5e25583c42b01fe8b1fae3b8ef05057cfdb4090c && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

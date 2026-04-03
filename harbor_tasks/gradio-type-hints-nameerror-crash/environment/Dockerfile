@@ -6,9 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before the fix)
-RUN git clone --filter=blob:none https://github.com/gradio-app/gradio.git /repo && \
+RUN git init /repo && \
     cd /repo && \
-    git checkout c13daab68aa40cb58f2c643a650b5db48e986935
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin c13daab68aa40cb58f2c643a650b5db48e986935 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

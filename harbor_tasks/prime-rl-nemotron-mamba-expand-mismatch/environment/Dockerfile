@@ -6,11 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
 
 # Clone repo at base commit (before the fix)
 ARG BASE_COMMIT=8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4
-RUN git clone https://github.com/PrimeIntellect-ai/prime-rl.git /workspace/prime-rl \
-    && cd /workspace/prime-rl \
-    && git checkout ${BASE_COMMIT} \
-    && git config user.name "agent" \
-    && git config user.email "agent@test"
+RUN git init /workspace/prime-rl && \
+    cd /workspace/prime-rl && \
+    git remote add origin https://github.com/PrimeIntellect-ai/prime-rl.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

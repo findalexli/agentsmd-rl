@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone vllm at base commit (before the fix) — blobless clone for speed
-RUN git clone --filter=blob:none https://github.com/vllm-project/vllm.git /workspace/vllm \
-    && cd /workspace/vllm \
-    && git checkout 7b54f60db0f55d74dac8aa3040c02363b7a9f6ec \
-    && git config user.email "agent@test.com" \
-    && git config user.name "Agent"
+RUN git init /workspace/vllm && \
+    cd /workspace/vllm && \
+    git remote add origin https://github.com/vllm-project/vllm.git && \
+    git fetch --depth=1 origin 7b54f60db0f55d74dac8aa3040c02363b7a9f6ec && \
+    git checkout FETCH_HEAD
 
 # No torch/GPU deps needed — tests use AST and code extraction
 

@@ -11,11 +11,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 RUN corepack enable
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/facebook/react.git /workspace/react && \
+RUN git init /workspace/react && \
     cd /workspace/react && \
-    git checkout f944b4c5352be02623d2d7415c0806350f875114 && \
-    git config user.email "agent@test" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/facebook/react.git && \
+    git fetch --depth=1 origin f944b4c5352be02623d2d7415c0806350f875114 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/react
 

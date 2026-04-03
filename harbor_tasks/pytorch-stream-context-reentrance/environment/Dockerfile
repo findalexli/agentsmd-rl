@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/pytorch/pytorch.git /workspace/pytorch && \
+RUN git init /workspace/pytorch && \
     cd /workspace/pytorch && \
-    git checkout 3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c
+    git remote add origin https://github.com/pytorch/pytorch.git && \
+    git fetch --depth=1 origin 3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps (agent fills in specifics)
 RUN pip install --no-cache-dir numpy 2>/dev/null || true

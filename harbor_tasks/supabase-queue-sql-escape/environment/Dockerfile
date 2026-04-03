@@ -12,11 +12,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 RUN npm install -g tsx
 
 # Clone repo at base commit (partial clone for large monorepo)
-RUN git clone --filter=blob:none https://github.com/supabase/supabase.git /workspace/supabase && \
+RUN git init /workspace/supabase && \
     cd /workspace/supabase && \
-    git checkout 273102323d2959bf5e24678a3388409e91e2ccb4 && \
-    git config user.email "agent@test" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/supabase/supabase.git && \
+    git fetch --depth=1 origin 273102323d2959bf5e24678a3388409e91e2ccb4 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/supabase
 

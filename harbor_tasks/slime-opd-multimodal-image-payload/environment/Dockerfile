@@ -5,9 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before fix)
-RUN git clone https://github.com/THUDM/slime.git /workspace/slime \
-    && cd /workspace/slime \
-    && git checkout f3a86d51d9efbb5575a9d87839a81135a51d6233
+RUN git init /workspace/slime && \
+    cd /workspace/slime && \
+    git remote add origin https://github.com/THUDM/slime.git && \
+    git fetch --depth=1 origin f3a86d51d9efbb5575a9d87839a81135a51d6233 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/slime
 

@@ -9,11 +9,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (pre-revert: has the shared calculateUserAgentEmulation)
-RUN git clone --filter=blob:none https://github.com/microsoft/playwright.git /workspace/playwright && \
+RUN git init /workspace/playwright && \
     cd /workspace/playwright && \
-    git checkout 346b39c7895a7df03b50b087d503e9f2997fe2e0 && \
-    git config user.email "agent@test" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/microsoft/playwright.git && \
+    git fetch --depth=1 origin 346b39c7895a7df03b50b087d503e9f2997fe2e0 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/playwright
 

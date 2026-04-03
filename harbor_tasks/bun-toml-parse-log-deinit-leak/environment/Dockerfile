@@ -9,9 +9,11 @@ RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Agent"
 
 # Partial clone (blob:none) — only fetches tree objects, blobs on demand
-RUN git clone --filter=blob:none https://github.com/oven-sh/bun.git /workspace/bun && \
+RUN git init /workspace/bun && \
     cd /workspace/bun && \
-    git checkout 36f17caa987d130788b97a6e9d7c9aea7895b6ed
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin 36f17caa987d130788b97a6e9d7c9aea7895b6ed && \
+    git checkout FETCH_HEAD
 
 RUN python3 -m pip install --no-cache-dir --break-system-packages pytest pytest-json-ctrf
 

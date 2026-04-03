@@ -6,9 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
 
 # Clone sglang at the base commit (before the fix)
 # Use blobless clone to avoid downloading full history (repo is very large)
-RUN git clone --filter=blob:none --no-checkout https://github.com/sgl-project/sglang.git /workspace/sglang \
-    && cd /workspace/sglang \
-    && git checkout 4e905febd2f9e96b4c114530a2379b084ad791af
+RUN git init /workspace/sglang && \
+    cd /workspace/sglang && \
+    git remote add origin https://github.com/sgl-project/sglang.git && \
+    git fetch --depth=1 origin 4e905febd2f9e96b4c114530a2379b084ad791af && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

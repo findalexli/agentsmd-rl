@@ -4,9 +4,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     git curl ca-certificates build-essential tmux \
     && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/gradio-app/gradio.git /workspace/gradio \
-    && cd /workspace/gradio \
-    && git checkout f1cd0644d2608b493db07cd204c0831a111f9fb2
+RUN git init /workspace/gradio && \
+    cd /workspace/gradio && \
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin f1cd0644d2608b493db07cd204c0831a111f9fb2 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

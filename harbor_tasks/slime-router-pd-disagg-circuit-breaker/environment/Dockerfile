@@ -8,8 +8,9 @@ RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test"
 
 # Clone repo at base commit (BEFORE the fix) — shallow to avoid timeout
-RUN git clone --filter=blob:none https://github.com/THUDM/slime.git /workspace/slime && \
+RUN git init /workspace/slime && \
     cd /workspace/slime && \
+    git remote add origin https://github.com/THUDM/slime.git && \
     git fetch --depth=1 origin 183e525f60fcf435f82f273e9eb69702d3ce431a && \
     git checkout FETCH_HEAD
 

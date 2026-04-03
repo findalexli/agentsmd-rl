@@ -8,9 +8,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --fix-br
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:${PATH}"
 
-RUN git clone https://github.com/oven-sh/bun.git /workspace/bun \
-    && cd /workspace/bun \
-    && git checkout 639bc4351cd7b5daa38b99d47a506dec68e95353
+RUN git init /workspace/bun && \
+    cd /workspace/bun && \
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin 639bc4351cd7b5daa38b99d47a506dec68e95353 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

@@ -6,9 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone vllm at the base commit (before the fix)
-RUN git clone --filter=blob:none https://github.com/vllm-project/vllm.git /workspace && \
+RUN git init /workspace && \
     cd /workspace && \
-    git checkout b9dbc5c4ab2b01f626376ffaeb68e575e70ff58c
+    git remote add origin https://github.com/vllm-project/vllm.git && \
+    git fetch --depth=1 origin b9dbc5c4ab2b01f626376ffaeb68e575e70ff58c && \
+    git checkout FETCH_HEAD
 
 # Install torch CPU-only (needed to test tensor operations)
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu

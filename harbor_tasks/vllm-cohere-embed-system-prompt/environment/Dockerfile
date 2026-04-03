@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/vllm-project/vllm.git /workspace/vllm && \
+RUN git init /workspace/vllm && \
     cd /workspace/vllm && \
-    git checkout aa4eb0db78ec469438a7a18147b0372fe2eb7cf4
+    git remote add origin https://github.com/vllm-project/vllm.git && \
+    git fetch --depth=1 origin aa4eb0db78ec469438a7a18147b0372fe2eb7cf4 && \
+    git checkout FETCH_HEAD
 
 # Install deps for testing (pydantic for protocol, no GPU needed)
 RUN pip install --no-cache-dir pydantic numpy 2>/dev/null || true

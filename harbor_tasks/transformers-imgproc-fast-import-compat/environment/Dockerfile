@@ -5,9 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
         git curl ca-certificates build-essential tmux && \
     rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/huggingface/transformers.git /repo && \
+RUN git init /repo && \
     cd /repo && \
-    git checkout e6ed96c7e93a6408a151e3177793212b02b8bb53
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin e6ed96c7e93a6408a151e3177793212b02b8bb53 && \
+    git checkout FETCH_HEAD
 
 RUN pip install --no-cache-dir ruff
 

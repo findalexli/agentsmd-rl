@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/inclusionAI/AReaL.git /workspace/AReaL && \
+RUN git init /workspace/AReaL && \
     cd /workspace/AReaL && \
-    git checkout 99040b94e43d7e4b26d71c6f37edf7ce6781dc56
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin 99040b94e43d7e4b26d71c6f37edf7ce6781dc56 && \
+    git checkout FETCH_HEAD
 
 # Install deps needed for tests (PIL for image serialization tests)
 RUN pip install --no-cache-dir numpy pydantic Pillow 2>/dev/null || true

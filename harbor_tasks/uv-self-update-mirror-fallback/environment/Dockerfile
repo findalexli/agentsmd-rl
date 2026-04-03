@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at the base commit (before the fix)
-RUN git clone --filter=blob:none --no-checkout https://github.com/astral-sh/uv.git /workspace/uv \
-    && cd /workspace/uv \
-    && git checkout 7228ad62b9de7f9b5d887ef4b2be9bb033a04191 \
-    && git config user.email "agent@test" \
-    && git config user.name "Agent"
+RUN git init /workspace/uv && \
+    cd /workspace/uv && \
+    git remote add origin https://github.com/astral-sh/uv.git && \
+    git fetch --depth=1 origin 7228ad62b9de7f9b5d887ef4b2be9bb033a04191 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

@@ -10,9 +10,11 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
 
 # Clone repo at base commit (before fix)
 ARG BASE_COMMIT=677424c7acd9fb7477294017c99f798588002d4f
-RUN git clone --filter=blob:none https://github.com/vllm-project/vllm.git /workspace/vllm && \
+RUN git init /workspace/vllm && \
     cd /workspace/vllm && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/vllm-project/vllm.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 # Configure git for agent use
 RUN cd /workspace/vllm && \

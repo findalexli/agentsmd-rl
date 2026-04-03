@@ -10,9 +10,11 @@ RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:$PATH"
 
 # Clone opencode at base commit (before fix)
-RUN git clone https://github.com/anomalyco/opencode.git /workspace/opencode && \
+RUN git init /workspace/opencode && \
     cd /workspace/opencode && \
-    git checkout 771525270a0c4d1394b3117e5842847a51caf72d
+    git remote add origin https://github.com/anomalyco/opencode.git && \
+    git fetch --depth=1 origin 771525270a0c4d1394b3117e5842847a51caf72d && \
+    git checkout FETCH_HEAD
 
 # Configure git
 RUN cd /workspace/opencode && \

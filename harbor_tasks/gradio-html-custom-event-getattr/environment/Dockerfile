@@ -8,9 +8,11 @@ RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test"
 
 # Clone gradio at the base commit (before the fix)
-RUN git clone https://github.com/gradio-app/gradio.git /workspace/gradio && \
+RUN git init /workspace/gradio && \
     cd /workspace/gradio && \
-    git checkout d610464e0eff5f200543c6bbc5fac616b1620b1e
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin d610464e0eff5f200543c6bbc5fac616b1620b1e && \
+    git checkout FETCH_HEAD
 
 RUN pip install --no-cache-dir ruff
 

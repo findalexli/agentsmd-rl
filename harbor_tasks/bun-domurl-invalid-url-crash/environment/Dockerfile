@@ -6,11 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone bun at the base commit (before the fix)
-RUN git clone --no-checkout https://github.com/oven-sh/bun.git /repo && \
+RUN git init /repo && \
     cd /repo && \
-    git checkout 9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8 && \
-    git config user.email "test@test.com" && \
-    git config user.name "Test"
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin 9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

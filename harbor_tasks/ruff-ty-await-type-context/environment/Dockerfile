@@ -12,10 +12,11 @@ RUN mkdir -p /logs/verifier
 WORKDIR /workspace
 
 ARG BASE_COMMIT=f283ddc382bf2d2825d21d4a59f2610ed97e5302
-RUN git clone --filter=blob:none https://github.com/astral-sh/ruff.git ruff && \
-    cd ruff && \
-    git checkout ${BASE_COMMIT} && \
-    git checkout -b task-branch
+RUN git init /workspace/ruff && \
+    cd /workspace/ruff && \
+    git remote add origin https://github.com/astral-sh/ruff.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/ruff
 

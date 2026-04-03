@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before fix)
-RUN git clone https://github.com/inclusionAI/AReaL.git /repo \
-    && cd /repo \
-    && git checkout f6556e88582e82b747ab1ac4038af2e106a464ee \
-    && git config user.email "agent@test.com" \
-    && git config user.name "Agent"
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin f6556e88582e82b747ab1ac4038af2e106a464ee && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

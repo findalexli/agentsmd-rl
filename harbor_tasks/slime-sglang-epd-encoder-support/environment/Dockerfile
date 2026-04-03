@@ -6,9 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before fix)
-RUN git clone https://github.com/THUDM/slime.git /workspace/slime && \
+RUN git init /workspace/slime && \
     cd /workspace/slime && \
-    git checkout 5182e2d85c06827d57d0bbce98b5d39efeb5ae45
+    git remote add origin https://github.com/THUDM/slime.git && \
+    git fetch --depth=1 origin 5182e2d85c06827d57d0bbce98b5d39efeb5ae45 && \
+    git checkout FETCH_HEAD
 
 # Minimal deps — only what tests need (no torch/sglang/GPU libs)
 RUN pip install --no-cache-dir pyyaml

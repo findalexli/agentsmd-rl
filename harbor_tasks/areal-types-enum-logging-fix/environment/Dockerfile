@@ -10,9 +10,11 @@ RUN git config --global user.email "agent@test.com" && \
 
 # Clone repo at the base commit (before the fix)
 ARG BASE_COMMIT=4f5a2944f0acfebba378e5b88bf2ab940f84b943
-RUN git clone https://github.com/inclusionAI/AReaL.git /workspace/AReaL && \
+RUN git init /workspace/AReaL && \
     cd /workspace/AReaL && \
-    git checkout $BASE_COMMIT
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

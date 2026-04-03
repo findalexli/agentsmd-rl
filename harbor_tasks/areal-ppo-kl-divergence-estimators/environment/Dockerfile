@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone AReaL at the base commit (before the fix)
-RUN git clone https://github.com/inclusionAI/AReaL.git /workspace/AReaL \
-    && cd /workspace/AReaL \
-    && git checkout a0d122930f7de028404235688c7dba3f01854954 \
-    && git config user.email "agent@test.com" \
-    && git config user.name "Agent"
+RUN git init /workspace/AReaL && \
+    cd /workspace/AReaL && \
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin a0d122930f7de028404235688c7dba3f01854954 && \
+    git checkout FETCH_HEAD
 
 # Install CPU-only torch for behavioral testing + pyyaml for judge
 RUN pip install --no-cache-dir \

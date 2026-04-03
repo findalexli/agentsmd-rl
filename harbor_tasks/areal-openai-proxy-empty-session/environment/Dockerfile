@@ -6,9 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before the fix)
-RUN git clone https://github.com/inclusionAI/AReaL.git /workspace/AReaL && \
+RUN git init /workspace/AReaL && \
     cd /workspace/AReaL && \
-    git checkout 84eaef1292b2a3184d4a565d4abb0758408be018
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin 84eaef1292b2a3184d4a565d4abb0758408be018 && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps for testing (no torch/GPU needed — we test via AST + import)
 RUN cd /workspace/AReaL && \

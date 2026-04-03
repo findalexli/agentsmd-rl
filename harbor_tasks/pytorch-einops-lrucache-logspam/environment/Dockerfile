@@ -15,9 +15,11 @@ RUN pip install --no-cache-dir einops==0.8.2
 
 WORKDIR /workspace
 
-RUN git clone --filter=blob:none https://github.com/pytorch/pytorch.git /workspace/pytorch && \
+RUN git init /workspace/pytorch && \
     cd /workspace/pytorch && \
-    git checkout 98e35020c7423c304778a7044f6baa3c8a98ba6d
+    git remote add origin https://github.com/pytorch/pytorch.git && \
+    git fetch --depth=1 origin 98e35020c7423c304778a7044f6baa3c8a98ba6d && \
+    git checkout FETCH_HEAD
 
 ENV PYTHONPATH="/workspace/pytorch"
 

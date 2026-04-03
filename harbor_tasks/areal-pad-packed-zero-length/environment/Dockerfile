@@ -5,9 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at the base commit (before the fix)
-RUN git clone https://github.com/inclusionAI/AReaL.git /workspace/AReaL \
-    && cd /workspace/AReaL \
-    && git checkout c961323ec4d989a52c78e5b42fc32f665367949f
+RUN git init /workspace/AReaL && \
+    cd /workspace/AReaL && \
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin c961323ec4d989a52c78e5b42fc32f665367949f && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/AReaL
 

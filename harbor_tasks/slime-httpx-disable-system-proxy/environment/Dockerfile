@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/THUDM/slime.git /workspace/slime && \
+RUN git init /workspace/slime && \
     cd /workspace/slime && \
-    git checkout e46e660059b5f2ae949ad812c7d49af823f415a3
+    git remote add origin https://github.com/THUDM/slime.git && \
+    git fetch --depth=1 origin e46e660059b5f2ae949ad812c7d49af823f415a3 && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps
 RUN pip install --no-cache-dir numpy httpx 2>/dev/null || true

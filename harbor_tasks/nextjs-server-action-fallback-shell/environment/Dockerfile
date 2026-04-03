@@ -6,9 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before the fix)
-RUN git clone --filter=blob:none https://github.com/vercel/next.js.git /workspace/next.js && \
+RUN git init /workspace/next.js && \
     cd /workspace/next.js && \
-    git checkout 6a8a31a7f42bb7d133aed5a6d854d069883aa57b
+    git remote add origin https://github.com/vercel/next.js.git && \
+    git fetch --depth=1 origin 6a8a31a7f42bb7d133aed5a6d854d069883aa57b && \
+    git checkout FETCH_HEAD
 
 # Configure git
 RUN cd /workspace/next.js && \

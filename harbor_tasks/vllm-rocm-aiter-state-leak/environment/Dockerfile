@@ -6,9 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
 
 # Clone vllm at the base commit (BEFORE the fix)
 ARG BASE_COMMIT=0aac2048bf3a7e60eaddf1ebcb4165ed777eb8ff
-RUN git clone --filter=blob:none https://github.com/vllm-project/vllm.git /workspace/vllm \
-    && cd /workspace/vllm \
-    && git checkout ${BASE_COMMIT}
+RUN git init /workspace/vllm && \
+    cd /workspace/vllm && \
+    git remote add origin https://github.com/vllm-project/vllm.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 # Configure git for potential patch operations
 RUN cd /workspace/vllm && \

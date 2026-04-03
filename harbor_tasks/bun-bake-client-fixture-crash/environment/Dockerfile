@@ -5,9 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone bun repo at base commit (before fix)
-RUN git clone --filter=blob:none https://github.com/oven-sh/bun.git /workspace/bun \
-    && cd /workspace/bun \
-    && git checkout 923690e923b2f13e0815e8cf342748082058bede
+RUN git init /workspace/bun && \
+    cd /workspace/bun && \
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin 923690e923b2f13e0815e8cf342748082058bede && \
+    git checkout FETCH_HEAD
 
 # Configure git for the agent
 RUN cd /workspace/bun && \

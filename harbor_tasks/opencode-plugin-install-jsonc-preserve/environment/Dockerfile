@@ -11,9 +11,11 @@ ENV BUN_INSTALL="/root/.bun"
 ENV PATH="$BUN_INSTALL/bin:$PATH"
 
 # Clone opencode at base commit (before fix)
-RUN git clone https://github.com/anomalyco/opencode.git /workspace/opencode && \
+RUN git init /workspace/opencode && \
     cd /workspace/opencode && \
-    git checkout afb6abff73bdc1577f7388d8273e2eba69849e08
+    git remote add origin https://github.com/anomalyco/opencode.git && \
+    git fetch --depth=1 origin afb6abff73bdc1577f7388d8273e2eba69849e08 && \
+    git checkout FETCH_HEAD
 
 # Configure git
 RUN cd /workspace/opencode && \

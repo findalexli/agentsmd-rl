@@ -9,12 +9,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (shallow for speed — storybook is a large monorepo)
-RUN git clone --filter=blob:none https://github.com/storybookjs/storybook.git /workspace/storybook && \
+RUN git init /workspace/storybook && \
     cd /workspace/storybook && \
+    git remote add origin https://github.com/storybookjs/storybook.git && \
     git fetch --depth=1 origin 15180fa049e683c4a58d69615dde12e33456512c && \
-    git checkout 15180fa049e683c4a58d69615dde12e33456512c && \
-    git config user.email "agent@test" && \
-    git config user.name "Agent"
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/storybook
 

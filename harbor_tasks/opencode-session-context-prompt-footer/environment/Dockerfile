@@ -8,7 +8,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
 RUN npm install -g bun@latest
 
 # Clone repo at base commit (before fix)
-RUN git clone https://github.com/anomalyco/opencode.git /workspace/opencode
+RUN git init /workspace/opencode && \
+    cd /workspace/opencode && \
+    git remote add origin https://github.com/anomalyco/opencode.git && \
+    git fetch --depth=1 origin 15a8c22a263b072a23e2fc0b2e840b2e12c220aa && \
+    git checkout FETCH_HEAD
 RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace/opencode

@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at the base commit (before the fix)
-RUN git clone https://github.com/PrimeIntellect-ai/prime-rl.git /workspace && \
+RUN git init /workspace && \
     cd /workspace && \
-    git checkout c2dfc338c30d04286284b67cf87e73d534e43f3e && \
-    git config user.email "agent@example.com" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/PrimeIntellect-ai/prime-rl.git && \
+    git fetch --depth=1 origin c2dfc338c30d04286284b67cf87e73d534e43f3e && \
+    git checkout FETCH_HEAD
 
 # No heavy deps needed — tests only exercise pure Python config logic
 ENV PYTHONPATH="/workspace/src:${PYTHONPATH}"

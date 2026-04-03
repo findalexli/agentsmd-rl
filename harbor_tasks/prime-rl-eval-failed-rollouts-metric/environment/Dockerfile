@@ -9,11 +9,11 @@ RUN pip install --no-cache-dir numpy pandas pyyaml pytest pytest-json-ctrf
 
 # Clone repo at base commit (BEFORE the fix)
 # Use --filter=blob:none for faster clone (fetches blobs on demand)
-RUN git clone --filter=blob:none https://github.com/PrimeIntellect-ai/prime-rl.git /workspace \
-    && cd /workspace \
-    && git checkout 18594ab2f5c43bdf80424731e5e268d67311056e \
-    && git config user.email "agent@test.com" \
-    && git config user.name "Agent"
+RUN git init /workspace && \
+    cd /workspace && \
+    git remote add origin https://github.com/PrimeIntellect-ai/prime-rl.git && \
+    git fetch --depth=1 origin 18594ab2f5c43bdf80424731e5e268d67311056e && \
+    git checkout FETCH_HEAD
 
 ENV PYTHONPATH="/workspace/src:${PYTHONPATH}"
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu

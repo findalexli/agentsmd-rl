@@ -6,11 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before the fix)
-RUN git clone https://github.com/openclaw/openclaw.git /workspace/openclaw && \
+RUN git init /workspace/openclaw && \
     cd /workspace/openclaw && \
-    git checkout 29cb1e3c7edd54a3d060419ffa153eecbd19c133 && \
-    git config user.email "agent@test" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/openclaw/openclaw.git && \
+    git fetch --depth=1 origin 29cb1e3c7edd54a3d060419ffa153eecbd19c133 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

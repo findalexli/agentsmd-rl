@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/astral-sh/ruff.git /workspace/ruff && \
+RUN git init /workspace/ruff && \
     cd /workspace/ruff && \
-    git checkout 09f645d49f1337866d63e62570cb9a43a4a875b3
+    git remote add origin https://github.com/astral-sh/ruff.git && \
+    git fetch --depth=1 origin 09f645d49f1337866d63e62570cb9a43a4a875b3 && \
+    git checkout FETCH_HEAD
 
 ENV PYTHONPATH="/workspace/ruff"
 

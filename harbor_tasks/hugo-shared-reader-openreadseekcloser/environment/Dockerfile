@@ -9,11 +9,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/gohugoio/hugo.git /workspace/hugo && \
+RUN git init /workspace/hugo && \
     cd /workspace/hugo && \
-    git checkout b55d452e46e81369a65978459a0683efa484c11b && \
-    git config user.email "agent@test" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/gohugoio/hugo.git && \
+    git fetch --depth=1 origin b55d452e46e81369a65978459a0683efa484c11b && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/hugo
 

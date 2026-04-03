@@ -13,9 +13,11 @@ RUN mkdir -p /logs/verifier
 WORKDIR /workspace
 
 # Clone repo at base commit (before the fix)
-RUN git clone --filter=blob:none https://github.com/anomalyco/opencode.git opencode \
-    && cd opencode \
-    && git checkout 47d2ab120a4fbc92e72aca4d5b40d722d0e4d2be
+RUN git init /workspace/opencode && \
+    cd /workspace/opencode && \
+    git remote add origin https://github.com/anomalyco/opencode.git && \
+    git fetch --depth=1 origin 47d2ab120a4fbc92e72aca4d5b40d722d0e4d2be && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/opencode
 

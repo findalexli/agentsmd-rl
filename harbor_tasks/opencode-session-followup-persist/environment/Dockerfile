@@ -6,11 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
 
 # Clone repo at the base commit (before the fix)
 ARG BASE_COMMIT=3fb60d05e555dad020d3354602affe166ef0cc22
-RUN git clone https://github.com/anomalyco/opencode.git /workspace/opencode \
-    && cd /workspace/opencode \
-    && git checkout ${BASE_COMMIT} \
-    && git config user.email "agent@test.com" \
-    && git config user.name "Agent"
+RUN git init /workspace/opencode && \
+    cd /workspace/opencode && \
+    git remote add origin https://github.com/anomalyco/opencode.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

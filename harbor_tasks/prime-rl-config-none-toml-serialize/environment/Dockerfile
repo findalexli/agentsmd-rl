@@ -8,9 +8,11 @@ RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test"
 
 # Clone repo at base commit (before the fix)
-RUN git clone https://github.com/PrimeIntellect-ai/prime-rl.git /workspace/prime-rl && \
+RUN git init /workspace/prime-rl && \
     cd /workspace/prime-rl && \
-    git checkout 692dfc8a4b9471e65004d8ac154d07ebb73bc61c
+    git remote add origin https://github.com/PrimeIntellect-ai/prime-rl.git && \
+    git fetch --depth=1 origin 692dfc8a4b9471e65004d8ac154d07ebb73bc61c && \
+    git checkout FETCH_HEAD
 
 # Install only what tests need
 RUN pip install --no-cache-dir tomli_w pytest pytest-json-ctrf

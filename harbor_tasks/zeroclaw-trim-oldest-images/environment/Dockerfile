@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/zeroclaw-labs/zeroclaw.git /workspace/zeroclaw && \
+RUN git init /workspace/zeroclaw && \
     cd /workspace/zeroclaw && \
-    git checkout 3e02e68ec0e26b2c43593c40d660e2298c8cb332
+    git remote add origin https://github.com/zeroclaw-labs/zeroclaw.git && \
+    git fetch --depth=1 origin 3e02e68ec0e26b2c43593c40d660e2298c8cb332 && \
+    git checkout FETCH_HEAD
 
 # Pre-compile in test mode so cargo test is fast during verification
 RUN cd /workspace/zeroclaw && cargo test --no-run 2>&1 || true

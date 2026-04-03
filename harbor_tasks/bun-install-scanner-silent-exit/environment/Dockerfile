@@ -11,10 +11,11 @@ RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:${PATH}"
 
 # Clone bun repo at the base commit (before the fix)
-RUN git clone --filter=blob:none https://github.com/oven-sh/bun.git /workspace/bun \
-    && cd /workspace/bun \
-    && git fetch --depth 1 origin 1d50d640f8fec6ce2d144f0cfd204e30da373c64 \
-    && git checkout 1d50d640f8fec6ce2d144f0cfd204e30da373c64
+RUN git init /workspace/bun && \
+    cd /workspace/bun && \
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin 1d50d640f8fec6ce2d144f0cfd204e30da373c64 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

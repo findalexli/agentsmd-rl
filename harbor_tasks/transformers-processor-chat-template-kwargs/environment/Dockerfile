@@ -7,9 +7,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 
 # Clone transformers at the base commit (BEFORE the fix)
 ARG BASE_COMMIT=6a056a16a856097cb0400ce9a48e96ab9d469e30
-RUN git clone --filter=blob:none https://github.com/huggingface/transformers.git /workspace/transformers && \
+RUN git init /workspace/transformers && \
     cd /workspace/transformers && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

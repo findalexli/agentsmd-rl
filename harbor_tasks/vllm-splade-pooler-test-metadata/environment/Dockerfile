@@ -7,9 +7,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 
 # Clone vllm at the base commit (BEFORE the fix)
 ARG BASE_COMMIT=85c0950b1f647e0b0654fbf3e91a9757b8233752
-RUN git clone --filter=blob:none https://github.com/vllm-project/vllm.git /testbed && \
+RUN git init /testbed && \
     cd /testbed && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/vllm-project/vllm.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

@@ -9,8 +9,11 @@ RUN git config --global user.email "agent@example.com" \
     && git config --global user.name "Agent"
 
 # Clone ruff at base commit (parent of the merge commit for PR #24151)
-RUN git clone --filter=blob:none https://github.com/astral-sh/ruff.git /repo \
-    && cd /repo && git checkout 6cff03427e386e38dc2ead0cc7718a71bfa288f8
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/astral-sh/ruff.git && \
+    git fetch --depth=1 origin 6cff03427e386e38dc2ead0cc7718a71bfa288f8 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

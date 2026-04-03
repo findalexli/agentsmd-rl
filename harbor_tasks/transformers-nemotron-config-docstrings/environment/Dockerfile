@@ -8,9 +8,11 @@ RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test"
 
 # Clone transformers at the base commit (before the fix)
-RUN git clone --filter=blob:none https://github.com/huggingface/transformers.git /workspace/transformers && \
+RUN git init /workspace/transformers && \
     cd /workspace/transformers && \
-    git checkout 8dc7a52d766efe76c121c0654a5d24d633bffe9e
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin 8dc7a52d766efe76c121c0654a5d24d633bffe9e && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps for testing (no torch/GPU)
 RUN cd /workspace/transformers && \

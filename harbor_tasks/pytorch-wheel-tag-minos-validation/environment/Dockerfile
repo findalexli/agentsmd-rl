@@ -7,9 +7,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 
 ARG BASE_COMMIT=2a86e1131417aa9fa6b860b03308215bfe2be92c
 
-RUN git clone --filter=blob:none https://github.com/pytorch/pytorch.git /workspace && \
+RUN git init /workspace && \
     cd /workspace && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/pytorch/pytorch.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN git config --global user.email "agent@test" && \
     git config --global user.name "Agent"

@@ -5,9 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
         git curl ca-certificates build-essential tmux && \
     rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/huggingface/transformers.git /repo && \
+RUN git init /repo && \
     cd /repo && \
-    git checkout a9532bcf887b364bfedcc33a13be2b1d1acbef85
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin a9532bcf887b364bfedcc33a13be2b1d1acbef85 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

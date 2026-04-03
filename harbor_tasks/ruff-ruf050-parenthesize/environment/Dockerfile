@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/astral-sh/ruff.git /workspace/ruff && \
+RUN git init /workspace/ruff && \
     cd /workspace/ruff && \
-    git checkout c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e
+    git remote add origin https://github.com/astral-sh/ruff.git && \
+    git fetch --depth=1 origin c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps (agent fills in specifics)
 RUN pip install --no-cache-dir numpy 2>/dev/null || true

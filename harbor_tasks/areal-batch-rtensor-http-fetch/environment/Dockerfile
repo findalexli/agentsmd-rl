@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/inclusionAI/AReaL.git /workspace/AReaL && \
+RUN git init /workspace/AReaL && \
     cd /workspace/AReaL && \
-    git checkout 3142b88a5e93e991df727c81892d6cb8bd65d06e
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin 3142b88a5e93e991df727c81892d6cb8bd65d06e && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps for test verification
 RUN pip install --no-cache-dir numpy flask orjson aiohttp colorlog requests pydantic pyyaml psutil 2>/dev/null || true && \

@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/astral-sh/ruff.git /workspace/ruff && \
+RUN git init /workspace/ruff && \
     cd /workspace/ruff && \
-    git checkout 9d2b16029a6a141b2d15e966a69faa4c2ec41572
+    git remote add origin https://github.com/astral-sh/ruff.git && \
+    git fetch --depth=1 origin 9d2b16029a6a141b2d15e966a69faa4c2ec41572 && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps (agent fills in specifics)
 

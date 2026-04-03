@@ -9,9 +9,11 @@ RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:${PATH}"
 
 # Clone repo at base commit (before the fix)
-RUN git clone https://github.com/anomalyco/opencode.git /repo \
-    && cd /repo \
-    && git checkout 83ed1c4414859b53c91f1e2f6985c3498bac1e84
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/anomalyco/opencode.git && \
+    git fetch --depth=1 origin 83ed1c4414859b53c91f1e2f6985c3498bac1e84 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

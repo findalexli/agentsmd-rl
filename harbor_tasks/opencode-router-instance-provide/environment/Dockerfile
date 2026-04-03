@@ -8,9 +8,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:${PATH}"
 
-RUN git clone https://github.com/anomalyco/opencode.git /workspace/opencode \
-    && cd /workspace/opencode \
-    && git checkout e5f0e813b6e2f9305fc27d432689f95a56beea51
+RUN git init /workspace/opencode && \
+    cd /workspace/opencode && \
+    git remote add origin https://github.com/anomalyco/opencode.git && \
+    git fetch --depth=1 origin e5f0e813b6e2f9305fc27d432689f95a56beea51 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

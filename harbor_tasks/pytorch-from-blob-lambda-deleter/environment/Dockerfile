@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/pytorch/pytorch.git /workspace/pytorch && \
+RUN git init /workspace/pytorch && \
     cd /workspace/pytorch && \
-    git checkout 41f8e3e0381395e1669ca4bc6e36a7872d25cdcd
+    git remote add origin https://github.com/pytorch/pytorch.git && \
+    git fetch --depth=1 origin 41f8e3e0381395e1669ca4bc6e36a7872d25cdcd && \
+    git checkout FETCH_HEAD
 
 ENV PYTHONPATH="/workspace/pytorch"
 

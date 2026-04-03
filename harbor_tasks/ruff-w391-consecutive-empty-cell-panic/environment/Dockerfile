@@ -6,9 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
 
 ARG BASE_COMMIT=627e2a04269400ea88f65e64797666ad32604204
 
-RUN git clone --filter=blob:none https://github.com/astral-sh/ruff.git /repo \
-    && cd /repo \
-    && git checkout $BASE_COMMIT
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/astral-sh/ruff.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

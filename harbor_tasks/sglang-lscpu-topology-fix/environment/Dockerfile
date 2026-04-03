@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/sgl-project/sglang.git /workspace/sglang && \
+RUN git init /workspace/sglang && \
     cd /workspace/sglang && \
-    git checkout 069c7e4188aca6ef69c0b81dfa05abba49685946
+    git remote add origin https://github.com/sgl-project/sglang.git && \
+    git fetch --depth=1 origin 069c7e4188aca6ef69c0b81dfa05abba49685946 && \
+    git checkout FETCH_HEAD
 
 # Install numpy (needed by behavioral tests that mock parse_lscpu_topology)
 RUN pip install --no-cache-dir numpy 2>/dev/null || true

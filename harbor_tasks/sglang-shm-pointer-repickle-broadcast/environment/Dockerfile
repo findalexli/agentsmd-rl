@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
     && rm -rf /var/lib/apt/lists/*
 
 # Clone sglang at the base commit (before the fix)
-RUN git clone https://github.com/sgl-project/sglang.git /workspace/sglang \
-    && cd /workspace/sglang \
-    && git checkout fc9de157f9ea51e93dc58b8abacd688b5d5474b7 \
-    && git config user.email "test@test.com" \
-    && git config user.name "Test"
+RUN git init /workspace/sglang && \
+    cd /workspace/sglang && \
+    git remote add origin https://github.com/sgl-project/sglang.git && \
+    git fetch --depth=1 origin fc9de157f9ea51e93dc58b8abacd688b5d5474b7 && \
+    git checkout FETCH_HEAD
 
 RUN pip install --no-cache-dir pybase64
 

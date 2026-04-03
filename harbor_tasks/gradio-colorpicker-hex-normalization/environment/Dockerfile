@@ -6,11 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before fix)
-RUN git clone https://github.com/gradio-app/gradio.git /workspace/gradio && \
+RUN git init /workspace/gradio && \
     cd /workspace/gradio && \
-    git checkout 8bc75137b24ba8a8571b49b9b006741819c0518b && \
-    git config user.email "agent@test.com" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin 8bc75137b24ba8a8571b49b9b006741819c0518b && \
+    git checkout FETCH_HEAD
 
 # Install only tinycolor2 for testing (avoid full monorepo install)
 RUN cd /workspace/gradio/js/colorpicker && \

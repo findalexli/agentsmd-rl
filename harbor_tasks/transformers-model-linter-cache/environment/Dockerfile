@@ -7,9 +7,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 
 # Clone transformers at the base commit (before the fix)
 ARG BASE_COMMIT=aa1c36f1a9f454e69c4eac83071ced235942c7ed
-RUN git clone --filter=blob:none https://github.com/huggingface/transformers.git /workspace/transformers && \
+RUN git init /workspace/transformers && \
     cd /workspace/transformers && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 

@@ -5,9 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before the fix)
-RUN git clone https://github.com/gradio-app/gradio.git /workspace && \
+RUN git init /workspace && \
     cd /workspace && \
-    git checkout 7760161258abe6329b754dd6d2511fc3b61fed95
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin 7760161258abe6329b754dd6d2511fc3b61fed95 && \
+    git checkout FETCH_HEAD
 
 # Install svelte compiler + prettier for syntax validation and formatting checks
 # (in separate dir to avoid workspace: protocol issues)

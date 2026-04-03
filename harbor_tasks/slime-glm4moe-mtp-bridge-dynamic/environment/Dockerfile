@@ -8,9 +8,11 @@ RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test"
 
 # Clone repo at base commit (before fix)
-RUN git clone https://github.com/THUDM/slime.git /workspace/slime && \
+RUN git init /workspace/slime && \
     cd /workspace/slime && \
-    git checkout 57e76686346beeaaec4010ebefc56b9949686457
+    git remote add origin https://github.com/THUDM/slime.git && \
+    git fetch --depth=1 origin 57e76686346beeaaec4010ebefc56b9949686457 && \
+    git checkout FETCH_HEAD
 
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 

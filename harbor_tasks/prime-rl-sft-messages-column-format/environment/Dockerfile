@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (BEFORE the fix)
-RUN git clone https://github.com/PrimeIntellect-ai/prime-rl.git /workspace && \
+RUN git init /workspace && \
     cd /workspace && \
-    git checkout 7e853195ea6c7ce0cdfd67f7f00e6fb755ad0e17 && \
-    git config user.email "agent@test.com" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/PrimeIntellect-ai/prime-rl.git && \
+    git fetch --depth=1 origin 7e853195ea6c7ce0cdfd67f7f00e6fb755ad0e17 && \
+    git checkout FETCH_HEAD
 
 RUN pip install --no-cache-dir pydantic pydantic-settings
 

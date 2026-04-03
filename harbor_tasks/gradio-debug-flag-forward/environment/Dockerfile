@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
     && rm -rf /var/lib/apt/lists/*
 
 # Clone gradio at the base commit (before the fix)
-RUN git clone https://github.com/gradio-app/gradio.git /workspace/gradio \
-    && cd /workspace/gradio \
-    && git checkout 4d97c68f8a5a55ba686ab5ce599b932b51754984 \
-    && git config user.email "agent@test.com" \
-    && git config user.name "Agent"
+RUN git init /workspace/gradio && \
+    cd /workspace/gradio && \
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin 4d97c68f8a5a55ba686ab5ce599b932b51754984 && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps for testing (just gradio core, no heavy extras)
 RUN cd /workspace/gradio \

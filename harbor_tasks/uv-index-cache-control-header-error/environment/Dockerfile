@@ -7,8 +7,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
 RUN mkdir -p /logs/verifier
 
 WORKDIR /src
-RUN git clone --filter=blob:none https://github.com/astral-sh/uv.git . \
-    && git checkout 1b6b7befb1b7160ff32c8692bbf24ef98aae3fa7
+RUN git init /src/. && \
+    cd /src/. && \
+    git remote add origin https://github.com/astral-sh/uv.git && \
+    git fetch --depth=1 origin 1b6b7befb1b7160ff32c8692bbf24ef98aae3fa7 && \
+    git checkout FETCH_HEAD
 
 # Pre-fetch all dependencies and pre-build the test target crates to cache compilation
 RUN cargo fetch

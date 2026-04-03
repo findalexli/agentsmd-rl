@@ -7,9 +7,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
 RUN git config --global advice.detachedHead false
 
 # Clone transformers at base commit (before the fix)
-RUN git clone --filter=blob:none https://github.com/huggingface/transformers.git /workspace/transformers \
-    && cd /workspace/transformers \
-    && git checkout ce4a791c5277840c4c1d74eed03431b674869da5
+RUN git init /workspace/transformers && \
+    cd /workspace/transformers && \
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin ce4a791c5277840c4c1d74eed03431b674869da5 && \
+    git checkout FETCH_HEAD
 
 # Install transformers in editable mode (minimal — no torch, no GPU)
 RUN cd /workspace/transformers && pip install --no-cache-dir -e .

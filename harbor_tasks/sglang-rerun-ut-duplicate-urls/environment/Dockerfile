@@ -7,9 +7,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 
 # Clone repo at the base commit (BEFORE the fix)
 ARG BASE_COMMIT=c580ddd19d613862b8720e307442946d0b9c41e2
-RUN git clone https://github.com/sgl-project/sglang.git /repo && \
+RUN git init /repo && \
     cd /repo && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/sgl-project/sglang.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 

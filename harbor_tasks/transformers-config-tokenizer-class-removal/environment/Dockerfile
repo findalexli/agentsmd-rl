@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
     && rm -rf /var/lib/apt/lists/*
 
 # Clone transformers at the base commit (before the fix)
-RUN git clone https://github.com/huggingface/transformers.git /workspace/transformers \
-    && cd /workspace/transformers \
-    && git checkout 18f88de7f575410f3ad8a64418abf2572fecb259 \
-    && git config user.email "agent@test.com" \
-    && git config user.name "Agent"
+RUN git init /workspace/transformers && \
+    cd /workspace/transformers && \
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin 18f88de7f575410f3ad8a64418abf2572fecb259 && \
+    git checkout FETCH_HEAD
 
 # Install transformers base (no torch/GPU/testing extras — config classes only)
 RUN cd /workspace/transformers \

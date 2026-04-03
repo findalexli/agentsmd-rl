@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (BEFORE the fix)
-RUN git clone https://github.com/PrimeIntellect-ai/prime-rl.git /workspace && \
+RUN git init /workspace && \
     cd /workspace && \
-    git checkout b7afd84024531074830143d88bf0f60f506e1588 && \
-    git config user.email "agent@test.com" && \
-    git config user.name "Agent"
+    git remote add origin https://github.com/PrimeIntellect-ai/prime-rl.git && \
+    git fetch --depth=1 origin b7afd84024531074830143d88bf0f60f506e1588 && \
+    git checkout FETCH_HEAD
 
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 

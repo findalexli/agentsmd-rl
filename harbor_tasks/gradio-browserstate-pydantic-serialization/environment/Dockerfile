@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/gradio-app/gradio.git /workspace/gradio && \
+RUN git init /workspace/gradio && \
     cd /workspace/gradio && \
-    git checkout 77e7871176e50a894190ac98aa9de8fbdbf3620f
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin 77e7871176e50a894190ac98aa9de8fbdbf3620f && \
+    git checkout FETCH_HEAD
 
 # Install pydantic, gradio-client, and ruff (needed for BrowserState imports and style checks)
 RUN pip install --no-cache-dir pydantic gradio-client ruff 2>/dev/null || true

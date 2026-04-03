@@ -19,11 +19,11 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     && rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y gh && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before the fix)
-RUN git clone https://github.com/anomalyco/opencode.git /workspace/opencode \
-    && cd /workspace/opencode \
-    && git checkout ee018d5c82a593907bae9011bc074766e670d593 \
-    && git config user.email "test@test.com" \
-    && git config user.name "Test"
+RUN git init /workspace/opencode && \
+    cd /workspace/opencode && \
+    git remote add origin https://github.com/anomalyco/opencode.git && \
+    git fetch --depth=1 origin ee018d5c82a593907bae9011bc074766e670d593 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

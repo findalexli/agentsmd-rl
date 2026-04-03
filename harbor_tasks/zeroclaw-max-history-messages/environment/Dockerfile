@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/zeroclaw-labs/zeroclaw.git /workspace/zeroclaw && \
+RUN git init /workspace/zeroclaw && \
     cd /workspace/zeroclaw && \
-    git checkout 5b6d0585dd635a719f47c97f761dbaae817f6daa
+    git remote add origin https://github.com/zeroclaw-labs/zeroclaw.git && \
+    git fetch --depth=1 origin 5b6d0585dd635a719f47c97f761dbaae817f6daa && \
+    git checkout FETCH_HEAD
 
 # Pre-fetch Rust dependencies so cargo check is fast at test time
 RUN cd /workspace/zeroclaw && cargo fetch

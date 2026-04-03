@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/vllm-project/vllm.git /workspace/vllm && \
+RUN git init /workspace/vllm && \
     cd /workspace/vllm && \
-    git checkout 2bf5b70ae86261431b4b92276828b40b9c0903b6
+    git remote add origin https://github.com/vllm-project/vllm.git && \
+    git fetch --depth=1 origin 2bf5b70ae86261431b4b92276828b40b9c0903b6 && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps (agent fills in specifics)
 RUN pip install --no-cache-dir numpy 2>/dev/null || true

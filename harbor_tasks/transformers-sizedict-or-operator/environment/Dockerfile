@@ -9,9 +9,11 @@ RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test User"
 
 # Clone repo at the base commit (before the fix)
-RUN git clone --filter=blob:none https://github.com/huggingface/transformers.git /repo && \
+RUN git init /repo && \
     cd /repo && \
-    git checkout b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin b7164eca8675e5223cf73fb430a6aaf6ceafc9cc && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

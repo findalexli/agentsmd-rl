@@ -7,9 +7,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-ins
 RUN git config --global advice.detachedHead false
 
 # Clone gradio at the base commit (before the fix)
-RUN git clone --filter=blob:none https://github.com/gradio-app/gradio.git /workspace/gradio \
-    && cd /workspace/gradio \
-    && git checkout 0595d1b15ba6b7c47f68ddf7f79152b3d1d3c467
+RUN git init /workspace/gradio && \
+    cd /workspace/gradio && \
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin 0595d1b15ba6b7c47f68ddf7f79152b3d1d3c467 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

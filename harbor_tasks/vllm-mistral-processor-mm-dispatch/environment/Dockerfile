@@ -7,9 +7,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 
 ARG BASE_COMMIT=43cc5138e5145752413235a2a8aa303886077327
 
-RUN git clone --filter=blob:none https://github.com/vllm-project/vllm.git /repo && \
+RUN git init /repo && \
     cd /repo && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/vllm-project/vllm.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 RUN git config --global user.email "bench@test" && \
     git config --global user.name "Benchmark"

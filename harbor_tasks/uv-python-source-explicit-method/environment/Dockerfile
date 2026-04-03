@@ -5,11 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (parent of merge commit for PR #18569)
-RUN git clone --no-checkout https://github.com/astral-sh/uv.git /repo \
-    && cd /repo \
-    && git checkout d7da792648a6e8bc2e56162f5890f44333df9ab8 \
-    && git config user.email "agent@test.com" \
-    && git config user.name "Agent"
+RUN git init /repo && \
+    cd /repo && \
+    git remote add origin https://github.com/astral-sh/uv.git && \
+    git fetch --depth=1 origin d7da792648a6e8bc2e56162f5890f44333df9ab8 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

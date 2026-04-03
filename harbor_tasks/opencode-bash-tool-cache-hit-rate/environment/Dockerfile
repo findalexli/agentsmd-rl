@@ -6,9 +6,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone opencode at base commit (before fix)
-RUN git clone https://github.com/anomalyco/opencode.git /workspace/opencode && \
+RUN git init /workspace/opencode && \
     cd /workspace/opencode && \
-    git checkout 48326e8d9ca5648b6ab1ee15f0374434be56c4d4
+    git remote add origin https://github.com/anomalyco/opencode.git && \
+    git fetch --depth=1 origin 48326e8d9ca5648b6ab1ee15f0374434be56c4d4 && \
+    git checkout FETCH_HEAD
 
 # Configure git
 RUN cd /workspace/opencode && \

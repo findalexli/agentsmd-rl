@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone --filter=blob:none https://github.com/gradio-app/gradio.git /workspace/gradio && \
+RUN git init /workspace/gradio && \
     cd /workspace/gradio && \
-    git checkout 64828b08d5be4fdde8a73932b3f288c073ec49bd
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin 64828b08d5be4fdde8a73932b3f288c073ec49bd && \
+    git checkout FETCH_HEAD
 
 RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Test Agent"

@@ -4,9 +4,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     git curl ca-certificates build-essential tmux python3 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/oven-sh/bun.git /workspace/bun \
-    && cd /workspace/bun \
-    && git checkout 39094877abb3e74557d3975dd015ee677220eb35
+RUN git init /workspace/bun && \
+    cd /workspace/bun && \
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin 39094877abb3e74557d3975dd015ee677220eb35 && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

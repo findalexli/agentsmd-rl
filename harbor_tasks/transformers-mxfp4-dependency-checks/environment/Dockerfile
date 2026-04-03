@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/huggingface/transformers.git /workspace/transformers && \
+RUN git init /workspace/transformers && \
     cd /workspace/transformers && \
-    git checkout a8732d5546d84bfb4519b6dbf461c947a5de45f6
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin a8732d5546d84bfb4519b6dbf461c947a5de45f6 && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps for quantizer testing (torch CPU + accelerate needed by validate_environment)
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu

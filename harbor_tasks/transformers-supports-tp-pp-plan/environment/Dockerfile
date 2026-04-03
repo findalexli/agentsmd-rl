@@ -12,9 +12,11 @@ RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/huggingface/transformers.git /workspace/transformers && \
+RUN git init /workspace/transformers && \
     cd /workspace/transformers && \
-    git checkout 09fea1e6e970a1051b1141ce320a3d696b2c15ed
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin 09fea1e6e970a1051b1141ce320a3d696b2c15ed && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps (agent fills in specifics)
 RUN pip install --no-cache-dir numpy 2>/dev/null || true

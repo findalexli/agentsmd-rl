@@ -9,9 +9,11 @@ RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Agent"
 
 # Clone transformers at the base commit (parent of the merge commit)
-RUN git clone https://github.com/huggingface/transformers.git /workspace/transformers && \
+RUN git init /workspace/transformers && \
     cd /workspace/transformers && \
-    git checkout 9cd278715c5154597a44110d6e0c114a7e90d6f5
+    git remote add origin https://github.com/huggingface/transformers.git && \
+    git fetch --depth=1 origin 9cd278715c5154597a44110d6e0c114a7e90d6f5 && \
+    git checkout FETCH_HEAD
 
 # Install minimal deps for testing (no torch/GPU needed — tests are grep/AST based)
 RUN cd /workspace/transformers && \

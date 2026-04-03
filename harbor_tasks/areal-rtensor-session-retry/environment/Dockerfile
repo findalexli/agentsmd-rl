@@ -5,9 +5,11 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (BEFORE the fix)
-RUN git clone https://github.com/inclusionAI/AReaL.git /repo && \
+RUN git init /repo && \
     cd /repo && \
-    git checkout 9639749e700ea278e0617589391cc3dda6ec3a5c
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin 9639749e700ea278e0617589391cc3dda6ec3a5c && \
+    git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
 

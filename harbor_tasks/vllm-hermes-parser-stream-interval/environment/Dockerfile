@@ -13,9 +13,11 @@ RUN mkdir -p /workspace /logs/verifier
 WORKDIR /workspace
 
 # Clone vllm at the commit BEFORE the fix
-RUN git clone https://github.com/vllm-project/vllm.git /workspace/vllm && \
+RUN git init /workspace/vllm && \
     cd /workspace/vllm && \
-    git checkout 0ae89f18fd75c5fcac48ff711ed84464c3da5d33
+    git remote add origin https://github.com/vllm-project/vllm.git && \
+    git fetch --depth=1 origin 0ae89f18fd75c5fcac48ff711ed84464c3da5d33 && \
+    git checkout FETCH_HEAD
 
 # Install deps needed for tool parser tests (no torch/GPU needed)
 RUN pip install --no-cache-dir pydantic regex partial-json-parser transformers tokenizers 2>/dev/null || true
