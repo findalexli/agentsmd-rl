@@ -36,7 +36,6 @@ def _parse_shorthand_map():
 def test_valid_js_syntax():
     """CSSShorthandProperty.js must parse without JS syntax errors."""
     assert Path(CSS_FILE).exists(), "CSSShorthandProperty.js not found"
-    # File uses ES module syntax (export const), so pipe via stdin with --input-type=module
     content = Path(CSS_FILE).read_bytes()
     r = subprocess.run(
         ["node", "--input-type=module", "--check"],
@@ -64,7 +63,7 @@ def test_border_logical_properties_added():
         "borderBlockStartColor", "borderBlockStartStyle", "borderBlockStartWidth",
     }, f"borderBlock longhands incorrect: {mapping['borderBlock']}"
 
-    # borderBlockColor / borderBlockStyle / borderBlockWidth (single-axis)
+    # borderBlockColor / borderBlockStyle / borderBlockWidth
     assert "borderBlockColor" in mapping, "borderBlockColor missing"
     assert set(mapping["borderBlockColor"]) == {"borderBlockEndColor", "borderBlockStartColor"}
 
@@ -85,7 +84,10 @@ def test_border_logical_properties_added():
     assert set(mapping["borderInlineColor"]) == {"borderInlineEndColor", "borderInlineStartColor"}
 
     assert "borderInlineStyle" in mapping, "borderInlineStyle missing"
+    assert set(mapping["borderInlineStyle"]) == {"borderInlineEndStyle", "borderInlineStartStyle"}
+
     assert "borderInlineWidth" in mapping, "borderInlineWidth missing"
+    assert set(mapping["borderInlineWidth"]) == {"borderInlineEndWidth", "borderInlineStartWidth"}
 
 
 # [pr_diff] fail_to_pass
@@ -122,7 +124,7 @@ def test_inset_and_block_inline_spacing_added():
 
 # [pr_diff] fail_to_pass
 def test_container_scroll_and_misc_properties_added():
-    """container, containIntrinsicSize, scrollMargin, scrollPadding, fontSynthesis, offset must be present."""
+    """container, containIntrinsicSize, scrollMargin/Padding (incl. block/inline), fontSynthesis, offset."""
     mapping = _parse_shorthand_map()
 
     # container
@@ -145,9 +147,19 @@ def test_container_scroll_and_misc_properties_added():
         "scrollPaddingBottom", "scrollPaddingLeft", "scrollPaddingRight", "scrollPaddingTop"
     }
 
-    # scrollMarginBlock / scrollPaddingBlock
+    # scrollMarginBlock / scrollMarginInline
     assert "scrollMarginBlock" in mapping, "scrollMarginBlock missing"
+    assert set(mapping["scrollMarginBlock"]) == {"scrollMarginBlockEnd", "scrollMarginBlockStart"}
+
+    assert "scrollMarginInline" in mapping, "scrollMarginInline missing"
+    assert set(mapping["scrollMarginInline"]) == {"scrollMarginInlineEnd", "scrollMarginInlineStart"}
+
+    # scrollPaddingBlock / scrollPaddingInline
     assert "scrollPaddingBlock" in mapping, "scrollPaddingBlock missing"
+    assert set(mapping["scrollPaddingBlock"]) == {"scrollPaddingBlockEnd", "scrollPaddingBlockStart"}
+
+    assert "scrollPaddingInline" in mapping, "scrollPaddingInline missing"
+    assert set(mapping["scrollPaddingInline"]) == {"scrollPaddingInlineEnd", "scrollPaddingInlineStart"}
 
     # fontSynthesis
     assert "fontSynthesis" in mapping, "fontSynthesis missing"
@@ -158,8 +170,62 @@ def test_container_scroll_and_misc_properties_added():
 
     # offset
     assert "offset" in mapping, "offset missing"
-    assert "offsetAnchor" in mapping["offset"]
-    assert "offsetPath" in mapping["offset"]
+    assert set(mapping["offset"]) == {
+        "offsetAnchor", "offsetDistance", "offsetPath", "offsetPosition", "offsetRotate",
+    }
+
+
+# [pr_diff] fail_to_pass
+def test_additional_shorthand_properties_added():
+    """colorAdjust, overscrollBehavior, pageBreak*, textWrap, verticalAlign, whiteSpace must be present."""
+    mapping = _parse_shorthand_map()
+
+    assert "colorAdjust" in mapping, "colorAdjust missing"
+    assert mapping["colorAdjust"] == ["printColorAdjust"]
+
+    assert "overscrollBehavior" in mapping, "overscrollBehavior missing"
+    assert set(mapping["overscrollBehavior"]) == {"overscrollBehaviorX", "overscrollBehaviorY"}
+
+    assert "pageBreakAfter" in mapping, "pageBreakAfter missing"
+    assert mapping["pageBreakAfter"] == ["breakAfter"]
+
+    assert "pageBreakBefore" in mapping, "pageBreakBefore missing"
+    assert mapping["pageBreakBefore"] == ["breakBefore"]
+
+    assert "pageBreakInside" in mapping, "pageBreakInside missing"
+    assert mapping["pageBreakInside"] == ["breakInside"]
+
+    assert "textWrap" in mapping, "textWrap missing"
+    assert set(mapping["textWrap"]) == {"textWrapMode", "textWrapStyle"}
+
+    assert "verticalAlign" in mapping, "verticalAlign missing"
+    assert set(mapping["verticalAlign"]) == {"alignmentBaseline", "baselineShift", "baselineSource"}
+
+    assert "whiteSpace" in mapping, "whiteSpace missing"
+    assert set(mapping["whiteSpace"]) == {"textWrapMode", "whiteSpaceCollapse"}
+
+
+# [pr_diff] fail_to_pass
+def test_existing_entries_expanded():
+    """textDecoration gains textDecorationThickness, transition gains transitionBehavior."""
+    mapping = _parse_shorthand_map()
+
+    # textDecoration should now include textDecorationThickness
+    assert "textDecoration" in mapping, "textDecoration missing"
+    assert "textDecorationThickness" in mapping["textDecoration"], \
+        f"textDecorationThickness not in textDecoration: {mapping['textDecoration']}"
+    assert set(mapping["textDecoration"]) == {
+        "textDecorationColor", "textDecorationLine", "textDecorationStyle", "textDecorationThickness",
+    }
+
+    # transition should now include transitionBehavior
+    assert "transition" in mapping, "transition missing"
+    assert "transitionBehavior" in mapping["transition"], \
+        f"transitionBehavior not in transition: {mapping['transition']}"
+    assert set(mapping["transition"]) == {
+        "transitionBehavior", "transitionDelay", "transitionDuration",
+        "transitionProperty", "transitionTimingFunction",
+    }
 
 
 # [pr_diff] fail_to_pass
@@ -193,6 +259,14 @@ def test_existing_shorthands_preserved():
         "margin": {"marginBottom", "marginLeft", "marginRight", "marginTop"},
         "padding": {"paddingBottom", "paddingLeft", "paddingRight", "paddingTop"},
         "transition": {"transitionDelay", "transitionDuration", "transitionProperty"},
+        "borderBottom": {"borderBottomColor", "borderBottomStyle", "borderBottomWidth"},
+        "borderLeft": {"borderLeftColor", "borderLeftStyle", "borderLeftWidth"},
+        "borderRight": {"borderRightColor", "borderRightStyle", "borderRightWidth"},
+        "borderTop": {"borderTopColor", "borderTopStyle", "borderTopWidth"},
+        "columns": {"columnCount", "columnWidth"},
+        "listStyle": {"listStyleImage", "listStylePosition", "listStyleType"},
+        "outline": {"outlineColor", "outlineStyle", "outlineWidth"},
+        "overflow": {"overflowX", "overflowY"},
     }
 
     for shorthand, expected_subset in required.items():
@@ -201,3 +275,11 @@ def test_existing_shorthands_preserved():
         missing = expected_subset - actual
         assert not missing, \
             f"Existing shorthand '{shorthand}' is missing longhands: {missing}"
+
+
+# [static] pass_to_pass
+def test_shorthand_count_minimum():
+    """The mapping must have at least 50 entries (base has ~35, fix adds ~30)."""
+    mapping = _parse_shorthand_map()
+    assert len(mapping) >= 50, \
+        f"Expected at least 50 shorthand entries, got {len(mapping)}"

@@ -20,8 +20,10 @@ REPO = "/workspace"
 DATA_FILE = Path(REPO) / "src/prime_rl/trainer/sft/data.py"
 TEST_FILE = Path(REPO) / "tests/unit/train/sft/test_sft_dataset.py"
 
-# Load tokenizer once for all tests (expensive: ~2s per load)
-TOKENIZER = AutoTokenizer.from_pretrained("PrimeIntellect/Qwen3-0.6B")
+
+@pytest.fixture(scope="module")
+def tokenizer():
+    return AutoTokenizer.from_pretrained("PrimeIntellect/Qwen3-0.6B")
 
 
 # ---------------------------------------------------------------------------
@@ -32,7 +34,7 @@ TOKENIZER = AutoTokenizer.from_pretrained("PrimeIntellect/Qwen3-0.6B")
 def test_syntax_check():
     """data.py must be valid Python."""
     source = DATA_FILE.read_text()
-    ast.parse(source)  # raises SyntaxError on failure
+    ast.parse(source)
 
 
 # ---------------------------------------------------------------------------
@@ -40,7 +42,7 @@ def test_syntax_check():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_messages_column_tokenized():
+def test_messages_column_tokenized(tokenizer):
     """SFTDataset must accept a 'messages' column and produce valid tokenized output."""
     conversations = [
         [
@@ -60,7 +62,7 @@ def test_messages_column_tokenized():
 
     for msgs in conversations:
         ds = Dataset.from_list([{"messages": msgs}])
-        sft_ds = SFTDataset(ds, tokenizer=TOKENIZER, max_examples=1)
+        sft_ds = SFTDataset(ds, tokenizer=tokenizer, max_examples=1)
         sample = next(iter(sft_ds))
 
         assert "input_ids" in sample and len(sample["input_ids"]) > 0
@@ -70,7 +72,7 @@ def test_messages_column_tokenized():
 
 
 # [pr_diff] fail_to_pass
-def test_messages_precedence():
+def test_messages_precedence(tokenizer):
     """When both 'messages' and 'prompt'/'completion' are present, messages takes precedence."""
     row_both = {
         "messages": [
@@ -87,8 +89,8 @@ def test_messages_precedence():
         ],
     }
 
-    ds_both = SFTDataset(Dataset.from_list([row_both]), tokenizer=TOKENIZER, max_examples=1)
-    ds_only = SFTDataset(Dataset.from_list([row_messages_only]), tokenizer=TOKENIZER, max_examples=1)
+    ds_both = SFTDataset(Dataset.from_list([row_both]), tokenizer=tokenizer, max_examples=1)
+    ds_only = SFTDataset(Dataset.from_list([row_messages_only]), tokenizer=tokenizer, max_examples=1)
 
     sample_both = next(iter(ds_both))
     sample_only = next(iter(ds_only))
@@ -98,22 +100,22 @@ def test_messages_precedence():
 
 
 # [pr_diff] fail_to_pass
-def test_error_mentions_messages():
+def test_error_mentions_messages(tokenizer):
     """ValueError when missing columns should inform users about the messages format."""
     for invalid_row in [
         {"text": "irrelevant"},
-        {"prompt": [{"role": "user", "content": "hi"}]},  # missing completion
-        {"completion": [{"role": "assistant", "content": "hi"}]},  # missing prompt
+        {"prompt": [{"role": "user", "content": "hi"}]},
+        {"completion": [{"role": "assistant", "content": "hi"}]},
     ]:
         ds = Dataset.from_list([invalid_row])
-        sft_ds = SFTDataset(ds, tokenizer=TOKENIZER, max_examples=1)
+        sft_ds = SFTDataset(ds, tokenizer=tokenizer, max_examples=1)
 
         with pytest.raises(ValueError, match="(?i)messages"):
             next(iter(sft_ds))
 
 
 # [pr_diff] fail_to_pass
-def test_multiturn_messages():
+def test_multiturn_messages(tokenizer):
     """Multi-turn messages must produce longer sequences than single-turn."""
     multi = [
         {"role": "system", "content": "You are helpful."},
@@ -127,8 +129,8 @@ def test_multiturn_messages():
         {"role": "assistant", "content": "The answer is 4."},
     ]
 
-    ds_multi = SFTDataset(Dataset.from_list([{"messages": multi}]), tokenizer=TOKENIZER, max_examples=1)
-    ds_single = SFTDataset(Dataset.from_list([{"messages": single}]), tokenizer=TOKENIZER, max_examples=1)
+    ds_multi = SFTDataset(Dataset.from_list([{"messages": multi}]), tokenizer=tokenizer, max_examples=1)
+    ds_single = SFTDataset(Dataset.from_list([{"messages": single}]), tokenizer=tokenizer, max_examples=1)
 
     sample_multi = next(iter(ds_multi))
     sample_single = next(iter(ds_single))
@@ -138,7 +140,7 @@ def test_multiturn_messages():
 
 
 # [pr_diff] fail_to_pass
-def test_messages_equivalent_to_empty_prompt_completion():
+def test_messages_equivalent_to_empty_prompt_completion(tokenizer):
     """Messages column is semantically equivalent to empty prompt + messages as completion."""
     conversations = [
         [
@@ -155,11 +157,11 @@ def test_messages_equivalent_to_empty_prompt_completion():
     for msgs in conversations:
         ds_messages = SFTDataset(
             Dataset.from_list([{"messages": msgs}]),
-            tokenizer=TOKENIZER, max_examples=1,
+            tokenizer=tokenizer, max_examples=1,
         )
         ds_split = SFTDataset(
             Dataset.from_list([{"prompt": [], "completion": msgs}]),
-            tokenizer=TOKENIZER, max_examples=1,
+            tokenizer=tokenizer, max_examples=1,
         )
 
         sample_msg = next(iter(ds_messages))
@@ -172,8 +174,8 @@ def test_messages_equivalent_to_empty_prompt_completion():
 
 
 # [pr_diff] fail_to_pass
-def test_messages_with_tool_calls():
-    """Messages containing tool calls must be tokenized correctly."""
+def test_messages_with_tool_calls(tokenizer):
+    """Messages containing tool calls must be tokenized correctly via messages path."""
     messages = [
         {"role": "user", "content": "What's the weather?"},
         {
@@ -192,11 +194,17 @@ def test_messages_with_tool_calls():
     ]
 
     ds = Dataset.from_list([{"messages": messages}])
-    sft_ds = SFTDataset(ds, tokenizer=TOKENIZER, max_examples=1)
+    sft_ds = SFTDataset(ds, tokenizer=tokenizer, max_examples=1)
     sample = next(iter(sft_ds))
 
     assert len(sample["input_ids"]) > 0
+    assert len(sample["input_ids"]) == len(sample["loss_mask"])
     assert any(sample["loss_mask"]), "Tool call messages should have trainable tokens"
+
+    # Verify the output contains meaningful content by decoding and checking
+    decoded = tokenizer.decode(sample["input_ids"])
+    assert "weather" in decoded.lower(), "Tokenized output should contain message content"
+    assert "72" in decoded, "Tokenized output should contain tool response content"
 
 
 # ---------------------------------------------------------------------------
@@ -204,7 +212,7 @@ def test_messages_with_tool_calls():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
-def test_prompt_completion_still_works():
+def test_prompt_completion_still_works(tokenizer):
     """Existing prompt+completion format must continue working."""
     examples = [
         {
@@ -222,7 +230,7 @@ def test_prompt_completion_still_works():
 
     for ex in examples:
         ds = Dataset.from_list([ex])
-        sft_ds = SFTDataset(ds, tokenizer=TOKENIZER, max_examples=1)
+        sft_ds = SFTDataset(ds, tokenizer=tokenizer, max_examples=1)
         sample = next(iter(sft_ds))
 
         assert "input_ids" in sample and len(sample["input_ids"]) > 0
@@ -230,10 +238,10 @@ def test_prompt_completion_still_works():
 
 
 # [pr_diff] pass_to_pass
-def test_valueerror_on_invalid_input():
+def test_valueerror_on_invalid_input(tokenizer):
     """Missing messages/prompt/completion must still raise ValueError."""
     ds = Dataset.from_list([{"text": "irrelevant"}])
-    sft_ds = SFTDataset(ds, tokenizer=TOKENIZER, max_examples=1)
+    sft_ds = SFTDataset(ds, tokenizer=tokenizer, max_examples=1)
 
     with pytest.raises(ValueError):
         next(iter(sft_ds))
@@ -241,31 +249,24 @@ def test_valueerror_on_invalid_input():
 
 # [static] pass_to_pass
 def test_resolve_messages_not_stub():
-    """Message resolution must have real branching logic with error handling, not a stub."""
+    """data.py must handle 'messages' column with branching logic, not a stub."""
     # AST-only because: checking structural property (non-trivial branching), not behavior
     source = DATA_FILE.read_text()
     tree = ast.parse(source)
 
-    # Look for resolve_messages nested in _process, or check _process directly
-    found = False
+    # Find _process method and check it handles "messages"
     for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "resolve_messages":
-            found = True
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "_process":
+            body_src = ast.get_source_segment(source, node) or ""
+            assert "messages" in body_src, "_process must handle 'messages' column"
+            # Must have at least 2 branches (messages vs prompt/completion vs error)
             ifs = [n for n in ast.walk(node) if isinstance(n, ast.If)]
-            assert len(ifs) >= 1, "resolve_messages must have conditional logic"
+            assert len(ifs) >= 2, "_process must branch on message format (messages vs prompt/completion)"
             raises = [n for n in ast.walk(node) if isinstance(n, ast.Raise)]
-            assert len(raises) >= 1, "resolve_messages must raise on invalid input"
-            break
+            assert len(raises) >= 1, "_process must raise on invalid input"
+            return
 
-    if not found:
-        # If resolve_messages doesn't exist as a named function, check _process
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and node.name == "_process":
-                body_src = ast.get_source_segment(source, node) or ""
-                assert "messages" in body_src, "_process must handle 'messages' column"
-                ifs = [n for n in ast.walk(node) if isinstance(n, ast.If)]
-                assert len(ifs) >= 1, "_process must have conditional logic for message formats"
-                break
+    pytest.fail("_process method not found in data.py")
 
 
 # ---------------------------------------------------------------------------
@@ -295,4 +296,4 @@ def test_no_class_based_tests():
     tree = ast.parse(source)
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name.startswith("Test"):
-            assert False, f"Class-based test '{node.name}' found -- use plain functions (AGENTS.md:54)"
+            pytest.fail(f"Class-based test '{node.name}' found -- use plain functions (AGENTS.md:54)")

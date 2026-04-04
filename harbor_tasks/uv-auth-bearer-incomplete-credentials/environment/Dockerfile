@@ -1,7 +1,7 @@
 FROM rust:1.85-slim
 
 RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
-    git curl ca-certificates build-essential tmux python3 \
+    git curl ca-certificates build-essential tmux python3 python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone uv at the base commit (before the fix)

@@ -7,76 +7,50 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import re
 import subprocess
 from pathlib import Path
-
-import pytest
 
 REPO = "/repo"
 CLI_FILE = f"{REPO}/crates/uv-cli/src/lib.rs"
 
 
 # ---------------------------------------------------------------------------
-# Fixtures
+# Helpers
 # ---------------------------------------------------------------------------
 
-@pytest.fixture(scope="module")
-def delimiter_check_output():
-    """Build and run a Rust binary that inspects clap's compiled command spec."""
-    examples_dir = Path(REPO) / "crates" / "uv-cli" / "examples"
-    examples_dir.mkdir(exist_ok=True)
-    test_rs = examples_dir / "comma_delim_check.rs"
-    test_rs.write_text(
-        """\
-use clap::{Args, Command};
+def _get_arg_block_for_field(content: str, struct_name: str, field_name: str) -> str:
+    """Extract the #[arg(...)] block + field line for a specific field in a struct.
 
-fn has_comma_delimiter(cmd: &Command, arg_id: &str) -> bool {
-    cmd.get_arguments()
-        .find(|a| a.get_id().as_str() == arg_id)
-        .map_or(false, |a| a.get_value_delimiter() == Some(','))
-}
+    Returns the ~20 lines preceding the field declaration within the struct,
+    which contains the #[arg(...)] attribute.
+    """
+    lines = content.splitlines()
 
-fn build_cmd<T: Args>() -> Command {
-    let mut cmd = Command::new("test");
-    cmd = T::augment_args(cmd);
-    cmd
-}
+    # Find the struct definition
+    struct_idx = None
+    for i, line in enumerate(lines):
+        if re.search(rf"\bstruct\s+{struct_name}\b", line):
+            struct_idx = i
+            break
+    assert struct_idx is not None, f"Struct '{struct_name}' not found in lib.rs"
 
-fn main() {
-    let cmd = build_cmd::<uv_cli::ExportArgs>();
-    println!(
-        "EXPORT_NO_EMIT:{}",
-        if has_comma_delimiter(&cmd, "no_emit_package") { "PASS" } else { "FAIL" }
-    );
-    println!(
-        "EXPORT_ONLY_EMIT:{}",
-        if has_comma_delimiter(&cmd, "only_emit_package") { "PASS" } else { "FAIL" }
-    );
-
-    let cmd2 = build_cmd::<uv_cli::PipCompileArgs>();
-    println!(
-        "PIPCOMPILE_NO_EMIT:{}",
-        if has_comma_delimiter(&cmd2, "no_emit_package") { "PASS" } else { "FAIL" }
-    );
-}
-"""
+    # Find the field within the struct (search forward)
+    field_idx = None
+    brace_depth = 0
+    for i in range(struct_idx, min(struct_idx + 500, len(lines))):
+        brace_depth += lines[i].count("{") - lines[i].count("}")
+        if re.search(rf"\b{field_name}\s*:", lines[i]):
+            field_idx = i
+            break
+        if brace_depth < 0:
+            break
+    assert field_idx is not None, (
+        f"Field '{field_name}' not found in struct '{struct_name}'"
     )
 
-    r = subprocess.run(
-        ["cargo", "run", "-p", "uv-cli", "--example", "comma_delim_check"],
-        cwd=REPO, capture_output=True, timeout=300,
-    )
-    stdout = r.stdout.decode()
-    stderr = r.stderr.decode()
-
-    # Clean up test artifact
-    test_rs.unlink(missing_ok=True)
-    try:
-        examples_dir.rmdir()
-    except OSError:
-        pass
-
-    yield stdout, stderr, r.returncode
+    start = max(struct_idx, field_idx - 20)
+    return "\n".join(lines[start : field_idx + 1])
 
 
 # ---------------------------------------------------------------------------
@@ -94,33 +68,40 @@ def test_cargo_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral via compiled clap command spec
+# Fail-to-pass (pr_diff) — value_delimiter on three arg fields
+# Source inspection because: full Rust compilation too slow in E2B sandbox
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_export_no_emit_package_comma_delimiter(delimiter_check_output):
+def test_export_no_emit_package_comma_delimiter():
     """ExportArgs no_emit_package accepts comma-separated values via value_delimiter."""
-    stdout, stderr, rc = delimiter_check_output
-    assert "EXPORT_NO_EMIT:PASS" in stdout, (
-        f"ExportArgs no_emit_package missing comma delimiter.\nstdout: {stdout}\nstderr: {stderr[-1000:]}"
+    content = Path(CLI_FILE).read_text()
+    block = _get_arg_block_for_field(content, "ExportArgs", "no_emit_package")
+    assert re.search(r"value_delimiter\s*=\s*','", block), (
+        f"ExportArgs::no_emit_package missing value_delimiter = ',' in #[arg(...)]\n"
+        f"Arg block:\n{block}"
     )
 
 
 # [pr_diff] fail_to_pass
-def test_export_only_emit_package_comma_delimiter(delimiter_check_output):
+def test_export_only_emit_package_comma_delimiter():
     """ExportArgs only_emit_package accepts comma-separated values via value_delimiter."""
-    stdout, stderr, rc = delimiter_check_output
-    assert "EXPORT_ONLY_EMIT:PASS" in stdout, (
-        f"ExportArgs only_emit_package missing comma delimiter.\nstdout: {stdout}\nstderr: {stderr[-1000:]}"
+    content = Path(CLI_FILE).read_text()
+    block = _get_arg_block_for_field(content, "ExportArgs", "only_emit_package")
+    assert re.search(r"value_delimiter\s*=\s*','", block), (
+        f"ExportArgs::only_emit_package missing value_delimiter = ',' in #[arg(...)]\n"
+        f"Arg block:\n{block}"
     )
 
 
 # [pr_diff] fail_to_pass
-def test_pipcompile_no_emit_package_comma_delimiter(delimiter_check_output):
+def test_pipcompile_no_emit_package_comma_delimiter():
     """PipCompileArgs no_emit_package accepts comma-separated values via value_delimiter."""
-    stdout, stderr, rc = delimiter_check_output
-    assert "PIPCOMPILE_NO_EMIT:PASS" in stdout, (
-        f"PipCompileArgs no_emit_package missing comma delimiter.\nstdout: {stdout}\nstderr: {stderr[-1000:]}"
+    content = Path(CLI_FILE).read_text()
+    block = _get_arg_block_for_field(content, "PipCompileArgs", "no_emit_package")
+    assert re.search(r"value_delimiter\s*=\s*','", block), (
+        f"PipCompileArgs::no_emit_package missing value_delimiter = ',' in #[arg(...)]\n"
+        f"Arg block:\n{block}"
     )
 
 

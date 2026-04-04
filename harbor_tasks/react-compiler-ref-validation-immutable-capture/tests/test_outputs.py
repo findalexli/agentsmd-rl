@@ -50,13 +50,18 @@ def test_panresponder_no_false_positive():
     On the base commit, the compiler uniformly applies validateNoRefPassedToFunction
     to all operands, producing a false positive. The fix uses per-effect validation
     so that ImmutableCapture operands with a co-existing Freeze are handled safely.
+
+    The fixture file and PanResponder type definition are pre-installed in the
+    Dockerfile as test infrastructure.
     """
-    # Generate the fixture output (--update to create expect.md from scratch)
+    # Generate the fixture output (suppress Node 22 punycode deprecation warning)
+    env = {**__import__("os").environ, "NODE_OPTIONS": "--no-deprecation"}
     r = subprocess.run(
         ["yarn", "snap", "-p", "panresponder-ref-in-callback", "-u"],
         cwd=COMPILER,
         capture_output=True,
         timeout=120,
+        env=env,
     )
     combined = r.stdout.decode() + r.stderr.decode()
 
@@ -92,7 +97,7 @@ def test_effects_branch_for_non_hook_calls():
     that iterates over effects to determine per-operand validation. On the base commit
     this branch does not exist and all operands are validated uniformly.
     """
-    # AST-only because: TypeScript source, modifying a live compiler pass
+    # AST-only because: TypeScript source, cannot be imported/executed in Python
     src = Path(VALIDATION_FILE).read_text()
 
     # The new branch must guard on hookKind being null and effects being present
@@ -117,14 +122,14 @@ def test_immutable_capture_freeze_distinction():
 
     The fix must check for a co-existing Freeze effect on the same operand.
     """
-    # AST-only because: TypeScript source, modifying a live compiler pass
+    # AST-only because: TypeScript source, cannot be imported/executed in Python
     src = Path(VALIDATION_FILE).read_text()
 
     # Must handle ImmutableCapture as a distinct case
     assert "'ImmutableCapture'" in src, (
         "Missing 'ImmutableCapture' case in effect kind handling"
     )
-    # Must check for Freeze on the same operand
+    # Must check for Freeze on the same operand to distinguish safe vs unsafe
     assert "Freeze" in src and "identifier.id" in src, (
         "Missing Freeze co-existence check for ImmutableCapture operands"
     )
@@ -140,38 +145,52 @@ def test_mutate_ref_fixture_still_errors():
 
     The fix must not suppress errors for functions with Mutate effects on refs.
     The existing error.validate-mutate-ref-arg-in-render fixture exercises this.
+    We regenerate the output (with -u) and verify it contains the expected error,
+    rather than relying on exact snap comparison which is fragile to Node version.
     """
+    env = {**__import__("os").environ, "NODE_OPTIONS": "--no-deprecation"}
     r = subprocess.run(
-        ["yarn", "snap", "-p", "error.validate-mutate-ref-arg-in-render"],
+        ["yarn", "snap", "-p", "error.validate-mutate-ref-arg-in-render", "-u"],
         cwd=COMPILER,
         capture_output=True,
         timeout=120,
+        env=env,
     )
-    output = r.stdout.decode() + r.stderr.decode()
-    assert r.returncode == 0, (
-        f"Regression: mutate-ref fixture failed:\n{output}"
+    expect_path = Path(COMPILER) / (
+        "packages/babel-plugin-react-compiler/src/__tests__"
+        "/fixtures/compiler/error.validate-mutate-ref-arg-in-render.expect.md"
+    )
+    assert expect_path.exists(), "Fixture expect.md not found"
+    content = expect_path.read_text()
+
+    # Must contain a ref-access error (not silently pass)
+    assert "## Error" in content, (
+        f"Regression: mutate-ref fixture should produce an error block:\n{content[:500]}"
+    )
+    assert "Cannot access ref" in content or "ref" in content.lower(), (
+        f"Regression: mutate-ref fixture should report ref-access error:\n{content[:500]}"
+    )
+    # Must NOT have compiled code (it should be an error-only fixture)
+    assert "## Code" not in content, (
+        f"Regression: mutate-ref fixture should NOT compile successfully:\n{content[:500]}"
     )
 
 
 # [static] pass_to_pass
-def test_effect_kind_coverage():
-    """The effects-based path must route Mutate to ref-passed and Freeze
-    to direct-ref validation, ensuring both validation functions are called."""
-    # AST-only because: TypeScript source, modifying a live compiler pass
+def test_validation_functions_present():
+    """Both ref validation functions must be present and called in the
+    validation pass. This is an anti-stub check — the fix must not remove
+    or break existing validation dispatchers."""
+    # AST-only because: TypeScript source, cannot be imported/executed in Python
     src = Path(VALIDATION_FILE).read_text()
 
-    # Mutate effects must still trigger validation
-    assert "'Mutate'" in src, (
-        "Missing 'Mutate' case — mutation effects must still produce errors"
-    )
-    # Freeze effects must be handled
-    assert "'Freeze'" in src, (
-        "Missing 'Freeze' case in effect kind handling"
-    )
-    # Both validation dispatchers must be present
+    # Both validation dispatchers must be present and called
     assert "validateNoDirectRefValueAccess" in src, (
         "Missing validateNoDirectRefValueAccess call"
     )
     assert "validateNoRefPassedToFunction" in src, (
         "Missing validateNoRefPassedToFunction call"
+    )
+    assert "validateNoRefValueAccess" in src, (
+        "Missing validateNoRefValueAccess call"
     )

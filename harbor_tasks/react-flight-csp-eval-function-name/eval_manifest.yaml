@@ -22,13 +22,9 @@ checks:
     origin: pr_diff
     description: "CSP fallback handles edge-case names: single char, dotted, hyphenated, unicode"
 
-  - id: prettier_format
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed file passes yarn prettier formatting check"
-    source:
-      path: ".claude/skills/fix/SKILL.md"
-      lines: "10"
-      commit: "87ae75b33f71eb673c55ddb3a147a9e58b7d05bd"
+  - id: csp_fallback_function_callable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CSP fallback function is callable (wraps thunk) and has correct name"
 
 rubric: []

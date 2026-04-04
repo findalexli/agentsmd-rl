@@ -17,22 +17,22 @@ TARGET = "crates/uv-distribution-types/src/prioritized_distribution.rs"
 TARGET_PATH = Path(REPO) / TARGET
 
 # ---------------------------------------------------------------------------
-# All injected Rust test code — inserted into mod tests, compiled once
+# Injected Rust tests — compiled and run in a single cargo test invocation
 # ---------------------------------------------------------------------------
 INJECTED_TESTS = '''
     #[test]
     fn test_abi3_lower_bound_injected() {
-        // cp39-abi3 means CPython >= 3.9
+        // cp39-abi3: CPython >= 3.9
         assert_python_markers(
             "pkg-1.0-cp39-abi3-any.whl",
             "python_full_version >= '3.9' and platform_python_implementation == 'CPython'",
         );
-        // cp312-abi3 means CPython >= 3.12
+        // cp312-abi3: CPython >= 3.12
         assert_python_markers(
             "pkg-1.0-cp312-abi3-any.whl",
             "python_full_version >= '3.12' and platform_python_implementation == 'CPython'",
         );
-        // cp310-abi3 means CPython >= 3.10
+        // cp310-abi3: CPython >= 3.10
         assert_python_markers(
             "pkg-1.0-cp310-abi3-any.whl",
             "python_full_version >= '3.10' and platform_python_implementation == 'CPython'",
@@ -41,7 +41,7 @@ INJECTED_TESTS = '''
 
     #[test]
     fn test_abi3_major_only_injected() {
-        // cp3-abi3 means CPython >= 3
+        // cp3-abi3: CPython >= 3
         assert_python_markers(
             "pkg-1.0-cp3-abi3-any.whl",
             "python_full_version >= '3' and platform_python_implementation == 'CPython'",
@@ -64,17 +64,17 @@ INJECTED_TESTS = '''
 
     #[test]
     fn test_non_abi3_exact_injected() {
-        // cp39-cp39 (non-abi3) should be exact 3.9.*
+        // cp39-cp39 (non-abi3): exact 3.9.*
         assert_python_markers(
             "pkg-1.0-cp39-cp39-any.whl",
             "python_full_version >= '3.9' and python_full_version < '3.10' and platform_python_implementation == 'CPython'",
         );
-        // py3-none (pure python) should be exact 3.*
+        // py3-none (pure python): exact 3.*
         assert_python_markers(
             "pkg-1.0-py3-none-any.whl",
             "python_full_version >= '3' and python_full_version < '4'",
         );
-        // cp311-cp311 (non-abi3) should be exact 3.11.*
+        // cp311-cp311 (non-abi3): exact 3.11.*
         assert_python_markers(
             "pkg-1.0-cp311-cp311-any.whl",
             "python_full_version >= '3.11' and python_full_version < '3.12' and platform_python_implementation == 'CPython'",
@@ -89,7 +89,7 @@ _cargo_cache = {}
 
 
 def _run_all_cargo_tests():
-    """Inject all Rust test functions, run cargo test once, return cached results."""
+    """Inject Rust test functions, run cargo test once, return cached results."""
     if _cargo_cache:
         return _cargo_cache
 
@@ -114,7 +114,7 @@ def _run_all_cargo_tests():
                 "test_implied_python_markers",
                 "test_implied_markers",
             ],
-            cwd=REPO, capture_output=True, timeout=300,
+            cwd=REPO, capture_output=True, timeout=600,
         )
         _cargo_cache["stdout"] = r.stdout.decode(errors="replace")
         _cargo_cache["stderr"] = r.stderr.decode(errors="replace")
@@ -154,11 +154,14 @@ def _assert_rust_test_passed(test_name: str):
 # [static] pass_to_pass
 def test_cargo_check():
     """Modified crate must compile without errors."""
-    r = subprocess.run(
-        ["cargo", "check", "-p", "uv-distribution-types"],
-        cwd=REPO, capture_output=True, timeout=300,
+    # Uses the cached cargo test run — if it compiled, this passes.
+    # If compilation failed, stderr will contain the error.
+    results = _run_all_cargo_tests()
+    stderr = results["stderr"]
+    # Compilation errors produce "error[E" in stderr
+    assert "error[E" not in stderr, (
+        f"cargo compilation failed:\n{stderr[-3000:]}"
     )
-    assert r.returncode == 0, f"cargo check failed:\n{r.stderr.decode()[-2000:]}"
 
 
 # ---------------------------------------------------------------------------

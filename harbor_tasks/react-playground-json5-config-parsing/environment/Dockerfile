@@ -19,6 +19,7 @@ WORKDIR /workspace/react
 
 # Install json5 globally so test scripts can require it (needed after fix is applied)
 RUN npm install -g json5@2.2.3
+ENV NODE_PATH=/usr/local/lib/node_modules
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

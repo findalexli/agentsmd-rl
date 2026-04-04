@@ -15,33 +15,45 @@ from pathlib import Path
 REPO = "/workspace/ruff"
 TYPED_DICT_RS = "crates/ty_python_semantic/src/types/class/typed_dict.rs"
 
+# Build ty once at module level — incremental after Dockerfile pre-check
+_ty_binary = None
 
-def _build_ty():
-    """Build the ty binary (incremental, should be fast)."""
+
+def _get_ty():
+    """Build ty binary once (cached for all tests)."""
+    global _ty_binary
+    if _ty_binary is not None:
+        return _ty_binary
     r = subprocess.run(
         ["cargo", "build", "--bin", "ty", "--quiet"],
         cwd=REPO, capture_output=True, timeout=600,
     )
     assert r.returncode == 0, f"Failed to build ty:\n{r.stderr.decode()[-2000:]}"
-    return str(Path(REPO) / "target/debug/ty")
+    _ty_binary = str(Path(REPO) / "target/debug/ty")
+    return _ty_binary
 
 
 def _ty_check(code: str) -> subprocess.CompletedProcess:
-    """Write code to a temp file and run ty check on it."""
-    ty = _build_ty()
-    with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
-        f.write(code)
-        f.flush()
+    """Write code to a temp dir and run ty check on it."""
+    ty = _get_ty()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        p = Path(tmpdir) / "test_input.py"
+        p.write_text(code)
         return subprocess.run(
-            [ty, "check", f.name],
+            [ty, "check", str(p)],
             capture_output=True, timeout=120, text=True,
         )
 
 
 def _has_type_error(result: subprocess.CompletedProcess) -> bool:
-    """Check if ty reported a type error."""
+    """Check if ty reported a type error (not just warnings)."""
     combined = result.stdout + result.stderr
-    return any(kw in combined.lower() for kw in ["invalid-argument", "invalid-assignment", "error"])
+    # ty diagnostic categories for type errors
+    return any(kw in combined for kw in [
+        "invalid-argument-type",
+        "invalid-assignment",
+        "invalid-return-type",
+    ])
 
 
 # ---------------------------------------------------------------------------
@@ -114,8 +126,32 @@ def f(payload: Payload | Payload2) -> None:
 
 
 # [pr_diff] fail_to_pass
+def test_get_nonrequired_nested_typeddict_default():
+    """p.get("inner", {"inner": 0}) on non-required nested TypedDict uses field type as context."""
+    result = _ty_check("""\
+from typing import TypedDict
+
+class Inner(TypedDict, total=False):
+    inner: int
+
+class Outer(TypedDict, total=False):
+    nested: Inner
+
+def takes_inner(value: Inner) -> None: ...
+
+def f(o: Outer) -> None:
+    result = o.get("nested", {"inner": 0})
+    takes_inner(result)
+""")
+    assert not _has_type_error(result), (
+        f"ty incorrectly reports error for .get() with nested TypedDict dict default:\n"
+        f"{result.stdout}\n{result.stderr}"
+    )
+
+
+# [pr_diff] pass_to_pass
 def test_get_nonrequired_list_default():
-    """cfg.get("tags", []) on non-required list[str] field infers list[str], not union."""
+    """cfg.get("tags", []) on non-required list[str] field infers list[str] correctly."""
     result = _ty_check("""\
 from typing import TypedDict
 

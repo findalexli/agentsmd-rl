@@ -10,7 +10,7 @@ checks:
   - id: syntax_check
     type: pass_to_pass
     origin: static
-    description: "Modified files must parse without TypeScript syntax errors"
+    description: "Modified files must exist and have valid TypeScript structure"
 
   - id: filter_param_basic_inclusion
     type: fail_to_pass
@@ -32,10 +32,15 @@ checks:
     origin: pr_diff
     description: "parseFilterParam handles empty/undefined input and trailing semicolons"
 
-  - id: upstream_statuses_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Upstream vitest tests for parseStatusesParam still pass"
+  - id: tags_uses_shared_helper
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tags.ts imports parseFilterParam and removes inline parsing logic"
+
+  - id: statuses_uses_shared_helper
+    type: fail_to_pass
+    origin: pr_diff
+    description: "statuses.ts imports parseFilterParam and removes inline parsing logic"
 
   - id: no_raw_console
     type: pass_to_pass

@@ -21,5 +21,5 @@ RUN git config user.name "test" && git config user.email "test@test.com"
 # Pre-fetch cargo dependencies to speed up builds
 RUN cargo fetch 2>/dev/null || true
 
-# Pre-build to cache dependency compilation (agent changes trigger incremental rebuild)
-RUN cargo build -p uv 2>/dev/null || true
+# Pre-build workspace test deps (much faster than full uv binary)
+RUN cargo test -p uv-workspace --lib --no-run 2>/dev/null || true

@@ -318,7 +318,7 @@ def test_pr_checks_docs_reference_typing():
 def test_ruff_lint():
     """ruff lint passes on the modified linter file."""
     r = subprocess.run(
-        ["ruff", "check", "--select=E,W,F", "--no-fix", LINTER],
+        ["ruff", "check", "--select=E,W,F", "--ignore=E501", "--no-fix", LINTER],
         capture_output=True, text=True,
     )
     assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"

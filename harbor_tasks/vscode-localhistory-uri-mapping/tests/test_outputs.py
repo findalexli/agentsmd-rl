@@ -182,3 +182,37 @@ def test_no_any_unknown_in_fix():
         "Found 'unknown' type annotation in findLocalHistoryEntry. "
         "Do not use any/unknown unless absolutely necessary."
     )
+
+
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:72 @ 8c61afa
+def test_uses_tabs_not_spaces():
+    """New lines added by the fix must use tabs for indentation, not spaces."""
+    # AST-only because: TypeScript file, cannot be imported
+    func = _extract_function(_read())
+    lines = func.splitlines()
+    for ln in lines:
+        stripped = ln.lstrip()
+        if not stripped or stripped.startswith("//") or stripped.startswith("*"):
+            continue
+        leading = ln[: len(ln) - len(ln.lstrip())]
+        if leading:
+            assert "\t" in leading and "    " not in leading, (
+                f"Found space-indented line in findLocalHistoryEntry: {ln!r}. "
+                "VS Code uses tabs, not spaces."
+            )
+
+
+# [agent_config] pass_to_pass — .github/copilot-instructions.md:113 @ 8c61afa
+def test_conditionals_have_curly_braces():
+    """if/else blocks in the fix must use curly braces."""
+    # AST-only because: TypeScript file, cannot be imported
+    func = _extract_function(_read())
+    code = _code_lines(func)
+    # Find if statements not followed by { on same line
+    for ln in code.splitlines():
+        stripped = ln.strip()
+        if re.match(r"^(if|else if)\s*\(.*\)\s*$", stripped):
+            assert False, (
+                f"Found if/else without curly brace on same line: {stripped!r}. "
+                "Always surround conditional bodies with curly braces."
+            )

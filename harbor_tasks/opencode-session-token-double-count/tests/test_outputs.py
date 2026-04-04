@@ -83,10 +83,8 @@ def _get_getusage_region() -> str:
 # [static] pass_to_pass
 def test_syntax_check():
     """session/index.ts must parse without errors."""
-    import os
-    os.makedirs("/tmp/gate_check", exist_ok=True)
     r = subprocess.run(
-        ["bun", "build", "--no-bundle", "./src/session/index.ts", "--outdir", "/tmp/gate_check"],
+        ["bun", "build", "--no-bundle", "./src/session/index.ts", "--outfile", "/tmp/gate_check.js"],
         cwd=f"{REPO}/packages/opencode",
         capture_output=True,
         timeout=30,

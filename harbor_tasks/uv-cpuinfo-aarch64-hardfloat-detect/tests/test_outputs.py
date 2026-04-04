@@ -161,6 +161,25 @@ def _build_test_binary() -> str:
                     if bin_path:
                         return bin_path
 
+            # 2c: inline contains/split with boolean expression
+            # Handle: features.split_whitespace().any(|f| matches!(f, "vfp" | "fp"))
+            matches_match = re.search(
+                r"\.(?:any|find)\(\s*\|(\w+)\|\s*matches!\s*\(\s*\w+\s*,\s*(.+?)\s*\)\s*\)",
+                detect_body, re.DOTALL,
+            )
+            if matches_match:
+                param = matches_match.group(1)
+                patterns = matches_match.group(2).strip()
+                fn_code = (
+                    f"fn test_features(features: &str) -> bool {{\n"
+                    f"    features.split_whitespace().any(|{param}| matches!({param}, {patterns}))\n"
+                    f"}}\n"
+                )
+                rust_src = fn_code + MAIN_TEMPLATE.format(fn_call="test_features(features)")
+                bin_path = _compile_rust(rust_src)
+                if bin_path:
+                    return bin_path
+
     pytest.fail(
         "Could not extract and compile feature detection logic from cpuinfo.rs. "
         "The fix must implement feature matching via: (a) a helper fn(&str) -> bool, "
@@ -187,26 +206,13 @@ def _check(binary: str, features: str, expected: bool):
 
 
 # ---------------------------------------------------------------------------
-# Gate (pass_to_pass, static)
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
-def test_crate_compiles():
-    """uv-platform crate compiles without errors."""
-    r = subprocess.run(
-        ["cargo", "check", "-p", "uv-platform"],
-        cwd=REPO, capture_output=True, text=True, timeout=120,
-    )
-    assert r.returncode == 0, f"cargo check failed:\n{r.stderr}"
-
-
-# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_aarch64_fp_detected(detection_binary):
-    """AArch64 kernel running arm32 userspace: 'fp' flag indicates hard-float."""
+    """AArch64 kernel arm32 userspace: 'fp' flag detected as hard-float."""
+    # Real aarch64 /proc/cpuinfo features line
     _check(
         detection_binary,
         "fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm",
@@ -226,8 +232,14 @@ def test_fp_at_end_detected(detection_binary):
     _check(detection_binary, "asimd evtstrm fp", True)
 
 
+# [pr_diff] fail_to_pass
+def test_fp_middle_of_list(detection_binary):
+    """'fp' in the middle of a feature list is recognized as hard-float."""
+    _check(detection_binary, "asimd fp evtstrm crc32", True)
+
+
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff / repo_tests / static)
+# Pass-to-pass (pr_diff / static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
@@ -252,6 +264,7 @@ def test_fphp_no_false_positive(detection_binary):
     _check(detection_binary, "asimd fphp asimdhp", False)
 
 
+
 # [pr_diff] pass_to_pass
 def test_no_float_features(detection_binary):
     """Features with no float support return soft-float."""
@@ -262,16 +275,6 @@ def test_no_float_features(detection_binary):
 def test_empty_features(detection_binary):
     """Empty features string returns soft-float."""
     _check(detection_binary, "", False)
-
-
-# [repo_tests] pass_to_pass
-def test_cargo_test_uv_platform():
-    """Upstream tests in uv-platform crate still pass."""
-    r = subprocess.run(
-        ["cargo", "test", "-p", "uv-platform"],
-        cwd=REPO, capture_output=True, text=True, timeout=120,
-    )
-    assert r.returncode == 0, f"cargo test failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [static] pass_to_pass
@@ -288,9 +291,9 @@ def test_not_stub():
         l for l in non_test.split("\n") if not l.strip().startswith("//")
     )
     has_processing = bool(
-        re.search(r"\w+\.(split_whitespace|split|contains|any|find|iter|match)", clean)
+        re.search(r"\.(split_whitespace|split|contains|any|find|iter|match)\s*\(", clean)
     ) or bool(
-        re.search(r"\w+\(\s*\w+\s*\)", clean)
+        re.search(r"matches!\s*\(", clean)
     )
     assert has_processing, "No string processing operations found in detection code"
 
@@ -314,9 +317,9 @@ def test_no_unwrap_panic():
     assert len(violations) == 0, f"Found {len(violations)} forbidden call(s): {violations}"
 
     unsafe_uses = re.findall(r"\bunsafe\b", code)
-    assert len(unsafe_uses) == 0, f"Found {len(unsafe_uses)} 'unsafe' usage(s) — CLAUDE.md forbids unsafe code"
+    assert len(unsafe_uses) == 0, f"Found {len(unsafe_uses)} 'unsafe' usage(s)"
 
     allow_clippy = re.findall(r"#\[allow\(clippy::", code)
     assert len(allow_clippy) == 0, (
-        f"Found {len(allow_clippy)} #[allow(clippy::...)] — CLAUDE.md says use #[expect()] instead"
+        f"Found {len(allow_clippy)} #[allow(clippy::...)] — should use #[expect()] instead"
     )

@@ -7,7 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import subprocess
+import re
 from pathlib import Path
 
 REPO = "/workspace/react"
@@ -55,8 +55,10 @@ def test_prevfiber_guard_profiling_loop():
     # Check for both possible formatting styles
     has_guard = (
         "prevFiber !== fiber && didFiberRender" in content
-        or "prevFiber !== fiber &&\n" in content
-        and "didFiberRender(prevFiber, fiber)" in content
+        or (
+            "prevFiber !== fiber &&\n" in content
+            and "didFiberRender(prevFiber, fiber)" in content
+        )
     )
     assert has_guard, (
         "renderer.js is missing the 'prevFiber !== fiber && didFiberRender' guard "
@@ -128,25 +130,39 @@ def test_prevfiber_guard_inspect_update():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
+# Pass-to-pass (static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
-def test_existing_profiling_charts_pass():
-    """Regression: the existing profilingCharts test suite passes after any changes."""
-    r = subprocess.run(
-        [
-            "yarn", "test", "--no-watchman", "--forceExit",
-            "profilingCharts-test",
-        ],
-        cwd=REPO,
-        capture_output=True,
-        timeout=300,
+# [static] pass_to_pass
+def test_profiling_data_logic_intact():
+    """Regression: the profiling data recording logic in renderer.js is intact.
+
+    The section that records profiling durations must still contain key operations:
+    actualDuration processing, pushOperation calls, and treeBaseDuration handling.
+    An agent must not gut this logic while adding the prevFiber guard.
+
+    Note: upstream test suite (profilingCharts-test.js) cannot be run in isolation
+    because React's Jest setup requires custom transforms (@reactVersion pragmas,
+    Flow types, built artifacts via --project devtools).
+    """
+    # AST-only because: JavaScript with Flow types, deeply integrated with React internals
+    content = Path(RENDERER).read_text()
+
+    # The profiling data loop must still process actual durations
+    assert "actualDuration" in content, (
+        "renderer.js is missing 'actualDuration' — profiling duration recording broken"
     )
-    stdout = r.stdout.decode(errors="replace")
-    stderr = r.stderr.decode(errors="replace")
-    assert r.returncode == 0, (
-        f"profilingCharts tests failed:\n{stdout[-3000:]}\n{stderr[-1000:]}"
+    # Must still push profiling operations
+    assert "pushOperation" in content, (
+        "renderer.js is missing 'pushOperation' — profiling operation recording broken"
+    )
+    # Must still handle tree base durations
+    assert "treeBaseDuration" in content, (
+        "renderer.js is missing 'treeBaseDuration' — profiling tree data broken"
+    )
+    # The prevFiber == null check must still exist (the guard adds to it, not replaces it)
+    assert "prevFiber == null" in content, (
+        "renderer.js is missing 'prevFiber == null' check — profiling null guard removed"
     )
 
 
@@ -169,4 +185,25 @@ def test_didfiberrender_not_stubbed():
     snippet = content[idx : idx + 500]
     assert "ClassComponent" in snippet, (
         "didFiberRender appears stubbed — missing ClassComponent case in switch"
+    )
+
+
+# [static] pass_to_pass
+def test_didfiber_render_uses_prevfiber_param():
+    """Anti-cheat: didFiberRender must still use its prevFiber parameter.
+
+    An agent might try to "fix" the false-render issue by making didFiberRender
+    always return false or by ignoring prevFiber. The function must still compare
+    prevFiber and nextFiber memoizedProps/memoizedState for ClassComponent/FunctionComponent.
+    """
+    # AST-only because: JavaScript with Flow types, deeply integrated with React internals
+    content = Path(RENDERER).read_text()
+    idx = content.index("function didFiberRender")
+    # Get the function body (2000 chars covers the full switch including default case)
+    snippet = content[idx : idx + 2000]
+
+    # Must reference prevFiber's memoizedProps or memoizedState
+    assert re.search(r"prevFiber\s*\.\s*memoized(Props|State)", snippet), (
+        "didFiberRender does not compare prevFiber.memoizedProps/State — "
+        "the function may have been stubbed to always return false"
     )

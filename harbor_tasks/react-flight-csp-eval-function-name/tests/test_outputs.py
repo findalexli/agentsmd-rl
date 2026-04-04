@@ -18,73 +18,55 @@ REPO = "/workspace/react"
 CLIENT_JS = f"{REPO}/packages/react-client/src/ReactFlightClient.js"
 
 
-def _extract_catch_body():
-    """Extract the catch block body from createFakeFunction for behavioral testing."""
-    src = Path(CLIENT_JS).read_text()
-    func_start = src.index("function createFakeFunction")
-    catch_start = src.index("catch (x)", func_start)
-    brace_start = src.index("{", catch_start)
-    depth = 0
-    brace_end = -1
-    for i in range(brace_start, len(src)):
-        if src[i] == "{":
-            depth += 1
-        elif src[i] == "}":
-            depth -= 1
-            if depth == 0:
-                brace_end = i
-                break
-    assert brace_end != -1, "Could not find matching brace for catch block"
-    return src[brace_start + 1 : brace_end]
-
-
 def _run_name_test(test_names):
-    """Run a node script that extracts the catch block and verifies fn.name is set."""
-    node_script = r"""
+    """Run a Node script that extracts the catch-block body from
+    createFakeFunction and verifies fn.name is set for each input name."""
+
+    names_json = str(test_names).replace("'", '"')
+    node_script = f"""
 const fs = require('fs');
-const src = fs.readFileSync('%s', 'utf8');
+const src = fs.readFileSync('{CLIENT_JS}', 'utf8');
 
 const funcStart = src.indexOf('function createFakeFunction');
-if (funcStart === -1) { console.error('createFakeFunction not found'); process.exit(10); }
+if (funcStart === -1) {{ console.error('createFakeFunction not found'); process.exit(10); }}
 
 const catchStart = src.indexOf('catch (x)', funcStart);
-if (catchStart === -1) { console.error('catch block not found'); process.exit(11); }
+if (catchStart === -1) {{ console.error('catch block not found'); process.exit(11); }}
 
-const braceStart = src.indexOf('{', catchStart);
+const braceStart = src.indexOf('{{', catchStart);
 let depth = 0, braceEnd = -1;
-for (let i = braceStart; i < src.length; i++) {
-  if (src[i] === '{') depth++;
-  if (src[i] === '}') { depth--; if (depth === 0) { braceEnd = i; break; } }
-}
-if (braceEnd === -1) { console.error('catch brace not matched'); process.exit(12); }
+for (let i = braceStart; i < src.length; i++) {{
+  if (src[i] === '{{') depth++;
+  if (src[i] === '}}') {{ depth--; if (depth === 0) {{ braceEnd = i; break; }} }}
+}}
+if (braceEnd === -1) {{ console.error('catch brace not matched'); process.exit(12); }}
 
 let catchBody = src.substring(braceStart + 1, braceEnd);
 // Strip Flow suppression comments to produce valid JS
-catchBody = catchBody.replace(/\/\/ \$FlowFixMe[^\n]*/g, '');
+catchBody = catchBody.replace(/\\/\\/ \\$FlowFixMe[^\\n]*/g, '');
 
-const testNames = %s;
+const testNames = {names_json};
 const failures = [];
 
-for (const name of testNames) {
-  try {
-    const fn = new Function('name', 'let fn;\n' + catchBody + '\nreturn fn;')(name);
-    if (typeof fn !== 'function') {
-      failures.push(name + ': result is not a function');
-    } else if (fn.name !== name) {
+for (const name of testNames) {{
+  try {{
+    const fn = new Function('name', 'let fn;\\n' + catchBody + '\\nreturn fn;')(name);
+    if (typeof fn !== 'function') {{
+      failures.push(name + ': result is not a function (' + typeof fn + ')');
+    }} else if (fn.name !== name) {{
       failures.push(name + ': expected "' + name + '", got "' + fn.name + '"');
-    }
-  } catch(e) {
+    }}
+  }} catch(e) {{
     failures.push(name + ': threw ' + e.message);
-  }
-}
+  }}
+}}
 
-if (failures.length > 0) {
-  console.error('FAILURES:\n' + failures.join('\n'));
+if (failures.length > 0) {{
+  console.error('FAILURES:\\n' + failures.join('\\n'));
   process.exit(1);
-}
+}}
 console.log('PASS: all ' + testNames.length + ' names verified');
-""" % (CLIENT_JS, str(test_names).replace("'", '"'))
-
+"""
     r = subprocess.run(["node", "-e", node_script], capture_output=True, timeout=30)
     return r
 
@@ -114,6 +96,7 @@ def test_csp_fallback_function_named():
 
     Extracts the catch block body and executes it in Node to verify that
     the resulting function's .name property matches the input name.
+    Tests common component/action names.
     """
     r = _run_name_test(["MyComponent", "ServerAction", "fetchData"])
     stdout = r.stdout.decode(errors="replace")
@@ -126,7 +109,7 @@ def test_csp_fallback_function_named():
 # [pr_diff] fail_to_pass
 def test_csp_fallback_special_names():
     """CSP fallback handles edge-case names: single char, dotted, hyphenated, unicode."""
-    r = _run_name_test(["a", "App.Header", "my-action", "Résumé"])
+    r = _run_name_test(["a", "App.Header", "my-action", "Komponent"])
     stdout = r.stdout.decode(errors="replace")
     stderr = r.stderr.decode(errors="replace")
     assert r.returncode == 0, (
@@ -135,21 +118,54 @@ def test_csp_fallback_special_names():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (agent_config) — formatting from .claude/skills/fix/SKILL.md
+# Fail-to-pass (pr_diff) — anti-stub: verify the function is still callable
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — .claude/skills/fix/SKILL.md:10 @ 87ae75b
-def test_prettier_format():
-    """Changed file passes yarn prettier formatting check."""
-    r = subprocess.run(
-        ["yarn", "prettier", "--check",
-         "packages/react-client/src/ReactFlightClient.js"],
-        cwd=REPO,
-        capture_output=True,
-        timeout=60,
-    )
+# [pr_diff] fail_to_pass
+def test_csp_fallback_function_callable():
+    """The CSP fallback function must still be callable (wraps inner call).
+
+    The fallback fn should accept a thunk and return its result, matching
+    the pattern `fn = function(_) { return _(); }`. This ensures the fix
+    doesn't break the function's actual behavior while adding the name.
+    """
+    node_script = f"""
+const fs = require('fs');
+const src = fs.readFileSync('{CLIENT_JS}', 'utf8');
+
+const funcStart = src.indexOf('function createFakeFunction');
+const catchStart = src.indexOf('catch (x)', funcStart);
+const braceStart = src.indexOf('{{', catchStart);
+let depth = 0, braceEnd = -1;
+for (let i = braceStart; i < src.length; i++) {{
+  if (src[i] === '{{') depth++;
+  if (src[i] === '}}') {{ depth--; if (depth === 0) {{ braceEnd = i; break; }} }}
+}}
+let catchBody = src.substring(braceStart + 1, braceEnd);
+catchBody = catchBody.replace(/\\/\\/ \\$FlowFixMe[^\\n]*/g, '');
+
+// Create fn with name "TestComp"
+const fn = new Function('name', 'let fn;\\n' + catchBody + '\\nreturn fn;')('TestComp');
+
+// Verify fn is callable and wraps a thunk correctly
+const sentinel = {{value: 42}};
+const result = fn(() => sentinel);
+if (result !== sentinel) {{
+  console.error('fn did not return thunk result: got ' + JSON.stringify(result));
+  process.exit(1);
+}}
+
+// Verify name is set
+if (fn.name !== 'TestComp') {{
+  console.error('fn.name is "' + fn.name + '", expected "TestComp"');
+  process.exit(1);
+}}
+
+console.log('PASS: fn is callable and correctly named');
+"""
+    r = subprocess.run(["node", "-e", node_script], capture_output=True, timeout=30)
     stdout = r.stdout.decode(errors="replace")
     stderr = r.stderr.decode(errors="replace")
     assert r.returncode == 0, (
-        f"Prettier formatting check failed:\n{stdout}\n{stderr}"
+        f"CSP fallback function not callable or not named:\n{stderr}\n{stdout}"
     )

@@ -17,7 +17,6 @@ REPO = "/workspace/react"
 PLAYGROUND = f"{REPO}/compiler/apps/playground"
 COMPILATION_TS = f"{PLAYGROUND}/lib/compilation.ts"
 DEFAULT_STORE_TS = f"{PLAYGROUND}/lib/defaultStore.ts"
-CONFIG_EDITOR_TSX = f"{PLAYGROUND}/components/Editor/ConfigEditor.tsx"
 PACKAGE_JSON = f"{PLAYGROUND}/package.json"
 
 
@@ -26,30 +25,49 @@ def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
     return subprocess.run(
         ["node", "-e", script],
         capture_output=True,
+        text=True,
         timeout=timeout,
     )
 
 
-def _extract_parse_function() -> str:
-    """Extract parseConfigOverrides logic from compilation.ts and return a
-    Node.js script fragment that defines the function using JSON5."""
+def _extract_parse_function_js() -> str:
+    """Extract parseConfigOverrides from compilation.ts, strip TS types,
+    return executable JS that defines the function with JSON5 available."""
     src = Path(COMPILATION_TS).read_text()
 
-    # Verify the function exists and uses JSON5
-    assert "parseConfigOverrides" in src, (
-        "parseConfigOverrides function not found in compilation.ts"
+    # Find the function definition (may or may not have 'export')
+    pattern = re.compile(
+        r'(?:export\s+)?function\s+parseConfigOverrides'
+        r'\s*\([^)]*\)'       # params (may have TS types)
+        r'(?:\s*:\s*\w+)?\s*' # optional return type
+        r'\{',
+        re.DOTALL,
     )
-    assert "JSON5" in src, "compilation.ts must import/use JSON5"
+    match = pattern.search(src)
+    assert match, "parseConfigOverrides function not found in compilation.ts"
 
-    # Return a JS re-implementation matching the TS source logic
-    return textwrap.dedent("""\
-        const JSON5 = require('json5');
-        function parseConfigOverrides(configOverrides) {
-            const trimmed = configOverrides.trim();
-            if (!trimmed) return {};
-            return JSON5.parse(trimmed);
-        }
-    """)
+    # Find the matching closing brace
+    start = match.end() - 1  # opening {
+    depth = 0
+    end = start
+    for i in range(start, len(src)):
+        if src[i] == '{':
+            depth += 1
+        elif src[i] == '}':
+            depth -= 1
+        if depth == 0:
+            end = i
+            break
+
+    func_body = src[match.start():end + 1]
+
+    # Strip TS type annotations from parameters and return type
+    func_body = re.sub(r'configOverrides\s*:\s*string', 'configOverrides', func_body)
+    func_body = re.sub(r'\)\s*:\s*\w+\s*\{', ') {', func_body)
+    # Remove 'export' keyword
+    func_body = re.sub(r'^export\s+', '', func_body)
+
+    return f"const JSON5 = require('json5');\n{func_body}\n"
 
 
 # ---------------------------------------------------------------------------
@@ -59,60 +77,73 @@ def _extract_parse_function() -> str:
 # [pr_diff] fail_to_pass
 def test_json5_parses_valid_config():
     """parseConfigOverrides correctly parses JSON5 configs with unquoted keys."""
-    fn = _extract_parse_function()
-    script = fn + textwrap.dedent("""\
+    fn_js = _extract_parse_function_js()
+    script = fn_js + textwrap.dedent("""\
+        // Test 1: simple unquoted key
         const r1 = parseConfigOverrides('{ compilationMode: "all" }');
         if (r1.compilationMode !== "all") {
+            process.stderr.write("Test 1 failed: " + JSON.stringify(r1));
             process.exit(1);
         }
+        // Test 2: nested object
         const r2 = parseConfigOverrides('{ environment: { validateRefAccessDuringRender: true } }');
         if (r2.environment.validateRefAccessDuringRender !== true) {
+            process.stderr.write("Test 2 failed: " + JSON.stringify(r2));
             process.exit(1);
         }
+        // Test 3: empty string returns empty object
         const r3 = parseConfigOverrides('');
         if (Object.keys(r3).length !== 0) {
+            process.stderr.write("Test 3 failed: " + JSON.stringify(r3));
             process.exit(1);
         }
-        const r4 = parseConfigOverrides('{ maxLevel: 42, sources: ["a.ts", "b.ts"] }');
-        if (r4.maxLevel !== 42 || r4.sources.length !== 2) {
+        // Test 4: whitespace-only returns empty object
+        const r4 = parseConfigOverrides('   ');
+        if (Object.keys(r4).length !== 0) {
+            process.stderr.write("Test 4 failed: " + JSON.stringify(r4));
+            process.exit(1);
+        }
+        // Test 5: mixed value types
+        const r5 = parseConfigOverrides('{ maxLevel: 42, sources: ["a.ts", "b.ts"], enabled: null }');
+        if (r5.maxLevel !== 42 || r5.sources.length !== 2 || r5.enabled !== null) {
+            process.stderr.write("Test 5 failed: " + JSON.stringify(r5));
             process.exit(1);
         }
     """)
     r = _run_node(script)
-    assert r.returncode == 0, (
-        f"JSON5 config parsing failed:\n{r.stderr.decode()}"
-    )
+    assert r.returncode == 0, f"JSON5 config parsing failed:\n{r.stderr}"
 
 
 # [pr_diff] fail_to_pass
 def test_xss_iife_rejected():
     """Malicious IIFE expressions are rejected by config parser."""
-    fn = _extract_parse_function()
+    fn_js = _extract_parse_function_js()
     payloads = [
         '(function(){ return {}; })()',
         '(() => ({}))()',
         '(function(){ document.title = "hacked"; return {}; })()',
     ]
     for payload in payloads:
-        escaped = payload.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
-        script = fn + f"""
+        escaped = json.dumps(payload)  # proper JS string escaping
+        script = fn_js + f"""
 try {{
-    parseConfigOverrides("{escaped}");
-    process.exit(1);  // Should have thrown
+    parseConfigOverrides({escaped});
+    process.stderr.write("Should have thrown for: " + {escaped});
+    process.exit(1);
 }} catch (e) {{
-    // Expected: JSON5 rejects JS expressions
+    // Expected: safe parser rejects JS expressions
 }}
 """
         r = _run_node(script)
         assert r.returncode == 0, (
-            f"IIFE payload was not rejected: {payload}\n{r.stderr.decode()}"
+            f"IIFE payload was not rejected: {payload}\n{r.stderr}"
         )
 
 
 # [pr_diff] fail_to_pass
 def test_xss_function_call_rejected():
     """Function calls like eval() in config values are rejected."""
-    fn = _extract_parse_function()
+    fn_js = _extract_parse_function_js()
     payloads = [
         '{ compilationMode: eval("all") }',
         '{ compilationMode: (alert("xss"), "all") }',
@@ -120,49 +151,69 @@ def test_xss_function_call_rejected():
         'fetch("https://evil.com")',
     ]
     for payload in payloads:
-        escaped = payload.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
-        script = fn + f"""
+        escaped = json.dumps(payload)
+        script = fn_js + f"""
 try {{
-    parseConfigOverrides("{escaped}");
-    process.exit(1);  // Should have thrown
+    parseConfigOverrides({escaped});
+    process.stderr.write("Should have thrown for: " + {escaped});
+    process.exit(1);
 }} catch (e) {{
-    // Expected
+    // Expected: safe parser rejects function calls
 }}
 """
         r = _run_node(script)
         assert r.returncode == 0, (
-            f"Function call payload was not rejected: {payload}\n{r.stderr.decode()}"
+            f"Function call payload was not rejected: {payload}\n{r.stderr}"
         )
 
 
 # [pr_diff] fail_to_pass
 def test_json5_comments_supported():
     """JSON5 comments and trailing commas are supported in config."""
-    fn = _extract_parse_function()
-    script = fn + textwrap.dedent("""\
-        // Single-line comment
+    fn_js = _extract_parse_function_js()
+    script = fn_js + textwrap.dedent("""\
+        // Single-line comment in config
         const r1 = parseConfigOverrides(`{
           // This is a comment
           compilationMode: "all",
         }`);
-        if (r1.compilationMode !== "all") process.exit(1);
+        if (r1.compilationMode !== "all") {
+            process.stderr.write("Single-line comment test failed");
+            process.exit(1);
+        }
 
-        // Block comment
+        // Block comment in config
         const r2 = parseConfigOverrides(`{
           /* block comment */
           compilationMode: "annotation",
         }`);
-        if (r2.compilationMode !== "annotation") process.exit(1);
+        if (r2.compilationMode !== "annotation") {
+            process.stderr.write("Block comment test failed");
+            process.exit(1);
+        }
 
-        // Default config with commented-out option
+        // Default config with commented-out option (should be empty)
         const r3 = parseConfigOverrides(`{
           //compilationMode: "all"
         }`);
-        if (Object.keys(r3).length !== 0) process.exit(1);
+        if (Object.keys(r3).length !== 0) {
+            process.stderr.write("Commented-out option should yield empty object");
+            process.exit(1);
+        }
+
+        // Trailing comma after last property
+        const r4 = parseConfigOverrides(`{
+          compilationMode: "all",
+          environment: { validateRefAccessDuringRender: false, },
+        }`);
+        if (r4.compilationMode !== "all" || r4.environment.validateRefAccessDuringRender !== false) {
+            process.stderr.write("Trailing comma test failed");
+            process.exit(1);
+        }
     """)
     r = _run_node(script)
     assert r.returncode == 0, (
-        f"JSON5 comments/trailing commas not supported:\n{r.stderr.decode()}"
+        f"JSON5 comments/trailing commas not supported:\n{r.stderr}"
     )
 
 
@@ -171,49 +222,38 @@ def test_default_config_json5_format():
     """Default config uses JSON5 object format, not TypeScript import/satisfies wrapper."""
     src = Path(DEFAULT_STORE_TS).read_text()
 
-    # The old format used: import type { PluginOptions } ... satisfies PluginOptions
-    assert "import type" not in src, (
-        "defaultStore.ts still uses TypeScript import for config"
+    # Old format wrapped config in: import type { PluginOptions } ... satisfies PluginOptions
+    # The defaultConfig value must not contain these TypeScript constructs
+    match = re.search(r"export const defaultConfig\s*=\s*`([^`]+)`", src)
+    assert match, "Could not find defaultConfig template literal in defaultStore.ts"
+    config_text = match.group(1)
+    assert "PluginOptions" not in config_text, (
+        "defaultConfig still references PluginOptions type"
     )
-    assert "satisfies" not in src, (
-        "defaultStore.ts still uses 'satisfies' TypeScript operator"
-    )
-    assert "PluginOptions" not in src, (
-        "defaultStore.ts still references PluginOptions type"
+    assert "satisfies" not in config_text, (
+        "defaultConfig still uses 'satisfies' TypeScript operator"
     )
 
-    # The new format should be a JSON5 object starting with {
-    # Extract the defaultConfig value
-    match = re.search(r"export const defaultConfig\s*=\s*`([^`]+)`", src)
-    assert match, "Could not find defaultConfig export in defaultStore.ts"
-    config_value = match.group(1).strip().lstrip("\\")
-    # The config should start with { (JSON5 object)
+    # New format: defaultConfig should be a JSON5 object starting with {
+    config_value = config_text.strip().lstrip("\\").strip()
     assert config_value.startswith("{"), (
-        f"Default config should be a JSON5 object starting with '{{', got: {config_value[:50]}"
+        f"Default config should be a JSON5 object starting with '{{', got: {config_value[:80]}"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_no_new_function_for_config():
-    """Config parsing does not use new Function() or eval()."""
+    """Config parsing does not use new Function() or eval() — the XSS vulnerability."""
     src = Path(COMPILATION_TS).read_text()
 
-    # Find the config parsing section — should not have new Function
     # The old code had: new Function(`return (${configString})`)()
     assert "new Function" not in src, (
         "compilation.ts still uses new Function() for config parsing (XSS vulnerability)"
     )
 
-    # Should use JSON5 instead
-    assert "JSON5" in src, "compilation.ts should use JSON5 for config parsing"
-    assert "parseConfigOverrides" in src, (
-        "compilation.ts should have parseConfigOverrides function"
-    )
+    # Must use a safe data-only parser (JSON5 or equivalent)
+    assert "JSON5" in src, "compilation.ts should use JSON5 for safe config parsing"
 
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression checks
-# ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_json5_dependency_added():

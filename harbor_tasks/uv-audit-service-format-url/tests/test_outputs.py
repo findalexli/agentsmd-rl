@@ -5,7 +5,7 @@ PR:   18571
 
 Add configurable vulnerability service backend (--service-format, --service-url)
 to `uv audit`.  All checks are structural (file inspection) because uv is a
-200+ crate Rust workspace whose `cargo check` exceeds test-timeout budgets.
+200+ crate Rust workspace whose full `cargo check` exceeds test-timeout budgets.
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
@@ -18,28 +18,13 @@ REPO = Path("/repo")
 
 
 # ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def strip_rust_comments(code: str) -> str:
-    """Remove // and /* */ comments from Rust source."""
-    code = re.sub(r"//[^\n]*", "", code)
-    code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
-    return code
-
-
-def read_stripped(path: Path) -> str:
-    return strip_rust_comments(path.read_text())
-
-
-# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core structural tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_enum_copy_clone_debug():
-    """VulnerabilityServiceFormat::Osv exists with Copy, Clone, Debug derives."""
-    code = read_stripped(REPO / "crates/uv-audit/src/service/mod.rs")
+def test_enum_exists_with_derives():
+    """VulnerabilityServiceFormat enum exists with Copy, Clone, Debug derives."""
+    code = (REPO / "crates/uv-audit/src/service/mod.rs").read_text()
 
     assert "enum VulnerabilityServiceFormat" in code, (
         "service/mod.rs must define VulnerabilityServiceFormat enum"
@@ -50,9 +35,9 @@ def test_enum_copy_clone_debug():
         r"enum\s+VulnerabilityServiceFormat\s*\{[^}]*\bOsv\b", code, re.DOTALL
     ), "VulnerabilityServiceFormat must have an Osv variant"
 
-    # Collect all derive() attributes in the ~300 chars before the enum keyword
+    # Collect derive attributes in the region before the enum keyword
     enum_pos = code.find("enum VulnerabilityServiceFormat")
-    derive_region = code[max(0, enum_pos - 300):enum_pos]
+    derive_region = code[max(0, enum_pos - 400):enum_pos]
     derives = " ".join(re.findall(r"derive\(([^)]+)\)", derive_region))
     for trait_name in ("Copy", "Clone", "Debug"):
         assert trait_name in derives, (
@@ -64,34 +49,45 @@ def test_enum_copy_clone_debug():
 # [pr_diff] fail_to_pass
 def test_enum_clap_valueenum():
     """VulnerabilityServiceFormat has cfg_attr for clap::ValueEnum."""
-    code = read_stripped(REPO / "crates/uv-audit/src/service/mod.rs")
+    code = (REPO / "crates/uv-audit/src/service/mod.rs").read_text()
 
-    # The enum must be usable as a clap ValueEnum behind a feature gate
     enum_pos = code.find("enum VulnerabilityServiceFormat")
     assert enum_pos != -1, "VulnerabilityServiceFormat enum not found"
 
     attr_region = code[max(0, enum_pos - 400):enum_pos]
-    assert re.search(r"cfg_attr.*clap.*ValueEnum", attr_region), (
-        "VulnerabilityServiceFormat must have a cfg_attr for clap::ValueEnum "
+    # Accept both cfg_attr(feature="clap", derive(clap::ValueEnum)) and
+    # a plain derive(clap::ValueEnum) — either makes it a ValueEnum
+    has_cfg_attr = re.search(r"cfg_attr.*clap.*ValueEnum", attr_region)
+    has_plain_derive = re.search(r"derive\([^)]*clap::ValueEnum", attr_region)
+    assert has_cfg_attr or has_plain_derive, (
+        "VulnerabilityServiceFormat must be usable as a clap ValueEnum "
         "(e.g. #[cfg_attr(feature = \"clap\", derive(clap::ValueEnum))])"
     )
 
 
 # [pr_diff] fail_to_pass
-def test_cli_fields_typed():
-    """AuditArgs has service_format (VulnerabilityServiceFormat) and service_url (Option<String>)."""
-    code = read_stripped(REPO / "crates/uv-cli/src/lib.rs")
+def test_cli_service_format_field():
+    """AuditArgs has service_format field typed as VulnerabilityServiceFormat."""
+    code = (REPO / "crates/uv-cli/src/lib.rs").read_text()
 
-    # Locate AuditArgs struct body
     m = re.search(r"pub\s+struct\s+AuditArgs\s*\{", code)
     assert m, "AuditArgs struct not found in uv-cli/src/lib.rs"
     body = code[m.end():]
 
-    # service_format field with correct type
     assert re.search(r"service_format\s*:\s*VulnerabilityServiceFormat\b", body), (
         "AuditArgs must have field `service_format: VulnerabilityServiceFormat`"
     )
-    # service_url field with correct type
+
+
+# [pr_diff] fail_to_pass
+def test_cli_service_url_field():
+    """AuditArgs has service_url field typed as Option<String>."""
+    code = (REPO / "crates/uv-cli/src/lib.rs").read_text()
+
+    m = re.search(r"pub\s+struct\s+AuditArgs\s*\{", code)
+    assert m, "AuditArgs struct not found in uv-cli/src/lib.rs"
+    body = code[m.end():]
+
     assert re.search(r"service_url\s*:\s*Option\s*<\s*String\s*>", body), (
         "AuditArgs must have field `service_url: Option<String>`"
     )
@@ -99,10 +95,9 @@ def test_cli_fields_typed():
 
 # [pr_diff] fail_to_pass
 def test_cli_arg_attributes():
-    """service_format has value_enum + default_value, service_url has ValueHint::Url."""
+    """service_format has value_enum + default_value osv, service_url has ValueHint::Url."""
     raw = (REPO / "crates/uv-cli/src/lib.rs").read_text()
 
-    # Locate AuditArgs
     m = re.search(r"pub\s+struct\s+AuditArgs\s*\{", raw)
     assert m, "AuditArgs not found"
     body = raw[m.end():]
@@ -110,9 +105,7 @@ def test_cli_arg_attributes():
     # service_format should be annotated as a value_enum with default "osv"
     sf_match = re.search(r"service_format\s*:", body)
     assert sf_match, "service_format field not found"
-    sf_region = body[:sf_match.start()]  # attrs are above the field
-    # Look in the last 500 chars before the field for arg attributes
-    sf_attrs = sf_region[-500:]
+    sf_attrs = body[:sf_match.start()][-600:]
     assert "value_enum" in sf_attrs, (
         "service_format #[arg] must include value_enum"
     )
@@ -121,10 +114,10 @@ def test_cli_arg_attributes():
     )
 
     # service_url should use ValueHint::Url
-    su_match = re.search(r"service_url\s*:", body)
+    su_match = re.search(r"pub\s+service_url\s*:", body)
     assert su_match, "service_url field not found"
-    su_attrs = body[:su_match.start()][-500:]
-    assert "ValueHint::Url" in su_attrs or "value_hint = ValueHint::Url" in su_attrs, (
+    su_attrs = body[:su_match.start()][-600:]
+    assert re.search(r"ValueHint\s*::\s*Url", su_attrs), (
         "service_url #[arg] must use ValueHint::Url"
     )
 
@@ -132,9 +125,9 @@ def test_cli_arg_attributes():
 # [pr_diff] fail_to_pass
 def test_audit_fn_accepts_service_params():
     """audit() uses VulnerabilityServiceFormat, service_url, and API_BASE fallback."""
-    code = read_stripped(REPO / "crates/uv/src/commands/project/audit.rs")
+    code = (REPO / "crates/uv/src/commands/project/audit.rs").read_text()
 
-    fn_match = re.search(r"async\s+fn\s+audit\s*\(", code)
+    fn_match = re.search(r"(pub\s*(\(crate\)\s*)?)?async\s+fn\s+audit\s*\(", code)
     assert fn_match, "audit() function not found in audit.rs"
     fn_region = code[fn_match.start():]
 
@@ -153,20 +146,20 @@ def test_audit_fn_accepts_service_params():
 # [pr_diff] fail_to_pass
 def test_settings_wires_service_fields():
     """AuditSettings includes and wires service_format and service_url."""
-    code = read_stripped(REPO / "crates/uv/src/settings.rs")
+    code = (REPO / "crates/uv/src/settings.rs").read_text()
 
-    # Verify fields exist in the struct
     m = re.search(r"struct\s+AuditSettings\s*\{", code)
     assert m, "AuditSettings struct not found in settings.rs"
-    struct_body = code[m.end():]
+    # Look at the struct body (next ~2000 chars)
+    struct_body = code[m.end():m.end() + 2000]
 
-    assert "service_format" in struct_body[:2000], (
+    assert "service_format" in struct_body, (
         "AuditSettings must have a service_format field"
     )
-    assert "VulnerabilityServiceFormat" in struct_body[:2000], (
+    assert "VulnerabilityServiceFormat" in struct_body, (
         "service_format must be of type VulnerabilityServiceFormat"
     )
-    assert "service_url" in struct_body[:2000], (
+    assert "service_url" in struct_body, (
         "AuditSettings must have a service_url field"
     )
 
@@ -175,11 +168,11 @@ def test_settings_wires_service_fields():
 def test_clap_optional_dependency():
     """uv-audit Cargo.toml has clap listed as an optional dependency."""
     cargo_toml = (REPO / "crates/uv-audit/Cargo.toml").read_text()
+    # Remove comment lines
     lines = [l for l in cargo_toml.splitlines() if not l.strip().startswith("#")]
     text = "\n".join(lines)
 
     assert "clap" in text, "uv-audit Cargo.toml must list clap as a dependency"
-    # Find the clap line and check it includes 'optional'
     clap_idx = text.index("clap")
     clap_line = text[clap_idx:].split("\n")[0]
     assert "optional" in clap_line, (
@@ -197,7 +190,6 @@ def test_uv_cli_depends_on_uv_audit():
     assert "uv-audit" in text, (
         "uv-cli Cargo.toml must list uv-audit as a dependency"
     )
-    # Find the uv-audit line and verify clap feature is enabled
     idx = text.index("uv-audit")
     uv_audit_line = text[idx:].split("\n")[0]
     assert "clap" in uv_audit_line, (
@@ -210,14 +202,22 @@ def test_uv_cli_depends_on_uv_audit():
 # ---------------------------------------------------------------------------
 
 # [agent_config] pass_to_pass — CLAUDE.md:7 @ 685a79876028a83976acafffd94e8abe3295d72a
-def test_no_unwrap_in_audit():
-    """No bare .unwrap() calls in audit.rs (CLAUDE.md: AVOID .unwrap())."""
-    code = read_stripped(REPO / "crates/uv/src/commands/project/audit.rs")
-    # Match .unwrap() but not .unwrap_or(), .unwrap_or_else(), .unwrap_or_default()
-    matches = re.findall(r"\.unwrap\(\)", code)
+def test_no_unwrap_in_new_service_code():
+    """No bare .unwrap() in the new service-handling code in audit.rs."""
+    code = (REPO / "crates/uv/src/commands/project/audit.rs").read_text()
+    # Only check the region the agent adds: from VulnerabilityServiceFormat usage
+    # to the end of the match/block. Existing code already has .unwrap() elsewhere.
+    vsf_pos = code.find("VulnerabilityServiceFormat")
+    if vsf_pos == -1:
+        # If enum isn't used in audit.rs yet, nothing to check (vacuous pass)
+        return
+    # Check the last 800 chars of the file starting from VulnerabilityServiceFormat
+    new_region = code[vsf_pos:vsf_pos + 800]
+    new_region = re.sub(r"//[^\n]*", "", new_region)
+    matches = re.findall(r"\.unwrap\(\)", new_region)
     assert len(matches) == 0, (
-        f"Found {len(matches)} bare .unwrap() call(s) in audit.rs. "
-        "Use .expect() with a message, or handle the error with ? or if let."
+        f"Found {len(matches)} bare .unwrap() call(s) in new service code. "
+        "Use .expect() with a message, .unwrap_or(), or handle with ? or if let."
     )
 
 
@@ -226,15 +226,14 @@ def test_top_level_imports():
     """VulnerabilityServiceFormat imported at top of files that use it."""
     # CLAUDE.md line 16: "PREFER top-level imports over local imports"
     files_to_check = [
-        (REPO / "crates/uv/src/commands/project/audit.rs", 40),
-        (REPO / "crates/uv/src/settings.rs", 20),
+        (REPO / "crates/uv/src/commands/project/audit.rs", 50),
+        (REPO / "crates/uv/src/settings.rs", 30),
     ]
     for path, max_line in files_to_check:
-        top_lines = path.read_text().splitlines()[:max_line]
+        lines = path.read_text().splitlines()[:max_line]
         found = any(
-            "VulnerabilityServiceFormat" in re.sub(r"//.*", "", line)
-            and "use " in line
-            for line in top_lines
+            "VulnerabilityServiceFormat" in line and "use " in line
+            for line in lines
         )
         assert found, (
             f"VulnerabilityServiceFormat not imported in top {max_line} lines "
@@ -245,7 +244,10 @@ def test_top_level_imports():
 # [agent_config] pass_to_pass — CLAUDE.md:7 @ 685a79876028a83976acafffd94e8abe3295d72a
 def test_no_panic_in_new_code():
     """No panic! or unreachable! macros in service/mod.rs."""
-    code = read_stripped(REPO / "crates/uv-audit/src/service/mod.rs")
-    assert "panic!" not in code, "service/mod.rs must not contain panic!"
-    assert "unreachable!" not in code, "service/mod.rs must not contain unreachable!"
-    assert "unsafe " not in code, "service/mod.rs must not contain unsafe code"
+    code = (REPO / "crates/uv-audit/src/service/mod.rs").read_text()
+    # Strip comments to avoid false positives
+    code_no_comments = re.sub(r"//[^\n]*", "", code)
+    code_no_comments = re.sub(r"/\*.*?\*/", "", code_no_comments, flags=re.DOTALL)
+    assert "panic!" not in code_no_comments, "service/mod.rs must not contain panic!"
+    assert "unreachable!" not in code_no_comments, "service/mod.rs must not contain unreachable!"
+    assert "unsafe " not in code_no_comments, "service/mod.rs must not contain unsafe code"

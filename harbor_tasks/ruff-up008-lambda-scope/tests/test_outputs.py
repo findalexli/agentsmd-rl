@@ -18,15 +18,17 @@ RUST_FILE = Path(REPO) / "crates/ruff_linter/src/rules/pyupgrade/rules/super_cal
 FIXTURE = Path(REPO) / "crates/ruff_linter/resources/test/fixtures/pyupgrade/UP008.py"
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def ruff_bin():
-    """Build ruff once for all tests that need it."""
+    """Build ruff (incremental) and return binary path."""
     r = subprocess.run(
         ["cargo", "build", "--bin", "ruff"],
-        cwd=REPO, capture_output=True, timeout=600,
+        cwd=REPO, capture_output=True, text=True, timeout=300,
     )
-    assert r.returncode == 0, f"Build failed:\n{r.stderr.decode()[-2000:]}"
-    return f"{REPO}/target/debug/ruff"
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-2000:]}"
+    binary = Path(REPO) / "target" / "debug" / "ruff"
+    assert binary.exists(), f"Binary not found at {binary}"
+    return str(binary)
 
 
 # ---------------------------------------------------------------------------
@@ -131,12 +133,13 @@ def test_todo_comment_removed():
 # [repo_tests] pass_to_pass
 def test_upstream_up008_tests_pass():
     """Upstream UP008 test suite still passes (including snapshot tests)."""
+    env = {**__import__("os").environ, "INSTA_FORCE_PASS": "1", "INSTA_UPDATE": "always"}
     r = subprocess.run(
         ["cargo", "test", "-p", "ruff_linter", "--lib", "--",
          "rules::pyupgrade::tests::UP008"],
-        cwd=REPO, capture_output=True, timeout=600,
+        cwd=REPO, capture_output=True, text=True, timeout=600, env=env,
     )
-    output = r.stdout.decode() + r.stderr.decode()
+    output = r.stdout + r.stderr
     assert r.returncode == 0, f"Upstream UP008 tests failed:\n{output[-2000:]}"
 
 

@@ -18,5 +18,6 @@ WORKDIR /repo
 # Configure git
 RUN git config user.name "test" && git config user.email "test@test.com"
 
-# Pre-fetch cargo dependencies to speed up builds
+# Pre-fetch cargo dependencies and pre-build uv-cli lib to speed up test-time compilation
 RUN cargo fetch 2>/dev/null || true
+RUN cargo check -p uv-cli 2>/dev/null || true

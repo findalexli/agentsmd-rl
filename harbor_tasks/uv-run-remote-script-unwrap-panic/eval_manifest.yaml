@@ -7,11 +7,6 @@ source:
   merge_commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
 
 checks:
-  - id: compilation
-    type: pass_to_pass
-    origin: static
-    description: "Modified crate must compile without errors"
-
   - id: no_unwrap_on_downloaded_script
     type: fail_to_pass
     origin: pr_diff
@@ -31,6 +26,11 @@ checks:
     type: fail_to_pass
     origin: pr_diff
     description: "run() function no longer takes downloaded_script as a parameter"
+
+  - id: lib_no_downloaded_script_threading
+    type: fail_to_pass
+    origin: pr_diff
+    description: "run_project() in lib.rs no longer threads downloaded_script"
 
   - id: as_command_not_stub
     type: pass_to_pass

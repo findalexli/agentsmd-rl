@@ -28,12 +28,5 @@ RUN git clone --depth 1 https://github.com/microsoft/vscode.git && \
 
 WORKDIR /workspace/vscode
 
-# Install dependencies (minimized - only what's needed for TypeScript checking)
-RUN npm ci --ignore-scripts 2>&1 | tail -20 || npm install --legacy-peer-deps 2>&1 | tail -20
-
 # Create logs directory
 RUN mkdir -p /logs/verifier
-
-# Set environment
-ENV NODE_ENV=development
-ENV PYTHONPATH=/workspace/vscode

@@ -24,7 +24,8 @@ RUN pip install --no-cache-dir \
     tyro \
     annotated-types \
     pyyaml \
-    liger-kernel
+    liger-kernel \
+    loguru
 
 # Install pydantic-config from the same source the repo uses
 RUN pip install --no-cache-dir "pydantic-config @ git+https://github.com/samsja/pydantic_config.git@main"

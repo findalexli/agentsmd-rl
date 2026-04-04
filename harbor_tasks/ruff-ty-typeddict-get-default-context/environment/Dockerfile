@@ -1,4 +1,4 @@
-FROM rust:1.94-slim
+FROM rust:1.94-slim-bookworm
 
 RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     git curl ca-certificates build-essential tmux python3 pkg-config \
@@ -20,8 +20,10 @@ RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace/ruff
 
-# Pre-build ty binary to cache compilation artifacts
-# This makes incremental rebuilds after agent changes fast (~60-120s)
-RUN cargo build --bin ty 2>&1 | tail -5
+# Pre-fetch all dependencies so cargo builds are fast
+RUN cargo fetch
 
-# Copy test files
+# Pre-compile deps (warm incremental cache for ty_python_semantic crate)
+RUN cargo check -p ty_python_semantic 2>&1 || true
+
+ENV PYTHONDONTWRITEBYTECODE=1

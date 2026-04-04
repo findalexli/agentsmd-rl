@@ -3,57 +3,196 @@ Task: uv-remove-dep-comment-preservation
 Repo: astral-sh/uv @ 46c9bac182d64359cef45d51fd796b81b3736f8b
 PR:   18557
 
+Tests that `remove_dependency` preserves end-of-line TOML comments.
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
 import subprocess
-import tempfile
 from pathlib import Path
 
 REPO = "/repo"
-
+MUT_RS = Path(f"{REPO}/crates/uv-workspace/src/pyproject_mut.rs")
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Rust test harness — injected into pyproject_mut's #[cfg(test)] mod test
 # ---------------------------------------------------------------------------
 
-_uv_bin_cache = None
+_HARNESS_RUST = r'''
+    #[test]
+    fn harness_remove_last_preserves_comment() {
+        // Case 1: two deps, remove last — comment on first must survive
+        let toml = "[project]\ndependencies = [\n    \"iniconfig>=2.0.0\", # keep this note\n    \"typing-extensions>=4.0.0\",\n]\n";
+        let mut doc: DocumentMut = toml.parse().unwrap();
+        let deps = doc["project"]["dependencies"].as_array_mut().unwrap();
+        remove_dependency(&uv_normalize::PackageName::from_str("typing-extensions").unwrap(), deps);
+        let out = doc.to_string();
+        assert!(out.contains("# keep this note"), "Case1: comment lost:\n{out}");
+        assert!(!out.to_lowercase().contains("typing-extensions"), "Case1: dep not removed");
 
-def _build_uv():
-    """Build the uv binary once, return its path."""
-    global _uv_bin_cache
-    if _uv_bin_cache and Path(_uv_bin_cache).exists():
-        return _uv_bin_cache
-    uv_bin = Path(REPO) / "target" / "debug" / "uv"
-    if not uv_bin.exists():
+        // Case 2: three deps, remove last, comment on second-to-last
+        let toml2 = "[project]\ndependencies = [\n    \"a>=1.0\",\n    \"b>=2.0\", # b comment\n    \"c>=3.0\",\n]\n";
+        let mut doc2: DocumentMut = toml2.parse().unwrap();
+        let deps2 = doc2["project"]["dependencies"].as_array_mut().unwrap();
+        remove_dependency(&uv_normalize::PackageName::from_str("c").unwrap(), deps2);
+        let out2 = doc2.to_string();
+        assert!(out2.contains("# b comment"), "Case2: comment lost:\n{out2}");
+
+        // Case 3: different comment text
+        let toml3 = "[project]\ndependencies = [\n    \"anyio>=4.0.0\", # pinned for compat\n    \"flask>=3.0.0\",\n]\n";
+        let mut doc3: DocumentMut = toml3.parse().unwrap();
+        let deps3 = doc3["project"]["dependencies"].as_array_mut().unwrap();
+        remove_dependency(&uv_normalize::PackageName::from_str("flask").unwrap(), deps3);
+        let out3 = doc3.to_string();
+        assert!(out3.contains("# pinned for compat"), "Case3: comment lost:\n{out3}");
+    }
+
+    #[test]
+    fn harness_remove_middle_preserves_comment() {
+        // Case 1: remove middle of 3, comment on first
+        let toml = "[project]\ndependencies = [\n    \"a>=1.0\", # a note\n    \"b>=2.0\",\n    \"c>=3.0\",\n]\n";
+        let mut doc: DocumentMut = toml.parse().unwrap();
+        let deps = doc["project"]["dependencies"].as_array_mut().unwrap();
+        remove_dependency(&uv_normalize::PackageName::from_str("b").unwrap(), deps);
+        let out = doc.to_string();
+        assert!(out.contains("# a note"), "Comment lost:\n{out}");
+        assert!(out.contains("c>=3.0"), "c should remain");
+
+        // Case 2: comments on surrounding entries survive
+        let toml2 = "[project]\ndependencies = [\n    \"x>=1.0\", # x note\n    \"y>=2.0\",\n    \"z>=3.0\", # z note\n    \"w>=4.0\",\n]\n";
+        let mut doc2: DocumentMut = toml2.parse().unwrap();
+        let deps2 = doc2["project"]["dependencies"].as_array_mut().unwrap();
+        remove_dependency(&uv_normalize::PackageName::from_str("y").unwrap(), deps2);
+        let out2 = doc2.to_string();
+        assert!(out2.contains("# x note"), "x comment lost:\n{out2}");
+        assert!(out2.contains("# z note"), "z comment lost:\n{out2}");
+    }
+
+    #[test]
+    fn harness_remove_adjacent_duplicates_preserves_comment() {
+        // Case 1: two typing-extensions with markers, comment on preceding dep
+        let toml = "[project]\ndependencies = [\n    \"numpy>=2.4.3\", # numpy comment\n    \"typing-extensions>=4.0.0 ; python_version < '3.11'\",\n    \"typing-extensions>=4.0.0 ; python_version >= '3.11'\",\n    \"sniffio>=1.3.0\",\n]\n";
+        let mut doc: DocumentMut = toml.parse().unwrap();
+        let deps = doc["project"]["dependencies"].as_array_mut().unwrap();
+        remove_dependency(&uv_normalize::PackageName::from_str("typing-extensions").unwrap(), deps);
+        let out = doc.to_string();
+        assert!(!out.to_lowercase().contains("typing-extensions"), "Not removed");
+        assert!(out.contains("# numpy comment"), "Comment lost:\n{out}");
+        assert!(out.contains("sniffio"), "sniffio should remain");
+
+        // Case 2: no trailing dep after duplicates
+        let toml2 = "[project]\ndependencies = [\n    \"anyio>=4.0.0\", # anyio note\n    \"typing-extensions>=4.0.0 ; python_version < '3.11'\",\n    \"typing-extensions>=4.0.0 ; python_version >= '3.11'\",\n]\n";
+        let mut doc2: DocumentMut = toml2.parse().unwrap();
+        let deps2 = doc2["project"]["dependencies"].as_array_mut().unwrap();
+        remove_dependency(&uv_normalize::PackageName::from_str("typing-extensions").unwrap(), deps2);
+        let out2 = doc2.to_string();
+        assert!(out2.contains("# anyio note"), "anyio comment lost:\n{out2}");
+    }
+
+    #[test]
+    fn harness_sequential_removals() {
+        let toml = "[project]\ndependencies = [\n    \"a>=1.0\", # must survive\n    \"b>=2.0\",\n    \"c>=3.0\",\n]\n";
+        let mut doc: DocumentMut = toml.parse().unwrap();
+
+        // First removal: b
+        let deps = doc["project"]["dependencies"].as_array_mut().unwrap();
+        remove_dependency(&uv_normalize::PackageName::from_str("b").unwrap(), deps);
+        let after1 = doc.to_string();
+        assert!(after1.contains("# must survive"), "Comment lost after first removal:\n{after1}");
+
+        // Second removal: c
+        let deps = doc["project"]["dependencies"].as_array_mut().unwrap();
+        remove_dependency(&uv_normalize::PackageName::from_str("c").unwrap(), deps);
+        let after2 = doc.to_string();
+        assert!(after2.contains("# must survive"), "Comment lost after second removal:\n{after2}");
+    }
+
+    #[test]
+    fn harness_remove_only_dep() {
+        let toml = "[project]\ndependencies = [\n    \"typing-extensions>=4.0.0\",\n]\n";
+        let mut doc: DocumentMut = toml.parse().unwrap();
+        let deps = doc["project"]["dependencies"].as_array_mut().unwrap();
+        remove_dependency(&uv_normalize::PackageName::from_str("typing-extensions").unwrap(), deps);
+        let out = doc.to_string();
+        assert!(!out.to_lowercase().contains("typing-extensions"), "Not removed:\n{out}");
+        assert!(out.contains("dependencies"), "dependencies key should remain");
+    }
+'''
+
+# ---------------------------------------------------------------------------
+# Harness runner — inject tests, run cargo test, cache results
+# ---------------------------------------------------------------------------
+
+_cached_results = None
+
+
+def _run_harness():
+    """Inject Rust tests into pyproject_mut.rs test module, run cargo test, cache results."""
+    global _cached_results
+    if _cached_results is not None:
+        return _cached_results
+
+    original = MUT_RS.read_text()
+
+    # Add import for remove_dependency if not already present
+    import_line = ""
+    if "use super::remove_dependency" not in original:
+        import_line = "    use super::remove_dependency;\n"
+
+    # Find the #[cfg(test)] mod test { ... } block
+    mod_test_match = re.search(r"#\[cfg\(test\)\]\s*mod test \{", original)
+    assert mod_test_match, "Could not find #[cfg(test)] mod test block in pyproject_mut.rs"
+    insert_after = mod_test_match.end()
+
+    # Find the final closing brace of the file (end of mod test)
+    last_brace = original.rfind("}")
+    assert last_brace > insert_after, "Could not find closing brace of mod test"
+
+    modified = (
+        original[:insert_after]
+        + "\n" + import_line
+        + original[insert_after:last_brace]
+        + _HARNESS_RUST
+        + "\n}\n"
+    )
+
+    MUT_RS.write_text(modified)
+    try:
         r = subprocess.run(
-            ["cargo", "build", "-p", "uv"],
+            ["cargo", "test", "-p", "uv-workspace", "--lib", "--no-fail-fast"],
             cwd=REPO, capture_output=True, timeout=600,
         )
-        assert r.returncode == 0, f"cargo build failed:\n{r.stderr.decode()[-2000:]}"
-    _uv_bin_cache = str(uv_bin)
-    return _uv_bin_cache
+    finally:
+        MUT_RS.write_text(original)
+
+    # Parse test results from stdout + stderr
+    output = r.stdout.decode(errors="replace") + "\n" + r.stderr.decode(errors="replace")
+    tests = {}
+    for line in output.splitlines():
+        m = re.search(r"test\s+\S+::(\w+)\s+\.\.\.\s+(ok|FAILED|ignored)", line)
+        if m:
+            tests[m.group(1)] = m.group(2)
+
+    _cached_results = {"tests": tests, "output": output, "returncode": r.returncode}
+    return _cached_results
 
 
-def _run_uv_remove(uv_bin: str, pyproject_content: str, dep_name: str) -> str:
-    """Create a temp project, run `uv remove <dep> --no-sync`, return resulting pyproject.toml."""
-    with tempfile.TemporaryDirectory() as tmp:
-        pf = Path(tmp) / "pyproject.toml"
-        pf.write_text(pyproject_content)
-        r = subprocess.run(
-            [uv_bin, "remove", dep_name, "--no-sync"],
-            cwd=tmp, capture_output=True, timeout=60,
-        )
-        assert r.returncode == 0, (
-            f"uv remove failed:\n{r.stderr.decode()[-1000:]}"
-        )
-        return pf.read_text()
+def _assert_harness_test(test_name: str, msg: str):
+    """Assert that a specific injected Rust test passed."""
+    results = _run_harness()
+    assert results["tests"], (
+        f"No test results — compilation likely failed:\n"
+        f"{results['output'][-3000:]}"
+    )
+    assert test_name in results["tests"], (
+        f"Test '{test_name}' not found. Found: {list(results['tests'].keys())}"
+    )
+    assert results["tests"][test_name] == "ok", msg
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
+# Gates (pass_to_pass, static) — compilation
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -72,166 +211,38 @@ def test_cargo_check():
 
 # [pr_diff] fail_to_pass
 def test_remove_last_dep_preserves_prev_comment():
-    """Removing the last dep preserves end-of-line comment on the previous entry."""
-    uv = _build_uv()
-
-    # Case 1: two deps, remove last
-    result1 = _run_uv_remove(uv, """\
-[project]
-name = "t1"
-version = "0.1.0"
-requires-python = ">=3.12"
-dependencies = [
-    "iniconfig>=2.0.0", # keep this note
-    "typing-extensions>=4.0.0",
-]
-""", "typing-extensions")
-    assert "# keep this note" in result1, f"Comment lost (case 1):\n{result1}"
-    assert "typing-extensions" not in result1.lower()
-
-    # Case 2: three deps, remove last, comment on second-to-last
-    result2 = _run_uv_remove(uv, """\
-[project]
-name = "t2"
-version = "0.1.0"
-requires-python = ">=3.12"
-dependencies = [
-    "iniconfig>=2.0.0",
-    "sniffio>=1.3.0", # sniffio is important
-    "typing-extensions>=4.0.0",
-]
-""", "typing-extensions")
-    assert "# sniffio is important" in result2, f"Comment lost (case 2):\n{result2}"
-    assert "typing-extensions" not in result2.lower()
-
-    # Case 3: two deps, remove last, different comment text
-    result3 = _run_uv_remove(uv, """\
-[project]
-name = "t3"
-version = "0.1.0"
-requires-python = ">=3.12"
-dependencies = [
-    "anyio>=4.0.0", # pinned for compat
-    "requests>=2.32.0",
-]
-""", "requests")
-    assert "# pinned for compat" in result3, f"Comment lost (case 3):\n{result3}"
-    assert "requests" not in result3.lower()
+    """End-of-line comment on previous entry survives removal of last entry (3 inputs)."""
+    _assert_harness_test(
+        "harness_remove_last_preserves_comment",
+        "End-of-line comment lost when removing last dep",
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_remove_middle_dep_preserves_prev_comment():
-    """Removing a middle dep preserves end-of-line comment on the previous entry."""
-    uv = _build_uv()
-
-    # Case 1: remove middle of 3
-    result1 = _run_uv_remove(uv, """\
-[project]
-name = "t4"
-version = "0.1.0"
-requires-python = ">=3.12"
-dependencies = [
-    "iniconfig>=2.0.0", # iniconfig note
-    "typing-extensions>=4.0.0",
-    "sniffio>=1.3.0",
-]
-""", "typing-extensions")
-    assert "# iniconfig note" in result1, f"Comment lost:\n{result1}"
-    assert "typing-extensions" not in result1.lower()
-    assert "sniffio" in result1
-
-    # Case 2: remove middle of 4, comments on surrounding entries
-    result2 = _run_uv_remove(uv, """\
-[project]
-name = "t5"
-version = "0.1.0"
-requires-python = ">=3.12"
-dependencies = [
-    "iniconfig>=2.0.0", # first note
-    "typing-extensions>=4.0.0",
-    "sniffio>=1.3.0", # third note
-    "anyio>=4.0.0",
-]
-""", "typing-extensions")
-    assert "# first note" in result2, f"First comment lost:\n{result2}"
-    assert "# third note" in result2, f"Third comment lost:\n{result2}"
+    """End-of-line comment on previous entry survives removal of middle entry (2 inputs)."""
+    _assert_harness_test(
+        "harness_remove_middle_preserves_comment",
+        "End-of-line comment lost when removing middle dep",
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_remove_adjacent_duplicates_preserves_comment():
-    """Removing multiple adjacent matching deps preserves comment on preceding entry."""
-    uv = _build_uv()
-
-    # Case 1: two typing-extensions with markers, comment on iniconfig
-    result1 = _run_uv_remove(uv, """\
-[project]
-name = "t6"
-version = "0.1.0"
-requires-python = ">=3.12"
-dependencies = [
-    "iniconfig>=2.0.0", # comment on iniconfig
-    "typing-extensions>=4.0.0 ; python_version < '3.11'",
-    "typing-extensions>=4.0.0 ; python_version >= '3.11'",
-    "sniffio>=1.3.0",
-]
-""", "typing-extensions")
-    assert "typing-extensions" not in result1.lower()
-    assert "# comment on iniconfig" in result1, \
-        f"Comment on iniconfig lost after removing adjacent duplicates:\n{result1}"
-    assert "sniffio" in result1
-
-    # Case 2: two typing-extensions, comment on preceding, no trailing dep
-    result2 = _run_uv_remove(uv, """\
-[project]
-name = "t9"
-version = "0.1.0"
-requires-python = ">=3.12"
-dependencies = [
-    "anyio>=4.0.0", # anyio is needed
-    "typing-extensions>=4.0.0 ; python_version < '3.11'",
-    "typing-extensions>=4.0.0 ; python_version >= '3.11'",
-]
-""", "typing-extensions")
-    assert "typing-extensions" not in result2.lower()
-    assert "# anyio is needed" in result2, \
-        f"Comment on anyio lost after removing adjacent duplicates:\n{result2}"
+    """Removing multiple adjacent matching deps preserves comment on preceding entry (2 inputs)."""
+    _assert_harness_test(
+        "harness_remove_adjacent_duplicates_preserves_comment",
+        "Comment lost when removing adjacent duplicate deps",
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_comment_preserved_across_sequential_removals():
     """Comments survive when multiple deps are removed in sequence."""
-    uv = _build_uv()
-
-    with tempfile.TemporaryDirectory() as tmp:
-        pf = Path(tmp) / "pyproject.toml"
-        pf.write_text("""\
-[project]
-name = "t7"
-version = "0.1.0"
-requires-python = ">=3.12"
-dependencies = [
-    "iniconfig>=2.0.0", # must survive both removals
-    "typing-extensions>=4.0.0",
-    "sniffio>=1.3.0",
-]
-""")
-        # First removal
-        r1 = subprocess.run(
-            [uv, "remove", "typing-extensions", "--no-sync"],
-            cwd=tmp, capture_output=True, timeout=60,
-        )
-        after_first = pf.read_text()
-        assert "# must survive both removals" in after_first, \
-            f"Comment lost after first removal:\n{after_first}"
-
-        # Second removal
-        r2 = subprocess.run(
-            [uv, "remove", "sniffio", "--no-sync"],
-            cwd=tmp, capture_output=True, timeout=60,
-        )
-        after_second = pf.read_text()
-        assert "# must survive both removals" in after_second, \
-            f"Comment lost after second removal:\n{after_second}"
+    _assert_harness_test(
+        "harness_sequential_removals",
+        "Comment lost after sequential dep removals",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -240,31 +251,27 @@ dependencies = [
 
 # [repo_tests] pass_to_pass
 def test_existing_unit_tests_pass():
-    """Existing unit tests in uv-workspace must not regress."""
-    r = subprocess.run(
-        ["cargo", "test", "-p", "uv-workspace", "--",
-         "split_specifiers", "reformat_array"],
-        cwd=REPO, capture_output=True, timeout=300,
+    """Existing uv-workspace unit tests still pass."""
+    results = _run_harness()
+    existing = [
+        name for name in results["tests"]
+        if not name.startswith("harness_")
+    ]
+    assert existing, (
+        f"No existing tests found — compilation may have failed:\n"
+        f"{results['output'][-3000:]}"
     )
-    assert r.returncode == 0, \
-        f"Existing tests failed:\n{r.stdout.decode()[-1000:]}\n{r.stderr.decode()[-1000:]}"
+    failed = [name for name in existing if results["tests"][name] == "FAILED"]
+    assert not failed, f"Existing tests failed: {failed}"
 
 
 # [static] pass_to_pass
 def test_remove_only_dep_basic():
-    """Removing the sole dependency leaves dependencies key with empty array."""
-    uv = _build_uv()
-    result = _run_uv_remove(uv, """\
-[project]
-name = "t8"
-version = "0.1.0"
-requires-python = ">=3.12"
-dependencies = [
-    "typing-extensions>=4.0.0",
-]
-""", "typing-extensions")
-    assert "typing-extensions" not in result.lower()
-    assert "dependencies" in result
+    """Removing the sole dependency works and leaves dependencies key."""
+    _assert_harness_test(
+        "harness_remove_only_dep",
+        "Failed to remove the only dependency",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -275,7 +282,7 @@ dependencies = [
 def test_no_panic_unwrap_unreachable():
     """remove_dependency avoids panic!/unreachable!/.unwrap() per CLAUDE.md line 7."""
     # AST-only because: Rust code cannot be imported into Python
-    src = Path(f"{REPO}/crates/uv-workspace/src/pyproject_mut.rs").read_text()
+    src = MUT_RS.read_text()
     match = re.search(
         r"fn remove_dependency\b.*?\n(.*?)(?=\nfn |\Z)",
         src, re.DOTALL,

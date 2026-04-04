@@ -4,7 +4,8 @@ set -euo pipefail
 cd /workspace/opencode
 
 # Check if already applied — look for the image-preserving pattern in handleSlashSelect
-if grep -q '\.\.\.images' packages/app/src/components/prompt-input.tsx 2>/dev/null; then
+# Must check specifically within handleSlashSelect, not other functions that already use ...images
+if grep -q 'DEFAULT_PROMPT, \.\.\.images' packages/app/src/components/prompt-input.tsx 2>/dev/null; then
   echo "Patch already applied"
   exit 0
 fi

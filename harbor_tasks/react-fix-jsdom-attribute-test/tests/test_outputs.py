@@ -173,3 +173,22 @@ def test_other_attribute_tests_pass():
     assert r.returncode == 0, (
         f"ReactDOMAttribute test suite failed:\n{combined[-3000:]}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Config-derived (agent_config) — rules from .claude/skills/
+# ---------------------------------------------------------------------------
+
+# [agent_config] fail_to_pass — .claude/skills/feature-flags/SKILL.md:79 @ 90b2dd44
+def test_no_string_gate_syntax():
+    """gate() calls must use arrow-function syntax, not string syntax.
+
+    Config rule: "It's gate(flags => flags.name), not gate('name')"
+    Base code violates this with gate('enableTrustedTypesIntegration').
+    """
+    src = Path(ATTR_TEST).read_text()
+    string_gates = re.findall(r"""gate\(\s*['"]""", src)
+    assert len(string_gates) == 0, (
+        "gate() must use arrow function syntax: gate(flags => flags.name), "
+        f"not gate('name'). Found {len(string_gates)} string-style gate() call(s)"
+    )

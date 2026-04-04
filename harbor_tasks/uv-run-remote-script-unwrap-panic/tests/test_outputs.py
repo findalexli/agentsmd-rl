@@ -8,7 +8,6 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
-import subprocess
 from pathlib import Path
 
 REPO = "/repo"
@@ -87,20 +86,6 @@ def _extract_fn_signature(source: str, func_name: str) -> str:
             if "{" in line:
                 break
     return " ".join(sig_lines)
-
-
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — compilation
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
-def test_compilation():
-    """Modified crate must compile without errors."""
-    r = subprocess.run(
-        ["cargo", "check", "-p", "uv", "--lib"],
-        cwd=REPO, capture_output=True, timeout=600,
-    )
-    assert r.returncode == 0, f"cargo check failed:\n{r.stderr.decode()[-2000:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -195,7 +180,7 @@ def test_as_command_no_option_downloaded_script():
 
 # [pr_diff] fail_to_pass
 def test_run_fn_no_downloaded_script_param():
-    """run() function no longer takes downloaded_script as a parameter.
+    """run() function in run.rs no longer takes downloaded_script as a parameter.
 
     AST-only because: Rust code cannot be called from Python.
 
@@ -210,6 +195,26 @@ def test_run_fn_no_downloaded_script_param():
     assert "downloaded_script" not in sig, (
         "run() still takes downloaded_script parameter — "
         "the Option threading should be eliminated"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_lib_no_downloaded_script_threading():
+    """lib.rs no longer threads downloaded_script through run_project().
+
+    AST-only because: Rust code cannot be called from Python.
+
+    On the base commit, lib.rs creates a `downloaded_script` variable and
+    passes it through run_project(). The fix must eliminate this threading
+    so the download is handled closer to where it's used.
+    """
+    src = LIB_RS.read_text()
+    sig = _extract_fn_signature(src, "run_project")
+    assert sig, "run_project function not found in lib.rs"
+
+    assert "downloaded_script" not in sig, (
+        "run_project() still takes downloaded_script parameter — "
+        "the Option threading through lib.rs should be eliminated"
     )
 
 

@@ -15,5 +15,4 @@ RUN git init . && \
     git fetch --depth=1 origin 87950df2cce7a219a617a1efc4807d8075986e5b && \
     git checkout FETCH_HEAD
 
-# Pre-fetch and compile dependencies for the target crate
-RUN cargo check -p uv-platform 2>/dev/null || true
+# rustc is available from the base image for standalone compilation tests

@@ -10,7 +10,6 @@ AST-only because: ReactFlightReplyClient.js and ReactFlightClient.js use
 Flow type annotations that node cannot execute directly without stripping.
 """
 
-import subprocess
 from pathlib import Path
 
 REPO = "/workspace/react"
@@ -85,19 +84,28 @@ def test_modelroot_jsx_root_check():
 
 # [pr_diff] fail_to_pass
 def test_modelroot_nulled_after_emit():
-    """modelRoot must be set to null after emitting the temporary reference marker.
+    """modelRoot must be set to null after emitting the temporary reference marker
+    in the REACT_ELEMENT_TYPE handler (the new block added by the fix).
 
     Without this, a nested visit to the same root value could re-emit the marker,
     causing double-processing of the JSX root.
     """
     src = Path(REPLY_CLIENT).read_text()
     lines = src.splitlines()
-    modelroot_check_line = next(
-        (i for i, l in enumerate(lines) if "modelRoot === value" in l), None
+    # Find the specific line that combines temporaryReferences with modelRoot === value
+    # (this pattern is unique to the fix — base code has modelRoot === value but not
+    # combined with temporaryReferences on the same line or adjacent guard)
+    combined_line = next(
+        (i for i, l in enumerate(lines)
+         if "temporaryReferences" in l and "modelRoot === value" in l),
+        None,
     )
-    assert modelroot_check_line is not None, "modelRoot === value check not found"
-    # modelRoot = null must appear within 5 lines after the check
-    window = "\n".join(lines[modelroot_check_line:modelroot_check_line + 6])
+    assert combined_line is not None, (
+        "No line combining temporaryReferences and modelRoot === value found — "
+        "the REACT_ELEMENT_TYPE root handler is missing"
+    )
+    # modelRoot = null must appear within 5 lines after the combined check
+    window = "\n".join(lines[combined_line:combined_line + 6])
     assert "modelRoot = null" in window, (
         "modelRoot is not set to null after emitting the marker — "
         f"context around check:\n{window}"

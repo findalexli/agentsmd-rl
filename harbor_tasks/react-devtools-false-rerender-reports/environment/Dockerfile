@@ -7,31 +7,29 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     build-essential \
     python3 \
-    && rm -rf /var/lib/apt-get
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Pre-install pytest so test.sh doesn't need to install at runtime
+RUN pip3 install --break-system-packages pytest pytest-json-ctrf
 
 # Set workdir
 WORKDIR /workspace
 
-# Base commit (parent of merge commit)
+# Base commit
 ENV BASE_COMMIT=eab523e2a99583703b13536670dfdd8a3b1e26e0
 
 # Clone React at base commit (shallow clone for speed)
-RUN git clone --depth=100 https://github.com/facebook/react.git react && \
+RUN git init react && \
     cd react && \
+    git remote add origin https://github.com/facebook/react.git && \
     git fetch --depth=1 origin ${BASE_COMMIT} && \
-    git checkout ${BASE_COMMIT}
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/react
 
-# The test file exists at packages/react-devtools-shared/src/__tests__/profilingCharts-test.js
-# We need to install dependencies for react-devtools-shared
-# React uses yarn workspaces - install top-level first
-
-# Install dependencies
+# Install dependencies (React uses yarn workspaces)
 RUN yarn install --frozen-lockfile
-
-# Build required packages (some tests need built artifacts)
-RUN yarn build react-devtools-shared --type=NODE
 
 # Configure git for any potential git operations
 RUN git config --global user.email "agent@example.com" && \
@@ -41,7 +39,7 @@ RUN git config --global user.email "agent@example.com" && \
 RUN mkdir -p /logs/verifier
 
 # Set environment
-ENV NODE_ENV=test
+ENV NODE_ENV=development
 ENV CI=true
 
 WORKDIR /workspace/react/packages/react-devtools-shared

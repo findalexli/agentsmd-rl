@@ -25,7 +25,17 @@ checks:
   - id: container_scroll_and_misc_properties_added
     type: fail_to_pass
     origin: pr_diff
-    description: "container, containIntrinsicSize, scrollMargin, scrollPadding, fontSynthesis, offset must be present with correct longhands"
+    description: "container, containIntrinsicSize, scrollMargin/Padding (incl. block/inline), fontSynthesis, offset must be present with correct longhands"
+
+  - id: additional_shorthand_properties_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "colorAdjust, overscrollBehavior, pageBreak*, textWrap, verticalAlign, whiteSpace must be present with correct longhands"
+
+  - id: existing_entries_expanded
+    type: fail_to_pass
+    origin: pr_diff
+    description: "textDecoration gains textDecorationThickness, transition gains transitionBehavior"
 
   - id: source_comment_updated_to_firefox
     type: fail_to_pass
@@ -35,16 +45,21 @@ checks:
   - id: existing_shorthands_preserved
     type: pass_to_pass
     origin: static
-    description: "Pre-existing shorthand properties (animation, background, border, flex, font, margin, padding, transition) must still be present with non-empty longhand lists"
+    description: "Pre-existing shorthand properties (animation, background, border, flex, font, margin, padding, transition, etc.) must still be present with non-empty longhand lists"
+
+  - id: shorthand_count_minimum
+    type: pass_to_pass
+    origin: static
+    description: "The mapping must have at least 50 entries to prevent stub/empty implementations"
 
 rubric:
   - rule: "Run yarn prettier to fix formatting before committing changes."
     source:
       path: ".claude/skills/fix/SKILL.md"
-      lines: "9"
+      lines: "10"
       commit: "12ba7d81297abac61012a36f20d4a9d22b9210d9"
   - rule: "Run yarn linc to check for remaining lint issues before committing."
     source:
       path: ".claude/skills/fix/SKILL.md"
-      lines: "10"
+      lines: "11"
       commit: "12ba7d81297abac61012a36f20d4a9d22b9210d9"

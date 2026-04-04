@@ -1,19 +1,20 @@
 #!/bin/bash
 set -euo pipefail
 
-cd /workspace/react/compiler/packages/babel-plugin-react-compiler
+PKGDIR=/workspace/react/compiler/packages/babel-plugin-react-compiler
 
 # Check if already applied
-if ! grep -q "retryErrors" src/Entrypoint/Program.ts 2>/dev/null; then
+if ! grep -q "retryErrors" "$PKGDIR/src/Entrypoint/Program.ts" 2>/dev/null; then
     echo "Patch already applied or not needed"
     exit 0
 fi
 
+cd /workspace/react
 git apply - <<'PATCH'
-diff --git a/src/Babel/BabelPlugin.ts b/src/Babel/BabelPlugin.ts
+diff --git a/compiler/packages/babel-plugin-react-compiler/src/Babel/BabelPlugin.ts b/compiler/packages/babel-plugin-react-compiler/src/Babel/BabelPlugin.ts
 index ed74f4664953..6764e12f025c 100644
---- a/src/Babel/BabelPlugin.ts
-+++ b/src/Babel/BabelPlugin.ts
+--- a/compiler/packages/babel-plugin-react-compiler/src/Babel/BabelPlugin.ts
++++ b/compiler/packages/babel-plugin-react-compiler/src/Babel/BabelPlugin.ts
 @@ -11,7 +11,6 @@ import {
    injectReanimatedFlag,
    pipelineUsesReanimatedPlugin,
@@ -43,10 +44,10 @@ index ed74f4664953..6764e12f025c 100644
              if (ENABLE_REACT_COMPILER_TIMINGS === true) {
                performance.mark(`${filename}:end`, {
                  detail: 'BabelPlugin:Program:end',
-diff --git a/src/Entrypoint/Imports.ts b/src/Entrypoint/Imports.ts
+diff --git a/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Imports.ts b/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Imports.ts
 index 2fef4cfabe59..15796d77a70e 100644
---- a/src/Entrypoint/Imports.ts
-+++ b/src/Entrypoint/Imports.ts
+--- a/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Imports.ts
++++ b/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Imports.ts
 @@ -19,7 +19,7 @@ import {getOrInsertWith} from '../Utils/utils';
  import {ExternalFunction, isHookName} from '../HIR/Environment';
  import {Err, Ok, Result} from '../Utils/Result';
@@ -68,10 +69,10 @@ index 2fef4cfabe59..15796d77a70e 100644
    constructor({
      program,
      suppressions,
-diff --git a/src/Entrypoint/Options.ts b/src/Entrypoint/Options.ts
+diff --git a/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Options.ts b/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Options.ts
 index 2e5c9313a935..e7818f82afba 100644
---- a/src/Entrypoint/Options.ts
-+++ b/src/Entrypoint/Options.ts
+--- a/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Options.ts
++++ b/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Options.ts
 @@ -228,8 +228,6 @@ const CompilerOutputModeSchema = z.enum([
    'ssr',
    // Build optimized for the client, with auto memoization
@@ -81,10 +82,10 @@ index 2e5c9313a935..e7818f82afba 100644
    // Lint mode, the output is unused but validations should run
    'lint',
  ]);
-diff --git a/src/Entrypoint/Program.ts b/src/Entrypoint/Program.ts
+diff --git a/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Program.ts b/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Program.ts
 index de36ad218f7e..038cf60385bd 100644
---- a/src/Entrypoint/Program.ts
-+++ b/src/Entrypoint/Program.ts
+--- a/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Program.ts
++++ b/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Program.ts
 @@ -350,9 +350,6 @@ function isFilePartOfSources(
    return false;
  }
@@ -139,10 +140,10 @@ index de36ad218f7e..038cf60385bd 100644
  }
 
  type CompileSource = {
-diff --git a/src/Entrypoint/ValidateNoUntransformedReferences.ts b/src/Entrypoint/ValidateNoUntransformedReferences.ts
+diff --git a/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/ValidateNoUntransformedReferences.ts b/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/ValidateNoUntransformedReferences.ts
 deleted file mode 100644
 index f612e1db070d..000000000000
---- a/src/Entrypoint/ValidateNoUntransformedReferences.ts
+--- a/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/ValidateNoUntransformedReferences.ts
 +++ /dev/null
 @@ -1,162 +0,0 @@
 -/**
@@ -300,17 +301,17 @@ index f612e1db070d..000000000000
 -              t.ImportNamespaceSpecifier | t.ImportDefaultSpecifier
 -            >,
 -            importSpecifierChecks,
--            state: TraversalState,
+-            traversalState,
 -          );
 -        }
 -      }
 -    },
 -  });
 -}
-diff --git a/src/HIR/Environment.ts b/src/HIR/Environment.ts
+diff --git a/compiler/packages/babel-plugin-react-compiler/src/HIR/Environment.ts b/compiler/packages/babel-plugin-react-compiler/src/HIR/Environment.ts
 index 80caee2caf43..ba224d352506 100644
---- a/src/HIR/Environment.ts
-+++ b/src/HIR/Environment.ts
+--- a/compiler/packages/babel-plugin-react-compiler/src/HIR/Environment.ts
++++ b/compiler/packages/babel-plugin-react-compiler/src/HIR/Environment.ts
 @@ -629,9 +629,6 @@ export class Environment {
        case 'ssr': {
          return true;

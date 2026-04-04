@@ -9,7 +9,21 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import re
+import sys
+import types
 from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Import chain fix: prime_rl.trainer.models.__init__.py imports heavy model
+# classes (NemotronH, GLM-MoE, etc.) that pull in GPU-only deps (flash_attn,
+# mamba_ssm, triton). Register a lightweight namespace package to bypass it.
+# ---------------------------------------------------------------------------
+for _pkg in ("prime_rl.trainer.models",):
+    if _pkg not in sys.modules:
+        _mod = types.ModuleType(_pkg)
+        _mod.__path__ = [f"/repo/src/{_pkg.replace('.', '/')}"]
+        _mod.__package__ = _pkg
+        sys.modules[_pkg] = _mod
 
 import torch
 import torch.nn as nn
@@ -18,7 +32,7 @@ REPO = "/repo"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) -- syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -39,7 +53,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) -- core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -57,7 +71,7 @@ def test_quack_fused_ce_class_and_interface():
     assert QuackFusedCrossEntropyOutputLinear.IGNORE_INDEX == FUSED_CE_IGNORE_INDEX
 
     # labels=None path returns logits on CPU (no quack needed)
-    for in_f, out_f in [(16, 32), (64, 128)]:
+    for in_f, out_f in [(16, 32), (64, 128), (8, 16)]:
         layer = QuackFusedCrossEntropyOutputLinear(in_features=in_f, out_features=out_f)
         hidden = torch.randn(2, 4, in_f)
         out = layer(hidden, labels=None)
@@ -149,7 +163,7 @@ def test_gemma_softcapping_rejects_quack():
             self.lm_head = nn.Linear(16, 32, bias=False)
 
     # Different softcapping values should all raise
-    for softcap_val in [30.0, 50.0]:
+    for softcap_val in [30.0, 50.0, 1.0]:
         model = FakeModel()
         model.config.final_logit_softcapping = softcap_val
         with pytest.raises(ValueError, match=r"(?i)(softcapping|gemma|quack)"):
@@ -168,7 +182,7 @@ def test_rmsnorm_quack_fallback_cpu():
     assert _get_quack_rmsnorm() is None, "Should return None on CPU"
 
     # RMSNorm forward with CPU tensors using torch fallback
-    for hidden_size in [16, 64]:
+    for hidden_size in [16, 64, 128]:
         config = RMSNormConfig(hidden_size=hidden_size, eps=1e-5)
         norm = RMSNorm(config)
         x = torch.randn(2, 4, hidden_size)
@@ -188,39 +202,46 @@ def test_contiguous_grad_identity():
     y = _contiguous_grad(x)
     assert torch.equal(x, y), "Should be identity in forward"
 
-    # With requires_grad=False — should return same object (no-op)
+    # With requires_grad=False -- should return same object (no-op)
     x2 = torch.randn(3, 4, requires_grad=False)
     y2 = _contiguous_grad(x2)
     assert torch.equal(x2, y2)
     assert y2 is x2, "Should return same tensor when requires_grad=False"
 
+    # Verify with different shapes
+    x3 = torch.randn(5, 6, 7, requires_grad=True)
+    y3 = _contiguous_grad(x3)
+    assert torch.equal(x3, y3)
+
 
 # [pr_diff] fail_to_pass
 def test_config_accepts_quack_fused():
     """SFT config loss_impl field accepts 'quack_fused' alongside existing values."""
-    import typing
-    import typing_extensions
+    # AST-only because: SFTConfig import chain pulls in pydantic-config + many
+    # config submodules; parsing the Literal annotation is reliable and direct.
+    source = Path(f"{REPO}/src/prime_rl/configs/sft.py").read_text()
+    tree = ast.parse(source)
 
-    from prime_rl.configs.sft import SFTConfig
+    # Find the Literal annotation for loss_impl
+    literal_values = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Subscript):
+            # Look for Literal[...] subscripts
+            if isinstance(node.value, ast.Name) and node.value.id == "Literal":
+                if isinstance(node.slice, ast.Tuple):
+                    for elt in node.slice.elts:
+                        if isinstance(elt, ast.Constant):
+                            literal_values.add(elt.value)
 
-    field_info = SFTConfig.model_fields.get("loss_impl")
-    assert field_info is not None, "SFTConfig must have a loss_impl field"
-
-    ann = field_info.annotation
-    origin = getattr(ann, "__origin__", None) or getattr(typing, "get_origin", lambda x: None)(ann)
-    args = getattr(ann, "__args__", None) or getattr(typing, "get_args", lambda x: ())(ann)
-    # Handle Annotated[Literal[...], Field(...)]
-    if origin is typing_extensions.Annotated or origin is typing.Annotated:
-        inner = args[0] if args else ann
-        args = getattr(inner, "__args__", ())
-
-    assert "quack_fused" in args, f"quack_fused not in allowed Literal values: {args}"
+    assert "quack_fused" in literal_values, \
+        f"'quack_fused' not in Literal values found: {literal_values}"
     for val in ("liger", "torch", "liger_fused"):
-        assert val in args, f"{val} should still be allowed: {args}"
+        assert val in literal_values, \
+            f"'{val}' should still be in Literal values: {literal_values}"
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — regression tests
+# Pass-to-pass (repo_tests) -- regression tests
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -246,12 +267,13 @@ def test_existing_lm_head_cpu():
 
 
 # ---------------------------------------------------------------------------
-# Structural (pr_diff) — packaging check (no behavioral way to test this)
+# Structural (pr_diff) -- packaging check (no behavioral way to test this)
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_pyproject_quack_extra():
     """pyproject.toml has quack optional extra with quack-kernels>=0.3.3."""
+    # AST-only because: TOML packaging metadata, no executable code
     content = Path(f"{REPO}/pyproject.toml").read_text()
     match = re.search(r"quack-kernels\s*[>~=!]+=?\s*([\d.]+)", content)
     assert match, "quack-kernels dependency with version constraint not found in pyproject.toml"
@@ -260,12 +282,14 @@ def test_pyproject_quack_extra():
 
 
 # ---------------------------------------------------------------------------
-# Structural (pr_diff) — train.py wiring (AST; can't call train() on CPU)
+# Structural (pr_diff) -- train.py wiring (AST; can't call train() on CPU)
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_train_wiring_quack():
     """train.py references FUSED_CE_IGNORE_INDEX and handles quack_fused in dispatch."""
+    # AST-only because: train.py imports torch.distributed, torchtitan, and
+    # other GPU-only modules that aren't available in the test environment
     source = Path(f"{REPO}/src/prime_rl/trainer/sft/train.py").read_text()
     tree = ast.parse(source)
 

@@ -2,8 +2,8 @@
 set -euo pipefail
 cd /workspace/react
 
-# Idempotent: skip if already applied
-grep -q 'modelRoot === value' packages/react-client/src/ReactFlightReplyClient.js 2>/dev/null && exit 0
+# Idempotent: skip if already applied (Object.isFrozen is unique to the fix)
+grep -q 'Object.isFrozen' packages/react-client/src/ReactFlightClient.js 2>/dev/null && exit 0
 
 git apply - <<'PATCH'
 diff --git a/packages/react-client/src/ReactFlightClient.js b/packages/react-client/src/ReactFlightClient.js

@@ -11,6 +11,10 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
+# Configure git user early (needed for snapshot commit)
+RUN git config --global user.email "test@example.com" && \
+    git config --global user.name "Test User"
+
 # Set up workspace
 WORKDIR /workspace/react
 
@@ -27,10 +31,6 @@ RUN git init && \
 
 # Install dependencies (runs yarn install in the monorepo)
 RUN yarn install --frozen-lockfile --network-timeout 100000
-
-# Configure git user for any potential git operations
-RUN git config --global user.email "test@example.com" && \
-    git config --global user.name "Test User"
 
 # Set up logging directory
 RUN mkdir -p /logs/verifier

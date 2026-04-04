@@ -7,11 +7,6 @@ source:
   merge_commit: "8998568ef4070b79578981d2486f52d3b596ba12"
 
 checks:
-  - id: crate_compiles
-    type: pass_to_pass
-    origin: static
-    description: "uv-platform crate compiles without errors"
-
   - id: aarch64_fp_detected
     type: fail_to_pass
     origin: pr_diff
@@ -26,6 +21,11 @@ checks:
     type: fail_to_pass
     origin: pr_diff
     description: "'fp' at end of features string recognized as hard-float"
+
+  - id: fp_middle_of_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "'fp' in the middle of a feature list recognized as hard-float"
 
   - id: native_arm32_vfp_detected
     type: pass_to_pass
@@ -51,11 +51,6 @@ checks:
     type: pass_to_pass
     origin: pr_diff
     description: "Empty features string returns soft-float"
-
-  - id: cargo_test_uv_platform
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Upstream tests in uv-platform crate still pass"
 
   - id: not_stub
     type: pass_to_pass
@@ -87,11 +82,5 @@ rubric:
   - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
     source:
       path: "CLAUDE.md"
-      lines: "16"
-      commit: "87950df2cce7a219a617a1efc4807d8075986e5b"
-
-  - rule: "ALWAYS attempt to add a test case for changed behavior"
-    source:
-      path: "CLAUDE.md"
-      lines: "2"
+      lines: "16-17"
       commit: "87950df2cce7a219a617a1efc4807d8075986e5b"

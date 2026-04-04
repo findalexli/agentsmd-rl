@@ -4,8 +4,9 @@ set -euo pipefail
 # Apply the fix for React Flight CSP eval function name restoration
 # This is the gold patch from PR #35650
 
-# Check if already applied
-if grep -q "Object.defineProperty" /workspace/react/packages/react-client/src/ReactFlightClient.js 2>/dev/null; then
+# Check if already applied — look for the specific comment added by the patch
+# (generic Object.defineProperty exists many times in the base file)
+if grep -q "doesn't work here since this will produce" /workspace/react/packages/react-client/src/ReactFlightClient.js 2>/dev/null; then
     echo "Patch already applied, skipping"
     exit 0
 fi

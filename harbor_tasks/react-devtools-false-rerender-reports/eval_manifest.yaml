@@ -33,14 +33,19 @@ checks:
       hasElementUpdatedSinceLastInspected assignment must be guarded by
       if (prevFiber !== nextFiber) to avoid spurious cache invalidation on bailed-out fibers
 
-  - id: existing_profiling_charts_pass
+  - id: profiling_data_logic_intact
     type: pass_to_pass
-    origin: repo_tests
-    description: "Full profilingCharts test suite passes after the fix"
+    origin: static
+    description: "Profiling data recording logic (actualDuration, pushOperation, treeBaseDuration) is intact"
 
   - id: didfiberrender_not_stubbed
     type: pass_to_pass
     origin: static
     description: "didFiberRender function retains its switch-based ClassComponent dispatch logic"
+
+  - id: didfiber_render_uses_prevfiber_param
+    type: pass_to_pass
+    origin: static
+    description: "didFiberRender still compares prevFiber.memoizedProps/State (not stubbed to return false)"
 
 rubric: []

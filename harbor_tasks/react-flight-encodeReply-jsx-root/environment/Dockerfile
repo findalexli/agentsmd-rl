@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN mkdir -p /workspace /logs/verifier
 
+RUN git config --global user.email "agent@test.com" && \
+    git config --global user.name "Test Agent"
+
 WORKDIR /workspace
 
 # Base commit: parent of merge commit b07aa7d6
@@ -30,8 +33,5 @@ RUN cd /workspace/react && \
     yarn install --frozen-lockfile 2>/dev/null || npm install 2>/dev/null || true
 
 ENV NODE_ENV=development
-
-RUN git config --global user.email "agent@test.com" && \
-    git config --global user.name "Test Agent"
 
 WORKDIR /workspace/react

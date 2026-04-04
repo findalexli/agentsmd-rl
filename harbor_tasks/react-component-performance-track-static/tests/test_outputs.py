@@ -126,10 +126,22 @@ def test_performance_issue_reporting_intact():
     assert "enablePerformanceIssueReporting" in content, (
         "enablePerformanceIssueReporting is missing from native-fb.js"
     )
-    dependent_lines = [
-        line for line in content.splitlines()
-        if "enablePerformanceIssueReporting" in line and "enableComponentPerformanceTrack" in line
+    # The declaration spans two lines, so check that enableComponentPerformanceTrack
+    # appears near enablePerformanceIssueReporting in the source
+    lines = content.splitlines()
+    perf_issue_indices = [
+        i for i, line in enumerate(lines)
+        if "enablePerformanceIssueReporting" in line
     ]
-    assert dependent_lines, (
+    assert perf_issue_indices, "enablePerformanceIssueReporting not found"
+    # Check that enableComponentPerformanceTrack appears within 2 lines of any
+    # enablePerformanceIssueReporting reference (covers multi-line declarations)
+    found = False
+    for idx in perf_issue_indices:
+        nearby = "\n".join(lines[max(0, idx - 1):idx + 3])
+        if "enableComponentPerformanceTrack" in nearby:
+            found = True
+            break
+    assert found, (
         "enablePerformanceIssueReporting no longer references enableComponentPerformanceTrack in native-fb.js"
     )

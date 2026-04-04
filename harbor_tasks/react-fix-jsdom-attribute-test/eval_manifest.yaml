@@ -42,6 +42,15 @@ checks:
     origin: repo_tests
     description: "Full ReactDOMAttribute test suite still passes (regression guard)"
 
+  - id: no_string_gate_syntax
+    type: fail_to_pass
+    origin: agent_config
+    description: "gate() calls use arrow-function syntax, not string syntax"
+    source:
+      path: ".claude/skills/feature-flags/SKILL.md"
+      lines: "79"
+      commit: "90b2dd442cc05048b2a6ade5020c463ab0499eca"
+
 rubric:
   - rule: "Ensure tests pass across relevant release channels (source, www, experimental, stable)."
     source:
@@ -53,4 +62,10 @@ rubric:
     source:
       path: ".claude/skills/feature-flags/SKILL.md"
       lines: "31-33"
+      commit: "90b2dd442cc05048b2a6ade5020c463ab0499eca"
+
+  - rule: "New flags must be added to ALL fork files, not just the main one."
+    source:
+      path: ".claude/skills/feature-flags/SKILL.md"
+      lines: "78"
       commit: "90b2dd442cc05048b2a6ade5020c463ab0499eca"

@@ -1,8 +1,11 @@
-FROM rust:1.86-slim
+FROM rust:1.86-slim-bookworm
 
 RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
-    git curl ca-certificates build-essential tmux pkg-config python3 \
+    git curl ca-certificates build-essential tmux pkg-config python3 python3-pip python3-venv \
     && rm -rf /var/lib/apt/lists/*
+
+# Pre-install pytest so tests don't need network at runtime
+RUN pip3 install --break-system-packages pytest pytest-json-ctrf
 
 # Clone uv at the base commit (before the fix)
 RUN git init /repo && \

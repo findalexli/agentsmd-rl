@@ -18,5 +18,7 @@ WORKDIR /repo
 # Configure git
 RUN git config user.name "test" && git config user.email "test@test.com"
 
-# Pre-fetch cargo dependencies to speed up builds
+# Pre-fetch and pre-compile dependencies to speed up test runs.
+# This compiles the test binary so only source changes trigger recompilation.
 RUN cargo fetch 2>/dev/null || true
+RUN cargo test -p uv-distribution-types --no-run 2>/dev/null || true

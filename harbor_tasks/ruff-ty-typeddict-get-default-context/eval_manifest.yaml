@@ -22,10 +22,15 @@ checks:
     origin: pr_diff
     description: "Union TypedDict .get() with dict default also infers field type correctly"
 
-  - id: get_nonrequired_list_default
+  - id: get_nonrequired_nested_typeddict_default
     type: fail_to_pass
     origin: pr_diff
-    description: "cfg.get('tags', []) on non-required list field infers list[str], not union"
+    description: "p.get('nested', {'inner': 0}) on non-required nested TypedDict uses field type as context"
+
+  - id: get_nonrequired_list_default
+    type: pass_to_pass
+    origin: pr_diff
+    description: "cfg.get('tags', []) on non-required list field infers list[str] correctly"
 
   - id: wrong_default_type_still_errors
     type: pass_to_pass

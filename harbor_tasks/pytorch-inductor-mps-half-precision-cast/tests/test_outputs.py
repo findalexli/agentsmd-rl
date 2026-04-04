@@ -74,8 +74,12 @@ def _build_where_callable():
         "OpVarT": object,
         "__builtins__": __builtins__,
     }
-    exec(compile(vtm_src, "<vtm>", "exec"), ns)
-    exec(compile(where_src, "<where>", "exec"), ns)
+    # The source file uses `from __future__ import annotations` + TYPE_CHECKING
+    # imports (Union, OpVarT). Prepend the future import so annotations stay as
+    # strings and don't trigger NameError during exec.
+    future = "from __future__ import annotations\n"
+    exec(compile(future + vtm_src, "<vtm>", "exec"), ns)
+    exec(compile(future + where_src, "<where>", "exec"), ns)
     return ns["where"], ns["value_to_metal"]
 
 

@@ -18,9 +18,6 @@ RUN git init /workspace/zeroclaw && \
     git fetch --depth=1 origin 3e02e68ec0e26b2c43593c40d660e2298c8cb332 && \
     git checkout FETCH_HEAD
 
-# Pre-compile in test mode so cargo test is fast during verification
-RUN cd /workspace/zeroclaw && cargo test --no-run 2>&1 || true
-
 
 
 RUN git config --global user.email "agent@test.com" && \

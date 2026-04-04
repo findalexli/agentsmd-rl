@@ -94,7 +94,8 @@ function createCtx(images, overrides) {
 }
 
 // --- Run scenario from argv ---
-const scenario = process.argv[2];
+// Node 22 with -e: argv is [node, arg1, ...] (no [eval] entry)
+const scenario = process.argv[1];
 let out = {};
 
 if (scenario === "custom_images") {
