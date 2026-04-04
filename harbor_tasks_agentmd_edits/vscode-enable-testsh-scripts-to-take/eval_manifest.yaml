@@ -9,15 +9,30 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified JS file must parse without syntax errors
-- id: help_text_shows_file_positional_usage
-  type: fail_to_pass
-  origin: pr_diff
-  description: Help text indicates bare file paths can be passed as positional args
 - id: existing_run_flag_preserved
   type: pass_to_pass
-  origin: static
-  description: The existing --run flag handling is still present in minimist config
-    and help
+  origin: pr_diff
+  description: Explicit --run flag must still route to args.run
+- id: non_ts_bare_args_not_converted
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-.ts/.js bare arguments stay in positional args, not converted to --run
+- id: bare_ts_file_becomes_run_arg
+  type: fail_to_pass
+  origin: pr_diff
+  description: A bare .ts file passed as positional arg is converted to a --run value
+- id: multiple_bare_files_all_converted
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple bare .ts/.js files all end up in args.run
+- id: bare_files_merge_with_explicit_run
+  type: fail_to_pass
+  origin: pr_diff
+  description: Bare files merge with an explicit --run flag rather than replacing it
+- id: help_text_mentions_positional_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: Help text documents that bare file paths work as positional args
 rubric:
 - rule: The SKILL.md update is consistent with the style of existing documentation
     sections

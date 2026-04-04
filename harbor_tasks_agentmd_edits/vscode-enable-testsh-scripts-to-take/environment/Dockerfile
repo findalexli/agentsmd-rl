@@ -24,5 +24,8 @@ WORKDIR /workspace/vscode
 RUN git config --global user.email "agent@test" && \
     git config --global user.name "Agent"
 
+# Install minimist for test harness (evaluates arg parsing from index.js)
+RUN mkdir -p /opt/test-deps && cd /opt/test-deps && npm init -y --silent && npm install --silent minimist
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier
