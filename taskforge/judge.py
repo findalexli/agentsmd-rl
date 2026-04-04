@@ -26,20 +26,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+from taskforge.config import CONFIG_RE, extract_config_hunks, extract_added_lines
+
 try:
     import yaml
 except ImportError:
     yaml = None
-
-
-# ── Config file patterns (same as scout) ──────────────────────────────────
-
-CONFIG_PATTERNS = [
-    r"README\.md", r"CLAUDE\.md", r"AGENTS\.md", r"SKILL\.md",
-    r"CONTRIBUTING\.md", r"CONVENTIONS\.md", r"CHANGELOG\.md",
-    r"copilot-instructions\.md", r"\.cursorrules",
-]
-CONFIG_RE = re.compile("|".join(CONFIG_PATTERNS), re.IGNORECASE)
 
 
 # ── Rubric loading ────────────────────────────────────────────────────────
@@ -99,40 +91,6 @@ def parse_rubric(path: str) -> list[dict]:
 
 
 # ── Agent file reading ────────────────────────────────────────────────────
-
-def extract_config_hunks(diff_text: str) -> dict[str, str]:
-    """Extract config file hunks from a unified diff.
-
-    Returns {filepath: hunk_text} for each config file modified.
-    Same logic used to parse both the gold patch and the agent's diff.
-    """
-    hunks: dict[str, str] = {}
-    current_file = None
-    current_lines: list[str] = []
-
-    for line in diff_text.split("\n"):
-        if line.startswith("diff --git"):
-            if current_file and CONFIG_RE.search(current_file):
-                hunks[current_file] = "\n".join(current_lines)
-            match = re.match(r"diff --git a/(.*?) b/(.*)", line)
-            current_file = match.group(2) if match else None
-            current_lines = [line]
-        else:
-            current_lines.append(line)
-
-    if current_file and CONFIG_RE.search(current_file):
-        hunks[current_file] = "\n".join(current_lines)
-
-    return hunks
-
-
-def extract_added_lines(hunk: str) -> str:
-    """Get just the added lines from a diff hunk."""
-    return "\n".join(
-        line[1:] for line in hunk.split("\n")
-        if line.startswith("+") and not line.startswith("+++")
-    ).strip()
-
 
 def get_diff(repo_dir: str) -> str:
     """Get the agent's changes as a unified diff."""

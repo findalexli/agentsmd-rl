@@ -137,7 +137,7 @@ async def run_one(
                 await proc.wait()
                 result["status"] = "timeout"
                 print(f"  [{datetime.now().strftime('%H:%M:%S')}] TIMEOUT {task}")
-                json.dump(result, open(log_file, "w"), indent=2)
+                log_file.write_text(json.dumps(result, indent=2))
                 return result
 
             stdout_text = stdout.decode("utf-8", errors="replace")
@@ -172,7 +172,7 @@ async def run_one(
             print(f"  [{datetime.now().strftime('%H:%M:%S')}] ERROR {task}: {e}")
 
         result["finished_at"] = datetime.now().isoformat()
-        json.dump(result, open(log_file, "w"), indent=2)
+        log_file.write_text(json.dumps(result, indent=2))
         return result
 
 

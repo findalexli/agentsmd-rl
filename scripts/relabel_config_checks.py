@@ -6,17 +6,15 @@ and updates the corresponding check's origin in eval_manifest.yaml.
 """
 
 import re
+import sys
 import yaml
 from pathlib import Path
 
-TASK_DIR = Path("harbor_tasks_agentmd_edits")
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-CONFIG_FILES = [
-    "README.md", "CLAUDE.md", "AGENTS.md", "SKILL.md",
-    "CONTRIBUTING.md", "CONVENTIONS.md", "copilot-instructions.md",
-    ".cursorrules",
-]
-CONFIG_RE = re.compile("|".join(re.escape(f) for f in CONFIG_FILES), re.IGNORECASE)
+from taskforge.config import CONFIG_RE
+
+TASK_DIR = Path("harbor_tasks_agentmd_edits")
 
 
 def get_config_test_ids(test_content: str) -> set[str]:

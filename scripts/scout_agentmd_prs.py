@@ -22,83 +22,21 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
-import subprocess
 import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(ROOT))
 
-# Agent config file patterns (case-insensitive matching)
-CONFIG_PATTERNS = [
-    r"CLAUDE\.md$",
-    r"AGENTS\.md$",
-    r"SKILL\.md$",
-    r"\.cursorrules$",
-    r"\.cursor/rules",
-    r"copilot-instructions\.md$",
-    r"\.windsurfrules$",
-    r"\.clinerules$",
-    r"\.continuerules$",
-    r"\.cody/",
-    r"CONVENTIONS\.md$",
-    r"CONTRIBUTING\.md$",
-    # README.md at any level
-    r"README\.md$",
-]
-CONFIG_RE = re.compile("|".join(CONFIG_PATTERNS), re.IGNORECASE)
-
-# Files that are purely docs/config (not "code")
-NON_CODE_EXTENSIONS = frozenset({
-    ".md", ".rst", ".txt", ".toml", ".cfg", ".ini",
-    ".yml", ".yaml", ".json", ".lock", ".sum",
-})
-NON_CODE_PREFIXES = ("docs/", "doc/", ".github/workflows/", ".github/ISSUE_TEMPLATE/")
+from taskforge.config import is_config_file, is_code_file, gh_json
 
 # Skip labels
 SKIP_LABELS = {
     "dependencies", "documentation", "docs", "release", "ci", "chore",
     "bot", "automated", "renovate", "dependabot", "skip-ci",
 }
-
-
-def is_config_file(path: str) -> bool:
-    """Check if a file path matches an agent config pattern."""
-    return bool(CONFIG_RE.search(path))
-
-
-def is_code_file(path: str) -> bool:
-    """Check if a file is a real code file (not docs/config/lockfile)."""
-    if is_config_file(path):
-        return False
-    ext = "." + path.rsplit(".", 1)[-1] if "." in path else ""
-    if ext.lower() in NON_CODE_EXTENSIONS:
-        return False
-    if any(path.startswith(pfx) for pfx in NON_CODE_PREFIXES):
-        return False
-    return True
-
-
-def gh_json(cmd: list[str], retries: int = 3) -> list | dict:
-    """Run a gh command and parse JSON output, with retries for rate limits."""
-    for attempt in range(retries):
-        result = subprocess.run(
-            ["gh"] + cmd,
-            capture_output=True, text=True, timeout=120,
-        )
-        if result.returncode == 0:
-            return json.loads(result.stdout)
-        if "rate limit" in result.stderr.lower() or "abuse" in result.stderr.lower():
-            wait = 30 * (attempt + 1)
-            print(f"  Rate limited, waiting {wait}s...", file=sys.stderr)
-            time.sleep(wait)
-            continue
-        if result.stderr:
-            print(f"  gh error: {result.stderr[:200]}", file=sys.stderr)
-        return []
-    return []
 
 
 def get_config_file_changes(repo: str, pr_number: int) -> list[dict]:

@@ -9,8 +9,13 @@ Also fixes eval_manifest.yaml to remove the placeholder check.
 """
 
 import re
+import sys
 import yaml
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from taskforge.config import CONFIG_RE
 
 TASK_DIR = Path("harbor_tasks_agentmd_edits")
 
@@ -23,14 +28,6 @@ PLACEHOLDER_RE = re.compile(
     r'    raise NotImplementedError.*?\n',
     re.DOTALL,
 )
-
-# Check if a test function reads a config file
-CONFIG_FILE_PATTERNS = [
-    r'README\.md', r'CLAUDE\.md', r'AGENTS\.md', r'SKILL\.md',
-    r'CONTRIBUTING\.md', r'CONVENTIONS\.md', r'copilot-instructions\.md',
-    r'\.cursorrules',
-]
-CONFIG_RE = re.compile('|'.join(CONFIG_FILE_PATTERNS), re.IGNORECASE)
 
 
 def has_real_config_tests(test_content: str) -> bool:

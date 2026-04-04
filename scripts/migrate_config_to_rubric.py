@@ -14,19 +14,15 @@ Config edit quality = LLM-judged rubric (separate signal).
 from __future__ import annotations
 
 import re
+import sys
 import yaml
 from pathlib import Path
 
-TASK_DIR = Path("harbor_tasks_agentmd_edits")
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Config file patterns for splitting diffs
-CONFIG_PATTERNS = [
-    r"README\.md", r"CLAUDE\.md", r"AGENTS\.md", r"SKILL\.md",
-    r"CONTRIBUTING\.md", r"CONVENTIONS\.md", r"CHANGELOG\.md",
-    r"copilot-instructions\.md", r"\.cursorrules", r"\.cursor/rules",
-    r"\.mdc$",
-]
-CONFIG_RE = re.compile("|".join(CONFIG_PATTERNS), re.IGNORECASE)
+from taskforge.config import CONFIG_RE, extract_config_hunks, extract_added_lines
+
+TASK_DIR = Path("harbor_tasks_agentmd_edits")
 
 
 def extract_config_diffs(solve_sh: str) -> dict[str, str]:
@@ -46,41 +42,7 @@ def extract_config_diffs(solve_sh: str) -> dict[str, str]:
         return {}
 
     patch_text = heredoc_match.group(2)
-
-    # Split into per-file hunks
-    file_hunks: dict[str, str] = {}
-    current_file = None
-    current_lines: list[str] = []
-
-    for line in patch_text.split("\n"):
-        if line.startswith("diff --git"):
-            # Save previous hunk
-            if current_file and CONFIG_RE.search(current_file):
-                file_hunks[current_file] = "\n".join(current_lines)
-            # Parse new file path
-            match = re.match(r"diff --git a/(.*?) b/(.*)", line)
-            if match:
-                current_file = match.group(2)
-            else:
-                current_file = None
-            current_lines = [line]
-        else:
-            current_lines.append(line)
-
-    # Don't forget last hunk
-    if current_file and CONFIG_RE.search(current_file):
-        file_hunks[current_file] = "\n".join(current_lines)
-
-    return file_hunks
-
-
-def extract_added_lines(diff_hunk: str) -> str:
-    """Extract just the added lines from a diff hunk (for rubric context)."""
-    added = []
-    for line in diff_hunk.split("\n"):
-        if line.startswith("+") and not line.startswith("+++"):
-            added.append(line[1:])  # Strip the leading +
-    return "\n".join(added).strip()
+    return extract_config_hunks(patch_text)
 
 
 def remove_test_function(test_content: str, func_name: str) -> str:
