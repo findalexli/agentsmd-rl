@@ -268,3 +268,154 @@ Using E2B sandboxes (~5x faster than local Docker):
 - Fix: batch Dockerfile fixes + re-validate
 
 ### Target: 394 + ~40 salvaged = ~430+ passing
+
+---
+
+## Phase 12: AgentMD-Edits Dataset (2026-04-03, overnight + morning)
+
+### Goal
+Collect ~400 tasks where PRs update BOTH functional code AND agent config files (CLAUDE.md, AGENTS.md, README.md, SKILL.md, etc.). The idea: train/evaluate agents to make the right edits to those files alongside code changes.
+
+### New requirement
+Each task should test whether the agent:
+1. Makes the correct code fix (binary, pytest)
+2. Makes the correct config/documentation update (LLM-judged, rubric)
+
+### Phase 12.1: Scouting — DONE
+- Scouted 76 repos (49 existing + 27 new from GitHub code search)
+- 500-1000 PRs per repo, 6-month lookback
+- Filter: 2-15 files, 10-800 lines, both code + config changed
+- **Bottleneck: only ~5% of PRs touch both code AND config files**
+- Result: 242 candidate PRs after quality filter
+
+**Quality filter pipeline:**
+1. `scout_agentmd_prs.py` — heuristic: file patterns, size, date, labels
+2. `filter_agentmd_prs.py` — fetch diffs, classify config edits, remove trivial
+3. LLM scaffold filter — Claude skips unsuitable PRs (merge commits, config-only)
+
+**Skip reasons the LLM caught that programmatic filters missed:**
+- "chore: sync master" PRs (merge commits with incidental config changes)
+- Config-only PRs disguised as code changes (just formatting/import reorder)
+- PRs where config change is a version bump hidden in a large diff
+
+### Phase 12.2: Batch Scaffold — DONE (5.7h, ~$1200)
+- 242 PRs → 194 success, 48 LLM-skipped
+- Opus model, $6/task budget, 4 workers, 900s timeout
+- **0% budget exceeded, 0% timeout** — all failures are intentional skips
+
+**Key finding: template placeholder leak**
+The task template has a `test_config_rule()` with `NotImplementedError`. 80% of scaffolds left this placeholder instead of replacing it with real config tests. The LLM wrote real config tests elsewhere but didn't remove the placeholder.
+- Fix: `fix_config_placeholders.py` removes them
+- Fix: `relabel_config_checks.py` relabels config tests to `origin: config_edit`
+
+### Phase 12.3: Architecture Decision — Config Tests → Rubric
+
+**Problem discovered:** Gold patches contain byte-exact markdown diffs. An LLM agent would write semantically equivalent but differently worded content → binary test fails.
+
+Analysis of 60+ config test functions:
+| Pattern | % of tests | LLM pass rate |
+|---------|-----------|---------------|
+| Exact string match | 51% | 40-60% |
+| Keyword AND | 25% | 65-75% |
+| Keyword OR | 17% | 80-90% |
+| Structural | 7% | 65-75% |
+
+**Decision: Option A — move config edits to LLM-judged rubric**
+- Binary reward = code tests only (pytest)
+- Config edit quality = LLM judge, separate signal
+- Gold patch stays complete (code + config)
+
+**Implementation:**
+1. `migrate_config_to_rubric.py` — moves `config_edit` checks from `checks[]` → `rubric[]`
+2. Gold config diffs auto-extracted from solve.sh using `extract_config_hunks()` → stored in rubric `reference` field
+3. `judge.py` updated — extracts agent's config hunks from their diff using same parser, compares side-by-side with gold reference semantically
+4. `RubricRule` model updated with optional `reference: str` field
+
+**Judge prompt (core question):**
+> "Here's what the gold solution added to AGENTS.md. Here's what the agent added. Are they semantically equivalent?"
+
+### Phase 12.4: Validation Results
+
+**After migration (code-only binary):**
+
+| Status | Count | % |
+|--------|-------|---|
+| pass | 95 | 33.8% |
+| gold=0 (code tests) | 91 | 32.4% |
+| build error | 22 | 7.8% |
+| solve.sh error | 29 | 10.3% |
+| other error | 44 | 15.7% |
+| **Total** | **281** | |
+
+**Why lower than initial 132?**
+- 40 tasks had ALL tests as config tests → 0 tests after migration → config-only, should be excluded
+- Remaining 196 tasks with code tests: 88 passing (44.9%)
+- Some regressions from E2B template caching (stale templates with old test files)
+
+### Phase 12.5: Pipeline Pitfalls Identified
+
+**From claude -p research:**
+1. **Not using `--bare`** — our pipeline loads CLAUDE.md, skills, hooks, auto-memory on every invocation. This wastes tokens (~1.3M cache reads/task) and can cause inconsistent behavior.
+2. **No `--max-turns`** — if a scaffold loops, it burns budget silently.
+3. **No `--no-session-persistence`** — each invocation saves a session, accumulating disk usage.
+4. **Auto memory pollution** — 100+ runs on same repo pollute `MEMORY.md` with stale notes.
+5. **Template placeholder not removed** — 80% of scaffolds left `NotImplementedError` placeholder.
+
+**Recommended flags for batch operations:**
+```bash
+claude --bare -p "prompt" \
+  --model opus \
+  --max-budget-usd 6.0 \
+  --max-turns 10 \
+  --no-session-persistence \
+  --allowedTools "Read,Edit,Bash,Write,Glob,Grep" \
+  --output-format json
+```
+
+**From E2B validation analysis:**
+- 49% of failures are "silent" (tests don't validate gold patch correctly)
+- 24% are sandbox cache 404s (infrastructure, not task quality)
+- 9% are stale patches in high-activity repos
+- **No budget or timeout issues in scaffolding** (0% exceeded)
+
+### Phase 12.6: Wave 2 Deep Scout — DONE
+- 12 high-yield repos, 1000 PRs, 12 months → 46 new unique PRs
+- 25 scaffolded, 21 LLM-skipped
+- Total: 281 tasks (95 passing code-only binary)
+
+### Current Scoreboard (2026-04-03 11:00)
+
+**harbor_tasks (original):**
+| Status | Count | % |
+|--------|-------|---|
+| pass | 394 | 71.6% |
+| fail | 74 | 13.5% |
+| fail_build | 64 | 11.6% |
+| other | 18 | 3.3% |
+| **Total** | **550** | |
+
+**harbor_tasks_agentmd_edits (new):**
+| Status | Count | % |
+|--------|-------|---|
+| pass (code-only) | 95 | 33.8% |
+| fail (code tests) | 91 | 32.4% |
+| errors | 95 | 33.8% |
+| **Total** | **281** | |
+| rubric rules | 1223 | (428 with gold ref) |
+
+### Lessons Learned
+
+1. **PRs touching both code + config are rare (~5%)** — need very deep scouting (1000+ PRs/repo) or many repos
+2. **LLM scaffold filter is valuable** — catches 24% of bad PRs that programmatic filters miss
+3. **Exact string matching is unfair for NL output** — must use LLM judge for config edits
+4. **Template placeholders leak** — always post-process to remove unfilled templates
+5. **`claude -p` should use `--bare`** for batch ops — saves tokens, avoids auto-memory pollution
+6. **Config-only tasks exist** — ~17% of agentmd PRs have no meaningful code change, just config updates. These need to be excluded or the task redefined.
+7. **Same diff parser for gold and agent** — `extract_config_hunks()` applied to both ensures fair comparison
+
+### Next Steps
+- [ ] Fix 40 config-only tasks (add code tests or exclude)
+- [ ] Fix 91 gold=0 tasks (re-scaffold with tighter prompt)
+- [ ] Apply `--bare` flag to batch_scaffold_agentmd.py
+- [ ] Target: 200+ passing agentmd tasks
+- [ ] Investigate silent test failures (tests too permissive)
