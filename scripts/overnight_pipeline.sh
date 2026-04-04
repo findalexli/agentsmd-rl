@@ -20,8 +20,7 @@ echo "  Strategy: scout $SCOUT_PER_REPO/repo → filter → scaffold → audit"
 echo "============================================================"
 
 # ──────────────────────────────────────────────────────────────
-# Phase 0: Audit the 86 existing unaudited tasks FIRST
-# (these are already scaffolded, just need audit)
+# Phase 0: Audit the existing unaudited tasks FIRST
 # ──────────────────────────────────────────────────────────────
 echo ""
 echo "=== Phase 0: Audit existing unaudited tasks via Kimi ==="
@@ -49,7 +48,7 @@ if [ -n "$UNAUDITED" ]; then
     echo "Unaudited tasks: $UNAUDITED_COUNT"
 
     python -m taskforge.proxy --model "$MODEL" -- \
-        python scripts/run_pipeline.py audit-tests \
+        python -m taskforge.pipeline audit-tests \
         --tasks "$UNAUDITED" \
         --workers "$WORKERS" \
         --timeout "$AUDIT_TIMEOUT" || echo "  (some audit failures, continuing)"
@@ -58,11 +57,11 @@ else
 fi
 
 # ──────────────────────────────────────────────────────────────
-# Phase 1: Scout PRs from 49 new repos (wide net)
+# Phase 1: Scout PRs (wide net)
 # ──────────────────────────────────────────────────────────────
 echo ""
-echo "=== Phase 1: Scout PRs from 49 new repos ($SCOUT_PER_REPO per repo) ==="
-python scripts/scout_prs.py \
+echo "=== Phase 1: Scout PRs ($SCOUT_PER_REPO per repo) ==="
+python -m taskforge.scout scout \
     --repos-file scouted_repos.jsonl \
     --output scouted_prs_new.jsonl \
     --limit "$SCOUT_PER_REPO"
@@ -75,7 +74,7 @@ echo "Scouted: $SCOUTED PRs"
 # ──────────────────────────────────────────────────────────────
 echo ""
 echo "=== Phase 2: Pre-filter ==="
-python scripts/prefilter_prs.py \
+python -m taskforge.scout filter \
     --input scouted_prs_new.jsonl \
     --output filtered_prs_new.jsonl
 
@@ -88,10 +87,9 @@ echo "After filter: $FILTERED PRs"
 echo ""
 echo "=== Phase 3: Scaffold new tasks via Kimi ==="
 echo "  Input: $FILTERED candidates"
-echo "  Kimi will reject unsuitable PRs during scaffold (~30-40% rejection)"
 
 python -m taskforge.proxy --model "$MODEL" -- \
-    python scripts/batch_scaffold.py \
+    python -m taskforge.pipeline scaffold-from-prs \
     --input filtered_prs_new.jsonl \
     --workers "$WORKERS" \
     --timeout "$SCAFFOLD_TIMEOUT" \
@@ -106,7 +104,7 @@ echo "Total tasks on disk: $TOTAL_TASKS"
 # ──────────────────────────────────────────────────────────────
 echo ""
 echo "=== Phase 4: Lint ==="
-python scripts/lint_tasks.py --severity critical
+python -m taskforge.lint --severity critical
 
 # ──────────────────────────────────────────────────────────────
 # Phase 5: Audit newly scaffolded tasks via Kimi
@@ -137,7 +135,7 @@ if [ -n "$NEW_UNAUDITED" ]; then
     echo "New unaudited tasks: $NEW_COUNT"
 
     python -m taskforge.proxy --model "$MODEL" -- \
-        python scripts/run_pipeline.py audit-tests \
+        python -m taskforge.pipeline audit-tests \
         --tasks "$NEW_UNAUDITED" \
         --workers "$WORKERS" \
         --timeout "$AUDIT_TIMEOUT" || echo "  (some audit failures, continuing)"

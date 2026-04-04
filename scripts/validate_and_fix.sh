@@ -19,7 +19,7 @@ echo "============================================================"
 # ──────────────────────────────────────────────────────────────
 # Step 1: Wait for running audit to finish
 # ──────────────────────────────────────────────────────────────
-AUDIT_PID=$(pgrep -f "run_pipeline.py audit" || true)
+AUDIT_PID=$(pgrep -f "taskforge.pipeline audit" || true)
 if [ -n "$AUDIT_PID" ]; then
     echo ""
     echo "=== Step 1: Waiting for audit (PID $AUDIT_PID) to finish ==="
@@ -39,7 +39,7 @@ fi
 # ──────────────────────────────────────────────────────────────
 echo ""
 echo "=== Step 2: Re-lint all tasks ==="
-python scripts/lint_tasks.py --severity critical 2>&1 | tail -8
+python -m taskforge.lint --severity critical 2>&1 | tail -8
 
 # ──────────────────────────────────────────────────────────────
 # Step 3: Docker oracle validation in batches

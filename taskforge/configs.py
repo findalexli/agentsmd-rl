@@ -1,16 +1,21 @@
-#!/usr/bin/env python3
-"""Pre-fetch all agent config files for each task at its exact base commit.
+"""Pre-fetch agent config files for harbor tasks at their exact base commits.
 
-Outputs one markdown file per task at repo_configs/{task_name}.md containing
-the full content of every agent config file found at the task's base commit.
+Writes one markdown file per task at harbor_tasks/{task}/agent_configs.md
+containing the full content of every agent config file found at the base commit.
 
 Usage:
-    python scripts/fetch_configs.py                    # all tasks
-    python scripts/fetch_configs.py --tasks "areal-*"  # glob filter
-    python scripts/fetch_configs.py --workers 8         # parallel fetches
+    python -m taskforge.configs                       # all tasks
+    python -m taskforge.configs --tasks "areal-*"     # glob filter
+    python -m taskforge.configs --workers 8            # parallel fetches
+    python -m taskforge.configs --force                # re-fetch cached
+    python -m taskforge.configs --task-dir harbor_tasks_agentmd_edits
 """
 
+from __future__ import annotations
+
 import argparse
+import base64
+import fnmatch
 import json
 import subprocess
 import sys
@@ -19,24 +24,16 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
-METADATA = ROOT / "task_metadata.jsonl"
-OUTPUT_DIR = None  # Written to harbor_tasks/{task}/agent_configs.md
-HARBOR = ROOT / "harbor_tasks"
 
-# Patterns to search for in the git tree
-CONFIG_PATTERN = (
-    r"CLAUDE\.md|AGENTS\.md|SKILL\.md|"
-    r"\.cursorrules|\.cursor/rules|"
-    r"copilot-instructions\.md|"
-    r"\.windsurfrules|\.clinerules|\.continuerules|"
-    r"\.cody|CONVENTIONS\.md"
-)
-
-# README.md — only fetch root + directories touched by the PR
-README_PATTERN = r"README\.md"
+CONFIG_NAMES = {
+    "CLAUDE.md", "AGENTS.md", "SKILL.md", ".cursorrules",
+    ".windsurfrules", ".clinerules", ".continuerules",
+    "copilot-instructions.md", "CONVENTIONS.md",
+}
+CONFIG_DIR_PREFIXES = (".cursor/rules/", ".claude/skills/", ".claude/commands/", ".cody/")
 
 
-def gh_api(endpoint: str, jq: str = "", retries: int = 3) -> str:
+def _gh_api(endpoint: str, jq: str = "", retries: int = 3) -> str:
     cmd = ["gh", "api", endpoint]
     if jq:
         cmd += ["--jq", jq]
@@ -45,7 +42,6 @@ def gh_api(endpoint: str, jq: str = "", retries: int = 3) -> str:
         if r.returncode == 0:
             return r.stdout.strip()
         if "rate limit" in r.stderr.lower():
-            # Wait for rate limit reset
             try:
                 reset_r = subprocess.run(
                     ["gh", "api", "rate_limit", "--jq", ".rate.reset"],
@@ -62,28 +58,27 @@ def gh_api(endpoint: str, jq: str = "", retries: int = 3) -> str:
     return ""
 
 
-def fetch_file(repo: str, path: str, commit: str) -> str:
+def _fetch_file(repo: str, path: str, commit: str) -> str:
     """Fetch a single file's content at a specific commit."""
-    content_b64 = gh_api(
+    content_b64 = _gh_api(
         f"repos/{repo}/contents/{path}?ref={commit}",
-        ".content"
+        ".content",
     )
     if not content_b64:
         return ""
-    import base64
     try:
         return base64.b64decode(content_b64).decode("utf-8", errors="replace")
     except Exception:
         return ""
 
 
-def get_modified_dirs(task_name: str) -> set[str]:
+def _get_modified_dirs(harbor_dir: Path, task_name: str) -> set[str]:
     """Get directories modified by the PR (from solve.sh patch)."""
-    solve = HARBOR / task_name / "solution" / "solve.sh"
+    solve = harbor_dir / task_name / "solution" / "solve.sh"
     if not solve.exists():
         return set()
     content = solve.read_text()
-    dirs = set()
+    dirs: set[str] = set()
     for line in content.splitlines():
         if line.startswith("diff --git") or line.startswith("---") or line.startswith("+++"):
             parts = line.split()
@@ -95,32 +90,28 @@ def get_modified_dirs(task_name: str) -> set[str]:
     return dirs
 
 
-def fetch_task_configs(task: dict) -> tuple[str, str, int]:
+def fetch_task_configs(
+    task: dict,
+    harbor_dir: Path,
+) -> tuple[str, str, int]:
     """Fetch all config files for one task. Returns (task_name, status, file_count)."""
     name = task["task"]
     repo = task["repo"]
     commit = task["base_commit"]
-    output_file = HARBOR / name / "agent_configs.md"
+    output_file = harbor_dir / name / "agent_configs.md"
 
     if output_file.exists() and output_file.stat().st_size > 500:
         return name, "cached", 0
 
-    # Discover all files in tree, filter in Python (avoids jq regex escaping hell)
-    all_paths_raw = gh_api(
+    # Discover all files in tree
+    all_paths_raw = _gh_api(
         f"repos/{repo}/git/trees/{commit}?recursive=1",
         ".tree[].path",
     )
     all_paths = [p.strip() for p in all_paths_raw.splitlines() if p.strip()]
 
-    CONFIG_NAMES = {
-        "CLAUDE.md", "AGENTS.md", "SKILL.md", ".cursorrules",
-        ".windsurfrules", ".clinerules", ".continuerules",
-        "copilot-instructions.md", "CONVENTIONS.md",
-    }
-    CONFIG_DIR_PREFIXES = (".cursor/rules/", ".claude/skills/", ".claude/commands/", ".cody/")
-
-    paths = []
-    readme_paths = []
+    paths: list[str] = []
+    readme_paths: list[str] = []
     for p in all_paths:
         basename = p.rsplit("/", 1)[-1] if "/" in p else p
         if basename in CONFIG_NAMES:
@@ -129,12 +120,11 @@ def fetch_task_configs(task: dict) -> tuple[str, str, int]:
             paths.append(p)
         elif basename == "README.md":
             readme_paths.append(p)
-    modified_dirs = get_modified_dirs(name)
+
+    modified_dirs = _get_modified_dirs(harbor_dir, name)
     for rp in readme_paths:
-        # Root README always included
         if rp == "README.md":
             paths.append(rp)
-        # Subdir README only if PR touches that dir
         elif "/" in rp:
             readme_dir = rp.rsplit("/", 1)[0]
             if any(readme_dir in d or d in readme_dir for d in modified_dirs):
@@ -144,61 +134,64 @@ def fetch_task_configs(task: dict) -> tuple[str, str, int]:
         output_file.write_text(f"# No agent config files found\n\nRepo: {repo}\nCommit: {commit}\n")
         return name, "empty", 0
 
-    # Fetch each file
-    sections = []
-    sections.append(f"# Agent Config Files for {name}\n")
-    sections.append(f"Repo: {repo}")
-    sections.append(f"Commit: {commit}")
-    sections.append(f"Files found: {len(paths)}\n")
+    sections = [
+        f"# Agent Config Files for {name}\n",
+        f"Repo: {repo}",
+        f"Commit: {commit}",
+        f"Files found: {len(paths)}\n",
+    ]
 
     fetched = 0
     for path in sorted(set(paths)):
-        content = fetch_file(repo, path, commit)
+        content = _fetch_file(repo, path, commit)
         if content:
-            # Add line numbers for source attribution
             numbered = "\n".join(
                 f"{i+1:4d} | {line}"
                 for i, line in enumerate(content.splitlines())
             )
             sections.append(f"\n---\n## {path}\n\n```\n{numbered}\n```\n")
             fetched += 1
-        time.sleep(0.1)  # Rate limit courtesy
+        time.sleep(0.1)
 
     output_file.write_text("\n".join(sections))
     return name, "ok", fetched
 
 
-def main():
-    parser = argparse.ArgumentParser()
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Fetch agent config files for harbor tasks")
     parser.add_argument("--tasks", help="Glob filter for task names")
+    parser.add_argument("--task-dir", default="harbor_tasks", help="Task directory")
+    parser.add_argument("--metadata", default="task_metadata.jsonl", help="Metadata JSONL file")
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--force", action="store_true", help="Re-fetch even if cached")
     args = parser.parse_args()
 
-    # Output goes to harbor_tasks/{task}/agent_configs.md
+    harbor_dir = ROOT / args.task_dir
+    metadata_path = ROOT / args.metadata
 
-    # Load metadata
+    if not metadata_path.exists():
+        print(f"Metadata file not found: {metadata_path}", file=sys.stderr)
+        sys.exit(1)
+
     tasks = []
-    with open(METADATA) as f:
+    with open(metadata_path) as f:
         for line in f:
             d = json.loads(line)
-            if args.tasks:
-                import fnmatch
-                if not fnmatch.fnmatch(d["task"], args.tasks):
-                    continue
+            if args.tasks and not fnmatch.fnmatch(d["task"], args.tasks):
+                continue
             tasks.append(d)
 
     if args.force:
         for t in tasks:
-            cached = HARBOR / t["task"] / "agent_configs.md"
+            cached = harbor_dir / t["task"] / "agent_configs.md"
             if cached.exists():
                 cached.unlink()
 
     print(f"Fetching configs for {len(tasks)} tasks ({args.workers} workers)")
 
-    statuses = {"ok": 0, "empty": 0, "cached": 0, "error": 0}
+    statuses: dict[str, int] = {"ok": 0, "empty": 0, "cached": 0, "error": 0}
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        futures = {pool.submit(fetch_task_configs, t): t for t in tasks}
+        futures = {pool.submit(fetch_task_configs, t, harbor_dir): t for t in tasks}
         done = 0
         for future in as_completed(futures):
             done += 1

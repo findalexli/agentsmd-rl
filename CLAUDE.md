@@ -26,7 +26,7 @@ harbor_tasks_agentmd_edits/ # Benchmark tasks: code + config edits (~236)
     environment/Dockerfile  #   Clones repo at pre-fix commit
     solution/solve.sh       #   Gold patch (idempotent)
     tests/test.sh           #   Deterministic tests → /logs/verifier/reward.txt
-scripts/                    # Scouting, filtering, migration, batch ops
+scripts/                    # Shell orchestrators for overnight batch pipelines
 research/                   # Research docs and analysis
 ```
 

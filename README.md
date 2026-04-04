@@ -17,7 +17,7 @@ claude-code-rl-w-tinker/    # RL training library (proxy + GRPO + Tinker API)
 taskforge/                   # Task construction toolkit (models, pipeline, judge)
 harbor_tasks/                # Benchmark tasks: code-only bug fixes (~420 tasks)
 harbor_tasks_agentmd_edits/  # Benchmark tasks: code + config file edits (~236 tasks)
-scripts/                     # Scouting, filtering, migration scripts
+scripts/                     # Shell orchestrators for overnight batch pipelines
 research/                    # Research docs and analysis
 .claude/skills/              # Claude Code skills for task scaffolding/validation
 .claude/agents/              # Headless agent definitions for batch pipelines
@@ -133,7 +133,7 @@ Following [OpenAI's critique of SWE-bench Verified](https://openai.com/index/why
 
 ```bash
 # Scout PRs from repos with agent configs
-python scripts/scout_agentmd_prs.py --repos repos.txt --output scouted.jsonl
+python -m taskforge.scout scout --agentmd --repos-file scouted_repos.jsonl --output scouted.jsonl
 
 # Scaffold tasks (via Claude Code agent)
 claude -p --agent task-scaffolder "owner/repo#123"

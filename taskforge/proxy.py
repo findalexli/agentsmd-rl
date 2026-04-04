@@ -12,7 +12,7 @@ Usage:
 
     # As CLI
     python -m taskforge.proxy --model openrouter/moonshotai/kimi-k2.5
-    python -m taskforge.proxy --model openrouter/moonshotai/kimi-k2.5 -- python scripts/run_pipeline.py audit-tests --workers 4
+    python -m taskforge.proxy --model openrouter/moonshotai/kimi-k2.5 -- python -m taskforge.pipeline audit-tests --workers 4
 """
 
 from __future__ import annotations

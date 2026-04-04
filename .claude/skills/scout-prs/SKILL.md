@@ -13,18 +13,18 @@ Find candidate merged PRs suitable for benchmark task generation.
 
 ### Standard scouting (code-only tasks)
 ```bash
-python scripts/scout_prs.py --repos-file scouted_repos.jsonl --limit 20 --output scouted_prs.jsonl
+python -m taskforge.scout scout --repos-file scouted_repos.jsonl --limit 20 --output scouted_prs.jsonl
 ```
 
 ### AgentMD scouting (code + config edit tasks)
 PRs that modify BOTH code AND agent config files:
 ```bash
-python scripts/scout_agentmd_prs.py --repos-file scouted_repos.jsonl --limit 15 --months 6 --output scouted_agentmd_prs.jsonl
+python -m taskforge.scout scout --agentmd --repos-file scouted_repos.jsonl --limit 15 --months 6 --output scouted_agentmd_prs.jsonl
 ```
 
 Then filter for quality:
 ```bash
-python scripts/filter_agentmd_prs.py --input scouted_agentmd_prs.jsonl --output scouted_agentmd_prs_filtered.jsonl
+python -m taskforge.scout filter --agentmd --input scouted_agentmd_prs.jsonl --output scouted_agentmd_prs_filtered.jsonl
 ```
 
 ## Quality heuristics

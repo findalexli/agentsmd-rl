@@ -51,11 +51,10 @@ if [ "$START_PHASE" -le 1 ]; then
     log "━━━ PHASE 1: Scout PRs ━━━"
     log "Target: ~400 PRs that touch both code + agent config files"
 
-    python scripts/scout_agentmd_prs.py \
+    python -m taskforge.scout scout --agentmd \
         --repos-file scouted_repos.jsonl \
         --limit 15 \
         --months 4 \
-        --task-dir "$TASK_DIR" \
         --output "$SCOUT_OUTPUT" \
         2>&1 | tee -a "$LOG_FILE"
 
@@ -65,11 +64,10 @@ if [ "$START_PHASE" -le 1 ]; then
     # If we got less than 200, try with higher limit
     if [ "$SCOUTED_COUNT" -lt 200 ]; then
         log "Low count, retrying with --limit 25..."
-        python scripts/scout_agentmd_prs.py \
+        python -m taskforge.scout scout --agentmd \
             --repos-file scouted_repos.jsonl \
             --limit 25 \
             --months 4 \
-            --task-dir "$TASK_DIR" \
             --output "$SCOUT_OUTPUT" \
             2>&1 | tee -a "$LOG_FILE"
         SCOUTED_COUNT=$(wc -l < "$SCOUT_OUTPUT")
@@ -84,7 +82,7 @@ if [ "$START_PHASE" -le 2 ]; then
     log ""
     log "━━━ PHASE 2: Quality filter ━━━"
 
-    python scripts/filter_agentmd_prs.py \
+    python -m taskforge.scout filter --agentmd \
         --input "$SCOUT_OUTPUT" \
         --output "$FILTERED_OUTPUT" \
         2>&1 | tee -a "$LOG_FILE"
@@ -111,8 +109,9 @@ if [ "$START_PHASE" -le 3 ]; then
     log "Estimated cost: \$$(echo "$TASK_COUNT * 6" | bc)"
     log "Estimated time: ~$(echo "$TASK_COUNT * 900 / 4 / 3600" | bc) hours"
 
-    python scripts/batch_scaffold_agentmd.py \
+    python -m taskforge.pipeline scaffold-from-prs \
         --input "$INPUT_FILE" \
+        --agentmd \
         --workers 4 \
         --model opus \
         --budget 6.0 \
@@ -137,7 +136,6 @@ if [ "$START_PHASE" -le 4 ]; then
         --build-concurrency 5 \
         2>&1 | tee -a "$LOG_FILE"
 
-    # Parse results
     RESULTS_FILE="pipeline_logs/e2b_validate_${TASK_DIR}_results.json"
     if [ -f "$RESULTS_FILE" ]; then
         VALID=$(python3 -c "import json; d=json.load(open('$RESULTS_FILE')); print(d.get('valid_count', 0))")
