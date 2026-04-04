@@ -5,17 +5,29 @@ See [README.md](README.md) for project overview, research question, and task lis
 ## Repository Structure
 
 ```
-taskforge/              # Python package — models, lint, filters, status
-  templates/task_template/  # Task template with placeholders (copied by /scaffold-task)
-harbor_tasks/           # Harbor-compatible benchmark tasks
+claude-code-rl-w-tinker/    # RL training library (proxy + GRPO + Tinker API)
+  anthropic_proxy.py        #   Anthropic→Tinker proxy, captures logprobs at generation time
+  train.py                  #   Training loop: Harbor Trial → GRPO → Tinker forward_backward
+  harbor_tokenization.py    #   Multi-turn chat tokenization for RL
+  test_*.py                 #   Unit + e2e + logprob fidelity tests
+taskforge/                  # Task construction toolkit
+  models.py                 #   Pydantic: EvalManifest, Check, RubricRule, SourceRef
+  config.py                 #   Shared config patterns, is_config_file(), extract_config_hunks()
+  pipeline.py               #   Parallel pipeline orchestrator (claude -p)
+  judge.py                  #   LLM judge for config edit rubric
+  e2b.py                    #   E2B sandbox validation
+  templates/task_template/  #   Task template with placeholders (copied by /scaffold-task)
+harbor_tasks/               # Benchmark tasks: code-only bug fixes (~420)
+harbor_tasks_agentmd_edits/ # Benchmark tasks: code + config edits (~236)
   <task>/
-    instruction.md      # Agent reads this (bug description, not the fix)
-    task.toml           # Metadata (difficulty, timeouts, resources)
-    eval_manifest.yaml  # What we test, where each check came from, rubric rules
-    environment/Dockerfile  # Clones repo at pre-fix commit
-    solution/solve.sh   # Gold patch (idempotent)
-    tests/test.sh       # Deterministic tests → /logs/verifier/reward.txt
-research/               # Research docs and analysis
+    instruction.md          #   Agent reads this (bug description, not the fix)
+    task.toml               #   Metadata (difficulty, timeouts, resources)
+    eval_manifest.yaml      #   Checks + rubric rules with source traceability
+    environment/Dockerfile  #   Clones repo at pre-fix commit
+    solution/solve.sh       #   Gold patch (idempotent)
+    tests/test.sh           #   Deterministic tests → /logs/verifier/reward.txt
+scripts/                    # Scouting, filtering, migration, batch ops
+research/                   # Research docs and analysis
 ```
 
 ## Task Selection Criteria
