@@ -1,0 +1,74 @@
+version: "2.0"
+
+source:
+  repo: "PostHog/posthog"
+  pr: 51426
+  base_commit: "e74eb42064ccff936e8b2039626646132a444c8d"
+  merge_commit: "ef7d04c7c5544276bf91260ec29506cfc71d8186"
+
+checks:
+  - id: shell_script_syntax
+    type: fail_to_pass
+    origin: static
+    description: "Verification shell script must exist and parse without bash syntax errors"
+
+  - id: workflow_yaml_valid
+    type: pass_to_pass
+    origin: static
+    description: "CI workflow file must be valid YAML"
+
+  - id: verification_script_validates_args
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Verification script validates arguments and rejects bad input"
+
+  - id: verification_script_detects_changed_specs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script uses git diff to find changed playwright spec files"
+
+  - id: verification_script_repeat_each
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script runs playwright with --repeat-each for flake detection"
+
+  - id: workflow_has_verification_step
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CI workflow includes the flake verification step for PRs"
+
+  - id: workflow_reports_flake_results
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CI workflow reads and reports flake verification results in PR comments"
+
+  - id: skill_references_readme
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md references README instead of duplicating best practices inline"
+
+  - id: readme_has_best_practices
+    type: fail_to_pass
+    origin: pr_diff
+    description: "playwright/README.md has best practices section with rules from SKILL.md"
+
+  - id: readme_has_gotchas_section
+    type: fail_to_pass
+    origin: agent_config
+    description: "playwright/README.md has gotchas section covering flaky tests and selectors"
+    source:
+      path: ".agents/skills/playwright-test/SKILL.md"
+      lines: "7-11"
+      commit: "e74eb42064ccff936e8b2039626646132a444c8d"
+
+  - id: script_not_stub
+    type: fail_to_pass
+    origin: static
+    description: "Verification script has real logic, not a stub"
+
+rubric:
+  - rule: "Config update is consistent with the style of existing documentation in the repo"
+    source:
+      path: "playwright/README.md"
+      lines: "1-10"
+      commit: "e74eb42064ccff936e8b2039626646132a444c8d"

@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "mlflow/mlflow"
+  pr: 22330
+  base_commit: "39f35acce9e63788371bfaaa2c57cafef10a02ec"
+  merge_commit: "4173076f2df42da7413d8a989af530f794cd9da2"
+
+checks:
+  - id: approve_sh_syntax
+    type: fail_to_pass
+    origin: pr_diff
+    description: "approve.sh must exist and have valid bash syntax"
+
+  - id: approve_sh_exits_on_missing_args
+    type: fail_to_pass
+    origin: pr_diff
+    description: "approve.sh must fail when called without required arguments"
+
+  - id: approve_sh_rerun_not_approve_api
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script must use the /rerun API endpoint, not /approve"
+
+  - id: approve_sh_filters_copilot_action_required
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script must filter for action_required conclusion and Copilot actor"
+
+  - id: approve_sh_handles_empty_results
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script must handle the case where no matching workflow runs are found"
+
+  - id: skill_md_approve_in_allowed_tools
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md must list approve.sh in allowed-tools frontmatter"
+
+  - id: skill_md_documents_approve_workflow
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md must document how to use the approve workflow script"
+
+rubric:
+  - rule: "The approve.sh script should follow the same patterns as the existing poll.sh script (set -euo pipefail, gh CLI usage, error handling style)"
+    source:
+      path: ".claude/skills/copilot/SKILL.md"
+      lines: "1-62"
+      commit: "39f35acce9e63788371bfaaa2c57cafef10a02ec"
+  - rule: "Prefer gh CLI over actions/github-script for GitHub API operations"
+    source:
+      path: ".claude/rules/github-actions.md"
+      lines: "7-8"
+      commit: "39f35acce9e63788371bfaaa2c57cafef10a02ec"

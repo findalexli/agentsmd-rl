@@ -1,0 +1,63 @@
+version: "2.0"
+
+source:
+  repo: "PostHog/posthog"
+  pr: 51937
+  base_commit: "2f7a8ee722e5d451dd2c242c722ea818cc325485"
+  merge_commit: "6fe1d5dafe2218c2e35121466285017ecadaed60"
+
+checks:
+  # Gates (pass_to_pass)
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files parse without syntax errors"
+
+  - id: max_tool_name_length_preserved
+    type: pass_to_pass
+    origin: static
+    description: "MAX_TOOL_NAME_LENGTH constant remains 52"
+
+  # Code behavioral tests (fail_to_pass)
+  - id: tool_name_pattern_validates
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TOOL_NAME_PATTERN accepts valid kebab-case and rejects invalid names"
+
+  - id: feature_name_pattern_validates
+    type: fail_to_pass
+    origin: pr_diff
+    description: "FEATURE_NAME_PATTERN accepts valid snake_case and rejects invalid identifiers"
+
+  - id: schema_rejects_invalid_tool_name
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CategoryConfigSchema rejects tool names that violate kebab-case pattern"
+
+  - id: lint_validates_json_definitions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "lint-tool-names.ts validates JSON definition files, not just YAML"
+
+  # Config/documentation update tests (fail_to_pass)
+  - id: skill_md_naming_constraints
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md documents tool naming constraints with pattern and length info"
+
+  - id: handbook_pattern_validation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Handbook doc documents pattern validation for tool names and feature identifiers"
+
+rubric:
+  - rule: "Updated documentation is consistent with the style and tone of existing SKILL.md content"
+    source:
+      path: ".agents/skills/implementing-mcp-tools/SKILL.md"
+      lines: "1-70"
+      commit: "2f7a8ee722e5d451dd2c242c722ea818cc325485"
+  - rule: "Updated handbook page follows the formatting conventions of the existing document"
+    source:
+      path: "docs/published/handbook/engineering/ai/implementing-mcp-tools.md"
+      lines: "1-20"
+      commit: "2f7a8ee722e5d451dd2c242c722ea818cc325485"

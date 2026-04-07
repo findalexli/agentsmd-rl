@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "mlflow/mlflow"
+  pr: 21451
+  base_commit: "956ab37d911e777ce40740ab851d2d472cec2752"
+  merge_commit: "9fdb83c0192d2957646a2629acb21bf53a2b87ce"
+
+checks:
+  # Gate — syntax
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  # Core code behavior — file pattern filtering
+  - id: filter_diff_single_pattern
+    type: fail_to_pass
+    origin: pr_diff
+    description: "filter_diff with file_patterns=['*.py'] returns only Python file diffs"
+
+  - id: filter_diff_multiple_patterns
+    type: fail_to_pass
+    origin: pr_diff
+    description: "filter_diff with multiple patterns returns files matching any pattern"
+
+  - id: filter_diff_path_glob
+    type: fail_to_pass
+    origin: pr_diff
+    description: "filter_diff with path glob (e.g. 'docs/*') filters by directory"
+
+  - id: register_adds_files_argument
+    type: fail_to_pass
+    origin: pr_diff
+    description: "register() adds --files nargs='+' argument to CLI parser"
+
+  # Config/doc update checks
+  - id: skill_md_documents_files_option
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md documents the --files option"
+
+  - id: skill_md_has_pattern_examples
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md includes glob pattern usage examples"
+
+  # Backward compatibility
+  - id: filter_diff_no_patterns_unchanged
+    type: pass_to_pass
+    origin: static
+    description: "filter_diff without file_patterns returns all non-excluded files"
+
+rubric:
+  - rule: "SKILL.md update is consistent with the style and formatting of the existing documentation"
+    source:
+      path: ".claude/skills/fetch-diff/SKILL.md"
+      lines: "1-35"
+      commit: "956ab37d911e777ce40740ab851d2d472cec2752"
+  - rule: "Only add comments that explain non-obvious logic or provide additional context"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "956ab37d911e777ce40740ab851d2d472cec2752"

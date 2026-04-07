@@ -1,0 +1,62 @@
+version: "2.0"
+
+source:
+  repo: "supabase/supabase"
+  pr: 42446
+  base_commit: "11d4da6c4b6d282c1d829a4786a342468472a698"
+  merge_commit: "7e9f243f51d5c522f1f8482fbb5b71c9eb3a3f1d"
+
+checks:
+  # Code behavior: query file refactored to queryOptions pattern
+  - id: query_file_exports_query_options
+    type: fail_to_pass
+    origin: pr_diff
+    description: "integrations-query.ts exports thirdPartyAuthIntegrationsQueryOptions using queryOptions"
+
+  - id: get_function_is_private
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getThirdPartyAuthIntegrations is private (not exported)"
+
+  - id: component_uses_query_options_pattern
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ThirdPartyAuthForm uses queryOptions pattern with useQuery, not custom hook"
+
+  - id: deprecated_custom_mutation_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "UseCustomMutationOptions type annotated with @deprecated"
+
+  # Config file update: Cursor rule updated to recommend queryOptions
+  - id: rule_md_recommends_query_options
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cursor rule RULE.md recommends queryOptions pattern instead of useXQuery hooks"
+
+  - id: rule_md_documents_imperative_fetching
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cursor rule documents imperative fetching with queryClient.fetchQuery()"
+
+  - id: rule_md_documents_component_usage_with_query_options
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cursor rule shows how to use query options in components with useQuery"
+
+  # Existing rule compliance
+  - id: query_gates_with_enabled
+    type: pass_to_pass
+    origin: agent_config
+    description: "Query function gates with enabled property per existing Cursor rule"
+    source:
+      path: ".cursor/rules/studio/queries/RULE.md"
+      lines: "46"
+      commit: "11d4da6c4b6d282c1d829a4786a342468472a698"
+
+rubric:
+  - rule: "Config update is consistent with the style and structure of existing cursor rules in .cursor/rules/studio/"
+    source:
+      path: ".cursor/rules/studio/queries/RULE.md"
+      lines: "1-10"
+      commit: "11d4da6c4b6d282c1d829a4786a342468472a698"

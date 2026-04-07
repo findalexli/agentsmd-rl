@@ -1,0 +1,42 @@
+version: "2.0"
+
+source:
+  repo: "sveltejs/svelte"
+  pr: 18047
+  base_commit: "c93e251654a3193f294d6a4171d4087b4cb2fb80"
+  merge_commit: "704e3bb5f0ad25e759c97cf7c8f45be79314d4df"
+
+checks:
+  # Code behavioral tests
+  - id: profile_diff_usage_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "profile-diff.mjs prints usage and exits 1 when called without arguments"
+
+  - id: profile_diff_missing_candidate
+    type: fail_to_pass
+    origin: pr_diff
+    description: "profile-diff.mjs exits 1 when candidate branch argument is missing"
+
+  - id: profile_diff_compares_profiles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "profile-diff.mjs reads cpuprofile files and outputs hotspot deltas"
+
+  # Config/documentation update tests
+  - id: agents_md_references_skill
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md exists and references the performance-investigation skill"
+
+  - id: skill_md_has_frontmatter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md has proper YAML frontmatter with name and description"
+
+  - id: skill_md_documents_benchmarking_workflow
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md documents bench:compare workflow and profile output locations"
+
+rubric: []

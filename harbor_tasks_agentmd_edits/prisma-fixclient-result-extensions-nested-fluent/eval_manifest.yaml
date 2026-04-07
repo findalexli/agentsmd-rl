@@ -1,0 +1,59 @@
+version: "2.0"
+
+source:
+  repo: "prisma/prisma"
+  pr: 29218
+  base_commit: "3fd1431decb1013969c9ef061f8c391e715fe973"
+  merge_commit: "77bfc96b9f61b0fd8405fc9515707bf8fd9c5c53"
+
+checks:
+  # Gate: existing AGENTS.md content preserved
+  - id: agents_md_client_architecture_intact
+    type: pass_to_pass
+    origin: static
+    description: "Client architecture section in AGENTS.md is preserved"
+
+  # Code: new context resolution module exists and exports correctly
+  - id: resolve_context_module_exports_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New resolve-result-extension-context.ts exports resolveResultExtensionContext"
+
+  # Code: dataPath parsing logic executes correctly in Node.js
+  - id: datapath_parsing_logic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "relationPathFromDataPath correctly parses selector/field pairs"
+
+  # Code: getPrismaClient.ts wired up to use context resolution
+  - id: getPrismaClient_uses_context_resolution
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getPrismaClient.ts imports and uses resolveResultExtensionContext with dataPath"
+
+  # Config: AGENTS.md documents dataPath and extension context resolution
+  - id: agents_md_documents_datapath
+    type: fail_to_pass
+    origin: agent_config
+    description: "AGENTS.md documents fluent dataPath and extension context resolution"
+    source:
+      path: "AGENTS.md"
+      lines: "123"
+      commit: "3fd1431decb1013969c9ef061f8c391e715fe973"
+
+  # Config: AGENTS.md documents functional test runtime bundle relationship
+  - id: agents_md_documents_functional_runtime
+    type: fail_to_pass
+    origin: agent_config
+    description: "AGENTS.md documents that functional .generated clients import runtime directly"
+    source:
+      path: "AGENTS.md"
+      lines: "123"
+      commit: "3fd1431decb1013969c9ef061f8c391e715fe973"
+
+rubric:
+  - rule: "AGENTS.md updates are consistent with existing style: bullet points under the relevant section header, referencing specific file paths"
+    source:
+      path: "AGENTS.md"
+      lines: "33-40"
+      commit: "3fd1431decb1013969c9ef061f8c391e715fe973"

@@ -1,0 +1,151 @@
+"""
+Task: payload-chore-add-docker-clean-script
+Repo: payloadcms/payload @ a188556e99d94c96266671b2129e5c8cb05e46a5
+PR:   16000
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import json
+import subprocess
+from pathlib import Path
+
+REPO = "/workspace/payload"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — new script must exist and be valid JS
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_docker_clean_js_syntax():
+    """scripts/docker-clean.js must exist and be valid JavaScript (ESM)."""
+    script = Path(REPO) / "scripts" / "docker-clean.js"
+    assert script.exists(), "scripts/docker-clean.js does not exist"
+    r = subprocess.run(
+        ["node", "--check", "--input-type=module", str(script)],
+        capture_output=True, text=True, timeout=15,
+    )
+    assert r.returncode == 0, f"JS syntax error:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_docker_clean_removes_all_containers():
+    """docker-clean.js must force-remove all named test containers."""
+    script = Path(REPO) / "scripts" / "docker-clean.js"
+    assert script.exists(), "scripts/docker-clean.js does not exist"
+    content = script.read_text()
+
+    expected_containers = [
+        "postgres-payload-test",
+        "mongodb-payload-test",
+        "mongot-payload-test",
+        "mongodb-atlas-payload-test",
+        "localstack_demo",
+    ]
+    for name in expected_containers:
+        assert name in content, f"docker-clean.js missing container: {name}"
+
+    assert "docker rm -f" in content, "docker-clean.js must use 'docker rm -f' to force-remove"
+
+
+# [pr_diff] fail_to_pass
+def test_docker_clean_runs_compose_down():
+    """docker-clean.js must also run docker compose down with -v and --remove-orphans."""
+    script = Path(REPO) / "scripts" / "docker-clean.js"
+    assert script.exists(), "scripts/docker-clean.js does not exist"
+    content = script.read_text()
+
+    assert "docker compose" in content, "docker-clean.js must run docker compose"
+    assert "down" in content, "docker-clean.js must run compose down"
+    assert "-v" in content, "docker-clean.js must pass -v to remove volumes"
+    assert "--remove-orphans" in content, "docker-clean.js must pass --remove-orphans"
+
+
+# [pr_diff] fail_to_pass
+def test_package_json_scripts():
+    """package.json must define docker:clean and update docker:start to chain it."""
+    r = subprocess.run(
+        ["node", "-e", """
+const pkg = require('./package.json');
+const scripts = pkg.scripts;
+const result = {
+    hasClean: 'docker:clean' in scripts,
+    cleanValue: scripts['docker:clean'] || '',
+    hasStop: 'docker:stop' in scripts,
+    startValue: scripts['docker:start'] || '',
+    startChainsClean: (scripts['docker:start'] || '').includes('docker:clean'),
+};
+console.log(JSON.stringify(result));
+"""],
+        cwd=REPO, capture_output=True, text=True, timeout=15,
+    )
+    assert r.returncode == 0, f"Failed to parse package.json:\n{r.stderr}"
+
+    data = json.loads(r.stdout.strip())
+    assert data["hasClean"], "package.json must have a docker:clean script"
+    assert "docker-clean.js" in data["cleanValue"], \
+        f"docker:clean should run docker-clean.js, got: {data['cleanValue']}"
+    assert not data["hasStop"], "docker:stop should be removed from package.json"
+    assert data["startChainsClean"], \
+        f"docker:start should chain docker:clean, got: {data['startValue']}"
+
+
+# ---------------------------------------------------------------------------
+# Config/documentation update tests (agentmd-edit)
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_claude_md_docker_commands():
+    """CLAUDE.md must reference docker:clean instead of docker:stop."""
+    claude_md = Path(REPO) / "CLAUDE.md"
+    content = claude_md.read_text()
+
+    assert "docker:clean" in content, "CLAUDE.md should reference docker:clean"
+    # Ensure docker:stop is no longer documented as a command
+    lines = content.splitlines()
+    docker_lines = [l for l in lines if "docker:" in l.lower() and "docker:test" not in l and "docker:start" not in l]
+    has_stop_ref = any("docker:stop" in l for l in lines if "docker:" in l)
+    assert not has_stop_ref, "CLAUDE.md should not reference docker:stop anymore"
+
+
+# [pr_diff] fail_to_pass
+def test_contributing_md_docker_commands():
+    """CONTRIBUTING.md must reference docker:clean instead of docker:stop."""
+    contributing = Path(REPO) / "CONTRIBUTING.md"
+    content = contributing.read_text()
+
+    assert "docker:clean" in content, "CONTRIBUTING.md should reference docker:clean"
+    # Check the bash code block section specifically
+    lines = content.splitlines()
+    has_stop_ref = any("docker:stop" in l for l in lines if "pnpm" in l and "docker" in l)
+    assert not has_stop_ref, "CONTRIBUTING.md should not reference pnpm docker:stop anymore"
+
+
+# [pr_diff] fail_to_pass
+def test_docker_compose_yml_comments():
+    """test/docker-compose.yml usage comments must reference docker:clean."""
+    dc = Path(REPO) / "test" / "docker-compose.yml"
+    content = dc.read_text()
+
+    # Check the Usage comment block at the top
+    usage_lines = []
+    in_usage = False
+    for line in content.splitlines():
+        if "Usage:" in line:
+            in_usage = True
+        elif in_usage and line.strip().startswith("#"):
+            usage_lines.append(line)
+        elif in_usage and not line.strip().startswith("#"):
+            break
+
+    usage_text = "\n".join(usage_lines)
+    assert "docker:clean" in usage_text, \
+        f"docker-compose.yml Usage block should reference docker:clean, got:\n{usage_text}"
+    assert "docker:stop" not in usage_text, \
+        "docker-compose.yml Usage block should not reference docker:stop"

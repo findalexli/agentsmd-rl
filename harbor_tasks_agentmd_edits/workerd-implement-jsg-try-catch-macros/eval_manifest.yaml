@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "cloudflare/workerd"
+  pr: 6021
+  base_commit: "bca5351754a7d3ee0568971d57435859bc3a71e6"
+  merge_commit: "232c2767579c24f8da374e074a138b40ac182f89"
+
+checks:
+  - id: jsg_header_well_formed
+    type: pass_to_pass
+    origin: static
+    description: "jsg.h has balanced braces and valid namespace structure"
+
+  - id: jsg_try_macro_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSG_TRY macro is #defined in jsg.h"
+
+  - id: jsg_catch_macro_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSG_CATCH macro is #defined in jsg.h"
+
+  - id: jsg_catch_scope_implementation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JsgCatchScope::catchException is implemented in jsg.c++"
+
+  - id: callers_migrated_to_jsg_try
+    type: fail_to_pass
+    origin: pr_diff
+    description: "At least 4 API source files migrated from js.tryCatch to JSG_TRY"
+
+  - id: jsg_catch_scope_class_declared
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JsgCatchScope class declared in jsg.h with getCaughtException method"
+
+  - id: readme_documents_jsg_try_catch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "src/workerd/jsg/README.md documents JSG_TRY and JSG_CATCH macros"
+
+  - id: readme_documents_exception_handling_update
+    type: fail_to_pass
+    origin: agent_config
+    description: "README.md updates exception handling docs to reference js.error/js.throwException"
+    source:
+      path: "CLAUDE.md"
+      lines: "128"
+      commit: "bca5351754a7d3ee0568971d57435859bc3a71e6"
+
+  - id: no_remaining_js_trycatch_in_migrated_files
+    type: pass_to_pass
+    origin: static
+    description: "jsg.h does not contain js.tryCatch lambda calls"
+
+rubric:
+  - rule: "Proactively suggest updates to the documentation when it is missing or out of date, but do not make edits without confirming accuracy."
+    source:
+      path: "CLAUDE.md"
+      lines: "128"
+      commit: "bca5351754a7d3ee0568971d57435859bc3a71e6"

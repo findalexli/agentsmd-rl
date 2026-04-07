@@ -1,0 +1,43 @@
+version: "2.0"
+
+source:
+  repo: "remix-run/remix"
+  pr: 10964
+  base_commit: "598a92e3dc3488b02da7e4edafd1ff2498cc4c34"
+  merge_commit: "aff458aa4826f6d7e5c0457542b19d4dead701ad"
+
+checks:
+  # Pass-to-pass — regression check
+  - id: getrootdir_still_works
+    type: pass_to_pass
+    origin: static
+    description: "getRootDir (unchanged function) still works after logAndExec refactor"
+
+  # Fail-to-pass — code behavior tests
+  - id: logandexec_captures_output
+    type: fail_to_pass
+    origin: pr_diff
+    description: "logAndExec with captureOutput=true returns captured command output"
+
+  - id: logandexec_default_returns_empty
+    type: fail_to_pass
+    origin: pr_diff
+    description: "logAndExec with captureOutput=false (default) returns empty string"
+
+  - id: setup_script_registered
+    type: fail_to_pass
+    origin: pr_diff
+    description: "package.json registers setup-installable-branch script pointing to .ts file"
+
+  # Fail-to-pass — config / documentation update tests
+  - id: readme_has_installation_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md documents package installation (npm/pnpm) and nightly builds"
+
+  - id: contributing_has_nightly_builds
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CONTRIBUTING.md documents nightly build workflow and references setup-installable-branch script"
+
+rubric: []

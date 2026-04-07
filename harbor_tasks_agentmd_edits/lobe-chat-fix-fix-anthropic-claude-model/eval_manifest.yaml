@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "lobehub/lobe-chat"
+  pr: 13206
+  base_commit: "66fba601942579a3c37fe4f0abe92e20de8e1831"
+  merge_commit: "0f534906335353602da8c7908ae2afbaf2800028"
+
+checks:
+  # --- Fail-to-pass: code behavior ---
+  - id: resolve_max_tokens_normal_models
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resolveMaxTokens returns 64000 for non-small-context models (was 8192)"
+
+  - id: tool_result_max_length_default_25000
+    type: fail_to_pass
+    origin: pr_diff
+    description: "toolResultMaxLength default in chatConfig is 25000 (was 6000)"
+
+  # --- Fail-to-pass: config / SKILL.md updates ---
+  - id: trpc_router_skill_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New .agents/skills/trpc-router/SKILL.md documents router conventions"
+
+  - id: cli_skill_documents_dev_mode
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLI SKILL.md documents dev mode with LOBEHUB_CLI_HOME isolation"
+
+  - id: db_migrations_skill_has_journal_tag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "db-migrations SKILL.md Step 4 mentions journal tag update"
+
+  # --- Pass-to-pass: regression ---
+  - id: resolve_max_tokens_small_context_4096
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Small-context models (opus, haiku, v2) still return 4096"
+
+  - id: resolve_max_tokens_user_override
+    type: pass_to_pass
+    origin: pr_diff
+    description: "User-provided max_tokens takes priority over default"
+
+  - id: resolve_max_tokens_thinking_modes
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Thinking enabled returns 32000, adaptive returns 64000"
+
+  - id: resolve_max_tokens_provider_model_default
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Provider model maxOutput takes priority when no user override"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "1"
+      commit: "66fba601942579a3c37fe4f0abe92e20de8e1831"
+  - rule: "Prefer interfaces over types for object shapes"
+    source:
+      path: "AGENTS.md"
+      lines: "42"
+      commit: "66fba601942579a3c37fe4f0abe92e20de8e1831"

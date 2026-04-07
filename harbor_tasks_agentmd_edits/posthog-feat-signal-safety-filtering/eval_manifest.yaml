@@ -1,0 +1,80 @@
+version: "2.0"
+
+source:
+  repo: "PostHog/posthog"
+  pr: 51171
+  base_commit: "12335b96f2209c3044a2fd623928284ab81b861d"
+  merge_commit: "7bc4977e59e631d71057e68c77d8edddc4db0d52"
+
+checks:
+  # Gate: syntax
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All modified Python files must parse without errors"
+
+  # Code: new safety_filter module
+  - id: safety_filter_module_structure
+    type: fail_to_pass
+    origin: pr_diff
+    description: "safety_filter.py exists with SafetyFilterInput, SafetyFilterOutput, SafetyFilterJudgeResponse, safety_filter_activity, SAFETY_FILTER_PROMPT"
+
+  # Code: rename safety_judge -> report_safety_judge
+  - id: safety_judge_renamed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "safety_judge.py renamed to report_safety_judge.py with all functions and constants renamed"
+
+  # Code: buffer workflow integration
+  - id: buffer_integrates_safety_filter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "buffer.py imports and uses safety_filter_activity to filter signals before S3 flush"
+
+  # Code: __init__.py activity registration
+  - id: init_registers_new_activities
+    type: fail_to_pass
+    origin: pr_diff
+    description: "__init__.py exports report_safety_judge_activity and safety_filter_activity"
+
+  # Code: EmptyLLMResponseError in llm.py
+  - id: empty_llm_response_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "llm.py defines EmptyLLMResponseError and uses it in _extract_text_content"
+
+  # Code: summary.py updated imports
+  - id: summary_uses_renamed_judge
+    type: fail_to_pass
+    origin: pr_diff
+    description: "summary.py imports from report_safety_judge module instead of safety_judge"
+
+  # Config: ARCHITECTURE.md documents safety_filter
+  - id: architecture_documents_safety_filter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ARCHITECTURE.md documents the new per-signal safety_filter with threat taxonomy and buffer integration"
+
+  # Config: eval/AGENTS.md HogQL report queries
+  - id: eval_agents_md_has_report_queries
+    type: fail_to_pass
+    origin: pr_diff
+    description: "eval/AGENTS.md has Reports section with HogQL query templates for eval analysis"
+
+  # Anti-stub
+  - id: safety_filter_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "safety_filter and safety_filter_activity have real implementation, not stubs"
+
+rubric:
+  - rule: "ARCHITECTURE.md updates are consistent with the style and detail level of existing documentation sections"
+    source:
+      path: "products/signals/ARCHITECTURE.md"
+      lines: "1-10"
+      commit: "12335b96f2209c3044a2fd623928284ab81b861d"
+  - rule: "eval/AGENTS.md queries section follows the same formatting and structure as the existing eval documentation"
+    source:
+      path: "products/signals/eval/AGENTS.md"
+      lines: "1-10"
+      commit: "12335b96f2209c3044a2fd623928284ab81b861d"

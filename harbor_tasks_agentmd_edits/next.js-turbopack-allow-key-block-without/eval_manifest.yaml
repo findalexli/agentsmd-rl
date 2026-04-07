@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 88938
+  base_commit: "d5a88ba4eb50fa9fcc2c06a68da54783d615b017"
+  merge_commit: "03899db53a83d7ca665c3f56273595f3dca195a6"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "turbo-persistence crate compiles without errors"
+
+  - id: block_type_no_hash_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "BLOCK_TYPE_KEY_NO_HASH=2 and BLOCK_TYPE_KEY_WITH_HASH=1 constants defined"
+
+  - id: use_hash_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "use_hash function with 32-byte threshold for hash omission"
+
+  - id: compare_hash_key_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "compare_hash_key function for hash-aware key comparison"
+
+  - id: builder_conditional_hash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "KeyBlockBuilder conditionally writes hash based on has_hash field"
+
+  - id: get_key_entry_hash_len_param
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_key_entry accepts hash_len parameter for variable hash size"
+
+  - id: readme_documents_block_type_2
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README documents block type 2 (key block without hash)"
+
+  - id: readme_conditional_hash_format
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README entry formats show hash is conditional on block type"
+
+  - id: readme_no_hash_todo
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README no longer has TODO about inefficient hashes for small keys"
+
+  - id: existing_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All existing cargo tests for turbo-persistence still pass"
+
+rubric:
+  - rule: "README documentation updates are consistent with the style and formatting of the existing on-disk format specification"
+    source:
+      path: "turbopack/crates/turbo-persistence/README.md"
+      lines: "1-10"
+      commit: "d5a88ba4eb50fa9fcc2c06a68da54783d615b017"

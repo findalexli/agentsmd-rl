@@ -1,0 +1,60 @@
+version: "2.0"
+
+source:
+  repo: "remix-run/remix"
+  pr: 11026
+  base_commit: "77567b453e4de0b2706cc9fa68c8f5d14e5361b3"
+  merge_commit: "87447287f87d29f394c71c1859d293f78b69cdca"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript files in route-pattern parse without errors"
+
+  - id: part_pattern_source_getter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PartPattern has a source getter that returns the original pattern string"
+
+  - id: href_with_params
+    type: pass_to_pass
+    origin: repo_tests
+    description: "RoutePattern.href correctly substitutes params (regression check)"
+
+  - id: no_namespace_imports_in_route_pattern
+    type: fail_to_pass
+    origin: pr_diff
+    description: "route-pattern.ts uses named imports instead of namespace imports"
+
+  - id: source_file_deleted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "source.ts is deleted — logic moved to PartPattern methods"
+
+  - id: existing_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream route-pattern test suite still passes"
+
+  - id: part_pattern_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "PartPattern test suite still passes"
+
+  - id: agents_md_documents_helpers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md exists and documents helper file organization by feature"
+
+  - id: agents_md_links_to_parent
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md references parent route-pattern.ts module"
+
+rubric:
+  - rule: "Helper organization in AGENTS.md is consistent with root AGENTS.md code style guidelines"
+    source:
+      path: "AGENTS.md"
+      lines: "33-35"
+      commit: "77567b453e4de0b2706cc9fa68c8f5d14e5361b3"

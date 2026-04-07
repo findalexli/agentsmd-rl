@@ -1,0 +1,74 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 89497
+  base_commit: "d7e06519cb98b1685830bcbb1dd4955cb159061d"
+  merge_commit: "384cb2dadfa12bca55a883c7f1c7e37f22bb5a5a"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "turbo-persistence crate compiles without errors"
+
+  - id: max_small_value_size_reduced
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MAX_SMALL_VALUE_SIZE reduced from 64KB to 4096 bytes"
+
+  - id: min_small_value_block_size_constant
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MIN_SMALL_VALUE_BLOCK_SIZE constant (8KB) added to constants.rs"
+
+  - id: max_value_block_count_constant
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MAX_VALUE_BLOCK_COUNT constant for u16 overflow protection"
+
+  - id: key_block_entry_meta_overhead_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "KEY_BLOCK_ENTRY_META_OVERHEAD updated from 8 to 20"
+
+  - id: value_block_count_tracker_module
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New ValueBlockCountTracker struct with track/is_full/reset methods"
+
+  - id: collector_uses_tracker
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Collector integrates ValueBlockCountTracker for overflow protection"
+
+  - id: small_value_block_emit_logic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "write_value_blocks uses MIN_SMALL_VALUE_BLOCK_SIZE instead of old MAX"
+
+  - id: readme_documents_value_types
+    type: fail_to_pass
+    origin: agent_config
+    description: "README documents INLINE, SMALL, MEDIUM, BLOB value types with size boundaries"
+    source:
+      path: "CLAUDE.md"
+      lines: "42-44"
+      commit: "d7e06519cb98b1685830bcbb1dd4955cb159061d"
+
+  - id: readme_has_tradeoff_table
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README has a value type trade-off table with compression/access/compaction info"
+
+rubric:
+  - rule: "README update is consistent with the technical style of the existing turbo-persistence README"
+    source:
+      path: "turbopack/crates/turbo-persistence/README.md"
+      lines: "1-10"
+      commit: "d7e06519cb98b1685830bcbb1dd4955cb159061d"
+  - rule: "Before editing or creating files in any subdirectory, read all README.md files in the directory path"
+    source:
+      path: "CLAUDE.md"
+      lines: "42-44"
+      commit: "d7e06519cb98b1685830bcbb1dd4955cb159061d"

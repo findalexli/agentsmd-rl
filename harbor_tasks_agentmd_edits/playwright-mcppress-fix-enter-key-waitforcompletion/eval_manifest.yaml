@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 38934
+  base_commit: "3cdf7ca18324b9a0aa0ec80d818c2f9602b0ef60"
+  merge_commit: "56d7bbfd89e10f304bb6f26547ef8a33fc34d3e6"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "keyboard.ts must parse without errors and have balanced braces"
+
+  - id: enter_key_uses_waitforcompletion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Press handler wraps Enter key in waitForCompletion for navigation awareness"
+
+  - id: enter_key_includes_snapshot
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Press handler calls setIncludeSnapshot for Enter key"
+
+  - id: non_enter_keys_unchanged
+    type: pass_to_pass
+    origin: static
+    description: "Non-Enter keys still use direct keyboard.press without waitForCompletion"
+
+  - id: skill_md_workflow_simplified
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md removes explicit snapshot step from core workflow"
+
+  - id: skill_md_workflow_step_count
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Core workflow in SKILL.md has 3 steps, not 4"
+
+  - id: press_tool_exports
+    type: pass_to_pass
+    origin: static
+    description: "keyboard.ts still exports all tools in the default export array"
+
+rubric: []

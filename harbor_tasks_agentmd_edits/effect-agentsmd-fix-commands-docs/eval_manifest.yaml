@@ -1,0 +1,53 @@
+version: "2.0"
+
+source:
+  repo: "effect-ts/effect"
+  pr: 6030
+  base_commit: "5487cfb65a69a308e7c0b29ae666c8a9ddcab159"
+  merge_commit: "33712058e2655dd50f9b2b511ab8d38c2bd5268a"
+
+checks:
+  # F2P: Config/documentation update tests
+  - id: agentsmd_test_run_command
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md specifies 'pnpm test run' (with required 'run' subcommand) for running tests"
+
+  - id: agentsmd_tsx_scratchpad
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md uses 'tsx' (not 'node') to run scratchpad TypeScript files"
+
+  - id: agentsmd_v4_learning_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md includes section about learning effect v4 with .repos/effect-v4 path"
+
+  # F2P: Code/config change tests
+  - id: sql_tsconfig_outdir
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/sql/tsconfig.test.json specifies outDir for test build output"
+
+  - id: schema_jsdoc_example_reference
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Schema.ts JSDoc example uses Schema.JsonNumber (not S.JsonNumber)"
+
+  - id: eslint_ignores_repos
+    type: fail_to_pass
+    origin: pr_diff
+    description: "eslint.config.mjs includes .repos/ in its ignore patterns"
+
+  # P2P: Structure intact tests
+  - id: agentsmd_core_sections_intact
+    type: pass_to_pass
+    origin: static
+    description: "AGENTS.md retains core Development Workflow, Code Style, and Testing sections"
+
+  - id: eslint_standard_ignores
+    type: pass_to_pass
+    origin: static
+    description: "eslint.config.mjs still includes standard ignore patterns (dist, build, md)"
+
+rubric: []

@@ -1,0 +1,58 @@
+version: "2.0"
+
+source:
+  repo: "dotnet/maui"
+  pr: 32872
+  base_commit: "39325cec7d8a6de66e4608471b7843c7dfe3b4e1"
+  merge_commit: "c4cda6aacd38793addf1e8832b67b9354ae29838"
+
+checks:
+  # Standard code behavior checks
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified C# and markdown files have basic syntax sanity"
+
+  - id: isbeingdismissed_check_in_while_loop
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GetTopUIViewController checks IsBeingDismissed before following PresentedViewController chain"
+
+  - id: while_loop_preserves_traversal
+    type: pass_to_pass
+    origin: static
+    description: "While loop still traverses VC hierarchy for non-dismissing presented view controllers"
+
+  # Config/instruction file update checks
+  - id: copilot_instructions_removes_opening_prs_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "copilot-instructions.md removes the Opening PRs section with NOTE block requirement"
+
+  - id: skill_md_removes_note_from_description_requirements
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pr-finalize SKILL.md removes NOTE block from description requirements"
+
+  - id: complete_example_removes_note_block
+    type: fail_to_pass
+    origin: pr_diff
+    description: "complete-example.md removes NOTE block from example PR description"
+
+  # Pass-to-pass regression checks
+  - id: existing_alert_manager_logic_intact
+    type: pass_to_pass
+    origin: static
+    description: "GetTopUIViewController still returns UIViewController and uses RootViewController"
+
+  - id: copilot_instructions_key_sections_intact
+    type: pass_to_pass
+    origin: static
+    description: "Key sections of copilot-instructions.md remain intact after removal"
+
+  - id: skill_md_never_approve_rule_intact
+    type: pass_to_pass
+    origin: static
+    description: "CRITICAL never-approve rule in SKILL.md remains intact"
+
+rubric: []

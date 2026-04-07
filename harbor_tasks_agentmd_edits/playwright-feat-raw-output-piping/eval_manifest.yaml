@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 40010
+  base_commit: "f6e14f9d73b46ab319b334c013094d867d4ef149"
+  merge_commit: "a89099d18c5b67355cf78d8e99f69b8ca23dee5b"
+
+checks:
+  - id: response_raw_mode
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Response class supports raw mode: filters sections and strips markdown formatting"
+
+  - id: raw_global_cli_option
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLI registers --raw as global boolean option, passes through session and daemon"
+
+  - id: evaluate_catches_errors
+    type: fail_to_pass
+    origin: pr_diff
+    description: "evaluate tool catches errors and adds them to response"
+
+  - id: help_text_includes_raw
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Help generator displays --raw in global options"
+
+  - id: skill_md_documents_raw_output
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md documents --raw option with purpose and usage examples"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Response serialize has real conditional logic, not a stub"
+
+rubric:
+  - rule: "Config update is consistent with the style of existing SKILL.md sections"
+    source:
+      path: "packages/playwright-core/src/tools/cli-client/skill/SKILL.md"
+      lines: "1-10"
+      commit: "f6e14f9d73b46ab319b334c013094d867d4ef149"

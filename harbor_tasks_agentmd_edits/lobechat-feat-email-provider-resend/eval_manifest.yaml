@@ -1,0 +1,53 @@
+version: "2.0"
+
+source:
+  repo: "lobehub/lobe-chat"
+  pr: 10557
+  base_commit: "08572d060270afd65fcc5efdf7cde9e5fb0b0e04"
+  merge_commit: "7449b2913fd406744e43f22f379fad6847b277ba"
+
+checks:
+  # Pass-to-pass gates
+  - id: package_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "package.json is valid JSON with dependencies section"
+
+  - id: resend_sdk_importable
+    type: pass_to_pass
+    origin: static
+    description: "The resend npm package is importable and provides a Resend class"
+
+  # Code behavior tests (fail-to-pass)
+  - id: resend_impl_file_structure
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ResendImpl class exists implementing EmailServiceImpl with sendMail and TRPCError handling"
+
+  - id: enum_includes_resend
+    type: fail_to_pass
+    origin: pr_diff
+    description: "EmailImplType enum includes 'resend' value with factory support"
+
+  - id: env_configures_resend_vars
+    type: fail_to_pass
+    origin: pr_diff
+    description: "src/envs/email.ts defines RESEND_API_KEY, RESEND_FROM, EMAIL_SERVICE_PROVIDER with nodemailer/resend validation"
+
+  - id: email_service_resolves_provider
+    type: fail_to_pass
+    origin: pr_diff
+    description: "EmailService constructor resolves provider from EMAIL_SERVICE_PROVIDER env var with Nodemailer fallback"
+
+  # Config/documentation update checks (required for agentmd-edit)
+  - id: email_readme_documents_resend
+    type: fail_to_pass
+    origin: pr_diff
+    description: "src/server/services/email/README.md documents the Resend provider configuration"
+
+  - id: agents_md_has_project_description
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md includes Project Description section with AI Agent Workspace branding"
+
+rubric: []

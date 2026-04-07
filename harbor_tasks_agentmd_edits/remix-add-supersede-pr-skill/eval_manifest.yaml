@@ -1,0 +1,63 @@
+version: "2.0"
+
+source:
+  repo: "remix-run/remix"
+  pr: 11088
+  base_commit: "64b3a160dc25bbb082b96673e12bb55935f3528d"
+  merge_commit: "27765d6ff3fc9671802defcc69693cebd554ce6d"
+
+checks:
+  # Code behavior tests
+  - id: help_shows_usage
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script --help exits 0 and shows usage info with PR number placeholders"
+
+  - id: requires_two_positional_args
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script exits non-zero when called with fewer than 2 positional args"
+
+  - id: rejects_non_numeric_pr
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script rejects non-numeric PR numbers with a descriptive error"
+
+  - id: rejects_same_pr_numbers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script rejects when old_pr and new_pr are the same number"
+
+  - id: rejects_unknown_arguments
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script rejects unrecognized command-line flags"
+
+  # Config/doc update tests
+  - id: agents_md_documents_skills
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md has a Skills section mentioning the supersede-pr skill"
+
+  - id: agents_md_one_off_scripts_rule
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md notes that one-off scripts should be executable TypeScript"
+
+  # Pass-to-pass
+  - id: existing_code_style_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Existing AGENTS.md code style rules (let/var) remain intact"
+
+rubric:
+  - rule: "Code uses let for locals, const only at module scope; never use var"
+    source:
+      path: "AGENTS.md"
+      lines: "25"
+      commit: "64b3a160dc25bbb082b96673e12bb55935f3528d"
+  - rule: "Always use import type { X } for types; include .ts extensions"
+    source:
+      path: "AGENTS.md"
+      lines: "24"
+      commit: "64b3a160dc25bbb082b96673e12bb55935f3528d"

@@ -1,0 +1,82 @@
+version: "2.0"
+
+source:
+  repo: "electric-sql/electric"
+  pr: 3223
+  base_commit: "551cb0265c7d4b53b8cba6d9fc8181997c463940"
+  merge_commit: "d23b8d8d923374e1d12113163bdef0da66383ba9"
+
+checks:
+  # --- Fail-to-pass: Code changes ---
+  - id: vite_config_no_caddy
+    type: fail_to_pass
+    origin: pr_diff
+    description: "vite.config.ts does not import or reference caddyPlugin"
+
+  - id: caddy_plugin_deleted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "vite-plugin-caddy.ts file is deleted"
+
+  - id: burn_caddyfile_deleted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "examples/burn/Caddyfile is deleted"
+
+  - id: client_version_bumped_tanstack
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tanstack-db-web-starter uses @electric-sql/client ^1.0.13+"
+
+  - id: client_version_bumped_burn
+    type: fail_to_pass
+    origin: pr_diff
+    description: "burn example uses @electric-sql/client ^1.0.13+"
+
+  - id: vite_config_no_host_true
+    type: fail_to_pass
+    origin: pr_diff
+    description: "vite.config.ts does not set server.host: true (Caddy remnant)"
+
+  # --- Fail-to-pass: Config/documentation changes ---
+  - id: agents_md_updated_gotcha
+    type: fail_to_pass
+    origin: agent_config
+    description: "Root AGENTS.md gotcha #3 updated to reflect client fix instead of Caddy proxy"
+    source:
+      path: "AGENTS.md"
+      lines: "199"
+      commit: "551cb0265c7d4b53b8cba6d9fc8181997c463940"
+
+  - id: tanstack_readme_no_caddy
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tanstack-db-web-starter README removes Caddy sections and uses localhost:5173"
+
+  - id: burn_readme_direct_port
+    type: fail_to_pass
+    origin: pr_diff
+    description: "burn README references port 4000 directly without Caddy proxy"
+
+  - id: troubleshooting_docs_subdomain_sharding
+    type: fail_to_pass
+    origin: pr_diff
+    description: "troubleshooting.md describes subdomain sharding as primary solution, not Caddy"
+
+  # --- Pass-to-pass ---
+  - id: vite_config_valid
+    type: pass_to_pass
+    origin: static
+    description: "vite.config.ts is readable and non-empty"
+
+  - id: package_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "Both package.json files are valid JSON with expected deps"
+
+rubric:
+  - rule: "Documentation updates are consistent with the style of existing docs in the repo"
+    source:
+      path: "examples/tanstack-db-web-starter/AGENTS.md"
+      lines: "1-10"
+      commit: "551cb0265c7d4b53b8cba6d9fc8181997c463940"

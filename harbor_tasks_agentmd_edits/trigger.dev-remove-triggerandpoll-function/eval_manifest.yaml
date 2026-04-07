@@ -1,0 +1,63 @@
+version: "2.0"
+
+source:
+  repo: "triggerdotdev/trigger.dev"
+  pr: 2379
+  base_commit: "21c2c136beec90c28ec46c895561f5b3c258ec06"
+  merge_commit: "dd4515a2eb3756f887310248ca220c2b7d3b2581"
+
+checks:
+  # Gates (pass_to_pass)
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files parse without syntax errors"
+
+  - id: other_task_methods_preserved
+    type: pass_to_pass
+    origin: static
+    description: "tasks object still exports trigger, batchTrigger, triggerAndWait, batchTriggerAndWait"
+
+  # Core code removal (fail_to_pass)
+  - id: triggerandpoll_function_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "triggerAndPoll function definition removed from shared.ts"
+
+  - id: triggerandpoll_not_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "triggerAndPoll not listed in tasks export object in tasks.ts"
+
+  - id: triggerandpoll_not_imported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "triggerAndPoll not imported from shared.js in tasks.ts"
+
+  - id: sdk_usage_no_triggerandpoll
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Reference catalog sdkUsage.ts does not call tasks.triggerAndPoll"
+
+  # Config/doc update checks (fail_to_pass)
+  - id: cursor_rules_no_triggerandpoll
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cursor rules writing-tasks.mdc no longer documents triggerAndPoll"
+
+  - id: docs_triggering_no_triggerandpoll
+    type: fail_to_pass
+    origin: pr_diff
+    description: "docs/triggering.mdx no longer documents triggerAndPoll"
+
+  - id: docs_triggering_table_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Function summary table in docs/triggering.mdx no longer lists triggerAndPoll"
+
+rubric:
+  - rule: "The removal should be clean — no leftover comments, dead code, or broken references to triggerAndPoll anywhere in the codebase"
+    source:
+      path: "AGENTS.md"
+      lines: "1-10"
+      commit: "21c2c136beec90c28ec46c895561f5b3c258ec06"

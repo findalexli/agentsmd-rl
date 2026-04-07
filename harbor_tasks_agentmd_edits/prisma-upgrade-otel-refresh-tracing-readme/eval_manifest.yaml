@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "prisma/prisma"
+  pr: 28268
+  base_commit: "423b58507879080bdc1273ca5d30b3de87e5b766"
+  merge_commit: "c5249341dc04490c790e535062224821be4c39b0"
+
+checks:
+  # Gate: syntax validation
+  - id: json_syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "package.json files modified by this PR must be valid JSON"
+
+  # Code: OTel version upgrade in package.json
+  - id: client_otel_versions_upgraded
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/client/package.json has updated OpenTelemetry dep versions to v2"
+
+  # Code: resourceFromAttributes API migration in test files
+  - id: tracing_tests_use_resource_from_attributes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All tracing test files use resourceFromAttributes (not deprecated new Resource)"
+
+  # Code: setGlobalTracerProvider API migration in test files
+  - id: tracing_tests_use_set_global_tracer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All tracing test files use trace.setGlobalTracerProvider (not .register)"
+
+  # Code: parentSpanContext API migration
+  - id: tracing_uses_parent_span_context
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tracing/tests.ts uses parentSpanContext?.spanId (not deprecated parentSpanId)"
+
+  # Code: spanProcessors constructor option
+  - id: tracing_tests_use_span_processors_option
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tracing test files use spanProcessors constructor option (not addSpanProcessor)"
+
+  # Config: README resourceFromAttributes
+  - id: readme_uses_resource_from_attributes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md Jaeger example uses resourceFromAttributes (not new Resource)"
+
+  # Config: README semantic conventions
+  - id: readme_uses_new_semantic_conventions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md uses ATTR_SERVICE_NAME/VERSION (not deprecated SEMRESATTRS_)"
+
+  # Config: README setGlobalTracerProvider
+  - id: readme_uses_set_global_tracer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md Jaeger example uses trace.setGlobalTracerProvider (not .register)"
+
+rubric: []

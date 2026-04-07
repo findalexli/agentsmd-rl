@@ -1,0 +1,58 @@
+version: "2.0"
+
+source:
+  repo: "remix-run/remix"
+  pr: 11071
+  base_commit: "783fa46240191001e0ee2084297b5c81d78b3545"
+  merge_commit: "a3dbcb421bd68ce440ada24e1db3a762dc576131"
+
+checks:
+  # Code removal checks
+  - id: run_method_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The run() method is removed from Router interface and createRouter implementation"
+
+  - id: run_tests_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The router.run() test suite and createStorageKey import are removed"
+
+  - id: change_file_deleted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The unreleased change file minor.router-run.md is deleted"
+
+  # Config/documentation update checks
+  - id: fetch_router_readme_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/fetch-router/README.md no longer documents router.run()"
+
+  - id: bookstore_readme_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "demos/bookstore/README.md no longer references router.run()"
+
+  # Regression / compilation checks
+  - id: typecheck_passes
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript type checking passes for fetch-router package"
+
+  - id: remaining_router_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Remaining fetch-router tests (router.fetch, router.map, etc.) pass"
+
+rubric:
+  - rule: "Removal is clean with no orphaned references, consistent with existing documentation style"
+    source:
+      path: "AGENTS.md"
+      lines: "42-43"
+      commit: "783fa46240191001e0ee2084297b5c81d78b3545"
+  - rule: "Code follows project style: let for locals, arrow callbacks, shorthand methods"
+    source:
+      path: "AGENTS.md"
+      lines: "30-34"
+      commit: "783fa46240191001e0ee2084297b5c81d78b3545"

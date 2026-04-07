@@ -1,0 +1,49 @@
+version: "2.0"
+
+source:
+  repo: "remix-run/remix"
+  pr: 10981
+  base_commit: "40a755c50f40ed444a928363beddd75e6edc1f52"
+  merge_commit: "4c77c95a478c863bc7245c7ec11a576df2808d20"
+
+checks:
+  # Static gates
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files parse without errors"
+
+  # Code behavior: prerelease config renamed tag→channel
+  - id: prerelease_json_uses_channel
+    type: fail_to_pass
+    origin: pr_diff
+    description: "prerelease.json uses 'channel' field instead of old 'tag' field"
+
+  - id: changes_ts_reads_channel_field
+    type: fail_to_pass
+    origin: pr_diff
+    description: "changes.ts readRemixPrereleaseConfig validates 'channel', not 'tag'"
+
+  - id: publish_uses_next_dist_tag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "publish.ts always publishes remix prereleases with '--tag next'"
+
+  # Config/documentation update checks
+  - id: agents_md_documents_channel_and_next
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md describes 'channel' field and explains npm dist-tag is always 'next'"
+
+  - id: contributing_md_uses_channel
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CONTRIBUTING.md shows 'channel' in prerelease.json example and docs"
+
+  # Anti-stub
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified functions have real logic, not just pass/return"
+
+rubric: []

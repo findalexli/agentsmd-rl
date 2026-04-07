@@ -1,0 +1,47 @@
+version: "2.0"
+
+source:
+  repo: "remix-run/remix"
+  pr: 11060
+  base_commit: "649aecadeb54fc3027a2b6a85020dd31421b5327"
+  merge_commit: "0951cf4968a8332220a10df37ee0bdb0ed0bab2e"
+
+checks:
+  # Code behavior checks
+  - id: handle_update_returns_promise
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Handle.update() returns Promise<AbortSignal> instead of accepting task callback"
+
+  - id: cascading_update_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Scheduler detects and stops infinite cascading update loops"
+
+  - id: render_ctrl_cleanup
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Component remove() aborts renderCtrl alongside connectedCtrl"
+
+  # Config/documentation update checks
+  - id: agents_md_promise_api
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md documents handle.update() as returning Promise<AbortSignal>"
+
+  - id: readme_md_promise_api
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md documents the new Promise-based update() API"
+
+  - id: handle_md_promise_api
+    type: fail_to_pass
+    origin: pr_diff
+    description: "docs/handle.md reflects the Promise-based handle.update() API"
+
+rubric:
+  - rule: "Documentation updates are consistent in style with existing content"
+    source:
+      path: "packages/component/AGENTS.md"
+      lines: "1-10"
+      commit: "649aecadeb54fc3027a2b6a85020dd31421b5327"

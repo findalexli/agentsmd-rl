@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "prisma/prisma"
+  pr: 28156
+  base_commit: "a60fe90928873bcec23b0fd07a002c164d7f4d27"
+  merge_commit: "ef1f424579b68020f682348f3786e171a54e166f"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "connection-string.ts must be valid TypeScript that tsx can load"
+
+  - id: default_azure_credential_auth
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parseConnectionString supports authentication=DefaultAzureCredential"
+
+  - id: active_directory_password_auth
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parseConnectionString supports ActiveDirectoryPassword with userName/password/clientId"
+
+  - id: service_principal_auth
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parseConnectionString supports ActiveDirectoryServicePrincipal"
+
+  - id: auth_missing_params_throws
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ActiveDirectoryPassword without clientId throws validation error"
+
+  - id: managed_identity_auth
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parseConnectionString supports ActiveDirectoryManagedIdentity"
+
+  - id: basic_parsing_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Basic connection string parsing (user/password/database) still works"
+
+  - id: readme_documents_entra_auth
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md documents Entra ID / Active Directory authentication options"
+
+  - id: readme_documents_connection_string_usage
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md shows how to use a connection string with the adapter"
+
+rubric: []

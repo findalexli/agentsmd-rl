@@ -1,0 +1,77 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39581
+  base_commit: "8bb752159dcd7bdf914a9b6d310c15dda84d0682"
+  merge_commit: "daa14b594287e20a663b38d95c8a21c1657fe5a2"
+
+checks:
+  # Gate
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files parse without errors"
+
+  # Core behavioral tests (code changes)
+  - id: asref_function_classifies_inputs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLI asRef helper correctly distinguishes refs (e15, f1e2) from selectors (button, #main, role=button)"
+
+  - id: cli_commands_use_target_param
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLI click/fill/hover/select/check/uncheck use 'target' instead of 'ref' as the element arg"
+
+  - id: drag_uses_start_end_element
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Drag command uses startElement/endElement instead of startRef/endRef"
+
+  - id: tab_reflocator_accepts_selector
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tab.refLocator and refLocators accept optional selector parameter for CSS/role selectors"
+
+  - id: tool_schemas_include_selector
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MCP tool schemas (snapshot, evaluate, verify, form, screenshot) include optional selector field"
+
+  - id: filtered_tools_strips_selector
+    type: fail_to_pass
+    origin: pr_diff
+    description: "filteredTools() omits selector/startSelector/endSelector from MCP tool schemas"
+
+  # Config/instruction file update checks (agentmd-edit)
+  - id: skill_md_documents_selector_targeting
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md documents how to use CSS/role selectors for targeting elements"
+    source:
+      path: ".claude/skills/playwright-dev/mcp-dev.md"
+      lines: "276-278"
+      commit: "8bb752159dcd7bdf914a9b6d310c15dda84d0682"
+
+  - id: skill_md_shows_ref_and_selector_examples
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md shows both ref-based and selector-based interaction examples"
+    source:
+      path: ".claude/skills/playwright-dev/mcp-dev.md"
+      lines: "276-278"
+      commit: "8bb752159dcd7bdf914a9b6d310c15dda84d0682"
+
+  # Regression
+  - id: ref_pattern_still_works
+    type: pass_to_pass
+    origin: static
+    description: "asRef preserves existing ref-based behavior (ref patterns return { ref: value })"
+
+rubric:
+  - rule: "SKILL.md update is consistent with the style of existing documentation sections"
+    source:
+      path: "packages/playwright-core/src/skill/SKILL.md"
+      lines: "1-10"
+      commit: "8bb752159dcd7bdf914a9b6d310c15dda84d0682"

@@ -1,0 +1,69 @@
+version: "2.0"
+
+source:
+  repo: "phidatahq/phidata"
+  pr: 6079
+  base_commit: "156d4e43e6281d0ff65a2351379df732348ffadc"
+  merge_commit: "2be4c5bdc5578c170639f7808e2e32bdca0cad87"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified Python files parse without errors"
+
+  - id: enum_values_renamed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "InfraStarterTemplate enum values use short names without -template suffix"
+
+  - id: template_name_map_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TEMPLATE_TO_NAME_MAP values use short names without -template suffix"
+
+  - id: default_template_prompt_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "User prompt shows 'agentos-docker' not 'agentos-docker-template'"
+
+  - id: repo_urls_unchanged
+    type: pass_to_pass
+    origin: pr_diff
+    description: "TEMPLATE_TO_REPO_MAP still points to original GitHub repo URLs"
+
+  - id: version_bumped
+    type: fail_to_pass
+    origin: pr_diff
+    description: "agno-infra version bumped to 1.0.7"
+
+  - id: claude_md_github_operations_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md contains a GitHub Operations section with gh api usage guidance"
+
+  - id: claude_md_graphql_workaround
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md documents the GraphQL / classic projects workaround with API path format"
+
+  - id: template_repo_map_keys_match_enum
+    type: pass_to_pass
+    origin: static
+    description: "TEMPLATE_TO_REPO_MAP and TEMPLATE_TO_NAME_MAP keys match all enum members"
+
+  - id: no_fstring_without_vars
+    type: pass_to_pass
+    origin: agent_config
+    description: "No f-strings used in print calls where there are no format variables"
+    source:
+      path: "CLAUDE.md"
+      lines: "195"
+      commit: "156d4e43e6281d0ff65a2351379df732348ffadc"
+
+rubric:
+  - rule: "GitHub Operations section is placed logically within the CLAUDE.md structure and follows the document's existing formatting style"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-10"
+      commit: "156d4e43e6281d0ff65a2351379df732348ffadc"

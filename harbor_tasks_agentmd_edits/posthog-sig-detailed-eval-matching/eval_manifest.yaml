@@ -1,0 +1,63 @@
+version: "2.0"
+
+source:
+  repo: "PostHog/posthog"
+  pr: 51319
+  base_commit: "7b8a1992516a0218c75784e8d2c987f78118d400"
+  merge_commit: "ca291b5bdb1e943f755d7da85208129f394f8081"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified Python files must parse without errors"
+
+  - id: cosine_distance_behavior
+    type: fail_to_pass
+    origin: pr_diff
+    description: "cosine_distance static method exists on EmbeddingStore and computes correctly"
+
+  - id: specificity_split_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MatchFailureMode enum must not contain SPECIFICITY_SPLIT"
+
+  - id: new_eval_metrics_emitted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_capture_match_quality emits correct_match_pre_specificity, query_diversity, and candidate_diversity"
+
+  - id: diversity_computation_logic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Diversity metrics use itertools.combinations for pairwise cosine and Jaccard computation"
+
+  - id: agents_md_metrics_updated
+    type: fail_to_pass
+    origin: agent_config
+    description: "AGENTS.md metrics table documents new metrics and removes SPECIFICITY_SPLIT"
+    source:
+      path: "products/signals/eval/AGENTS.md"
+      lines: "78-88"
+      commit: "7b8a1992516a0218c75784e8d2c987f78118d400"
+
+  - id: agents_md_new_sql_sections
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md has new SQL sections for specificity judge impact and diversity queries"
+
+  - id: agents_md_sql_no_specificity_split
+    type: fail_to_pass
+    origin: agent_config
+    description: "SQL query in AGENTS.md must not reference SPECIFICITY_SPLIT failure mode"
+    source:
+      path: "products/signals/eval/AGENTS.md"
+      lines: "157-178"
+      commit: "7b8a1992516a0218c75784e8d2c987f78118d400"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "_capture_match_quality has substantial logic, not a stub"
+
+rubric: []

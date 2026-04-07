@@ -1,0 +1,85 @@
+version: "2.0"
+
+source:
+  repo: "dotnet/maui"
+  pr: 34160
+  base_commit: "48dae02e3e04dce551396f747f234bf3e30801ec"
+  merge_commit: "dea56cb4078346ca5983f4b431bae6501f4f114f"
+
+checks:
+  - id: script_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "PowerShell script and SKILL.md files exist"
+
+  - id: script_default_category_is_default
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script -Category default changed from 'all' to 'default'"
+
+  - id: script_default_limit_is_100
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script -Limit default changed from 10 to 100"
+
+  - id: script_validate_set_has_new_categories
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script ValidateSet includes approved, ready-to-review, agent-reviewed, default"
+
+  - id: script_has_assignees_field
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script includes Assignees in processed PR objects"
+
+  - id: script_queries_agent_reviewed_prs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script queries for agent-reviewed and agent-approved PRs via labels"
+
+  - id: script_has_write_pr_entry_helper
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script has Write-PREntry helper function to avoid output repetition"
+
+  - id: script_has_default_mode_logic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script implements default mode showing only P/0 + milestoned, filtering changes-requested"
+
+  - id: skill_md_documents_nine_categories
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md lists 9 priority categories (was 6)"
+
+  - id: skill_md_documents_approved_category
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md documents the Approved (Not Merged) category"
+
+  - id: skill_md_documents_agent_reviewed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md documents the Agent Reviewed category"
+
+  - id: skill_md_default_category_value
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md parameter table shows 'default' as Category default"
+
+  - id: skill_md_limit_default_100
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md parameter table shows 100 as Limit default"
+
+  - id: skill_md_step3_includes_assignees_column
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md Step 3 mentions Assignees column in table format"
+
+rubric:
+  - rule: "Documentation updates are consistent with the style and formatting of the existing SKILL.md"
+    source:
+      path: ".github/skills/find-reviewable-pr/SKILL.md"
+      lines: "1-20"
+      commit: "48dae02e3e04dce551396f747f234bf3e30801ec"

@@ -1,0 +1,38 @@
+version: "2.0"
+
+source:
+  repo: "electric-sql/electric"
+  pr: 3225
+  base_commit: "617b429f0f8b9b78bed42b897092e065cf993e35"
+  merge_commit: "45e3f0da9dc29eb3fc5c1174264cdfdcbcf60c0b"
+
+checks:
+  # Code behavior checks
+  - id: vite_plugin_exports
+    type: fail_to_pass
+    origin: pr_diff
+    description: "vite-plugin-caddy.ts exports caddyPlugin returning valid plugin with configureServer and buildEnd"
+
+  - id: vite_config_uses_caddy
+    type: fail_to_pass
+    origin: pr_diff
+    description: "vite.config.ts imports and uses caddyPlugin with server.host enabled"
+
+  # Config/documentation update checks
+  - id: agents_md_http2_proxy_tip
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md slow shapes tip mentions HTTP/2 proxy fix, not outdated version upgrade"
+
+  - id: readme_documents_caddy
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README documents Caddy with HTTP/2 multiplexing explanation and setup instructions"
+
+  # Regression guard
+  - id: vite_config_still_has_existing_plugins
+    type: pass_to_pass
+    origin: static
+    description: "vite.config.ts retains all existing plugins (tanstack, react, tailwind)"
+
+rubric: []

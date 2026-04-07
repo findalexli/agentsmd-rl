@@ -1,0 +1,38 @@
+version: "2.0"
+
+source:
+  repo: "docker/compose"
+  pr: 13656
+  base_commit: "27d9d506306e808965d99b70c1f59308dcabca13"
+  merge_commit: "5de4353a6a8bd872dbf1591a545df04f8241b805"
+
+checks:
+  # Syntax gate
+  - id: go_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified Go files parse without errors"
+
+  # Code style fixes
+  - id: publish_uses_fprintf
+    type: fail_to_pass
+    origin: pr_diff
+    description: "publish.go uses fmt.Fprintf instead of WriteString(fmt.Sprintf)"
+
+  - id: no_unnecessary_nolint
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Test file has no unnecessary //nolint:errcheck directive"
+
+  # Config/documentation updates
+  - id: claude_md_documents_build
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md exists and documents build/test commands"
+
+  - id: claude_md_documents_lint_style
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md documents linting setup and fmt.Fprintf style preference"
+
+rubric: []

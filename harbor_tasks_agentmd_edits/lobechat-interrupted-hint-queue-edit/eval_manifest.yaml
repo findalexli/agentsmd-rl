@@ -1,0 +1,91 @@
+version: "2.0"
+
+source:
+  repo: "lobehub/lobe-chat"
+  pr: 13397
+  base_commit: "9c08fa5cdf2116e041b63255be3e498f1ae8d1e3"
+  merge_commit: "143a15fdb9fabec92ed8829b9e4f8228d93ff833"
+
+checks:
+  # Gate checks (pass_to_pass)
+  - id: typescript_files_parse
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript/TSX files exist and are non-empty"
+
+  # Core behavioral tests (fail_to_pass)
+  - id: interrupted_computation_logic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isInterrupted is true when latest runtime op is cancelled, false when running or completed"
+
+  - id: complete_operation_preserves_cancelled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "completeOperation preserves cancelled status instead of overwriting with completed"
+
+  - id: operation_state_has_interrupted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MessageOperationState type includes isInterrupted boolean field"
+
+  - id: interrupted_selector_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isMessageInterrupted selector is defined and exported from messageState selectors"
+
+  - id: interrupted_hint_component
+    type: fail_to_pass
+    origin: pr_diff
+    description: "InterruptedHint component exists with correct i18n keys and memo wrapper"
+
+  - id: queue_tray_edit_button
+    type: fail_to_pass
+    origin: pr_diff
+    description: "QueueTray has Pencil icon edit button with handleEdit callback"
+
+  - id: locale_interrupted_keys
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Locale files (default, en-US, zh-CN) contain interrupted and interruptedHint keys"
+
+  # Config file update checks (fail_to_pass)
+  - id: skill_md_screen_recording
+    type: fail_to_pass
+    origin: pr_diff
+    description: "electron-testing SKILL.md documents Screen Recording feature with ffmpeg and agent-browser"
+
+  - id: recording_script_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "record-electron-demo.sh script exists with recording lifecycle functions"
+
+  # Regression checks (pass_to_pass)
+  - id: existing_message_state_selectors
+    type: pass_to_pass
+    origin: static
+    description: "Existing message state selectors (editing, generating, loading, etc.) are unchanged"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "isInterrupted computation uses real logic with reverse/find/cancelled check"
+
+rubric:
+  - rule: "New i18n keys follow the flat key naming convention: {feature}.{context}.{action|status}"
+    source:
+      path: ".agents/skills/i18n/SKILL.md"
+      lines: "19"
+      commit: "9c08fa5cdf2116e041b63255be3e498f1ae8d1e3"
+
+  - rule: "Prefer interfaces over types for object shapes"
+    source:
+      path: "AGENTS.md"
+      lines: "55"
+      commit: "9c08fa5cdf2116e041b63255be3e498f1ae8d1e3"
+
+  - rule: "Use selectors to access zustand store data"
+    source:
+      path: ".agents/skills/react/SKILL.md"
+      lines: "9"
+      commit: "9c08fa5cdf2116e041b63255be3e498f1ae8d1e3"

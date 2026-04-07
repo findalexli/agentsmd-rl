@@ -1,0 +1,58 @@
+version: "2.0"
+
+source:
+  repo: "BerriAI/litellm"
+  pr: 22925
+  base_commit: "bf9c96b91205d17e13d9c7ea54d396005db5bc63"
+  merge_commit: "503eb2fd4ccafa5034c4e90a368952b7fb44578a"
+
+checks:
+  # Gate: syntax check
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified Python files parse without errors"
+
+  # Core behavioral tests (code fix)
+  - id: remove_key_does_not_close_async_client
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Evicting an async client from LLMClientCache must NOT close it"
+
+  - id: remove_key_does_not_close_sync_client
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Evicting a sync client from LLMClientCache must NOT close it"
+
+  - id: eviction_does_not_close_async_clients
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cache eviction by capacity must not close async clients"
+
+  - id: remove_key_handles_plain_values
+    type: pass_to_pass
+    origin: pr_diff
+    description: "_remove_key still works for non-client values (strings, dicts)"
+
+  # Config/documentation update tests
+  - id: agents_md_no_close_on_eviction_rule
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md must document the rule about never closing clients on cache eviction"
+
+  - id: claude_md_client_cache_safety
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md must document HTTP Client Cache Safety section"
+
+rubric:
+  - rule: "Config update is consistent with the style of existing documentation in AGENTS.md"
+    source:
+      path: "AGENTS.md"
+      lines: "200-215"
+      commit: "bf9c96b91205d17e13d9c7ea54d396005db5bc63"
+  - rule: "Config update is consistent with the style of existing sections in CLAUDE.md"
+    source:
+      path: "CLAUDE.md"
+      lines: "110-125"
+      commit: "bf9c96b91205d17e13d9c7ea54d396005db5bc63"

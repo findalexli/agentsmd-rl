@@ -1,0 +1,73 @@
+version: "2.0"
+
+source:
+  repo: "dotnet/maui"
+  pr: 33196
+  base_commit: "1789d47932dd78983d7c68101f154f372f60e151"
+  merge_commit: "a6e9730b11c09baacab650c28e4844240009cea9"
+
+checks:
+  # Structural gate checks (pass_to_pass)
+  - id: csproj_xml_valid
+    type: pass_to_pass
+    origin: static
+    description: "Controls.Maps.csproj must be valid XML after modifications"
+
+  - id: csproj_existing_properties_intact
+    type: pass_to_pass
+    origin: static
+    description: "Existing csproj properties (PackageId, Description) are preserved"
+
+  # csproj packaging tests (fail_to_pass)
+  - id: csproj_references_readme
+    type: fail_to_pass
+    origin: pr_diff
+    description: "csproj declares PackageReadmeFile element pointing to README.md"
+
+  - id: csproj_includes_readme_in_package
+    type: fail_to_pass
+    origin: pr_diff
+    description: "csproj includes README.md as None item with Pack=true for NuGet packaging"
+
+  # README content tests (fail_to_pass)
+  - id: readme_has_install_instructions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README includes package installation instructions and package name"
+
+  - id: readme_documents_features
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README documents multiple Maps features (pins, shapes, interactions)"
+
+  - id: readme_has_code_samples
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README includes XAML or C# code examples for Maps usage"
+
+  - id: readme_links_to_docs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README links to Microsoft Learn documentation"
+
+  # Agent config compliance check (fail_to_pass)
+  - id: readme_follows_doc_patterns
+    type: fail_to_pass
+    origin: agent_config
+    description: "README follows existing code documentation patterns with proper structure and MAUI initialization"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "162"
+      commit: "1789d47932dd78983d7c68101f154f372f60e151"
+
+rubric:
+  - rule: "Follow existing code documentation patterns"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "162"
+      commit: "1789d47932dd78983d7c68101f154f372f60e151"
+  - rule: "Update relevant docs in docs/ folder when needed"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "163"
+      commit: "1789d47932dd78983d7c68101f154f372f60e151"

@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "zulip/zulip"
+  pr: 37872
+  base_commit: "305c52c35a7dad3e6c9bde470e8f717186abaae5"
+  merge_commit: "1a56a9fef3180b5588642ba6f0326f91b0097b00"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "fetch-zulip-web-public-messages parses without syntax errors"
+
+  - id: parse_near_url
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parse_zulip_url handles near/ID anchor format"
+
+  - id: parse_near_url_stream_variant
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parse_zulip_url handles near/ID with stream prefix"
+
+  - id: error_message_mentions_near
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error message documents near/ID URL format"
+
+  - id: parse_with_url_still_works
+    type: pass_to_pass
+    origin: static
+    description: "parse_zulip_url still handles the original with/ID format"
+
+  - id: parse_url_no_anchor
+    type: pass_to_pass
+    origin: static
+    description: "parse_zulip_url handles URLs without any anchor"
+
+  - id: claude_md_zulip_chat_links
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md documents how to handle Zulip chat links"
+
+rubric: []

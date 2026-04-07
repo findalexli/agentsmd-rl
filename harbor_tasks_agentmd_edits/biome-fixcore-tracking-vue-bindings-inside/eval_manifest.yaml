@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "biomejs/biome"
+  pr: 9053
+  base_commit: "c047e86583434beb33ed4fb0b49e627d26a8afbd"
+  merge_commit: "66ef5baf6325d324efcb3a1a527496406cfbf72e"
+
+checks:
+  # Static gates
+  - id: new_module_registered
+    type: pass_to_pass
+    origin: static
+    description: "biome_html_syntax::lib.rs declares the new directive_ext module"
+
+  # Code behavior tests — Vue directive tracking
+  - id: directive_ext_initializer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "directive_ext.rs provides initializer() covering all 8 Svelte directive types"
+
+  - id: vue_directive_tracking
+    type: fail_to_pass
+    origin: pr_diff
+    description: "html.rs parses all 4 Vue directive variants (VueVOn, VueVBind, VueVSlot, VueDirective) as embedded JS"
+
+  - id: svelte_directive_tracking
+    type: fail_to_pass
+    origin: pr_diff
+    description: "html.rs parses Svelte directives (AnySvelteDirective) as embedded JS"
+
+  - id: parse_directive_helpers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parse_directive_string_value (Vue) and parse_directive_text_expression (Svelte) helpers exist with correct logic"
+
+  # Config/documentation update tests
+  - id: biome_developer_skill_created
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".claude/skills/biome-developer/SKILL.md created with frontmatter, inner_string_text, quick_test, EmbeddingKind content"
+
+  - id: agents_md_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md updated with new do/don't rules about legacy syntax, AST inspection, skills reference"
+
+  - id: testing_codegen_skill_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "testing-codegen SKILL.md updated with parser quick test section and just qt command"
+
+  # Anti-stub
+  - id: directive_ext_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "directive_ext.rs has 8 real match arms, not a stub returning None"
+
+rubric:
+  - rule: "Config updates follow the style and formatting of existing documentation in the repo"
+    source:
+      path: "AGENTS.md"
+      lines: "350-370"
+      commit: "c047e86583434beb33ed4fb0b49e627d26a8afbd"

@@ -1,0 +1,63 @@
+version: "2.0"
+
+source:
+  repo: "remix-run/remix"
+  pr: 11067
+  base_commit: "89db125c56d3b0d637a283ac9122c6cb8f5542c3"
+  merge_commit: "28d74aae012ca78b82fedaf6f7f5de53094fd002"
+
+checks:
+  # Fail-to-pass: Standard Schema compatibility (code behavior)
+  - id: table_standard_schema_partial
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Table objects accept partial objects via ~standard.validate"
+
+  - id: table_standard_schema_unknown_column
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Table objects reject unknown columns with path info"
+
+  - id: table_standard_schema_invalid_value
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Table objects reject invalid column values with path info"
+
+  - id: table_standard_schema_with_parseSafe
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parseSafe from data-schema works directly on table objects"
+
+  # Fail-to-pass: config/documentation updates
+  - id: agents_md_cross_package_rule
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md documents the cross-package boundaries rule about avoiding re-exports"
+
+  - id: readme_documents_data_validation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/data-table/README.md documents data validation and Standard Schema compatibility"
+
+  # Pass-to-pass: regression
+  - id: existing_table_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-existing table.test.ts still passes"
+
+  - id: create_table_basic
+    type: pass_to_pass
+    origin: static
+    description: "Basic createTable functionality (metadata, column refs) works"
+
+  - id: not_stub
+    type: fail_to_pass
+    origin: static
+    description: "Table validate rejects non-objects, arrays, and reports all unknown columns"
+
+rubric:
+  - rule: "Config updates should be consistent with the style of existing AGENTS.md and README.md content"
+    source:
+      path: "AGENTS.md"
+      lines: "1-5"
+      commit: "89db125c56d3b0d637a283ac9122c6cb8f5542c3"

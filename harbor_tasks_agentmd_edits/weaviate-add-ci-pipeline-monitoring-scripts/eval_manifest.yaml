@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "weaviate/weaviate"
+  pr: 10542
+  base_commit: "57d1e03321fd1648889b5c3fae5261cf5a7a0217"
+  merge_commit: "b8c2a029c1c3c11cc8a20284ed1e3675d78ac18e"
+
+checks:
+  - id: shell_syntax
+    type: pass_to_pass
+    origin: static
+    description: "All shell scripts in .claude/scripts/ parse without syntax errors"
+
+  - id: monitor_pr_script_exists_and_executable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "monitor_pr.sh exists, is executable, accepts PR env var, and uses gh pr checks"
+
+  - id: monitor_pr_exits_on_missing_pr
+    type: fail_to_pass
+    origin: pr_diff
+    description: "monitor_pr.sh exits non-zero with usage when PR env var is not set"
+
+  - id: monitor_docker_script_exists_and_executable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "monitor_docker.sh exists, is executable, and accepts a run ID"
+
+  - id: monitor_docker_exits_on_missing_arg
+    type: fail_to_pass
+    origin: pr_diff
+    description: "monitor_docker.sh exits non-zero when no run ID argument is provided"
+
+  - id: gitignore_allows_claude_scripts
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".gitignore has negation pattern to allow .claude/scripts/ to be tracked"
+
+  - id: claude_md_has_ci_monitoring_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md documents CI monitoring and references both monitoring scripts"
+
+  - id: claude_md_documents_script_usage
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md documents PR= usage, re-run commands, and .claude/scripts/ location"
+
+  - id: claude_md_preserves_existing_sections
+    type: pass_to_pass
+    origin: static
+    description: "CLAUDE.md preserves existing Build & Run, Testing, Architecture, Code Conventions sections"
+
+rubric: []

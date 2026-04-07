@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 38932
+  base_commit: "1e81675f850280d2cbaa0bbb01a7f066532d0e01"
+  merge_commit: "3cdf7ca18324b9a0aa0ec80d818c2f9602b0ef60"
+
+checks:
+  - id: help_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "help.json must be valid JSON"
+
+  - id: commands_renamed_in_help
+    type: fail_to_pass
+    origin: pr_diff
+    description: "help.json command keys use new unhyphenated names (press, keydown, mousemove, etc.)"
+
+  - id: help_global_text_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Global help text references new command names, not hyphenated ones"
+
+  - id: modal_state_dual_format
+    type: fail_to_pass
+    origin: pr_diff
+    description: "renderModalStates accepts config and conditionally renders skill vs tool name"
+
+  - id: eval_auto_wraps_expression
+    type: fail_to_pass
+    origin: pr_diff
+    description: "evaluate.ts auto-wraps non-arrow expressions with () => (...)"
+
+  - id: skill_md_documents_cli
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md exists with frontmatter and documents CLI commands with new names"
+
+  - id: build_copies_terminal_md
+    type: fail_to_pass
+    origin: pr_diff
+    description: "build.js copies terminal .md files to lib output"
+
+  - id: clearedby_type_is_object
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ModalState clearedBy type is { tool: string; skill: string } not plain string"
+
+rubric: []

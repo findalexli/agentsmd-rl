@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "lobehub/lobe-chat"
+  pr: 11514
+  base_commit: "959c210e869803545d451c3019e178966188ef17"
+  merge_commit: "d44616354efaa54d76bd388a67ed8ed4736f279e"
+
+checks:
+  - id: swr_module_loads
+    type: pass_to_pass
+    origin: static
+    description: "SWR module can be loaded and exports all expected hooks"
+
+  - id: use_action_swr_uses_fallback_data
+    type: fail_to_pass
+    origin: pr_diff
+    description: "useActionSWR uses useSWR with fallbackData instead of useSWRMutation"
+
+  - id: swr_comments_english_only
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SWR module comments are in English, not Chinese"
+
+  - id: claude_md_references_linear_mdc
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md references .cursor/rules/linear.mdc for Linear rules"
+
+  - id: linear_mdc_exists_with_rules
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".cursor/rules/linear.mdc file exists with Linear issue management rules"
+
+rubric: []

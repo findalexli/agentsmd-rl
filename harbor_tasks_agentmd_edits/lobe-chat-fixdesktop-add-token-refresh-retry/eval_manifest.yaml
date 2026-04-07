@@ -1,0 +1,59 @@
+version: "2.0"
+
+source:
+  repo: "lobehub/lobe-chat"
+  pr: 10575
+  base_commit: "95bc5c2e6c9cca04b584002fbd85145e3b977e1f"
+  merge_commit: "83fc2e8bc61f8fedbd021d9b02d3b380a41f38e9"
+
+checks:
+  # --- f2p: code behavior tests ---
+  - id: oidc_error_codes_detected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isNonRetryableError flags OIDC error codes (invalid_grant, invalid_client, etc.)"
+
+  - id: deterministic_failures_detected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isNonRetryableError flags deterministic failures (missing token, inactive server)"
+
+  - id: transient_errors_are_retryable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Network/transient errors are NOT flagged as non-retryable"
+
+  - id: error_matching_case_insensitive
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error matching is case-insensitive"
+
+  - id: retry_mechanism_parameters
+    type: fail_to_pass
+    origin: pr_diff
+    description: "performTokenRefreshWithRetry uses retries=3, minTimeout=1000, maxTimeout=4000, factor=2"
+
+  - id: grace_period_in_adapter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "adapter.ts defines REFRESH_TOKEN_GRACE_PERIOD_SECONDS = 180"
+
+  # --- f2p: config/documentation update test (REQUIRED) ---
+  - id: claude_md_in_review_workflow
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md instructs setting issue status to 'In Review' (not 'Done') when PR is created"
+
+  # --- f2p: dependency check ---
+  - id: async_retry_dependency
+    type: fail_to_pass
+    origin: pr_diff
+    description: "async-retry and @types/async-retry added to desktop package.json"
+
+  # --- p2p: regression check ---
+  - id: auth_ctr_existing_methods_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Core AuthCtr methods (startAutoRefresh, refreshAccessToken, initializeAutoRefresh) still exist"
+
+rubric: []

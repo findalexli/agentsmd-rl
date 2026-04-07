@@ -1,0 +1,63 @@
+version: "2.0"
+
+source:
+  repo: "remix-run/remix"
+  pr: 11045
+  base_commit: "3921f065331f6b28e0c29750f1e757a4e09feebc"
+  merge_commit: "2fa272cdd372dea3382ddc23fb63f2ca1d32b063"
+
+checks:
+  # Config/documentation update checks
+  - id: readme_documents_type_benchmarks
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bench/README.md documents type benchmarks section with ArkType Attest"
+
+  - id: readme_has_run_command_for_types
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bench/README.md documents how to run type benchmarks with node"
+
+  - id: readme_distinguishes_runtime_benchmarks
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bench/README.md differentiates runtime vs type benchmarks with src/ reference"
+
+  # Code: type benchmark files
+  - id: type_benchmarks_test_href
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Type benchmark file tests RoutePattern href/HrefArgs using @ark/attest"
+
+  - id: type_benchmarks_test_params
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Type benchmark file tests RoutePattern params/Params using @ark/attest"
+
+  - id: bench_package_has_types_script
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bench/package.json has bench:types script"
+
+  - id: bench_package_has_attest_dep
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bench/package.json has @ark/attest devDependency"
+
+  - id: attest_moved_to_bench_subpackage
+    type: fail_to_pass
+    origin: pr_diff
+    description: "@ark/attest removed from route-pattern/package.json devDeps (moved to bench)"
+
+  # Regression checks
+  - id: existing_bench_deps_maintained
+    type: pass_to_pass
+    origin: static
+    description: "Existing bench dependencies (vitest, path-to-regexp) still present"
+
+  - id: route_pattern_package_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "route-pattern/package.json core fields preserved (name, exports)"
+
+rubric: []

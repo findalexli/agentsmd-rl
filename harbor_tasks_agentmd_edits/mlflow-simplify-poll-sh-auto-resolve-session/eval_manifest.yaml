@@ -1,0 +1,48 @@
+version: "2.0"
+
+source:
+  repo: "mlflow/mlflow"
+  pr: 21901
+  base_commit: "cd2cea0d7acf7d47f4fbd8f94e7da0844a89e76a"
+  merge_commit: "84f85d4c6a894023e618150d6a4efda1e25d6623"
+
+checks:
+  # Gates — syntax and regression
+  - id: poll_sh_syntax
+    type: pass_to_pass
+    origin: static
+    description: "poll.sh parses without bash syntax errors"
+
+  - id: poll_retains_core_loop
+    type: pass_to_pass
+    origin: static
+    description: "poll.sh retains polling loop and mark-ready-for-review logic"
+
+  # Code behavior — poll.sh refactor
+  - id: poll_two_arg_interface
+    type: fail_to_pass
+    origin: pr_diff
+    description: "poll.sh accepts 2 args (repo, pr_number) instead of 3"
+
+  - id: poll_auto_resolves_session
+    type: fail_to_pass
+    origin: pr_diff
+    description: "poll.sh uses 'gh agent-task list' to auto-resolve the latest session ID"
+
+  # Config update — SKILL.md
+  - id: skill_allowed_tools_has_agent_task_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md allowed-tools includes 'gh agent-task list'"
+
+  - id: skill_polling_simplified
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md polling section simplified, no session_url extraction boilerplate"
+
+rubric:
+  - rule: "The SKILL.md polling instructions are clear and consistent with the new poll.sh interface"
+    source:
+      path: ".claude/skills/copilot/SKILL.md"
+      lines: "1-10"
+      commit: "cd2cea0d7acf7d47f4fbd8f94e7da0844a89e76a"

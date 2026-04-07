@@ -1,0 +1,69 @@
+version: "2.0"
+
+source:
+  repo: "lobehub/lobe-chat"
+  pr: 13343
+  base_commit: "70091935ba75208eeea880b3e5856342beabd22f"
+  merge_commit: "bc9ae6b4e52b64b62d1c675167ab8f21ebb9f596"
+
+checks:
+  # --- Code behavior: mergeQueuedMessages pure function ---
+  - id: merge_queues_sorted_and_joined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "mergeQueuedMessages sorts by createdAt and joins content with double newlines"
+
+  - id: merge_queues_collects_files
+    type: fail_to_pass
+    origin: pr_diff
+    description: "mergeQueuedMessages flattens files from all queued messages"
+
+  - id: merge_empty_queue_returns_empty
+    type: fail_to_pass
+    origin: pr_diff
+    description: "mergeQueuedMessages with empty array returns empty content and files"
+
+  # --- Config update: electron-testing SKILL.md ---
+  - id: skill_electron_testing_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The electron-testing SKILL.md file exists at .agents/skills/electron-testing/"
+
+  - id: skill_has_valid_frontmatter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md has proper YAML frontmatter with name and description"
+
+  - id: skill_documents_agent_browser_patterns
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md documents agent-browser CLI, CDP connection, and snapshot patterns"
+
+  - id: skill_documents_zustand_store_access
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md documents accessing Zustand store via window.__LOBE_STORES"
+
+  # --- Structural pass-to-pass checks ---
+  - id: operation_state_includes_queued_messages
+    type: pass_to_pass
+    origin: static
+    description: "Operation initial state includes queuedMessages field"
+
+  - id: finish_reason_queued_interrupt_defined
+    type: pass_to_pass
+    origin: static
+    description: "Event types include queued_message_interrupt finish reason"
+
+rubric:
+  - rule: "New store slice code follows class-based action pattern with #private fields and flattenActions composition"
+    source:
+      path: ".agents/skills/zustand/SKILL.md"
+      lines: "68-95"
+      commit: "70091935ba75208eeea880b3e5856342beabd22f"
+
+  - rule: "React components use @lobehub/ui components (Flexbox, ActionIcon, Icon) and antd-style for styling"
+    source:
+      path: ".agents/skills/react/SKILL.md"
+      lines: "1-10"
+      commit: "70091935ba75208eeea880b3e5856342beabd22f"

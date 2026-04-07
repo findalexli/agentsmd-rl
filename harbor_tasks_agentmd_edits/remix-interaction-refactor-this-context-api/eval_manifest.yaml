@@ -1,0 +1,106 @@
+version: "2.0"
+
+source:
+  repo: "remix-run/remix"
+  pr: 10823
+  base_commit: "90016e313b24a05c5862a853a3b518290d9017ba"
+  merge_commit: "e3f244b484622a0f6be1b1f215a4153474e96806"
+
+checks:
+  # Gate — typecheck
+  - id: typecheck
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript compilation passes for the interaction package"
+
+  # Core API refactor checks
+  - id: interaction_interface_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Interaction type exported from package index"
+
+  - id: container_options_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ContainerOptions type exported from package index"
+
+  - id: capture_listenWith_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "capture() and listenWith() helper functions removed from exports"
+
+  - id: interaction_handle_class
+    type: fail_to_pass
+    origin: pr_diff
+    description: "InteractionHandle class exists implementing the Interaction interface"
+
+  - id: on_function_simplified
+    type: fail_to_pass
+    origin: pr_diff
+    description: "on() function simplified — AbortSignal overload removed"
+
+  - id: create_container_accepts_options
+    type: fail_to_pass
+    origin: pr_diff
+    description: "createContainer accepts ContainerOptions object instead of bare AbortSignal"
+
+  - id: on_error_handler
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Container supports onError callback for listener error handling"
+
+  - id: interactions_use_this_context
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Interaction setup functions in submodules use this: Interaction context"
+
+  # Config/documentation update checks
+  - id: readme_removes_old_api
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README removes references to old capture()/listenWith()/signal overload API"
+
+  - id: readme_documents_new_api
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README documents new Interaction context and descriptor API"
+
+  - id: changelog_unreleased_section
+    type: fail_to_pass
+    origin: agent_config
+    description: "CHANGELOG uses '## Unreleased' heading per AGENTS.md formatting rules"
+    source:
+      path: "AGENTS.md"
+      lines: "24-25"
+      commit: "90016e313b24a05c5862a853a3b518290d9017ba"
+
+  # Agent config compliance
+  - id: import_type_syntax
+    type: pass_to_pass
+    origin: agent_config
+    description: "Type exports use 'type' keyword per AGENTS.md style rules"
+    source:
+      path: "AGENTS.md"
+      lines: "18"
+      commit: "90016e313b24a05c5862a853a3b518290d9017ba"
+
+  - id: ts_extensions_in_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Import paths include .ts extensions per AGENTS.md style rules"
+    source:
+      path: "AGENTS.md"
+      lines: "18"
+      commit: "90016e313b24a05c5862a853a3b518290d9017ba"
+
+rubric:
+  - rule: "Code uses 'let' for locals, 'const' only at module scope; never use 'var'"
+    source:
+      path: "AGENTS.md"
+      lines: "19"
+      commit: "90016e313b24a05c5862a853a3b518290d9017ba"
+  - rule: "Formatting follows Prettier (printWidth: 100, no semicolons, single quotes)"
+    source:
+      path: "AGENTS.md"
+      lines: "21"
+      commit: "90016e313b24a05c5862a853a3b518290d9017ba"
