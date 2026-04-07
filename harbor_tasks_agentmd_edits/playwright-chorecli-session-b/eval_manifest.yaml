@@ -21,15 +21,39 @@ checks:
 - id: program_switch_uses_new_names
   type: fail_to_pass
   origin: pr_diff
-  description: program.ts switch statement uses 'list', 'close-all', 'kill-all'
+  description: program.ts switch dispatches list, close-all, kill-all
 - id: b_flag_alias
   type: fail_to_pass
   origin: pr_diff
   description: program.ts normalizes -b flag to --session
+- id: user_messages_say_browser
+  type: fail_to_pass
+  origin: pr_diff
+  description: User-facing messages say Browser instead of Session
+- id: status_markers_open_closed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Status markers use [open]/[closed] instead of [running]/[stopped]
 - id: session_mgmt_md_heading_updated
-  type: pass_to_pass
-  origin: static
-  description: session-management.md heading mentions 'Browser'
+  type: fail_to_pass
+  origin: pr_diff
+  description: session-management.md heading mentions Browser
+- id: skill_md_uses_new_commands
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md documents -b flag and new command names
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '28-29'
+    commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
+- id: session_mgmt_md_uses_b_flag
+  type: fail_to_pass
+  origin: agent_config
+  description: session-management.md uses -b flag and new command names
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '28-29'
+    commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
 - id: program_still_handles_open_close
   type: pass_to_pass
   origin: static
@@ -38,164 +62,12 @@ rubric:
 - rule: Documentation updates are consistent with the style of existing SKILL.md content
   source:
     path: packages/playwright/src/skill/SKILL.md
-    lines: 1-10
+    lines: '1-10'
     commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
-- rule: Update skill file at packages/playwright/src/skill/SKILL.md and references
-    if necessary in packages/playwright/src/skill/references/
+- rule: Update skill file and references when commands change
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
-    lines: 28-29
+    lines: '28-29'
     commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
-- rule: helpGenerator.ts uses 'browsers' category and documents -b flag
-  reference: '# packages/playwright/src/skill/SKILL.md
-
-    ### Browser Sessions
-
-    playwright-cli -b mysession open example.com
-
-    playwright-cli -b mysession click e6
-
-    playwright-cli -b mysession close  # stop a named browser
-
-    playwright-cli -b mysession delete-data  # delete user data for named browser
-
-    playwright-cli list
-
-    playwright-cli close-all
-
-    playwright-cli kill-all
-
-    * **Browser session management** [references/session-management.md](references/session-management.md)'
-- rule: SKILL.md documents -b flag instead of --session for named sessions
-  source:
-    path: packages/playwright/src/skill/SKILL.md
-    lines: 184-198
-    commit: fead0d342f112d51d7c6ba749a5da768c6e73269
-  reference: '### Browser Sessions
-
-    playwright-cli -b mysession open example.com
-
-    playwright-cli -b mysession click e6
-
-    playwright-cli -b mysession close  # stop a named browser
-
-    playwright-cli -b mysession delete-data  # delete user data for named browser
-
-    playwright-cli list
-
-    playwright-cli close-all
-
-    playwright-cli kill-all
-
-    * **Browser session management** [references/session-management.md](references/session-management.md)'
-- rule: SKILL.md uses new command names (list, close-all, kill-all)
-  source:
-    path: packages/playwright/src/skill/SKILL.md
-    lines: 184-198
-    commit: fead0d342f112d51d7c6ba749a5da768c6e73269
-  reference: '### Browser Sessions
-
-    playwright-cli -b mysession open example.com
-
-    playwright-cli -b mysession click e6
-
-    playwright-cli -b mysession close  # stop a named browser
-
-    playwright-cli -b mysession delete-data  # delete user data for named browser
-
-    playwright-cli list
-
-    playwright-cli close-all
-
-    playwright-cli kill-all
-
-    * **Browser session management** [references/session-management.md](references/session-management.md)'
-- rule: session-management.md uses -b flag instead of --session
-  source:
-    path: packages/playwright/src/skill/references/session-management.md
-    lines: 1-60
-    commit: fead0d342f112d51d7c6ba749a5da768c6e73269
-  reference: '# packages/playwright/src/skill/SKILL.md
-
-    ### Browser Sessions
-
-    playwright-cli -b mysession open example.com
-
-    playwright-cli -b mysession click e6
-
-    playwright-cli -b mysession close  # stop a named browser
-
-    playwright-cli -b mysession delete-data  # delete user data for named browser
-
-    playwright-cli list
-
-    playwright-cli close-all
-
-    playwright-cli kill-all
-
-    * **Browser session management** [references/session-management.md](references/session-management.md)'
-- rule: session-management.md uses new command names
-  source:
-    path: packages/playwright/src/skill/references/session-management.md
-    lines: 28-50
-    commit: fead0d342f112d51d7c6ba749a5da768c6e73269
-  reference: '# packages/playwright/src/skill/SKILL.md
-
-    ### Browser Sessions
-
-    playwright-cli -b mysession open example.com
-
-    playwright-cli -b mysession click e6
-
-    playwright-cli -b mysession close  # stop a named browser
-
-    playwright-cli -b mysession delete-data  # delete user data for named browser
-
-    playwright-cli list
-
-    playwright-cli close-all
-
-    playwright-cli kill-all
-
-    * **Browser session management** [references/session-management.md](references/session-management.md)'
-- rule: SKILL.md sessions section heading mentions 'Browser'
-  reference: '# packages/playwright/src/skill/SKILL.md
-
-    ### Browser Sessions
-
-    playwright-cli -b mysession open example.com
-
-    playwright-cli -b mysession click e6
-
-    playwright-cli -b mysession close  # stop a named browser
-
-    playwright-cli -b mysession delete-data  # delete user data for named browser
-
-    playwright-cli list
-
-    playwright-cli close-all
-
-    playwright-cli kill-all
-
-    * **Browser session management** [references/session-management.md](references/session-management.md)'
-- rule: User-facing messages say 'Browser' instead of 'Session', '[open]'/'[closed]'
-    instead of '[running]'/'[stopped]'
-  reference: '# packages/playwright/src/skill/SKILL.md
-
-    ### Browser Sessions
-
-    playwright-cli -b mysession open example.com
-
-    playwright-cli -b mysession click e6
-
-    playwright-cli -b mysession close  # stop a named browser
-
-    playwright-cli -b mysession delete-data  # delete user data for named browser
-
-    playwright-cli list
-
-    playwright-cli close-all
-
-    playwright-cli kill-all
-
-    * **Browser session management** [references/session-management.md](references/session-management.md)'
+- rule: User-facing messages say Browser instead of Session, [open]/[closed] instead
+    of [running]/[stopped]

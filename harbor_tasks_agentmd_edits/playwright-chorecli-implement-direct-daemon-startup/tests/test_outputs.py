@@ -11,7 +11,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/playwright"
@@ -23,7 +23,6 @@ SKILL_DIR = Path(REPO) / "packages" / "playwright" / "src" / "skill"
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Modified TypeScript files exist and are non-empty."""
     files = [
@@ -40,34 +39,107 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — code behavioral tests
+# Fail-to-pass (pr_diff) -- behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-def test_session_flag_renamed_in_arg_parser():
-    """program.ts normalizes -s (not -b) to --session."""
-    src = (MCP_DIR / "terminal" / "program.ts").read_text()
-    # After fix: args.s → args.session, and -s alias
-    assert "args.s" in src or "args['s']" in src, \
-        "program.ts should reference args.s for the session alias"
-    assert "args.session = args.s" in src or "session = args.s" in src, \
-        "program.ts should normalize -s to --session"
-    # Should NOT have the old -b alias normalization
-    lines = src.splitlines()
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith("//") or stripped.startswith("*"):
-            continue
-        if "args.b" in stripped and "session" in stripped:
-            assert False, "program.ts still has old -b to --session normalization"
+def test_session_flag_normalization_behavior():
+    """The arg parser normalizes -s to --session, verified by executing the logic."""
+    r = subprocess.run(
+        ["node", "-e", """
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright/src/mcp/terminal/program.ts', 'utf8');
+
+// Find the session-alias normalization block (matches both old -b and new -s)
+const match = src.match(/\\/\\/ Normalize -[sb] alias to --session[\\s\\S]*?delete args\\.[sb];?\\s*\\}/);
+if (!match) {
+  console.error('No session alias normalization block found');
+  process.exit(1);
+}
+
+// Strip comments and execute the block with a test args object
+const code = match[0].replace(/\\/\\/.*/g, '');
+const args = { s: 'my-session' };
+eval(code);
+
+// After fix: the -s flag should be normalized to --session
+if (args.session !== 'my-session') {
+  console.error('Expected args.session="my-session", got:', args.session);
+  process.exit(1);
+}
+if ('s' in args) {
+  console.error('args.s should have been deleted after normalization');
+  process.exit(1);
+}
+console.log('PASS');
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
+def test_browser_error_includes_channel_name():
+    """throwBrowserIsNotInstalledError includes the specific browser channel in the error."""
+    r = subprocess.run(
+        ["node", "-e", """
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright/src/mcp/browser/browserContextFactory.ts', 'utf8');
+
+// Extract the throwBrowserIsNotInstalledError function
+const match = src.match(/function\\s+throwBrowserIsNotInstalledError[\\s\\S]*?\\n\\}/);
+if (!match) {
+  console.error('throwBrowserIsNotInstalledError function not found');
+  process.exit(1);
+}
+
+// Strip TS type annotations to produce valid JS
+let fn = match[0]
+  .replace(/\\(config:\\s*FullConfig\\)/g, '(config)')
+  .replace(/:\\s*never/g, '');
+eval(fn);
+
+// Test: uses launchOptions.channel when available
+try {
+  throwBrowserIsNotInstalledError({
+    browser: { launchOptions: { channel: 'chrome' }, browserName: 'chromium' },
+    skillMode: false
+  });
+} catch (e) {
+  if (!e.message.includes('chrome')) {
+    console.error('Error should mention "chrome", got:', e.message);
+    process.exit(1);
+  }
+}
+
+// Test: falls back to browserName when no channel specified
+try {
+  throwBrowserIsNotInstalledError({
+    browser: { browserName: 'firefox' },
+    skillMode: false
+  });
+} catch (e) {
+  if (!e.message.includes('firefox')) {
+    console.error('Error should mention "firefox", got:', e.message);
+    process.exit(1);
+  }
+}
+
+console.log('PASS');
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) -- structural tests
+# ---------------------------------------------------------------------------
+
 def test_help_generator_shows_new_flag():
     """Help text uses -s=<session>, not -b=<session>."""
     src = (MCP_DIR / "terminal" / "helpGenerator.ts").read_text()
     assert "-s=" in src, "helpGenerator should show -s= in usage text"
-    # Must not have old -b= usage line
     for line in src.splitlines():
         if line.strip().startswith("//"):
             continue
@@ -75,16 +147,13 @@ def test_help_generator_shows_new_flag():
             assert False, "helpGenerator still shows old -b= session usage"
 
 
-# [pr_diff] fail_to_pass
 def test_direct_daemon_startup():
     """daemon.ts creates browser context directly, not via ServerBackendFactory."""
     src = (MCP_DIR / "terminal" / "daemon.ts").read_text()
-    # After fix: imports BrowserContextFactory type and calls createContext
     assert "createContext" in src, \
         "daemon.ts should call createContext for direct browser launch"
     assert "BrowserContextFactory" in src or "browserContextFactory" in src, \
         "daemon.ts should reference BrowserContextFactory"
-    # Should NOT import ServerBackendFactory
     for line in src.splitlines():
         if line.strip().startswith("//"):
             continue
@@ -92,34 +161,13 @@ def test_direct_daemon_startup():
             assert False, "daemon.ts should not import ServerBackendFactory anymore"
 
 
-# [pr_diff] fail_to_pass
-def test_browser_error_message_includes_channel():
-    """browserContextFactory.ts error includes browser channel name, not generic message."""
-    src = (MCP_DIR / "browser" / "browserContextFactory.ts").read_text()
-    # After fix: throwBrowserIsNotInstalledError helper with channel interpolation
-    assert "throwBrowserIsNotInstalledError" in src, \
-        "Should have throwBrowserIsNotInstalledError helper function"
-    func_match = re.search(
-        r'function\s+throwBrowserIsNotInstalledError.*?\{(.*?)\n\}',
-        src, re.DOTALL
-    )
-    assert func_match, "throwBrowserIsNotInstalledError function not found"
-    func_body = func_match.group(1)
-    assert "channel" in func_body or "browserName" in func_body, \
-        "Error function should include browser channel/name in the message"
-
-
-# [pr_diff] fail_to_pass
 def test_daemon_stdout_communication():
-    """program.ts uses stdout markers for daemon communication."""
+    """program.ts uses stdout markers for daemon communication instead of polling."""
     src = (MCP_DIR / "program.ts").read_text()
-    has_success_marker = "### Success" in src
-    has_eof_marker = "<EOF>" in src
-    assert has_success_marker, "program.ts should output '### Success' marker for daemon"
-    assert has_eof_marker, "program.ts should output '<EOF>' marker for daemon communication"
+    assert "### Success" in src, "program.ts should output '### Success' marker"
+    assert "<EOF>" in src, "program.ts should output '<EOF>' marker"
 
 
-# [pr_diff] fail_to_pass
 def test_session_flag_in_error_messages():
     """Error messages and console output use -s= not -b for session references."""
     src = (MCP_DIR / "terminal" / "program.ts").read_text()
@@ -130,24 +178,32 @@ def test_session_flag_in_error_messages():
         if "-s=" in line and ("open" in line or "session" in line.lower()):
             found_s_flag = True
             break
-    assert found_s_flag, "program.ts error messages should reference -s= flag for sessions"
+    assert found_s_flag, "program.ts error messages should reference -s= flag"
 
 
 # ---------------------------------------------------------------------------
-# Config/documentation update tests (config_edit)
+# Fail-to-pass (pr_diff) -- documentation updates
 # ---------------------------------------------------------------------------
 
-# [config_edit] fail_to_pass
+def test_skill_md_session_flag_updated():
+    """SKILL.md uses -s= for session examples, not -b."""
+    src = (SKILL_DIR / "SKILL.md").read_text()
+    assert "-s=" in src, "SKILL.md should use -s= for session flag"
+    in_code_block = False
+    for line in src.splitlines():
+        if line.strip().startswith("```"):
+            in_code_block = not in_code_block
+        if in_code_block and "playwright-cli -b" in line:
+            assert False, f"SKILL.md still uses -b in code: {line.strip()}"
 
 
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
-
-
-# ---------------------------------------------------------------------------
-# Agent config compliance (agent_config)
-# ---------------------------------------------------------------------------
-
-# [agent_config] pass_to_pass
+def test_session_management_md_updated():
+    """session-management.md uses -s= for session flag, not -b."""
+    src = (SKILL_DIR / "references" / "session-management.md").read_text()
+    assert "-s=" in src, "session-management.md should use -s= flag"
+    in_code_block = False
+    for line in src.splitlines():
+        if line.strip().startswith("```"):
+            in_code_block = not in_code_block
+        if in_code_block and "playwright-cli -b" in line:
+            assert False, f"session-management.md still uses -b: {line.strip()}"

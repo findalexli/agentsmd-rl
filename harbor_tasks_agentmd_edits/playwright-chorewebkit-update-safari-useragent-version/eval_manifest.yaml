@@ -5,22 +5,28 @@ source:
   base_commit: 3aba395f2d151d2345de3182b8b3e9564507c9e5
   merge_commit: 69924568b93f2f37609fa2a617baf83d6ff11838
 checks:
-- id: wkbrowser_version_constant
+- id: version_consistency_across_sources
   type: fail_to_pass
   origin: pr_diff
-  description: BROWSER_VERSION in wkBrowser.ts must be '26.4'
-- id: browsers_json_webkit_version
+  description: BROWSER_VERSION in wkBrowser.ts, browsers.json, and device descriptors
+    must all be '26.4'
+- id: readme_webkit_badge
   type: fail_to_pass
   origin: pr_diff
-  description: browsers.json WebKit browserVersion must be '26.4'
-- id: device_descriptors_version
-  type: fail_to_pass
-  origin: pr_diff
-  description: Device descriptor user-agent strings must use Version/26.4
+  description: README.md WebKit badge and compatibility table must show version 26.4
 - id: release_notes_webkit_version
   type: fail_to_pass
   origin: pr_diff
   description: Release notes across all languages must list WebKit 26.4
+- id: skill_doc_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: Skill doc for WebKit Safari version update must exist with required
+    sections
+- id: skill_index_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must link to the webkit-safari-version skill doc
 - id: wkbrowser_ts_valid_syntax
   type: pass_to_pass
   origin: static
@@ -28,11 +34,11 @@ checks:
 - id: browsers_json_valid
   type: pass_to_pass
   origin: static
-  description: browsers.json must be valid JSON
+  description: browsers.json must be valid JSON with browsers key
 - id: device_descriptors_valid_json
   type: pass_to_pass
   origin: static
-  description: deviceDescriptorsSource.json must be valid JSON
+  description: deviceDescriptorsSource.json must be valid JSON with many entries
 rubric:
 - rule: The skill document should explain how to find the latest stable Safari version
     (not Technology Preview)
@@ -45,14 +51,3 @@ rubric:
     path: CLAUDE.md
     lines: 73-82
     commit: 3aba395f2d151d2345de3182b8b3e9564507c9e5
-- rule: README.md WebKit badge must show version 26.4
-- rule: Skill doc for updating WebKit Safari version must exist with correct content
-  source:
-    path: .claude/skills/playwright-dev/webkit-safari-version.md
-    lines: 1-22
-    commit: 69924568b93f2f37609fa2a617baf83d6ff11838
-- rule: SKILL.md must link to the webkit-safari-version skill doc
-  source:
-    path: .claude/skills/playwright-dev/SKILL.md
-    lines: '16'
-    commit: 69924568b93f2f37609fa2a617baf83d6ff11838

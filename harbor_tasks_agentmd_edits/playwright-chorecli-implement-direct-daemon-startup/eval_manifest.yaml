@@ -9,10 +9,14 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files exist and are non-empty
-- id: session_flag_renamed_in_arg_parser
+- id: session_flag_normalization_behavior
   type: fail_to_pass
   origin: pr_diff
-  description: program.ts normalizes -s (not -b) to --session
+  description: The arg parser normalizes -s to --session, verified by execution
+- id: browser_error_includes_channel_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: throwBrowserIsNotInstalledError includes specific browser channel in error
 - id: help_generator_shows_new_flag
   type: fail_to_pass
   origin: pr_diff
@@ -21,10 +25,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: daemon.ts creates browser context directly, not via ServerBackendFactory
-- id: browser_error_message_includes_channel
-  type: fail_to_pass
-  origin: pr_diff
-  description: browserContextFactory.ts error includes browser channel name
 - id: daemon_stdout_communication
   type: fail_to_pass
   origin: pr_diff
@@ -33,6 +33,14 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Error messages use -s= not -b for session references
+- id: skill_md_session_flag_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md uses -s= for session examples, not -b
+- id: session_management_md_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: session-management.md uses -s= for session flag, not -b
 rubric:
 - rule: CLI flag rename from -b to -s is applied consistently across all code and
     documentation
@@ -45,52 +53,18 @@ rubric:
     path: packages/playwright/src/skill/SKILL.md
     lines: 187-193
     commit: e0e7f41e80247f857e97cb23f4833d2eee2122fe
-  reference: 'playwright-cli -s=mysession open example.com
-
-    playwright-cli -s=mysession click e6
-
-    playwright-cli -s=mysession close  # stop a named browser
-
-    playwright-cli -s=mysession delete-data   # delete profile'
 - rule: session-management.md uses -s= for session flag, not -b
   source:
     path: packages/playwright/src/skill/references/session-management.md
     lines: 5-170
     commit: e0e7f41e80247f857e97cb23f4833d2eee2122fe
-  reference: '# packages/playwright/src/skill/SKILL.md
-
-    playwright-cli -s=mysession open example.com
-
-    playwright-cli -s=mysession click e6
-
-    playwright-cli -s=mysession close  # stop a named browser
-
-    playwright-cli -s=mysession delete-data   # delete profile'
 - rule: session-management.md documents -s (not -b) for default session
   source:
     path: packages/playwright/src/skill/references/session-management.md
     lines: '111'
     commit: e0e7f41e80247f857e97cb23f4833d2eee2122fe
-  reference: '# packages/playwright/src/skill/SKILL.md
-
-    playwright-cli -s=mysession open example.com
-
-    playwright-cli -s=mysession click e6
-
-    playwright-cli -s=mysession close  # stop a named browser
-
-    playwright-cli -s=mysession delete-data   # delete profile'
 - rule: SKILL.md and references use consistent session flag style
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 26-27
     commit: 25d303f03424011dc0ad36d027a7af3368618eab
-  reference: '# packages/playwright/src/skill/SKILL.md
-
-    playwright-cli -s=mysession open example.com
-
-    playwright-cli -s=mysession click e6
-
-    playwright-cli -s=mysession close  # stop a named browser
-
-    playwright-cli -s=mysession delete-data   # delete profile'

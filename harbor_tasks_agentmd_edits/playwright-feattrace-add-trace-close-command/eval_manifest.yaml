@@ -3,7 +3,6 @@ source:
   repo: microsoft/playwright
   pr: 39903
   base_commit: 21268964f99d52e5a48e24c04df5f6dc9e7fa0bc
-  merge_commit: 807c75967227011a04b17cba97cd32b994527d3b
 checks:
 - id: syntax_check
   type: pass_to_pass
@@ -12,84 +11,41 @@ checks:
 - id: close_trace_function_exported
   type: fail_to_pass
   origin: pr_diff
-  description: traceUtils.ts must export an async closeTrace function
+  description: traceUtils.ts exports an async closeTrace function with fs cleanup logic
 - id: close_trace_removes_directory
   type: fail_to_pass
   origin: pr_diff
-  description: closeTrace must remove the trace directory recursively
+  description: closeTrace function body, extracted from source and executed, removes
+    a directory
 - id: close_command_registered
   type: fail_to_pass
   origin: pr_diff
-  description: traceCli.ts must register a 'close' subcommand
+  description: traceCli.ts registers a 'close' subcommand that references closeTrace
+- id: open_trace_uses_close_trace
+  type: fail_to_pass
+  origin: pr_diff
+  description: openTrace delegates cleanup to closeTrace() instead of inline rm
+- id: skill_md_close_section
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md documents the trace close command with a heading and code block
+  source:
+    path: packages/playwright-core/src/tools/trace/SKILL.md
+    lines: '23-28'
+    commit: 21268964f99d52e5a48e24c04df5f6dc9e7fa0bc
+- id: skill_md_workflow_mentions_close
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md workflow steps include a numbered step for trace close
+  source:
+    path: packages/playwright-core/src/tools/trace/SKILL.md
+    lines: '13-17'
+    commit: 21268964f99d52e5a48e24c04df5f6dc9e7fa0bc
 rubric:
 - rule: SKILL.md close documentation should be consistent with the style and structure
     of existing command documentation (e.g., the 'Open a trace' section has a heading,
     description comment, and code block)
   source:
     path: packages/playwright-core/src/tools/trace/SKILL.md
-    lines: 24-28
+    lines: '24-28'
     commit: 21268964f99d52e5a48e24c04df5f6dc9e7fa0bc
-- rule: openTrace must call closeTrace() instead of inline rm logic
-  reference: '# packages/playwright-core/src/tools/trace/SKILL.md
-
-    6. Use `trace close` to remove the extracted trace data when done.
-
-    ### Close a trace
-
-
-    ```bash
-
-    # Remove extracted trace data
-
-    npx playwright trace close
-
-    ```'
-- rule: SKILL.md must document the 'trace close' command with usage example
-  source:
-    path: packages/playwright-core/src/tools/trace/SKILL.md
-    lines: 28-35
-    commit: 807c75967227011a04b17cba97cd32b994527d3b
-  reference: '6. Use `trace close` to remove the extracted trace data when done.
-
-    ### Close a trace
-
-
-    ```bash
-
-    # Remove extracted trace data
-
-    npx playwright trace close
-
-    ```'
-- rule: SKILL.md workflow section must mention using trace close to clean up
-  source:
-    path: packages/playwright-core/src/tools/trace/SKILL.md
-    lines: '18'
-    commit: 807c75967227011a04b17cba97cd32b994527d3b
-  reference: '6. Use `trace close` to remove the extracted trace data when done.
-
-    ### Close a trace
-
-
-    ```bash
-
-    # Remove extracted trace data
-
-    npx playwright trace close
-
-    ```'
-- rule: The close command handler must import and call closeTrace from traceUtils
-  reference: '# packages/playwright-core/src/tools/trace/SKILL.md
-
-    6. Use `trace close` to remove the extracted trace data when done.
-
-    ### Close a trace
-
-
-    ```bash
-
-    # Remove extracted trace data
-
-    npx playwright trace close
-
-    ```'

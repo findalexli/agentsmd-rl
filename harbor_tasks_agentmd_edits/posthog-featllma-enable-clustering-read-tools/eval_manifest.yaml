@@ -35,6 +35,26 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: print_clusters.py parse_result handles direct clusters array input
+- id: print_clusters_script_output
+  type: fail_to_pass
+  origin: pr_diff
+  description: print_clusters.py produces readable cluster summary when run as main
+- id: skill_md_frontmatter
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md has YAML frontmatter with correct name and description
+- id: skill_md_references_tools
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md references clustering MCP tools and execute-sql
+- id: skill_md_documents_events
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md documents cluster event types and key properties
+- id: skill_md_includes_sql
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md includes SQL query patterns for exploring cluster events
 - id: tool_names_valid
   type: pass_to_pass
   origin: agent_config
@@ -64,24 +84,3 @@ rubric:
     path: .agents/skills/implementing-mcp-tools/SKILL.md
     lines: 105-110
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
-- rule: SKILL.md exists with correct name and description in frontmatter
-  source:
-    path: products/llm_analytics/skills/exploring-llm-clusters/SKILL.md
-    lines: 1-5
-    commit: ee9eb212266b294edb421b0030c567fba458fb68
-- rule: SKILL.md references the MCP clustering tools and execute-sql
-  source:
-    path: products/llm_analytics/skills/exploring-llm-clusters/SKILL.md
-    lines: 13-19
-    commit: ee9eb212266b294edb421b0030c567fba458fb68
-- rule: SKILL.md documents $ai_trace_clusters/$ai_generation_clusters event types
-    and key properties
-  source:
-    path: products/llm_analytics/skills/exploring-llm-clusters/SKILL.md
-    lines: 21-44
-    commit: ee9eb212266b294edb421b0030c567fba458fb68
-- rule: SKILL.md includes SQL query patterns for exploring cluster events
-  source:
-    path: products/llm_analytics/skills/exploring-llm-clusters/SKILL.md
-    lines: 80-120
-    commit: ee9eb212266b294edb421b0030c567fba458fb68

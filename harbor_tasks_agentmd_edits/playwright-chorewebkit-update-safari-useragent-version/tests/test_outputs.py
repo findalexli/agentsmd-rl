@@ -9,79 +9,74 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import json
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/playwright"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_wkbrowser_version_constant():
-    """BROWSER_VERSION in wkBrowser.ts must be '26.4'."""
-    src = Path(f"{REPO}/packages/playwright-core/src/server/webkit/wkBrowser.ts").read_text()
-    match = re.search(r"const BROWSER_VERSION\s*=\s*'([^']+)'", src)
-    assert match is not None, "Could not find BROWSER_VERSION constant in wkBrowser.ts"
-    assert match.group(1) == "26.4", (
-        f"BROWSER_VERSION should be '26.4', got '{match.group(1)}'"
+def test_version_consistency_across_sources():
+    """BROWSER_VERSION in wkBrowser.ts, browsers.json, and device descriptors must all be '26.4'."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import json, re, sys
+from pathlib import Path
+
+REPO = "/workspace/playwright"
+
+# 1. Extract BROWSER_VERSION from wkBrowser.ts
+ts_src = Path(f"{REPO}/packages/playwright-core/src/server/webkit/wkBrowser.ts").read_text()
+m = re.search(r"const BROWSER_VERSION\\s*=\\s*'([^']+)'", ts_src)
+assert m, "BROWSER_VERSION not found in wkBrowser.ts"
+ts_version = m.group(1)
+
+# 2. Extract browserVersion from browsers.json
+bj = json.loads(Path(f"{REPO}/packages/playwright-core/browsers.json").read_text())
+webkit = [b for b in bj["browsers"] if b["name"] == "webkit"]
+assert len(webkit) == 1, f"Expected 1 webkit entry, got {len(webkit)}"
+json_version = webkit[0]["browserVersion"]
+
+# 3. Check all WebKit device descriptors use the same version
+dd = json.loads(Path(f"{REPO}/packages/playwright-core/src/server/deviceDescriptorsSource.json").read_text())
+webkit_devices = {n: d for n, d in dd.items() if d.get("defaultBrowserType") == "webkit"}
+assert len(webkit_devices) > 10, f"Expected >10 webkit devices, got {len(webkit_devices)}"
+
+stale = []
+for name, desc in webkit_devices.items():
+    ua = desc.get("userAgent", "")
+    if "Version/" in ua and f"Version/{ts_version}" not in ua:
+        stale.append(name)
+
+# All three sources must agree on 26.4
+assert ts_version == "26.4", f"wkBrowser.ts BROWSER_VERSION={ts_version}, expected 26.4"
+assert json_version == "26.4", f"browsers.json browserVersion={json_version}, expected 26.4"
+assert len(stale) == 0, f"{len(stale)} devices have wrong version: {stale[:5]}"
+print("PASS: all sources consistent at 26.4")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
+    assert r.returncode == 0, f"Version consistency check failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_browsers_json_webkit_version():
-    """browsers.json must declare WebKit browserVersion as '26.4'."""
-    data = json.loads(
-        Path(f"{REPO}/packages/playwright-core/browsers.json").read_text()
+def test_readme_webkit_badge():
+    """README.md WebKit badge must show version 26.4."""
+    readme = Path(f"{REPO}/README.md").read_text()
+    assert "webkit-26.4" in readme, "README.md badge should show webkit-26.4"
+    assert ">26.4<" in readme, (
+        "README.md compatibility table should list WebKit 26.4"
     )
-    webkit_entries = [
-        b for b in data.get("browsers", []) if b.get("name") == "webkit"
-    ]
-    assert len(webkit_entries) == 1, "Expected exactly one 'webkit' entry in browsers.json"
-    version = webkit_entries[0].get("browserVersion", "")
-    assert version == "26.4", (
-        f"WebKit browserVersion in browsers.json should be '26.4', got '{version}'"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_device_descriptors_version():
-    """Device descriptor user-agent strings must contain Version/26.4."""
-    data = json.loads(
-        Path(
-            f"{REPO}/packages/playwright-core/src/server/deviceDescriptorsSource.json"
-        ).read_text()
-    )
-    # Check a representative sample of WebKit devices
-    webkit_devices = {
-        name: desc
-        for name, desc in data.items()
-        if desc.get("defaultBrowserType") == "webkit"
-    }
-    assert len(webkit_devices) > 10, "Expected many WebKit device descriptors"
-
-    stale = []
-    for name, desc in webkit_devices.items():
-        ua = desc.get("userAgent", "")
-        if "Version/26.0" in ua:
-            stale.append(name)
-        elif "Version/26.4" not in ua:
-            # Devices that don't have any Version/ string are fine (non-Safari UA)
-            if "Version/" in ua:
-                stale.append(name)
-
-    assert len(stale) == 0, (
-        f"{len(stale)} WebKit device(s) still have old version: {stale[:5]}"
-    )
-
-
-# [pr_diff] fail_to_pass
 
 
 # [pr_diff] fail_to_pass
 def test_release_notes_webkit_version():
-    """Release notes must list WebKit 26.4."""
+    """Release notes across all languages must list WebKit 26.4."""
     for lang in ("js", "python", "java", "csharp"):
         notes = Path(f"{REPO}/docs/src/release-notes-{lang}.md").read_text()
         assert "WebKit 26.4" in notes, (
@@ -89,25 +84,57 @@ def test_release_notes_webkit_version():
         )
 
 
+# [pr_diff] fail_to_pass
+def test_skill_doc_created():
+    """Skill doc for WebKit Safari version update must exist with required content."""
+    r = subprocess.run(
+        ["python3", "-c", """
+from pathlib import Path
+
+doc = Path("/workspace/playwright/.claude/skills/playwright-dev/webkit-safari-version.md")
+assert doc.exists(), "webkit-safari-version.md does not exist"
+
+content = doc.read_text()
+assert len(content) > 100, f"Skill doc too short ({len(content)} chars)"
+
+# Must mention BROWSER_VERSION as the source of truth
+assert "BROWSER_VERSION" in content, "Skill doc must mention BROWSER_VERSION constant"
+
+# Must reference wkBrowser.ts where the version is declared
+assert "wkBrowser" in content, "Skill doc must reference wkBrowser.ts"
+
+# Must explain how to find the latest stable Safari version
+lower = content.lower()
+assert "safari" in lower, "Skill doc must mention Safari"
+assert "stable" in lower or "release" in lower, (
+    "Skill doc must explain finding the latest stable Safari version"
+)
+
+print("PASS: skill doc has required content")
+"""],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Skill doc check failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_skill_index_updated():
+    """SKILL.md must link to the webkit-safari-version skill doc."""
+    skill_md = Path(f"{REPO}/.claude/skills/playwright-dev/SKILL.md").read_text()
+    assert "webkit-safari-version" in skill_md, (
+        "SKILL.md must contain a link to webkit-safari-version.md"
+    )
+
+
 # ---------------------------------------------------------------------------
-# Config-edit (config_edit) — skill doc creation tests
-# ---------------------------------------------------------------------------
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — syntax gate
+# Pass-to-pass (static) — syntax and structure gates
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_wkbrowser_ts_valid_syntax():
-    """wkBrowser.ts must be valid TypeScript (no unterminated strings)."""
+    """wkBrowser.ts must have a well-formed BROWSER_VERSION declaration."""
     src = Path(f"{REPO}/packages/playwright-core/src/server/webkit/wkBrowser.ts").read_text()
-    # Basic checks: file is non-empty and BROWSER_VERSION line is well-formed
     assert len(src) > 100, "wkBrowser.ts seems truncated"
     assert re.search(r"const BROWSER_VERSION\s*=\s*'[^']+'\s*;", src), (
         "BROWSER_VERSION declaration is malformed"
@@ -116,7 +143,7 @@ def test_wkbrowser_ts_valid_syntax():
 
 # [static] pass_to_pass
 def test_browsers_json_valid():
-    """browsers.json must be valid JSON."""
+    """browsers.json must be valid JSON with a browsers key."""
     data = json.loads(
         Path(f"{REPO}/packages/playwright-core/browsers.json").read_text()
     )
@@ -125,7 +152,7 @@ def test_browsers_json_valid():
 
 # [static] pass_to_pass
 def test_device_descriptors_valid_json():
-    """deviceDescriptorsSource.json must be valid JSON."""
+    """deviceDescriptorsSource.json must be valid JSON with many entries."""
     data = json.loads(
         Path(
             f"{REPO}/packages/playwright-core/src/server/deviceDescriptorsSource.json"

@@ -5,30 +5,38 @@ source:
   base_commit: 057e587d5f31ad2361dfbc66d8c57406a13f86bc
   merge_commit: ddc10462458afc88069d8d8e04411f8c3397f225
 checks:
-- id: mcp_moved_to_subdirectory
+- id: mcp_module_at_new_location
   type: fail_to_pass
   origin: pr_diff
-  description: MCP.ts must exist at packages/cli/src/mcp/MCP.ts
+  description: MCP.ts exists at packages/cli/src/mcp/MCP.ts and exports the Mcp class
 - id: old_mcp_file_removed
   type: fail_to_pass
   origin: pr_diff
-  description: Old MCP.ts at packages/cli/src/MCP.ts must be removed
-- id: bin_imports_from_mcp_directory
+  description: Old MCP.ts at packages/cli/src/MCP.ts must not exist after move
+- id: bin_import_targets_mcp_dir
   type: fail_to_pass
   origin: pr_diff
-  description: bin.ts must import Mcp from ./mcp/MCP path
-- id: pdp_tools_removed
+  description: bin.ts imports Mcp from ./mcp/MCP path
+- id: pdp_tools_not_registered
   type: fail_to_pass
   origin: pr_diff
-  description: PDP MCP tools removed from local server
-- id: relative_imports_updated
+  description: PDP tools removed from MCP server tool registration
+- id: relative_imports_resolve
   type: fail_to_pass
   origin: pr_diff
-  description: Relative imports in MCP.ts adjusted for mcp/ subdirectory
+  description: MCP.ts relative imports resolve to existing files from new directory
 - id: mcp_keyword_in_package_json
   type: fail_to_pass
   origin: pr_diff
   description: packages/cli/package.json keywords include MCP
+- id: mcp_readme_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md in packages/cli/src/mcp/ documents MCP and server startup
+- id: core_tools_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Core MCP tools (migrate-status, migrate-dev, migrate-reset, Prisma-Studio) preserved
 rubric:
 - rule: README is consistent with the style of existing documentation in the repo
     (packages/cli/README.md)

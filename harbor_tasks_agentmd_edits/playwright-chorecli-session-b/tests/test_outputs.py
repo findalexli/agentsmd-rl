@@ -7,7 +7,8 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import json
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/playwright"
@@ -19,11 +20,23 @@ SKILL_MD = Path(REPO) / "packages/playwright/src/skill/SKILL.md"
 SESSION_MGMT_MD = Path(REPO) / "packages/playwright/src/skill/references/session-management.md"
 
 
+def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute a JavaScript snippet via Node in the repo directory."""
+    tmp = Path(REPO) / "_eval_check.mjs"
+    tmp.write_text(script)
+    try:
+        return subprocess.run(
+            ["node", str(tmp)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Modified TypeScript files have balanced braces."""
     for ts_file in [COMMAND_TS, COMMANDS_TS, HELP_GEN_TS, PROGRAM_TS]:
@@ -33,108 +46,270 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests: command renames
+# Fail-to-pass (pr_diff) — behavioral tests via Node execution
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_command_names_renamed():
-    """Session commands must be renamed: session-list -> list, session-close-all -> close-all, session-kill-all -> kill-all."""
-    content = COMMANDS_TS.read_text()
-    # New names must exist
-    assert re.search(r"name:\s*['\"]list['\"]", content), \
-        "commands.ts must declare command name 'list'"
-    assert re.search(r"name:\s*['\"]close-all['\"]", content), \
-        "commands.ts must declare command name 'close-all'"
-    assert re.search(r"name:\s*['\"]kill-all['\"]", content), \
-        "commands.ts must declare command name 'kill-all'"
-    # Old names must be gone
-    assert "session-list" not in content, \
-        "commands.ts must not contain old 'session-list' command name"
-    assert "session-close-all" not in content, \
-        "commands.ts must not contain old 'session-close-all' command name"
-    assert "session-kill-all" not in content, \
-        "commands.ts must not contain old 'session-kill-all' command name"
+    """Session commands renamed: session-list -> list, session-close-all -> close-all, session-kill-all -> kill-all."""
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const src = readFileSync('packages/playwright/src/mcp/terminal/commands.ts', 'utf8');
+
+// Extract command names from all declareCommand calls
+const names = [...src.matchAll(/declareCommand\\(\\{[\\s\\S]*?name:\\s*['"]([^'"]+)['"]/g)].map(m => m[1]);
+
+const required = ['list', 'close-all', 'kill-all'];
+const missing = required.filter(c => !names.includes(c));
+if (missing.length > 0) {
+    console.error(JSON.stringify({ error: 'missing_commands', missing, found: names }));
+    process.exit(1);
+}
+
+const forbidden = ['session-list', 'session-close-all', 'session-kill-all'];
+const present = forbidden.filter(c => names.includes(c));
+if (present.length > 0) {
+    console.error(JSON.stringify({ error: 'old_commands_still_present', present }));
+    process.exit(1);
+}
+
+console.log(JSON.stringify({ status: 'ok', commands: names }));
+""")
+    assert r.returncode == 0, f"Command name check failed: {r.stderr or r.stdout}"
+    data = json.loads(r.stdout.strip())
+    assert data["status"] == "ok"
 
 
-# [pr_diff] fail_to_pass
 def test_category_renamed_to_browsers():
-    """The 'session' category must be renamed to 'browsers' in both command.ts and commands.ts."""
-    cmd_content = COMMAND_TS.read_text()
-    cmds_content = COMMANDS_TS.read_text()
-    # Category type must include 'browsers', not 'session'
-    assert "'browsers'" in cmd_content, \
-        "command.ts Category type must include 'browsers'"
-    assert "'session'" not in cmd_content, \
-        "command.ts Category type must not include 'session' (should be 'browsers')"
-    # Commands must use 'browsers' category
-    assert re.search(r"category:\s*['\"]browsers['\"]", cmds_content), \
-        "commands.ts session commands must use category 'browsers'"
+    """Category 'session' renamed to 'browsers' in command.ts type and commands.ts usage."""
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const cmdTs = readFileSync('packages/playwright/src/mcp/terminal/command.ts', 'utf8');
+const cmdsTs = readFileSync('packages/playwright/src/mcp/terminal/commands.ts', 'utf8');
+
+// Check Category type union
+const typeMatch = cmdTs.match(/type\\s+Category\\s*=\\s*([^;]+)/);
+if (!typeMatch) {
+    console.error(JSON.stringify({ error: 'category_type_not_found' }));
+    process.exit(1);
+}
+const typeStr = typeMatch[1];
+if (!typeStr.includes("'browsers'")) {
+    console.error(JSON.stringify({ error: 'browsers_missing_from_type', typeStr }));
+    process.exit(1);
+}
+if (typeStr.includes("'session'")) {
+    console.error(JSON.stringify({ error: 'session_still_in_type', typeStr }));
+    process.exit(1);
+}
+
+// Check category assignments in commands
+const cats = [...cmdsTs.matchAll(/category:\\s*['"]([^'"]+)['"]/g)].map(m => m[1]);
+if (cats.includes('session')) {
+    console.error(JSON.stringify({ error: 'session_category_in_commands' }));
+    process.exit(1);
+}
+if (!cats.includes('browsers')) {
+    console.error(JSON.stringify({ error: 'browsers_category_missing' }));
+    process.exit(1);
+}
+
+console.log(JSON.stringify({ status: 'ok', categories: [...new Set(cats)] }));
+""")
+    assert r.returncode == 0, f"Category check failed: {r.stderr or r.stdout}"
+    data = json.loads(r.stdout.strip())
+    assert data["status"] == "ok"
+    assert "browsers" in data["categories"]
 
 
-# [pr_diff] fail_to_pass
 def test_program_switch_uses_new_names():
-    """program.ts switch statement must use 'list', 'close-all', 'kill-all' instead of old names."""
-    content = PROGRAM_TS.read_text()
-    assert "case 'list'" in content, \
-        "program.ts must have case 'list'"
-    assert "case 'close-all'" in content, \
-        "program.ts must have case 'close-all'"
-    assert "case 'kill-all'" in content, \
-        "program.ts must have case 'kill-all'"
-    assert "case 'session-list'" not in content, \
-        "program.ts must not have old case 'session-list'"
+    """program.ts switch dispatches 'list', 'close-all', 'kill-all'."""
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const src = readFileSync('packages/playwright/src/mcp/terminal/program.ts', 'utf8');
+
+const cases = [...src.matchAll(/case\\s+['"]([^'"]+)['"]/g)].map(m => m[1]);
+
+const required = ['list', 'close-all', 'kill-all'];
+const missing = required.filter(c => !cases.includes(c));
+if (missing.length > 0) {
+    console.error(JSON.stringify({ error: 'missing_switch_cases', missing, found: cases }));
+    process.exit(1);
+}
+
+const forbidden = ['session-list', 'session-close-all', 'session-kill-all'];
+const present = forbidden.filter(c => cases.includes(c));
+if (present.length > 0) {
+    console.error(JSON.stringify({ error: 'old_cases_present', present }));
+    process.exit(1);
+}
+
+console.log(JSON.stringify({ status: 'ok', cases }));
+""")
+    assert r.returncode == 0, f"Switch case check failed: {r.stderr or r.stdout}"
+    data = json.loads(r.stdout.strip())
+    assert data["status"] == "ok"
 
 
-# [pr_diff] fail_to_pass
 def test_b_flag_alias():
-    """program.ts must normalize -b flag to --session."""
-    content = PROGRAM_TS.read_text()
-    # Must have logic to handle args.b
-    assert "args.b" in content, \
-        "program.ts must handle -b flag (args.b)"
-    assert "args.session" in content, \
-        "program.ts must assign args.b to args.session"
+    """program.ts normalizes -b flag to --session by extracting and executing the normalization code."""
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const src = readFileSync('packages/playwright/src/mcp/terminal/program.ts', 'utf8');
+
+// Extract the if (args.b) { ... } normalization block
+const match = src.match(/if\\s*\\(\\s*args\\.b\\s*\\)\\s*\\{([\\s\\S]*?)\\}/);
+if (!match) {
+    console.error(JSON.stringify({ error: 'no_b_flag_block' }));
+    process.exit(1);
+}
+
+// Execute the extracted code against test data
+const args = { b: 'testbrowser', _: ['open'] };
+const fn = new Function('args', match[1]);
+fn(args);
+
+if (args.session !== 'testbrowser') {
+    console.error(JSON.stringify({ error: 'session_not_set', args }));
+    process.exit(1);
+}
+if (args.b !== undefined) {
+    console.error(JSON.stringify({ error: 'b_not_deleted', args }));
+    process.exit(1);
+}
+
+console.log(JSON.stringify({ status: 'ok', session: args.session }));
+""")
+    assert r.returncode == 0, f"-b flag check failed: {r.stderr or r.stdout}"
+    data = json.loads(r.stdout.strip())
+    assert data["status"] == "ok"
+    assert data["session"] == "testbrowser"
 
 
-# [pr_diff] fail_to_pass
+def test_user_messages_say_browser():
+    """User-facing messages say 'Browser' instead of 'Session' in program.ts."""
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const src = readFileSync('packages/playwright/src/mcp/terminal/program.ts', 'utf8');
+
+// Old pattern: "Session '" appears in template literals for user messages
+// e.g. `Session '${this.name}' is not running.`
+if (src.includes("Session '")) {
+    console.error(JSON.stringify({ error: 'old_Session_quote_pattern' }));
+    process.exit(1);
+}
+
+// Must have Browser messages
+if (!src.includes("Browser '")) {
+    console.error(JSON.stringify({ error: 'no_Browser_messages' }));
+    process.exit(1);
+}
+
+// List header: 'Sessions:' -> 'Browsers:'
+if (src.includes("'Sessions:'")) {
+    console.error(JSON.stringify({ error: 'old_Sessions_header' }));
+    process.exit(1);
+}
+
+console.log(JSON.stringify({ status: 'ok' }));
+""")
+    assert r.returncode == 0, f"User message check failed: {r.stderr or r.stdout}"
 
 
-# [pr_diff] fail_to_pass
+def test_status_markers_open_closed():
+    """Status markers use [open]/[closed] instead of [running]/[stopped]."""
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const src = readFileSync('packages/playwright/src/mcp/terminal/program.ts', 'utf8');
+
+if (!src.includes("'[open]'") || !src.includes("'[closed]'")) {
+    console.error(JSON.stringify({ error: 'missing_new_markers' }));
+    process.exit(1);
+}
+if (src.includes("'[running]'") || src.includes("'[stopped]'")) {
+    console.error(JSON.stringify({ error: 'old_markers_present' }));
+    process.exit(1);
+}
+
+console.log(JSON.stringify({ status: 'ok' }));
+""")
+    assert r.returncode == 0, f"Status marker check failed: {r.stderr or r.stdout}"
+
+
+def test_session_mgmt_md_heading_updated():
+    """session-management.md heading mentions 'Browser'."""
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const src = readFileSync('packages/playwright/src/skill/references/session-management.md', 'utf8');
+const firstLine = src.trim().split('\\n')[0].toLowerCase();
+if (!firstLine.includes('browser')) {
+    console.error(JSON.stringify({ error: 'heading_missing_browser', firstLine }));
+    process.exit(1);
+}
+console.log(JSON.stringify({ status: 'ok', firstLine }));
+""")
+    assert r.returncode == 0, f"Heading check failed: {r.stderr or r.stdout}"
 
 
 # ---------------------------------------------------------------------------
-# Config edit tests (config_edit) — SKILL.md and session-management.md updates
+# Fail-to-pass (agent_config) — documentation updates
 # ---------------------------------------------------------------------------
 
-# [config_edit] fail_to_pass
+def test_skill_md_uses_new_commands():
+    """SKILL.md documents -b flag and new command names."""
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const src = readFileSync('packages/playwright/src/skill/SKILL.md', 'utf8');
+
+const required = ['-b ', 'playwright-cli list', 'playwright-cli close-all', 'playwright-cli kill-all'];
+const missing = required.filter(p => !src.includes(p));
+if (missing.length > 0) {
+    console.error(JSON.stringify({ error: 'missing_in_skill_md', missing }));
+    process.exit(1);
+}
+
+const forbidden = ['session-list', 'session-close-all', 'session-kill-all'];
+const present = forbidden.filter(p => src.includes(p));
+if (present.length > 0) {
+    console.error(JSON.stringify({ error: 'old_commands_in_skill_md', present }));
+    process.exit(1);
+}
+
+console.log(JSON.stringify({ status: 'ok' }));
+""")
+    assert r.returncode == 0, f"SKILL.md check failed: {r.stderr or r.stdout}"
 
 
-# [config_edit] fail_to_pass
+def test_session_mgmt_md_uses_b_flag():
+    """session-management.md uses -b flag and new command names."""
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const src = readFileSync('packages/playwright/src/skill/references/session-management.md', 'utf8');
 
+if (!src.includes('-b ')) {
+    console.error(JSON.stringify({ error: 'missing_b_flag' }));
+    process.exit(1);
+}
+if (src.includes('--session')) {
+    console.error(JSON.stringify({ error: 'old_session_flag' }));
+    process.exit(1);
+}
 
-# [config_edit] fail_to_pass
+const required = ['playwright-cli list', 'close-all', 'kill-all'];
+const missing = required.filter(p => !src.includes(p));
+if (missing.length > 0) {
+    console.error(JSON.stringify({ error: 'missing_commands', missing }));
+    process.exit(1);
+}
 
-
-# [config_edit] fail_to_pass
+console.log(JSON.stringify({ status: 'ok' }));
+""")
+    assert r.returncode == 0, f"session-management.md check failed: {r.stderr or r.stdout}"
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
-def test_session_mgmt_md_heading_updated():
-    """session-management.md title must reference 'Browser' in heading."""
-    content = SESSION_MGMT_MD.read_text()
-    first_line = content.strip().split("\n")[0]
-    assert "browser" in first_line.lower(), \
-        "session-management.md heading should mention 'Browser'"
-
-
-# [static] pass_to_pass
-
-
-# [static] pass_to_pass
 def test_program_still_handles_open_close():
     """program.ts must still handle 'open' and 'close' commands."""
     content = PROGRAM_TS.read_text()

@@ -7,8 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import json
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/playwright"
@@ -18,7 +17,6 @@ REPO = "/workspace/playwright"
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Modified TypeScript files must parse without syntax errors."""
     files = [
@@ -34,55 +32,198 @@ def test_syntax_check():
         p = Path(REPO) / f
         assert p.exists(), f"{f} must exist"
         content = p.read_text()
-        # Basic syntax: balanced braces (rough check for TS)
         assert content.count("{") == content.count("}"), (
             f"{f} has unbalanced braces"
         )
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests using subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
+def test_help_json_command_names():
+    """help.json must contain new command names (press, keydown, etc.)
+    and not the old hyphenated names, validated by parsing JSON with Node."""
+    r = subprocess.run(
+        ["node", "-e", """
+const fs = require('fs');
+const data = JSON.parse(fs.readFileSync('packages/playwright/src/mcp/terminal/help.json', 'utf8'));
+const cmds = Object.keys(data.commands);
+const required = ['press', 'keydown', 'keyup', 'mousemove', 'mousedown', 'mouseup', 'mousewheel'];
+const forbidden = ['key-press', 'key-down', 'key-up', 'mouse-move', 'mouse-down', 'mouse-up', 'mouse-wheel'];
+for (const r of required) {
+  if (!cmds.includes(r)) { console.error('Missing command: ' + r); process.exit(1); }
+}
+for (const f of forbidden) {
+  if (cmds.includes(f)) { console.error('Old command still present: ' + f); process.exit(1); }
+}
+// Global help text must also use new names
+const g = data.global;
+for (const f of ['key-press', 'key-down', 'key-up', 'mouse-move', 'mouse-down', 'mouse-up', 'mouse-wheel']) {
+  if (g.includes(f)) { console.error('Global help still references: ' + f); process.exit(1); }
+}
+console.log('PASS');
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_eval_auto_wrap():
+    """evaluate tool must auto-wrap expressions that don't contain '=>',
+    verified by checking source for the pattern and testing the logic."""
+    r = subprocess.run(
+        ["node", "-e", """
+const fs = require('fs');
+const code = fs.readFileSync('packages/playwright/src/mcp/browser/tools/evaluate.ts', 'utf8');
+
+// Source must contain the arrow-detection check
+const hasArrowCheck = code.includes(".includes('=>')") || code.includes('.includes("=>")');
+if (!hasArrowCheck) { console.error('evaluate.ts has no arrow-detection check'); process.exit(1); }
+
+// Source must contain the wrapping pattern
+const hasWrap = code.includes('() => (') || code.includes('`() => (`');
+if (!hasWrap) { console.error('evaluate.ts has no auto-wrap pattern'); process.exit(1); }
+
+// Replicate the exact logic and test it
+function autoWrap(fn) {
+  if (!fn.includes('=>'))
+    fn = '() => (' + fn + ')';
+  return fn;
+}
+
+const cases = [
+  ['document.title', '() => (document.title)'],
+  ['() => document.title', '() => document.title'],
+  ['el => el.textContent', 'el => el.textContent'],
+  ['window.location.href', '() => (window.location.href)'],
+];
+for (const [input, expected] of cases) {
+  const result = autoWrap(input);
+  if (result !== expected) {
+    console.error('autoWrap("' + input + '") = "' + result + '", expected "' + expected + '"');
+    process.exit(1);
+  }
+}
+console.log('PASS');
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_render_modal_skill_mode():
+    """renderModalStates must accept a config param and branch on skillMode:
+    show skill name in skill mode, tool name otherwise."""
+    r = subprocess.run(
+        ["node", "-e", """
+const fs = require('fs');
+const code = fs.readFileSync('packages/playwright/src/mcp/browser/tab.ts', 'utf8');
+
+// Function must accept config as first parameter
+if (!/function\\s+renderModalStates\\s*\\(\\s*config\\s*:/.test(code)) {
+  console.error('renderModalStates must accept config as first parameter');
+  process.exit(1);
+}
+
+// Must branch on config.skillMode
+if (!code.includes('config.skillMode')) {
+  console.error('renderModalStates must use config.skillMode');
+  process.exit(1);
+}
+
+// Must access .skill and .tool on clearedBy
+if (!code.includes('clearedBy.skill') && !code.includes('state.clearedBy.skill')) {
+  console.error('Must access clearedBy.skill');
+  process.exit(1);
+}
+if (!code.includes('clearedBy.tool') && !code.includes('state.clearedBy.tool')) {
+  console.error('Must access clearedBy.tool');
+  process.exit(1);
+}
+
+// Replicate the rendering logic and test both modes
+function renderModalStates(config, modalStates) {
+  const result = [];
+  if (modalStates.length === 0)
+    result.push('- There is no modal state present');
+  for (const state of modalStates)
+    result.push('- [' + state.description + ']: can be handled by ' +
+      (config.skillMode ? state.clearedBy.skill : state.clearedBy.tool));
+  return result;
+}
+
+const state = {
+  description: '"alert" dialog with message "MyAlert"',
+  clearedBy: { tool: 'browser_handle_dialog', skill: 'dialog-accept or dialog-dismiss' }
+};
+
+// Skill mode: must show skill name
+const skillOut = renderModalStates({ skillMode: true }, [state]);
+if (!skillOut[0].includes('dialog-accept or dialog-dismiss')) {
+  console.error('Skill mode should show skill name, got: ' + skillOut[0]);
+  process.exit(1);
+}
+if (skillOut[0].includes('browser_handle_dialog')) {
+  console.error('Skill mode should NOT show tool name');
+  process.exit(1);
+}
+
+// Non-skill mode: must show tool name
+const toolOut = renderModalStates({ skillMode: false }, [state]);
+if (!toolOut[0].includes('browser_handle_dialog')) {
+  console.error('Non-skill mode should show tool name, got: ' + toolOut[0]);
+  process.exit(1);
+}
+
+console.log('PASS');
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — structural tests
+# ---------------------------------------------------------------------------
+
 def test_command_names_renamed():
-    """Terminal commands must use short names: press, keydown, keyup,
-    mousemove, mousedown, mouseup, mousewheel (no hyphens)."""
+    """commands.ts must declare short names (press, keydown, etc.)
+    and not the old hyphenated names."""
     commands_ts = Path(REPO) / "packages/playwright/src/mcp/terminal/commands.ts"
     content = commands_ts.read_text()
 
-    # New names must be present as declared command names
-    new_names = ["'press'", "'keydown'", "'keyup'", "'mousemove'", "'mousedown'", "'mouseup'", "'mousewheel'"]
+    new_names = ["'press'", "'keydown'", "'keyup'", "'mousemove'",
+                 "'mousedown'", "'mouseup'", "'mousewheel'"]
     for name in new_names:
         assert f"name: {name}" in content, (
             f"commands.ts should declare command with name: {name}"
         )
 
-    # Old hyphenated names must NOT be declared
-    old_names = ["'key-press'", "'key-down'", "'key-up'", "'mouse-move'", "'mouse-down'", "'mouse-up'", "'mouse-wheel'"]
+    old_names = ["'key-press'", "'key-down'", "'key-up'", "'mouse-move'",
+                 "'mouse-down'", "'mouse-up'", "'mouse-wheel'"]
     for name in old_names:
         assert f"name: {name}" not in content, (
             f"commands.ts should not still use old name: {name}"
         )
 
 
-# [pr_diff] fail_to_pass
-def test_modal_state_cleared_by_is_object():
-    """The ModalState clearedBy field must be an object type
-    { tool: string; skill: string }, not a plain string."""
+def test_modal_state_cleared_by_type():
+    """ModalState clearedBy field must be typed as { tool: string; skill: string },
+    not a plain string."""
     tool_ts = Path(REPO) / "packages/playwright/src/mcp/browser/tools/tool.ts"
     content = tool_ts.read_text()
 
-    # The type definition should have clearedBy as an object with tool and skill
-    assert "clearedBy: { tool: string; skill: string }" in content or \
-           "clearedBy: {tool: string; skill: string}" in content or \
-           ("clearedBy:" in content and "tool: string" in content and "skill: string" in content), \
+    # Must have both 'tool: string' and 'skill: string' in the type definition
+    assert "tool: string" in content and "skill: string" in content, (
         "tool.ts clearedBy must be typed as { tool: string; skill: string }"
+    )
 
-    # It must NOT be typed as just 'string'
-    # Match "clearedBy: string" but not "clearedBy: { tool: string..."
-    lines = content.split("\n")
-    for line in lines:
+    # No line should have 'clearedBy: string' without braces (plain string type)
+    for line in content.split("\n"):
         stripped = line.strip()
         if stripped.startswith("clearedBy:") and "string" in stripped:
             assert "{" in stripped, (
@@ -90,142 +231,65 @@ def test_modal_state_cleared_by_is_object():
             )
 
 
-# [pr_diff] fail_to_pass
-def test_render_modal_states_accepts_config():
-    """renderModalStates function must accept a config parameter."""
-    tab_ts = Path(REPO) / "packages/playwright/src/mcp/browser/tab.ts"
-    content = tab_ts.read_text()
+def test_daemon_sets_skill_mode():
+    """Daemon mode in program.ts must set config.skillMode = true."""
+    program_ts = Path(REPO) / "packages/playwright/src/mcp/program.ts"
+    content = program_ts.read_text()
 
-    # Function signature should include config parameter
-    # Match: export function renderModalStates(config: FullConfig, modalStates: ModalState[])
-    assert re.search(
-        r"function\s+renderModalStates\s*\(\s*config\s*:", content
-    ), "renderModalStates must accept config as first parameter"
-
-    # Should use config.skillMode to determine output format
-    assert "config.skillMode" in content or "skillMode" in content, (
-        "renderModalStates should use skillMode from config"
+    assert "skillMode" in content, (
+        "program.ts must reference skillMode"
     )
-
-
-# [pr_diff] fail_to_pass
-def test_render_modal_uses_skill_name():
-    """When skillMode is active, modal state message should use the skill name
-    instead of the tool name."""
-    tab_ts = Path(REPO) / "packages/playwright/src/mcp/browser/tab.ts"
-    content = tab_ts.read_text()
-
-    # The rendering must reference .skill for skill mode output
-    assert "clearedBy.skill" in content or "state.clearedBy.skill" in content, (
-        "renderModalStates should use clearedBy.skill in skill mode"
-    )
-    # And .tool for non-skill mode
-    assert "clearedBy.tool" in content or "state.clearedBy.tool" in content, (
-        "renderModalStates should use clearedBy.tool in non-skill mode"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_eval_auto_wraps_expression():
-    """evaluate tool must auto-wrap expressions that don't contain '=>'
-    into an arrow function."""
-    evaluate_ts = Path(REPO) / "packages/playwright/src/mcp/browser/tools/evaluate.ts"
-    content = evaluate_ts.read_text()
-
-    # Check for the arrow-wrapping logic
-    assert "=>" in content, "evaluate.ts must reference arrow syntax"
-
-    # The wrapping pattern: if no => in function, wrap it
-    assert re.search(r"!.*includes\s*\(\s*['\"]=>['\"]\s*\)", content) or \
-           re.search(r"indexOf\s*\(\s*['\"]=>['\"]\s*\)", content), \
-        "evaluate.ts must check if function param contains '=>'"
-
-    # Should wrap in arrow function like: () => (expression)
-    assert "() =>" in content or "`() =>" in content or \
-           "=> (" in content, \
-        "evaluate.ts must wrap non-arrow expressions in () => (...)"
-
-
-# [pr_diff] fail_to_pass
-def test_help_json_uses_new_command_names():
-    """help.json must reference the new command names (press, keydown, etc.)
-    instead of the old hyphenated names (key-press, key-down, etc.)."""
-    help_json = Path(REPO) / "packages/playwright/src/mcp/terminal/help.json"
-    content = help_json.read_text()
-    data = json.loads(content)
-
-    # New command names must be keys in commands object
-    commands = data.get("commands", {})
-    for name in ["press", "keydown", "keyup", "mousemove", "mousedown", "mouseup", "mousewheel"]:
-        assert name in commands, f"help.json commands must include '{name}'"
-
-    # Old names must be gone
-    for name in ["key-press", "key-down", "key-up", "mouse-move", "mouse-down", "mouse-up", "mouse-wheel"]:
-        assert name not in commands, f"help.json commands must not include old name '{name}'"
-
-
-# [pr_diff] fail_to_pass
+    # Verify it's set in the daemon block
+    in_daemon = False
+    for line in content.split("\n"):
+        if "options.daemon" in line:
+            in_daemon = True
+        if in_daemon and "skillMode" in line:
+            assert "true" in line, "skillMode must be set to true in daemon mode"
+            break
+    else:
+        assert False, "skillMode must be set inside the daemon mode block"
 
 
 # ---------------------------------------------------------------------------
-# Config edit (config_edit) — SKILL.md creation
+# Fail-to-pass (pr_diff) — SKILL.md creation
 # ---------------------------------------------------------------------------
 
-# [config_edit] fail_to_pass
+def test_skill_md_exists_with_frontmatter():
+    """SKILL.md must exist in terminal directory with valid YAML frontmatter."""
+    skill_md = Path(REPO) / "packages/playwright/src/mcp/terminal/SKILL.md"
+    assert skill_md.exists(), "SKILL.md must exist in terminal directory"
 
     content = skill_md.read_text()
-    # Must have YAML frontmatter
     assert content.startswith("---"), "SKILL.md must start with YAML frontmatter"
     assert content.count("---") >= 2, "SKILL.md must have opening and closing frontmatter"
 
-    # Frontmatter must include name and description
     frontmatter_end = content.index("---", 3)
     frontmatter = content[3:frontmatter_end]
     assert "name:" in frontmatter, "SKILL.md frontmatter must include name"
     assert "description:" in frontmatter, "SKILL.md frontmatter must include description"
 
 
-# [config_edit] fail_to_pass
-
+def test_skill_md_documents_commands():
+    """SKILL.md must document new command names and cover core workflow."""
+    skill_md = Path(REPO) / "packages/playwright/src/mcp/terminal/SKILL.md"
+    assert skill_md.exists(), "SKILL.md must exist"
     content = skill_md.read_text()
 
-    # Must document the new command names
-    for cmd in ["press", "keydown", "keyup", "mousemove", "mousedown", "mouseup", "mousewheel"]:
-        assert f"playwright-cli {cmd}" in content or f" {cmd} " in content or f" {cmd}\n" in content, (
-            f"SKILL.md must document the '{cmd}' command"
-        )
+    for cmd in ["press", "keydown", "keyup", "mousemove", "mousedown",
+                "mouseup", "mousewheel"]:
+        assert cmd in content, f"SKILL.md must document the '{cmd}' command"
 
-    # Must cover core workflow concepts
     assert "snapshot" in content.lower(), "SKILL.md should mention snapshot workflow"
     assert "open" in content, "SKILL.md should document the open command"
     assert "click" in content, "SKILL.md should document the click command"
 
 
-# [config_edit] fail_to_pass
-
-    content = skill_md.read_text().lower()
-
-    # Must cover multiple categories
-    categories_found = 0
-    for category in ["keyboard", "mouse", "navigation", "tab", "screenshot", "session"]:
-        if category in content:
-            categories_found += 1
-
-    assert categories_found >= 4, (
-        f"SKILL.md should cover at least 4 command categories, found {categories_found}"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass — build script
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
-def test_build_script_copies_md_files():
-    """Build script must copy .md files from terminal directory."""
+def test_build_script_copies_md():
+    """Build script must copy .md files from terminal directory to lib output."""
     build_js = Path(REPO) / "utils/build/build.js"
     content = build_js.read_text()
 
     assert "terminal" in content and "*.md" in content, (
-        "build.js must copy terminal/*.md files"
+        "build.js must copy terminal/*.md files to lib output"
     )

@@ -8,17 +8,30 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/playwright"
 TOOLS = f"{REPO}/packages/playwright-core/src/tools"
 
 
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.js"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Modified TypeScript files must parse without syntax errors."""
     files = [
@@ -35,131 +48,226 @@ def test_syntax_check():
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_type_tool_conditional_wait():
     """browser_type (fill) must only use waitForCompletion when submit or slowly is set."""
-    src = Path(f"{TOOLS}/backend/keyboard.ts").read_text()
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright-core/src/tools/backend/keyboard.ts', 'utf8');
 
-    # Find the type tool's handle function — it's the one with refLocator + lookupSecret
-    # The action body should be extracted into a variable or inline function
-    # and waitForCompletion should be conditional on submit/slowly
+// Find browser_type tool definition
+const toolMatch = src.match(/name:\\s*['"]browser_type['"]/);
+if (!toolMatch) { console.error('browser_type tool not found'); process.exit(1); }
 
-    # There must be a conditional check for submit or slowly before waitForCompletion
-    # in the type tool's handler
-    type_section = _extract_type_handler(src)
+// Extract handler body using brace counting
+const rest = src.slice(toolMatch.index);
+const handleMatch = rest.match(/handle:\\s*async/);
+if (!handleMatch) { console.error('handle function not found'); process.exit(1); }
 
-    # The unconditional waitForCompletion wrapping the entire fill+submit should be gone.
-    # waitForCompletion must still exist (for submit/slowly cases) but not wrap the plain fill.
-    assert "waitForCompletion" in type_section, \
-        "type tool must still use waitForCompletion for submit/slowly paths"
+const fromHandle = rest.slice(handleMatch.index);
+const braceStart = fromHandle.indexOf('{');
+let depth = 0;
+let handler = '';
+for (let i = braceStart; i < fromHandle.length; i++) {
+    if (fromHandle[i] === '{') depth++;
+    if (fromHandle[i] === '}') { depth--; if (depth === 0) { handler = fromHandle.slice(braceStart, i + 1); break; } }
+}
 
-    # There must be a conditional that gates waitForCompletion on submit or slowly.
-    # Accept various formulations: if/else, ternary, etc.
-    has_submit_check = bool(re.search(r'params\.submit', type_section))
-    has_slowly_check = bool(re.search(r'params\.slowly', type_section))
-    assert has_submit_check and has_slowly_check, \
-        "type tool must check both params.submit and params.slowly to decide waitForCompletion"
+// waitForCompletion must still exist (for submit/slowly paths)
+if (!handler.includes('waitForCompletion')) {
+    console.error('FAIL: waitForCompletion removed entirely - still needed for submit/slowly');
+    process.exit(1);
+}
 
-    # The fill path (not submit, not slowly) must NOT be inside waitForCompletion.
-    # Verify there's a branch where the action runs without waitForCompletion.
-    # This means there must be an else/alternative path after the conditional.
-    lines = type_section.split("\n")
-    wait_lines = [i for i, l in enumerate(lines) if "waitForCompletion" in l]
-    # waitForCompletion should appear inside a conditional, not at the top level of the handler
-    # Verify: at least one line between the handle start and waitForCompletion has an if-check
-    has_guarded_wait = False
-    for wl in wait_lines:
-        preceding = "\n".join(lines[max(0, wl - 5):wl])
-        if re.search(r'if\s*\(', preceding):
-            has_guarded_wait = True
-            break
-    assert has_guarded_wait, \
-        "waitForCompletion must be guarded by a conditional (not unconditionally wrapping the fill)"
+// Must reference both params.submit and params.slowly as guards
+if (!handler.includes('params.submit')) {
+    console.error('FAIL: must check params.submit to decide waitForCompletion');
+    process.exit(1);
+}
+if (!handler.includes('params.slowly')) {
+    console.error('FAIL: must check params.slowly to decide waitForCompletion');
+    process.exit(1);
+}
+
+// waitForCompletion must be inside a conditional, not at top level of handler
+const lines = handler.split('\\n');
+const waitLineIndices = [];
+lines.forEach((l, i) => { if (l.includes('waitForCompletion')) waitLineIndices.push(i); });
+
+let guarded = false;
+for (const wl of waitLineIndices) {
+    const preceding = lines.slice(Math.max(0, wl - 5), wl).join('\\n');
+    if (/if\\s*\\(/.test(preceding)) { guarded = true; break; }
+}
+if (!guarded) {
+    console.error('FAIL: waitForCompletion must be guarded by a conditional (submit/slowly)');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_hover_no_wait_for_completion():
     """browser_hover must not use waitForCompletion."""
-    src = Path(f"{TOOLS}/backend/snapshot.ts").read_text()
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright-core/src/tools/backend/snapshot.ts', 'utf8');
 
-    hover_section = _extract_tool_handler(src, "browser_hover")
+const toolMatch = src.match(/name:\\s*['"]browser_hover['"]/);
+if (!toolMatch) { console.error('browser_hover not found'); process.exit(1); }
 
-    # hover should directly await the locator action, not wrap in waitForCompletion
-    assert "waitForCompletion" not in hover_section, \
-        "hover handler must not use waitForCompletion — hover never causes navigation"
+const rest = src.slice(toolMatch.index);
+const handleMatch = rest.match(/handle:\\s*async/);
+if (!handleMatch) { console.error('handle not found'); process.exit(1); }
 
-    # Must still call locator.hover
-    assert "locator.hover" in hover_section or ".hover(" in hover_section, \
-        "hover handler must still call hover on the locator"
+const fromHandle = rest.slice(handleMatch.index);
+const braceStart = fromHandle.indexOf('{');
+let depth = 0;
+let handler = '';
+for (let i = braceStart; i < fromHandle.length; i++) {
+    if (fromHandle[i] === '{') depth++;
+    if (fromHandle[i] === '}') { depth--; if (depth === 0) { handler = fromHandle.slice(braceStart, i + 1); break; } }
+}
+
+if (handler.includes('waitForCompletion')) {
+    console.error('FAIL: hover must not use waitForCompletion - hover never causes navigation');
+    process.exit(1);
+}
+
+if (!handler.includes('.hover(')) {
+    console.error('FAIL: hover handler must still call .hover()');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
+def test_select_option_no_wait_for_completion():
+    """browser_select_option must not use waitForCompletion."""
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright-core/src/tools/backend/snapshot.ts', 'utf8');
 
-    select_section = _extract_tool_handler(src, "browser_select_option")
+const toolMatch = src.match(/name:\\s*['"]browser_select_option['"]/);
+if (!toolMatch) { console.error('browser_select_option not found'); process.exit(1); }
 
-    assert "waitForCompletion" not in select_section, \
-        "selectOption handler must not use waitForCompletion — selectOption never causes navigation"
+const rest = src.slice(toolMatch.index);
+const handleMatch = rest.match(/handle:\\s*async/);
+if (!handleMatch) { console.error('handle not found'); process.exit(1); }
 
-    # Must still call selectOption
-    assert "selectOption" in select_section, \
-        "selectOption handler must still call selectOption on the locator"
+const fromHandle = rest.slice(handleMatch.index);
+const braceStart = fromHandle.indexOf('{');
+let depth = 0;
+let handler = '';
+for (let i = braceStart; i < fromHandle.length; i++) {
+    if (fromHandle[i] === '{') depth++;
+    if (fromHandle[i] === '}') { depth--; if (depth === 0) { handler = fromHandle.slice(braceStart, i + 1); break; } }
+}
+
+if (handler.includes('waitForCompletion')) {
+    console.error('FAIL: selectOption must not use waitForCompletion - never causes navigation');
+    process.exit(1);
+}
+
+if (!handler.includes('selectOption')) {
+    console.error('FAIL: selectOption handler must still call selectOption');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
+def test_mouse_move_no_wait_for_completion():
+    """browser_mouse_move_xy must not use waitForCompletion."""
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright-core/src/tools/backend/mouse.ts', 'utf8');
 
-    move_section = _extract_tool_handler(src, "browser_mouse_move_xy")
+const toolMatch = src.match(/name:\\s*['"]browser_mouse_move_xy['"]/);
+if (!toolMatch) { console.error('browser_mouse_move_xy not found'); process.exit(1); }
 
-    assert "waitForCompletion" not in move_section, \
-        "mouseMove handler must not use waitForCompletion — mouse.move never causes navigation"
+const rest = src.slice(toolMatch.index);
+const handleMatch = rest.match(/handle:\\s*async/);
+if (!handleMatch) { console.error('handle not found'); process.exit(1); }
 
-    # Must still call mouse.move
-    assert "mouse.move" in move_section, \
-        "mouseMove handler must still call page.mouse.move"
+const fromHandle = rest.slice(handleMatch.index);
+const braceStart = fromHandle.indexOf('{');
+let depth = 0;
+let handler = '';
+for (let i = braceStart; i < fromHandle.length; i++) {
+    if (fromHandle[i] === '{') depth++;
+    if (fromHandle[i] === '}') { depth--; if (depth === 0) { handler = fromHandle.slice(braceStart, i + 1); break; } }
+}
+
+if (handler.includes('waitForCompletion')) {
+    console.error('FAIL: mouseMove must not use waitForCompletion - mouse.move never causes navigation');
+    process.exit(1);
+}
+
+if (!handler.includes('mouse.move')) {
+    console.error('FAIL: mouseMove handler must still call mouse.move');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_skill_md_submit_flag():
+    """SKILL.md must document the --submit flag for fill command."""
+    r = _run_node("""
+const fs = require('fs');
+const md = fs.readFileSync('packages/playwright-core/src/tools/cli-client/skill/SKILL.md', 'utf8');
+
+if (!md.includes('--submit')) {
+    console.error('FAIL: SKILL.md must document the --submit flag');
+    process.exit(1);
+}
+
+const fillSubmitLines = md.split('\\n').filter(l => l.toLowerCase().includes('fill') && l.includes('--submit'));
+if (fillSubmitLines.length === 0) {
+    console.error('FAIL: SKILL.md needs at least one fill example with --submit');
+    process.exit(1);
+}
+
+const lower = md.toLowerCase();
+if (!(lower.includes('enter') && lower.includes('submit')) && !lower.includes('presses enter')) {
+    console.error('FAIL: SKILL.md must explain that --submit presses Enter after filling');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Config edit (config_edit) — SKILL.md documentation update
+# Pass-to-pass (static) — regression
 # ---------------------------------------------------------------------------
 
-# [config_edit] fail_to_pass
-
-    # The fill example must show --submit
-    assert "--submit" in skill_md, \
-        "SKILL.md should document the --submit flag"
-
-    # The fill command line should include --submit
-    fill_lines = [line for line in skill_md.split("\n") if "fill" in line.lower() and "--submit" in line]
-    assert len(fill_lines) >= 1, \
-        "SKILL.md should have at least one fill example with --submit"
-
-    # Should explain what --submit does (presses Enter)
-    lower = skill_md.lower()
-    assert ("enter" in lower and "submit" in lower) or "presses enter" in lower, \
-        "SKILL.md should explain that --submit presses Enter after filling"
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression + anti-stub
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
 def test_click_still_uses_wait_for_completion():
     """browser_click must still use waitForCompletion (it causes navigation)."""
     src = Path(f"{TOOLS}/backend/snapshot.ts").read_text()
-
     click_section = _extract_tool_handler(src, "browser_click")
-
     assert "waitForCompletion" in click_section, \
         "click handler must still use waitForCompletion — clicks can cause navigation"
 
 
-# [static] pass_to_pass
 def test_press_enter_still_uses_wait_for_completion():
     """browser_press_key for Enter must still use waitForCompletion."""
     src = Path(f"{TOOLS}/backend/keyboard.ts").read_text()
-
     press_section = _extract_tool_handler(src, "browser_press_key")
-
     assert "waitForCompletion" in press_section, \
         "press handler must still use waitForCompletion for Enter key"
 
@@ -167,24 +275,6 @@ def test_press_enter_still_uses_wait_for_completion():
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-def _extract_type_handler(src: str) -> str:
-    """Extract the type tool handler body from keyboard.ts."""
-    # The type tool has name: 'browser_type' and its handle function
-    # contains refLocator and lookupSecret
-    match = re.search(r"name:\s*['\"]browser_type['\"]", src)
-    assert match, "browser_type tool definition not found in keyboard.ts"
-    # Get everything from this tool definition to the next export or end
-    start = match.start()
-    # Find the handle function
-    handle_match = re.search(r"handle:\s*async", src[start:])
-    assert handle_match, "handle function not found in browser_type tool"
-    handle_start = start + handle_match.start()
-    # Find the closing of this tool definition (next defineTabTool or end of exports)
-    rest = src[handle_start:]
-    # Use brace counting to find end of handler
-    return _extract_brace_block(rest)
-
 
 def _extract_tool_handler(src: str, tool_name: str) -> str:
     """Extract a tool handler body by its schema name."""

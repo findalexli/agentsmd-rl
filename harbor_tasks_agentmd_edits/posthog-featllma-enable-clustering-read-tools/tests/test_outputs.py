@@ -9,48 +9,57 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import json
 import re
-import sys
+import subprocess
 from pathlib import Path
 
 import yaml
 
 REPO = "/workspace/posthog"
 
+SCRIPT_DIR = str(
+    Path(REPO)
+    / "products"
+    / "llm_analytics"
+    / "skills"
+    / "exploring-llm-clusters"
+    / "scripts"
+)
+
+
+def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in a subprocess within the repo."""
+    script = Path(REPO) / "_eval_tmp.py"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
 
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Modified YAML and Python files parse without errors."""
-    # tools.yaml parses as valid YAML
     tools_path = Path(REPO) / "products" / "llm_analytics" / "mcp" / "tools.yaml"
     data = yaml.safe_load(tools_path.read_text())
     assert isinstance(data, dict), "tools.yaml must parse as a YAML mapping"
     assert "tools" in data, "tools.yaml must have a 'tools' key"
 
-    # print_clusters.py compiles as valid Python
-    script_path = (
-        Path(REPO)
-        / "products"
-        / "llm_analytics"
-        / "skills"
-        / "exploring-llm-clusters"
-        / "scripts"
-        / "print_clusters.py"
-    )
+    script_path = Path(SCRIPT_DIR) / "print_clusters.py"
     if script_path.exists():
         import py_compile
-
         py_compile.compile(str(script_path), doraise=True)
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests: MCP tool enablement
+# Fail-to-pass (pr_diff) — MCP tool enablement
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_clustering_list_tool_enabled():
     """clustering-jobs-list tool must be enabled with read scope and readOnly annotation."""
     tools_path = Path(REPO) / "products" / "llm_analytics" / "mcp" / "tools.yaml"
@@ -69,7 +78,6 @@ def test_clustering_list_tool_enabled():
     assert annotations.get("destructive") is False, "clustering-jobs-list must not be destructive"
 
 
-# [pr_diff] fail_to_pass
 def test_clustering_retrieve_tool_enabled():
     """clustering-jobs-retrieve tool must be enabled with read scope and readOnly annotation."""
     tools_path = Path(REPO) / "products" / "llm_analytics" / "mcp" / "tools.yaml"
@@ -87,7 +95,6 @@ def test_clustering_retrieve_tool_enabled():
     assert annotations.get("readOnly") is True, "clustering-jobs-retrieve must be readOnly"
 
 
-# [pr_diff] fail_to_pass
 def test_clustering_tools_have_descriptions():
     """Both clustering tools must have meaningful descriptions mentioning cluster concepts."""
     tools_path = Path(REPO) / "products" / "llm_analytics" / "mcp" / "tools.yaml"
@@ -114,7 +121,6 @@ def test_clustering_tools_have_descriptions():
 # Fail-to-pass (pr_diff) — lint exclusion for skill scripts
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_ruff_excludes_skill_scripts():
     """pyproject.toml ruff exclude must include skill scripts path."""
     pyproject = Path(REPO) / "pyproject.toml"
@@ -125,103 +131,113 @@ def test_ruff_excludes_skill_scripts():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — print_clusters.py functionality
+# Fail-to-pass (pr_diff) — print_clusters.py functionality via subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_print_clusters_parses_sql_result():
-    """print_clusters.py parse_result must extract clusters from SQL result format."""
-    script_dir = (
-        Path(REPO)
-        / "products"
-        / "llm_analytics"
-        / "skills"
-        / "exploring-llm-clusters"
-        / "scripts"
-    )
-    sys.path.insert(0, str(script_dir))
-    try:
-        import importlib
+    """print_clusters.py parse_result extracts clusters from SQL result format."""
+    test_input = json.dumps({
+        "columns": ["run_id", "level", "clusters"],
+        "results": [
+            [
+                "123_trace_20260328_100000",
+                "trace",
+                json.dumps([
+                    {"cluster_id": 0, "size": 10, "title": "Auth flows",
+                     "description": "Login traces", "traces": {}},
+                    {"cluster_id": 1, "size": 5, "title": "Search queries",
+                     "description": "Search traces", "traces": {}},
+                ]),
+            ]
+        ],
+    })
 
-        mod = importlib.import_module("print_clusters")
+    r = _run_python(f"""
+import json, sys
+sys.path.insert(0, {SCRIPT_DIR!r})
+from print_clusters import parse_result
 
-        sql_result = {
-            "columns": ["run_id", "level", "clusters"],
-            "results": [
-                [
-                    "123_trace_20260328_100000",
-                    "trace",
-                    json.dumps(
-                        [
-                            {
-                                "cluster_id": 0,
-                                "size": 10,
-                                "title": "Auth flows",
-                                "description": "Login traces",
-                                "traces": {},
-                            },
-                            {
-                                "cluster_id": 1,
-                                "size": 5,
-                                "title": "Search queries",
-                                "description": "Search traces",
-                                "traces": {},
-                            },
-                        ]
-                    ),
-                ]
-            ],
-        }
-
-        clusters, meta = mod.parse_result(sql_result)
-        assert len(clusters) == 2, f"Expected 2 clusters, got {len(clusters)}"
-        assert clusters[0]["cluster_id"] == 0
-        assert clusters[1]["title"] == "Search queries"
-        assert meta.get("run_id") == "123_trace_20260328_100000"
-        assert meta.get("level") == "trace"
-    finally:
-        sys.path.pop(0)
-        if "print_clusters" in sys.modules:
-            del sys.modules["print_clusters"]
+sql_result = json.loads({test_input!r})
+clusters, meta = parse_result(sql_result)
+assert len(clusters) == 2, f"Expected 2 clusters, got {{len(clusters)}}"
+assert clusters[0]["cluster_id"] == 0
+assert clusters[1]["title"] == "Search queries"
+assert meta.get("run_id") == "123_trace_20260328_100000"
+assert meta.get("level") == "trace"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_print_clusters_parses_direct_array():
-    """print_clusters.py parse_result must handle a direct clusters array."""
-    script_dir = (
-        Path(REPO)
-        / "products"
-        / "llm_analytics"
-        / "skills"
-        / "exploring-llm-clusters"
-        / "scripts"
-    )
-    sys.path.insert(0, str(script_dir))
+    """print_clusters.py parse_result handles direct clusters array input."""
+    direct_json = json.dumps([
+        {"cluster_id": -1, "size": 3, "title": "Noise", "traces": {}},
+        {"cluster_id": 0, "size": 20, "title": "Main", "traces": {}},
+    ])
+
+    r = _run_python(f"""
+import json, sys
+sys.path.insert(0, {SCRIPT_DIR!r})
+from print_clusters import parse_result
+
+direct = json.loads({direct_json!r})
+clusters, meta = parse_result(direct)
+assert len(clusters) == 2, f"Expected 2 clusters, got {{len(clusters)}}"
+assert clusters[0]["cluster_id"] == -1, "First cluster should be noise"
+assert meta == {{}}, "Direct array should have empty metadata"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_print_clusters_script_output():
+    """print_clusters.py produces readable cluster summary when run as main."""
+    script_path = Path(SCRIPT_DIR) / "print_clusters.py"
+    assert script_path.exists(), "print_clusters.py must exist"
+
+    test_file = Path(REPO) / "_eval_test_clusters.json"
+    test_data = [
+        {
+            "cluster_id": 0, "size": 15, "title": "Auth flows",
+            "description": "Login and signup traces",
+            "traces": {
+                "trace-1": {"distance_to_centroid": 0.1, "rank": 0,
+                            "x": 1.0, "y": 2.0, "timestamp": "2026-03-28T10:00:00Z"},
+            },
+        },
+        {
+            "cluster_id": -1, "size": 3, "title": "Noise",
+            "description": "Outlier traces", "traces": {},
+        },
+    ]
     try:
-        import importlib
-
-        mod = importlib.import_module("print_clusters")
-
-        direct = [
-            {"cluster_id": -1, "size": 3, "title": "Noise", "traces": {}},
-            {"cluster_id": 0, "size": 20, "title": "Main", "traces": {}},
-        ]
-
-        clusters, meta = mod.parse_result(direct)
-        assert len(clusters) == 2, f"Expected 2 clusters, got {len(clusters)}"
-        assert clusters[0]["cluster_id"] == -1, "First cluster should be noise"
-        assert meta == {}, "Direct array should have empty metadata"
+        test_file.write_text(json.dumps(test_data))
+        r = subprocess.run(
+            ["python3", str(script_path), str(test_file)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Script failed: {r.stderr}"
+        assert "Auth flows" in r.stdout, "Output must include cluster title"
+        assert "NOISE/OUTLIERS" in r.stdout, "Output must label noise cluster"
     finally:
-        sys.path.pop(0)
-        if "print_clusters" in sys.modules:
-            del sys.modules["print_clusters"]
+        test_file.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) — SKILL.md created with correct content
+# Fail-to-pass (pr_diff) — SKILL.md created with correct content
 # ---------------------------------------------------------------------------
 
-# [config_edit] fail_to_pass
+def test_skill_md_frontmatter():
+    """SKILL.md must have YAML frontmatter with correct name and description."""
+    skill_path = (
+        Path(REPO) / "products" / "llm_analytics" / "skills"
+        / "exploring-llm-clusters" / "SKILL.md"
+    )
+    assert skill_path.exists(), "SKILL.md must exist"
+    content = skill_path.read_text()
 
     fm_match = re.search(r"^---\s*\n(.*?)\n---", content, re.DOTALL)
     assert fm_match, "SKILL.md must have YAML frontmatter"
@@ -232,7 +248,13 @@ def test_print_clusters_parses_direct_array():
     assert fm.get("description"), "SKILL.md must have a description in frontmatter"
 
 
-# [config_edit] fail_to_pass
+def test_skill_md_references_tools():
+    """SKILL.md must reference clustering MCP tools and execute-sql."""
+    skill_path = (
+        Path(REPO) / "products" / "llm_analytics" / "skills"
+        / "exploring-llm-clusters" / "SKILL.md"
+    )
+    content = skill_path.read_text()
 
     assert "clustering-jobs-list" in content, (
         "SKILL.md must mention the clustering-jobs-list tool"
@@ -245,7 +267,13 @@ def test_print_clusters_parses_direct_array():
     )
 
 
-# [config_edit] fail_to_pass
+def test_skill_md_documents_events():
+    """SKILL.md must document cluster event types and key properties."""
+    skill_path = (
+        Path(REPO) / "products" / "llm_analytics" / "skills"
+        / "exploring-llm-clusters" / "SKILL.md"
+    )
+    content = skill_path.read_text()
 
     assert "$ai_trace_clusters" in content, (
         "SKILL.md must document $ai_trace_clusters event type"
@@ -259,7 +287,13 @@ def test_print_clusters_parses_direct_array():
     assert "cluster_id" in content, "SKILL.md must document cluster_id field"
 
 
-# [config_edit] fail_to_pass
+def test_skill_md_includes_sql():
+    """SKILL.md must include SQL query patterns for exploring cluster events."""
+    skill_path = (
+        Path(REPO) / "products" / "llm_analytics" / "skills"
+        / "exploring-llm-clusters" / "SKILL.md"
+    )
+    content = skill_path.read_text()
 
     assert "SELECT" in content, "SKILL.md must include SQL query examples"
     assert "FROM events" in content, (
@@ -274,7 +308,6 @@ def test_print_clusters_parses_direct_array():
 # Pass-to-pass (agent_config) — tool naming conventions
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass
 def test_tool_names_valid():
     """All enabled tool names must be kebab-case and <= 52 chars per MCP naming rules."""
     tools_path = Path(REPO) / "products" / "llm_analytics" / "mcp" / "tools.yaml"
@@ -288,7 +321,6 @@ def test_tool_names_valid():
             assert kebab_re.match(name), f"Tool name '{name}' is not valid kebab-case"
 
 
-# [agent_config] pass_to_pass
 def test_skill_name_gerund_kebab():
     """Skill directory name must be kebab-case with gerund form per writing-skills guide."""
     skill_dir = (

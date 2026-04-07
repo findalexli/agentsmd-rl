@@ -9,18 +9,26 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript and Markdown files exist and are non-empty
-- id: enter_key_has_special_handling
+- id: enter_key_waits_for_completion
   type: fail_to_pass
   origin: pr_diff
-  description: press handler branches on Enter key to add wait-for-completion logic
-- id: enter_key_triggers_snapshot
+  description: Pressing Enter triggers waitForCompletion to wait for navigation
+- id: enter_key_auto_snapshots
   type: fail_to_pass
   origin: pr_diff
-  description: press handler calls setIncludeSnapshot when Enter is pressed
-- id: non_enter_keys_still_press_directly
+  description: Pressing Enter calls setIncludeSnapshot for automatic page state capture
+- id: skill_md_no_separate_snapshot_step
   type: fail_to_pass
   origin: pr_diff
-  description: Non-Enter keys still call page.keyboard.press without waitForCompletion
+  description: SKILL.md core workflow does not list Snapshot as a separate numbered step
+- id: skill_md_workflow_step_count
+  type: fail_to_pass
+  origin: pr_diff
+  description: Core workflow has at most 3 steps after removing manual snapshot step
+- id: non_enter_keys_press_directly
+  type: pass_to_pass
+  origin: static
+  description: Non-Enter keys call keyboard.press directly without waitForCompletion
 - id: press_tool_still_exported
   type: pass_to_pass
   origin: static

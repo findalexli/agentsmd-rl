@@ -18,6 +18,18 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: browser_hover must not use waitForCompletion
+- id: select_option_no_wait_for_completion
+  type: fail_to_pass
+  origin: pr_diff
+  description: browser_select_option must not use waitForCompletion
+- id: mouse_move_no_wait_for_completion
+  type: fail_to_pass
+  origin: pr_diff
+  description: browser_mouse_move_xy must not use waitForCompletion
+- id: skill_md_submit_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must document the --submit flag for fill command
 - id: click_still_uses_wait_for_completion
   type: pass_to_pass
   origin: static
@@ -30,25 +42,5 @@ rubric:
 - rule: SKILL.md update is consistent with the style of existing documentation
   source:
     path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
-    lines: 1-10
+    lines: '1-10'
     commit: b6f860d846146f072f5a804017d89f2deb737b39
-- rule: browser_mouse_move_xy must not use waitForCompletion
-  reference: '# packages/playwright-core/src/tools/cli-client/skill/SKILL.md
-
-    # --submit presses Enter after filling the element
-
-    playwright-cli fill e5 "user@example.com"  --submit'
-- rule: SKILL.md must document the --submit flag for the fill command
-  source:
-    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
-    lines: 38-39
-    commit: fd1b453fdc7710c077d3389370dea395cde1570f
-  reference: '# --submit presses Enter after filling the element
-
-    playwright-cli fill e5 "user@example.com"  --submit'
-- rule: browser_select_option must not use waitForCompletion
-  reference: '# packages/playwright-core/src/tools/cli-client/skill/SKILL.md
-
-    # --submit presses Enter after filling the element
-
-    playwright-cli fill e5 "user@example.com"  --submit'

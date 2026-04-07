@@ -17,11 +17,24 @@ from pathlib import Path
 REPO = "/workspace/angular"
 
 
+def _file_content(path: str) -> str:
+    """Read a file from the repo."""
+    return (Path(REPO) / path).read_text()
+
+
+def _run_py(code: str) -> subprocess.CompletedProcess:
+    """Execute Python code in the repo directory via subprocess."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+
 def test_syntax_check():
     """Modified TypeScript files parse without syntax errors."""
     ts_files = [
@@ -30,105 +43,158 @@ def test_syntax_check():
     ]
     for f in ts_files:
         p = Path(REPO) / f
+        assert p.exists(), f"{f} must exist"
         content = p.read_text()
-        # Basic check: file is non-empty and has balanced braces
         assert len(content) > 100, f"{f} is unexpectedly short"
         assert content.count("{") == content.count("}"), f"{f} has unbalanced braces"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core code JSDoc updates
+# Fail-to-pass (pr_diff) — core source JSDoc updates
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
+
 def test_constants_onpush_default_note():
-    """OnPush JSDoc in constants.ts must note it is enabled by default."""
-    content = (Path(REPO) / "packages/core/src/change_detection/constants.ts").read_text()
-    assert "OnPush" in content, "constants.ts must define OnPush"
-    # The PR adds a note that OnPush is enabled by default.
-    # The JSDoc block above OnPush = 0 should contain language about
-    # OnPush being the default — not just a reference to `Default` enum value.
-    idx_onpush_enum = content.find("OnPush = 0")
-    assert idx_onpush_enum != -1, "constants.ts must have OnPush = 0 enum member"
-    block_before = content[max(0, idx_onpush_enum - 500):idx_onpush_enum]
-    # Check for "enabled by default" or "default" in a context about OnPush being the default,
-    # not just mentioning the `Default` enum member name
-    block_lower = block_before.lower()
-    assert "enabled by default" in block_lower or "is the default" in block_lower \
-        or ("onpush" in block_lower and "by default" in block_lower), \
-        "JSDoc above OnPush = 0 should note that OnPush is enabled by default"
+    """OnPush JSDoc in constants.ts notes it is enabled by default."""
+    r = _run_py("""
+from pathlib import Path
+
+content = Path("packages/core/src/change_detection/constants.ts").read_text()
+
+# Verify the OnPush enum member exists with value 0
+assert "OnPush = 0" in content, "OnPush must be enum member with value 0"
+
+# Extract the JSDoc comment block immediately above OnPush = 0
+idx = content.index("OnPush = 0")
+preceding = content[:idx]
+
+# Find the last /** ... */ comment block above OnPush
+close = preceding.rfind("*/")
+assert close != -1, "JSDoc comment must exist above OnPush"
+open_ = preceding.rfind("/**", 0, close)
+assert open_ != -1, "JSDoc block must be well-formed"
+jsdoc = preceding[open_:close + 2]
+
+assert "OnPush is enabled by default" in jsdoc, (
+    "JSDoc above OnPush must note it is enabled by default"
+)
+print("PASS")
+""")
+    assert r.returncode == 0, f"constants.ts validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_directives_eager_reference():
-    """directives.ts JSDoc should reference Eager (not Default) and note OnPush is default."""
-    content = (Path(REPO) / "packages/core/src/metadata/directives.ts").read_text()
-    # Find the changeDetection property doc
-    idx = content.find("changeDetection?")
-    assert idx != -1, "directives.ts must have changeDetection property"
-    block = content[max(0, idx - 800):idx + 200]
-    # The PR changes "ChangeDetectionStrategy#Default" to "ChangeDetectionStrategy#Eager"
-    assert "Eager" in block, \
-        "changeDetection JSDoc should reference ChangeDetectionStrategy#Eager (not #Default)"
-    # The PR also adds a NOTE about OnPush being enabled by default
-    block_lower = block.lower()
-    assert "enabled by default" in block_lower or "is the default" in block_lower \
-        or ("onpush" in block_lower and "by default" in block_lower), \
-        "changeDetection JSDoc should note OnPush is enabled by default"
+    """directives.ts JSDoc references Eager and notes OnPush is default."""
+    r = _run_py("""
+from pathlib import Path
+
+content = Path("packages/core/src/metadata/directives.ts").read_text()
+
+# Verify the changeDetection property exists
+assert "changeDetection?" in content, "changeDetection property must exist"
+
+# Extract the JSDoc comment block above changeDetection
+idx = content.index("changeDetection?")
+preceding = content[:idx]
+close = preceding.rfind("*/")
+assert close != -1, "JSDoc must exist above changeDetection property"
+open_ = preceding.rfind("/**", 0, close)
+assert open_ != -1, "JSDoc block must be well-formed"
+jsdoc = preceding[open_:close + 2]
+
+# Must reference Eager (renamed from Default)
+assert "Eager" in jsdoc, (
+    "changeDetection JSDoc must reference ChangeDetectionStrategy#Eager"
+)
+# Must note OnPush is enabled by default
+assert "OnPush is enabled by default" in jsdoc, (
+    "changeDetection JSDoc must note OnPush is enabled by default"
+)
+print("PASS")
+""")
+    assert r.returncode == 0, f"directives.ts validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — documentation updates
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
+
 def test_skipping_subtrees_onpush_default():
     """skipping-subtrees.md must describe OnPush as the default strategy."""
-    content = (Path(REPO) / "adev/src/content/best-practices/runtime-performance/skipping-subtrees.md").read_text()
-    # The PR updates this doc to say OnPush is the default since v22
-    assert "default" in content.lower(), \
-        "skipping-subtrees.md should mention OnPush is the default"
-    # Check that it describes OnPush as default change detection strategy
-    # Look for language like "default change detection" or "default strategy" near "OnPush"
+    content = _file_content(
+        "adev/src/content/best-practices/runtime-performance/skipping-subtrees.md"
+    )
+    assert "OnPush" in content, "must mention OnPush"
+    # First mention should describe OnPush as default
     idx = content.find("OnPush")
-    assert idx != -1, "skipping-subtrees.md must mention OnPush"
-    nearby = content[max(0, idx - 200):idx + 200].lower()
-    assert "default" in nearby, \
-        "skipping-subtrees.md should describe OnPush as the default near its first mention"
-    # The old doc had a section telling users to set OnPush manually with a code example
-    # That code example should be removed since it's now the default
-    assert "ChangeDetectionStrategy.OnPush," not in content, \
-        "skipping-subtrees.md should not show code to manually set OnPush (it's now default)"
+    nearby = content[max(0, idx - 200):idx + 300].lower()
+    assert "default" in nearby, (
+        "OnPush should be described as the default strategy near its first mention"
+    )
+    # Old code example for manually setting OnPush must be removed
+    assert "ChangeDetectionStrategy.OnPush," not in content, (
+        "manual OnPush code example should be removed (it is now the default)"
+    )
 
 
-# [pr_diff] fail_to_pass
 def test_advanced_config_onpush_default():
-    """advanced-configuration.md must describe OnPush as the default strategy."""
-    content = (Path(REPO) / "adev/src/content/guide/components/advanced-configuration.md").read_text()
-    # Find the OnPush description section
-    idx = content.find("OnPush")
-    assert idx != -1, "advanced-configuration.md must mention OnPush"
-    nearby = content[max(0, idx - 100):idx + 300].lower()
-    # The PR changes OnPush from "optional mode" to "default strategy"
-    assert "default" in nearby, \
-        "advanced-configuration.md should describe OnPush as the default strategy"
-    # The PR also changes Eager from "default strategy" to "optional mode"
+    """advanced-configuration.md describes OnPush as default, Eager as optional."""
+    content = _file_content(
+        "adev/src/content/guide/components/advanced-configuration.md"
+    )
+    # OnPush described as default
+    onpush_idx = content.find("OnPush")
+    assert onpush_idx != -1, "must mention OnPush"
+    onpush_nearby = content[max(0, onpush_idx - 100):onpush_idx + 300].lower()
+    assert "default" in onpush_nearby, (
+        "OnPush should be described as the default strategy"
+    )
+    # Eager described as optional
     eager_idx = content.find("Eager")
-    assert eager_idx != -1, \
-        "advanced-configuration.md should reference Eager (renamed from Default)"
+    assert eager_idx != -1, "must reference Eager"
     eager_nearby = content[max(0, eager_idx - 100):eager_idx + 300].lower()
-    assert "optional" in eager_nearby, \
-        "advanced-configuration.md should describe Eager as an optional mode"
+    assert "optional" in eager_nearby, (
+        "Eager should be described as an optional mode"
+    )
+
+
+def test_signals_readme_no_callout():
+    """signals tutorial README no longer has the OnPush callout."""
+    content = _file_content(
+        "adev/src/content/tutorials/signals/steps/1-creating-your-first-signal/README.md"
+    )
+    assert "About ChangeDetectionStrategy.OnPush" not in content, (
+        "OnPush callout should be removed from signals tutorial README"
+    )
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) — agent config file updates
+# Fail-to-pass (agent_config) — agent config file cleanups
 # ---------------------------------------------------------------------------
 
-# [config_edit] fail_to_pass — adev/src/context/airules.md:89
+
+def test_airules_no_onpush_instruction():
+    """airules.md no longer instructs setting OnPush in @Component."""
+    content = _file_content("adev/src/context/airules.md")
+    assert "changeDetection: ChangeDetectionStrategy.OnPush" not in content, (
+        "airules.md should not instruct setting OnPush in @Component decorator"
+    )
 
 
-# [config_edit] fail_to_pass — adev/src/context/guidelines.md:95
+def test_guidelines_no_onpush_instruction():
+    """guidelines.md no longer instructs setting OnPush in @Component."""
+    content = _file_content("adev/src/context/guidelines.md")
+    assert "changeDetection: ChangeDetectionStrategy.OnPush" not in content, (
+        "guidelines.md should not instruct setting OnPush in @Component decorator"
+    )
 
 
-# [config_edit] fail_to_pass — adev/src/context/angular-20.mdc:67
+def test_angular20_mdc_no_onpush_instruction():
+    """angular-20.mdc no longer instructs always setting OnPush."""
+    content = _file_content("adev/src/context/angular-20.mdc")
+    assert "Always set `changeDetection: ChangeDetectionStrategy.OnPush`" not in content, (
+        "angular-20.mdc should not have the 'Always set OnPush' instruction"
+    )

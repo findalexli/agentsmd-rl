@@ -12,19 +12,30 @@ checks:
 - id: namespace_variable_defined
   type: fail_to_pass
   origin: pr_diff
-  description: variables.tf defines a namespace variable with string type
+  description: variables.tf defines a namespace variable with string type and envoy-ratelimiter
+    default
 - id: enable_metrics_variable_defined
   type: fail_to_pass
   origin: pr_diff
-  description: variables.tf defines an enable_metrics variable with bool type
-- id: namespace_resource_created
+  description: variables.tf defines an enable_metrics variable with bool type and
+    false default
+- id: kubernetes_namespace_resource
   type: fail_to_pass
   origin: pr_diff
-  description: ratelimit.tf creates a kubernetes_namespace resource using var.namespace
-- id: resources_use_namespace
+  description: ratelimit.tf creates a kubernetes_namespace resource that uses var.namespace
+- id: all_k8s_resources_use_namespace
   type: fail_to_pass
   origin: pr_diff
-  description: At least 6 Kubernetes resources set namespace = var.namespace
+  description: All Kubernetes resources (excluding namespace itself) set namespace
+    = var.namespace
+- id: use_statsd_is_conditional
+  type: fail_to_pass
+  origin: pr_diff
+  description: USE_STATSD env var is conditional on enable_metrics, not hardcoded
+- id: statsd_sidecar_is_conditional
+  type: fail_to_pass
+  origin: pr_diff
+  description: StatsD exporter sidecar uses dynamic block gated on enable_metrics
 rubric:
 - rule: README variable documentation is consistent with the style of the existing
     table
@@ -52,56 +63,17 @@ rubric:
   source:
     path: examples/terraform/envoy-ratelimiter/README.md
     lines: 168-169
-    commit: 46b27eee882a52cb400a549b7c959078a42aa509
-  reference: 'Example Beam Python Pipelines using it:
-
-    Example Beam Java Pipelines using it:
-
-    *   [Simple DoFn RateLimiter](https://github.com/apache/beam/blob/master/examples/java/src/main/java/org/apache/beam/examples/RateLimiterSimple.java)
-
-
-    namespace             = "envoy-ratelimiter"         # Kubernetes namespace for
-    deployment
-
-    enable_metrics        = false                       # Deploy statsd-exporter sidecar
-
-    |namespace              |Kubernetes namespace to deploy resources into        |envoy-ratelimiter'
+    commit: bab2374552da7a1f7fbe783408c3b4159e3f0391
 - rule: README.md documents the enable_metrics variable
   source:
     path: examples/terraform/envoy-ratelimiter/README.md
     lines: 82-83
-    commit: 46b27eee882a52cb400a549b7c959078a42aa509
-  reference: 'Example Beam Python Pipelines using it:
-
-    Example Beam Java Pipelines using it:
-
-    *   [Simple DoFn RateLimiter](https://github.com/apache/beam/blob/master/examples/java/src/main/java/org/apache/beam/examples/RateLimiterSimple.java)
-
-
-    namespace             = "envoy-ratelimiter"         # Kubernetes namespace for
-    deployment
-
-    enable_metrics        = false                       # Deploy statsd-exporter sidecar
-
-    |namespace              |Kubernetes namespace to deploy resources into        |envoy-ratelimiter'
+    commit: bab2374552da7a1f7fbe783408c3b4159e3f0391
 - rule: README.md references Java pipeline examples alongside Python
   source:
     path: examples/terraform/envoy-ratelimiter/README.md
     lines: 31-33
-    commit: 46b27eee882a52cb400a549b7c959078a42aa509
-  reference: 'Example Beam Python Pipelines using it:
-
-    Example Beam Java Pipelines using it:
-
-    *   [Simple DoFn RateLimiter](https://github.com/apache/beam/blob/master/examples/java/src/main/java/org/apache/beam/examples/RateLimiterSimple.java)
-
-
-    namespace             = "envoy-ratelimiter"         # Kubernetes namespace for
-    deployment
-
-    enable_metrics        = false                       # Deploy statsd-exporter sidecar
-
-    |namespace              |Kubernetes namespace to deploy resources into        |envoy-ratelimiter'
+    commit: bab2374552da7a1f7fbe783408c3b4159e3f0391
 - rule: statsd-exporter sidecar uses dynamic block gated on enable_metrics
   reference: '# examples/terraform/envoy-ratelimiter/README.md
 

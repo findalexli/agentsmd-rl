@@ -7,178 +7,265 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import ast
-import re
+import json
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/posthog"
 
-# The 8 dynamic property patterns that the PR documents
-DYNAMIC_PERSON_PATTERNS = [
-    "$survey_dismissed/",
-    "$survey_responded/",
-    "$feature_enrollment/",
-    "$feature_interaction/",
-    "$product_tour_dismissed/",
-    "$product_tour_shown/",
-    "$product_tour_completed/",
-]
-DYNAMIC_EVENT_PATTERNS = [
-    "$feature/",
-]
-ALL_DYNAMIC_PATTERNS = DYNAMIC_PERSON_PATTERNS + DYNAMIC_EVENT_PATTERNS
+
+def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute a Python snippet in the repo directory."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Modified Python files must parse without errors."""
-    files = [
+    for f in [
         "ee/hogai/chat_agent/taxonomy/prompts.py",
         "ee/hogai/tools/read_taxonomy/core.py",
         "posthog/hogql_queries/ai/event_taxonomy_query_runner.py",
-    ]
-    for f in files:
-        src = (Path(REPO) / f).read_text()
-        compile(src, f, "exec")
+    ]:
+        r = _run_python(f"import ast; ast.parse(open('{f}').read()); print('OK')")
+        assert r.returncode == 0, f"{f} syntax error: {r.stderr}"
+        assert "OK" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_prompt_documents_dynamic_properties():
-    """PROPERTY_TYPES_PROMPT must contain a dynamic_person_properties section
+    """PROPERTY_TYPES_PROMPT must contain a <dynamic_person_properties> section
     documenting all 8 dynamic property patterns."""
-    src = (Path(REPO) / "ee/hogai/chat_agent/taxonomy/prompts.py").read_text()
+    r = _run_python(r"""
+import ast, json, sys
 
-    # Must have the section tags
-    assert "<dynamic_person_properties>" in src, \
-        "prompts.py should contain <dynamic_person_properties> section"
-    assert "</dynamic_person_properties>" in src, \
-        "prompts.py should contain closing </dynamic_person_properties> tag"
+def extract_str(node):
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+        if node.func.attr == 'strip' and isinstance(node.func.value, ast.Constant):
+            return node.func.value.value.strip()
+    return None
 
-    # Must document all dynamic property patterns
-    for pattern in ALL_DYNAMIC_PATTERNS:
-        assert pattern in src, \
-            f"prompts.py should document the dynamic property pattern '{pattern}'"
+with open('ee/hogai/chat_agent/taxonomy/prompts.py') as f:
+    tree = ast.parse(f.read())
+
+for node in ast.walk(tree):
+    if isinstance(node, ast.Assign):
+        for t in node.targets:
+            if isinstance(t, ast.Name) and t.id == 'PROPERTY_TYPES_PROMPT':
+                val = extract_str(node.value)
+                print(json.dumps({"found": True, "value": val}))
+                sys.exit(0)
+
+print(json.dumps({"found": False, "value": None}))
+""")
+    assert r.returncode == 0, f"AST extraction failed: {r.stderr}"
+    data = json.loads(r.stdout.strip().split("\n")[-1])
+    assert data["found"], "PROPERTY_TYPES_PROMPT not found in prompts.py"
+
+    value = data["value"]
+    if value is None:
+        # Fallback if string is built dynamically (f-string, concat, etc.)
+        value = (Path(REPO) / "ee/hogai/chat_agent/taxonomy/prompts.py").read_text()
+
+    assert "<dynamic_person_properties>" in value, "Missing <dynamic_person_properties> section"
+    assert "</dynamic_person_properties>" in value, "Missing closing tag"
+    for p in [
+        "$survey_dismissed/", "$survey_responded/",
+        "$feature_enrollment/", "$feature/",
+        "$feature_interaction/",
+        "$product_tour_dismissed/", "$product_tour_shown/", "$product_tour_completed/",
+    ]:
+        assert p in value, f"PROPERTY_TYPES_PROMPT missing pattern '{p}'"
 
 
-# [pr_diff] fail_to_pass
 def test_taxonomy_tool_person_hint():
-    """read_taxonomy core.py must define a person properties hint constant
-    and append it when querying person entity properties."""
-    src = (Path(REPO) / "ee/hogai/tools/read_taxonomy/core.py").read_text()
+    """core.py must define DYNAMIC_PERSON_PROPERTIES_HINT with person-specific
+    patterns and dispatch it conditionally for person entity queries."""
+    r = _run_python(r"""
+import ast, json
 
-    # Must have the hint constant with key patterns
-    assert "DYNAMIC_PERSON_PROPERTIES_HINT" in src, \
-        "core.py should define DYNAMIC_PERSON_PROPERTIES_HINT"
-    for pattern in DYNAMIC_PERSON_PATTERNS:
-        assert pattern in src, \
-            f"core.py should include '{pattern}' in person hint"
+def extract_str(node):
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+        if node.func.attr == 'strip' and isinstance(node.func.value, ast.Constant):
+            return node.func.value.value.strip()
+    return None
 
-    # Must conditionally append hint for person entity queries
-    assert 'entity == "person"' in src or "entity == 'person'" in src, \
-        "core.py should check entity == 'person' to conditionally append hint"
+with open('ee/hogai/tools/read_taxonomy/core.py') as f:
+    source = f.read()
+    tree = ast.parse(source)
+
+hint_value = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.Assign):
+        for t in node.targets:
+            if isinstance(t, ast.Name) and t.id == 'DYNAMIC_PERSON_PROPERTIES_HINT':
+                hint_value = extract_str(node.value)
+                break
+
+func_source = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == 'execute_taxonomy_query':
+        func_source = ast.get_source_segment(source, node)
+        break
+
+print(json.dumps({"hint_value": hint_value, "func_source": func_source}))
+""")
+    assert r.returncode == 0, f"Analysis failed: {r.stderr}"
+    data = json.loads(r.stdout.strip().split("\n")[-1])
+
+    hint = data["hint_value"]
+    assert hint is not None, "DYNAMIC_PERSON_PROPERTIES_HINT not defined in core.py"
+    for p in ["$survey_dismissed", "$feature_enrollment", "$product_tour_dismissed"]:
+        assert p in hint, f"Person hint missing '{p}'"
+
+    func = data["func_source"]
+    assert func is not None, "execute_taxonomy_query function not found"
+    assert "DYNAMIC_PERSON_PROPERTIES_HINT" in func, \
+        "execute_taxonomy_query must reference DYNAMIC_PERSON_PROPERTIES_HINT"
+    assert 'entity == "person"' in func or "entity == 'person'" in func, \
+        "execute_taxonomy_query must check entity == 'person' for conditional hint"
 
 
-# [pr_diff] fail_to_pass
+def test_taxonomy_tool_event_hint():
+    """core.py must define DYNAMIC_EVENT_PROPERTIES_HINT with the $feature/
+    pattern and dispatch it for event/action property queries."""
+    r = _run_python(r"""
+import ast, json
 
-    # Must have the event hint constant
-    assert "DYNAMIC_EVENT_PROPERTIES_HINT" in src, \
-        "core.py should define DYNAMIC_EVENT_PROPERTIES_HINT"
-    assert "$feature/" in src, \
-        "core.py event hint should document $feature/{flag_key} pattern"
+def extract_str(node):
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+        if node.func.attr == 'strip' and isinstance(node.func.value, ast.Constant):
+            return node.func.value.value.strip()
+    return None
 
-    # The function should append event hint to event property results
-    # Check that ReadEventProperties case includes the hint
-    assert re.search(
-        r"ReadEventProperties.*DYNAMIC_EVENT_PROPERTIES_HINT",
-        src, re.DOTALL
-    ), "core.py should append DYNAMIC_EVENT_PROPERTIES_HINT for event property queries"
+with open('ee/hogai/tools/read_taxonomy/core.py') as f:
+    source = f.read()
+    tree = ast.parse(source)
+
+hint_value = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.Assign):
+        for t in node.targets:
+            if isinstance(t, ast.Name) and t.id == 'DYNAMIC_EVENT_PROPERTIES_HINT':
+                hint_value = extract_str(node.value)
+                break
+
+func_source = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == 'execute_taxonomy_query':
+        func_source = ast.get_source_segment(source, node)
+        break
+
+print(json.dumps({"hint_value": hint_value, "func_source": func_source}))
+""")
+    assert r.returncode == 0, f"Analysis failed: {r.stderr}"
+    data = json.loads(r.stdout.strip().split("\n")[-1])
+
+    hint = data["hint_value"]
+    assert hint is not None, "DYNAMIC_EVENT_PROPERTIES_HINT not defined in core.py"
+    assert "$feature/" in hint, "Event hint missing '$feature/' pattern"
+
+    func = data["func_source"]
+    assert func is not None, "execute_taxonomy_query function not found"
+    assert "DYNAMIC_EVENT_PROPERTIES_HINT" in func, \
+        "execute_taxonomy_query must reference DYNAMIC_EVENT_PROPERTIES_HINT"
 
 
-# [pr_diff] fail_to_pass
+def test_omit_filter_expanded():
+    """The event taxonomy omit filter must include new dynamic property patterns."""
+    r = _run_python(r"""
+import ast, json
 
-    # These patterns must be in the omit list
-    required_patterns = [
-        "feature_enrollment",
-        "feature_interaction",
-        "product_tour",
-    ]
-    for pattern in required_patterns:
-        assert pattern in src, \
-            f"Omit filter should include '{pattern}' to exclude dynamic properties"
+with open('posthog/hogql_queries/ai/event_taxonomy_query_runner.py') as f:
+    source = f.read()
+    tree = ast.parse(source)
 
-    # The old exact-match patterns should be broadened to prefix matches
-    # survey_dismissed -> survey_dismiss (prefix to catch both survey_dismissed/id and survey_dismissed)
-    assert "survey_dismiss" in src, \
-        "Omit filter should match survey dismiss patterns"
+omit_strings = []
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == '_get_omit_filter':
+        for child in ast.walk(node):
+            if isinstance(child, ast.List):
+                for elt in child.elts:
+                    try:
+                        omit_strings.append(ast.literal_eval(elt))
+                    except Exception:
+                        pass
+        break
+
+print(json.dumps({"omit_strings": omit_strings}))
+""")
+    assert r.returncode == 0, f"Analysis failed: {r.stderr}"
+    data = json.loads(r.stdout.strip().split("\n")[-1])
+    assert len(data["omit_strings"]) > 0, "omit_list empty or _get_omit_filter not found"
+
+    omit_joined = " ".join(data["omit_strings"])
+    assert "feature_enrollment" in omit_joined, "Omit filter missing feature_enrollment"
+    assert "feature_interaction" in omit_joined, "Omit filter missing feature_interaction"
+    assert "product_tour" in omit_joined, "Omit filter missing product_tour"
+    assert "survey_dismiss" in omit_joined, "Omit filter should use survey_dismiss prefix"
 
 
 # ---------------------------------------------------------------------------
-# Config-edit (agent_config) — SKILL.md and reference doc updates
+# Config-edit (agent_config) — SKILL.md and reference doc
 # ---------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass
-
-    # Must link to the dynamic properties reference
-    assert "dynamic" in content.lower() and "propert" in content.lower(), \
-        "SKILL.md should reference dynamic properties documentation"
-
-    # Must mention key concepts so the AI agent knows these exist
+def test_skill_md_references_dynamic_properties():
+    """SKILL.md must reference the dynamic properties documentation."""
+    content = (Path(REPO) / "products/posthog_ai/skills/query-examples/SKILL.md").read_text()
     assert "taxonomy-dynamic-properties" in content or "dynamic-properties" in content, \
         "SKILL.md should link to the dynamic properties reference file"
 
 
-# [agent_config] fail_to_pass
 def test_dynamic_properties_reference_doc():
-    """A reference doc must exist documenting all dynamic property patterns
-    with their types and descriptions."""
-    # Find the reference doc — could be .md or .md.j2
+    """A reference doc must exist documenting all dynamic property patterns."""
     ref_dir = Path(REPO) / "products/posthog_ai/skills/query-examples/references"
     candidates = list(ref_dir.glob("*dynamic*propert*")) + list(ref_dir.glob("*taxonomy*dynamic*"))
-    assert len(candidates) > 0, \
-        "A reference doc for dynamic properties should exist in the query-examples/references/ directory"
+    assert len(candidates) > 0, "Dynamic properties reference doc not found"
 
     content = candidates[0].read_text()
-
-    # Must document person property patterns
     for pattern in ["$survey_dismissed", "$feature_enrollment", "$product_tour_dismissed"]:
-        assert pattern in content, \
-            f"Dynamic properties reference doc should document '{pattern}'"
-
-    # Must document event property patterns
-    assert "$feature/" in content, \
-        "Dynamic properties reference doc should document '$feature/{flag_key}'"
-
-    # Must distinguish person vs event properties
-    assert "person" in content.lower(), \
-        "Reference doc should mention person properties"
-    assert "event" in content.lower(), \
-        "Reference doc should mention event properties"
+        assert pattern in content, f"Reference doc missing '{pattern}'"
+    assert "$feature/" in content, "Reference doc missing '$feature/{flag_key}'"
+    assert "person" in content.lower(), "Reference doc should mention person properties"
+    assert "event" in content.lower(), "Reference doc should mention event properties"
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_not_stub():
-    """execute_taxonomy_query must have real match/case logic, not just pass/return."""
-    src = (Path(REPO) / "ee/hogai/tools/read_taxonomy/core.py").read_text()
-    tree = ast.parse(src)
+    """execute_taxonomy_query must have real match/case logic."""
+    r = _run_python(r"""
+import ast, json
 
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "execute_taxonomy_query":
-            # Should have meaningful body (match statement with cases)
-            body_types = [type(s).__name__ for s in node.body]
-            assert len(node.body) >= 2, \
-                "execute_taxonomy_query should have real logic, not just a stub"
-            break
-    else:
-        raise AssertionError("execute_taxonomy_query function not found in core.py")
+with open('ee/hogai/tools/read_taxonomy/core.py') as f:
+    tree = ast.parse(f.read())
+
+result = {"found": False, "body_len": 0}
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == 'execute_taxonomy_query':
+        result = {"found": True, "body_len": len(node.body)}
+        break
+
+print(json.dumps(result))
+""")
+    assert r.returncode == 0, f"Analysis failed: {r.stderr}"
+    data = json.loads(r.stdout.strip().split("\n")[-1])
+    assert data["found"], "execute_taxonomy_query not found"
+    assert data["body_len"] >= 2, "execute_taxonomy_query should have real logic"

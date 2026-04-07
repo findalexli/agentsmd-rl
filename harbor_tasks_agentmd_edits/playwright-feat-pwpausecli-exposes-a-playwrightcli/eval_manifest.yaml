@@ -3,7 +3,6 @@ source:
   repo: microsoft/playwright
   pr: 39408
   base_commit: 982b9b279557229b12d049ebd3063da408ba5253
-  merge_commit: d06dbc4b58ee4e8a1553e365145b4ffa353a4e76
 checks:
 - id: modified_files_exist
   type: pass_to_pass
@@ -12,79 +11,54 @@ checks:
 - id: decorate_server_exported
   type: fail_to_pass
   origin: pr_diff
-  description: decorateServer is exported from network.ts so daemon.ts can import
-    it
-- id: finish_callbacks_supports_multiple
+  description: decorateServer is exported from network.ts so daemon.ts can import it
+- id: session_config_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: sessionConfigFromArgs is exported from cli/client/program.ts
+- id: finish_callbacks_is_set
   type: fail_to_pass
   origin: pr_diff
   description: _onDidFinishTestFunctionCallbacks uses a Set to support multiple callbacks
-- id: pwpause_cli_sets_timeouts
+- id: pwpause_cli_overrides
   type: fail_to_pass
   origin: pr_diff
   description: PWPAUSE=cli sets timeout=0 and actionTimeout=5000 in program.ts
+- id: run_daemon_for_context_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: runDaemonForContext is defined and exported from browserBackend.ts
+- id: daemon_accepts_no_shutdown
+  type: fail_to_pass
+  origin: pr_diff
+  description: startMcpDaemonServer accepts noShutdown parameter to keep daemon alive
+- id: skill_md_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md allowed-tools includes npx/npm and links to playwright-tests
+    reference
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: '1-4'
+    commit: 982b9b279557229b12d049ebd3063da408ba5253
+- id: playwright_tests_reference_created
+  type: fail_to_pass
+  origin: agent_config
+  description: playwright-tests.md reference doc documents PWPAUSE=cli debugging workflow
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: '274-277'
+    commit: 982b9b279557229b12d049ebd3063da408ba5253
 rubric:
 - rule: The new playwright-tests.md reference should be consistent in tone and format
     with existing reference docs (request-mocking.md, running-code.md, session-management.md)
   source:
     path: packages/playwright/src/skill/references/
-    lines: 1-10
+    lines: '1-10'
     commit: 982b9b279557229b12d049ebd3063da408ba5253
 - rule: The SKILL.md description should be concise and accurately reflect the expanded
     scope of the tool
   source:
     path: packages/playwright/src/skill/SKILL.md
-    lines: 1-4
+    lines: '1-4'
     commit: 982b9b279557229b12d049ebd3063da408ba5253
-- rule: startMcpDaemonServer accepts noShutdown parameter to keep daemon alive
-  reference: '# packages/playwright/src/skill/SKILL.md
-
-    description: Automate browser interactions, test web pages and work with Playwright
-    tests.
-
-    allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)
-
-    * **Running and Debugging Playwright tests** [references/playwright-tests.md](references/playwright-tests.md)'
-- rule: SKILL.md allowed-tools includes Bash(npx:*) and Bash(npm:*) for test commands
-  source:
-    path: packages/playwright/src/skill/SKILL.md
-    lines: '4'
-    commit: d06dbc4b58ee4e8a1553e365145b4ffa353a4e76
-  reference: 'description: Automate browser interactions, test web pages and work
-    with Playwright tests.
-
-    allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)
-
-    * **Running and Debugging Playwright tests** [references/playwright-tests.md](references/playwright-tests.md)'
-- rule: references/playwright-tests.md documents PWPAUSE=cli debugging workflow
-  source:
-    path: packages/playwright/src/skill/references/playwright-tests.md
-    lines: 1-34
-    commit: d06dbc4b58ee4e8a1553e365145b4ffa353a4e76
-  reference: '# packages/playwright/src/skill/SKILL.md
-
-    description: Automate browser interactions, test web pages and work with Playwright
-    tests.
-
-    allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)
-
-    * **Running and Debugging Playwright tests** [references/playwright-tests.md](references/playwright-tests.md)'
-- rule: SKILL.md specific-tasks section links to the playwright-tests reference
-  source:
-    path: packages/playwright/src/skill/SKILL.md
-    lines: '277'
-    commit: d06dbc4b58ee4e8a1553e365145b4ffa353a4e76
-  reference: 'description: Automate browser interactions, test web pages and work
-    with Playwright tests.
-
-    allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)
-
-    * **Running and Debugging Playwright tests** [references/playwright-tests.md](references/playwright-tests.md)'
-- rule: runDaemonForContext function is exported from browserBackend.ts
-  reference: '# packages/playwright/src/skill/SKILL.md
-
-    description: Automate browser interactions, test web pages and work with Playwright
-    tests.
-
-    allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)
-
-    * **Running and Debugging Playwright tests** [references/playwright-tests.md](references/playwright-tests.md)'

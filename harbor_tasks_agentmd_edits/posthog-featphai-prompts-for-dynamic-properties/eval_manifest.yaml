@@ -3,32 +3,49 @@ source:
   repo: PostHog/posthog
   pr: 52913
   base_commit: 14b7a8edebb1b574414ac9866a417fbe7c8170c0
-  merge_commit: cac99ad21d1846b0b3fa496f97ff68f6dc8394f7
 checks:
-- id: syntax_check
+- id: test_syntax_check
   type: pass_to_pass
   origin: static
   description: Modified Python files parse without errors
-- id: prompt_documents_dynamic_properties
+- id: test_prompt_documents_dynamic_properties
   type: fail_to_pass
   origin: pr_diff
-  description: PROPERTY_TYPES_PROMPT contains dynamic_person_properties section with
-    all 8 patterns
-- id: taxonomy_tool_person_hint
+  description: PROPERTY_TYPES_PROMPT contains <dynamic_person_properties> section with
+    all 8 dynamic property patterns
+- id: test_taxonomy_tool_person_hint
   type: fail_to_pass
   origin: pr_diff
-  description: read_taxonomy core.py defines DYNAMIC_PERSON_PROPERTIES_HINT and appends
-    it for person entities
-- id: dynamic_properties_reference_doc
+  description: core.py defines DYNAMIC_PERSON_PROPERTIES_HINT with person patterns
+    and dispatches it for person entity queries
+- id: test_taxonomy_tool_event_hint
+  type: fail_to_pass
+  origin: pr_diff
+  description: core.py defines DYNAMIC_EVENT_PROPERTIES_HINT with $feature/ pattern
+    and dispatches it for event property queries
+- id: test_omit_filter_expanded
+  type: fail_to_pass
+  origin: pr_diff
+  description: event_taxonomy_query_runner omit filter includes feature_enrollment,
+    feature_interaction, product_tour patterns
+- id: test_skill_md_references_dynamic_properties
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md references the dynamic properties documentation
+  source:
+    path: products/posthog_ai/skills/query-examples/SKILL.md
+    lines: "24-29"
+    commit: 14b7a8edebb1b574414ac9866a417fbe7c8170c0
+- id: test_dynamic_properties_reference_doc
   type: fail_to_pass
   origin: agent_config
   description: Reference doc exists documenting all dynamic property patterns with
     types
   source:
-    path: products/posthog_ai/skills/query-examples/references/taxonomy-dynamic-properties.md
-    lines: 1-78
-    commit: cac99ad21d1846b0b3fa496f97ff68f6dc8394f7
-- id: not_stub
+    path: products/posthog_ai/skills/query-examples/SKILL.md
+    lines: "24-29"
+    commit: 14b7a8edebb1b574414ac9866a417fbe7c8170c0
+- id: test_not_stub
   type: pass_to_pass
   origin: static
   description: execute_taxonomy_query has real match/case logic
@@ -37,20 +54,11 @@ rubric:
     SKILL.md references
   source:
     path: products/posthog_ai/skills/query-examples/SKILL.md
-    lines: 1-30
+    lines: "1-30"
     commit: 14b7a8edebb1b574414ac9866a417fbe7c8170c0
 - rule: Hint text appended to tool results should be concise and actionable for an
     AI agent
   source:
     path: products/posthog_ai/skills/query-examples/SKILL.md
-    lines: 1-5
+    lines: "1-5"
     commit: 14b7a8edebb1b574414ac9866a417fbe7c8170c0
-- rule: event_taxonomy_query_runner omit filter excludes feature_enrollment, feature_interaction,
-    product_tour
-- rule: SKILL.md references the dynamic properties documentation
-  source:
-    path: products/posthog_ai/skills/query-examples/SKILL.md
-    lines: '30'
-    commit: cac99ad21d1846b0b3fa496f97ff68f6dc8394f7
-- rule: read_taxonomy core.py defines DYNAMIC_EVENT_PROPERTIES_HINT and appends it
-    for event properties

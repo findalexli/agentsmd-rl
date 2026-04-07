@@ -9,6 +9,10 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified files must parse without errors
+- id: not_stub_create_and_run
+  type: pass_to_pass
+  origin: static
+  description: create_and_run() has real logic, not just pass/return
 - id: create_and_run_accepts_sandbox_environment_id
   type: fail_to_pass
   origin: pr_diff
@@ -25,10 +29,14 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: sandbox_environment_id is stored in extra_state for the task run
-- id: not_stub_create_and_run
-  type: pass_to_pass
-  origin: static
-  description: create_and_run() has real logic, not just pass/return
+- id: docs_parameter_table_includes_sandbox_env_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: sandboxed-agents.md parameters table includes sandbox_environment_id
+- id: docs_has_sandbox_env_usage_example
+  type: fail_to_pass
+  origin: pr_diff
+  description: sandboxed-agents.md has a code example showing sandbox_environment_id with create_and_run
 rubric:
 - rule: Config update is consistent with the style of existing documentation in sandboxed-agents.md
   source:
@@ -41,33 +49,3 @@ rubric:
     path: AGENTS.md
     lines: '1'
     commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
-- rule: sandboxed-agents.md parameters table includes sandbox_environment_id
-  source:
-    path: docs/published/handbook/engineering/ai/sandboxed-agents.md
-    lines: '82'
-    commit: 3cce0ef6d910d304d205b9b4654952b3fdc0678f
-  reference: '| Parameter                | Required | Description                                                                |
-
-    | ------------------------ | -------- | --------------------------------------------------------------------------
-    |
-
-    | `team`                   | Yes      | The team this task belongs to                                              |
-
-    | `title`                  | Yes      | Human-readable task title                                                  |
-
-    | `description`            | Yes'
-- rule: sandboxed-agents.md has usage example for sandbox_environment_id
-  source:
-    path: docs/published/handbook/engineering/ai/sandboxed-agents.md
-    lines: 192-227
-    commit: 3cce0ef6d910d304d205b9b4654952b3fdc0678f
-  reference: '| Parameter                | Required | Description                                                                |
-
-    | ------------------------ | -------- | --------------------------------------------------------------------------
-    |
-
-    | `team`                   | Yes      | The team this task belongs to                                              |
-
-    | `title`                  | Yes      | Human-readable task title                                                  |
-
-    | `description`            | Yes'
