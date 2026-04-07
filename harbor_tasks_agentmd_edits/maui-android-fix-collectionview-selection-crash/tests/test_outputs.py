@@ -70,9 +70,9 @@ def test_header_footer_guard_in_onbindviewholder():
     )
 
 
-
-    If the guard only skips _currentViewHolders.Add but still subscribes the
-    click handler, the crash would still occur via SelectableClicked → GetItem.
+def test_guard_before_click_handler():
+    """If the guard only skips _currentViewHolders.Add but still subscribes the
+    click handler, the crash would still occur via SelectableClicked -> GetItem.
     The guard must early-return before the Clicked += line.
     """
     content = ADAPTER_PATH.read_text()
@@ -105,8 +105,8 @@ def test_header_footer_guard_in_onbindviewholder():
     )
 
 
-
-    Even without the click handler, adding headers to _currentViewHolders
+def test_guard_before_viewholders_add():
+    """Even without the click handler, adding headers to _currentViewHolders
     causes MarkPlatformSelection to call GetItem on header positions.
     The guard must return before _currentViewHolders.Add as well.
     """
@@ -139,8 +139,8 @@ def test_header_footer_guard_in_onbindviewholder():
 # Fail-to-pass (config_edit) — copilot-instructions.md update tests
 # ---------------------------------------------------------------------------
 
-
-    PublicAPI.Unshipped.txt files require #nullable enable on the first line.
+def test_copilot_nullable_enable_documented():
+    """PublicAPI.Unshipped.txt files require #nullable enable on the first line.
     If it gets moved (e.g., by sorting), the Roslyn analyzer emits RS0017 errors.
     The instructions must document this critical requirement.
     """
@@ -159,8 +159,8 @@ def test_header_footer_guard_in_onbindviewholder():
     )
 
 
-
-    BOM bytes (0xEF 0xBB 0xBF) sort after ASCII under LC_ALL=C, which
+def test_copilot_bom_warning():
+    """BOM bytes (0xEF 0xBB 0xBF) sort after ASCII under LC_ALL=C, which
     pushes #nullable enable to the bottom. The instructions must warn about this.
     """
     content = COPILOT_PATH.read_text()
@@ -175,8 +175,8 @@ def test_header_footer_guard_in_onbindviewholder():
     )
 
 
-
-    The script should handle merge conflict resolution for PublicAPI.Unshipped.txt
+def test_copilot_merge_conflict_script():
+    """The script should handle merge conflict resolution for PublicAPI.Unshipped.txt
     files while preserving the #nullable enable header line.
     """
     content = COPILOT_PATH.read_text()

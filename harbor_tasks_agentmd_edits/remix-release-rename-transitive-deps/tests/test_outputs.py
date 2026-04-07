@@ -99,13 +99,45 @@ def test_get_transitive_dependents_exists():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) — config/docs update tests
+# Fail-to-pass (pr_diff) — config/docs update tests
 # ---------------------------------------------------------------------------
 
-# [config_edit] fail_to_pass
+# [pr_diff] fail_to_pass
+def test_agents_md_references_release_pr():
+    """AGENTS.md must reference the release-pr workflow, not changes-version-pr."""
+    agents = Path(REPO) / "AGENTS.md"
+    content = agents.read_text()
+    assert "release-pr" in content, \
+        "AGENTS.md should reference the release-pr workflow"
+    assert "changes-version-pr" not in content, \
+        "AGENTS.md should not reference the old changes-version-pr workflow"
 
 
-# [config_edit] fail_to_pass
+# [pr_diff] fail_to_pass
+def test_agents_md_uses_release_naming():
+    """AGENTS.md must use 'Release' PR naming, not 'Version Packages'."""
+    agents = Path(REPO) / "AGENTS.md"
+    content = agents.read_text()
+    # The automated releases bullet should say "Release" PR
+    assert '"Release" PR' in content or "'Release' PR" in content or \
+           re.search(r'opens/updates a "Release" PR', content), \
+        "AGENTS.md should describe the automated PR as 'Release'"
+    # The preview script section should reference release-pr.ts
+    assert "release-pr.ts" in content, \
+        "AGENTS.md should reference release-pr.ts for the preview script"
+
+
+# [pr_diff] fail_to_pass
+def test_contributing_md_uses_release_naming():
+    """CONTRIBUTING.md must use 'Release' PR naming throughout."""
+    contributing = Path(REPO) / "CONTRIBUTING.md"
+    content = contributing.read_text()
+    assert '"Release" PR' in content, \
+        "CONTRIBUTING.md should reference 'Release' PR"
+    assert "release-pr" in content, \
+        "CONTRIBUTING.md should reference the release-pr workflow"
+    assert "changes-version-pr" not in content, \
+        "CONTRIBUTING.md should not reference the old changes-version-pr workflow"
 
 
 # ---------------------------------------------------------------------------
@@ -114,22 +146,18 @@ def test_get_transitive_dependents_exists():
 
 # [static] pass_to_pass
 def test_workflow_references_consistent():
-    """Workflow YAML and scripts must reference consistent naming."""
-    workflow = Path(REPO) / ".github" / "workflows" / "release-pr.yaml"
-    if workflow.exists():
-        content = workflow.read_text()
-        assert "release-pr" in content or "Release" in content, \
-            "Workflow file must use updated naming"
+    """Workflow naming is internally consistent (either all old or all new naming)."""
+    # The workflow file and main script should exist (regardless of name)
+    new_workflow = Path(REPO) / ".github" / "workflows" / "release-pr.yaml"
+    old_workflow = Path(REPO) / ".github" / "workflows" / "changes-version-pr.yaml"
+    has_new = new_workflow.exists()
+    has_old = old_workflow.exists()
+    assert has_new or has_old, "A workflow file must exist"
 
-    # release-pr.ts must import from utils/release-pr.ts
-    script = Path(REPO) / "scripts" / "release-pr.ts"
-    if script.exists():
-        content = script.read_text()
-        assert "release-pr" in content, \
-            "release-pr.ts must import from ./utils/release-pr"
+    # If new workflow exists, scripts must also use new naming
+    if has_new:
+        content = new_workflow.read_text()
+        assert "release-pr" in content, "New workflow must reference release-pr"
 
-    # publish.ts must reference "Release" PR
-    publish = Path(REPO) / "scripts" / "publish.ts"
-    content = publish.read_text()
-    assert "Version Packages" not in content, \
-        "publish.ts must not reference old 'Version Packages' naming"
+        script = Path(REPO) / "scripts" / "release-pr.ts"
+        assert script.exists(), "release-pr.ts must exist when release-pr.yaml exists"

@@ -31,8 +31,8 @@ def test_syntax_check():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-
-    Buffer.from() causes RenderResult.isDynamic to return true (response is not
+def test_data_response_no_buffer_from():
+    """Buffer.from() causes RenderResult.isDynamic to return true (response is not
     a string), which makes sendRenderResult skip Content-Length and ETag headers.
     """
     src = HANDLER.read_text()
@@ -44,8 +44,8 @@ def test_syntax_check():
 
 
 # [pr_diff] fail_to_pass
-
-    Same root cause: Buffer.from(previousCacheEntry.value.html) produces a
+def test_isr_fallback_no_buffer_from():
+    """Same root cause: Buffer.from(previousCacheEntry.value.html) produces a
     non-string, making the response appear dynamic.
     """
     src = HANDLER.read_text()
@@ -59,9 +59,9 @@ def test_syntax_check():
 # Config-edit (config_edit) — AGENTS.md documentation fixes
 # ---------------------------------------------------------------------------
 
-# [config_edit] fail_to_pass — AGENTS.md:151-157 @ 962e5b166cea3fdb6589837a8fd3ea62031be17d
-
-    The -- is required to forward args through pnpm to the underlying script.
+# [config_edit] fail_to_pass -- AGENTS.md:151-157 @ 962e5b166cea3fdb6589837a8fd3ea62031be17d
+def test_agents_md_pnpm_new_test_separator():
+    """The -- is required to forward args through pnpm to the underlying script.
     Without it, pnpm swallows the --args flag.
     """
     content = (Path(REPO) / "AGENTS.md").read_text()
@@ -69,9 +69,9 @@ def test_syntax_check():
         "AGENTS.md should use 'pnpm new-test -- --args' to forward args correctly"
 
 
-# [config_edit] fail_to_pass — AGENTS.md:148-157,403 @ 962e5b166cea3fdb6589837a8fd3ea62031be17d
-
-    Base commit has 3 occurrences of 'pnpm new-test --args' (missing --).
+# [config_edit] fail_to_pass -- AGENTS.md:148-157,403 @ 962e5b166cea3fdb6589837a8fd3ea62031be17d
+def test_agents_md_all_pnpm_new_test_fixed():
+    """Base commit has 3 occurrences of 'pnpm new-test --args' (missing --).
     All must be fixed to 'pnpm new-test -- --args'.
     """
     content = (Path(REPO) / "AGENTS.md").read_text()

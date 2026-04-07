@@ -8,11 +8,24 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/posthog"
 MCP = f"{REPO}/services/mcp"
+
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.cjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -33,60 +46,124 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — schema normalization
+# Fail-to-pass (behavioral) — schema normalization
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
+# [agent_config] fail_to_pass
 def test_schema_feature_names_use_underscores():
     """All feature fields in schema JSON files must use underscores, not hyphens."""
-    hyphenated_features = {"error-tracking", "llm-analytics", "data-schema"}
-    for name in [
-        "tool-definitions.json",
-        "tool-definitions-all.json",
-        "tool-definitions-v2.json",
+    r = _run_node("""
+const fs = require('fs');
+const files = [
+    'services/mcp/schema/tool-definitions.json',
+    'services/mcp/schema/tool-definitions-all.json',
+    'services/mcp/schema/tool-definitions-v2.json',
+];
+const bad = new Set(['error-tracking', 'llm-analytics', 'data-schema']);
+const violations = [];
+for (const f of files) {
+    const data = JSON.parse(fs.readFileSync(f, 'utf8'));
+    for (const [tool, defn] of Object.entries(data)) {
+        if (bad.has(defn.feature)) {
+            violations.push(f + ': ' + tool + ' has "' + defn.feature + '"');
+        }
+    }
+}
+if (violations.length > 0) {
+    console.error('Hyphenated features found:\\n' + violations.join('\\n'));
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Schema has hyphenated features:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_feature_filtering_normalizes_hyphens():
+    """Feature filtering normalizes hyphens to underscores so both conventions match."""
+    r = _run_node(r"""
+const fs = require('fs');
+
+// Load the tool definitions and the filtering source
+const defs = JSON.parse(fs.readFileSync('services/mcp/schema/tool-definitions-all.json', 'utf8'));
+const src = fs.readFileSync('services/mcp/src/tools/toolDefinitions.ts', 'utf8');
+
+// 1. The source must NOT use the broken direct-includes pattern
+if (src.includes('features.includes(definition.feature)')) {
+    console.error('FAIL: Still using direct features.includes(definition.feature)');
+    process.exit(1);
+}
+
+// 2. The source must have normalization logic (replace hyphens with underscores)
+const hasNormalize = /replace\s*\(\s*\/-\/g/.test(src) || /replace\s*\(\s*['"]-(All)?\s*['"]/.test(src);
+if (!hasNormalize) {
+    console.error('FAIL: No hyphen-to-underscore normalization in toolDefinitions.ts');
+    process.exit(1);
+}
+
+// 3. Simulate filtering: both "error-tracking" and "error_tracking" should match same tools
+const normalize = (n) => n.replace(/-/g, '_');
+const getTools = (features) => {
+    const nf = new Set(features.map(normalize));
+    return Object.entries(defs)
+        .filter(([_, d]) => d.feature && nf.has(normalize(d.feature)))
+        .map(([name]) => name)
+        .sort();
+};
+
+const hyphenResult = getTools(['error-tracking']);
+const underscoreResult = getTools(['error_tracking']);
+
+if (hyphenResult.length === 0) {
+    console.error('FAIL: No tools found for error-tracking / error_tracking');
+    process.exit(1);
+}
+if (JSON.stringify(hyphenResult) !== JSON.stringify(underscoreResult)) {
+    console.error('FAIL: Hyphen and underscore queries return different results');
+    process.exit(1);
+}
+
+console.log('PASS: ' + hyphenResult.length + ' tools matched for error_tracking');
+""")
+    assert r.returncode == 0, f"Feature filtering broken:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — README documentation update
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_readme_documents_all_features():
+    """README.md must document all available MCP features, not just a subset."""
+    readme = Path(f"{MCP}/README.md").read_text()
+    missing = []
+    for feat in [
+        "data_schema", "data_warehouse", "error_tracking", "hog_functions",
+        "llm_analytics", "prompts", "notebooks", "persons", "surveys",
+        "annotations", "cohorts", "alerts", "early_access_features",
     ]:
-        p = Path(MCP) / "schema" / name
-        data = json.loads(p.read_text())
-        for tool_name, defn in data.items():
-            feat = defn.get("feature", "")
-            assert feat not in hyphenated_features, (
-                f"{name}: tool '{tool_name}' has hyphenated feature '{feat}', "
-                f"expected underscore variant '{feat.replace('-', '_')}'"
-            )
-
-
-# [pr_diff] fail_to_pass
-def test_feature_name_normalization_defined():
-    """toolDefinitions.ts must define logic to normalize hyphens to underscores."""
-    src = Path(f"{MCP}/src/tools/toolDefinitions.ts").read_text()
-    # Must have code that replaces hyphens with underscores (or equivalent)
-    has_hyphen_replacement = bool(re.search(r"replace(?:All)?\s*\(\s*[/\"'].*-", src))
-    assert has_hyphen_replacement, (
-        "toolDefinitions.ts should have logic to replace hyphens in feature names"
+        if feat not in readme:
+            missing.append(feat)
+    assert not missing, (
+        f"README.md is missing documentation for features: {missing}. "
+        f"All 28 available features should be documented."
     )
 
 
 # [pr_diff] fail_to_pass
-def test_feature_filtering_uses_normalization():
-    """Feature filtering must not use direct string comparison for features."""
-    src = Path(f"{MCP}/src/tools/toolDefinitions.ts").read_text()
-    # The old broken pattern: features.includes(definition.feature)
-    # This direct comparison fails when conventions differ (hyphens vs underscores)
-    has_direct_includes = "features.includes(definition.feature)" in src
-    assert not has_direct_includes, (
-        "Feature filtering should use normalized comparison, "
-        "not direct features.includes(definition.feature)"
+def test_readme_hyphen_underscore_equivalence_note():
+    """README.md must note that hyphens and underscores are treated as equivalent."""
+    readme = Path(f"{MCP}/README.md").read_text().lower()
+    has_equivalence = (
+        ("hyphen" in readme and "underscore" in readme)
+        or ("equivalent" in readme and ("hyphen" in readme or "underscore" in readme))
     )
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) — README documentation
-# ---------------------------------------------------------------------------
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
+    assert has_equivalence, (
+        "README.md should note that hyphens and underscores are equivalent "
+        "in feature names for backward compatibility"
+    )
 
 
 # ---------------------------------------------------------------------------

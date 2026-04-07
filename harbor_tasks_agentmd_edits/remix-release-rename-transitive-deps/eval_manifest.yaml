@@ -40,6 +40,18 @@ checks:
   origin: static
   description: Workflow YAML and scripts use consistent naming without old 'Version
     Packages' references
+- id: agents_md_references_release_pr
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md references the release-pr workflow, not changes-version-pr
+- id: agents_md_uses_release_naming
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md uses 'Release' PR naming and references release-pr.ts
+- id: contributing_md_uses_release_naming
+  type: fail_to_pass
+  origin: pr_diff
+  description: CONTRIBUTING.md uses 'Release' PR naming throughout, no old references
 rubric:
 - rule: Config updates (AGENTS.md, CONTRIBUTING.md) are consistent with the style
     and formatting of the surrounding documentation
@@ -47,30 +59,3 @@ rubric:
     path: AGENTS.md
     lines: 1-10
     commit: 130fbdc7b808a2d313363458dabc00caf036f482
-- rule: AGENTS.md updated to reference release-pr workflow and 'Release' PR naming
-  source:
-    path: AGENTS.md
-    lines: 58-60
-    commit: 3e76bb387aa32f42ae7933daab00a879286e4e91
-  reference: '- **Automated releases**: When changes are pushed to `main`, the [release-pr
-    workflow](/.github/workflows/release-pr.yaml) automatically opens/updates a "Release"
-    PR. The [publish workflow](/.github/workflows/publish.yaml) runs on every push
-    to `main` and publishes when no change files are present (i.e., after merging
-    the Release PR).
-
-    - **Test change/release code with preview scripts**: When modifying any change/release
-    code, run `pnpm changes:preview` to test locally. For the release PR script,'
-- rule: CONTRIBUTING.md updated to reference release-pr workflow and 'Release' PR
-    naming
-  source:
-    path: CONTRIBUTING.md
-    lines: 97-115
-    commit: 3e76bb387aa32f42ae7933daab00a879286e4e91
-  reference: 'Releases are automated via the [release-pr workflow](/.github/workflows/release-pr.yaml)
-    and [publish workflow](/.github/workflows/publish.yaml).
-
-    2. **A "Release" PR is automatically opened** (or updated if one exists)
-
-    The "Release" PR simply automates the `pnpm changes:version` command. If needed,
-    you can run this command manually. This will update the `package.json` versions,
-    `CHANGELOG.md` files, and delete the change files. It will then commit the result.'

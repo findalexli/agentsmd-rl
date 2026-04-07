@@ -101,8 +101,8 @@ def test_imports_binding_declaration_type():
 
 
 # [pr_diff] fail_to_pass
-
-    The noShadow rule now detects shadowing in destructuring patterns, so
+def test_invalid_destructuring_spec_exists():
+    """The noShadow rule now detects shadowing in destructuring patterns, so
     there must be test cases covering object, array, nested, and rest patterns.
     """
     spec_file = SPEC_DIR / "invalidDestructuring.js"
@@ -131,8 +131,8 @@ def test_imports_binding_declaration_type():
 
 
 # [pr_diff] fail_to_pass
-
-    Destructuring in sibling scopes should NOT trigger noShadow. There must be
+def test_valid_destructuring_spec_exists():
+    """Destructuring in sibling scopes should NOT trigger noShadow. There must be
     test cases verifying this (the original bug was false positives here).
     """
     spec_file = SPEC_DIR / "validDestructuring.js"
@@ -164,10 +164,10 @@ def test_imports_binding_declaration_type():
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
-
-    The testing-codegen skill must explain that files/folders with 'valid' in the
+def test_skill_md_naming_conventions():
+    """The testing-codegen skill must explain that files/folders with 'valid' in the
     name produce no diagnostics and files with 'invalid' produce diagnostics.
-    This is critical for agents writing tests — without this guidance they may
+    This is critical for agents writing tests -- without this guidance they may
     name test files incorrectly.
     """
     content = SKILL_MD.read_text()
@@ -188,8 +188,8 @@ def test_imports_binding_declaration_type():
 
 
 # [config_edit] fail_to_pass
-
-    When testing multiple cases in folders, names should be prefixed with
+def test_skill_md_folder_prefix_convention():
+    """When testing multiple cases in folders, names should be prefixed with
     valid/invalid (e.g. validResolutionReact, invalidResolutionReact).
     """
     content = SKILL_MD.read_text()

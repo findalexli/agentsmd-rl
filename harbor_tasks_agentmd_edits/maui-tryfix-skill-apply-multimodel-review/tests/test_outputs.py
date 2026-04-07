@@ -28,7 +28,9 @@ OUTPUT_STRUCTURE_MD = Path(REPO) / ".github/skills/try-fix/references/output-str
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-
+def test_dryrun_path_uses_regex_capture():
+    """DryRun path must use regex capture and AttemptNumber for deduplication."""
+    content = PS1_SCRIPT.read_text()
     # Extract the DryRun/preview code path (the block after "if ($DryRun)")
     # On base, this path simply replaces the entire TRY-FIX section.
     # A correct fix must extract existing content and handle attempt deduplication.

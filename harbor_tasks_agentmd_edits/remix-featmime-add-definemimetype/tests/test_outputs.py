@@ -203,6 +203,9 @@ console.log('PASS')
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_builtin_detect_mime_type():
+    """Built-in extension mappings still resolve correctly."""
+    r = _run_ts('''
 import { detectMimeType } from './packages/mime/src/index.ts'
 
 let cases: [string, string | undefined][] = [
@@ -223,7 +226,7 @@ for (let [input, expected] of cases) {
 }
 
 console.log('PASS')
-""")
+''')
     assert r.returncode == 0, f"Failed:\n{r.stdout}\n{r.stderr}"
     assert "PASS" in r.stdout
 
@@ -233,7 +236,9 @@ console.log('PASS')
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
-
+def test_readme_documents_define_mime_type():
+    """README.md must document the defineMimeType API."""
+    content = Path(f"{REPO}/packages/mime/README.md").read_text()
     # Check that the README documents the new function
     assert "defineMimeType" in content, \
         "README.md should mention defineMimeType"
@@ -252,8 +257,10 @@ console.log('PASS')
 # Agent config (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass — AGENTS.md:44 @ 9c05f82
-
+# [agent_config] fail_to_pass -- AGENTS.md:44 @ 9c05f82
+def test_changeset_file_exists():
+    """A changeset file must exist for the new defineMimeType feature."""
+    changes_dir = Path(f"{REPO}/packages/mime/.changes")
     # Look for a minor changeset file (this is a new feature for a v0.x package)
     changeset_files = list(changes_dir.glob("minor.*.md"))
     assert len(changeset_files) > 0, \

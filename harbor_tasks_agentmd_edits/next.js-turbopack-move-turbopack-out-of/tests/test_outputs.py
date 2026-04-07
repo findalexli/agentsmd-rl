@@ -85,8 +85,8 @@ def test_next_swc_build_decoupled():
 
 
 # [pr_diff] fail_to_pass
-
-    On the base commit, the 'build' task has Cargo/crate inputs, meaning
+def test_turbo_config_build_no_native_inputs():
+    """On the base commit, the 'build' task has Cargo/crate inputs, meaning
     `pnpm build` triggers native Turbopack compilation. After the fix,
     either the 'build' task is removed/renamed or it no longer has native inputs.
     """
@@ -132,7 +132,9 @@ def test_next_swc_build_decoupled():
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
-
+def test_agents_md_documents_build_all():
+    """AGENTS.md must document the new build-all command in multiple contexts."""
+    agents_md = Path(f"{REPO}/AGENTS.md").read_text()
     assert "build-all" in agents_md, (
         "AGENTS.md must document the 'build-all' command"
     )
@@ -149,8 +151,8 @@ def test_next_swc_build_decoupled():
 
 
 # [config_edit] fail_to_pass
-
-    After the change, 'pnpm build' no longer builds Turbopack native binaries.
+def test_agents_md_build_not_everything():
+    """After the change, 'pnpm build' no longer builds Turbopack native binaries.
     The description of 'pnpm build' should NOT say it builds 'everything'.
     """
     agents_md = Path(f"{REPO}/AGENTS.md").read_text()
