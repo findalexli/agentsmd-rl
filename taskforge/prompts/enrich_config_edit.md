@@ -52,17 +52,24 @@ def test_readme_documents_new_feature():
 
 ### 4. Update eval_manifest.yaml
 
-Add matching check entries with `origin: config_edit`:
+Add matching check entries. Use `origin: agent_config` if an existing rule in CLAUDE.md/AGENTS.md requires the doc update (and point `source` to that rule). Otherwise use `origin: pr_diff`:
 
 ```yaml
+  # If driven by a rule in AGENTS.md:
   - id: readme_documents_new_feature
     type: fail_to_pass
-    origin: config_edit
+    origin: agent_config
     description: "README.md updated to document new feature"
     source:
-      path: "README.md"
-      lines: "45-52"
-      commit: "merge_commit_sha"
+      path: "AGENTS.md"              # the file with the rule, NOT the file being edited
+      lines: "21"
+      commit: "base_commit_sha"
+
+  # If just part of the PR change (no pre-existing rule):
+  - id: claude_md_adds_lint_rule
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md adds the new lint rule"
 ```
 
 ### 5. Remove any remaining placeholders

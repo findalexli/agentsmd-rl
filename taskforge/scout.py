@@ -31,7 +31,7 @@ from typing import Sequence
 
 from unidiff import PatchSet
 
-from taskforge.config import gh_json, is_code_file, is_config_file
+from taskforge.config import gh_json, is_agent_instruction_file, is_code_file, is_config_file, is_doc_file
 from taskforge.models import PRCandidate
 
 ROOT = Path(__file__).parent.parent
@@ -331,7 +331,7 @@ def scout_repo_agentmd(
         print(f"  ! {caution}")
     print(f"{'='*60}")
 
-    fetch_limit = max(target * 15, 1000)
+    fetch_limit = min(max(target * 15, 1000), 2000)  # cap at 2000 to avoid gh timeouts
 
     prs = gh_json([
         "pr", "list",
@@ -353,7 +353,7 @@ def scout_repo_agentmd(
         "too_many_files": 0, "too_few_files": 0,
         "too_few_changes": 0, "too_many_changes": 0,
         "no_config_file": 0, "no_code_file": 0,
-        "trivial_config_edit": 0,
+        "trivial_config_edit": 0, "doc_only_trivial": 0,
     }
 
     for pr in prs:
@@ -394,7 +394,11 @@ def scout_repo_agentmd(
         files = pr.get("files", [])
         file_paths = [f.get("path", "") for f in files] if files else []
 
-        config_files = [f for f in file_paths if is_config_file(f)]
+        # Tier 1: agent instruction files (CLAUDE.md, AGENTS.md, .cursorrules, etc.)
+        # Tier 2: documentation (README.md, CONTRIBUTING.md, CHANGELOG.md)
+        instruction_files = [f for f in file_paths if is_agent_instruction_file(f)]
+        doc_files = [f for f in file_paths if is_doc_file(f)]
+        config_files = instruction_files + doc_files
         code_files = [f for f in file_paths if is_code_file(f)]
 
         if not config_files:
@@ -404,13 +408,29 @@ def scout_repo_agentmd(
             skipped["no_code_file"] += 1
             continue
 
+        # PRs that ONLY touch Tier 2 docs (no CLAUDE.md/AGENTS.md) are low-value.
+        # Skip unless the doc change is substantial (>10 lines).
+        if not instruction_files:
+            doc_changes = sum(
+                f.get("additions", 0) + f.get("deletions", 0)
+                for f in files
+                if is_doc_file(f.get("path", ""))
+            )
+            if doc_changes < 10:
+                skipped["doc_only_trivial"] += 1
+                continue
+
+        # Check that config changes are meaningful (not just version bumps)
         config_changes_meaningful = False
         for f in files:
             fpath = f.get("path", "")
             if is_config_file(fpath):
                 f_adds = f.get("additions", 0)
                 f_dels = f.get("deletions", 0)
-                if f_adds + f_dels > 2:
+                # Tier 1 files: even small changes are interesting
+                # Tier 2 files: need >5 lines to be meaningful
+                threshold = 2 if is_agent_instruction_file(fpath) else 5
+                if f_adds + f_dels > threshold:
                     config_changes_meaningful = True
                     break
 
@@ -419,6 +439,7 @@ def scout_repo_agentmd(
             config_changes_meaningful = any(
                 (f.get("additions", 0) + f.get("deletions", 0)) > 2
                 for f in config_detail
+                if is_agent_instruction_file(f.get("path", ""))
             )
             if not config_changes_meaningful:
                 skipped["trivial_config_edit"] += 1
@@ -439,7 +460,10 @@ def scout_repo_agentmd(
             "merge_sha": merge_sha,
             "file_paths": file_paths[:15],
             "config_files": config_files,
+            "instruction_files": instruction_files,
+            "doc_files": doc_files,
             "code_files": code_files[:10],
+            "has_tier1": bool(instruction_files),
         })
 
         if len(candidates) >= target:
@@ -584,7 +608,7 @@ def filter_prs(
             print(f"  Progress: {i}/{len(prs)} ({len(kept)} kept so far)")
 
         if agentmd:
-            # AgentMD quality filter
+            # AgentMD quality filter — prioritize PRs with meaningful instruction file changes
             title = raw.get("title", "").lower()
             if any(bot in title for bot in BOT_PATTERNS):
                 skipped["bot"] = skipped.get("bot", 0) + 1
@@ -596,9 +620,20 @@ def filter_prs(
                 continue
 
             config_files = raw.get("config_files", [])
+            instruction_files = raw.get("instruction_files", [])
+
+            # Skip PRs that only touch changelogs/history
             if all("change" in cf.lower() or "history" in cf.lower() for cf in config_files):
                 skipped["config_only_changelog"] = skipped.get("config_only_changelog", 0) + 1
                 continue
+
+            # Skip PRs that only touch Tier 2 docs (README/CONTRIBUTING) with no
+            # Tier 1 instruction files — unless the doc change is substantial
+            if not instruction_files:
+                doc_only_title_signals = ["readme", "changelog", "contributing", "docs:", "doc:", "documentation"]
+                if any(sig in title for sig in doc_only_title_signals):
+                    skipped["doc_only_pr"] = skipped.get("doc_only_pr", 0) + 1
+                    continue
 
             if fetch_diffs:
                 diff = _gh_diff(raw["repo"], raw["pr_number"])
@@ -620,6 +655,7 @@ def filter_prs(
             else:
                 raw["config_edit_type"] = "unknown"
 
+            raw["config_tier"] = "tier1" if instruction_files else "tier2"
             kept.append(raw)
         else:
             # Standard heuristic filter

@@ -42,11 +42,13 @@ Understand:
 
 This is critical — our benchmark tests how well agents follow repo instructions.
 
-**Step 3a: Discover all config files at the base commit:**
+**Step 3a: Discover all agent instruction files at the base commit:**
 ```bash
 gh api "repos/OWNER/REPO/git/trees/BASE_COMMIT?recursive=1" \
-  --jq '.tree[] | select(.path | test("CLAUDE\\.md|AGENTS\\.md|SKILL\\.md|\\.cursorrules|\\.cursor/rules|copilot-instructions\\.md|\\.windsurfrules|\\.clinerules|\\.continuerules|\\.cody|CONVENTIONS\\.md|README\\.md|CONTRIBUTING\\.md")) | .path'
+  --jq '.tree[] | select(.path | test("CLAUDE\\.md|AGENTS\\.md|SKILL\\.md|CONVENTIONS\\.md|\\.cursorrules|\\.cursor/rules|copilot-instructions\\.md|\\.windsurfrules|\\.clinerules|\\.continuerules|\\.cody|\\.mdc$|\\.claude/rules/|\\.claude/skills/|\\.claude/agents/|README\\.md")) | .path'
 ```
+
+**Priority**: Focus on Tier 1 files (CLAUDE.md, AGENTS.md, .claude/rules/, .claude/skills/, .cursorrules, CONVENTIONS.md). README.md is Tier 2 — only relevant if a Tier 1 rule references it.
 
 **Step 3b: Fetch the FULL content of every config file found:**
 ```bash
@@ -96,31 +98,60 @@ Replace all `{{PLACEHOLDER}}` tokens across files.
 
 #### test_outputs.py — THE CORE WORK
 
+**CRITICAL STRUCTURAL RULE**: Every assertion MUST be inside a `def test_*():` function. NEVER write bare assertions, orphaned code blocks, or comments like `# [config_edit] fail_to_pass` without a complete function definition following them. Pytest only discovers `def test_*()` functions — anything else is dead code or causes SyntaxError.
+
 This file has two categories of tests:
 
 **Category 1: Code behavior tests (standard)**
-- Same as regular tasks: call code, assert behavior, fail-to-pass
-- These test the functional code change
+- For non-Python repos: use `subprocess.run()` to execute the actual code. Python is the test harness, not the thing being tested.
+- At least ONE f2p test MUST execute code (not just read files as text).
 
-**Category 2: Config/documentation update tests (NEW — REQUIRED)**
-At least ONE test must verify the config file was updated correctly. These tests check that the agent made the right documentation/config edit. Examples:
+```python
+# TypeScript: write a temp .ts file and run it with node
+def _run_ts(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    script_path = Path(REPO) / "_eval_tmp.ts"
+    script_path.write_text(script)
+    try:
+        return subprocess.run(
+            ["node", "--experimental-strip-types", "--no-warnings", str(script_path)],
+            capture_output=True, text=True, timeout=timeout,
+        )
+    finally:
+        script_path.unlink(missing_ok=True)
+
+def test_core_behavior():
+    """Import the module and verify the fix works."""
+    result = _run_ts("""
+import { myFunction } from './src/lib/module.ts'
+let out = myFunction("test-input")
+console.log(JSON.stringify({ out }))
+""")
+    assert result.returncode == 0, f"Script failed: {result.stderr}"
+    data = json.loads(result.stdout.strip())
+    assert data["out"] == "expected", f"Got: {data['out']}"
+
+# Rust: compile and run
+def test_cargo_check():
+    r = subprocess.run(["cargo", "check"], cwd=REPO, capture_output=True, timeout=120)
+    assert r.returncode == 0, f"Compilation failed:\n{r.stderr.decode()}"
+
+# Go: build and test
+def test_go_build():
+    r = subprocess.run(["go", "build", "./..."], cwd=REPO, capture_output=True, timeout=120)
+    assert r.returncode == 0, f"Build failed:\n{r.stderr.decode()}"
+```
+
+**Category 2: Config/documentation update tests (REQUIRED)**
+At least ONE test must verify the config file was updated correctly:
 
 ```python
 def test_readme_documents_new_api():
     """README.md must document the new batch endpoint."""
     readme = Path(REPO) / "README.md"
     content = readme.read_text()
-    # Check the key content was added, not exact wording
     assert "batch" in content.lower(), "README should mention batch endpoint"
     assert "/api/batch" in content or "/data/batch" in content, \
         "README should document the batch API path"
-
-def test_claude_md_updates_lint_rule():
-    """CLAUDE.md must include the new no-wildcard-imports rule."""
-    claude_md = Path(REPO) / "CLAUDE.md"
-    content = claude_md.read_text()
-    assert "wildcard" in content.lower() or "import *" in content, \
-        "CLAUDE.md should document the no-wildcard-imports rule"
 
 def test_agents_md_documents_new_module():
     """AGENTS.md must reference the new processing module."""
@@ -131,17 +162,17 @@ def test_agents_md_documents_new_module():
 ```
 
 **Design principles for config tests:**
-1. **Check semantic content, not exact wording.** The agent might phrase things differently — that's fine. Check for key concepts, API names, file references.
-2. **Be specific enough to fail on base commit.** The test must fail before the config update and pass after. Check for content that was genuinely added by the PR.
-3. **Don't check formatting/structure.** Check that the right information is present, not where exactly it appears.
-4. **Use multiple keywords/concepts.** Check 2-3 key terms that the update should contain, not just one word.
-5. **Mark origin as `config_edit` in eval_manifest.yaml** — this is a new origin type for this dataset.
+1. **Check semantic content, not exact wording.** Check for key concepts, API names, file references.
+2. **Be specific enough to fail on base commit.** Check for content genuinely added by the PR.
+3. **Use multiple keywords/concepts.** Check 2-3 key terms, not just one word.
+4. **Origin in eval_manifest.yaml**: Use `origin: agent_config` if driven by an existing rule. Use `origin: pr_diff` if just part of the PR. **Only valid origins: `pr_diff`, `repo_tests`, `agent_config`, `static`. Do NOT invent new values.**
+5. **Source ref**: Points to **the config file with the rule** (e.g., AGENTS.md line 21), NOT the file being edited. Use the **base commit** (the rule existed before this PR). If `origin: pr_diff`, no source needed.
 
-**Standard design principles (same as regular tasks):**
-1. Call code, don't inspect it (for code tests)
+**Standard design principles:**
+1. **Execute code, don't grep it.** At least one test must use `subprocess.run()` for non-Python repos. Reading a file as text and searching for strings is anti-pattern #3.
 2. Fail-to-pass is primary
-3. Vary inputs
-4. Anti-stub: verify return values
+3. Vary inputs — never test with a single parameter value
+4. Anti-stub: verify return values, not just "doesn't crash"
 5. Upstream P2P if available
 
 **10 anti-patterns to avoid** (same as regular tasks):
@@ -167,8 +198,8 @@ The template test.sh is standardized boilerplate. Do not add task-specific logic
 
 - Fill in source PR metadata
 - One `check` entry per `def test_*` function in test_outputs.py (keep ids in sync)
-- **REQUIRED**: At least one check with `origin: config_edit` for the config file update test
-- Add `source` refs for all `agent_config` and `config_edit` checks
+- **REQUIRED**: At least one check that verifies the config/instruction file update
+- Add `source` refs for all `agent_config` checks (pointing to the rule in CLAUDE.md/AGENTS.md, NOT the file being edited)
 - Add rubric rules (soft, LLM-judge-only) or leave empty `[]`
 
 ```yaml
@@ -192,22 +223,30 @@ checks:
     origin: pr_diff
     description: "Primary behavioral fix verified"
 
-  # Config file update checks (NEW - at least one required)
-  - id: readme_documents_new_feature
+  # Config/instruction file update checks (at least one required)
+  # Case A: AGENTS.md has a rule requiring doc updates → agent_config
+  - id: agents_md_documents_new_module
     type: fail_to_pass
-    origin: config_edit
-    description: "README.md updated to document the new batch API"
+    origin: agent_config
+    description: "AGENTS.md updated to document the new processing module"
     source:
-      path: "README.md"
-      lines: "45-52"
-      commit: "merge_commit_sha"  # use merge commit since this is what was added
+      path: "AGENTS.md"              # the config file with the rule
+      lines: "15"                     # the line that says "document new modules"
+      commit: "base_commit_sha"       # at base commit (rule existed before this PR)
 
-  # Agent config compliance checks (from existing configs)
-  - id: no_wildcard_imports
+  # Case B: PR updates a config file (no pre-existing rule mandates it) → pr_diff
+  - id: claude_md_adds_lint_rule
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md adds the new no-wildcard-imports lint rule"
+
+  # Agent config compliance checks (agent follows existing rules while coding)
+  - id: uses_let_not_var
     type: pass_to_pass
     origin: agent_config
+    description: "Code uses let/const per AGENTS.md style rule"
     source:
-      path: "CLAUDE.md"
+      path: "AGENTS.md"
       lines: "30"
       commit: "base_commit_sha"
 
@@ -241,21 +280,23 @@ But do NOT reveal exactly what to write — the agent should figure that out.
 
 After filling all files, verify:
 
-1. **Stub walk**: mentally run every test with `def f(): pass`. All must fail → reward 0.
-2. **Alternative fix**: think of a different valid implementation. Does it pass all tests? If not, the test is too narrow — fix it.
-3. **F2P coverage**: at least 2 tests must fail on the base commit (at least 1 code + 1 config).
-4. **Config test**: at least 1 test checks the config file update. It MUST fail on base commit.
+1. **Python validity**: Run `python3 -c "import ast; ast.parse(open('test_outputs.py').read())"` mentally. Every assertion is inside a `def test_*():`. No orphaned code blocks, no bare assertions, no raw non-Python code pasted into the file.
+2. **Subprocess check**: At least one f2p test uses `subprocess.run()` to execute the actual code (not just read files as text). Exception: pure Python repos can import directly.
+3. **Stub walk**: mentally run every test with `def f(): pass`. All must fail → reward 0.
+4. **F2P coverage**: at least 2 tests must fail on the base commit (at least 1 code + 1 config).
 5. **Gold patch completeness**: solve.sh includes BOTH code and config changes.
 6. **Anti-pattern scan**: check each test against the 10 anti-patterns above.
-7. **Manifest sync**: every `def test_*` has a matching check in eval_manifest.yaml.
+7. **Manifest sync**: every `def test_*` has a matching check in eval_manifest.yaml. No extra, no missing.
+8. **Source ref verification**: For every `agent_config` check, verify the `source.path` file actually EXISTS at the `source.commit` (base commit). Run mentally: `gh api repos/OWNER/REPO/contents/PATH?ref=COMMIT`. If the file doesn't exist, the ref is fabricated — change origin to `pr_diff` or find the correct file. Source refs MUST use the **base commit** (not merge commit) — the rule must have existed before this PR.
 
 ```
 Self-audit:
+  Python valid: yes (no orphaned blocks, no bare assertions)
+  Subprocess tests: N (for non-Python: _run_ts, cargo check, etc.)
   Tests: N total (X f2p code, Y f2p config, Z p2p)
-  Config tests: N (checking: FILE1, FILE2)
   Stub score: 0 (all must fail on stub)
-  Alternative fix passes: yes
   Gold patch includes config changes: yes
   Anti-patterns: none
   Manifest sync: yes
+  Source refs verified: yes (all agent_config paths exist at base commit)
 ```

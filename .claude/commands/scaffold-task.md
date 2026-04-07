@@ -23,7 +23,7 @@ This is critical — our benchmark tests how well agents follow repo instruction
 **Step 2a: Discover all config files at the base commit:**
 ```bash
 gh api "repos/OWNER/REPO/git/trees/BASE_COMMIT?recursive=1" \
-  --jq '.tree[] | select(.path | test("CLAUDE\\.md|AGENTS\\.md|SKILL\\.md|\\.cursorrules|\\.cursor/rules|copilot-instructions\\.md|\\.windsurfrules|\\.clinerules|\\.continuerules|\\.cody|CONVENTIONS\\.md|README\\.md")) | .path'
+  --jq '.tree[] | select(.path | test("CLAUDE\\.md|AGENTS\\.md|SKILL\\.md|CONVENTIONS\\.md|\\.cursorrules|\\.cursor/rules|copilot-instructions\\.md|\\.windsurfrules|\\.clinerules|\\.continuerules|\\.cody|\\.mdc$|\\.claude/rules/|\\.claude/skills/|\\.claude/agents/|README\\.md")) | .path'
 ```
 
 **Step 2b: Fetch the FULL content of every config file found:**
@@ -92,9 +92,11 @@ Replace all `{{PLACEHOLDER}}` tokens across files:
 
 Replace each `raise NotImplementedError(...)` placeholder with real tests. Every `def test_*` function maps 1:1 to a check in eval_manifest.yaml.
 
+**CRITICAL STRUCTURAL RULE**: Every assertion MUST be inside a `def test_*():` function. NEVER write bare assertions or orphaned code outside a function. Pytest only discovers `def test_*()` — anything else is dead code or causes SyntaxError.
+
 **Design principles:**
 
-1. **Call code, don't inspect it.** Import the function, call it with bug-triggering input, assert the result. AST is a last resort (only for GPU kernels, CUDA C++, or code needing unavailable model weights).
+1. **Call code, don't inspect it.** Import the function, call it with bug-triggering input, assert the result. For non-Python repos, at least ONE f2p test MUST use `subprocess.run()` to execute real code — not just read source files as text. AST is a last resort (only for GPU kernels, CUDA C++, or code needing unavailable model weights).
 
 2. **Fail-to-pass is primary.** Each f2p test MUST fail on the base commit and pass on a correct fix. Test the *behavior*, not the *structure*.
 
@@ -159,17 +161,23 @@ By now you know exactly what test_outputs.py checks. Describe the *symptom* thos
 
 After filling all files, verify:
 
-1. **Stub walk**: mentally run every test with `def f(): pass`. All must fail → reward 0.
-2. **Alternative fix**: think of a different valid implementation. Does it pass all tests? If not, the test is too narrow — fix it.
-3. **F2P coverage**: at least 2 tests must fail on the base commit.
-4. **Anti-pattern scan**: check each test against the 10 anti-patterns above.
-5. **Manifest sync**: every `def test_*` has a matching check in eval_manifest.yaml.
+1. **Python validity**: Every assertion is inside a `def test_*():` function. No orphaned code blocks, no bare assertions outside functions. The file must parse cleanly.
+2. **Subprocess check**: For non-Python repos, at least one f2p test uses `subprocess.run()`.
+3. **Stub walk**: mentally run every test with `def f(): pass`. All must fail → reward 0.
+4. **Alternative fix**: think of a different valid implementation. Does it pass all tests? If not, the test is too narrow — fix it.
+5. **F2P coverage**: at least 2 tests must fail on the base commit.
+6. **Anti-pattern scan**: check each test against the 10 anti-patterns above.
+7. **Manifest sync**: every `def test_*` has a matching check in eval_manifest.yaml. No extra, no missing.
+8. **Source ref verification**: For `agent_config` checks, confirm `source.path` exists at `source.commit` (base commit). Do NOT cite lines from the merge commit or files that don't exist at the base.
 
 ```
 Self-audit:
+  Python valid: yes (no orphaned blocks)
+  Subprocess tests: N
   Tests: N total (X f2p, Y p2p)
   Stub score: 0 (all must fail on stub)
   Alternative fix passes: yes
   Anti-patterns: none
   Manifest sync: yes
+  Source refs verified: yes
 ```

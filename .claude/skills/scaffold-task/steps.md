@@ -15,7 +15,7 @@ gh pr diff <N> --repo <owner/repo>                                      # full d
 **Step 2a: Discover all config files at the base commit:**
 ```bash
 gh api "repos/OWNER/REPO/git/trees/BASE_COMMIT?recursive=1" \
-  --jq '.tree[] | select(.path | test("CLAUDE\\.md|AGENTS\\.md|SKILL\\.md|\\.cursorrules|\\.cursor/rules|copilot-instructions\\.md|\\.windsurfrules|\\.clinerules|\\.continuerules|\\.cody|CONVENTIONS\\.md|README\\.md")) | .path'
+  --jq '.tree[] | select(.path | test("CLAUDE\\.md|AGENTS\\.md|SKILL\\.md|CONVENTIONS\\.md|\\.cursorrules|\\.cursor/rules|copilot-instructions\\.md|\\.windsurfrules|\\.clinerules|\\.continuerules|\\.cody|\\.mdc$|\\.claude/rules/|\\.claude/skills/|\\.claude/agents/|\\.github/skills/|\\.agents/skills/|README\\.md")) | .path'
 ```
 
 **Step 2b: Fetch the FULL content of every config file found:**
@@ -73,8 +73,19 @@ Replace all `{{PLACEHOLDER}}` tokens:
 - Set difficulty, tags, time estimates
 - Adjust timeouts if needed (default: 1800s agent, 120s verifier)
 
-### test_outputs.py
-See [test-design.md](../scaffold-task/test-design.md) for the full design guide.
+### test_outputs.py — TWO-PHASE APPROACH
+**Phase 1**: Write ONLY function signatures + docstrings (no bodies yet):
+```python
+def test_syntax_check():
+    """Modified files parse without errors."""
+    ...
+
+def test_core_behavior():
+    """Function returns correct result."""
+    ...
+```
+
+**Phase 2**: Fill each function body, one at a time. See [test-design.md](test-design.md) for principles, [examples.md](examples.md) for gold examples.
 
 ### test.sh — DO NOT MODIFY
 Standardized boilerplate. Installs pytest, runs test_outputs.py, writes binary reward.
@@ -94,9 +105,12 @@ Standardized boilerplate. Installs pytest, runs test_outputs.py, writes binary r
 
 ```
 Self-audit:
+  Python valid: yes (no orphaned blocks, every assert inside def test_*)
+  Subprocess tests: N (at least 1 for non-Python repos)
   Tests: N total (X f2p, Y p2p)
   Stub score: 0 (all must fail on stub)
   Alternative fix passes: yes
   Anti-patterns: none
-  Manifest sync: yes
+  Manifest sync: yes (every def test_* ↔ check, no extras)
+  Source refs verified: yes (all agent_config paths exist at base commit)
 ```

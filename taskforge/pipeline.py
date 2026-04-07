@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import re
 import shutil
 import sys
@@ -46,6 +47,7 @@ PROMPT_FILES = {
     "scaffold": "scaffold.md",
     "scaffold-agentmd": "scaffold_agentmd.md",
     "enrich-config-edit": "enrich_config_edit.md",
+    "improve-tests": "improve_tests.md",
     "validate": "validate.md",
     "remake": "remake.md",
     "enrich-rubric": "enrich-rubric.md",
@@ -60,6 +62,7 @@ DEFAULT_MODELS = {
     "scaffold-agentmd": "opus",
     "scaffold-from-prs": "opus",
     "enrich-config-edit": "sonnet",
+    "improve-tests": "opus",
     "validate": "opus",
     "remake": "opus",
     "solve": "opus",
@@ -71,6 +74,7 @@ DEFAULT_BUDGETS = {
     "scaffold-agentmd": 6.0,
     "scaffold-from-prs": 5.0,
     "enrich-config-edit": 2.0,
+    "improve-tests": 10.0,
     "validate": 2.0,
     "remake": 5.0,
     "solve": 5.0,
@@ -166,8 +170,13 @@ async def run_one(
 ) -> dict:
     """Run claude -p with a prompt against one task."""
     log_file = log_dir / f"{task}.json"
+    # Record actual backend model (e.g., glm-5.1 when routed via Z.AI)
+    backend_model = os.environ.get("ANTHROPIC_DEFAULT_OPUS_MODEL", "") if model == "opus" else \
+                    os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "") if model == "sonnet" else \
+                    os.environ.get("ANTHROPIC_DEFAULT_HAIKU_MODEL", "")
     result = {
         "task": task, "model": model,
+        "backend_model": backend_model or model,
         "status": "pending", "started_at": datetime.now().isoformat(),
     }
 

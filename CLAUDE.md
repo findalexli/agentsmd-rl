@@ -32,8 +32,14 @@ research/                   # Research docs and analysis
 
 ## Task Selection Criteria
 
-Tasks must come from repos that have agent instruction files:
-- CLAUDE.md, AGENTS.md, .claude/skills/, .cursorrules, .github/copilot-instructions.md
+Tasks must come from repos that have agent instruction files (Tier 1):
+- `CLAUDE.md`, `AGENTS.md`, `CONVENTIONS.md` (at any level)
+- `.claude/rules/*.md` (modular path-scoped rules)
+- `.claude/skills/*/SKILL.md` (skills with frontmatter)
+- `.claude/agents/*.md` (custom subagent definitions)
+- `.cursorrules`, `.cursor/rules/`, `.github/copilot-instructions.md`
+
+Tier 2 files (README.md, CONTRIBUTING.md) are only relevant when paired with a Tier 1 rule.
 
 And satisfy standard requirements:
 - Public repo, specific base commit, no secrets/accounts needed

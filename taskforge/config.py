@@ -17,24 +17,49 @@ from typing import Sequence
 # Agent config file patterns
 # ---------------------------------------------------------------------------
 
-CONFIG_PATTERNS: list[str] = [
+# Tier 1: Agent instruction files — changes here directly affect agent behavior.
+# These are what make agentmd tasks valuable.
+AGENT_INSTRUCTION_PATTERNS: list[str] = [
+    # Claude Code
     r"CLAUDE\.md$",
+    r"CLAUDE\.local\.md$",
+    r"\.claude/CLAUDE\.md$",
+    r"\.claude/rules/.*\.md$",        # modular rules (path-scoped)
+    r"\.claude/skills/.*/SKILL\.md$",  # skills with frontmatter
+    r"\.claude/agents/.*\.md$",        # custom subagent definitions
+    # GitHub-hosted skills (e.g., dotnet/maui .github/skills/)
+    r"\.github/skills/.*SKILL\.md$",
+    r"\.agents/skills/.*SKILL\.md$",   # alternative convention (ant-design, next.js)
+    # Cross-tool
     r"AGENTS\.md$",
     r"SKILL\.md$",
+    r"CONVENTIONS\.md$",
+    # Cursor
     r"\.cursorrules$",
     r"\.cursor/rules",
+    # GitHub Copilot
     r"copilot-instructions\.md$",
+    # Other agents
     r"\.windsurfrules$",
     r"\.clinerules$",
     r"\.continuerules$",
     r"\.cody/",
-    r"CONVENTIONS\.md$",
-    r"CONTRIBUTING\.md$",
-    r"CHANGELOG\.md$",
-    r"README\.md$",
     r"\.mdc$",
 ]
 
+# Tier 2: Documentation files — usually noise (changelogs, version bumps),
+# but occasionally meaningful when paired with a Tier 1 rule that requires doc updates.
+DOC_PATTERNS: list[str] = [
+    r"README\.md$",
+    r"CONTRIBUTING\.md$",
+    r"CHANGELOG\.md$",
+]
+
+# Combined: all config-like files (backward compat)
+CONFIG_PATTERNS: list[str] = AGENT_INSTRUCTION_PATTERNS + DOC_PATTERNS
+
+AGENT_INSTRUCTION_RE = re.compile("|".join(AGENT_INSTRUCTION_PATTERNS), re.IGNORECASE)
+DOC_RE = re.compile("|".join(DOC_PATTERNS), re.IGNORECASE)
 CONFIG_RE = re.compile("|".join(CONFIG_PATTERNS), re.IGNORECASE)
 
 NON_CODE_EXTENSIONS = frozenset({
@@ -48,8 +73,21 @@ NON_CODE_PREFIXES = (
 
 
 def is_config_file(path: str) -> bool:
-    """Check if a file path matches an agent config pattern."""
+    """Check if a file path matches any config pattern (Tier 1 or 2)."""
     return bool(CONFIG_RE.search(path))
+
+
+def is_agent_instruction_file(path: str) -> bool:
+    """Check if a file is a Tier 1 agent instruction file (CLAUDE.md, AGENTS.md, etc.).
+
+    These are the high-value files — changes here directly affect agent behavior.
+    """
+    return bool(AGENT_INSTRUCTION_RE.search(path))
+
+
+def is_doc_file(path: str) -> bool:
+    """Check if a file is a Tier 2 documentation file (README.md, CHANGELOG.md, etc.)."""
+    return bool(DOC_RE.search(path))
 
 
 def is_code_file(path: str) -> bool:
