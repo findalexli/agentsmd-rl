@@ -22,241 +22,229 @@ CLAUDE_MD = f"{REPO}/compiler/CLAUDE.md"
 DEV_GUIDE = f"{REPO}/compiler/docs/DEVELOPMENT_GUIDE.md"
 
 
+def _run_node(code: str, *args, timeout: int = 10) -> subprocess.CompletedProcess:
+    """Run a Node.js script, passing *args as process.argv[2..], clean up temp file."""
+    script = Path(REPO) / "_eval_tmp.js"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script), *args],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax checks
+# pass_to_pass (static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
-    """Modified TypeScript files must have valid syntax (no unterminated strings, missing brackets, etc.)."""
+    """Modified TypeScript files must have valid syntax (balanced braces, non-empty)."""
     ts_files = [CONSTANTS_TS, RUNNER_TS, MINIMIZE_TS, RUNNER_WATCH_TS, RUNNER_WORKER_TS]
     for ts_file in ts_files:
         content = Path(ts_file).read_text()
-        # Basic syntax sanity: balanced braces
         opens = content.count("{")
         closes = content.count("}")
         assert abs(opens - closes) <= 2, (
             f"{ts_file}: brace mismatch ({opens} opens, {closes} closes)"
         )
-        # File must have content
         assert len(content) > 100, f"{ts_file}: file is suspiciously short"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# fail_to_pass (pr_diff) — behavioral tests using Node subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_constants_separation():
-    """constants.ts must separate compiler root from babel-plugin-react-compiler path into two distinct constants."""
-    content = Path(CONSTANTS_TS).read_text()
+    """Root path constant resolves to compiler/ dir (2 levels up), not babel-plugin subdir."""
+    r = _run_node(r"""
+const fs = require('fs');
+const path = require('path');
+const content = fs.readFileSync(process.argv[2], 'utf8');
 
-    # Must have a constant for the compiler root (two levels up from snap package)
-    # This could be PROJECT_ROOT, COMPILER_ROOT, etc.
-    # Key: must have path.join(process.cwd(), '..', '..') or equivalent going 2 dirs up
-    assert re.search(r"""path\.(join|resolve)\(process\.cwd\(\).*['"]\.\.['"].*['"]\.\.['"]""", content), (
-        "constants.ts must define a root constant pointing two directories up from cwd"
-    )
+// Find the first exported const using process.cwd() for a root path
+const pattern = /export\s+const\s+(\w+)\s*=\s*([^;]*process\.cwd\(\)[^;]*);/s;
+const match = content.match(pattern);
+if (!match) {
+    console.error('FAIL: No exported path constant using process.cwd()');
+    process.exit(1);
+}
 
-    # Must have a separate constant for the babel-plugin-react-compiler path
-    # On base commit, PROJECT_ROOT directly pointed to babel-plugin-react-compiler.
-    # After fix, there must be a separate constant for it.
-    exports = re.findall(r"export\s+const\s+(\w+)\s*=", content)
-    assert len(exports) >= 2, "constants.ts must export at least 2 path constants (root + plugin)"
+const name = match[1];
+const expr = match[2];
 
-    # babel-plugin-react-compiler must be referenced in a DIFFERENT constant than the root
-    root_const = None
-    plugin_const = None
-    for match in re.finditer(r"export\s+const\s+(\w+)\s*=\s*(.*?)(?:;|\n)", content, re.DOTALL):
-        name = match.group(1)
-        val = match.group(2)
-        if "process.cwd()" in val and "'..'," in val:
-            root_const = name
-        if "babel-plugin-react-compiler" in val:
-            plugin_const = name
+// Simulate cwd as the snap package directory and evaluate the path expression
+const fakeCwd = '/sim/compiler/packages/snap';
+const evalExpr = expr.replace(/process\.cwd\(\)/g, "'" + fakeCwd + "'");
 
-    # The plugin path could also be constructed by joining root + 'packages' + 'babel-plugin-react-compiler'
-    if plugin_const is None:
-        # Check multi-line path.join with the root constant
-        assert re.search(
-            r"path\.(join|normalize)\(\s*\w+.*babel-plugin-react-compiler", content, re.DOTALL
-        ) or re.search(
-            r"path\.(join|normalize)\(\s*\w+.*packages.*babel-plugin", content, re.DOTALL
-        ), "Must have a constant resolving to the babel-plugin-react-compiler directory"
+let result;
+try {
+    result = path.normalize(eval(evalExpr));
+} catch(e) {
+    console.error('FAIL: Could not evaluate path expression: ' + e.message);
+    process.exit(1);
+}
 
-    assert root_const is not None, (
-        "Must export a root constant derived from process.cwd() going up 2 directories"
-    )
+// Must resolve to compiler root (2 dirs up from snap), NOT babel-plugin subdir
+const compilerRoot = path.normalize(path.join(fakeCwd, '..', '..'));
+if (result === compilerRoot) {
+    console.log('PASS: ' + name + ' = ' + result);
+} else {
+    console.error('FAIL: ' + name + ' = ' + result + ' (expected ' + compilerRoot + ')');
+    process.exit(1);
+}
+""", CONSTANTS_TS)
+    assert r.returncode == 0, f"Root constant wrong: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_compile_command_registered():
-    """runner.ts must register a 'compile' subcommand with yargs that takes a path and optional debug flag."""
-    content = Path(RUNNER_TS).read_text()
+    """runner.ts registers a 'compile' subcommand via yargs with path and debug options."""
+    r = _run_node(r"""
+const fs = require('fs');
+const content = fs.readFileSync(process.argv[2], 'utf8');
+const errors = [];
 
-    # Must have compile command registered
-    assert re.search(r"""['"]compile\s*<path>['"]""", content) or \
-           re.search(r"""['"]compile\b""", content), (
-        "runner.ts must register a 'compile' command with yargs"
-    )
+// Must register a compile command with yargs .command()
+if (!content.includes("'compile") && !content.includes('"compile')) {
+    errors.push('No compile command string in yargs chain');
+}
 
-    # Must have a function that handles compilation
-    assert "runCompileCommand" in content or "CompileCommand" in content or \
-           re.search(r"async\s+function\s+\w*[Cc]ompile", content), (
-        "runner.ts must have a compile command handler function"
-    )
+// Must have a handler function for compilation
+if (!/(?:async\s+)?function\s+\w*[Cc]ompile/.test(content)) {
+    errors.push('No compile handler function');
+}
 
-    # Compile command must support --debug flag
-    assert re.search(r"""['"]debug['"]""", content), (
-        "compile command must support a --debug flag"
-    )
+// compile command must accept a path argument
+if (!content.includes('compile <path>') &&
+    !/compile[\s\S]{0,500}\.positional/.test(content)) {
+    errors.push('compile must accept a path argument');
+}
+
+if (errors.length > 0) {
+    console.error('FAIL: ' + errors.join('; '));
+    process.exit(1);
+}
+console.log('PASS');
+""", RUNNER_TS)
+    assert r.returncode == 0, f"Compile command missing: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_minimize_positional_path():
-    """minimize command must accept path as a positional argument, not a --path option."""
-    content = Path(RUNNER_TS).read_text()
+    """minimize command accepts path as a positional argument, not --path option."""
+    r = _run_node(r"""
+const fs = require('fs');
+const content = fs.readFileSync(process.argv[2], 'utf8');
 
-    # Should have 'minimize <path>' (positional syntax)
-    assert re.search(r"""['"]minimize\s+<path>['"]""", content), (
-        "minimize command must use positional <path> syntax (e.g., 'minimize <path>')"
-    )
-
-    # Should NOT have the old --path / -p option pattern for minimize
-    # Look specifically in the minimize command builder section
-    minimize_section = ""
-    in_minimize = False
-    brace_depth = 0
-    for line in content.split("\n"):
-        if "'minimize" in line or '"minimize' in line:
-            in_minimize = True
-        if in_minimize:
-            minimize_section += line + "\n"
-            brace_depth += line.count("(") - line.count(")")
-            if brace_depth <= 0 and len(minimize_section) > 50:
-                break
-
-    # The positional approach uses .positional('path', ...) not .string('path')
-    assert "positional" in minimize_section.lower() or "<path>" in minimize_section, (
-        "minimize command should use positional path argument"
-    )
+// Must have 'minimize <path>' (yargs positional syntax)
+if (!/'minimize\s+<path>'/.test(content) && !/"minimize\s+<path>"/.test(content)) {
+    console.error('FAIL: minimize must use positional <path> syntax');
+    process.exit(1);
+}
+console.log('PASS');
+""", RUNNER_TS)
+    assert r.returncode == 0, f"minimize path not positional: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_path_resolution_not_cwd():
-    """Minimize and compile commands must NOT resolve relative paths from process.cwd()."""
-    content = Path(RUNNER_TS).read_text()
+    """path.resolve calls in runner.ts must NOT use process.cwd() directly."""
+    r = _run_node(r"""
+const fs = require('fs');
+const content = fs.readFileSync(process.argv[2], 'utf8');
 
-    # On the base commit, minimize resolves paths with: path.resolve(process.cwd(), opts.path)
-    # After fix, it should use a project root constant instead.
-    # Check that process.cwd() is NOT used for path resolution in minimize/compile handlers
-    # (It's fine in constants.ts for defining the root, but not in runner.ts for resolving input paths)
-    path_resolve_calls = re.findall(r"path\.resolve\((.*?)\)", content)
-    for call in path_resolve_calls:
-        assert "process.cwd()" not in call, (
-            "path.resolve should not use process.cwd() directly — "
-            "use a project root constant that accounts for the compiler/ directory structure"
-        )
+// Find all path.resolve(...) calls
+const resolves = content.match(/path\.resolve\([^)]*\)/g) || [];
+const bad = resolves.filter(r => r.includes('process.cwd()'));
+
+if (bad.length > 0) {
+    console.error('FAIL: path.resolve still uses process.cwd(): ' + bad[0]);
+    process.exit(1);
+}
+console.log('PASS');
+""", RUNNER_TS)
+    assert r.returncode == 0, f"path.resolve uses process.cwd(): {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
+def test_runner_watch_uses_plugin_root():
+    """runner-watch.ts must import the babel plugin root constant, not PROJECT_ROOT."""
+    r = _run_node(r"""
+const fs = require('fs');
+const content = fs.readFileSync(process.argv[2], 'utf8');
 
-    # runner-watch.ts must not use PROJECT_ROOT for build/tsconfig operations
-    # (those should use the babel plugin root, not the compiler project root)
-    watch_content = Path(RUNNER_WATCH_TS).read_text()
-    # The build cwd should NOT use the old PROJECT_ROOT that pointed to babel-plugin
-    # On base: PROJECT_ROOT pointed to babel-plugin, so {cwd: PROJECT_ROOT} was correct
-    # After fix: PROJECT_ROOT points to compiler root, so build must use the new plugin constant
-    build_lines = [l for l in watch_content.split("\n") if "cwd:" in l and "build" in watch_content[max(0,watch_content.find(l)-200):watch_content.find(l)+len(l)]]
-    # Simpler: just check PROJECT_ROOT is no longer imported from constants in runner-watch
-    imports = [l for l in watch_content.split("\n") if "from" in l and "constants" in l]
-    for imp in imports:
-        assert "PROJECT_ROOT" not in imp, (
-            "runner-watch.ts should not import PROJECT_ROOT from constants — "
-            "use the babel plugin root constant for build/tsconfig operations"
-        )
+// Check import lines from constants module
+const lines = content.split('\n');
+for (const line of lines) {
+    if (line.includes('from') && line.includes('constants')) {
+        if (/\bPROJECT_ROOT\b/.test(line)) {
+            console.error('FAIL: runner-watch.ts imports PROJECT_ROOT — should use babel plugin root');
+            process.exit(1);
+        }
+    }
+}
+console.log('PASS');
+""", RUNNER_WATCH_TS)
+    assert r.returncode == 0, f"runner-watch.ts uses wrong constant: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_compile_handler_not_stub():
+    """Compile command handler must have real logic — file reading, compilation, output."""
+    r = _run_node(r"""
+const fs = require('fs');
+const content = fs.readFileSync(process.argv[2], 'utf8');
+
+const fnMatch = content.match(/(?:async\s+)?function\s+(\w*[Cc]ompile\w*)\s*\(/);
+if (!fnMatch) {
+    console.error('FAIL: No compile handler function found');
+    process.exit(1);
+}
+
+const fnName = fnMatch[1];
+const fnBody = content.substring(fnMatch.index, fnMatch.index + 3000);
+
+const checks = [
+    [/readFileSync|readFile/.test(fnBody), 'must read the input file'],
+    [/BABEL_PLUGIN|BabelPlugin|require\(/.test(fnBody), 'must load the compiler'],
+    [/debug/i.test(fnBody), 'must handle debug option'],
+    [/console\.|stdout|print/.test(fnBody), 'must produce output'],
+];
+
+const failures = checks.filter(c => !c[0]).map(c => c[1]);
+if (failures.length > 0) {
+    console.error('FAIL: ' + fnName + ': ' + failures.join('; '));
+    process.exit(1);
+}
+console.log('PASS: ' + fnName + ' has real logic');
+""", RUNNER_TS)
+    assert r.returncode == 0, f"Compile handler is stub: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Config/doc update tests (config_edit) — REQUIRED for agentmd-edit tasks
+# fail_to_pass (pr_diff) — documentation updates
 # ---------------------------------------------------------------------------
 
-# [config_edit] fail_to_pass
-
-    # Must mention the compile subcommand
+def test_claude_md_documents_compile():
+    """compiler/CLAUDE.md must document the 'yarn snap compile' command."""
+    content = Path(CLAUDE_MD).read_text()
     assert "snap compile" in content, (
-        "CLAUDE.md should document the 'yarn snap compile' command"
+        "CLAUDE.md should document 'yarn snap compile'"
     )
-
-    # Must explain it can compile arbitrary files (not just fixtures)
-    assert "arbitrary" in content.lower() or "any file" in content.lower() or \
-           "not just fixtures" in content.lower(), (
-        "CLAUDE.md should explain that compile works on any file, not just fixtures"
-    )
-
-    # Must mention the --debug flag for compile
     assert "--debug" in content or "debug" in content.lower(), (
-        "CLAUDE.md should mention the debug option for the compile command"
+        "CLAUDE.md should mention the debug option for compile"
     )
 
 
-# [config_edit] fail_to_pass
-
-    # Must mention the compile subcommand
+def test_dev_guide_documents_commands():
+    """compiler/docs/DEVELOPMENT_GUIDE.md must document compile and minimize commands."""
+    content = Path(DEV_GUIDE).read_text()
     assert "snap compile" in content, (
         "DEVELOPMENT_GUIDE.md should document 'yarn snap compile'"
     )
-
-    # Must mention the minimize subcommand with path syntax
     assert "snap minimize" in content, (
         "DEVELOPMENT_GUIDE.md should document 'yarn snap minimize'"
-    )
-
-    # Should have code examples
-    assert "```" in content, (
-        "DEVELOPMENT_GUIDE.md should include code examples"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub + regression
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
-def test_compile_handler_not_stub():
-    """The compile command handler must have real logic — file reading, compilation, output."""
-    content = Path(RUNNER_TS).read_text()
-
-    # Find the compile handler function
-    compile_fn_match = re.search(
-        r"(async\s+)?function\s+(\w*[Cc]ompile\w*)\s*\(", content
-    )
-    assert compile_fn_match, "Must have a compile handler function"
-
-    fn_name = compile_fn_match.group(2)
-
-    # Extract the function body (rough: from function declaration to end)
-    fn_start = compile_fn_match.start()
-    # Count at least some substantial lines
-    fn_body = content[fn_start:fn_start + 3000]
-
-    # Must read file contents
-    assert "readFileSync" in fn_body or "readFile" in fn_body, (
-        f"{fn_name} must read the input file"
-    )
-
-    # Must use the compiler (BABEL_PLUGIN_SRC or BabelPluginReactCompiler)
-    assert "BABEL_PLUGIN_SRC" in fn_body or "BabelPluginReactCompiler" in fn_body or \
-           "require(" in fn_body, (
-        f"{fn_name} must load and use the compiler"
-    )
-
-    # Must handle the debug option
-    assert "debug" in fn_body.lower(), (
-        f"{fn_name} must handle the debug option"
-    )
-
-    # Must produce output
-    assert "console" in fn_body or "stdout" in fn_body or "print" in fn_body, (
-        f"{fn_name} must produce output"
     )

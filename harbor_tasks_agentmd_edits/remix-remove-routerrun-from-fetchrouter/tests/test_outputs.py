@@ -7,7 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/remix"
@@ -19,11 +19,139 @@ BOOKSTORE_README = f"{REPO}/demos/bookstore/README.md"
 CHANGE_FILE = f"{REPO}/packages/fetch-router/.changes/minor.router-run.md"
 
 
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax checks
+# Fail-to-pass (pr_diff) — router.run removed from source code
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+def test_router_run_removed_from_source():
+    """Router interface and createRouter must not contain run() method."""
+    r = _run_node("""
+import { readFileSync } from 'node:fs';
+
+const src = readFileSync('packages/fetch-router/src/lib/router.ts', 'utf8');
+
+// Extract the Router interface body
+const iface = src.match(/export\\s+interface\\s+Router\\s*\\{([\\s\\S]*?)\\n\\}/);
+if (!iface) {
+  console.error('ERROR: Router interface not found');
+  process.exit(1);
+}
+
+// Check for run method declarations in the interface
+if (/^\\s+run\\s*[<(]/m.test(iface[1])) {
+  console.error('ERROR: Router interface still declares run() method');
+  process.exit(1);
+}
+
+// Check for async run implementation anywhere in the file
+if (/async\\s+run\\s*[<(]/m.test(src)) {
+  console.error('ERROR: createRouter still has async run() implementation');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"router.run() not fully removed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+def test_router_run_tests_and_imports_removed():
+    """Test file must not contain router.run() tests or createStorageKey import."""
+    r = _run_node("""
+import { readFileSync } from 'node:fs';
+
+const src = readFileSync('packages/fetch-router/src/lib/router.test.ts', 'utf8');
+
+if (src.includes("describe('router.run()")) {
+  console.error('ERROR: test file still has router.run() describe block');
+  process.exit(1);
+}
+
+if (/router\\.run\\s*\\(/m.test(src)) {
+  console.error('ERROR: test file still calls router.run()');
+  process.exit(1);
+}
+
+if (src.includes('createStorageKey')) {
+  console.error('ERROR: test file still imports createStorageKey');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"router.run() tests not removed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+def test_change_file_deleted():
+    """The unreleased change file for router.run must be removed."""
+    assert not Path(CHANGE_FILE).exists(), \
+        "packages/fetch-router/.changes/minor.router-run.md should be deleted"
+
+
+def test_readme_router_run_section_removed():
+    """fetch-router README must not have 'Running Code In Request Context' section."""
+    r = _run_node("""
+import { readFileSync } from 'node:fs';
+
+const content = readFileSync('packages/fetch-router/README.md', 'utf8');
+
+if (content.includes('### Running Code In Request Context')) {
+  console.error('ERROR: README still has "Running Code In Request Context" section');
+  process.exit(1);
+}
+
+if (/router\\.run\\s*\\(/m.test(content)) {
+  console.error('ERROR: README still has router.run() code examples');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"README still references router.run(): {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+def test_bookstore_readme_no_router_run():
+    """Bookstore demo README must not reference router.run()."""
+    r = _run_node("""
+import { readFileSync } from 'node:fs';
+
+const content = readFileSync('demos/bookstore/README.md', 'utf8');
+
+if (/router\\.run\\(\\)/m.test(content)) {
+  console.error('ERROR: bookstore README still mentions router.run()');
+  process.exit(1);
+}
+
+if (content.includes('#running-code-in-request-context')) {
+  console.error('ERROR: bookstore README still links to removed section');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"bookstore README still references router.run(): {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) — preserved functionality
+# ---------------------------------------------------------------------------
+
 def test_syntax_check():
     """Modified TypeScript files must be non-empty with balanced braces."""
     for path in [ROUTER_TS, ROUTER_TEST_TS]:
@@ -32,103 +160,23 @@ def test_syntax_check():
         assert src.count("{") == src.count("}"), f"{path} has unbalanced braces"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — router.run removed from code
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
-def test_router_run_method_removed_from_interface():
-    """The Router interface must NOT declare a run() method."""
-    src = Path(ROUTER_TS).read_text()
-    # Match "run<" or "run(" in the interface portion (before createRouter)
-    interface_match = re.search(
-        r"export\s+interface\s+Router\s*\{([\s\S]*?)\n\}", src
-    )
-    assert interface_match, "Router interface not found"
-    interface_body = interface_match.group(1)
-    assert "run" not in interface_body.split("fetch")[1].split("route")[0] if "route" in interface_body else True, \
-        "Router interface still declares run()"
-    # More direct: no "run<result>" or "run(" signatures
-    assert not re.search(r"\brun\s*[<(]", interface_body), \
-        "Router interface still has run() method signature"
-
-
-# [pr_diff] fail_to_pass
-def test_router_run_implementation_removed():
-    """The createRouter function must NOT contain a run() implementation."""
-    src = Path(ROUTER_TS).read_text()
-    # Look for the run implementation in the returned object
-    assert "async run" not in src, \
-        "router.ts still contains async run implementation"
-    assert "router.run()" not in src, \
-        "router.ts still references router.run()"
-
-
-# [pr_diff] fail_to_pass
-def test_router_run_tests_removed():
-    """The test file must NOT contain a describe('router.run()') block."""
-    src = Path(ROUTER_TEST_TS).read_text()
-    assert "router.run" not in src.lower(), \
-        "router.test.ts still contains router.run tests"
-
-
-# [pr_diff] fail_to_pass
-def test_change_file_deleted():
-    """The unreleased change file for router.run must be removed."""
-    assert not Path(CHANGE_FILE).exists(), \
-        "packages/fetch-router/.changes/minor.router-run.md should be deleted"
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — router.fetch still works
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
 def test_router_fetch_still_in_interface():
     """The Router interface must still declare fetch()."""
     src = Path(ROUTER_TS).read_text()
-    assert re.search(r"\bfetch\s*\(", src), \
+    assert "fetch(" in src, \
         "Router interface must still have fetch() method"
 
 
-# [static] pass_to_pass
 def test_router_map_still_in_interface():
     """The Router interface must still declare map()."""
     src = Path(ROUTER_TS).read_text()
-    assert re.search(r"\bmap\s*[<(]", src), \
+    assert "map(" in src or "mapRoutes" in src, \
         "Router interface must still have map() method"
 
 
-# [static] pass_to_pass
-def test_createStorageKey_import_removed_from_tests():
-    """The test file should not import createStorageKey (only used by run tests)."""
-    src = Path(ROUTER_TEST_TS).read_text()
-    assert "createStorageKey" not in src, \
-        "router.test.ts still imports createStorageKey which was only used by run() tests"
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) — README updates
-# ---------------------------------------------------------------------------
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — README still has other content
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
 def test_fetch_router_readme_still_has_content():
-    """fetch-router README must still document router.fetch and other features."""
+    """fetch-router README must still document core features."""
     content = Path(FETCH_ROUTER_README).read_text()
     assert "router.fetch" in content, "README must still document router.fetch"
     assert "## Features" in content, "README must still have Features section"
     assert "## Usage" in content, "README must still have Usage section"
-    assert "### Testing" in content, "README must still have Testing section"

@@ -7,167 +7,184 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import json
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/lotti"
 
 
+def _analyze_dart(script: str, filepath: str) -> dict:
+    """Run a Python analysis script against a Dart file, return JSON result."""
+    r = subprocess.run(
+        ["python3", "-c", script, filepath],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    if r.returncode != 0:
+        return {"ok": False, "err": r.stderr.strip() or f"exit {r.returncode}"}
+    try:
+        return json.loads(r.stdout.strip())
+    except json.JSONDecodeError:
+        return {"ok": False, "err": f"bad output: {r.stdout[:200]}"}
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# pass_to_pass — syntax / structural checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+
 def test_syntax_check():
-    """Modified Dart files must not have obvious syntax errors (balanced braces)."""
-    for rel_path in [
+    """Modified Dart files have balanced braces and parens."""
+    for rel in [
         "lib/features/journal/ui/widgets/list_cards/modern_task_card.dart",
         "lib/features/tasks/ui/header/task_due_date_wrapper.dart",
     ]:
-        src = Path(f"{REPO}/{rel_path}").read_text()
-        # Basic brace-balance check for Dart
+        src = Path(f"{REPO}/{rel}").read_text()
         assert src.count("{") == src.count("}"), (
-            f"{rel_path}: unbalanced braces ({src.count('{')} open vs {src.count('}')} close)"
+            f"{rel}: unbalanced braces ({src.count('{')} open vs {src.count('}')} close)"
         )
         assert src.count("(") == src.count(")"), (
-            f"{rel_path}: unbalanced parens ({src.count('(')} open vs {src.count(')')} close)"
+            f"{rel}: unbalanced parens ({src.count('(')} open vs {src.count(')')} close)"
         )
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# fail_to_pass — behavioral tests using subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
+_ANALYZE_CARD = r"""
+import json, re, sys
+
+src = open(sys.argv[1]).read()
+
+# Locate _buildDateRow method body
+m = re.search(r'Widget _buildDateRow\(.*?\{', src)
+if not m:
+    print(json.dumps({"ok": False, "err": "_buildDateRow not found"}))
+    sys.exit(0)
+
+depth = 1
+body_start = m.end()
+body_end = len(src)
+for i in range(body_start, len(src)):
+    if src[i] == '{':
+        depth += 1
+    elif src[i] == '}':
+        depth -= 1
+        if depth == 0:
+            body_end = i
+            break
+
+body = src[body_start:body_end]
+
+# 1. Must reference TaskDone or TaskRejected in the method
+if not re.search(r'(TaskDone|TaskRejected)', body):
+    print(json.dumps({"ok": False, "err": "_buildDateRow must reference TaskDone/TaskRejected"}))
+    sys.exit(0)
+
+# 2. hasDueDate assignment must be gated by completion status (!isCompleted)
+has_due_line = None
+for line in body.split('\n'):
+    s = line.strip()
+    if 'hasDueDate' in s and '=' in s and ('final' in s or s.startswith('hasDueDate')):
+        has_due_line = s
+        break
+
+if not has_due_line:
+    print(json.dumps({"ok": False, "err": "hasDueDate assignment not found in _buildDateRow"}))
+    sys.exit(0)
+
+if not re.search(r'!.*(?:isCompleted|isComplete|isDone|isFinished)', has_due_line):
+    print(json.dumps({"ok": False, "err": f"hasDueDate not gated by completion status: {has_due_line}"}))
+    sys.exit(0)
+
+print(json.dumps({"ok": True}))
+"""
+
+
 def test_task_card_hides_due_date_for_completed():
-    """ModernTaskCard._buildDateRow must skip due date for completed/rejected tasks."""
-    src = Path(
-        f"{REPO}/lib/features/journal/ui/widgets/list_cards/modern_task_card.dart"
-    ).read_text()
-
-    # The fix must introduce a check for completed/rejected status in _buildDateRow.
-    # We look for references to TaskDone/TaskRejected or done/rejected status
-    # within the _buildDateRow method context (near hasDueDate logic).
-    has_date_row = "_buildDateRow" in src
-    assert has_date_row, "modern_task_card.dart must contain _buildDateRow method"
-
-    # Extract the _buildDateRow method body (from method signature to next method or end)
-    date_row_match = re.search(
-        r"_buildDateRow\(.*?\{(.*?)(?=\n  Widget |\n  \w+ _|\Z)",
-        src,
-        re.DOTALL,
-    )
-    assert date_row_match, "_buildDateRow method body not found"
-    method_body = date_row_match.group(1)
-
-    # The method must check for completed/done or rejected task status
-    checks_done = bool(
-        re.search(r"TaskDone|TaskStatus\.done|status.*done|isDone|isCompleted", method_body, re.IGNORECASE)
-    )
-    checks_rejected = bool(
-        re.search(r"TaskRejected|TaskStatus\.rejected|status.*rejected|isRejected|isCompleted", method_body, re.IGNORECASE)
-    )
-    assert checks_done, (
-        "_buildDateRow must check for completed (done) task status to hide due date"
-    )
-    assert checks_rejected, (
-        "_buildDateRow must check for rejected task status to hide due date"
-    )
-
-    # The hasDueDate assignment must be gated by the status check
-    # (not just checking showDueDate && task.data.due != null)
-    has_due_date_line = [
-        line for line in method_body.split("\n")
-        if "hasDueDate" in line and "=" in line and "showDueDate" in line
-    ]
-    assert len(has_due_date_line) > 0, "hasDueDate assignment not found"
-    # The line must reference the completed/status variable
-    due_date_assign = has_due_date_line[0]
-    assert re.search(r"isCompleted|isDone|isRejected|status", due_date_assign, re.IGNORECASE), (
-        "hasDueDate must be gated by task completion status, not just showDueDate && due != null"
-    )
+    """ModernTaskCard._buildDateRow skips due date for completed/rejected tasks."""
+    card = f"{REPO}/lib/features/journal/ui/widgets/list_cards/modern_task_card.dart"
+    result = _analyze_dart(_ANALYZE_CARD, card)
+    assert result.get("ok"), result.get("err", "Unknown error")
 
 
-# [pr_diff] fail_to_pass
+_ANALYZE_WRAPPER = r"""
+import json, re, sys
 
-    # Must reference TaskDone/TaskRejected or equivalent completed check
-    has_completed_check = bool(
-        re.search(r"TaskDone|TaskRejected|isCompleted|isDone|isRejected", src)
-    )
-    assert has_completed_check, (
-        "task_due_date_wrapper.dart must check for completed/rejected task status"
-    )
+src = open(sys.argv[1]).read()
 
-    # The isUrgent parameter must be conditioned on completed status
-    # Before fix: isUrgent: status.isUrgent
-    # After fix: isUrgent: !isCompleted && status.isUrgent (or equivalent)
-    is_urgent_lines = [line.strip() for line in src.split("\n") if "isUrgent" in line and ":" in line]
-    assert len(is_urgent_lines) > 0, "isUrgent parameter assignment not found"
+# 1. Must import task.dart (needed for TaskDone/TaskRejected types)
+if not re.search(r"import.*package:lotti/classes/task\.dart", src):
+    print(json.dumps({"ok": False, "err": "Missing import for lotti/classes/task.dart"}))
+    sys.exit(0)
 
-    # At least one isUrgent line must reference the completed status
-    urgency_gated = any(
-        re.search(r"isCompleted|isDone|isRejected|completed|rejected", line)
-        for line in is_urgent_lines
-    )
-    assert urgency_gated, (
-        "isUrgent must be gated by completion status "
-        "(e.g., !isCompleted && status.isUrgent)"
-    )
+# 2. Must define isCompleted using TaskDone/TaskRejected
+if not re.search(r'(TaskDone|TaskRejected)', src):
+    print(json.dumps({"ok": False, "err": "Must reference TaskDone/TaskRejected for status check"}))
+    sys.exit(0)
 
-    # The urgentColor must also be conditioned
-    color_lines = [line.strip() for line in src.split("\n") if "urgentColor" in line and ":" in line]
-    assert len(color_lines) > 0, "urgentColor parameter assignment not found"
-    color_gated = any(
-        re.search(r"isCompleted|isDone|isRejected|completed|rejected|null", line)
-        for line in color_lines
-    )
-    assert color_gated, (
-        "urgentColor must be conditioned on completion status "
-        "(e.g., isCompleted ? null : status.urgentColor)"
-    )
+# 3. isUrgent must be gated by completion status (negation before status.isUrgent)
+is_urgent_lines = [l for l in src.split('\n') if 'isUrgent' in l and ':' in l]
+if not is_urgent_lines:
+    print(json.dumps({"ok": False, "err": "isUrgent parameter not found"}))
+    sys.exit(0)
+
+gated = any(re.search(r'!.*(?:isCompleted|isComplete|isDone|isFinished).*isUrgent', l) for l in is_urgent_lines)
+if not gated:
+    print(json.dumps({"ok": False, "err": "isUrgent must be gated by completion status (e.g., !isCompleted && status.isUrgent)"}))
+    sys.exit(0)
+
+# 4. urgentColor must be null when task is completed
+color_lines = [l for l in src.split('\n') if 'urgentColor' in l and ':' in l]
+if not color_lines:
+    print(json.dumps({"ok": False, "err": "urgentColor parameter not found"}))
+    sys.exit(0)
+
+null_gated = any(
+    'null' in l and re.search(r'isCompleted|isComplete|isDone|isFinished', l)
+    for l in color_lines
+)
+if not null_gated:
+    print(json.dumps({"ok": False, "err": "urgentColor must be null for completed tasks (e.g., isCompleted ? null : status.urgentColor)"}))
+    sys.exit(0)
+
+print(json.dumps({"ok": True}))
+"""
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) — config/documentation update tests
-# ---------------------------------------------------------------------------
+def test_due_date_wrapper_disables_urgency():
+    """TaskDueDateWrapper disables urgency styling for completed/rejected tasks."""
+    wrapper = f"{REPO}/lib/features/tasks/ui/header/task_due_date_wrapper.dart"
+    result = _analyze_dart(_ANALYZE_WRAPPER, wrapper)
+    assert result.get("ok"), result.get("err", "Unknown error")
 
-# [config_edit] fail_to_pass
 
-    # Must NOT still say "Coming Soon: Deep Dive Series"
+def test_readme_updated():
+    """README references live 'Meet Lotti' blog series with link."""
+    readme = Path(f"{REPO}/README.md").read_text()
     assert "Coming Soon: Deep Dive" not in readme, (
         "README still says 'Coming Soon: Deep Dive Series' — "
         "should be updated to reflect the launched blog series"
     )
-
-    # Must reference "Meet Lotti" blog series
-    assert "meet lotti" in readme.lower() or "meet-lotti" in readme.lower(), (
+    assert "meet-lotti" in readme.lower(), (
         "README should reference the 'Meet Lotti' blog series"
     )
-
-    # Must contain a link to the actual blog post on substack
     assert "matthiasnehlsen.substack.com/p/meet-lotti" in readme, (
-        "README should link to the Meet Lotti blog post"
+        "README should link to the Meet Lotti blog post on Substack"
     )
 
 
-# [config_edit] fail_to_pass
-
-    # Must mention due date changes
+def test_changelog_documents_changes():
+    """CHANGELOG documents due date visibility changes for completed/rejected tasks."""
+    changelog = Path(f"{REPO}/CHANGELOG.md").read_text()
+    lower = changelog.lower()
     assert "due date" in lower, (
         "CHANGELOG should mention 'due date' changes"
     )
-
-    # Must mention completed or rejected tasks
-    has_completed = "completed" in lower or "done" in lower
-    has_rejected = "rejected" in lower
-    assert has_completed or has_rejected, (
+    assert "completed" in lower or "rejected" in lower, (
         "CHANGELOG should reference completed/rejected tasks "
         "in context of due date visibility changes"
     )
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (agent_config) — rules from AGENTS.md
-# ---------------------------------------------------------------------------
-
-# [agent_config] pass_to_pass — AGENTS.md:last-section @ 88b2b0e

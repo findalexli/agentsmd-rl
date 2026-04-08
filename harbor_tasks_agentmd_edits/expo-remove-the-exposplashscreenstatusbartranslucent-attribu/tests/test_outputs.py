@@ -7,10 +7,23 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/expo"
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute a Python snippet in the repo directory."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -20,8 +33,6 @@ REPO = "/workspace/expo"
 # [static] pass_to_pass
 def test_syntax_check():
     """Modified XML files must be well-formed."""
-    import xml.etree.ElementTree as ET
-
     xml_files = [
         "apps/bare-expo/android/app/src/main/res/values/strings.xml",
         "apps/expo-go/android/expoview/src/main/res/values/strings.xml",
@@ -30,110 +41,225 @@ def test_syntax_check():
     for rel in xml_files:
         path = Path(REPO) / rel
         assert path.exists(), f"Missing: {rel}"
+        import xml.etree.ElementTree as ET
         ET.parse(str(path))  # raises ParseError if malformed
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — code changes
+# Fail-to-pass (pr_diff) — code changes, verified via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_translucent_resource_removed():
     """expo_splash_screen_status_bar_translucent string must be removed from all apps."""
-    xml_files = [
-        "apps/bare-expo/android/app/src/main/res/values/strings.xml",
-        "apps/expo-go/android/expoview/src/main/res/values/strings.xml",
-        "apps/minimal-tester/android/app/src/main/res/values/strings.xml",
-    ]
-    for rel in xml_files:
-        content = (Path(REPO) / rel).read_text()
-        assert "expo_splash_screen_status_bar_translucent" not in content, (
-            f"{rel} still contains expo_splash_screen_status_bar_translucent"
-        )
+    r = _run_py("""
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+REPO = "/workspace/expo"
+xml_files = [
+    "apps/bare-expo/android/app/src/main/res/values/strings.xml",
+    "apps/expo-go/android/expoview/src/main/res/values/strings.xml",
+    "apps/minimal-tester/android/app/src/main/res/values/strings.xml",
+]
+for rel in xml_files:
+    tree = ET.parse(str(Path(REPO) / rel))
+    for string_elem in tree.findall(".//string"):
+        if string_elem.get("name") == "expo_splash_screen_status_bar_translucent":
+            raise AssertionError(f"Found expo_splash_screen_status_bar_translucent in {rel}")
+print("PASS")
+""")
+    assert r.returncode == 0, f"translucent resource still present: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_splash_screen_no_translucent_param():
-    """SplashScreen.kt show/ensureShown must not accept statusBarTranslucent parameter."""
-    splash_kt = (
-        Path(REPO)
-        / "apps/expo-go/android/expoview/src/main/java/host/exp/exponent"
-        / "experience/splashscreen/legacy/singletons/SplashScreen.kt"
-    )
-    content = splash_kt.read_text()
-    # The parameter declaration should be gone
-    assert "statusBarTranslucent: Boolean" not in content, (
-        "SplashScreen.kt still declares statusBarTranslucent parameter"
-    )
-    # The old configureTranslucent call should be replaced with setTranslucent
-    assert "configureTranslucent" not in content, (
-        "SplashScreen.kt still calls configureTranslucent instead of setTranslucent"
-    )
+    """SplashScreen.show/ensureShown must not accept statusBarTranslucent parameter."""
+    r = _run_py("""
+import re
+from pathlib import Path
+
+REPO = "/workspace/expo"
+splash_kt = Path(REPO) / (
+    "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/"
+    "experience/splashscreen/legacy/singletons/SplashScreen.kt"
+)
+content = splash_kt.read_text()
+
+# Extract all function signatures with 'fun show' or 'fun ensureShown'
+# and verify none have statusBarTranslucent parameter
+sig_pattern = re.compile(
+    r'fun\\s+(show|ensureShown)\\s*\\(([^)]*)\\)', re.DOTALL
+)
+for m in sig_pattern.finditer(content):
+    params = m.group(2)
+    if 'statusBarTranslucent' in params:
+        raise AssertionError(
+            f"Function {m.group(1)} still has statusBarTranslucent param: {params[:80]}"
+        )
+    if 'translucent: Boolean' in params:
+        raise AssertionError(
+            f"Function {m.group(1)} still has translucent: Boolean param"
+        )
+
+# Verify configureTranslucent is gone (replaced by setTranslucent)
+if 'configureTranslucent' in content:
+    raise AssertionError("SplashScreen.kt still calls configureTranslucent")
+
+# Verify all show/ensureShown calls inside the file use setTranslucent
+if 'SplashScreenStatusBar.setTranslucent' not in content:
+    raise AssertionError("SplashScreen.kt does not call SplashScreenStatusBar.setTranslucent")
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"SplashScreen signature check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_status_bar_set_translucent_simplified():
     """SplashScreenStatusBar must use setTranslucent(activity) without boolean param."""
-    status_bar_kt = (
-        Path(REPO)
-        / "apps/expo-go/android/expoview/src/main/java/host/exp/exponent"
-        / "experience/splashscreen/legacy/singletons/SplashScreenStatusBar.kt"
-    )
-    content = status_bar_kt.read_text()
-    # Must have setTranslucent with single activity param
-    assert re.search(r"fun\s+setTranslucent\s*\(\s*activity\s*:\s*Activity\s*\)", content), (
-        "SplashScreenStatusBar should have setTranslucent(activity: Activity)"
-    )
-    # Must NOT have old configureTranslucent with translucent boolean
-    assert "configureTranslucent" not in content, (
-        "SplashScreenStatusBar still has configureTranslucent"
-    )
-    assert "translucent: Boolean" not in content, (
-        "SplashScreenStatusBar still accepts translucent boolean"
-    )
+    r = _run_py("""
+import re
+from pathlib import Path
+
+REPO = "/workspace/expo"
+status_bar_kt = Path(REPO) / (
+    "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/"
+    "experience/splashscreen/legacy/singletons/SplashScreenStatusBar.kt"
+)
+content = status_bar_kt.read_text()
+
+# Verify setTranslucent exists with single Activity param
+sig = re.search(r'fun\\s+setTranslucent\\s*\\(\\s*activity\\s*:\\s*Activity\\s*\\)', content)
+if not sig:
+    raise AssertionError("SplashScreenStatusBar missing setTranslucent(activity: Activity)")
+
+# Verify configureTranslucent is gone
+if 'configureTranslucent' in content:
+    raise AssertionError("SplashScreenStatusBar still has configureTranslucent")
+
+# Verify no translucent: Boolean param anywhere in the object
+if 'translucent: Boolean' in content:
+    raise AssertionError("SplashScreenStatusBar still accepts translucent boolean")
+
+# Verify the insets listener is always applied (no conditional branching)
+# The old code had `if (translucent) { ... } else { setListener(null) }`
+# The new code should NOT have setOnApplyWindowInsetsListener(null)
+if 'setOnApplyWindowInsetsListener(null)' in content:
+    raise AssertionError("SplashScreenStatusBar still has null listener fallback")
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"SplashScreenStatusBar check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_experience_utils_set_translucent_no_boolean():
     """ExperienceActivityUtils.setTranslucent must take only activity, no boolean."""
-    utils_kt = (
-        Path(REPO)
-        / "apps/expo-go/android/expoview/src/main/java/host/exp/exponent"
-        / "utils/ExperienceActivityUtils.kt"
-    )
-    content = utils_kt.read_text()
-    # Should have setTranslucent(activity: Activity) without boolean
-    assert re.search(r"fun\s+setTranslucent\s*\(\s*activity\s*:\s*Activity\s*\)", content), (
-        "ExperienceActivityUtils should have setTranslucent(activity: Activity)"
-    )
-    # Should NOT have translucent: Boolean param
-    assert "translucent: Boolean" not in content, (
-        "ExperienceActivityUtils.setTranslucent still accepts translucent boolean"
-    )
+    r = _run_py("""
+import re
+from pathlib import Path
+
+REPO = "/workspace/expo"
+utils_kt = Path(REPO) / (
+    "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/"
+    "utils/ExperienceActivityUtils.kt"
+)
+content = utils_kt.read_text()
+
+# Verify setTranslucent signature takes only activity
+sig = re.search(r'fun\\s+setTranslucent\\(\\s*activity\\s*:\\s*Activity\\s*\\)', content)
+if not sig:
+    raise AssertionError("ExperienceActivityUtils missing setTranslucent(activity: Activity)")
+
+# Verify old signature with boolean is gone
+if 'translucent: Boolean' in content:
+    raise AssertionError("ExperienceActivityUtils.setTranslucent still accepts translucent boolean")
+
+# Verify call site in updateStatusBar uses setTranslucent(activity) without boolean
+# The old code was: setTranslucent(statusBarTranslucent, activity)
+# The new code should be: setTranslucent(activity)
+call_pattern = re.compile(r'setTranslucent\\s*\\(([^)]*)\\)', re.MULTILINE)
+for m in call_pattern.finditer(content):
+    args = [a.strip() for a in m.group(1).split(',') if a.strip()]
+    if len(args) > 1:
+        raise AssertionError(
+            f"setTranslucent called with multiple args: {m.group(0)}"
+        )
+
+# Verify the statusBarTranslucent local variable is removed
+if 'val statusBarTranslucent' in content:
+    raise AssertionError("statusBarTranslucent variable still exists in ExperienceActivityUtils")
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"ExperienceActivityUtils check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_get_status_bar_translucent_removed():
     """getStatusBarTranslucent helper must be removed from lifecycle listener."""
-    listener_kt = (
-        Path(REPO)
-        / "apps/expo-go/android/expoview/src/main/java/host/exp/exponent"
-        / "experience/splashscreen/legacy/SplashScreenReactActivityLifecycleListener.kt"
-    )
-    content = listener_kt.read_text()
-    assert "getStatusBarTranslucent" not in content, (
-        "SplashScreenReactActivityLifecycleListener still has getStatusBarTranslucent"
-    )
+    r = _run_py("""
+from pathlib import Path
+
+REPO = "/workspace/expo"
+listener_kt = Path(REPO) / (
+    "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/"
+    "experience/splashscreen/legacy/SplashScreenReactActivityLifecycleListener.kt"
+)
+content = listener_kt.read_text()
+
+if 'getStatusBarTranslucent' in content:
+    raise AssertionError("getStatusBarTranslucent still present")
+
+# Verify ensureShown calls no longer pass statusBarTranslucent arg
+# Old: ensureShown(activity, resizeMode, ReactRootView::class.java, getStatusBarTranslucent(activity))
+# New: ensureShown(activity, resizeMode, ReactRootView::class.java)
+import re
+ensure_calls = re.findall(r'ensureShown\\s*\\([^)]+\\)', content, re.DOTALL)
+for call in ensure_calls:
+    args = [a.strip() for a in call.split(',') if a.strip()]
+    if len(args) > 3:
+        raise AssertionError(f"ensureShown called with >3 args: {call[:80]}")
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"getStatusBarTranslucent check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) — README documentation update
-# ---------------------------------------------------------------------------
+# [pr_diff] fail_to_pass
+def test_experience_activity_splash_screen_call():
+    """ExperienceActivity must call SplashScreen.show without the translucent boolean arg."""
+    r = _run_py("""
+import re
+from pathlib import Path
 
-# [config_edit] fail_to_pass
+REPO = "/workspace/expo"
+activity_kt = Path(REPO) / (
+    "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/"
+    "experience/ExperienceActivity.kt"
+)
+content = activity_kt.read_text()
 
+# Find SplashScreen.show calls
+show_calls = re.findall(r'SplashScreen\\.show\\s*\\([^)]+\\)', content, re.DOTALL)
+for call in show_calls:
+    # The old code had: SplashScreen.show(this, managedAppSplashScreenViewController!!, true)
+    # The new code: SplashScreen.show(this, managedAppSplashScreenViewController!!)
+    if 'true' in call.split(',')[-1].strip().lower():
+        raise AssertionError(
+            f"SplashScreen.show still passes translucent boolean: {call[:100]}"
+        )
 
-# [config_edit] fail_to_pass
+print("PASS")
+""")
+    assert r.returncode == 0, f"ExperienceActivity call site check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -149,7 +275,6 @@ def test_status_bar_still_applies_insets():
         / "experience/splashscreen/legacy/singletons/SplashScreenStatusBar.kt"
     )
     content = status_bar_kt.read_text()
-    # Must still contain the insets logic
     assert "setOnApplyWindowInsetsListener" in content, (
         "SplashScreenStatusBar.setTranslucent is missing insets listener"
     )

@@ -9,6 +9,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 import re
 from pathlib import Path
 
@@ -17,6 +18,14 @@ REPO = "/workspace/lotti"
 DETAIL_CONTENT = Path(REPO) / "lib/features/projects/ui/widgets/project_mobile_detail_content.dart"
 TASKS_PANEL = Path(REPO) / "lib/features/projects/ui/widgets/project_tasks_panel.dart"
 README = Path(REPO) / "lib/features/projects/README.md"
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code for Dart source analysis."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -41,41 +50,122 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_custom_scroll_view_in_detail_content():
     """Detail content uses CustomScrollView for sliver-based lazy rendering."""
-    src = DETAIL_CONTENT.read_text()
-    assert "CustomScrollView" in src, \
-        "ProjectMobileDetailContent should use CustomScrollView for lazy scroll rendering"
+    r = _run_py('''
+import re, sys
+src = open("/workspace/lotti/lib/features/projects/ui/widgets/project_mobile_detail_content.dart").read()
+
+# CustomScrollView must be present
+if "CustomScrollView" not in src:
+    sys.exit("Missing CustomScrollView widget")
+
+# SingleChildScrollView must be removed from the main scroll container
+if "SingleChildScrollView(" in src:
+    sys.exit("SingleChildScrollView still present; should be replaced by CustomScrollView")
+
+# CustomScrollView must have a slivers parameter
+if not re.search(r"slivers\\s*:", src):
+    sys.exit("CustomScrollView missing slivers: parameter")
+
+print("PASS")
+''')
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_sliver_task_panel_class_exists():
     """A sliver-compatible task panel widget class is defined."""
-    src = TASKS_PANEL.read_text()
-    assert re.search(r"class\s+\w*Sliver\w*Panel\s+extends\s+StatelessWidget", src), \
-        "A sliver-based task panel widget should be defined in project_tasks_panel.dart"
+    r = _run_py('''
+import re, sys
+src = open("/workspace/lotti/lib/features/projects/ui/widgets/project_tasks_panel.dart").read()
+
+# ProjectTasksSliverPanel must be a StatelessWidget
+if not re.search(r"class\\s+ProjectTasksSliverPanel\\s+extends\\s+StatelessWidget", src):
+    sys.exit("ProjectTasksSliverPanel must extend StatelessWidget")
+
+# Must have a build method that returns a Widget
+if not re.search(r"class\\s+ProjectTasksSliverPanel[\\s\\S]*?Widget\\s+build\\s*\\(", src):
+    sys.exit("ProjectTasksSliverPanel must have a build method returning Widget")
+
+# Must accept a ProjectRecord parameter (typed field)
+if "ProjectRecord" not in src:
+    sys.exit("ProjectTasksSliverPanel must reference ProjectRecord type")
+
+print("PASS")
+''')
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_sliver_list_for_lazy_task_rows():
     """Task rows are rendered lazily via SliverList."""
-    src = TASKS_PANEL.read_text()
-    assert "SliverList" in src, \
-        "Task panel should use SliverList for lazy rendering of task rows"
+    r = _run_py('''
+import re, sys
+src = open("/workspace/lotti/lib/features/projects/ui/widgets/project_tasks_panel.dart").read()
+
+# SliverList must be used for lazy rendering
+if "SliverList" not in src:
+    sys.exit("Task panel should use SliverList for lazy rendering")
+
+# Must have itemBuilder callback — this is what makes rendering lazy
+if "itemBuilder" not in src:
+    sys.exit("SliverList must have itemBuilder for lazy item construction")
+
+# Must have itemCount to bound the list
+if "itemCount" not in src:
+    sys.exit("SliverList must have itemCount to limit lazy rendering")
+
+print("PASS")
+''')
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_detail_content_uses_sliver_task_panel():
     """Detail content renders tasks through the sliver panel, not the eager panel."""
-    src = DETAIL_CONTENT.read_text()
-    assert re.search(r"ProjectTasks\w*Sliver\w*Panel|Sliver\w*Tasks?\w*Panel", src), \
-        "Detail content should reference a sliver-based task panel for lazy rendering"
+    r = _run_py('''
+import sys
+src = open("/workspace/lotti/lib/features/projects/ui/widgets/project_mobile_detail_content.dart").read()
+
+# Must reference the sliver panel
+if "ProjectTasksSliverPanel" not in src:
+    sys.exit("Detail content must use ProjectTasksSliverPanel for lazy task rendering")
+
+# The old eager panel reference should be gone
+if "ProjectTasksPanel(" in src:
+    sys.exit("Old eager ProjectTasksPanel should be replaced by ProjectTasksSliverPanel")
+
+print("PASS")
+''')
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_detail_content_uses_sliver_adapters():
     """Detail content wraps static header sections in SliverToBoxAdapter."""
-    src = DETAIL_CONTENT.read_text()
-    assert "SliverToBoxAdapter" in src, \
-        "Static header widgets should be wrapped in SliverToBoxAdapter inside CustomScrollView"
+    r = _run_py('''
+import sys
+src = open("/workspace/lotti/lib/features/projects/ui/widgets/project_mobile_detail_content.dart").read()
+
+# SliverToBoxAdapter must wrap non-lazy content
+if "SliverToBoxAdapter" not in src:
+    sys.exit("Static header widgets should be wrapped in SliverToBoxAdapter inside CustomScrollView")
+
+# Must wrap the HealthPanel in a SliverToBoxAdapter
+if "SliverToBoxAdapter" not in src or "HealthPanel" not in src:
+    sys.exit("HealthPanel must be wrapped in SliverToBoxAdapter")
+
+# Verify the header widget is also in a SliverToBoxAdapter
+if "_ProjectMobileHeader" not in src:
+    sys.exit("Header widget must be present")
+
+print("PASS")
+''')
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -92,16 +182,3 @@ def test_sliver_panel_not_stub():
         "Sliver panel must have an itemBuilder or delegate for rendering items"
     assert "TaskSummaryRow" in src, \
         "Sliver panel must render TaskSummaryRow widgets"
-
-
-# ---------------------------------------------------------------------------
-# Config-edit (config_edit) — README documents new architecture
-# ---------------------------------------------------------------------------
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass

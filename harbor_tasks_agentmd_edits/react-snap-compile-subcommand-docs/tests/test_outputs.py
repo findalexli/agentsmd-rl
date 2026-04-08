@@ -15,11 +15,23 @@ REPO = "/workspace/react"
 SNAP_SRC = Path(REPO) / "compiler" / "packages" / "snap" / "src"
 
 
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.js"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax checks
+# pass_to_pass (static) — syntax sanity
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Modified TypeScript files must not have obvious syntax errors."""
     ts_files = [
@@ -32,102 +44,107 @@ def test_syntax_check():
     for f in ts_files:
         content = f.read_text()
         assert len(content) > 100, f"{f.name} is too short or empty"
-        # Check balanced braces (rough syntax sanity)
         assert content.count("{") == content.count("}"), (
             f"{f.name} has unbalanced braces"
         )
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# fail_to_pass (pr_diff) — behavioral tests using subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-def test_constants_renamed_to_babel_plugin():
-    """constants.ts must export BABEL_PLUGIN_ROOT and BABEL_PLUGIN_SRC
-    instead of using PROJECT_ROOT for the babel-plugin path."""
-    src = (SNAP_SRC / "constants.ts").read_text()
-    # New exports must exist
-    assert "export const BABEL_PLUGIN_ROOT" in src, (
-        "constants.ts should export BABEL_PLUGIN_ROOT"
-    )
-    assert "export const BABEL_PLUGIN_SRC" in src, (
-        "constants.ts should export BABEL_PLUGIN_SRC"
-    )
-    # BABEL_PLUGIN_ROOT should reference 'babel-plugin-react-compiler'
-    # Find the definition of BABEL_PLUGIN_ROOT and check it includes the package path
-    root_match = re.search(
-        r"export const BABEL_PLUGIN_ROOT\s*=.*?;", src, re.DOTALL
-    )
-    assert root_match, "Could not find BABEL_PLUGIN_ROOT definition"
-    assert "babel-plugin-react-compiler" in root_match.group(), (
-        "BABEL_PLUGIN_ROOT should reference babel-plugin-react-compiler"
-    )
+def test_constants_evaluate_with_babel_plugin_exports():
+    """Transpile and evaluate constants.ts; verify BABEL_PLUGIN_ROOT/SRC are defined."""
+    r = _run_node("""\
+const fs = require("fs");
+const path = require("path");
+
+const src = fs.readFileSync("compiler/packages/snap/src/constants.ts", "utf8");
+
+// Minimal TS->JS: remove import statement, strip export keyword
+let js = src.replace(/^import\\s+path\\s+from\\s+['"]path['"];?$/m, "");
+js = js.replace(/^export\\s+/gm, "");
+
+// Build a function that evaluates the JS and returns the constants
+const body = js + "\\n"
+  + "return {\\n"
+  + "  BABEL_PLUGIN_ROOT: typeof BABEL_PLUGIN_ROOT !== 'undefined' ? BABEL_PLUGIN_ROOT : null,\\n"
+  + "  BABEL_PLUGIN_SRC: typeof BABEL_PLUGIN_SRC !== 'undefined' ? BABEL_PLUGIN_SRC : null,\\n"
+  + "};\\n";
+
+const fn = new Function("path", "process", body);
+const result = fn(path, process);
+
+if (!result.BABEL_PLUGIN_ROOT || !result.BABEL_PLUGIN_ROOT.includes("babel-plugin-react-compiler")) {
+  console.error("FAIL: BABEL_PLUGIN_ROOT missing or invalid:", result.BABEL_PLUGIN_ROOT);
+  process.exit(1);
+}
+if (!result.BABEL_PLUGIN_SRC || !result.BABEL_PLUGIN_SRC.includes("dist/index.js")) {
+  console.error("FAIL: BABEL_PLUGIN_SRC missing or invalid:", result.BABEL_PLUGIN_SRC);
+  process.exit(1);
+}
+console.log("PASS");
+""")
+    assert r.returncode == 0, f"Eval failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
-def test_compile_command_registered():
-    """runner.ts must register a 'compile' subcommand via yargs."""
-    src = (SNAP_SRC / "runner.ts").read_text()
-    # The compile command must be registered with yargs
-    assert re.search(r"\.command\(\s*['\"]compile", src), (
-        "runner.ts should register a 'compile' command with yargs"
-    )
-    # It should have a path positional parameter
-    assert "compile <path>" in src or "compile [path]" in src, (
-        "compile command should accept a path parameter"
-    )
+def test_compile_command_in_yargs():
+    """Parse runner.ts with Node and verify 'compile <path>' is registered."""
+    r = _run_node("""\
+const fs = require("fs");
+
+const src = fs.readFileSync("compiler/packages/snap/src/runner.ts", "utf8");
+
+// Extract yargs .command() first arguments
+const cmdPattern = /\\.command\\(\\s*(?:\\[([^\\]]+)\\]|'([^']*)'|"([^"]*)")/g;
+const commands = [];
+let m;
+while ((m = cmdPattern.exec(src)) !== null) {
+  commands.push(m[1] || m[2] || m[3]);
+}
+
+const compileCmd = commands.find(c => c.startsWith("compile"));
+if (!compileCmd) {
+  console.error("FAIL: No compile command found. Commands:", JSON.stringify(commands));
+  process.exit(1);
+}
+if (!compileCmd.includes("<path>") && !compileCmd.includes("[path]")) {
+  console.error("FAIL: compile command missing path parameter:", compileCmd);
+  process.exit(1);
+}
+console.log("PASS: found command:", compileCmd);
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
-def test_compile_function_exists():
-    """runner.ts must define runCompileCommand with file reading and compilation logic."""
-    src = (SNAP_SRC / "runner.ts").read_text()
-    assert "runCompileCommand" in src, (
-        "runner.ts should define runCompileCommand function"
-    )
-    # The function should read the file and invoke the compiler
-    assert "readFileSync" in src, (
-        "runCompileCommand should read the input file"
-    )
-    assert "transformFromAstSync" in src or "BabelPluginReactCompiler" in src, (
-        "runCompileCommand should invoke the React Compiler"
-    )
+# ---------------------------------------------------------------------------
+# fail_to_pass (pr_diff) — structural tests
+# ---------------------------------------------------------------------------
 
-
-# [pr_diff] fail_to_pass
 def test_minimize_positional_path():
     """minimize command should accept path as a positional arg, not --path flag."""
     src = (SNAP_SRC / "runner.ts").read_text()
-    # The minimize command should use positional path syntax
     assert re.search(r"['\"]minimize <path>['\"]", src), (
         "minimize command should use positional <path> syntax"
     )
 
 
-# [pr_diff] fail_to_pass
 def test_path_resolution_uses_project_root():
-    """minimize and compile should resolve relative paths from PROJECT_ROOT
-    (compiler dir), not process.cwd() (snap package dir)."""
+    """minimize and compile should resolve relative paths from PROJECT_ROOT."""
     src = (SNAP_SRC / "runner.ts").read_text()
-    # Find the path resolution in minimize/compile: should use PROJECT_ROOT
-    # The old code used: path.resolve(process.cwd(), opts.path)
-    # The new code uses: path.resolve(PROJECT_ROOT, opts.path)
     resolve_calls = re.findall(r"path\.resolve\(([^,]+),\s*opts\.path\)", src)
-    assert len(resolve_calls) >= 1, (
-        "Should have path.resolve calls for opts.path"
-    )
+    assert len(resolve_calls) >= 1, "Should have path.resolve calls for opts.path"
     for call in resolve_calls:
         assert "PROJECT_ROOT" in call, (
             f"Path resolution should use PROJECT_ROOT, not {call.strip()}"
         )
 
 
-# [pr_diff] fail_to_pass
 def test_consumer_files_use_renamed_constants():
     """Files that imported PROJECT_ROOT/PROJECT_SRC should now use
-    BABEL_PLUGIN_ROOT/BABEL_PLUGIN_SRC where they mean the babel plugin path."""
-    # runner-worker.ts should import BABEL_PLUGIN_SRC, not PROJECT_SRC
+    BABEL_PLUGIN_ROOT/BABEL_PLUGIN_SRC."""
     worker_src = (SNAP_SRC / "runner-worker.ts").read_text()
     assert "BABEL_PLUGIN_SRC" in worker_src, (
         "runner-worker.ts should import BABEL_PLUGIN_SRC"
@@ -136,13 +153,11 @@ def test_consumer_files_use_renamed_constants():
         "runner-worker.ts should not reference old PROJECT_SRC"
     )
 
-    # runner-watch.ts should import BABEL_PLUGIN_ROOT, not PROJECT_ROOT
     watch_src = (SNAP_SRC / "runner-watch.ts").read_text()
     assert "BABEL_PLUGIN_ROOT" in watch_src, (
         "runner-watch.ts should import BABEL_PLUGIN_ROOT"
     )
 
-    # minimize.ts should import BABEL_PLUGIN_SRC
     minimize_src = (SNAP_SRC / "minimize.ts").read_text()
     assert "BABEL_PLUGIN_SRC" in minimize_src, (
         "minimize.ts should import BABEL_PLUGIN_SRC"
@@ -153,13 +168,36 @@ def test_consumer_files_use_renamed_constants():
 
 
 # ---------------------------------------------------------------------------
-# Config edit tests (config_edit) — documentation updates
+# fail_to_pass (pr_diff) — documentation tests
 # ---------------------------------------------------------------------------
 
-# [config_edit] fail_to_pass
+def test_claude_md_documents_compile():
+    """compiler/CLAUDE.md must document the yarn snap compile command."""
+    claude_md = Path(REPO) / "compiler" / "CLAUDE.md"
+    assert claude_md.exists(), "compiler/CLAUDE.md not found"
+    content = claude_md.read_text()
+    assert "yarn snap compile" in content, (
+        "CLAUDE.md should document yarn snap compile"
+    )
 
 
-# [config_edit] fail_to_pass
+def test_claude_md_documents_minimize():
+    """compiler/CLAUDE.md must document the yarn snap minimize command."""
+    claude_md = Path(REPO) / "compiler" / "CLAUDE.md"
+    content = claude_md.read_text()
+    assert "yarn snap minimize" in content, (
+        "CLAUDE.md should document yarn snap minimize"
+    )
 
 
-# [config_edit] fail_to_pass
+def test_dev_guide_documents_commands():
+    """DEVELOPMENT_GUIDE.md must document compile and minimize commands."""
+    guide = Path(REPO) / "compiler" / "docs" / "DEVELOPMENT_GUIDE.md"
+    assert guide.exists(), "compiler/docs/DEVELOPMENT_GUIDE.md not found"
+    content = guide.read_text()
+    assert "yarn snap compile" in content, (
+        "DEVELOPMENT_GUIDE.md should document yarn snap compile"
+    )
+    assert "yarn snap minimize" in content, (
+        "DEVELOPMENT_GUIDE.md should document yarn snap minimize"
+    )

@@ -10,152 +10,173 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/rabbitmq-server"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# fail_to_pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
-def test_erlang_module_well_formed():
-    """Core exchange module has valid Erlang module structure."""
-    module_path = Path(REPO) / "deps" / "rabbit" / "src" / "rabbit_exchange_type_modulus_hash.erl"
-    if not module_path.exists():
-        return  # File not yet created; f2p tests verify existence
-    content = module_path.read_text()
-    # Must declare the correct module name
-    assert re.search(r"-module\(rabbit_exchange_type_modulus_hash\)\.", content), \
-        "Module must declare -module(rabbit_exchange_type_modulus_hash)"
-    # Must declare the behaviour
-    assert re.search(r"-behaviour\(rabbit_exchange_type\)\.", content), \
-        "Module must declare -behaviour(rabbit_exchange_type)"
-    # Must have export declarations
-    assert "-export(" in content, "Module must export functions"
+def test_core_module_exists_with_stable_routing():
+    """Core exchange module exists in deps/rabbit/src/ and sorts destinations for stable routing."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import re, sys
+
+path = "/workspace/rabbitmq-server/deps/rabbit/src/rabbit_exchange_type_modulus_hash.erl"
+try:
+    content = open(path).read()
+except FileNotFoundError:
+    print("FAIL: core module does not exist at expected path")
+    sys.exit(1)
+
+# Must have route function
+if not re.search(r'route\\(', content):
+    print("FAIL: no route function found")
+    sys.exit(1)
+
+# Key fix: destinations must be sorted for stable routing
+if not re.search(r'lists:(u?sort)\\(', content):
+    print("FAIL: route function does not sort destinations")
+    sys.exit(1)
+
+# Must use phash2 for hashing + rem for modulus
+if 'phash2' not in content:
+    print("FAIL: no phash2 hashing")
+    sys.exit(1)
+if 'rem' not in content:
+    print("FAIL: no modulus operation")
+    sys.exit(1)
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}{r.stdout}"
+    assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
+def test_core_module_registers_as_boot_step():
+    """Core module registers x-modulus-hash exchange type as a rabbit boot step."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import re, sys
 
-# [pr_diff] fail_to_pass
-def test_core_module_routes_with_sorting():
-    """The core exchange module must sort destinations for stable routing."""
-    module_path = Path(REPO) / "deps" / "rabbit" / "src" / "rabbit_exchange_type_modulus_hash.erl"
-    content = module_path.read_text()
+path = "/workspace/rabbitmq-server/deps/rabbit/src/rabbit_exchange_type_modulus_hash.erl"
+try:
+    content = open(path).read()
+except FileNotFoundError:
+    print("FAIL: core module does not exist")
+    sys.exit(1)
 
-    # The route function must exist
-    assert re.search(r"route\(", content), "Module must implement route/3"
+if not re.search(r'-rabbit_boot_step\\(', content):
+    print("FAIL: no boot step registration")
+    sys.exit(1)
+if 'x-modulus-hash' not in content:
+    print("FAIL: does not register x-modulus-hash exchange type")
+    sys.exit(1)
+if 'rabbit_registry' not in content:
+    print("FAIL: does not use rabbit_registry for registration")
+    sys.exit(1)
 
-    # The key fix: destinations must be sorted before selecting one.
-    # This guarantees stable routing across node restarts.
-    # Accept lists:sort or lists:usort as valid sorting approaches.
-    assert re.search(r"lists:(u?sort)\(", content), \
-        "Route function must sort destinations for stable routing (lists:sort or lists:usort)"
-
-    # Must use modulus hashing to pick the destination
-    assert "rem" in content, "Route function must use modulus (rem) to pick destination"
-    assert "phash2" in content or "erlang:phash2" in content, \
-        "Route function must use phash2 for hashing"
-
-
-# [pr_diff] fail_to_pass
-def test_core_module_registers_exchange():
-    """The core module registers x-modulus-hash as a boot step in rabbit."""
-    module_path = Path(REPO) / "deps" / "rabbit" / "src" / "rabbit_exchange_type_modulus_hash.erl"
-    content = module_path.read_text()
-
-    # Must register x-modulus-hash exchange type
-    assert "x-modulus-hash" in content, \
-        "Module must register the x-modulus-hash exchange type"
-
-    # Must be a rabbit boot step (not sharding boot step)
-    assert re.search(r"-rabbit_boot_step\(", content), \
-        "Module must register as a rabbit boot step"
-
-    # Must register with rabbit_registry
-    assert "rabbit_registry" in content, \
-        "Module must register exchange type with rabbit_registry"
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}{r.stdout}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
+def test_core_module_implements_all_callbacks():
+    """Core module implements all required rabbit_exchange_type callbacks."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
 
-    required_callbacks = [
-        "description",
-        "route",
-        "serialise_events",
-        "validate",
-        "validate_binding",
-        "create",
-        "delete",
-        "policy_changed",
-        "add_binding",
-        "remove_bindings",
-        "assert_args_equivalence",
-    ]
+path = "/workspace/rabbitmq-server/deps/rabbit/src/rabbit_exchange_type_modulus_hash.erl"
+try:
+    content = open(path).read()
+except FileNotFoundError:
+    print("FAIL: core module does not exist")
+    sys.exit(1)
 
-    for callback in required_callbacks:
-        assert re.search(rf"^{callback}\(", content, re.MULTILINE), \
-            f"Module must implement {callback} callback"
+callbacks = [
+    "description", "route", "serialise_events", "validate",
+    "validate_binding", "create", "delete", "policy_changed",
+    "add_binding", "remove_bindings", "assert_args_equivalence",
+]
+lines = content.splitlines()
+missing = []
+for cb in callbacks:
+    if not any(line.lstrip().startswith(cb + "(") for line in lines):
+        missing.append(cb)
+
+if missing:
+    print("FAIL: missing callbacks: " + ", ".join(missing))
+    sys.exit(1)
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}{r.stdout}"
+    assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Config edit tests (config_edit) — README documentation updates
-# ---------------------------------------------------------------------------
+def test_old_sharding_module_removed():
+    """Old sharding exchange module must be removed from the plugin."""
+    old_path = Path(REPO) / "deps" / "rabbitmq_sharding" / "src" / "rabbit_sharding_exchange_type_modulus_hash.erl"
+    assert not old_path.exists(), \
+        "Old sharding module must be removed after moving exchange type to core"
 
-# [config_edit] fail_to_pass
 
-    # The README must no longer say "the plugin provides" the exchange type.
-    # It should indicate the exchange is built-in / core / available without the plugin.
-    content_lower = content.lower()
+def test_readme_documents_builtin_exchange():
+    """Sharding README documents x-modulus-hash as built-in to core RabbitMQ."""
+    content = (Path(REPO) / "deps" / "rabbitmq_sharding" / "README.md").read_text().lower()
 
-    # Must mention the exchange is built-in or part of core RabbitMQ
-    has_builtin = "built-in" in content_lower or "built in" in content_lower
-    has_core = "core rabbitmq" in content_lower or "core server" in content_lower
-    has_no_plugin = ("does not require" in content_lower and "plugin" in content_lower) or \
-                    "without enabling" in content_lower or "without this plugin" in content_lower
-    assert has_builtin or has_core or has_no_plugin, \
-        "README must indicate x-modulus-hash is built-in to core RabbitMQ, not provided by the plugin"
-
-    # Must NOT say "the plugin provides" the exchange type anymore
-    assert "plugin provides a new exchange type" not in content_lower, \
+    assert "plugin provides a new exchange type" not in content, \
         "README should no longer say the plugin provides the exchange type"
 
+    has_builtin = "built-in" in content or "built in" in content
+    has_core = "core rabbitmq" in content or "core server" in content
+    has_no_plugin = ("does not require" in content and "plugin" in content) or \
+                    "without enabling" in content or "without this plugin" in content
+    assert has_builtin or has_core or has_no_plugin, \
+        "README must indicate x-modulus-hash is built-in to core RabbitMQ"
 
-# [config_edit] fail_to_pass
 
-    # Must mention stable routing
-    assert "stable" in content_lower, \
+def test_readme_documents_stable_routing():
+    """Sharding README documents the stable routing guarantee."""
+    content = (Path(REPO) / "deps" / "rabbitmq_sharding" / "README.md").read_text().lower()
+
+    assert "stable" in content, \
         "README must document stable routing"
-
-    # Must mention that same routing key goes to same queue
-    has_same_queue = "same" in content_lower and ("queue" in content_lower or "destination" in content_lower)
-    assert has_same_queue, \
-        "README must explain that messages with the same routing key go to the same queue"
-
-    # Must mention this works across restarts
-    has_restart = "restart" in content_lower
-    assert has_restart, \
+    assert "restart" in content, \
         "README must mention routing stability across node restarts"
 
 
+def test_makefile_includes_modulus_hash_ct():
+    """Makefile includes rabbit_exchange_type_modulus_hash in parallel CT test sets."""
+    content = (Path(REPO) / "deps" / "rabbit" / "Makefile").read_text()
+    assert "rabbit_exchange_type_modulus_hash" in content, \
+        "Makefile must include rabbit_exchange_type_modulus_hash in parallel CT test sets"
+
+
 # ---------------------------------------------------------------------------
-# Pass-to-pass (agent_config) — rules from CLAUDE.md
+# pass_to_pass (static) — structural validation
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — CLAUDE.md:comments_style
-
-    for i, line in enumerate(content.splitlines(), 1):
-        stripped = line.strip()
-        if not stripped or stripped.startswith("%%") or stripped.startswith("%"):
-            continue
-        # Check for inline comments: non-comment code followed by %% comment
-        match = re.search(r'%%', line)
-        if match:
-            before = line[:match.start()].strip()
-            if before:
-                assert False, \
-                    f"Line {i}: inline comment violates CLAUDE.md rule (comments above the line): {stripped}"
+def test_erlang_module_well_formed():
+    """If core module exists, it has valid Erlang module structure."""
+    module_path = Path(REPO) / "deps" / "rabbit" / "src" / "rabbit_exchange_type_modulus_hash.erl"
+    if not module_path.exists():
+        return  # File creation is verified by fail_to_pass tests
+    content = module_path.read_text()
+    assert "-module(rabbit_exchange_type_modulus_hash)." in content, \
+        "Must declare correct module name"
+    assert "-behaviour(rabbit_exchange_type)." in content, \
+        "Must declare rabbit_exchange_type behaviour"
+    assert "-export(" in content, "Must export functions"

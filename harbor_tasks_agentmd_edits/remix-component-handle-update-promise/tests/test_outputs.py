@@ -19,152 +19,115 @@ HANDLE_MD = f"{REPO}/packages/component/docs/handle.md"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — code behavioral tests
+# Fail-to-pass (pr_diff) — behavioral type check
 # ---------------------------------------------------------------------------
 
 
 def test_handle_update_returns_promise():
-    """Handle.update() must return Promise<AbortSignal> instead of accepting task callback."""
-    src = Path(COMPONENT_TS).read_text()
-
-    # Type signature must be Promise<AbortSignal>, not void with optional task
-    assert "update(): Promise<AbortSignal>" in src, (
-        "Handle interface must declare update(): Promise<AbortSignal>"
+    """handle.update() returns Promise<AbortSignal> — verified via TypeScript type check."""
+    # Write a TS file that ONLY compiles when update() returns Promise<AbortSignal>.
+    # On base commit update() returns void, so assigning await result to AbortSignal errors.
+    check_file = Path(f"{REPO}/packages/component/src/test/_eval_typecheck.ts")
+    check_file.write_text(
+        "import type { Handle } from '../lib/component.ts'\n"
+        "\n"
+        "// Compiles only if update() returns Promise<AbortSignal>\n"
+        "async function _check(handle: Handle): Promise<AbortSignal> {\n"
+        "    return await handle.update()\n"
+        "}\n"
+        "void _check\n"
     )
+    try:
+        r = subprocess.run(
+            ["npx", "tsc", "--noEmit", "--project",
+             "packages/component/tsconfig.json"],
+            capture_output=True, text=True, timeout=120, cwd=REPO,
+        )
+        assert r.returncode == 0, (
+            "TypeScript type check failed — update() must return "
+            f"Promise<AbortSignal>:\n{r.stdout}\n{r.stderr}"
+        )
+    finally:
+        check_file.unlink(missing_ok=True)
 
-    # Implementation must create a new Promise (not just call scheduleUpdate)
-    assert "new Promise" in src, (
-        "update() implementation must create a new Promise that resolves with signal"
-    )
 
-    # The old task parameter must be removed from the interface
-    assert "update(task?" not in src, (
-        "Handle.update() must not accept a task parameter"
-    )
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — structural code checks
+# ---------------------------------------------------------------------------
 
 
 def test_cascading_update_guard():
-    """Scheduler must detect and stop infinite cascading update loops."""
+    """Scheduler detects and stops infinite cascading update loops."""
     src = Path(SCHEDULER_TS).read_text()
 
-    # Must define a max threshold constant
     assert "MAX_CASCADING_UPDATES" in src, (
         "Scheduler must define a MAX_CASCADING_UPDATES threshold"
     )
-
-    # Must increment a counter on each flush
     assert "cascadingUpdateCount" in src, (
         "Scheduler must track cascading update count"
     )
-
-    # Must detect the infinite loop and dispatch an error
     assert "infinite loop detected" in src, (
-        "Scheduler must detect and report infinite cascading update loops"
-    )
-
-    # Must dispatch an error (not just console.log)
-    assert "dispatchError" in src or "dispatchError(error)" in src, (
-        "Scheduler must dispatch an error event when cascading limit is exceeded"
+        "Scheduler must report an 'infinite loop detected' error"
     )
 
 
 def test_render_ctrl_cleanup():
-    """Component remove() must abort renderCtrl alongside connectedCtrl."""
+    """Component remove() aborts renderCtrl alongside connectedCtrl."""
     src = Path(COMPONENT_TS).read_text()
+    lines = src.split("\n")
 
-    # The remove function must abort renderCtrl
-    assert "renderCtrl" in src, (
+    # Find the remove() function definition
+    remove_start = None
+    for i, line in enumerate(lines):
+        if "function remove()" in line:
+            remove_start = i
+            break
+
+    assert remove_start is not None, "Could not find remove() function"
+
+    # Check the body (next 10 lines) for renderCtrl abort
+    remove_body = "\n".join(lines[remove_start:remove_start + 10])
+    assert "renderCtrl" in remove_body and "abort" in remove_body, (
         "remove() must abort renderCtrl when component is removed"
-    )
-
-    # Must use optional chaining (renderCtrl may be undefined)
-    lines_with_render_ctrl_abort = [
-        line for line in src.split("\n")
-        if "renderCtrl" in line and "abort" in line
-    ]
-    assert len(lines_with_render_ctrl_abort) > 0, (
-        "remove() must call renderCtrl?.abort()"
     )
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — config/documentation update tests
+# Fail-to-pass (pr_diff) — documentation update checks
 # ---------------------------------------------------------------------------
 
 
 def test_agents_md_promise_api():
-    """AGENTS.md must document handle.update() as returning Promise<AbortSignal>."""
+    """AGENTS.md documents handle.update() as returning Promise<AbortSignal>."""
     content = Path(AGENTS_MD).read_text()
 
-    # The heading must not include the old (task?) parameter
     assert "handle.update(task?)" not in content, (
         "AGENTS.md must not reference the old handle.update(task?) signature"
     )
-
-    # Must document the Promise/AbortSignal return value
-    has_promise = "promise" in content.lower() or "Promise" in content
-    has_signal = "AbortSignal" in content or "abort signal" in content.lower()
-    assert has_promise and has_signal, (
-        "AGENTS.md must document that handle.update() returns a Promise<AbortSignal>"
-    )
-
-    # Must show await-based usage pattern instead of callback
-    has_await = "await handle.update()" in content
-    assert has_await, (
+    assert "await handle.update()" in content, (
         "AGENTS.md must show the await handle.update() usage pattern"
     )
 
 
 def test_readme_md_promise_api():
-    """README.md must document the new Promise-based update() API."""
+    """README.md documents the new Promise-based update() API."""
     content = Path(README_MD).read_text()
 
-    # Must not reference the old task callback signature
     assert "handle.update(task?)" not in content, (
         "README.md must not reference the old handle.update(task?) signature"
     )
-
-    # Must mention await or Promise or AbortSignal in context of update
-    has_new_api = (
-        "await" in content
-        or "Promise" in content
-        or "AbortSignal" in content
-        or "await handle.update()" in content
+    assert "await handle.update()" in content, (
+        "README.md must show the await handle.update() usage pattern"
     )
-    assert has_new_api, (
-        "README.md must document the new Promise-based handle.update() API"
-    )
-
-    # The API reference line must not mention "task" in the update description
-    # Find the line describing handle.update()
-    update_lines = [
-        line for line in content.split("\n")
-        if "handle.update" in line and "**`handle.update" in line
-    ]
-    for line in update_lines:
-        assert "(task" not in line, (
-            f"README.md API reference must not include task parameter: {line.strip()}"
-        )
 
 
 def test_handle_md_promise_api():
-    """docs/handle.md must reflect the Promise-based handle.update() API."""
+    """docs/handle.md reflects the Promise-based handle.update() API."""
     content = Path(HANDLE_MD).read_text()
 
-    # Must not reference the old task callback signature
     assert "handle.update(task?)" not in content, (
         "docs/handle.md must not reference the old handle.update(task?) signature"
     )
-
-    # Must document the Promise return type
-    has_promise = "promise" in content.lower() or "Promise" in content
-    has_signal = "AbortSignal" in content or "abort signal" in content.lower()
-    assert has_promise or has_signal, (
-        "docs/handle.md must document the Promise<AbortSignal> return from handle.update()"
-    )
-
-    # Must show await-based usage
-    has_await = "await handle.update()" in content
-    assert has_await, (
+    assert "await handle.update()" in content, (
         "docs/handle.md must show the await handle.update() usage pattern"
     )

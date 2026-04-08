@@ -8,17 +8,28 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import asyncio
-import sys
-import os
+import subprocess
 from pathlib import Path
 
 import pytest
 
 REPO = "/workspace/litellm"
-sys.path.insert(0, REPO)
 
-from litellm.caching.llm_caching_handler import LLMClientCache
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in the repo context."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -35,29 +46,33 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.asyncio
-async def test_remove_key_does_not_close_async_client():
+def test_remove_key_does_not_close_async_client():
     """Evicting an async client from LLMClientCache must NOT close it.
 
     On the base commit, _remove_key schedules aclose() via create_task(),
     which closes the client. The fix removes the override entirely.
     """
+    r = _run_py("""
+import sys, asyncio
+sys.path.insert(0, '/workspace/litellm')
+from litellm.caching.llm_caching_handler import LLMClientCache
+
+async def main():
     cache = LLMClientCache(max_size_in_memory=10)
 
     class MockAsyncClient:
         def __init__(self):
             self.closed = False
-
         async def aclose(self):
             self.closed = True
 
     mock_client = MockAsyncClient()
     cache.cache_dict["test-key"] = mock_client
-    cache.ttl_dict["test-key"] = 0  # expired
+    cache.ttl_dict["test-key"] = 0
 
     cache._remove_key("test-key")
     # Let the event loop drain any background close tasks
@@ -69,6 +84,12 @@ async def test_remove_key_does_not_close_async_client():
     )
     assert "test-key" not in cache.cache_dict
     assert "test-key" not in cache.ttl_dict
+    print("PASS")
+
+asyncio.run(main())
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}\nstdout: {r.stdout}"
+    assert "PASS" in r.stdout
 
 
 def test_remove_key_does_not_close_sync_client():
@@ -77,41 +98,51 @@ def test_remove_key_does_not_close_sync_client():
     On the base commit, _remove_key calls close() directly on sync clients.
     The fix removes the override so the parent class just removes the key.
     """
-    cache = LLMClientCache(max_size_in_memory=10)
+    r = _run_py("""
+import sys
+sys.path.insert(0, '/workspace/litellm')
+from litellm.caching.llm_caching_handler import LLMClientCache
 
-    class MockSyncClient:
-        def __init__(self):
-            self.closed = False
+cache = LLMClientCache(max_size_in_memory=10)
 
-        def close(self):
-            self.closed = True
+class MockSyncClient:
+    def __init__(self):
+        self.closed = False
+    def close(self):
+        self.closed = True
 
-    mock_client = MockSyncClient()
-    cache.cache_dict["test-key"] = mock_client
-    cache.ttl_dict["test-key"] = 0
+mock_client = MockSyncClient()
+cache.cache_dict["test-key"] = mock_client
+cache.ttl_dict["test-key"] = 0
 
-    cache._remove_key("test-key")
+cache._remove_key("test-key")
 
-    assert not mock_client.closed, (
-        "Sync client was closed on eviction"
-    )
-    assert "test-key" not in cache.cache_dict
+assert not mock_client.closed, "Sync client was closed on eviction"
+assert "test-key" not in cache.cache_dict
+print("PASS")
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}\nstdout: {r.stdout}"
+    assert "PASS" in r.stdout
 
 
-@pytest.mark.asyncio
-async def test_eviction_does_not_close_async_clients():
+def test_eviction_does_not_close_async_clients():
     """When the cache is full and entries are evicted, clients stay open.
 
     Uses multiple clients and fills the cache beyond capacity to trigger
     LRU eviction. All evicted clients must remain open.
     """
+    r = _run_py("""
+import sys, asyncio
+sys.path.insert(0, '/workspace/litellm')
+from litellm.caching.llm_caching_handler import LLMClientCache
+
+async def main():
     cache = LLMClientCache(max_size_in_memory=2, default_ttl=600)
 
     class MockAsyncClient:
         def __init__(self, name):
             self.name = name
             self.closed = False
-
         async def aclose(self):
             self.closed = True
 
@@ -127,6 +158,12 @@ async def test_eviction_does_not_close_async_clients():
 
     for c in clients:
         assert not c.closed, f"{c.name} was closed on eviction"
+    print("PASS")
+
+asyncio.run(main())
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}\nstdout: {r.stdout}"
+    assert "PASS" in r.stdout
 
 
 def test_remove_key_handles_plain_values():
@@ -135,18 +172,27 @@ def test_remove_key_handles_plain_values():
     Regression check: removing the override shouldn't break eviction of
     plain values that have no close()/aclose() methods.
     """
-    cache = LLMClientCache(max_size_in_memory=5)
+    r = _run_py("""
+import sys
+sys.path.insert(0, '/workspace/litellm')
+from litellm.caching.llm_caching_handler import LLMClientCache
 
-    cache.cache_dict["str-key"] = "hello"
-    cache.ttl_dict["str-key"] = 0
-    cache.cache_dict["dict-key"] = {"foo": "bar"}
-    cache.ttl_dict["dict-key"] = 0
+cache = LLMClientCache(max_size_in_memory=5)
 
-    cache._remove_key("str-key")
-    cache._remove_key("dict-key")
+cache.cache_dict["str-key"] = "hello"
+cache.ttl_dict["str-key"] = 0
+cache.cache_dict["dict-key"] = {"foo": "bar"}
+cache.ttl_dict["dict-key"] = 0
 
-    assert "str-key" not in cache.cache_dict
-    assert "dict-key" not in cache.cache_dict
+cache._remove_key("str-key")
+cache._remove_key("dict-key")
+
+assert "str-key" not in cache.cache_dict
+assert "dict-key" not in cache.cache_dict
+print("PASS")
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}\nstdout: {r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -155,15 +201,10 @@ def test_remove_key_handles_plain_values():
 
 
 def test_agents_md_no_close_on_eviction_rule():
-    """AGENTS.md must document the rule about never closing clients on cache eviction.
-
-    The PR adds rule #9 to AGENTS.md explaining why evicted clients must not
-    be closed and pointing to close_litellm_async_clients() for cleanup.
-    """
+    """AGENTS.md must document the rule about never closing clients on cache eviction."""
     agents_md = Path(f"{REPO}/AGENTS.md")
     content = agents_md.read_text()
 
-    # Check for key concepts from the config update
     assert "cache eviction" in content.lower() or "evict" in content.lower(), \
         "AGENTS.md should mention cache eviction"
     assert "close" in content.lower() and "client" in content.lower(), \
@@ -173,11 +214,7 @@ def test_agents_md_no_close_on_eviction_rule():
 
 
 def test_claude_md_client_cache_safety():
-    """CLAUDE.md must document HTTP Client Cache Safety section.
-
-    The PR adds a section explaining that _remove_key must not close
-    evicted clients, referencing close_litellm_async_clients() for cleanup.
-    """
+    """CLAUDE.md must document HTTP Client Cache Safety section."""
     claude_md = Path(f"{REPO}/CLAUDE.md")
     content = claude_md.read_text()
 

@@ -7,98 +7,142 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/react"
 INDEX_TS = Path(REPO) / "packages/eslint-plugin-react-hooks/src/index.ts"
-README = Path(REPO) / "packages/eslint-plugin-react-hooks/README.md"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+def test_recommended_config_rules():
+    """recommended config must use allRuleConfigs (compiler rules), not basicRuleConfigs."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import re, sys
 
+content = open('/workspace/react/packages/eslint-plugin-react-hooks/src/index.ts').read()
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — code behavioral tests
-# ---------------------------------------------------------------------------
+# Extract config entries from the 'const configs = { ... }' block.
+# Each entry has the form:
+#   'config-name': {
+#     plugins,
+#     rules: variableName,
+#   },
+# or for unquoted keys:
+#   configName: {
+#     plugins,
+#     rules: variableName,
+#   },
+entries = re.findall(
+    r"['\"]?([\\w/'.-]+?)['\"]?\\s*:\\s*\\{\\s*\\n\\s*plugins,?\\s*\\n\\s*rules:\\s*(\\w+)",
+    content,
+)
+config_map = dict(entries)
+print(f"Config entries: {config_map}")
 
-# [pr_diff] fail_to_pass
-def test_legacy_configs_removed():
-    """recommended-legacy and recommended-latest-legacy configs must be removed."""
-    content = INDEX_TS.read_text()
-    # These config names should not appear as object keys in the configs definition
-    assert "'recommended-legacy'" not in content, (
-        "index.ts should not define 'recommended-legacy' config"
+if 'recommended' not in config_map:
+    print("ERROR: 'recommended' config not found in configs object")
+    sys.exit(1)
+
+if config_map['recommended'] != 'allRuleConfigs':
+    print(f"ERROR: 'recommended' uses {config_map['recommended']}, expected allRuleConfigs")
+    sys.exit(1)
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert "'recommended-latest-legacy'" not in content, (
-        "index.ts should not define 'recommended-latest-legacy' config"
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+def test_legacy_configs_not_in_configs_object():
+    """Legacy configs (recommended-legacy, recommended-latest-legacy, flat/recommended) must be removed."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import re, sys
+
+content = open('/workspace/react/packages/eslint-plugin-react-hooks/src/index.ts').read()
+
+# Extract all quoted config key names from the entire file
+# These appear as 'key-name': { or "key-name": {
+all_keys = re.findall(r"'([\\w/'.-]+?)'\\s*:", content)
+
+removed = ['recommended-legacy', 'recommended-latest-legacy', 'flat/recommended']
+for cfg in removed:
+    if cfg in all_keys:
+        print(f"ERROR: removed config '{cfg}' still present as config key")
+        sys.exit(1)
+
+print("PASS: no removed configs found")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
-def test_flat_recommended_removed():
-    """flat/recommended config must be removed from configs object."""
-    content = INDEX_TS.read_text()
-    assert "'flat/recommended'" not in content, (
-        "index.ts should not define 'flat/recommended' config"
+def test_plugin_meta_version_field():
+    """Plugin meta object must include a version field with a semver string."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import re, sys
+
+content = open('/workspace/react/packages/eslint-plugin-react-hooks/src/index.ts').read()
+
+# Find the meta block in the plugin definition
+meta_match = re.search(r'meta\\s*:\\s*\\{([\\s\\S]*?)\\}', content)
+if not meta_match:
+    print("ERROR: could not find plugin meta block")
+    sys.exit(1)
+
+meta_body = meta_match.group(1)
+
+# Check for a version field with a semver-like value
+version_match = re.search(r"version\\s*:\\s*['\\"](\\d+\\.\\d+\\.\\d+)['\"]", meta_body)
+if not version_match:
+    print(f"ERROR: no version field with semver value in meta: {meta_body.strip()}")
+    sys.exit(1)
+
+print(f"PASS: meta.version = {version_match.group(1)}")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
-def test_recommended_uses_all_rules():
-    """The 'recommended' config must use allRuleConfigs (compiler rules included)."""
-    content = INDEX_TS.read_text()
-    # Find the recommended config definition and verify it uses allRuleConfigs
-    # Pattern: recommended config should reference allRuleConfigs, not basicRuleConfigs
-    rec_match = re.search(
-        r"""(?:['"]?recommended['"]?\s*[=:{]\s*\{[^}]*rules\s*:\s*)(\w+)""",
-        content,
+def test_package_json_version_bumped():
+    """package.json version must be >= 7.0.0 (bumped from 5.x/6.x)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import json, sys
+
+pkg = json.load(open('/workspace/react/packages/eslint-plugin-react-hooks/package.json'))
+version = pkg.get('version', '')
+parts = version.split('.')
+major = int(parts[0]) if parts else 0
+
+if major < 7:
+    print(f"ERROR: package.json version is {version}, expected >= 7.0.0")
+    sys.exit(1)
+
+print(f"PASS: version = {version}")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert rec_match, "Could not find 'recommended' config definition in index.ts"
-    rules_ref = rec_match.group(1)
-    assert rules_ref == "allRuleConfigs", (
-        f"'recommended' config should use allRuleConfigs, found: {rules_ref}"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_plugin_meta_has_version():
-    """Plugin meta object must include a version field."""
-    content = INDEX_TS.read_text()
-    # Look for version in the plugin meta block
-    meta_match = re.search(r"meta\s*:\s*\{([\s\S]*?)\}", content)
-    assert meta_match, "Could not find plugin meta block in index.ts"
-    meta_body = meta_match.group(1)
-    assert "version" in meta_body, (
-        "Plugin meta should include a version field"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) — README documentation tests
-# ---------------------------------------------------------------------------
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_recommended_latest_still_exists():
     """The 'recommended-latest' config must still be defined."""
     content = INDEX_TS.read_text()
@@ -107,7 +151,6 @@ def test_recommended_latest_still_exists():
     )
 
 
-# [static] pass_to_pass
 def test_plugin_exports_structure():
     """Plugin must still export rules, configs, and meta."""
     content = INDEX_TS.read_text()

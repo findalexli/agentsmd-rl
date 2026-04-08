@@ -7,18 +7,30 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/remix"
 BOOKSTORE = Path(REPO) / "demos" / "bookstore"
 
 
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute a Python analysis script in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.py"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Modified TypeScript files exist and are non-empty."""
     files = [
@@ -34,84 +46,141 @@ def test_syntax_check():
         assert len(content) > 50, f"{f.name} is too short to be valid"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
-def test_database_middleware_uses_context_set():
-    """database.ts must use context.set(Database, db) instead of context.db = db."""
-    content = (BOOKSTORE / "app" / "middleware" / "database.ts").read_text()
-    # Must use the typed context key pattern
-    assert re.search(r'context\.set\s*\(\s*Database', content), \
-        "database.ts should use context.set(Database, ...) to store the database"
-    # Must not use the old direct property assignment
-    assert "context.db" not in content, \
-        "database.ts should not use context.db property assignment"
-
-
-# [pr_diff] fail_to_pass
-def test_database_imported_in_middleware():
-    """database.ts must import Database from remix/data-table."""
-    content = (BOOKSTORE / "app" / "middleware" / "database.ts").read_text()
-    assert "Database" in content, "database.ts should reference the Database class"
-    assert "remix/data-table" in content, \
-        "database.ts should import from remix/data-table"
-
-
-# [pr_diff] fail_to_pass
-def test_handlers_use_get_database():
-    """Route handlers must use get(Database) to retrieve the database."""
-    handler_files = [
-        BOOKSTORE / "app" / "account.tsx",
-        BOOKSTORE / "app" / "admin.books.tsx",
-        BOOKSTORE / "app" / "admin.orders.tsx",
-        BOOKSTORE / "app" / "admin.users.tsx",
-        BOOKSTORE / "app" / "books.tsx",
-        BOOKSTORE / "app" / "auth.tsx",
-        BOOKSTORE / "app" / "cart.tsx",
-        BOOKSTORE / "app" / "checkout.tsx",
-    ]
-    files_with_get_database = 0
-    for f in handler_files:
-        if not f.exists():
-            continue
-        content = f.read_text()
-        if "get(Database)" in content:
-            files_with_get_database += 1
-    assert files_with_get_database >= 5, \
-        f"At least 5 handler files should use get(Database), found {files_with_get_database}"
-
-
-# [pr_diff] fail_to_pass
-def test_type_augmentation_removed():
-    """The context.db.ts type augmentation file must be removed."""
-    augmentation = BOOKSTORE / "app" / "types" / "context.db.ts"
-    assert not augmentation.exists(), \
-        "app/types/context.db.ts should be deleted (RequestContext augmentation no longer needed)"
-
-
-# ---------------------------------------------------------------------------
-# Config-edit (config_edit) — README documentation update
-# ---------------------------------------------------------------------------
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub checks
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
 def test_middleware_has_real_logic():
     """database.ts middleware must have real logic, not just a stub."""
     content = (BOOKSTORE / "app" / "middleware" / "database.ts").read_text()
-    # Must export the loadDatabase function
     assert "loadDatabase" in content, "database.ts must export loadDatabase"
-    # Must call next() to continue the middleware chain
     assert "next()" in content, "database.ts middleware must call next()"
-    # Must have a return statement or implicit return
     assert "return" in content, "database.ts middleware must return the next() result"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
+# ---------------------------------------------------------------------------
+
+def test_database_middleware_uses_context_set():
+    """database.ts imports Database and uses context.set(Database, db) not context.db."""
+    r = _run_py("""
+import sys
+
+content = open('demos/bookstore/app/middleware/database.ts').read()
+
+# Must import Database from remix/data-table
+if 'Database' not in content or 'remix/data-table' not in content:
+    print("FAIL: Database not imported from remix/data-table", file=sys.stderr)
+    sys.exit(1)
+
+# Must use context.set(Database, ...) pattern
+if 'context.set(Database' not in content:
+    print("FAIL: does not use context.set(Database, ...)", file=sys.stderr)
+    sys.exit(1)
+
+# Must NOT use old context.db = pattern
+if 'context.db' in content:
+    print("FAIL: still uses context.db assignment", file=sys.stderr)
+    sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Middleware pattern check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_handlers_use_get_database():
+    """Route handler files use get(Database) to retrieve the database."""
+    r = _run_py("""
+import sys, os
+
+bookstore = 'demos/bookstore/app'
+handler_files = [
+    'account.tsx', 'admin.books.tsx', 'admin.orders.tsx',
+    'admin.users.tsx', 'books.tsx', 'auth.tsx', 'cart.tsx',
+    'checkout.tsx', 'fragments.tsx', 'marketing.tsx',
+]
+
+get_database_count = 0
+for fname in handler_files:
+    path = os.path.join(bookstore, fname)
+    if not os.path.exists(path):
+        continue
+    content = open(path).read()
+    if 'get(Database)' in content:
+        get_database_count += 1
+
+if get_database_count < 8:
+    print(f"FAIL: Only {get_database_count}/10 handler files use get(Database)", file=sys.stderr)
+    sys.exit(1)
+
+print(f"PASS: {get_database_count} handler files use get(Database)")
+""")
+    assert r.returncode == 0, f"Handler pattern check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_type_augmentation_removed():
+    """The context.db.ts type augmentation file must be removed."""
+    r = _run_py("""
+import os, sys
+
+aug_file = 'demos/bookstore/app/types/context.db.ts'
+if os.path.exists(aug_file):
+    content = open(aug_file).read()
+    print(f"FAIL: context.db.ts still exists with {len(content)} bytes", file=sys.stderr)
+    sys.exit(1)
+print("PASS: context.db.ts removed")
+""")
+    assert r.returncode == 0, f"Type augmentation not removed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_auth_middleware_uses_get_database():
+    """auth.ts middleware imports Database and uses get(Database) not destructured db."""
+    r = _run_py("""
+import sys
+
+content = open('demos/bookstore/app/middleware/auth.ts').read()
+
+# Must import Database from remix/data-table
+if 'Database' not in content or 'remix/data-table' not in content:
+    print("FAIL: auth.ts does not import Database from remix/data-table", file=sys.stderr)
+    sys.exit(1)
+
+# Must use get(Database) pattern
+if 'get(Database)' not in content:
+    print("FAIL: auth.ts does not use get(Database)", file=sys.stderr)
+    sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Auth middleware check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_readme_documents_context_set_pattern():
+    """README.md describes the context.set/get(Database) pattern without duplicates."""
+    r = _run_py("""
+import sys
+
+content = open('demos/bookstore/README.md').read()
+
+# Must mention context.set(Database
+if 'context.set(Database' not in content:
+    print("FAIL: README does not mention context.set(Database, ...)", file=sys.stderr)
+    sys.exit(1)
+
+# Must mention get(Database)
+if 'get(Database)' not in content:
+    print("FAIL: README does not mention get(Database)", file=sys.stderr)
+    sys.exit(1)
+
+# Should not have duplicate database.ts bullet entries
+lines = content.split('\\n')
+db_bullets = [l for l in lines if 'middleware/database.ts' in l and l.strip().startswith('-')]
+if len(db_bullets) > 1:
+    print(f"FAIL: README has {len(db_bullets)} database.ts bullet entries, expected 1", file=sys.stderr)
+    sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"README check failed: {r.stderr}"
+    assert "PASS" in r.stdout

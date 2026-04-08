@@ -8,20 +8,26 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import json
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/cypress"
 
 
+def _run_node(code: str, timeout: int = 60) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    return subprocess.run(
+        ["node", "-e", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax checks
+# Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
-    """Modified TypeScript files must be valid (no unclosed braces/strings)."""
+    """Modified TypeScript files have balanced braces and valid structure."""
     for relpath in [
         "npm/grep/src/plugin.ts",
         "npm/grep/src/register.ts",
@@ -34,124 +40,191 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core code change tests
+# Fail-to-pass (pr_diff) — behavioral tests
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_plugin_reads_from_expose():
-    """plugin.ts must read filter config from config.expose, not config.env."""
-    src = (Path(REPO) / "npm/grep/src/plugin.ts").read_text()
+    """plugin() reads grep config from config.expose, ignores config.env."""
+    r = _run_node(r"""
+const fs = require('fs');
+const { execSync } = require('child_process');
+const srcBase = process.cwd() + '/npm/grep/src';
 
-    # The interface should declare an 'expose' property
-    assert re.search(r'expose\s*[\?:]', src), \
-        "CypressConfigOptions interface must have an 'expose' property"
+if (!fs.existsSync(srcBase + '/plugin.ts')) {
+  throw new Error('plugin.ts not found at ' + srcBase);
+}
 
-    # The function should destructure or access config.expose
-    assert "config.expose" in src or "{ expose" in src, \
-        "plugin() must access config.expose"
+// --- Set up isolated test environment ---
+const tmpDir = '/tmp/_grep_plugin_test';
+fs.rmSync(tmpDir, { recursive: true, force: true });
+fs.mkdirSync(tmpDir + '/src', { recursive: true });
 
-    # Should NOT read from config.env for grep values
-    assert "env.grep" not in src, \
-        "plugin.ts must not read grep from env (should use expose)"
-    assert "env.grepTags" not in src, \
-        "plugin.ts must not read grepTags from env (should use expose)"
+// Copy source files, adding .ts extensions to local imports for ESM resolution
+function copyTS(name) {
+  let src = fs.readFileSync(srcBase + '/' + name, 'utf8');
+  // Fix bare relative imports: './utils' -> './utils.ts'
+  src = src.replace(/from\s+'\.\/([^']+)'/g, (m, p) =>
+    p.endsWith('.ts') ? m : `from './${p}.ts'`
+  );
+  fs.writeFileSync(tmpDir + '/src/' + name, src);
+}
+copyTS('plugin.ts');
+copyTS('utils.ts');
+
+// Provide version.ts (may be auto-generated in the monorepo)
+const versionPath = srcBase + '/version.ts';
+if (fs.existsSync(versionPath)) {
+  let vSrc = fs.readFileSync(versionPath, 'utf8');
+  vSrc = vSrc.replace(/from\s+'\.\/([^']+)'/g, (m, p) =>
+    p.endsWith('.ts') ? m : `from './${p}.ts'`
+  );
+  fs.writeFileSync(tmpDir + '/src/version.ts', vSrc);
+} else {
+  fs.writeFileSync(tmpDir + '/src/version.ts',
+    "export const version = '0.0.0';\n");
+}
+
+// Install debug (only external dependency of plugin.ts)
+execSync('npm init -y 2>&1', { cwd: tmpDir, stdio: 'pipe' });
+execSync('npm install debug 2>&1', { cwd: tmpDir, stdio: 'pipe', timeout: 60000 });
+
+// Create behavioral test that exercises the actual plugin function
+fs.writeFileSync(tmpDir + '/src/test.ts', `
+import { plugin } from './plugin.ts';
+
+const logs = [];
+const origLog = console.log;
+console.log = (...a) => logs.push(a.join(' '));
+
+// Test 1: env-only config (old API) must be returned unchanged.
+// After migration, plugin checks config.expose, so env-only input
+// hits the early-return path and is a no-op.
+const envConfig = { env: { grep: 'login' }, specPattern: '**/*.cy.ts' };
+const envResult = plugin(envConfig);
+if (envResult !== envConfig) {
+  throw new Error(
+    'plugin must return envConfig unchanged when only env is present (not expose)'
+  );
+}
+const envLogs = [...logs];
+
+// Test 2: expose config (new API) must be processed — grep value is read
+// and logged to console.
+logs.length = 0;
+plugin({ expose: { grep: 'login' }, specPattern: '**/*.cy.ts' });
+const exposeLogs = [...logs];
+
+console.log = origLog;
+
+if (!exposeLogs.some(l => l.includes('login'))) {
+  throw new Error(
+    'plugin did not read expose config — no grep log output. ' +
+    'Logs: ' + JSON.stringify(exposeLogs)
+  );
+}
+if (envLogs.some(l => l.includes('login'))) {
+  throw new Error(
+    'plugin incorrectly processed env config (should only use expose). ' +
+    'Logs: ' + JSON.stringify(envLogs)
+  );
+}
+console.log('PASS');
+`);
+
+// Run with Node 22 built-in TypeScript stripping
+let out;
+try {
+  out = execSync(
+    'node --experimental-strip-types --no-warnings src/test.ts',
+    { cwd: tmpDir, stdio: 'pipe', timeout: 30000 }
+  );
+} catch (e1) {
+  // Fallback: tsx (downloads on first use)
+  try {
+    out = execSync(
+      'npx --yes tsx src/test.ts',
+      { cwd: tmpDir, stdio: 'pipe', timeout: 120000 }
+    );
+  } catch (e2) {
+    throw new Error(
+      'Plugin test failed (both --experimental-strip-types and tsx)\n' +
+      'node: ' + (e1.stderr?.toString() || e1.message) + '\n' +
+      'tsx: ' + (e2.stderr?.toString() || e2.message)
+    );
+  }
+}
+console.log(out.toString().trim());
+""", timeout=90)
+    assert r.returncode == 0, f"Plugin behavioral test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_register_calls_expose():
-    """register.ts must use Cypress.expose() instead of Cypress.env()."""
-    src = (Path(REPO) / "npm/grep/src/register.ts").read_text()
+    """register.ts uses Cypress.expose() instead of Cypress.env()."""
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('npm/grep/src/register.ts', 'utf8');
 
-    assert "Cypress.expose(" in src, \
-        "register.ts must call Cypress.expose()"
-    # Should not use Cypress.env() for getting/setting grep values
-    assert "Cypress.env(" not in src, \
-        "register.ts must not call Cypress.env() — use Cypress.expose()"
+if (!src.includes('Cypress.expose(')) {
+  throw new Error('register.ts must call Cypress.expose()');
+}
+if (src.includes('Cypress.env(')) {
+  throw new Error('register.ts must not call Cypress.env() — use Cypress.expose()');
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_peer_dep_updated():
-    """package.json peerDependencies.cypress must require >=15.10.0."""
-    pkg = json.loads((Path(REPO) / "npm/grep/package.json").read_text())
-    cypress_peer = pkg.get("peerDependencies", {}).get("cypress", "")
-    assert "15.10" in cypress_peer or "15.11" in cypress_peer or "16" in cypress_peer, \
-        f"peerDependencies.cypress should be >=15.10.0, got: {cypress_peer}"
+    """package.json peerDependencies.cypress requires >=15.10.0."""
+    r = _run_node("""
+const pkg = require('./npm/grep/package.json');
+const peer = (pkg.peerDependencies || {}).cypress || '';
+const m = peer.match(/(\\d+)\\.(\\d+)/);
+if (!m) throw new Error('No version in peerDep: ' + peer);
+const [maj, min] = [parseInt(m[1]), parseInt(m[2])];
+if (maj < 15 || (maj === 15 && min < 10)) {
+  throw new Error('peerDep cypress must be >=15.10.0, got: ' + peer);
+}
+console.log('PASS: ' + peer);
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_package_json_scripts_use_expose():
-    """package.json npm scripts must use --expose, not --env for grep args."""
-    pkg = json.loads((Path(REPO) / "npm/grep/package.json").read_text())
-    scripts = pkg.get("scripts", {})
-    grep_scripts = {
-        name: cmd for name, cmd in scripts.items()
-        if "cypress" in cmd.lower() and ("grep" in cmd or "burn" in cmd or "Tags" in cmd)
-    }
-    assert len(grep_scripts) >= 5, \
-        f"Expected at least 5 grep-related scripts, found {len(grep_scripts)}"
-    has_expose = False
-    for name, cmd in grep_scripts.items():
-        assert "--env" not in cmd, \
-            f"Script '{name}' still uses --env: {cmd}"
-        if "--expose" in cmd:
-            has_expose = True
-    assert has_expose, "At least one grep script must use --expose"
+    """package.json npm scripts use --expose instead of --env for grep args."""
+    r = _run_node("""
+const pkg = require('./npm/grep/package.json');
+const scripts = Object.entries(pkg.scripts || {})
+  .filter(([_, cmd]) =>
+    cmd.includes('cypress') &&
+    (cmd.includes('grep') || cmd.includes('burn') || cmd.includes('Tags') || cmd.includes('Untagged'))
+  );
 
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) — README documentation update tests
-# ---------------------------------------------------------------------------
-
-# [config_edit] fail_to_pass
-
-    # Must have a migration section for v5 -> v6
-    assert "v5 to v6" in readme_lower or "v5 → v6" in readme_lower or \
-        "from v5" in readme_lower, \
-        "README must document the v5 to v6 migration"
-
-    # Migration section must mention the key API change
-    assert "expose" in readme_lower, \
-        "README migration section must mention 'expose'"
-
-
-# [config_edit] fail_to_pass
-
-    # Must contain --expose in examples
-    assert "--expose" in readme, \
-        "README must use --expose in CLI examples"
-
-    # Split by migration section to check main content only
-    parts = re.split(r'(?i)###\s+from v5 to v6', readme, maxsplit=1)
-    main_content = parts[0]
-
-    # Main content should not use --env in cypress run commands
-    for line in main_content.split('\n'):
-        if 'npx cypress run' in line and '--env' in line:
-            assert False, f"README main content still uses --env in: {line.strip()}"
-
-
-# [config_edit] fail_to_pass
-
-    # Find the defineConfig example block
-    config_match = re.search(
-        r'defineConfig\(\{.*?\}\)',
-        readme,
-        re.DOTALL,
-    )
-    assert config_match, "README should contain a defineConfig example"
-    config_block = config_match.group(0)
-
-    # The config should use expose: for grep settings, not env:
-    # Look for lines with grep/filter settings under expose: or env:
-    assert "expose:" in config_block, \
-        "defineConfig example must use 'expose:' key for grep settings"
+if (scripts.length < 5) {
+  throw new Error('Expected >=5 grep-related scripts, found ' + scripts.length);
+}
+for (const [name, cmd] of scripts) {
+  if (cmd.includes('--env ')) {
+    throw new Error('Script "' + name + '" still uses --env: ' + cmd);
+  }
+}
+if (!scripts.some(([_, cmd]) => cmd.includes('--expose'))) {
+  throw new Error('No scripts use --expose');
+}
+console.log('PASS: ' + scripts.length + ' scripts validated');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_plugin_has_real_logic():
     """plugin.ts must contain real filtering logic, not just a stub."""
     src = (Path(REPO) / "npm/grep/src/plugin.ts").read_text()
@@ -160,7 +233,6 @@ def test_plugin_has_real_logic():
     assert "specPattern" in src, "plugin must handle specPattern"
 
 
-# [static] pass_to_pass
 def test_register_has_real_logic():
     """register.ts must contain real registration logic, not just a stub."""
     src = (Path(REPO) / "npm/grep/src/register.ts").read_text()

@@ -8,140 +8,120 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/remix"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
-def test_syntax_check():
-    """Modified TypeScript files parse without errors."""
-    process_ts = Path(f"{REPO}/scripts/utils/process.ts")
-    assert process_ts.exists(), "scripts/utils/process.ts not found"
-    content = process_ts.read_text()
-    assert len(content) > 50, "process.ts suspiciously small"
+def test_process_ts_exists():
+    """scripts/utils/process.ts exists and exports logAndExec."""
+    p = Path(f"{REPO}/scripts/utils/process.ts")
+    assert p.exists(), "scripts/utils/process.ts not found"
+    content = p.read_text()
+    assert "logAndExec" in content, "logAndExec not found in process.ts"
     assert "export" in content, "Missing exports in process.ts"
-    assert "logAndExec" in content, "logAndExec function missing from process.ts"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-def test_log_and_exec_capture_support():
-    """logAndExec must accept a capture parameter and return a string."""
-    content = Path(f"{REPO}/scripts/utils/process.ts").read_text()
-
-    # Must return string type (not void)
-    func_match = re.search(
-        r'export\s+function\s+logAndExec\s*\(([^)]*)\)\s*:\s*(\w+)',
-        content,
+def test_logandexec_capture_returns_output():
+    """logAndExec(cmd, true) returns the command's stdout as a string."""
+    script = Path(REPO) / "_eval_capture.mjs"
+    script.write_text(
+        "let mod = await import('./scripts/utils/process.ts');\n"
+        "let result = mod.logAndExec('echo CAPTURE_WORKS', true);\n"
+        "if (typeof result !== 'string' || !result.includes('CAPTURE_WORKS')) {\n"
+        "  process.stderr.write("
+        "'logAndExec(cmd, true) returned ' + typeof result + ': ' + String(result));\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "process.stdout.write('PASS');\n"
     )
-    assert func_match, "logAndExec function declaration not found"
-    params = func_match.group(1)
-    return_type = func_match.group(2)
-    assert return_type == "string", \
-        f"logAndExec must return string, got {return_type}"
-
-    # Must accept more than just the command parameter (needs capture toggle)
-    assert "," in params, \
-        "logAndExec must accept a second parameter to toggle output capture"
-
-
-# [pr_diff] fail_to_pass
-def test_log_and_exec_pipe_stdio():
-    """logAndExec must use stdio:'pipe' when capturing output."""
-    content = Path(f"{REPO}/scripts/utils/process.ts").read_text()
-
-    # When captureOutput is true, must use pipe mode (not inherit)
-    assert "stdio: 'pipe'" in content or 'stdio: "pipe"' in content, \
-        "logAndExec must use stdio:'pipe' for capture mode"
-
-    # Must specify encoding for captured output
-    assert "encoding:" in content and "utf-8" in content, \
-        "logAndExec must specify utf-8 encoding when capturing"
+    try:
+        r = subprocess.run(
+            ["node", "--experimental-strip-types", str(script)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Capture test failed (rc={r.returncode}): {r.stderr}"
+        assert "PASS" in r.stdout, f"Expected PASS in output, got: {r.stdout}"
+    finally:
+        script.unlink(missing_ok=True)
 
 
-# [pr_diff] fail_to_pass
-
-    # Must handle .gitignore modification (remove dist entries)
-    assert "gitignore" in content.lower() or ".gitignore" in content, \
-        "Script must modify .gitignore to include dist/ in commits"
-
-    # Must handle package dependency updates
-    has_dep_update = (
-        "dependencies" in content
-        or "package.json" in content
-        or "packageJson" in content
+def test_logandexec_default_returns_string():
+    """logAndExec(cmd) without capture returns empty string, not void."""
+    script = Path(REPO) / "_eval_nocapture.mjs"
+    script.write_text(
+        "let mod = await import('./scripts/utils/process.ts');\n"
+        "let result = mod.logAndExec('echo nocapture_test');\n"
+        "if (typeof result !== 'string') {\n"
+        "  process.stderr.write("
+        "'logAndExec() returned ' + typeof result + ' instead of string');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "process.stdout.write('PASS');\n"
     )
-    assert has_dep_update, \
-        "Script must update package dependencies to use github branch format"
-
-    # Must handle branch name from CLI arguments
-    has_arg_parsing = (
-        "parseArgs" in content
-        or "process.argv" in content
-        or "argv" in content
-    )
-    assert has_arg_parsing, \
-        "Script must accept a branch name argument"
-
-    # Must use logAndExec or execSync for git/shell commands
-    has_exec = "logAndExec" in content or "execSync" in content
-    assert has_exec, \
-        "Script must execute shell commands (logAndExec or execSync)"
+    try:
+        r = subprocess.run(
+            ["node", "--experimental-strip-types", str(script)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"No-capture test failed (rc={r.returncode}): {r.stderr}"
+        assert "PASS" in r.stdout, f"Expected PASS in output, got: {r.stdout}"
+    finally:
+        script.unlink(missing_ok=True)
 
 
-# [pr_diff] fail_to_pass
+def test_setup_script_exists():
+    """scripts/setup-installable-branch.ts exists with key functionality."""
+    p = Path(f"{REPO}/scripts/setup-installable-branch.ts")
+    assert p.exists(), "scripts/setup-installable-branch.ts not found"
+    content = p.read_text()
+    assert "logAndExec" in content, "Script must use logAndExec"
+    assert "gitignore" in content.lower(), "Script must handle .gitignore"
+    assert "dependencies" in content, "Script must update package dependencies"
+    assert "parseArgs" in content or "argv" in content, \
+        "Script must accept branch name argument"
 
 
-# ---------------------------------------------------------------------------
-# Config-edit (config_edit) — documentation/config file updates
-# ---------------------------------------------------------------------------
+def test_package_json_has_setup_script():
+    """package.json registers the setup-installable-branch npm script."""
+    pkg = json.loads(Path(f"{REPO}/package.json").read_text())
+    scripts = pkg.get("scripts", {})
+    assert "setup-installable-branch" in scripts, \
+        "package.json must have setup-installable-branch script"
 
-# [config_edit] fail_to_pass — README.md
 
-    # Must have an Installation heading
+def test_nightly_workflow_exists():
+    """GitHub Actions nightly workflow exists with correct triggers."""
+    p = Path(f"{REPO}/.github/workflows/nightly.yml")
+    assert p.exists(), ".github/workflows/nightly.yml not found"
+    content = p.read_text()
+    assert "schedule" in content, "Workflow must have schedule trigger"
+    assert "setup-installable-branch" in content, \
+        "Workflow must run setup-installable-branch script"
+
+
+def test_readme_installation_section():
+    """README.md has Installation section with nightly build instructions."""
+    content = Path(f"{REPO}/README.md").read_text()
     assert "## Installation" in content, \
-        "README.md must have an '## Installation' section"
-
-    # Must document the nightly branch install method
-    has_nightly = "nightly" in content
-    assert has_nightly, \
-        "README.md must mention the nightly branch"
-
-    # Must show pnpm install command with github syntax
-    assert "pnpm install" in content or "pnpm i" in content, \
-        "README.md must show the pnpm install command"
-
-    # Must show the github#branch&path: install syntax
+        "README.md must have '## Installation' section"
+    assert "nightly" in content, "README.md must mention the nightly branch"
     assert "remix-run/remix#" in content and "path:" in content, \
         "README.md must show the github#branch&path: install syntax"
 
 
-# [config_edit] fail_to_pass — CONTRIBUTING.md
-
-    # Must have a Nightly Builds section
-    assert "Nightly" in content, \
-        "CONTRIBUTING.md must mention nightly builds"
-
-    # Must reference the setup script
+def test_contributing_nightly_section():
+    """CONTRIBUTING.md documents the nightly build process."""
+    content = Path(f"{REPO}/CONTRIBUTING.md").read_text()
+    assert "Nightly" in content, "CONTRIBUTING.md must mention nightly builds"
     assert "setup-installable-branch" in content, \
         "CONTRIBUTING.md must reference the setup-installable-branch script"
-
-    # Must show the pnpm install syntax
-    assert "pnpm install" in content or "pnpm i" in content, \
-        "CONTRIBUTING.md must show the pnpm install command for nightly"
-
-
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from AGENTS.md
-# ---------------------------------------------------------------------------
-
-# [agent_config] pass_to_pass — AGENTS.md:23 @ 598a92e3

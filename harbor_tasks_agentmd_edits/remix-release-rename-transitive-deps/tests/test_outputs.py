@@ -7,22 +7,33 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/remix"
 
 
+def _run_node(code, timeout=30):
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.cjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_syntax_check():
-    """Modified TypeScript files must exist and be non-empty."""
+    """Core TypeScript utility files must exist and be non-empty."""
     files = [
-        "scripts/release-pr.ts",
-        "scripts/utils/release-pr.ts",
         "scripts/utils/changes.ts",
         "scripts/utils/packages.ts",
         "scripts/publish.ts",
@@ -35,129 +46,358 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests: renaming
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_release_pr_script_renamed():
-    """Main PR script must be at scripts/release-pr.ts (not changes-version-pr.ts)."""
-    new_path = Path(REPO) / "scripts" / "release-pr.ts"
-    old_path = Path(REPO) / "scripts" / "changes-version-pr.ts"
-    assert new_path.exists(), "scripts/release-pr.ts must exist"
-    assert not old_path.exists(), "scripts/changes-version-pr.ts should be removed"
+def test_release_pr_import_chain():
+    """release-pr.ts exists, old files removed, import to utils/release-pr.ts resolves."""
+    r = _run_node("""
+var fs = require('fs');
+var path = require('path');
+var base = '/workspace/remix';
+
+// New files must exist
+if (!fs.existsSync(path.join(base, 'scripts/release-pr.ts'))) {
+  console.error('scripts/release-pr.ts must exist');
+  process.exit(1);
+}
+if (!fs.existsSync(path.join(base, 'scripts/utils/release-pr.ts'))) {
+  console.error('scripts/utils/release-pr.ts must exist');
+  process.exit(1);
+}
+
+// Old files must be removed
+if (fs.existsSync(path.join(base, 'scripts/changes-version-pr.ts'))) {
+  console.error('scripts/changes-version-pr.ts should be removed');
+  process.exit(1);
+}
+if (fs.existsSync(path.join(base, 'scripts/utils/version-pr.ts'))) {
+  console.error('scripts/utils/version-pr.ts should be removed');
+  process.exit(1);
+}
+
+// Verify import chain: release-pr.ts must import from ./utils/release-pr
+var content = fs.readFileSync(path.join(base, 'scripts/release-pr.ts'), 'utf-8');
+if (content.indexOf('./utils/release-pr') === -1) {
+  console.error('release-pr.ts must import from ./utils/release-pr');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Import chain failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_release_pr_utils_renamed():
-    """Utility module must be at scripts/utils/release-pr.ts (not version-pr.ts)."""
-    new_path = Path(REPO) / "scripts" / "utils" / "release-pr.ts"
-    old_path = Path(REPO) / "scripts" / "utils" / "version-pr.ts"
-    assert new_path.exists(), "scripts/utils/release-pr.ts must exist"
-    assert not old_path.exists(), "scripts/utils/version-pr.ts should be removed"
+def test_pr_config_values():
+    """release-pr.ts sets prTitle='Release' and prBranch='release-pr/main'."""
+    r = _run_node(r"""
+var fs = require('fs');
+var p = '/workspace/remix/scripts/release-pr.ts';
+if (!fs.existsSync(p)) {
+  console.error('scripts/release-pr.ts does not exist');
+  process.exit(1);
+}
+var content = fs.readFileSync(p, 'utf-8');
+
+var titleMatch = content.match(/prTitle\s*=\s*['"](.+?)['"]/);
+if (!titleMatch || titleMatch[1] !== 'Release') {
+  console.error('prTitle must be "Release", got: ' + (titleMatch ? titleMatch[1] : 'not found'));
+  process.exit(1);
+}
+
+var branchMatch = content.match(/prBranch\s*=\s*['"](.+?)['"]/);
+if (!branchMatch || branchMatch[1] !== 'release-pr/main') {
+  console.error('prBranch must be "release-pr/main", got: ' + (branchMatch ? branchMatch[1] : 'not found'));
+  process.exit(1);
+}
+
+if (content.indexOf('Version Packages') !== -1) {
+  console.error('release-pr.ts must not reference "Version Packages"');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"PR config failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_pr_title_is_release():
-    """The release-pr.ts script must use 'Release' as the PR title, not 'Version Packages'."""
-    content = (Path(REPO) / "scripts" / "release-pr.ts").read_text()
-    # Must contain the new title assignment
-    assert re.search(r"""prTitle\s*=\s*['"]Release['"]""", content), \
-        "release-pr.ts must set prTitle = 'Release'"
-    # Must NOT contain old title
-    assert "Version Packages" not in content, \
-        "release-pr.ts must not reference 'Version Packages'"
+def test_commit_subject_is_release():
+    """generateCommitMessage in changes.ts uses 'Release' as commit subject."""
+    r = _run_node(r"""
+var fs = require('fs');
+var content = fs.readFileSync('/workspace/remix/scripts/utils/changes.ts', 'utf-8');
+
+var m = content.match(/function\s+generateCommitMessage[\s\S]*?let\s+subject\s*=\s*['"](.+?)['"]/);
+if (!m) {
+  console.error('Could not find subject in generateCommitMessage');
+  process.exit(1);
+}
+if (m[1] !== 'Release') {
+  console.error('Commit subject must be "Release", got: "' + m[1] + '"');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Commit subject failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_commit_message_subject():
-    """generateCommitMessage must use 'Release' as the commit subject."""
-    content = (Path(REPO) / "scripts" / "utils" / "changes.ts").read_text()
-    assert re.search(r"""let\s+subject\s*=\s*['"]Release['"]""", content), \
-        "changes.ts must set subject = 'Release'"
+def test_git_tag_and_release_url():
+    """getGitTag and getGitHubReleaseUrl produce correct output when executed."""
+    r = _run_node(r"""
+var fs = require('fs');
+var content = fs.readFileSync('/workspace/remix/scripts/utils/packages.ts', 'utf-8');
+
+// Extract GITHUB_REPO_URL constant
+var urlMatch = content.match(/GITHUB_REPO_URL\s*=\s*['"](.+?)['"]/);
+if (!urlMatch) {
+  console.error('GITHUB_REPO_URL not found in packages.ts');
+  process.exit(1);
+}
+var GITHUB_REPO_URL = urlMatch[1];
+
+// Extract and execute getPackageShortName
+var shortNameMatch = content.match(/function getPackageShortName\(packageName[^)]*\)[^{]*\{([\s\S]*?)\n\}/);
+if (!shortNameMatch) {
+  console.error('getPackageShortName function not found');
+  process.exit(1);
+}
+var getPackageShortName = new Function('packageName', shortNameMatch[1]);
+
+// Test getPackageShortName
+var r1 = getPackageShortName('@remix-run/headers');
+if (r1 !== 'headers') {
+  console.error('getPackageShortName("@remix-run/headers") = "' + r1 + '", expected "headers"');
+  process.exit(1);
+}
+var r2 = getPackageShortName('remix');
+if (r2 !== 'remix') {
+  console.error('getPackageShortName("remix") = "' + r2 + '", expected "remix"');
+  process.exit(1);
+}
+
+// Extract and execute getGitTag
+var gitTagMatch = content.match(/function getGitTag\(packageName[^,]*, version[^)]*\)[^{]*\{([\s\S]*?)\n\}/);
+if (!gitTagMatch) {
+  console.error('getGitTag function not found');
+  process.exit(1);
+}
+var getGitTag = new Function('packageName', 'version',
+  'var getPackageShortName = ' + getPackageShortName.toString() + ';\n' + gitTagMatch[1]);
+
+var r3 = getGitTag('@remix-run/headers', '0.11.0');
+if (r3 !== 'headers@0.11.0') {
+  console.error('getGitTag("@remix-run/headers", "0.11.0") = "' + r3 + '"');
+  process.exit(1);
+}
+var r4 = getGitTag('remix', '3.0.0');
+if (r4 !== 'remix@3.0.0') {
+  console.error('getGitTag("remix", "3.0.0") = "' + r4 + '"');
+  process.exit(1);
+}
+
+// Extract and execute getGitHubReleaseUrl
+var releaseUrlMatch = content.match(/function getGitHubReleaseUrl\(packageName[^,]*, version[^)]*\)[^{]*\{([\s\S]*?)\n\}/);
+if (!releaseUrlMatch) {
+  console.error('getGitHubReleaseUrl function not found');
+  process.exit(1);
+}
+var getGitHubReleaseUrl = new Function('packageName', 'version',
+  'var GITHUB_REPO_URL = ' + JSON.stringify(GITHUB_REPO_URL) + ';\n' +
+  'var getGitTag = ' + getGitTag.toString() + ';\n' +
+  releaseUrlMatch[1]);
+
+var r5 = getGitHubReleaseUrl('@remix-run/headers', '0.11.0');
+var expected = GITHUB_REPO_URL + '/releases/tag/headers@0.11.0';
+if (r5 !== expected) {
+  console.error('getGitHubReleaseUrl = "' + r5 + '", expected: "' + expected + '"');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Git tag/URL execution failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_dependency_bumps_in_package_release():
-    """PackageRelease interface must include dependencyBumps field."""
-    content = (Path(REPO) / "scripts" / "utils" / "changes.ts").read_text()
-    assert "dependencyBumps" in content, \
-        "changes.ts must define dependencyBumps in PackageRelease"
-    assert "DependencyBump" in content, \
-        "changes.ts must define DependencyBump interface"
+def test_dependency_bump_type_and_field():
+    """DependencyBump interface with required fields and dependencyBumps in PackageRelease."""
+    r = _run_node(r"""
+var fs = require('fs');
+var content = fs.readFileSync('/workspace/remix/scripts/utils/changes.ts', 'utf-8');
+
+// Verify DependencyBump interface with required fields
+var ifaceMatch = content.match(/interface\s+DependencyBump\s*\{([\s\S]*?)\}/);
+if (!ifaceMatch) {
+  console.error('DependencyBump interface not found in changes.ts');
+  process.exit(1);
+}
+var body = ifaceMatch[1];
+var fields = ['packageName', 'version', 'releaseUrl'];
+for (var i = 0; i < fields.length; i++) {
+  if (body.indexOf(fields[i]) === -1) {
+    console.error('DependencyBump missing field: ' + fields[i]);
+    process.exit(1);
+  }
+}
+
+// Verify PackageRelease has dependencyBumps field
+var releaseMatch = content.match(/interface\s+PackageRelease\s*\{([\s\S]*?)\}/);
+if (!releaseMatch) {
+  console.error('PackageRelease interface not found');
+  process.exit(1);
+}
+if (releaseMatch[1].indexOf('dependencyBumps') === -1) {
+  console.error('PackageRelease missing dependencyBumps field');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"DependencyBump check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_get_transitive_dependents_exists():
-    """packages.ts must export getTransitiveDependents function."""
-    content = (Path(REPO) / "scripts" / "utils" / "packages.ts").read_text()
-    assert "export function getTransitiveDependents" in content, \
-        "packages.ts must export getTransitiveDependents"
-    assert "export function buildReverseDependencyGraph" in content, \
-        "packages.ts must export buildReverseDependencyGraph"
-    assert "export function getGitHubReleaseUrl" in content, \
-        "packages.ts must export getGitHubReleaseUrl"
+def test_transitive_dependents_exported():
+    """packages.ts exports getTransitiveDependents, buildReverseDependencyGraph, getPackageDependencies."""
+    r = _run_node("""
+var fs = require('fs');
+var content = fs.readFileSync('/workspace/remix/scripts/utils/packages.ts', 'utf-8');
+
+var required = [
+  'getTransitiveDependents',
+  'buildReverseDependencyGraph',
+  'getPackageDependencies',
+];
+
+for (var i = 0; i < required.length; i++) {
+  if (content.indexOf('export function ' + required[i]) === -1) {
+    console.error('Missing exported function: ' + required[i]);
+    process.exit(1);
+  }
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Export check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_workflow_renamed():
+    """Workflow renamed from changes-version-pr.yaml to release-pr.yaml."""
+    r = _run_node("""
+var fs = require('fs');
+var path = require('path');
+var base = '/workspace/remix/.github/workflows';
+var newPath = path.join(base, 'release-pr.yaml');
+var oldPath = path.join(base, 'changes-version-pr.yaml');
+
+if (!fs.existsSync(newPath)) {
+  console.error('release-pr.yaml must exist');
+  process.exit(1);
+}
+if (fs.existsSync(oldPath)) {
+  console.error('changes-version-pr.yaml should be removed');
+  process.exit(1);
+}
+
+var content = fs.readFileSync(newPath, 'utf-8');
+if (content.indexOf('release-pr') === -1) {
+  console.error('Workflow must reference release-pr script');
+  process.exit(1);
+}
+if (content.indexOf('changes-version-pr') !== -1) {
+  console.error('Workflow must not reference old changes-version-pr');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Workflow rename failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_agents_md_updated():
+    """AGENTS.md references release-pr workflow and 'Release' PR naming."""
+    r = _run_node("""
+var fs = require('fs');
+var content = fs.readFileSync('/workspace/remix/AGENTS.md', 'utf-8');
+
+if (content.indexOf('release-pr') === -1) {
+  console.error('AGENTS.md must reference release-pr');
+  process.exit(1);
+}
+if (content.indexOf('changes-version-pr') !== -1) {
+  console.error('AGENTS.md must not reference changes-version-pr');
+  process.exit(1);
+}
+if (content.indexOf('"Release" PR') === -1 && content.indexOf("'Release' PR") === -1) {
+  console.error('AGENTS.md must describe the PR as "Release"');
+  process.exit(1);
+}
+if (content.indexOf('release-pr.ts') === -1) {
+  console.error('AGENTS.md must reference release-pr.ts');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"AGENTS.md check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_contributing_md_updated():
+    """CONTRIBUTING.md uses 'Release' naming and release-pr references throughout."""
+    r = _run_node("""
+var fs = require('fs');
+var content = fs.readFileSync('/workspace/remix/CONTRIBUTING.md', 'utf-8');
+
+if (content.indexOf('"Release" PR') === -1) {
+  console.error('CONTRIBUTING.md must reference "Release" PR');
+  process.exit(1);
+}
+if (content.indexOf('release-pr') === -1) {
+  console.error('CONTRIBUTING.md must reference release-pr');
+  process.exit(1);
+}
+if (content.indexOf('changes-version-pr') !== -1) {
+  console.error('CONTRIBUTING.md must not reference changes-version-pr');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"CONTRIBUTING.md check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — config/docs update tests
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
-def test_agents_md_references_release_pr():
-    """AGENTS.md must reference the release-pr workflow, not changes-version-pr."""
-    agents = Path(REPO) / "AGENTS.md"
-    content = agents.read_text()
-    assert "release-pr" in content, \
-        "AGENTS.md should reference the release-pr workflow"
-    assert "changes-version-pr" not in content, \
-        "AGENTS.md should not reference the old changes-version-pr workflow"
-
-
-# [pr_diff] fail_to_pass
-def test_agents_md_uses_release_naming():
-    """AGENTS.md must use 'Release' PR naming, not 'Version Packages'."""
-    agents = Path(REPO) / "AGENTS.md"
-    content = agents.read_text()
-    # The automated releases bullet should say "Release" PR
-    assert '"Release" PR' in content or "'Release' PR" in content or \
-           re.search(r'opens/updates a "Release" PR', content), \
-        "AGENTS.md should describe the automated PR as 'Release'"
-    # The preview script section should reference release-pr.ts
-    assert "release-pr.ts" in content, \
-        "AGENTS.md should reference release-pr.ts for the preview script"
-
-
-# [pr_diff] fail_to_pass
-def test_contributing_md_uses_release_naming():
-    """CONTRIBUTING.md must use 'Release' PR naming throughout."""
-    contributing = Path(REPO) / "CONTRIBUTING.md"
-    content = contributing.read_text()
-    assert '"Release" PR' in content, \
-        "CONTRIBUTING.md should reference 'Release' PR"
-    assert "release-pr" in content, \
-        "CONTRIBUTING.md should reference the release-pr workflow"
-    assert "changes-version-pr" not in content, \
-        "CONTRIBUTING.md should not reference the old changes-version-pr workflow"
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — workflow file and PR branch name
+# Pass-to-pass (static)
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_workflow_references_consistent():
-    """Workflow naming is internally consistent (either all old or all new naming)."""
-    # The workflow file and main script should exist (regardless of name)
+    """Workflow YAML and scripts use consistent naming."""
     new_workflow = Path(REPO) / ".github" / "workflows" / "release-pr.yaml"
     old_workflow = Path(REPO) / ".github" / "workflows" / "changes-version-pr.yaml"
     has_new = new_workflow.exists()
     has_old = old_workflow.exists()
     assert has_new or has_old, "A workflow file must exist"
 
-    # If new workflow exists, scripts must also use new naming
     if has_new:
         content = new_workflow.read_text()
         assert "release-pr" in content, "New workflow must reference release-pr"
-
         script = Path(REPO) / "scripts" / "release-pr.ts"
         assert script.exists(), "release-pr.ts must exist when release-pr.yaml exists"

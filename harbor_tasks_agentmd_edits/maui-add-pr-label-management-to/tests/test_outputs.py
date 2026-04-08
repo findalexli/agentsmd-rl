@@ -7,19 +7,30 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/maui"
 PS1 = Path(REPO) / ".github/skills/verify-tests-fail-without-fix/scripts/verify-tests-fail.ps1"
 SKILL_MD = Path(REPO) / ".github/skills/verify-tests-fail-without-fix/SKILL.md"
 
+PS1_STR = str(PS1)
+SKILL_MD_STR = str(SKILL_MD)
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code that validates repo file content."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout,
+    )
+
 
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+
 def test_ps1_not_empty():
     """PowerShell script exists and is non-trivial."""
     content = PS1.read_text()
@@ -28,82 +39,166 @@ def test_ps1_not_empty():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — code behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-def test_update_labels_function_defined():
-    """Script must define Update-VerificationLabels with label add/remove logic."""
-    content = PS1.read_text()
-    # Function must exist
-    assert re.search(r"function\s+Update-VerificationLabels", content), \
-        "Must define Update-VerificationLabels function"
-    # Must accept a boolean parameter for reproduction status
-    assert "ReproductionConfirmed" in content, \
-        "Function must have ReproductionConfirmed parameter"
-    # Must use gh CLI to manage labels
-    assert "gh api" in content or "gh pr edit" in content or "gh issue edit" in content, \
-        "Must use gh CLI for label management"
 
-
-# [pr_diff] fail_to_pass
-def test_label_names_defined():
-    """Script must define both confirmed and failed label name strings."""
-    content = PS1.read_text()
-    assert "s/ai-reproduction-confirmed" in content, \
-        "Must define the confirmed label name"
-    assert "s/ai-reproduction-failed" in content, \
-        "Must define the failed label name"
-
-
-# [pr_diff] fail_to_pass
-def test_labels_called_on_verification_pass():
-    """Update-VerificationLabels must be called with $true on verification pass."""
-    content = PS1.read_text()
-    # Find calls with ReproductionConfirmed $true
-    true_calls = re.findall(
-        r"Update-VerificationLabels\s+-ReproductionConfirmed\s+\$true", content
+def test_update_labels_function_logic():
+    """Update-VerificationLabels implements correct toggle logic with REST API."""
+    r = _run_py(
+        "import re, sys\n"
+        "content = open('" + PS1_STR + "').read()\n"
+        "\n"
+        "# Extract the function body by tracking braces\n"
+        "match = re.search(r'function\\s+Update-VerificationLabels\\s*\\{', content)\n"
+        "if not match:\n"
+        "    print('FAIL: function not found'); sys.exit(1)\n"
+        "\n"
+        "start = match.end() - 1\n"
+        "depth = 0\n"
+        "body = ''\n"
+        "for i in range(start, len(content)):\n"
+        "    if content[i] == '{': depth += 1\n"
+        "    elif content[i] == '}':\n"
+        "        depth -= 1\n"
+        "        if depth == 0:\n"
+        "            body = content[start:i+1]\n"
+        "            break\n"
+        "if not body:\n"
+        "    print('FAIL: could not find function end'); sys.exit(1)\n"
+        "\n"
+        "# Validate toggle logic: conditional assignment of labelToAdd/labelToRemove\n"
+        "if '$labelToAdd' not in body:\n"
+        "    print('FAIL: no $labelToAdd variable'); sys.exit(1)\n"
+        "if '$labelToRemove' not in body:\n"
+        "    print('FAIL: no $labelToRemove variable'); sys.exit(1)\n"
+        "if '$LabelConfirmed' not in body or '$LabelFailed' not in body:\n"
+        "    print('FAIL: label constants not referenced in function'); sys.exit(1)\n"
+        "\n"
+        "# Must use REST API DELETE for removal\n"
+        "if 'DELETE' not in body:\n"
+        "    print('FAIL: no DELETE method for label removal'); sys.exit(1)\n"
+        "# Must use REST API POST for addition\n"
+        "if 'POST' not in body:\n"
+        "    print('FAIL: no POST method for label addition'); sys.exit(1)\n"
+        "# Must check $LASTEXITCODE for error handling\n"
+        "if '$LASTEXITCODE' not in body:\n"
+        "    print('FAIL: no error handling via $LASTEXITCODE'); sys.exit(1)\n"
+        "# Must have guard for unknown PR number\n"
+        "if 'unknown' not in body:\n"
+        "    print('FAIL: no guard for unknown PR number'); sys.exit(1)\n"
+        "\n"
+        "print('PASS')\n"
     )
-    assert len(true_calls) >= 2, \
-        f"Expected at least 2 calls with $true (simple + full mode), found {len(true_calls)}"
+    assert r.returncode == 0, f"Function logic validation failed: {r.stdout}{r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
-def test_labels_called_on_verification_fail():
-    """Update-VerificationLabels must be called with $false on verification fail."""
-    content = PS1.read_text()
-    # Find calls with ReproductionConfirmed $false
-    false_calls = re.findall(
-        r"Update-VerificationLabels\s+-ReproductionConfirmed\s+\$false", content
+def test_label_names_and_constants():
+    """Script defines $LabelConfirmed and $LabelFailed with correct label strings."""
+    r = _run_py(
+        "import re, sys\n"
+        "content = open('" + PS1_STR + "').read()\n"
+        "\n"
+        "confirmed = re.search(r'\\$LabelConfirmed\\s*=\\s*[\"\\']([^\"\\']+)[\"\\']', content)\n"
+        "failed = re.search(r'\\$LabelFailed\\s*=\\s*[\"\\']([^\"\\']+)[\"\\']', content)\n"
+        "if not confirmed:\n"
+        "    print('FAIL: $LabelConfirmed not defined'); sys.exit(1)\n"
+        "if not failed:\n"
+        "    print('FAIL: $LabelFailed not defined'); sys.exit(1)\n"
+        "\n"
+        "c, f = confirmed.group(1), failed.group(1)\n"
+        "if 'ai-reproduction-confirmed' not in c:\n"
+        "    print(f'FAIL: unexpected confirmed label: {c}'); sys.exit(1)\n"
+        "if 'ai-reproduction-failed' not in f:\n"
+        "    print(f'FAIL: unexpected failed label: {f}'); sys.exit(1)\n"
+        "if c == f:\n"
+        "    print('FAIL: labels must be different'); sys.exit(1)\n"
+        "\n"
+        "print('PASS')\n"
     )
-    assert len(false_calls) >= 2, \
-        f"Expected at least 2 calls with $false (simple + full mode), found {len(false_calls)}"
+    assert r.returncode == 0, f"Label constants validation failed: {r.stdout}{r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
+def test_labels_called_on_all_paths():
+    """Update-VerificationLabels called with correct bool in all 4 verification paths."""
+    r = _run_py(
+        "import re, sys\n"
+        "content = open('" + PS1_STR + "').read()\n"
+        "\n"
+        "true_calls = re.findall(\n"
+        "    r'Update-VerificationLabels\\s+-ReproductionConfirmed\\s+\\$true', content\n"
+        ")\n"
+        "false_calls = re.findall(\n"
+        "    r'Update-VerificationLabels\\s+-ReproductionConfirmed\\s+\\$false', content\n"
+        ")\n"
+        "if len(true_calls) < 2:\n"
+        "    print(f'FAIL: expected >= 2 $true calls, found {len(true_calls)}'); sys.exit(1)\n"
+        "if len(false_calls) < 2:\n"
+        "    print(f'FAIL: expected >= 2 $false calls, found {len(false_calls)}'); sys.exit(1)\n"
+        "\n"
+        "print('PASS')\n"
+    )
+    assert r.returncode == 0, f"Label calls validation failed: {r.stdout}{r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
+def test_pr_detection_fallback():
+    """PR detection has gh pr list --head fallback for fork branches."""
+    r = _run_py(
+        "import sys\n"
+        "content = open('" + PS1_STR + "').read()\n"
+        "\n"
+        "if 'gh pr view' not in content:\n"
+        "    print('FAIL: missing gh pr view primary detection'); sys.exit(1)\n"
+        "if 'gh pr list' not in content:\n"
+        "    print('FAIL: missing gh pr list fallback'); sys.exit(1)\n"
+        "if '--head' not in content:\n"
+        "    print('FAIL: missing --head flag in fallback'); sys.exit(1)\n"
+        "if '$foundPR' not in content:\n"
+        "    print('FAIL: missing $foundPR tracking variable'); sys.exit(1)\n"
+        "\n"
+        "print('PASS')\n"
+    )
+    assert r.returncode == 0, f"PR detection fallback validation failed: {r.stdout}{r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) — SKILL.md documentation tests
-# ---------------------------------------------------------------------------
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
+def test_skill_md_labels_section():
+    """SKILL.md has PR Labels section with both labels, table, and toggle behavior."""
+    r = _run_py(
+        "import sys\n"
+        "content = open('" + SKILL_MD_STR + "').read()\n"
+        "\n"
+        "if '## PR Labels' not in content:\n"
+        "    print('FAIL: missing ## PR Labels section'); sys.exit(1)\n"
+        "if 'ai-reproduction-confirmed' not in content:\n"
+        "    print('FAIL: SKILL.md missing ai-reproduction-confirmed'); sys.exit(1)\n"
+        "if 'ai-reproduction-failed' not in content:\n"
+        "    print('FAIL: SKILL.md missing ai-reproduction-failed'); sys.exit(1)\n"
+        "# Must describe toggle behavior\n"
+        "lower = content.lower()\n"
+        "if 'remove' not in lower or 'add' not in lower:\n"
+        "    print('FAIL: SKILL.md does not describe label toggle (add/remove)'); sys.exit(1)\n"
+        "# Must have label table\n"
+        "if '|' not in content or 'Label' not in content:\n"
+        "    print('FAIL: SKILL.md missing label table'); sys.exit(1)\n"
+        "# Workflow steps must mention PR labels\n"
+        "if 'pr labels' not in lower:\n"
+        "    print('FAIL: workflow steps do not mention PR labels'); sys.exit(1)\n"
+        "\n"
+        "print('PASS')\n"
+    )
+    assert r.returncode == 0, f"SKILL.md validation failed: {r.stdout}{r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+
 def test_existing_verify_failure_mode_preserved():
     """The verify-failure-only mode logic must still be present."""
     content = PS1.read_text()
@@ -113,6 +208,3 @@ def test_existing_verify_failure_mode_preserved():
         "Success output must be preserved"
     assert "RequireFullVerification" in content, \
         "RequireFullVerification parameter must be preserved"
-
-
-# [static] pass_to_pass

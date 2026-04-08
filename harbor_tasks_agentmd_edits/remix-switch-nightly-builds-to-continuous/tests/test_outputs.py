@@ -11,6 +11,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 import re
 from pathlib import Path
 
@@ -21,7 +22,6 @@ REPO = "/workspace/remix"
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Key modified files must exist and be non-empty."""
     files = [
@@ -37,94 +37,198 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests using subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_nightly_workflow_removed():
     """The old nightly.yml workflow must be deleted."""
     p = Path(REPO) / ".github/workflows/nightly.yml"
     assert not p.exists(), "nightly.yml should be removed — its functionality moves to preview.yml"
 
 
-# [pr_diff] fail_to_pass
-def test_preview_workflow_has_push_trigger():
-    """preview.yml must trigger on pushes to main (continuous builds)."""
-    workflow = (Path(REPO) / ".github/workflows/preview.yml").read_text()
-    assert "push:" in workflow, "Workflow must have a push trigger"
-    # The push trigger should target main
-    assert "main" in workflow, "Push trigger should target the main branch"
+def test_preview_workflow_push_trigger():
+    """preview.yml must contain a push trigger targeting main — parsed via subprocess."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+
+content = open('.github/workflows/preview.yml').read()
+lines = content.splitlines()
+
+# Find the 'push:' trigger line
+push_idx = -1
+for i, line in enumerate(lines):
+    if line.strip() == 'push:':
+        push_idx = i
+        break
+
+if push_idx < 0:
+    print('FAIL: no push: trigger found in preview.yml')
+    sys.exit(1)
+
+# Check that 'main' appears in the branches list following push:
+nearby = lines[push_idx:push_idx + 5]
+has_main = any('- main' in l for l in nearby)
+if not has_main:
+    print('FAIL: push trigger does not target main branch')
+    sys.exit(1)
+
+print('PASS')
+"""],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Workflow parsing failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Push trigger test failed: {r.stdout}"
 
 
-# [pr_diff] fail_to_pass
-def test_preview_workflow_builds_on_push():
-    """preview.yml must build and push a preview branch on push-to-main events."""
-    workflow = (Path(REPO) / ".github/workflows/preview.yml").read_text()
-    # Should reference building/pushing for push events
-    assert "setup-installable-branch preview" in workflow, \
-        "Workflow must call setup-installable-branch with 'preview' for push events"
-    # Should force-push the preview branch
-    assert re.search(r"git push.*origin preview", workflow), \
-        "Workflow must push to origin preview branch"
+def test_script_no_branch_flag():
+    """setup-installable-branch.ts parseArgs config must reject --branch flag."""
+    r = subprocess.run(
+        ["node", "-e", """
+const util = require('util');
+const fs = require('fs');
+const script = fs.readFileSync('scripts/setup-installable-branch.ts', 'utf8');
+
+// Extract the parseArgs config using balanced parenthesis matching
+const start = script.indexOf('util.parseArgs(');
+if (start === -1) {
+    console.log('FAIL: no util.parseArgs call found');
+    process.exit(1);
+}
+
+let depth = 0, configStr = '', inside = false;
+for (let i = start + 'util.parseArgs'.length; i < script.length; i++) {
+    if (script[i] === '(') { depth++; if (depth === 1) { inside = true; continue; } }
+    if (script[i] === ')') { depth--; if (depth === 0) break; }
+    if (inside) configStr += script[i];
+}
+
+// Evaluate the config object literal (pure JS, no TS annotations)
+const config = eval('(' + configStr + ')');
+
+// Actually call util.parseArgs with the extracted config + --branch flag
+// Old config defines 'branch' option → accepts it
+// New config has no options → rejects it with ERR_PARSE_ARGS_UNKNOWN_OPTION
+try {
+    util.parseArgs({ ...config, args: ['--branch', 'nightly'] });
+    console.log('FAIL: --branch flag was accepted by parseArgs config');
+    process.exit(1);
+} catch (e) {
+    if (e.code === 'ERR_PARSE_ARGS_UNKNOWN_OPTION') {
+        console.log('PASS');
+    } else {
+        console.log('FAIL: unexpected error: ' + e.message);
+        process.exit(1);
+    }
+}
+"""],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node execution failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"--branch flag test failed: {r.stdout}"
 
 
-# [pr_diff] fail_to_pass
 def test_script_requires_branch_name():
-    """setup-installable-branch.ts must require a positional branch name argument."""
-    script = (Path(REPO) / "scripts/setup-installable-branch.ts").read_text()
-    # The old script had a fallback: positionals[0] || values.branch || 'nightly'
-    # The new script requires a positional arg and throws if missing
-    assert "|| 'nightly'" not in script, \
-        "Script must not default to 'nightly' branch name"
-    # Should error when no argument given
-    assert "if (!installableBranch)" in script or "must provide" in script.lower() or \
-        "Error:" in script, \
-        "Script should throw an error when no branch name is provided"
+    """setup-installable-branch.ts must not silently default to a branch name."""
+    r = subprocess.run(
+        ["node", "-e", """
+const util = require('util');
+const fs = require('fs');
+const script = fs.readFileSync('scripts/setup-installable-branch.ts', 'utf8');
+
+// Extract the parseArgs config
+const start = script.indexOf('util.parseArgs(');
+if (start === -1) {
+    console.log('FAIL: no util.parseArgs call found');
+    process.exit(1);
+}
+
+let depth = 0, configStr = '', inside = false;
+for (let i = start + 'util.parseArgs'.length; i < script.length; i++) {
+    if (script[i] === '(') { depth++; if (depth === 1) { inside = true; continue; } }
+    if (script[i] === ')') { depth--; if (depth === 0) break; }
+    if (inside) configStr += script[i];
+}
+
+const config = eval('(' + configStr + ')');
+
+// Call parseArgs with no arguments — simulating the no-arg invocation
+const result = util.parseArgs({ ...config, args: [] });
+
+// Reconstruct the script's branch resolution logic
+// Old: positionals[0] || values.branch || 'nightly' → resolves to 'nightly'
+// New: positionals[0] → undefined (then script throws)
+let installableBranch;
+if (script.includes("|| 'nightly'")) {
+    installableBranch = result.positionals[0]
+        || (result.values && result.values.branch)
+        || 'nightly';
+} else {
+    installableBranch = result.positionals[0];
+}
+
+if (installableBranch) {
+    console.log('FAIL: script resolves to "' + installableBranch + '" with no args');
+    process.exit(1);
+}
+
+console.log('PASS');
+"""],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node execution failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Branch requirement test failed: {r.stdout}"
 
 
-# [pr_diff] fail_to_pass
 def test_script_removes_overwrite_protection():
     """setup-installable-branch.ts must remove the nightly-specific overwrite protection."""
     script = (Path(REPO) / "scripts/setup-installable-branch.ts").read_text()
-    # Old script had allowedOverwrites = ['nightly'] check
     assert "allowedOverwrites" not in script, \
         "The allowedOverwrites branch-protection logic should be removed"
     assert "remoteBranches" not in script or "git branch -r" not in script, \
         "The remote branch check should be removed"
 
 
-# [pr_diff] fail_to_pass
+def test_preview_workflow_builds_on_push():
+    """preview.yml must build and push a preview branch on push-to-main events."""
+    workflow = (Path(REPO) / ".github/workflows/preview.yml").read_text()
+    assert "setup-installable-branch preview" in workflow, \
+        "Workflow must call setup-installable-branch with 'preview' for push events"
+    assert re.search(r"git push.*origin preview", workflow), \
+        "Workflow must push to origin preview branch"
+
+
 def test_script_comments_reference_preview():
     """setup-installable-branch.ts JSDoc must reference preview branch, not nightly."""
     script = (Path(REPO) / "scripts/setup-installable-branch.ts").read_text()
-    # JSDoc should now say 'preview' not 'nightly'
     assert 'remix#preview&path:packages/remix' in script, \
         "Script JSDoc should show preview in the install example"
     assert '(usually `nightly`)' not in script, \
         "Script JSDoc should not reference nightly as the default"
 
 
-# ---------------------------------------------------------------------------
-# Config/doc update tests (config_edit) — fail_to_pass
-# ---------------------------------------------------------------------------
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
+def test_readme_nightly_to_preview():
+    """README.md install instructions must reference preview branch, not nightly."""
+    readme = (Path(REPO) / "README.md").read_text()
+    assert 'remix#preview&path:packages/remix' in readme, \
+        "README.md should have preview install command"
+    assert 'remix#nightly' not in readme, \
+        "README.md install commands should reference preview, not nightly"
 
 
-# [config_edit] fail_to_pass
+def test_contributing_nightly_to_preview():
+    """CONTRIBUTING.md must reference preview builds, not nightly builds."""
+    contributing = (Path(REPO) / "CONTRIBUTING.md").read_text()
+    assert "## Preview builds" in contributing, \
+        "CONTRIBUTING.md should have a 'Preview builds' section heading"
+    assert 'remix#nightly' not in contributing, \
+        "CONTRIBUTING.md install commands should reference preview, not nightly"
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_preview_workflow_retains_pr_previews():
     """PR preview branches (preview/{number}) must still be supported."""
     workflow = (Path(REPO) / ".github/workflows/preview.yml").read_text()
@@ -132,7 +236,6 @@ def test_preview_workflow_retains_pr_previews():
     assert "preview/" in workflow, "Workflow must still reference preview/ branches for PRs"
 
 
-# [static] pass_to_pass
 def test_preview_workflow_retains_cleanup():
     """Workflow must still clean up PR preview branches when PRs close."""
     workflow = (Path(REPO) / ".github/workflows/preview.yml").read_text()

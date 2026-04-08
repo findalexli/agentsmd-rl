@@ -7,18 +7,25 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/react"
 SNAP_SRC = Path(REPO) / "compiler" / "packages" / "snap" / "src"
 
 
+def _node(script: str, timeout: int = 15) -> subprocess.CompletedProcess:
+    """Run a Node.js script and return the result."""
+    return subprocess.run(
+        ["node", "-e", script],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_typescript_files_parseable():
     """Modified TypeScript files have balanced braces (basic structural validity)."""
     files = [
@@ -29,7 +36,6 @@ def test_typescript_files_parseable():
     ]
     for f in files:
         content = f.read_text()
-        # Basic structural check: balanced braces
         opens = content.count("{")
         closes = content.count("}")
         assert abs(opens - closes) <= 1, (
@@ -41,157 +47,227 @@ def test_typescript_files_parseable():
 # Fail-to-pass (pr_diff) — code behavior tests
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_filter_file_mechanism_removed():
-    """testfilter.txt-based filtering must be removed from snap."""
-    constants = (SNAP_SRC / "constants.ts").read_text()
-    assert "FILTER_FILENAME" not in constants, (
-        "constants.ts should not export FILTER_FILENAME"
-    )
-    assert "FILTER_PATH" not in constants, (
-        "constants.ts should not export FILTER_PATH"
-    )
-    assert "testfilter.txt" not in constants, (
-        "constants.ts should not reference testfilter.txt"
-    )
+    """testfilter.txt-based filtering removed from constants.ts and fixture-utils.ts."""
+    r = _node("""
+const fs = require('fs');
+const constants = fs.readFileSync(
+    'compiler/packages/snap/src/constants.ts', 'utf8');
+const fixtureUtils = fs.readFileSync(
+    'compiler/packages/snap/src/fixture-utils.ts', 'utf8');
 
-    fixture_utils = (SNAP_SRC / "fixture-utils.ts").read_text()
-    assert "readTestFilter" not in fixture_utils, (
-        "fixture-utils.ts should not export readTestFilter"
-    )
-    # The debug field should not be in TestFilter type
-    # Match "debug" as a property in the TestFilter type definition
-    assert not re.search(r"debug\s*:", fixture_utils), (
-        "TestFilter type should not have a debug property"
-    )
+const errors = [];
+if (constants.includes('FILTER_FILENAME'))
+    errors.push('constants.ts still exports FILTER_FILENAME');
+if (constants.includes('FILTER_PATH'))
+    errors.push('constants.ts still exports FILTER_PATH');
+if (constants.includes('testfilter.txt'))
+    errors.push('constants.ts still references testfilter.txt');
+if (fixtureUtils.includes('readTestFilter'))
+    errors.push('fixture-utils.ts still has readTestFilter');
+if (/debug\\s*:/.test(fixtureUtils))
+    errors.push('TestFilter still has debug property');
+
+if (errors.length > 0) {
+    console.error(errors.join('\\n'));
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Filter mechanism not removed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_filter_option_removed():
-    """runner.ts must not have the old --filter boolean option."""
-    runner = (SNAP_SRC / "runner.ts").read_text()
-    # The old --filter boolean option must be gone
-    assert ".boolean('filter')" not in runner and '.boolean("filter")' not in runner, (
-        "runner.ts should not define --filter as a boolean option"
-    )
-    # readTestFilter must not be imported or called
-    assert "readTestFilter" not in runner, (
-        "runner.ts should not import or use readTestFilter"
-    )
-    # FILTER_PATH must not be imported
-    assert "FILTER_PATH" not in runner, (
-        "runner.ts should not import FILTER_PATH"
-    )
+    """runner.ts removes --filter boolean option and readTestFilter/FILTER_PATH usage."""
+    r = _node("""
+const fs = require('fs');
+const runner = fs.readFileSync(
+    'compiler/packages/snap/src/runner.ts', 'utf8');
+
+const errors = [];
+if (runner.includes(".boolean('filter')") || runner.includes('.boolean("filter")'))
+    errors.push('runner.ts still has --filter boolean option');
+if (runner.includes('readTestFilter'))
+    errors.push('runner.ts still imports readTestFilter');
+if (runner.includes('FILTER_PATH'))
+    errors.push('runner.ts still imports FILTER_PATH');
+
+if (errors.length > 0) {
+    console.error(errors.join('\\n'));
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Old filter option not removed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_debug_cli_option():
-    """runner.ts must define a --debug / -d CLI option via yargs."""
-    runner = (SNAP_SRC / "runner.ts").read_text()
-    # Check for --debug boolean option
-    assert ".boolean('debug')" in runner or '.boolean("debug")' in runner, (
-        "runner.ts should define --debug as a boolean option"
-    )
-    # Check for -d alias
-    assert re.search(r"\.alias\(['\"]d['\"],\s*['\"]debug['\"]\)", runner), (
-        "runner.ts should alias -d to debug"
-    )
+    """runner.ts defines --debug / -d CLI option via yargs."""
+    r = _node("""
+const fs = require('fs');
+const runner = fs.readFileSync(
+    'compiler/packages/snap/src/runner.ts', 'utf8');
+
+const errors = [];
+
+// --debug boolean option must exist
+if (!runner.includes(".boolean('debug')") && !runner.includes('.boolean("debug")'))
+    errors.push('runner.ts missing --debug boolean option');
+
+// -d alias must exist
+if (!(/\\.alias\\(['"]d['"],\\s*['"]debug['"]\\)/.test(runner)))
+    errors.push('runner.ts missing .alias("d", "debug")');
+
+if (errors.length > 0) {
+    console.error(errors.join('\\n'));
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"--debug/-d option not added: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_interactive_watch_mode():
-    """runner-watch.ts must support interactive pattern entry and debug toggle."""
-    watch = (SNAP_SRC / "runner-watch.ts").read_text()
+    """runner-watch.ts supports interactive pattern entry and debug toggle via keyboard."""
+    r = _node("""
+const fs = require('fs');
+const watch = fs.readFileSync(
+    'compiler/packages/snap/src/runner-watch.ts', 'utf8');
 
-    # RunnerState must have inputMode and inputBuffer for interactive pattern entry
-    assert "inputMode" in watch, (
-        "runner-watch.ts should have inputMode in RunnerState"
-    )
-    assert "inputBuffer" in watch, (
-        "runner-watch.ts should have inputBuffer in RunnerState"
-    )
+const errors = [];
 
-    # Must handle 'p' key for pattern entry
-    assert re.search(r"key\.name\s*===\s*['\"]p['\"]", watch), (
-        "runner-watch.ts should handle 'p' key for pattern entry"
-    )
-    # Must handle 'd' key for debug toggle
-    assert re.search(r"key\.name\s*===\s*['\"]d['\"]", watch), (
-        "runner-watch.ts should handle 'd' key for debug toggle"
-    )
-    # Must handle 'a' key for running all tests
-    assert re.search(r"key\.name\s*===\s*['\"]a['\"]", watch), (
-        "runner-watch.ts should handle 'a' key to run all tests"
-    )
+// RunnerState must have inputMode and inputBuffer for interactive pattern entry
+if (!watch.includes('inputMode'))
+    errors.push('missing inputMode in RunnerState');
+if (!watch.includes('inputBuffer'))
+    errors.push('missing inputBuffer in RunnerState');
+
+// Must handle 'p' key for pattern entry
+if (!/key\\.name\\s*===\\s*['"]p['"]/.test(watch))
+    errors.push("missing 'p' key handler for pattern entry");
+// Must handle 'd' key for debug toggle
+if (!/key\\.name\\s*===\\s*['"]d['"]/.test(watch))
+    errors.push("missing 'd' key handler for debug toggle");
+// Must handle 'a' key for running all tests
+if (!/key\\.name\\s*===\\s*['"]a['"]/.test(watch))
+    errors.push("missing 'a' key handler to run all tests");
+
+// subscribeFilterFile must be removed
+if (watch.includes('subscribeFilterFile'))
+    errors.push('subscribeFilterFile function not removed');
+
+if (errors.length > 0) {
+    console.error(errors.join('\\n'));
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Interactive watch mode not implemented: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_watch_runner_signature_updated():
-    """makeWatchRunner must accept debugMode and optional initialPattern params."""
-    watch = (SNAP_SRC / "runner-watch.ts").read_text()
+    """makeWatchRunner accepts debugMode and initialPattern instead of filterMode."""
+    r = _node("""
+const fs = require('fs');
+const watch = fs.readFileSync(
+    'compiler/packages/snap/src/runner-watch.ts', 'utf8');
 
-    # makeWatchRunner should accept debugMode parameter
-    assert re.search(r"debugMode\s*:\s*boolean", watch), (
-        "makeWatchRunner should accept a debugMode: boolean parameter"
-    )
-    # makeWatchRunner should accept initialPattern parameter
-    assert re.search(r"initialPattern\s*\??\s*:\s*string", watch), (
-        "makeWatchRunner should accept an initialPattern parameter"
-    )
-    # Should NOT use readTestFilter anymore
-    assert "readTestFilter" not in watch, (
-        "runner-watch.ts should not import or use readTestFilter"
-    )
+const errors = [];
+
+// makeWatchRunner should accept debugMode: boolean
+if (!/debugMode\\s*:\\s*boolean/.test(watch))
+    errors.push('makeWatchRunner missing debugMode: boolean parameter');
+// makeWatchRunner should accept initialPattern
+if (!/initialPattern\\s*\\??\\s*:\\s*string/.test(watch))
+    errors.push('makeWatchRunner missing initialPattern parameter');
+// readTestFilter must not be used
+if (watch.includes('readTestFilter'))
+    errors.push('runner-watch.ts still uses readTestFilter');
+
+if (errors.length > 0) {
+    console.error(errors.join('\\n'));
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"makeWatchRunner signature not updated: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression checks
+# Fail-to-pass (pr_diff) — CLAUDE.md creation tests
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+def test_claudemd_documents_cli():
+    """compiler/CLAUDE.md documents snap CLI flags (-p, -d, -u)."""
+    r = _node("""
+const fs = require('fs');
+const path = require('path');
+const filePath = path.join('compiler', 'CLAUDE.md');
+
+if (!fs.existsSync(filePath)) {
+    console.error('compiler/CLAUDE.md does not exist');
+    process.exit(1);
+}
+
+const content = fs.readFileSync(filePath, 'utf8');
+const errors = [];
+
+if (!content.includes('yarn snap'))
+    errors.push('missing yarn snap documentation');
+if (!content.includes('-p') || !content.toLowerCase().includes('pattern'))
+    errors.push('missing -p/--pattern flag documentation');
+if (!content.includes('-d') || !content.toLowerCase().includes('debug'))
+    errors.push('missing -d/--debug flag documentation');
+if (!content.includes('-u'))
+    errors.push('missing -u/--update flag documentation');
+
+if (errors.length > 0) {
+    console.error(errors.join('\\n'));
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"CLAUDE.md CLI docs missing: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [static] pass_to_pass
+def test_claudemd_documents_project():
+    """compiler/CLAUDE.md documents project structure, HIR, and fixtures."""
+    r = _node("""
+const fs = require('fs');
+const path = require('path');
+const filePath = path.join('compiler', 'CLAUDE.md');
 
+if (!fs.existsSync(filePath)) {
+    console.error('compiler/CLAUDE.md does not exist');
+    process.exit(1);
+}
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) — CLAUDE.md creation tests
-# ---------------------------------------------------------------------------
+const content = fs.readFileSync(filePath, 'utf8');
+const errors = [];
 
-# [config_edit] fail_to_pass
+if (!content.includes('babel-plugin-react-compiler'))
+    errors.push('missing babel-plugin-react-compiler reference');
+if (!content.includes('HIR'))
+    errors.push('missing HIR documentation');
+if (!content.toLowerCase().includes('fixtures'))
+    errors.push('missing fixtures reference');
 
+// Must be substantial documentation (not just a stub)
+if (content.length < 200) {
+    errors.push('CLAUDE.md is too short (' + content.length + ' chars)');
+}
 
-# [config_edit] fail_to_pass
-
-    # Must document yarn snap as the test runner
-    assert "yarn snap" in content, (
-        "CLAUDE.md should document 'yarn snap' as the test command"
-    )
-    # Must document the -p / --pattern flag
-    assert "-p" in content and "pattern" in content.lower(), (
-        "CLAUDE.md should document the -p/--pattern flag for filtering"
-    )
-    # Must document the -d / --debug flag
-    assert "-d" in content and "debug" in content.lower(), (
-        "CLAUDE.md should document the -d/--debug flag"
-    )
-    # Must document the -u / --update flag
-    assert "-u" in content, (
-        "CLAUDE.md should document the -u/--update flag"
-    )
-
-
-# [config_edit] fail_to_pass
-
-    # Must reference the main compiler package
-    assert "babel-plugin-react-compiler" in content, (
-        "CLAUDE.md should reference babel-plugin-react-compiler package"
-    )
-    # Must reference HIR (core compiler concept)
-    assert "HIR" in content, (
-        "CLAUDE.md should document HIR (High-level Intermediate Representation)"
-    )
-    # Must reference the test fixtures directory
-    assert "fixtures" in content.lower(), (
-        "CLAUDE.md should reference the test fixtures"
-    )
+if (errors.length > 0) {
+    console.error(errors.join('\\n'));
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"CLAUDE.md project docs missing: {r.stderr}"
+    assert "PASS" in r.stdout

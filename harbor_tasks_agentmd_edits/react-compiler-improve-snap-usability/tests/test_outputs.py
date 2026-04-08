@@ -14,11 +14,23 @@ REPO = "/workspace/react"
 SNAP_SRC = Path(REPO) / "compiler" / "packages" / "snap" / "src"
 
 
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax checks
+# Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Modified TypeScript files parse without syntax errors."""
     files = [
@@ -30,7 +42,6 @@ def test_syntax_check():
     for f in files:
         assert f.exists(), f"{f.name} must exist"
         content = f.read_text()
-        # Basic TS syntax: file must not be empty and must have at least one export/import
         assert len(content) > 100, f"{f.name} is suspiciously short"
         assert "import" in content or "export" in content, (
             f"{f.name} must contain import/export statements"
@@ -38,94 +49,119 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-def test_filter_constant_removed():
-    """constants.ts must not define FILTER_FILENAME or FILTER_PATH (testfilter.txt mechanism removed)."""
-    content = (SNAP_SRC / "constants.ts").read_text()
-    # The old mechanism defined these constants for testfilter.txt
-    assert "FILTER_FILENAME" not in content, (
-        "constants.ts should not define FILTER_FILENAME — testfilter.txt mechanism was removed"
-    )
-    assert "FILTER_PATH" not in content, (
-        "constants.ts should not define FILTER_PATH — testfilter.txt mechanism was removed"
-    )
+def test_yargs_debug_option():
+    """runner.ts defines --debug/-d boolean CLI option and removes --filter."""
+    r = _run_node("""
+import fs from 'fs';
+const content = fs.readFileSync('compiler/packages/snap/src/runner.ts', 'utf-8');
+
+// Must have .boolean('debug') or .boolean("debug")
+if (!/\\.boolean\\(\\s*['"]debug['"]\\s*\\)/.test(content)) {
+    process.stderr.write('Missing .boolean("debug") in yargs config');
+    process.exit(1);
+}
+
+// Must have .alias('d', 'debug') or .alias("d", "debug")
+if (!/\\.alias\\(\\s*['"]d['"]\\s*,\\s*['"]debug['"]\\s*\\)/.test(content)) {
+    process.stderr.write('Missing .alias("d", "debug") in yargs config');
+    process.exit(1);
+}
+
+// Must NOT have .boolean('filter') — old option should be removed
+if (/\\.boolean\\(\\s*['"]filter['"]\\s*\\)/.test(content)) {
+    process.stderr.write('Still has .boolean("filter") — should be removed');
+    process.exit(1);
+}
+
+process.stdout.write('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
-def test_debug_cli_option_added():
-    """runner.ts must define a --debug / -d CLI option via yargs."""
-    content = (SNAP_SRC / "runner.ts").read_text()
-    # The new CLI should have a debug boolean option
-    assert ".boolean('debug')" in content or '.boolean("debug")' in content, (
-        "runner.ts should define a 'debug' boolean CLI option"
-    )
-    # Should have the -d alias
-    assert "'d'" in content or '"d"' in content, (
-        "runner.ts should alias debug as '-d'"
-    )
+def test_filter_mechanism_removed():
+    """FILTER constants and readTestFilter function removed from snap packages."""
+    r = _run_node("""
+import fs from 'fs';
+
+const constants = fs.readFileSync('compiler/packages/snap/src/constants.ts', 'utf-8');
+if (/export\\s+const\\s+FILTER_(FILENAME|PATH)\\b/.test(constants)) {
+    process.stderr.write('constants.ts still exports FILTER_FILENAME or FILTER_PATH');
+    process.exit(1);
+}
+
+const utils = fs.readFileSync('compiler/packages/snap/src/fixture-utils.ts', 'utf-8');
+if (/(?:export\\s+)?(?:async\\s+)?function\\s+readTestFilter/.test(utils)) {
+    process.stderr.write('fixture-utils.ts still defines readTestFilter');
+    process.exit(1);
+}
+if (/debug\\s*:\\s*boolean/.test(utils)) {
+    process.stderr.write('TestFilter type still has debug field');
+    process.exit(1);
+}
+
+process.stdout.write('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
-def test_testfilter_function_removed():
-    """fixture-utils.ts must not export readTestFilter (old mechanism removed)."""
-    content = (SNAP_SRC / "fixture-utils.ts").read_text()
-    assert "readTestFilter" not in content, (
-        "fixture-utils.ts should not define or export readTestFilter"
-    )
-    # The TestFilter type should no longer have a debug field
-    assert "debug: boolean" not in content, (
-        "TestFilter type should not have a debug field — debug is now a CLI flag"
-    )
+def test_runner_state_interactive_fields():
+    """RunnerState type includes debug, inputMode, and inputBuffer fields."""
+    r = _run_node("""
+import fs from 'fs';
+const content = fs.readFileSync('compiler/packages/snap/src/runner-watch.ts', 'utf-8');
 
+const match = content.match(/export\\s+type\\s+RunnerState\\s*=\\s*\\{([\\s\\S]*?)\\n\\};/);
+if (!match) {
+    process.stderr.write('Cannot find RunnerState type definition');
+    process.exit(1);
+}
+const body = match[1];
 
-# [pr_diff] fail_to_pass
+for (const field of ['debug', 'inputMode', 'inputBuffer']) {
+    if (!new RegExp('\\\\b' + field + '\\\\s*:').test(body)) {
+        process.stderr.write('RunnerState missing field: ' + field);
+        process.exit(1);
+    }
+}
 
-
-# [pr_diff] fail_to_pass
+process.stdout.write('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Config-edit (config_edit) — CLAUDE.md creation tests
+# Fail-to-pass (pr_diff) — CLAUDE.md creation
 # ---------------------------------------------------------------------------
 
-# [config_edit] fail_to_pass
-
-    # Must document the snap test runner
-    assert "yarn snap" in content, (
-        "CLAUDE.md should document the 'yarn snap' command"
-    )
-    # Must document the -p / --pattern flag
-    assert "-p" in content, (
-        "CLAUDE.md should document the -p flag for pattern filtering"
-    )
-    # Must document the -d / --debug flag
-    assert "-d" in content, (
-        "CLAUDE.md should document the -d flag for debug mode"
-    )
-    # Must document updating fixtures
+def test_claude_md_documents_snap_cli():
+    """compiler/CLAUDE.md documents snap CLI with -p, -d, and -u flags."""
+    claude_md = Path(REPO) / "compiler" / "CLAUDE.md"
+    assert claude_md.exists(), "compiler/CLAUDE.md must be created"
+    content = claude_md.read_text()
+    assert "yarn snap" in content, "Should document 'yarn snap' command"
+    assert "-p" in content, "Should document -p flag for pattern filtering"
+    assert "-d" in content, "Should document -d flag for debug mode"
     assert "-u" in content or "update" in content.lower(), (
-        "CLAUDE.md should document how to update fixture outputs"
+        "Should document how to update fixture outputs"
     )
 
 
-# [config_edit] fail_to_pass
-
-    # Must document the main compiler package location
+def test_claude_md_documents_project_structure():
+    """compiler/CLAUDE.md documents project structure and key concepts."""
+    claude_md = Path(REPO) / "compiler" / "CLAUDE.md"
+    assert claude_md.exists(), "compiler/CLAUDE.md must be created"
+    content = claude_md.read_text()
     assert "babel-plugin-react-compiler" in content, (
-        "CLAUDE.md should reference the main compiler package"
+        "Should reference the main compiler package"
     )
-    # Must document HIR (central concept)
     assert "HIR" in content, (
-        "CLAUDE.md should document HIR (High-level Intermediate Representation)"
+        "Should document HIR (High-level Intermediate Representation)"
     )
-    # Must document fixtures
-    assert "fixture" in content.lower(), (
-        "CLAUDE.md should document test fixtures"
-    )
-    # Must have meaningful content (not just a stub)
-    assert len(content) > 500, (
-        "CLAUDE.md should have substantial documentation, not just a stub"
-    )
+    assert "fixture" in content.lower(), "Should document test fixtures"
+    assert len(content) > 500, "Should have substantial documentation"

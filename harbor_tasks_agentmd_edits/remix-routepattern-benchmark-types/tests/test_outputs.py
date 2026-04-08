@@ -7,111 +7,148 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import json
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/remix"
 
 
+def _node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Run a Node.js script in the repo directory."""
+    return subprocess.run(
+        ["node", "-e", script],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — config/documentation update tests
+# Fail-to-pass (pr_diff) — behavioral tests using subprocess
 # ---------------------------------------------------------------------------
+
+
+def test_type_benchmark_files_exist():
+    """bench/types/ directory must contain at least 3 type benchmark .ts files."""
+    r = _node("""
+const fs = require('fs');
+const path = require('path');
+const dir = path.join(process.cwd(), 'packages/route-pattern/bench/types');
+if (!fs.existsSync(dir)) { console.error('bench/types/ directory missing'); process.exit(1); }
+const files = fs.readdirSync(dir).filter(f => f.endsWith('.ts'));
+if (files.length < 3) {
+  console.error('Expected >= 3 .ts files in bench/types/, got ' + files.length);
+  process.exit(1);
+}
+console.log(JSON.stringify(files));
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+
+
+def test_type_benchmarks_use_attest():
+    """Type benchmark files must use @ark/attest bench() with .types() assertions, covering href and params."""
+    r = _node("""
+const fs = require('fs');
+const path = require('path');
+const dir = path.join(process.cwd(), 'packages/route-pattern/bench/types');
+if (!fs.existsSync(dir)) { console.error('bench/types/ missing'); process.exit(1); }
+const files = fs.readdirSync(dir).filter(f => f.endsWith('.ts'));
+let hasHref = false, hasParams = false;
+for (const f of files) {
+  const content = fs.readFileSync(path.join(dir, f), 'utf-8');
+  if (!content.includes('@ark/attest')) {
+    console.error(f + ' missing @ark/attest import'); process.exit(1);
+  }
+  if (!content.includes('bench(')) {
+    console.error(f + ' missing bench() call'); process.exit(1);
+  }
+  if (!content.includes('.types(')) {
+    console.error(f + ' missing .types() assertion'); process.exit(1);
+  }
+  if (/href/i.test(content)) hasHref = true;
+  if (/params/i.test(content)) hasParams = true;
+}
+if (!hasHref) { console.error('No type benchmark covers href'); process.exit(1); }
+if (!hasParams) { console.error('No type benchmark covers params'); process.exit(1); }
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+
+
+def test_runtime_benchmarks_moved_to_src():
+    """Existing runtime .bench.ts files must be in bench/src/, not in bench/ root."""
+    r = _node("""
+const fs = require('fs');
+const path = require('path');
+const benchDir = path.join(process.cwd(), 'packages/route-pattern/bench');
+const srcDir = path.join(benchDir, 'src');
+if (!fs.existsSync(srcDir)) { console.error('bench/src/ directory missing'); process.exit(1); }
+const expected = ['comparison.bench.ts', 'href.bench.ts', 'pathological.bench.ts', 'simple.bench.ts'];
+for (const f of expected) {
+  if (!fs.existsSync(path.join(srcDir, f))) {
+    console.error(f + ' missing from bench/src/'); process.exit(1);
+  }
+  if (fs.existsSync(path.join(benchDir, f))) {
+    console.error(f + ' still in bench/ root (should be moved to src/)'); process.exit(1);
+  }
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+
+
+def test_bench_package_json_updated():
+    """bench/package.json must have bench:types script and @ark/attest devDependency."""
+    r = _node("""
+const fs = require('fs');
+const pkg = JSON.parse(fs.readFileSync('packages/route-pattern/bench/package.json', 'utf-8'));
+if (!pkg.scripts || !pkg.scripts['bench:types']) {
+  console.error('Missing bench:types script'); process.exit(1);
+}
+if (!pkg.devDependencies || !pkg.devDependencies['@ark/attest']) {
+  console.error('Missing @ark/attest devDependency'); process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+
+
+def test_attest_moved_from_parent_package():
+    """@ark/attest must be removed from route-pattern/package.json devDependencies."""
+    r = _node("""
+const fs = require('fs');
+const pkg = JSON.parse(fs.readFileSync('packages/route-pattern/package.json', 'utf-8'));
+if (pkg.devDependencies && pkg.devDependencies['@ark/attest']) {
+  console.error('@ark/attest should not be in route-pattern devDependencies');
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
 
 
 def test_readme_documents_type_benchmarks():
-    """bench/README.md must document type benchmarks with ArkType Attest."""
-    readme = Path(REPO) / "packages/route-pattern/bench/README.md"
-    content = readme.read_text().lower()
-    # Must distinguish between runtime and type benchmarks
-    assert "type benchmark" in content, \
-        "README should have a Type benchmarks section"
-    assert "attest" in content, \
-        "README should mention ArkType Attest for type benchmarking"
-
-
-def test_readme_has_run_command_for_types():
-    """bench/README.md must document how to run type benchmarks."""
-    readme = Path(REPO) / "packages/route-pattern/bench/README.md"
-    content = readme.read_text()
-    # Must include a command to run type benchmarks
-    assert "node" in content.lower() and "types" in content.lower(), \
-        "README should show a node command for running type benchmarks"
-    # Must mention the types/ directory
-    assert "types/" in content, \
-        "README should reference the types/ directory"
-
-
-def test_readme_distinguishes_runtime_benchmarks():
-    """bench/README.md must differentiate runtime vs type benchmarks."""
-    readme = Path(REPO) / "packages/route-pattern/bench/README.md"
-    content = readme.read_text()
-    # The heading should now say "Runtime benchmarks", not just "Run benchmarks"
-    assert "runtime" in content.lower(), \
-        "README should label runtime benchmarks distinctly from type benchmarks"
-    # Should reference src/ directory for runtime benchmarks
-    assert "src/" in content, \
-        "README should reference the src/ directory for runtime benchmarks"
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — code tests: type benchmark files
-# ---------------------------------------------------------------------------
-
-
-def test_type_benchmarks_test_href():
-    """A type benchmark file must test RoutePattern href and HrefArgs."""
-    types_dir = Path(REPO) / "packages/route-pattern/bench/types"
-    assert types_dir.is_dir(), "types/ directory must exist"
-    # Find a file that tests href functionality
-    href_content = ""
-    for f in types_dir.glob("*.ts"):
-        text = f.read_text()
-        if "href" in text.lower() and "attest" in text.lower():
-            href_content = text
-            break
-    assert href_content, "No type benchmark file tests href/HrefArgs"
-    assert "RoutePattern" in href_content, \
-        "Type benchmark should use RoutePattern class"
-    assert "bench(" in href_content, \
-        "Type benchmark should use @ark/attest bench() function"
-    assert ".types(" in href_content, \
-        "Type benchmark should assert type instantiation counts"
-
-
-def test_type_benchmarks_test_params():
-    """A type benchmark file must test RoutePattern params and Params type."""
-    types_dir = Path(REPO) / "packages/route-pattern/bench/types"
-    assert types_dir.is_dir(), "types/ directory must exist"
-    # Find a file that tests params functionality
-    params_content = ""
-    for f in types_dir.glob("*.ts"):
-        text = f.read_text()
-        if "params" in text.lower() and "attest" in text.lower():
-            params_content = text
-            break
-    assert params_content, "No type benchmark file tests params/Params"
-    assert "match" in params_content, \
-        "Params benchmark should test pattern.match() method"
-    assert "bench(" in params_content, \
-        "Type benchmark should use @ark/attest bench() function"
-
-
-def test_bench_package_has_types_script():
-    """bench/package.json must have a bench:types script."""
-    pkg_path = Path(REPO) / "packages/route-pattern/bench/package.json"
-    pkg = json.loads(pkg_path.read_text())
-    scripts = pkg.get("scripts", {})
-    assert "bench:types" in scripts, \
-        "bench/package.json must have a bench:types script"
-
-
-def test_bench_package_has_attest_dep():
-    """bench/package.json must have @ark/attest as a devDependency."""
-    pkg_path = Path(REPO) / "packages/route-pattern/bench/package.json"
-    pkg = json.loads(pkg_path.read_text())
-    dev_deps = pkg.get("devDependencies", {})
-    assert "@ark/attest" in dev_deps, \
-        "bench/package.json must have @ark/attest in devDependencies"
+    """bench/README.md must distinguish runtime vs type benchmarks with src/ and types/ refs."""
+    r = _node("""
+const fs = require('fs');
+const content = fs.readFileSync('packages/route-pattern/bench/README.md', 'utf-8');
+const lower = content.toLowerCase();
+if (!lower.includes('type benchmark')) {
+  console.error('README missing type benchmarks section'); process.exit(1);
+}
+if (!lower.includes('attest')) {
+  console.error('README missing ArkType Attest reference'); process.exit(1);
+}
+if (!lower.includes('runtime')) {
+  console.error('README missing runtime benchmarks label'); process.exit(1);
+}
+if (!content.includes('src/')) {
+  console.error('README missing src/ reference'); process.exit(1);
+}
+if (!content.includes('types/')) {
+  console.error('README missing types/ reference'); process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
 
 
 # ---------------------------------------------------------------------------
@@ -121,29 +158,28 @@ def test_bench_package_has_attest_dep():
 
 def test_existing_bench_deps_maintained():
     """Existing bench dependencies (vitest, path-to-regexp) still present."""
-    pkg_path = Path(REPO) / "packages/route-pattern/bench/package.json"
-    pkg = json.loads(pkg_path.read_text())
-    deps = pkg.get("dependencies", {})
-    dev_deps = pkg.get("devDependencies", {})
-    assert "vitest" in dev_deps, "vitest devDependency must be preserved"
-    assert "path-to-regexp" in deps, "path-to-regexp dependency must be preserved"
-    assert "@remix-run/route-pattern" in deps, \
-        "@remix-run/route-pattern dependency must be preserved"
-
-
-def test_attest_moved_to_bench_subpackage():
-    """@ark/attest removed from route-pattern/package.json (moved to bench)."""
-    pkg_path = Path(REPO) / "packages/route-pattern/package.json"
-    pkg = json.loads(pkg_path.read_text())
-    dev_deps = pkg.get("devDependencies", {})
-    assert "@ark/attest" not in dev_deps, \
-        "@ark/attest should be removed from route-pattern devDependencies (moved to bench)"
+    r = _node("""
+const fs = require('fs');
+const pkg = JSON.parse(fs.readFileSync('packages/route-pattern/bench/package.json', 'utf-8'));
+const deps = pkg.dependencies || {};
+const devDeps = pkg.devDependencies || {};
+if (!devDeps['vitest']) { console.error('vitest devDep missing'); process.exit(1); }
+if (!deps['path-to-regexp']) { console.error('path-to-regexp dep missing'); process.exit(1); }
+if (!deps['@remix-run/route-pattern']) { console.error('@remix-run/route-pattern dep missing'); process.exit(1); }
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
 
 
 def test_route_pattern_package_json_valid():
     """packages/route-pattern/package.json core fields preserved."""
-    pkg_path = Path(REPO) / "packages/route-pattern/package.json"
-    pkg = json.loads(pkg_path.read_text())
-    assert pkg.get("name") == "@remix-run/route-pattern", \
-        "Package name must be preserved"
-    assert "exports" in pkg, "exports field must be preserved"
+    r = _node("""
+const fs = require('fs');
+const pkg = JSON.parse(fs.readFileSync('packages/route-pattern/package.json', 'utf-8'));
+if (pkg.name !== '@remix-run/route-pattern') {
+  console.error('Package name changed: ' + pkg.name); process.exit(1);
+}
+if (!pkg.exports) { console.error('exports field missing'); process.exit(1); }
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"

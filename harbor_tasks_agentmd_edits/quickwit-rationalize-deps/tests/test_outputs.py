@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -17,139 +18,190 @@ except ImportError:
 
 REPO = "/workspace/quickwit"
 CARGO_TOML = Path(REPO) / "quickwit" / "Cargo.toml"
-
-
-def _load_workspace_deps():
-    """Parse workspace Cargo.toml and return the [workspace.dependencies] table."""
-    content = CARGO_TOML.read_text()
-    data = tomllib.loads(content)
-    return data["workspace"]["dependencies"]
+SKILL_PATH = Path(REPO) / ".claude" / "skills" / "rationalize-deps" / "SKILL.md"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_cargo_toml_valid():
     """Cargo.toml must be valid TOML after modifications."""
     content = CARGO_TOML.read_text()
-    # Will raise if invalid TOML
     data = tomllib.loads(content)
     assert "workspace" in data, "Missing [workspace] section"
     assert "dependencies" in data["workspace"], "Missing [workspace.dependencies]"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests for Cargo.toml changes
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
-def test_hyper_util_not_full():
-    """hyper-util must not use the 'full' feature — should list specific features."""
-    deps = _load_workspace_deps()
-    hu = deps["hyper-util"]
-    assert isinstance(hu, dict), "hyper-util should be a table, not a plain version string"
-    features = hu.get("features", [])
-    assert "full" not in features, "hyper-util should not use 'full' feature"
-    assert hu.get("default-features") is False, "hyper-util should set default-features = false"
-    # Must retain essential features for the project
-    assert "tokio" in features, "hyper-util must keep 'tokio' feature"
-    assert "service" in features, "hyper-util must keep 'service' feature"
-
-
-# [pr_diff] fail_to_pass
-def test_tokio_util_not_full():
-    """tokio-util must not use the 'full' feature — should list specific features."""
-    deps = _load_workspace_deps()
-    tu = deps["tokio-util"]
-    assert isinstance(tu, dict), "tokio-util should be a table, not a plain version string"
-    features = tu.get("features", [])
-    assert "full" not in features, "tokio-util should not use 'full' feature"
-    assert tu.get("default-features") is False, "tokio-util should set default-features = false"
-
-
-# [pr_diff] fail_to_pass
-def test_prometheus_defaults_disabled():
-    """prometheus must have default-features = false (protobuf not needed)."""
-    deps = _load_workspace_deps()
-    prom = deps["prometheus"]
-    assert isinstance(prom, dict), "prometheus should be a table, not a plain version string"
-    assert prom.get("default-features") is False, \
-        "prometheus should set default-features = false"
-    # Must keep process feature
-    features = prom.get("features", [])
-    assert "process" in features, "prometheus must keep 'process' feature"
-
-
-# [pr_diff] fail_to_pass
-def test_dialoguer_defaults_disabled():
-    """dialoguer must have default-features = false (editor/password not needed)."""
-    deps = _load_workspace_deps()
-    dlg = deps["dialoguer"]
-    assert isinstance(dlg, dict), "dialoguer should be a table, not a plain version string"
-    assert dlg.get("default-features") is False, \
-        "dialoguer should set default-features = false"
-
-
-# [pr_diff] fail_to_pass
-def test_zstd_defaults_disabled():
-    """zstd must have default-features = false (legacy/arrays/zdict not needed)."""
-    deps = _load_workspace_deps()
-    z = deps["zstd"]
-    assert isinstance(z, dict), "zstd should be a table, not a plain version string"
-    assert z.get("default-features") is False, \
-        "zstd should set default-features = false"
-
-
-# [pr_diff] fail_to_pass
-def test_env_logger_defaults_disabled():
-    """env_logger must have default-features = false (humantime/regex not needed)."""
-    deps = _load_workspace_deps()
-    el = deps["env_logger"]
-    assert isinstance(el, dict), "env_logger should be a table, not a plain version string"
-    assert el.get("default-features") is False, \
-        "env_logger should set default-features = false"
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass — ensure we didn't break existing deps
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
 def test_essential_deps_unchanged():
-    """Critical dependencies (tokio, serde, hyper) must still be present."""
-    deps = _load_workspace_deps()
+    """Critical dependencies must still be present in workspace."""
+    content = CARGO_TOML.read_text()
+    data = tomllib.loads(content)
+    deps = data["workspace"]["dependencies"]
     for crate in ["tokio", "serde", "hyper", "hyper-util", "tokio-util",
                    "prometheus", "dialoguer", "zstd", "env_logger"]:
         assert crate in deps, f"Dependency '{crate}' must still be present in workspace deps"
 
 
-# [static] pass_to_pass
-def test_hyper_util_has_required_features():
-    """hyper-util must retain essential features (tokio, service) for the project to compile."""
-    deps = _load_workspace_deps()
-    hu = deps["hyper-util"]
-    if isinstance(hu, str):
-        # Plain version string — defaults are on, all features available
-        return
-    features = hu.get("features", [])
-    # If full is used, all features are included
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — behavioral tests using subprocess
+# ---------------------------------------------------------------------------
+
+def test_deps_rationalized():
+    """All 6 deps must have default-features=false and no 'full' feature."""
+    cargo_path = str(CARGO_TOML)
+    r = subprocess.run(
+        [sys.executable, "-c", DEPS_SCRIPT, cargo_path],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Dep validation failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+DEPS_SCRIPT = """\
+import sys
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
+
+cargo_path = sys.argv[1]
+data = tomllib.loads(open(cargo_path).read())
+deps = data["workspace"]["dependencies"]
+
+errors = []
+must_disable = ["hyper-util", "tokio-util", "prometheus", "dialoguer", "zstd", "env_logger"]
+for name in must_disable:
+    dep = deps.get(name)
+    if dep is None:
+        errors.append(f"{name} not found")
+        continue
+    if isinstance(dep, str):
+        errors.append(f"{name} is a plain version string, needs default-features = false")
+        continue
+    if dep.get("default-features") is not False:
+        errors.append(f"{name} missing default-features = false")
+    features = dep.get("features", [])
     if "full" in features:
-        return
-    # Otherwise, must have the essentials
-    assert "tokio" in features, "hyper-util must keep 'tokio' feature"
-    assert "service" in features, "hyper-util must keep 'service' feature"
+        errors.append(f"{name} still has 'full' feature")
+
+if errors:
+    for e in errors:
+        print(f"FAIL: {e}", file=sys.stderr)
+    sys.exit(1)
+print("PASS: all 6 deps properly rationalized")
+"""
 
 
-# ---------------------------------------------------------------------------
-# Config file update tests (config_edit) — SKILL.md creation
-# ---------------------------------------------------------------------------
+def test_hyper_util_essential_features():
+    """hyper-util must retain essential features (tokio, service) after removing 'full'."""
+    cargo_path = str(CARGO_TOML)
+    r = subprocess.run(
+        [sys.executable, "-c", HYPER_UTIL_SCRIPT, cargo_path],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Feature check failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
 
-# [config_edit] fail_to_pass
+
+HYPER_UTIL_SCRIPT = """\
+import sys
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
+
+cargo_path = sys.argv[1]
+data = tomllib.loads(open(cargo_path).read())
+hu = data["workspace"]["dependencies"]["hyper-util"]
+
+if isinstance(hu, str):
+    print("FAIL: hyper-util is a plain string, no explicit features", file=sys.stderr)
+    sys.exit(1)
+
+features = hu.get("features", [])
+if "full" in features:
+    print("FAIL: hyper-util still uses 'full'", file=sys.stderr)
+    sys.exit(1)
+
+required = ["tokio", "service"]
+missing = [f for f in required if f not in features]
+if missing:
+    print(f"FAIL: hyper-util missing required features: {missing}", file=sys.stderr)
+    sys.exit(1)
+
+print("PASS: hyper-util has essential features")
+"""
 
 
-# [config_edit] fail_to_pass
+def test_skill_file_exists():
+    """rationalize-deps SKILL.md must exist with YAML frontmatter."""
+    skill_path = str(SKILL_PATH)
+    r = subprocess.run(
+        [sys.executable, "-c", SKILL_EXISTS_SCRIPT, skill_path],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"SKILL.md check failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [config_edit] fail_to_pass
+SKILL_EXISTS_SCRIPT = """\
+import sys
+from pathlib import Path
+
+skill_path = Path(sys.argv[1])
+if not skill_path.is_file():
+    print(f"FAIL: {skill_path} does not exist", file=sys.stderr)
+    sys.exit(1)
+
+content = skill_path.read_text()
+if not content.startswith("---"):
+    print("FAIL: missing YAML frontmatter", file=sys.stderr)
+    sys.exit(1)
+
+parts = content.split("---", 2)
+if len(parts) < 3:
+    print("FAIL: frontmatter not properly closed", file=sys.stderr)
+    sys.exit(1)
+
+fm = parts[1]
+if "name:" not in fm:
+    print("FAIL: frontmatter missing 'name' field", file=sys.stderr)
+    sys.exit(1)
+if "description:" not in fm:
+    print("FAIL: frontmatter missing 'description' field", file=sys.stderr)
+    sys.exit(1)
+
+print("PASS: SKILL.md exists with valid frontmatter")
+"""
+
+
+def test_skill_documents_workflow():
+    """SKILL.md must document the dependency rationalization workflow."""
+    skill_path = str(SKILL_PATH)
+    r = subprocess.run(
+        [sys.executable, "-c", SKILL_WORKFLOW_SCRIPT, skill_path],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"Workflow check failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+SKILL_WORKFLOW_SCRIPT = """\
+import sys
+from pathlib import Path
+
+skill_path = Path(sys.argv[1])
+if not skill_path.is_file():
+    print(f"FAIL: {skill_path} does not exist", file=sys.stderr)
+    sys.exit(1)
+
+content = skill_path.read_text().lower()
+required_keywords = ["cargo", "default-features", "cargo check"]
+missing = [kw for kw in required_keywords if kw not in content]
+if missing:
+    print(f"FAIL: SKILL.md missing expected keywords: {missing}", file=sys.stderr)
+    sys.exit(1)
+
+print("PASS: SKILL.md documents rationalization workflow")
+"""
