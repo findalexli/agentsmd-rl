@@ -1,0 +1,74 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28858
+  base_commit: "c721d357ad9ed04017bb24d21decf5739dba3911"
+  merge_commit: "871f660f5816a48dacc6c53e104f42d775852e6b"
+
+checks:
+  # Gates
+  - id: source_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "Modified source files (bun.ts, compile.ts, CLAUDE.md) exist"
+
+  # Code behavior — fail-to-pass
+  - id: cc_implicit_dep_outputs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "compileC lambda passes depOutputs as implicitInputs to cc(), with codegenOrderOnly as orderOnlyInputs"
+
+  - id: no_pch_cxx_implicit_dep_outputs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No-PCH cxx path uses implicitInputs with depOutputs and orderOnlyInputs with codegenOrderOnly"
+
+  - id: codegen_order_only_separate
+    type: fail_to_pass
+    origin: pr_diff
+    description: "codegenOrderOnly is just codegen.cppAll; old depOrderOnly variable removed"
+
+  # Config/documentation update — fail-to-pass
+  - id: claude_md_gotchas_implicit_deps
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md Gotchas states PCH, cc, and no-PCH cxx all need implicit dep on depOutputs"
+
+  - id: claude_md_ninja_primer_implicit_example
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Ninja primer example shows dep output (lib*.a) as implicit dep (|) not order-only (||)"
+
+  - id: claude_md_depfile_explains_implicit
+    type: fail_to_pass
+    origin: pr_diff
+    description: "depfile section distinguishes codegen headers (order-only) from dep outputs (implicit) with WebKit side-effect explanation"
+
+  # Regression / anti-stub — pass-to-pass
+  - id: dep_outputs_comment_updated
+    type: pass_to_pass
+    origin: pr_diff
+    description: "depOutputs variable comment describes implicit-dep signal, not PCH order-only-deps"
+
+  - id: compile_opts_docs_updated
+    type: pass_to_pass
+    origin: pr_diff
+    description: "compile.ts CompileOpts docs mention dep outputs in implicitInputs and redirect from orderOnlyInputs"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "emitBun has substantial implementation (>= 50 real lines, control flow, compile calls)"
+
+rubric:
+  - rule: "Config update style is consistent with the existing CLAUDE.md documentation"
+    source:
+      path: "scripts/build/CLAUDE.md"
+      lines: "1-10"
+      commit: "c721d357ad9ed04017bb24d21decf5739dba3911"
+  - rule: "Code comments follow the existing pattern of explaining WHY, not just WHAT"
+    source:
+      path: "scripts/build/CLAUDE.md"
+      lines: "16-18"
+      commit: "c721d357ad9ed04017bb24d21decf5739dba3911"
