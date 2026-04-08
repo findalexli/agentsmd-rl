@@ -1,21 +1,15 @@
 #!/usr/bin/env python3
-"""Pipeline orchestrator: run actions against harbor tasks in parallel via claude -p.
+"""Pipeline orchestrator: run actions against harbor tasks in parallel.
 
-Supports two modes:
-  1. Task-based: run actions against existing task directories
-  2. PR-based: scaffold new tasks from scouted PR JSONL files
+Without ``--pool``, uses a single backend configured via env vars (original behavior).
+With ``--pool``, discovers all backends from .env and rotates on 429:
+  - Single-shot actions (improve-tests): direct httpx API, ~5 MB/worker
+  - Multi-turn actions (scaffold, validate): claude -p subprocess, ~300 MB/worker
 
 Usage:
-    # Task-based actions
-    python -m taskforge.pipeline scaffold --tasks sglang-lscpu-topology-fix
-    python -m taskforge.pipeline scaffold --workers 4 --model opus
-    python -m taskforge.pipeline validate --workers 8
-    python -m taskforge.pipeline solve --model sonnet --workers 8
-    python -m taskforge.pipeline full --workers 4
-
-    # PR-based scaffolding (reads JSONL of scouted PRs)
-    python -m taskforge.pipeline scaffold-from-prs --input scouted_prs.jsonl --workers 4
-    python -m taskforge.pipeline scaffold-from-prs --input scouted_agentmd_prs.jsonl --agentmd --workers 4
+    python -m taskforge.pipeline improve-tests --workers 6
+    python -m taskforge.pipeline improve-tests --pool --workers 30
+    python -m taskforge.pipeline scaffold-from-prs --input prs.jsonl --agentmd --pool
 """
 
 from __future__ import annotations
@@ -82,20 +76,26 @@ DEFAULT_BUDGETS = {
 }
 
 
-def load_command(action: str, task: str) -> str:
+
+
+
+def load_command(action: str, task: str, task_dir: Path | None = None) -> str:
     """Load a prompt file and substitute $ARGUMENTS with the task name.
 
     Checks taskforge/prompts/ first, then .claude/commands/.
+    Also substitutes $TASK_DIR with the task directory name.
     """
+    resolved_dir = (task_dir or HARBOR_TASKS).name
+
     if action in PROMPT_FILES:
         prompt_file = PROMPTS_DIR / PROMPT_FILES[action]
         if prompt_file.exists():
-            return prompt_file.read_text().replace("$ARGUMENTS", task)
+            return prompt_file.read_text().replace("$ARGUMENTS", task).replace("$TASK_DIR", resolved_dir)
 
     if action in COMMAND_FILES:
         cmd_file = COMMANDS_DIR / COMMAND_FILES[action]
         if cmd_file.exists():
-            return cmd_file.read_text().replace("$ARGUMENTS", task)
+            return cmd_file.read_text().replace("$ARGUMENTS", task).replace("$TASK_DIR", resolved_dir)
 
     raise FileNotFoundError(f"No prompt found for action: {action}")
 
@@ -167,88 +167,144 @@ async def run_one(
     timeout: int,
     sem: asyncio.Semaphore,
     log_dir: Path,
+    pool: BackendPool | None = None,
 ) -> dict:
-    """Run claude -p with a prompt against one task."""
+    """Run claude -p with a prompt against one task.
+
+    When *pool* is provided, acquires a backend slot and injects per-subprocess
+    env vars.  On 429, retries with the next available backend.
+    """
     log_file = log_dir / f"{task}.json"
-    # Record actual backend model (e.g., glm-5.1 when routed via Z.AI)
-    backend_model = os.environ.get("ANTHROPIC_DEFAULT_OPUS_MODEL", "") if model == "opus" else \
-                    os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "") if model == "sonnet" else \
-                    os.environ.get("ANTHROPIC_DEFAULT_HAIKU_MODEL", "")
-    result = {
+    ts = lambda: datetime.now().strftime("%H:%M:%S")
+
+    result: dict = {
         "task": task, "model": model,
-        "backend_model": backend_model or model,
         "status": "pending", "started_at": datetime.now().isoformat(),
     }
 
     async with sem:
-        print(f"  [{datetime.now().strftime('%H:%M:%S')}] START {task}")
+        print(f"  [{ts()}] START {task}")
+        max_attempts = 3 if pool else 1
 
-        try:
-            proc = await asyncio.create_subprocess_exec(
-                "claude", "-p",
-                "--dangerously-skip-permissions",
-                "--model", model,
-                "--max-budget-usd", str(budget),
-                "--output-format", "json",
-                stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=str(ROOT),
-            )
-
+        for attempt in range(1, max_attempts + 1):
             try:
-                stdout, stderr = await asyncio.wait_for(
-                    proc.communicate(prompt.encode()),
-                    timeout=timeout,
-                )
-            except asyncio.TimeoutError:
-                proc.kill()
-                await proc.wait()
-                result["status"] = "timeout"
-                print(f"  [{datetime.now().strftime('%H:%M:%S')}] TIMEOUT {task}")
-                log_file.write_text(json.dumps(result, indent=2))
-                return result
-
-            stdout_text = stdout.decode("utf-8", errors="replace")
-            stderr_text = stderr.decode("utf-8", errors="replace")
-
-            try:
-                output = json.loads(stdout_text)
-                result["result"] = output.get("result", "")[:3000]
-                result["session_id"] = output.get("session_id")
-                result["usage"] = output.get("usage")
-            except json.JSONDecodeError:
-                result["stdout_tail"] = stdout_text[-2000:]
-
-            result["exit_code"] = proc.returncode
-            if stderr_text:
-                result["stderr_tail"] = stderr_text[-500:]
-
-            if "SKIP:" in stdout_text:
-                result["status"] = "skipped"
-                for line in stdout_text.split("\n"):
-                    if "SKIP:" in line:
-                        result["skip_reason"] = line.strip()[:200]
-                        break
-                print(f"  [{datetime.now().strftime('%H:%M:%S')}] SKIP {task}: {result.get('skip_reason', '')[:60]}")
-            elif "Exceeded USD budget" in stdout_text or "Exceeded USD budget" in stderr_text:
-                result["status"] = "budget_exceeded"
-                print(f"  [{datetime.now().strftime('%H:%M:%S')}] BUDGET {task}")
-            elif proc.returncode == 0:
-                result["status"] = "success"
-                print(f"  [{datetime.now().strftime('%H:%M:%S')}] OK {task}")
-            else:
+                result["attempt"] = attempt
+                await _exec_subprocess(task, prompt, model, budget, timeout, result, pool)
+            except Exception as e:
                 result["status"] = "error"
-                print(f"  [{datetime.now().strftime('%H:%M:%S')}] FAIL {task} (exit {proc.returncode})")
+                result["error"] = str(e)[:500]
+                print(f"  [{ts()}] ERROR {task}: {e}")
 
-        except Exception as e:
-            result["status"] = "error"
-            result["error"] = str(e)[:500]
-            print(f"  [{datetime.now().strftime('%H:%M:%S')}] ERROR {task}: {e}")
+            # Report to pool and maybe retry on 429
+            backend = result.pop("_backend", None)
+            if pool and backend:
+                combined = (result.get("result", "") or "") + (result.get("stderr_tail", "") or "")
+                is_429 = "429" in combined or "Rate limit" in combined
+                if result["status"] == "error" and is_429:
+                    pool.report_429(backend)
+                    if attempt < max_attempts:
+                        continue
+                elif result["status"] == "success":
+                    pool.report_success(backend)
 
+            break
         result["finished_at"] = datetime.now().isoformat()
         log_file.write_text(json.dumps(result, indent=2))
         return result
+
+
+async def _exec_subprocess(
+    task: str, prompt: str, model: str, budget: float,
+    timeout: int, result: dict, pool: BackendPool | None,
+) -> None:
+    """Spawn ``claude -p`` and populate *result* dict in-place."""
+    ts = lambda: datetime.now().strftime("%H:%M:%S")
+
+    # Build env: merge pool backend env on top of os.environ
+    env = dict(os.environ)
+    if pool:
+        async with pool.acquire() as backend:
+            env.update(backend.subprocess_env())
+            result["_backend"] = backend  # runtime ref, stripped before JSON
+            result["backend_name"] = backend.name
+            result["backend_model"] = backend.resolve_model(model)
+            return await _run_claude(task, prompt, model, budget, timeout, env, result, ts)
+    else:
+        backend_model = os.environ.get("ANTHROPIC_DEFAULT_OPUS_MODEL", "") if model == "opus" else \
+                        os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "") if model == "sonnet" else \
+                        os.environ.get("ANTHROPIC_DEFAULT_HAIKU_MODEL", "")
+        result["backend_model"] = backend_model or model
+        return await _run_claude(task, prompt, model, budget, timeout, env, result, ts)
+
+
+async def _run_claude(
+    task: str, prompt: str, model: str, budget: float,
+    timeout: int, env: dict, result: dict, ts,
+) -> None:
+    """The actual subprocess spawn + output parsing."""
+    proc = await asyncio.create_subprocess_exec(
+        "claude", "-p",
+        "--dangerously-skip-permissions",
+        "--model", model,
+        "--max-budget-usd", str(budget),
+        "--output-format", "json",
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        cwd=str(ROOT),
+        env=env,
+    )
+
+    try:
+        stdout, stderr = await asyncio.wait_for(
+            proc.communicate(prompt.encode()), timeout=timeout,
+        )
+    except asyncio.TimeoutError:
+        proc.kill()
+        await proc.wait()
+        result["status"] = "timeout"
+        print(f"  [{ts()}] TIMEOUT {task}")
+        return
+
+    stdout_text = stdout.decode("utf-8", errors="replace")
+    stderr_text = stderr.decode("utf-8", errors="replace")
+
+    # Parse JSON output
+    try:
+        output = json.loads(stdout_text)
+        if isinstance(output, dict):
+            result["result"] = output.get("result", "")[:3000]
+            result["session_id"] = output.get("session_id")
+            result["usage"] = output.get("usage")
+        elif isinstance(output, list) and output:
+            last = output[-1] if isinstance(output[-1], dict) else {}
+            result["result"] = str(last.get("content", last.get("result", "")))[:3000]
+        else:
+            result["stdout_tail"] = stdout_text[-2000:]
+    except json.JSONDecodeError:
+        result["stdout_tail"] = stdout_text[-2000:]
+
+    result["exit_code"] = proc.returncode
+    if stderr_text:
+        result["stderr_tail"] = stderr_text[-500:]
+
+    # Classify status
+    if "SKIP:" in stdout_text:
+        result["status"] = "skipped"
+        for line in stdout_text.split("\n"):
+            if "SKIP:" in line:
+                result["skip_reason"] = line.strip()[:200]
+                break
+        print(f"  [{ts()}] SKIP {task}: {result.get('skip_reason', '')[:60]}")
+    elif "Exceeded USD budget" in stdout_text or "Exceeded USD budget" in stderr_text:
+        result["status"] = "budget_exceeded"
+        print(f"  [{ts()}] BUDGET {task}")
+    elif proc.returncode == 0:
+        result["status"] = "success"
+        print(f"  [{ts()}] OK {task}")
+    else:
+        result["status"] = "error"
+        print(f"  [{ts()}] FAIL {task} (exit {proc.returncode})")
 
 
 # ---------------------------------------------------------------------------
@@ -263,6 +319,7 @@ async def run_batch(
     workers: int,
     log_dir: Path,
     dry_run: bool = False,
+    pool: BackendPool | None = None,
 ) -> list[dict]:
     """Run claude -p in parallel for a batch of (label, prompt) pairs."""
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -276,7 +333,7 @@ async def run_batch(
 
     sem = asyncio.Semaphore(workers)
     coros = [
-        run_one(label, prompt, model, budget, timeout, sem, log_dir)
+        run_one(label, prompt, model, budget, timeout, sem, log_dir, pool=pool)
         for label, prompt in items
     ]
 
@@ -292,17 +349,202 @@ async def run_batch(
     print(f"  Done in {elapsed:.0f}s ({elapsed/60:.1f}m)")
     for status, count in sorted(by_status.items()):
         print(f"  {status}: {count}")
+    if pool:
+        print(f"  Backends: {pool.stats()}")
     print(f"{'='*60}")
+
+    # Scrub non-serializable Backend objects before writing JSON
+    clean_results = []
+    for r in results:
+        clean = {k: v for k, v in r.items() if not k.startswith("_")}
+        clean_results.append(clean)
 
     summary_file = log_dir / "_summary.json"
     json.dump({
         "model": model, "tasks": len(results),
         "elapsed_sec": elapsed, "by_status": by_status,
-        "results": results,
+        "results": clean_results,
     }, open(summary_file, "w"), indent=2)
     print(f"  Logs: {log_dir}")
 
     return results
+
+
+# ---------------------------------------------------------------------------
+# Direct API mode — single-shot, no subprocess
+# ---------------------------------------------------------------------------
+
+async def run_direct_batch(
+    items: list[tuple[str, str]],  # (task_label, prompt)
+    model: str,
+    workers: int,
+    log_dir: Path,
+    pool: BackendPool,
+    task_dir: Path,
+    dry_run: bool = False,
+) -> list[dict]:
+    """Run improve-tests via direct API calls (no subprocess).
+
+    Pre-loads all task files into the prompt, sends a single API call,
+    parses code blocks from the response, and writes the output files.
+    """
+    from taskforge.backends import call_api, parse_file_blocks
+
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    if dry_run:
+        for label, _ in items[:20]:
+            print(f"  {label}: direct-api, model={model}")
+        return []
+
+    import httpx as _httpx
+    http = _httpx.AsyncClient(timeout=_httpx.Timeout(300, connect=15))
+    sem = asyncio.Semaphore(workers)
+
+    async def _one(task: str, system_prompt: str) -> dict:
+        result: dict = {
+            "task": task, "model": model, "mode": "direct-api",
+            "status": "pending", "started_at": datetime.now().isoformat(),
+        }
+        ts = lambda: datetime.now().strftime("%H:%M:%S")
+
+        async with sem:
+            print(f"  [{ts()}] START {task}")
+            try:
+                user_msg = await _build_direct_prompt(task, task_dir)
+                text, usage, backend_name = await call_api(
+                    pool, messages=[{"role": "user", "content": user_msg}],
+                    system=system_prompt, model=model, http=http,
+                )
+                result["backend_name"] = backend_name
+                result["usage"] = usage
+
+                # Parse and write output files
+                blocks = parse_file_blocks(text)
+                wrote = _write_parsed_blocks(blocks, task_dir / task)
+                result["wrote"] = wrote
+
+                if "tests/test_outputs.py" in wrote or "test_outputs.py" in wrote:
+                    result["status"] = "success"
+                    print(f"  [{ts()}] OK {task} via {backend_name} ({len(wrote)} files)")
+                else:
+                    result["status"] = "error"
+                    result["error"] = f"No test_outputs.py in response (got: {list(blocks.keys())})"
+                    result["response_tail"] = text[-3000:]
+                    print(f"  [{ts()}] FAIL {task}: no test_outputs.py parsed (blocks: {list(blocks.keys())})")
+
+            except Exception as e:
+                result["status"] = "error"
+                result["error"] = str(e)[:500]
+                print(f"  [{ts()}] ERROR {task}: {e}")
+
+            result["finished_at"] = datetime.now().isoformat()
+            (log_dir / f"{task}.json").write_text(json.dumps(result, indent=2))
+            return result
+
+    start = time.time()
+    coros = [_one(task, prompt) for task, prompt in items]
+    results = await asyncio.gather(*coros)
+    elapsed = time.time() - start
+    await http.aclose()
+
+    by_status: dict[str, int] = {}
+    for r in results:
+        by_status[r["status"]] = by_status.get(r["status"], 0) + 1
+
+    print(f"\n{'='*60}")
+    print(f"  Done in {elapsed:.0f}s ({elapsed/60:.1f}m)")
+    for status, count in sorted(by_status.items()):
+        print(f"  {status}: {count}")
+    print(f"  Backends: {pool.stats()}")
+    print(f"{'='*60}")
+
+    summary_file = log_dir / "_summary.json"
+    json.dump({
+        "model": model, "mode": "direct-api", "tasks": len(results),
+        "elapsed_sec": elapsed, "by_status": by_status, "results": results,
+    }, open(summary_file, "w"), indent=2)
+    print(f"  Logs: {log_dir}")
+
+    return results
+
+
+async def _build_direct_prompt(task: str, task_dir: Path) -> str:
+    """Pre-load all task files + PR diff into a single user message."""
+    td = task_dir / task
+    parts = [f"# Task: {task}\n\n## Task Files\n"]
+
+    for fname in [
+        "instruction.md", "tests/test_outputs.py", "solution/solve.sh",
+        "eval_manifest.yaml", "task.toml", "environment/Dockerfile",
+    ]:
+        fpath = td / fname
+        if fpath.exists():
+            content = fpath.read_text()
+            parts.append(f"### {fname}\n```\n{content}\n```\n")
+
+    # Pre-fetch PR diff
+    toml_path = td / "task.toml"
+    if toml_path.exists():
+        toml_text = toml_path.read_text()
+        repo = pr = None
+        for line in toml_text.splitlines():
+            if line.startswith("source_repo"):
+                repo = line.split("=", 1)[1].strip().strip('"')
+            if line.startswith("source_pr"):
+                try:
+                    pr = line.split("=", 1)[1].strip()
+                except (ValueError, IndexError):
+                    pass
+        if repo and pr:
+            proc = await asyncio.create_subprocess_exec(
+                "gh", "pr", "diff", str(pr), "--repo", repo,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=30)
+            diff = stdout.decode("utf-8", errors="replace")[:50000]
+            if diff.strip():
+                parts.append(f"### PR Diff ({repo}#{pr})\n```diff\n{diff}\n```\n")
+
+    parts.append("""
+## Output Format
+
+Return your rewritten files wrapped in XML tags:
+
+<file path="tests/test_outputs.py">
+... your rewritten test file ...
+</file>
+
+<file path="eval_manifest.yaml">
+... your rewritten manifest ...
+</file>
+""")
+    return "\n".join(parts)
+
+
+def _write_parsed_blocks(blocks: dict[str, str], task_path: Path) -> list[str]:
+    """Write parsed file blocks to disk. Returns list of written paths."""
+    import ast
+    wrote: list[str] = []
+    for name, content in blocks.items():
+        # Normalize: "tests/test_outputs.py" or just "test_outputs.py"
+        if name in ("test_outputs.py", "tests/test_outputs.py"):
+            # Syntax-validate before writing
+            try:
+                ast.parse(content)
+            except SyntaxError as e:
+                print(f"    Syntax error in {name}: {e}")
+                continue
+            out = task_path / "tests" / "test_outputs.py"
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(content)
+            wrote.append(name)
+        elif name in ("eval_manifest.yaml",):
+            out = task_path / "eval_manifest.yaml"
+            out.write_text(content)
+            wrote.append(name)
+    return wrote
 
 
 # ---------------------------------------------------------------------------
@@ -320,6 +562,8 @@ async def main():
     parser.add_argument("--budget", type=float, help="Max USD per task")
     parser.add_argument("--timeout", type=int, default=600, help="Seconds per task")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--pool", action="store_true",
+                        help="Use multi-backend pool with auto-fallback on 429")
     # scaffold-from-prs specific
     parser.add_argument("--input", help="Input JSONL file for scaffold-from-prs")
     parser.add_argument("--agentmd", action="store_true", help="Use agentmd scaffold mode")
@@ -341,7 +585,7 @@ async def main():
             model = args.model or DEFAULT_MODELS[action]
             budget = args.budget or DEFAULT_BUDGETS[action]
             log_dir = LOG_DIR / f"{action}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            prompts = {t: load_command(action, t) for t in tasks}
+            prompts = {t: load_command(action, t, task_dir) for t in tasks}
             items = [(t, prompts[t]) for t in tasks]
             await run_batch(items, model, budget, args.timeout, args.workers, log_dir, args.dry_run)
         return
@@ -349,6 +593,17 @@ async def main():
     model = args.model or DEFAULT_MODELS[args.action]
     budget = args.budget or DEFAULT_BUDGETS[args.action]
     log_dir = LOG_DIR / f"{args.action}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+    # Resolve backend pool
+    pool = None
+    if args.pool:
+        from taskforge.backends import BackendPool, backends_from_env
+        backends = backends_from_env()
+        if not backends:
+            print("No backends found in .env / environment")
+            sys.exit(1)
+        pool = BackendPool(backends)
+        print(f"Backend pool: {pool.names}")
 
     if args.action == "solve":
         items = []
@@ -360,9 +615,11 @@ async def main():
             )
             items.append((t, prompt))
     else:
-        items = [(t, load_command(args.action, t)) for t in tasks]
+        items = [(t, load_command(args.action, t, task_dir)) for t in tasks]
 
-    await run_batch(items, model, budget, args.timeout, args.workers, log_dir, args.dry_run)
+    await run_batch(
+        items, model, budget, args.timeout, args.workers, log_dir, args.dry_run, pool=pool,
+    )
 
 
 async def _cmd_scaffold_from_prs(args: argparse.Namespace) -> None:

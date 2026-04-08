@@ -4,7 +4,7 @@ Upgrade tests in an existing agentmd-edit task from grep/structural to behaviora
 
 ## Input
 
-`$ARGUMENTS` = task name in `harbor_tasks_agentmd_edits/` (e.g., `remix-add-charset-to-contenttype-for`)
+`$ARGUMENTS` = task name in `$TASK_DIR/` (e.g., `remix-add-charset-to-contenttype-for`)
 
 ## Problem
 
@@ -14,7 +14,7 @@ The task's `test_outputs.py` currently only reads files and checks strings (grep
 
 ### 1. Read ALL task files
 
-Read every file in `harbor_tasks_agentmd_edits/$ARGUMENTS/`:
+Read every file in `$TASK_DIR/$ARGUMENTS/`:
 - `instruction.md` — what the task asks the agent to do
 - `solution/solve.sh` — the gold patch (shows exactly what changed)
 - `tests/test_outputs.py` — CURRENT tests (you will rewrite these)
