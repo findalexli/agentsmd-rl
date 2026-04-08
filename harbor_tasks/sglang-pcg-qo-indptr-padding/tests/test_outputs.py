@@ -8,8 +8,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 import sys
-import types
 from pathlib import Path
 
 REPO = "/workspace/sglang"
@@ -19,39 +19,45 @@ FLASH_BE = f"{REPO}/python/sglang/srt/layers/attention/flashinfer_backend.py"
 PCG_RUN = f"{REPO}/python/sglang/srt/model_executor/piecewise_cuda_graph_runner.py"
 
 
-def _load_context_manager():
-    """Load piecewise_context_manager.py with mocked torch (no GPU needed)."""
-    mock_torch = types.ModuleType("torch")
-    mock_cuda = types.ModuleType("torch.cuda")
-
-    class _MockStream:
-        pass
-
-    mock_cuda.Stream = _MockStream
-    mock_torch.cuda = mock_cuda
-    sys.modules["torch"] = mock_torch
-    sys.modules["torch.cuda"] = mock_cuda
-
-    for pkg in [
-        "sglang",
-        "sglang.srt",
-        "sglang.srt.compilation",
-        "sglang.srt.model_executor",
-    ]:
-        m = types.ModuleType(pkg)
-        m.__path__ = [f"{REPO}/python/{pkg.replace('.', '/')}"]
-        sys.modules[pkg] = m
-
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location(
-        "sglang.srt.compilation.piecewise_context_manager",
-        CTX_MGR,
+def _run_ctx_mgr_test(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Run Python code that tests piecewise_context_manager.py with mocked torch."""
+    script = Path(REPO) / "_eval_ctx_mgr_test.py"
+    setup = (
+        "import sys, types\n"
+        "\n"
+        "REPO = " + repr(REPO) + "\n"
+        "\n"
+        "# Mock torch (no GPU needed)\n"
+        "mock_torch = types.ModuleType('torch')\n"
+        "mock_cuda = types.ModuleType('torch.cuda')\n"
+        "class _MockStream: pass\n"
+        "mock_cuda.Stream = _MockStream\n"
+        "mock_torch.cuda = mock_cuda\n"
+        "sys.modules['torch'] = mock_torch\n"
+        "sys.modules['torch.cuda'] = mock_cuda\n"
+        "\n"
+        "for pkg in ['sglang', 'sglang.srt', 'sglang.srt.compilation', 'sglang.srt.model_executor']:\n"
+        "    m = types.ModuleType(pkg)\n"
+        "    m.__path__ = [REPO + '/python/' + pkg.replace('.', '/')]\n"
+        "    sys.modules[pkg] = m\n"
+        "\n"
+        "import importlib.util\n"
+        "spec = importlib.util.spec_from_file_location(\n"
+        "    'sglang.srt.compilation.piecewise_context_manager',\n"
+        "    REPO + '/python/sglang/srt/compilation/piecewise_context_manager.py',\n"
+        ")\n"
+        "mod = importlib.util.module_from_spec(spec)\n"
+        "sys.modules[spec.name] = mod\n"
+        "spec.loader.exec_module(mod)\n"
     )
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = mod
-    spec.loader.exec_module(mod)
-    return mod
+    script.write_text(setup + "\n" + code)
+    try:
+        return subprocess.run(
+            [sys.executable, str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -75,52 +81,57 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_forward_context_has_num_tokens():
     """ForwardContext must have a num_tokens attribute; set_forward_context must accept it."""
-    mod = _load_context_manager()
-    FC = mod.ForwardContext
-    sfc = mod.set_forward_context
-
-    # ForwardContext instances must have num_tokens
-    fc = FC()
-    assert hasattr(fc, "num_tokens"), "ForwardContext missing num_tokens attribute"
-
-    # set_forward_context must accept num_tokens keyword
-    import inspect
-
-    sig = inspect.signature(sfc)
-    assert "num_tokens" in sig.parameters, (
-        "set_forward_context does not accept num_tokens parameter"
+    r = _run_ctx_mgr_test(
+        "import inspect\n"
+        "\n"
+        "FC = mod.ForwardContext\n"
+        "sfc = mod.set_forward_context\n"
+        "\n"
+        "# ForwardContext instances must have num_tokens\n"
+        "fc = FC()\n"
+        'assert hasattr(fc, "num_tokens"), "ForwardContext missing num_tokens attribute"\n'
+        "\n"
+        "# set_forward_context must accept num_tokens keyword\n"
+        "sig = inspect.signature(sfc)\n"
+        'assert "num_tokens" in sig.parameters, "set_forward_context does not accept num_tokens"\n'
+        'print("PASS")\n'
     )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_num_tokens_propagation():
     """num_tokens value propagates through set_forward_context and varies with input."""
-    mod = _load_context_manager()
-    sfc = mod.set_forward_context
-    gfc = mod.get_forward_context
-
-    # Propagate num_tokens=42
-    with sfc(None, None, None, [], [], num_tokens=42):
-        fwd = gfc()
-        assert fwd is not None, "get_forward_context() returned None inside context"
-        assert fwd.num_tokens == 42, f"expected num_tokens=42, got {fwd.num_tokens}"
-
-    # Different value propagates (not hardcoded)
-    with sfc(None, None, None, [], [], num_tokens=256):
-        fwd2 = gfc()
-        assert fwd2.num_tokens == 256, f"expected num_tokens=256, got {fwd2.num_tokens}"
-
-    # Default (no num_tokens) gives None
-    with sfc(None, None, None, [], []):
-        fwd3 = gfc()
-        assert fwd3.num_tokens is None, (
-            f"default num_tokens should be None, got {fwd3.num_tokens}"
-        )
+    r = _run_ctx_mgr_test(
+        "sfc = mod.set_forward_context\n"
+        "gfc = mod.get_forward_context\n"
+        "\n"
+        "# Propagate num_tokens=42\n"
+        "with sfc(None, None, None, [], [], num_tokens=42):\n"
+        "    fwd = gfc()\n"
+        '    assert fwd is not None, "get_forward_context() returned None inside context"\n'
+        '    assert fwd.num_tokens == 42, f"expected 42, got {fwd.num_tokens}"\n'
+        "\n"
+        "# Different value propagates (not hardcoded)\n"
+        "with sfc(None, None, None, [], [], num_tokens=256):\n"
+        "    fwd2 = gfc()\n"
+        '    assert fwd2.num_tokens == 256, f"expected 256, got {fwd2.num_tokens}"\n'
+        "\n"
+        "# Default (no num_tokens) gives None\n"
+        "with sfc(None, None, None, [], []):\n"
+        "    fwd3 = gfc()\n"
+        '    assert fwd3.num_tokens is None, f"default should be None, got {fwd3.num_tokens}"\n'
+        "\n"
+        'print("PASS")\n'
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_replay_num_tokens_and_ordering():
-    # AST-only because: piecewise_cuda_graph_runner.py imports torch, bisect,
+    # AST-only: piecewise_cuda_graph_runner.py imports torch, bisect,
     # CUDA graph APIs, ModelRunner, ForwardBatch — cannot be imported without GPU.
     """replay() passes num_tokens to set_forward_context and calls
     init_forward_metadata inside the context block (ordering fix)."""
@@ -179,7 +190,7 @@ def test_replay_num_tokens_and_ordering():
 
 # [pr_diff] fail_to_pass
 def test_call_begin_forward_pcg_padding():
-    # AST-only because: flashinfer_backend.py imports torch, flashinfer C++ bindings,
+    # AST-only: flashinfer_backend.py imports torch, flashinfer C++ bindings,
     # ModelRunner, and dozens of sglang internals — cannot be imported without GPU.
     """call_begin_forward extends qo_indptr/kv_indptr for PCG padding tokens."""
     source = Path(FLASH_BE).read_text()
@@ -231,41 +242,42 @@ def test_call_begin_forward_pcg_padding():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression + anti-stub
+# Pass-to-pass — regression + anti-stub
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] pass_to_pass
 def test_existing_context_manager_api():
     """Original ForwardContext attributes and context manager preserved."""
-    mod = _load_context_manager()
-    FC = mod.ForwardContext
-    sfc = mod.set_forward_context
-    gfc = mod.get_forward_context
-
-    # Required exports exist
-    for name in [
-        "set_forward_context",
-        "get_forward_context",
-        "is_in_piecewise_cuda_graph",
-        "enable_piecewise_cuda_graph",
-    ]:
-        assert getattr(mod, name, None) is not None, f"missing export: {name}"
-
-    # ForwardContext retains original attributes
-    fc = FC()
-    for attr in ["forward_batch", "quant_config", "moe_layers", "moe_fusions"]:
-        assert hasattr(fc, attr), f"ForwardContext missing attr: {attr}"
-
-    # get_forward_context returns None outside any context
-    assert gfc() is None, "get_forward_context should return None outside context"
-
-    # Context manager round-trip (without num_tokens, backwards compat)
-    with sfc(None, None, None, [], []):
-        inside = gfc()
-        assert inside is not None, "get_forward_context returned None inside context"
-        assert hasattr(inside, "forward_batch"), "context missing forward_batch"
-    assert gfc() is None, "forward context not cleared after exiting"
+    r = _run_ctx_mgr_test(
+        "FC = mod.ForwardContext\n"
+        "sfc = mod.set_forward_context\n"
+        "gfc = mod.get_forward_context\n"
+        "\n"
+        "# Required exports exist\n"
+        "for name in ['set_forward_context', 'get_forward_context',\n"
+        "             'is_in_piecewise_cuda_graph', 'enable_piecewise_cuda_graph']:\n"
+        '    assert getattr(mod, name, None) is not None, f"missing export: {name}"\n'
+        "\n"
+        "# ForwardContext retains original attributes\n"
+        "fc = FC()\n"
+        "for attr in ['forward_batch', 'quant_config', 'moe_layers', 'moe_fusions']:\n"
+        '    assert hasattr(fc, attr), f"ForwardContext missing attr: {attr}"\n'
+        "\n"
+        "# get_forward_context returns None outside any context\n"
+        'assert gfc() is None, "should return None outside context"\n'
+        "\n"
+        "# Context manager round-trip (without num_tokens, backwards compat)\n"
+        "with sfc(None, None, None, [], []):\n"
+        "    inside = gfc()\n"
+        '    assert inside is not None, "returned None inside context"\n'
+        '    assert hasattr(inside, "forward_batch"), "context missing forward_batch"\n'
+        'assert gfc() is None, "not cleared after exiting"\n'
+        "\n"
+        'print("PASS")\n'
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [static] pass_to_pass

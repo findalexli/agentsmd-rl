@@ -8,8 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import gc
-import textwrap
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/sglang"
@@ -17,9 +16,18 @@ SERVER_ARGS = f"{REPO}/python/sglang/srt/server_args.py"
 ENGINE = f"{REPO}/python/sglang/srt/entrypoints/engine.py"
 
 
-# ---------------------------------------------------------------------------
-# Helper: extract a named function's source from a file's AST
-# ---------------------------------------------------------------------------
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in a subprocess within the repo directory."""
+    script = Path(REPO) / "_eval_tmp.py"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
 
 def _extract_func_source(filepath, func_name):
     """Return source text of `func_name` from `filepath`, or None."""
@@ -29,18 +37,6 @@ def _extract_func_source(filepath, func_name):
         if isinstance(node, ast.FunctionDef) and node.name == func_name:
             return ast.get_source_segment(source, node)
     return None
-
-
-def _find_gc_setter_func(filepath):
-    """Find the function in engine.py that calls gc.set_threshold and return (name, source)."""
-    source = Path(filepath).read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef):
-            func_src = ast.get_source_segment(source, node)
-            if func_src and "set_threshold" in func_src:
-                return node.name, func_src
-    return None, None
 
 
 # ---------------------------------------------------------------------------
@@ -56,167 +52,195 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_gc_function_sets_thresholds():
     """GC-setting function calls gc.set_threshold correctly for 1, 2, and 3 args."""
-    func_name, func_src = _find_gc_setter_func(ENGINE)
-    assert func_src is not None, "No function calling gc.set_threshold found in engine.py"
+    r = _run_py('''import ast, gc, textwrap
+from pathlib import Path
 
-    # ServerArgs type annotation must be resolvable during exec (Python 3.12
-    # evaluates annotations eagerly).  A placeholder type is sufficient.
-    exec_ns = {"gc": gc, "__builtins__": __builtins__, "ServerArgs": type("ServerArgs", (), {})}
-    exec(textwrap.dedent(func_src), exec_ns)
-    fn = exec_ns[func_name]
+source = Path("/workspace/sglang/python/sglang/srt/entrypoints/engine.py").read_text()
+tree = ast.parse(source)
 
-    original = gc.get_threshold()
+func_name = func_src = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef):
+        src = ast.get_source_segment(source, node)
+        if src and "set_threshold" in src:
+            func_name, func_src = node.name, src
+            break
 
-    # 3-arg
-    class Args3:
-        gc_threshold = [500, 5, 5]
-    fn(Args3())
-    assert gc.get_threshold() == (500, 5, 5), f"3-arg: expected (500,5,5), got {gc.get_threshold()}"
+assert func_src, "No gc.set_threshold function found in engine.py"
 
-    # 1-arg
-    gc.set_threshold(*original)
-    class Args1:
-        gc_threshold = [50000]
-    fn(Args1())
-    assert gc.get_threshold()[0] == 50000, f"1-arg: expected gen0=50000, got {gc.get_threshold()}"
+ServerArgs = type("ServerArgs", (), {})
+ns = {"gc": gc, "__builtins__": __builtins__, "ServerArgs": ServerArgs}
+exec(textwrap.dedent(func_src), ns)
+fn = ns[func_name]
 
-    # 2-arg
-    gc.set_threshold(*original)
-    class Args2:
-        gc_threshold = [700, 10]
-    fn(Args2())
-    assert gc.get_threshold()[0] == 700 and gc.get_threshold()[1] == 10, (
-        f"2-arg: expected (700,10,...), got {gc.get_threshold()}"
-    )
+orig = gc.get_threshold()
 
-    # None → no-op
-    gc.set_threshold(*original)
-    class ArgsNone:
-        gc_threshold = None
-    fn(ArgsNone())
-    assert gc.get_threshold() == original, "gc_threshold=None should be no-op"
+class A3:
+    gc_threshold = [500, 5, 5]
+fn(A3())
+assert gc.get_threshold() == (500, 5, 5), "3-arg: %s" % repr(gc.get_threshold())
 
-    # Restore
-    gc.set_threshold(*original)
+gc.set_threshold(*orig)
+class A1:
+    gc_threshold = [50000]
+fn(A1())
+assert gc.get_threshold()[0] == 50000, "1-arg: %s" % repr(gc.get_threshold())
+
+gc.set_threshold(*orig)
+class A2:
+    gc_threshold = [700, 10]
+fn(A2())
+t = gc.get_threshold()
+assert t[0] == 700 and t[1] == 10, "2-arg: %s" % repr(t)
+
+gc.set_threshold(*orig)
+class AN:
+    gc_threshold = None
+fn(AN())
+assert gc.get_threshold() == orig, "None should be no-op"
+
+gc.set_threshold(*orig)
+print("PASS")
+''')
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_cli_parser_accepts_gc_threshold():
     """CLI parser accepts --gc-threshold with varying numbers of int arguments."""
-    import argparse
+    r = _run_py('''import ast, argparse, textwrap
+from pathlib import Path
 
-    add_cli_src = _extract_func_source(SERVER_ARGS, "add_cli_args")
-    assert add_cli_src is not None, "add_cli_args function not found"
-    assert "--gc-threshold" in add_cli_src, "--gc-threshold not registered in add_cli_args"
+source = Path("/workspace/sglang/python/sglang/srt/server_args.py").read_text()
+tree = ast.parse(source)
 
-    # Extract the parser.add_argument(...) block for --gc-threshold.
-    # The argument string may appear on a line AFTER the opening paren,
-    # so we backtrack to include the add_argument( line.
-    lines = add_cli_src.split("\n")
-    gc_line_idx = None
-    for i, line in enumerate(lines):
-        if "--gc-threshold" in line:
-            gc_line_idx = i
-            break
-    assert gc_line_idx is not None, "Could not find --gc-threshold in add_cli_args"
+add_cli_src = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "add_cli_args":
+        add_cli_src = ast.get_source_segment(source, node)
+        break
 
-    # Backtrack to the line containing add_argument(
-    start = gc_line_idx
-    for j in range(gc_line_idx, -1, -1):
-        if "add_argument" in lines[j]:
-            start = j
-            break
+assert add_cli_src, "add_cli_args not found"
+assert "--gc-threshold" in add_cli_src, "--gc-threshold not registered"
 
-    # Now capture from start until parens balance
-    block_lines = []
-    paren_depth = 0
-    for line in lines[start:]:
-        block_lines.append(line)
-        paren_depth += line.count("(") - line.count(")")
-        if paren_depth <= 0 and len(block_lines) > 0:
-            break
+lines = add_cli_src.split("\\n")
+gc_idx = None
+for i, line in enumerate(lines):
+    if "--gc-threshold" in line:
+        gc_idx = i
+        break
+assert gc_idx is not None
 
-    assert block_lines, "Could not extract --gc-threshold add_argument call"
-    block_src = textwrap.dedent("\n".join(block_lines))
-    parser = argparse.ArgumentParser()
-    exec(block_src, {"parser": parser, "int": int, "str": str, "float": float, "bool": bool})
+start = gc_idx
+for j in range(gc_idx, -1, -1):
+    if "add_argument" in lines[j]:
+        start = j
+        break
 
-    # 3 ints
-    args = parser.parse_args(["--gc-threshold", "700", "10", "10"])
-    assert args.gc_threshold == [700, 10, 10]
+block = []
+depth = 0
+for line in lines[start:]:
+    block.append(line)
+    depth += line.count("(") - line.count(")")
+    if depth <= 0 and block:
+        break
 
-    # 1 int
-    args = parser.parse_args(["--gc-threshold", "50000"])
-    assert args.gc_threshold == [50000]
+block_src = textwrap.dedent("\\n".join(block))
+parser = argparse.ArgumentParser()
+exec(block_src, {"parser": parser, "int": int, "str": str, "float": float, "bool": bool})
 
-    # Default is None
-    args = parser.parse_args([])
-    assert args.gc_threshold is None
+args = parser.parse_args(["--gc-threshold", "700", "10", "10"])
+assert args.gc_threshold == [700, 10, 10], "3-int: %s" % args.gc_threshold
 
-    # Values are int, not str
-    args = parser.parse_args(["--gc-threshold", "100", "20"])
-    assert all(isinstance(v, int) for v in args.gc_threshold)
+args = parser.parse_args(["--gc-threshold", "50000"])
+assert args.gc_threshold == [50000], "1-int: %s" % args.gc_threshold
+
+args = parser.parse_args([])
+assert args.gc_threshold is None, "default: %s" % args.gc_threshold
+
+args = parser.parse_args(["--gc-threshold", "100", "20"])
+assert all(isinstance(v, int) for v in args.gc_threshold), "values not int"
+
+print("PASS")
+''')
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_validation_rejects_invalid_gc_threshold():
     """check_server_args rejects gc_threshold with 0 or 4+ values."""
-    check_src = _extract_func_source(SERVER_ARGS, "check_server_args")
-    assert check_src is not None, "check_server_args function not found"
-    assert "gc_threshold" in check_src, "gc_threshold not validated in check_server_args"
+    r = _run_py('''import ast, textwrap
+from pathlib import Path
 
-    # Extract ONLY the gc_threshold validation block from check_server_args
-    # to avoid executing unrelated checks with missing dependencies.
-    lines = check_src.split("\n")
-    gc_block = []
-    capturing = False
-    base_indent = None
-    for line in lines:
-        if "gc_threshold" in line and not capturing:
-            capturing = True
-            base_indent = len(line) - len(line.lstrip())
-        if capturing:
-            stripped = line.strip()
-            cur_indent = len(line) - len(line.lstrip()) if stripped else base_indent + 1
-            if cur_indent >= base_indent or not stripped:
-                gc_block.append(line)
-            else:
-                break
+source = Path("/workspace/sglang/python/sglang/srt/server_args.py").read_text()
+tree = ast.parse(source)
 
-    assert gc_block, "Could not locate gc_threshold validation block"
-    gc_code = textwrap.dedent("\n".join(gc_block))
+check_src = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "check_server_args":
+        check_src = ast.get_source_segment(source, node)
+        break
 
-    # Wrap the extracted block in a callable that sets self.gc_threshold
-    wrapper = f"""\
-def _validate(gc_threshold):
+assert check_src, "check_server_args not found"
+assert "gc_threshold" in check_src, "gc_threshold not validated in check_server_args"
+
+lines = check_src.split("\\n")
+gc_block = []
+capturing = False
+base_indent = None
+for line in lines:
+    if "gc_threshold" in line and not capturing:
+        capturing = True
+        base_indent = len(line) - len(line.lstrip())
+    if capturing:
+        stripped = line.strip()
+        cur_indent = len(line) - len(line.lstrip()) if stripped else base_indent + 1
+        if cur_indent >= base_indent or not stripped:
+            gc_block.append(line)
+        else:
+            break
+
+assert gc_block, "Could not locate gc_threshold validation block"
+gc_code = textwrap.dedent("\\n".join(gc_block))
+
+wrapper = """def _validate(gc_threshold):
     class _self:
         pass
     _self.gc_threshold = gc_threshold
     self = _self
-{textwrap.indent(gc_code, '    ')}
-"""
-    exec_ns = {"__builtins__": __builtins__}
-    exec(wrapper, exec_ns)
-    validate = exec_ns["_validate"]
+""" + textwrap.indent(gc_code, "    ")
 
-    # Valid inputs — should NOT raise
-    for valid in ([700, 10, 10], [50000], [100, 20]):
-        validate(valid)
+ns = {"__builtins__": __builtins__}
+exec(wrapper, ns)
+validate = ns["_validate"]
 
-    # Invalid: 4 values — must raise
-    import pytest
-    with pytest.raises((ValueError, SystemExit, AssertionError)):
-        validate([1, 2, 3, 4])
+for v in ([700, 10, 10], [50000], [100, 20]):
+    validate(v)
 
-    # Invalid: 5 values
-    with pytest.raises((ValueError, SystemExit, AssertionError)):
-        validate([1, 2, 3, 4, 5])
+try:
+    validate([1, 2, 3, 4])
+    raise RuntimeError("Should have raised for 4 values")
+except (ValueError, SystemExit, AssertionError):
+    pass
+
+try:
+    validate([1, 2, 3, 4, 5])
+    raise RuntimeError("Should have raised for 5 values")
+except (ValueError, SystemExit, AssertionError):
+    pass
+
+print("PASS")
+''')
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -254,7 +278,6 @@ def test_gc_invoked_in_launch_subprocesses():
     source = Path(ENGINE).read_text()
     tree = ast.parse(source)
 
-    # Find functions that call gc.set_threshold
     gc_func_names = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef):
@@ -264,11 +287,9 @@ def test_gc_invoked_in_launch_subprocesses():
 
     assert gc_func_names, "No function calls gc.set_threshold in engine.py"
 
-    # If directly in _launch_subprocesses, that's fine
     if "_launch_subprocesses" in gc_func_names:
         return
 
-    # Otherwise check that a gc-setting function is called from _launch_subprocesses
     launch_src = _extract_func_source(ENGINE, "_launch_subprocesses")
     assert launch_src is not None, "_launch_subprocesses not found"
     for gc_name in gc_func_names:

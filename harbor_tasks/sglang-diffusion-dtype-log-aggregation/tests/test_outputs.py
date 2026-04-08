@@ -8,9 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import textwrap
-import types
-from collections import Counter, defaultdict
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/sglang"
@@ -27,52 +25,61 @@ def _parse_tree(source=None):
     return ast.parse(source), source
 
 
-def _find_summary_formatter():
-    """Find the dtype mismatch summary/format function by behavior, not exact name.
+# ---------------------------------------------------------------------------
+# Subprocess helper: extracts the summary formatter function as `func`
+# ---------------------------------------------------------------------------
 
-    Searches module-level functions for one that accepts (Counter, defaultdict)
-    and returns a human-readable string. This avoids hard-coding the gold-patch
-    function name so alternative implementations also pass.
-    """
-    tree, source = _parse_tree()
-    lines = source.splitlines(keepends=True)
+_FORMATTER_PREAMBLE = """\
+import ast, textwrap, types
+from collections import Counter, defaultdict
+from pathlib import Path
 
-    for node in ast.iter_child_nodes(tree):
-        if not isinstance(node, ast.FunctionDef):
-            continue
-        # Skip known pre-existing functions
-        if node.name in (
-            "_make_param_like",
-            "load_model_from_full_model_state_dict",
-            "shard_model",
-        ):
-            continue
+TARGET = "/workspace/sglang/python/sglang/multimodal_gen/runtime/loader/fsdp_load.py"
+source = Path(TARGET).read_text()
+tree = ast.parse(source)
+lines = source.splitlines(keepends=True)
 
-        func_src = "from __future__ import annotations\n" + textwrap.dedent(
-            "".join(lines[node.lineno - 1 : node.end_lineno])
+func = None
+for node in ast.iter_child_nodes(tree):
+    if not isinstance(node, ast.FunctionDef):
+        continue
+    if node.name in ("_make_param_like", "load_model_from_full_model_state_dict", "shard_model"):
+        continue
+    func_src = "from __future__ import annotations\\n" + textwrap.dedent(
+        "".join(lines[node.lineno - 1 : node.end_lineno])
+    )
+    mock_torch = types.ModuleType("torch")
+    mock_torch.dtype = type("dtype", (), {})
+    env = {"Counter": Counter, "defaultdict": defaultdict, "torch": mock_torch, "__builtins__": __builtins__}
+    try:
+        exec(func_src, env)
+        fn = env[node.name]
+        test_counts = Counter()
+        test_examples = defaultdict(list)
+        test_counts[("torch.float32", "torch.bfloat16")] = 1
+        test_examples[("torch.float32", "torch.bfloat16")] = ["w"]
+        probe = fn(test_counts, test_examples)
+        if isinstance(probe, str) and len(probe) > 0:
+            func = fn
+            break
+    except Exception:
+        continue
+
+assert func is not None, "No summary formatter function found at module level"
+"""
+
+
+def _run_formatter_test(test_body: str) -> subprocess.CompletedProcess:
+    """Write a script that extracts the formatter as `func`, appends test_body, and runs it."""
+    script = Path(REPO) / "_eval_formatter_test.py"
+    script.write_text(_FORMATTER_PREAMBLE + "\n" + test_body + "\nprint('PASS')\n")
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
         )
-        # Provide a mock torch module so type annotations like torch.dtype don't fail
-        mock_torch = types.ModuleType("torch")
-        mock_torch.dtype = type("dtype", (), {})
-        env = {
-            "Counter": Counter,
-            "defaultdict": defaultdict,
-            "torch": mock_torch,
-            "__builtins__": __builtins__,
-        }
-        try:
-            exec(func_src, env)
-            func = env[node.name]
-            counts = Counter()
-            examples = defaultdict(list)
-            counts[("torch.float32", "torch.bfloat16")] = 3
-            examples[("torch.float32", "torch.bfloat16")] = ["w0"]
-            result = func(counts, examples)
-            if isinstance(result, str) and len(result) > 0:
-                return func
-        except Exception:
-            continue
-    return None
+    finally:
+        script.unlink(missing_ok=True)
 
 
 def _find_loading_func_and_loop():
@@ -109,90 +116,85 @@ def test_syntax():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
 def test_summary_formatter_multiple_types():
     """Summary function aggregates multiple dtype mismatch pairs with counts and examples."""
-    fmt = _find_summary_formatter()
-    assert fmt is not None, "No summary formatter function found at module level"
+    r = _run_formatter_test("""
+counts = Counter()
+examples = defaultdict(list)
+counts[("torch.float32", "torch.bfloat16")] = 50
+examples[("torch.float32", "torch.bfloat16")] = ["blocks.0.weight", "blocks.1.bias", "embed.pos"]
+counts[("torch.float16", "torch.bfloat16")] = 12
+examples[("torch.float16", "torch.bfloat16")] = ["norm.weight"]
 
-    counts = Counter()
-    examples = defaultdict(list)
-    counts[("torch.float32", "torch.bfloat16")] = 50
-    examples[("torch.float32", "torch.bfloat16")] = [
-        "blocks.0.weight",
-        "blocks.1.bias",
-        "embed.pos",
-    ]
-    counts[("torch.float16", "torch.bfloat16")] = 12
-    examples[("torch.float16", "torch.bfloat16")] = ["norm.weight"]
-
-    result = fmt(counts, examples)
-    assert isinstance(result, str) and len(result) > 0
-    # Both dtype pairs must be represented
-    assert "float32" in result, f"Missing float32 in: {result}"
-    assert "float16" in result, f"Missing float16 in: {result}"
-    assert "bfloat16" in result, f"Missing bfloat16 in: {result}"
-    # Counts must appear
-    assert "50" in result, f"Missing count 50 in: {result}"
-    assert "12" in result, f"Missing count 12 in: {result}"
-    # At least one example name must appear
-    assert any(
-        name in result for name in ["blocks.0.weight", "blocks.1.bias", "embed.pos"]
-    ), f"Missing example names in: {result}"
+result = func(counts, examples)
+assert isinstance(result, str) and len(result) > 0
+assert "float32" in result, f"Missing float32 in: {result}"
+assert "float16" in result, f"Missing float16 in: {result}"
+assert "bfloat16" in result, f"Missing bfloat16 in: {result}"
+assert "50" in result, f"Missing count 50 in: {result}"
+assert "12" in result, f"Missing count 12 in: {result}"
+assert any(name in result for name in ["blocks.0.weight", "blocks.1.bias", "embed.pos"]), f"Missing example names in: {result}"
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_summary_formatter_empty_examples():
     """Summary function handles pairs with no example parameter names."""
-    fmt = _find_summary_formatter()
-    assert fmt is not None, "No summary formatter function found"
+    r = _run_formatter_test("""
+counts = Counter()
+examples = defaultdict(list)
+counts[("torch.float32", "torch.bfloat16")] = 7
+examples[("torch.float32", "torch.bfloat16")] = []
 
-    counts = Counter()
-    examples = defaultdict(list)
-    counts[("torch.float32", "torch.bfloat16")] = 7
-    examples[("torch.float32", "torch.bfloat16")] = []  # no examples
-
-    result = fmt(counts, examples)
-    assert isinstance(result, str)
-    assert "7" in result, f"Missing count with empty examples: {result}"
-    assert "float32" in result, f"Missing dtype in: {result}"
+result = func(counts, examples)
+assert isinstance(result, str)
+assert "7" in result, f"Missing count with empty examples: {result}"
+assert "float32" in result, f"Missing dtype in: {result}"
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_summary_formatter_single_pair():
     """Summary function works correctly with a single mismatch type."""
-    fmt = _find_summary_formatter()
-    assert fmt is not None, "No summary formatter function found"
+    r = _run_formatter_test("""
+counts = Counter()
+examples = defaultdict(list)
+counts[("torch.int8", "torch.float32")] = 100
+examples[("torch.int8", "torch.float32")] = ["fc.weight", "fc.bias"]
 
-    counts = Counter()
-    examples = defaultdict(list)
-    counts[("torch.int8", "torch.float32")] = 100
-    examples[("torch.int8", "torch.float32")] = ["fc.weight", "fc.bias"]
-
-    result = fmt(counts, examples)
-    assert "int8" in result, f"Missing int8 in: {result}"
-    assert "100" in result, f"Missing count 100 in: {result}"
-    assert "fc.weight" in result or "fc.bias" in result, f"Missing example in: {result}"
+result = func(counts, examples)
+assert "int8" in result, f"Missing int8 in: {result}"
+assert "100" in result, f"Missing count 100 in: {result}"
+assert "fc.weight" in result or "fc.bias" in result, f"Missing example in: {result}"
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_summary_formatter_no_raw_repr():
     """Summary output is human-readable, not raw Counter/defaultdict repr."""
-    fmt = _find_summary_formatter()
-    assert fmt is not None, "No summary formatter function found"
+    r = _run_formatter_test("""
+counts = Counter()
+examples = defaultdict(list)
+counts[("torch.float32", "torch.bfloat16")] = 5
+examples[("torch.float32", "torch.bfloat16")] = ["layer.0.w"]
 
-    counts = Counter()
-    examples = defaultdict(list)
-    counts[("torch.float32", "torch.bfloat16")] = 5
-    examples[("torch.float32", "torch.bfloat16")] = ["layer.0.w"]
-
-    result = fmt(counts, examples)
-    assert "Counter(" not in result, f"Raw Counter repr in output: {result}"
-    assert "defaultdict(" not in result, f"Raw defaultdict repr in output: {result}"
+result = func(counts, examples)
+assert "Counter(" not in result, f"Raw Counter repr in output: {result}"
+assert "defaultdict(" not in result, f"Raw defaultdict repr in output: {result}"
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

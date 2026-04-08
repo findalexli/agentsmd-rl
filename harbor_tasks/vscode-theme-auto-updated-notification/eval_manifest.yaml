@@ -1,0 +1,40 @@
+version: "2.0"
+source:
+  repo: microsoft/vscode
+  base_commit: 9d3144bf84f54ab1e886fca20608dd3ddc296f64
+
+checks:
+  - id: test_method_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: showThemeAutoUpdatedNotification is defined as a private void method
+
+  - id: test_method_called_in_initialize
+    type: fail_to_pass
+    origin: pr_diff
+    description: showThemeAutoUpdatedNotification is invoked during initialization
+
+  - id: test_notification_guard_conditions
+    type: fail_to_pass
+    origin: pr_diff
+    description: Method has guards for already-shown, new-user, wrong-theme, and explicit-choice
+
+  - id: test_revert_calls_setColorTheme
+    type: fail_to_pass
+    origin: pr_diff
+    description: Revert action looks up previous theme by settings ID and calls setColorTheme
+
+  - id: test_suppresses_new_theme_notification
+    type: fail_to_pass
+    origin: pr_diff
+    description: On close, stores both THEME_AUTO_UPDATED and NEW_THEME notification keys
+
+  - id: test_target_file_exists
+    type: pass_to_pass
+    origin: static
+    description: Target theme service file exists
+
+  - id: test_existing_notification_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: showNewDefaultThemeNotification remains unchanged

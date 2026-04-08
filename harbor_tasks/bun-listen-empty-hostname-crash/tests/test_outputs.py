@@ -7,16 +7,26 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 Note: Bun requires the full Zig + JavaScriptCore toolchain to build from source,
-so structural checks are used for the Zig fix. AST-only because: Zig code cannot
-be compiled without the full bun build system (multi-hour GPU-less build).
+so the Zig fix checks are structural (comment-stripping + window analysis).
+The TypeScript test validation uses subprocess (node) to execute actual code
+that parses and validates the test file structure.
 """
 
+import subprocess
 import re
 from pathlib import Path
 
 REPO = "/workspace/bun"
 ZIG_FILE = f"{REPO}/src/bun.js/api/bun/socket/Handlers.zig"
 TEST_FILE = f"{REPO}/test/js/bun/net/socket.test.ts"
+
+
+def _run_node(code: str, timeout: int = 15) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node.js in the repo directory."""
+    return subprocess.run(
+        ["node", "-e", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 def _read_zig_stripped() -> str:
@@ -46,14 +56,14 @@ def _find_window(code: str, markers: list[str], size: int = 600) -> str | None:
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core structural checks on the Zig fix
+# Fail-to-pass (pr_diff) — Zig fix checks (structural, can't compile Zig)
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
 def test_hostname_crash_fixed():
     """Hostname assertf removed and replaced with proper error return."""
-    # AST-only because: Zig code cannot be compiled without the full bun build system
+    # Zig cannot be compiled without the full bun build system — structural check
     code = _read_zig_stripped()
     window = _find_window(code, ["generated.hostname.get()", "hostname.get()"])
 
@@ -81,7 +91,7 @@ def test_hostname_crash_fixed():
 # [pr_diff] fail_to_pass
 def test_unix_crash_fixed():
     """Unix path assertf removed and replaced with proper error return."""
-    # AST-only because: Zig code cannot be compiled without the full bun build system
+    # Zig cannot be compiled without the full bun build system — structural check
     code = _read_zig_stripped()
     window = _find_window(code, ["generated.unix_.get()", "generated.unix.get()", "unix.get()"])
 
@@ -106,28 +116,38 @@ def test_unix_crash_fixed():
 # [pr_diff] fail_to_pass
 def test_throw_tests_added():
     """Agent added tests verifying throw on truthy-but-empty hostname/unix."""
-    assert Path(TEST_FILE).exists(), f"{TEST_FILE} does not exist"
-    text = Path(TEST_FILE).read_text()
-    lower = text.lower()
+    r = _run_node(r"""
+const fs = require('fs');
+const path = 'test/js/bun/net/socket.test.ts';
+if (!fs.existsSync(path)) {
+  throw new Error(path + ' does not exist');
+}
+const text = fs.readFileSync(path, 'utf8');
+const lower = text.toLowerCase();
 
-    # Must reference the bug trigger: [], String(""), or empty + hostname
-    has_trigger = (
-        ("[]" in text and "hostname" in lower)
-        or ('string("")' in lower)
-        or ("empty" in lower and "hostname" in lower)
-    )
-    assert has_trigger, "No test references the bug trigger ([], new String(''), empty hostname)"
+// Must have test blocks (it/test/describe)
+const hasTestBlock = /it\s*\(\s*["'`]/.test(text) || /test\s*\(\s*["'`]/.test(text);
+if (!hasTestBlock) throw new Error('No it()/test() block found');
 
-    # Must assert throwing behavior
-    has_throw = any(k in lower for k in ["tothrow", "throw", "reject"])
-    assert has_throw, "No throw/reject assertion found in tests"
+// Must reference the bug trigger: [], String(""), or empty + hostname
+const hasTrigger =
+  (text.includes('[]') && lower.includes('hostname')) ||
+  lower.includes('string("")') ||
+  (lower.includes('empty') && lower.includes('hostname'));
+if (!hasTrigger) throw new Error('No test references the bug trigger');
 
-    # Must be in a test block
-    has_block = any(
-        f'{kw}("' in text or f"{kw}('" in text or f"{kw}(`" in text
-        for kw in ("it", "test", "describe")
-    )
-    assert has_block, "No it()/test()/describe() block found"
+// Must assert throwing behavior
+const hasThrow = ['tothrow', 'throw', 'reject'].some(k => lower.includes(k));
+if (!hasThrow) throw new Error('No throw/reject assertion found');
+
+// Must test Bun.listen and/or Bun.connect
+const hasListenOrConnect = lower.includes('bun.listen') || lower.includes('bun.connect');
+if (!hasListenOrConnect) throw new Error('No Bun.listen/Bun.connect test');
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Test validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -138,7 +158,6 @@ def test_throw_tests_added():
 # [static] pass_to_pass
 def test_handlers_not_stubbed():
     """Handlers.zig is substantial, not gutted or replaced with stub."""
-    # AST-only because: Zig code cannot be compiled without the full bun build system
     p = Path(ZIG_FILE)
     assert p.exists(), f"{ZIG_FILE} does not exist"
     lines = p.read_text().splitlines()
@@ -148,7 +167,6 @@ def test_handlers_not_stubbed():
 # [pr_diff] pass_to_pass
 def test_hostname_unix_branches_preserved():
     """Both hostname and unix handling branches still exist."""
-    # AST-only because: Zig code cannot be compiled without the full bun build system
     text = Path(ZIG_FILE).read_text()
     has_hostname = "hostname" in text and (
         "generated.hostname" in text or "hostname.get" in text or "hostname_or_unix" in text

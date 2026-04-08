@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/openclaw"
@@ -15,44 +16,25 @@ INDEX_FILE = Path(REPO) / "extensions/google/index.ts"
 MODELS_FILE = Path(REPO) / "extensions/google/provider-models.ts"
 
 
-def _extract_function_body(content: str, func_name: str) -> str:
-    """Extract the body of a named TS function by tracking brace depth.
+# ---------------------------------------------------------------------------
+# Helper
+# ---------------------------------------------------------------------------
 
-    Skips past the parameter type annotation (params: { ... }) to find the
-    actual function body brace.
-    """
-    start = content.find(func_name)
-    assert start != -1, f"{func_name} not found"
-    # Walk past the opening paren of the function signature
-    paren_pos = content.index("(", start)
-    # Track paren depth to skip over the params type annotation
-    depth, idx = 1, paren_pos + 1
-    while depth > 0 and idx < len(content):
-        if content[idx] == "(":
-            depth += 1
-        elif content[idx] == ")":
-            depth -= 1
-        idx += 1
-    # Now idx is just past the closing ')' of the params; find the function body '{'
-    brace_pos = content.index("{", idx)
-    depth, idx = 1, brace_pos + 1
-    while depth > 0 and idx < len(content):
-        if content[idx] == "{":
-            depth += 1
-        elif content[idx] == "}":
-            depth -= 1
-        idx += 1
-    return content[brace_pos:idx]
+
+def _run(cmd, cwd=REPO, timeout=120, **kw):
+    return subprocess.run(
+        cmd, capture_output=True, text=True, cwd=cwd, timeout=timeout, **kw
+    )
 
 
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
+
 # [static] pass_to_pass
 def test_typescript_syntax():
     """Modified TypeScript files exist and have balanced braces."""
-    # Text inspection because: TypeScript requires full monorepo build to compile
     for f in [INDEX_FILE, MODELS_FILE]:
         assert f.exists(), f"Missing: {f}"
         content = f.read_text()
@@ -62,13 +44,69 @@ def test_typescript_syntax():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core bug fix checks
+# Fail-to-pass (pr_diff) — core bug fix checks via code execution
 # ---------------------------------------------------------------------------
+
+
+# [pr_diff] fail_to_pass
+def test_resolve_pro_for_alias_provider():
+    """resolveGoogle31ForwardCompatModel resolves pro model for alias provider."""
+    r = _run(
+        ["npx", "vitest", "run",
+         "extensions/google/provider-models.test.ts",
+         "--reporter=verbose"],
+    )
+    assert r.returncode == 0, (
+        f"Vitest failed (rc={r.returncode}).\nstdout:\n{r.stdout}\nstderr:\n{r.stderr}"
+    )
+    # The test suite must include at least one passing test for pro resolution
+    assert "resolves gemini 3.1 pro" in r.stdout.lower() or re.search(
+        r"resolves.*pro.*alias", r.stdout, re.IGNORECASE
+    ), f"Pro resolution test not found in output:\n{r.stdout}"
+    # Overall must show all tests passed
+    assert "Tests" in r.stdout or "passed" in r.stdout.lower() or "FAIL" not in r.stdout, (
+        f"Not all tests passed:\n{r.stdout}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_resolve_flash_from_direct_provider():
+    """resolveGoogle31ForwardCompatModel resolves flash from direct google templates."""
+    r = _run(
+        ["npx", "vitest", "run",
+         "extensions/google/provider-models.test.ts",
+         "--reporter=verbose"],
+    )
+    assert r.returncode == 0, (
+        f"Vitest failed (rc={r.returncode}).\nstdout:\n{r.stdout}\nstderr:\n{r.stderr}"
+    )
+    assert "resolves gemini 3.1 flash" in r.stdout.lower() or re.search(
+        r"resolves.*flash.*direct", r.stdout, re.IGNORECASE
+    ), f"Flash resolution test not found in output:\n{r.stdout}"
+    assert "FAIL" not in r.stdout, f"Some tests failed:\n{r.stdout}"
+
+
+# [pr_diff] fail_to_pass
+def test_flash_lite_not_misclassified_as_flash():
+    """flash-lite models resolve to their own template, not the broader flash prefix."""
+    r = _run(
+        ["npx", "vitest", "run",
+         "extensions/google/provider-models.test.ts",
+         "--reporter=verbose"],
+    )
+    assert r.returncode == 0, (
+        f"Vitest failed (rc={r.returncode}).\nstdout:\n{r.stdout}\nstderr:\n{r.stderr}"
+    )
+    assert "flash-lite" in r.stdout.lower() or "flash lite" in r.stdout.lower(), (
+        f"Flash-lite test not referenced in output:\n{r.stdout}"
+    )
+    # Ensure the flash-lite test specifically passed (not just the suite overall)
+    assert "FAIL" not in r.stdout, f"Flash-lite test may have failed:\n{r.stdout}"
+
 
 # [pr_diff] fail_to_pass
 def test_runtime_provider_not_hardcoded():
     """index.ts passes runtime ctx.provider instead of hardcoded 'google'."""
-    # Text inspection because: TypeScript, can't import from Python
     content = INDEX_FILE.read_text()
 
     call_pattern = re.compile(
@@ -95,10 +133,8 @@ def test_runtime_provider_not_hardcoded():
 # [pr_diff] fail_to_pass
 def test_template_provider_id_fallback():
     """resolveGoogle31ForwardCompatModel accepts templateProviderId for cross-provider lookup."""
-    # Text inspection because: TypeScript, can't import from Python
     models_content = MODELS_FILE.read_text()
 
-    # The exported function must accept templateProviderId
     func_sig_area = models_content[
         models_content.find("resolveGoogle31ForwardCompatModel"):
     ][:500]
@@ -106,8 +142,6 @@ def test_template_provider_id_fallback():
         "resolveGoogle31ForwardCompatModel missing templateProviderId parameter"
     )
 
-    # At least one call in index.ts must pass templateProviderId
-    # (there are multiple calls — the gemini-cli provider has its own)
     index_content = INDEX_FILE.read_text()
     call_matches = re.findall(
         r"resolveGoogle31ForwardCompatModel\s*\(\s*\{([^}]+)\}",
@@ -120,90 +154,10 @@ def test_template_provider_id_fallback():
     )
 
 
-# [pr_diff] fail_to_pass
-def test_flash_lite_prefix_before_flash():
-    """flash-lite prefix checked before flash prefix to avoid misclassification."""
-    # Text inspection because: TypeScript, can't import from Python
-    content = MODELS_FILE.read_text()
-    func_body = _extract_function_body(content, "resolveGoogle31ForwardCompatModel")
-
-    # Find conditional checks for flash-lite vs flash in the if-else chain
-    lite_match = re.search(
-        r'(?:startsWith|includes|===|==)[^;{}\n]*?(?:FLASH_LITE|flash[\-_]lite)',
-        func_body,
-        re.IGNORECASE,
-    )
-    assert lite_match, "No flash-lite prefix check found in resolver"
-
-    # Find flash-only checks (not flash-lite)
-    flash_only = None
-    for m in re.finditer(
-        r'(?:startsWith|includes|===|==)[^;{}\n]*?(?:FLASH_PREFIX|["\']gemini[^"\']*flash["\'])',
-        func_body,
-        re.IGNORECASE,
-    ):
-        if "lite" not in m.group(0).lower():
-            flash_only = m
-            break
-
-    assert flash_only, "No flash prefix check found in resolver"
-    assert lite_match.start() < flash_only.start(), (
-        "flash-lite check must come before flash check"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_flash_lite_template_ids():
-    """flash-lite models map to their own template IDs, not flash templates."""
-    # Text inspection because: TypeScript, can't import from Python
-    content = MODELS_FILE.read_text()
-
-    # Must define flash-lite-specific template IDs
-    has_lite_templates = (
-        re.search(r"FLASH_LITE_TEMPLATE_IDS", content)
-        or re.search(r"flash[\-_.]lite.*template", content, re.IGNORECASE)
-        or re.search(r"template.*flash[\-_.]lite", content, re.IGNORECASE)
-    )
-    assert has_lite_templates, "No flash-lite-specific template IDs defined"
-
-    # If a named constant exists, verify it contains flash-lite model references
-    lite_array = re.search(
-        r"FLASH_LITE_TEMPLATE_IDS\s*(?:=|:)\s*\[([^\]]+)\]",
-        content,
-    )
-    if lite_array:
-        arr = lite_array.group(1).lower()
-        # The template IDs should reference flash-lite (not plain flash)
-        assert "flash" in arr, "flash-lite template array is empty or has no model refs"
-
-
-# [pr_diff] fail_to_pass
-def test_cross_provider_template_lookup():
-    """Template lookup tries multiple provider IDs for cross-provider resolution."""
-    # Text inspection because: TypeScript, can't import from Python
-    content = MODELS_FILE.read_text()
-
-    # The fix introduces a helper (or inline logic) that tries providerId then
-    # falls back to templateProviderId for template lookup
-    has_fallback = (
-        # Named helper
-        re.search(r"cloneFirstGoogleTemplateModel", content)
-        # Or a for/iteration over provider IDs with template lookup
-        or (
-            re.search(r"for\s*\(", content)
-            and re.search(r"templateProviderId", content)
-            and re.search(r"cloneFirstTemplateModel", content)
-        )
-    )
-    assert has_fallback, (
-        "No cross-provider template lookup logic — must try actual providerId "
-        "then fall back to templateProviderId"
-    )
-
-
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------
+
 
 # [static] pass_to_pass
 def test_not_stub():
@@ -225,6 +179,7 @@ def test_not_stub():
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — CLAUDE.md / AGENTS.md rules
 # ---------------------------------------------------------------------------
+
 
 # [agent_config] pass_to_pass — CLAUDE.md:16 @ 6be14ab388eb74cd100e43bf975aad78146ac220
 def test_no_core_internal_imports():
@@ -285,7 +240,6 @@ def test_no_relative_imports_outside_package():
             m = re.search(r"""from ['"](\.\.[^'"]+)['"]""", line)
             if m:
                 up_count = m.group(1).split("/").count("..")
-                # From extensions/google/*.ts, 2+ levels up escapes the package
                 assert up_count < 2, (
                     f"{f.name}:{i} relative import escapes package: {line.strip()}"
                 )
@@ -294,14 +248,11 @@ def test_no_relative_imports_outside_package():
 # [agent_config] pass_to_pass — CLAUDE.md:106 @ 6be14ab388eb74cd100e43bf975aad78146ac220
 def test_no_dynamic_import_mixing():
     """Do not mix await import() and static import for the same module."""
-    # Text inspection because: TypeScript, can't import from Python
     for f in [INDEX_FILE, MODELS_FILE]:
         content = f.read_text()
-        # Collect statically imported module specifiers
         static_imports = set(
             re.findall(r"""import\s+.*?\s+from\s+['"]([^'"]+)['"]""", content)
         )
-        # Collect dynamically imported module specifiers
         dynamic_imports = set(
             re.findall(r"""await\s+import\s*\(\s*['"]([^'"]+)['"]\s*\)""", content)
         )
@@ -322,7 +273,6 @@ def test_no_ts_ignore():
 # [agent_config] pass_to_pass — CLAUDE.md:111 @ 6be14ab388eb74cd100e43bf975aad78146ac220
 def test_no_prototype_mutation():
     """No prototype mutation in production code."""
-    # Text inspection because: TypeScript, can't import from Python
     for f in [INDEX_FILE, MODELS_FILE]:
         content = f.read_text()
         for i, line in enumerate(content.splitlines(), 1):

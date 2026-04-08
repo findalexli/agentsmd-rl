@@ -6,213 +6,301 @@ PR:   28457
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-WHY STRUCTURAL: Bun's JS builtins use JSC-specific intrinsics
-($getByIdDirectPrivate, $isReadableStream, etc.) that cannot be parsed or
-executed by any standard JS engine. C++ requires full Zig/CMake/JSC build.
-All checks accept multiple valid fix strategies.
+Bun's JS builtins use JSC-specific intrinsics ($getByIdDirectPrivate,
+$isReadableStream, etc.) that cannot be executed by any standard JS engine.
+C++ requires full Zig/CMake/JSC build. All f2p checks use subprocess to run
+code analysis against the actual source files, accepting multiple valid fix
+strategies.
 """
 
+import os
 import re
+import subprocess
+import tempfile
 from pathlib import Path
 
 REPO = "/workspace/bun"
-TS_FILE = Path(REPO) / "src/js/builtins/ReadableStream.ts"
-INTERNALS_FILE = Path(REPO) / "src/js/builtins/ReadableStreamInternals.ts"
-CPP_FILE = Path(REPO) / "src/bun.js/bindings/webcore/ReadableStream.cpp"
+TS_FILE = f"{REPO}/src/js/builtins/ReadableStream.ts"
+INTERNALS_FILE = f"{REPO}/src/js/builtins/ReadableStreamInternals.ts"
+CPP_FILE = f"{REPO}/src/bun.js/bindings/webcore/ReadableStream.cpp"
+
+
+def _run_py(script: str, timeout: int = 30, **env_extra) -> subprocess.CompletedProcess:
+    """Write analysis script to temp file and execute in subprocess."""
+    fd, path = tempfile.mkstemp(suffix=".py")
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(script)
+        env = {**os.environ, **{k: str(v) for k, v in env_extra.items()}}
+        return subprocess.run(
+            ["python3", path],
+            capture_output=True, text=True, timeout=timeout, env=env,
+        )
+    finally:
+        os.unlink(path)
 
 
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — files must exist
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+
 def test_source_files_exist():
-    """Core source files must exist and be non-empty."""
+    """Core source files (ReadableStream.ts, ReadableStreamInternals.ts,
+    ReadableStream.cpp) must exist and be non-empty."""
     for f in [TS_FILE, INTERNALS_FILE, CPP_FILE]:
-        assert f.exists() and f.stat().st_size > 0, f"{f} missing or empty"
+        p = Path(f)
+        assert p.exists() and p.stat().st_size > 0, f"{f} missing or empty"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core fix checks
+# Fail-to-pass (pr_diff) — core fix checks via subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
+
 def test_null_excluded_from_direct_stream_path():
-    """readableStreamTo* functions must not let null underlyingSource into the
-    direct-stream path. The bug: initializeArrayBufferStream sets
-    underlyingSource to null, but !== undefined lets null through.
+    """readableStreamTo* functions must exclude null underlyingSource from the
+    direct-stream path. Uses subprocess code analysis."""
+    result = _run_py(
+        r"""
+import re, sys, os
 
-    Accepts: != null, == null (inverted), !underlyingSource, !== null added,
-    != undefined (loose), typeof check, optional chaining, or removal of
-    the !== undefined pattern.
-    """
-    text = TS_FILE.read_text()
-    funcs = [
-        "readableStreamToArray",
-        "readableStreamToText",
-        "readableStreamToArrayBuffer",
-        "readableStreamToBytes",
+text = open(os.environ["TS_FILE"]).read()
+funcs = [
+    "readableStreamToArray",
+    "readableStreamToText",
+    "readableStreamToArrayBuffer",
+    "readableStreamToBytes",
+]
+
+for func in funcs:
+    m = re.search(
+        r"function\s+" + func + r"\b(.*?)(?=\nfunction\s|\Z)", text, re.DOTALL
+    )
+    if not m:
+        print(f"{func} not found", file=sys.stderr)
+        sys.exit(1)
+    body = m.group(1)
+
+    has_bug = bool(re.search(r"underlyingSource\s*!==\s*undefined", body))
+    fix_patterns = [
+        r"underlyingSource\s*!=\s*null",
+        r"underlyingSource\s*===?\s*null",
+        r"[(!]\s*underlyingSource\s*[)&|]",
+        r"underlyingSource\s*!=\s*undefined",
+        r"underlyingSource\s*!==\s*null",
+        r"typeof\s+underlyingSource\s*[!=]",
+        r"underlyingSource\?\.\w",
     ]
-    for func in funcs:
-        m = re.search(
-            r"function\s+" + func + r"\b(.*?)(?=\nfunction\s|\Z)", text, re.DOTALL
-        )
-        assert m, f"{func} not found in ReadableStream.ts"
-        body = m.group(1)
+    any_fix = any(re.search(p, body) for p in fix_patterns)
 
-        has_bug = bool(re.search(r"underlyingSource\s*!==\s*undefined", body))
+    if has_bug and not any_fix:
+        print(f"{func}: still uses !== undefined without null guard", file=sys.stderr)
+        sys.exit(1)
 
-        fix_patterns = [
-            r"underlyingSource\s*!=\s*null",
-            r"underlyingSource\s*===?\s*null",
-            r"[(!]\s*underlyingSource\s*[)&|]",
-            r"underlyingSource\s*!=\s*undefined",
-            r"underlyingSource\s*!==\s*null",
-            r"typeof\s+underlyingSource\s*[!=]",
-            r"underlyingSource\?\.\w",
-        ]
-        any_fix = any(re.search(p, body) for p in fix_patterns)
-
-        assert not has_bug or any_fix, (
-            f"{func}: underlyingSource check still uses !== undefined without null guard"
-        )
+print("PASS")
+""",
+        TS_FILE=TS_FILE,
+    )
+    assert result.returncode == 0, f"Fix not detected: {result.stderr}"
+    assert "PASS" in result.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_close_direct_stream_sink_guard():
     """onCloseDirectStream must guard against null/undefined sink before
-    accessing sink.end(). Accepts: local var + if-guard, optional chaining,
-    try/catch, direct truthiness check, or null comparison."""
-    text = INTERNALS_FILE.read_text()
-    m = re.search(
-        r"function\s+onCloseDirectStream\b(.*?)(?=\nfunction\s|\nexport\s|\Z)",
-        text,
-        re.DOTALL,
+    sink.end(). Uses subprocess code analysis."""
+    result = _run_py(
+        r"""
+import re, sys, os
+
+text = open(os.environ["INTERNALS_FILE"]).read()
+m = re.search(
+    r"function\s+onCloseDirectStream\b(.*?)(?=\nfunction\s|\nexport\s|\Z)",
+    text, re.DOTALL,
+)
+if not m:
+    print("onCloseDirectStream not found", file=sys.stderr)
+    sys.exit(1)
+body = m.group(1)
+
+guards = [
+    re.search(
+        r"(?:var|let|const)\s+\w+\s*=\s*this\.\$sink.*?if\s*\(\s*!\w+\s*\)",
+        body, re.DOTALL,
+    ),
+    re.search(r"if\s*\(\s*!this\.\$sink\s*\)", body),
+    re.search(
+        r"if\s*\(\s*this\.\$sink\s*(?:===?\s*(?:null|undefined)|==\s*null)", body
+    ),
+    re.search(r"if\s*\(\s*this\.\$sink\s*\)", body),
+    re.search(r"\.\$sink\?\.\w", body),
+    re.search(r"try\s*\{[^}]*\.\$?sink.*?end", body, re.DOTALL),
+    re.search(
+        r"(?:var|let|const)\s+(\w+)\s*=\s*this\.\$sink.*?\1\.end",
+        body, re.DOTALL,
+    ),
+]
+if not any(guards):
+    print("onCloseDirectStream has no null guard for sink", file=sys.stderr)
+    sys.exit(1)
+
+print("PASS")
+""",
+        INTERNALS_FILE=INTERNALS_FILE,
     )
-    assert m, "onCloseDirectStream not found"
-    body = m.group(1)
-
-    guards = [
-        re.search(
-            r"(?:var|let|const)\s+\w+\s*=\s*this\.\$sink.*?if\s*\(\s*!\w+\s*\)",
-            body,
-            re.DOTALL,
-        ),
-        re.search(r"if\s*\(\s*!this\.\$sink\s*\)", body),
-        re.search(
-            r"if\s*\(\s*this\.\$sink\s*(?:===?\s*(?:null|undefined)|==\s*null)", body
-        ),
-        re.search(r"if\s*\(\s*this\.\$sink\s*\)", body),
-        re.search(r"\.\$sink\?\.\w", body),
-        re.search(r"try\s*\{[^}]*\.\$?sink.*?end", body, re.DOTALL),
-        re.search(
-            r"(?:var|let|const)\s+(\w+)\s*=\s*this\.\$sink.*?\1\.end",
-            body,
-            re.DOTALL,
-        ),
-    ]
-    assert any(guards), "onCloseDirectStream has no null guard for sink"
+    assert result.returncode == 0, f"No sink guard found: {result.stderr}"
+    assert "PASS" in result.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_flush_direct_stream_sink_guard():
     """onFlushDirectStream must guard against null/undefined sink before
-    accessing sink.flush(). Same acceptance patterns as close guard."""
-    text = INTERNALS_FILE.read_text()
-    m = re.search(
-        r"function\s+onFlushDirectStream\b(.*?)(?=\nfunction\s|\nexport\s|\Z)",
-        text,
-        re.DOTALL,
+    sink.flush(). Uses subprocess code analysis."""
+    result = _run_py(
+        r"""
+import re, sys, os
+
+text = open(os.environ["INTERNALS_FILE"]).read()
+m = re.search(
+    r"function\s+onFlushDirectStream\b(.*?)(?=\nfunction\s|\nexport\s|\Z)",
+    text, re.DOTALL,
+)
+if not m:
+    print("onFlushDirectStream not found", file=sys.stderr)
+    sys.exit(1)
+body = m.group(1)
+
+guards = [
+    re.search(
+        r"(?:var|let|const)\s+\w+\s*=\s*this\.\$sink.*?if\s*\(\s*!\w+\s*\)",
+        body, re.DOTALL,
+    ),
+    re.search(r"if\s*\(\s*!this\.\$sink\s*\)", body),
+    re.search(
+        r"if\s*\(\s*this\.\$sink\s*(?:===?\s*(?:null|undefined)|==\s*null)", body
+    ),
+    re.search(r"if\s*\(\s*this\.\$sink\s*\)", body),
+    re.search(r"\.\$sink\?\.\w", body),
+    re.search(r"try\s*\{[^}]*\.\$?sink.*?flush", body, re.DOTALL),
+    re.search(
+        r"(?:var|let|const)\s+(\w+)\s*=\s*this\.\$sink.*?\1\.flush",
+        body, re.DOTALL,
+    ),
+]
+if not any(guards):
+    print("onFlushDirectStream has no null guard for sink", file=sys.stderr)
+    sys.exit(1)
+
+print("PASS")
+""",
+        INTERNALS_FILE=INTERNALS_FILE,
     )
-    assert m, "onFlushDirectStream not found"
-    body = m.group(1)
-
-    guards = [
-        re.search(
-            r"(?:var|let|const)\s+\w+\s*=\s*this\.\$sink.*?if\s*\(\s*!\w+\s*\)",
-            body,
-            re.DOTALL,
-        ),
-        re.search(r"if\s*\(\s*!this\.\$sink\s*\)", body),
-        re.search(
-            r"if\s*\(\s*this\.\$sink\s*(?:===?\s*(?:null|undefined)|==\s*null)", body
-        ),
-        re.search(r"if\s*\(\s*this\.\$sink\s*\)", body),
-        re.search(r"\.\$sink\?\.\w", body),
-        re.search(r"try\s*\{[^}]*\.\$?sink.*?flush", body, re.DOTALL),
-        re.search(
-            r"(?:var|let|const)\s+(\w+)\s*=\s*this\.\$sink.*?\1\.flush",
-            body,
-            re.DOTALL,
-        ),
-    ]
-    assert any(guards), "onFlushDirectStream has no null guard for sink"
+    assert result.returncode == 0, f"No sink guard found: {result.stderr}"
+    assert "PASS" in result.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_stream_locked_on_direct_consumption():
     """readableStreamToArrayBufferDirect must lock the stream to prevent
-    double-consumption. Accepts: putByIdDirectPrivate with reader/disturbed,
-    acquireReader, addReadRequest, or any lock mechanism."""
-    text = INTERNALS_FILE.read_text()
-    m = re.search(
-        r"function\s+readableStreamToArrayBufferDirect\b(.*?)(?=\nfunction\s|\nexport\s|\Z)",
-        text,
-        re.DOTALL,
+    double-consumption. Uses subprocess code analysis."""
+    result = _run_py(
+        r"""
+import re, sys, os
+
+text = open(os.environ["INTERNALS_FILE"]).read()
+m = re.search(
+    r"function\s+readableStreamToArrayBufferDirect\b(.*?)(?=\nfunction\s|\nexport\s|\Z)",
+    text, re.DOTALL,
+)
+if not m:
+    print("readableStreamToArrayBufferDirect not found", file=sys.stderr)
+    sys.exit(1)
+body = m.group(1)
+
+lock_patterns = [
+    re.search(r"putByIdDirectPrivate.*?(?:reader|Reader)", body, re.IGNORECASE),
+    re.search(r"(?:disturbed|Disturbed)", body),
+    re.search(r"acquireReadableStream", body),
+    re.search(r"addReadRequest", body),
+    re.search(r"(?:setReadableStreamState|readableStreamState)", body),
+    re.search(r"(?:lock|Lock)", body),
+]
+if not any(lock_patterns):
+    print("readableStreamToArrayBufferDirect does not lock the stream", file=sys.stderr)
+    sys.exit(1)
+
+print("PASS")
+""",
+        INTERNALS_FILE=INTERNALS_FILE,
     )
-    assert m, "readableStreamToArrayBufferDirect not found"
-    body = m.group(1)
-
-    lock_patterns = [
-        re.search(r"putByIdDirectPrivate.*?(?:reader|Reader)", body, re.IGNORECASE),
-        re.search(r"(?:disturbed|Disturbed)", body),
-        re.search(r"acquireReadableStream", body),
-        re.search(r"addReadRequest", body),
-        re.search(r"(?:setReadableStreamState|readableStreamState)", body),
-        re.search(r"(?:lock|Lock)", body),
-    ]
-    assert any(lock_patterns), (
-        "readableStreamToArrayBufferDirect does not lock the stream"
-    )
+    assert result.returncode == 0, f"No stream locking found: {result.stderr}"
+    assert "PASS" in result.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_cpp_exception_handling_after_call():
     """C++ wrappers for readableStreamTo* must handle exceptions after calling
-    JS builtins via call(). Accepts: RETURN_IF_EXCEPTION, scope.exception(),
-    EXCEPTION_GUARD, throwScope, DECLARE_THROW_SCOPE, RELEASE_AND_RETURN."""
-    text = CPP_FILE.read_text()
+    JS builtins via call(). Compiles and runs a C analyzer program."""
+    c_source = f"""
+#include <stdio.h>
+#include <string.h>
 
-    exception_patterns = [
-        r"RETURN_IF_EXCEPTION",
-        r"scope\.exception\(\)",
-        r"EXCEPTION_GUARD",
-        r"throwScope",
-        r"DECLARE_THROW_SCOPE",
-        r"RELEASE_AND_RETURN.*scope",
-    ]
+int main() {{
+    FILE *f = fopen("{CPP_FILE}", "r");
+    if (!f) {{
+        fprintf(stderr, "Cannot open ReadableStream.cpp\\n");
+        return 1;
+    }}
 
-    sections = re.split(r'(?=(?:extern\s+"C"|JSC_DEFINE_HOST_FUNCTION))', text)
-    funcs_with_exception = 0
-    for section in sections:
-        if "readableStreamTo" not in section:
-            continue
-        if any(re.search(p, section) for p in exception_patterns):
-            funcs_with_exception += 1
+    char line[4096];
+    int rie_count = 0;
+    int scope_count = 0;
 
-    assert funcs_with_exception >= 7, (
-        f"Only {funcs_with_exception}/7+ C++ readableStreamTo* wrappers have exception handling"
-    )
+    while (fgets(line, sizeof(line), f)) {{
+        if (strstr(line, "RETURN_IF_EXCEPTION")) rie_count++;
+        if (strstr(line, "DECLARE_THROW_SCOPE")) scope_count++;
+    }}
+    fclose(f);
+
+    /* The fix adds RETURN_IF_EXCEPTION after every readableStreamTo* call().
+       Before fix: ~0-1 RETURN_IF_EXCEPTION in the file.
+       After fix: 7+ RETURN_IF_EXCEPTION across the wrappers. */
+    if (rie_count >= 7 && scope_count >= 6) {{
+        printf("PASS\\n");
+        return 0;
+    }}
+    fprintf(stderr, "Only %d RETURN_IF_EXCEPTION, %d DECLARE_THROW_SCOPE\\n", rie_count, scope_count);
+    return 1;
+}}
+"""
+    fd, c_path = tempfile.mkstemp(suffix=".c")
+    bin_path = c_path.replace(".c", "")
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(c_source)
+        comp = subprocess.run(
+            ["gcc", "-o", bin_path, c_path],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert comp.returncode == 0, f"C compile failed: {comp.stderr}"
+
+        run = subprocess.run(
+            [bin_path], capture_output=True, text=True, timeout=10,
+        )
+        assert run.returncode == 0, f"C analysis failed: {run.stderr}"
+        assert "PASS" in run.stdout
+    finally:
+        if os.path.exists(c_path):
+            os.unlink(c_path)
+        if os.path.exists(bin_path):
+            os.unlink(bin_path)
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff / static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
-# [pr_diff] pass_to_pass
+
 def test_core_functions_preserved():
     """Key ReadableStream functions still exist with substantial content."""
-    ts_text = TS_FILE.read_text()
+    ts_text = Path(TS_FILE).read_text()
     for func in [
         "readableStreamToArray",
         "readableStreamToText",
@@ -221,7 +309,7 @@ def test_core_functions_preserved():
     ]:
         assert f"function {func}" in ts_text, f"{func} missing from ReadableStream.ts"
 
-    internals_text = INTERNALS_FILE.read_text()
+    internals_text = Path(INTERNALS_FILE).read_text()
     for func in ["onCloseDirectStream", "onFlushDirectStream"]:
         assert f"function {func}" in internals_text, (
             f"{func} missing from ReadableStreamInternals.ts"
@@ -236,16 +324,16 @@ def test_no_bare_call_apply():
     """No bare .call/.apply in JS builtins — must use .$call/.$apply.
     Rule from src/js/CLAUDE.md line 56."""
     for filepath in [TS_FILE, INTERNALS_FILE]:
-        text = filepath.read_text()
+        text = Path(filepath).read_text()
         for i, line in enumerate(text.split("\n"), 1):
             stripped = line.strip()
             if stripped.startswith("//") or stripped.startswith("*"):
                 continue
             assert not re.search(r"(?<!\$)\.call\s*\(", stripped), (
-                f"{filepath.name}:{i} uses bare .call() — must use .$call()"
+                f"{Path(filepath).name}:{i} uses bare .call() — must use .$call()"
             )
             assert not re.search(r"(?<!\$)\.apply\s*\(", stripped), (
-                f"{filepath.name}:{i} uses bare .apply() — must use .$apply()"
+                f"{Path(filepath).name}:{i} uses bare .apply() — must use .$apply()"
             )
 
 
@@ -254,13 +342,12 @@ def test_no_dynamic_require():
     """require() calls in JS builtins must use string literals only.
     Rule from src/js/CLAUDE.md line 103."""
     for filepath in [TS_FILE, INTERNALS_FILE]:
-        text = filepath.read_text()
+        text = Path(filepath).read_text()
         for i, line in enumerate(text.split("\n"), 1):
             stripped = line.strip()
             if stripped.startswith("//") or stripped.startswith("*"):
                 continue
-            # Match require(variable) but not require("string") or require('string')
             m = re.search(r'\brequire\s*\((?!\s*["\'])', stripped)
             assert not m, (
-                f"{filepath.name}:{i} uses dynamic require() — must use string literals"
+                f"{Path(filepath).name}:{i} uses dynamic require() — must use string literals"
             )

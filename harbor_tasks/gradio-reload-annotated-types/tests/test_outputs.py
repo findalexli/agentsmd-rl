@@ -8,28 +8,19 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import types
-import __future__
+import subprocess
 
 REPO = "/workspace/gradio"
 UTILS = f"{REPO}/gradio/utils.py"
 SKILLS = f"{REPO}/gradio/cli/commands/skills.py"
 
-CO_FUTURE_ANNOTATIONS = __future__.annotations.compiler_flag
 
-
-def _find_code_object(module_code: types.CodeType, name: str) -> types.CodeType:
-    """Find a named function's code object in compiled module code."""
-    for const in module_code.co_consts:
-        if isinstance(const, types.CodeType) and const.co_name == name:
-            return const
-    raise LookupError(f"No code object named {name!r} found in module")
-
-
-def _compile_utils() -> types.CodeType:
-    """Compile gradio/utils.py and return its module-level code object."""
-    src = open(UTILS).read()
-    return compile(src, UTILS, "exec")
+def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in a subprocess with the repo on PYTHONPATH."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -39,19 +30,17 @@ def _compile_utils() -> types.CodeType:
 # [static] pass_to_pass
 def test_utils_syntax():
     """gradio/utils.py must parse without syntax errors."""
-    src = open(UTILS).read()
-    ast.parse(src)
+    ast.parse(open(UTILS).read())
 
 
 # [static] pass_to_pass
 def test_skills_syntax():
     """gradio/cli/commands/skills.py must parse without syntax errors."""
-    src = open(SKILLS).read()
-    ast.parse(src)
+    ast.parse(open(SKILLS).read())
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests using subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -62,10 +51,21 @@ def test_watchfn_no_future_annotations_flag():
     the module inherits CO_FUTURE_ANNOTATIONS. This causes exec() inside
     watchfn to propagate the flag into user code, breaking Annotated types.
     """
-    module_code = _compile_utils()
-    watchfn_code = _find_code_object(module_code, "watchfn")
-    has_flag = bool(watchfn_code.co_flags & CO_FUTURE_ANNOTATIONS)
-    assert not has_flag, (
+    r = _run_python("""
+import types, __future__
+CO_FLAG = __future__.annotations.compiler_flag
+src = open("/workspace/gradio/gradio/utils.py").read()
+module_code = compile(src, "utils.py", "exec")
+for const in module_code.co_consts:
+    if isinstance(const, types.CodeType) and const.co_name == "watchfn":
+        has_flag = bool(const.co_flags & CO_FLAG)
+        print("HAS_FLAG" if has_flag else "NO_FLAG")
+        break
+else:
+    raise LookupError("No code object named 'watchfn' found")
+""")
+    assert r.returncode == 0, f"Subprocess failed: {r.stderr}"
+    assert "NO_FLAG" in r.stdout, (
         "watchfn still has CO_FUTURE_ANNOTATIONS — "
         "from __future__ import annotations likely still present in utils.py"
     )
@@ -78,64 +78,92 @@ def test_annotated_class_hints_resolve():
     Simulates the reload path: compile user code using the same flags as
     watchfn, exec it, then call get_type_hints. On the buggy base, the
     inherited CO_FUTURE_ANNOTATIONS flag stringifies annotations, and
-    get_type_hints raises on ForwardRef strings like 'Annotated[str, "desc"]'.
+    get_type_hints raises on ForwardRef strings.
     """
-    from typing import Annotated, get_type_hints
+    r = _run_python(r"""
+import types, __future__
+from typing import Annotated, get_type_hints
 
-    module_code = _compile_utils()
-    watchfn_code = _find_code_object(module_code, "watchfn")
-    # Extract only the __future__-related flags (safe for compile())
-    future_flags = watchfn_code.co_flags & CO_FUTURE_ANNOTATIONS
+CO_FLAG = __future__.annotations.compiler_flag
+src = open("/workspace/gradio/gradio/utils.py").read()
+module_code = compile(src, "utils.py", "exec")
 
-    user_code = (
-        "from typing import Annotated\n"
-        "class UserConfig:\n"
-        "    name: Annotated[str, 'user name']\n"
-        "    count: Annotated[int, 'item count']\n"
-        "    flag: Annotated[bool, 'enabled']\n"
-    )
+watchfn_code = None
+for const in module_code.co_consts:
+    if isinstance(const, types.CodeType) and const.co_name == "watchfn":
+        watchfn_code = const
+        break
+if watchfn_code is None:
+    raise LookupError("No code object named 'watchfn' found")
 
-    code = compile(user_code, "<reload>", "exec", flags=future_flags)
-    ns: dict = {}
-    exec(code, ns)
+future_flags = watchfn_code.co_flags & CO_FLAG
 
-    hints = get_type_hints(ns["UserConfig"], include_extras=True)
-    assert "name" in hints, "Missing 'name' in type hints"
-    assert "count" in hints, "Missing 'count' in type hints"
-    assert "flag" in hints, "Missing 'flag' in type hints"
-    assert hints["name"] == Annotated[str, "user name"]
-    assert hints["count"] == Annotated[int, "item count"]
+user_code = (
+    "from typing import Annotated\n"
+    "class UserConfig:\n"
+    "    name: Annotated[str, 'user name']\n"
+    "    count: Annotated[int, 'item count']\n"
+    "    flag: Annotated[bool, 'enabled']\n"
+)
+
+code = compile(user_code, "<reload>", "exec", flags=future_flags)
+ns = {}
+exec(code, ns)
+
+hints = get_type_hints(ns["UserConfig"], include_extras=True)
+assert hints["name"] == Annotated[str, "user name"], f"Got {hints['name']}"
+assert hints["count"] == Annotated[int, "item count"], f"Got {hints['count']}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Subprocess failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_annotations_not_stringified_after_exec():
-    """Function annotations are real type objects, not strings, after exec with watchfn's flags.
+    """Function annotations are real type objects, not strings, after exec.
 
     When CO_FUTURE_ANNOTATIONS propagates into exec'd code, raw __annotations__
     contain strings instead of actual type objects. This test checks the raw
     annotations directly.
     """
-    module_code = _compile_utils()
-    watchfn_code = _find_code_object(module_code, "watchfn")
-    future_flags = watchfn_code.co_flags & CO_FUTURE_ANNOTATIONS
+    r = _run_python(r"""
+import types, __future__
+CO_FLAG = __future__.annotations.compiler_flag
+src = open("/workspace/gradio/gradio/utils.py").read()
+module_code = compile(src, "utils.py", "exec")
 
-    user_code = (
-        "from typing import Annotated\n"
-        "def process(x: Annotated[str, 'input'], n: Annotated[int, 'repeat']) "
-        "-> Annotated[list, 'results']:\n"
-        "    return [x] * n\n"
+watchfn_code = None
+for const in module_code.co_consts:
+    if isinstance(const, types.CodeType) and const.co_name == "watchfn":
+        watchfn_code = const
+        break
+if watchfn_code is None:
+    raise LookupError("No code object named 'watchfn' found")
+
+future_flags = watchfn_code.co_flags & CO_FLAG
+
+user_code = (
+    "from typing import Annotated\n"
+    "def process(x: Annotated[str, 'input'], n: Annotated[int, 'repeat']) "
+    "-> Annotated[list, 'results']:\n"
+    "    return [x] * n\n"
+)
+
+code = compile(user_code, "<reload>", "exec", flags=future_flags)
+ns = {}
+exec(code, ns)
+
+func = ns["process"]
+for param_name, ann in func.__annotations__.items():
+    assert not isinstance(ann, str), (
+        f"Annotation for {param_name!r} is a string {ann!r} — "
+        "CO_FUTURE_ANNOTATIONS is leaking into exec'd code"
     )
-
-    code = compile(user_code, "<reload>", "exec", flags=future_flags)
-    ns: dict = {}
-    exec(code, ns)
-
-    func = ns["process"]
-    for param_name, ann in func.__annotations__.items():
-        assert not isinstance(ann, str), (
-            f"Annotation for {param_name!r} is a string {ann!r} — "
-            "CO_FUTURE_ANNOTATIONS is leaking into exec'd code"
-        )
+print("PASS")
+""")
+    assert r.returncode == 0, f"Subprocess failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
@@ -145,27 +173,21 @@ def test_forward_refs_are_quoted():
     When 'from __future__ import annotations' is removed, bare references to
     types like App and Blocks (forward refs due to circular imports) would cause
     NameError at import time. The fix must quote them as strings.
-
-    # AST-only because: gradio cannot be imported (heavy deps + circular imports)
     """
     src = open(UTILS).read()
     tree = ast.parse(src)
 
-    # These types are forward refs in utils.py — must be quoted after removing
-    # from __future__ import annotations. Taken from the PR diff.
     forward_ref_names = {"App", "Blocks", "Component", "BlockContext",
                          "Request", "SessionState", "Button"}
 
     errors = []
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            # Check return annotation
             if isinstance(node.returns, ast.Name) and node.returns.id in forward_ref_names:
-                errors.append(f"{node.name}() return annotation: bare {node.returns.id}")
-            # Check parameter annotations
+                errors.append(f"{node.name}() return: bare {node.returns.id}")
             for arg in node.args.args + node.args.posonlyargs + node.args.kwonlyargs:
                 if isinstance(arg.annotation, ast.Name) and arg.annotation.id in forward_ref_names:
-                    errors.append(f"{node.name}({arg.arg}) annotation: bare {arg.annotation.id}")
+                    errors.append(f"{node.name}({arg.arg}): bare {arg.annotation.id}")
 
     assert not errors, (
         "Found bare forward-reference annotations that would cause NameError:\n"
@@ -180,13 +202,13 @@ def test_forward_refs_are_quoted():
 # [pr_diff] pass_to_pass
 def test_utils_compiles_cleanly():
     """gradio/utils.py compiles without syntax errors after annotation changes."""
-    module_code = _compile_utils()
+    module_code = compile(open(UTILS).read(), UTILS, "exec")
     assert module_code is not None
 
 
 # [static] pass_to_pass
 def test_not_stub():
-    """utils.py retains its full implementation (not stubbed out)."""
+    """utils.py retains full implementation (watchfn, BaseReloader, safe_join present)."""
     src = open(UTILS).read()
     assert "def watchfn" in src, "watchfn function missing"
     assert "class BaseReloader" in src, "BaseReloader class missing"

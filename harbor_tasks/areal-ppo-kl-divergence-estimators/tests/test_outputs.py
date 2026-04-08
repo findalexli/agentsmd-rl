@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 import textwrap
 from pathlib import Path
 
@@ -98,6 +99,14 @@ def _get_kl_tensors(tracker):
     return direct, taylor, dual
 
 
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code as a subprocess in the repo directory."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -117,20 +126,79 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_kl_estimators_computed():
     """All three KL estimators (direct, taylor, dual) are computed and logged via stats_tracker."""
-    logprobs = torch.tensor([-1.0, -2.0, -3.0])
-    old_logp = torch.tensor([-1.5, -2.5, -3.5])
-    tracker = _extract_and_call(logprobs, old_logp)
-    direct, taylor, dual = _get_kl_tensors(tracker)
+    r = _run_py("""
+import ast, textwrap, json
+from pathlib import Path
+import torch
 
-    assert direct is not None, "KL direct estimator not logged"
-    assert taylor is not None, "KL taylor estimator not logged"
-    assert dual is not None, "KL dual estimator not logged"
+TARGET = "/workspace/AReaL/areal/trainer/ppo/actor.py"
 
-    # Verify math correctness
-    log_ratio = (logprobs.float() - old_logp.float()).detach()
-    assert torch.allclose(direct.float(), -log_ratio, atol=1e-5)
-    assert torch.allclose(taylor.float(), log_ratio ** 2 / 2.0, atol=1e-5)
-    assert torch.allclose(dual.float(), log_ratio.exp() - 1 - log_ratio, atol=1e-5)
+class _FakeScope:
+    def __enter__(self): return self
+    def __exit__(self, *a): pass
+
+class _FakeStatsTracker:
+    def __init__(self):
+        self.calls = []
+    def scope(self, name):
+        return _FakeScope()
+    def denominator(self, **kw): pass
+    def stat(self, **kw):
+        self.calls.append(dict(kw))
+
+source = Path(TARGET).read_text()
+tree = ast.parse(source)
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "_log_proximal_approximation_stats":
+        func_node = node
+        break
+assert func_node is not None, "_log_proximal_approximation_stats not found"
+
+lines = source.splitlines(keepends=True)
+func_src = textwrap.dedent("".join(lines[func_node.lineno - 1 : func_node.end_lineno]))
+
+tracker = _FakeStatsTracker()
+ns = {
+    "torch": torch,
+    "stats_tracker": tracker,
+    "PROX_LOGP_METHOD_LOGLINEAR": "loglinear",
+    "PROX_LOGP_METHOD_METRICS": "metrics",
+    "PROX_LOGP_METHOD_RECOMPUTE": "recompute",
+    "PROX_APPROX_METHOD_LOGLINEAR": "loglinear",
+    "compute_prox_logp_approximations": lambda **kw: {},
+    "_log_approximation_metrics_for_method": lambda **kw: None,
+    "__builtins__": __builtins__,
+}
+exec(compile(func_src, "<test>", "exec"), ns)
+fn = ns["_log_proximal_approximation_stats"]
+
+logprobs = torch.tensor([-1.0, -2.0, -3.0])
+old_logp = torch.tensor([-1.5, -2.5, -3.5])
+mask = torch.ones(3, dtype=torch.bool)
+fn(prox_logp_method="none", prox_logp_gt=None, old_logp=old_logp,
+   logprobs=logprobs, versions=None, current_version=None, compute_logp_mask=mask)
+
+# Extract KL tensors from stat calls
+all_kw = {}
+for c in tracker.calls:
+    all_kw.update(c)
+direct = next((v for k, v in all_kw.items() if "direct" in k and isinstance(v, torch.Tensor)), None)
+taylor = next((v for k, v in all_kw.items() if "taylor" in k and isinstance(v, torch.Tensor)), None)
+dual = next((v for k, v in all_kw.items() if "dual" in k and isinstance(v, torch.Tensor)), None)
+
+assert direct is not None, "KL direct estimator not logged"
+assert taylor is not None, "KL taylor estimator not logged"
+assert dual is not None, "KL dual estimator not logged"
+
+log_ratio = (logprobs.float() - old_logp.float()).detach()
+assert torch.allclose(direct.float(), -log_ratio, atol=1e-5), f"direct mismatch: {direct} vs {-log_ratio}"
+assert torch.allclose(taylor.float(), log_ratio**2 / 2.0, atol=1e-5), f"taylor mismatch"
+assert torch.allclose(dual.float(), log_ratio.exp() - 1 - log_ratio, atol=1e-5), f"dual mismatch"
+print("PASS")
+""")
+    assert r.returncode == 0, f"KL estimator test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
@@ -138,65 +206,240 @@ def test_kl_estimators_diverse_inputs():
     """KL estimators are correct across diverse inputs including edge cases."""
     test_cases = [
         # identical policies → all estimators ≈ 0
-        (torch.tensor([-1.0, -2.0, -3.0]), torch.tensor([-1.0, -2.0, -3.0])),
+        ([-1.0, -2.0, -3.0], [-1.0, -2.0, -3.0]),
         # large positive log-ratio
-        (torch.tensor([-0.1, -0.2]), torch.tensor([-5.0, -10.0])),
+        ([-0.1, -0.2], [-5.0, -10.0]),
         # large negative log-ratio
-        (torch.tensor([-5.0, -10.0]), torch.tensor([-0.1, -0.2])),
+        ([-5.0, -10.0], [-0.1, -0.2]),
         # single token
-        (torch.tensor([-0.5]), torch.tensor([-1.5])),
+        ([-0.5], [-1.5]),
     ]
 
-    for logprobs, old_logp in test_cases:
-        tracker = _extract_and_call(logprobs, old_logp)
-        direct, taylor, dual = _get_kl_tensors(tracker)
+    r = _run_py(f"""
+import ast, textwrap, json
+from pathlib import Path
+import torch
 
-        assert direct is not None and taylor is not None and dual is not None
+TARGET = "/workspace/AReaL/areal/trainer/ppo/actor.py"
 
-        log_ratio = (logprobs.float() - old_logp.float()).detach()
-        assert torch.allclose(direct.float(), -log_ratio, atol=1e-5)
-        assert torch.allclose(taylor.float(), log_ratio ** 2 / 2.0, atol=1e-5)
-        assert torch.allclose(dual.float(), log_ratio.exp() - 1 - log_ratio, atol=1e-5)
+class _FakeScope:
+    def __enter__(self): return self
+    def __exit__(self, *a): pass
 
-        # Mathematical property: taylor and dual are always non-negative
-        assert (taylor.float() >= -1e-6).all(), "Taylor estimator must be non-negative"
-        assert (dual.float() >= -1e-6).all(), "Dual estimator must be non-negative"
+class _FakeStatsTracker:
+    def __init__(self):
+        self.calls = []
+    def scope(self, name):
+        return _FakeScope()
+    def denominator(self, **kw): pass
+    def stat(self, **kw):
+        self.calls.append(dict(kw))
 
-        # Identical policies → all ≈ 0
-        if torch.equal(logprobs, old_logp):
-            assert (direct.float().abs() < 1e-5).all()
-            assert (taylor.float().abs() < 1e-5).all()
-            assert (dual.float().abs() < 1e-5).all()
+source = Path(TARGET).read_text()
+tree = ast.parse(source)
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "_log_proximal_approximation_stats":
+        func_node = node
+        break
+assert func_node is not None
+
+lines = source.splitlines(keepends=True)
+func_src = textwrap.dedent("".join(lines[func_node.lineno - 1 : func_node.end_lineno]))
+
+test_cases = {test_cases!r}
+
+for lp_vals, olp_vals in test_cases:
+    tracker = _FakeStatsTracker()
+    ns = {{
+        "torch": torch,
+        "stats_tracker": tracker,
+        "PROX_LOGP_METHOD_LOGLINEAR": "loglinear",
+        "PROX_LOGP_METHOD_METRICS": "metrics",
+        "PROX_LOGP_METHOD_RECOMPUTE": "recompute",
+        "PROX_APPROX_METHOD_LOGLINEAR": "loglinear",
+        "compute_prox_logp_approximations": lambda **kw: {{}},
+        "_log_approximation_metrics_for_method": lambda **kw: None,
+        "__builtins__": __builtins__,
+    }}
+    exec(compile(func_src, "<test>", "exec"), ns)
+    fn = ns["_log_proximal_approximation_stats"]
+
+    logprobs = torch.tensor(lp_vals)
+    old_logp = torch.tensor(olp_vals)
+    mask = torch.ones(len(olp_vals), dtype=torch.bool)
+    fn(prox_logp_method="none", prox_logp_gt=None, old_logp=old_logp,
+       logprobs=logprobs, versions=None, current_version=None, compute_logp_mask=mask)
+
+    all_kw = {{}}
+    for c in tracker.calls:
+        all_kw.update(c)
+    direct = next((v for k, v in all_kw.items() if "direct" in k and isinstance(v, torch.Tensor)), None)
+    taylor = next((v for k, v in all_kw.items() if "taylor" in k and isinstance(v, torch.Tensor)), None)
+    dual = next((v for k, v in all_kw.items() if "dual" in k and isinstance(v, torch.Tensor)), None)
+
+    assert direct is not None and taylor is not None and dual is not None
+
+    log_ratio = (logprobs.float() - old_logp.float()).detach()
+    assert torch.allclose(direct.float(), -log_ratio, atol=1e-5)
+    assert torch.allclose(taylor.float(), log_ratio**2 / 2.0, atol=1e-5)
+    assert torch.allclose(dual.float(), log_ratio.exp() - 1 - log_ratio, atol=1e-5)
+
+    # taylor and dual must be non-negative
+    assert (taylor.float() >= -1e-6).all(), "Taylor must be non-negative"
+    assert (dual.float() >= -1e-6).all(), "Dual must be non-negative"
+
+    # Identical policies → all ≈ 0
+    if lp_vals == olp_vals:
+        assert (direct.float().abs() < 1e-5).all()
+        assert (taylor.float().abs() < 1e-5).all()
+        assert (dual.float().abs() < 1e-5).all()
+print("PASS")
+""")
+    assert r.returncode == 0, f"Diverse inputs test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_kl_estimators_detached():
     """KL estimator tensors must be detached (no gradient tracking)."""
-    # Use requires_grad=True so that omitting .detach() would propagate grad tracking
-    logprobs = torch.tensor([-1.0, -2.0], requires_grad=True)
-    old_logp = torch.tensor([-1.5, -2.5])
-    tracker = _extract_and_call(logprobs, old_logp)
-    direct, taylor, dual = _get_kl_tensors(tracker)
+    r = _run_py("""
+import ast, textwrap
+from pathlib import Path
+import torch
 
-    assert direct is not None and not direct.requires_grad, "direct must be detached"
-    assert taylor is not None and not taylor.requires_grad, "taylor must be detached"
-    assert dual is not None and not dual.requires_grad, "dual must be detached"
+TARGET = "/workspace/AReaL/areal/trainer/ppo/actor.py"
+
+class _FakeScope:
+    def __enter__(self): return self
+    def __exit__(self, *a): pass
+
+class _FakeStatsTracker:
+    def __init__(self):
+        self.calls = []
+    def scope(self, name):
+        return _FakeScope()
+    def denominator(self, **kw): pass
+    def stat(self, **kw):
+        self.calls.append(dict(kw))
+
+source = Path(TARGET).read_text()
+tree = ast.parse(source)
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "_log_proximal_approximation_stats":
+        func_node = node
+        break
+assert func_node is not None
+
+lines = source.splitlines(keepends=True)
+func_src = textwrap.dedent("".join(lines[func_node.lineno - 1 : func_node.end_lineno]))
+
+tracker = _FakeStatsTracker()
+ns = {
+    "torch": torch,
+    "stats_tracker": tracker,
+    "PROX_LOGP_METHOD_LOGLINEAR": "loglinear",
+    "PROX_LOGP_METHOD_METRICS": "metrics",
+    "PROX_LOGP_METHOD_RECOMPUTE": "recompute",
+    "PROX_APPROX_METHOD_LOGLINEAR": "loglinear",
+    "compute_prox_logp_approximations": lambda **kw: {},
+    "_log_approximation_metrics_for_method": lambda **kw: None,
+    "__builtins__": __builtins__,
+}
+exec(compile(func_src, "<test>", "exec"), ns)
+fn = ns["_log_proximal_approximation_stats"]
+
+# Use requires_grad=True so that omitting .detach() would propagate grad tracking
+logprobs = torch.tensor([-1.0, -2.0], requires_grad=True)
+old_logp = torch.tensor([-1.5, -2.5])
+mask = torch.ones(2, dtype=torch.bool)
+fn(prox_logp_method="none", prox_logp_gt=None, old_logp=old_logp,
+   logprobs=logprobs, versions=None, current_version=None, compute_logp_mask=mask)
+
+all_kw = {}
+for c in tracker.calls:
+    all_kw.update(c)
+direct = next((v for k, v in all_kw.items() if "direct" in k and isinstance(v, torch.Tensor)), None)
+taylor = next((v for k, v in all_kw.items() if "taylor" in k and isinstance(v, torch.Tensor)), None)
+dual = next((v for k, v in all_kw.items() if "dual" in k and isinstance(v, torch.Tensor)), None)
+
+assert direct is not None and not direct.requires_grad, "direct must be detached"
+assert taylor is not None and not taylor.requires_grad, "taylor must be detached"
+assert dual is not None and not dual.requires_grad, "dual must be detached"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Detached test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_kl_stats_use_denominator():
     """KL stats registered with denominator kwarg for proper per-token averaging."""
-    logprobs = torch.tensor([-1.0, -2.0, -3.0])
-    old_logp = torch.tensor([-1.5, -2.5, -3.5])
-    tracker = _extract_and_call(logprobs, old_logp)
+    r = _run_py("""
+import ast, textwrap
+from pathlib import Path
+import torch
 
-    # Find stat calls containing KL keys
-    kl_calls = [
-        c for c in tracker.calls
-        if any(("direct" in k or "taylor" in k or "dual" in k) for k in c.keys())
-    ]
-    assert len(kl_calls) >= 1, "No stat calls with KL keys found"
-    assert all("denominator" in c for c in kl_calls), "KL stat calls must include denominator"
+TARGET = "/workspace/AReaL/areal/trainer/ppo/actor.py"
+
+class _FakeScope:
+    def __enter__(self): return self
+    def __exit__(self, *a): pass
+
+class _FakeStatsTracker:
+    def __init__(self):
+        self.calls = []
+    def scope(self, name):
+        return _FakeScope()
+    def denominator(self, **kw): pass
+    def stat(self, **kw):
+        self.calls.append(dict(kw))
+
+source = Path(TARGET).read_text()
+tree = ast.parse(source)
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "_log_proximal_approximation_stats":
+        func_node = node
+        break
+assert func_node is not None
+
+lines = source.splitlines(keepends=True)
+func_src = textwrap.dedent("".join(lines[func_node.lineno - 1 : func_node.end_lineno]))
+
+tracker = _FakeStatsTracker()
+ns = {
+    "torch": torch,
+    "stats_tracker": tracker,
+    "PROX_LOGP_METHOD_LOGLINEAR": "loglinear",
+    "PROX_LOGP_METHOD_METRICS": "metrics",
+    "PROX_LOGP_METHOD_RECOMPUTE": "recompute",
+    "PROX_APPROX_METHOD_LOGLINEAR": "loglinear",
+    "compute_prox_logp_approximations": lambda **kw: {},
+    "_log_approximation_metrics_for_method": lambda **kw: None,
+    "__builtins__": __builtins__,
+}
+exec(compile(func_src, "<test>", "exec"), ns)
+fn = ns["_log_proximal_approximation_stats"]
+
+logprobs = torch.tensor([-1.0, -2.0, -3.0])
+old_logp = torch.tensor([-1.5, -2.5, -3.5])
+mask = torch.ones(3, dtype=torch.bool)
+fn(prox_logp_method="none", prox_logp_gt=None, old_logp=old_logp,
+   logprobs=logprobs, versions=None, current_version=None, compute_logp_mask=mask)
+
+# Find stat calls containing KL keys
+kl_calls = [
+    c for c in tracker.calls
+    if any(("direct" in k or "taylor" in k or "dual" in k) for k in c.keys())
+]
+assert len(kl_calls) >= 1, "No stat calls with KL keys found"
+assert all("denominator" in c for c in kl_calls), "KL stat calls must include denominator"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Denominator test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] pass_to_pass
@@ -259,7 +502,6 @@ def test_no_wildcard_imports():
 # [agent_config] pass_to_pass — AGENTS.md:90 @ a0d122930f7de028404235688c7dba3f01854954
 def test_no_gpu_cpu_sync():
     """No .item()/.tolist()/.numpy() calls in _log_proximal_approximation_stats (AGENTS.md rule)."""
-    # AST-only because: function depends on module-level stats_tracker and distributed imports
     source = Path(TARGET).read_text()
     tree = ast.parse(source)
     for node in ast.walk(tree):
@@ -274,7 +516,6 @@ def test_no_gpu_cpu_sync():
 # [agent_config] pass_to_pass — AGENTS.md:84 @ a0d122930f7de028404235688c7dba3f01854954
 def test_no_print_in_function():
     """No print() calls in _log_proximal_approximation_stats (AGENTS.md: never print)."""
-    # AST-only because: function depends on module-level stats_tracker and distributed imports
     source = Path(TARGET).read_text()
     tree = ast.parse(source)
     for node in ast.walk(tree):

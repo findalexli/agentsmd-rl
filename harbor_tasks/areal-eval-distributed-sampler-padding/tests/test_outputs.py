@@ -9,39 +9,55 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/repo"
 FILE = Path(f"{REPO}/areal/utils/dataloader.py")
 
 
-def _load_dataloader_module():
-    """Load the dataloader module with mocked areal.api.cli_args imports."""
-    source = FILE.read_text()
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
-    # Strip areal-internal imports (not installable without full package)
-    for pattern in [
-        "from areal.api.cli_args import ValidDatasetConfig, _DatasetConfig",
-        "from areal.api.cli_args import _DatasetConfig",
-    ]:
-        source = source.replace(pattern, "")
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in the repo environment via subprocess."""
+    script = Path(f"{REPO}/_eval_tmp.py")
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
-    class _DatasetConfig:
-        batch_size = 4
-        shuffle = False
-        drop_last = True
-        num_workers = 0
 
-    class ValidDatasetConfig(_DatasetConfig):
-        drop_last = False
+# Shared preamble: loads the dataloader module with mocked internal imports
+_PREAMBLE = """
+from pathlib import Path
 
-    ns = {
-        "__builtins__": __builtins__,
-        "_DatasetConfig": _DatasetConfig,
-        "ValidDatasetConfig": ValidDatasetConfig,
-    }
-    exec(compile(source, "<dataloader>", "exec"), ns)
-    return ns
+source = Path("/repo/areal/utils/dataloader.py").read_text()
+for old in [
+    "from areal.api.cli_args import ValidDatasetConfig, _DatasetConfig",
+    "from areal.api.cli_args import _DatasetConfig",
+]:
+    source = source.replace(old, "")
+
+class _DatasetConfig:
+    batch_size = 4
+    shuffle = False
+    drop_last = True
+    num_workers = 0
+
+class ValidDatasetConfig(_DatasetConfig):
+    drop_last = False
+
+ns = {"__builtins__": __builtins__, "_DatasetConfig": _DatasetConfig, "ValidDatasetConfig": ValidDatasetConfig}
+exec(compile(source, "<dataloader>", "exec"), ns)
+EvalDistributedSampler = ns.get("EvalDistributedSampler")
+create_dataloader = ns["create_dataloader"]
+"""
 
 
 # ---------------------------------------------------------------------------
@@ -55,84 +71,90 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_eval_sampler_no_padding():
     """EvalDistributedSampler covers every index exactly once without padding."""
-    mod = _load_dataloader_module()
-    EvalDistributedSampler = mod["EvalDistributedSampler"]
-
-    for ds_size, nrep in [(10, 3), (7, 4), (13, 5), (100, 7)]:
-        dataset = list(range(ds_size))
-        all_indices = []
-        for rank in range(nrep):
-            sampler = EvalDistributedSampler(
-                dataset, num_replicas=nrep, rank=rank, shuffle=False, drop_last=False
-            )
-            all_indices.extend(list(sampler))
-        assert sorted(all_indices) == list(range(ds_size)), (
-            f"ds={ds_size}, replicas={nrep}: got {sorted(all_indices)}"
+    r = _run_py(_PREAMBLE + """
+for ds_size, nrep in [(10, 3), (7, 4), (13, 5), (100, 7)]:
+    dataset = list(range(ds_size))
+    all_indices = []
+    for rank in range(nrep):
+        sampler = EvalDistributedSampler(
+            dataset, num_replicas=nrep, rank=rank, shuffle=False, drop_last=False
         )
+        all_indices.extend(list(sampler))
+    assert sorted(all_indices) == list(range(ds_size)), (
+        f"ds={ds_size}, replicas={nrep}: got {sorted(all_indices)}"
+    )
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_create_dataloader_dispatches_eval_sampler():
     """create_dataloader uses EvalDistributedSampler for ValidDatasetConfig."""
-    mod = _load_dataloader_module()
-    create_dataloader = mod["create_dataloader"]
-
-    valid_config = mod["ValidDatasetConfig"]()
-    valid_config.batch_size = 4
-    loader = create_dataloader(
-        list(range(12)), rank=0, world_size=2, dataset_config=valid_config
-    )
-    sampler = loader.sampler
-
-    assert type(sampler).__name__ == "EvalDistributedSampler", (
-        f"Expected EvalDistributedSampler, got {type(sampler).__name__}"
-    )
-    assert not sampler.drop_last, "Sampler drop_last should be False for validation"
+    r = _run_py(_PREAMBLE + """
+valid_config = ValidDatasetConfig()
+valid_config.batch_size = 4
+loader = create_dataloader(
+    list(range(12)), rank=0, world_size=2, dataset_config=valid_config
+)
+sampler = loader.sampler
+assert type(sampler).__name__ == "EvalDistributedSampler", (
+    f"Expected EvalDistributedSampler, got {type(sampler).__name__}"
+)
+assert not sampler.drop_last, "Sampler drop_last should be False for validation"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_edge_case_small_dataset():
     """Sampler handles dataset_size < num_replicas and exact division correctly."""
-    mod = _load_dataloader_module()
-    EvalDistributedSampler = mod["EvalDistributedSampler"]
-
-    # 2 samples, 4 replicas — some ranks get 0 samples
-    for ds_size, nrep in [(2, 4), (6, 3), (1, 5)]:
-        dataset = list(range(ds_size))
-        all_indices = []
-        for rank in range(nrep):
-            sampler = EvalDistributedSampler(
-                dataset, num_replicas=nrep, rank=rank, shuffle=False, drop_last=False
-            )
-            all_indices.extend(list(sampler))
-        assert sorted(all_indices) == list(range(ds_size)), (
-            f"ds={ds_size}, replicas={nrep}: got {sorted(all_indices)}"
+    r = _run_py(_PREAMBLE + """
+for ds_size, nrep in [(2, 4), (6, 3), (1, 5)]:
+    dataset = list(range(ds_size))
+    all_indices = []
+    for rank in range(nrep):
+        sampler = EvalDistributedSampler(
+            dataset, num_replicas=nrep, rank=rank, shuffle=False, drop_last=False
         )
+        all_indices.extend(list(sampler))
+    assert sorted(all_indices) == list(range(ds_size)), (
+        f"ds={ds_size}, replicas={nrep}: got {sorted(all_indices)}"
+    )
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_no_duplicate_indices():
     """No duplicate indices across ranks for various dataset sizes."""
-    mod = _load_dataloader_module()
-    EvalDistributedSampler = mod["EvalDistributedSampler"]
-
-    for ds_size, nrep in [(10, 3), (7, 4), (13, 5), (100, 7), (3, 8)]:
-        dataset = list(range(ds_size))
-        all_indices = []
-        for rank in range(nrep):
-            sampler = EvalDistributedSampler(
-                dataset, num_replicas=nrep, rank=rank, shuffle=False, drop_last=False
-            )
-            all_indices.extend(list(sampler))
-        assert len(all_indices) == len(set(all_indices)), (
-            f"ds={ds_size}, replicas={nrep}: found duplicates"
+    r = _run_py(_PREAMBLE + """
+for ds_size, nrep in [(10, 3), (7, 4), (13, 5), (100, 7), (3, 8)]:
+    dataset = list(range(ds_size))
+    all_indices = []
+    for rank in range(nrep):
+        sampler = EvalDistributedSampler(
+            dataset, num_replicas=nrep, rank=rank, shuffle=False, drop_last=False
         )
+        all_indices.extend(list(sampler))
+    assert len(all_indices) == len(set(all_indices)), (
+        f"ds={ds_size}, replicas={nrep}: found duplicates"
+    )
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -142,20 +164,21 @@ def test_no_duplicate_indices():
 # [pr_diff] pass_to_pass
 def test_training_config_unchanged():
     """Training config still uses standard DistributedSampler with drop_last=True."""
-    mod = _load_dataloader_module()
-    create_dataloader = mod["create_dataloader"]
-
-    train_config = mod["_DatasetConfig"]()
-    train_config.batch_size = 4
-    loader = create_dataloader(
-        list(range(12)), rank=0, world_size=2, dataset_config=train_config
-    )
-    sampler = loader.sampler
-
-    assert type(sampler).__name__ == "DistributedSampler", (
-        f"Expected DistributedSampler for training, got {type(sampler).__name__}"
-    )
-    assert sampler.drop_last, "Sampler drop_last should be True for training"
+    r = _run_py(_PREAMBLE + """
+train_config = _DatasetConfig()
+train_config.batch_size = 4
+loader = create_dataloader(
+    list(range(12)), rank=0, world_size=2, dataset_config=train_config
+)
+sampler = loader.sampler
+assert type(sampler).__name__ == "DistributedSampler", (
+    f"Expected DistributedSampler for training, got {type(sampler).__name__}"
+)
+assert sampler.drop_last, "Sampler drop_last should be True for training"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

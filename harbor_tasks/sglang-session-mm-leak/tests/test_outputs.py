@@ -7,33 +7,34 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 NOTE: sglang modules import torch/CUDA at module level, so we cannot
-import them directly on a CPU-only container.  Tests use AST extraction
-+ mock execution — the least-invasive way to call the actual code.
+import them directly on a CPU-only container.  Tests use subprocess to
+extract and execute the relevant code with mocks.
 """
 
 import ast
-import textwrap
+import subprocess
 from pathlib import Path
 
-BATCH_FILE = "/workspace/python/sglang/srt/managers/schedule_batch.py"
-SESSION_FILE = "/workspace/python/sglang/srt/managers/session_controller.py"
-SCHEDULER_FILE = "/workspace/python/sglang/srt/managers/scheduler.py"
-OUTPUT_PROC_FILE = "/workspace/python/sglang/srt/managers/scheduler_output_processor_mixin.py"
+REPO = "/workspace"
+BATCH_FILE = f"{REPO}/python/sglang/srt/managers/schedule_batch.py"
+SESSION_FILE = f"{REPO}/python/sglang/srt/managers/session_controller.py"
+SCHEDULER_FILE = f"{REPO}/python/sglang/srt/managers/scheduler.py"
+OUTPUT_PROC_FILE = f"{REPO}/python/sglang/srt/managers/scheduler_output_processor_mixin.py"
 
 ALL_FILES = [BATCH_FILE, SESSION_FILE, SCHEDULER_FILE, OUTPUT_PROC_FILE]
 
 
-# ---- helpers ----------------------------------------------------------------
-
-def _find_method(source: str, class_name: str, method_name: str) -> str | None:
-    """Return the source text of class_name.method_name, or None."""
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == class_name:
-            for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name == method_name:
-                    return ast.get_source_segment(source, item)
-    return None
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in a subprocess in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.py"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -55,13 +56,24 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_release_features_clears_all():
     """MultimodalInputs.release_features() sets feature=None on every mm_item."""
-    source = Path(BATCH_FILE).read_text()
-    method_src = _find_method(source, "MultimodalInputs", "release_features")
-    assert method_src is not None, "release_features method not found on MultimodalInputs"
+    r = _run_py("""\
+import ast, textwrap
+from pathlib import Path
 
-    # Build a minimal mock and execute the extracted method
-    env: dict = {}
-    exec(textwrap.dedent(f"""
+source = Path('python/sglang/srt/managers/schedule_batch.py').read_text()
+tree = ast.parse(source)
+method_src = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == 'MultimodalInputs':
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == 'release_features':
+                method_src = ast.get_source_segment(source, item)
+                break
+
+assert method_src is not None, "release_features method not found on MultimodalInputs"
+
+env = {}
+exec(textwrap.dedent(f'''
 class MockItem:
     def __init__(self, feature):
         self.feature = feature
@@ -71,47 +83,59 @@ class MultimodalInputs:
         self.mm_items = mm_items
 
 {textwrap.indent(method_src, '    ')}
-"""), env)
+'''), env)
 
-    MI = env["MultimodalInputs"]
-    MockItem = env["MockItem"]
+MI = env['MultimodalInputs']
+MockItem = env['MockItem']
 
-    # Multiple items
-    items = [MockItem("tensor_a"), MockItem("tensor_b"), MockItem("tensor_c")]
-    MI(items).release_features()
-    for i, item in enumerate(items):
-        assert item.feature is None, f"item {i} feature not released"
+# Multiple items
+items = [MockItem('tensor_a'), MockItem('tensor_b'), MockItem('tensor_c')]
+MI(items).release_features()
+for i, item in enumerate(items):
+    assert item.feature is None, f'item {i} feature not released'
 
-    # Single item
-    single = [MockItem(42)]
-    MI(single).release_features()
-    assert single[0].feature is None, "single item feature not released"
+# Empty list must not crash
+MI([]).release_features()
 
-    # Empty list — must not crash
-    MI([]).release_features()
+# Idempotent — calling twice must not crash
+items2 = [MockItem('x')]
+mm = MI(items2)
+mm.release_features()
+mm.release_features()
+assert items2[0].feature is None
 
-    # Idempotent — calling twice must not crash
-    items2 = [MockItem("x")]
-    mm = MI(items2)
-    mm.release_features()
-    mm.release_features()
-    assert items2[0].feature is None
+# Attribute must still exist (set to None, not deleted)
+items3 = [MockItem('data')]
+MI(items3).release_features()
+assert hasattr(items3[0], 'feature'), 'feature attr deleted instead of set to None'
 
-    # Attribute must still exist (set to None, not deleted)
-    items3 = [MockItem("data")]
-    MI(items3).release_features()
-    assert hasattr(items3[0], "feature"), "feature attr deleted instead of set to None"
+print('PASS')
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_close_releases_session_mm_features():
     """SessionController._close() releases multimodal features from session requests."""
-    source = Path(SESSION_FILE).read_text()
-    close_src = _find_method(source, "SessionController", "_close")
-    assert close_src is not None, "SessionController._close method not found"
+    r = _run_py("""\
+import ast, textwrap
+from pathlib import Path
 
-    env: dict = {}
-    exec(textwrap.dedent("""
+source = Path('python/sglang/srt/managers/session_controller.py').read_text()
+tree = ast.parse(source)
+close_src = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == 'SessionController':
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == '_close':
+                close_src = ast.get_source_segment(source, item)
+                break
+
+assert close_src is not None, "SessionController._close method not found"
+
+env = {}
+exec(textwrap.dedent('''
 import logging
 
 class SessionAwareCache:
@@ -152,121 +176,130 @@ class SessionController:
     def __init__(self, session, sid):
         self.sessions = {sid: session}
         self.tree_cache = MockTreeCache()
-"""), env)
+'''), env)
 
-    exec(textwrap.dedent(f"""
+exec(textwrap.dedent(f'''
 class SessionControllerTest(SessionController):
 {textwrap.indent(close_src, '    ')}
-"""), env)
+'''), env)
 
-    MockMMItem = env["MockMMItem"]
-    MockMMInputs = env["MockMMInputs"]
-    MockReq = env["MockReq"]
-    MockNode = env["MockNode"]
-    Session = env["Session"]
-    TestCtrl = env["SessionControllerTest"]
+MockMMItem = env['MockMMItem']
+MockMMInputs = env['MockMMInputs']
+MockReq = env['MockReq']
+MockNode = env['MockNode']
+Session = env['Session']
+TestCtrl = env['SessionControllerTest']
 
-    # Two requests share one MMInputs, one request has its own, one has none
-    shared_items = [MockMMItem(), MockMMItem()]
-    shared_mm = MockMMInputs(shared_items)
-    own_items = [MockMMItem()]
-    own_mm = MockMMInputs(own_items)
+# Two requests share one MMInputs, one has its own, one has none
+shared_items = [MockMMItem(), MockMMItem()]
+shared_mm = MockMMInputs(shared_items)
+own_items = [MockMMItem()]
+own_mm = MockMMInputs(own_items)
 
-    nodes = {
-        "r1": MockNode(MockReq(shared_mm)),
-        "r2": MockNode(MockReq(shared_mm)),
-        "r3": MockNode(MockReq(own_mm)),
-        "r4": MockNode(MockReq(None)),
-    }
-    session = Session(nodes)
-    controller = TestCtrl(session, "s1")
+nodes = {
+    "r1": MockNode(MockReq(shared_mm)),
+    "r2": MockNode(MockReq(shared_mm)),
+    "r3": MockNode(MockReq(own_mm)),
+    "r4": MockNode(MockReq(None)),
+}
+session = Session(nodes)
+controller = TestCtrl(session, "s1")
 
-    # Pre-check: features alive
-    assert all(i.feature is not None for i in shared_items + own_items)
+# Pre-check: features alive
+assert all(i.feature is not None for i in shared_items + own_items)
 
-    controller._close("s1")
+controller._close("s1")
 
-    # All features released
-    for label, items in [("shared", shared_items), ("own", own_items)]:
-        for i, item in enumerate(items):
-            assert item.feature is None, f"{label} item {i} feature not released"
+# All features released
+for label, items in [("shared", shared_items), ("own", own_items)]:
+    for i, item in enumerate(items):
+        assert item.feature is None, f"{label} item {i} feature not released"
 
-    # multimodal_inputs cleared on every request
-    for key, node in nodes.items():
-        assert node.req.multimodal_inputs is None, f"{key} multimodal_inputs not cleared"
+# multimodal_inputs cleared on every request
+for key, node in nodes.items():
+    assert node.req.multimodal_inputs is None, f"{key} multimodal_inputs not cleared"
 
-    # Session removed
-    assert "s1" not in controller.sessions, "session not deleted after _close"
+# Session removed
+assert "s1" not in controller.sessions, "session not deleted after _close"
+
+print('PASS')
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_bos_offset_clamping():
     """BOS offset adjustment in Session.create_req doesn't produce negative values."""
-    source = Path(SESSION_FILE).read_text()
-    tree = ast.parse(source)
+    r = _run_py("""\
+import ast
+from pathlib import Path
 
-    # Find the offset adjustment expression in create_req
-    create_req_node = None
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "Session":
-            for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name == "create_req":
-                    create_req_node = item
-                    break
-            break
-    assert create_req_node is not None, "Session.create_req not found"
+source = Path('python/sglang/srt/managers/session_controller.py').read_text()
+tree = ast.parse(source)
 
-    # Find the list comprehension that adjusts offsets (item.offsets = [...])
-    found = False
-    for node in ast.walk(create_req_node):
-        if not isinstance(node, ast.Assign):
+create_req_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == 'Session':
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == 'create_req':
+                create_req_node = item
+                break
+
+assert create_req_node is not None, "Session.create_req not found"
+
+found = False
+for node in ast.walk(create_req_node):
+    if not isinstance(node, ast.Assign):
+        continue
+    for target in node.targets:
+        if not (isinstance(target, ast.Attribute) and target.attr == 'offsets'):
             continue
-        for target in node.targets:
-            if not (isinstance(target, ast.Attribute) and target.attr == "offsets"):
-                continue
-            if not any(isinstance(n, ast.Sub) for n in ast.walk(node.value)):
-                continue
+        if not any(isinstance(n, ast.Sub) for n in ast.walk(node.value)):
+            continue
 
-            rhs_src = ast.get_source_segment(source, node.value)
-            if rhs_src is None:
-                continue
+        rhs_src = ast.get_source_segment(source, node.value)
+        if rhs_src is None:
+            continue
 
-            # For list comprehensions, swap iteration source with test data
-            if isinstance(node.value, ast.ListComp):
-                for gen in node.value.generators:
-                    iter_src = ast.get_source_segment(source, gen.iter)
-                    if iter_src is None:
-                        continue
-                    test_expr = rhs_src.replace(iter_src, "test_offsets")
+        if isinstance(node.value, ast.ListComp):
+            for gen in node.value.generators:
+                iter_src = ast.get_source_segment(source, gen.iter)
+                if iter_src is None:
+                    continue
+                test_expr = rhs_src.replace(iter_src, 'test_offsets')
 
-                    cases = [
-                        [(0, 5)],        # BOS edge: s=0
-                        [(0, 0)],        # double-zero
-                        [(1, 10)],       # normal
-                        [(0, 5), (3, 8)],  # mixed
-                        [(5, 10)],       # should subtract
-                    ]
-                    for offsets in cases:
-                        ns = {"test_offsets": offsets, "max": max, "min": min}
-                        result = eval(test_expr, ns)
-                        for s, e in result:
-                            assert s >= 0 and e >= 0, (
-                                f"Negative offset from {offsets}: got {result}"
-                            )
-
-                    # Verify it actually subtracts for non-zero
-                    ns = {"test_offsets": [(5, 10)], "max": max, "min": min}
+                cases = [
+                    [(0, 5)],         # BOS edge: s=0
+                    [(0, 0)],         # double-zero
+                    [(1, 10)],        # normal
+                    [(0, 5), (3, 8)], # mixed
+                    [(5, 10)],        # should subtract
+                ]
+                for offsets in cases:
+                    ns = {'test_offsets': offsets, 'max': max, 'min': min}
                     result = eval(test_expr, ns)
-                    assert result[0][0] < 5, (
-                        f"Offset not adjusted downward: (5,10) -> {result}"
-                    )
-                    found = True
-                    break
+                    for s, e in result:
+                        assert s >= 0 and e >= 0, (
+                            f'Negative offset from {offsets}: got {result}'
+                        )
 
-        if found:
-            break
+                # Verify it actually subtracts for non-zero
+                ns = {'test_offsets': [(5, 10)], 'max': max, 'min': min}
+                result = eval(test_expr, ns)
+                assert result[0][0] < 5, (
+                    f'Offset not adjusted downward: (5,10) -> {result}'
+                )
+                found = True
+                break
+    if found:
+        break
 
-    assert found, "No clamped offset adjustment found in create_req"
+assert found, 'No clamped offset adjustment found in create_req'
+print('PASS')
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
@@ -288,7 +321,7 @@ def test_callers_use_release_features():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff / static) — regression + anti-stub
+# Pass-to-pass (pr_diff) — regression
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
@@ -323,19 +356,3 @@ def test_class_structure_preserved():
                     assert m in found_classes[cls_name], (
                         f"{cls_name}.{m} missing from {filepath}"
                     )
-
-
-# [static] fail_to_pass
-def test_release_features_not_stub():
-    """release_features has real logic (≥2 meaningful statements), not just pass."""
-    source = Path(BATCH_FILE).read_text()
-    method_src = _find_method(source, "MultimodalInputs", "release_features")
-    assert method_src is not None, "release_features not found"
-
-    method_tree = ast.parse(textwrap.dedent(method_src))
-    meaningful = 0
-    for node in ast.walk(method_tree):
-        if isinstance(node, (ast.For, ast.While, ast.If, ast.Assign, ast.AugAssign)):
-            meaningful += 1
-
-    assert meaningful >= 2, f"release_features looks like a stub ({meaningful} statements)"

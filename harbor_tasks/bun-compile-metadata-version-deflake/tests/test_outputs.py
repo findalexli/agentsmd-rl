@@ -6,17 +6,31 @@ PR:   #28205
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-Note: bun is not available in the test environment, so all checks
-analyse the TypeScript source directly.
+Node.js is used to parse and evaluate the TypeScript test file structure.
 """
 
+import json
 import re
+import subprocess
 from pathlib import Path
 
 REPO = Path("/workspace/bun")
 TEST_FILE = REPO / "test/bundler/compile-windows-metadata.test.ts"
 
-INVALID_VERSIONS = ["not.a.version", "1.2.3.4.5", "1.-2.3.4", "65536.0.0.0"]
+EXPECTED_INVALID_VERSIONS = ["not.a.version", "1.2.3.4.5", "1.-2.3.4", "65536.0.0.0", ""]
+
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via a temp file with Node.js."""
+    script = REPO / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=str(REPO),
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 def _read_test_file() -> str:
@@ -26,6 +40,112 @@ def _read_test_file() -> str:
         f"File too short ({len(text.splitlines())} lines); likely truncated or gutted"
     )
     return text
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — behavioral tests using subprocess
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_loop_removed():
+    """The sequential for-loop over invalidVersions with Bun.spawn must be removed."""
+    r = _run_node("""\
+import { readFileSync } from 'fs';
+
+const text = readFileSync('test/bundler/compile-windows-metadata.test.ts', 'utf8');
+
+// Check 1: No for...of loop iterating over invalidVersions
+if (/for\\s*\\(\\s*(?:const|let|var)\\s+\\w+\\s+of\\s+invalidVersions/.test(text)) {
+  console.error('FAIL: for...of loop over invalidVersions still present');
+  process.exit(1);
+}
+
+// Check 2: No invalidVersions array declaration
+if (/(?:const|let|var)\\s+invalidVersions\\s*=\\s*\\[/.test(text)) {
+  console.error('FAIL: invalidVersions array variable still present');
+  process.exit(1);
+}
+
+// Check 3: No for-loop body that calls Bun.spawn (the core flaky pattern)
+if (/for\\s*\\([^)]*\\)\\s*\\{[\\s\\S]*?Bun\\.spawn/.test(text)) {
+  console.error('FAIL: for-loop containing Bun.spawn calls still present');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Loop check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_versions_parameterized():
+    """Each invalid version gets its own test case via test.each with correct versions."""
+    r = _run_node("""\
+import { readFileSync } from 'fs';
+
+const text = readFileSync('test/bundler/compile-windows-metadata.test.ts', 'utf8');
+
+// Find test.each([...]) or it.each([...])
+const match = text.match(/(?:test|it)\\.each\\s*\\(\\s*(\\[[\\s\\S]*?\\])\\s*\\)/);
+if (!match) {
+  console.error('FAIL: No test.each() or it.each() found');
+  process.exit(1);
+}
+
+// Strip comments and evaluate the array as real JavaScript
+let arrayStr = match[1]
+  .replace(/\\/\\/.*$/gm, '')
+  .trim();
+
+let arr;
+try {
+  arr = eval(arrayStr);
+} catch (e) {
+  console.error('FAIL: test.each array is not valid JS: ' + e.message);
+  process.exit(1);
+}
+
+if (!Array.isArray(arr) || arr.length === 0) {
+  console.error('FAIL: test.each argument is not a non-empty array');
+  process.exit(1);
+}
+
+// Verify every entry has a 'version' string property
+const versions = arr.map(item => {
+  if (!item || typeof item.version !== 'string') {
+    console.error('FAIL: entry missing string "version" property: ' + JSON.stringify(item));
+    process.exit(1);
+  }
+  return item.version;
+});
+
+const expected = ['not.a.version', '1.2.3.4.5', '1.-2.3.4', '65536.0.0.0', ''];
+
+for (const v of expected) {
+  if (!versions.includes(v)) {
+    console.error('FAIL: Missing version: ' + JSON.stringify(v) + '. Got: ' + JSON.stringify(versions));
+    process.exit(1);
+  }
+}
+
+if (versions.length !== expected.length) {
+  console.error('FAIL: Expected ' + expected.length + ' versions, got ' + versions.length);
+  process.exit(1);
+}
+
+// Verify test name references $version for proper reporting
+const afterEach = text.slice(text.indexOf(match[0]) + match[0].length);
+if (!afterEach.includes('$version')) {
+  console.error('FAIL: test.each test name does not reference $version');
+  process.exit(1);
+}
+
+console.log(JSON.stringify({ count: arr.length, versions }));
+""")
+    assert r.returncode == 0, f"Parameterization check failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["count"] == 5, f"Expected 5 versions, got {data['count']}"
 
 
 # ---------------------------------------------------------------------------
@@ -46,75 +166,13 @@ def test_file_parses():
     assert depth == 0, f"Unbalanced braces (depth={depth} at EOF)"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioural tests
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
-def test_loop_removed():
-    """The sequential for-loop over invalidVersions with Bun.spawn must be removed."""
-    text = _read_test_file()
-    # Check for any kind of loop iterating over versions and calling Bun.spawn
-    has_for_loop = bool(
-        re.search(r"for\s*\([^)]*\)\s*\{[\s\S]*?Bun\.spawn", text, re.DOTALL)
-    )
-    has_version_array = bool(
-        re.search(r"(?:const|let|var)\s+invalidVersions\s*=\s*\[", text)
-    )
-    has_while_loop = bool(
-        re.search(r"while\s*\([^)]*\)\s*\{[\s\S]*?Bun\.spawn", text, re.DOTALL)
-    )
-    assert not has_for_loop, "for-loop over versions with Bun.spawn still present"
-    assert not has_version_array, "invalidVersions array variable still present"
-    assert not has_while_loop, "while-loop over versions with Bun.spawn still present"
-
-
-# [pr_diff] fail_to_pass
-def test_versions_parameterized():
-    """Each invalid version gets its own test case (test.each, describe.each, etc.)."""
-    text = _read_test_file()
-
-    best = 0
-
-    # Method 1: test.each / it.each / describe.each with array
-    m = re.search(r"(?:test|it|describe)\.each\s*\((\[[\s\S]*?\])\)", text)
-    if m:
-        matched = sum(1 for v in INVALID_VERSIONS if v in m.group(1))
-        best = max(best, matched)
-
-    # Method 2: template literal .each
-    m = re.search(r"(?:test|it|describe)\.each`([\s\S]*?)`", text)
-    if m:
-        matched = sum(1 for v in INVALID_VERSIONS if v in m.group(1))
-        best = max(best, matched)
-
-    # Method 3: forEach/map generating test registrations
-    if re.search(r"\.(?:forEach|map)\s*\([\s\S]*?(?:test|it|describe)\s*\(", text):
-        matched = sum(1 for v in INVALID_VERSIONS if v in text)
-        best = max(best, matched)
-
-    # Method 4: individual test()/it() calls each referencing a version
-    individual = 0
-    for v in INVALID_VERSIONS:
-        escaped = re.escape(v)
-        if re.search(r"(?:test|it|describe)\s*\([^)]*" + escaped, text, re.DOTALL):
-            individual += 1
-    best = max(best, individual)
-
-    assert best >= 3, (
-        f"Only {best}/4 versions found in separate test registrations; "
-        "expected at least 3 parameterised individually"
-    )
-
-
 # [pr_diff] pass_to_pass
 def test_substantive_bodies():
     """Invalid-version test bodies contain Bun.spawn + await exited + expect (not stubs)."""
     text = _read_test_file()
 
-    # Grab the region around invalid version strings (±1000 chars)
     invalid_region = ""
-    for v in INVALID_VERSIONS:
+    for v in EXPECTED_INVALID_VERSIONS:
         idx = text.find(v)
         if idx != -1:
             start = max(0, idx - 1000)
@@ -141,9 +199,8 @@ def test_substantive_bodies():
 def test_all_invalid_versions_present():
     """All 5 invalid version strings must still be tested."""
     text = _read_test_file()
-    for v in INVALID_VERSIONS:
+    for v in EXPECTED_INVALID_VERSIONS:
         assert v in text, f"Invalid version string {v!r} missing from test file"
-    # Empty string: must appear as "" in some version context
     assert '""' in text or "version: ''" in text, "Empty string version case missing"
 
 

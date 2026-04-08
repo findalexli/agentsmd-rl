@@ -1,0 +1,52 @@
+version: "2.0"
+source:
+  repo: microsoft/vscode
+  base_commit: d7ebb2cc7dcab5b7d7c9bc98ad5b96652dcab650
+
+checks:
+  # fail_to_pass — must fail on base, pass on fix
+  - id: test_is_first_request_context_key
+    type: fail_to_pass
+    origin: pr_diff
+    description: isFirstRequest context key defined as RawContextKey with name chatFirstRequest
+
+  - id: test_start_over_action_registered
+    type: fail_to_pass
+    origin: pr_diff
+    description: StartOverAction class registered via registerAction2 with correct action ID
+
+  - id: test_start_over_action_when_clause
+    type: fail_to_pass
+    origin: pr_diff
+    description: StartOverAction menu shows only when isFirstRequest is true (not negated)
+
+  - id: test_start_over_action_run_method
+    type: fail_to_pass
+    origin: pr_diff
+    description: StartOverAction.run calls setCheckpoint and restoreSnapshotWithConfirmation
+
+  - id: test_first_request_bound_in_renderer
+    type: fail_to_pass
+    origin: pr_diff
+    description: isFirstRequest bound in chatListRenderer with first-request detection via getRequests()
+
+  - id: test_fork_hidden_on_first_request
+    type: fail_to_pass
+    origin: pr_diff
+    description: Fork action when clause includes isFirstRequest.negate() to hide on first request
+
+  - id: test_restore_checkpoint_hidden_on_first
+    type: fail_to_pass
+    origin: pr_diff
+    description: RestoreCheckpoint when clause includes isFirstRequest.negate() to hide on first request
+
+  # pass_to_pass — should pass on both base and fix
+  - id: test_chat_context_keys_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: ChatContextKeys namespace has core keys (isResponse, isRequest, itemId, isPendingRequest)
+
+  - id: test_start_over_action_label_and_tooltip
+    type: fail_to_pass
+    origin: pr_diff
+    description: StartOverAction has localize2 label and tooltip with correct keys

@@ -9,10 +9,97 @@ that were moved to auxiliary windows.
 All checks must pass for reward = 1. Any failure = reward 0.
 """
 
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/vscode"
 TARGET = f"{REPO}/src/vs/workbench/browser/parts/titlebar/titlebarPart.ts"
+
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    return subprocess.run(
+        ["node", "-e", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
+# --- fail_to_pass ---
+
+
+def test_scoped_editor_service_created():
+    """editorService.createScoped called with editorGroupsContainer and stored."""
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('src/vs/workbench/browser/parts/titlebar/titlebarPart.ts', 'utf8');
+if (!src.includes('editorService.createScoped(editorGroupsContainer'))) {
+  console.error('FAIL: editorService.createScoped(editorGroupsContainer, ...) not found');
+  process.exit(1);
+}
+if (!src.includes('scopedEditorService')) {
+  console.error('FAIL: scopedEditorService variable not assigned');
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Scoped editor service not created: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+def test_child_instantiation_service_with_override():
+    """Child instantiation service with IEditorService override in ServiceCollection."""
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('src/vs/workbench/browser/parts/titlebar/titlebarPart.ts', 'utf8');
+if (!src.includes('instantiationService.createChild(new ServiceCollection')) {
+  console.error('FAIL: createChild(new ServiceCollection(...)) not found');
+  process.exit(1);
+}
+if (!src.includes('IEditorService, scopedEditorService')) {
+  console.error('FAIL: IEditorService -> scopedEditorService override not found');
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Child instantiation service wrong: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+def test_window_title_uses_scoped_service():
+    """WindowTitle instantiated via the scoped this.instantiationService."""
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('src/vs/workbench/browser/parts/titlebar/titlebarPart.ts', 'utf8');
+if (!src.includes('this.instantiationService.createInstance(WindowTitle'))) {
+  console.error('FAIL: must use this.instantiationService.createInstance(WindowTitle, ...)');
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"WindowTitle not using scoped service: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+def test_active_editor_from_container():
+    """Active editor read from editorGroupsContainer, not global editorService."""
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('src/vs/workbench/browser/parts/titlebar/titlebarPart.ts', 'utf8');
+if (!src.includes('this.editorGroupsContainer.activeGroup.activeEditor')) {
+  console.error('FAIL: should use editorGroupsContainer.activeGroup.activeEditor');
+  process.exit(1);
+}
+if (src.includes('this.editorService.activeEditor')) {
+  console.error('FAIL: old pattern this.editorService.activeEditor still present');
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Active editor source wrong: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# --- pass_to_pass ---
 
 
 def test_file_exists():
@@ -20,46 +107,31 @@ def test_file_exists():
     assert Path(TARGET).exists()
 
 
-def test_service_collection_imported():
-    """ServiceCollection should be imported for creating scoped services."""
-    src = Path(TARGET).read_text()
-    assert "ServiceCollection" in src, \
-        "ServiceCollection should be imported"
-
-
-def test_scoped_editor_service_created():
-    """A scoped editor service should be created with createScoped."""
-    src = Path(TARGET).read_text()
-    assert "createScoped" in src, \
-        "Should call editorService.createScoped"
-
-
-def test_child_instantiation_service():
-    """Should create child instantiation service with scoped editor service."""
-    src = Path(TARGET).read_text()
-    assert "createChild" in src, \
-        "Should call instantiationService.createChild"
-
-
-def test_editor_service_in_service_collection():
-    """IEditorService should be overridden in the child service collection."""
-    src = Path(TARGET).read_text()
-    assert "IEditorService" in src and "ServiceCollection" in src, \
-        "Should put IEditorService in ServiceCollection"
-
-
-def test_instantiation_service_field():
-    """instantiationService should be a field (protected readonly)."""
-    src = Path(TARGET).read_text()
-    assert "protected readonly instantiationService" in src or \
-           "protected instantiationService" in src or \
-           "readonly instantiationService: IInstantiationService" in src, \
-        "instantiationService should be a protected/readonly field"
-
-
-def test_active_group_editor_check():
-    """Should use editorGroupsContainer.activeGroup.activeEditor instead of editorService.activeEditor."""
-    src = Path(TARGET).read_text()
-    assert "editorGroupsContainer.activeGroup.activeEditor" in src or \
-           "this.editorGroupsContainer.activeGroup.activeEditor" in src, \
-        "Should check activeGroup.activeEditor instead of editorService.activeEditor"
+def test_file_transpiles():
+    """Modified TypeScript file transpiles without syntax errors."""
+    r = _run_node("""
+const ts = require('typescript');
+const fs = require('fs');
+const src = fs.readFileSync('src/vs/workbench/browser/parts/titlebar/titlebarPart.ts', 'utf8');
+const result = ts.transpileModule(src, {
+  compilerOptions: {
+    module: ts.ModuleKind.ESNext,
+    target: ts.ScriptTarget.ESNext,
+    experimentalDecorators: true,
+    emitDecoratorMetadata: true,
+  },
+  reportDiagnostics: true,
+});
+if (result.diagnostics && result.diagnostics.length > 0) {
+  result.diagnostics.forEach(d => {
+    const msg = typeof d.messageText === 'string'
+      ? d.messageText
+      : d.messageText.messageText || JSON.stringify(d.messageText);
+    console.error('Transpile error: ' + msg);
+  });
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"TypeScript transpile failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout

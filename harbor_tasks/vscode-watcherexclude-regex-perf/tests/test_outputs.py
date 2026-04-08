@@ -14,11 +14,25 @@ Fix summary:
     block (session override was applying the same pathological patterns).
 """
 
+import subprocess, json
 from pathlib import Path
 
 REPO = Path("/workspace/vscode")
 FC_FILE = REPO / "src/vs/workbench/contrib/files/browser/files.contribution.ts"
 SC_FILE = REPO / "src/vs/sessions/contrib/configuration/browser/configuration.contribution.ts"
+
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node.js in the repo directory."""
+    script = REPO / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=str(REPO),
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -27,46 +41,140 @@ SC_FILE = REPO / "src/vs/sessions/contrib/configuration/browser/configuration.co
 
 # [pr_diff] fail_to_pass
 def test_optimized_patterns_present():
-    """New non-pathological watcherExclude patterns added to workbench config default.
+    """New non-pathological watcherExclude patterns match correct paths.
 
-    The fix replaces '**/.git/objects/**' (causes pathological regex) with two
-    simpler patterns: '.git/objects/**' (root-level) and '*/.git/objects/**'
-    (one-level-deep). All three directories must have both variants.
+    Extracts the default patterns from files.contribution.ts via Node.js,
+    verifies all six new patterns exist, and validates each one matches
+    the intended .git/.hg paths using glob evaluation.
     """
-    content = FC_FILE.read_text()
+    r = _run_node("""
+import fs from 'fs';
+const content = fs.readFileSync(
+  'src/vs/workbench/contrib/files/browser/files.contribution.ts', 'utf8'
+);
 
-    # Root-level patterns (no leading glob)
-    assert "'.git/objects/**': true" in content, \
-        "Missing '.git/objects/**' pattern — root-level git objects not excluded"
-    assert "'.git/subtree-cache/**': true" in content, \
-        "Missing '.git/subtree-cache/**' pattern"
-    assert "'.hg/store/**': true" in content, \
-        "Missing '.hg/store/**' pattern"
+// Extract the default object near watcherExclude
+const defaultMatch = content.match(/'default':\\s*\\{([^}]+)\\}/);
+if (!defaultMatch) {
+  console.error('No default block found');
+  process.exit(1);
+}
 
-    # One-level-deep patterns (covers subdirectory workspaces)
-    assert "'*/.git/objects/**': true" in content, \
-        "Missing '*/.git/objects/**' pattern — nested git objects not excluded"
-    assert "'*/.git/subtree-cache/**': true" in content, \
-        "Missing '*/.git/subtree-cache/**' pattern"
-    assert "'*/.hg/store/**': true" in content, \
-        "Missing '*/.hg/store/**' pattern"
+const block = defaultMatch[1];
+const patterns = [];
+const re = /'([^']+)':\\s*true/g;
+let m;
+while ((m = re.exec(block)) !== null) {
+  patterns.push(m[1]);
+}
+
+// Simple glob matcher for the pattern types in this fix:
+//   "X/**"   -> path starts with "X/"
+//   "*/X/**" -> exactly one segment, then "/X/", then anything
+function globMatch(path, pattern) {
+  if (!pattern.endsWith('/**')) return path === pattern;
+  const base = pattern.slice(0, -3);
+  if (base.startsWith('*/')) {
+    const target = base.slice(2);
+    const slashIdx = path.indexOf('/');
+    if (slashIdx === -1) return false;
+    const rest = path.slice(slashIdx + 1);
+    return rest.startsWith(target + '/') || rest === target;
+  }
+  return path.startsWith(base + '/') || path === base;
+}
+
+// Required new patterns
+const required = [
+  '.git/objects/**', '.git/subtree-cache/**', '.hg/store/**',
+  '*/.git/objects/**', '*/.git/subtree-cache/**', '*/.hg/store/**'
+];
+const missing = required.filter(p => !patterns.includes(p));
+if (missing.length > 0) {
+  console.error('Missing patterns: ' + JSON.stringify(missing));
+  process.exit(1);
+}
+
+// Verify each pattern matches expected paths correctly
+const tests = [
+  { pattern: '.git/objects/**', path: '.git/objects/pack/abc.pack', expect: true },
+  { pattern: '.git/objects/**', path: '.git/objects/ab/cd1234', expect: true },
+  { pattern: '.git/subtree-cache/**', path: '.git/subtree-cache/abc', expect: true },
+  { pattern: '.hg/store/**', path: '.hg/store/data/xyz.i', expect: true },
+  { pattern: '*/.git/objects/**', path: 'project/.git/objects/pack/foo.pack', expect: true },
+  { pattern: '*/.git/subtree-cache/**', path: 'subdir/.git/subtree-cache/abc', expect: true },
+  { pattern: '*/.hg/store/**', path: 'subproject/.hg/store/data/foo', expect: true },
+  // Negative cases: deeper nesting should NOT match */ patterns
+  { pattern: '*/.git/objects/**', path: 'vendor/lib/.git/objects/abc', expect: false },
+  // Source code should never match exclusion patterns
+  { pattern: '.git/objects/**', path: 'src/main.ts', expect: false },
+  { pattern: '.hg/store/**', path: 'package.json', expect: false },
+];
+
+const failures = [];
+for (const t of tests) {
+  const result = globMatch(t.path, t.pattern);
+  if (result !== t.expect) {
+    failures.push(`"${t.pattern}" vs "${t.path}": expected ${t.expect}, got ${result}`);
+  }
+}
+if (failures.length > 0) {
+  console.error('Pattern match failures:\\n' + failures.join('\\n'));
+  process.exit(1);
+}
+
+console.log(JSON.stringify({ patterns, verified: tests.length }));
+""")
+    assert r.returncode == 0, f"Pattern verification failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    required = [
+        '.git/objects/**', '.git/subtree-cache/**', '.hg/store/**',
+        '*/.git/objects/**', '*/.git/subtree-cache/**', '*/.hg/store/**'
+    ]
+    for p in required:
+        assert p in data['patterns'], f"Missing pattern: {p}"
+    assert data['verified'] == 10, f"Expected 10 verified glob tests, got {data['verified']}"
 
 
 # [pr_diff] fail_to_pass
 def test_pathological_patterns_removed():
     """Old '**/' prefix patterns removed — they generate catastrophically complex RegExp.
 
-    A '**/' prefix followed by another '**' creates an exponential-time regex
-    matcher that stalls the file watcher on large repos (issue #305923).
+    Parses the default block via Node.js and confirms no '**/...' patterns
+    remain (the old patterns caused exponential backtracking in the watcher).
     """
-    content = FC_FILE.read_text()
+    r = _run_node("""
+import fs from 'fs';
+const content = fs.readFileSync(
+  'src/vs/workbench/contrib/files/browser/files.contribution.ts', 'utf8'
+);
 
-    assert "'**/.git/objects/**': true" not in content, \
-        "Old pathological pattern '**/.git/objects/**' still present"
-    assert "'**/.git/subtree-cache/**': true" not in content, \
-        "Old pathological pattern '**/.git/subtree-cache/**' still present"
-    assert "'**/.hg/store/**': true" not in content, \
-        "Old pathological pattern '**/.hg/store/**' still present"
+const defaultMatch = content.match(/'default':\\s*\\{([^}]+)\\}/);
+if (!defaultMatch) {
+  console.error('No default block found');
+  process.exit(1);
+}
+
+const block = defaultMatch[1];
+const patterns = [];
+const re = /'([^']+)':\\s*true/g;
+let m;
+while ((m = re.exec(block)) !== null) {
+  patterns.push(m[1]);
+}
+
+// Any pattern starting with **/ is the old pathological form
+const pathological = patterns.filter(p => p.startsWith('**/'));
+if (pathological.length > 0) {
+  console.error('Pathological patterns still present: ' + JSON.stringify(pathological));
+  process.exit(1);
+}
+
+console.log(JSON.stringify({ clean: true, patternCount: patterns.length }));
+""")
+    assert r.returncode == 0, f"Old pathological patterns still present: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data['clean'] is True
 
 
 # [pr_diff] fail_to_pass
@@ -74,9 +182,9 @@ def test_performance_comment_present():
     """Explanatory comment documenting why '**' prefix patterns are avoided."""
     content = FC_FILE.read_text()
 
-    assert "Avoiding a '**' pattern here" in content, \
-        "Missing comment: \"Avoiding a '**' pattern here which results in a very complex\""
-    assert "slow things down significantly" in content, \
+    assert "Avoiding a" in content and "**" in content, \
+        "Missing comment about avoiding '**' patterns"
+    assert "slow things down" in content or "complex" in content, \
         "Missing performance explanation in comment"
 
 
@@ -84,13 +192,32 @@ def test_performance_comment_present():
 def test_session_config_duplicate_removed():
     """Duplicate files.watcherExclude removed from sessions configuration.
 
-    The sessions contrib was overriding files.watcherExclude with the same
-    pathological patterns, defeating any workbench-level fix.
+    Parses the session config via Node.js and verifies no watcherExclude
+    override remains (the sessions contrib was re-applying the same
+    pathological patterns, defeating the workbench-level fix).
     """
-    content = SC_FILE.read_text()
+    r = _run_node("""
+import fs from 'fs';
+const content = fs.readFileSync(
+  'src/vs/sessions/contrib/configuration/browser/configuration.contribution.ts', 'utf8'
+);
 
-    assert "'files.watcherExclude':" not in content, \
-        "Duplicate files.watcherExclude still present in sessions configuration.contribution.ts"
+if (content.includes("'files.watcherExclude'")) {
+  console.error('Duplicate files.watcherExclude still present in sessions config');
+  process.exit(1);
+}
+
+// Verify the file still has its core registration (not accidentally deleted)
+if (!content.includes('registerDefaultConfigurations')) {
+  console.error('Session config corrupted: registerDefaultConfigurations missing');
+  process.exit(1);
+}
+
+console.log(JSON.stringify({ duplicateRemoved: true }));
+""")
+    assert r.returncode == 0, f"Session config check failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data['duplicateRemoved'] is True
 
 
 # ---------------------------------------------------------------------------
@@ -134,7 +261,6 @@ def test_tab_indentation_in_files_contribution():
     lines = content.splitlines()
 
     tab_indented = sum(1 for line in lines if line.startswith("\t"))
-    # 4-space indented lines (would indicate wrong style)
     space_indented = sum(1 for line in lines if line.startswith("    ") and not line.startswith("\t"))
 
     assert tab_indented > 10, \

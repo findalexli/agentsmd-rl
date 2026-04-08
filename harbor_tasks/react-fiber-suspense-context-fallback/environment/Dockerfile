@@ -21,18 +21,15 @@ RUN git clone https://github.com/facebook/react.git /workspace/react && \
     git checkout $BASE_COMMIT && \
     rm -rf .git && \
     git init && \
-    git add -A && \
-    git commit -m "snapshot" && \
     git config user.email "agent@example.com" && \
-    git config user.name "Agent"
+    git config user.name "Agent" && \
+    git add -A && \
+    git commit -m "snapshot"
 
 WORKDIR /workspace/react
 
-# Install dependencies for the reconciler package
-RUN npm install --legacy-peer-deps 2>&1 | tail -20 || true
-
-# Install minimal test dependencies
-RUN cd packages/react-reconciler && npm install --legacy-peer-deps 2>&1 | tail -20 || true
+# React uses yarn workspaces — npm cannot resolve link: deps
+RUN corepack enable && yarn install 2>&1 | tail -30 || true
 
 # Set up paths
 ENV NODE_ENV=development

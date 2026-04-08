@@ -8,19 +8,34 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import signal
-import textwrap
-import types
+import subprocess
+from pathlib import Path
+
+REPO = "/workspace/sglang"
+TARGET = f"{REPO}/python/sglang/srt/managers/detokenizer_manager.py"
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute a Python script in the repo directory."""
+    script = Path(REPO) / "_eval_test.py"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
+# Shared harness injected into every subprocess script.
+# Sets up AST extraction + lightweight mocks so the real function can run.
+_HARNESS = '''
+import ast, textwrap, types, signal, sys
 
 TARGET = "/workspace/sglang/python/sglang/srt/managers/detokenizer_manager.py"
 
-
-# ---------------------------------------------------------------------------
-# Helpers — extract and exec the target function with mocks
-# ---------------------------------------------------------------------------
-
-def _extract_function_source(name="run_detokenizer_process"):
-    """Parse the target file and return the dedented source of the named function."""
+def extract_function(name="run_detokenizer_process"):
     with open(TARGET) as f:
         source = f.read()
     tree = ast.parse(source)
@@ -28,77 +43,47 @@ def _extract_function_source(name="run_detokenizer_process"):
         if isinstance(node, ast.FunctionDef) and node.name == name:
             lines = source.splitlines(keepends=True)
             return textwrap.dedent("".join(lines[node.lineno - 1 : node.end_lineno]))
-    raise AssertionError(f"Function {name!r} not found in {TARGET}")
+    raise AssertionError(f"Function {name!r} not found")
 
-
-class _FailingManager:
+class FailingManager:
     """Constructor always raises — simulates a broken DetokenizerManager."""
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *a, **kw):
         raise RuntimeError("simulated constructor failure")
     def maybe_clear_socket_mapping(self):
         pass
 
-
-class _MockArgs:
+class MockArgs:
     tokenizer_worker_num = 1
 
-
-def _make_exec_globals(*, logger=None, parent_signal_log=None):
-    """Build the namespace for exec'ing run_detokenizer_process."""
-    signal_log = parent_signal_log if parent_signal_log is not None else []
-
+def make_globals(signal_log=None, manager_cls=FailingManager):
+    sig_log = signal_log if signal_log is not None else []
     psutil_mock = types.ModuleType("psutil")
-
     class MockProcess:
-        def __init__(self):
-            pass
         def parent(self):
-            ns = types.SimpleNamespace()
-            ns.send_signal = lambda sig: signal_log.append(sig)
-            return ns
-        def send_signal(self, sig):
-            signal_log.append(sig)
-
+            return types.SimpleNamespace(send_signal=lambda sig: sig_log.append(sig))
     psutil_mock.Process = MockProcess
-
-    if logger is None:
-        logger = types.SimpleNamespace(
-            error=lambda *a, **kw: None,
-            info=lambda *a, **kw: None,
-            warning=lambda *a, **kw: None,
-            debug=lambda *a, **kw: None,
-        )
-
     return {
-        "DetokenizerManager": _FailingManager,
-        "ServerArgs": _MockArgs,
-        "PortArgs": _MockArgs,
+        "DetokenizerManager": manager_cls,
+        "ServerArgs": MockArgs,
+        "PortArgs": MockArgs,
         "kill_itself_when_parent_died": lambda: None,
         "setproctitle": types.SimpleNamespace(setproctitle=lambda t: None),
         "psutil": psutil_mock,
-        "logger": logger,
+        "logger": types.SimpleNamespace(
+            error=lambda *a,**kw:None, info=lambda *a,**kw:None,
+            warning=lambda *a,**kw:None, debug=lambda *a,**kw:None),
         "configure_logger": lambda *a, **kw: None,
         "get_exception_traceback": lambda: "mock traceback",
         "signal": signal,
         "__builtins__": __builtins__,
     }
-
-
-def _exec_function(exec_globals):
-    """Compile and exec the function, then call it with the failing manager."""
-    func_src = _extract_function_source()
-    exec(func_src, exec_globals)
-    try:
-        exec_globals["run_detokenizer_process"](_MockArgs(), _MockArgs(), _FailingManager)
-    except (SystemExit, Exception):
-        pass
+'''
 
 
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Target file must parse as valid Python."""
     with open(TARGET) as f:
@@ -106,121 +91,154 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_no_unbound_error_on_constructor_failure():
     """When DetokenizerManager() raises, no UnboundLocalError should propagate."""
-    func_src = _extract_function_source()
-    g = _make_exec_globals()
-    exec(func_src, g)
+    r = _run_py(_HARNESS + '''
+func_src = extract_function()
+g = make_globals()
+exec(func_src, g)
+try:
+    g["run_detokenizer_process"](MockArgs(), MockArgs(), FailingManager)
+except UnboundLocalError as e:
+    print(f"FAIL: UnboundLocalError: {e}")
+    sys.exit(1)
+except Exception:
+    pass
+print("PASS")
+''')
+    assert r.returncode == 0, f"UnboundLocalError raised:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
-    raised_unbound = False
-    try:
-        g["run_detokenizer_process"](_MockArgs(), _MockArgs(), _FailingManager)
-    except (UnboundLocalError, NameError) as e:
-        if isinstance(e, UnboundLocalError) or "manager" in str(e):
-            raised_unbound = True
-    except (SystemExit, Exception):
-        pass
 
-    assert not raised_unbound, "UnboundLocalError raised when constructor fails"
-
-
-# [pr_diff] fail_to_pass
 def test_sigquit_sent_on_constructor_failure():
     """SIGQUIT must be sent to the parent process even when the constructor fails."""
-    signal_log = []
-    g = _make_exec_globals(parent_signal_log=signal_log)
-    _exec_function(g)
-    assert signal.SIGQUIT in signal_log, (
-        f"SIGQUIT not sent to parent. Signals sent: {signal_log}"
-    )
+    r = _run_py(_HARNESS + '''
+signal_log = []
+func_src = extract_function()
+g = make_globals(signal_log=signal_log)
+exec(func_src, g)
+try:
+    g["run_detokenizer_process"](MockArgs(), MockArgs(), FailingManager)
+except Exception:
+    pass
+if signal.SIGQUIT in signal_log:
+    print("PASS")
+else:
+    print(f"FAIL: SIGQUIT not in signal_log: {signal_log}")
+    sys.exit(1)
+''')
+    assert r.returncode == 0, f"SIGQUIT not sent:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_no_unbound_error_with_type_error():
-    """Same fix works when the constructor raises TypeError (varied exception type)."""
-    class TypeErrorManager:
-        def __init__(self, *args, **kwargs):
-            raise TypeError("bad argument type")
-        def maybe_clear_socket_mapping(self):
-            pass
-
-    signal_log = []
-    g = _make_exec_globals(parent_signal_log=signal_log)
-    # Override the manager class to use TypeError variant
-    g["DetokenizerManager"] = TypeErrorManager
-    func_src = _extract_function_source()
-    exec(func_src, g)
-
-    raised_unbound = False
-    try:
-        g["run_detokenizer_process"](_MockArgs(), _MockArgs(), TypeErrorManager)
-    except (UnboundLocalError, NameError) as e:
-        if isinstance(e, UnboundLocalError) or "manager" in str(e):
-            raised_unbound = True
-    except (SystemExit, Exception):
+    """Same fix works when the constructor raises TypeError."""
+    r = _run_py(_HARNESS + '''
+class TypeErrorManager:
+    def __init__(self, *a, **kw):
+        raise TypeError("bad argument type")
+    def maybe_clear_socket_mapping(self):
         pass
 
-    assert not raised_unbound, "UnboundLocalError raised with TypeError constructor"
-    assert signal.SIGQUIT in signal_log, "SIGQUIT not sent with TypeError constructor"
+signal_log = []
+func_src = extract_function()
+g = make_globals(signal_log=signal_log, manager_cls=TypeErrorManager)
+exec(func_src, g)
+try:
+    g["run_detokenizer_process"](MockArgs(), MockArgs(), TypeErrorManager)
+except UnboundLocalError as e:
+    print(f"FAIL: UnboundLocalError: {e}")
+    sys.exit(1)
+except Exception:
+    pass
+
+if signal.SIGQUIT not in signal_log:
+    print(f"FAIL: SIGQUIT not sent: {signal_log}")
+    sys.exit(1)
+print("PASS")
+''')
+    assert r.returncode == 0, f"Failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression + anti-stub
+# Pass-to-pass — regression + behavioral via subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] pass_to_pass
 def test_cleanup_called_when_manager_succeeds():
     """When manager IS created but event_loop raises, cleanup must still be called."""
-    cleanup_log = []
+    r = _run_py(_HARNESS + '''
+cleanup_log = []
 
-    class SuccessManager:
-        def __init__(self, *args, **kwargs):
-            pass  # Constructor succeeds
-        def event_loop(self):
-            raise RuntimeError("event loop crash")
-        def event_loop_overlap(self):
-            raise RuntimeError("event loop crash")
-        def maybe_clear_socket_mapping(self):
-            cleanup_log.append("cleared")
-
-    signal_log = []
-    g = _make_exec_globals(parent_signal_log=signal_log)
-    g["DetokenizerManager"] = SuccessManager
-    func_src = _extract_function_source()
-    exec(func_src, g)
-
-    try:
-        g["run_detokenizer_process"](_MockArgs(), _MockArgs(), SuccessManager)
-    except (SystemExit, Exception):
+class SuccessManager:
+    def __init__(self, *a, **kw):
         pass
+    def event_loop(self):
+        raise RuntimeError("event loop crash")
+    def event_loop_overlap(self):
+        raise RuntimeError("event loop crash")
+    def maybe_clear_socket_mapping(self):
+        cleanup_log.append("cleared")
 
-    assert len(cleanup_log) > 0, "maybe_clear_socket_mapping not called when manager was created"
-    assert signal.SIGQUIT in signal_log, "SIGQUIT not sent when event_loop fails"
+signal_log = []
+func_src = extract_function()
+g = make_globals(signal_log=signal_log, manager_cls=SuccessManager)
+exec(func_src, g)
+try:
+    g["run_detokenizer_process"](MockArgs(), MockArgs(), SuccessManager)
+except Exception:
+    pass
+
+if not cleanup_log:
+    print("FAIL: maybe_clear_socket_mapping not called")
+    sys.exit(1)
+if signal.SIGQUIT not in signal_log:
+    print(f"FAIL: SIGQUIT not sent: {signal_log}")
+    sys.exit(1)
+print("PASS")
+''')
+    assert r.returncode == 0, f"Cleanup check failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [static] pass_to_pass
 def test_error_logged_on_constructor_failure():
     """An error must be logged when the constructor fails."""
-    error_messages = []
-    logger = types.SimpleNamespace(
-        error=lambda *a, **kw: error_messages.append(a),
-        info=lambda *a, **kw: None,
-        warning=lambda *a, **kw: None,
-        debug=lambda *a, **kw: None,
-    )
-    g = _make_exec_globals(logger=logger)
-    _exec_function(g)
-    assert len(error_messages) > 0, "No error was logged when constructor failed"
-    msg = str(error_messages[0])
-    assert "DetokenizerManager" in msg or "traceback" in msg.lower(), (
-        f"Error message doesn't reference the failure: {msg}"
-    )
+    r = _run_py(_HARNESS + '''
+error_messages = []
+def capture_error(*a, **kw):
+    error_messages.append(a)
 
-# [static] pass_to_pass
+func_src = extract_function()
+g = make_globals()
+g["logger"] = types.SimpleNamespace(
+    error=capture_error, info=lambda *a,**kw:None,
+    warning=lambda *a,**kw:None, debug=lambda *a,**kw:None)
+exec(func_src, g)
+try:
+    g["run_detokenizer_process"](MockArgs(), MockArgs(), FailingManager)
+except Exception:
+    pass
+
+if not error_messages:
+    print("FAIL: no error logged")
+    sys.exit(1)
+msg = str(error_messages[0])
+if "DetokenizerManager" not in msg and "traceback" not in msg.lower():
+    print(f"FAIL: error message doesn't reference failure: {msg}")
+    sys.exit(1)
+print("PASS")
+''')
+    assert r.returncode == 0, f"Logging check failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) — structural checks
+# ---------------------------------------------------------------------------
+
 def test_function_signature_intact():
     """run_detokenizer_process must still exist with expected parameters."""
     with open(TARGET) as f:
@@ -235,7 +253,6 @@ def test_function_signature_intact():
     raise AssertionError("run_detokenizer_process function not found")
 
 
-# [static] pass_to_pass
 def test_not_stub():
     """run_detokenizer_process must have real logic, not just pass/return."""
     with open(TARGET) as f:
@@ -243,7 +260,6 @@ def test_not_stub():
     tree = ast.parse(source)
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef) and node.name == "run_detokenizer_process":
-            # Must have a try/except and multiple statements
             body_types = {type(s).__name__ for s in node.body}
             assert "Try" in body_types, "Function body missing try/except block"
             assert len(node.body) >= 3, (

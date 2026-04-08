@@ -12,15 +12,15 @@ checks:
     origin: static
     description: "tokenizer_manager.py must parse without syntax errors"
 
-  - id: no_backlog_warning_in_method
+  - id: no_backlog_warning_at_runtime
     type: fail_to_pass
     origin: pr_diff
-    description: "No logger.warning/warn calls about streaming backlog in _wait_one_response"
+    description: "Executing the streaming drain path with multiple pending chunks must not emit WARNING-level logs"
 
-  - id: no_warning_emitted_with_pending_chunks
+  - id: no_warning_call_in_method
     type: fail_to_pass
     origin: pr_diff
-    description: "Executing backlog-related code paths must not emit WARNING-level output"
+    description: "No WARNING-level logger calls about streaming backlog in _wait_one_response AST"
 
   - id: async_generator_preserved
     type: pass_to_pass

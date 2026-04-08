@@ -6,12 +6,12 @@ PR:   28617
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-NOTE: This is a C++ task (JSC/WebKit). The test container cannot compile
-or execute Bun, so all checks are structural — they parse the source file
-and verify the correct code patterns exist. We strip comments to prevent
-trivial gaming.
+C++ task (JSC/WebKit bindings). Cannot compile Bun in the test container,
+so f2p checks use subprocess.run() to execute Python scripts that parse
+the C++ source with brace-matching scope analysis.
 """
 
+import subprocess
 import re
 from pathlib import Path
 
@@ -19,8 +19,12 @@ REPO = "/workspace/bun"
 CPP_FILE = Path(REPO) / "src/bun.js/bindings/FormatStackTraceForJS.cpp"
 
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
 def _get_function_body(strip_comments: bool = True) -> str:
-    """Extract errorConstructorFuncCaptureStackTrace body, optionally stripped of comments."""
+    """Extract errorConstructorFuncCaptureStackTrace body from C++ source."""
     text = CPP_FILE.read_text()
     m = re.search(
         r"errorConstructorFuncCaptureStackTrace\b(.*?)(?=\nJSC_DEFINE_HOST_FUNCTION|\Z)",
@@ -35,11 +39,76 @@ def _get_function_body(strip_comments: bool = True) -> str:
     return body
 
 
+def _run_cpp_check(assertion_code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute a Python verification script via subprocess that analyzes the C++ source.
+
+    The subprocess receives `text` (file contents, comments stripped) and a
+    pre-loaded `_extract_branches()` helper that returns (if_body, else_body)
+    for the hasMaterializedErrorInfo conditional block. The assertion_code
+    should use `assert` statements and `print("PASS")` on success.
+    """
+    preamble = (
+        'import re, sys\n'
+        'from pathlib import Path\n'
+        '\n'
+        f'text = Path("{CPP_FILE}").read_text()\n'
+        '# Strip comments to prevent trivial gaming\n'
+        r'text = re.sub(r"//[^\n]*", "", text)' + '\n'
+        r'text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)' + '\n'
+        '\n'
+    )
+
+    extractor = (
+        r'def _extract_branches():' + '\n'
+        r'    m = re.search(r"errorConstructorFuncCaptureStackTrace\b", text)' + '\n'
+        r'    assert m, "errorConstructorFuncCaptureStackTrace not found"' + '\n'
+        r'    region = text[m.start():]' + '\n'
+        r'    # \w+ before -> rejects negated form (!instance->)' + '\n'
+        r'    if_m = re.search(r"\bif\s*\(\s*\w+->hasMaterializedErrorInfo\s*\(\s*\)\s*\)", region)' + '\n'
+        r'    assert if_m, "Positive hasMaterializedErrorInfo if-condition not found"' + '\n'
+        r'    rest = region[if_m.end():]' + '\n'
+        r'    bp = rest.find("{")' + '\n'
+        r'    assert bp >= 0, "No opening brace after if-condition"' + '\n'
+        r'    depth, end = 0, -1' + '\n'
+        r'    for i in range(bp, len(rest)):' + '\n'
+        r'        if rest[i] == "{": depth += 1' + '\n'
+        r'        elif rest[i] == "}":' + '\n'
+        r'            depth -= 1' + '\n'
+        r'            if depth == 0: end = i; break' + '\n'
+        r'    assert end >= 0, "Unbalanced braces in if-body"' + '\n'
+        r'    if_body = rest[bp:end + 1]' + '\n'
+        r'    erest = rest[end + 1:]' + '\n'
+        r'    em = re.search(r"\belse\s*\{", erest)' + '\n'
+        r'    else_body = ""' + '\n'
+        r'    if em:' + '\n'
+        r'        eb = em.end() - 1' + '\n'
+        r'        depth = 0' + '\n'
+        r'        for i in range(eb, len(erest)):' + '\n'
+        r'            if erest[i] == "{": depth += 1' + '\n'
+        r'            elif erest[i] == "}":' + '\n'
+        r'                depth -= 1' + '\n'
+        r'                if depth == 0: else_body = erest[eb:i + 1]; break' + '\n'
+        r'    return if_body, else_body' + '\n'
+        '\n'
+        'if_body, else_body = _extract_branches()\n'
+    )
+
+    script = preamble + extractor + "\n" + assertion_code
+    tmp = Path("/tmp/_cpp_check.py")
+    tmp.write_text(script)
+    try:
+        return subprocess.run(
+            ["python3", str(tmp)],
+            capture_output=True, text=True, timeout=timeout,
+        )
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
+# Gate (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_source_file_exists():
     """FormatStackTraceForJS.cpp must exist and be non-empty."""
     assert CPP_FILE.exists(), f"{CPP_FILE} does not exist"
@@ -47,68 +116,59 @@ def test_source_file_exists():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core bug fix checks
+# Fail-to-pass (pr_diff) — subprocess-based C++ scope analysis
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_materialized_branch_with_else():
-    """hasMaterializedErrorInfo must be used as a POSITIVE branching condition
-    (if+else), not a negated guard. The buggy code has if (!has...) with no
+    """hasMaterializedErrorInfo must be a POSITIVE branching condition
+    (if+else), not a negated guard. The buggy code has if (!...) with no
     dedicated else for the materialized path."""
-    body = _get_function_body()
-    # Must be a positive check: if (x->hasMaterializedErrorInfo()), NOT if (!x->hasMaterializedErrorInfo())
-    # \w+ before -> rejects the negated form since ! is not \w
-    has_positive_if = re.search(r"\bif\s*\(\s*\w+->hasMaterializedErrorInfo\s*\(", body)
-    assert has_positive_if, (
-        "hasMaterializedErrorInfo not used as a positive if-condition — "
-        "the buggy pattern uses if (!...) which inverts the logic"
+    r = _run_cpp_check(
+        'assert else_body, "No else branch after hasMaterializedErrorInfo check"\n'
+        'print("PASS")\n'
     )
-    after_if = body[has_positive_if.start() :]
-    assert re.search(
-        r"\}\s*else\s*\{", after_if
-    ), "No else branch after hasMaterializedErrorInfo check"
+    assert r.returncode == 0, (
+        f"Branch structure check failed:\n{r.stderr or r.stdout}"
+    )
 
 
-# [pr_diff] fail_to_pass
 def test_setStackFrames_not_in_materialized_path():
-    """setStackFrames must NOT appear in the materialized-info branch.
+    """setStackFrames must NOT appear in the materialized-info (if) branch.
     The buggy code calls setStackFrames unconditionally after materialization,
     violating JSC's invariant (m_errorInfoMaterialized=true + non-null m_stackTrace)."""
-    body = _get_function_body()
-    has_if = re.search(r"\bif\s*\(.*hasMaterializedErrorInfo\s*\(", body)
-    assert has_if, "hasMaterializedErrorInfo if-block not found"
-    after_if = body[has_if.start() :]
-    else_match = re.search(r"\}\s*else\s*\{", after_if)
-    assert else_match, "No else branch found"
-    materialized_block = after_if[: else_match.start()]
-    assert not re.search(
-        r"\bsetStackFrames\s*\(", materialized_block
-    ), "setStackFrames called in materialized path — this causes the assertion failure"
+    r = _run_cpp_check(
+        'assert not re.search(r"\\bsetStackFrames\\s*\\(", if_body), (\n'
+        '    "setStackFrames found in materialized (if) branch — "\n'
+        '    "this causes ASSERT(!m_errorInfoMaterialized) failure"\n'
+        ')\n'
+        'print("PASS")\n'
+    )
+    assert r.returncode == 0, (
+        f"setStackFrames check failed:\n{r.stderr or r.stdout}"
+    )
 
 
-# [pr_diff] fail_to_pass
 def test_materialized_path_eagerly_sets_stack():
     """When error info is already materialized, the fix must eagerly compute
-    and set the .stack property via a direct-write API (putDirect, etc.),
-    NOT through setStackFrames + lazy accessor."""
-    body = _get_function_body()
-    has_if = re.search(r"\bif\s*\(.*hasMaterializedErrorInfo\s*\(", body)
-    assert has_if, "hasMaterializedErrorInfo if-block not found"
-    after_if = body[has_if.start() :]
-    else_match = re.search(r"\}\s*else\s*\{", after_if)
-    assert else_match, "No else branch found"
-    materialized_block = after_if[: else_match.start()]
-    assert re.search(
-        r"\b(putDirect|putDirectWithoutTransition|defineOwnProperty)\s*\(",
-        materialized_block,
-    ), "Materialized path missing direct property write for .stack"
+    and set the .stack property via putDirect (not through lazy accessor)."""
+    r = _run_cpp_check(
+        'assert re.search(r"\\bputDirect\\s*\\(", if_body), (\n'
+        '    "Materialized path missing putDirect call for .stack property"\n'
+        ')\n'
+        'assert re.search(r"\\bcomputeErrorInfoToJSValue\\s*\\(", if_body), (\n'
+        '    "Materialized path missing computeErrorInfoToJSValue call"\n'
+        ')\n'
+        'print("PASS")\n'
+    )
+    assert r.returncode == 0, (
+        f"Eager stack write check failed:\n{r.stderr or r.stdout}"
+    )
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff / static) — regression + structural
 # ---------------------------------------------------------------------------
 
-# [pr_diff] pass_to_pass
 def test_function_signature_preserved():
     """errorConstructorFuncCaptureStackTrace must still be declared with
     JSC_DEFINE_HOST_FUNCTION wrapper."""
@@ -118,17 +178,15 @@ def test_function_signature_preserved():
     ), "errorConstructorFuncCaptureStackTrace function signature missing"
 
 
-# [pr_diff] pass_to_pass
 def test_lazy_accessor_in_non_materialized_path():
     """Non-materialized path must still install a lazy custom accessor via
-    putDirectCustomAccessor — this preserves lazy evaluation for the common case."""
+    putDirectCustomAccessor — preserves lazy evaluation for the common case."""
     body = _get_function_body()
     assert re.search(
         r"\bputDirectCustomAccessor\s*\(", body
     ), "putDirectCustomAccessor missing — lazy accessor for non-materialized path removed"
 
 
-# [pr_diff] pass_to_pass
 def test_delete_property_preserved():
     """Non-materialized path must delete the existing .stack property before
     installing the custom accessor (DeletePropertySlot pattern)."""
@@ -138,7 +196,6 @@ def test_delete_property_preserved():
     ), "deleteProperty missing — needed to clear .stack before installing custom accessor"
 
 
-# [pr_diff] pass_to_pass
 def test_exception_safety():
     """Function must include RETURN_IF_EXCEPTION for proper JSC exception safety."""
     body = _get_function_body()
@@ -147,7 +204,6 @@ def test_exception_safety():
     ), "RETURN_IF_EXCEPTION missing — exception safety violated"
 
 
-# [static] pass_to_pass
 def test_not_stub():
     """Function must have substantial implementation — at least 35 non-blank
     non-comment lines. Prevents trivial stubs."""
@@ -158,7 +214,6 @@ def test_not_stub():
     ), f"Function has only {len(lines)} non-blank lines — likely a stub"
 
 
-# [static] pass_to_pass
 def test_jsc_api_diversity():
     """Function must use at least 4 different JSC API calls — prevents
     keyword-stuffed or minimal implementations."""
@@ -183,7 +238,6 @@ def test_jsc_api_diversity():
 # Config-derived (agent_config) — rules from AGENTS.md / SKILL.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — AGENTS.md:228 (follow existing code style)
 def test_no_tabs_in_function():
     """Bun C++ uses spaces for indentation. No tabs in the function body.
     Derived from AGENTS.md: 'Follow existing code style - check neighboring files for patterns'."""
@@ -197,13 +251,10 @@ def test_no_tabs_in_function():
     assert "\t" not in m.group(1), "Tabs found in function body — use spaces"
 
 
-# [agent_config] pass_to_pass — .claude/skills/implementing-jsc-classes-cpp/SKILL.md:184
 def test_root_h_include():
     """C++ bindings files must include root.h at the top.
     Derived from implementing-jsc-classes-cpp SKILL.md: 'Include #include "root.h" at the top of C++ files'."""
-    # AST-only because: C++ cannot be compiled/executed in this container
     text = CPP_FILE.read_text()
-    # root.h must appear before any other includes or code
     lines = text.split("\n")
     include_lines = [
         (i, line) for i, line in enumerate(lines)

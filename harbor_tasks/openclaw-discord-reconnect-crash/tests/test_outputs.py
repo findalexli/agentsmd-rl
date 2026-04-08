@@ -7,8 +7,10 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
 import os
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/openclaw"
@@ -30,18 +32,14 @@ def _extract_drain_body(src):
     for the logging path. The drain callback is where buffered events are
     processed and where the gate must be removed.
     """
-    # Find drainPendingGatewayErrors definition
     drain_idx = src.find("drainPendingGatewayErrors")
     assert drain_idx != -1, "drainPendingGatewayErrors not found"
 
-    # Find the opening brace of the drainPending callback
-    # Pattern: drainPending((event) => {
     cb_start = src.find("drainPending(", drain_idx)
     assert cb_start != -1, "drainPending( call not found"
     brace_start = src.find("{", cb_start)
     assert brace_start != -1, "Opening brace of drain callback not found"
 
-    # Match braces to find the end
     depth = 0
     for i in range(brace_start, len(src)):
         if src[i] == "{":
@@ -51,11 +49,63 @@ def _extract_drain_body(src):
             if depth == 0:
                 return src[brace_start:i + 1]
 
-    return src[brace_start:]  # fallback
+    return src[brace_start:]
+
+
+def _extract_stop_condition(src):
+    """Extract the if-condition from the drain callback that leads to return 'stop'.
+
+    Returns the raw condition expression, e.g.:
+      event.type === "disallowed-intents" || event.type === "reconnect-exhausted"
+    """
+    drain = _extract_drain_body(src)
+    code = re.sub(r'//[^\n]*', '', drain)
+    code = re.sub(r'/\*[\s\S]*?\*/', '', code)
+    match = re.search(r'if\s*\(([\s\S]*?)\)\s*\{\s*return\s+["\']stop["\']', code)
+    assert match is not None, "No stop condition found in drain callback"
+    return match.group(1).strip()
+
+
+def _run_node(code, timeout=30):
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
+def _eval_condition(cond_expr, event_type, lifecycle_stopping):
+    """Evaluate the drain callback's condition expression with given inputs.
+
+    Extracts the condition from source, writes it to a temp file, then uses
+    Node.js new Function() to evaluate it with the provided event type and
+    lifecycleStopping value. Returns True if the condition is truthy.
+    """
+    cond = ' '.join(cond_expr.split())
+    cond_file = Path(REPO) / "_eval_cond.txt"
+    cond_file.write_text(cond)
+    ls_val = "true" if lifecycle_stopping else "false"
+    try:
+        r = _run_node(
+            'import { readFileSync } from "node:fs";\n'
+            'const cond = readFileSync("_eval_cond.txt", "utf8").trim();\n'
+            'const fn = new Function("event", "lifecycleStopping", "return (" + cond + ");");\n'
+            f'const result = fn({{ type: "{event_type}" }}, {ls_val});\n'
+            'console.log(result ? "TRUE" : "FALSE");\n'
+        )
+        assert r.returncode == 0, f"Node eval failed: {r.stderr}"
+        return "TRUE" in r.stdout
+    finally:
+        cond_file.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests using Node.js subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -66,57 +116,35 @@ def test_drain_reconnect_exhausted_not_gated():
     The bug: (lifecycleStopping && event.type === "reconnect-exhausted")
     in the drain callback missed buffered events queued before teardown
     flipped lifecycleStopping, causing a crash via throw event.err.
+
+    This test extracts the actual condition from source code and evaluates
+    it via Node.js to verify reconnect-exhausted triggers 'stop' even when
+    lifecycleStopping is false.
     """
     src = _read_target()
-    drain = _extract_drain_body(src)
-
-    # The buggy pattern in the drain callback
-    buggy = re.search(
-        r'lifecycleStopping\s*&&[^;{]*reconnect-exhausted', drain
-    )
-    assert buggy is None, (
-        "drainPendingGatewayErrors still gates reconnect-exhausted "
-        "behind lifecycleStopping && — buffered events before teardown will crash"
-    )
-
-    buggy_rev = re.search(
-        r'reconnect-exhausted[^;{]*&&\s*lifecycleStopping', drain
-    )
-    assert buggy_rev is None, (
-        "drainPendingGatewayErrors still gates reconnect-exhausted "
-        "behind && lifecycleStopping"
+    cond = _extract_stop_condition(src)
+    result = _eval_condition(cond, "reconnect-exhausted", False)
+    assert result, (
+        "reconnect-exhausted with lifecycleStopping=false does NOT evaluate to stop — "
+        "the condition is still gated by lifecycleStopping (the original bug)"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_drain_reconnect_exhausted_returns_stop():
-    """In drainPendingGatewayErrors, reconnect-exhausted must lead to
-    return 'stop' unconditionally (not fall through to throw event.err).
+    """In drainPendingGatewayErrors, reconnect-exhausted must unconditionally
+    return 'stop' — not fall through to throw event.err.
+
+    Evaluates the actual condition via Node.js for both lifecycleStopping states.
     """
     src = _read_target()
-    drain = _extract_drain_body(src)
-
-    # Strip single-line comments so we only analyze code
-    drain_code = re.sub(r'//[^\n]*', '', drain)
-
-    # reconnect-exhausted must be checked in the drain callback CODE
-    match = re.search(r'event\.type\s*===?\s*["\']reconnect-exhausted["\']', drain_code)
-    assert match is not None, (
-        "reconnect-exhausted type check not found in drainPendingGatewayErrors code — "
-        "buffered events will fall through to throw"
+    cond = _extract_stop_condition(src)
+    assert _eval_condition(cond, "reconnect-exhausted", False), (
+        "reconnect-exhausted does not return stop when lifecycleStopping=false"
     )
-
-    # It must lead to return "stop", not throw
-    after = drain_code[match.start():match.start() + 300]
-    assert re.search(r'return\s+["\']stop["\']', after), (
-        "reconnect-exhausted in drain does not return 'stop'"
+    assert _eval_condition(cond, "reconnect-exhausted", True), (
+        "reconnect-exhausted does not return stop when lifecycleStopping=true"
     )
-
-    # And must NOT be inside a lifecycleStopping guard
-    before = drain_code[max(0, match.start() - 200):match.start()]
-    assert not re.search(
-        r'\(\s*lifecycleStopping\s*&&[^)]*$', before
-    ), "reconnect-exhausted wrapped in (lifecycleStopping && ...) guard"
 
 
 # [pr_diff] fail_to_pass
@@ -124,17 +152,19 @@ def test_drain_no_parenthesized_lifecycle_guard():
     """The drain callback must not have a parenthesized
     (lifecycleStopping && ...reconnect-exhausted) sub-expression.
 
-    This is the exact pattern that caused the race condition.
+    Verifies the actual condition evaluates identically for reconnect-exhausted
+    regardless of lifecycleStopping, proving the AND-gate is removed.
     """
     src = _read_target()
-    drain = _extract_drain_body(src)
-
-    buggy = re.search(
-        r'\(\s*lifecycleStopping\s*&&[^)]*reconnect-exhausted[^)]*\)', drain
+    cond = _extract_stop_condition(src)
+    r_false = _eval_condition(cond, "reconnect-exhausted", False)
+    r_true = _eval_condition(cond, "reconnect-exhausted", True)
+    assert r_false and r_true, (
+        "reconnect-exhausted must evaluate to stop in both lifecycleStopping states"
     )
-    assert buggy is None, (
-        "Found (lifecycleStopping && ...reconnect-exhausted) in drain — "
-        "this is the exact buggy pattern"
+    assert r_false == r_true, (
+        "reconnect-exhausted outcome differs based on lifecycleStopping — "
+        "the lifecycleStopping guard is still present"
     )
 
 
@@ -220,7 +250,6 @@ def test_no_ts_nocheck():
     src = _read_target()
     assert "@ts-nocheck" not in src, "Found @ts-nocheck — fix root cause instead"
     assert "@ts-ignore" not in src, "Found @ts-ignore — fix root cause instead"
-    # The base file has zero eslint-disable comments; the fix should not add any
     assert "eslint-disable" not in src, (
         "Found eslint-disable suppression — fix root cause instead"
     )
@@ -262,9 +291,7 @@ def test_no_prototype_mutation():
 def test_no_mixed_dynamic_static_imports():
     """Must not mix await import() and static import for the same module."""
     src = _read_target()
-    # Find all static imports
     static_modules = set(re.findall(r'from\s+["\']([^"\']+)["\']', src))
-    # Find all dynamic imports
     dynamic_modules = set(re.findall(r'await\s+import\s*\(\s*["\']([^"\']+)["\']\s*\)', src))
     overlap = static_modules & dynamic_modules
     assert not overlap, (
@@ -277,8 +304,6 @@ def test_no_mixed_dynamic_static_imports():
 def test_no_relative_imports_escaping_extension():
     """Relative imports must not resolve outside the extension package root."""
     src = _read_target()
-    # extensions/discord/src/monitor/ — going up 4+ levels escapes the extension
-    # ../../../../ would leave extensions/discord/
     escaping = re.findall(r'from\s+["\'](\.\./\.\./\.\./\.\.[^"\']*)["\']', src)
     assert not escaping, (
         f"Relative imports escape extension root: {escaping} — "

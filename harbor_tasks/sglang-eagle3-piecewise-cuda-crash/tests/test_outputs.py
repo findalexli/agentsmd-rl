@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 import textwrap
 import types
 from pathlib import Path
@@ -16,84 +17,80 @@ REPO = "/workspace/sglang"
 TARGET = f"{REPO}/python/sglang/srt/model_executor/model_runner.py"
 
 
-def _extract_func(name="init_piecewise_cuda_graphs"):
-    """Extract a function's source from the target file by AST lookup."""
-    # AST-only because: module imports torch, triton, CUDA — cannot import
-    source = Path(TARGET).read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name:
-            lines = source.splitlines(keepends=True)
-            return textwrap.dedent("".join(lines[node.lineno - 1 : node.end_lineno]))
-    raise AssertionError(f"{name} not found in {TARGET}")
+def _run_script(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Write a Python script to a temp file and execute it via subprocess."""
+    script = Path(REPO) / "_eval_tmp_test.py"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
-class _MockLogger:
-    def __init__(self):
-        self.warnings = []
+# Shared harness code injected into subprocess scripts.
+# Extracts init_piecewise_cuda_graphs via AST (cannot import module — needs CUDA)
+# and executes it with mock objects.
+_HARNESS = textwrap.dedent("""\
+    import ast, textwrap, types, sys
 
-    def error(self, *a, **kw): pass
-    def info(self, *a, **kw): pass
-    def warning(self, msg, *a, **kw): self.warnings.append(msg)
-    def warning_once(self, msg, *a, **kw): self.warnings.append(msg)
-    def debug(self, *a, **kw): pass
+    TARGET = "/workspace/sglang/python/sglang/srt/model_executor/model_runner.py"
 
+    def extract_func(name="init_piecewise_cuda_graphs"):
+        source = open(TARGET).read()
+        tree = ast.parse(source)
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name:
+                lines = source.splitlines(keepends=True)
+                return textwrap.dedent("".join(lines[node.lineno - 1 : node.end_lineno]))
+        raise RuntimeError(f"{name} not found")
 
-def _run_func(mock_self, resolve_fn=None):
-    """Compile and execute init_piecewise_cuda_graphs with the given mock self."""
-    func_src = _extract_func()
-    mock_logger = _MockLogger()
-    resolve_calls = []
-
-    def default_resolve(m):
-        resolve_calls.append(True)
-        return m.model
-
-    exec_globals = {
-        "resolve_language_model": resolve_fn or default_resolve,
-        "logger": mock_logger,
-        "__builtins__": __builtins__,
-    }
-    exec(func_src, exec_globals)
-    exec_globals["init_piecewise_cuda_graphs"](mock_self)
-    return resolve_calls, mock_logger
-
-
-def _make_layerless_model(extra_attr=None):
-    """Model WITHOUT 'layers' — simulates eagle3 draft model."""
-    class Inner:
-        pass
-
-    class Model:
+    class MockLogger:
         def __init__(self):
-            self.model = Inner()
+            self.warnings = []
+        def error(self, *a, **kw): pass
+        def info(self, *a, **kw): pass
+        def warning(self, msg, *a, **kw): self.warnings.append(msg)
+        def warning_once(self, msg, *a, **kw): self.warnings.append(msg)
+        def debug(self, *a, **kw): pass
 
-    m = Model()
-    if extra_attr:
-        setattr(m.model, extra_attr[0], extra_attr[1])
-    return m
+    class ServerArgs:
+        disable_piecewise_cuda_graph = False
+        piecewise_cuda_graph_tokens = [128, 256]
 
+    def run_func(mock_self):
+        func_src = extract_func()
+        logger = MockLogger()
+        exec_globals = {
+            "resolve_language_model": lambda m: m.model,
+            "logger": logger,
+            "__builtins__": __builtins__,
+        }
+        exec(func_src, exec_globals)
+        exec_globals["init_piecewise_cuda_graphs"](mock_self)
+        return logger
 
-def _make_layered_model(n_layers=3):
-    """Model WITH standard 'layers' attribute."""
-    class FakeLayer:
-        def __init__(self):
-            self.self_attn = types.SimpleNamespace(attn=object())
+    def make_layerless_model():
+        class Inner: pass
+        class Model:
+            def __init__(self):
+                self.model = Inner()
+        return Model()
 
-    class Inner:
-        def __init__(self):
-            self.layers = [FakeLayer() for _ in range(n_layers)]
-
-    class Model:
-        def __init__(self):
-            self.model = Inner()
-
-    return Model()
-
-
-class _ServerArgs:
-    disable_piecewise_cuda_graph = False
-    piecewise_cuda_graph_tokens = [128, 256]
+    def make_layered_model(n_layers=3):
+        class FakeLayer:
+            def __init__(self):
+                self.self_attn = types.SimpleNamespace(attn=object())
+        class Inner:
+            def __init__(self):
+                self.layers = [FakeLayer() for _ in range(n_layers)]
+        class Model:
+            def __init__(self):
+                self.model = Inner()
+        return Model()
+""")
 
 
 # ---------------------------------------------------------------------------
@@ -108,70 +105,78 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_no_crash_missing_layers():
     """Model without 'layers' attr must not raise AttributeError."""
-    # Test with 3 different layerless model variants to prevent hardcoding
-    variants = [
-        _make_layerless_model(),                              # bare inner model
-        _make_layerless_model(("midlayer", object())),        # eagle3-style single midlayer
-        _make_layerless_model(("blocks", [1, 2, 3])),         # alternative block naming
-    ]
-    for i, model in enumerate(variants):
-        mock_self = types.SimpleNamespace(
-            model=model,
-            server_args=_ServerArgs(),
-            attention_layers=[],
-            moe_layers=[],
-            moe_fusions=[],
-        )
-        try:
-            resolve_calls, _ = _run_func(mock_self)
-        except AttributeError as e:
-            if "layers" in str(e):
-                raise AssertionError(f"Variant {i}: crashed on missing 'layers': {e}") from e
-            # Other AttributeErrors from downstream CUDA code are OK
-            resolve_calls = [True]
-        except Exception:
-            # Other errors (e.g. CUDA stubs missing) are acceptable —
-            # key is no AttributeError on 'layers'
-            resolve_calls = [True]
+    r = _run_script(_HARNESS + textwrap.dedent("""\
+        # Test 3 layerless model variants to prevent hardcoding
+        variants = [
+            make_layerless_model(),                                    # bare
+            make_layerless_model(),                                    # eagle3-style
+            make_layerless_model(),                                    # alt naming
+        ]
+        # Add different attributes to variants to vary the models
+        setattr(variants[1].model, "midlayer", object())
+        setattr(variants[2].model, "blocks", [1, 2, 3])
 
-        assert resolve_calls, f"Variant {i}: resolve_language_model never called — function is likely stubbed"
+        for i, model in enumerate(variants):
+            mock_self = types.SimpleNamespace(
+                model=model,
+                server_args=ServerArgs(),
+                attention_layers=[],
+                moe_layers=[],
+                moe_fusions=[],
+            )
+            try:
+                run_func(mock_self)
+            except AttributeError as e:
+                if "layers" in str(e):
+                    print(f"FAIL variant {i}: crashed on missing 'layers': {e}", file=sys.stderr)
+                    sys.exit(1)
+            except Exception:
+                pass  # Other errors (e.g. CUDA stubs missing) are OK
+
+        print("PASS")
+    """))
+    assert r.returncode == 0, f"Subprocess failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout, f"Expected PASS, got: {r.stdout}"
 
 
 # [pr_diff] fail_to_pass
 def test_no_spurious_extraction_layerless():
     """Layerless model must not produce populated attention_layers."""
-    SENTINEL = object()
-    mock_self = types.SimpleNamespace(
-        model=_make_layerless_model(),
-        server_args=_ServerArgs(),
-        attention_layers=SENTINEL,
-        moe_layers=SENTINEL,
-        moe_fusions=SENTINEL,
-    )
-    try:
-        resolve_calls, _ = _run_func(mock_self)
-    except AttributeError as e:
-        if "layers" in str(e):
-            raise AssertionError(f"Crashed on missing 'layers': {e}") from e
-        resolve_calls = [True]
-    except Exception:
-        resolve_calls = [True]
-
-    assert resolve_calls, "resolve_language_model never called — function is likely stubbed"
-
-    attn = mock_self.attention_layers
-    # Valid: SENTINEL (early return), None, or empty list
-    # Invalid: list with actual layer objects
-    if isinstance(attn, list) and len(attn) > 0:
-        raise AssertionError(
-            f"attention_layers has {len(attn)} entries but model has no layers"
+    r = _run_script(_HARNESS + textwrap.dedent("""\
+        SENTINEL = "SENTINEL_UNCHANGED"
+        mock_self = types.SimpleNamespace(
+            model=make_layerless_model(),
+            server_args=ServerArgs(),
+            attention_layers=SENTINEL,
+            moe_layers=SENTINEL,
+            moe_fusions=SENTINEL,
         )
+        try:
+            run_func(mock_self)
+        except AttributeError as e:
+            if "layers" in str(e):
+                print(f"FAIL: crashed on missing 'layers': {e}", file=sys.stderr)
+                sys.exit(1)
+        except Exception:
+            pass  # Other errors are OK
+
+        attn = mock_self.attention_layers
+        # Valid: SENTINEL (early return), None, or empty list
+        # Invalid: list with actual layer objects
+        if isinstance(attn, list) and len(attn) > 0:
+            print(f"FAIL: attention_layers has {len(attn)} entries but model has no layers", file=sys.stderr)
+            sys.exit(1)
+
+        print("PASS")
+    """))
+    assert r.returncode == 0, f"Subprocess failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout, f"Expected PASS, got: {r.stdout}"
 
 
 # ---------------------------------------------------------------------------
@@ -181,33 +186,37 @@ def test_no_spurious_extraction_layerless():
 # [pr_diff] pass_to_pass
 def test_layers_extracted_standard_model():
     """Model WITH layers must still get attention layers extracted."""
-    # Test with multiple layer counts to prevent hardcoding
-    for n_layers in (2, 4, 6):
-        mock_self = types.SimpleNamespace(
-            model=_make_layered_model(n_layers=n_layers),
-            server_args=_ServerArgs(),
-            attention_layers=None,
-            moe_layers=None,
-            moe_fusions=None,
-        )
-        try:
-            _run_func(mock_self)
-        except Exception:
-            pass  # May fail on downstream CUDA parts; we check layer extraction
+    r = _run_script(_HARNESS + textwrap.dedent("""\
+        for n_layers in (2, 4, 6):
+            mock_self = types.SimpleNamespace(
+                model=make_layered_model(n_layers=n_layers),
+                server_args=ServerArgs(),
+                attention_layers=None,
+                moe_layers=None,
+                moe_fusions=None,
+            )
+            try:
+                run_func(mock_self)
+            except Exception:
+                pass  # May fail on downstream CUDA parts; we check layer extraction
 
-        attn = mock_self.attention_layers
-        assert attn is not None, (
-            f"n_layers={n_layers}: Model with layers did not proceed to layer extraction"
-        )
-        assert isinstance(attn, list), (
-            f"n_layers={n_layers}: attention_layers should be a list, got {type(attn)}"
-        )
+            attn = mock_self.attention_layers
+            if attn is None:
+                print(f"FAIL n_layers={n_layers}: attention_layers still None after execution", file=sys.stderr)
+                sys.exit(1)
+            if not isinstance(attn, list):
+                print(f"FAIL n_layers={n_layers}: attention_layers is {type(attn)}, not list", file=sys.stderr)
+                sys.exit(1)
+
+        print("PASS")
+    """))
+    assert r.returncode == 0, f"Subprocess failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout, f"Expected PASS, got: {r.stdout}"
 
 
 # [static] pass_to_pass
 def test_not_stub():
     """init_piecewise_cuda_graphs must have real logic, not be stubbed out."""
-    # AST-only because: module imports torch, triton, CUDA — cannot import
     source = Path(TARGET).read_text()
 
     for sym in ["init_piecewise_cuda_graphs", "resolve_language_model",

@@ -7,42 +7,42 @@ source:
   merge_commit: "7984e4ab5c9562ea847ab04a43480c27ce4a3368"
 
 checks:
-  - id: cli_flags_in_common_arguments
+  - id: test_cli_flags_in_common_arguments
     type: fail_to_pass
     origin: pr_diff
-    description: "persistent_caching and cache_dir declared as fields in CommonArguments with CLI arg attributes"
+    description: "persistent_caching: bool and cache_dir: Option<PathBuf> in CommonArguments with #[clap(long)]"
 
-  - id: build_rs_git_version_embedding
+  - id: test_build_rs_git_version_embedding
     type: fail_to_pass
     origin: pr_diff
-    description: "build.rs exists with fn main(), vergen/gitcl reference, describe config, and emit logic"
+    description: "build.rs uses vergen-gitcl for git version embedding with CI-aware dirty flag"
 
-  - id: backend_supports_both_storage_modes
+  - id: test_backend_supports_both_storage_modes
     type: fail_to_pass
     origin: pr_diff
-    description: "Backend type alias in dev/build modules supports persistent+noop storage with conditional selection"
+    description: "Backend type uses Either<TurboBackingStorage, NoopBackingStorage> with conditional branching"
 
-  - id: cargo_toml_dependencies
+  - id: test_cargo_toml_dependencies
     type: fail_to_pass
     origin: pr_diff
-    description: "Cargo.toml has type-dispatch crate (either) in deps and vergen in build-deps"
+    description: "Cargo.toml has either in deps and vergen-gitcl + anyhow in build-deps"
 
-  - id: storage_init_and_cache_invalidation
+  - id: test_storage_init_and_cache_invalidation
     type: fail_to_pass
     origin: pr_diff
-    description: "Dev/build modules initialize persistent storage and include cache invalidation warning"
+    description: "Dev/build modules init persistent storage via turbo_backing_storage, use env! for version, and warn on invalidation"
 
-  - id: bench_file_includes_new_fields
+  - id: test_bench_file_includes_new_fields
     type: fail_to_pass
     origin: pr_diff
-    description: "Bench file includes persistent_caching and cache_dir field assignments"
+    description: "Bench file has persistent_caching: false and cache_dir: None in struct init"
 
-  - id: existing_cli_args_preserved
+  - id: test_existing_cli_args_preserved
     type: pass_to_pass
     origin: repo_tests
     description: "Existing CLI args (log_detail, log_level, full_stats, worker_threads) still present"
 
-  - id: key_files_not_stubbed
+  - id: test_key_files_not_stubbed
     type: pass_to_pass
     origin: static
     description: "Key source files (arguments.rs, dev/mod.rs, build/mod.rs) have >=50 lines each"

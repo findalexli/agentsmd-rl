@@ -6,12 +6,13 @@ PR:   28251
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-NOTE: Zig code requires the full Bun build toolchain (custom Zig fork,
-CMake, JavaScriptCore, vendor deps) — cannot compile/run in container.
-Tests verify semantic properties that any correct fix must have.
+Zig code requires the full Bun build toolchain — cannot compile in container.
+F2P tests use subprocess.run() to execute Python validation scripts that
+analyze the Zig source for structural correctness of the fix.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/bun"
@@ -33,7 +34,7 @@ def _extract_handler_body(text):
 
 def _extract_next_body(handler_body):
     """Extract the body of Handler.next function."""
-    m = re.search(r"pub fn next[^{]*\{(.*?)\n\s{8,16}\}", handler_body, re.DOTALL)
+    m = re.search(r"pub fn next[^{]*\{(.*)\n\s{8,16}\}", handler_body, re.DOTALL)
     assert m, "Handler.next function not found"
     return m.group(1)
 
@@ -50,97 +51,157 @@ def test_zig_file_exists():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_handler_next_no_direct_param_as_index():
     """Handler.next must not use its parameter directly as a chunks[] index.
 
-    The bug: chunks[chunk_id] where chunk_id is the raw entry_point_id.
-    Any correct fix must translate the ID through a mapping, guard the access,
-    or restructure to avoid direct indexing.
+    On the base commit, Handler.next does chunks[chunk_id] which crashes when
+    CSS entry points cause gaps in the JS chunk index space. Any correct fix
+    must translate the entry point ID through a mapping or restructure indexing.
     """
-    text = _read_zig()
-    handler_body = _extract_handler_body(text)
-
-    # Get the parameter name of Handler.next
-    sig = re.search(r"pub fn next\s*\(\s*c\s*:\s*\*@This\(\)\s*,\s*(\w+)\s*:", handler_body)
-    assert sig, "Handler.next signature not found"
-    param_name = sig.group(1)
-
-    next_body = _extract_next_body(handler_body)
-
-    # The raw parameter must NOT be used directly as chunks[param]
-    direct = re.search(r"c\.chunks\[" + re.escape(param_name) + r"\]", next_body)
-    assert not direct, (
-        f"Parameter '{param_name}' is used directly as chunks[] index — "
-        "this is the original bug (entry_point_id != chunk index when CSS entries exist)"
+    r = subprocess.run(
+        ["python3", "-c", (
+            "import re, sys\n"
+            "text = open('/workspace/bun/src/bundler/linker_context/computeChunks.zig').read()\n"
+            "# Extract Handler struct\n"
+            "m = re.search(r'const Handler\\s*=\\s*struct\\s*\\{(.*?)\\n\\s{8}\\};', text, re.DOTALL)\n"
+            "if not m:\n"
+            "    m = re.search(r'Handler.*=.*struct\\s*\\{(.*?)\\n\\s{8}\\};', text, re.DOTALL)\n"
+            "if not m:\n"
+            "    print('FAIL: Handler struct not found'); sys.exit(1)\n"
+            "handler = m.group(1)\n"
+            "# Get the parameter name of next()\n"
+            "sig = re.search(r'pub fn next\\s*\\(\\s*c\\s*:\\s*\\*@This\\(\\)\\s*,\\s*(\\w+)\\s*:', handler)\n"
+            "if not sig:\n"
+            "    print('FAIL: Handler.next signature not found'); sys.exit(1)\n"
+            "param = sig.group(1)\n"
+            "# Extract next body\n"
+            "nm = re.search(r'pub fn next[^{]*\\{(.*)\\n\\s{8,16}\\}', handler, re.DOTALL)\n"
+            "if not nm:\n"
+            "    print('FAIL: Handler.next body not found'); sys.exit(1)\n"
+            "body = nm.group(1)\n"
+            "# The raw parameter must NOT be used directly as chunks[param]\n"
+            "if re.search(r'c\\.chunks\\[' + re.escape(param) + r'\\]', body):\n"
+            "    print(f'FAIL: parameter {param!r} used directly as chunks[] index'); sys.exit(1)\n"
+            "# Verify chunks IS still accessed (fix didn't delete core logic)\n"
+            "has_chunks = bool(re.search(r'c\\.chunks\\[', body))\n"
+            "has_core = 'getOrPut' in body or 'files_with_parts_in_chunk' in body\n"
+            "if not (has_chunks or has_core):\n"
+            "    print('FAIL: chunks access and core logic removed entirely'); sys.exit(1)\n"
+            "print('PASS')\n"
+        )],
+        capture_output=True, text=True, timeout=30,
     )
-
-    # Verify chunks[] IS still accessed (fix didn't just delete core logic)
-    has_chunks = bool(re.search(r"c\.chunks\[", next_body))
-    has_core = "getOrPut" in next_body or "files_with_parts_in_chunk" in next_body
-    assert has_chunks or has_core, "chunks access and core logic were removed entirely"
+    assert r.returncode == 0, f"Handler.next index check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_css_entry_point_guard():
-    """Handler.next must have a guard/skip for CSS-only entry points.
+    """Handler.next must guard/skip CSS-only entry points that have no JS chunk.
 
-    CSS-only entries don't have JS chunks. Any correct fix must handle this
-    via sentinel check, optional unwrap, bounds check, or similar guard.
+    On the base commit, Handler.next unconditionally accesses chunks[] with
+    the entry point ID, causing a crash for CSS-only entries. The fix must
+    add a guard (sentinel check, optional unwrap, bounds check, etc).
     """
-    text = _read_zig()
-    handler_body = _extract_handler_body(text)
-    next_body = _extract_next_body(handler_body)
-
-    has_guard = (
-        # sentinel check (maxInt, max_int, etc.)
-        bool(re.search(r"maxInt|max_int|sentinel", next_body))
-        # optional unwrap (orelse return, .? access)
-        or bool(re.search(r"orelse\s+return|\.?\s*\?\s*;|\borelse\b", next_body))
-        # null check
-        or bool(re.search(r"==\s*null|!=\s*null", next_body))
-        # bounds check
-        or bool(re.search(r">=\s*c\.chunks\.len|<\s*c\.chunks\.len|bounds", next_body))
-        # early return on condition
-        or bool(re.search(r"if\s*\(.*\)\s*return", next_body))
+    r = subprocess.run(
+        ["python3", "-c", (
+            "import re, sys\n"
+            "text = open('/workspace/bun/src/bundler/linker_context/computeChunks.zig').read()\n"
+            "m = re.search(r'const Handler\\s*=\\s*struct\\s*\\{(.*?)\\n\\s{8}\\};', text, re.DOTALL)\n"
+            "if not m:\n"
+            "    m = re.search(r'Handler.*=.*struct\\s*\\{(.*?)\\n\\s{8}\\};', text, re.DOTALL)\n"
+            "if not m:\n"
+            "    print('FAIL: Handler struct not found'); sys.exit(1)\n"
+            "handler = m.group(1)\n"
+            "nm = re.search(r'pub fn next[^{]*\\{(.*)\\n\\s{8,16}\\}', handler, re.DOTALL)\n"
+            "if not nm:\n"
+            "    print('FAIL: Handler.next body not found'); sys.exit(1)\n"
+            "body = nm.group(1)\n"
+            "has_guard = (\n"
+            "    bool(re.search(r'maxInt|max_int|sentinel', body))\n"
+            "    or bool(re.search(r'orelse\\s+return', body))\n"
+            "    or bool(re.search(r'==\\s*null|!=\\s*null', body))\n"
+            "    or bool(re.search(r'>=\\s*c\\.chunks\\.len|<\\s*c\\.chunks\\.len', body))\n"
+            "    or bool(re.search(r'if\\s*\\(.*\\)\\s*return', body))\n"
+            ")\n"
+            "if not has_guard:\n"
+            "    print('FAIL: no guard for CSS-only entry points'); sys.exit(1)\n"
+            "print('PASS')\n"
+        )],
+        capture_output=True, text=True, timeout=30,
     )
-    assert has_guard, (
-        "Handler.next has no guard for CSS-only entry points — "
-        "must skip entries that don't have a JS chunk"
-    )
+    assert r.returncode == 0, f"CSS entry point guard check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_entry_point_to_chunk_mapping():
-    """A data structure mapping entry point IDs to JS chunk indices must exist.
+    """A mapping from entry point IDs to JS chunk indices must exist.
 
-    The core fix requires translating entry_point IDs to JS chunk indices.
-    Accepts: flat array, HashMap, ArrayList, optional array, any name.
+    The core fix requires translating entry_point IDs to JS chunk indices
+    because CSS-only entry points don't get JS chunks. Accepts any data
+    structure: flat array, HashMap, ArrayList, or named variable.
     """
-    text = _read_zig()
+    r = subprocess.run(
+        ["python3", "-c", (
+            "import re, sys\n"
+            "text = open('/workspace/bun/src/bundler/linker_context/computeChunks.zig').read()\n"
+            "has_mapping = (\n"
+            "    # Array allocated with entry_points.len\n"
+            "    bool(re.search(r'alloc\\(\\s*(?:u32|\\?u32)\\s*,\\s*(?:this\\.graph\\.)?entry_points\\.len\\)', text))\n"
+            "    # HashMap keyed on entry point IDs\n"
+            "    or bool(re.search(r'HashMap\\(.*entry.*chunk|AutoHashMap.*u32.*u32', text))\n"
+            "    # ArrayList for mapping\n"
+            "    or bool(re.search(r'ArrayList\\((?:u32|\\?u32)\\).*entry_point', text))\n"
+            "    # Variable allocated with entry_points.len\n"
+            "    or bool(re.search(r'\\w+\\s*=\\s*(?:try\\s+)?(?:temp_allocator|this\\.allocator|allocator)\\w*\\.alloc\\([^)]*entry_points\\.len\\)', text))\n"
+            "    # Slice field in Handler\n"
+            "    or bool(re.search(r'Handler.*struct.*\\[\\](?:const\\s+)?(?:u32|\\?u32)', text, re.DOTALL))\n"
+            ")\n"
+            "if not has_mapping:\n"
+            "    print('FAIL: no mapping from entry point IDs to chunk indices'); sys.exit(1)\n"
+            "print('PASS')\n"
+        )],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Entry point mapping check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
-    has_mapping = (
-        # Array allocated with entry_points.len
-        bool(re.search(r"alloc\(\s*(?:u32|\?u32)\s*,\s*(?:this\.graph\.)?entry_points\.len\)", text))
-        # HashMap keyed on entry point IDs
-        or bool(re.search(r"HashMap\(.*entry.*chunk|AutoHashMap.*u32.*u32", text))
-        # ArrayList for mapping
-        or bool(re.search(r"ArrayList\((?:u32|\?u32)\).*entry_point", text))
-        # Variable allocated with entry_points.len
-        or bool(re.search(
-            r"\w+\s*=\s*(?:try\s+)?(?:temp_allocator|this\.allocator|allocator)\w*\.alloc\([^)]*entry_points\.len\)",
-            text,
-        ))
-        # Slice field in Handler
-        or bool(re.search(r"Handler.*struct.*\[\](?:const\s+)?(?:u32|\?u32)", text, re.DOTALL))
+
+# [pr_diff] fail_to_pass
+def test_mapping_populated_during_chunk_creation():
+    """The entry-point-to-chunk mapping must be written when JS chunks are created.
+
+    On the base commit, no mapping is populated. The fix must record the chunk
+    index at the point where js_chunks.getOrPut is called, otherwise the mapping
+    array stays all-sentinels and every entry point gets skipped in Handler.next.
+    """
+    r = subprocess.run(
+        ["python3", "-c", (
+            "import re, sys\n"
+            "text = open('/workspace/bun/src/bundler/linker_context/computeChunks.zig').read()\n"
+            "# Find the section where js_chunks.getOrPut is called\n"
+            "getorput_section = re.search(\n"
+            "    r'js_chunks\\.getOrPut\\(js_chunk_key\\)(.*?)\\n\\s{8}\\}',\n"
+            "    text, re.DOTALL,\n"
+            ")\n"
+            "if not getorput_section:\n"
+            "    print('FAIL: js_chunks.getOrPut(js_chunk_key) not found'); sys.exit(1)\n"
+            "section = getorput_section.group(1)\n"
+            "# The mapping must be written in this section (any variable indexed by entry_id)\n"
+            "has_mapping_write = bool(re.search(r'\\w+\\[entry_id\\w*\\]\\s*=', section))\n"
+            "if not has_mapping_write:\n"
+            "    print('FAIL: no mapping write near js_chunks.getOrPut'); sys.exit(1)\n"
+            "print('PASS')\n"
+        )],
+        capture_output=True, text=True, timeout=30,
     )
-    assert has_mapping, (
-        "No mapping from entry point IDs to JS chunk indices found — "
-        "this is the core data structure needed to fix the bug"
-    )
+    assert r.returncode == 0, f"Mapping population check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -210,7 +271,7 @@ def test_no_inline_imports():
         assert "@import(" not in body, "Found @import() inline inside a function body"
 
 
-# [agent_config] pass_to_pass — src/CLAUDE.md:234 @ 7abe6c387d0746b26eeed7fe9175e14560840cbb
+# [agent_config] pass_to_pass — src/CLAUDE.md:234-238 @ 7abe6c387d0746b26eeed7fe9175e14560840cbb
 def test_no_catch_out_of_memory_pattern():
     """Must use bun.handleOom(), not 'catch bun.outOfMemory()' which swallows non-OOM errors."""
     text = _read_zig()
@@ -218,30 +279,4 @@ def test_no_catch_out_of_memory_pattern():
     assert len(bad) == 0, (
         f"Found {len(bad)} uses of 'catch bun.outOfMemory()' — "
         "use bun.handleOom() or 'try' instead"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_mapping_populated_during_chunk_creation():
-    """The entry-point-to-chunk mapping must be written when JS chunks are created.
-
-    The fix requires storing the mapping index at the point where js_chunks.getOrPut
-    is called. Without this, the mapping array stays all-sentinels and every entry
-    point gets skipped in Handler.next.
-    """
-    text = _read_zig()
-    # Find the section where js_chunks.getOrPut is called and check the mapping is updated nearby
-    getorput_section = re.search(
-        r"js_chunks\.getOrPut\(js_chunk_key\)(.*?)\n\s{8}\}",
-        text,
-        re.DOTALL,
-    )
-    assert getorput_section, "js_chunks.getOrPut(js_chunk_key) not found"
-    section = getorput_section.group(1)
-
-    # The mapping must be written in this section (any variable indexed by entry_id)
-    has_mapping_write = bool(re.search(r"\w+\[entry_id\w*\]\s*=", section))
-    assert has_mapping_write, (
-        "No mapping write found near js_chunks.getOrPut — "
-        "the entry-point-to-chunk index must be recorded when JS chunks are created"
     )

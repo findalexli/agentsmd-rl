@@ -7,6 +7,21 @@ source:
   merge_commit: "8b6b11f703a1f92dd2bb2e0e3b93a1836dc06de6"
 
 checks:
+  - id: compileprogram_returns_void
+    type: fail_to_pass
+    origin: pr_diff
+    description: "compileProgram returns void and CompileProgramMetadata type removed (TS AST)"
+
+  - id: retryerrors_removed_from_class
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ProgramContext class retryErrors property removed (TS AST)"
+
+  - id: schema_rejects_client_no_memo
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CompilerOutputModeSchema z.enum no longer includes 'client-no-memo' (TS AST)"
+
   - id: validate_file_deleted
     type: fail_to_pass
     origin: pr_diff
@@ -17,30 +32,10 @@ checks:
     origin: pr_diff
     description: "BabelPlugin.ts no longer imports or calls validateNoUntransformedReferences"
 
-  - id: compile_program_metadata_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CompileProgramMetadata type removed from Program.ts"
-
-  - id: compile_program_returns_void
-    type: fail_to_pass
-    origin: pr_diff
-    description: "compileProgram no longer returns CompileProgramMetadata object"
-
-  - id: retry_errors_field_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "retryErrors field removed from ProgramContext in Imports.ts"
-
   - id: babel_fn_import_removed
     type: fail_to_pass
     origin: pr_diff
     description: "BabelFn import removed from Imports.ts (was only used by retryErrors type)"
-
-  - id: client_no_memo_removed_options
-    type: fail_to_pass
-    origin: pr_diff
-    description: "'client-no-memo' enum value removed from CompilerOutputModeSchema in Options.ts"
 
   - id: client_no_memo_removed_environment
     type: fail_to_pass

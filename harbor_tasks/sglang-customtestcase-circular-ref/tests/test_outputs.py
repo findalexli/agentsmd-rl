@@ -7,16 +7,23 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
+from pathlib import Path
+
+REPO = "/workspace/sglang"
+TARGET = f"{REPO}/python/sglang/test/test_utils.py"
+
+# Self-contained helper code that extracts CustomTestCase from source
+# without importing the full sglang package (which has heavy deps).
+_EXTRACT_HELPER = r'''
 import functools
 import types
 import unittest
 
 TARGET = "/workspace/sglang/python/sglang/test/test_utils.py"
 
-
-def _extract_custom_testcase(path=TARGET):
-    """Extract CustomTestCase from source without importing heavy sglang deps."""
-    with open(path) as f:
+def _extract_custom_testcase():
+    with open(TARGET) as f:
         source = f.read()
     lines = source.split("\n")
     in_class = False
@@ -36,7 +43,7 @@ def _extract_custom_testcase(path=TARGET):
                 break
             method_lines.append(line)
     if not method_lines:
-        return None
+        raise RuntimeError("Could not find CustomTestCase")
     min_indent = min(
         (len(l) - len(l.lstrip()) for l in method_lines if l.strip()), default=0
     )
@@ -50,6 +57,20 @@ def _extract_custom_testcase(path=TARGET):
         ns,
     )
     return ns["CustomTestCase"]
+'''
+
+
+def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in a subprocess with the extraction helper."""
+    script = Path(REPO) / "_eval_tmp.py"
+    script.write_text(_EXTRACT_HELPER + "\n" + code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -65,149 +86,178 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_dill_serialize_subclass():
-    """dill.dumps succeeds on a CustomTestCase subclass (no circular ref error)."""
-    import dill
+def test_dill_no_recursive_ref_warning():
+    """dill.dumps on a CustomTestCase subclass must not emit recursive-ref warnings."""
+    r = _run_python('''
+import dill, warnings
 
-    CTC = _extract_custom_testcase()
-    assert CTC is not None, "Could not extract CustomTestCase"
+CTC = _extract_custom_testcase()
 
-    class SerTest(CTC):
-        @classmethod
-        def setUpClass(cls):
-            pass
+class SerTest(CTC):
+    @classmethod
+    def setUpClass(cls):
+        pass
+    def test_example(self):
+        pass
 
-        def test_example(self):
-            pass
-
-    # Core bug: bound method default param creates a reference cycle that
-    # breaks dill serialization.
+with warnings.catch_warnings(record=True) as w:
+    warnings.simplefilter("always")
     dill.dumps(SerTest)
 
+recursive_warns = [x for x in w if "recursive self-references" in str(x.message)]
+assert len(recursive_warns) == 0, (
+    f"dill.dumps emitted {len(recursive_warns)} recursive-ref warning(s) — "
+    f"circular reference not broken"
+)
+print("PASS")
+''')
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Assertion failed in subprocess: {r.stdout}\n{r.stderr}"
+
 
 # [pr_diff] fail_to_pass
+def test_no_circular_ref_in_setup_defaults():
+    """safe_setUpClass must not hold a bound-method default that creates a circular ref."""
+    r = _run_python('''
+CTC = _extract_custom_testcase()
+
+class SerTest(CTC):
+    @classmethod
+    def setUpClass(cls):
+        pass
+    def test_example(self):
+        pass
+
+# The wrapped setUpClass should not capture the original bound method
+# as a default parameter (which creates cls -> setUpClass -> default -> __self__ -> cls).
+setup_func = SerTest.setUpClass.__func__
+defaults = setup_func.__defaults__
+if defaults is not None:
+    for d in defaults:
+        if hasattr(d, "__self__"):
+            assert d.__self__ is not SerTest, (
+                "safe_setUpClass default parameter holds a bound method "
+                "referencing back to the subclass — circular reference exists"
+            )
+print("PASS")
+''')
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Assertion failed in subprocess: {r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (pr_diff) — regression tests via subprocess
+# ---------------------------------------------------------------------------
+
+# [pr_diff] pass_to_pass
 def test_dill_roundtrip_preserves_state():
     """dill round-trip preserves class attributes and identity."""
-    import dill
+    r = _run_python('''
+import dill, warnings
+warnings.filterwarnings("ignore")
 
-    CTC = _extract_custom_testcase()
-    assert CTC is not None, "Could not extract CustomTestCase"
+CTC = _extract_custom_testcase()
 
-    class RoundTripTest(CTC):
-        CLASS_VAR = "hello"
-        NUMERIC = 42
+class RoundTripTest(CTC):
+    CLASS_VAR = "hello"
+    NUMERIC = 42
 
-        @classmethod
-        def setUpClass(cls):
-            pass
+    @classmethod
+    def setUpClass(cls):
+        pass
+    def test_example(self):
+        pass
 
-        def test_example(self):
-            pass
+data = dill.dumps(RoundTripTest)
+restored = dill.loads(data)
+assert restored.CLASS_VAR == "hello", f"Lost CLASS_VAR: {restored.CLASS_VAR}"
+assert restored.NUMERIC == 42, f"Lost NUMERIC: {restored.NUMERIC}"
+assert restored.__name__ == "RoundTripTest", f"Lost name: {restored.__name__}"
+print("PASS")
+''')
+    assert r.returncode == 0, f"dill round-trip failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
-    data = dill.dumps(RoundTripTest)
-    restored = dill.loads(data)
-    assert restored.CLASS_VAR == "hello", f"Lost CLASS_VAR: {restored.CLASS_VAR}"
-    assert restored.NUMERIC == 42, f"Lost NUMERIC: {restored.NUMERIC}"
-    assert restored.__name__ == "RoundTripTest", f"Lost name: {restored.__name__}"
-
-
-# [pr_diff] fail_to_pass
-def test_dill_serialize_inner_class():
-    """dill.dumps succeeds on a class defined inside a CustomTestCase subclass scope."""
-    import dill
-
-    CTC = _extract_custom_testcase()
-    assert CTC is not None, "Could not extract CustomTestCase"
-
-    class OuterTest(CTC):
-        @classmethod
-        def setUpClass(cls):
-            pass
-
-        def test_example(self):
-            pass
-
-    # Inner class referencing the subclass — this is the pattern from the bug report
-    class InnerClass:
-        parent = OuterTest
-
-    dill.dumps(InnerClass)
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression tests
-# ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
 def test_teardown_called_on_setup_failure():
     """tearDownClass still runs when setUpClass raises."""
-    CTC = _extract_custom_testcase()
-    assert CTC is not None, "Could not extract CustomTestCase"
+    r = _run_python('''
+CTC = _extract_custom_testcase()
 
-    teardown_called = []
+teardown_called = []
 
-    class FailingSetup(CTC):
-        @classmethod
-        def setUpClass(cls):
-            raise RuntimeError("intentional failure")
+class FailingSetup(CTC):
+    @classmethod
+    def setUpClass(cls):
+        raise RuntimeError("intentional failure")
+    @classmethod
+    def tearDownClass(cls):
+        teardown_called.append(True)
 
-        @classmethod
-        def tearDownClass(cls):
-            teardown_called.append(True)
+try:
+    FailingSetup.setUpClass()
+except RuntimeError:
+    pass
 
-    try:
-        FailingSetup.setUpClass()
-    except RuntimeError:
-        pass
-
-    assert teardown_called, "tearDownClass was not called after setUpClass failure"
+assert teardown_called, "tearDownClass was not called after setUpClass failure"
+print("PASS")
+''')
+    assert r.returncode == 0, f"teardown test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] pass_to_pass
 def test_normal_setup_flow():
     """Normal setUpClass executes correctly and sets class state."""
-    CTC = _extract_custom_testcase()
-    assert CTC is not None, "Could not extract CustomTestCase"
+    r = _run_python('''
+CTC = _extract_custom_testcase()
 
-    class NormalTest(CTC):
-        @classmethod
-        def setUpClass(cls):
-            cls.data = 99
+class NormalTest(CTC):
+    @classmethod
+    def setUpClass(cls):
+        cls.data = 99
+    @classmethod
+    def tearDownClass(cls):
+        pass
 
-        @classmethod
-        def tearDownClass(cls):
-            pass
-
-    NormalTest.setUpClass()
-    assert NormalTest.data == 99, f"setUpClass did not set data: {NormalTest.data}"
+NormalTest.setUpClass()
+assert NormalTest.data == 99, f"setUpClass did not set data: {NormalTest.data}"
+print("PASS")
+''')
+    assert r.returncode == 0, f"normal setup test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] pass_to_pass
 def test_no_double_wrapping():
     """Subclass of subclass doesn't double-wrap setUpClass."""
-    CTC = _extract_custom_testcase()
-    assert CTC is not None, "Could not extract CustomTestCase"
+    r = _run_python('''
+CTC = _extract_custom_testcase()
 
-    call_count = []
+call_count = []
 
-    class Parent(CTC):
-        @classmethod
-        def setUpClass(cls):
-            call_count.append(1)
+class Parent(CTC):
+    @classmethod
+    def setUpClass(cls):
+        call_count.append(1)
+    @classmethod
+    def tearDownClass(cls):
+        pass
 
-        @classmethod
-        def tearDownClass(cls):
-            pass
+class Child(Parent):
+    pass
 
-    class Child(Parent):
-        pass  # inherits setUpClass
-
-    Child.setUpClass()
-    assert len(call_count) == 1, f"setUpClass called {len(call_count)} times (double-wrapped?)"
+Child.setUpClass()
+assert len(call_count) == 1, f"setUpClass called {len(call_count)} times (double-wrapped?)"
+print("PASS")
+''')
+    assert r.returncode == 0, f"double-wrap test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

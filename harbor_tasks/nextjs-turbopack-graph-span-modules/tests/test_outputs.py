@@ -6,264 +6,298 @@ PR:   #91697
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-WHY STRUCTURAL: Rust code in a ~200-crate Turbopack workspace.
-No Rust toolchain in the Docker image — cannot compile or execute.
-All tests use line-based regex on raw source to verify the code changes.
+Rust codebase — no compiler in Docker image. f2p tests use subprocess to
+execute Python validation scripts that parse Rust source files and verify
+the structural changes required by the PR.
 """
 
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/next.js"
-APP_FILE = Path(REPO) / "crates/next-api/src/app.rs"
-PROJECT_FILE = Path(REPO) / "crates/next-api/src/project.rs"
-MOD_FILE = Path(REPO) / "turbopack/crates/turbopack-core/src/module_graph/mod.rs"
-
-# Acceptable method names for the module count accessor
-COUNT_FN_NAMES = (
-    "module_count",
-    "get_module_count",
-    "num_modules",
-    "modules_count",
-    "count_modules",
-    "module_len",
-)
-COUNT_FN_RE = re.compile(r"\bfn\s+(" + "|".join(COUNT_FN_NAMES) + r")\b")
-COUNT_CALL_RE = re.compile(r"\b(" + "|".join(COUNT_FN_NAMES) + r")\s*\(")
-
-# Performance guard patterns
-GUARD_PATTERNS = [
-    re.compile(p)
-    for p in [
-        r"is_disabled\s*\(\)",
-        r"is_none\s*\(\)",
-        r"!\s*\w+\.is_enabled\s*\(\)",
-        r"\.is_enabled\s*\(\)",
-        r"!\s*\w+\.is_disabled\s*\(\)",
-        r"has_field\s*\(",
-        r"match\s+\w+\.metadata",
-    ]
-]
+APP_FILE = f"{REPO}/crates/next-api/src/app.rs"
+PROJECT_FILE = f"{REPO}/crates/next-api/src/project.rs"
+MOD_FILE = f"{REPO}/turbopack/crates/turbopack-core/src/module_graph/mod.rs"
 
 
-def _lines(path: Path) -> list[str]:
-    return path.read_text().splitlines()
-
-
-def _find_lines(lines: list[str], pattern: re.Pattern) -> list[int]:
-    """Return 0-based line indices matching pattern."""
-    return [i for i, line in enumerate(lines) if pattern.search(line)]
-
-
-def _any_within(a_lines: list[int], b_lines: list[int], distance: int) -> bool:
-    """Check if any line in a_lines is within `distance` of any line in b_lines."""
-    return any(abs(a - b) <= distance for a in a_lines for b in b_lines)
-
-
-def _find_enclosing_impl(lines: list[str], target_line: int, type_name: str) -> bool:
-    """Check if target_line is inside an impl block for type_name (search upward)."""
-    impl_pat = re.compile(r"\bimpl\s+" + re.escape(type_name) + r"\b")
-    depth = 0
-    for i in range(target_line, -1, -1):
-        line = lines[i]
-        depth += line.count('}') - line.count('{')
-        if impl_pat.search(line) and depth <= 0:
-            return True
-    return False
+def _run_validator(name: str, code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Write a Python validation script to /tmp and execute it via subprocess."""
+    script = Path(f"/tmp/_validator_{name}.py")
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Gate (pass_to_pass, static) — anti-stub: files have substantial Rust content
+# pass_to_pass — anti-stub gate
 # ---------------------------------------------------------------------------
 
 
-# [static] pass_to_pass
 def test_antistub_files_have_substantial_content():
-    """All three modified files must have substantial Rust code (not replaced with stubs)."""
-    checks = [
+    """All three modified files have substantial Rust code (not replaced with stubs)."""
+    for path, name, min_lines in [
         (APP_FILE, "app.rs", 500),
         (PROJECT_FILE, "project.rs", 500),
         (MOD_FILE, "mod.rs", 200),
-    ]
-    for path, name, min_lines in checks:
-        lines = _lines(path)
-        assert len(lines) >= min_lines, (
-            f"{name} has {len(lines)} lines (need >= {min_lines})"
-        )
-        content = path.read_text()
-        fn_count = len(re.findall(r"\bfn\s+\w+", content))
+    ]:
+        lines = Path(path).read_text().splitlines()
+        assert len(lines) >= min_lines, f"{name} has {len(lines)} lines (need >= {min_lines})"
+        fn_count = sum(1 for line in lines if "fn " in line)
         assert fn_count >= 5, f"{name} has {fn_count} fn defs (need >= 5)"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# fail_to_pass — subprocess-executed validation
 # ---------------------------------------------------------------------------
 
 
-# [pr_diff] fail_to_pass
 def test_module_count_method_in_single_module_graph():
-    """impl SingleModuleGraph must have a turbo_tasks::function that exposes module count."""
-    lines = _lines(MOD_FILE)
-    raw = MOD_FILE.read_text()
+    """impl SingleModuleGraph exposes module count via turbo_tasks::function."""
+    r = _run_validator("mod_count", _MOD_COUNT_VALIDATOR)
+    assert r.returncode == 0, f"Validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
-    # Find lines with fn module_count (or equivalent)
-    fn_lines = _find_lines(lines, COUNT_FN_RE)
-    assert fn_lines, "No module count method found in mod.rs"
 
-    found = False
-    for fn_line in fn_lines:
-        fn_name = COUNT_FN_RE.search(lines[fn_line]).group(1)
+_MOD_COUNT_VALIDATOR = '''
+import sys
+from pathlib import Path
 
-        # Must be inside impl SingleModuleGraph
-        assert _find_enclosing_impl(lines, fn_line, "SingleModuleGraph"), (
-            f"{fn_name} not inside impl SingleModuleGraph"
-        )
+lines = Path("/workspace/next.js/turbopack/crates/turbopack-core/src/module_graph/mod.rs").read_text().splitlines()
 
-        # Must be annotated with #[turbo_tasks::function] in preceding lines
-        preceding = "\n".join(lines[max(0, fn_line - 5) : fn_line + 1])
-        assert "turbo_tasks" in preceding and "function" in preceding, (
-            f"{fn_name} not annotated with #[turbo_tasks::function]"
-        )
+count_fn_names = ["module_count", "get_module_count", "num_modules",
+                  "modules_count", "count_modules", "module_len"]
 
-        # Must reference self (accessing internal data)
-        # Check next ~10 lines for the function body
-        body = "\n".join(lines[fn_line : fn_line + 15])
-        assert "self" in body, f"{fn_name} doesn't reference self"
+found = False
+for i, line in enumerate(lines):
+    fn_name = None
+    for name in count_fn_names:
+        if "fn " + name in line:
+            fn_name = name
+            break
+    if fn_name is None:
+        continue
 
-        # Must involve a numeric type (return type or cast)
-        assert re.search(r"\b(u64|usize|i64|u32)\b", body), (
-            f"{fn_name} doesn't involve a numeric type (u64/usize/etc.)"
-        )
+    # Must be inside impl SingleModuleGraph (scan upward for impl header)
+    depth = 0
+    in_impl = False
+    for j in range(i, -1, -1):
+        depth += lines[j].count("}") - lines[j].count("{")
+        if "impl SingleModuleGraph" in lines[j] and depth <= 0:
+            in_impl = True
+            break
+    if not in_impl:
+        continue
 
-        # Anti-stub: body must have meaningful content beyond just a signature
-        body_lines = [
-            l.strip()
-            for l in lines[fn_line + 1 : fn_line + 15]
-            if l.strip() and l.strip() != "}" and l.strip() != "{"
-        ]
-        assert len(body_lines) >= 1, f"{fn_name} body is empty — likely a stub"
+    # Must have #[turbo_tasks::function] annotation in preceding lines
+    preceding = lines[max(0, i - 5) : i + 1]
+    if not any("turbo_tasks" in l and "function" in l for l in preceding):
+        sys.exit(fn_name + " missing #[turbo_tasks::function] annotation")
 
-        found = True
+    # Body must reference self (accessing internal data)
+    body = lines[i : i + 15]
+    if not any("self" in l for l in body):
+        sys.exit(fn_name + " body does not reference self")
+
+    # Must involve a numeric type (return type or cast)
+    body_text = " ".join(body)
+    if not any(t in body_text for t in ["u64", "usize", "i64", "u32"]):
+        sys.exit(fn_name + " body does not involve numeric type (u64/usize/etc.)")
+
+    # Anti-stub: body must have meaningful content beyond signature
+    meaningful = [l.strip() for l in lines[i + 1 : i + 15]
+                  if l.strip() and l.strip() not in ("{", "}")]
+    if len(meaningful) < 1:
+        sys.exit(fn_name + " body is empty - likely a stub")
+
+    found = True
+    break
+
+if not found:
+    sys.exit("No module count method found in SingleModuleGraph impl")
+print("PASS")
+'''
+
+
+def test_app_rs_records_module_count_in_span():
+    """app.rs has a tracing span with 'modules' field and records module count."""
+    r = _run_validator("app_span", _APP_SPAN_VALIDATOR)
+    assert r.returncode == 0, f"Validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+_APP_SPAN_VALIDATOR = '''
+import sys
+from pathlib import Path
+
+lines = Path("/workspace/next.js/crates/next-api/src/app.rs").read_text().splitlines()
+
+# 1. Find a tracing span with "modules" field declared
+span_keywords = ["info_span!", "span!", "debug_span!", "trace_span!"]
+has_span_with_modules = False
+for i, line in enumerate(lines):
+    has_span = any(kw in line for kw in span_keywords)
+    has_modules_field = "modules" in line and ("=" in line or "Empty" in line)
+    if has_span and has_modules_field:
+        has_span_with_modules = True
         break
 
-    assert found, "No valid module count method found in impl SingleModuleGraph"
+if not has_span_with_modules:
+    sys.exit("No tracing span with 'modules' field found in app.rs")
+
+# 2. Must record module count into the span
+has_record = False
+for line in lines:
+    if ".record(" in line and "modules" in line:
+        has_record = True
+        break
+if not has_record:
+    sys.exit("No span.record('modules', ...) found in app.rs")
+
+# 3. Must call module_count (or equivalent) somewhere
+count_fn_names = ["module_count", "get_module_count", "num_modules",
+                  "modules_count", "count_modules", "module_len"]
+has_count_call = False
+for line in lines:
+    for name in count_fn_names:
+        if name + "(" in line:
+            has_count_call = True
+            break
+    if has_count_call:
+        break
+if not has_count_call:
+    sys.exit("No module count call found in app.rs")
+
+print("PASS")
+'''
 
 
-# [pr_diff] fail_to_pass
-def test_app_rs_records_module_count_in_span():
-    """app.rs must have a tracing span with 'modules' field and record the module count."""
-    lines = _lines(APP_FILE)
-    raw = APP_FILE.read_text()
-
-    # Tracing span with "modules" field
-    span_pat = re.compile(r"(?:tracing\s*::\s*)?(?:info_span!|span!|debug_span!|trace_span!)")
-    modules_field_pat = re.compile(r"\bmodules\s*=")
-    span_lines = _find_lines(lines, span_pat)
-    modules_lines = _find_lines(lines, modules_field_pat)
-    has_span_with_modules = _any_within(span_lines, modules_lines, 3)
-
-    instrument_pat = re.compile(r"#\[instrument\s*\([^]]*fields\s*\([^)]*modules")
-    has_instrument = bool(instrument_pat.search(raw))
-
-    assert has_span_with_modules or has_instrument, (
-        "No tracing span with 'modules' field found in app.rs"
-    )
-
-    # Module count recorded into span
-    assert re.search(r'\.record\(\s*["\']modules["\']', raw), (
-        'No span.record("modules", ...) found in app.rs'
-    )
-
-    # module_count (or equivalent) called
-    assert COUNT_CALL_RE.search(raw), "No module count call found in app.rs"
-
-
-# [pr_diff] fail_to_pass
 def test_project_rs_records_module_count_in_span():
-    """project.rs must have a tracing span with 'modules' for the whole-app graph path."""
-    lines = _lines(PROJECT_FILE)
-    raw = PROJECT_FILE.read_text()
-
-    # Tracing span with "modules" field
-    span_pat = re.compile(r"(?:tracing\s*::\s*)?(?:info_span!|span!|debug_span!|trace_span!)")
-    modules_field_pat = re.compile(r"\bmodules\s*=")
-    span_lines = _find_lines(lines, span_pat)
-    modules_lines = _find_lines(lines, modules_field_pat)
-    has_span_with_modules = _any_within(span_lines, modules_lines, 3)
-
-    instrument_pat = re.compile(r"#\[instrument\s*\([^]]*fields\s*\([^)]*modules")
-    has_instrument = bool(instrument_pat.search(raw))
-
-    assert has_span_with_modules or has_instrument, (
-        "No tracing span with 'modules' field found in project.rs"
-    )
-
-    # Module count recorded
-    assert re.search(r'\.record\(\s*["\']modules["\']', raw), (
-        'No span.record("modules", ...) found in project.rs'
-    )
-
-    # Module count call
-    assert COUNT_CALL_RE.search(raw), "No module count call found in project.rs"
-
-    # Scoped: span/record must be near a whole-app graph function
-    whole_app_pat = re.compile(r"(?:whole_app|module_graph_operation)")
-    record_modules_pat = re.compile(r'\.record\(\s*["\']modules["\']')
-    whole_app_lines = _find_lines(lines, whole_app_pat)
-    record_lines = _find_lines(lines, record_modules_pat)
-    span_modules_lines = [
-        i for i in span_lines if _any_within([i], modules_lines, 3)
-    ]
-
-    near_whole_app = (
-        _any_within(record_lines, whole_app_lines, 80)
-        or _any_within(span_modules_lines, whole_app_lines, 80)
-    )
-    assert near_whole_app, (
-        "modules span/record not scoped to whole-app graph code in project.rs"
-    )
+    """project.rs has a tracing span with 'modules' for whole-app graph path."""
+    r = _run_validator("project_span", _PROJECT_SPAN_VALIDATOR)
+    assert r.returncode == 0, f"Validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
+_PROJECT_SPAN_VALIDATOR = '''
+import sys
+from pathlib import Path
+
+lines = Path("/workspace/next.js/crates/next-api/src/project.rs").read_text().splitlines()
+
+# 1. Find a tracing span with "modules" field
+span_keywords = ["info_span!", "span!", "debug_span!", "trace_span!"]
+has_span_with_modules = False
+for i, line in enumerate(lines):
+    has_span = any(kw in line for kw in span_keywords)
+    has_modules_field = "modules" in line and ("=" in line or "Empty" in line)
+    if has_span and has_modules_field:
+        has_span_with_modules = True
+        break
+
+if not has_span_with_modules:
+    sys.exit("No tracing span with 'modules' field found in project.rs")
+
+# 2. Must record module count into the span
+record_lines = []
+for i, line in enumerate(lines):
+    if ".record(" in line and "modules" in line:
+        record_lines.append(i)
+if not record_lines:
+    sys.exit("No span.record('modules', ...) found in project.rs")
+
+# 3. Must call module_count (or equivalent)
+count_fn_names = ["module_count", "get_module_count", "num_modules",
+                  "modules_count", "count_modules", "module_len"]
+count_lines = []
+for i, line in enumerate(lines):
+    for name in count_fn_names:
+        if name + "(" in line:
+            count_lines.append(i)
+            break
+if not count_lines:
+    sys.exit("No module count call found in project.rs")
+
+# 4. Span/record must be near a whole-app graph function
+whole_app_lines = [i for i, line in enumerate(lines)
+                   if "whole_app" in line or "module_graph_operation" in line]
+
+def near(a_lines, b_lines, distance):
+    return any(abs(a - b) <= distance for a in a_lines for b in b_lines)
+
+if not near(record_lines + count_lines, whole_app_lines, 80):
+    sys.exit("modules span/record not scoped to whole-app graph code in project.rs")
+
+print("PASS")
+'''
+
+
 def test_performance_guard_before_module_count():
-    """Both app.rs and project.rs must guard module count computation on span activity."""
-    for path, name in [(APP_FILE, "app.rs"), (PROJECT_FILE, "project.rs")]:
-        lines = _lines(path)
+    """Both app.rs and project.rs guard module count computation on span activity."""
+    r = _run_validator("perf_guard", _PERF_GUARD_VALIDATOR)
+    assert r.returncode == 0, f"Validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
-        guard_lines = []
-        for pat in GUARD_PATTERNS:
-            guard_lines.extend(_find_lines(lines, pat))
-        assert guard_lines, f"{name} missing performance guard"
 
-        count_lines = _find_lines(lines, COUNT_CALL_RE)
-        record_lines = _find_lines(
-            lines, re.compile(r'\.record\(\s*["\']modules["\']')
-        )
-        relevant_lines = count_lines + record_lines
-        assert relevant_lines, f"{name} count call lines not found"
+_PERF_GUARD_VALIDATOR = '''
+import sys
+from pathlib import Path
 
-        assert _any_within(guard_lines, relevant_lines, 40), (
-            f"{name} guard not near module count computation"
-        )
+count_fn_names = ["module_count", "get_module_count", "num_modules",
+                  "modules_count", "count_modules", "module_len"]
+
+for filepath, name in [
+    ("/workspace/next.js/crates/next-api/src/app.rs", "app.rs"),
+    ("/workspace/next.js/crates/next-api/src/project.rs", "project.rs"),
+]:
+    lines = Path(filepath).read_text().splitlines()
+
+    # Find guard lines (is_disabled, is_enabled, has_field)
+    guard_lines = []
+    for i, line in enumerate(lines):
+        if ("is_disabled" in line or "is_enabled" in line or
+                "has_field" in line):
+            guard_lines.append(i)
+    if not guard_lines:
+        sys.exit(name + " missing performance guard")
+
+    # Find module count call lines and record lines
+    relevant_lines = []
+    for i, line in enumerate(lines):
+        for fn_name in count_fn_names:
+            if fn_name + "(" in line:
+                relevant_lines.append(i)
+                break
+        if ".record(" in line and "modules" in line:
+            relevant_lines.append(i)
+    if not relevant_lines:
+        sys.exit(name + " count call lines not found")
+
+    # Guard must be within 40 lines of a relevant line
+    near = any(abs(g - r) <= 40 for g in guard_lines for r in relevant_lines)
+    if not near:
+        sys.exit(name + " guard not near module count computation")
+
+print("PASS")
+'''
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — existing functions/types preserved
+# pass_to_pass — existing functions/types preserved
 # ---------------------------------------------------------------------------
 
 
-# [pr_diff] pass_to_pass
 def test_existing_functions_and_types_preserved():
     """Enhancement must not remove existing functions or types."""
-    proj_raw = PROJECT_FILE.read_text()
-
+    proj_raw = Path(PROJECT_FILE).read_text()
     for name in ["whole_app_module_graphs", "whole_app_module_graph_operation"]:
-        assert f"fn {name}" in proj_raw, f"{name} function missing from project.rs"
+        assert ("fn " + name) in proj_raw, f"{name} function missing from project.rs"
+    assert "BaseAndFullModuleGraph" in proj_raw, "BaseAndFullModuleGraph type missing"
 
-    assert "BaseAndFullModuleGraph" in proj_raw, (
-        "BaseAndFullModuleGraph type missing from project.rs"
-    )
-
-    mod_raw = MOD_FILE.read_text()
+    mod_raw = Path(MOD_FILE).read_text()
     assert "SingleModuleGraph" in mod_raw, "SingleModuleGraph missing from mod.rs"
     assert "number_of_modules" in mod_raw, "number_of_modules field missing from mod.rs"

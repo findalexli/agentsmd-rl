@@ -5,19 +5,61 @@ Repo: microsoft/vscode @ af50a47c13e23e0b3c46719dbd92fe00144362a5
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-This is a TypeScript repo. Tests inspect source files directly since the
-codebase cannot be compiled/executed in the minimal verifier environment.
+Uses Node.js subprocess to parse TypeScript source — extracting method
+bodies via brace counting so assertions are scoped to the right function,
+not the whole file.
 """
 
-import re
+import subprocess
+import json
 from pathlib import Path
 
 REPO = "/workspace/vscode"
-TARGET_FILE = Path(REPO) / "src/vs/workbench/services/themes/browser/workbenchThemeService.ts"
+TARGET = "src/vs/workbench/services/themes/browser/workbenchThemeService.ts"
 
 
-def _src() -> str:
-    return TARGET_FILE.read_text(encoding="utf-8")
+# -- Helpers ----------------------------------------------------------------
+
+def _node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Run a Node.js script in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
+# Template: extract a method body from the TS file via brace counting.
+# Placeholders TARGET_PATH and METHOD_NAME are replaced before execution.
+_EXTRACT_TMPL = """\
+const fs = require("fs");
+const src = fs.readFileSync("TARGET_PATH", "utf8");
+const idx = src.indexOf("METHOD_NAME(");
+if (idx === -1) { process.stdout.write("null"); process.exit(0); }
+const brace = src.indexOf("{", idx);
+if (brace === -1) { process.stdout.write("null"); process.exit(0); }
+let depth = 1, i = brace + 1;
+while (depth > 0 && i < src.length) {
+    if (src[i] === "{") depth++;
+    else if (src[i] === "}") depth--;
+    i++;
+}
+process.stdout.write(JSON.stringify(src.substring(brace + 1, i - 1)));
+"""
+
+
+def _method_body(method_name: str) -> str | None:
+    """Extract a method body from the TS file using Node.js brace counting."""
+    js = _EXTRACT_TMPL.replace("TARGET_PATH", TARGET).replace("METHOD_NAME", method_name)
+    r = _node(js)
+    if r.returncode != 0:
+        return None
+    out = r.stdout.strip()
+    return json.loads(out) if out != "null" else None
 
 
 # ---------------------------------------------------------------------------
@@ -26,112 +68,89 @@ def _src() -> str:
 
 # [pr_diff] fail_to_pass
 def test_method_exists():
-    """showThemeAutoUpdatedNotification method must be defined in the service."""
-    src = _src()
-    # Must define the private method (any return type annotation)
-    assert re.search(r"private\s+showThemeAutoUpdatedNotification\s*\(", src), (
-        "showThemeAutoUpdatedNotification method not defined"
-    )
+    """showThemeAutoUpdatedNotification private method is defined in WorkbenchThemeService"""
+    body = _method_body("showThemeAutoUpdatedNotification")
+    assert body is not None, "showThemeAutoUpdatedNotification method not defined"
 
 
 # [pr_diff] fail_to_pass
 def test_method_called_in_init():
-    """showThemeAutoUpdatedNotification must be called during theme initialization."""
-    src = _src()
-    # The method must be invoked (not just defined)
-    assert re.search(r"this\.showThemeAutoUpdatedNotification\s*\(\s*\)", src), (
-        "showThemeAutoUpdatedNotification is never called"
+    """showThemeAutoUpdatedNotification is called during theme initialization"""
+    init_body = _method_body("initializeThemes")
+    assert init_body is not None, "initializeThemes method not found"
+    assert "this.showThemeAutoUpdatedNotification()" in init_body, (
+        "showThemeAutoUpdatedNotification is not called during initialization"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_storage_key_for_one_time_notification():
-    """A storage key constant must exist to track whether the notification was shown."""
-    src = _src()
-    # Must have a static/const key for the auto-updated notification
-    assert re.search(r"THEME_AUTO_UPDATED_NOTIFICATION_KEY", src), (
-        "No storage key constant for the auto-updated notification"
-    )
-    # Must actually read from storage to guard against repeat display
-    assert re.search(r"storageService\.getBoolean\s*\(.*THEME_AUTO_UPDATED_NOTIFICATION_KEY", src), (
-        "Storage key not used in a getBoolean guard"
-    )
+    """A storage key constant exists and is read via getBoolean to prevent repeat display"""
+    body = _method_body("showThemeAutoUpdatedNotification")
+    assert body is not None, "Method not found"
+    assert "THEME_AUTO_UPDATED_NOTIFICATION_KEY" in body, "Storage key constant missing"
+    assert "getBoolean" in body, "Storage key not used in getBoolean guard"
 
 
 # [pr_diff] fail_to_pass
 def test_skips_new_users():
-    """Notification must be suppressed for new (first-time) users."""
-    src = _src()
-    # Must check isNew before deciding to show the notification
-    assert re.search(r"storageService\.isNew\s*\(", src), (
-        "No storageService.isNew check — new users would incorrectly see the notification"
+    """storageService.isNew check suppresses notification for brand-new users"""
+    body = _method_body("showThemeAutoUpdatedNotification")
+    assert body is not None, "Method not found"
+    assert "isNew" in body, (
+        "No isNew check — new users would incorrectly see the notification"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_skips_explicit_theme_choice():
-    """Notification must not show when the user explicitly chose their current theme."""
-    src = _src()
-    # Must guard with isDefaultColorTheme() so explicit picks are excluded
-    assert re.search(r"isDefaultColorTheme\s*\(\s*\)", src), (
+    """isDefaultColorTheme() guard prevents notification for users who explicitly chose their theme"""
+    body = _method_body("showThemeAutoUpdatedNotification")
+    assert body is not None, "Method not found"
+    assert "isDefaultColorTheme" in body, (
         "No isDefaultColorTheme() guard — users who explicitly chose a theme would see the notification"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_has_browse_themes_action():
-    """Notification must include an action to browse / pick a different theme."""
-    src = _src()
-    # Check for the browse-themes command (workbench.action.selectTheme) or a 'browseThemes' label key
-    has_select_theme = "workbench.action.selectTheme" in src
-    has_browse_label = bool(re.search(r"['\"]browseThemes['\"]", src))
-    assert has_select_theme or has_browse_label, (
-        "No Browse Themes action found in the notification"
-    )
+    """Notification offers a Browse Themes action (workbench.action.selectTheme or browseThemes label)"""
+    body = _method_body("showThemeAutoUpdatedNotification")
+    assert body is not None, "Method not found"
+    has_cmd = "workbench.action.selectTheme" in body
+    has_label = "browseThemes" in body
+    assert has_cmd or has_label, "No Browse Themes action found in the notification"
 
 
 # [pr_diff] fail_to_pass
 def test_has_revert_action():
-    """Notification must include an action to revert to the previous default theme."""
-    src = _src()
-    # Check for setColorTheme call inside the notification handler (the revert logic)
-    # and a revert/revertTheme label
-    has_revert_label = bool(re.search(r"['\"]revertTheme['\"]", src))
-    has_set_theme = bool(re.search(r"setColorTheme\s*\(", src))
-    assert has_revert_label or has_set_theme, (
-        "No Revert action found in the notification"
-    )
+    """Notification offers a Revert action that calls setColorTheme to restore the previous default"""
+    body = _method_body("showThemeAutoUpdatedNotification")
+    assert body is not None, "Method not found"
+    assert "setColorTheme" in body, "No setColorTheme call in revert action"
 
 
 # [pr_diff] fail_to_pass
 def test_stores_shown_flag_on_close():
-    """After the notification is dismissed, the shown flag must be persisted to storage."""
-    src = _src()
-    # Must write the notification key back to storage when the notification closes
-    assert re.search(
-        r"storageService\.store\s*\([^)]*THEME_AUTO_UPDATED_NOTIFICATION_KEY",
-        src,
-    ), (
-        "Notification flag not stored on close — user would see notification again on restart"
+    """THEME_AUTO_UPDATED_NOTIFICATION_KEY is persisted to storage when notification is dismissed"""
+    body = _method_body("showThemeAutoUpdatedNotification")
+    assert body is not None, "Method not found"
+    assert "THEME_AUTO_UPDATED_NOTIFICATION_KEY" in body, "Notification key not referenced"
+    assert "storageService.store" in body, (
+        "Notification flag not stored on close — user would see notification again"
     )
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (agent_config) — config-derived coding rules
+# Fail-to-pass (agent_config) — config-derived coding rules
 # ---------------------------------------------------------------------------
 
 # [agent_config] fail_to_pass — .github/copilot-instructions.md:132 @ af50a47c13e23e0b3c46719dbd92fe00144362a5
 def test_nls_localize_used_for_notification():
-    """User-facing notification message must use nls.localize (all visible strings must be externalized)."""
-    # AST-only because: TypeScript cannot be executed in the verifier environment
-    src = _src()
-    method_match = re.search(
-        r"private\s+showThemeAutoUpdatedNotification[\s\S]*?(?=\n\t(?:private|public|protected|\}))",
-        src,
-    )
-    assert method_match, "showThemeAutoUpdatedNotification method not found"
-    method_body = method_match.group(0)
-    assert "nls.localize" in method_body, (
+    """Notification message strings use nls.localize for externalization/localization"""
+    body = _method_body("showThemeAutoUpdatedNotification")
+    assert body is not None, "Method not found"
+    assert "nls.localize" in body, (
         "Notification strings must use nls.localize for localization "
         "(copilot-instructions.md:132)"
     )
@@ -139,16 +158,10 @@ def test_nls_localize_used_for_notification():
 
 # [agent_config] fail_to_pass — .github/copilot-instructions.md:144 @ af50a47c13e23e0b3c46719dbd92fe00144362a5
 def test_disposable_registered_with_register():
-    """Event listener on notification handle must be registered via _register / this._register."""
-    # AST-only because: TypeScript cannot be executed in the verifier environment
-    src = _src()
-    method_match = re.search(
-        r"private\s+showThemeAutoUpdatedNotification[\s\S]*?(?=\n\t(?:private|public|protected|\}))",
-        src,
-    )
-    assert method_match, "showThemeAutoUpdatedNotification method not found"
-    method_body = method_match.group(0)
-    assert re.search(r"this\._register\s*\(", method_body), (
+    """Event listener on notification handle is registered via this._register for proper disposal"""
+    body = _method_body("showThemeAutoUpdatedNotification")
+    assert body is not None, "Method not found"
+    assert "this._register" in body, (
         "Disposable event listener not registered via this._register "
         "(copilot-instructions.md:144)"
     )

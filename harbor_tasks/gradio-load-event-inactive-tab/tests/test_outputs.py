@@ -7,6 +7,8 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
+import json
 import re
 from pathlib import Path
 
@@ -14,40 +16,21 @@ REPO = "/workspace/gradio"
 FILE = Path(REPO) / "js/core/src/init.svelte.ts"
 
 
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node.js in the repo directory."""
+    script = Path("/tmp") / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 def _read_source():
     return FILE.read_text()
-
-
-def _strip_comments(code: str) -> str:
-    code = re.sub(r"//.*", "", code)
-    code = re.sub(r"/\*[\s\S]*?\*/", "", code)
-    return code
-
-
-def _extract_method(src: str, signature: str, max_len: int = 4000) -> str:
-    start = src.find(signature)
-    assert start != -1, f"Method '{signature}' not found"
-    depth = 0
-    started = False
-    body = []
-    for i in range(start, min(start + max_len, len(src))):
-        ch = src[i]
-        if ch == "{":
-            depth += 1
-            started = True
-        if ch == "}":
-            depth -= 1
-        if started:
-            body.append(ch)
-        if started and depth == 0:
-            break
-    return "".join(body)
-
-
-def _meaningful_lines(code: str) -> int:
-    stripped = _strip_comments(code)
-    return len([l for l in stripped.splitlines()
-                if l.strip() and l.strip() not in ("{", "}")])
 
 
 # ---------------------------------------------------------------------------
@@ -63,96 +46,176 @@ def test_file_exists_with_apptree():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via Node.js subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-# AST-only because: TypeScript/Svelte module with deep framework deps, cannot import in Python
 def test_spread_replace_bug_removed():
     """The spread-replace pattern (node!.props.props = { ...spread })
-    must be absent from the !_set_data branch in update_state.
-    This pattern breaks Svelte 5 $state proxy tracking for unmounted components."""
-    src = _read_source()
-    update_body = _extract_method(src, "async update_state(")
+    must be replaced with in-place for...in modification in update_state."""
+    r = _run_node("""\
+import { readFileSync } from 'node:fs';
+const src = readFileSync('js/core/src/init.svelte.ts', 'utf8');
 
-    assert _meaningful_lines(update_body) >= 10, \
-        "update_state appears to be a stub"
+const methodStart = src.indexOf('async update_state(');
+if (methodStart === -1) {
+    console.log(JSON.stringify({pass:false, reason:'update_state method not found'}));
+    process.exit(0);
+}
 
-    stripped = _strip_comments(update_body)
+let depth = 0, started = false, bs = -1, be = -1;
+for (let i = methodStart; i < src.length; i++) {
+    if (src[i] === '{') { depth++; if (!started) { started = true; bs = i; } }
+    if (src[i] === '}') { depth--; if (started && depth === 0) { be = i + 1; break; } }
+}
+const body = src.substring(bs, be);
 
-    no_callback = update_body.find("if (!_set_data)")
-    if no_callback == -1:
-        # Method restructured — acceptable if substantial (verified above)
-        return
+// Bug pattern: spread-replace overwrites entire props object
+if (/\\.props\\.props\\s*=\\s*\\{[^}]*\\.\\.\\./.test(body)) {
+    console.log(JSON.stringify({pass:false, reason:'spread-replace pattern still present in update_state'}));
+    process.exit(0);
+}
 
-    else_pos = update_body.find("else if (_set_data)", no_callback)
-    branch = stripped[no_callback:else_pos] if else_pos > no_callback \
-        else stripped[no_callback:no_callback + 600]
+// Fix: must use for...in in-place modification
+if (!/for\\s*\\(\\s*const\\s+key\\s+in\\s+new_props\\.props\\s*\\)/.test(body)) {
+    console.log(JSON.stringify({pass:false, reason:'for...in in-place prop loop not found in update_state'}));
+    process.exit(0);
+}
 
-    assert not re.search(r"\.props\.props\s*=\s*\{[^}]*\.\.\.", branch), \
-        "Spread-replace pattern still present — breaks Svelte $state proxy"
+console.log(JSON.stringify({pass:true}));
+""")
+    assert r.returncode == 0, f"Node script failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert result.get("pass"), result.get("reason", "spread-replace pattern still present")
 
 
 # [pr_diff] fail_to_pass
-# AST-only because: TypeScript/Svelte module with deep framework deps, cannot import in Python
 def test_deferred_state_stored():
-    """update_state must store deferred state on the class instance when
-    _set_data is unavailable (component hidden in inactive tab).
-    Accepts: this.X.set(), this.X.push(), this.X[k]=v, this.X.add()."""
-    src = _read_source()
-    update_body = _extract_method(src, "async update_state(")
-    stripped = _strip_comments(update_body)
+    """update_state must store deferred state in #pending_updates map.
+    The map must be declared on the class and used with .get()/.set()."""
+    r = _run_node("""\
+import { readFileSync } from 'node:fs';
+const src = readFileSync('js/core/src/init.svelte.ts', 'utf8');
 
-    no_callback = update_body.find("if (!_set_data)")
-    if no_callback == -1:
-        target = stripped
-    else:
-        else_pos = update_body.find("else if (_set_data)", no_callback)
-        target = stripped[no_callback:else_pos] if else_pos > no_callback \
-            else stripped[no_callback:no_callback + 600]
+// #pending_updates Map must be declared as a class field
+if (!/#pending_updates\\s*=\\s*new\\s+Map/.test(src)) {
+    console.log(JSON.stringify({pass:false, reason:'#pending_updates Map not declared on class'}));
+    process.exit(0);
+}
 
-    assert (
-        re.search(r"this[.\[#]\S*\.(set|push|add)\s*\(", target) or
-        re.search(r"this[.\[#]\S*\[.*\]\s*=", target)
-    ), "update_state does not store deferred state on class instance"
+// update_state must write to #pending_updates
+const ms = src.indexOf('async update_state(');
+let d = 0, s = false, bs = -1, be = -1;
+for (let i = ms; i < src.length; i++) {
+    if (src[i] === '{') { d++; if (!s) { s = true; bs = i; } }
+    if (src[i] === '}') { d--; if (s && d === 0) { be = i + 1; break; } }
+}
+const body = src.substring(bs, be);
+
+if (!/this\\.#pending_updates\\.set\\s*\\(/.test(body)) {
+    console.log(JSON.stringify({pass:false, reason:'update_state does not write to #pending_updates'}));
+    process.exit(0);
+}
+if (!/this\\.#pending_updates\\.get\\s*\\(/.test(body)) {
+    console.log(JSON.stringify({pass:false, reason:'update_state does not read #pending_updates (missing merge with existing)'}));
+    process.exit(0);
+}
+
+console.log(JSON.stringify({pass:true}));
+""")
+    assert r.returncode == 0, f"Node script failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert result.get("pass"), result.get("reason", "deferred state not stored in update_state")
 
 
 # [pr_diff] fail_to_pass
-# AST-only because: TypeScript/Svelte module with deep framework deps, cannot import in Python
 def test_register_component_applies_deferred():
-    """register_component must apply deferred state when a component mounts.
-    It should read from the class-level store and be substantially longer
-    than the buggy version (~6 lines)."""
-    src = _read_source()
-    method_body = _extract_method(src, "register_component(", max_len=3000)
-    stripped = _strip_comments(method_body)
+    """register_component must read from #pending_updates, delete the entry,
+    and apply it via _set_data after tick()."""
+    r = _run_node("""\
+import { readFileSync } from 'node:fs';
+const src = readFileSync('js/core/src/init.svelte.ts', 'utf8');
 
-    ml = _meaningful_lines(method_body)
-    assert ml >= 10, \
-        f"register_component has only {ml} lines — expected deferred state logic"
+// Extract register_component method body
+const ms = src.indexOf('register_component(');
+let d = 0, s = false, bs = -1, be = -1;
+for (let i = ms; i < src.length; i++) {
+    if (src[i] === '{') { d++; if (!s) { s = true; bs = i; } }
+    if (src[i] === '}') { d--; if (s && d === 0) { be = i + 1; break; } }
+}
+const body = src.substring(bs, be);
 
-    assert (
-        re.search(r"this[.\[#]\S*\.(get|has|delete|size|length|shift|pop|keys|entries|forEach)\s*\(", stripped) or
-        re.search(r"this[.\[#]\S*\[.*\]", stripped)
-    ), "register_component does not read from any deferred state store"
+// Must read pending updates for the component
+if (!/this\\.#pending_updates\\.get\\s*\\(/.test(body)) {
+    console.log(JSON.stringify({pass:false, reason:'register_component does not read #pending_updates'}));
+    process.exit(0);
+}
+
+// Must clean up after reading
+if (!/this\\.#pending_updates\\.delete\\s*\\(/.test(body)) {
+    console.log(JSON.stringify({pass:false, reason:'register_component does not delete from #pending_updates'}));
+    process.exit(0);
+}
+
+// Must defer application until after Svelte tick
+if (!/tick\\s*\\(\\s*\\)\\.then/.test(body)) {
+    console.log(JSON.stringify({pass:false, reason:'register_component does not defer via tick().then()'}));
+    process.exit(0);
+}
+
+// Must apply via _set callback
+if (!/_set\\s*\\(\\s*pending\\s*\\)/.test(body)) {
+    console.log(JSON.stringify({pass:false, reason:'register_component does not call _set(pending)'}));
+    process.exit(0);
+}
+
+console.log(JSON.stringify({pass:true}));
+""")
+    assert r.returncode == 0, f"Node script failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert result.get("pass"), result.get("reason", "register_component does not apply deferred state")
 
 
 # [pr_diff] fail_to_pass
-# AST-only because: TypeScript/Svelte module with deep framework deps, cannot import in Python
 def test_no_full_tree_traversal_in_render():
-    """render_previously_invisible_children must not do a full tree traversal
-    with root reassignment (this.root = this.traverse(this.root!, [...])),
-    which triggers unnecessary Svelte reactive cascades."""
-    src = _read_source()
-    method_body = _extract_method(
-        src, "render_previously_invisible_children(", max_len=2000)
+    """render_previously_invisible_children must use targeted node lookup
+    (find_node_by_id) instead of full tree traversal with root reassignment."""
+    r = _run_node("""\
+import { readFileSync } from 'node:fs';
+const src = readFileSync('js/core/src/init.svelte.ts', 'utf8');
 
-    ml = _meaningful_lines(method_body)
-    assert ml >= 2, "render_previously_invisible_children is a stub"
+// Extract render_previously_invisible_children method body
+const ms = src.indexOf('render_previously_invisible_children(');
+let d = 0, s = false, bs = -1, be = -1;
+for (let i = ms; i < src.length; i++) {
+    if (src[i] === '{') { d++; if (!s) { s = true; bs = i; } }
+    if (src[i] === '}') { d--; if (s && d === 0) { be = i + 1; break; } }
+}
+const body = src.substring(bs, be);
 
-    stripped = _strip_comments(method_body)
-    assert "this.root = this.traverse(this.root" not in stripped, \
-        "Still does full tree traversal with root reassignment"
+// Bug: full tree traversal with root reassignment
+if (/this\\.root\\s*=\\s*this\\.traverse\\s*\\(\\s*this\\.root/.test(body)) {
+    console.log(JSON.stringify({pass:false, reason:'full tree traversal with this.root reassignment still present'}));
+    process.exit(0);
+}
+
+// Fix: must use targeted find_node_by_id
+if (!/find_node_by_id\\s*\\(/.test(body)) {
+    console.log(JSON.stringify({pass:false, reason:'does not use find_node_by_id for targeted lookup'}));
+    process.exit(0);
+}
+
+// Fix: must check hidden_on_startup for early return optimization
+if (!/#hidden_on_startup\\.has/.test(body)) {
+    console.log(JSON.stringify({pass:false, reason:'no #hidden_on_startup check for early return'}));
+    process.exit(0);
+}
+
+console.log(JSON.stringify({pass:true}));
+""")
+    assert r.returncode == 0, f"Node script failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert result.get("pass"), result.get("reason", "full tree traversal still present")
 
 
 # ---------------------------------------------------------------------------

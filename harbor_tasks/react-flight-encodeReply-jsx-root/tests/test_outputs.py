@@ -5,11 +5,9 @@ PR:   35730
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
-
-AST-only because: ReactFlightReplyClient.js and ReactFlightClient.js use
-Flow type annotations that node cannot execute directly without stripping.
 """
 
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/react"
@@ -18,7 +16,47 @@ FLIGHT_CLIENT = REPO + "/packages/react-client/src/ReactFlightClient.js"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — file existence and syntax
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _inject_and_run_jest(test_file_rel: str, test_name: str, test_code: str,
+                         test_path_pattern: str) -> None:
+    """Inject a test case into an existing React test file and run it via Jest.
+
+    The test file is restored to its original state after execution.
+    """
+    test_file = Path(REPO) / test_file_rel
+    original = test_file.read_text()
+
+    # Insert before the last }); (which closes the outermost describe block)
+    lines = original.split('\n')
+    insert_idx = None
+    for i in range(len(lines) - 1, -1, -1):
+        if lines[i].strip() == '});':
+            insert_idx = i
+            break
+    assert insert_idx is not None, f"Could not find describe block closing in {test_file_rel}"
+
+    lines.insert(insert_idx, test_code)
+    test_file.write_text('\n'.join(lines))
+
+    try:
+        r = subprocess.run(
+            ["yarn", "test", "--no-watchman",
+             "--testPathPattern", test_path_pattern,
+             "--testNamePattern", test_name],
+            cwd=REPO, capture_output=True, text=True, timeout=180,
+        )
+        assert r.returncode == 0, (
+            f"Jest test '{test_name}' failed.\n"
+            f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-500:]}"
+        )
+    finally:
+        test_file.write_text(original)
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static) — file existence and basic structure
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -32,10 +70,9 @@ def test_files_exist():
 def test_js_syntax_reply_client():
     """ReactFlightReplyClient.js must be readable and non-empty."""
     src = Path(REPLY_CLIENT).read_text()
-    # File must have substantial content (not stubbed out)
     assert len(src.splitlines()) > 100, "ReactFlightReplyClient.js is too short — likely stubbed"
-    # Key structural elements must remain
-    for marker in ("processReply", "REACT_ELEMENT_TYPE", "temporaryReferences", "serializeTemporaryReferenceMarker"):
+    for marker in ("processReply", "REACT_ELEMENT_TYPE", "temporaryReferences",
+                    "serializeTemporaryReferenceMarker"):
         assert marker in src, f"ReactFlightReplyClient.js missing expected symbol: {marker}"
 
 
@@ -44,103 +81,68 @@ def test_js_syntax_flight_client():
     """ReactFlightClient.js must be readable and non-empty."""
     src = Path(FLIGHT_CLIENT).read_text()
     assert len(src.splitlines()) > 100, "ReactFlightClient.js is too short — likely stubbed"
-    for marker in ("moveDebugInfoFromChunkToInnerValue", "addAsyncInfo", "_debugInfo", "Object.defineProperty"):
+    for marker in ("moveDebugInfoFromChunkToInnerValue", "addAsyncInfo",
+                    "_debugInfo", "Object.defineProperty"):
         assert marker in src, f"ReactFlightClient.js missing expected symbol: {marker}"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral changes
+# Fail-to-pass (pr_diff) — behavioral tests via React's Jest runner
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_modelroot_jsx_root_check():
-    """encodeReply must detect JSX as root model and emit a temporary reference marker.
+def test_encodereply_jsx_root_behavior():
+    """encodeReply with JSX element as root must not throw when temporaryReferences provided.
 
-    The fix adds: if (temporaryReferences !== undefined && modelRoot === value)
-    inside the REACT_ELEMENT_TYPE handler so JSX passed directly to encodeReply
-    is serialized as a temporary reference instead of throwing.
+    Runs a focused Jest test via React's test runner (yarn test).
+    On base commit: encodeReply throws 'React Element cannot be passed to Server Functions'.
+    On fix: JSX root is correctly serialized as a temporary reference.
     """
-    src = Path(REPLY_CLIENT).read_text()
-    # Core check: modelRoot === value must be present
-    assert "modelRoot === value" in src, (
-        "modelRoot === value check not found in ReactFlightReplyClient.js — "
-        "JSX root will throw instead of being serialized as a temporary reference"
-    )
-    # Must be guarded by temporaryReferences check (prevents false positive for missing ref case)
-    lines = src.splitlines()
-    modelroot_check_line = next(
-        (i for i, l in enumerate(lines) if "modelRoot === value" in l), None
-    )
-    assert modelroot_check_line is not None
-    context = "\n".join(lines[max(0, modelroot_check_line - 2):modelroot_check_line + 8])
-    assert "temporaryReferences" in context, (
-        "modelRoot === value check is not guarded by temporaryReferences !== undefined"
-    )
-    # Must return serializeTemporaryReferenceMarker() in same block
-    assert "serializeTemporaryReferenceMarker" in context, (
-        "modelRoot === value block does not return serializeTemporaryReferenceMarker()"
+    _inject_and_run_jest(
+        test_file_rel="packages/react-server-dom-webpack/src/__tests__/ReactFlightDOMReply-test.js",
+        test_name="__eval_jsx_root__",
+        test_code="""
+  it('__eval_jsx_root__', async () => {
+    const React = require('react');
+    const jsx = React.createElement('div');
+    const temporaryReferences = ReactServerDOMClient.createTemporaryReferenceSet();
+    const body = await ReactServerDOMClient.encodeReply(jsx, {temporaryReferences});
+    expect(body).toBeDefined();
+  });
+""",
+        test_path_pattern="ReactFlightDOMReply-test",
     )
 
 
 # [pr_diff] fail_to_pass
-def test_modelroot_nulled_after_emit():
-    """modelRoot must be set to null after emitting the temporary reference marker
-    in the REACT_ELEMENT_TYPE handler (the new block added by the fix).
+def test_frozen_client_ref_behavior():
+    """Frozen client reference element must not crash when debug info is attached.
 
-    Without this, a nested visit to the same root value could re-emit the marker,
-    causing double-processing of the JSX root.
+    Runs a focused Jest test via React's test runner (yarn test).
+    On base commit: Object.defineProperty on frozen element throws TypeError in dev mode.
+    On fix: Object.isFrozen guard prevents the crash.
     """
-    src = Path(REPLY_CLIENT).read_text()
-    lines = src.splitlines()
-    # Find the specific line that combines temporaryReferences with modelRoot === value
-    # (this pattern is unique to the fix — base code has modelRoot === value but not
-    # combined with temporaryReferences on the same line or adjacent guard)
-    combined_line = next(
-        (i for i, l in enumerate(lines)
-         if "temporaryReferences" in l and "modelRoot === value" in l),
-        None,
-    )
-    assert combined_line is not None, (
-        "No line combining temporaryReferences and modelRoot === value found — "
-        "the REACT_ELEMENT_TYPE root handler is missing"
-    )
-    # modelRoot = null must appear within 5 lines after the combined check
-    window = "\n".join(lines[combined_line:combined_line + 6])
-    assert "modelRoot = null" in window, (
-        "modelRoot is not set to null after emitting the marker — "
-        f"context around check:\n{window}"
-    )
+    _inject_and_run_jest(
+        test_file_rel="packages/react-client/src/__tests__/ReactFlight-test.js",
+        test_name="__eval_frozen_ref__",
+        test_code="""
+  it('__eval_frozen_ref__', async () => {
+    const ClientReference = clientReference(React.createElement('span'));
 
+    function App() {
+      return ReactServer.createElement('div', null, ClientReference);
+    }
 
-# [pr_diff] fail_to_pass
-def test_frozen_guard_in_move_debug_info():
-    """moveDebugInfoFromChunkToInnerValue must guard Object.defineProperty with Object.isFrozen.
+    const transport = ReactNoopFlightServer.render(ReactServer.createElement(App));
+    await act(async () => {
+      const result = await ReactNoopFlightClient.read(transport);
+      ReactNoop.render(result);
+    });
 
-    Without this, attaching _debugInfo to a frozen React element (e.g. a client
-    reference exported as JSX) throws: TypeError: Cannot define property _debugInfo,
-    object is not extensible.
-    """
-    src = Path(FLIGHT_CLIENT).read_text()
-    assert "Object.isFrozen" in src, (
-        "Object.isFrozen not found in ReactFlightClient.js"
-    )
-    lines = src.splitlines()
-    # Find the moveDebugInfoFromChunkToInnerValue function region
-    fn_start = next(
-        (i for i, l in enumerate(lines) if "moveDebugInfoFromChunkToInnerValue" in l and "function" in l),
-        None,
-    )
-    assert fn_start is not None, "moveDebugInfoFromChunkToInnerValue function not found"
-    # Look for Object.isFrozen in the vicinity of the function (within 60 lines)
-    region = "\n".join(lines[fn_start: fn_start + 60])
-    assert "Object.isFrozen" in region, (
-        "Object.isFrozen guard not found in moveDebugInfoFromChunkToInnerValue — "
-        "frozen elements will crash when receiving debug info"
-    )
-    # The guard must wrap an else branch that contains Object.defineProperty
-    assert "Object.defineProperty" in region, (
-        "Object.defineProperty not found in moveDebugInfoFromChunkToInnerValue — "
-        "unexpected structural change"
+    expect(ReactNoop).toMatchRenderedOutput(<div><span /></div>);
+  });
+""",
+        test_path_pattern="react-client/src/__tests__/ReactFlight-test",
     )
 
 
@@ -148,8 +150,9 @@ def test_frozen_guard_in_move_debug_info():
 def test_frozen_guard_in_add_async_info():
     """addAsyncInfo must guard Object.defineProperty with Object.isFrozen.
 
-    Same frozen-element crash occurs in addAsyncInfo when a chunk resolves to a
-    frozen React element and debug info needs to be attached.
+    The same frozen-element crash occurs in addAsyncInfo when a chunk resolves
+    to a frozen React element and async debug info needs to be attached.
+    This supplements the behavioral test above which exercises moveDebugInfoFromChunkToInnerValue.
     """
     src = Path(FLIGHT_CLIENT).read_text()
     lines = src.splitlines()
@@ -168,18 +171,6 @@ def test_frozen_guard_in_add_async_info():
     )
 
 
-# [pr_diff] fail_to_pass
-def test_isFrozen_count():
-    """ReactFlightClient.js must have at least 2 Object.isFrozen guards (one per def site)."""
-    src = Path(FLIGHT_CLIENT).read_text()
-    import re
-    occurrences = re.findall(r"Object\.isFrozen", src)
-    assert len(occurrences) >= 2, (
-        f"Expected >=2 Object.isFrozen guards, found {len(occurrences)} — "
-        "one guard in moveDebugInfoFromChunkToInnerValue, one in addAsyncInfo"
-    )
-
-
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff / static) — regression + anti-stub
 # ---------------------------------------------------------------------------
@@ -193,8 +184,7 @@ def test_error_preserved_for_non_temp_ref_jsx():
     """
     src = Path(REPLY_CLIENT).read_text()
     assert "React Element cannot be passed to Server Functions" in src, (
-        "Original error message for non-temp-ref JSX was removed — "
-        "invalid JSX would silently misbehave instead of throwing"
+        "Original error message for non-temp-ref JSX was removed"
     )
     assert "temporary reference set" in src, (
         "Error message mentioning 'temporary reference set' not found"

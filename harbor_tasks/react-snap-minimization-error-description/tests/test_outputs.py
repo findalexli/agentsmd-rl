@@ -6,139 +6,293 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import os
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/react"
 MINIMIZE_TS = f"{REPO}/compiler/packages/snap/src/minimize.ts"
 
 
-def _read_minimize() -> str:
-    src = Path(MINIMIZE_TS)
-    assert src.exists(), f"minimize.ts not found at {MINIMIZE_TS}"
-    return src.read_text()
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.cjs"
+    script.write_text(code)
+    try:
+        env = os.environ.copy()
+        env["NODE_PATH"] = f"{REPO}/compiler/node_modules:{REPO}/node_modules"
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+            env=env,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — file presence check
+# Gate (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_minimize_ts_exists():
     """minimize.ts must exist and be non-empty."""
-    content = _read_minimize()
+    content = Path(MINIMIZE_TS).read_text()
     assert len(content) > 1000, "minimize.ts appears empty or truncated"
     assert "errorsMatch" in content, "minimize.ts missing expected function errorsMatch"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — error description in type definitions
+# Fail-to-pass (pr_diff) — core behavioral: errorsMatch
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript type declarations; behavior requires full React compiler pipeline
-def test_compile_errors_type_has_description():
-    """CompileErrors.errors array must include description: string | null."""
-    content = _read_minimize()
-    # Base has: errors: Array<{category: string; reason: string}>
-    # Fixed:    errors: Array<{category: string; reason: string; description: string | null}>
-    assert re.search(
-        r"errors:\s*Array<\{[^}]*description:\s*string\s*\|\s*null[^}]*\}>",
-        content,
-    ), "CompileErrors.errors must include `description: string | null`"
+def test_errorsMatch_rejects_different_descriptions():
+    """errorsMatch must return false when error descriptions differ."""
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('compiler/packages/snap/src/minimize.ts', 'utf-8');
 
+// Extract the errorsMatch function by finding its start and matching braces
+const funcStart = src.indexOf('function errorsMatch(');
+if (funcStart === -1) {
+  console.error('errorsMatch function not found');
+  process.exit(1);
+}
 
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript type declarations; behavior requires full React compiler pipeline
-def test_error_details_type_has_description():
-    """error.details array type must include description: string | null."""
-    content = _read_minimize()
-    # Base has: details?: Array<{category: string; reason: string}>;
-    # Fixed:    details?: Array<{...description: string | null;...}>;
-    # Use DOTALL so we match the multi-line form introduced by the fix
-    assert re.search(
-        r"details\?:.*?description:\s*string\s*\|\s*null",
-        content,
-        re.DOTALL,
-    ), "error.details type must include `description: string | null`"
+let braceCount = 0, endIdx = funcStart, started = false;
+for (let i = funcStart; i < src.length; i++) {
+  if (src[i] === '{') { braceCount++; started = true; }
+  else if (src[i] === '}') {
+    braceCount--;
+    if (started && braceCount === 0) { endIdx = i + 1; break; }
+  }
+}
+
+// Strip TypeScript type annotations to get valid JS
+let fnSrc = src.slice(funcStart, endIdx)
+  .replace(/:\s*CompileErrors/g, '')
+  .replace(/:\s*CompileResult/g, '')
+  .replace(/:\s*boolean/g, '');
+
+eval(fnSrc);
+
+// Core test: same category+reason but DIFFERENT description must NOT match
+const a = { kind: 'errors', errors: [{ category: 'InvalidReact', reason: 'hook-rule', description: 'Cannot call hook inside condition' }] };
+const b = { kind: 'errors', errors: [{ category: 'InvalidReact', reason: 'hook-rule', description: 'Cannot call hook inside loop' }] };
+
+if (errorsMatch(a, b) === true) {
+  console.error('FAIL: errorsMatch returned true for different descriptions');
+  process.exit(1);
+}
+
+// Sanity: identical errors should still match
+const c = { kind: 'errors', errors: [{ category: 'X', reason: 'Y', description: 'Z' }] };
+const d = { kind: 'errors', errors: [{ category: 'X', reason: 'Y', description: 'Z' }] };
+if (!errorsMatch(c, d)) {
+  console.error('FAIL: errorsMatch returned false for identical errors');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"errorsMatch behavioral test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — error extraction and comparison
+# Fail-to-pass (pr_diff) — description field in type definitions
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript, function is internal to module with complex React compiler deps
-def test_error_mapping_preserves_description():
+def test_description_in_error_types():
+    """CompileErrors and error.details types must include description: string | null."""
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('compiler/packages/snap/src/minimize.ts', 'utf-8');
+const parser = require('@babel/parser');
+
+const ast = parser.parse(src, {
+  sourceType: 'module',
+  plugins: ['typescript'],
+});
+
+// Count TSPropertySignature nodes with key 'description'
+let descriptionTypeCount = 0;
+
+function walk(node) {
+  if (!node || typeof node !== 'object') return;
+  if (node.type === 'TSPropertySignature' &&
+      node.key && node.key.type === 'Identifier' &&
+      node.key.name === 'description') {
+    descriptionTypeCount++;
+  }
+  for (const key of Object.keys(node)) {
+    if (key === 'type' || key === 'start' || key === 'end' || key === 'loc') continue;
+    const child = node[key];
+    if (Array.isArray(child)) child.forEach(c => walk(c));
+    else if (child && typeof child === 'object' && child.type) walk(child);
+  }
+}
+
+walk(ast.program);
+
+// The fix adds description to two type definitions:
+// 1. CompileErrors type alias
+// 2. error.details type in the catch block
+if (descriptionTypeCount < 2) {
+  console.error('FAIL: Expected at least 2 description type annotations, found ' + descriptionTypeCount);
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Type definition check failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — error mapping preserves description
+# ---------------------------------------------------------------------------
+
+def test_error_mapping_copies_description():
     """error.details.map must copy description field onto each mapped error object."""
-    content = _read_minimize()
-    assert "description: detail.description" in content, (
-        "Error mapping must include `description: detail.description` "
-        "so the description is preserved from CompilerError details"
-    )
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('compiler/packages/snap/src/minimize.ts', 'utf-8');
+const parser = require('@babel/parser');
 
+const ast = parser.parse(src, {
+  sourceType: 'module',
+  plugins: ['typescript'],
+});
 
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript, function is internal to module with complex React compiler deps
-def test_errors_match_compares_description():
-    """errorsMatch must return false when descriptions differ."""
-    content = _read_minimize()
-    # Base has only category and reason in the comparison
-    # Fixed adds: a.errors[i].description !== b.errors[i].description
-    assert re.search(
-        r"a\.errors\[i\]\.description\s*!==\s*b\.errors\[i\]\.description",
-        content,
-    ), "errorsMatch must compare `a.errors[i].description !== b.errors[i].description`"
+// Look for ObjectProperty: description: detail.description
+let found = false;
+
+function walk(node) {
+  if (!node || typeof node !== 'object') return;
+  if (node.type === 'ObjectProperty' &&
+      node.key && node.key.name === 'description' &&
+      node.value && node.value.type === 'MemberExpression' &&
+      node.value.object && node.value.object.name === 'detail' &&
+      node.value.property && node.value.property.name === 'description') {
+    found = true;
+  }
+  for (const key of Object.keys(node)) {
+    if (key === 'type' || key === 'start' || key === 'end' || key === 'loc') continue;
+    const child = node[key];
+    if (Array.isArray(child)) child.forEach(c => walk(c));
+    else if (child && typeof child === 'object' && child.type) walk(child);
+  }
+}
+
+walk(ast.program);
+
+if (!found) {
+  console.error('FAIL: description: detail.description not found in error mapping');
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Error mapping check failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — new minimization strategy generators
+# Fail-to-pass (pr_diff) — new generator functions
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript generator functions, cannot call without full package compilation
-def test_remove_function_parameters_generator_exists():
-    """Generator function removeFunctionParameters must be defined."""
-    content = _read_minimize()
-    assert re.search(r"function\*\s+removeFunctionParameters\s*\(", content), (
-        "Generator `function* removeFunctionParameters(...)` must be defined"
-    )
+def test_new_generators_defined():
+    """Generator functions removeFunctionParameters, removeArrayPatternElements, removeObjectPatternProperties must be defined."""
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('compiler/packages/snap/src/minimize.ts', 'utf-8');
+const parser = require('@babel/parser');
+
+const ast = parser.parse(src, {
+  sourceType: 'module',
+  plugins: ['typescript'],
+});
+
+const generatorNames = [];
+
+function walk(node) {
+  if (!node || typeof node !== 'object') return;
+  if (node.type === 'FunctionDeclaration' && node.generator && node.id) {
+    generatorNames.push(node.id.name);
+  }
+  for (const key of Object.keys(node)) {
+    if (key === 'type' || key === 'start' || key === 'end' || key === 'loc') continue;
+    const child = node[key];
+    if (Array.isArray(child)) child.forEach(c => walk(c));
+    else if (child && typeof child === 'object' && child.type) walk(child);
+  }
+}
+
+walk(ast.program);
+
+const required = ['removeFunctionParameters', 'removeArrayPatternElements', 'removeObjectPatternProperties'];
+const missing = required.filter(name => !generatorNames.includes(name));
+
+if (missing.length > 0) {
+  console.error('FAIL: Missing generator functions: ' + missing.join(', '));
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Generator check failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript generator functions, cannot call without full package compilation
-def test_remove_array_pattern_elements_generator_exists():
-    """Generator function removeArrayPatternElements must be defined."""
-    content = _read_minimize()
-    assert re.search(r"function\*\s+removeArrayPatternElements\s*\(", content), (
-        "Generator `function* removeArrayPatternElements(...)` must be defined"
-    )
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — strategies registered
+# ---------------------------------------------------------------------------
 
+def test_new_strategies_registered():
+    """All three new strategies must be registered in simplificationStrategies array."""
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('compiler/packages/snap/src/minimize.ts', 'utf-8');
+const parser = require('@babel/parser');
 
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript generator functions, cannot call without full package compilation
-def test_remove_object_pattern_properties_generator_exists():
-    """Generator function removeObjectPatternProperties must be defined."""
-    content = _read_minimize()
-    assert re.search(r"function\*\s+removeObjectPatternProperties\s*\(", content), (
-        "Generator `function* removeObjectPatternProperties(...)` must be defined"
-    )
+const ast = parser.parse(src, {
+  sourceType: 'module',
+  plugins: ['typescript'],
+});
 
+let strategyNames = [];
 
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript, strategy array is module-level; cannot introspect at runtime
-def test_new_strategies_registered_in_array():
-    """All three new strategies must be registered in simplificationStrategies."""
-    content = _read_minimize()
-    # Find the simplificationStrategies array
-    match = re.search(
-        r"simplificationStrategies\s*=\s*\[(.+?)(?=\n\]|\];)",
-        content,
-        re.DOTALL,
-    )
-    assert match, "Could not locate `simplificationStrategies` array"
-    block = match.group(1)
-    for name in ("removeFunctionParameters", "removeArrayPatternElements", "removeObjectPatternProperties"):
-        assert name in block, (
-            f"`{name}` must be registered inside the simplificationStrategies array"
-        )
+function walk(node) {
+  if (!node || typeof node !== 'object') return;
+  if (node.type === 'VariableDeclarator' &&
+      node.id && node.id.name === 'simplificationStrategies' &&
+      node.init && node.init.type === 'ArrayExpression') {
+    for (const elem of node.init.elements) {
+      if (elem && elem.type === 'ObjectExpression') {
+        for (const prop of elem.properties) {
+          if (prop.key && prop.key.name === 'name' && prop.value && prop.value.value) {
+            strategyNames.push(prop.value.value);
+          }
+        }
+      }
+    }
+  }
+  for (const key of Object.keys(node)) {
+    if (key === 'type' || key === 'start' || key === 'end' || key === 'loc') continue;
+    const child = node[key];
+    if (Array.isArray(child)) child.forEach(c => walk(c));
+    else if (child && typeof child === 'object' && child.type) walk(child);
+  }
+}
+
+walk(ast.program);
+
+const required = ['removeFunctionParameters', 'removeArrayPatternElements', 'removeObjectPatternProperties'];
+const missing = required.filter(name => !strategyNames.includes(name));
+
+if (missing.length > 0) {
+  console.error('FAIL: Missing strategies: ' + missing.join(', '));
+  console.error('Found strategies: ' + strategyNames.join(', '));
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Strategy registration check failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout

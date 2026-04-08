@@ -9,21 +9,27 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/prime-rl"
 CONFIG_PY = Path(f"{REPO}/src/prime_rl/utils/config.py")
 
-
 TARGET_FUNCS = {"none_to_none_str", "_convert_none"}
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in the repo environment."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 def _load_config_functions():
     """Extract target functions from config.py and exec them.
 
-    AST-only because: config.py imports pydantic_config and pydantic at module level,
-    which pull in heavy deps that may not be fully installed in the test env.
-    The target functions (none_to_none_str, _convert_none) are pure Python.
+    Used by pass_to_pass tests that don't need subprocess isolation.
     """
     src = CONFIG_PY.read_text()
     tree = ast.parse(src)
@@ -51,80 +57,82 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_none_inside_flat_list():
     """None values inside a flat list are converted to 'None' strings."""
-    ns = _load_config_functions()
-    none_to_none_str = ns["none_to_none_str"]
-
-    assert none_to_none_str({"k": [None, "a", None]}) == {"k": ["None", "a", "None"]}
-    assert none_to_none_str({"x": [1, None, "b", None, 3]}) == {
-        "x": [1, "None", "b", "None", 3]
-    }
-    assert none_to_none_str({"single": [None]}) == {"single": ["None"]}
+    r = _run_py("""
+from prime_rl.utils.config import none_to_none_str
+r1 = none_to_none_str({"k": [None, "a", None]})
+assert r1 == {"k": ["None", "a", "None"]}, f"Expected None converted, got {r1}"
+r2 = none_to_none_str({"x": [1, None, "b", None, 3]})
+assert r2 == {"x": [1, "None", "b", "None", 3]}, f"Got {r2}"
+r3 = none_to_none_str({"single": [None]})
+assert r3 == {"single": ["None"]}, f"Got {r3}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_none_inside_dict_in_list():
     """None inside a dict nested in a list is converted."""
-    ns = _load_config_functions()
-    none_to_none_str = ns["none_to_none_str"]
-
-    assert none_to_none_str({"k": [{"n": None, "ok": 1}]}) == {
-        "k": [{"n": "None", "ok": 1}]
-    }
-    assert none_to_none_str({"d": [{"a": None}, {"b": None, "c": 2}]}) == {
-        "d": [{"a": "None"}, {"b": "None", "c": 2}]
-    }
+    r = _run_py("""
+from prime_rl.utils.config import none_to_none_str
+r1 = none_to_none_str({"k": [{"n": None, "ok": 1}]})
+assert r1 == {"k": [{"n": "None", "ok": 1}]}, f"Got {r1}"
+r2 = none_to_none_str({"d": [{"a": None}, {"b": None, "c": 2}]})
+assert r2 == {"d": [{"a": "None"}, {"b": "None", "c": 2}]}, f"Got {r2}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_deeply_nested_list_of_list():
     """Deeply nested None (list of list) is converted."""
-    ns = _load_config_functions()
-    none_to_none_str = ns["none_to_none_str"]
-
-    assert none_to_none_str({"k": [[None, 1], [2, None]]}) == {
-        "k": [["None", 1], [2, "None"]]
-    }
-    assert none_to_none_str({"matrix": [[None, None], [None, None]]}) == {
-        "matrix": [["None", "None"], ["None", "None"]]
-    }
-    assert none_to_none_str({"deep": [[[None, 1], [2, None]]]}) == {
-        "deep": [[["None", 1], [2, "None"]]]
-    }
-    assert none_to_none_str({"mixed": [None, [None, 1], [2, [None]]]}) == {
-        "mixed": ["None", ["None", 1], [2, ["None"]]]
-    }
+    r = _run_py("""
+from prime_rl.utils.config import none_to_none_str
+assert none_to_none_str({"k": [[None, 1], [2, None]]}) == {"k": [["None", 1], [2, "None"]]}
+assert none_to_none_str({"matrix": [[None, None], [None, None]]}) == {"matrix": [["None", "None"], ["None", "None"]]}
+assert none_to_none_str({"deep": [[[None, 1], [2, None]]]}) == {"deep": [[["None", 1], [2, "None"]]]}
+assert none_to_none_str({"mixed": [None, [None, 1], [2, [None]]]}) == {"mixed": ["None", ["None", 1], [2, ["None"]]]}
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_toml_roundtrip_with_none_in_list():
     """TOML serialization succeeds after converting None in lists."""
-    import tomli_w
+    r = _run_py("""
+import tomli_w
+from prime_rl.utils.config import none_to_none_str
 
-    ns = _load_config_functions()
-    none_to_none_str = ns["none_to_none_str"]
+# Flat list with None — must not raise TypeError from tomli_w
+data1 = {"items": [None, "hello", None]}
+toml1 = tomli_w.dumps(none_to_none_str(data1))
+assert toml1.count("None") >= 2, f"Expected >=2 'None', got: {toml1}"
 
-    # Input 1: flat list with None
-    data1 = {"items": [None, "hello", None]}
-    toml1 = tomli_w.dumps(none_to_none_str(data1))
-    assert toml1.count("None") >= 2
+# Nested dict+list combo
+data2 = {"section": {"items": [None, "hello", None], "nested": {"vals": [1, None]}}}
+toml2 = tomli_w.dumps(none_to_none_str(data2))
+assert "None" in toml2
 
-    # Input 2: nested dict+list combo
-    data2 = {
-        "section": {"items": [None, "hello", None], "nested": {"vals": [1, None]}}
-    }
-    toml2 = tomli_w.dumps(none_to_none_str(data2))
-    assert "None" in toml2
+# List of dicts with None values
+data3 = {"configs": [{"timeout": None}, {"name": "main", "val": None}]}
+toml3 = tomli_w.dumps(none_to_none_str(data3))
+assert toml3.count("None") >= 2
 
-    # Input 3: list of dicts with None values
-    data3 = {"configs": [{"timeout": None}, {"name": "main", "val": None}]}
-    toml3 = tomli_w.dumps(none_to_none_str(data3))
-    assert toml3.count("None") >= 2
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

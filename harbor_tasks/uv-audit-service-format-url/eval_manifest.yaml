@@ -7,16 +7,18 @@ source:
   merge_commit: "b38bea427cca74f993c78213522a16a902b6046e"
 
 checks:
-  - id: enum_exists_with_derives
+  # Behavioral (subprocess) f2p tests
+  - id: uv_audit_clap_feature_compiles
     type: fail_to_pass
     origin: pr_diff
-    description: "VulnerabilityServiceFormat enum exists with Copy, Clone, Debug derives and Osv variant"
+    description: "uv-audit crate compiles with the clap feature enabled (validates optional dep + ValueEnum derive)"
 
-  - id: enum_clap_valueenum
+  - id: vulnerability_service_format_is_public
     type: fail_to_pass
     origin: pr_diff
-    description: "VulnerabilityServiceFormat has cfg_attr for clap::ValueEnum"
+    description: "VulnerabilityServiceFormat is a public enum with Osv variant and Copy+Clone+Debug derives"
 
+  # Structural f2p tests
   - id: cli_service_format_field
     type: fail_to_pass
     origin: pr_diff
@@ -42,16 +44,12 @@ checks:
     origin: pr_diff
     description: "AuditSettings includes and wires service_format and service_url"
 
-  - id: clap_optional_dependency
-    type: fail_to_pass
-    origin: pr_diff
-    description: "uv-audit Cargo.toml has clap listed as optional dependency"
-
   - id: uv_cli_depends_on_uv_audit
     type: fail_to_pass
     origin: pr_diff
     description: "uv-cli Cargo.toml depends on uv-audit with clap feature enabled"
 
+  # Config-derived tests
   - id: no_unwrap_in_new_service_code
     type: pass_to_pass
     origin: agent_config

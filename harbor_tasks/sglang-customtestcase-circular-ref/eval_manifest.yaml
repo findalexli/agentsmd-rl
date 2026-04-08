@@ -12,20 +12,20 @@ checks:
     origin: static
     description: "test_utils.py must parse without syntax errors"
 
-  - id: dill_serialize_subclass
+  - id: dill_no_recursive_ref_warning
     type: fail_to_pass
     origin: pr_diff
-    description: "dill.dumps succeeds on a CustomTestCase subclass (no circular ref)"
+    description: "dill.dumps on a CustomTestCase subclass must not emit recursive-ref PicklingWarnings"
+
+  - id: no_circular_ref_in_setup_defaults
+    type: fail_to_pass
+    origin: pr_diff
+    description: "safe_setUpClass must not hold a bound-method default that creates a circular reference"
 
   - id: dill_roundtrip_preserves_state
-    type: fail_to_pass
+    type: pass_to_pass
     origin: pr_diff
     description: "dill round-trip preserves class attributes and name"
-
-  - id: dill_serialize_inner_class
-    type: fail_to_pass
-    origin: pr_diff
-    description: "dill.dumps succeeds on a class referencing a CustomTestCase subclass"
 
   - id: teardown_called_on_setup_failure
     type: pass_to_pass

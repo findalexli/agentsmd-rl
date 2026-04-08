@@ -7,37 +7,37 @@ source:
   merge_commit: "594f421fdc9a6aaf04b394e2775abc2f4baba05c"
 
 checks:
-  - id: no_bare_put_on_registration_targets
+  - id: test_no_bare_put_on_registration_targets
     type: fail_to_pass
     origin: pr_diff
     description: "Buggy .put() calls on expect_proto/constructor/static_proto are removed or guarded"
 
-  - id: index_safe_property_setting
+  - id: test_index_safe_property_setting
     type: fail_to_pass
     origin: pr_diff
     description: "Properties registered via a method that handles index keys (putMayBeIndex, etc.)"
 
-  - id: all_three_targets_use_safe_setter
+  - id: test_all_three_targets_use_safe_setter
     type: fail_to_pass
     origin: pr_diff
     description: "All three registration targets are updated, not just one or two"
 
-  - id: extend_preserves_core_logic
+  - id: test_extend_preserves_core_logic
     type: pass_to_pass
     origin: pr_diff
     description: "Extend function still iterates properties and creates wrapper functions"
 
-  - id: key_functions_preserved
+  - id: test_key_functions_preserved
     type: pass_to_pass
     origin: static
     description: "Core expect functions (applyCustomMatcher, extend, call, getNot) still exist"
 
-  - id: not_stub
+  - id: test_not_stub
     type: pass_to_pass
     origin: static
     description: "expect.zig has substantial Zig content (not stubbed out)"
 
-  - id: no_inline_import_in_functions
+  - id: test_no_inline_import_in_functions
     type: pass_to_pass
     origin: agent_config
     description: "No @import() inline inside the extend() function body (scoped to agent's change)"
@@ -46,7 +46,7 @@ checks:
       lines: "11"
       commit: "6034bd82b1a0d9b3635560405354e931b7e0e192"
 
-  - id: no_std_direct_usage
+  - id: test_no_std_direct_usage
     type: pass_to_pass
     origin: agent_config
     description: "No std.fs/std.posix/std.os introduced in extend() — must use bun.* equivalents"
@@ -55,7 +55,7 @@ checks:
       lines: "16"
       commit: "6034bd82b1a0d9b3635560405354e931b7e0e192"
 
-  - id: no_wrong_allocator
+  - id: test_no_wrong_allocator
     type: pass_to_pass
     origin: agent_config
     description: "New allocator usage should use bun.default_allocator, not std.heap"
@@ -64,7 +64,7 @@ checks:
       lines: "232"
       commit: "6034bd82b1a0d9b3635560405354e931b7e0e192"
 
-  - id: no_catch_outofmemory_pattern
+  - id: test_no_catch_outofmemory_pattern
     type: pass_to_pass
     origin: agent_config
     description: "Must not use 'catch bun.outOfMemory()' — use bun.handleOom() instead"

@@ -7,10 +7,15 @@ source:
   merge_commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
 
 checks:
-  - id: exception_guard_between_tojs_and_jscast
+  - id: fix_adds_return_if_exception
     type: fail_to_pass
     origin: pr_diff
-    description: "Exception or null guard must exist after toJSNewlyCreated and before jsCast"
+    description: "RETURN_IF_EXCEPTION(throwScope, {}) must exist between toJSNewlyCreated and jsCast"
+
+  - id: fix_is_minimal
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Fix must be a pure insertion — no deletions of existing code in BunString.cpp"
 
   - id: guard_prevents_null_deref_on_error
     type: fail_to_pass

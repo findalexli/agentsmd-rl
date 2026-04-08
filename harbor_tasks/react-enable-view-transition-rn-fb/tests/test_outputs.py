@@ -7,53 +7,96 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/react"
 FLAG_NATIVE_FB = f"{REPO}/packages/shared/forks/ReactFeatureFlags.native-fb.js"
-FLAG_TEST_RN   = f"{REPO}/packages/shared/forks/ReactFeatureFlags.test-renderer.native-fb.js"
-FLAG_TEST_WWW  = f"{REPO}/packages/shared/forks/ReactFeatureFlags.test-renderer.www.js"
+FLAG_TEST_RN = f"{REPO}/packages/shared/forks/ReactFeatureFlags.test-renderer.native-fb.js"
+FLAG_TEST_WWW = f"{REPO}/packages/shared/forks/ReactFeatureFlags.test-renderer.www.js"
+
+# Node.js script that evaluates a feature flag's runtime value from a JS source file.
+# Strips Flow import lines and type annotations so the JS engine can evaluate the constants.
+_FLAG_EVAL_SCRIPT = r"""
+const fs = require('fs');
+const flagPath = process.argv[2];
+const flagName = process.argv[3];
+
+const src = fs.readFileSync(flagPath, 'utf8');
+
+// Strip Flow import/import-type lines and 'export' keyword,
+// then strip Flow type annotations (e.g. ': boolean') from const declarations.
+const cleaned = src.split('\n')
+  .filter(l => !/^\s*import\s/.test(l))
+  .map(l => l.replace(/^export\s+/, ''))
+  .map(l => l.replace(/(const\s+\w+)\s*:\s*\w+/g, '$1'))
+  .join('\n');
+
+try {
+  const fn = new Function(cleaned + '\nreturn ' + flagName + ';');
+  const val = fn();
+  console.log(JSON.stringify({ flag: flagName, value: val, type: typeof val }));
+  process.exit(val === true ? 0 : 1);
+} catch (e) {
+  console.error('Evaluation error: ' + e.message);
+  process.exit(2);
+}
+"""
+
+
+def _eval_flag(filepath: str, flag_name: str) -> subprocess.CompletedProcess:
+    """Use Node.js to evaluate a feature flag's runtime value from a JS source file."""
+    script_path = Path(REPO) / "_eval_flag.cjs"
+    script_path.write_text(_FLAG_EVAL_SCRIPT)
+    try:
+        return subprocess.run(
+            ["node", str(script_path), filepath, flag_name],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+    finally:
+        script_path.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core flag changes
+# Fail-to-pass (pr_diff) — core flag changes via Node.js evaluation
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_enable_view_transition_native_fb():
-    """enableViewTransition is set to true in ReactFeatureFlags.native-fb.js."""
-    content = Path(FLAG_NATIVE_FB).read_text()
-    m = re.search(r'export const enableViewTransition\b.*?=\s*(\S+?)\s*;', content)
-    assert m is not None, "enableViewTransition declaration not found in native-fb.js"
-    actual = m.group(1)
-    assert actual == "true", (
-        f"enableViewTransition should be 'true' in native-fb.js, found: '{actual}'"
+    """enableViewTransition evaluates to true in ReactFeatureFlags.native-fb.js."""
+    r = _eval_flag(FLAG_NATIVE_FB, "enableViewTransition")
+    assert r.returncode == 0, (
+        f"enableViewTransition is not true in native-fb.js: "
+        f"{r.stdout.strip()} {r.stderr.strip()}"
     )
+    data = json.loads(r.stdout.strip())
+    assert data["value"] is True
 
 
 # [pr_diff] fail_to_pass
 def test_enable_view_transition_test_renderer_native_fb():
-    """enableViewTransition is set to true in ReactFeatureFlags.test-renderer.native-fb.js."""
-    content = Path(FLAG_TEST_RN).read_text()
-    m = re.search(r'export const enableViewTransition\b.*?=\s*(\S+?)\s*;', content)
-    assert m is not None, "enableViewTransition declaration not found in test-renderer.native-fb.js"
-    actual = m.group(1)
-    assert actual == "true", (
-        f"enableViewTransition should be 'true' in test-renderer.native-fb.js, found: '{actual}'"
+    """enableViewTransition evaluates to true in ReactFeatureFlags.test-renderer.native-fb.js."""
+    r = _eval_flag(FLAG_TEST_RN, "enableViewTransition")
+    assert r.returncode == 0, (
+        f"enableViewTransition is not true in test-renderer.native-fb.js: "
+        f"{r.stdout.strip()} {r.stderr.strip()}"
     )
+    data = json.loads(r.stdout.strip())
+    assert data["value"] is True
 
 
 # [pr_diff] fail_to_pass
 def test_enable_view_transition_test_renderer_www():
-    """enableViewTransition is set to true in ReactFeatureFlags.test-renderer.www.js."""
-    content = Path(FLAG_TEST_WWW).read_text()
-    m = re.search(r'export const enableViewTransition\b.*?=\s*(\S+?)\s*;', content)
-    assert m is not None, "enableViewTransition declaration not found in test-renderer.www.js"
-    actual = m.group(1)
-    assert actual == "true", (
-        f"enableViewTransition should be 'true' in test-renderer.www.js, found: '{actual}'"
+    """enableViewTransition evaluates to true in ReactFeatureFlags.test-renderer.www.js."""
+    r = _eval_flag(FLAG_TEST_WWW, "enableViewTransition")
+    assert r.returncode == 0, (
+        f"enableViewTransition is not true in test-renderer.www.js: "
+        f"{r.stdout.strip()} {r.stderr.strip()}"
     )
+    data = json.loads(r.stdout.strip())
+    assert data["value"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -63,7 +106,6 @@ def test_enable_view_transition_test_renderer_www():
 # [static] pass_to_pass
 def test_no_unintended_flag_changes():
     """Other flags remain at their base-commit values — only enableViewTransition was changed."""
-    # These flags were all false at the base commit and must stay false.
     flags_must_stay_false = [
         "enableGestureTransition",
         "enableSuspenseyImages",
@@ -95,21 +137,24 @@ def test_all_fork_files_have_view_transition_enabled():
     Rule: 'Missing fork files — New flags must be added to ALL fork files, not just the main one'
     Source: .claude/skills/feature-flags/SKILL.md line 78
     """
-    # AST-only because: JavaScript files, not Python; using regex text check.
     files = {
         "native-fb.js": FLAG_NATIVE_FB,
         "test-renderer.native-fb.js": FLAG_TEST_RN,
         "test-renderer.www.js": FLAG_TEST_WWW,
     }
-    missing = []
+    failures = []
     for name, filepath in files.items():
-        content = Path(filepath).read_text()
-        m = re.search(r'export const enableViewTransition\b.*?=\s*(\S+?)\s*;', content)
-        if m is None or m.group(1) != "true":
-            found = m.group(1) if m else "not found"
-            missing.append(f"{name}: {found}")
+        r = _eval_flag(filepath, "enableViewTransition")
+        if r.returncode != 0:
+            failures.append(
+                f"{name}: not true ({r.stdout.strip()} {r.stderr.strip()})"
+            )
+            continue
+        data = json.loads(r.stdout.strip())
+        if data["value"] is not True:
+            failures.append(f"{name}: {data['value']}")
 
-    assert not missing, (
-        "enableViewTransition must be 'true' in ALL fork files. "
-        "Still false/missing in: " + ", ".join(missing)
+    assert not failures, (
+        "enableViewTransition must evaluate to true in ALL fork files. "
+        "Failed: " + ", ".join(failures)
     )

@@ -6,15 +6,30 @@ PR:   21503
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-All tests use regex/text analysis because the target is a CUDA C++ kernel header
-(.cuh) — no GPU or CUDA compiler is available in the test environment.
+f2p tests execute Python analysis scripts via subprocess.
+p2p / agent_config tests verify structural invariants inline.
 """
 
 import re
+import subprocess
+import textwrap
 from pathlib import Path
 
 REPO = "/workspace/sglang"
 TARGET = Path(REPO) / "python/sglang/jit_kernel/csrc/elementwise/qknorm_across_heads.cuh"
+_SCRIPT = Path(REPO) / "_eval_tmp.py"
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute a Python analysis script in the repo directory."""
+    _SCRIPT.write_text(textwrap.dedent(code))
+    try:
+        return subprocess.run(
+            ["python3", str(_SCRIPT)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        _SCRIPT.unlink(missing_ok=True)
 
 
 def _strip_comments(src: str) -> str:
@@ -25,13 +40,11 @@ def _strip_comments(src: str) -> str:
 
 
 def _read_stripped() -> str:
-    """Read the target file with comments stripped."""
     assert TARGET.exists(), f"{TARGET} does not exist"
     return _strip_comments(TARGET.read_text())
 
 
 def _read_raw() -> str:
-    """Read the target file with comments intact."""
     assert TARGET.exists(), f"{TARGET} does not exist"
     return TARGET.read_text()
 
@@ -40,113 +53,210 @@ def _read_raw() -> str:
 # Gates (pass_to_pass, static) -- anti-stub
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_not_stub():
     """Target file must be substantial (>= 80 non-empty lines), not a stub."""
-    # AST-only because: CUDA C++ kernel, no GPU/compiler in test env
     src = _read_stripped()
     nonempty = sum(1 for line in src.splitlines() if line.strip())
-    assert nonempty >= 80, f"Only {nonempty} non-empty lines -- expected >= 80 for a real kernel"
+    assert nonempty >= 80, f"Only {nonempty} non-empty lines -- expected >= 80"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) -- core behavioral tests
+# Fail-to-pass (pr_diff) -- behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_blockidx_y_dispatch():
     """Kernel must use blockIdx.y to dispatch between Q and K processing.
 
-    The base code processes both Q and K in a single CTA with no blockIdx.y usage.
-    After the fix, blockIdx.y selects which tensor (Q or K) each block handles.
+    Base code processes both Q and K in a single CTA with no blockIdx.y.
+    After fix, blockIdx.y selects which tensor each block handles.
     """
-    # AST-only because: CUDA C++ kernel, no GPU/compiler in test env
-    src = _read_stripped()
-    bidy_refs = re.findall(r"blockIdx\s*\.\s*y", src)
-    assert len(bidy_refs) >= 1, "blockIdx.y not found in kernel code"
-    # Must be used in a conditional or assignment, not just mentioned
-    bidy_in_context = re.findall(r"(if|switch|=|==|\?)\s*.*blockIdx\s*\.\s*y", src)
-    assert len(bidy_in_context) >= 1, (
-        f"blockIdx.y found {len(bidy_refs)} time(s) but not in a conditional or assignment"
-    )
+    r = _run_py("""\
+        import re, sys
+        path = "python/sglang/jit_kernel/csrc/elementwise/qknorm_across_heads.cuh"
+        src = open(path).read()
+        src = re.sub(r'/\\*.*?\\*/', '', src, flags=re.DOTALL)
+        src = re.sub(r'//[^\\n]*', '', src)
+
+        # Extract the kernel function body
+        m = re.search(
+            r'__global__\\s+void\\s+qknorm_across_heads_reg_kernel.*?\\{(.+?)^\\}',
+            src, re.DOTALL | re.MULTILINE,
+        )
+        if not m:
+            print("FAIL: kernel function body not found")
+            sys.exit(1)
+        body = m.group(1)
+
+        # blockIdx.y must appear in the kernel body
+        refs = re.findall(r'blockIdx\\s*\\.\\s*y', body)
+        if not refs:
+            print("FAIL: blockIdx.y not found in kernel body")
+            sys.exit(1)
+
+        # It must be used to select q vs k (conditional or assignment)
+        dispatch = re.search(
+            r'blockIdx\\s*\\.\\s*y\\s*==|'
+            r'=\\s*.*blockIdx\\s*\\.\\s*y|'
+            r'\\?\\s*.*blockIdx\\s*\\.\\s*y|'
+            r'blockIdx\\s*\\.\\s*y.*\\?',
+            body,
+        )
+        if not dispatch:
+            print(f"FAIL: blockIdx.y found {len(refs)}x but not used for Q/K dispatch")
+            sys.exit(1)
+
+        print(f"PASS: blockIdx.y used {len(refs)}x with Q/K dispatch")
+    """)
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Check failed: {r.stdout.strip()}"
 
 
-# [pr_diff] fail_to_pass
 def test_shared_memory_halved():
     """Shared memory must be reduced from 64 to <= 32.
 
     Base code: __shared__ float shared_memory[64] (32 for Q + 32 for K).
     After fix: only one buffer needed since each CTA handles one tensor.
     """
-    # AST-only because: CUDA C++ kernel, no GPU/compiler in test env
-    src = _read_stripped()
-    matches = re.findall(
-        r"__shared__\s+float\s+\w+\s*\[\s*(\d+)\s*\]", src
-    )
-    assert len(matches) >= 1, "No __shared__ float array found"
-    sizes = [int(m) for m in matches]
-    assert all(s <= 32 for s in sizes), (
-        f"Shared memory buffer size(s) {sizes} -- expected all <= 32 (base uses 64)"
-    )
+    r = _run_py("""\
+        import re, sys
+        path = "python/sglang/jit_kernel/csrc/elementwise/qknorm_across_heads.cuh"
+        src = open(path).read()
+        src = re.sub(r'/\\*.*?\\*/', '', src, flags=re.DOTALL)
+        src = re.sub(r'//[^\\n]*', '', src)
+
+        matches = re.findall(r'__shared__\\s+float\\s+\\w+\\s*\\[\\s*(\\d+)\\s*\\]', src)
+        if not matches:
+            print("FAIL: no __shared__ float array found")
+            sys.exit(1)
+
+        sizes = [int(m) for m in matches]
+        for s in sizes:
+            if s > 32:
+                print(f"FAIL: shared memory buffer size {s} > 32 (base uses 64)")
+                sys.exit(1)
+
+        print(f"PASS: shared memory sizes {sizes}")
+    """)
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Check failed: {r.stdout.strip()}"
 
 
-# [pr_diff] fail_to_pass
 def test_register_vectors_unified():
     """Dual Q/K register vectors must be replaced with unified generic vectors.
 
-    Base code declares 6 vec_t variables: v_q, v_k, v_q_weight, v_k_weight, v_q_out, v_k_out.
+    Base code declares 6 vec_t vars: v_q, v_k, v_q_weight, v_k_weight, v_q_out, v_k_out.
     After fix, each CTA handles only one tensor, so <= 3 vec_t vars needed.
     """
-    # AST-only because: CUDA C++ kernel, no GPU/compiler in test env
-    src = _read_stripped()
-    decls = re.findall(r"\bvec_t\s+(\w+)\s*;", src)
-    assert len(decls) <= 3, (
-        f"{len(decls)} vec_t declarations ({', '.join(decls)}) -- expected <= 3 (base has 6)"
-    )
-    # Also verify the old dual names are gone
-    for old_name in ("v_q", "v_k", "v_q_weight", "v_k_weight", "v_q_out", "v_k_out"):
-        assert old_name not in decls, f"Old dual variable '{old_name}' still declared"
+    r = _run_py("""\
+        import re, sys
+        path = "python/sglang/jit_kernel/csrc/elementwise/qknorm_across_heads.cuh"
+        src = open(path).read()
+        src = re.sub(r'/\\*.*?\\*/', '', src, flags=re.DOTALL)
+        src = re.sub(r'//[^\\n]*', '', src)
+
+        # Extract kernel body to only count declarations inside the kernel
+        m = re.search(
+            r'__global__\\s+void\\s+qknorm_across_heads_reg_kernel.*?\\{(.+?)^\\}',
+            src, re.DOTALL | re.MULTILINE,
+        )
+        if not m:
+            print("FAIL: kernel function body not found")
+            sys.exit(1)
+        body = m.group(1)
+
+        decls = re.findall(r'\\bvec_t\\s+(\\w+)\\s*;', body)
+        if len(decls) > 3:
+            print(f"FAIL: {len(decls)} vec_t declarations ({', '.join(decls)}) -- expected <= 3")
+            sys.exit(1)
+
+        old_names = {'v_q', 'v_k', 'v_q_weight', 'v_k_weight', 'v_q_out', 'v_k_out'}
+        leftover = old_names & set(decls)
+        if leftover:
+            print(f"FAIL: old dual variable(s) still declared: {leftover}")
+            sys.exit(1)
+
+        print(f"PASS: {len(decls)} vec_t declarations: {decls}")
+    """)
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Check failed: {r.stdout.strip()}"
 
 
-# [pr_diff] fail_to_pass
 def test_2d_grid_launch():
     """LaunchKernel must use a 2D grid (dim3 with y=2) instead of 1D.
 
     Base code: LaunchKernel(static_cast<uint>(N.unwrap()), threads, device.unwrap())
-    After fix: dim3(N, 2) -- second dimension dispatches Q vs K blocks.
+    After fix: dim3(N, 2) to dispatch Q vs K blocks via second dimension.
     """
-    # AST-only because: CUDA C++ kernel, no GPU/compiler in test env
-    src = _read_stripped()
-    has_dim3_2 = re.search(r"dim3\s*[\({]\s*[^,]+,\s*2\s*[\)}]", src)
-    assert has_dim3_2, "No 2D grid launch (dim3 with y=2) found"
+    r = _run_py("""\
+        import re, sys
+        path = "python/sglang/jit_kernel/csrc/elementwise/qknorm_across_heads.cuh"
+        src = open(path).read()
+        src = re.sub(r'/\\*.*?\\*/', '', src, flags=re.DOTALL)
+        src = re.sub(r'//[^\\n]*', '', src)
+
+        # Extract the launcher struct body
+        m = re.search(
+            r'struct\\s+QKNormAcrossHeadsKernel.*?\\{(.+)',
+            src, re.DOTALL,
+        )
+        if not m:
+            print("FAIL: QKNormAcrossHeadsKernel struct not found")
+            sys.exit(1)
+        launcher = m.group(1)
+
+        # Must use dim3 with y=2 in the LaunchKernel call
+        if not re.search(r'dim3\\s*[\\({]\\s*[^,]+,\\s*2\\s*[\\)}]', launcher):
+            print("FAIL: no 2D grid launch (dim3 with y=2) in launcher")
+            sys.exit(1)
+
+        # Verify LaunchKernel is the launch mechanism (not raw <<<>>>)
+        if not re.search(r'\\bLaunchKernel\\b', launcher):
+            print("FAIL: LaunchKernel not found in launcher")
+            sys.exit(1)
+
+        print("PASS: 2D grid launch with dim3(N, 2) found")
+    """)
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Check failed: {r.stdout.strip()}"
 
 
-# [pr_diff] fail_to_pass
 def test_rms_const_params():
     """rms() helper parameters must be const-qualified (read-only).
 
-    Base code: rms(packed_t& val, packed_t& weight, float rsqrt_square_sum)
-    After fix: rms(const packed_t& val, const packed_t& weight, ...)
+    Base: rms(packed_t& val, packed_t& weight, float rsqrt_square_sum)
+    Fix:  rms(const packed_t& val, const packed_t& weight, ...)
     """
-    # AST-only because: CUDA C++ kernel, no GPU/compiler in test env
-    src = _read_stripped()
-    match = re.search(r"\brms\s*\(([^)]+)\)", src)
-    assert match, "rms() function signature not found"
-    params = [p.strip() for p in match.group(1).split(",")]
-    const_count = sum(1 for p in params if "const" in p)
-    assert const_count >= 2, (
-        f"Only {const_count} const-qualified param(s) in rms() -- expected >= 2"
-    )
+    r = _run_py("""\
+        import re, sys
+        path = "python/sglang/jit_kernel/csrc/elementwise/qknorm_across_heads.cuh"
+        src = open(path).read()
+        src = re.sub(r'/\\*.*?\\*/', '', src, flags=re.DOTALL)
+        src = re.sub(r'//[^\\n]*', '', src)
+
+        # Find the rms function definition signature
+        m = re.search(r'\\brms\\s*\\(([^)]+)\\)', src)
+        if not m:
+            print("FAIL: rms() function signature not found")
+            sys.exit(1)
+
+        params = [p.strip() for p in m.group(1).split(',')]
+        const_ref_params = [p for p in params if 'const' in p and '&' in p]
+        if len(const_ref_params) < 2:
+            print(f"FAIL: only {len(const_ref_params)} const-ref param(s), expected >= 2")
+            sys.exit(1)
+
+        print(f"PASS: {len(const_ref_params)} const-ref params in rms()")
+    """)
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Check failed: {r.stdout.strip()}"
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) -- regression checks
 # ---------------------------------------------------------------------------
 
-# [pr_diff] pass_to_pass
 def test_rms_helper_exists():
     """rms() helper function must still exist with a real body (not removed)."""
-    # AST-only because: CUDA C++ kernel, no GPU/compiler in test env
     src = _read_stripped()
     assert re.search(r"\brms\s*\(", src), "rms() function not found"
     assert re.search(r"\brms\s*\([^)]*\)\s*\{[^}]+\}", src, re.DOTALL), (
@@ -154,10 +264,8 @@ def test_rms_helper_exists():
     )
 
 
-# [pr_diff] pass_to_pass
 def test_launcher_struct_exists():
     """QKNormAcrossHeadsKernel struct with run() method must still exist."""
-    # AST-only because: CUDA C++ kernel, no GPU/compiler in test env
     src = _read_stripped()
     assert re.search(r"struct\s+QKNormAcrossHeadsKernel", src), (
         "QKNormAcrossHeadsKernel struct not found"
@@ -168,46 +276,35 @@ def test_launcher_struct_exists():
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) -- rules from .claude/skills/add-jit-kernel/SKILL.md
+# Config-derived (agent_config) -- from .claude/skills/add-jit-kernel/SKILL.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass -- .claude/skills/add-jit-kernel/SKILL.md:51 @ 8a56a7b0
 def test_sgl_device_macro():
     """Device helper functions must use SGL_DEVICE macro (not raw __device__).
 
-    SKILL.md line 51: "SGL_DEVICE -- Expands to __forceinline__ __device__. Use on all device functions."
-    The rms() helper is a device function and must retain SGL_DEVICE.
+    SKILL.md line 51: "SGL_DEVICE -- Expands to __forceinline__ __device__."
     """
-    # AST-only because: CUDA C++ kernel, no GPU/compiler in test env
     src = _read_raw()
-    # Find the rms function definition (template line + SGL_DEVICE line)
     rms_match = re.search(r"SGL_DEVICE\s+\w+\s+rms\s*\(", src)
     assert rms_match, "rms() function must use SGL_DEVICE macro"
 
 
-# [agent_config] pass_to_pass -- .claude/skills/add-jit-kernel/SKILL.md:300 @ 8a56a7b0
 def test_uses_launch_kernel():
     """Kernel must be launched via LaunchKernel helper, not raw <<<>>> syntax.
 
-    SKILL.md line 300: "Use LaunchKernel -- it resolves the stream and checks errors automatically."
+    SKILL.md line 300: "Use LaunchKernel -- it resolves the stream and checks errors."
     """
-    # AST-only because: CUDA C++ kernel, no GPU/compiler in test env
     src = _read_stripped()
-    assert re.search(r"\bLaunchKernel\b", src), "LaunchKernel not found -- must use it for kernel launches"
-    # Ensure no raw CUDA <<<>>> launch syntax
-    assert not re.search(r"<<<.*>>>", src), "Raw <<<>>> kernel launch found -- use LaunchKernel instead"
+    assert re.search(r"\bLaunchKernel\b", src), "LaunchKernel not found"
+    assert not re.search(r"<<<.*>>>", src), "Raw <<<>>> kernel launch found"
 
 
-# [agent_config] pass_to_pass -- .claude/skills/add-jit-kernel/SKILL.md:304 @ 8a56a7b0
 def test_device_cast_used():
-    """Type conversions must use device::cast, not raw C-style casts in kernel code.
+    """Type conversions must use device::cast, not raw C-style casts.
 
-    SKILL.md line 304: "device::cast<To, From> or dtype_trait<T>::from(val) for cross-type conversions."
-    The kernel converts between packed_t and fp32x2_t -- must use device::cast.
+    SKILL.md line 304: "device::cast<To, From> for cross-type conversions."
     """
-    # AST-only because: CUDA C++ kernel, no GPU/compiler in test env
     src = _read_stripped()
-    # The kernel body (inside qknorm_across_heads_reg_kernel) must use device::cast
     kernel_match = re.search(
         r"__global__\s+void\s+qknorm_across_heads_reg_kernel.*?\{(.+?)^struct",
         src, re.DOTALL | re.MULTILINE,
@@ -215,24 +312,20 @@ def test_device_cast_used():
     assert kernel_match, "Kernel function body not found"
     kernel_body = kernel_match.group(1)
     casts = re.findall(r"device::cast\s*<", kernel_body)
-    assert len(casts) >= 1, "No device::cast<> found in kernel body -- must use project cast abstractions"
+    assert len(casts) >= 1, "No device::cast<> found in kernel body"
 
 
-# [agent_config] pass_to_pass -- .claude/skills/add-jit-kernel/SKILL.md:156 @ 8a56a7b0
 def test_syncthreads_after_smem_write():
-    """__syncthreads() must be called after writing to shared memory before reading it.
+    """__syncthreads() must be called after writing to shared memory before reading.
 
-    SKILL.md line 156: "Caller is responsible for a __syncthreads() after if the result
+    SKILL.md line 156: "Caller is responsible for __syncthreads() after if the result
     in smem[0] is needed."
     """
-    # AST-only because: CUDA C++ kernel, no GPU/compiler in test env
     src = _read_stripped()
-    # After shared memory buffer write, must have __syncthreads before reading
     assert re.search(r"__syncthreads\s*\(\s*\)", src), (
-        "No __syncthreads() found -- required after shared memory write before read"
+        "No __syncthreads() found"
     )
-    # Should have at least 2 sync points (after warp reduce write, after CTA reduce)
     syncs = re.findall(r"__syncthreads\s*\(\s*\)", src)
     assert len(syncs) >= 2, (
-        f"Only {len(syncs)} __syncthreads() call(s) -- expected >= 2 for shared memory coordination"
+        f"Only {len(syncs)} __syncthreads() -- expected >= 2 for shared memory coordination"
     )

@@ -7,130 +7,203 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/vscode"
-FILE = Path(f"{REPO}/src/vs/workbench/contrib/chat/browser/chatTipCatalog.ts")
+TIP_FILE = f"{REPO}/src/vs/workbench/contrib/chat/browser/chatTipCatalog.ts"
+
+
+# ---------------------------------------------------------------------------
+# Helpers — TypeScript AST extraction via subprocess
+# ---------------------------------------------------------------------------
+
+_TS_EXTRACT = r"""
+const ts = require('typescript');
+const fs = require('fs');
+
+const content = fs.readFileSync('/workspace/vscode/src/vs/workbench/contrib/chat/browser/chatTipCatalog.ts', 'utf8');
+const src = ts.createSourceFile('chatTipCatalog.ts', content, ts.ScriptTarget.Latest, true);
+
+function findVar(node, name) {
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === name && node.initializer) {
+        return node.initializer;
+    }
+    let result;
+    ts.forEachChild(node, child => {
+        if (!result) result = findVar(child, name);
+    });
+    return result;
+}
+
+const catalog = findVar(src, 'TIP_CATALOG');
+if (!catalog || !ts.isArrayLiteralExpression(catalog)) {
+    process.stdout.write(JSON.stringify({error: 'TIP_CATALOG not found or not array'}));
+    process.exit(0);
+}
+
+const entries = catalog.elements.filter(ts.isObjectLiteralExpression).map(elem => {
+    const props = {};
+    for (const prop of elem.properties) {
+        if (!prop.name || !ts.isIdentifier(prop.name)) continue;
+        const key = prop.name.text;
+        if (ts.isPropertyAssignment(prop) && prop.initializer) {
+            const init = prop.initializer;
+            props[key] = ts.isStringLiteral(init) ? init.text : init.getText(src);
+        } else if (ts.isMethodDeclaration(prop)) {
+            props[key] = prop.getText(src);
+        }
+    }
+    return props;
+});
+
+const imports = [];
+for (const stmt of src.statements) {
+    if (ts.isImportDeclaration(stmt) && stmt.importClause && stmt.importClause.namedBindings) {
+        const bindings = stmt.importClause.namedBindings;
+        if (ts.isNamedImports(bindings)) {
+            for (const el of bindings.elements) {
+                imports.push(el.name.text);
+            }
+        }
+    }
+}
+
+process.stdout.write(JSON.stringify({entries, imports}));
+"""
+
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.js"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
+_cached = None
+
+
+def _parse_catalog():
+    """Parse the TypeScript file via AST and return {entries, imports}."""
+    global _cached
+    if _cached is not None:
+        return _cached
+    r = _run_node(_TS_EXTRACT)
+    assert r.returncode == 0, f"TypeScript AST extraction failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert "error" not in data, f"AST error: {data['error']}"
+    _cached = data
+    return _cached
+
+
+def _find_tip(tip_id: str):
+    """Find a tip entry by id from the parsed AST."""
+    for e in _parse_catalog()["entries"]:
+        if e.get("id") == tip_id:
+            return e
+    return None
 
 
 def _file_content():
-    return FILE.read_text()
-
-
-def _tip_block():
-    """Return the full tip object block for tip.openSessionsWindow."""
-    content = _file_content()
-    # Find the id line
-    idx = content.find("tip.openSessionsWindow")
-    if idx == -1:
-        return ""
-    # Find the opening brace before the id
-    start = content.rfind("{", 0, idx)
-    if start == -1:
-        return ""
-    # Find matching closing brace by counting brace depth
-    depth = 0
-    for i in range(start, len(content)):
-        if content[i] == "{":
-            depth += 1
-        elif content[i] == "}":
-            depth -= 1
-            if depth == 0:
-                return content[start : i + 1]
-    # Fallback: grab generous slice
-    return content[start : idx + 1200]
+    return Path(TIP_FILE).read_text()
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via TypeScript AST
 # ---------------------------------------------------------------------------
+
 
 # [pr_diff] fail_to_pass
 def test_tip_id_exists():
     """TIP_CATALOG must contain a tip with id 'tip.openSessionsWindow'."""
-    content = _file_content()
-    assert "'tip.openSessionsWindow'" in content, (
-        "tip.openSessionsWindow tip ID not found in TIP_CATALOG"
-    )
+    tip = _find_tip("tip.openSessionsWindow")
+    assert tip is not None, "tip.openSessionsWindow not found in TIP_CATALOG"
 
 
 # [pr_diff] fail_to_pass
 def test_tip_tier_qol():
     """The sessions window tip must have tier ChatTipTier.Qol."""
-    block = _tip_block()
-    assert block, "tip.openSessionsWindow block not found"
-    assert "ChatTipTier.Qol" in block, (
-        "Sessions window tip must have tier ChatTipTier.Qol"
+    tip = _find_tip("tip.openSessionsWindow")
+    assert tip, "tip.openSessionsWindow not found"
+    assert "ChatTipTier.Qol" in tip.get("tier", ""), (
+        f"Expected tier ChatTipTier.Qol, got {tip.get('tier')!r}"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_command_link_present():
     """buildMessage must link to workbench.action.openSessionsWindow."""
-    block = _tip_block()
-    assert block, "tip.openSessionsWindow block not found"
-    assert "command:workbench.action.openSessionsWindow" in block, (
-        "Tip message must contain a command link to workbench.action.openSessionsWindow"
+    tip = _find_tip("tip.openSessionsWindow")
+    assert tip, "tip.openSessionsWindow not found"
+    assert "command:workbench.action.openSessionsWindow" in tip.get("buildMessage", ""), (
+        "buildMessage must contain a command link to workbench.action.openSessionsWindow"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_command_link_descriptive_title():
     """Command link must include the title 'Open Sessions Window'."""
-    block = _tip_block()
-    assert block, "tip.openSessionsWindow block not found"
-    # The markdown link title should contain "Open Sessions Window"
-    assert "Open Sessions Window" in block, (
+    tip = _find_tip("tip.openSessionsWindow")
+    assert tip, "tip.openSessionsWindow not found"
+    assert "Open Sessions Window" in tip.get("buildMessage", ""), (
         "Command link must include descriptive title 'Open Sessions Window'"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_exclude_when_commands_executed():
-    """Tip must be excluded once the sessions window command is executed."""
-    block = _tip_block()
-    assert block, "tip.openSessionsWindow block not found"
-    assert "excludeWhenCommandsExecuted" in block, (
-        "Missing excludeWhenCommandsExecuted property"
-    )
-    assert "workbench.action.openSessionsWindow" in block, (
+    """Tip must be excluded once workbench.action.openSessionsWindow is executed."""
+    tip = _find_tip("tip.openSessionsWindow")
+    assert tip, "tip.openSessionsWindow not found"
+    val = tip.get("excludeWhenCommandsExecuted", "")
+    assert "workbench.action.openSessionsWindow" in val, (
         "excludeWhenCommandsExecuted must reference workbench.action.openSessionsWindow"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_dismiss_when_commands_clicked():
-    """Tip must be dismissed once the sessions window command is clicked."""
-    block = _tip_block()
-    assert block, "tip.openSessionsWindow block not found"
-    assert "dismissWhenCommandsClicked" in block, (
-        "Missing dismissWhenCommandsClicked property"
+    """Tip must be dismissed once workbench.action.openSessionsWindow is clicked."""
+    tip = _find_tip("tip.openSessionsWindow")
+    assert tip, "tip.openSessionsWindow not found"
+    val = tip.get("dismissWhenCommandsClicked", "")
+    assert "workbench.action.openSessionsWindow" in val, (
+        "dismissWhenCommandsClicked must reference workbench.action.openSessionsWindow"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_when_clause_non_stable():
-    """Tip must only appear on non-stable builds via ProductQualityContext."""
-    block = _tip_block()
-    assert block, "tip.openSessionsWindow block not found"
-    assert "ProductQualityContext" in block, (
+    """Tip must only appear on non-stable builds via ProductQualityContext.notEqualsTo."""
+    tip = _find_tip("tip.openSessionsWindow")
+    assert tip, "tip.openSessionsWindow not found"
+    when = tip.get("when", "")
+    assert "ProductQualityContext" in when, (
         "when clause must reference ProductQualityContext"
     )
-    assert re.search(r"notEqualsTo\(['\"]stable['\"]\)", block), (
+    assert re.search(r"notEqualsTo\(['\"]stable['\"]\)", when), (
         "when clause must include ProductQualityContext.notEqualsTo('stable')"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_when_clause_not_sessions_window():
-    """Tip must be hidden when the user is already in a Sessions Window."""
-    block = _tip_block()
-    assert block, "tip.openSessionsWindow block not found"
-    assert "IsSessionsWindowContext" in block, (
+    """Tip must be hidden when already in a Sessions Window via IsSessionsWindowContext.negate()."""
+    tip = _find_tip("tip.openSessionsWindow")
+    assert tip, "tip.openSessionsWindow not found"
+    when = tip.get("when", "")
+    assert "IsSessionsWindowContext" in when, (
         "when clause must reference IsSessionsWindowContext"
     )
-    assert "negate()" in block, (
+    assert "negate()" in when, (
         "when clause must negate IsSessionsWindowContext"
     )
 
@@ -138,11 +211,11 @@ def test_when_clause_not_sessions_window():
 # [pr_diff] fail_to_pass
 def test_required_imports():
     """ProductQualityContext and IsSessionsWindowContext must be imported."""
-    content = _file_content()
-    assert re.search(r"import\s*\{[^}]*ProductQualityContext[^}]*\}", content), (
+    data = _parse_catalog()
+    assert "ProductQualityContext" in data["imports"], (
         "Missing import for ProductQualityContext"
     )
-    assert re.search(r"import\s*\{[^}]*IsSessionsWindowContext[^}]*\}", content), (
+    assert "IsSessionsWindowContext" in data["imports"], (
         "Missing import for IsSessionsWindowContext"
     )
 
@@ -150,6 +223,7 @@ def test_required_imports():
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — regression
 # ---------------------------------------------------------------------------
+
 
 # [repo_tests] pass_to_pass
 def test_existing_tips_preserved():
@@ -170,12 +244,13 @@ def test_existing_tips_preserved():
 # Config-derived (agent_config) — rules from .github/copilot-instructions.md
 # ---------------------------------------------------------------------------
 
+
 # [agent_config] fail_to_pass — .github/copilot-instructions.md:83 @ 67fdb3ee04fbd04430cd47702977eaa51bd14c40
 def test_user_facing_string_localized():
     """User-facing tip message must use localize() from vs/nls."""
-    block = _tip_block()
-    assert block, "tip.openSessionsWindow block not found"
-    assert "localize(" in block, (
+    tip = _find_tip("tip.openSessionsWindow")
+    assert tip, "tip.openSessionsWindow not found"
+    assert "localize(" in tip.get("buildMessage", ""), (
         "User-facing strings must be externalized using localize() (copilot-instructions.md)"
     )
 
@@ -187,7 +262,6 @@ def test_uses_tabs_not_spaces():
     idx = content.find("tip.openSessionsWindow")
     if idx == -1:
         raise AssertionError("tip.openSessionsWindow not found")
-    # Get lines around the tip block
     start = content.rfind("{", 0, idx)
     end = content.find("}", idx)
     if start == -1 or end == -1:
@@ -207,7 +281,6 @@ def test_no_duplicate_imports():
     """Never duplicate imports — reuse existing imports if present."""
     content = _file_content()
     import_lines = [l.strip() for l in content.split("\n") if l.strip().startswith("import ")]
-    # Check no two import lines are identical
     seen = set()
     for line in import_lines:
         assert line not in seen, (

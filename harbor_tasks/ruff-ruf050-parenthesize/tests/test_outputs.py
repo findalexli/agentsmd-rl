@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/ruff"
@@ -22,58 +23,94 @@ FIXTURE = Path(f"{REPO}/crates/ruff_linter/resources/test/fixtures/ruff/RUF050.p
 # [pr_diff] fail_to_pass
 def test_fixture_has_multiline_expression():
     """Fixture file includes a multiline arithmetic expression test case."""
-    # AST-only because: Rust project, no cargo toolchain in test container
-    source = FIXTURE.read_text()
-    # The PR adds a multiline if-condition with an operator across lines:
-    #   if (\n    id(0)\n    + 0\n):\n    pass
-    # Check for any multiline if with an arithmetic/bitwise operator on a continuation line
-    assert re.search(
-        r"if\s*\(\s*\n\s+\S.*\n\s+[+\-*|&^]", source
-    ), "Fixture must include a multiline expression if-condition with operator across lines"
+    # Parse the fixture with Python's AST and look for an if-statement whose
+    # test is a BinOp (e.g. id(0) + 0).  The base fixture has BoolOps (and/or)
+    # and bare Calls but no arithmetic BinOps in if-conditions.
+    r = subprocess.run(
+        ["python3", "-c", """
+import ast, sys
+
+tree = ast.parse(open(sys.argv[1]).read())
+found = any(
+    isinstance(n, ast.If) and isinstance(n.test, ast.BinOp)
+    for n in ast.walk(tree)
+)
+if not found:
+    print("FAIL: No if-statement with BinOp condition in fixture")
+    sys.exit(1)
+print("PASS")
+""", str(FIXTURE)],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_fixture_has_multiline_call():
     """Fixture file includes a multiline function call test case."""
-    # AST-only because: Rust project, no cargo toolchain in test container
-    source = FIXTURE.read_text()
-    # The PR adds a multiline function call case:
-    #   if foo(\n    1,\n    2,\n):\n    pass
-    # Check for a multiline if with a function call spanning lines
-    assert re.search(
-        r"if\s+\w+\(\s*\n\s+\d", source
-    ), "Fixture must include a multiline function call if-condition"
+    # Parse the fixture with Python's AST and look for an if-statement whose
+    # test is a bare Call with >=2 integer constant arguments (e.g. foo(1, 2)).
+    # The base fixture only has zero-arg calls like foo() in if-conditions.
+    r = subprocess.run(
+        ["python3", "-c", """
+import ast, sys
+
+tree = ast.parse(open(sys.argv[1]).read())
+found = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.If) and isinstance(node.test, ast.Call):
+        call = node.test
+        if (isinstance(call.func, ast.Name)
+            and len(call.args) >= 2
+            and all(isinstance(a, ast.Constant) and isinstance(a.value, int)
+                    for a in call.args)):
+            found = True
+            break
+
+if not found:
+    print("FAIL: No if-statement with Call(name, [int, int, ...]) in fixture")
+    sys.exit(1)
+print("PASS")
+""", str(FIXTURE)],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_replacement_handles_multiline():
     """Replacement logic handles multiline expressions, not just walrus operators."""
-    # AST-only because: Rust project, no cargo toolchain in test container
-    source = RUST_FILE.read_text()
-    # On the base commit, the ONLY conditional parenthesization is for walrus
-    # operators (is_named_expr). A valid fix must add parenthesization logic
-    # for multiline expressions too — via a helper function, additional
-    # conditions, or using existing APIs like parenthesized_range.
-    has_named_expr = "is_named_expr" in source
-    additional_indicators = [
-        "parenthesized_range",       # reuses existing API for paren extraction
-        "has_top_level_line_break",   # gold solution's detection function
-        "condition_as_expression",    # gold solution's helper function
-        "line_break",                 # general line break detection variable/function
-        "multiline",                  # multiline detection
-        "multi_line",                 # alternative naming
-        "needs_parens",              # alternative naming for paren check
-        "spans_multiple",            # alternative detection
-    ]
-    has_multiline_logic = any(ind in source for ind in additional_indicators)
+    # On the base commit the ONLY parenthesization check is is_named_expr().
+    # A valid fix must add additional logic for multiline expressions — via
+    # helper functions, parenthesized_range, line break detection, etc.
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
 
-    assert has_named_expr and has_multiline_logic, (
-        "Parenthesization logic must handle both walrus operators AND multiline "
-        "expressions. Found is_named_expr=%s, multiline_logic=%s. "
-        "The fix needs additional logic (e.g., line break detection, "
-        "parenthesized_range) beyond the base commit's walrus-only handling."
-        % (has_named_expr, has_multiline_logic)
+source = open(sys.argv[1]).read()
+
+has_named_expr = 'is_named_expr' in source
+indicators = [
+    'parenthesized_range', 'has_top_level_line_break',
+    'condition_as_expression', 'line_break', 'multiline',
+    'multi_line', 'needs_parens', 'spans_multiple', 'nesting',
+]
+found = [i for i in indicators if i in source]
+
+if not has_named_expr:
+    print("FAIL: is_named_expr removed (walrus handling broken)")
+    sys.exit(1)
+if not found:
+    print("FAIL: No multiline handling beyond is_named_expr")
+    sys.exit(1)
+print("PASS: multiline indicators: " + str(found))
+""", str(RUST_FILE)],
+        capture_output=True, text=True, timeout=10,
     )
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

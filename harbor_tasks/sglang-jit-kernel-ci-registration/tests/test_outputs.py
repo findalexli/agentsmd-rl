@@ -8,19 +8,10 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import importlib.util
-import sys
+import json
+import subprocess
 
 REPO = "/workspace"
-
-# Helper: load ci_register without importing the full sglang package
-_spec = importlib.util.spec_from_file_location(
-    "ci_register", f"{REPO}/python/sglang/test/ci/ci_register.py"
-)
-_ci_register = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_ci_register)
-ut_parse_one_file = _ci_register.ut_parse_one_file
-collect_tests = _ci_register.collect_tests
 
 TARGET_FILES = [
     f"{REPO}/python/sglang/jit_kernel/benchmark/bench_cast.py",
@@ -31,6 +22,26 @@ TARGET_FILES = [
 
 BENCHMARK_FILES = TARGET_FILES[:2]
 TEST_FILES = TARGET_FILES[2:]
+
+# Snippet to load ci_register.py in isolation (avoids transitive sglang imports)
+_LOAD_CI_REGISTER = """
+import importlib.util, sys
+_spec = importlib.util.spec_from_file_location(
+    "ci_register", "{repo}/python/sglang/test/ci/ci_register.py"
+)
+ci_register = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(ci_register)
+ut_parse_one_file = ci_register.ut_parse_one_file
+collect_tests = ci_register.collect_tests
+""".format(repo=REPO)
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in a subprocess."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -47,52 +58,87 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_bench_cast_ci_registration():
     """bench_cast.py is discoverable by ci_register AST parser and registered for benchmark suite."""
-    regs = ut_parse_one_file(f"{REPO}/python/sglang/jit_kernel/benchmark/bench_cast.py")
+    filepath = f"{REPO}/python/sglang/jit_kernel/benchmark/bench_cast.py"
+    r = _run_py(f"""{_LOAD_CI_REGISTER}
+import json
+regs = ut_parse_one_file("{filepath}")
+print(json.dumps([{{"suite": r.suite, "est_time": r.est_time}} for r in regs]))
+""")
+    assert r.returncode == 0, f"ut_parse_one_file failed: {r.stderr}"
+    regs = json.loads(r.stdout.strip())
     assert regs, "No CI registrations found in bench_cast.py"
-    suites = [r.suite for r in regs]
+    suites = [reg["suite"] for reg in regs]
     assert "stage-b-kernel-benchmark-1-gpu-large" in suites, f"Expected benchmark suite, got {suites}"
 
 
 # [pr_diff] fail_to_pass
 def test_bench_fused_qknorm_rope_ci_registration():
     """bench_fused_qknorm_rope.py is discoverable and registered for benchmark suite."""
-    regs = ut_parse_one_file(f"{REPO}/python/sglang/jit_kernel/benchmark/bench_fused_qknorm_rope.py")
+    filepath = f"{REPO}/python/sglang/jit_kernel/benchmark/bench_fused_qknorm_rope.py"
+    r = _run_py(f"""{_LOAD_CI_REGISTER}
+import json
+regs = ut_parse_one_file("{filepath}")
+print(json.dumps([{{"suite": r.suite, "est_time": r.est_time}} for r in regs]))
+""")
+    assert r.returncode == 0, f"ut_parse_one_file failed: {r.stderr}"
+    regs = json.loads(r.stdout.strip())
     assert regs, "No CI registrations found in bench_fused_qknorm_rope.py"
-    suites = [r.suite for r in regs]
+    suites = [reg["suite"] for reg in regs]
     assert "stage-b-kernel-benchmark-1-gpu-large" in suites, f"Expected benchmark suite, got {suites}"
 
 
 # [pr_diff] fail_to_pass
 def test_cast_ci_registration():
     """test_cast.py is discoverable and registered for kernel unit suite."""
-    regs = ut_parse_one_file(f"{REPO}/python/sglang/jit_kernel/tests/test_cast.py")
+    filepath = f"{REPO}/python/sglang/jit_kernel/tests/test_cast.py"
+    r = _run_py(f"""{_LOAD_CI_REGISTER}
+import json
+regs = ut_parse_one_file("{filepath}")
+print(json.dumps([{{"suite": r.suite, "est_time": r.est_time}} for r in regs]))
+""")
+    assert r.returncode == 0, f"ut_parse_one_file failed: {r.stderr}"
+    regs = json.loads(r.stdout.strip())
     assert regs, "No CI registrations found in test_cast.py"
-    suites = [r.suite for r in regs]
+    suites = [reg["suite"] for reg in regs]
     assert "stage-b-kernel-unit-1-gpu-large" in suites, f"Expected unit suite, got {suites}"
 
 
 # [pr_diff] fail_to_pass
 def test_fused_qknorm_rope_ci_registration():
     """test_fused_qknorm_rope.py is discoverable and registered for kernel unit suite."""
-    regs = ut_parse_one_file(f"{REPO}/python/sglang/jit_kernel/tests/test_fused_qknorm_rope.py")
+    filepath = f"{REPO}/python/sglang/jit_kernel/tests/test_fused_qknorm_rope.py"
+    r = _run_py(f"""{_LOAD_CI_REGISTER}
+import json
+regs = ut_parse_one_file("{filepath}")
+print(json.dumps([{{"suite": r.suite, "est_time": r.est_time}} for r in regs]))
+""")
+    assert r.returncode == 0, f"ut_parse_one_file failed: {r.stderr}"
+    regs = json.loads(r.stdout.strip())
     assert regs, "No CI registrations found in test_fused_qknorm_rope.py"
-    suites = [r.suite for r in regs]
+    suites = [reg["suite"] for reg in regs]
     assert "stage-b-kernel-unit-1-gpu-large" in suites, f"Expected unit suite, got {suites}"
 
 
 # [pr_diff] fail_to_pass
 def test_collect_tests_no_errors():
     """collect_tests() succeeds on all 4 files without raising ValueError."""
-    regs = collect_tests(TARGET_FILES, sanity_check=True)
+    files_list = json.dumps(TARGET_FILES)
+    r = _run_py(f"""{_LOAD_CI_REGISTER}
+import json
+regs = collect_tests({files_list}, sanity_check=True)
+print(json.dumps([{{"filename": r.filename, "suite": r.suite, "est_time": r.est_time}} for r in regs]))
+""")
+    assert r.returncode == 0, f"collect_tests raised an error: {r.stderr}"
+    regs = json.loads(r.stdout.strip())
     assert len(regs) >= 4, f"Expected at least 4 registrations, got {len(regs)}"
-    for r in regs:
-        assert r.est_time > 0, f"{r.filename} has non-positive est_time: {r.est_time}"
+    for reg in regs:
+        assert reg["est_time"] > 0, f"{reg['filename']} has non-positive est_time: {reg['est_time']}"
 
 
 # ---------------------------------------------------------------------------
@@ -133,13 +179,11 @@ def test_literal_registration_values():
 # [agent_config] fail_to_pass — .claude/skills/add-jit-kernel/SKILL.md:422 @ 6047d2c
 def test_module_level_registration():
     """Registration calls are at module level, not nested inside functions or classes."""
-    # AST-only because: verifying AST node depth is inherently structural
     for filepath in TARGET_FILES:
         with open(filepath) as f:
             source = f.read()
         tree = ast.parse(source)
 
-        # Only check top-level statements (module body)
         top_level_calls = []
         for node in tree.body:
             if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
@@ -179,15 +223,29 @@ def test_correct_import_path():
 # [agent_config] fail_to_pass — .claude/skills/write-sglang-test/SKILL.md:8 @ 6047d2c
 def test_suite_file_type_consistency():
     """Benchmark files use benchmark suite, test files use unit suite (not swapped)."""
+    bench_json = json.dumps(BENCHMARK_FILES)
+    test_json = json.dumps(TEST_FILES)
+    r = _run_py(f"""{_LOAD_CI_REGISTER}
+import json
+results = {{}}
+for filepath in {bench_json}:
+    regs = ut_parse_one_file(filepath)
+    results[filepath] = [{{"suite": r.suite}} for r in regs]
+for filepath in {test_json}:
+    regs = ut_parse_one_file(filepath)
+    results[filepath] = [{{"suite": r.suite}} for r in regs]
+print(json.dumps(results))
+""")
+    assert r.returncode == 0, f"ut_parse_one_file failed: {r.stderr}"
+    results = json.loads(r.stdout.strip())
+
     for bench_file in BENCHMARK_FILES:
-        regs = ut_parse_one_file(bench_file)
-        for r in regs:
-            assert "kernel-unit" not in r.suite, (
-                f"{bench_file}: benchmark file incorrectly registered for unit suite '{r.suite}'"
+        for reg in results[bench_file]:
+            assert "kernel-unit" not in reg["suite"], (
+                f"{bench_file}: benchmark file incorrectly registered for unit suite '{reg['suite']}'"
             )
 
     for test_file in TEST_FILES:
-        regs = ut_parse_one_file(test_file)
-        suites = [r.suite for r in regs]
+        suites = [reg["suite"] for reg in results[test_file]]
         has_unit = any("kernel-unit" in s for s in suites)
         assert has_unit, f"{test_file}: test file not registered for any kernel unit suite, got {suites}"

@@ -12,6 +12,7 @@ import io
 import contextlib
 import os
 import re
+import subprocess
 import sys
 import sysconfig
 import tempfile
@@ -84,6 +85,42 @@ def test_syntax_check():
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_freethreaded_abi_subprocess():
+    """Subprocess: MATRIX_PYTHON_VERSION=X.Yt triggers free-threaded ABI detection."""
+    major, minor = sys.version_info.major, sys.version_info.minor
+    python_tag = f"cp{major}{minor}"
+    abi_tag = f"cp{major}{minor}t"
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        _make_wheel(tmpdir, python_tag, abi_tag, "linux_x86_64")
+
+        script = (
+            "import sys\n"
+            "from pathlib import Path\n"
+            "from unittest.mock import patch\n"
+            "\n"
+            "with patch.object(sys, 'abiflags', ''):\n"
+            "    ns = {}\n"
+            f"    exec(Path('{SRC}').read_text(), ns)\n"
+            "    ns['check_wheel_platform_tag']()\n"
+            "print('PASS')\n"
+        )
+
+        env = os.environ.copy()
+        env["PYTORCH_FINAL_PACKAGE_DIR"] = tmpdir
+        env["TARGET_OS"] = "linux"
+        env["MATRIX_PYTHON_VERSION"] = f"{major}.{minor}t"
+
+        r = subprocess.run(
+            ["python3", "-c", script],
+            capture_output=True, text=True, timeout=30,
+            env=env, cwd="/workspace",
+        )
+        assert r.returncode == 0, f"Subprocess failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+        assert "PASS" in r.stdout
+
 
 # [pr_diff] fail_to_pass
 def test_freethreaded_abi_tag_accepted():

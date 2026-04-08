@@ -7,40 +7,35 @@ source:
   merge_commit: "d55c8eb9f133854f1abe897a484a7a97155d6239"
 
 checks:
-  - id: disposable_store_imported
+  - id: typescript_file_parses
     type: fail_to_pass
     origin: pr_diff
-    description: "DisposableStore is imported from lifecycle.js to manage active session disposables"
+    description: "Modified file parses as valid TypeScript with no syntax errors"
 
-  - id: autorun_imported
+  - id: imports_include_disposable_store_and_autorun
     type: fail_to_pass
     origin: pr_diff
-    description: "autorun is imported from observable.js for reactive archive-state observation"
+    description: "DisposableStore and autorun are imported from lifecycle.js and observable.js"
 
-  - id: active_session_disposables_field
+  - id: disposable_store_field_registered
     type: fail_to_pass
     origin: pr_diff
-    description: "_activeSessionDisposables DisposableStore field is registered on the class"
+    description: "_activeSessionDisposables is a DisposableStore registered via this._register()"
 
-  - id: buggy_immediate_archive_check_removed
+  - id: on_sessions_changed_no_archive_bounce
     type: fail_to_pass
     origin: pr_diff
-    description: "Immediate updated?.isArchived.get() check removed from _onSessionsChanged (was the bug)"
+    description: "_onSessionsChanged no longer contains the buggy immediate archive check or openNewSessionView call"
 
-  - id: early_return_unchanged_session
+  - id: autorun_observer_in_set_active_session
     type: fail_to_pass
     origin: pr_diff
-    description: "setActiveSession early-returns when called with the already-active session"
+    description: "setActiveSession uses autorun to reactively observe archive state with proper disposable lifecycle"
 
-  - id: archive_state_observed_reactively
+  - id: idempotency_guard_in_set_active_session
     type: fail_to_pass
     origin: pr_diff
-    description: "Archive state watched via autorun so openNewSessionView() fires only on transition"
-
-  - id: active_session_disposables_cleared_on_set
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_activeSessionDisposables.clear() called in setActiveSession to drop stale observers"
+    description: "setActiveSession early-returns when session ID hasn't changed to prevent disposable churn"
 
   - id: copyright_header
     type: pass_to_pass
@@ -60,10 +55,10 @@ checks:
       lines: "72"
       commit: "3d5035e98791181f4fb04962a8a7b127106d2626"
 
-  - id: file_parses_as_valid_typescript
+  - id: file_is_structurally_sound
     type: pass_to_pass
     origin: static
-    description: "Modified file is syntactically valid (non-truncated, balanced braces, intact imports)"
+    description: "Modified file is non-truncated with balanced braces and intact class definition"
 
 rubric:
   - rule: "Avoid using events to drive control flow between components. Instead, prefer direct method calls or service interactions to ensure clearer dependencies and easier traceability of logic. Events should be reserved for broadcasting state changes or notifications rather than orchestrating behavior across components."

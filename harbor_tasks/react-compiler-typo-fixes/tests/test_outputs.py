@@ -9,6 +9,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/react"
@@ -23,6 +24,19 @@ INFER_REACTIVE = (
 CLAUDE_MD = f"{REPO}/compiler/CLAUDE.md"
 
 
+def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Write a temp JS file and execute it with Node."""
+    tmp = Path(REPO) / "_eval_check.mjs"
+    tmp.write_text(script)
+    try:
+        return subprocess.run(
+            ["node", str(tmp)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — each typo must be corrected
 # ---------------------------------------------------------------------------
@@ -30,57 +44,88 @@ CLAUDE_MD = f"{REPO}/compiler/CLAUDE.md"
 # [pr_diff] fail_to_pass
 def test_infer_mutation_typo_fixed():
     """InferMutationAliasingEffects.ts error message says 'initialized' not 'intialized'."""
-    content = Path(INFER_MUTATION).read_text()
-    assert "intialized" not in content, (
-        "Old typo 'intialized' still present in InferMutationAliasingEffects.ts"
-    )
-    assert "initialized with a DeclareLocal Catch instruction" in content, (
-        "Corrected error message text not found in InferMutationAliasingEffects.ts"
-    )
+    r = _run_node(f"""
+import fs from 'node:fs';
+const content = fs.readFileSync('{INFER_MUTATION}', 'utf8');
+if (content.includes('intialized')) {{
+    console.error('Old typo "intialized" still present in InferMutationAliasingEffects.ts');
+    process.exit(1);
+}}
+if (!content.includes('initialized with a DeclareLocal Catch instruction')) {{
+    console.error('Corrected error message not found in InferMutationAliasingEffects.ts');
+    process.exit(1);
+}}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_claude_md_typo_fixed():
     """compiler/CLAUDE.md says 'explicitly added/removed' not 'explicitlyu added/removed'."""
-    content = Path(CLAUDE_MD).read_text()
-    assert "explicitlyu" not in content, (
-        "Old typo 'explicitlyu' still present in compiler/CLAUDE.md"
-    )
-    assert "explicitly added/removed" in content, (
-        "Corrected text 'explicitly added/removed' not found in compiler/CLAUDE.md"
-    )
+    r = _run_node(f"""
+import fs from 'node:fs';
+const content = fs.readFileSync('{CLAUDE_MD}', 'utf8');
+if (content.includes('explicitlyu')) {{
+    console.error('Old typo "explicitlyu" still present in compiler/CLAUDE.md');
+    process.exit(1);
+}}
+if (!content.includes('explicitly added/removed')) {{
+    console.error('Corrected text "explicitly added/removed" not found');
+    process.exit(1);
+}}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_reactive_scope_typo_fixed():
     """InferReactiveScopeVariables.ts comment says 'initialized' not 'intialized'."""
-    content = Path(INFER_REACTIVE).read_text()
-    assert "intialized" not in content, (
-        "Old typo 'intialized' still present in InferReactiveScopeVariables.ts"
-    )
-    assert "properly initialized, valid mutable ranges" in content, (
-        "Corrected comment text not found in InferReactiveScopeVariables.ts"
-    )
+    r = _run_node(f"""
+import fs from 'node:fs';
+const content = fs.readFileSync('{INFER_REACTIVE}', 'utf8');
+if (content.includes('intialized')) {{
+    console.error('Old typo "intialized" still present in InferReactiveScopeVariables.ts');
+    process.exit(1);
+}}
+if (!content.includes('properly initialized, valid mutable ranges')) {{
+    console.error('Corrected comment not found in InferReactiveScopeVariables.ts');
+    process.exit(1);
+}}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — files intact, not accidentally deleted or hollowed
+# Pass-to-pass — files intact and structurally sound
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_files_intact():
     """Modified files still exist and retain their structural content."""
-    ts_mutation = Path(INFER_MUTATION).read_text()
-    assert "CompilerError.invariant" in ts_mutation, (
-        "InferMutationAliasingEffects.ts is missing CompilerError.invariant usage"
-    )
-
-    ts_reactive = Path(INFER_REACTIVE).read_text()
-    assert "inferReactiveScopeVariables" in ts_reactive, (
-        "InferReactiveScopeVariables.ts is missing inferReactiveScopeVariables function"
-    )
-
-    md = Path(CLAUDE_MD).read_text()
-    assert "Sapling" in md, (
-        "compiler/CLAUDE.md is missing the Sapling version-control section"
-    )
+    r = _run_node(f"""
+import fs from 'node:fs';
+const mutation = fs.readFileSync('{INFER_MUTATION}', 'utf8');
+if (!mutation.includes('CompilerError.invariant')) {{
+    console.error('InferMutationAliasingEffects.ts missing CompilerError.invariant');
+    process.exit(1);
+}}
+const reactive = fs.readFileSync('{INFER_REACTIVE}', 'utf8');
+if (!reactive.includes('inferReactiveScopeVariables')) {{
+    console.error('InferReactiveScopeVariables.ts missing function');
+    process.exit(1);
+}}
+const md = fs.readFileSync('{CLAUDE_MD}', 'utf8');
+if (!md.includes('Sapling')) {{
+    console.error('CLAUDE.md missing Sapling section');
+    process.exit(1);
+}}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout

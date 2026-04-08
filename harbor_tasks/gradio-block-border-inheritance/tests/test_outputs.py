@@ -5,12 +5,11 @@ PR:   #12933
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
-
-Note: All checks use regex on Svelte/CSS source because CSS cannot be
-executed or imported in Python — regex is the only viable approach here.
 """
 
 import re
+import subprocess
+import json
 from pathlib import Path
 
 REPO = "/repo"
@@ -35,9 +34,23 @@ def _extract_rule_body(style: str, selector_pattern: str) -> str:
     return m.group(1)
 
 
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node.js in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — file integrity
 # ---------------------------------------------------------------------------
+
 
 # [static] pass_to_pass
 def test_file_is_valid_svelte():
@@ -49,17 +62,139 @@ def test_file_is_valid_svelte():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral test using subprocess
 # ---------------------------------------------------------------------------
+
+
+# [pr_diff] fail_to_pass
+def test_child_block_retains_border():
+    """Simulate CSS custom property inheritance: child .block inside hide-container retains border.
+
+    The bug: .hide-container sets --block-border-width: 0 (a CSS custom property).
+    Since custom properties inherit, all descendant blocks get border-width: 0.
+
+    The fix: .hide-container uses border-width: 0 directly (not a custom property),
+    so children keep the theme-provided --block-border-width value.
+
+    Uses Node.js to parse the CSS and template, then simulates the cascade
+    to determine a child block's effective border-width.
+    """
+    r = _run_node(r"""
+const fs = require('fs');
+const content = fs.readFileSync('/repo/js/atoms/src/Block.svelte', 'utf8');
+
+// 1. Extract CSS from <style> block
+const styleMatch = content.match(/<style[^>]*>([\s\S]*?)<\/style>/);
+if (!styleMatch) {
+  console.log(JSON.stringify({error: "no style block"}));
+  process.exit(1);
+}
+const css = styleMatch[1].replace(/\/\*[\s\S]*?\*\//g, '');
+
+// 2. Parse CSS rules into selector -> properties map
+function parseRules(cssText) {
+  const rules = {};
+  const re = /([^{]+)\{([^}]+)\}/g;
+  let m;
+  while ((m = re.exec(cssText)) !== null) {
+    const selector = m[1].trim();
+    const body = m[2].trim();
+    const props = {};
+    body.split(';').forEach(function(p) {
+      var idx = p.indexOf(':');
+      if (idx > 0) {
+        var name = p.slice(0, idx).trim();
+        var value = p.slice(idx + 1).trim();
+        if (name && value) props[name] = value;
+      }
+    });
+    rules[selector] = props;
+  }
+  return rules;
+}
+
+var rules = parseRules(css);
+
+// 3. Find .hide-container rule
+var hideProps = {};
+for (var sel of Object.keys(rules)) {
+  if (sel.includes('.hide-container')) {
+    hideProps = Object.assign({}, rules[sel]);
+    break;
+  }
+}
+
+// 4. Find .block rule (standalone, not inside hide-container selector)
+var blockProps = {};
+for (var sel of Object.keys(rules)) {
+  if (/\b\.block(?![-\w])/.test(sel) && !sel.includes('hide')) {
+    blockProps = Object.assign({}, rules[sel]);
+    break;
+  }
+}
+
+// 5. Parse Svelte inline style: bindings from template
+var inlineStyles = {};
+var inlineRe = /style:([\w-]+)\s*=\s*"([^"]*)"/g;
+var im;
+while ((im = inlineRe.exec(content)) !== null) {
+  inlineStyles[im[1]] = im[2];
+}
+
+// 6. Simulate CSS cascade for a child .block inside .hide-container
+
+// Does hide-container set any --block*border* custom property to 0?
+var inheritedBorderVarZeroed = false;
+for (var prop of Object.keys(hideProps)) {
+  if (/--block.*border/i.test(prop) && hideProps[prop].trim() === '0') {
+    inheritedBorderVarZeroed = true;
+    break;
+  }
+}
+
+// Does the child element reference --block-border-width via inline Svelte style?
+var hasInlineBorderWidth = 'border-width' in inlineStyles;
+var inlineBorderRef = inlineStyles['border-width'] || '';
+var inlineReferencesInheritedVar = inlineBorderRef.includes('var(--block-border-width)');
+
+// BUG SCENARIO: parent zeros inherited CSS custom property + child references it inline
+if (inheritedBorderVarZeroed && hasInlineBorderWidth && inlineReferencesInheritedVar) {
+  console.log(JSON.stringify({
+    pass: false,
+    reason: "hide-container zeros --block-border-width (inherited custom property) AND child has inline style:border-width referencing it"
+  }));
+  process.exit(0);
+}
+
+// FIXED SCENARIO: parent uses direct border-width: 0, not a custom property
+if (!inheritedBorderVarZeroed) {
+  var childHasBorder = 'border-width' in blockProps || hasInlineBorderWidth;
+  if (childHasBorder) {
+    console.log(JSON.stringify({
+      pass: true,
+      reason: "hide-container uses direct border reset, child retains border-width"
+    }));
+    process.exit(0);
+  }
+}
+
+console.log(JSON.stringify({
+  pass: false,
+  reason: "Could not verify child border retention",
+  debug: {hideProps: hideProps, blockProps: blockProps, inlineStyles: inlineStyles, inheritedBorderVarZeroed: inheritedBorderVarZeroed}
+}));
+""")
+    assert r.returncode == 0, f"Node.js execution failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data.get("pass"), f"Child block loses border: {data.get('reason', data)}"
+
 
 # [pr_diff] fail_to_pass
 def test_hide_container_no_inherited_border_var():
-    """hide-container must NOT set --block-border-width (inherits to children)."""
+    """hide-container must NOT set --block-border-width CSS variable (inherits to children)."""
     content = _read_file()
     style = _extract_style(content)
     hide_body = _extract_rule_body(style, r"\.hide-container[^{]*")
-    # The bug: setting CSS custom properties that child blocks inherit.
-    # Use [\w-]* to match hyphenated CSS property names like --block-border-width.
     inherited_vars = re.findall(r"--block[\w-]*border[\w-]*\s*:", hide_body)
     assert not inherited_vars, (
         f"hide-container still sets inherited CSS var(s): {inherited_vars}"
@@ -68,7 +203,7 @@ def test_hide_container_no_inherited_border_var():
 
 # [pr_diff] fail_to_pass
 def test_hide_container_uses_direct_border_zero():
-    """hide-container must zero its border directly (not via CSS variable)."""
+    """hide-container must zero its own border directly, not via inherited CSS variable."""
     content = _read_file()
     style = _extract_style(content)
     hide_body = _extract_rule_body(style, r"\.hide-container[^{]*")
@@ -82,59 +217,14 @@ def test_hide_container_uses_direct_border_zero():
     )
 
 
-# [pr_diff] fail_to_pass
-def test_child_block_retains_border():
-    """Child .block inside hide-container must retain its border.
-
-    The bug: hide-container sets --block-border-width: 0 (a CSS custom property).
-    Since custom properties inherit, ALL descendant blocks lose their border.
-    The inline style:border-width="var(--block-border-width)" on the element
-    references this variable, so it resolves to 0 inside hide-container.
-
-    The fix must ensure hide-container does NOT zero the CSS variable, so
-    children's border-width (whether from class rule or inline style) still
-    resolves to the theme-provided value.
-    """
-    content = _read_file()
-    style = _extract_style(content)
-
-    # Check if hide-container sets any --block-*border* var (would inherit to children)
-    hide_body = _extract_rule_body(style, r"\.hide-container[^{]*")
-    sets_inherited_var = bool(
-        re.search(r"--block[\w-]*border[\w-]*\s*:\s*0", hide_body)
-    )
-
-    # Check if template uses inline style:border-width referencing the CSS var
-    has_inline_border_var = bool(
-        re.search(r"style:border-width\s*=", content)
-    )
-
-    # If parent zeros the CSS variable AND there's an inline style referencing
-    # that variable, children lose their border (inline style wins over class rules,
-    # and the inherited variable resolves to 0).
-    assert not (sets_inherited_var and has_inline_border_var), (
-        "Child block loses border: hide-container zeros --block-border-width "
-        "CSS variable, and inline style:border-width references it, so all "
-        "descendant blocks get border-width: 0"
-    )
-
-    # At least one source of border-width must exist for child blocks
-    block_body = _extract_rule_body(style, r"(?<!\w)\.block(?!\w)")
-    block_has_border_width = bool(
-        re.search(r"(?<!-)border-width\s*:", block_body)
-    )
-    assert block_has_border_width or has_inline_border_var, (
-        "Child block has no source of border-width (neither class rule nor inline style)"
-    )
-
-
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) — regression checks
 # ---------------------------------------------------------------------------
 
+
 # [pr_diff] pass_to_pass
 def test_hide_container_preserves_other_resets():
-    """hide-container must keep its other CSS resets (margin, box-shadow, etc.)."""
+    """hide-container preserves its other CSS resets (margin, box-shadow, background, padding, overflow)."""
     content = _read_file()
     style = _extract_style(content)
     hide_body = _extract_rule_body(style, r"\.hide-container[^{]*")
@@ -151,7 +241,7 @@ def test_hide_container_preserves_other_resets():
 
 # [pr_diff] pass_to_pass
 def test_block_class_preserves_styling():
-    """.block CSS class must retain core visual properties."""
+    """.block CSS class retains core visual properties (box-shadow, border-color, etc.)."""
     content = _read_file()
     style = _extract_style(content)
     block_body = _extract_rule_body(style, r"(?<!\w)\.block(?!\w)")
@@ -167,7 +257,7 @@ def test_block_class_preserves_styling():
 
 # [pr_diff] pass_to_pass
 def test_svelte_template_integrity():
-    """Key Svelte template bindings must be preserved."""
+    """Key Svelte template bindings preserved (hide-container, fullscreen, flex-grow, etc.)."""
     content = _read_file()
     required = [
         (r"class:hide-container", "class:hide-container binding"),

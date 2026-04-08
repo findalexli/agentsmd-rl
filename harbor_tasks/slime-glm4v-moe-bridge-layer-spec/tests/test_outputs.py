@@ -5,15 +5,14 @@ PR:   1738
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
-
-NOTE: megatron-core is not installable on CPU, so all tests use AST parsing
-to inspect the source code rather than importing it directly.
 """
 
 import ast
+import subprocess
 from pathlib import Path
 
-FILE = Path("/workspace/slime/slime_plugins/megatron_bridge/glm4v_moe.py")
+REPO = "/workspace/slime"
+FILE = Path(f"{REPO}/slime_plugins/megatron_bridge/glm4v_moe.py")
 
 
 def _parse():
@@ -32,95 +31,157 @@ def _find_method(tree, method_name):
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_valid():
     """glm4v_moe.py must parse without syntax errors."""
     src = FILE.read_text()
-    ast.parse(src)  # raises SyntaxError if invalid
+    ast.parse(src)
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-def test_moe_layer_freq_is_list():
-    """moe_layer_freq must evaluate to a list, not a string expression."""
-    src, tree = _parse()
-    provider_bridge = _find_method(tree, "provider_bridge")
-    assert provider_bridge is not None, "provider_bridge method not found"
+_MOE_FREQ_TYPE_SCRIPT = '''\
+import ast, sys
+from pathlib import Path
 
-    # Find assignment to a variable containing 'moe_layer_freq'
-    for child in ast.walk(provider_bridge):
-        if isinstance(child, ast.Assign):
-            for target in child.targets:
-                if isinstance(target, ast.Name) and "moe_layer_freq" in target.id:
-                    rhs_src = ast.get_source_segment(src, child.value)
-                    assert rhs_src, "Could not extract moe_layer_freq RHS source"
-                    ns = {"first_k_dense": 1, "num_layers": 46}
-                    result = eval(rhs_src, {"__builtins__": __builtins__}, ns)
-                    assert not isinstance(result, str), (
-                        f"moe_layer_freq evaluates to string: {result!r}"
-                    )
-                    assert isinstance(result, (list, tuple)), (
-                        f"moe_layer_freq is unexpected type: {type(result).__name__}"
-                    )
-                    return
+src = Path("slime_plugins/megatron_bridge/glm4v_moe.py").read_text()
+tree = ast.parse(src)
 
-    # Fallback: check the keyword arg directly
+# Find provider_bridge method
+provider_bridge = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "provider_bridge":
+        provider_bridge = node
+        break
+
+if not provider_bridge:
+    print("FAIL: provider_bridge method not found", file=sys.stderr)
+    sys.exit(1)
+
+# Find the moe_layer_freq variable assignment and extract its RHS expression
+rhs_src = None
+for child in ast.walk(provider_bridge):
+    if isinstance(child, ast.Assign):
+        for target in child.targets:
+            if isinstance(target, ast.Name) and "moe_layer_freq" in target.id:
+                rhs_src = ast.get_source_segment(src, child.value)
+                break
+        if rhs_src:
+            break
+
+if not rhs_src:
+    # Fallback: check the keyword arg value directly
     for child in ast.walk(provider_bridge):
         if isinstance(child, ast.keyword) and child.arg == "moe_layer_freq":
-            val = child.value
-            assert not isinstance(val, (ast.JoinedStr, ast.Constant)), (
-                "moe_layer_freq passed as string literal or f-string"
-            )
-            if isinstance(val, (ast.List, ast.Tuple, ast.ListComp)):
-                return
-            if isinstance(val, ast.Name):
-                # Variable reference — already checked above, accept it
-                return
+            rhs_src = ast.get_source_segment(src, child.value)
+            break
 
-    raise AssertionError("Could not find moe_layer_freq computation")
+if not rhs_src:
+    print("FAIL: Could not find moe_layer_freq computation", file=sys.stderr)
+    sys.exit(1)
+
+# Execute the expression with realistic mock values
+ns = {"first_k_dense": 1, "num_layers": 46}
+result = eval(rhs_src, {"__builtins__": __builtins__}, ns)
+
+if isinstance(result, str):
+    print(f"FAIL: moe_layer_freq evaluates to string: {result!r}", file=sys.stderr)
+    sys.exit(1)
+
+if not isinstance(result, (list, tuple)):
+    print(f"FAIL: moe_layer_freq is {type(result).__name__}, expected list", file=sys.stderr)
+    sys.exit(1)
+
+print("PASS")
+'''
+
+_MOE_FREQ_VALUES_SCRIPT = '''\
+import ast, sys
+from pathlib import Path
+
+src = Path("slime_plugins/megatron_bridge/glm4v_moe.py").read_text()
+tree = ast.parse(src)
+
+# Find provider_bridge method
+provider_bridge = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "provider_bridge":
+        provider_bridge = node
+        break
+
+if not provider_bridge:
+    print("FAIL: provider_bridge not found", file=sys.stderr)
+    sys.exit(1)
+
+# Extract the moe_layer_freq RHS expression
+rhs_src = None
+for child in ast.walk(provider_bridge):
+    if isinstance(child, ast.Assign):
+        for target in child.targets:
+            if isinstance(target, ast.Name) and "moe_layer_freq" in target.id:
+                rhs_src = ast.get_source_segment(src, child.value)
+                break
+        if rhs_src:
+            break
+
+if not rhs_src:
+    print("FAIL: Could not extract moe_layer_freq expression", file=sys.stderr)
+    sys.exit(1)
+
+# Test with multiple (first_k_dense, num_layers) configurations
+configs = [(1, 46), (2, 10), (0, 5), (3, 3)]
+for dk, nl in configs:
+    ns = {
+        "first_k_dense": dk,
+        "num_layers": nl,
+        "num_hidden_layers": nl,
+        "first_k_dense_replace": dk,
+    }
+    result = eval(rhs_src, {"__builtins__": __builtins__}, ns)
+    if not isinstance(result, (list, tuple)):
+        print(f"FAIL: Not a list for dk={dk}, nl={nl}: {type(result).__name__}", file=sys.stderr)
+        sys.exit(1)
+    if len(result) != nl:
+        print(f"FAIL: Length {len(result)} != {nl} for dk={dk}, nl={nl}", file=sys.stderr)
+        sys.exit(1)
+    for i in range(dk):
+        if result[i] != 0:
+            print(f"FAIL: Layer {i} should be dense (0), got {result[i]}", file=sys.stderr)
+            sys.exit(1)
+    for i in range(dk, nl):
+        if result[i] != 1:
+            print(f"FAIL: Layer {i} should be MoE (1), got {result[i]}", file=sys.stderr)
+            sys.exit(1)
+
+print("PASS")
+'''
 
 
-# [pr_diff] fail_to_pass
+def test_moe_layer_freq_is_list():
+    """moe_layer_freq must evaluate to a list, not a string expression."""
+    r = subprocess.run(
+        ["python3", "-c", _MOE_FREQ_TYPE_SCRIPT],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Unexpected output: {r.stdout}"
+
+
 def test_moe_layer_freq_values_correct():
     """moe_layer_freq list has correct dense/MoE pattern for varied configs."""
-    src, tree = _parse()
-    provider_bridge = _find_method(tree, "provider_bridge")
-    assert provider_bridge is not None
-
-    rhs_src = None
-    for child in ast.walk(provider_bridge):
-        if isinstance(child, ast.Assign):
-            for target in child.targets:
-                if isinstance(target, ast.Name) and "moe_layer_freq" in target.id:
-                    rhs_src = ast.get_source_segment(src, child.value)
-                    break
-            if rhs_src:
-                break
-
-    assert rhs_src, "Could not extract moe_layer_freq expression"
-
-    # Test with multiple (first_k_dense, num_layers) configurations
-    configs = [(1, 46), (2, 10), (0, 5), (3, 3)]
-    for dk, nl in configs:
-        ns = {
-            "first_k_dense": dk,
-            "num_layers": nl,
-            "num_hidden_layers": nl,
-            "first_k_dense_replace": dk,
-        }
-        result = eval(rhs_src, {"__builtins__": __builtins__}, ns)
-        assert isinstance(result, (list, tuple)), f"Not a list for dk={dk}, nl={nl}"
-        assert len(result) == nl, f"Length {len(result)} != {nl} for dk={dk}, nl={nl}"
-        for i in range(dk):
-            assert result[i] == 0, f"Layer {i} should be dense (0), got {result[i]}"
-        for i in range(dk, nl):
-            assert result[i] == 1, f"Layer {i} should be MoE (1), got {result[i]}"
+    r = subprocess.run(
+        ["python3", "-c", _MOE_FREQ_VALUES_SCRIPT],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Unexpected output: {r.stdout}"
 
 
-# [pr_diff] fail_to_pass
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — AST structural checks (megatron not installable)
+# ---------------------------------------------------------------------------
+
 def test_provide_uses_decoder_block_spec():
     """provide() must call get_gpt_decoder_block_spec, not the old function."""
     _, tree = _parse()
@@ -143,7 +204,6 @@ def test_provide_uses_decoder_block_spec():
     )
 
 
-# [pr_diff] fail_to_pass
 def test_provide_passes_config_to_spec():
     """get_gpt_decoder_block_spec must receive a config argument."""
     _, tree = _parse()
@@ -169,7 +229,6 @@ def test_provide_passes_config_to_spec():
     raise AssertionError("get_gpt_decoder_block_spec call not found in provide()")
 
 
-# [pr_diff] fail_to_pass
 def test_imports_decoder_block_spec():
     """Must import get_gpt_decoder_block_spec, not the old function."""
     _, tree = _parse()
@@ -195,7 +254,6 @@ def test_imports_decoder_block_spec():
 # Pass-to-pass (repo_tests / static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
 def test_key_classes_exist():
     """Core classes must still be defined."""
     _, tree = _parse()
@@ -205,7 +263,6 @@ def test_key_classes_exist():
     assert not missing, f"Missing classes: {missing}"
 
 
-# [repo_tests] pass_to_pass
 def test_key_methods_not_stubbed():
     """Core methods must have real logic, not stubs."""
     _, tree = _parse()
@@ -240,7 +297,6 @@ def test_key_methods_not_stubbed():
             )
 
 
-# [static] pass_to_pass
 def test_file_not_stub():
     """File must not be stubbed out — needs substantial content."""
     lines = [

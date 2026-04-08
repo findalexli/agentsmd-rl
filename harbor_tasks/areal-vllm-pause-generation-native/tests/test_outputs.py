@@ -9,6 +9,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import asyncio
+import subprocess
+import textwrap
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
@@ -18,13 +20,21 @@ REPO = "/workspace/AReaL"
 FILE = f"{REPO}/areal/engine/vllm_ext/areal_vllm_server.py"
 
 
-def _extract_async_func(func_name: str):
-    """Extract an async function from the server file, compile, and return it.
+def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code via subprocess in the repo environment."""
+    script = Path(REPO) / "_eval_tmp.py"
+    script.write_text(textwrap.dedent(code))
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
-    AST-only extraction because: vllm/torch deps not importable without GPU.
-    We extract the function source, then exec it with mocks so we can test
-    behavior (call ordering, kwargs, error handling) rather than just structure.
-    """
+
+def _extract_async_func(func_name: str):
+    """Extract async function from source, exec with mocks, return callable + AST node."""
     source = Path(FILE).read_text()
     tree = ast.parse(source)
 
@@ -62,7 +72,7 @@ def _extract_async_func(func_name: str):
 
 
 def _make_tracked_client():
-    """Create an AsyncMock engine client that logs pause/rpc/resume calls."""
+    """Create AsyncMock engine client that logs pause/rpc/resume calls."""
     client = AsyncMock()
     call_log = []
 
@@ -83,7 +93,7 @@ def _make_tracked_client():
 
 
 def _invoke(func, func_node, client):
-    """Call the extracted function with a mock raw_request wired to client."""
+    """Call extracted function with mock raw_request wired to client."""
     raw_request = MagicMock()
     raw_request.app.state.engine_client = client
     request = MagicMock()
@@ -104,7 +114,6 @@ def _invoke(func, func_node, client):
 # Gate (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Modified file must parse without errors."""
     source = Path(FILE).read_text()
@@ -112,7 +121,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — weight update call ordering
+# Fail-to-pass (pr_diff) — behavioral tests (exec-based)
 # ---------------------------------------------------------------------------
 
 WEIGHT_UPDATE_ENDPOINTS = [
@@ -123,7 +132,6 @@ WEIGHT_UPDATE_ENDPOINTS = [
 ]
 
 
-# [pr_diff] fail_to_pass
 @pytest.mark.parametrize("func_name", WEIGHT_UPDATE_ENDPOINTS)
 def test_weight_update_call_ordering(func_name):
     """Weight update must call pause_generation -> collective_rpc -> resume_generation."""
@@ -142,7 +150,6 @@ def test_weight_update_call_ordering(func_name):
     )
 
 
-# [pr_diff] fail_to_pass
 @pytest.mark.parametrize("func_name", WEIGHT_UPDATE_ENDPOINTS)
 def test_weight_update_pause_kwargs(func_name):
     """pause_generation must be called with wait_for_inflight_requests=False, clear_cache=True."""
@@ -160,11 +167,6 @@ def test_weight_update_pause_kwargs(func_name):
     )
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — error resilience (resume even on RPC failure)
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
 @pytest.mark.parametrize("func_name", WEIGHT_UPDATE_ENDPOINTS)
 def test_weight_update_error_resilience(func_name):
     """resume_generation must be called even when collective_rpc raises."""
@@ -190,24 +192,14 @@ def test_weight_update_error_resilience(func_name):
     except RuntimeError:
         pass
 
-    assert "pause" in call_log, (
-        "pause_generation NOT called before RPC attempt"
-    )
-    assert "resume" in call_log, (
-        "resume_generation NOT called after RPC failure (finally block missing)"
-    )
+    assert "pause" in call_log, "pause_generation NOT called before RPC attempt"
+    assert "resume" in call_log, "resume_generation NOT called after RPC failure"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — pause endpoint uses native API
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
 def test_pause_endpoint_uses_native_api():
     """areal_pause_generation must call llm.pause_generation, not abort_all_reqs."""
     func, _ = _extract_async_func("areal_pause_generation")
     client, call_log = _make_tracked_client()
-    # Track legacy abort path
     client.engine_core = MagicMock()
     client.engine_core.call_utility_async = AsyncMock()
 
@@ -221,11 +213,6 @@ def test_pause_endpoint_uses_native_api():
     )
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — continue endpoint calls resume
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
 def test_continue_endpoint_calls_resume():
     """areal_continue_generation must call llm.resume_generation."""
     func, _ = _extract_async_func("areal_continue_generation")
@@ -245,70 +232,78 @@ def test_continue_endpoint_calls_resume():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — monkey-patching removed
+# Fail-to-pass (pr_diff) — subprocess-based structural checks
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-# AST-only because: checking for absence of code patterns (setattr calls, function defs)
 def test_no_monkey_patching():
     """setattr(EngineCore, ...) and hook() function must be removed."""
-    source = Path(FILE).read_text()
-    tree = ast.parse(source)
+    r = _run_python(f"""
+        import ast, sys
+        source = open("{FILE}").read()
+        tree = ast.parse(source)
+        for node in ast.walk(tree):
+            if (isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Name)
+                    and node.func.id == "setattr"
+                    and node.args
+                    and isinstance(node.args[0], ast.Name)
+                    and node.args[0].id == "EngineCore"):
+                print("FAIL: setattr(EngineCore) found", file=sys.stderr)
+                sys.exit(1)
+            if isinstance(node, ast.FunctionDef) and node.name == "hook":
+                print("FAIL: hook() defined", file=sys.stderr)
+                sys.exit(1)
+        print("PASS")
+    """)
+    assert r.returncode == 0, f"Monkey-patching still present: {r.stderr}"
+    assert "PASS" in r.stdout
 
-    for node in ast.walk(tree):
-        if (
-            isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Name)
-            and node.func.id == "setattr"
-            and node.args
-            and isinstance(node.args[0], ast.Name)
-            and node.args[0].id == "EngineCore"
-        ):
-            pytest.fail("setattr(EngineCore, ...) still present")
-        if isinstance(node, ast.FunctionDef) and node.name == "hook":
-            pytest.fail("hook() function still defined")
 
-
-# [pr_diff] fail_to_pass
-# AST-only because: checking for absence of function definition
 def test_no_abort_all_reqs_function():
     """Standalone abort_all_reqs function must be removed."""
-    source = Path(FILE).read_text()
-    tree = ast.parse(source)
+    r = _run_python(f"""
+        import ast, sys
+        source = open("{FILE}").read()
+        tree = ast.parse(source)
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if node.name == "abort_all_reqs":
+                    print("FAIL: abort_all_reqs defined", file=sys.stderr)
+                    sys.exit(1)
+        print("PASS")
+    """)
+    assert r.returncode == 0, f"abort_all_reqs still defined: {r.stderr}"
+    assert "PASS" in r.stdout
 
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            if node.name == "abort_all_reqs":
-                pytest.fail("abort_all_reqs function still defined")
 
-
-# [pr_diff] fail_to_pass
-# AST-only because: checking for removal of specific imports
 def test_removed_vllm_internals_imports():
     """Imports of EngineCore and related vllm.v1 internals must be removed."""
-    source = Path(FILE).read_text()
-    tree = ast.parse(source)
-
-    removed_names = {
-        "EngineCore", "EngineCoreOutput", "EngineCoreOutputs",
-        "FinishReason", "RequestStatus", "LoRARequestStates",
-    }
-    found = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom):
-            for alias in node.names:
-                actual = alias.asname or alias.name
-                if actual in removed_names:
-                    found.add(actual)
-    assert not found, f"vllm.v1 internals still imported: {found}"
+    r = _run_python(f"""
+        import ast, sys
+        source = open("{FILE}").read()
+        tree = ast.parse(source)
+        removed = {{"EngineCore", "EngineCoreOutput", "EngineCoreOutputs",
+                    "FinishReason", "RequestStatus", "LoRARequestStates"}}
+        found = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                for alias in node.names:
+                    actual = alias.asname or alias.name
+                    if actual in removed:
+                        found.add(actual)
+        if found:
+            print(f"FAIL: still imported: {{found}}", file=sys.stderr)
+            sys.exit(1)
+        print("PASS")
+    """)
+    assert r.returncode == 0, f"vllm internals still imported: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) — regression checks
 # ---------------------------------------------------------------------------
 
-# [pr_diff] pass_to_pass
-# AST-only because: checking decorator string literals across all function defs
 def test_routes_preserved():
     """All original API route paths must still be declared."""
     source = Path(FILE).read_text()
@@ -335,8 +330,6 @@ def test_routes_preserved():
     assert not missing, f"Missing routes: {missing}"
 
 
-# [pr_diff] pass_to_pass
-# AST-only because: checking class definitions exist in source
 def test_request_models_preserved():
     """Pydantic request model classes must still be defined."""
     source = Path(FILE).read_text()
@@ -356,11 +349,9 @@ def test_request_models_preserved():
 
 
 # ---------------------------------------------------------------------------
-# Agent config (pass_to_pass) — CLAUDE.md:93
+# Agent config (pass_to_pass)
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — CLAUDE.md:93 @ 45e805ba8d274ec2c3cbb0699658449c2c6e163a
-# AST-only because: checking import structure
 def test_no_wildcard_imports():
     """No wildcard imports (from x import *)."""
     source = Path(FILE).read_text()
@@ -373,10 +364,8 @@ def test_no_wildcard_imports():
                     pytest.fail(f"Wildcard import: from {node.module} import *")
 
 
-# [agent_config] pass_to_pass — AGENTS.md:100-101 @ 45e805ba8d274ec2c3cbb0699658449c2c6e163a
-# AST-only because: checking type annotation presence on function parameters
 def test_endpoint_functions_typed():
-    """Async endpoint functions must have explicit type annotations on all parameters."""
+    """Async endpoint functions have explicit type annotations on all parameters."""
     source = Path(FILE).read_text()
     tree = ast.parse(source)
 

@@ -8,84 +8,75 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import io
-import logging
+import subprocess
 import textwrap
-import warnings
 from pathlib import Path
-
-import torch
 
 REPO = "/workspace/vllm"
 TARGET = f"{REPO}/vllm/v1/worker/cpu_worker.py"
 
+# Script that extracts the monkey-patch from cpu_worker.py via AST,
+# execs it against real torch, then runs a test body.
+# On the base commit (no patch present), extraction fails → subprocess
+# exits non-zero → test correctly fails.
+_EXTRACT_AND_TEST = """
+import ast, textwrap, logging, torch
+from pathlib import Path
 
-def _extract_and_apply_patch():
-    """Find the torch.set_num_threads monkey-patch in init_device, exec it.
+TARGET = "{target}"
+source = Path(TARGET).read_text()
+src_lines = source.splitlines(keepends=True)
+tree = ast.parse(source)
 
-    Returns the original torch.set_num_threads so callers can restore it.
-    Raises AssertionError if no monkey-patch is found (i.e. base commit).
+init_device = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "CPUWorker":
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == "init_device":
+                init_device = item
+                break
 
-    AST-only because: cpu_worker.py imports vLLM C extensions and distributed
-    modules that cannot be imported in a CPU-only test environment without the
-    full vLLM build. We parse the source, extract the replacement function and
-    assignment, then exec just the relevant snippet with mocked globals.
-    """
-    source = Path(TARGET).read_text()
-    src_lines = source.splitlines(keepends=True)
-    tree = ast.parse(source)
+assert init_device is not None, "CPUWorker.init_device not found"
 
-    # Locate CPUWorker.init_device
-    init_device = None
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "CPUWorker":
-            for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name == "init_device":
-                    init_device = item
-                    break
-    assert init_device is not None, "CPUWorker.init_device not found"
+def is_set_num_threads_assign(n):
+    if isinstance(n, ast.Assign):
+        for t in n.targets:
+            if (isinstance(t, ast.Attribute) and t.attr == "set_num_threads"
+                    and isinstance(t.value, ast.Name) and t.value.id == "torch"):
+                return True
+    return False
 
-    # Detect torch.set_num_threads reassignment (direct or via setattr)
-    def is_set_num_threads_assign(n):
-        if isinstance(n, ast.Assign):
-            for t in n.targets:
-                if (isinstance(t, ast.Attribute) and t.attr == "set_num_threads"
-                        and isinstance(t.value, ast.Name) and t.value.id == "torch"):
-                    return True
-        if isinstance(n, ast.Expr) and isinstance(n.value, ast.Call):
-            func = n.value.func
-            if isinstance(func, ast.Name) and func.id == "setattr":
-                args = n.value.args
-                if (len(args) >= 3
-                        and isinstance(args[0], ast.Name) and args[0].id == "torch"
-                        and isinstance(args[1], ast.Constant)
-                        and args[1].value == "set_num_threads"):
-                    return True
-        return False
+nodes = []
+for n in ast.walk(init_device):
+    if isinstance(n, ast.FunctionDef) and n is not init_device:
+        nodes.append(n)
+    if is_set_num_threads_assign(n):
+        nodes.append(n)
 
-    nodes = []
-    found = False
-    for n in ast.walk(init_device):
-        if isinstance(n, ast.FunctionDef) and n is not init_device:
-            nodes.append(n)
-        if is_set_num_threads_assign(n):
-            nodes.append(n)
-            found = True
+assert nodes, "No torch.set_num_threads monkey-patch found in init_device"
 
-    assert found, "No torch.set_num_threads monkey-patch found in init_device"
+nodes.sort(key=lambda n: n.lineno)
+parts = []
+for n in nodes:
+    chunk = "".join(src_lines[n.lineno - 1 : n.end_lineno])
+    parts.append(textwrap.dedent(chunk))
+code = "\\n".join(parts)
 
-    nodes.sort(key=lambda n: n.lineno)
-    parts = []
-    for n in nodes:
-        chunk = "".join(src_lines[n.lineno - 1 : n.end_lineno])
-        parts.append(textwrap.dedent(chunk))
-    code = "\n".join(parts)
+logger = logging.getLogger("vllm.v1.worker.cpu_worker")
+exec(code, {{"torch": torch, "logger": logger, "__builtins__": __builtins__,
+            "logging": logging}})
 
-    original = torch.set_num_threads
-    logger = logging.getLogger("vllm.v1.worker.cpu_worker")
-    exec(code, {"torch": torch, "logger": logger, "__builtins__": __builtins__,
-                "logging": logging})
-    return original
+{test_body}
+"""
+
+
+def _run_subprocess(test_body: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Run the extraction + test body in an isolated subprocess."""
+    script = _EXTRACT_AND_TEST.format(target=TARGET, test_body=test_body)
+    return subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -95,55 +86,52 @@ def _extract_and_apply_patch():
 # [pr_diff] fail_to_pass
 def test_set_num_threads_noop():
     """After monkey-patch, torch.set_num_threads must not change thread count."""
-    original = _extract_and_apply_patch()
-    try:
-        baseline = torch.get_num_threads()
-        for n in [1, 2, 4, 8, 16]:
-            torch.set_num_threads(n)
-            assert torch.get_num_threads() == baseline, (
-                f"Thread count changed from {baseline} to {torch.get_num_threads()} "
-                f"after set_num_threads({n})"
-            )
-    finally:
-        torch.set_num_threads = original
+    r = _run_subprocess("""
+baseline = torch.get_num_threads()
+for n in [1, 2, 4, 8, 16]:
+    torch.set_num_threads(n)
+    actual = torch.get_num_threads()
+    assert actual == baseline, (
+        f"Thread count changed from {baseline} to {actual} after set_num_threads({n})"
+    )
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_warning_logged():
-    """Monkey-patched set_num_threads emits a log or warning when called."""
-    original = _extract_and_apply_patch()
-    try:
-        # Capture logging from any logger (not just vllm-specific)
-        log_buf = io.StringIO()
-        handler = logging.StreamHandler(log_buf)
-        handler.setLevel(logging.DEBUG)
-        root_logger = logging.getLogger()
-        root_logger.addHandler(handler)
-        old_level = root_logger.level
-        root_logger.setLevel(logging.DEBUG)
+    """Monkey-patched set_num_threads emits a log warning when called."""
+    r = _run_subprocess("""
+import io, logging
 
-        # Also capture Python warnings
-        with warnings.catch_warnings(record=True) as caught_warnings:
-            warnings.simplefilter("always")
-            torch.set_num_threads(2)
-            torch.set_num_threads(8)
+# Set up a stream handler on the vllm worker logger to capture output
+log_buf = io.StringIO()
+handler = logging.StreamHandler(log_buf)
+handler.setLevel(logging.DEBUG)
+vllm_logger = logging.getLogger("vllm.v1.worker.cpu_worker")
+vllm_logger.addHandler(handler)
+vllm_logger.setLevel(logging.DEBUG)
 
-        log_output = log_buf.getvalue()
-        root_logger.removeHandler(handler)
-        root_logger.setLevel(old_level)
+torch.set_num_threads(2)
+torch.set_num_threads(8)
 
-        has_log = bool(log_output.strip())
-        has_warnings = len(caught_warnings) > 0
-        assert has_log or has_warnings, (
-            "No log output or warnings when calling patched set_num_threads"
-        )
-    finally:
-        torch.set_num_threads = original
+log_output = log_buf.getvalue()
+assert log_output.strip(), (
+    "No log output when calling patched set_num_threads"
+)
+# Verify the warning mentions the key information
+assert "set_num_threads" in log_output.lower() or "skip" in log_output.lower(), (
+    f"Log message doesn't mention set_num_threads or skip: {log_output!r}"
+)
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-# AST-only because: cpu_worker.py imports vLLM C extensions and distributed
-# modules that cannot be imported in a CPU-only test environment
 def test_patch_after_thread_binding():
     """Monkey-patch must appear after init_cpu_threads_env in source order."""
     source = Path(TARGET).read_text()
@@ -175,15 +163,6 @@ def test_patch_after_thread_binding():
                 if (isinstance(t, ast.Attribute) and t.attr == "set_num_threads"
                         and isinstance(t.value, ast.Name) and t.value.id == "torch"):
                     patch_line = node.lineno
-        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
-            func = node.value.func
-            if isinstance(func, ast.Name) and func.id == "setattr":
-                args = node.value.args
-                if (len(args) >= 3
-                        and isinstance(args[0], ast.Name) and args[0].id == "torch"
-                        and isinstance(args[1], ast.Constant)
-                        and args[1].value == "set_num_threads"):
-                    patch_line = node.lineno
     assert patch_line is not None, "No torch.set_num_threads reassignment found"
     assert patch_line > init_env_line, (
         f"Monkey-patch (L{patch_line}) must come after "
@@ -196,7 +175,6 @@ def test_patch_after_thread_binding():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
-# AST-only because: cpu_worker.py cannot be imported (vLLM C extensions, GPU deps)
 def test_init_device_exists():
     """CPUWorker class and init_device method must still exist."""
     source = Path(TARGET).read_text()
@@ -223,7 +201,6 @@ def test_key_functionality_preserved():
 
 
 # [static] pass_to_pass
-# AST-only because: cpu_worker.py cannot be imported (vLLM C extensions, GPU deps)
 def test_replacement_has_body():
     """Replacement function must have real logic (logging/warning call), not just pass."""
     source = Path(TARGET).read_text()
@@ -238,8 +215,6 @@ def test_replacement_has_body():
                     break
     assert init_device is not None
 
-    # Find nested function(s) defined inside init_device that are assigned to
-    # torch.set_num_threads
     nested_funcs = [
         n for n in ast.walk(init_device)
         if isinstance(n, ast.FunctionDef) and n is not init_device
@@ -247,7 +222,6 @@ def test_replacement_has_body():
     assert nested_funcs, "No replacement function defined inside init_device"
 
     for func in nested_funcs:
-        # Verify the function body contains at least one Call (logging, warning, etc.)
         has_call = any(isinstance(n, ast.Call) for n in ast.walk(func))
         assert has_call, (
             f"Function '{func.name}' has no function calls — appears to be a stub"

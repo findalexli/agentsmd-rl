@@ -7,24 +7,28 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import importlib.util
+import subprocess
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock
 
 REPO = "/workspace/slime"
 TARGET = f"{REPO}/slime/backends/megatron_utils/model_provider.py"
 
+# Shared helper script that mocks heavy deps, loads model_provider.py,
+# and exercises the bridge-mode code path.
+_BRIDGE_TEST_SCRIPT = r"""
+import importlib.util
+import sys
+import json
+from unittest.mock import MagicMock
+
+TARGET = "{target}"
 
 class _FakeLinear:
-    """Minimal stand-in for torch.nn.Linear (allows subclassing)."""
-
     def __init__(self, *args, **kwargs):
         pass
 
-
-def _make_args(**overrides):
-    """Create a mock args namespace with bridge-mode defaults."""
+def make_args(**overrides):
     defaults = dict(
         megatron_to_hf_mode="bridge",
         custom_model_provider_path=None,
@@ -40,16 +44,10 @@ def _make_args(**overrides):
     defaults.update(overrides)
     return type("Args", (), defaults)()
 
-
-def _call_bridge_mode(args):
-    """Load model_provider with mocked deps and call get_model_provider_func.
-
-    Returns (mock_provider, result) so tests can inspect what was set on the provider.
-    """
+def call_bridge_mode(args):
     mock_provider = MagicMock()
     mock_bridge = MagicMock()
     mock_bridge.to_megatron_provider.return_value = mock_provider
-
     mock_auto_bridge = MagicMock()
     mock_auto_bridge.from_hf_pretrained.return_value = mock_bridge
 
@@ -71,16 +69,16 @@ def _call_bridge_mode(args):
         "slime.backends", "slime.backends.megatron_utils",
     ]
 
-    saved = {}
+    saved = {{}}
     for name in auto_mock_names:
         saved[name] = sys.modules.get(name)
         sys.modules[name] = MagicMock()
 
-    explicit = {
+    explicit = {{
         "torch": torch_mock,
         "torch.nn": torch_mock.nn,
         "megatron.bridge": megatron_bridge_mock,
-    }
+    }}
     for name, mock in explicit.items():
         saved[name] = sys.modules.get(name)
         sys.modules[name] = mock
@@ -93,7 +91,6 @@ def _call_bridge_mode(args):
         spec = importlib.util.spec_from_file_location(mod_key, TARGET)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-
         result = module.get_model_provider_func(args)
         return mock_provider, result
     finally:
@@ -102,6 +99,16 @@ def _call_bridge_mode(args):
                 sys.modules.pop(name, None)
             else:
                 sys.modules[name] = orig
+""".format(target=TARGET)
+
+
+def _run_bridge_test(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Run a Python script in a subprocess that loads model_provider with mocked deps."""
+    full_script = _BRIDGE_TEST_SCRIPT + "\n" + code
+    return subprocess.run(
+        [sys.executable, "-c", full_script],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -118,28 +125,36 @@ def test_syntax_valid():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_moe_dispatcher_propagated():
     """Bridge provider receives moe_token_dispatcher_type from args."""
-    args = _make_args(moe_token_dispatcher_type="alltoall")
-    provider, _ = _call_bridge_mode(args)
-    assert provider.moe_token_dispatcher_type == "alltoall", (
-        f"Expected 'alltoall', got {provider.moe_token_dispatcher_type!r}"
-    )
+    r = _run_bridge_test("""
+args = make_args(moe_token_dispatcher_type="alltoall")
+provider, _ = call_bridge_mode(args)
+val = provider.moe_token_dispatcher_type
+assert val == "alltoall", f"Expected 'alltoall', got {val!r}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_moe_dispatcher_various_values():
     """Propagation works for different dispatcher type values."""
-    for value in ["alltoall", "allgather", "custom_dispatch"]:
-        args = _make_args(moe_token_dispatcher_type=value)
-        provider, _ = _call_bridge_mode(args)
-        assert provider.moe_token_dispatcher_type == value, (
-            f"Expected {value!r}, got {provider.moe_token_dispatcher_type!r}"
-        )
+    r = _run_bridge_test("""
+for value in ["alltoall", "allgather", "custom_dispatch"]:
+    args = make_args(moe_token_dispatcher_type=value)
+    provider, _ = call_bridge_mode(args)
+    val = provider.moe_token_dispatcher_type
+    assert val == value, f"Expected {value!r}, got {val!r}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -149,23 +164,33 @@ def test_moe_dispatcher_various_values():
 # [pr_diff] pass_to_pass
 def test_moe_dispatcher_absent_no_error():
     """No error when args lacks moe_token_dispatcher_type."""
-    args = _make_args()
-    assert not hasattr(args, "moe_token_dispatcher_type")
-    provider, result = _call_bridge_mode(args)
-    assert result is not None, "get_model_provider_func should return a callable"
+    r = _run_bridge_test("""
+args = make_args()
+assert not hasattr(args, "moe_token_dispatcher_type")
+provider, result = call_bridge_mode(args)
+assert result is not None, "get_model_provider_func should return a callable"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] pass_to_pass
 def test_existing_attrs_preserved():
     """Existing provider attribute assignments are not broken."""
-    args = _make_args(
-        tensor_model_parallel_size=4,
-        pipeline_model_parallel_size=2,
-        sequence_parallel=True,
-        variable_seq_lengths=True,
-    )
-    provider, _ = _call_bridge_mode(args)
-    assert provider.tensor_model_parallel_size == 4
-    assert provider.pipeline_model_parallel_size == 2
-    assert provider.sequence_parallel is True
-    assert provider.variable_seq_lengths is True
+    r = _run_bridge_test("""
+args = make_args(
+    tensor_model_parallel_size=4,
+    pipeline_model_parallel_size=2,
+    sequence_parallel=True,
+    variable_seq_lengths=True,
+)
+provider, _ = call_bridge_mode(args)
+assert provider.tensor_model_parallel_size == 4
+assert provider.pipeline_model_parallel_size == 2
+assert provider.sequence_parallel is True
+assert provider.variable_seq_lengths is True
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout

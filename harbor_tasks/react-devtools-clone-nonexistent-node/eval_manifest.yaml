@@ -17,24 +17,19 @@ checks:
     origin: pr_diff
     description: "'Commit tree already contains fiber' error still present (no regression)"
 
-  - id: validates_node_existence_before_cloning
+  - id: throws_error_for_nonexistent_node
     type: fail_to_pass
     origin: pr_diff
-    description: "getClonedNode checks existingNode is not null before cloning"
+    description: "getClonedNode throws descriptive error for missing fiber ID"
 
-  - id: throws_descriptive_error_for_missing_node
+  - id: error_message_identifies_fiber
     type: fail_to_pass
     origin: pr_diff
-    description: "getClonedNode throws descriptive error ('Could not clone the node') for missing fiber"
+    description: "Error message includes the specific missing fiber ID"
 
-  - id: error_message_includes_fiber_id
+  - id: clone_produces_correct_result
     type: fail_to_pass
     origin: pr_diff
-    description: "Error message includes the missing fiber's ID for debuggability"
-
-  - id: spread_operator_used_for_cloning
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Cloning uses object spread {...existingNode} instead of Object.assign workaround"
+    description: "Cloning function compiles as valid JS and produces correct independent copy"
 
 rubric: []

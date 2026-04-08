@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 import re
 from pathlib import Path
 
@@ -60,6 +61,14 @@ def _read_stripped() -> str:
     return _strip_comments(TEST_FILE.read_text())
 
 
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node.js in the repo directory."""
+    return subprocess.run(
+        ["node", "-e", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gate (pass_to_pass, static) — file exists and has balanced syntax
 # ---------------------------------------------------------------------------
@@ -80,8 +89,39 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests using subprocess
 # ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_retry_mechanism_imported():
+    """A retry/polling mechanism is imported or defined.
+
+    The base commit has no retry utility. The fix must import or define one
+    (retry, waitFor, toPass, waitForFunction, etc.).
+    """
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync(
+  'test/development/pages-dir/client-navigation/url-hash.test.ts', 'utf8'
+);
+const stripped = src.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+const checks = [
+  /import\s*\{[^}]*\bretry\b/.test(stripped),
+  /import\s*\{[^}]*\bwaitFor\b/.test(stripped),
+  /(?:const|let|var|function)\s+retry\b/.test(stripped),
+  /\.toPass\s*\(/.test(stripped),
+  /\bwaitForFunction\s*\(/.test(stripped),
+  /require\s*\([^)]*\)\.retry\b/.test(stripped),
+];
+if (!checks.some(Boolean)) {
+  console.error('No retry/polling mechanism found');
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Node check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
 
 # [pr_diff] fail_to_pass
 def test_flaky_click_chains_removed():
@@ -92,64 +132,63 @@ def test_flaky_click_chains_removed():
     click from read and wraps the read in retry/polling.
     Also requires >=10 expect() calls remain (not just deleted).
     """
-    src = _read_stripped()
-    chains = re.findall(
-        r"\.click\(\)(?:\s*\.\w+\([^)]*\))*\s*\.(?:text|eval)\s*\(",
-        src,
-        re.DOTALL,
-    )
-    assert len(chains) < 3, (
-        f"{len(chains)} flaky click-to-read chains remain (expected <3)"
-    )
-    expect_count = len(re.findall(r"\bexpect\s*\(", src))
-    assert expect_count >= 10, (
-        f"Only {expect_count} expect() calls remain (expected >=10)"
-    )
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync(
+  'test/development/pages-dir/client-navigation/url-hash.test.ts', 'utf8'
+);
+const stripped = src.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+const chainPattern = /\.click\(\)(?:\s*\.\w+\([^)]*\))*\s*\.(?:text|eval)\s*\(/g;
+const chains = stripped.match(chainPattern) || [];
+if (chains.length >= 3) {
+  console.error('Too many flaky click-to-read chains: ' + chains.length);
+  process.exit(1);
+}
+const expectMatches = stripped.match(/\bexpect\s*\(/g) || [];
+if (expectMatches.length < 10) {
+  console.error('Too few expect() calls: ' + expectMatches.length);
+  process.exit(1);
+}
+console.log('PASS chains=' + chains.length + ' expects=' + expectMatches.length);
+""")
+    assert r.returncode == 0, f"Node check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_retry_wraps_browser_assertions():
-    """retry/polling wrappers surround browser assertions.
+    """retry/polling wrappers surround browser assertions (>=5 with proximity check).
 
-    The buggy code has 0 retry/polling wrappers. A correct fix wraps flaky
-    browser assertions in retry(), toPass(), waitFor(), etc.
-    Counts only retry/polling calls that have browser.* within a 5-line
-    window to prevent keyword-stuffing.
+    The base code has 0 retry/polling wrappers. The fix adds retry() around
+    browser assertions. Counts retry/polling calls that have browser.* within
+    a 5-line window to prevent keyword-stuffing.
     """
-    src = _read_stripped()
-    lines = src.split("\n")
-    retry_pat = re.compile(
-        r"(?:\bretry\s*\(|\.\s*toPass\s*\(|\bwaitFor\s*\(|\bwaitForFunction\s*\(|\bpoll\s*\()"
-    )
-    browser_pat = re.compile(r"\bbrowser\b\s*\.")
-    count = 0
-    for i, line in enumerate(lines):
-        if retry_pat.search(line):
-            window = lines[max(0, i - 1) : i + 6]
-            if any(browser_pat.search(l) for l in window):
-                count += 1
-    assert count >= 5, (
-        f"Only {count} retry/polling blocks wrap browser assertions (expected >=5)"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_retry_mechanism_imported():
-    """A retry/polling mechanism is imported or defined.
-
-    The buggy code has no retry utility. A correct fix must import or
-    define one (retry, waitFor, toPass, waitForFunction, etc.).
-    """
-    src = _read_stripped()
-    checks = [
-        re.search(r"import\s*\{[^}]*\bretry\b", src),
-        re.search(r"import\s*\{[^}]*\bwaitFor\b", src),
-        re.search(r"(?:const|let|var|function)\s+retry\b", src),
-        re.search(r"\.toPass\s*\(", src),
-        re.search(r"\bwaitForFunction\s*\(", src),
-        re.search(r"require\s*\([^)]*\)\.retry\b", src),
-    ]
-    assert any(checks), "No retry/polling mechanism found (import or definition)"
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync(
+  'test/development/pages-dir/client-navigation/url-hash.test.ts', 'utf8'
+);
+const stripped = src.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+const lines = stripped.split('\n');
+const retryPat = /(?:\bretry\s*\(|\.\s*toPass\s*\(|\bwaitFor\s*\(|\bwaitForFunction\s*\(|\bpoll\s*\()/;
+const browserPat = /\bbrowser\b\s*\./;
+let count = 0;
+for (let i = 0; i < lines.length; i++) {
+  if (retryPat.test(lines[i])) {
+    const window = lines.slice(Math.max(0, i - 1), i + 6);
+    if (window.some(l => browserPat.test(l))) {
+      count++;
+    }
+  }
+}
+if (count < 5) {
+  console.error('Only ' + count + ' retry/polling blocks wrap browser assertions');
+  process.exit(1);
+}
+console.log('PASS count=' + count);
+""")
+    assert r.returncode == 0, f"Node check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -224,13 +263,11 @@ def test_no_inline_files_object():
     the real-directory pattern — a correct fix must not regress this.
     """
     src = TEST_FILE.read_text()
-    # Detect the anti-pattern: nextTestSetup with an inline object as `files`
-    # i.e. files: { or files:{ (with optional whitespace)
     assert not re.search(
         r"nextTestSetup\s*\(\s*\{[^}]*\bfiles\s*:\s*\{",
         src,
         re.DOTALL,
-    ), "nextTestSetup uses inline files object — should use files: __dirname instead"
+    ), "nextTestSetup uses inline files object — should use file: __dirname instead"
 
 
 # [agent_config] pass_to_pass — AGENTS.md:180 @ 78f73b27069ffe2dc1ddfb2b16013220d2a86569

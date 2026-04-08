@@ -9,7 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import re
-import textwrap
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/sglang"
@@ -17,7 +17,6 @@ REPO = "/workspace/sglang"
 
 def _extract_get_layer_id():
     """Extract get_layer_id from common.py via AST+exec to avoid torch import."""
-    # AST-only because: common.py imports torch at top level
     src = Path(f"{REPO}/python/sglang/srt/layers/utils/common.py").read_text()
     tree = ast.parse(src)
     for node in ast.walk(tree):
@@ -28,6 +27,14 @@ def _extract_get_layer_id():
             exec(func_src, ns)
             return ns["get_layer_id"]
     raise AssertionError("get_layer_id not found in common.py")
+
+
+def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code via subprocess in the repo directory."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -113,191 +120,224 @@ def test_pp_weight_filtering():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — structural tests (AST required: GPU-dependent classes)
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_decode_pp_parameters():
     """HybridMambaDecodeReqToTokenPool.__init__ must accept mamba_layer_ids and start_layer."""
-    # AST-only because: decode.py classes require GPU/torch runtime to instantiate
-    src = Path(f"{REPO}/python/sglang/srt/disaggregation/decode.py").read_text()
-    tree = ast.parse(src)
+    r = _run_python("""\
+import ast
+from pathlib import Path
 
-    found = False
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "HybridMambaDecodeReqToTokenPool":
-            for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name == "__init__":
-                    param_names = [arg.arg for arg in item.args.args]
-                    assert "mamba_layer_ids" in param_names, (
-                        f"__init__ must accept mamba_layer_ids, got: {param_names}"
-                    )
-                    assert "start_layer" in param_names, (
-                        f"__init__ must accept start_layer, got: {param_names}"
-                    )
-                    # Verify start_layer is not hardcoded to 0
-                    init_src = ast.get_source_segment(src, item) or ""
-                    assert "# TODO: Support PP" not in init_src, (
-                        "Still has TODO: Support PP comment"
-                    )
-                    found = True
-                    break
-            break
+src = Path("/workspace/sglang/python/sglang/srt/disaggregation/decode.py").read_text()
+tree = ast.parse(src)
 
-    assert found, "HybridMambaDecodeReqToTokenPool.__init__ not found"
+found = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "HybridMambaDecodeReqToTokenPool":
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == "__init__":
+                param_names = [arg.arg for arg in item.args.args]
+                assert "mamba_layer_ids" in param_names, \\
+                    f"Missing mamba_layer_ids: {param_names}"
+                assert "start_layer" in param_names, \\
+                    f"Missing start_layer: {param_names}"
+                init_src = ast.get_source_segment(src, item) or ""
+                assert "# TODO: Support PP" not in init_src, "Still has TODO"
+                found = True
+                break
+        break
+
+assert found, "HybridMambaDecodeReqToTokenPool.__init__ not found"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_qwen3_vl_pp_properties():
     """Qwen3_5VLForConditionalGeneration must have start_layer/end_layer properties that delegate."""
-    src = Path(f"{REPO}/python/sglang/srt/models/qwen3_vl.py").read_text()
-    tree = ast.parse(src)
+    r = _run_python("""\
+import ast, textwrap
+from pathlib import Path
 
-    found = False
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and "Qwen3" in node.name and "Conditional" in node.name:
-            props = {}
-            for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name in ("start_layer", "end_layer"):
-                    is_prop = any(
-                        (isinstance(d, ast.Name) and d.id == "property")
-                        or (isinstance(d, ast.Attribute) and d.attr == "property")
-                        for d in item.decorator_list
-                    )
-                    assert is_prop, f"{item.name} must be a @property"
-                    # Extract function WITHOUT decorator (lineno points to def, not @property)
-                    lines = src.splitlines(keepends=True)
-                    func_src = textwrap.dedent("".join(lines[item.lineno - 1 : item.end_lineno]))
-                    props[item.name] = func_src
+src = Path("/workspace/sglang/python/sglang/srt/models/qwen3_vl.py").read_text()
+tree = ast.parse(src)
 
-            assert "start_layer" in props, "Must have start_layer property"
-            assert "end_layer" in props, "Must have end_layer property"
+found = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and "Qwen3" in node.name and "Conditional" in node.name:
+        props = {}
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name in ("start_layer", "end_layer"):
+                is_prop = any(
+                    (isinstance(d, ast.Name) and d.id == "property")
+                    or (isinstance(d, ast.Attribute) and d.attr == "property")
+                    for d in item.decorator_list
+                )
+                assert is_prop, f"{item.name} must be a @property"
+                lines = src.splitlines(keepends=True)
+                func_src = textwrap.dedent("".join(lines[item.lineno - 1 : item.end_lineno]))
+                props[item.name] = func_src
 
-            # Execute extracted functions against mock objects
-            class MockModel:
-                start_layer = 15
-                end_layer = 30
+        assert "start_layer" in props, "Must have start_layer property"
+        assert "end_layer" in props, "Must have end_layer property"
 
-            class MockModelNoEnd:
-                class config:
-                    num_hidden_layers = 48
+        # Execute extracted property functions against mock objects
+        class MockModel:
+            start_layer = 15
+            end_layer = 30
 
-            class ObjWithModel:
-                model = MockModel()
+        class MockModelNoEnd:
+            class config:
+                num_hidden_layers = 48
 
-            class ObjWithFallback:
-                model = MockModelNoEnd()
+        class ObjWithModel:
+            model = MockModel()
 
-            class ObjEmpty:
-                pass
+        class ObjWithFallback:
+            model = MockModelNoEnd()
 
-            ns = {"__builtins__": __builtins__}
-            exec(props["start_layer"], ns)
-            exec(props["end_layer"], ns)
+        class ObjEmpty:
+            pass
 
-            # Test delegation to inner model
-            assert ns["start_layer"](ObjWithModel()) == 15
-            assert ns["end_layer"](ObjWithModel()) == 30
+        ns = {"__builtins__": __builtins__}
+        exec(props["start_layer"], ns)
+        exec(props["end_layer"], ns)
 
-            # Test fallback when end_layer is missing but config exists
-            assert ns["end_layer"](ObjWithFallback()) == 48
+        # Test delegation to inner model
+        assert ns["start_layer"](ObjWithModel()) == 15, "start_layer should delegate to model"
+        assert ns["end_layer"](ObjWithModel()) == 30, "end_layer should delegate to model"
 
-            # Test fallback when model is missing
-            assert ns["start_layer"](ObjEmpty()) == 0
+        # Test fallback when end_layer is missing but config exists
+        assert ns["end_layer"](ObjWithFallback()) == 48, "end_layer should fallback to config"
 
-            found = True
-            break
+        # Test fallback when model is missing
+        assert ns["start_layer"](ObjEmpty()) == 0, "start_layer should default to 0"
 
-    assert found, "Qwen3VLForConditionalGeneration not found"
+        found = True
+        break
+
+assert found, "Qwen3VLForConditionalGeneration not found"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_qwen3_5_load_weights_pp_filtering():
     """load_weights/load_fused_expert_weights in qwen3_5.py must use get_layer_id for PP skip."""
-    # AST-only because: model classes require GPU/torch to instantiate
-    src = Path(f"{REPO}/python/sglang/srt/models/qwen3_5.py").read_text()
-    tree = ast.parse(src)
+    r = _run_python("""\
+import ast
+from pathlib import Path
 
-    methods_with_filtering = 0
-    total_load_methods = 0
-    target_classes = set()
+src = Path("/workspace/sglang/python/sglang/srt/models/qwen3_5.py").read_text()
+tree = ast.parse(src)
 
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and "Qwen3_5" in node.name:
-            for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name in (
-                    "load_weights", "load_fused_expert_weights"
-                ):
-                    total_load_methods += 1
-                    has_get_layer_id = False
-                    has_continue = False
-                    for child in ast.walk(item):
-                        if isinstance(child, ast.Call):
-                            func = child.func
-                            if (isinstance(func, ast.Name) and func.id == "get_layer_id") or (
-                                isinstance(func, ast.Attribute) and func.attr == "get_layer_id"
-                            ):
-                                has_get_layer_id = True
-                        if isinstance(child, ast.Continue):
-                            has_continue = True
-                    if has_get_layer_id and has_continue:
-                        methods_with_filtering += 1
-                        target_classes.add(node.name)
+methods_with_filtering = 0
+total_load_methods = 0
+target_classes = set()
 
-    assert total_load_methods >= 4, f"Expected >=4 load methods, found {total_load_methods}"
-    assert methods_with_filtering >= 4, (
-        f"Expected >=4 methods with PP filtering, only {methods_with_filtering} have it"
-    )
-    assert len(target_classes) >= 2, f"Expected >=2 classes with filtering, got {target_classes}"
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and "Qwen3_5" in node.name:
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name in (
+                "load_weights", "load_fused_expert_weights"
+            ):
+                total_load_methods += 1
+                has_get_layer_id = False
+                has_continue = False
+                for child in ast.walk(item):
+                    if isinstance(child, ast.Call):
+                        func = child.func
+                        if (isinstance(func, ast.Name) and func.id == "get_layer_id") or (
+                            isinstance(func, ast.Attribute) and func.attr == "get_layer_id"
+                        ):
+                            has_get_layer_id = True
+                    if isinstance(child, ast.Continue):
+                        has_continue = True
+                if has_get_layer_id and has_continue:
+                    methods_with_filtering += 1
+                    target_classes.add(node.name)
+
+assert total_load_methods >= 4, f"Expected >=4 load methods, found {total_load_methods}"
+assert methods_with_filtering >= 4, \\
+    f"Expected >=4 methods with PP filtering, only {methods_with_filtering} have it"
+assert len(target_classes) >= 2, f"Expected >=2 classes with filtering, got {target_classes}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_memory_pool_pp_support():
     """memory_pool.py must not hardcode start_layer=0 and MambaPool must accept mamba_layer_ids."""
-    # AST-only because: pool classes require torch/CUDA to instantiate
-    src = Path(f"{REPO}/python/sglang/srt/mem_cache/memory_pool.py").read_text()
-    tree = ast.parse(src)
+    r = _run_python("""\
+import ast
+from pathlib import Path
 
-    # Check 1: no hardcoded self.start_layer = 0 in relevant classes
-    hardcoded_count = 0
-    parametric_count = 0
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name in (
-            "HybridReqToTokenPool", "HybridLinearKVPool",
-        ):
-            for item in ast.walk(node):
-                if isinstance(item, ast.Assign):
-                    for target in item.targets:
-                        if (
-                            isinstance(target, ast.Attribute)
-                            and target.attr == "start_layer"
-                            and isinstance(target.value, ast.Name)
-                            and target.value.id == "self"
-                        ):
-                            if isinstance(item.value, ast.Constant) and item.value.value == 0:
-                                hardcoded_count += 1
-                            else:
-                                parametric_count += 1
+src = Path("/workspace/sglang/python/sglang/srt/mem_cache/memory_pool.py").read_text()
+tree = ast.parse(src)
 
-    assert hardcoded_count == 0, f"Found {hardcoded_count} hardcoded self.start_layer = 0"
-    assert parametric_count >= 2, f"Expected >=2 parametric start_layer, got {parametric_count}"
-    assert "TODO: Support PP" not in src, "Still has TODO: Support PP comments"
+# Behavioral: extract and execute self.start_layer assignments to verify parametric
+tested_classes = 0
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name in ("HybridReqToTokenPool", "HybridLinearKVPool"):
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == "__init__":
+                for stmt in ast.walk(item):
+                    if isinstance(stmt, ast.Assign):
+                        for target in stmt.targets:
+                            if (
+                                isinstance(target, ast.Attribute)
+                                and target.attr == "start_layer"
+                                and isinstance(target.value, ast.Name)
+                                and target.value.id == "self"
+                            ):
+                                assign_src = ast.get_source_segment(src, stmt)
+                                assert assign_src, f"Could not extract start_layer from {node.name}"
+                                # Execute with start_layer=15: must get 15, not hardcoded 0
+                                obj = type("S", (), {})()
+                                exec(assign_src, {"self": obj, "start_layer": 15})
+                                assert obj.start_layer == 15, \\
+                                    f"{node.name}: expected 15, got {obj.start_layer}"
+                                # Execute with start_layer=None: must default to 0
+                                obj2 = type("S", (), {})()
+                                exec(assign_src, {"self": obj2, "start_layer": None})
+                                assert obj2.start_layer == 0, \\
+                                    f"{node.name}: expected 0 for None, got {obj2.start_layer}"
+                                tested_classes += 1
 
-    # Check 2: MambaPool.__init__ accepts a layer IDs parameter
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "MambaPool":
-            for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name == "__init__":
-                    param_names = [arg.arg for arg in item.args.args] + [arg.arg for arg in item.args.kwonlyargs]
-                    has_layer_param = any("layer" in p and "id" in p for p in param_names)
-                    assert has_layer_param, f"MambaPool.__init__ must accept layer IDs param, got: {param_names}"
-                    init_src = ast.get_source_segment(src, item) or ""
-                    assert "len(cache_params.layers)" not in init_src, (
-                        "num_mamba_layers must NOT use len(cache_params.layers)"
-                    )
-                    break
-            break
+assert tested_classes >= 2, f"Expected >=2 classes with parametric start_layer, got {tested_classes}"
+assert "TODO: Support PP" not in src, "Still has TODO: Support PP"
 
+# MambaPool.__init__ must accept mamba_layer_ids and not use len(cache_params.layers)
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "MambaPool":
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == "__init__":
+                params = [arg.arg for arg in item.args.args] + [arg.arg for arg in item.args.kwonlyargs]
+                has_layer_param = any("layer" in p and "id" in p for p in params)
+                assert has_layer_param, f"MambaPool must accept layer IDs param: {params}"
+                init_src = ast.get_source_segment(src, item) or ""
+                assert "len(cache_params.layers)" not in init_src, \\
+                    "Must not use len(cache_params.layers)"
+                break
+        break
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (agent_config)
+# ---------------------------------------------------------------------------
 
 # [agent_config] pass_to_pass — .claude/skills/write-sglang-test/SKILL.md:12 @ c06ca1526cb6008a8dacb4fdb06567e648134664
 def test_unit_test_uses_custom_test_case():

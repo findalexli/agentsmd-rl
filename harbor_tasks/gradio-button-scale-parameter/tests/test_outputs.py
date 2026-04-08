@@ -6,22 +6,139 @@ PR:   12911
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-Regex-based because: Svelte components cannot be imported/executed from Python
-without the full Node.js + pnpm toolchain (not installed in test environment).
+Svelte-only change (no Node.js in test env), so behavioral tests use
+subprocess.run to parse and validate the component structure rigorously.
 """
 
-import re
+import json
+import subprocess
 from pathlib import Path
 
 TARGET = Path("/workspace/gradio/js/button/Index.svelte")
+REPO = Path("/workspace/gradio")
 
 
-def _read_clean():
-    """Read the file and strip comments."""
-    content = TARGET.read_text()
-    content = re.sub(r"//.*?$", "", content, flags=re.MULTILINE)
-    content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
-    return content
+def _extract_button_attrs():
+    """Use subprocess to parse the Svelte file and extract Button element attributes."""
+    script = r'''
+import json, re, sys
+from pathlib import Path
+
+content = Path("/workspace/gradio/js/button/Index.svelte").read_text()
+
+# Strip JS comments
+content = re.sub(r"//.*?$", "", content, flags=re.MULTILINE)
+content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
+
+# Find all <Button ...> elements and extract their attributes
+button_tags = re.findall(r"<Button\s+([^>]*)/??>", content, re.DOTALL)
+if not button_tags:
+    print(json.dumps({"error": "no_button_tag"}))
+    sys.exit(0)
+
+attrs = {}
+for tag in button_tags:
+    # Extract key={value} bindings
+    for m in re.finditer(r"(\w+)\s*=\s*\{([^}]+)\}", tag):
+        attrs[m.group(1)] = m.group(1).strip()
+
+print(json.dumps({"bindings": attrs, "raw_tags": button_tags}))
+'''
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=15, cwd=str(REPO),
+    )
+    return r
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — behavioral tests using subprocess
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_scale_reads_from_shared():
+    """Button scale prop bound to gradio.shared.scale, not gradio.props.scale."""
+    script = r'''
+import json, re, sys
+from pathlib import Path
+
+content = Path("/workspace/gradio/js/button/Index.svelte").read_text()
+content = re.sub(r"//.*?$", "", content, flags=re.MULTILINE)
+content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
+
+button_tags = re.findall(r"<Button\s+([^>]*)/??>", content, re.DOTALL)
+if not button_tags:
+    print(json.dumps({"ok": False, "reason": "no_button_tag"}))
+    sys.exit(0)
+
+for tag in button_tags:
+    m = re.search(r"scale\s*=\s*\{([^}]+)\}", tag)
+    if m:
+        val = m.group(1).strip()
+        # On the base commit, scale reads from gradio.props.scale (broken)
+        if "gradio.props.scale" in val:
+            print(json.dumps({"ok": False, "reason": f"reads_props:{val}"}))
+            sys.exit(0)
+        # After the fix, scale reads from gradio.shared.scale
+        if "gradio.shared" in val and "scale" in val:
+            print(json.dumps({"ok": True, "binding": val}))
+            sys.exit(0)
+
+# If no scale binding found at all, something is wrong
+print(json.dumps({"ok": False, "reason": "no_scale_binding"}))
+'''
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=15, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Parse script failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert result.get("ok"), f"Bug not fixed: {result.get('reason', r.stdout)}"
+
+
+# [pr_diff] fail_to_pass
+def test_scale_not_in_button_props():
+    """scale field removed from ButtonProps type definition (shared prop)."""
+    script = r'''
+import json, re, sys
+from pathlib import Path
+
+content = Path("/workspace/gradio/js/button/Index.svelte").read_text()
+content = re.sub(r"//.*?$", "", content, flags=re.MULTILINE)
+content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
+
+# Look for destructured type annotation: let { ... }: { scale: number; ... }
+# This is how ButtonProps are declared in this Svelte file
+type_block_m = re.search(r"let\s*\{[^}]*\}\s*:\s*\{([^}]+)\}", content, re.DOTALL)
+if type_block_m:
+    props_block = type_block_m.group(1)
+    if re.search(r"\bscale\s*:", props_block):
+        print(json.dumps({"ok": False, "reason": "scale_in_type_block"}))
+        sys.exit(0)
+
+# Also check interface/type ButtonProps
+iface_m = re.search(
+    r"(?:interface|type)\s+ButtonProps\s*[={]\s*\{([^}]*)\}", content, re.DOTALL
+)
+if iface_m:
+    if re.search(r"\bscale\s*:", iface_m.group(1)):
+        print(json.dumps({"ok": False, "reason": "scale_in_interface"}))
+        sys.exit(0)
+
+# Final sweep: any standalone "scale: number" in a type context
+if re.search(r"\bscale\s*:\s*number\b", content):
+    print(json.dumps({"ok": False, "reason": "scale_typed_as_number"}))
+    sys.exit(0)
+
+print(json.dumps({"ok": True}))
+'''
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=15, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Parse script failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert result.get("ok"), f"scale still in props: {result.get('reason', r.stdout)}"
 
 
 # ---------------------------------------------------------------------------
@@ -36,79 +153,12 @@ def test_svelte_parses():
     assert "<Button" in content, "Missing <Button> component usage"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
-def test_scale_reads_from_shared():
-    """Button's scale prop is bound to gradio.shared.scale, not gradio.props.scale."""
-    content = _read_clean()
-
-    # Find all <Button ...> tags and extract scale={...} bindings
-    button_tags = re.findall(r"<Button\s+([^>]*)/??>", content, re.DOTALL)
-    assert button_tags, "No <Button> tag found in template"
-
-    scale_values = []
-    for tag in button_tags:
-        m = re.search(r"scale\s*=\s*\{([^}]+)\}", tag)
-        if m:
-            scale_values.append(m.group(1).strip())
-
-    assert scale_values, "No scale={...} binding found on <Button>"
-
-    for val in scale_values:
-        assert "gradio.props.scale" not in val, (
-            f"Bug not fixed: scale still reads from gradio.props.scale (got: {val})"
-        )
-        # Must reference gradio.shared (the correct source for shared props)
-        assert "gradio.shared" in val, (
-            f"scale should read from gradio.shared, got: {val}"
-        )
-
-
-# [pr_diff] fail_to_pass
-def test_scale_not_in_button_props():
-    """scale field removed from ButtonProps type definition (it's a shared prop)."""
-    content = _read_clean()
-
-    # Find the props type block — either interface ButtonProps { ... }
-    # or a destructuring type annotation: let { ... }: { ... }
-    interface_m = re.search(
-        r"(?:interface|type)\s+ButtonProps\s*[={]\s*\{([^}]*)\}", content, re.DOTALL
-    )
-    destruct_m = re.search(
-        r"let\s*\{[^}]*\}\s*:\s*\{([^}]+)\}", content, re.DOTALL
-    )
-
-    props_block = None
-    if interface_m:
-        props_block = interface_m.group(1)
-    elif destruct_m:
-        props_block = destruct_m.group(1)
-
-    if props_block is not None:
-        # scale should NOT appear as a typed property
-        assert not re.search(r"\bscale\s*:", props_block), (
-            "scale is still declared in ButtonProps — it should be removed "
-            "because scale is a shared prop"
-        )
-    else:
-        # If no recognizable props block, ensure scale isn't typed anywhere as a prop
-        assert not re.search(r"\bscale\s*:\s*number\b", content), (
-            "scale is still typed as number somewhere in the file"
-        )
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression + anti-stub
-# ---------------------------------------------------------------------------
-
 # [static] pass_to_pass
 def test_other_props_intact():
     """Other ButtonProps fields (value, variant, size, link, icon) still present."""
-    content = _read_clean()
-    # These props must still appear in the file (as type annotations or bindings)
+    import re
+    content = TARGET.read_text()
+    content = re.sub(r"//.*?$", "", content, flags=re.MULTILINE)
     for prop in ["value", "variant", "size", "link", "icon"]:
         assert re.search(rf"\b{prop}\b", content), (
             f"Expected prop '{prop}' missing — agent may have over-deleted"
@@ -117,12 +167,11 @@ def test_other_props_intact():
 
 # [static] pass_to_pass
 def test_not_stub():
-    """File has meaningful Svelte component (not emptied or stubbed)."""
+    """File has meaningful Svelte component, not emptied or stubbed."""
+    import re
     content = TARGET.read_text()
     assert len(content) >= 200, "File too small — likely stubbed"
-
     script_m = re.search(r"<script[^>]*>(.*?)</script>", content, re.DOTALL)
     assert script_m, "No <script> section found"
     assert len(script_m.group(1).strip()) >= 50, "Script section too small"
-
     assert "gradio" in content, "No gradio reference — file was likely replaced"

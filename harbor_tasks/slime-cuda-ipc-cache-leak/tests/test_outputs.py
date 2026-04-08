@@ -8,13 +8,18 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import json
+import subprocess
+import textwrap
 from pathlib import Path
 
-# AST-only because: update_weights requires torch, ray, torch.distributed, CUDA GPU,
-# and a full Megatron/SLIME distributed runtime — cannot be imported or called in test.
 REPO = "/workspace/slime"
 TARGET = f"{REPO}/slime/backends/megatron_utils/update_weight/update_weight_from_tensor.py"
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 def _parse_target():
     """Parse the target file and return the AST tree."""
@@ -53,29 +58,79 @@ def _released_names(node):
     return names
 
 
-def _is_ipc_collect_call(node):
-    """Check if an AST node is a call to torch.cuda.ipc_collect()."""
-    if not isinstance(node, ast.Call):
-        return False
-    func = node.func
-    # torch.cuda.ipc_collect()
-    if isinstance(func, ast.Attribute) and func.attr == "ipc_collect":
-        if isinstance(func.value, ast.Attribute) and func.value.attr == "cuda":
-            if isinstance(func.value.value, ast.Name) and func.value.value.id == "torch":
-                return True
-        # cuda.ipc_collect() if cuda was imported directly
-        if isinstance(func.value, ast.Name) and func.value.id == "cuda":
-            return True
-    return False
+# Script that mock-executes update_weights and prints an ordered event log as JSON.
+# Passed to subprocess as `python3 -c <script> <target_path> <num_chunks>`.
+_MOCK_SCRIPT = textwrap.dedent("""\
+import sys, ast, textwrap, json
+from unittest.mock import MagicMock
+
+target_path = sys.argv[1]
+num_chunks = int(sys.argv[2])
+
+src = open(target_path).read()
+tree = ast.parse(src)
+
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "update_weights":
+        func_node = node
+        break
+assert func_node is not None, "update_weights not found"
+
+# Extract function source (skip @torch.no_grad() decorator)
+lines = src.splitlines()
+func_lines = lines[func_node.lineno - 1 : func_node.end_lineno]
+func_src = textwrap.dedent('\\n'.join(func_lines))
+
+# Build mock namespace matching the function's global references
+torch_mock = MagicMock()
+ray_mock = MagicMock()
+dist_mock = MagicMock()
+gloo_group = MagicMock()
+pp_weights = MagicMock()
+
+events = []
+torch_mock.cuda.ipc_collect.side_effect = lambda: events.append("ipc_collect")
+dist_mock.barrier.side_effect = lambda **kw: events.append("barrier")
+dist_mock.get_rank.return_value = 1   # non-zero rank → skip rank-0 blocks
+ray_mock.get.side_effect = lambda refs: events.append("ray_get")
+
+ns = {
+    'torch': torch_mock,
+    'ray': ray_mock,
+    'dist': dist_mock,
+    'get_gloo_group': gloo_group,
+    'post_process_weights': pp_weights,
+}
+
+exec(func_src, ns)
+
+# Build mock self with controllable weight chunks
+mock_self = MagicMock()
+mock_self.weight_version = 0
+mock_self.quantization_config = None
+mock_self.rollout_engines = []
+mock_self.use_distribute = False
+chunks = [{"w": MagicMock()} for _ in range(num_chunks)]
+mock_self._hf_weight_iterator.get_hf_weight_chunks.return_value = chunks
+mock_self._send_hf_params.return_value = ([], MagicMock())
+
+ns['update_weights'](mock_self)
+print(json.dumps(events))
+""")
 
 
-def _is_barrier_call(node):
-    """Check if an AST node is a call to dist.barrier()."""
-    if not isinstance(node, ast.Call):
-        return False
-    if isinstance(node.func, ast.Attribute) and node.func.attr == "barrier":
-        return True
-    return False
+def _mock_execute_update_weights(num_chunks: int = 2) -> list[str]:
+    """Mock-execute update_weights via subprocess and return ordered event log.
+
+    Events are strings like "barrier", "ray_get", "ipc_collect".
+    """
+    r = subprocess.run(
+        ["python3", "-c", _MOCK_SCRIPT, TARGET, str(num_chunks)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Mock execution failed: {r.stderr}"
+    return json.loads(r.stdout.strip())
 
 
 # ---------------------------------------------------------------------------
@@ -90,8 +145,46 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess mock-execution
 # ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_ipc_collect_in_loop():
+    """torch.cuda.ipc_collect() must be called inside the weight chunk for-loop
+    to release IPC cache entries after each chunk."""
+    events = _mock_execute_update_weights(num_chunks=2)
+    barrier_indices = [i for i, e in enumerate(events) if e == "barrier"]
+    assert len(barrier_indices) >= 2, (
+        f"Expected >= 2 barrier calls, got {len(barrier_indices)}; events: {events}"
+    )
+    # The weight-update loop runs between the first and second barrier calls
+    loop_events = events[barrier_indices[0] + 1 : barrier_indices[1]]
+    ipc_in_loop = loop_events.count("ipc_collect")
+    assert ipc_in_loop >= 2, (
+        f"Expected >= 2 ipc_collect calls in loop (one per chunk), got {ipc_in_loop}. "
+        f"Loop events: {loop_events}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_ipc_collect_after_barrier():
+    """torch.cuda.ipc_collect() must be called after the post-loop dist.barrier()
+    to clean up the last chunk's IPC entries for non-source ranks."""
+    events = _mock_execute_update_weights(num_chunks=2)
+    barrier_indices = [i for i, e in enumerate(events) if e == "barrier"]
+    assert len(barrier_indices) >= 2, (
+        f"Expected >= 2 barrier calls, got {len(barrier_indices)}; events: {events}"
+    )
+    # Post-loop section: between the second barrier and the third (or end)
+    post_start = barrier_indices[1] + 1
+    post_end = barrier_indices[2] if len(barrier_indices) > 2 else len(events)
+    post_events = events[post_start:post_end]
+    ipc_after = post_events.count("ipc_collect")
+    assert ipc_after >= 1, (
+        f"Expected >= 1 ipc_collect after post-loop barrier, got {ipc_after}. "
+        f"Post-loop events: {post_events}, all events: {events}"
+    )
+
 
 # [pr_diff] fail_to_pass
 def test_hf_named_tensors_released_in_loop():
@@ -115,51 +208,6 @@ def test_hf_named_tensors_released_in_loop():
 
     assert released_long, "long_lived_tensors not released in loop (need del or = None)"
     assert released_hf, "hf_named_tensors not released in loop (need del or = None)"
-
-
-# [pr_diff] fail_to_pass
-def test_ipc_collect_in_loop():
-    """torch.cuda.ipc_collect() must be called inside the weight chunk for-loop
-    to release IPC cache entries after each chunk."""
-    tree, _ = _parse_target()
-    func = _find_function(tree, "update_weights")
-    assert func is not None, "update_weights function not found"
-
-    found_in_loop = False
-    for node in ast.walk(func):
-        if isinstance(node, ast.For):
-            for child in ast.walk(node):
-                if isinstance(child, ast.Expr) and _is_ipc_collect_call(child.value):
-                    found_in_loop = True
-                elif _is_ipc_collect_call(child):
-                    found_in_loop = True
-
-    assert found_in_loop, "torch.cuda.ipc_collect() not found inside loop in update_weights"
-
-
-# [pr_diff] fail_to_pass
-def test_ipc_collect_after_barrier():
-    """torch.cuda.ipc_collect() must be called after dist.barrier() to clean up
-    the last chunk's IPC entries for non-source ranks."""
-    tree, _ = _parse_target()
-    func = _find_function(tree, "update_weights")
-    assert func is not None, "update_weights function not found"
-
-    barrier_lines = []
-    collect_lines = []
-
-    for child in ast.walk(func):
-        if isinstance(child, ast.Expr) and isinstance(child.value, ast.Call):
-            if _is_barrier_call(child.value):
-                barrier_lines.append(child.lineno)
-            if _is_ipc_collect_call(child.value):
-                collect_lines.append(child.lineno)
-
-    found = any(cl > bl for bl in barrier_lines for cl in collect_lines)
-    assert found, (
-        f"No torch.cuda.ipc_collect() found after dist.barrier() in update_weights. "
-        f"barrier lines: {barrier_lines}, collect lines: {collect_lines}"
-    )
 
 
 # ---------------------------------------------------------------------------

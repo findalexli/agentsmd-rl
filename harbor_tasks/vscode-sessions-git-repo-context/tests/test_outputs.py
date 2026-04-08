@@ -7,11 +7,21 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
+import json
 from pathlib import Path
 
 REPO = Path("/workspace/vscode")
 CHANGES_VIEW = REPO / "src/vs/sessions/contrib/changes/browser/changesView.ts"
 CODE_REVIEW = REPO / "src/vs/sessions/contrib/codeReview/browser/codeReview.contributions.ts"
+
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    return subprocess.run(
+        ["node", "-e", code],
+        capture_output=True, text=True, timeout=timeout, cwd=str(REPO),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -21,30 +31,70 @@ CODE_REVIEW = REPO / "src/vs/sessions/contrib/codeReview/browser/codeReview.cont
 # [pr_diff] fail_to_pass
 def test_has_git_repository_context_key_defined():
     """sessions.hasGitRepository RawContextKey must be defined in changesView.ts."""
-    content = CHANGES_VIEW.read_text()
-    assert "hasGitRepositoryContextKey" in content, (
-        "hasGitRepositoryContextKey not found in changesView.ts"
-    )
-    assert "'sessions.hasGitRepository'" in content or '"sessions.hasGitRepository"' in content, (
-        "Context key string 'sessions.hasGitRepository' not found in changesView.ts"
-    )
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('src/vs/sessions/contrib/changes/browser/changesView.ts', 'utf8');
+
+// Must have the constant name
+if (!src.includes('hasGitRepositoryContextKey')) {
+    console.error('hasGitRepositoryContextKey not found');
+    process.exit(1);
+}
+
+// Must reference the context key string
+if (!src.includes('sessions.hasGitRepository')) {
+    console.error('Context key string sessions.hasGitRepository not found');
+    process.exit(1);
+}
+
+// Must be a RawContextKey instantiation
+const lines = src.split('\\n');
+let found = false;
+for (const line of lines) {
+    if (line.includes('hasGitRepositoryContextKey') && line.includes('RawContextKey')) {
+        found = true;
+        break;
+    }
+}
+if (!found) {
+    console.error('hasGitRepositoryContextKey not defined with RawContextKey');
+    process.exit(1);
+}
+
+console.log('OK');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_context_key_is_raw_context_key_boolean():
     """hasGitRepositoryContextKey must be a RawContextKey<boolean>."""
-    content = CHANGES_VIEW.read_text()
-    # The constant must be created via new RawContextKey
-    assert "RawContextKey" in content, "RawContextKey not used"
-    # Find the hasGitRepositoryContextKey definition line
-    for line in content.splitlines():
-        if "hasGitRepositoryContextKey" in line and "RawContextKey" in line:
-            assert "boolean" in line, (
-                f"hasGitRepositoryContextKey should be RawContextKey<boolean>, got: {line.strip()}"
-            )
-            break
-    else:
-        assert False, "hasGitRepositoryContextKey not defined with RawContextKey"
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('src/vs/sessions/contrib/changes/browser/changesView.ts', 'utf8');
+const lines = src.split('\\n');
+
+let found = false;
+for (const line of lines) {
+    if (line.includes('hasGitRepositoryContextKey') && line.includes('RawContextKey')) {
+        if (!line.includes('boolean')) {
+            console.error('hasGitRepositoryContextKey should be RawContextKey<boolean>, got: ' + line.trim());
+            process.exit(1);
+        }
+        found = true;
+        break;
+    }
+}
+if (!found) {
+    console.error('hasGitRepositoryContextKey not defined with RawContextKey');
+    process.exit(1);
+}
+
+console.log('OK');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -54,24 +104,60 @@ def test_context_key_is_raw_context_key_boolean():
 # [pr_diff] fail_to_pass
 def test_bind_context_key_for_git_repository():
     """bindContextKey must wire hasGitRepositoryContextKey in ChangesViewPane."""
-    content = CHANGES_VIEW.read_text()
-    assert "bindContextKey(hasGitRepositoryContextKey" in content, (
-        "bindContextKey for hasGitRepositoryContextKey not found in changesView.ts"
-    )
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('src/vs/sessions/contrib/changes/browser/changesView.ts', 'utf8');
+
+// Look for bindContextKey call with hasGitRepositoryContextKey
+if (!src.includes('bindContextKey(hasGitRepositoryContextKey')) {
+    console.error('bindContextKey for hasGitRepositoryContextKey not found');
+    process.exit(1);
+}
+
+// Must be inside a method (i.e., this.renderDisposables.add context)
+const idx = src.indexOf('bindContextKey(hasGitRepositoryContextKey');
+const surrounding = src.substring(Math.max(0, idx - 200), idx);
+if (!surrounding.includes('renderDisposables')) {
+    console.error('bindContextKey call not in renderDisposables context');
+    process.exit(1);
+}
+
+console.log('OK');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_git_repository_binding_checks_repository_obs():
     """The hasGitRepository binding must derive from the repository observable."""
-    content = CHANGES_VIEW.read_text()
-    idx = content.find("bindContextKey(hasGitRepositoryContextKey")
-    assert idx != -1, "bindContextKey for hasGitRepositoryContextKey not found"
-    # The binding implementation should reference the repository observable within ~400 chars
-    block = content[idx : idx + 400]
-    assert "activeSessionRepositoryObs" in block or "RepositoryObs" in block, (
-        "hasGitRepository binding does not reference the repository observable. "
-        f"Block: {block[:200]}"
-    )
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('src/vs/sessions/contrib/changes/browser/changesView.ts', 'utf8');
+
+const idx = src.indexOf('bindContextKey(hasGitRepositoryContextKey');
+if (idx === -1) {
+    console.error('bindContextKey for hasGitRepositoryContextKey not found');
+    process.exit(1);
+}
+
+// Check the binding block references the repository observable
+const block = src.substring(idx, idx + 400);
+if (!block.includes('activeSessionRepositoryObs') && !block.includes('RepositoryObs')) {
+    console.error('hasGitRepository binding does not reference repository observable');
+    process.exit(1);
+}
+
+// Must return a boolean check (undefined comparison)
+if (!block.includes('undefined')) {
+    console.error('Binding does not check for undefined (should return repository !== undefined)');
+    process.exit(1);
+}
+
+console.log('OK');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -81,23 +167,58 @@ def test_git_repository_binding_checks_repository_obs():
 # [pr_diff] fail_to_pass
 def test_code_review_has_git_repository_condition():
     """codeReview.contributions.ts must include sessions.hasGitRepository condition."""
-    content = CODE_REVIEW.read_text()
-    assert "sessions.hasGitRepository" in content, (
-        "sessions.hasGitRepository not found in codeReview.contributions.ts"
-    )
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('src/vs/sessions/contrib/codeReview/browser/codeReview.contributions.ts', 'utf8');
+
+if (!src.includes('sessions.hasGitRepository')) {
+    console.error('sessions.hasGitRepository not found in codeReview.contributions.ts');
+    process.exit(1);
+}
+
+console.log('OK');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_code_review_git_repo_in_context_key_expr():
     """sessions.hasGitRepository must be in a ContextKeyExpr for the code review when clause."""
-    content = CODE_REVIEW.read_text()
-    idx = content.find("sessions.hasGitRepository")
-    assert idx != -1, "sessions.hasGitRepository not found"
-    # It should be inside a ContextKeyExpr call
-    block = content[max(0, idx - 300) : idx + 100]
-    assert "ContextKeyExpr" in block, (
-        "sessions.hasGitRepository is not inside a ContextKeyExpr expression"
-    )
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('src/vs/sessions/contrib/codeReview/browser/codeReview.contributions.ts', 'utf8');
+
+const idx = src.indexOf('sessions.hasGitRepository');
+if (idx === -1) {
+    console.error('sessions.hasGitRepository not found');
+    process.exit(1);
+}
+
+// Verify it's inside a ContextKeyExpr.and() or ContextKeyExpr.equals() block
+const preceding = src.substring(Math.max(0, idx - 500), idx);
+if (!preceding.includes('ContextKeyExpr')) {
+    console.error('sessions.hasGitRepository is not inside a ContextKeyExpr expression');
+    process.exit(1);
+}
+
+// Must use ContextKeyExpr.equals pattern
+const surrounding = src.substring(Math.max(0, idx - 100), idx + 200);
+if (!surrounding.includes("ContextKeyExpr.equals")) {
+    console.error('sessions.hasGitRepository not used with ContextKeyExpr.equals');
+    process.exit(1);
+}
+
+// Must be within a 'when' clause context
+if (!preceding.includes('when:') && !preceding.includes('when :')) {
+    console.error('sessions.hasGitRepository not inside a when clause');
+    process.exit(1);
+}
+
+console.log('OK');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
 # ---------------------------------------------------------------------------

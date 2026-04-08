@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/react"
@@ -14,71 +15,158 @@ MARKUP_CONFIG = f"{REPO}/packages/react-client/src/forks/ReactFlightClientConfig
 ACTION_SERVER = f"{REPO}/packages/react-server/src/ReactFlightActionServer.js"
 
 
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.cjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via AST parsing
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_server_reference_id_not_opaque():
-    """ServerReferenceId type must not use the 'opaque' modifier."""
-    # AST-only because: Flow type annotations in JS files cannot be executed
-    src = Path(MARKUP_CONFIG).read_text()
-    assert "export opaque type ServerReferenceId" not in src, (
-        "ServerReferenceId must not be an opaque type — "
-        "opaque types hide the underlying representation from external consumers, "
-        "but ServerReferenceId is a plain string that must be passable across module boundaries"
-    )
-    assert "export type ServerReferenceId = string" in src, (
-        "ServerReferenceId must be exported as a plain type alias for string"
-    )
+    """ServerReferenceId type must not use the 'opaque' modifier — verified via AST parse."""
+    r = _run_node("""
+const { parse } = require('@babel/parser');
+const fs = require('fs');
+
+const src = fs.readFileSync('%s', 'utf8');
+const ast = parse(src, { sourceType: 'module', plugins: ['flow'] });
+
+let found = false;
+for (const node of ast.program.body) {
+  if (node.type === 'ExportNamedDeclaration' && node.declaration) {
+    const decl = node.declaration;
+    if ((decl.type === 'TypeAlias' || decl.type === 'OpaqueType') && decl.id.name === 'ServerReferenceId') {
+      found = true;
+      if (decl.type === 'OpaqueType') {
+        console.log('FAIL: ServerReferenceId is opaque');
+        process.exit(1);
+      }
+      console.log('PASS: ServerReferenceId is a plain TypeAlias');
+    }
+  }
+}
+
+if (!found) {
+  console.log('FAIL: ServerReferenceId type declaration not found');
+  process.exit(1);
+}
+""" % MARKUP_CONFIG)
+    assert r.returncode == 0, f"AST check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_resolve_server_reference_parameter_type():
-    """resolveServerReference id parameter must use ServerReferenceId, not mixed."""
-    # AST-only because: Flow type annotations in JS files cannot be executed
-    src = Path(MARKUP_CONFIG).read_text()
-    lines = src.splitlines()
-    for i, line in enumerate(lines):
-        if "resolveServerReference" in line and "export function" in line:
-            # Check the next 6 lines for the id parameter declaration
-            context = "\n".join(lines[i : i + 6])
-            assert "id: mixed" not in context, (
-                "resolveServerReference must not use 'id: mixed' — "
-                "the parameter should reference the declared ServerReferenceId type"
-            )
-            assert "id: ServerReferenceId" in context, (
-                "resolveServerReference must use 'id: ServerReferenceId' as the parameter type"
-            )
-            return
-    assert False, "resolveServerReference function not found in markup config file"
+    """resolveServerReference id parameter must use ServerReferenceId, not mixed — verified via AST parse."""
+    r = _run_node("""
+const { parse } = require('@babel/parser');
+const fs = require('fs');
+
+const src = fs.readFileSync('%s', 'utf8');
+const ast = parse(src, { sourceType: 'module', plugins: ['flow'] });
+
+for (const node of ast.program.body) {
+  if (node.type === 'ExportNamedDeclaration' && node.declaration &&
+      node.declaration.type === 'FunctionDeclaration' &&
+      node.declaration.id.name === 'resolveServerReference') {
+    const params = node.declaration.params;
+    const idParam = params.find(p => p.name === 'id');
+    if (!idParam) {
+      console.log('FAIL: id parameter not found');
+      process.exit(1);
+    }
+    const ta = idParam.typeAnnotation && idParam.typeAnnotation.typeAnnotation;
+    if (!ta) {
+      console.log('FAIL: id parameter has no type annotation');
+      process.exit(1);
+    }
+    if (ta.type === 'MixedTypeAnnotation') {
+      console.log('FAIL: id parameter is typed as mixed');
+      process.exit(1);
+    }
+    if (ta.type === 'GenericTypeAnnotation' && ta.id.name === 'ServerReferenceId') {
+      console.log('PASS: id parameter is typed as ServerReferenceId');
+      process.exit(0);
+    }
+    console.log('FAIL: unexpected type: ' + ta.type);
+    process.exit(1);
+  }
+}
+console.log('FAIL: resolveServerReference function not found');
+process.exit(1);
+""" % MARKUP_CONFIG)
+    assert r.returncode == 0, f"AST check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_load_server_reference_metadata_id_type():
-    """loadServerReference metaData.id must use ServerReferenceId, not string."""
-    # AST-only because: Flow type annotations in JS files cannot be executed
-    src = Path(ACTION_SERVER).read_text()
-    lines = src.splitlines()
-    for i, line in enumerate(lines):
-        if "function loadServerReference" in line:
-            # Find the metaData object type block in the next ~15 lines
-            context = "\n".join(lines[i : i + 15])
-            # Locate just the metaData block
-            start = context.find("metaData:")
-            if start == -1:
-                continue
-            end = context.find("}", start)
-            metadata_block = context[start : end + 1] if end != -1 else context[start:]
-            assert "id: string" not in metadata_block, (
-                "loadServerReference metaData.id must not be typed as bare 'string' — "
-                "it should use the specific ServerReferenceId type alias"
-            )
-            assert "id: ServerReferenceId" in metadata_block, (
-                "loadServerReference metaData.id must be typed as 'ServerReferenceId'"
-            )
-            return
-    assert False, "loadServerReference function not found in ReactFlightActionServer.js"
+    """loadServerReference metaData.id must use ServerReferenceId, not string — verified via AST parse."""
+    r = _run_node("""
+const { parse } = require('@babel/parser');
+const fs = require('fs');
+
+const src = fs.readFileSync('%s', 'utf8');
+const ast = parse(src, { sourceType: 'module', plugins: ['flow'] });
+
+function findFunction(body, name) {
+  for (const node of body) {
+    if (node.type === 'FunctionDeclaration' && node.id && node.id.name === name) return node;
+    if (node.type === 'ExportNamedDeclaration' && node.declaration &&
+        node.declaration.type === 'FunctionDeclaration' && node.declaration.id.name === name) return node.declaration;
+  }
+  return null;
+}
+
+const fn = findFunction(ast.program.body, 'loadServerReference');
+if (!fn) {
+  console.log('FAIL: loadServerReference function not found');
+  process.exit(1);
+}
+
+const metaDataParam = fn.params[1];
+if (!metaDataParam) {
+  console.log('FAIL: metaData parameter not found');
+  process.exit(1);
+}
+
+const ta = metaDataParam.typeAnnotation && metaDataParam.typeAnnotation.typeAnnotation;
+if (!ta || ta.type !== 'ObjectTypeAnnotation') {
+  console.log('FAIL: metaData type annotation is not an object type');
+  process.exit(1);
+}
+
+const idProp = ta.properties.find(p => p.key && p.key.name === 'id');
+if (!idProp) {
+  console.log('FAIL: id property not found in metaData type');
+  process.exit(1);
+}
+
+const idType = idProp.value;
+if (idType.type === 'StringTypeAnnotation') {
+  console.log('FAIL: metaData.id is typed as bare string');
+  process.exit(1);
+}
+if (idType.type === 'GenericTypeAnnotation' && idType.id.name === 'ServerReferenceId') {
+  console.log('PASS: metaData.id is typed as ServerReferenceId');
+  process.exit(0);
+}
+console.log('FAIL: unexpected type for metaData.id: ' + idType.type);
+process.exit(1);
+""" % ACTION_SERVER)
+    assert r.returncode == 0, f"AST check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -88,7 +176,6 @@ def test_load_server_reference_metadata_id_type():
 # [static] pass_to_pass
 def test_server_manifest_remains_opaque():
     """ServerManifest must stay opaque — only ServerReferenceId type was changed."""
-    # AST-only because: Flow type annotations in JS files cannot be executed
     src = Path(MARKUP_CONFIG).read_text()
     assert "export opaque type ServerManifest = null" in src, (
         "ServerManifest must remain an opaque type (not changed by this fix)"
@@ -98,7 +185,6 @@ def test_server_manifest_remains_opaque():
 # [static] pass_to_pass
 def test_resolve_server_reference_throws_error():
     """resolveServerReference must still throw its error (body not stubbed out)."""
-    # AST-only because: Flow type annotations in JS files cannot be executed
     src = Path(MARKUP_CONFIG).read_text()
     assert "renderToHTML should not have emitted Server References" in src, (
         "resolveServerReference must still contain its throw statement — "

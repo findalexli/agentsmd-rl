@@ -8,11 +8,19 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import copy
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/vllm"
 TARGET = f"{REPO}/vllm/entrypoints/openai/chat_completion/serving.py"
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in a subprocess within the repo directory."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 def _find_method(tree, name="chat_completion_stream_generator"):
@@ -23,21 +31,6 @@ def _find_method(tree, name="chat_completion_stream_generator"):
     return None
 
 
-def _find_assignment_expr(source, method_node, var_name, exclude_none=False):
-    """Find the RHS expression string for a variable assignment within a method."""
-    for node in ast.walk(method_node):
-        if isinstance(node, (ast.Assign, ast.AnnAssign)):
-            target = node.target if isinstance(node, ast.AnnAssign) else (
-                node.targets[0] if node.targets else None
-            )
-            value = node.value if isinstance(node, ast.AnnAssign) else node.value
-            if isinstance(target, ast.Name) and target.id == var_name and value is not None:
-                seg = ast.get_source_segment(source, value)
-                if seg and (not exclude_none or "None" not in seg):
-                    return seg
-    return None
-
-
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -45,98 +38,122 @@ def _find_assignment_expr(source, method_node, var_name, exclude_none=False):
 # [static] pass_to_pass
 def test_syntax_check():
     """Target file must parse without syntax errors."""
-    # AST-only because: syntax gate — intentionally structural
     source = Path(TARGET).read_text()
     ast.parse(source)
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests (subprocess-executed)
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_token_ids_creates_independent_lists():
-    """all_previous_token_ids must be independent lists — mutating one must not affect others."""
-    # AST-only because: vllm requires torch/CUDA — extract assignment expr and eval behaviorally
-    source = Path(TARGET).read_text()
-    tree = ast.parse(source)
-    method = _find_method(tree)
-    assert method is not None, "chat_completion_stream_generator method not found"
+    """all_previous_token_ids must create independent lists per choice — mutating one must not affect others."""
+    r = _run_py("""
+import ast, copy
+from pathlib import Path
 
-    expr = _find_assignment_expr(source, method, "all_previous_token_ids")
-    assert expr is not None, "all_previous_token_ids assignment not found in method"
+source = Path("vllm/entrypoints/openai/chat_completion/serving.py").read_text()
+tree = ast.parse(source)
 
-    for num_choices in (2, 4, 7):
-        result = eval(expr, {
-            "num_choices": num_choices, "copy": copy,
-            "list": list, "range": range, "__builtins__": __builtins__,
-        })
-        assert isinstance(result, list) and len(result) == num_choices, (
-            f"Expected list of length {num_choices}, got {type(result).__name__} "
-            f"len={len(result) if isinstance(result, list) else 'N/A'}"
-        )
-        # Identity: each element must be a distinct object
-        for i in range(num_choices):
-            for j in range(i + 1, num_choices):
-                assert result[i] is not result[j], (
-                    f"result[{i}] is result[{j}] — shared reference"
-                )
-        # Mutation: appending to one must not affect others
-        result[0].append(99999)
-        for k in range(1, num_choices):
-            assert 99999 not in result[k], (
-                f"Appending to result[0] mutated result[{k}]"
-            )
+method = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.AsyncFunctionDef) and node.name == "chat_completion_stream_generator":
+        method = node
+        break
+assert method is not None, "chat_completion_stream_generator not found"
+
+expr = None
+for node in ast.walk(method):
+    if isinstance(node, (ast.Assign, ast.AnnAssign)):
+        target = node.target if isinstance(node, ast.AnnAssign) else (node.targets[0] if node.targets else None)
+        value = node.value if isinstance(node, ast.AnnAssign) else node.value
+        if isinstance(target, ast.Name) and target.id == "all_previous_token_ids" and value is not None:
+            expr = ast.get_source_segment(source, value)
+            break
+assert expr is not None, "all_previous_token_ids assignment not found"
+
+for num_choices in (2, 4, 7):
+    result = eval(expr, {"num_choices": num_choices, "copy": copy, "list": list, "range": range, "__builtins__": __builtins__})
+    assert isinstance(result, list) and len(result) == num_choices, (
+        f"Expected list of length {num_choices}, got {type(result).__name__}"
+    )
+    for i in range(num_choices):
+        for j in range(i + 1, num_choices):
+            assert result[i] is not result[j], f"result[{i}] is result[{j}] — shared reference"
+    result[0].append(99999)
+    for k in range(1, num_choices):
+        assert 99999 not in result[k], f"Appending to result[0] mutated result[{k}]"
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_tool_parsers_creates_independent_instances():
-    """tool_parsers must be independent parser instances — mutating one must not affect others."""
-    # AST-only because: vllm requires torch/CUDA — extract assignment expr and eval behaviorally
-    source = Path(TARGET).read_text()
-    tree = ast.parse(source)
-    method = _find_method(tree)
-    assert method is not None, "chat_completion_stream_generator method not found"
+    """tool_parsers must create independent parser instances per choice — mutating one must not affect others."""
+    r = _run_py("""
+import ast, copy
+from pathlib import Path
 
-    expr = _find_assignment_expr(source, method, "tool_parsers", exclude_none=True)
-    assert expr is not None, "tool_parsers (non-None) assignment not found in method"
+source = Path("vllm/entrypoints/openai/chat_completion/serving.py").read_text()
+tree = ast.parse(source)
 
-    class FakeParser:
-        def __init__(self, tokenizer=None, tools=None):
-            self.buffer = []
+method = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.AsyncFunctionDef) and node.name == "chat_completion_stream_generator":
+        method = node
+        break
+assert method is not None, "chat_completion_stream_generator not found"
 
-    class FakeParserFactory:
-        def __call__(self, tokenizer=None, tools=None):
-            return FakeParser(tokenizer, tools)
+expr = None
+for node in ast.walk(method):
+    if isinstance(node, (ast.Assign, ast.AnnAssign)):
+        target = node.target if isinstance(node, ast.AnnAssign) else (node.targets[0] if node.targets else None)
+        value = node.value if isinstance(node, ast.AnnAssign) else node.value
+        if isinstance(target, ast.Name) and target.id == "tool_parsers" and value is not None:
+            seg = ast.get_source_segment(source, value)
+            if seg and "None" not in seg:
+                expr = seg
+                break
+assert expr is not None, "tool_parsers assignment not found"
 
-    class FakeSelf:
-        tool_parser = FakeParserFactory()
+class FakeParser:
+    def __init__(self, tokenizer=None, tools=None):
+        self.buffer = []
 
-    for num_choices in (2, 5):
-        result = eval(expr, {
-            "num_choices": num_choices,
-            "self": FakeSelf(),
-            "tokenizer": None,
-            "request": type("R", (), {"tools": []})(),
-            "copy": copy, "list": list, "range": range,
-            "__builtins__": __builtins__,
-        })
-        assert isinstance(result, list) and len(result) == num_choices, (
-            f"Expected list of length {num_choices}, got {type(result).__name__} "
-            f"len={len(result) if isinstance(result, list) else 'N/A'}"
-        )
-        # Identity: each parser must be a distinct object
-        for i in range(num_choices):
-            for j in range(i + 1, num_choices):
-                assert result[i] is not result[j], (
-                    f"tool_parsers[{i}] is tool_parsers[{j}] — shared reference"
-                )
-        # Mutation: mutating one parser's state must not affect others
-        result[0].buffer.append("token_from_choice_0")
-        for k in range(1, num_choices):
-            assert "token_from_choice_0" not in result[k].buffer, (
-                f"Mutating parser[0].buffer affected parser[{k}]"
-            )
+class FakeParserFactory:
+    def __call__(self, tokenizer=None, tools=None):
+        return FakeParser(tokenizer, tools)
+
+class FakeSelf:
+    tool_parser = FakeParserFactory()
+
+for num_choices in (2, 5):
+    result = eval(expr, {
+        "num_choices": num_choices,
+        "self": FakeSelf(),
+        "tokenizer": None,
+        "request": type("R", (), {"tools": []})(),
+        "copy": copy, "list": list, "range": range,
+        "__builtins__": __builtins__,
+    })
+    assert isinstance(result, list) and len(result) == num_choices, (
+        f"Expected list of length {num_choices}, got {type(result).__name__}"
+    )
+    for i in range(num_choices):
+        for j in range(i + 1, num_choices):
+            assert result[i] is not result[j], f"tool_parsers[{i}] is tool_parsers[{j}] — shared reference"
+    result[0].buffer.append("corrupt")
+    for k in range(1, num_choices):
+        assert "corrupt" not in result[k].buffer, f"Mutating parser[0].buffer affected parser[{k}]"
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -146,7 +163,6 @@ def test_tool_parsers_creates_independent_instances():
 # [pr_diff] pass_to_pass
 def test_sibling_methods_preserved():
     """Key sibling methods must still exist — file must not be truncated."""
-    # AST-only because: vllm requires torch/CUDA — check method existence structurally
     source = Path(TARGET).read_text()
     tree = ast.parse(source)
     expected = {
@@ -165,7 +181,6 @@ def test_sibling_methods_preserved():
 # [static] pass_to_pass
 def test_method_not_stub():
     """chat_completion_stream_generator must have a substantial body (not a stub)."""
-    # AST-only because: vllm requires torch/CUDA — check body size structurally
     source = Path(TARGET).read_text()
     tree = ast.parse(source)
     method = _find_method(tree)
@@ -187,7 +202,6 @@ def test_method_not_stub():
 # [pr_diff] pass_to_pass
 def test_sibling_initializations_preserved():
     """Non-mutable sibling vars (added_content_delta_arr, reasoning_end_arr) must still be assigned."""
-    # AST-only because: vllm requires torch/CUDA — check assignment existence structurally
     source = Path(TARGET).read_text()
     tree = ast.parse(source)
     method = _find_method(tree)

@@ -7,37 +7,37 @@ source:
   merge_commit: "db741c72097871e384b22ee6fff1d6083adf23cc"
 
 checks:
-  - id: mps_syntax
+  - id: test_mps_syntax
     type: pass_to_pass
     origin: static
     description: "mps.py must parse without syntax errors"
 
-  - id: utils_h_balanced_braces
+  - id: test_utils_h_balanced_braces
     type: pass_to_pass
     origin: static
     description: "c10/metal/utils.h must have balanced braces"
 
-  - id: buggy_pattern_not_bare_modulo
+  - id: test_buggy_pattern_not_bare_modulo
     type: fail_to_pass
     origin: pr_diff
     description: "_print_ModularIndexing with div=65536 + non-power-of-2 mod must not return bare (x/div) % (mod)"
 
-  - id: buggy_pattern_uses_function_call
+  - id: test_buggy_pattern_uses_function_call
     type: fail_to_pass
     origin: pr_diff
     description: "Buggy-pattern output must use a function call, not bare % operator"
 
-  - id: utils_h_new_mod_safety_function
+  - id: test_utils_h_new_mod_safety_function
     type: fail_to_pass
     origin: pr_diff
     description: "utils.h must have a new modulo-safety function with optimization barrier"
 
-  - id: non_buggy_patterns_preserved
+  - id: test_non_buggy_patterns_preserved
     type: pass_to_pass
     origin: pr_diff
     description: "Non-buggy patterns (div=1, power-of-2 mod) and FloorDiv still produce valid output"
 
-  - id: existing_functions_preserved
+  - id: test_existing_functions_preserved
     type: pass_to_pass
     origin: repo_tests
     description: "floor_divide and fmod still present in utils.h; files not gutted"

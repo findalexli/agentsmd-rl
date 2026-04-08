@@ -7,25 +7,35 @@ source:
   merge_commit: "f32d9d6fd610f5aa06957afb8de4cf66102ee27e"
 
 checks:
-  - id: recorder_state_variables_reactive
+  - id: recorder_state_reactive
     type: fail_to_pass
     origin: pr_diff
     description: "Recording state vars (record, seconds, is_recording, has_started, mic_devices, selected_device_id, show_device_selection) must use $state() for Svelte 5 reactivity"
 
-  - id: player_state_variables_reactive
+  - id: player_state_reactive
     type: fail_to_pass
     origin: pr_diff
     description: "Playback state vars (playing, duration, currentTime, waveform_ready) must use $state()"
 
-  - id: stop_button_conditional_logic
+  - id: stop_button_conditional
     type: fail_to_pass
     origin: pr_diff
-    description: "Stop button must check is_recording: stop if recording, call onclear if not"
+    description: "Stop button onclick must branch on is_recording: stop if recording, call onclear if not"
 
   - id: startmic_error_handling
     type: fail_to_pass
     origin: pr_diff
     description: "startMic() call must have .catch() or try/catch error handling"
+
+  - id: recorder_js_balanced
+    type: pass_to_pass
+    origin: static
+    description: "MinimalAudioRecorder <script> has balanced braces/parens (valid syntax skeleton)"
+
+  - id: player_js_balanced
+    type: pass_to_pass
+    origin: static
+    description: "MinimalAudioPlayer <script> has balanced braces/parens (valid syntax skeleton)"
 
   - id: recorder_not_stub
     type: pass_to_pass

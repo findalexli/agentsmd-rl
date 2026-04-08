@@ -7,32 +7,37 @@ source:
   merge_commit: "ef5c69dec13056e58810a59663db7f8a6b8bebbd"
 
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "torch/_dynamo/decorators.py must parse without syntax errors"
-
-  - id: allow_in_graph_wraps_core_ops
+  - id: test_allow_in_graph_wraps_core_ops
     type: fail_to_pass
     origin: pr_diff
     description: "allow_in_graph must be called for rearrange and reduce (version check must not skip)"
 
-  - id: multiple_einops_functions_wrapped
+  - id: test_multiple_einops_functions_wrapped
     type: fail_to_pass
     origin: pr_diff
     description: "At least 4 of 6 einops functions must be registered with allow_in_graph"
 
-  - id: version_check_does_not_skip_wrapping
+  - id: test_version_check_does_not_skip_wrapping
     type: fail_to_pass
     origin: pr_diff
     description: "Version check must not cause early return that skips allow_in_graph calls"
 
-  - id: function_imports_einops
+  - id: test_version_check_is_commented_out
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The version check comparing einops.__version__ must be commented out in the function body"
+
+  - id: test_syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "torch/_dynamo/decorators.py must parse without syntax errors"
+
+  - id: test_function_imports_einops
     type: pass_to_pass
     origin: static
     description: "_allow_in_graph_einops must exist and contain 'import einops'"
 
-  - id: not_stub
+  - id: test_not_stub
     type: pass_to_pass
     origin: static
     description: "Function has substantive body (>=4 AST statements), not just pass/return"

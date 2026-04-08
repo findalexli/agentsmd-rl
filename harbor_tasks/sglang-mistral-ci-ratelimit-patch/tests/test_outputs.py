@@ -10,6 +10,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import contextlib
 import logging
+import subprocess
 import sys
 import textwrap
 import types
@@ -22,6 +23,19 @@ TARGET = f"{REPO}/python/sglang/srt/utils/hf_transformers_utils.py"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in a subprocess within the repo directory."""
+    script = Path(REPO) / "_eval_tmp.py"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
 
 def _extract_source_range(source, tree, names):
     """Extract module-level declarations (assignments + functions) by name."""
@@ -117,23 +131,116 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_ci_patches_is_base_mistral():
     """In CI mode, _patch_is_base_mistral_in_ci replaces is_base_mistral with False."""
-    with _patch_env(ci_mode=True) as (ns, mock_tut):
-        ns["_patch_is_base_mistral_in_ci"]()
-        for model_id in ["mistralai/Mistral-7B", "some-other-model", "", "x" * 100]:
-            assert mock_tut.is_base_mistral(model_id) is False, (
-                f"Expected False for {model_id!r} in CI mode"
-            )
+    r = _run_py("""\
+import ast, types, sys, logging
+
+TARGET = "/repo/python/sglang/srt/utils/hf_transformers_utils.py"
+source = open(TARGET).read()
+tree = ast.parse(source)
+
+names = {
+    "_is_base_mistral_patched",
+    "_TRANSFORMERS_PATCHED_VERSION",
+    "_patch_is_base_mistral_in_ci",
+}
+lines = source.splitlines(keepends=True)
+chunks = []
+for node in ast.iter_child_nodes(tree):
+    if isinstance(node, ast.Assign):
+        for target in node.targets:
+            if isinstance(target, ast.Name) and target.id in names:
+                chunks.append("".join(lines[node.lineno - 1 : node.end_lineno]))
+    elif isinstance(node, ast.FunctionDef) and node.name in names:
+        chunks.append("".join(lines[node.lineno - 1 : node.end_lineno]))
+
+code = "\\n\\n".join(chunks)
+assert code.strip(), "Patch function _patch_is_base_mistral_in_ci not found"
+
+mock_envs = types.SimpleNamespace(
+    SGLANG_IS_IN_CI=types.SimpleNamespace(get=lambda: True)
+)
+mock_tut = types.ModuleType("transformers.tokenization_utils_tokenizers")
+mock_tut.is_base_mistral = lambda model_id: True
+mock_tf = types.ModuleType("transformers")
+mock_tf.__version__ = "5.3.0"
+mock_tf.tokenization_utils_tokenizers = mock_tut
+
+sys.modules["sglang"] = types.ModuleType("sglang")
+sys.modules["sglang.srt"] = types.ModuleType("sglang.srt")
+sys.modules["sglang.srt.environ"] = types.SimpleNamespace(envs=mock_envs)
+sys.modules["transformers"] = mock_tf
+sys.modules["transformers.tokenization_utils_tokenizers"] = mock_tut
+
+ns = {"logger": logging.getLogger("test"), "__builtins__": __builtins__}
+exec(compile(code, "<patch>", "exec"), ns)
+ns["_patch_is_base_mistral_in_ci"]()
+
+for model_id in ["mistralai/Mistral-7B", "some-other-model", "", "x" * 100]:
+    result = mock_tut.is_base_mistral(model_id)
+    assert result is False, f"Expected False for {model_id!r}, got {result!r}"
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Subprocess failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_idempotent_multiple_calls():
     """Calling _patch_is_base_mistral_in_ci multiple times doesn't break the patch."""
-    with _patch_env(ci_mode=True) as (ns, mock_tut):
-        patch_fn = ns["_patch_is_base_mistral_in_ci"]
-        for _ in range(5):
-            patch_fn()
-        for model_id in ["model-a", "model-b", "model-c"]:
-            assert mock_tut.is_base_mistral(model_id) is False
+    r = _run_py("""\
+import ast, types, sys, logging
+
+TARGET = "/repo/python/sglang/srt/utils/hf_transformers_utils.py"
+source = open(TARGET).read()
+tree = ast.parse(source)
+
+names = {
+    "_is_base_mistral_patched",
+    "_TRANSFORMERS_PATCHED_VERSION",
+    "_patch_is_base_mistral_in_ci",
+}
+lines = source.splitlines(keepends=True)
+chunks = []
+for node in ast.iter_child_nodes(tree):
+    if isinstance(node, ast.Assign):
+        for target in node.targets:
+            if isinstance(target, ast.Name) and target.id in names:
+                chunks.append("".join(lines[node.lineno - 1 : node.end_lineno]))
+    elif isinstance(node, ast.FunctionDef) and node.name in names:
+        chunks.append("".join(lines[node.lineno - 1 : node.end_lineno]))
+
+code = "\\n\\n".join(chunks)
+assert code.strip(), "Patch function not found"
+
+mock_envs = types.SimpleNamespace(
+    SGLANG_IS_IN_CI=types.SimpleNamespace(get=lambda: True)
+)
+mock_tut = types.ModuleType("transformers.tokenization_utils_tokenizers")
+mock_tut.is_base_mistral = lambda model_id: True
+mock_tf = types.ModuleType("transformers")
+mock_tf.__version__ = "5.3.0"
+mock_tf.tokenization_utils_tokenizers = mock_tut
+
+sys.modules["sglang"] = types.ModuleType("sglang")
+sys.modules["sglang.srt"] = types.ModuleType("sglang.srt")
+sys.modules["sglang.srt.environ"] = types.SimpleNamespace(envs=mock_envs)
+sys.modules["transformers"] = mock_tf
+sys.modules["transformers.tokenization_utils_tokenizers"] = mock_tut
+
+ns = {"logger": logging.getLogger("test"), "__builtins__": __builtins__}
+exec(compile(code, "<patch>", "exec"), ns)
+patch_fn = ns["_patch_is_base_mistral_in_ci"]
+for _ in range(5):
+    patch_fn()
+for model_id in ["model-a", "model-b", "model-c"]:
+    result = mock_tut.is_base_mistral(model_id)
+    assert result is False, f"Expected False for {model_id!r} after 5 calls"
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Subprocess failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass

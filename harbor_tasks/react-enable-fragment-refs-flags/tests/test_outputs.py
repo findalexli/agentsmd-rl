@@ -8,14 +8,70 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/react"
 
-MAIN_FLAGS       = Path(f"{REPO}/packages/shared/ReactFeatureFlags.js")
-NATIVE_OSS_FLAGS = Path(f"{REPO}/packages/shared/forks/ReactFeatureFlags.native-oss.js")
-TEST_RENDERER    = Path(f"{REPO}/packages/shared/forks/ReactFeatureFlags.test-renderer.js")
-TEST_WWW         = Path(f"{REPO}/packages/shared/forks/ReactFeatureFlags.test-renderer.www.js")
+# Relative paths (for Node.js runtime evaluation)
+MAIN_FLAGS_REL       = "packages/shared/ReactFeatureFlags.js"
+NATIVE_OSS_FLAGS_REL = "packages/shared/forks/ReactFeatureFlags.native-oss.js"
+TEST_RENDERER_REL    = "packages/shared/forks/ReactFeatureFlags.test-renderer.js"
+TEST_WWW_REL         = "packages/shared/forks/ReactFeatureFlags.test-renderer.www.js"
+
+# Absolute paths (for file-reading structural tests)
+MAIN_FLAGS       = Path(f"{REPO}/{MAIN_FLAGS_REL}")
+NATIVE_OSS_FLAGS = Path(f"{REPO}/{NATIVE_OSS_FLAGS_REL}")
+TEST_RENDERER    = Path(f"{REPO}/{TEST_RENDERER_REL}")
+TEST_WWW         = Path(f"{REPO}/{TEST_WWW_REL}")
+
+# Node.js script: strips Flow types, evaluates flag file in vm sandbox, checks value
+_EVAL_SCRIPT = r"""
+const fs = require('fs');
+const vm = require('vm');
+const path = require('path');
+
+const [,, relPath, flagName, expectedStr] = process.argv;
+const expected = expectedStr === 'true';
+
+let src = fs.readFileSync(path.resolve(relPath), 'utf8');
+// Strip all import lines (Flow type imports and value imports)
+src = src.replace(/^import\s+.+$/gm, '');
+// Strip Flow type annotations (: boolean)
+src = src.replace(/:\s*boolean/g, '');
+// Convert 'export const X = V' to 'exports.X = V'
+src = src.replace(/export\s+const\s+(\w+)\s*=/g, 'exports.$1 =');
+// Strip remaining export lines (export type, export default, etc.)
+src = src.replace(/^export\s+.+$/gm, '');
+
+const sandbox = { exports: {}, __VARIANT__: '__VARIANT__' };
+try {
+    vm.runInNewContext(src, sandbox);
+} catch (e) {
+    console.error('Eval error:', e.message);
+    process.exit(2);
+}
+
+const actual = sandbox.exports[flagName];
+if (actual !== expected) {
+    console.error(flagName + ': expected ' + expected + ', got ' + actual);
+    process.exit(1);
+}
+console.log('PASS: ' + flagName + ' = ' + actual);
+"""
+
+
+def _check_flag_runtime(rel_path: str, flag_name: str, expected: bool) -> subprocess.CompletedProcess:
+    """Use Node.js vm module to evaluate a flag file and check a flag's runtime value."""
+    script = Path(REPO) / "_eval_flags.cjs"
+    script.write_text(_EVAL_SCRIPT)
+    try:
+        return subprocess.run(
+            ["node", str(script), rel_path, flag_name, str(expected).lower()],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -31,69 +87,54 @@ def test_required_files_exist():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core flag value changes
+# Fail-to-pass (pr_diff) — core flag values verified via Node.js runtime eval
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_main_instance_handles_enabled():
-    """enableFragmentRefsInstanceHandles must be true in ReactFeatureFlags.js (was false)."""
-    content = MAIN_FLAGS.read_text()
-    assert "enableFragmentRefsInstanceHandles: boolean = true;" in content, \
-        "enableFragmentRefsInstanceHandles should be true in ReactFeatureFlags.js"
-    assert "enableFragmentRefsInstanceHandles: boolean = false;" not in content, \
-        "enableFragmentRefsInstanceHandles still false in ReactFeatureFlags.js"
+    """enableFragmentRefsInstanceHandles evaluates to true at runtime in ReactFeatureFlags.js (was false)."""
+    r = _check_flag_runtime(MAIN_FLAGS_REL, "enableFragmentRefsInstanceHandles", True)
+    assert r.returncode == 0, f"Flag check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_native_oss_instance_handles_enabled():
-    """enableFragmentRefsInstanceHandles must be true in ReactFeatureFlags.native-oss.js (was false)."""
-    content = NATIVE_OSS_FLAGS.read_text()
-    assert "enableFragmentRefsInstanceHandles: boolean = true;" in content, \
-        "enableFragmentRefsInstanceHandles should be true in native-oss.js"
-    assert "enableFragmentRefsInstanceHandles: boolean = false;" not in content, \
-        "enableFragmentRefsInstanceHandles still false in native-oss.js"
+    """enableFragmentRefsInstanceHandles evaluates to true at runtime in native-oss.js (was false)."""
+    r = _check_flag_runtime(NATIVE_OSS_FLAGS_REL, "enableFragmentRefsInstanceHandles", True)
+    assert r.returncode == 0, f"Flag check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_native_oss_text_nodes_enabled():
-    """enableFragmentRefsTextNodes must be true in ReactFeatureFlags.native-oss.js (was false)."""
-    content = NATIVE_OSS_FLAGS.read_text()
-    assert "enableFragmentRefsTextNodes: boolean = true;" in content, \
-        "enableFragmentRefsTextNodes should be true in native-oss.js"
-    assert "enableFragmentRefsTextNodes: boolean = false;" not in content, \
-        "enableFragmentRefsTextNodes still false in native-oss.js"
+    """enableFragmentRefsTextNodes evaluates to true at runtime in native-oss.js (was false)."""
+    r = _check_flag_runtime(NATIVE_OSS_FLAGS_REL, "enableFragmentRefsTextNodes", True)
+    assert r.returncode == 0, f"Flag check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_test_renderer_instance_handles_enabled():
-    """enableFragmentRefsInstanceHandles must be true in ReactFeatureFlags.test-renderer.js (was false)."""
-    content = TEST_RENDERER.read_text()
-    assert "enableFragmentRefsInstanceHandles: boolean = true;" in content, \
-        "enableFragmentRefsInstanceHandles should be true in test-renderer.js"
-    assert "enableFragmentRefsInstanceHandles: boolean = false;" not in content, \
-        "enableFragmentRefsInstanceHandles still false in test-renderer.js"
+    """enableFragmentRefsInstanceHandles evaluates to true at runtime in test-renderer.js (was false)."""
+    r = _check_flag_runtime(TEST_RENDERER_REL, "enableFragmentRefsInstanceHandles", True)
+    assert r.returncode == 0, f"Flag check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_www_all_fragment_flags_enabled():
-    """All 4 fragment ref flags must be true in ReactFeatureFlags.test-renderer.www.js (all were false)."""
-    content = TEST_WWW.read_text()
-    for flag_true in [
-        "enableFragmentRefs: boolean = true;",
-        "enableFragmentRefsScrollIntoView: boolean = true;",
-        "enableFragmentRefsInstanceHandles: boolean = true;",
-        "enableFragmentRefsTextNodes: boolean = true;",
-    ]:
-        assert flag_true in content, \
-            f"{flag_true.split(':')[0]} should be true in test-renderer.www.js"
-    for flag_false in [
-        "enableFragmentRefs: boolean = false;",
-        "enableFragmentRefsScrollIntoView: boolean = false;",
-        "enableFragmentRefsInstanceHandles: boolean = false;",
-        "enableFragmentRefsTextNodes: boolean = false;",
-    ]:
-        assert flag_false not in content, \
-            f"{flag_false.split(':')[0]} still false in test-renderer.www.js"
+    """All 4 fragment ref flags evaluate to true at runtime in test-renderer.www.js (all were false)."""
+    flags = [
+        "enableFragmentRefs",
+        "enableFragmentRefsScrollIntoView",
+        "enableFragmentRefsInstanceHandles",
+        "enableFragmentRefsTextNodes",
+    ]
+    for flag in flags:
+        r = _check_flag_runtime(TEST_WWW_REL, flag, True)
+        assert r.returncode == 0, f"{flag} check failed: {r.stderr}"
+        assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -134,8 +175,14 @@ def test_flag_values_are_boolean_literals():
 
 # [agent_config] fail_to_pass — .claude/skills/feature-flags/SKILL.md:15 @ a74302c02d220e3663fcad5836cb90607fc2d006
 def test_instance_handles_in_all_forks():
-    """enableFragmentRefsInstanceHandles enabled in ALL fork files (SKILL.md: 'Add to ALL fork files')."""
-    for f in [MAIN_FLAGS, NATIVE_OSS_FLAGS, TEST_RENDERER, TEST_WWW]:
-        content = f.read_text()
-        assert "enableFragmentRefsInstanceHandles: boolean = true;" in content, \
-            f"enableFragmentRefsInstanceHandles not enabled in {f.name} — must propagate to all forks"
+    """enableFragmentRefsInstanceHandles enabled in ALL fork files at runtime (SKILL.md: 'Add to ALL fork files')."""
+    for rel, label in [
+        (MAIN_FLAGS_REL, "ReactFeatureFlags.js"),
+        (NATIVE_OSS_FLAGS_REL, "native-oss.js"),
+        (TEST_RENDERER_REL, "test-renderer.js"),
+        (TEST_WWW_REL, "test-renderer.www.js"),
+    ]:
+        r = _check_flag_runtime(rel, "enableFragmentRefsInstanceHandles", True)
+        assert r.returncode == 0, \
+            f"enableFragmentRefsInstanceHandles not enabled in {label}: {r.stderr}"
+        assert "PASS" in r.stdout

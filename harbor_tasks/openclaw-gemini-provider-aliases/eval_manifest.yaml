@@ -12,6 +12,21 @@ checks:
     origin: static
     description: "Modified TypeScript files exist and have balanced braces"
 
+  - id: resolve_pro_for_alias_provider
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resolveGoogle31ForwardCompatModel resolves pro model for alias provider via cross-provider template lookup"
+
+  - id: resolve_flash_from_direct_provider
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resolveGoogle31ForwardCompatModel resolves flash from direct google templates"
+
+  - id: flash_lite_not_misclassified_as_flash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "flash-lite models resolve to their own template, not the broader flash prefix"
+
   - id: runtime_provider_not_hardcoded
     type: fail_to_pass
     origin: pr_diff
@@ -21,21 +36,6 @@ checks:
     type: fail_to_pass
     origin: pr_diff
     description: "resolveGoogle31ForwardCompatModel accepts templateProviderId for cross-provider lookup"
-
-  - id: flash_lite_prefix_before_flash
-    type: fail_to_pass
-    origin: pr_diff
-    description: "flash-lite prefix checked before flash prefix to avoid misclassification"
-
-  - id: flash_lite_template_ids
-    type: fail_to_pass
-    origin: pr_diff
-    description: "flash-lite models map to their own template IDs, not flash templates"
-
-  - id: cross_provider_template_lookup
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Template lookup tries multiple provider IDs for cross-provider resolution"
 
   - id: not_stub
     type: pass_to_pass

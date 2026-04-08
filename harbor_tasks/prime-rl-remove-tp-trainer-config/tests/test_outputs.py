@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 import textwrap
 from pathlib import Path
 
@@ -51,7 +52,7 @@ def _class_methods(cls: ast.ClassDef) -> set[str]:
 
 
 def _extract_method_body(source: str, cls: ast.ClassDef, method_name: str) -> str:
-    """Extract a method's source, stripping decorators, for exec()."""
+    """Extract a method's source, stripping decorators."""
     for item in cls.body:
         if isinstance(item, ast.FunctionDef) and item.name == method_name:
             lines = source.splitlines(keepends=True)
@@ -60,6 +61,19 @@ def _extract_method_body(source: str, cls: ast.ClassDef, method_name: str) -> st
                           if not l.strip().startswith("@")]
             return "".join(body_lines)
     raise AssertionError(f"Method {method_name!r} not found in {cls.name}")
+
+
+def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute a Python code snippet in a subprocess via temp file."""
+    script = Path(REPO) / "_eval_tmp.py"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -75,60 +89,64 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_non_data_parallel_size_excludes_tp():
     """non_data_parallel_size must return cp*pp, not cp*tp*pp.
 
-    Extracts the property via AST then execs it to test behaviorally.
-    # AST-only because: module imports torch.distributed (GPU-only)
+    Extracts the property via AST then runs it in a subprocess with mock
+    objects whose tp is set high — any leaked tp reference produces wrong results.
     """
     src, tree = _parse(PARALLEL_DIMS)
     cls = _find_class(tree, "ParallelDims")
-    func_src = _extract_method_body(src, cls, "non_data_parallel_size")
+    func_src = textwrap.dedent(_extract_method_body(src, cls, "non_data_parallel_size"))
 
-    ns = {}
-    exec(textwrap.dedent(func_src), ns)
-    fn = ns["non_data_parallel_size"]
+    test_code = (
+        func_src +
+        "\n"
+        "for cp, pp, tp in [(4, 2, 8), (1, 1, 16), (2, 4, 4), (3, 3, 7)]:\n"
+        "    mock = type('M', (), {'cp': cp, 'pp': pp, 'tp': tp})()\n"
+        "    result = non_data_parallel_size(mock)\n"
+        "    expected = cp * pp\n"
+        "    assert result == expected, 'Got %d, expected %d' % (result, expected)\n"
+        "print('PASS')\n"
+    )
 
-    # Test with multiple input combos; tp is set high to catch leaks
-    for cp, pp, tp in [(4, 2, 8), (1, 1, 16), (2, 4, 4), (3, 3, 7)]:
-        mock = type("M", (), {"cp": cp, "pp": pp, "tp": tp})()
-        result = fn(mock)
-        expected = cp * pp
-        assert result == expected, (
-            f"non_data_parallel_size({cp=},{pp=}) = {result}, expected {expected}"
-        )
+    r = _run_python(test_code)
+    assert r.returncode == 0, f"non_data_parallel_size failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_seq_len_divisor_excludes_tp():
     """seq_len_divisor must return cp*2, not tp*cp*2.
 
-    Extracts the property via AST then execs it to test behaviorally.
-    # AST-only because: module imports torch.distributed (GPU-only)
+    Extracts the property via AST then runs it in a subprocess with mock
+    objects whose tp is set high — any leaked tp reference produces wrong results.
     """
     src, tree = _parse(PARALLEL_DIMS)
     cls = _find_class(tree, "ParallelDims")
-    func_src = _extract_method_body(src, cls, "seq_len_divisor")
+    func_src = textwrap.dedent(_extract_method_body(src, cls, "seq_len_divisor"))
 
-    ns = {}
-    exec(textwrap.dedent(func_src), ns)
-    fn = ns["seq_len_divisor"]
+    test_code = (
+        func_src +
+        "\n"
+        "for cp, tp in [(4, 8), (1, 16), (3, 5), (6, 3)]:\n"
+        "    mock = type('M', (), {'cp': cp, 'tp': tp})()\n"
+        "    result = seq_len_divisor(mock)\n"
+        "    expected = cp * 2\n"
+        "    assert result == expected, 'Got %d, expected %d' % (result, expected)\n"
+        "print('PASS')\n"
+    )
 
-    for cp, tp in [(4, 8), (1, 16), (3, 5), (6, 3)]:
-        mock = type("M", (), {"cp": cp, "tp": tp})()
-        result = fn(mock)
-        expected = cp * 2
-        assert result == expected, (
-            f"seq_len_divisor({cp=}) = {result}, expected {expected}"
-        )
+    r = _run_python(test_code)
+    assert r.returncode == 0, f"seq_len_divisor failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-# AST-only because: ModelConfig inherits pydantic BaseModel with torch-dependent validators
 def test_model_config_no_tp_field():
     """ModelConfig must not have a tp field — it should be fully removed."""
     _, tree = _parse(TRAINER_CFG)
@@ -138,7 +156,6 @@ def test_model_config_no_tp_field():
 
 
 # [pr_diff] fail_to_pass
-# AST-only because: ParallelDims is a dataclass importing torch.distributed.DeviceMesh
 def test_parallel_dims_no_tp():
     """ParallelDims must have no tp field and no tp_enabled property."""
     _, tree = _parse(PARALLEL_DIMS)
@@ -148,7 +165,6 @@ def test_parallel_dims_no_tp():
 
 
 # [pr_diff] fail_to_pass
-# AST-only because: sft/train.py imports torch, torch.distributed, and GPU-only modules
 def test_sft_train_no_tp_multiplication():
     """SFT train.py must not reference model.tp in computations."""
     src, tree = _parse(SFT_TRAIN)
@@ -163,7 +179,6 @@ def test_sft_train_no_tp_multiplication():
 
 
 # [pr_diff] fail_to_pass
-# AST-only because: rl.py imports torch and GPU-only config dependencies
 def test_rl_deployment_no_tp():
     """auto_setup_deployment must not reference model.tp."""
     src, tree = _parse(RL_CFG)

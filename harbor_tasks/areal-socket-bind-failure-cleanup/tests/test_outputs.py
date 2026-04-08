@@ -8,10 +8,9 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 import sys
 import textwrap
-import types
-import socket as socket_mod
 from pathlib import Path
 
 REPO = "/workspace/AReaL"
@@ -21,6 +20,14 @@ MODIFIED_FILES = [
     "areal/trainer/rl_trainer.py",
     "areal/trainer/sft_trainer.py",
 ]
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in the repo environment via subprocess."""
+    return subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 def _find_function(tree, name):
@@ -55,102 +62,291 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests using subprocess
 # ---------------------------------------------------------------------------
-
-
-def _make_fake_socket_module(tcp_bind_fails=True, udp_bind_fails=True):
-    """Build a fake socket module that tracks close() calls and counts."""
-    state = {"tcp_closed": 0, "udp_closed": 0}
-
-    class FakeSocket:
-        def __init__(self, family=socket_mod.AF_INET, type_=socket_mod.SOCK_STREAM, *a, **kw):
-            self._type = type_
-
-        def bind(self, addr):
-            if self._type == socket_mod.SOCK_STREAM and tcp_bind_fails:
-                raise OSError("TCP bind refused")
-            if self._type == socket_mod.SOCK_DGRAM and udp_bind_fails:
-                raise OSError("UDP bind refused")
-
-        def close(self):
-            if self._type == socket_mod.SOCK_STREAM:
-                state["tcp_closed"] += 1
-            else:
-                state["udp_closed"] += 1
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *a):
-            self.close()
-
-    fake_mod = types.SimpleNamespace(
-        socket=FakeSocket,
-        AF_INET=socket_mod.AF_INET,
-        SOCK_STREAM=socket_mod.SOCK_STREAM,
-        SOCK_DGRAM=socket_mod.SOCK_DGRAM,
-    )
-    return fake_mod, state
-
-
-def _get_is_port_free_ns(fake_mod):
-    """Extract is_port_free from source and exec with fake socket module."""
-    # AST-only because: network.py imports torch.distributed and other heavy deps
-    src = Path(f"{REPO}/areal/utils/network.py").read_text()
-    tree = ast.parse(src)
-    func = _find_function(tree, "is_port_free")
-    assert func is not None, "is_port_free() not found in network.py"
-    func_src = _extract_function(src, func)
-    ns = {"__builtins__": __builtins__, "socket": fake_mod}
-    exec(func_src, ns)
-    return ns
 
 
 # [pr_diff] fail_to_pass
 def test_tcp_socket_closed_on_bind_failure():
     """TCP socket.close() is called even when bind() raises OSError."""
-    for port in [9999, 8080, 12345]:
-        fake_mod, state = _make_fake_socket_module(tcp_bind_fails=True, udp_bind_fails=True)
-        ns = _get_is_port_free_ns(fake_mod)
+    r = _run_py("""
+import ast, types, textwrap, socket as socket_mod
+from pathlib import Path
 
-        result = ns["is_port_free"](port)
-        assert result is False, f"is_port_free({port}) should return False when TCP bind fails"
-        assert state["tcp_closed"] >= 1, f"TCP socket.close() was NOT called after bind failure (port {port})"
+src = Path("/workspace/AReaL/areal/utils/network.py").read_text()
+tree = ast.parse(src)
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "is_port_free":
+        func = node
+        break
+else:
+    raise AssertionError("is_port_free not found")
+
+lines = src.splitlines(keepends=True)
+func_src = textwrap.dedent("".join(lines[func.lineno - 1 : func.end_lineno]))
+
+# Fake socket: TCP bind always fails, UDP succeeds
+state = {"tcp_closed": 0, "udp_closed": 0}
+
+class FakeSocket:
+    def __init__(self, family=socket_mod.AF_INET, type_=socket_mod.SOCK_STREAM, *a, **kw):
+        self._type = type_
+    def bind(self, addr):
+        if self._type == socket_mod.SOCK_STREAM:
+            raise OSError("TCP bind refused")
+    def close(self):
+        if self._type == socket_mod.SOCK_STREAM:
+            state["tcp_closed"] += 1
+        else:
+            state["udp_closed"] += 1
+
+fake_mod = types.SimpleNamespace(
+    socket=FakeSocket,
+    AF_INET=socket_mod.AF_INET,
+    SOCK_STREAM=socket_mod.SOCK_STREAM,
+    SOCK_DGRAM=socket_mod.SOCK_DGRAM,
+)
+ns = {"__builtins__": __builtins__, "socket": fake_mod}
+exec(func_src, ns)
+
+result = ns["is_port_free"](9999)
+assert result is False, f"Expected False, got {result}"
+assert state["tcp_closed"] >= 1, "TCP socket was NOT closed after bind failure"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Test failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_udp_socket_closed_on_bind_failure():
     """UDP socket.close() is called even when bind() raises OSError."""
-    for port in [9999, 5000, 44100]:
-        fake_mod, state = _make_fake_socket_module(tcp_bind_fails=False, udp_bind_fails=True)
-        ns = _get_is_port_free_ns(fake_mod)
+    r = _run_py("""
+import ast, types, textwrap, socket as socket_mod
+from pathlib import Path
 
-        result = ns["is_port_free"](port)
-        assert result is False, f"is_port_free({port}) should return False when UDP bind fails"
-        assert state["udp_closed"] >= 1, f"UDP socket.close() was NOT called after bind failure (port {port})"
+src = Path("/workspace/AReaL/areal/utils/network.py").read_text()
+tree = ast.parse(src)
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "is_port_free":
+        func = node
+        break
+else:
+    raise AssertionError("is_port_free not found")
+
+lines = src.splitlines(keepends=True)
+func_src = textwrap.dedent("".join(lines[func.lineno - 1 : func.end_lineno]))
+
+# Fake socket: TCP succeeds, UDP bind fails
+state = {"tcp_closed": 0, "udp_closed": 0}
+
+class FakeSocket:
+    def __init__(self, family=socket_mod.AF_INET, type_=socket_mod.SOCK_STREAM, *a, **kw):
+        self._type = type_
+    def bind(self, addr):
+        if self._type == socket_mod.SOCK_DGRAM:
+            raise OSError("UDP bind refused")
+    def close(self):
+        if self._type == socket_mod.SOCK_STREAM:
+            state["tcp_closed"] += 1
+        else:
+            state["udp_closed"] += 1
+
+fake_mod = types.SimpleNamespace(
+    socket=FakeSocket,
+    AF_INET=socket_mod.AF_INET,
+    SOCK_STREAM=socket_mod.SOCK_STREAM,
+    SOCK_DGRAM=socket_mod.SOCK_DGRAM,
+)
+ns = {"__builtins__": __builtins__, "socket": fake_mod}
+exec(func_src, ns)
+
+result = ns["is_port_free"](9999)
+assert result is False, f"Expected False, got {result}"
+assert state["udp_closed"] >= 1, "UDP socket was NOT closed after bind failure"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Test failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] pass_to_pass
+def test_both_sockets_closed_on_success():
+    """Both TCP and UDP sockets are closed even when both binds succeed."""
+    r = _run_py("""
+import ast, types, textwrap, socket as socket_mod
+from pathlib import Path
+
+src = Path("/workspace/AReaL/areal/utils/network.py").read_text()
+tree = ast.parse(src)
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "is_port_free":
+        func = node
+        break
+else:
+    raise AssertionError("is_port_free not found")
+
+lines = src.splitlines(keepends=True)
+func_src = textwrap.dedent("".join(lines[func.lineno - 1 : func.end_lineno]))
+
+# Fake socket: both binds succeed
+state = {"tcp_closed": 0, "udp_closed": 0}
+
+class FakeSocket:
+    def __init__(self, family=socket_mod.AF_INET, type_=socket_mod.SOCK_STREAM, *a, **kw):
+        self._type = type_
+    def bind(self, addr):
+        pass  # both succeed
+    def close(self):
+        if self._type == socket_mod.SOCK_STREAM:
+            state["tcp_closed"] += 1
+        else:
+            state["udp_closed"] += 1
+
+fake_mod = types.SimpleNamespace(
+    socket=FakeSocket,
+    AF_INET=socket_mod.AF_INET,
+    SOCK_STREAM=socket_mod.SOCK_STREAM,
+    SOCK_DGRAM=socket_mod.SOCK_DGRAM,
+)
+ns = {"__builtins__": __builtins__, "socket": fake_mod}
+exec(func_src, ns)
+
+result = ns["is_port_free"](9999)
+assert result is True, f"Expected True, got {result}"
+assert state["tcp_closed"] >= 1, "TCP socket was NOT closed on success"
+assert state["udp_closed"] >= 1, "UDP socket was NOT closed on success"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Test failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_both_sockets_closed_on_success():
-    """Both TCP and UDP sockets are closed even when both binds succeed."""
-    for port in [9999, 7777, 3000]:
-        fake_mod, state = _make_fake_socket_module(tcp_bind_fails=False, udp_bind_fails=False)
-        ns = _get_is_port_free_ns(fake_mod)
+def test_rl_exit_does_not_reraise():
+    """RLTrainer.__exit__ returns falsy instead of re-raising with 'raise exc_value'."""
+    r = _run_py("""
+import ast, textwrap
+from pathlib import Path
 
-        result = ns["is_port_free"](port)
-        assert result is True, f"is_port_free({port}) should return True when both binds succeed"
-        assert state["tcp_closed"] >= 1, f"TCP socket.close() was NOT called on success (port {port})"
-        assert state["udp_closed"] >= 1, f"UDP socket.close() was NOT called on success (port {port})"
+src = Path("/workspace/AReaL/areal/trainer/rl_trainer.py").read_text()
+tree = ast.parse(src)
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef):
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == "__exit__":
+                exit_func = item
+                break
+else:
+    raise AssertionError("__exit__ not found")
+
+lines = src.splitlines(keepends=True)
+func_src = textwrap.dedent("".join(lines[exit_func.lineno - 1 : exit_func.end_lineno]))
+
+class_body = (
+    "class _TestTrainer:\\n"
+    "    def __init__(self): self.closed = False\\n"
+    "    def close(self): self.closed = True\\n"
+    "    def __enter__(self): return self\\n"
+) + textwrap.indent(func_src, "    ")
+
+class MockLogger:
+    def error(self, *a, **kw): pass
+    def warning(self, *a, **kw): pass
+    def info(self, *a, **kw): pass
+
+ns = {"__builtins__": __builtins__, "logger": MockLogger()}
+exec(class_body, ns)
+Trainer = ns["_TestTrainer"]
+
+for exc_cls, msg in [
+    (ValueError, "bad learning rate"),
+    (RuntimeError, "CUDA OOM"),
+    (TypeError, "wrong argument type"),
+]:
+    exc = exc_cls(msg)
+    exc.__traceback__ = None
+    trainer = Trainer()
+    try:
+        result = trainer.__exit__(exc_cls, exc, None)
+    except BaseException as e:
+        raise AssertionError(
+            f"__exit__ should not re-raise — return False instead. "
+            f"Got: {type(e).__name__}: {e}"
+        )
+    assert not result, f"__exit__ should return falsy, got {result!r}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Test failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
 
 
-def _build_trainer_class(filepath):
-    """Extract __exit__ from source and build a testable Trainer class."""
-    # AST-only because: trainer modules import torch, FSDP, distributed
-    src = Path(filepath).read_text()
+# [pr_diff] fail_to_pass
+def test_sft_exit_does_not_reraise():
+    """SFTTrainer.__exit__ returns falsy instead of re-raising with 'raise exc_value'."""
+    r = _run_py("""
+import ast, textwrap
+from pathlib import Path
+
+src = Path("/workspace/AReaL/areal/trainer/sft_trainer.py").read_text()
+tree = ast.parse(src)
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef):
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == "__exit__":
+                exit_func = item
+                break
+else:
+    raise AssertionError("__exit__ not found")
+
+lines = src.splitlines(keepends=True)
+func_src = textwrap.dedent("".join(lines[exit_func.lineno - 1 : exit_func.end_lineno]))
+
+class_body = (
+    "class _TestTrainer:\\n"
+    "    def __init__(self): self.closed = False\\n"
+    "    def close(self): self.closed = True\\n"
+    "    def __enter__(self): return self\\n"
+) + textwrap.indent(func_src, "    ")
+
+class MockLogger:
+    def error(self, *a, **kw): pass
+    def warning(self, *a, **kw): pass
+    def info(self, *a, **kw): pass
+
+ns = {"__builtins__": __builtins__, "logger": MockLogger()}
+exec(class_body, ns)
+Trainer = ns["_TestTrainer"]
+
+for exc_cls, msg in [
+    (ValueError, "invalid batch size"),
+    (RuntimeError, "distributed error"),
+    (TypeError, "unexpected kwarg"),
+]:
+    exc = exc_cls(msg)
+    exc.__traceback__ = None
+    trainer = Trainer()
+    try:
+        result = trainer.__exit__(exc_cls, exc, None)
+    except BaseException as e:
+        raise AssertionError(
+            f"__exit__ should not re-raise — return False instead. "
+            f"Got: {type(e).__name__}: {e}"
+        )
+    assert not result, f"__exit__ should return falsy, got {result!r}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Test failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] pass_to_pass
+def test_rl_exit_calls_close():
+    """RLTrainer.__exit__ calls self.close() for cleanup."""
+    src = Path(f"{REPO}/areal/trainer/rl_trainer.py").read_text()
     tree = ast.parse(src)
     exit_func = _find_function(tree, "__exit__")
-    assert exit_func is not None, f"__exit__ not found in {filepath}"
+    assert exit_func is not None, "__exit__ not found in rl_trainer.py"
 
     func_src = _extract_function(src, exit_func)
     test_class_src = (
@@ -167,62 +363,7 @@ def _build_trainer_class(filepath):
 
     ns = {"__builtins__": __builtins__, "logger": MockLogger()}
     exec(test_class_src, ns)
-    return ns["_TestTrainer"]
-
-
-def _test_exit_does_not_reraise(filepath, exc_class, exc_msg):
-    """Test that __exit__ returns falsy instead of re-raising the exception.
-
-    On base commit: __exit__ does 'raise exc_value' → raises → FAIL
-    On fix: __exit__ returns False → passes
-    """
-    Trainer = _build_trainer_class(filepath)
-
-    exc = exc_class(exc_msg)
-    exc.__traceback__ = None  # simulate a clean exception
-    trainer = Trainer()
-    try:
-        result = trainer.__exit__(exc_class, exc, None)
-    except BaseException as e:
-        raise AssertionError(
-            f"__exit__ should not re-raise the exception — return False instead. "
-            f"Got: {type(e).__name__}: {e}"
-        )
-    assert not result, (
-        f"__exit__ should return falsy to let Python re-raise with original traceback, "
-        f"got {result!r}"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_rl_exit_does_not_reraise():
-    """RLTrainer.__exit__ returns falsy instead of re-raising with 'raise exc_value'."""
-    rl_path = f"{REPO}/areal/trainer/rl_trainer.py"
-    for exc_cls, msg in [
-        (ValueError, "bad learning rate"),
-        (RuntimeError, "CUDA OOM"),
-        (TypeError, "wrong argument type"),
-    ]:
-        _test_exit_does_not_reraise(rl_path, exc_cls, msg)
-
-
-# [pr_diff] fail_to_pass
-def test_sft_exit_does_not_reraise():
-    """SFTTrainer.__exit__ returns falsy instead of re-raising with 'raise exc_value'."""
-    sft_path = f"{REPO}/areal/trainer/sft_trainer.py"
-    for exc_cls, msg in [
-        (ValueError, "invalid batch size"),
-        (RuntimeError, "distributed error"),
-        (TypeError, "unexpected kwarg"),
-    ]:
-        _test_exit_does_not_reraise(sft_path, exc_cls, msg)
-
-
-# [pr_diff] pass_to_pass
-def test_rl_exit_calls_close():
-    """RLTrainer.__exit__ calls self.close() for cleanup."""
-    Trainer = _build_trainer_class(f"{REPO}/areal/trainer/rl_trainer.py")
-    trainer = Trainer()
+    trainer = ns["_TestTrainer"]()
     trainer.__exit__(None, None, None)
     assert trainer.closed, "RLTrainer.__exit__ must call self.close()"
 
@@ -230,8 +371,27 @@ def test_rl_exit_calls_close():
 # [pr_diff] pass_to_pass
 def test_sft_exit_calls_close():
     """SFTTrainer.__exit__ calls self.close() for cleanup."""
-    Trainer = _build_trainer_class(f"{REPO}/areal/trainer/sft_trainer.py")
-    trainer = Trainer()
+    src = Path(f"{REPO}/areal/trainer/sft_trainer.py").read_text()
+    tree = ast.parse(src)
+    exit_func = _find_function(tree, "__exit__")
+    assert exit_func is not None, "__exit__ not found in sft_trainer.py"
+
+    func_src = _extract_function(src, exit_func)
+    test_class_src = (
+        "class _TestTrainer:\n"
+        "    def __init__(self): self.closed = False\n"
+        "    def close(self): self.closed = True\n"
+        "    def __enter__(self): return self\n"
+    ) + textwrap.indent(func_src, "    ")
+
+    class MockLogger:
+        def error(self, *a, **kw): pass
+        def warning(self, *a, **kw): pass
+        def info(self, *a, **kw): pass
+
+    ns = {"__builtins__": __builtins__, "logger": MockLogger()}
+    exec(test_class_src, ns)
+    trainer = ns["_TestTrainer"]()
     trainer.__exit__(None, None, None)
     assert trainer.closed, "SFTTrainer.__exit__ must call self.close()"
 

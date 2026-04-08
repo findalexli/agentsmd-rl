@@ -6,23 +6,30 @@ PR:   1094
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-The FSDP engine requires distributed process groups and multi-GB model weights,
-so we AST-extract the Qwen-VL branch from _prepare_mb_list and exec it with
-lightweight mock objects on CPU.
-# AST-only because: FSDPEngine requires torch.distributed, FSDP, multi-GPU
+FSDPEngine requires torch.distributed / FSDP / multi-GPU, so f2p tests
+AST-extract the Qwen-VL branch from _prepare_mb_list and exec it with
+lightweight mock objects inside a subprocess for isolation.
 """
 
 import ast
+import json
+import subprocess
 import sys
-import textwrap
-import types
+from pathlib import Path
 
 FILE = "/repo/areal/engine/fsdp_engine.py"
 
+# ---------------------------------------------------------------------------
+# Subprocess helpers: mock torch + AST extraction, run in isolated process
+# ---------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# Helpers: mock torch environment + AST extraction
-# ---------------------------------------------------------------------------
+_EVAL_HELPERS = r'''
+import ast as _ast
+import json as _json
+import sys as _sys
+import textwrap as _textwrap
+import types as _types
+
 
 class _DType:
     """Mock dtype that supports equality comparison."""
@@ -62,8 +69,7 @@ class _MockTensor:
 
 
 def _make_torch_ns():
-    """Build a mock torch module namespace."""
-    ns = types.ModuleType("torch")
+    ns = _types.ModuleType("torch")
     ns.long = LONG
     ns.int64 = INT64
     ns.int32 = INT32
@@ -77,43 +83,37 @@ def _make_torch_ns():
 
 
 def _extract_qwen_vl_branch():
-    """AST-extract the is_qwen_vl_model branch from _prepare_mb_list."""
-    source = open(FILE).read()
-    tree = ast.parse(source)
-
+    source = open("/repo/areal/engine/fsdp_engine.py").read()
+    tree = _ast.parse(source)
     func_node = None
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "_prepare_mb_list":
+    for node in _ast.walk(tree):
+        if isinstance(node, _ast.FunctionDef) and node.name == "_prepare_mb_list":
             func_node = node
             break
-    assert func_node is not None, "_prepare_mb_list not found in fsdp_engine.py"
-
+    assert func_node is not None, "_prepare_mb_list not found"
     vl_if = None
-    for child in ast.walk(func_node):
-        if isinstance(child, ast.If):
-            test_src = ast.get_source_segment(source, child.test)
+    for child in _ast.walk(func_node):
+        if isinstance(child, _ast.If):
+            test_src = _ast.get_source_segment(source, child.test)
             if test_src and "qwen_vl" in test_src.lower().replace("-", "_").replace(" ", "_"):
                 vl_if = child
                 break
-    assert vl_if is not None, "is_qwen_vl_model branch not found in _prepare_mb_list"
-
+    assert vl_if is not None, "is_qwen_vl_model branch not found"
     body_start = vl_if.body[0].lineno
     body_end = vl_if.body[-1].end_lineno
     raw_lines = source.splitlines()[body_start - 1:body_end]
-    return textwrap.dedent("\n".join(raw_lines))
+    return _textwrap.dedent("\n".join(raw_lines))
 
 
 def _exec_branch(input_ids_dtype):
-    """Execute the Qwen-VL branch with a mock input_ dict and return results."""
     body_src = _extract_qwen_vl_branch()
     torch_ns = _make_torch_ns()
-
     calls = []
 
     class MModel:
         @staticmethod
         def get_rope_index(*args, **kwargs):
-            calls.append({"args": args, "kwargs": kwargs})
+            calls.append({"args_n": len(args), "kwargs": list(kwargs.keys())})
             return _MockTensor(LONG), None
 
     class SelfMock:
@@ -128,8 +128,8 @@ def _exec_branch(input_ids_dtype):
         "attention_mask": _MockTensor(LONG),
     }
 
-    old_torch = sys.modules.get("torch")
-    sys.modules["torch"] = torch_ns
+    old_torch = _sys.modules.get("torch")
+    _sys.modules["torch"] = torch_ns
     try:
         ns = {
             "torch": torch_ns,
@@ -140,15 +140,25 @@ def _exec_branch(input_ids_dtype):
         exec(body_src, ns)
     finally:
         if old_torch is not None:
-            sys.modules["torch"] = old_torch
+            _sys.modules["torch"] = old_torch
         else:
-            sys.modules.pop("torch", None)
+            _sys.modules.pop("torch", None)
 
     return {
-        "input_": input_,
-        "original_tensor": original_tensor,
+        "final_dtype": repr(input_["input_ids"].dtype),
+        "is_new_tensor": input_["input_ids"] is not original_tensor,
         "calls": calls,
     }
+'''
+
+
+def _run_python(test_code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute mock-based test code in an isolated subprocess."""
+    script = _EVAL_HELPERS + "\n" + test_code
+    return subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True, text=True, timeout=timeout,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -163,51 +173,74 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_dtype_cast_int32_to_int64():
     """Non-long input_ids must be cast to int64/long to prevent dtype mismatch."""
-    # Test multiple non-long dtypes — prevents agents from only special-casing int32
-    for dtype in (INT32, FLOAT16, BFLOAT16):
-        result = _exec_branch(dtype)
-        final = result["input_"]["input_ids"]
-        assert final.dtype in (LONG, INT64), (
-            f"input_ids with {dtype} should be cast to int64/long, got {final.dtype}"
+    r = _run_python("""
+import json
+results = []
+for dt in [INT32, FLOAT16, BFLOAT16]:
+    res = _exec_branch(dt)
+    results.append({
+        "final_dtype": res["final_dtype"],
+        "is_new": res["is_new_tensor"],
+    })
+print(json.dumps(results))
+""")
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    results = json.loads(r.stdout.strip())
+    for item in results:
+        dtype_str = item["final_dtype"]
+        assert "long" in dtype_str or "int64" in dtype_str, (
+            f"input_ids should be cast to int64/long, got {dtype_str}"
         )
-        assert final is not result["original_tensor"], (
-            f"input_ids with {dtype} should be a new tensor after dtype cast"
+        assert item["is_new"], (
+            f"input_ids should be a new tensor after dtype cast"
         )
 
 
 # [pr_diff] fail_to_pass
 def test_dict_updated_with_cast_tensor():
     """The cast tensor must be written back to the input_ dict (not just local var)."""
-    result = _exec_branch(INT32)
-    final = result["input_"]["input_ids"]
-    # The dict must hold the cast tensor, not the original
-    assert final is not result["original_tensor"], (
+    r = _run_python("""
+import json
+res = _exec_branch(INT32)
+print(json.dumps({
+    "final_dtype": res["final_dtype"],
+    "is_new": res["is_new_tensor"],
+}))
+""")
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["is_new"], (
         "input_ dict still holds original int32 tensor — cast not written back"
     )
-    assert final.dtype in (LONG, INT64), (
-        f"input_ dict should contain tensor with int64/long dtype, got {final.dtype}"
+    dtype_str = data["final_dtype"]
+    assert "long" in dtype_str or "int64" in dtype_str, (
+        f"input_ dict should contain tensor with int64/long dtype, got {dtype_str}"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_keyword_args_in_get_rope_index():
     """get_rope_index must use keyword args to avoid positional binding ambiguity."""
-    result = _exec_branch(INT32)
-    assert result["calls"], "get_rope_index was never called"
-    call = result["calls"][0]
-    kw = set(call["kwargs"].keys())
-    n_pos = len(call["args"])
-    # Must use zero positional args and all keyword args
+    r = _run_python("""
+import json
+res = _exec_branch(INT32)
+print(json.dumps(res["calls"]))
+""")
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    calls = json.loads(r.stdout.strip())
+    assert calls, "get_rope_index was never called"
+    call = calls[0]
+    n_pos = call["args_n"]
+    kw = set(call["kwargs"])
     assert n_pos == 0, (
         f"get_rope_index should use keyword-only args, got {n_pos} positional"
     )
-    # All 4 params must be keyword args
     for expected in ("input_ids", "image_grid_thw", "video_grid_thw", "attention_mask"):
         assert expected in kw, f"Missing keyword arg '{expected}', got kwargs={kw}"
 
@@ -215,14 +248,24 @@ def test_keyword_args_in_get_rope_index():
 # [pr_diff] fail_to_pass
 def test_keyword_args_with_int64_input():
     """get_rope_index uses keyword args even when input_ids is already int64."""
-    for dtype in (INT64, LONG):
-        result = _exec_branch(dtype)
-        assert result["calls"], "get_rope_index was never called"
-        call = result["calls"][0]
-        n_pos = len(call["args"])
-        assert n_pos == 0 and len(call["kwargs"]) >= 2, (
-            f"get_rope_index should use keyword-only args for {dtype}, "
-            f"got {n_pos} positional, kwargs={set(call['kwargs'].keys())}"
+    r = _run_python("""
+import json
+results = []
+for dt in [INT64, LONG]:
+    res = _exec_branch(dt)
+    results.append(res["calls"])
+print(json.dumps(results))
+""")
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    all_calls = json.loads(r.stdout.strip())
+    for calls in all_calls:
+        assert calls, "get_rope_index was never called"
+        call = calls[0]
+        n_pos = call["args_n"]
+        kw = set(call["kwargs"])
+        assert n_pos == 0 and len(kw) >= 2, (
+            f"get_rope_index should use keyword-only args, "
+            f"got {n_pos} positional, kwargs={kw}"
         )
 
 
@@ -233,20 +276,30 @@ def test_keyword_args_with_int64_input():
 # [pr_diff] pass_to_pass
 def test_noop_int64_input():
     """When input_ids is already int64, code must not crash or change dtype."""
-    result = _exec_branch(INT64)
-    final = result["input_"]["input_ids"]
-    assert final.dtype in (LONG, INT64), (
-        f"int64 input_ids should be preserved, got {final.dtype}"
+    r = _run_python("""
+import json
+res = _exec_branch(INT64)
+print(json.dumps({"final_dtype": res["final_dtype"]}))
+""")
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert "long" in data["final_dtype"] or "int64" in data["final_dtype"], (
+        f"int64 input_ids should be preserved, got {data['final_dtype']}"
     )
 
 
 # [pr_diff] pass_to_pass
 def test_noop_long_input():
     """When input_ids is already torch.long, code must not crash or change dtype."""
-    result = _exec_branch(LONG)
-    final = result["input_"]["input_ids"]
-    assert final.dtype in (LONG, INT64), (
-        f"torch.long input_ids should be preserved, got {final.dtype}"
+    r = _run_python("""
+import json
+res = _exec_branch(LONG)
+print(json.dumps({"final_dtype": res["final_dtype"]}))
+""")
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert "long" in data["final_dtype"] or "int64" in data["final_dtype"], (
+        f"torch.long input_ids should be preserved, got {data['final_dtype']}"
     )
 
 
@@ -303,17 +356,14 @@ def test_no_print_statements():
 
 
 # [agent_config] pass_to_pass — AGENTS.md:189 @ f6556e88582e82b747ab1ac4038af2e106a464ee
-# AST-only because: checking module-level code structure, not runtime behavior
 def test_no_global_process_groups():
     """No global process group creation at module level in fsdp_engine.py."""
     source = open(FILE).read()
     tree = ast.parse(source)
     pg_funcs = {"new_group", "init_process_group"}
     for node in tree.body:
-        # Only check module-level statements (not inside functions/classes)
         if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
             call = node.value
-            # Check for dist.new_group() or dist.init_process_group() at module level
             if isinstance(call.func, ast.Attribute) and call.func.attr in pg_funcs:
                 raise AssertionError(
                     f"Global process group creation at module level: {call.func.attr}()"

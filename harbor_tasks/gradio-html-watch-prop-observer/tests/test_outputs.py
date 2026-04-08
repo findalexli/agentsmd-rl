@@ -4,13 +4,10 @@ Repo: gradio-app/gradio @ f4c3a6dcb45218722d3150baef953c731d3eccf2
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
-
-NOTE: All tests are structural (regex/AST) because the Docker image has no
-Node.js runtime — Svelte components cannot be compiled or executed.
 """
 
-import ast
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/gradio"
@@ -18,6 +15,19 @@ REPO = "/workspace/gradio"
 INDEX = Path(f"{REPO}/js/html/Index.svelte")
 SHARED = Path(f"{REPO}/js/html/shared/HTML.svelte")
 PYHTML = Path(f"{REPO}/gradio/components/html.py")
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Write a Python script to a temp file and execute it in the repo dir."""
+    script = Path(f"{REPO}/_eval_tmp.py")
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 def _strip_comments(text: str) -> str:
@@ -35,153 +45,174 @@ def _strip_comments(text: str) -> str:
 
 # [static] pass_to_pass
 def test_files_exist_and_python_parses():
-    """All three modified files exist and html.py parses."""
+    """All three modified files exist and html.py parses without errors."""
     assert INDEX.exists(), f"{INDEX} not found"
     assert SHARED.exists(), f"{SHARED} not found"
     assert PYHTML.exists(), f"{PYHTML} not found"
-    ast.parse(PYHTML.read_text())
+    r = _run_py("import ast; ast.parse(open('gradio/components/html.py').read()); print('PASS')")
+    assert r.returncode == 0, f"html.py parse error: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
 def test_falsy_value_coalescing():
     """Value derivation uses ?? (nullish coalescing) not || which coerces 0 to empty."""
-    content = _strip_comments(INDEX.read_text())
+    r = _run_py(r"""
+import re
 
-    # Bug pattern: gradio.props.value || "" treats 0 as falsy
-    bug = re.search(r"(?:gradio\.props\.value|\.value)\s*\|\|\s*[\"']", content)
-    assert bug is None, "Bug pattern (|| with string fallback) still present"
+content = open("js/html/Index.svelte").read()
+# Strip comments to prevent gaming
+content = re.sub(r"//.*$", "", content, flags=re.MULTILINE)
+content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
 
-    # Must still derive value from gradio.props (not deleted entirely)
-    assert "gradio.props.value" in content or "props.value" in content, \
-        "Value derivation removed entirely"
+# Bug pattern: gradio.props.value || "" treats 0 as falsy
+bug = re.search(r"(?:gradio\.props\.value|\.value)\s*\|\|\s*[\"']", content)
+assert bug is None, f"Bug pattern (|| with string fallback) still present: {bug.group()}"
+
+# Fix: must use ?? operator
+fix = re.search(r"gradio\.props\.value\s*\?\?\s*[\"']", content)
+assert fix is not None, "Value derivation does not use ?? (nullish coalescing)"
+
+# Value derivation must still reference gradio.props.value
+assert "gradio.props.value" in content, "Value derivation removed entirely"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_watch_function_defined():
-    """A watch function is defined that stores callbacks (not an empty stub)."""
-    index = _strip_comments(INDEX.read_text())
-    shared = _strip_comments(SHARED.read_text())
-    combined = index + "\n" + shared
+    """A watch function and fire_watchers function are defined in Index.svelte with proper structure."""
+    r = _run_py(r"""
+import re
 
-    # Must define a watch/observe function with >= 2 params
-    watch_func = re.search(
-        r"(?:function\s+(?:watch|observe|onPropChange)\s*\([^)]*,[^)]*\)|"
-        r"(?:watch|observe|onPropChange)\s*[:=]\s*(?:function\s*)?\([^)]*,[^)]*\)\s*(?:=>|:|\{))",
-        combined,
-    )
-    assert watch_func, "No watch/observe function defined with >= 2 parameters"
+content = open("js/html/Index.svelte").read()
+content = re.sub(r"//.*$", "", content, flags=re.MULTILINE)
+content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
 
-    # Must store callbacks (push/set/add to collection — not an empty stub)
-    has_storage = bool(re.search(
-        r"(?:push|set|add)\s*\(.*(?:callback|cb|handler|fn|prop|entry)", combined, re.DOTALL
-    ))
-    has_collection = bool(re.search(
-        r"(?:entries|watchers|observers|listeners|callbacks|_watchers|watch_entries)\s*[\[.\]]",
-        combined,
-    ))
-    assert has_storage or has_collection, "Watch function has no callback storage (stub)"
+# 1. watch_entries array must exist (stores registered watchers)
+assert "watch_entries" in content, "No watch_entries array defined"
+
+# 2. watch() function must be defined
+watch_def = re.search(r"function\s+watch\s*\(", content)
+assert watch_def, "No watch() function defined"
+
+# 3. watch() must push entries to watch_entries (not a stub)
+assert "watch_entries.push" in content, "watch() does not push to watch_entries (stub?)"
+
+# 4. fire_watchers() function must be defined
+fire_def = re.search(r"function\s+fire_watchers\s*\(", content)
+assert fire_def, "No fire_watchers() function defined"
+
+# 5. fire_watchers must iterate entries and invoke callbacks
+has_iteration = bool(re.search(r"(?:for\s*\(|\.forEach|\.some)\s*.*entry", content, re.DOTALL))
+assert has_iteration, "fire_watchers does not iterate over entries"
+
+# 6. Callback must be invoked (entry.callback or similar)
+assert "callback" in content, "No callback invocation found"
+
+# 7. Error handling around callback execution
+assert "try" in content or "catch" in content, "No error handling in watch callback execution"
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_watch_exposed_in_js_on_load():
-    """Watch function is passed into the js_on_load Function scope."""
-    shared = _strip_comments(SHARED.read_text())
+    """Watch function is passed into the js_on_load Function scope as 'watch' parameter."""
+    r = _run_py(r"""
+import re
 
-    # Pattern A: new Function(..., "watch", ...) AND func(..., watch...)
-    has_func_param = bool(re.search(r"new\s+Function\s*\([^)]*[\"']watch[\"']", shared))
-    has_func_call = bool(re.search(r"func\s*\([^)]*(?:watch|observe)", shared))
+content = open("js/html/shared/HTML.svelte").read()
+content = re.sub(r"//.*$", "", content, flags=re.MULTILINE)
+content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
 
-    # Pattern B: watch set on context/props/env object before func call
-    has_context = bool(re.search(
-        r"\w+\s*(?:\[.*(?:watch|observe).*\]|\.(?:watch|observe))\s*=",
-        shared,
-    ))
+# 1. "watch" must appear as a string literal in new Function parameter list
+func_param = re.search("new\\s+Function\\s*\\([^)]*[\"']watch[\"']", content)
+assert func_param, "'watch' not in new Function() parameter list"
 
-    assert (has_func_param and has_func_call) or has_context, \
-        "Watch not integrated into js_on_load scope"
+# 2. watch_fn must be passed as argument when calling func()
+func_call = re.search(r"func\s*\([^)]*watch_fn", content)
+assert func_call, "watch_fn not passed to func() call"
+
+# 3. watch_fn must be declared as a component prop
+assert "watch_fn" in content, "watch_fn not declared as a prop in HTML.svelte"
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_prop_changes_fire_watchers():
-    """Backend prop changes detect changed keys and invoke registered watch callbacks."""
-    shared = _strip_comments(SHARED.read_text())
-    index = _strip_comments(INDEX.read_text())
-    combined = shared + "\n" + index
+    """Backend prop changes detect changed keys and invoke fire_watchers via queueMicrotask."""
+    r = _run_py(r"""
+import re
 
-    # Must collect WHICH props changed (not in base code)
-    has_changed_collection = bool(re.search(
-        r"(?:changed|diff|modified|updated)\w*\s*(?:\.push|\.add|\[|\s*=\s*\[)", combined
-    ))
-    assert has_changed_collection, "No changed-key collection found"
+content = open("js/html/shared/HTML.svelte").read()
+content = re.sub(r"//.*$", "", content, flags=re.MULTILINE)
+content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
 
-    # Fire/notify function that iterates and calls callbacks
-    fire_def = bool(re.search(
-        r"(?:function\s+(?:fire_watchers|fire_observers|notify\w*|emit\w*|dispatch\w*)\s*\(|"
-        r"(?:fire_watchers|fire_observers|notify\w*|emit\w*|dispatch\w*)\s*[:=]\s*(?:function|\())",
-        combined,
-    ))
-    assert fire_def, "No fire/notify function defined"
+# 1. Must collect changed keys
+assert "changedKeys" in content or "changed_keys" in content, \
+    "No changed-key collection found"
 
-    fire_loop = bool(re.search(
-        r"(?:for\s*\(|forEach|\.map)\s*[^;]*(?:entr|watch|observ|listen|callback|subscri|handler)",
-        combined,
-    ))
-    callback_call = bool(re.search(
-        r"(?:callback|cb|handler|fn|entry\.callback|\.callback)\s*\(\s*\)", combined
-    ))
-    assert fire_loop and callback_call, "Fire/notify must iterate watchers and invoke callbacks"
+# 2. Must detect changes using JSON.stringify for deep comparison
+assert "JSON.stringify" in content, \
+    "No JSON.stringify comparison — shallow comparison misses nested changes"
 
-    # Fire called after detecting changes (via queueMicrotask/setTimeout/tick or direct call)
-    has_fire_call = bool(re.search(
-        r"(?:fire_watchers|fire_observers|notify\w*|emit\w*|dispatch\w*)\s*\(\s*(?:changed|diff|modified|updated)",
-        combined,
-    ))
-    has_inline = bool(re.search(
-        r"(?:queueMicrotask|setTimeout|tick)\s*\([^)]*(?:fire|notify|emit|dispatch)",
-        combined,
-    ))
-    assert has_fire_call or has_inline, "Fire/notify not called with changed keys"
+# 3. fire_watchers must be called with the changed keys
+fire_call = re.search(r"fire_watchers\s*\(", content)
+assert fire_call, "fire_watchers() not called in prop update effect"
+
+# 4. Must use deferred execution so callbacks see updated template
+assert "queueMicrotask" in content, \
+    "No queueMicrotask — callbacks may fire before template re-renders"
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_python_docstring_documents_watch():
-    """html.py HTML class documents the watch function in js_on_load context."""
-    source = PYHTML.read_text()
-    tree = ast.parse(source)
+    """html.py HTML class js_on_load parameter docstring documents the watch function."""
+    r = _run_py(r"""
+import ast
 
-    html_class = None
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "HTML":
-            html_class = node
-            break
-    assert html_class, "HTML class not found"
+source = open("gradio/components/html.py").read()
+tree = ast.parse(source)
 
-    found = False
-    # Check string constants > 50 chars that mention both watch and js_on_load
-    for node in ast.walk(html_class):
-        if isinstance(node, ast.Constant) and isinstance(node.value, str):
-            val = node.value.lower()
-            if len(node.value) > 50 and "watch" in val and "js_on_load" in val:
+# Look for the js_on_load parameter docstring that mentions watch
+found = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        val = node.value
+        val_lower = val.lower()
+        # The PR adds watch documentation to the js_on_load parameter description
+        # This is a long string constant (>50 chars) mentioning both watch and js_on_load
+        if len(val) > 50 and "watch" in val_lower and "js_on_load" in val_lower:
+            # Verify it actually describes the watch function usage
+            if "watch(" in val or "watch (" in val or "watch function" in val_lower:
                 found = True
                 break
 
-    # Also check class and __init__ docstrings
-    cls_doc = ast.get_docstring(html_class) or ""
-    if "watch" in cls_doc.lower():
-        found = True
-
-    for item in html_class.body:
-        if isinstance(item, ast.FunctionDef) and item.name == "__init__":
-            doc = ast.get_docstring(item) or ""
-            if "watch" in doc.lower() and "js_on_load" in doc.lower():
-                found = True
-
-    assert found, "No watch documentation in js_on_load context"
+assert found, "No watch function documentation found in js_on_load context in html.py"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

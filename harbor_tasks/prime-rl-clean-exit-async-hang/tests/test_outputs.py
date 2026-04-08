@@ -10,6 +10,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import asyncio
 import functools
+import subprocess
 import sys
 import types
 from pathlib import Path
@@ -20,17 +21,66 @@ UTILS_PY = Path(REPO) / "src/prime_rl/utils/utils.py"
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Subprocess helper for behavioral f2p tests
+# ---------------------------------------------------------------------------
+
+SETUP_SCRIPT = '''\
+import sys, types, asyncio, functools
+from pathlib import Path
+from typing import Any, Callable
+
+# Mock wandb
+wandb_mock = types.ModuleType("wandb")
+wandb_mock.finish = lambda exit_code=None: None
+sys.modules["wandb"] = wandb_mock
+
+# Mock torch.distributed
+dist_mock = types.ModuleType("torch.distributed")
+dist_mock.is_initialized = lambda: False
+dist_mock.destroy_process_group = lambda: None
+sys.modules.setdefault("torch", types.ModuleType("torch"))
+sys.modules["torch.distributed"] = dist_mock
+
+# Load clean_exit from source
+src = Path("src/prime_rl/utils/utils.py").read_text()
+lines = src.split("\\n")
+start = end = None
+for i, line in enumerate(lines):
+    if line.startswith("def clean_exit("):
+        start = i
+    elif start is not None and i > start and line and not line[0].isspace() and line[0] != "#":
+        end = i
+        break
+if end is None:
+    end = len(lines)
+
+ns = {"asyncio": asyncio, "functools": functools, "wandb": wandb_mock, "dist": dist_mock,
+      "sys": sys, "Callable": Callable, "Any": Any,
+      "get_logger": lambda: types.SimpleNamespace(opt=lambda **kw: types.SimpleNamespace(error=lambda msg: None))}
+exec("\\n".join(lines[start:end]), ns)
+clean_exit = ns["clean_exit"]
+'''
+
+
+def _run_subprocess(test_body: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute test code against clean_exit in an isolated subprocess."""
+    script = Path(REPO) / "_eval_tmp.py"
+    script.write_text(SETUP_SCRIPT + "\n" + test_body)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# In-process helper for p2p tests needing mock callbacks
 # ---------------------------------------------------------------------------
 
 def _extract_clean_exit(*, wandb_finish=None, dist_initialized=False, dist_destroy=None):
-    """Extract and exec the clean_exit decorator with mocked dependencies.
-
-    Args:
-        wandb_finish: custom callback for wandb.finish(exit_code=...)
-        dist_initialized: whether dist.is_initialized() returns True
-        dist_destroy: custom callback for dist.destroy_process_group()
-    """
+    """Extract and exec the clean_exit decorator with mocked dependencies."""
     src = UTILS_PY.read_text()
 
     lines = src.split("\n")
@@ -82,86 +132,102 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — subprocess behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_async_exit():
     """Async clean_exit must raise SystemExit (via sys.exit) instead of re-raising the original exception."""
-    clean_exit, _, _ = _extract_clean_exit()
+    r = _run_subprocess("""\
+@clean_exit
+async def failing_async():
+    raise ValueError("dataset is not set")
 
-    @clean_exit
-    async def failing_async():
-        raise ValueError("dataset is not set")
-
-    try:
-        asyncio.run(failing_async())
-        assert False, "No exception raised at all"
-    except SystemExit as e:
-        assert e.code, f"sys.exit called with falsy code {e.code!r} — error path must exit non-zero"
-    except ValueError:
-        raise AssertionError("Async wrapper re-raised ValueError instead of calling sys.exit")
+try:
+    asyncio.run(failing_async())
+    print("NO_EXCEPTION")
+except SystemExit as e:
+    print(f"SYSTEM_EXIT:{e.code}")
+except ValueError:
+    print("VALUE_ERROR")
+""")
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    assert "SYSTEM_EXIT:1" in r.stdout, f"Expected SystemExit(1), got: {r.stdout.strip()}"
 
 
 # [pr_diff] fail_to_pass
 def test_sync_exit():
     """Sync clean_exit must raise SystemExit (via sys.exit) instead of re-raising the original exception."""
-    clean_exit, _, _ = _extract_clean_exit()
+    r = _run_subprocess("""\
+@clean_exit
+def failing_sync():
+    raise RuntimeError("config missing")
 
-    @clean_exit
-    def failing_sync():
-        raise RuntimeError("config missing")
-
-    try:
-        failing_sync()
-        assert False, "No exception raised at all"
-    except SystemExit as e:
-        assert e.code, f"sys.exit called with falsy code {e.code!r} — error path must exit non-zero"
-    except RuntimeError:
-        raise AssertionError("Sync wrapper re-raised RuntimeError instead of calling sys.exit")
+try:
+    failing_sync()
+    print("NO_EXCEPTION")
+except SystemExit as e:
+    print(f"SYSTEM_EXIT:{e.code}")
+except RuntimeError:
+    print("RUNTIME_ERROR")
+""")
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    assert "SYSTEM_EXIT:1" in r.stdout, f"Expected SystemExit(1), got: {r.stdout.strip()}"
 
 
 # [pr_diff] fail_to_pass
 def test_async_exit_different_exception():
     """Async clean_exit terminates with SystemExit for various exception types, not just ValueError."""
-    clean_exit, _, _ = _extract_clean_exit()
+    r = _run_subprocess("""\
+results = []
+for exc_type, msg in [(TypeError, "bad type"), (KeyError, "missing key"), (OSError, "io fail")]:
+    @clean_exit
+    async def failing_async(et=exc_type, m=msg):
+        raise et(m)
 
-    for exc_type, msg in [(TypeError, "bad type"), (KeyError, "missing key"), (OSError, "io fail")]:
-        @clean_exit
-        async def failing_async(et=exc_type, m=msg):
-            raise et(m)
+    try:
+        asyncio.run(failing_async())
+        results.append(f"NO_EXCEPTION:{exc_type.__name__}")
+    except SystemExit as e:
+        results.append(f"SYSTEM_EXIT:{exc_type.__name__}:{e.code}")
+    except Exception as orig:
+        results.append(f"ORIGINAL:{exc_type.__name__}:{type(orig).__name__}")
 
-        try:
-            asyncio.run(failing_async())
-            assert False, f"No exception raised for {exc_type.__name__}"
-        except SystemExit as e:
-            assert e.code, f"sys.exit called with falsy code for {exc_type.__name__}"
-        except Exception as orig:
-            raise AssertionError(
-                f"Async wrapper re-raised {type(orig).__name__} instead of calling sys.exit"
-            )
+print("\\n".join(results))
+""")
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    for line in r.stdout.strip().split("\n"):
+        assert line.startswith("SYSTEM_EXIT:"), f"Expected SystemExit, got: {line}"
 
 
 # [pr_diff] fail_to_pass
 def test_sync_exit_different_exception():
     """Sync clean_exit terminates with SystemExit for various exception types."""
-    clean_exit, _, _ = _extract_clean_exit()
+    r = _run_subprocess("""\
+results = []
+for exc_type, msg in [(TypeError, "bad type"), (KeyError, "missing key"), (OSError, "io fail")]:
+    @clean_exit
+    def failing_sync(et=exc_type, m=msg):
+        raise et(m)
 
-    for exc_type, msg in [(TypeError, "bad type"), (KeyError, "missing key"), (OSError, "io fail")]:
-        @clean_exit
-        def failing_sync(et=exc_type, m=msg):
-            raise et(m)
+    try:
+        failing_sync()
+        results.append(f"NO_EXCEPTION:{exc_type.__name__}")
+    except SystemExit as e:
+        results.append(f"SYSTEM_EXIT:{exc_type.__name__}:{e.code}")
+    except Exception as orig:
+        results.append(f"ORIGINAL:{exc_type.__name__}:{type(orig).__name__}")
 
-        try:
-            failing_sync()
-            assert False, f"No exception raised for {exc_type.__name__}"
-        except SystemExit as e:
-            assert e.code, f"sys.exit called with falsy code for {exc_type.__name__}"
-        except Exception as orig:
-            raise AssertionError(
-                f"Sync wrapper re-raised {type(orig).__name__} instead of calling sys.exit"
-            )
+print("\\n".join(results))
+""")
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    for line in r.stdout.strip().split("\n"):
+        assert line.startswith("SYSTEM_EXIT:"), f"Expected SystemExit, got: {line}"
 
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (pr_diff / repo_tests) — in-process with mock callbacks
+# ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
 def test_finally_cleanup():
@@ -203,10 +269,6 @@ def test_wandb_cleanup():
 
     assert 1 in finish_calls, f"wandb.finish(exit_code=1) not called; calls were: {finish_calls}"
 
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
-# ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
 def test_success_path_async():

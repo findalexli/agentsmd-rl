@@ -18,11 +18,21 @@ to cast to float where needed.
 """
 
 import importlib.util
+import os
+import subprocess
 from unittest.mock import patch
 
 import torch
 
 TARGET = "/workspace/AReaL/areal/experimental/models/archon/moe/router.py"
+REPO = "/workspace/AReaL"
+
+# CPU-safe histc wrapper: torch.histc doesn't support int64 on CPU
+_orig_histc = torch.histc
+
+
+def _safe_histc(input, bins=100, min=0, max=0):
+    return _orig_histc(input.float(), bins=bins, min=float(min), max=float(max))
 
 
 def _load_router():
@@ -33,14 +43,6 @@ def _load_router():
     return mod
 
 
-# CPU-safe histc wrapper: torch.histc doesn't support int64 on CPU
-_orig_histc = torch.histc
-
-
-def _safe_histc(input, bins=100, min=0, max=0):
-    return _orig_histc(input.float(), bins=bins, min=float(min), max=float(max))
-
-
 def _make_router(router_mod, dim=32, num_experts=4, top_k=2, score_func="sigmoid"):
     """Create a router with CPU-safe defaults (router_dtype=None)."""
     return router_mod.TokenChoiceTopKRouter(
@@ -48,8 +50,34 @@ def _make_router(router_mod, dim=32, num_experts=4, top_k=2, score_func="sigmoid
     )
 
 
+def _run_python(code, timeout=30):
+    """Execute Python code in the repo workspace with PYTHONPATH set."""
+    env = {**os.environ, "PYTHONPATH": REPO}
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO, env=env,
+    )
+
+
+# Subprocess boilerplate for loading router.py safely on CPU
+_LOAD_ROUTER_BOILERPLATE = """
+import importlib.util
+import torch
+from unittest.mock import patch
+
+TARGET = "{target}"
+spec = importlib.util.spec_from_file_location("_router", TARGET)
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+
+_orig_histc = torch.histc
+def _safe_histc(input, bins=100, min=0, max=0):
+    return _orig_histc(input.float(), bins=bins, min=float(min), max=float(max))
+"""
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) -- syntax / compilation checks
+# Static (pass_to_pass) -- syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -61,7 +89,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) -- core behavioral tests
+# Fail-to-pass (pr_diff) -- core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -73,49 +101,62 @@ def test_gate_hook_fires():
     level and only fire when the module is invoked, not when the underlying
     function is called directly.
     """
-    router_mod = _load_router()
-    router = _make_router(router_mod)
-    hook_called = {"count": 0}
+    code = _LOAD_ROUTER_BOILERPLATE.format(target=TARGET) + """
+router = mod.TokenChoiceTopKRouter(dim=32, num_experts=4, top_k=2, score_func="sigmoid")
+hook_count = [0]
 
-    def hook_fn(module, input, output):
-        hook_called["count"] += 1
+def hook_fn(module, input, output):
+    hook_count[0] += 1
 
-    router.gate.register_forward_hook(hook_fn)
+router.gate.register_forward_hook(hook_fn)
 
-    x = torch.randn(8, 32)
-    with patch.object(torch, "histc", _safe_histc):
-        router(x)
-    assert hook_called["count"] == 1, (
-        f"Expected gate forward hook to fire once, fired {hook_called['count']} times. "
-        "forward() likely bypasses self.gate() with a direct function call."
-    )
+x = torch.randn(8, 32)
+with patch.object(torch, "histc", _safe_histc):
+    router(x)
+
+assert hook_count[0] == 1, (
+    f"Expected gate forward hook to fire once, fired {hook_count[0]} times. "
+    "forward() likely bypasses self.gate() with a direct function call."
+)
+print("PASS")
+"""
+    r = _run_python(code)
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_gate_hook_with_varied_inputs():
     """Gate hook fires for different input shapes and score functions."""
-    router_mod = _load_router()
+    code = _LOAD_ROUTER_BOILERPLATE.format(target=TARGET) + """
+configs = [
+    (1, 16, 4, "softmax"),
+    (32, 64, 8, "sigmoid"),
+    (4, 32, 4, "softmax"),
+]
 
-    for n_tokens, dim, n_experts, score_func in [
-        (1, 16, 4, "softmax"),
-        (32, 64, 8, "sigmoid"),
-        (4, 32, 4, "softmax"),
-    ]:
-        router = router_mod.TokenChoiceTopKRouter(
-            dim=dim, num_experts=n_experts, top_k=2, score_func=score_func,
-        )
-        fired = {"n": 0}
+for n_tokens, dim, n_experts, score_func in configs:
+    router = mod.TokenChoiceTopKRouter(
+        dim=dim, num_experts=n_experts, top_k=2, score_func=score_func,
+    )
+    fired = [0]
 
-        def _hook(m, i, o, _d=fired):
-            _d["n"] += 1
+    def _hook(m, i, o, _d=fired):
+        _d[0] += 1
 
-        router.gate.register_forward_hook(_hook)
-        x = torch.randn(n_tokens, dim)
-        with patch.object(torch, "histc", _safe_histc):
-            router(x)
-        assert fired["n"] == 1, (
-            f"Hook not fired for shape ({n_tokens}, {dim}), score_func={score_func}"
-        )
+    router.gate.register_forward_hook(_hook)
+    x = torch.randn(n_tokens, dim)
+    with patch.object(torch, "histc", _safe_histc):
+        router(x)
+    assert fired[0] == 1, (
+        f"Hook not fired for shape ({n_tokens}, {dim}), score_func={score_func}"
+    )
+
+print("PASS")
+"""
+    r = _run_python(code)
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
@@ -150,7 +191,7 @@ def test_gate_is_router_gate_linear():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff / repo_tests) -- regression + anti-stub
+# Pass-to-pass (pr_diff / repo_tests) -- regression + structural
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
@@ -190,10 +231,12 @@ def test_router_forward_shapes():
 
 
 # [static] fail_to_pass
-# AST-only because: we need to verify RouterGateLinear.forward has real logic,
-# and the class doesn't exist on the base commit — this naturally fails on base.
 def test_not_stub():
-    """RouterGateLinear.forward must have real logic (not just pass/return)."""
+    """RouterGateLinear.forward must have real logic (not just pass/return).
+
+    AST-only because: we need to verify RouterGateLinear.forward has real logic,
+    and the class doesn't exist on the base commit — this naturally fails on base.
+    """
     import ast
 
     src = open(TARGET).read()
@@ -234,7 +277,6 @@ def test_no_gpu_cpu_sync_in_hot_path():
     import re
 
     src = open(TARGET).read()
-    # Check for .item() and .tolist() calls (GPU-CPU sync)
     sync_calls = re.findall(r"\.\s*item\s*\(\s*\)|\.\s*tolist\s*\(\s*\)", src)
     assert not sync_calls, f"GPU-CPU sync calls found in router.py: {sync_calls}"
 
@@ -265,7 +307,6 @@ def test_explicit_type_hints():
     src = open(TARGET).read()
     tree = ast.parse(src)
 
-    # Find RouterGateLinear class
     linear_class = None
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name == "RouterGateLinear":
@@ -273,20 +314,17 @@ def test_explicit_type_hints():
             break
 
     if linear_class is None:
-        # Class absent on base commit — vacuously pass (class presence checked elsewhere)
         return
 
     for item in linear_class.body:
         if not isinstance(item, ast.FunctionDef) or item.name not in ("__init__", "forward"):
             continue
-        # Check all non-self args have annotations
         for arg in item.args.args:
             if arg.arg == "self":
                 continue
             assert arg.annotation is not None, (
                 f"RouterGateLinear.{item.name}: parameter '{arg.arg}' missing type annotation"
             )
-        # forward must have a return annotation
         if item.name == "forward":
             assert item.returns is not None, (
                 "RouterGateLinear.forward: missing return type annotation"
@@ -305,12 +343,10 @@ def test_no_module_level_process_group():
     src = open(TARGET).read()
     tree = ast.parse(src)
 
-    # Walk only top-level statements (not inside function or class bodies)
     for node in ast.iter_child_nodes(tree):
         for subnode in ast.walk(node):
             if isinstance(subnode, ast.Call):
                 func = subnode.func
-                # Match dist.init_process_group, dist.new_group, torch.distributed.*
                 if isinstance(func, ast.Attribute) and func.attr in (
                     "init_process_group",
                     "new_group",

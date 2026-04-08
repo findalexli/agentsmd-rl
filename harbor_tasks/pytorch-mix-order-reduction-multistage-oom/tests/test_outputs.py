@@ -9,197 +9,361 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import os
-import textwrap
-import types
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/pytorch"
-
 CONFIG_PY = f"{REPO}/torch/_inductor/config.py"
 CODEGEN_TRITON = f"{REPO}/torch/_inductor/codegen/triton.py"
 HEURISTICS_PY = f"{REPO}/torch/_inductor/runtime/triton_heuristics.py"
-
 ATTR = "mix_order_reduction_allow_multi_stages"
 ENV_VAR = "TORCHINDUCTOR_MIX_ORDER_REDUCTION_ALLOW_MULTI_STAGES"
 
 
-def _find_config_attr_value(env_overrides=None):
-    """Find and eval the ATTR assignment inside the triton class.
-
-    Returns the evaluated bool, or None if the attribute doesn't exist.
-    AST-only because: importing torch._inductor.config requires full torch installation.
-    """
-    source = Path(CONFIG_PY).read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if not (isinstance(node, ast.ClassDef) and node.name == "triton"):
-            continue
-        for stmt in ast.walk(node):
-            # Handle both annotated (x: bool = ...) and plain (x = ...) assignments
-            if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
-                target_name, value_node = stmt.target.id, stmt.value
-            elif isinstance(stmt, ast.Assign) and stmt.targets and isinstance(stmt.targets[0], ast.Name):
-                target_name, value_node = stmt.targets[0].id, stmt.value
-            else:
-                continue
-            if target_name != ATTR or value_node is None:
-                continue
-            expr_src = ast.get_source_segment(source, value_node)
-            if not expr_src:
-                continue
-            env = os.environ.copy()
-            env.pop(ENV_VAR, None)
-            if env_overrides:
-                env.update(env_overrides)
-            fake_os = types.ModuleType("os")
-            fake_os.environ = env
-            ns = {"os": fake_os, "__builtins__": __builtins__}
-            return eval(expr_src, ns)
-    return None
-
-
-def _exec_heuristics_branch(allow_multi_stages, rnumel_hint, num_iters=8):
-    """Find the if-block in persistent_reduction whose CONDITION tests ATTR and execute it.
-
-    Returns MAX_NUM_STAGES, or None if the branch is not found.
-    AST-only because: importing torch._inductor.runtime.triton_heuristics requires triton GPU toolkit.
-
-    Uses child.test to identify the right if-block (not body content), so an outer if that happens
-    to contain both keywords in its body is not confused with the target if.
-    """
-    source = Path(HEURISTICS_PY).read_text()
-    tree = ast.parse(source)
-    for func_node in ast.walk(tree):
-        if not (isinstance(func_node, ast.FunctionDef) and func_node.name == "persistent_reduction"):
-            continue
-        for child in ast.walk(func_node):
-            if not isinstance(child, ast.If):
-                continue
-            # Match on the CONDITION of the if, not its body, to avoid outer if-blocks
-            test_src = ast.get_source_segment(source, child.test)
-            if not (test_src and ATTR in test_src):
-                continue
-            # Use full source lines (not get_source_segment which slices the first line
-            # at col_offset, leaving body lines misindented relative to it), then dedent.
-            block_lines = source.splitlines()[child.lineno - 1 : child.end_lineno]
-            if_src = textwrap.dedent("\n".join(block_lines))
-            ns = {
-                "inductor_meta": {ATTR: allow_multi_stages},
-                "rnumel_hint": rnumel_hint,
-                "num_iters": num_iters,
-                "__builtins__": __builtins__,
-            }
-            exec(if_src, ns)
-            return ns.get("MAX_NUM_STAGES")
-    return None
+def _run_python(code: str, timeout: int = 30, env_extra=None):
+    """Execute Python code in a subprocess via temp file."""
+    env = os.environ.copy()
+    env.pop(ENV_VAR, None)
+    if env_extra:
+        env.update(env_extra)
+    script = Path(REPO) / "_eval_tmp.py"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO, env=env,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax check
+# Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
+
 
 # [static] pass_to_pass
 def test_syntax_check():
-    """Modified files must parse without errors."""
+    """Modified files (config.py, codegen/triton.py, triton_heuristics.py) parse without errors."""
     for path in [CONFIG_PY, CODEGEN_TRITON, HEURISTICS_PY]:
         source = Path(path).read_text()
         ast.parse(source)  # raises SyntaxError on failure
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
+
 
 # [pr_diff] fail_to_pass
 def test_config_default_false():
     """New config attribute mix_order_reduction_allow_multi_stages defaults to False."""
-    val = _find_config_attr_value()
-    assert val is not None, f"Attribute {ATTR!r} not found in triton class in config.py"
-    assert val is False, f"Config should default to False (env var unset), got {val!r}"
+    r = _run_python(r"""
+import ast, os, types
+from pathlib import Path
+
+ATTR = "mix_order_reduction_allow_multi_stages"
+source = Path("torch/_inductor/config.py").read_text()
+tree = ast.parse(source)
+for node in ast.walk(tree):
+    if not (isinstance(node, ast.ClassDef) and node.name == "triton"):
+        continue
+    for stmt in ast.walk(node):
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+            target_name, value_node = stmt.target.id, stmt.value
+        elif isinstance(stmt, ast.Assign) and stmt.targets and isinstance(stmt.targets[0], ast.Name):
+            target_name, value_node = stmt.targets[0].id, stmt.value
+        else:
+            continue
+        if target_name != ATTR or value_node is None:
+            continue
+        expr_src = ast.get_source_segment(source, value_node)
+        if not expr_src:
+            continue
+        fake_os = types.ModuleType("os")
+        fake_os.environ = os.environ.copy()
+        ns = {"os": fake_os, "__builtins__": __builtins__}
+        result = eval(expr_src, ns)
+        assert result is False, f"Expected False, got {result!r}"
+        print("PASS")
+        break
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_config_env_var_enables():
     """Setting TORCHINDUCTOR_MIX_ORDER_REDUCTION_ALLOW_MULTI_STAGES=1 enables multi-stages."""
-    val_on = _find_config_attr_value({ENV_VAR: "1"})
-    assert val_on is True, f"Config should be True when env var='1', got {val_on!r}"
+    r_on = _run_python(r"""
+import ast, os, types
+from pathlib import Path
 
-    val_off = _find_config_attr_value({ENV_VAR: "0"})
-    assert val_off is False, f"Config should be False when env var='0', got {val_off!r}"
+ATTR = "mix_order_reduction_allow_multi_stages"
+source = Path("torch/_inductor/config.py").read_text()
+tree = ast.parse(source)
+for node in ast.walk(tree):
+    if not (isinstance(node, ast.ClassDef) and node.name == "triton"):
+        continue
+    for stmt in ast.walk(node):
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+            target_name, value_node = stmt.target.id, stmt.value
+        elif isinstance(stmt, ast.Assign) and stmt.targets and isinstance(stmt.targets[0], ast.Name):
+            target_name, value_node = stmt.targets[0].id, stmt.value
+        else:
+            continue
+        if target_name != ATTR or value_node is None:
+            continue
+        expr_src = ast.get_source_segment(source, value_node)
+        if not expr_src:
+            continue
+        fake_os = types.ModuleType("os")
+        fake_os.environ = os.environ.copy()
+        ns = {"os": fake_os, "__builtins__": __builtins__}
+        result = eval(expr_src, ns)
+        assert result is True, f"Expected True with env=1, got {result!r}"
+        print("PASS")
+        break
+""", env_extra={ENV_VAR: "1"})
+    assert r_on.returncode == 0, f"Failed (env=1): {r_on.stderr}"
+    assert "PASS" in r_on.stdout
 
-    val_unset = _find_config_attr_value()
-    assert val_unset is False, f"Config should default to False when env var unset, got {val_unset!r}"
+    r_off = _run_python(r"""
+import ast, os, types
+from pathlib import Path
+
+ATTR = "mix_order_reduction_allow_multi_stages"
+source = Path("torch/_inductor/config.py").read_text()
+tree = ast.parse(source)
+for node in ast.walk(tree):
+    if not (isinstance(node, ast.ClassDef) and node.name == "triton"):
+        continue
+    for stmt in ast.walk(node):
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+            target_name, value_node = stmt.target.id, stmt.value
+        elif isinstance(stmt, ast.Assign) and stmt.targets and isinstance(stmt.targets[0], ast.Name):
+            target_name, value_node = stmt.targets[0].id, stmt.value
+        else:
+            continue
+        if target_name != ATTR or value_node is None:
+            continue
+        expr_src = ast.get_source_segment(source, value_node)
+        if not expr_src:
+            continue
+        fake_os = types.ModuleType("os")
+        fake_os.environ = os.environ.copy()
+        ns = {"os": fake_os, "__builtins__": __builtins__}
+        result = eval(expr_src, ns)
+        assert result is False, f"Expected False with env=0, got {result!r}"
+        print("PASS")
+        break
+""", env_extra={ENV_VAR: "0"})
+    assert r_off.returncode == 0, f"Failed (env=0): {r_off.stderr}"
+    assert "PASS" in r_off.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_heuristics_single_stage_when_disabled():
     """persistent_reduction sets MAX_NUM_STAGES=1 when multi-stages disabled, regardless of rnumel."""
-    for rnumel_hint in [512, 4096, 8192, 10000, 65536]:
-        max_stages = _exec_heuristics_branch(False, rnumel_hint)
-        assert max_stages is not None, f"MAX_NUM_STAGES branch not found in persistent_reduction"
-        assert max_stages == 1, (
-            f"MAX_NUM_STAGES should be 1 when disabled (rnumel={rnumel_hint}), got {max_stages}"
-        )
+    r = _run_python(r"""
+import ast, textwrap
+from pathlib import Path
+
+ATTR = "mix_order_reduction_allow_multi_stages"
+source = Path("torch/_inductor/runtime/triton_heuristics.py").read_text()
+tree = ast.parse(source)
+
+for func_node in ast.walk(tree):
+    if not (isinstance(func_node, ast.FunctionDef) and func_node.name == "persistent_reduction"):
+        continue
+    for child in ast.walk(func_node):
+        if not isinstance(child, ast.If):
+            continue
+        test_src = ast.get_source_segment(source, child.test)
+        if not (test_src and ATTR in test_src):
+            continue
+        block_lines = source.splitlines()[child.lineno - 1 : child.end_lineno]
+        if_src = textwrap.dedent("\n".join(block_lines))
+        for rnumel in [512, 4096, 8192, 10000, 65536]:
+            ns = {
+                "inductor_meta": {ATTR: False},
+                "rnumel_hint": rnumel,
+                "num_iters": 8,
+                "__builtins__": __builtins__,
+            }
+            exec(if_src, ns)
+            max_stages = ns.get("MAX_NUM_STAGES")
+            assert max_stages == 1, (
+                f"MAX_NUM_STAGES should be 1 when disabled (rnumel={rnumel}), got {max_stages}"
+            )
+        print("PASS")
+        break
+    break
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_heuristics_single_stage_small_rnumel():
-    """persistent_reduction sets MAX_NUM_STAGES=1 even with small rnumel when disabled."""
-    for rnumel_hint in [128, 512, 1024]:
-        max_stages = _exec_heuristics_branch(False, rnumel_hint)
-        assert max_stages is not None, "MAX_NUM_STAGES branch not found in persistent_reduction"
-        assert max_stages == 1, (
-            f"MAX_NUM_STAGES should be 1 when disabled (small rnumel={rnumel_hint}), got {max_stages}"
-        )
+    """persistent_reduction sets MAX_NUM_STAGES=1 with small rnumel when disabled."""
+    r = _run_python(r"""
+import ast, textwrap
+from pathlib import Path
+
+ATTR = "mix_order_reduction_allow_multi_stages"
+source = Path("torch/_inductor/runtime/triton_heuristics.py").read_text()
+tree = ast.parse(source)
+
+for func_node in ast.walk(tree):
+    if not (isinstance(func_node, ast.FunctionDef) and func_node.name == "persistent_reduction"):
+        continue
+    for child in ast.walk(func_node):
+        if not isinstance(child, ast.If):
+            continue
+        test_src = ast.get_source_segment(source, child.test)
+        if not (test_src and ATTR in test_src):
+            continue
+        block_lines = source.splitlines()[child.lineno - 1 : child.end_lineno]
+        if_src = textwrap.dedent("\n".join(block_lines))
+        for rnumel in [128, 256, 512, 1024]:
+            ns = {
+                "inductor_meta": {ATTR: False},
+                "rnumel_hint": rnumel,
+                "num_iters": 8,
+                "__builtins__": __builtins__,
+            }
+            exec(if_src, ns)
+            max_stages = ns.get("MAX_NUM_STAGES")
+            assert max_stages == 1, (
+                f"MAX_NUM_STAGES should be 1 when disabled (small rnumel={rnumel}), got {max_stages}"
+            )
+        print("PASS")
+        break
+    break
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_heuristics_multi_stage_when_enabled():
-    """persistent_reduction allows up to 3 stages for small rnumel (<=8192) when enabled."""
-    for rnumel_hint in [1024, 4096, 8192]:
-        max_stages = _exec_heuristics_branch(True, rnumel_hint, num_iters=16)
-        assert max_stages is not None, "MAX_NUM_STAGES branch not found"
-        assert max_stages == 3, (
-            f"MAX_NUM_STAGES should be 3 for rnumel={rnumel_hint} when enabled, got {max_stages}"
-        )
+    """persistent_reduction allows >1 stages when multi-stages enabled."""
+    r = _run_python(r"""
+import ast, textwrap
+from pathlib import Path
+
+ATTR = "mix_order_reduction_allow_multi_stages"
+source = Path("torch/_inductor/runtime/triton_heuristics.py").read_text()
+tree = ast.parse(source)
+
+for func_node in ast.walk(tree):
+    if not (isinstance(func_node, ast.FunctionDef) and func_node.name == "persistent_reduction"):
+        continue
+    for child in ast.walk(func_node):
+        if not isinstance(child, ast.If):
+            continue
+        test_src = ast.get_source_segment(source, child.test)
+        if not (test_src and ATTR in test_src):
+            continue
+        block_lines = source.splitlines()[child.lineno - 1 : child.end_lineno]
+        if_src = textwrap.dedent("\n".join(block_lines))
+        for rnumel in [1024, 4096, 8192]:
+            ns = {
+                "inductor_meta": {ATTR: True},
+                "rnumel_hint": rnumel,
+                "num_iters": 16,
+                "__builtins__": __builtins__,
+            }
+            exec(if_src, ns)
+            max_stages = ns.get("MAX_NUM_STAGES")
+            assert max_stages == 3, (
+                f"MAX_NUM_STAGES should be 3 for rnumel={rnumel} when enabled, got {max_stages}"
+            )
+        print("PASS")
+        break
+    break
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_heuristics_large_rnumel_caps_at_two():
     """When enabled with large rnumel (>8192), MAX_NUM_STAGES caps at 2."""
-    for rnumel_hint in [8193, 16384, 65536]:
-        max_stages = _exec_heuristics_branch(True, rnumel_hint, num_iters=16)
-        assert max_stages is not None, "MAX_NUM_STAGES branch not found"
-        assert max_stages == 2, (
-            f"MAX_NUM_STAGES should be 2 for rnumel={rnumel_hint} when enabled, got {max_stages}"
-        )
+    r = _run_python(r"""
+import ast, textwrap
+from pathlib import Path
+
+ATTR = "mix_order_reduction_allow_multi_stages"
+source = Path("torch/_inductor/runtime/triton_heuristics.py").read_text()
+tree = ast.parse(source)
+
+for func_node in ast.walk(tree):
+    if not (isinstance(func_node, ast.FunctionDef) and func_node.name == "persistent_reduction"):
+        continue
+    for child in ast.walk(func_node):
+        if not isinstance(child, ast.If):
+            continue
+        test_src = ast.get_source_segment(source, child.test)
+        if not (test_src and ATTR in test_src):
+            continue
+        block_lines = source.splitlines()[child.lineno - 1 : child.end_lineno]
+        if_src = textwrap.dedent("\n".join(block_lines))
+        for rnumel in [8193, 16384, 65536]:
+            ns = {
+                "inductor_meta": {ATTR: True},
+                "rnumel_hint": rnumel,
+                "num_iters": 16,
+                "__builtins__": __builtins__,
+            }
+            exec(if_src, ns)
+            max_stages = ns.get("MAX_NUM_STAGES")
+            assert max_stages == 2, (
+                f"MAX_NUM_STAGES should be 2 for rnumel={rnumel} when enabled, got {max_stages}"
+            )
+        print("PASS")
+        break
+    break
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_codegen_propagates_config_key():
     """inductor_meta_common includes mix_order_reduction_allow_multi_stages as a dict key."""
-    # AST-only because: importing torch._inductor.codegen.triton requires full torch + triton
-    source = Path(CODEGEN_TRITON).read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "inductor_meta_common":
-            for child in ast.walk(node):
-                if isinstance(child, ast.Constant) and child.value == ATTR:
-                    return  # found
-            raise AssertionError(
-                f"inductor_meta_common does not include {ATTR!r} as a string key"
-            )
+    r = _run_python(r"""
+import ast
+from pathlib import Path
+
+ATTR = "mix_order_reduction_allow_multi_stages"
+source = Path("torch/_inductor/codegen/triton.py").read_text()
+tree = ast.parse(source)
+for node in ast.walk(tree):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "inductor_meta_common":
+        for child in ast.walk(node):
+            if isinstance(child, ast.Constant) and child.value == ATTR:
+                print("PASS")
+                break
+        else:
+            raise AssertionError(f"inductor_meta_common does not include {ATTR!r} as a string key")
+        break
+else:
     raise AssertionError("inductor_meta_common function not found in codegen/triton.py")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests / static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
+
 # [repo_tests] pass_to_pass
 def test_existing_configs_intact():
-    """Existing mix_order_reduction config attributes are still present in the triton class."""
-    # AST-only because: importing torch._inductor.config requires full torch installation
+    """Existing mix_order_reduction config attributes still present."""
     source = Path(CONFIG_PY).read_text()
     tree = ast.parse(source)
     for node in ast.walk(tree):
@@ -225,9 +389,65 @@ def test_existing_configs_intact():
 
 # [static] pass_to_pass
 def test_config_not_hardcoded_false():
-    """Config reads env var — env var change actually toggles the value (not a hardcoded stub)."""
-    val_off = _find_config_attr_value()
-    val_on = _find_config_attr_value({ENV_VAR: "1"})
-    assert val_off != val_on, (
-        f"Config should toggle with {ENV_VAR}, but got off={val_off!r} on={val_on!r}"
+    """Config reads env var, not a trivial hardcoded False."""
+    r_off = _run_python(r"""
+import ast, os, types
+from pathlib import Path
+
+ATTR = "mix_order_reduction_allow_multi_stages"
+source = Path("torch/_inductor/config.py").read_text()
+tree = ast.parse(source)
+for node in ast.walk(tree):
+    if not (isinstance(node, ast.ClassDef) and node.name == "triton"):
+        continue
+    for stmt in ast.walk(node):
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+            target_name, value_node = stmt.target.id, stmt.value
+        elif isinstance(stmt, ast.Assign) and stmt.targets and isinstance(stmt.targets[0], ast.Name):
+            target_name, value_node = stmt.targets[0].id, stmt.value
+        else:
+            continue
+        if target_name != ATTR or value_node is None:
+            continue
+        expr_src = ast.get_source_segment(source, value_node)
+        if not expr_src:
+            continue
+        fake_os = types.ModuleType("os")
+        fake_os.environ = os.environ.copy()
+        ns = {"os": fake_os, "__builtins__": __builtins__}
+        print(eval(expr_src, ns))
+        break
+""")
+    r_on = _run_python(r"""
+import ast, os, types
+from pathlib import Path
+
+ATTR = "mix_order_reduction_allow_multi_stages"
+source = Path("torch/_inductor/config.py").read_text()
+tree = ast.parse(source)
+for node in ast.walk(tree):
+    if not (isinstance(node, ast.ClassDef) and node.name == "triton"):
+        continue
+    for stmt in ast.walk(node):
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+            target_name, value_node = stmt.target.id, stmt.value
+        elif isinstance(stmt, ast.Assign) and stmt.targets and isinstance(stmt.targets[0], ast.Name):
+            target_name, value_node = stmt.targets[0].id, stmt.value
+        else:
+            continue
+        if target_name != ATTR or value_node is None:
+            continue
+        expr_src = ast.get_source_segment(source, value_node)
+        if not expr_src:
+            continue
+        fake_os = types.ModuleType("os")
+        fake_os.environ = os.environ.copy()
+        fake_os.environ["TORCHINDUCTOR_MIX_ORDER_REDUCTION_ALLOW_MULTI_STAGES"] = "1"
+        ns = {"os": fake_os, "__builtins__": __builtins__}
+        print(eval(expr_src, ns))
+        break
+""", env_extra={ENV_VAR: "1"})
+    assert r_off.returncode == 0 and r_on.returncode == 0, f"Failed: off={r_off.stderr} on={r_on.stderr}"
+    assert r_off.stdout.strip() != r_on.stdout.strip(), (
+        f"Config should toggle with {ENV_VAR}, but got off={r_off.stdout.strip()!r} on={r_on.stdout.strip()!r}"
     )

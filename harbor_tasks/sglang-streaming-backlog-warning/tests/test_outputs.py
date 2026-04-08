@@ -8,10 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import io
-import logging
-import textwrap
-import types
+import subprocess
 from pathlib import Path
 
 REPO = "/repo"
@@ -20,7 +17,6 @@ FILE = f"{REPO}/python/sglang/srt/managers/tokenizer_manager.py"
 
 def _get_method_node():
     """Parse the file and return the _wait_one_response AST node."""
-    # AST-only because: torch, vllm, triton deps prevent importing tokenizer_manager
     source = Path(FILE).read_text()
     tree = ast.parse(source)
     for node in ast.walk(tree):
@@ -33,7 +29,6 @@ def _get_method_node():
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """tokenizer_manager.py must parse without syntax errors."""
     source = Path(FILE).read_text()
@@ -44,102 +39,145 @@ def test_syntax_check():
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-def test_no_backlog_warning_in_method():
-    """No logger.warning/warn calls about streaming backlog in _wait_one_response.
+def test_no_backlog_warning_at_runtime():
+    """Execute the streaming drain path and verify no WARNING log is emitted.
 
-    Accepts: deletion of the warning, downgrade to debug/info, or any
-    approach that eliminates WARNING-level log about backlog.
+    Extracts if-blocks in _wait_one_response containing logger.warning with
+    backlog keywords, executes them with mock objects at multiple pending
+    sizes, and asserts no WARNING-level output is produced.
     """
-    # AST-only because: torch, vllm, triton deps prevent importing tokenizer_manager
-    method, source = _get_method_node()
-    backlog_keywords = ["backlog", "queued chunks", "p99 tbt", "inflate"]
+    r = subprocess.run(
+        ["python3", "-c", _RUNTIME_SCRIPT],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Script failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout, f"Expected PASS:\nstdout: {r.stdout}\nstderr: {r.stderr}"
 
-    for child in ast.walk(method):
-        if not isinstance(child, ast.Call):
+
+_RUNTIME_SCRIPT = r'''
+import ast, textwrap, logging, io, types, sys
+
+source = open("python/sglang/srt/managers/tokenizer_manager.py").read()
+tree = ast.parse(source)
+lines = source.splitlines()
+
+method = None
+for node in ast.walk(tree):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "_wait_one_response":
+        method = node
+        break
+
+if method is None:
+    print("FAIL: _wait_one_response not found")
+    sys.exit(1)
+
+backlog_kw = ["backlog", "queued chunks", "p99 tbt", "inflate"]
+warning_blocks = []
+
+for child in ast.walk(method):
+    if not isinstance(child, ast.If):
+        continue
+    for sub in ast.walk(child):
+        if not isinstance(sub, ast.Call):
             continue
-        func = child.func
+        func = sub.func
         if not (isinstance(func, ast.Attribute) and func.attr in ("warning", "warn")):
             continue
-        for arg in child.args:
+        for arg in sub.args:
             if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
-                low = arg.value.lower()
-                if any(kw in low for kw in backlog_keywords):
-                    raise AssertionError(
-                        f"WARNING-level streaming backlog log still present "
-                        f"at line {child.lineno}: {arg.value!r}"
-                    )
+                if any(kw in arg.value.lower() for kw in backlog_kw):
+                    warning_blocks.append(child)
+                    break
+
+if not warning_blocks:
+    print("PASS: no backlog warning blocks found in source")
+    sys.exit(0)
+
+for block in warning_blocks:
+    code = textwrap.dedent("\n".join(lines[block.lineno - 1 : block.end_lineno]))
+    for n in [2, 5, 10]:
+        cap = io.StringIO()
+        handler = logging.StreamHandler(cap)
+        handler.setLevel(logging.WARNING)
+        lg = logging.getLogger("backlog_test_%d" % n)
+        lg.handlers.clear()
+        lg.addHandler(handler)
+        lg.setLevel(logging.DEBUG)
+        ns = {
+            "is_stream": True,
+            "pending": [{"t": str(i)} for i in range(n)],
+            "logger": lg,
+            "obj": types.SimpleNamespace(rid="test-rid-%d" % n),
+            "len": len,
+        }
+        try:
+            exec(code, ns)
+        except Exception:
+            pass
+        output = cap.getvalue().strip()
+        if output:
+            print("FAIL: WARNING emitted with %d pending: %s" % (n, output))
+            sys.exit(1)
+
+print("PASS: warning blocks exist but do not emit WARNING-level output")
+'''
 
 
-# [pr_diff] fail_to_pass
-def test_no_warning_emitted_with_pending_chunks():
-    """Execute any backlog-related code path and verify no WARNING output.
+def test_no_warning_call_in_method():
+    """No WARNING-level logger calls about streaming backlog in _wait_one_response.
 
-    Extracts if-blocks in _wait_one_response that reference backlog keywords,
-    runs them with varied pending list sizes, and asserts no WARNING is captured.
-    Covers fixes that restructure the code rather than deleting the block.
+    Parses the source AST via subprocess and verifies the warning call has been
+    removed, not just silenced or reconfigured.
     """
-    # AST-only because: torch, vllm, triton deps prevent importing tokenizer_manager
-    method, source = _get_method_node()
-    lines = source.splitlines()
-    backlog_keywords = ["backlog", "queued chunks", "p99 tbt", "inflate"]
+    r = subprocess.run(
+        ["python3", "-c", _AST_CHECK_SCRIPT],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Script failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout, f"Expected PASS:\nstdout: {r.stdout}\nstderr: {r.stderr}"
 
-    # Vary inputs — test multiple pending list sizes to prevent hardcoding
-    test_inputs = [
-        [{"t": "a"}, {"t": "b"}],                          # 2 pending
-        [{"t": "x"}, {"t": "y"}, {"t": "z"}],              # 3 pending
-        [{"t": str(i)} for i in range(10)],                 # 10 pending
-    ]
 
-    for child in ast.walk(method):
-        if not isinstance(child, ast.If):
-            continue
-        for sub in ast.walk(child):
-            if not isinstance(sub, ast.Call):
-                continue
-            func = sub.func
-            if not (isinstance(func, ast.Attribute) and func.attr in ("warning", "warn")):
-                continue
-            for arg in sub.args:
-                if not (isinstance(arg, ast.Constant) and isinstance(arg.value, str)):
-                    continue
-                if not any(kw in arg.value.lower() for kw in backlog_keywords):
-                    continue
-                # Found the block — execute it with each input set
-                block = textwrap.dedent("\n".join(lines[child.lineno - 1 : child.end_lineno]))
-                for pending in test_inputs:
-                    cap = io.StringIO()
-                    handler = logging.StreamHandler(cap)
-                    handler.setLevel(logging.WARNING)
-                    lg = logging.getLogger(f"backlog_exec_test_{len(pending)}")
-                    lg.handlers.clear()
-                    lg.addHandler(handler)
-                    lg.setLevel(logging.DEBUG)
-                    ns = {
-                        "is_stream": True,
-                        "pending": pending,
-                        "logger": lg,
-                        "obj": types.SimpleNamespace(rid=f"test-rid-{len(pending)}"),
-                        "len": len,
-                    }
-                    try:
-                        exec(block, ns)
-                    except Exception:
-                        pass  # restructured code may reference unavailable vars
-                    output = cap.getvalue().strip()
-                    assert not output, (
-                        f"WARNING-level log emitted with {len(pending)} pending chunks: {output!r}"
-                    )
+_AST_CHECK_SCRIPT = r'''
+import ast, sys
+
+source = open("python/sglang/srt/managers/tokenizer_manager.py").read()
+tree = ast.parse(source)
+
+method = None
+for node in ast.walk(tree):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "_wait_one_response":
+        method = node
+        break
+
+if method is None:
+    print("FAIL: _wait_one_response not found")
+    sys.exit(1)
+
+backlog_kw = ["backlog", "queued chunks", "p99 tbt", "inflate"]
+
+for child in ast.walk(method):
+    if not isinstance(child, ast.Call):
+        continue
+    func = child.func
+    if not (isinstance(func, ast.Attribute) and func.attr in ("warning", "warn")):
+        continue
+    for arg in child.args:
+        if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+            low = arg.value.lower()
+            if any(kw in low for kw in backlog_kw):
+                print("FAIL: WARNING-level backlog log at line %d: %r" % (child.lineno, arg.value))
+                sys.exit(1)
+
+print("PASS: no backlog warning calls in _wait_one_response")
+'''
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff / static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
-# [pr_diff] pass_to_pass
 def test_async_generator_preserved():
     """_wait_one_response must remain an async generator with drain loop and event handling."""
-    # AST-only because: torch, vllm, triton deps prevent importing tokenizer_manager
     method, _ = _get_method_node()
 
     assert isinstance(method, ast.AsyncFunctionDef), (
@@ -159,10 +197,8 @@ def test_async_generator_preserved():
     assert has_event, "Event coordination (.wait/.clear) is missing"
 
 
-# [static] pass_to_pass
 def test_method_not_stubbed():
     """_wait_one_response must have a substantial body with real logic."""
-    # AST-only because: torch, vllm, triton deps prevent importing tokenizer_manager
     method, _ = _get_method_node()
 
     line_count = method.end_lineno - method.lineno

@@ -22,30 +22,20 @@ checks:
     origin: static
     description: "ReactFlightClient.js is readable, non-empty, and retains key symbols"
 
-  - id: modelroot_jsx_root_check
+  - id: encodereply_jsx_root_behavior
     type: fail_to_pass
     origin: pr_diff
-    description: "encodeReply detects JSX as root model and emits a temporary reference marker instead of throwing"
+    description: "encodeReply with JSX element as root does not throw when temporaryReferences provided (Jest behavioral test)"
 
-  - id: modelroot_nulled_after_emit
+  - id: frozen_client_ref_behavior
     type: fail_to_pass
     origin: pr_diff
-    description: "modelRoot is set to null after emitting the temporary reference marker to prevent double-processing"
-
-  - id: frozen_guard_in_move_debug_info
-    type: fail_to_pass
-    origin: pr_diff
-    description: "moveDebugInfoFromChunkToInnerValue guards Object.defineProperty with Object.isFrozen to avoid crash on frozen elements"
+    description: "Frozen client reference element does not crash when debug info is attached in dev mode (Jest behavioral test)"
 
   - id: frozen_guard_in_add_async_info
     type: fail_to_pass
     origin: pr_diff
-    description: "addAsyncInfo guards Object.defineProperty with Object.isFrozen to avoid crash on frozen elements"
-
-  - id: isFrozen_count
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ReactFlightClient.js has at least 2 Object.isFrozen guards (one per defineProperty call site)"
+    description: "addAsyncInfo guards Object.defineProperty with Object.isFrozen to prevent crash on frozen elements"
 
   - id: error_preserved_for_non_temp_ref_jsx
     type: pass_to_pass

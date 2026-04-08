@@ -12,30 +12,25 @@ checks:
     origin: static
     description: "proxy.js must exist and contain core extension functions"
 
-  - id: handle_pageshow_function_defined
+  - id: handle_pageshow_defers_when_prerendering
     type: fail_to_pass
     origin: pr_diff
-    description: "A handlePageShow function must be defined to guard against prerendering"
+    description: "handlePageShow defers injection via prerenderingchange listener with once:true when document.prerendering is true"
 
-  - id: prerendering_checked_before_injection
+  - id: handle_pageshow_injects_when_not_prerendering
     type: fail_to_pass
     origin: pr_diff
-    description: "handlePageShow must check document.prerendering before calling injectProxy"
-
-  - id: prerenderingchange_listener_defers_injection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "When prerendering, a prerenderingchange listener must defer proxy injection with {once: true}"
+    description: "handlePageShow calls injectProxy directly when document.prerendering is false"
 
   - id: pageshow_listener_uses_handle_pageshow
     type: fail_to_pass
     origin: pr_diff
-    description: "The pageshow event listener must call handlePageShow, not injectProxy directly"
+    description: "The pageshow event listener must be registered with handlePageShow, not injectProxy"
 
   - id: inject_proxy_no_target_parameter
     type: fail_to_pass
     origin: pr_diff
-    description: "injectProxy must not destructure {target} — signature updated to no parameters"
+    description: "injectProxy must have no parameters (old {target} destructuring removed)"
 
   - id: flow_prerendering_type_declared
     type: fail_to_pass

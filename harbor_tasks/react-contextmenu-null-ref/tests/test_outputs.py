@@ -3,145 +3,227 @@ Task: react-contextmenu-null-ref
 Repo: facebook/react @ 93882bd40ee48dc6d072dfc0b6cc7801fac1be31
 PR:   35923
 
+Tests for fixing ContextMenu null ref crash in React DevTools.
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/react"
-CONTEXT_MENU = Path(REPO) / "packages/react-devtools-shared/src/devtools/ContextMenu/ContextMenu.js"
+MENU_FILE = "packages/react-devtools-shared/src/devtools/ContextMenu/ContextMenu.js"
+CONTEXT_MENU = Path(REPO) / MENU_FILE
 
-# NOTE: Tests use regex/text checks rather than `node --check` because ContextMenu.js
-# uses Flow type annotations (e.g. `(maybeMenu: HTMLDivElement)`) which are not
-# valid vanilla JavaScript and would cause node --check to fail on all commits.
+
+def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute a Node.js script in the repo working directory."""
+    tmp = Path(REPO) / "_eval_test.cjs"
+    tmp.write_text(script)
+    try:
+        return subprocess.run(
+            ["node", str(tmp)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — file existence / structure checks
+# pass_to_pass (static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_file_structure():
-    """ContextMenu.js must exist and export a ContextMenu function with useLayoutEffect."""
+    """ContextMenu.js must exist with ContextMenu function, useLayoutEffect, and createPortal."""
     assert CONTEXT_MENU.exists(), f"File not found: {CONTEXT_MENU}"
     src = CONTEXT_MENU.read_text()
-    assert len(src) > 200, "File appears empty or near-empty"
-    assert "function ContextMenu" in src, "ContextMenu function not found in file"
-    assert "useLayoutEffect" in src, "useLayoutEffect not found — core hook removed"
-    assert "createPortal" in src, "createPortal not found — portal rendering removed"
+    assert len(src) > 200, "File appears empty"
+    assert "function ContextMenu" in src, "ContextMenu function not found"
+    assert "useLayoutEffect" in src, "useLayoutEffect hook removed"
+    assert "createPortal" in src, "createPortal removed"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# fail_to_pass (pr_diff) — behavioral tests via Node.js subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_createref_not_used_as_default():
-    """createRef() must not be used as a default value for the ref prop.
+    """createRef() must not be imported or used as default ref prop (root cause of crash).
 
-    Root cause of the bug: `ref = createRef()` in the function signature creates a
-    new ref object on every render. Because the new ref's .current is always null
-    until after the DOM attaches, useLayoutEffect crashes immediately. The fix
-    removes this default entirely and uses a stable internal ref instead.
+    Runs Node.js to parse the source and verify createRef is removed from
+    both the import and the function signature default parameter.
     """
-    src = CONTEXT_MENU.read_text()
-    assert "ref = createRef()" not in src, (
-        "createRef() is still used as default for ref prop — this causes a new ref "
-        "to be created on every render, so ref.current is always null in the effect."
+    script = (
+        "const fs = require('fs');\n"
+        "const src = fs.readFileSync('" + MENU_FILE + "', 'utf-8');\n"
+        "\n"
+        "// createRef must not be imported from react\n"
+        "const importLines = src.split('\\n').filter(l => /^import\\s/.test(l) && l.includes(\"'react'\"));\n"
+        "if (importLines.some(l => l.includes('createRef'))) {\n"
+        "  process.stderr.write('FAIL: createRef is still imported from react\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "\n"
+        "// createRef() must not appear as default param in ContextMenu function signature\n"
+        "const sigMatch = src.match(/function\\s+ContextMenu\\s*\\(\\{[\\s\\S]*?\\}[\\s\\S]*?\\)\\s*(?::\\s*\\S+\\s*)?\\{/);\n"
+        "if (!sigMatch) {\n"
+        "  process.stderr.write('FAIL: ContextMenu function signature not found\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "if (sigMatch[0].includes('createRef')) {\n"
+        "  process.stderr.write('FAIL: createRef() still used as default param\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "\n"
+        "process.stdout.write('PASS\\n');\n"
     )
+    r = _run_node(script)
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_hidemenu_variable_and_early_return_in_effect():
-    """useLayoutEffect must guard against early-render using a hideMenu variable.
+    """hideMenu variable must guard useLayoutEffect against null ref access.
 
-    The fix extracts the early-return condition into `hideMenu` and checks it at
-    the top of useLayoutEffect, returning early before attempting to access
-    ref.current when the component is about to render nothing.
+    Runs Node.js to verify hideMenu is declared before the effect and
+    checked inside the effect body as an early-return guard.
     """
-    src = CONTEXT_MENU.read_text()
-    # hideMenu variable must be defined
-    assert "hideMenu" in src, (
-        "hideMenu variable not found — early-return condition not extracted"
+    script = (
+        "const fs = require('fs');\n"
+        "const src = fs.readFileSync('" + MENU_FILE + "', 'utf-8');\n"
+        "\n"
+        "// hideMenu must be declared as a variable\n"
+        "if (!src.match(/(?:const|let|var)\\s+hideMenu\\b/)) {\n"
+        "  process.stderr.write('FAIL: hideMenu is not declared as a variable\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "\n"
+        "// hideMenu must be defined BEFORE useLayoutEffect\n"
+        "const defIdx = src.search(/(?:const|let|var)\\s+hideMenu\\b/);\n"
+        "const effectIdx = src.indexOf('useLayoutEffect(');\n"
+        "if (effectIdx === -1) {\n"
+        "  process.stderr.write('FAIL: useLayoutEffect not found\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "if (defIdx > effectIdx) {\n"
+        "  process.stderr.write('FAIL: hideMenu defined after useLayoutEffect\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "\n"
+        "// Effect body must contain if (hideMenu) guard\n"
+        "const effectSrc = src.slice(effectIdx);\n"
+        "const bodyMatch = effectSrc.match(/useLayoutEffect\\(\\s*\\(\\)\\s*=>\\s*\\{([\\s\\S]*?)\\n\\s*\\},\\s*\\[/);\n"
+        "if (!bodyMatch) {\n"
+        "  process.stderr.write('FAIL: Cannot extract useLayoutEffect body\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "if (!bodyMatch[1].match(/if\\s*\\(\\s*hideMenu\\s*\\)/)) {\n"
+        "  process.stderr.write('FAIL: useLayoutEffect body does not check hideMenu\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "\n"
+        "process.stdout.write('PASS\\n');\n"
     )
-    # useLayoutEffect must check hideMenu before accessing ref
-    assert re.search(r"if\s*\(\s*hideMenu\s*\)", src), (
-        "useLayoutEffect must check `if (hideMenu)` and return early "
-        "before accessing menuRef.current"
-    )
+    r = _run_node(script)
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_null_check_before_using_ref():
-    """menuRef.current must be null-checked before use in useLayoutEffect.
+    """menuRef.current must be null-checked in useLayoutEffect before use as HTMLElement.
 
-    Even after the hideMenu guard, the fix adds an explicit null assertion:
-    `const maybeMenu = menuRef.current; if (maybeMenu === null) { throw ... }`
-    This makes programming errors visible instead of silently crashing with a
-    cryptic "cannot read property of null" error.
+    Runs Node.js to verify the effect body references menuRef.current and
+    includes an explicit === null guard before casting to HTMLElement.
     """
-    src = CONTEXT_MENU.read_text()
-    # The fix captures menuRef.current in a local variable and null-checks it.
-    # Accept either the exact pattern from the PR or a semantically equivalent guard.
-    has_null_check = (
-        re.search(r"menuRef\.current\s*===\s*null", src) or
-        re.search(r"maybeMenu\s*===\s*null", src) or
-        re.search(r"if\s*\(\s*!\s*menuRef\.current\s*\)", src)
+    script = (
+        "const fs = require('fs');\n"
+        "const src = fs.readFileSync('" + MENU_FILE + "', 'utf-8');\n"
+        "\n"
+        "// Extract useLayoutEffect body\n"
+        "const effectSrc = src.slice(src.indexOf('useLayoutEffect('));\n"
+        "const bodyMatch = effectSrc.match(/useLayoutEffect\\(\\s*\\(\\)\\s*=>\\s*\\{([\\s\\S]*?)\\n\\s*\\},\\s*\\[/);\n"
+        "if (!bodyMatch) {\n"
+        "  process.stderr.write('FAIL: Cannot extract useLayoutEffect body\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "const body = bodyMatch[1];\n"
+        "\n"
+        "// Must reference menuRef.current and have a null check (=== null)\n"
+        "if (!body.includes('menuRef.current')) {\n"
+        "  process.stderr.write('FAIL: menuRef.current not referenced in effect\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "if (!body.includes('=== null')) {\n"
+        "  process.stderr.write('FAIL: No === null check in effect body\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "\n"
+        "process.stdout.write('PASS\\n');\n"
     )
-    assert has_null_check, (
-        "No null check found for menuRef.current — the effect must guard against "
-        "a null ref before calling methods like contains() on the element"
-    )
+    r = _run_node(script)
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_hidemenu_in_dependency_array():
-    """useLayoutEffect dependency array must include hideMenu, not be empty.
+    """useLayoutEffect dependency array must be [hideMenu], not empty [].
 
-    The base commit uses `[]` (empty deps), meaning the effect fires once on mount
-    and never again. After the fix, the effect must re-run when hideMenu changes
-    so that event listeners are properly added/removed when menu visibility toggles.
+    Runs Node.js to verify the effect's dependency array changed from the
+    buggy empty [] to [hideMenu] so the effect re-runs on visibility change.
     """
-    src = CONTEXT_MENU.read_text()
-    # Must NOT have the buggy empty dep array
-    # (use DOTALL so the regex can span the multi-line effect body)
-    buggy_empty_deps = re.search(
-        r"useLayoutEffect\s*\(.*?\},\s*\[\s*\]\s*\)",
-        src,
-        re.DOTALL,
+    script = (
+        "const fs = require('fs');\n"
+        "const src = fs.readFileSync('" + MENU_FILE + "', 'utf-8');\n"
+        "\n"
+        "// Must NOT have empty dependency array (the buggy pattern)\n"
+        "if (src.match(/useLayoutEffect\\([\\s\\S]*?\\},\\s*\\[\\s*\\]\\s*\\)/)) {\n"
+        "  process.stderr.write('FAIL: useLayoutEffect still has empty dep array []\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "\n"
+        "// Must have [hideMenu] as dependency array\n"
+        "if (!src.match(/\\},\\s*\\[hideMenu\\]\\s*\\)/)) {\n"
+        "  process.stderr.write('FAIL: useLayoutEffect deps should be [hideMenu]\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "\n"
+        "process.stdout.write('PASS\\n');\n"
     )
-    assert not buggy_empty_deps, (
-        "useLayoutEffect still has an empty dependency array `[]` — "
-        "it must use `[hideMenu]` so the effect re-runs on visibility changes"
-    )
-    assert re.search(r"},\s*\[hideMenu\]\s*\)", src), (
-        "useLayoutEffect dependency array must be `[hideMenu]`"
-    )
+    r = _run_node(script)
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-regression
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
 def test_internal_ref_replaces_prop_ref():
-    """Component must use an internal React.useRef instead of the external ref prop.
+    """Component must use internal useRef (menuRef) attached to div, not external ref prop.
 
-    The fix replaces `<div ref={ref}>` (where ref came from props) with
-    `<div ref={menuRef}>` (an internal ref created via React.useRef).
-    This ensures the ref is stable across renders.
+    Runs Node.js to verify menuRef is introduced and wired to the JSX element,
+    replacing the old ref prop that used createRef() as a default.
     """
-    src = CONTEXT_MENU.read_text()
-    assert "menuRef" in src, (
-        "menuRef not found — internal ref not introduced"
+    script = (
+        "const fs = require('fs');\n"
+        "const src = fs.readFileSync('" + MENU_FILE + "', 'utf-8');\n"
+        "\n"
+        "// menuRef must exist (internal ref via React.useRef)\n"
+        "if (!src.includes('menuRef')) {\n"
+        "  process.stderr.write('FAIL: menuRef not found — internal ref not introduced\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "\n"
+        "// JSX must attach menuRef to the div element\n"
+        "if (!src.match(/ref=\\{menuRef\\}/)) {\n"
+        "  process.stderr.write('FAIL: menuRef not attached to ContextMenu div\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "\n"
+        "// Old prop ref default must be gone\n"
+        "if (src.includes('ref = createRef()')) {\n"
+        "  process.stderr.write('FAIL: Old ref = createRef() default still present\\n');\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "\n"
+        "process.stdout.write('PASS\\n');\n"
     )
-    # The JSX must attach menuRef (not the old prop ref) to the div
-    assert re.search(r"ref=\{menuRef\}", src), (
-        "Internal menuRef is not attached to the ContextMenu div element"
-    )
-    # The prop ref default should be gone
-    assert "ref = createRef()" not in src, (
-        "Old prop ref default still present alongside menuRef"
-    )
+    r = _run_node(script)
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout

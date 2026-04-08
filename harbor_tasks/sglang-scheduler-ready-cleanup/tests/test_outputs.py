@@ -10,6 +10,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import multiprocessing
 import signal
+import subprocess
+import textwrap
 from pathlib import Path
 
 REPO = "/workspace"
@@ -59,6 +61,36 @@ def _extract_wait_function():
     return header + "\n\n".join(chunks)
 
 
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in a subprocess within the repo directory."""
+    script = Path(REPO) / "_eval_tmp.py"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
+# Build subprocess preamble: extracted function source + test helpers
+_SUBPROCESS_PREAMBLE = (
+    _extract_wait_function()
+    + "\nimport signal\nimport sys\n\n"
+    + textwrap.dedent("""\
+    class FakeProc:
+        def __init__(self, alive=True, exitcode=None):
+            self._alive = alive
+            self.exitcode = exitcode
+        def is_alive(self):
+            return self._alive
+        def join(self, timeout=None):
+            pass
+    """)
+)
+
+# In-process extraction for pass_to_pass tests
 _ns = {}
 exec(_extract_wait_function(), _ns)
 _wait_for_scheduler_ready = _ns["_wait_for_scheduler_ready"]
@@ -88,7 +120,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -98,27 +130,35 @@ def test_immediate_nonready_first_rank():
     Bug: rank 0 sends non-ready, rank 1 never sends -> hangs polling rank 1.
     Fix: rank 0 non-ready detected right after recv -> raises immediately.
     """
+    r = _run_py(_SUBPROCESS_PREAMBLE + textwrap.dedent("""\
+
     def timeout_handler(signum, frame):
-        raise TimeoutError("Hung waiting — status check was deferred")
+        print("HUNG")
+        sys.exit(1)
 
-    old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(15)
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(10)
+
+    r0, w0 = multiprocessing.Pipe(duplex=False)
+    w0.send({"status": "error", "message": "init failed"})
+
+    r1, w1 = multiprocessing.Pipe(duplex=False)
+    # rank 1 never sends — alive but slow
+
     try:
-        r0, w0 = multiprocessing.Pipe(duplex=False)
-        w0.send({"status": "error", "message": "init failed"})
-
-        r1, w1 = multiprocessing.Pipe(duplex=False)
-        # rank 1 never sends — alive but slow
-
-        try:
-            _wait_for_scheduler_ready([r0, r1], [FakeProc(), FakeProc()])
-            assert False, "Expected RuntimeError but no exception raised"
-        except RuntimeError as e:
-            msg = str(e).lower()
-            assert "failed" in msg or "error" in msg, f"Wrong error: {e}"
-    finally:
-        signal.alarm(0)
-        signal.signal(signal.SIGALRM, old_handler)
+        _wait_for_scheduler_ready([r0, r1], [FakeProc(), FakeProc()])
+        print("NO_ERROR")
+        sys.exit(1)
+    except RuntimeError as e:
+        msg = str(e).lower()
+        if "failed" in msg or "error" in msg:
+            print("PASS")
+        else:
+            print(f"WRONG_ERROR: {e}")
+            sys.exit(1)
+    """), timeout=20)
+    assert r.returncode == 0, f"Failed (rc={r.returncode}): stdout={r.stdout} stderr={r.stderr}"
+    assert "PASS" in r.stdout, f"Expected PASS: {r.stdout}"
 
 
 # [pr_diff] fail_to_pass
@@ -128,33 +168,41 @@ def test_immediate_nonready_middle_rank():
     Bug: rank 0 ready, rank 1 non-ready, rank 2 never sends -> hangs on rank 2.
     Fix: rank 1 non-ready detected right after recv -> raises immediately.
     """
+    r = _run_py(_SUBPROCESS_PREAMBLE + textwrap.dedent("""\
+
     def timeout_handler(signum, frame):
-        raise TimeoutError("Hung waiting — status check was deferred")
+        print("HUNG")
+        sys.exit(1)
 
-    old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(15)
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(10)
+
+    r0, w0 = multiprocessing.Pipe(duplex=False)
+    w0.send({"status": "ready", "rank": 0})
+
+    r1, w1 = multiprocessing.Pipe(duplex=False)
+    w1.send({"status": "error", "message": "rank 1 init failed"})
+
+    r2, w2 = multiprocessing.Pipe(duplex=False)
+    # rank 2 never sends
+
     try:
-        r0, w0 = multiprocessing.Pipe(duplex=False)
-        w0.send({"status": "ready", "rank": 0})
-
-        r1, w1 = multiprocessing.Pipe(duplex=False)
-        w1.send({"status": "error", "message": "rank 1 init failed"})
-
-        r2, w2 = multiprocessing.Pipe(duplex=False)
-        # rank 2 never sends
-
-        try:
-            _wait_for_scheduler_ready(
-                [r0, r1, r2],
-                [FakeProc(), FakeProc(), FakeProc()]
-            )
-            assert False, "Expected RuntimeError but no exception raised"
-        except RuntimeError as e:
-            msg = str(e).lower()
-            assert "failed" in msg or "error" in msg, f"Wrong error: {e}"
-    finally:
-        signal.alarm(0)
-        signal.signal(signal.SIGALRM, old_handler)
+        _wait_for_scheduler_ready(
+            [r0, r1, r2],
+            [FakeProc(), FakeProc(), FakeProc()]
+        )
+        print("NO_ERROR")
+        sys.exit(1)
+    except RuntimeError as e:
+        msg = str(e).lower()
+        if "failed" in msg or "error" in msg:
+            print("PASS")
+        else:
+            print(f"WRONG_ERROR: {e}")
+            sys.exit(1)
+    """), timeout=20)
+    assert r.returncode == 0, f"Failed (rc={r.returncode}): stdout={r.stdout} stderr={r.stderr}"
+    assert "PASS" in r.stdout, f"Expected PASS: {r.stdout}"
 
 
 # [pr_diff] fail_to_pass
@@ -286,7 +334,6 @@ def test_dead_process_detected():
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
-# AST-only because: checking code complexity requires inspecting the AST
 def test_not_stub():
     """_wait_for_scheduler_ready has meaningful implementation, not a stub."""
     source = ENGINE_FILE.read_text()

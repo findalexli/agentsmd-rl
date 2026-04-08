@@ -7,37 +7,37 @@ source:
   merge_commit: "2d4c2beb23085873380840c9bd18eeca29645843"
 
 checks:
-  - id: hostname_crash_fixed
+  - id: test_hostname_crash_fixed
     type: fail_to_pass
     origin: pr_diff
     description: "Hostname assertf removed and replaced with proper error return"
 
-  - id: unix_crash_fixed
+  - id: test_unix_crash_fixed
     type: fail_to_pass
     origin: pr_diff
     description: "Unix path assertf removed and replaced with proper error return"
 
-  - id: throw_tests_added
+  - id: test_throw_tests_added
     type: fail_to_pass
     origin: pr_diff
     description: "Agent added tests verifying throw on truthy-but-empty hostname/unix"
 
-  - id: handlers_not_stubbed
+  - id: test_handlers_not_stubbed
     type: pass_to_pass
     origin: static
     description: "Handlers.zig is substantial, not gutted or replaced with stub"
 
-  - id: hostname_unix_branches_preserved
+  - id: test_hostname_unix_branches_preserved
     type: pass_to_pass
     origin: pr_diff
     description: "Both hostname and unix handling branches still exist"
 
-  - id: socket_test_file_preserved
+  - id: test_socket_test_file_preserved
     type: pass_to_pass
     origin: pr_diff
     description: "socket.test.ts not truncated or deleted"
 
-  - id: no_hardcoded_ports
+  - id: test_no_hardcoded_ports
     type: pass_to_pass
     origin: agent_config
     description: "New tests use port: 0, not hardcoded ports"
@@ -46,7 +46,7 @@ checks:
       lines: "97"
       commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"
 
-  - id: no_settimeout_in_new_tests
+  - id: test_no_settimeout_in_new_tests
     type: pass_to_pass
     origin: agent_config
     description: "New tests do not use setTimeout — await conditions instead"
@@ -55,7 +55,7 @@ checks:
       lines: "102"
       commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"
 
-  - id: no_panic_absence_tests
+  - id: test_no_panic_absence_tests
     type: pass_to_pass
     origin: agent_config
     description: "New tests don't check for absence of 'panic' or 'uncaught exception'"

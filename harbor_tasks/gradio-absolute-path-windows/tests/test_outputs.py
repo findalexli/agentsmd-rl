@@ -10,6 +10,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import os
 import posixpath
+import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
@@ -18,6 +19,46 @@ import pytest
 REPO = "/workspace/gradio"
 UTILS_PATH = Path(f"{REPO}/gradio/utils.py")
 
+# Shared extraction snippet used by subprocess-based tests.
+# Extracts safe_join via AST (avoids importing heavy gradio deps)
+# and leaves `safe_join` in scope for the caller to use.
+_EXTRACT_AND_TEST_PREFIX = """
+import ast, os, posixpath
+from unittest.mock import patch
+
+class InvalidPathError(ValueError):
+    pass
+
+src = open("gradio/utils.py").read()
+tree = ast.parse(src)
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "safe_join":
+        func_src = ast.get_source_segment(src, node)
+        break
+else:
+    raise RuntimeError("safe_join not found")
+
+namespace = {
+    "os": os,
+    "posixpath": posixpath,
+    "InvalidPathError": InvalidPathError,
+    "DeveloperPath": str,
+    "UserProvidedPath": str,
+}
+exec(compile(ast.parse(func_src), "<safe_join>", "exec"), namespace)
+safe_join = namespace["safe_join"]
+"""
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code via subprocess in the repo directory."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
+# --- In-process helper for pass_to_pass regression tests ---
 
 class InvalidPathError(ValueError):
     """Mirror of gradio.exceptions.InvalidPathError for extracted function."""
@@ -45,7 +86,6 @@ def _extract_safe_join():
         "os": os,
         "posixpath": posixpath,
         "InvalidPathError": InvalidPathError,
-        # Type aliases used in function signature
         "DeveloperPath": str,
         "UserProvidedPath": str,
     }
@@ -66,36 +106,50 @@ def test_syntax_check():
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — paths starting with / must be rejected
+# Uses subprocess.run() to execute actual code
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_slash_path_rejected_simulated_win314():
     """Path /etc/passwd rejected even when os.path.isabs returns False (Py3.14 Windows sim)."""
-    safe_join = _extract_safe_join()
-
-    # Simulate Python 3.14 Windows: os.path.isabs returns False for /-prefixed paths
-    with patch("os.path.isabs", return_value=False):
-        for malicious in ["/etc/passwd", "/root/.ssh/id_rsa", "/var/log/syslog"]:
-            with pytest.raises(InvalidPathError):
-                safe_join("/tmp/uploads", malicious)
+    r = _run_py(_EXTRACT_AND_TEST_PREFIX + """
+with patch("os.path.isabs", return_value=False):
+    for malicious in ["/etc/passwd", "/root/.ssh/id_rsa", "/var/log/syslog"]:
+        try:
+            safe_join("/tmp/uploads", malicious)
+        except InvalidPathError:
+            pass
+        else:
+            raise AssertionError(f"safe_join allowed malicious path: {malicious!r}")
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_various_slash_paths_rejected_simulated_win314():
-    """Slash-prefixed paths with varying depths rejected under Py3.14 Windows sim."""
-    safe_join = _extract_safe_join()
-
-    slash_paths = [
-        "/home/user/.env",
-        "/proc/self/environ",
-        "/etc/shadow",
-        "/opt/secrets/key.pem",
-        "/usr/local/bin/exploit",
-    ]
-    with patch("os.path.isabs", return_value=False):
-        for path in slash_paths:
-            with pytest.raises(InvalidPathError):
-                safe_join("/data/files", path)
+    """Multiple /-prefixed paths rejected under Py3.14 Windows simulation."""
+    r = _run_py(_EXTRACT_AND_TEST_PREFIX + """
+slash_paths = [
+    "/home/user/.env",
+    "/proc/self/environ",
+    "/etc/shadow",
+    "/opt/secrets/key.pem",
+    "/usr/local/bin/exploit",
+]
+with patch("os.path.isabs", return_value=False):
+    for path in slash_paths:
+        try:
+            safe_join("/data/files", path)
+        except InvalidPathError:
+            pass
+        else:
+            raise AssertionError(f"safe_join allowed: {path!r}")
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -134,7 +188,6 @@ def test_traversal_paths_still_rejected():
 # [static] pass_to_pass
 def test_not_stub():
     """safe_join has real logic with security checks."""
-    # AST-only because: checking function structure, not behavior
     src = UTILS_PATH.read_text()
     tree = ast.parse(src)
     for node in ast.walk(tree):

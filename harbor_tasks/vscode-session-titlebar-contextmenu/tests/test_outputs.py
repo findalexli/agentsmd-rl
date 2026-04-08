@@ -5,123 +5,250 @@ PR:   306419
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
-"""
-# AST-only because: TypeScript cannot be executed in Python; all checks
-# are structural pattern searches on the source text.
 
-import re
+Tests use the TypeScript compiler API via Node.js subprocess to verify
+AST-level code structure rather than grep-based string matching.
+"""
+
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/vscode"
-TITLEBAR = Path(f"{REPO}/src/vs/sessions/contrib/sessions/browser/sessionsTitleBarWidget.ts")
-PROVIDER = Path(
-    f"{REPO}/src/vs/sessions/contrib/copilotChatSessions/browser/copilotChatSessionsProvider.ts"
-)
+TITLEBAR = "src/vs/sessions/contrib/sessions/browser/sessionsTitleBarWidget.ts"
+PROVIDER = "src/vs/sessions/contrib/copilotChatSessions/browser/copilotChatSessionsProvider.ts"
+
+
+def _run_node(code: str, file_rel: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node.js, passing file_rel as argv[2]."""
+    script = Path(f"{REPO}/_eval_tmp.cjs")
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script), file_rel],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_files_exist():
     """Both modified TypeScript files are present in the workspace."""
-    assert TITLEBAR.exists(), f"Missing: {TITLEBAR}"
-    assert PROVIDER.exists(), f"Missing: {PROVIDER}"
+    assert (Path(REPO) / TITLEBAR).exists(), f"Missing: {TITLEBAR}"
+    assert (Path(REPO) / PROVIDER).exists(), f"Missing: {PROVIDER}"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioural fixes
+# Fail-to-pass (pr_diff) — verified via TS compiler API
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_new_session_guard():
-    """Context menu is suppressed for new/unsaved chat sessions.
+    """Context menu suppressed for new/unsaved sessions via IsNewChatSessionContext early-return guard."""
+    r = _run_node(
+        """
+const ts = require('typescript');
+const fs = require('fs');
+const src = fs.readFileSync(process.argv[2], 'utf8');
+const sf = ts.createSourceFile('f.ts', src, ts.ScriptTarget.Latest, true);
 
-    The base commit shows the context menu unconditionally; the fix adds an
-    IsNewChatSessionContext guard that returns early before opening the menu.
-    """
-    src = TITLEBAR.read_text()
-    assert "IsNewChatSessionContext" in src, (
-        "IsNewChatSessionContext not imported — new-session guard is missing"
+// 1. IsNewChatSessionContext must be imported from sessionsManagementService
+let imported = false;
+ts.forEachChild(sf, n => {
+    if (ts.isImportDeclaration(n)) {
+        const mod = n.moduleSpecifier.getText(sf);
+        if (mod.includes('sessionsManagementService')) {
+            const clause = n.importClause;
+            if (clause && clause.namedBindings) {
+                ts.forEachChild(clause.namedBindings, c => {
+                    if (ts.isImportSpecifier(c) && c.name.text === 'IsNewChatSessionContext') imported = true;
+                });
+            }
+        }
+    }
+});
+if (!imported) { process.stderr.write('IsNewChatSessionContext not imported\\n'); process.exit(1); }
+
+// 2. An if-statement referencing IsNewChatSessionContext must contain a return
+let foundGuard = false;
+function walk(n) {
+    if (ts.isIfStatement(n)) {
+        const cond = n.expression.getText(sf);
+        if (cond.includes('IsNewChatSessionContext')) {
+            const then = n.thenStatement;
+            const stmts = ts.isBlock(then) ? Array.from(then.statements) : [then];
+            if (stmts.some(s => ts.isReturnStatement(s))) foundGuard = true;
+        }
+    }
+    ts.forEachChild(n, walk);
+}
+ts.forEachChild(sf, walk);
+if (!foundGuard) { process.stderr.write('No IsNewChatSessionContext guard with return\\n'); process.exit(1); }
+console.log('PASS');
+""",
+        TITLEBAR,
     )
-    assert "IsNewChatSessionContext.key" in src, (
-        "IsNewChatSessionContext.key not referenced — guard not applied"
-    )
-    # The guard must be inside a conditional that causes an early return
-    # Look for the pattern: if (...IsNewChatSessionContext...) { return; }
-    assert re.search(r"IsNewChatSessionContext\.key[^)]*\)[\s\S]{0,40}return", src), (
-        "IsNewChatSessionContext check does not lead to an early return"
-    )
+    assert r.returncode == 0, f"New session guard check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_pinned_state_not_hardcoded():
-    """IsSessionPinnedContext.key is no longer hardcoded to false.
+    """IsSessionPinnedContext.key is no longer hardcoded to false."""
+    r = _run_node(
+        """
+const ts = require('typescript');
+const fs = require('fs');
+const src = fs.readFileSync(process.argv[2], 'utf8');
+const sf = ts.createSourceFile('f.ts', src, ts.ScriptTarget.Latest, true);
 
-    Base commit: [IsSessionPinnedContext.key, false]
-    Fixed:       [IsSessionPinnedContext.key, isPinned]
-    """
-    src = TITLEBAR.read_text()
-    assert "IsSessionPinnedContext.key, false" not in src, (
-        "Bug still present: IsSessionPinnedContext.key is hardcoded to false"
+// Walk AST looking for [IsSessionPinnedContext.key, false] pattern
+let found = false;
+function walk(n) {
+    if (ts.isArrayLiteralExpression(n)) {
+        for (const elem of n.elements) {
+            if (ts.isArrayLiteralExpression(elem)) {
+                const parts = Array.from(elem.elements);
+                if (parts.length >= 2) {
+                    const key = parts[0].getText(sf);
+                    const val = parts[1];
+                    if (key.includes('IsSessionPinnedContext.key') && val.kind === ts.SyntaxKind.FalseKeyword) {
+                        found = true;
+                    }
+                }
+            }
+        }
+    }
+    ts.forEachChild(n, walk);
+}
+ts.forEachChild(sf, walk);
+if (found) { process.stderr.write('IsSessionPinnedContext.key still hardcoded to false\\n'); process.exit(1); }
+console.log('PASS');
+""",
+        TITLEBAR,
     )
+    assert r.returncode == 0, f"Pinned state hardcoded check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_pinned_state_dynamic():
-    """Pinned state is dynamically resolved via IViewsService + isSessionPinned().
+    """Pinned state resolved dynamically via IViewsService + isSessionPinned()."""
+    r = _run_node(
+        """
+const ts = require('typescript');
+const fs = require('fs');
+const src = fs.readFileSync(process.argv[2], 'utf8');
+const sf = ts.createSourceFile('f.ts', src, ts.ScriptTarget.Latest, true);
 
-    The fix injects IViewsService, retrieves the SessionsView, and calls
-    isSessionPinned(sessionData) to obtain the real pinned flag.
-    """
-    src = TITLEBAR.read_text()
-    assert "IViewsService" in src, "IViewsService not injected into SessionsTitleBarWidget"
-    assert "SessionsView" in src, "SessionsView not imported — needed for isSessionPinned lookup"
-    assert "isSessionPinned(" in src, (
-        "isSessionPinned() not called — pinned state still not dynamically fetched"
+// 1. IViewsService must be imported from viewsService module
+let viewsImported = false;
+ts.forEachChild(sf, n => {
+    if (ts.isImportDeclaration(n)) {
+        const mod = n.moduleSpecifier.getText(sf);
+        if (mod.includes('viewsService')) {
+            const clause = n.importClause;
+            if (clause && clause.namedBindings) {
+                ts.forEachChild(clause.namedBindings, c => {
+                    if (ts.isImportSpecifier(c) && c.name.text === 'IViewsService') viewsImported = true;
+                });
+            }
+        }
+    }
+});
+if (!viewsImported) { process.stderr.write('IViewsService not imported\\n'); process.exit(1); }
+
+// 2. isSessionPinned() must be called somewhere
+if (!src.includes('isSessionPinned(')) { process.stderr.write('isSessionPinned() not called\\n'); process.exit(1); }
+
+// 3. IViewsService must be a constructor parameter (dependency injection)
+let foundInjection = false;
+function walk(n) {
+    if (ts.isConstructorDeclaration(n)) {
+        for (const p of n.parameters) {
+            if (p.type && p.type.getText(sf).includes('IViewsService')) foundInjection = true;
+        }
+    }
+    ts.forEachChild(n, walk);
+}
+ts.forEachChild(sf, walk);
+if (!foundInjection) { process.stderr.write('IViewsService not injected as constructor param\\n'); process.exit(1); }
+console.log('PASS');
+""",
+        TITLEBAR,
     )
-    # The result must be wired to IsSessionPinnedContext (may span lines)
-    assert re.search(
-        r"IsSessionPinnedContext\.key.*isSessionPinned|isSessionPinned.*IsSessionPinnedContext\.key",
-        src,
-        re.DOTALL,
-    ), "isSessionPinned() result is not passed to IsSessionPinnedContext.key"
+    assert r.returncode == 0, f"Dynamic pinned state check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_session_type_icon_method_exists():
-    """Private _getSessionTypeIcon method added to AgentSessionAdapter.
+    """Private _getSessionTypeIcon method with switch on providerType covering Background and Cloud."""
+    r = _run_node(
+        """
+const ts = require('typescript');
+const fs = require('fs');
+const src = fs.readFileSync(process.argv[2], 'utf8');
+const sf = ts.createSourceFile('f.ts', src, ts.ScriptTarget.Latest, true);
 
-    Base commit: no such method.  Fix: switch on session.providerType to
-    return the correct ThemeIcon for Background and Cloud providers.
-    """
-    src = PROVIDER.read_text()
-    assert "_getSessionTypeIcon" in src, (
-        "_getSessionTypeIcon method not found in copilotChatSessionsProvider.ts"
+let foundMethod = false, hasSwitch = false, hasBackground = false, hasCloud = false;
+function walk(n) {
+    if (ts.isMethodDeclaration(n) && n.name.getText(sf) === '_getSessionTypeIcon') {
+        foundMethod = true;
+        function walkMethod(m) {
+            if (ts.isSwitchStatement(m) && m.expression.getText(sf).includes('providerType')) {
+                hasSwitch = true;
+                for (const cl of m.caseBlock.clauses) {
+                    const t = cl.getText(sf);
+                    if (t.includes('Background')) hasBackground = true;
+                    if (t.includes('Cloud')) hasCloud = true;
+                }
+            }
+            ts.forEachChild(m, walkMethod);
+        }
+        if (n.body) ts.forEachChild(n.body, walkMethod);
+    }
+    ts.forEachChild(n, walk);
+}
+ts.forEachChild(sf, walk);
+if (!foundMethod) { process.stderr.write('_getSessionTypeIcon method not found\\n'); process.exit(1); }
+if (!hasSwitch) { process.stderr.write('No switch(providerType) in method\\n'); process.exit(1); }
+if (!hasBackground) { process.stderr.write('Background case missing\\n'); process.exit(1); }
+if (!hasCloud) { process.stderr.write('Cloud case missing\\n'); process.exit(1); }
+console.log('PASS');
+""",
+        PROVIDER,
     )
-    assert re.search(r"switch\s*\([^)]*providerType", src), (
-        "No switch(providerType) found inside _getSessionTypeIcon"
-    )
-    assert "AgentSessionProviders.Background" in src, (
-        "Background provider case missing from _getSessionTypeIcon"
-    )
-    assert "AgentSessionProviders.Cloud" in src, (
-        "Cloud provider case missing from _getSessionTypeIcon"
-    )
+    assert r.returncode == 0, f"Session type icon method check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_session_icon_uses_method():
-    """this.icon is set via _getSessionTypeIcon(), not directly from session.icon.
+    """this.icon assigned via this._getSessionTypeIcon() instead of direct session.icon."""
+    r = _run_node(
+        """
+const ts = require('typescript');
+const fs = require('fs');
+const src = fs.readFileSync(process.argv[2], 'utf8');
+const sf = ts.createSourceFile('f.ts', src, ts.ScriptTarget.Latest, true);
 
-    Base commit: this.icon = session.icon  (all provider types get the same icon)
-    Fixed:       this.icon = this._getSessionTypeIcon(session)
-    """
-    src = PROVIDER.read_text()
-    assert "this.icon = session.icon" not in src, (
-        "Bug still present: this.icon assigned directly from session.icon"
+let directAssign = false, methodAssign = false;
+function walk(n) {
+    if (ts.isBinaryExpression(n) && n.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
+        const left = n.left.getText(sf);
+        if (left === 'this.icon') {
+            const right = n.right.getText(sf);
+            if (right === 'session.icon') directAssign = true;
+            if (right.includes('_getSessionTypeIcon')) methodAssign = true;
+        }
+    }
+    ts.forEachChild(n, walk);
+}
+ts.forEachChild(sf, walk);
+if (directAssign) { process.stderr.write('this.icon = session.icon still present\\n'); process.exit(1); }
+if (!methodAssign) { process.stderr.write('this._getSessionTypeIcon() not used for icon assignment\\n'); process.exit(1); }
+console.log('PASS');
+""",
+        PROVIDER,
     )
-    assert "this._getSessionTypeIcon(" in src, (
-        "this._getSessionTypeIcon() not called — icon method not wired up"
-    )
+    assert r.returncode == 0, f"Session icon method usage check failed: {r.stderr}"
+    assert "PASS" in r.stdout

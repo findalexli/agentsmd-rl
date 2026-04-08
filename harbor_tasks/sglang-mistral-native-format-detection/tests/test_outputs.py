@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import os
+import subprocess
 import tempfile
 import textwrap
 import types
@@ -22,6 +23,63 @@ TARGET_FILE = f"{REPO}/python/sglang/srt/server_args.py"
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _build_check_script(model_name: str, has_params: bool, has_config: bool) -> str:
+    """Build a Python script that extracts and calls _is_mistral_native_format."""
+    lines = [
+        "import ast, os, tempfile, textwrap, types",
+        "from pathlib import Path",
+        "",
+        f"TARGET = {TARGET_FILE!r}",
+        "source = Path(TARGET).read_text()",
+        "src_lines = source.splitlines(keepends=True)",
+        "tree = ast.parse(source)",
+        "for node in ast.walk(tree):",
+        "    if isinstance(node, ast.FunctionDef) and node.name == '_is_mistral_native_format':",
+        "        func_src = textwrap.dedent(''.join(src_lines[node.lineno - 1 : node.end_lineno]))",
+        "        break",
+        "else:",
+        "    raise RuntimeError('_is_mistral_native_format not found')",
+        "",
+        "tmpdir = tempfile.mkdtemp()",
+        f"model_dir = os.path.join(tmpdir, 'models', {model_name!r})",
+        "os.makedirs(model_dir, exist_ok=True)",
+    ]
+    if has_params:
+        lines.append("Path(os.path.join(model_dir, 'params.json')).write_text('{}')")
+    if has_config:
+        lines.append("Path(os.path.join(model_dir, 'config.json')).write_text('{}')")
+    lines += [
+        "",
+        "ns = {'os': os, 're': __import__('re'), '__builtins__': __builtins__}",
+        "exec(compile('import os, re\\n' + func_src, '<test>', 'exec'), ns)",
+        "func = ns['_is_mistral_native_format']",
+        "mock = types.SimpleNamespace(model_path=model_dir)",
+        "result = func(mock)",
+        "print('NATIVE_RESULT:', result)",
+    ]
+    return "\n".join(lines)
+
+
+def _run_native_format_check(model_name: str, has_params: bool, has_config: bool) -> bool:
+    """Run _is_mistral_native_format in a subprocess and return the boolean result."""
+    script_path = Path(REPO) / "_eval_tmp.py"
+    script_path.write_text(_build_check_script(model_name, has_params, has_config))
+    try:
+        r = subprocess.run(
+            ["python3", str(script_path)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Script failed:\n{r.stderr}"
+        output = r.stdout.strip()
+        if "NATIVE_RESULT: True" in output:
+            return True
+        if "NATIVE_RESULT: False" in output:
+            return False
+        raise AssertionError(f"Unexpected output: {output}")
+    finally:
+        script_path.unlink(missing_ok=True)
+
+
 def _extract_function(filepath, funcname):
     """Extract a method's source from a file using AST."""
     source = Path(filepath).read_text()
@@ -34,7 +92,7 @@ def _extract_function(filepath, funcname):
 
 
 def _call_is_mistral_native(model_name, has_params, has_config):
-    """Create a temp model dir and invoke _is_mistral_native_format."""
+    """Create a temp model dir and invoke _is_mistral_native_format (in-process)."""
     func_src = _extract_function(TARGET_FILE, "_is_mistral_native_format")
 
     tmpdir = tempfile.mkdtemp()
@@ -66,31 +124,31 @@ def test_syntax_check():
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core bug: native models with both files must
-# return True from _is_mistral_native_format
+# return True from _is_mistral_native_format (executed via subprocess)
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_mistral_small_4_both_files_returns_true():
     """Mistral-Small-4 with both params.json and config.json returns True."""
-    assert _call_is_mistral_native("Mistral-Small-4-119B-2603", True, True) is True
+    assert _run_native_format_check("Mistral-Small-4-119B-2603", True, True) is True
 
 
 # [pr_diff] fail_to_pass
 def test_mistral_large_3_both_files_returns_true():
     """Mistral-Large-3 with both params.json and config.json returns True."""
-    assert _call_is_mistral_native("Mistral-Large-3-2503", True, True) is True
+    assert _run_native_format_check("Mistral-Large-3-2503", True, True) is True
 
 
 # [pr_diff] fail_to_pass
 def test_leanstral_both_files_returns_true():
     """Leanstral with both params.json and config.json returns True."""
-    assert _call_is_mistral_native("Leanstral-22B-v0.1", True, True) is True
+    assert _run_native_format_check("Leanstral-22B-v0.1", True, True) is True
 
 
 # [pr_diff] fail_to_pass
 def test_mistral_small_4_variant_both_files_returns_true():
     """Mistral-Small-4 variant name with both files returns True."""
-    assert _call_is_mistral_native("Mistral-Small-4-Base", True, True) is True
+    assert _run_native_format_check("Mistral-Small-4-Base", True, True) is True
 
 
 # ---------------------------------------------------------------------------

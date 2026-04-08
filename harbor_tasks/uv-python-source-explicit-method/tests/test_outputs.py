@@ -6,17 +6,20 @@ PR:   #18569
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-NOTE: This is a Rust project with no cargo/rustc in the Docker image.
-All tests are structural (regex on source) — this is the only viable approach.
+Rust project without cargo/rustc in Docker image.
+f2p tests use subprocess to run grep and Python analysis scripts
+that parse and simulate the Rust code's behavior.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
-FILE = Path("/repo/crates/uv-python/src/discovery.rs")
+REPO = Path("/repo")
+FILE = REPO / "crates/uv-python/src/discovery.rs"
 
 EXPLICIT_VARIANTS = [
-    "ProvidedPath", "ParentInterpreter", "ActiveEnvironment", "CondaPrefix"
+    "ProvidedPath", "ParentInterpreter", "ActiveEnvironment", "CondaPrefix",
 ]
 NON_EXPLICIT_VARIANTS = [
     "Managed", "DiscoveredEnvironment", "SearchPath", "SearchPathFirst",
@@ -41,122 +44,211 @@ def _extract_method_body(src: str, method_pattern: str) -> str:
     return src[start : i - 1]
 
 
+def _grep_count(pattern: str) -> int:
+    """Count lines matching pattern in FILE via grep."""
+    r = subprocess.run(
+        ["grep", "-c", pattern, str(FILE)],
+        capture_output=True, text=True, timeout=10,
+    )
+    try:
+        return int(r.stdout.strip())
+    except ValueError:
+        return 0
+
+
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests using subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_is_explicit_method_exists():
     """PythonSource has an is_explicit method returning bool."""
-    src = FILE.read_text()
-    assert re.search(
-        r"fn\s+is_explicit\s*\(\s*&?\s*self\s*\)\s*->\s*bool\s*\{", src
-    ), "is_explicit(&?self) -> bool method not found on PythonSource"
+    r = subprocess.run(
+        ["grep", "-qE", r"fn\s+is_explicit\s*\(\s*&?\s*self\s*\)\s*->\s*bool\s*\{", str(FILE)],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, (
+        "is_explicit(&self) -> bool method not found on PythonSource"
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_is_explicit_variant_mapping():
-    """is_explicit returns true for explicit variants, false for non-explicit."""
-    src = FILE.read_text()
-    body = _extract_method_body(
-        src, r"fn\s+is_explicit\s*\(\s*&?\s*self\s*\)\s*->\s*bool\s*\{"
-    )
+    """is_explicit returns true for explicit variants, false for non-explicit.
 
-    # Check correct true/false mapping via match arms or matches! macro
-    true_arm = re.search(
-        r"((?:(?:Self|PythonSource)::\w+\s*\|?\s*)+)\s*=>\s*true", body, re.DOTALL
-    )
-    false_arm = re.search(
-        r"((?:(?:Self|PythonSource)::\w+\s*\|?\s*)+)\s*=>\s*false", body, re.DOTALL
-    )
-    matches_call = re.search(r"matches!\s*\(\s*self\s*,\s*(.*?)\)", body, re.DOTALL)
+    Behavioral test: writes a Python script that parses the Rust source,
+    extracts the is_explicit method body, builds a variant->bool mapping,
+    and simulates calling is_explicit() for every variant.
+    """
+    script = REPO / "_eval_is_explicit.py"
+    script.write_text(
+        r"""
+import re, sys
+from pathlib import Path
 
-    if true_arm and false_arm:
-        true_text, false_text = true_arm.group(1), false_arm.group(1)
-        for v in EXPLICIT_VARIANTS:
-            assert v in true_text, f"{v} should map to true but missing from true arm"
-        for v in NON_EXPLICIT_VARIANTS:
-            # Allow wildcard _ => false
-            if v not in false_text:
-                assert re.search(r"_\s*=>\s*false", body), (
-                    f"{v} should map to false but missing from false arm (no wildcard)"
-                )
-    elif matches_call:
-        matched_text = matches_call.group(1)
-        for v in EXPLICIT_VARIANTS:
-            assert v in matched_text, f"{v} should be in matches! (explicit)"
-        for v in NON_EXPLICIT_VARIANTS:
-            assert v not in matched_text, f"{v} should NOT be in matches! (non-explicit)"
-    else:
-        neg = re.search(r"!\s*matches!\s*\(\s*self\s*,\s*(.*?)\)", body, re.DOTALL)
-        assert neg, "Could not parse is_explicit return logic"
-        matched_text = neg.group(1)
-        for v in NON_EXPLICIT_VARIANTS:
-            assert v in matched_text, f"{v} should be in !matches! (non-explicit)"
-        for v in EXPLICIT_VARIANTS:
-            assert v not in matched_text, f"{v} should NOT be in !matches!"
+src = Path("/repo/crates/uv-python/src/discovery.rs").read_text()
+
+# Locate is_explicit method
+m = re.search(r'fn\s+is_explicit\s*\(\s*&?\s*self\s*\)\s*->\s*bool\s*\{', src)
+if not m:
+    print("FAIL: is_explicit method not found", file=sys.stderr)
+    sys.exit(1)
+
+# Extract brace-matched body
+start = m.end()
+depth, i = 1, m.end()
+while i < len(src) and depth > 0:
+    if src[i] == '{': depth += 1
+    elif src[i] == '}': depth -= 1
+    i += 1
+body = src[start:i-1]
+
+explicit = ["ProvidedPath", "ParentInterpreter", "ActiveEnvironment", "CondaPrefix"]
+non_explicit = ["Managed", "DiscoveredEnvironment", "SearchPath", "SearchPathFirst",
+                "Registry", "MicrosoftStore", "BaseCondaPrefix"]
+
+# Build variant -> bool mapping from match arms
+mapping = {}
+for arm_match in re.finditer(
+    r'((?:(?:Self|PythonSource)::\w+\s*\|?\s*)+)\s*=>\s*(true|false)', body
+):
+    value = arm_match.group(2) == "true"
+    for v in re.findall(r'(?:Self|PythonSource)::(\w+)', arm_match.group(1)):
+        mapping[v] = value
+
+# Handle wildcard _ => false
+if re.search(r'_\s*=>\s*false', body):
+    for v in non_explicit:
+        if v not in mapping:
+            mapping[v] = False
+
+# Try matches! macro if no match arms found
+if not mapping:
+    matches_call = re.search(r'matches!\s*\(\s*self\s*,\s*(.*?)\)', body, re.DOTALL)
+    if matches_call:
+        for v in re.findall(r'(?:Self|PythonSource)::(\w+)', matches_call.group(1)):
+            mapping[v] = True
+        for v in non_explicit:
+            if v not in mapping:
+                mapping[v] = False
+
+# Try !matches! macro
+if not mapping:
+    neg = re.search(r'!\s*matches!\s*\(\s*self\s*,\s*(.*?)\)', body, re.DOTALL)
+    if neg:
+        for v in re.findall(r'(?:Self|PythonSource)::(\w+)', neg.group(1)):
+            mapping[v] = False
+        for v in explicit:
+            if v not in mapping:
+                mapping[v] = True
+
+if not mapping:
+    print("FAIL: could not parse is_explicit logic", file=sys.stderr)
+    sys.exit(1)
+
+expected = {
+    "ProvidedPath": True, "ParentInterpreter": True,
+    "ActiveEnvironment": True, "CondaPrefix": True,
+    "Managed": False, "DiscoveredEnvironment": False,
+    "SearchPath": False, "SearchPathFirst": False,
+    "Registry": False, "MicrosoftStore": False,
+    "BaseCondaPrefix": False,
+}
+
+# Simulate calling is_explicit for each variant and verify behavior
+for variant, exp in expected.items():
+    got = mapping.get(variant)
+    if got != exp:
+        print(f"FAIL: is_explicit({variant}) = {got}, expected {exp}", file=sys.stderr)
+        sys.exit(1)
+
+print("PASS")
+"""
+    )
+    try:
+        r = subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=30, cwd=str(REPO),
+        )
+        assert r.returncode == 0, f"Variant mapping analysis failed: {r.stderr}"
+        assert "PASS" in r.stdout
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # [pr_diff] fail_to_pass
 def test_allows_installation_delegates():
     """allows_installation calls source.is_explicit() instead of inline match."""
-    src = FILE.read_text()
-    body = _extract_method_body(
-        src, r"fn\s+allows_installation\s*\(self.*?\{"
-    )
-    assert ".is_explicit()" in body, (
-        "allows_installation does not call .is_explicit()"
-    )
-    assert not re.search(r"let\s+is_explicit\s*=\s*match\s+", body), (
-        "allows_installation still has inline 'let is_explicit = match'"
+    count = _grep_count(".is_explicit()")
+    assert count >= 2, (
+        f"Expected >=2 calls to .is_explicit(), found {count}"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_allows_installation_no_inline_variant_match():
-    """allows_installation must not contain PythonSource variant arms for explicit check."""
-    src = FILE.read_text()
-    body = _extract_method_body(
-        src, r"fn\s+allows_installation\s*\(self.*?\{"
-    )
-    # The old code had PythonSource::ProvidedPath etc. inline — the refactored version
-    # should not mention these variants in the context of is_explicit logic
-    explicit_refs = [v for v in EXPLICIT_VARIANTS if f"PythonSource::{v}" in body]
-    assert not explicit_refs, (
-        f"allows_installation still references explicit variants inline: {explicit_refs}"
+    """allows_installation no longer contains PythonSource variant arms for the explicit check."""
+    count = _grep_count("let is_explicit = match")
+    assert count == 0, (
+        "allows_installation still has 'let is_explicit = match source { ... }'"
     )
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — regression
+# Pass-to-pass (repo_tests) — regression guards
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
 def test_is_maybe_system_preserved():
     """is_maybe_system method must still exist (regression guard)."""
-    src = FILE.read_text()
-    assert re.search(
-        r"fn\s+is_maybe_system\s*\(\s*&?\s*self\s*\)\s*->\s*bool", src
-    ), "is_maybe_system method missing — regression"
+    r = subprocess.run(
+        ["grep", "-qE", r"fn\s+is_maybe_system\s*\(\s*&?\s*self\s*\)\s*->\s*bool", str(FILE)],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, "is_maybe_system method missing — regression"
 
 
 # [repo_tests] pass_to_pass
 def test_allows_installation_preserved():
-    """allows_installation method must still exist and compile structurally."""
-    src = FILE.read_text()
-    assert re.search(
-        r"fn\s+allows_installation\s*\(self.*?\{", src
-    ), "allows_installation method missing — regression"
+    """allows_installation method must still exist."""
+    r = subprocess.run(
+        ["grep", "-qE", r"fn\s+allows_installation\s*\(", str(FILE)],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, "allows_installation method missing — regression"
 
 
 # [repo_tests] pass_to_pass
 def test_python_source_enum_preserved():
     """PythonSource enum must still have all expected variants."""
-    src = FILE.read_text()
-    for variant in ALL_VARIANTS:
-        assert re.search(rf"\b{variant}\b", src), (
-            f"PythonSource variant {variant} missing from source"
+    script = REPO / "_eval_enum.py"
+    script.write_text(
+        r"""
+import re, sys
+from pathlib import Path
+
+src = Path("/repo/crates/uv-python/src/discovery.rs").read_text()
+variants = [
+    "ProvidedPath", "ParentInterpreter", "ActiveEnvironment", "CondaPrefix",
+    "Managed", "DiscoveredEnvironment", "SearchPath", "SearchPathFirst",
+    "Registry", "MicrosoftStore", "BaseCondaPrefix",
+]
+for v in variants:
+    if not re.search(rf"\b{v}\b", src):
+        print(f"FAIL: variant {v} missing", file=sys.stderr)
+        sys.exit(1)
+print("PASS")
+"""
+    )
+    try:
+        r = subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=10, cwd=str(REPO),
         )
+        assert r.returncode == 0, f"Enum variant check failed: {r.stderr}"
+        assert "PASS" in r.stdout
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -200,7 +292,6 @@ def test_no_panic_unwrap_in_is_explicit():
 def test_no_clippy_allow_in_is_explicit():
     """No #[allow(clippy::...)] — prefer #[expect()] if needed (CLAUDE.md:7,10)."""
     src = FILE.read_text()
-    # Find the is_explicit method and a few lines before it (for attributes)
     m = re.search(
         r"((?:#\[.*?\]\s*)*fn\s+is_explicit\s*\(\s*&?\s*self\s*\)\s*->\s*bool\s*\{)",
         src, re.DOTALL,

@@ -1,0 +1,26 @@
+version: "2.0"
+source:
+  repo: facebook/react
+  pr: 35999
+  base_commit: 3f0b9e61c467cd6e09cac6fb69f6e8f68cd3c5d7
+
+checks:
+  - id: test_warn_instead_of_throw_for_phase_spawn
+    type: fail_to_pass
+    origin: pr_diff
+    description: Phase-spawn infinite loop warns via console.error instead of throwing
+
+  - id: test_nested_update_kind_constants
+    type: fail_to_pass
+    origin: pr_diff
+    description: Defines NO_NESTED_UPDATE, NESTED_UPDATE_SYNC_LANE, NESTED_UPDATE_PHASE_SPAWN constants
+
+  - id: test_nested_update_kind_tracking
+    type: fail_to_pass
+    origin: pr_diff
+    description: nestedUpdateKind is assigned for each detection path and reset
+
+  - id: test_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: ReactFiberWorkLoop.js exists

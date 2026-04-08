@@ -8,26 +8,39 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import textwrap
+import subprocess
 from pathlib import Path
 
 TARGET = Path("/workspace/sglang/python/sglang/srt/models/qwen3_next.py")
+REPO = "/workspace/sglang"
+
+# Shared preamble: extracts _override_weight_loader from source via AST+exec
+# (can't import sglang directly — torch/vllm not installed in test image).
+_EXTRACT = """\
+import ast, textwrap
+from pathlib import Path
+
+source = Path("/workspace/sglang/python/sglang/srt/models/qwen3_next.py").read_text()
+tree = ast.parse(source)
+func_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "_override_weight_loader":
+        func_node = node
+        break
+assert func_node is not None, "_override_weight_loader not found"
+lines = source.splitlines(keepends=True)
+func_src = textwrap.dedent("".join(lines[func_node.lineno - 1 : func_node.end_lineno]))
+ns = {}
+exec(func_src, ns)
+override = ns["_override_weight_loader"]
+"""
 
 
-def _extract_function(name: str):
-    """Extract a standalone function from qwen3_next.py by name and return it.
-    AST-only because: module imports torch/triton/vllm which are not installed."""
-    source = TARGET.read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == name:
-            lines = source.splitlines(keepends=True)
-            func_lines = lines[node.lineno - 1 : node.end_lineno]
-            func_src = textwrap.dedent("".join(func_lines))
-            ns = {}
-            exec(func_src, ns)
-            return ns[name]
-    return None
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -42,137 +55,135 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_override_property_backed_param():
     """_override_weight_loader sets the loader on a property-backed param (ModelWeightParameter)."""
-    override = _extract_function("_override_weight_loader")
-    assert override is not None, "_override_weight_loader function not found"
+    r = _run_py(_EXTRACT + """\
+class PropertyParam:
+    def __init__(self):
+        self._weight_loader = "original"
+    @property
+    def weight_loader(self):
+        return self._weight_loader
 
-    class PropertyParam:
-        def __init__(self):
-            self._weight_loader = "original"
+class Mod:
+    def __init__(self):
+        self.weight = PropertyParam()
 
-        @property
-        def weight_loader(self):
-            return self._weight_loader
+for i, loader in enumerate([
+    lambda p, w, sid=None: f"l{i}",
+    lambda p, w: "second",
+    lambda p, w, **kw: "third",
+]):
+    m = Mod()
+    override(m, loader)
+    assert m.weight._weight_loader is loader, f"Failed loader {i}"
+    assert m.weight.weight_loader is loader, f"Property getter broken {i}"
 
-    # Test with 3 different loaders to prevent hardcoding
-    for i, loader in enumerate([
-        lambda p, w, shard_id=None: f"loader_{i}",
-        lambda p, w: "second",
-        lambda p, w, **kw: "third",
-    ]):
-
-        class Mod:
-            def __init__(self):
-                self.weight = PropertyParam()
-
-        m = Mod()
-        override(m, loader)
-        assert m.weight._weight_loader is loader, f"Failed on loader {i}"
-        assert m.weight.weight_loader is loader, f"Property getter broken on loader {i}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_override_plain_attribute_param():
     """_override_weight_loader sets the loader on a plain attribute param (non-quantized)."""
-    override = _extract_function("_override_weight_loader")
-    assert override is not None, "_override_weight_loader function not found"
+    r = _run_py(_EXTRACT + """\
+class PlainParam:
+    def __init__(self):
+        self.weight_loader = "original"
 
-    # Test with 3 different loaders
-    for i, loader in enumerate([
-        lambda p, w, shard_id=None: f"loader_{i}",
-        lambda p, w: "second",
-        lambda p, w, **kw: "third",
-    ]):
+class Mod:
+    def __init__(self):
+        self.weight = PlainParam()
 
-        class PlainParam:
-            def __init__(self):
-                self.weight_loader = "original"
+for i, loader in enumerate([
+    lambda p, w, sid=None: f"l{i}",
+    lambda p, w: "second",
+    lambda p, w, **kw: "third",
+]):
+    m = Mod()
+    override(m, loader)
+    assert m.weight.weight_loader is loader, f"Failed loader {i}"
 
-        class Mod:
-            def __init__(self):
-                self.weight = PlainParam()
-
-        m = Mod()
-        override(m, loader)
-        assert m.weight.weight_loader is loader, f"Failed on loader {i}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_override_plain_then_property():
     """_override_weight_loader handles mixed param types in sequence."""
-    override = _extract_function("_override_weight_loader")
-    assert override is not None, "_override_weight_loader function not found"
+    r = _run_py(_EXTRACT + """\
+class PropertyParam:
+    def __init__(self):
+        self._weight_loader = "original"
+    @property
+    def weight_loader(self):
+        return self._weight_loader
 
-    class PropertyParam:
-        def __init__(self):
-            self._weight_loader = "original"
+class PlainParam:
+    def __init__(self):
+        self.weight_loader = "original"
 
-        @property
-        def weight_loader(self):
-            return self._weight_loader
+class ModA:
+    def __init__(self):
+        self.weight = PlainParam()
 
-    class PlainParam:
-        def __init__(self):
-            self.weight_loader = "original"
+class ModB:
+    def __init__(self):
+        self.weight = PropertyParam()
 
-    class ModA:
-        def __init__(self):
-            self.weight = PlainParam()
+loader_plain = lambda p, w: "plain"
+loader_prop = lambda p, w: "prop"
+ma = ModA()
+mb = ModB()
+override(ma, loader_plain)
+override(mb, loader_prop)
+assert ma.weight.weight_loader is loader_plain, "plain attr failed"
+assert mb.weight.weight_loader is loader_prop, "property param failed"
 
-    class ModB:
-        def __init__(self):
-            self.weight = PropertyParam()
-
-    loader_plain = lambda p, w: "plain"
-    loader_prop = lambda p, w: "prop"
-
-    # Apply to plain first, then property — both must work
-    ma = ModA()
-    mb = ModB()
-    override(ma, loader_plain)
-    override(mb, loader_prop)
-
-    assert ma.weight.weight_loader is loader_plain
-    assert mb.weight.weight_loader is loader_prop
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_override_independent_across_modules():
     """Calling _override_weight_loader on two modules doesn't cross-contaminate."""
-    override = _extract_function("_override_weight_loader")
-    assert override is not None, "_override_weight_loader function not found"
+    r = _run_py(_EXTRACT + """\
+class PropertyParam:
+    def __init__(self):
+        self._weight_loader = "original"
+    @property
+    def weight_loader(self):
+        return self._weight_loader
 
-    class PropertyParam:
-        def __init__(self):
-            self._weight_loader = "original"
+class Module:
+    def __init__(self):
+        self.weight = PropertyParam()
 
-        @property
-        def weight_loader(self):
-            return self._weight_loader
+m1, m2, m3 = Module(), Module(), Module()
+la = lambda p, w: "a"
+lb = lambda p, w: "b"
+lc = lambda p, w: "c"
+override(m1, la)
+override(m2, lb)
+override(m3, lc)
+assert m1.weight.weight_loader is la, "m1 contaminated"
+assert m2.weight.weight_loader is lb, "m2 contaminated"
+assert m3.weight.weight_loader is lc, "m3 contaminated"
 
-    class Module:
-        def __init__(self):
-            self.weight = PropertyParam()
-
-    m1 = Module()
-    m2 = Module()
-    m3 = Module()
-    loader_a = lambda p, w: "a"
-    loader_b = lambda p, w: "b"
-    loader_c = lambda p, w: "c"
-
-    override(m1, loader_a)
-    override(m2, loader_b)
-    override(m3, loader_c)
-
-    assert m1.weight.weight_loader is loader_a
-    assert m2.weight.weight_loader is loader_b
-    assert m3.weight.weight_loader is loader_c
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

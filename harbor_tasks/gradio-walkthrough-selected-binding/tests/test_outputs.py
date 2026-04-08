@@ -7,31 +7,32 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
 import re
+import subprocess
 from pathlib import Path
 
 REPO = Path("/repo")
 TARGET = REPO / "js" / "tabs" / "Index.svelte"
 
 
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node.js in the repo directory."""
+    script = REPO / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=str(REPO),
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 def _read_clean():
     """Read Index.svelte with HTML comments stripped."""
     src = TARGET.read_text()
     return re.sub(r"<!--[\s\S]*?-->", "", src)
-
-
-def _walkthrough_block(clean: str) -> str:
-    """Extract the {#if ...walkthrough} ... {:else} block."""
-    m = re.search(r"\{#if\b[^}]*walkthrough[^}]*\}([\s\S]*?)\{:else\}", clean)
-    assert m, "No {#if ...walkthrough} ... {:else} block found"
-    return m.group(1)
-
-
-def _else_block(clean: str) -> str:
-    """Extract the {:else} ... {/if} block."""
-    m = re.search(r"\{:else\}([\s\S]*?)\{/if\}", clean)
-    assert m, "No {:else} ... {/if} block found"
-    return m.group(1)
 
 
 # ---------------------------------------------------------------------------
@@ -67,35 +68,92 @@ def test_not_stub():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests using Node.js
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_walkthrough_bind_selected():
     """Walkthrough component must use bind:selected (two-way binding) in the
-    {#if walkthrough} block — the core fix for back-and-forward navigation."""
-    clean = _read_clean()
-    wblock = _walkthrough_block(clean)
-    tags = re.findall(r"<Walkthrough\b([^>]*?)>", wblock, re.S)
-    assert tags, "No <Walkthrough> tag found in walkthrough block"
-    assert any(re.search(r"\bbind:selected\b", t) for t in tags), (
-        "Walkthrough tag(s) found but none use bind:selected"
+    {#if walkthrough} block — the core fix for back-and-forward navigation.
+
+    Uses Node.js to parse the Svelte template, extract the Walkthrough tag
+    within the conditional block, and verify the binding direction."""
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('js/tabs/Index.svelte', 'utf8');
+
+// Strip HTML comments
+const clean = src.replace(/<!--[\s\S]*?-->/g, '');
+
+// Extract the {#if ...walkthrough} ... {:else} block
+const ifMatch = clean.match(/\{#if[^}]*walkthrough[^}]*\}([\s\S]*?)\{:else\}/);
+if (!ifMatch) {
+    console.log(JSON.stringify({error: "No walkthrough block found"}));
+    process.exit(1);
+}
+const walkthroughBlock = ifMatch[1];
+
+// Find <Walkthrough ...> tag and extract attributes
+const tagMatch = walkthroughBlock.match(/<Walkthrough\b([\s\S]*?)(?:\/>|>)/);
+if (!tagMatch) {
+    console.log(JSON.stringify({error: "No Walkthrough tag in walkthrough block"}));
+    process.exit(1);
+}
+const attrs = tagMatch[1];
+const hasBindSelected = /\bbind:selected\b/.test(attrs);
+
+console.log(JSON.stringify({hasBindSelected, attrs: attrs.trim()}));
+""")
+    assert r.returncode == 0, f"Node script failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data.get("hasBindSelected"), (
+        f"Walkthrough tag does not use bind:selected. "
+        f"Found attrs: {data.get('attrs', '(none)')}"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_no_oneway_selected_on_walkthrough():
     """Within the walkthrough block, <Walkthrough> must NOT retain a bare
-    selected= (without bind:) — that one-way binding is the root cause."""
-    clean = _read_clean()
-    wblock = _walkthrough_block(clean)
-    tags = re.findall(r"<Walkthrough\b([^>]*?)>", wblock, re.S)
-    assert tags, "No <Walkthrough> tag found in walkthrough block"
-    for attrs in tags:
-        neutralized = attrs.replace("bind:selected", "__BOUND__")
-        assert not re.search(r"\bselected\s*[={]", neutralized), (
-            "One-way selected= still present on Walkthrough"
-        )
+    selected= (without bind:) — that one-way binding is the root cause.
+
+    Uses Node.js to parse Walkthrough tag attributes and confirm the buggy
+    one-way binding has been replaced."""
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('js/tabs/Index.svelte', 'utf8');
+
+// Strip HTML comments
+const clean = src.replace(/<!--[\s\S]*?-->/g, '');
+
+// Extract the {#if ...walkthrough} ... {:else} block
+const ifMatch = clean.match(/\{#if[^}]*walkthrough[^}]*\}([\s\S]*?)\{:else\}/);
+if (!ifMatch) {
+    console.log(JSON.stringify({error: "No walkthrough block found"}));
+    process.exit(1);
+}
+const walkthroughBlock = ifMatch[1];
+
+// Find <Walkthrough ...> tag
+const tagMatch = walkthroughBlock.match(/<Walkthrough\b([\s\S]*?)(?:\/>|>)/);
+if (!tagMatch) {
+    console.log(JSON.stringify({error: "No Walkthrough tag in walkthrough block"}));
+    process.exit(1);
+}
+const attrs = tagMatch[1];
+
+// Neutralize bind:selected, then check for any remaining bare selected=
+const neutralized = attrs.replace(/bind:selected/g, '__BOUND__');
+const hasBareSelected = /\bselected\s*[={]/.test(neutralized);
+
+console.log(JSON.stringify({hasBareSelected, attrs: attrs.trim()}));
+""")
+    assert r.returncode == 0, f"Node script failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert not data.get("hasBareSelected"), (
+        f"One-way selected= still present on Walkthrough. "
+        f"Found attrs: {data.get('attrs', '(none)')}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -106,7 +164,9 @@ def test_no_oneway_selected_on_walkthrough():
 def test_tabs_retains_bind_selected():
     """Tabs component in {:else} branch must keep its bind:selected."""
     clean = _read_clean()
-    eblock = _else_block(clean)
+    m = re.search(r"\{:else\}([\s\S]*?)\{/if\}", clean)
+    assert m, "No {:else} ... {/if} block found"
+    eblock = m.group(1)
     tags = re.findall(r"<Tabs\b([^>]*?)>", eblock, re.S)
     assert any(re.search(r"\bbind:selected\b", t) for t in tags), (
         "Tabs missing bind:selected in else block"
@@ -117,13 +177,17 @@ def test_tabs_retains_bind_selected():
 def test_event_dispatches_both_branches():
     """Both Walkthrough and Tabs branches must fire on:change and on:select."""
     clean = _read_clean()
-    wblock = _walkthrough_block(clean)
-    eblock = _else_block(clean)
+    w_match = re.search(r"\{#if\b[^}]*walkthrough[^}]*\}([\s\S]*?)\{:else\}", clean)
+    assert w_match, "No walkthrough block found"
+    wblock = w_match.group(1)
+    e_match = re.search(r"\{:else\}([\s\S]*?)\{/if\}", clean)
+    assert e_match, "No else block found"
+    eblock = e_match.group(1)
     assert "on:change" in wblock and "on:select" in wblock, (
-        f"Walkthrough branch missing event handlers"
+        "Walkthrough branch missing event handlers"
     )
     assert "on:change" in eblock and "on:select" in eblock, (
-        f"Tabs branch missing event handlers"
+        "Tabs branch missing event handlers"
     )
 
 

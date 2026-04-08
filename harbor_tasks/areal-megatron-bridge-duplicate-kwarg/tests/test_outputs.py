@@ -7,96 +7,101 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import ast
 import re
+import subprocess
 from pathlib import Path
 
 FILE = Path("/workspace/AReaL/areal/engine/megatron_engine.py")
 
 
-def _parse_file():
-    """Helper: parse the file into an AST. Raises on SyntaxError."""
-    # AST-only because: module requires torch, megatron-core, GPU libs — cannot be imported
-    return ast.parse(FILE.read_text())
+def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code via subprocess (isolated from this process)."""
+    preamble = f"FILE = {str(FILE)!r}\n"
+    return subprocess.run(
+        ["python3", "-c", preamble + code],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass — file must parse (duplicate kwarg = SyntaxError on base)
+# Fail-to-pass — subprocess-based behavioral tests
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
 def test_file_parses():
-    """megatron_engine.py must be valid Python syntax."""
-    import py_compile
-
-    py_compile.compile(str(FILE), doraise=True)
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
+    """megatron_engine.py compiles without SyntaxError (duplicate kwarg = SyntaxError on base)."""
+    r = _run_python("import py_compile; py_compile.compile(FILE, doraise=True)")
+    assert r.returncode == 0, f"Compile failed: {r.stderr}"
 
 
 # [pr_diff] fail_to_pass
 def test_no_duplicate_kwargs():
     """No function call in the file has duplicate keyword arguments."""
-    # AST-only because: module requires torch/megatron-core, cannot be imported
-    tree = _parse_file()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Call):
-            kwarg_names = [kw.arg for kw in node.keywords if kw.arg is not None]
-            seen = set()
-            for k in kwarg_names:
-                assert k not in seen, (
-                    f"Duplicate keyword argument '{k}' at line {node.lineno}"
-                )
-                seen.add(k)
+    r = _run_python(
+        """\
+import ast
+tree = ast.parse(open(FILE).read())
+for node in ast.walk(tree):
+    if isinstance(node, ast.Call):
+        names = [kw.arg for kw in node.keywords if kw.arg is not None]
+        seen = set()
+        for k in names:
+            assert k not in seen, 'Duplicate keyword argument at line ' + str(node.lineno)
+            seen.add(k)
+"""
+    )
+    assert r.returncode == 0, f"Duplicate kwargs found: {r.stderr}"
 
 
 # [pr_diff] fail_to_pass
 def test_from_hf_pretrained_trust_remote_code():
     """from_hf_pretrained() passes trust_remote_code exactly once."""
-    # AST-only because: module requires torch/megatron-core, cannot be imported
-    tree = _parse_file()
-    found = False
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Call):
-            if hasattr(node.func, "attr") and node.func.attr == "from_hf_pretrained":
-                found = True
-                count = sum(
-                    1 for kw in node.keywords if kw.arg == "trust_remote_code"
-                )
-                assert count == 1, (
-                    f"Expected trust_remote_code exactly once, found {count}"
-                )
-    assert found, "from_hf_pretrained call not found"
+    r = _run_python(
+        """\
+import ast
+tree = ast.parse(open(FILE).read())
+found = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.Call) and hasattr(node.func, 'attr') and node.func.attr == 'from_hf_pretrained':
+        found = True
+        count = sum(1 for kw in node.keywords if kw.arg == 'trust_remote_code')
+        assert count == 1, 'Expected trust_remote_code exactly once, found ' + str(count)
+assert found, 'from_hf_pretrained call not found'
+"""
+    )
+    assert r.returncode == 0, f"Check failed: {r.stderr}"
 
 
 # [pr_diff] fail_to_pass
 def test_from_hf_pretrained_has_dtype():
     """from_hf_pretrained() passes a dtype argument."""
-    # AST-only because: module requires torch/megatron-core, cannot be imported
-    tree = _parse_file()
-    found = False
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Call):
-            if hasattr(node.func, "attr") and node.func.attr == "from_hf_pretrained":
-                found = True
-                has_dtype = any(kw.arg == "dtype" for kw in node.keywords)
-                assert has_dtype, "from_hf_pretrained missing dtype argument"
-    assert found, "from_hf_pretrained call not found"
+    r = _run_python(
+        """\
+import ast
+tree = ast.parse(open(FILE).read())
+found = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.Call) and hasattr(node.func, 'attr') and node.func.attr == 'from_hf_pretrained':
+        found = True
+        has_dtype = any(kw.arg == 'dtype' for kw in node.keywords)
+        assert has_dtype, 'from_hf_pretrained missing dtype argument'
+assert found, 'from_hf_pretrained call not found'
+"""
+    )
+    assert r.returncode == 0, f"Check failed: {r.stderr}"
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff / static) — regression + anti-stub
+# Pass-to-pass (pr_diff / static) — text-based, works on both base and fix
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] pass_to_pass
 def test_mbridge_path_has_trust_remote_code():
     """mbridge from_pretrained call still passes trust_remote_code (text-based)."""
-    # Text-based so it works even when file has SyntaxError (base commit).
     source = FILE.read_text()
     assert "mbridge" in source, "mbridge reference missing"
     assert "from_pretrained" in source, "from_pretrained call missing"
@@ -177,8 +182,6 @@ def test_no_wildcard_imports():
 # [agent_config] pass_to_pass — AGENTS.md:90 @ 722e235
 def test_no_bare_print_in_method():
     """_build_hf_mcore_bridge uses self.logger, not bare print() calls."""
-    # AGENTS.md:90 — "Logging: areal.utils.logging.getLogger(name) ... never print"
-    # Text-based so it works even on base (SyntaxError).
     source = FILE.read_text()
     lines = source.splitlines()
     in_method = False

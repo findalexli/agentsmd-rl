@@ -7,57 +7,62 @@ source:
   merge_commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
 
 checks:
-  - id: target_files_exist
+  - id: test_target_files_exist
     type: pass_to_pass
     origin: static
     description: "All five target source files must exist and be non-empty"
 
-  - id: weak_ref_replaces_strong
+  - id: test_cpp_pattern_compiles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Compile and run a standalone C++ program validating the weak callback null-guard, locked container, and memory-cost patterns used in the fix"
+
+  - id: test_weak_ref_replaces_strong
     type: fail_to_pass
     origin: pr_diff
     description: "JSAbortAlgorithm must not use JSCallbackDataStrong; a weak callback mechanism must be present"
 
-  - id: gc_visitor_in_abort_algorithm
+  - id: test_gc_visitor_in_abort_algorithm
     type: fail_to_pass
     origin: pr_diff
     description: "JSAbortAlgorithm must have a GC visitor method that delegates to m_data"
 
-  - id: handle_event_null_guard
+  - id: test_handle_event_null_guard
     type: fail_to_pass
     origin: pr_diff
     description: "handleEvent must guard against GC-collected weak callback with null check"
 
-  - id: abort_signal_typed_container
+  - id: test_abort_signal_typed_container
     type: fail_to_pass
     origin: pr_diff
     description: "AbortSignal must store abort algorithms in a typed GC-visible container with visitor"
 
-  - id: thread_safety
+  - id: test_thread_safety
     type: fail_to_pass
     origin: pr_diff
     description: "Abort algorithm storage must be synchronized with lock member and usage"
 
-  - id: gc_visitor_walks_algorithms
+  - id: test_gc_visitor_walks_algorithms
     type: fail_to_pass
     origin: pr_diff
     description: "JSAbortSignal GC visitor must walk abort algorithms to keep weak callbacks alive"
 
-  - id: typed_storage_path
+  - id: test_typed_storage_path
     type: fail_to_pass
     origin: pr_diff
     description: "addAbortAlgorithmToSignal must use typed container, not type-erase into lambda"
 
-  - id: remove_uses_new_container
+  - id: test_remove_uses_new_container
     type: fail_to_pass
     origin: pr_diff
     description: "removeAbortAlgorithmFromSignal must use new locked typed container, not old removeAlgorithm"
 
-  - id: memory_cost_includes_new_container
+  - id: test_memory_cost_includes_new_container
     type: fail_to_pass
     origin: pr_diff
     description: "memoryCost must account for the new abort algorithms container size"
 
-  - id: visit_children_for_gc_objects
+  - id: test_visit_children_for_gc_objects
     type: fail_to_pass
     origin: agent_config
     description: "Custom heap objects holding GC refs must implement visitChildren/visitor pattern"

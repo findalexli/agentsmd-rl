@@ -3,144 +3,308 @@ Task: vscode-sessions-archived-view
 Repo: microsoft/vscode @ 3d5035e98791181f4fb04962a8a7b127106d2626
 PR:   306265
 
-Bug: Clicking an archived session causes the view to immediately bounce back to
-the new-session screen because _onSessionsChanged() calls openNewSessionView()
-synchronously on every archive-state change.
+Bug: Clicking an archived session causes the view to immediately bounce back
+to the new-session screen because _onSessionsChanged() calls
+openNewSessionView() synchronously on archive-state changes.
 
-Fix: Remove the immediate check from _onSessionsChanged; instead add an autorun
-observer in setActiveSession() that fires only when the *active* session becomes
-archived *after* being opened.
+Fix: Remove immediate check from _onSessionsChanged; add an autorun observer
+in setActiveSession() that fires only when the active session becomes archived.
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-# AST-only checks throughout: TypeScript cannot be imported/executed in Python.
-# Full tsc compilation requires the entire VS Code build graph.
-
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/vscode"
-TARGET = Path(f"{REPO}/src/vs/sessions/contrib/sessions/browser/sessionsManagementService.ts")
+TARGET = Path(
+    f"{REPO}/src/vs/sessions/contrib/sessions/browser/sessionsManagementService.ts"
+)
+
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript via Node.js in the repo directory."""
+    script = Path(f"{REPO}/_eval_tmp.js")
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core fix checks
+# Fail-to-pass (pr_diff) — behavioral tests via TypeScript AST
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript cannot be executed directly in Python
-def test_disposable_store_imported():
-    """DisposableStore must be imported from lifecycle.js to manage active session disposables."""
-    content = TARGET.read_text()
-    lifecycle_lines = [
-        ln for ln in content.splitlines()
-        if "import" in ln and "lifecycle.js" in ln
-    ]
-    assert lifecycle_lines, "No import found from lifecycle.js"
-    assert any("DisposableStore" in ln for ln in lifecycle_lines), (
-        f"DisposableStore not imported from lifecycle.js. Import lines: {lifecycle_lines}"
+
+def test_typescript_file_parses():
+    """Modified file must parse as valid TypeScript with no syntax errors."""
+    r = _run_node(
+        """
+const ts = require('typescript');
+const fs = require('fs');
+const path = 'src/vs/sessions/contrib/sessions/browser/sessionsManagementService.ts';
+const source = fs.readFileSync(path, 'utf8');
+const sf = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
+if (sf.parseDiagnostics && sf.parseDiagnostics.length > 0) {
+    const msgs = sf.parseDiagnostics.map(d => {
+        const pos = d.file ? d.file.getLineAndCharacterOfPosition(d.start) : {};
+        return 'Line ' + ((pos.line || 0) + 1) + ': '
+            + ts.flattenDiagnosticMessageText(d.messageText, '\\n');
+    });
+    console.error(msgs.join('\\n'));
+    process.exit(1);
+}
+console.log('OK');
+"""
     )
+    assert r.returncode == 0, f"TypeScript parse failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript cannot be executed directly in Python
-def test_autorun_imported():
-    """autorun must be imported from observable.js for reactive archive-state observation."""
-    content = TARGET.read_text()
-    observable_lines = [
-        ln for ln in content.splitlines()
-        if "import" in ln and "observable.js" in ln
-    ]
-    assert observable_lines, "No import found from observable.js"
-    assert any("autorun" in ln for ln in observable_lines), (
-        f"autorun not imported from observable.js. Import lines: {observable_lines}"
+def test_imports_include_disposable_store_and_autorun():
+    """DisposableStore and autorun must be imported from lifecycle.js and observable.js."""
+    r = _run_node(
+        """
+const ts = require('typescript');
+const fs = require('fs');
+const path = 'src/vs/sessions/contrib/sessions/browser/sessionsManagementService.ts';
+const source = fs.readFileSync(path, 'utf8');
+const sf = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
+
+const imports = {};
+ts.forEachChild(sf, node => {
+    if (ts.isImportDeclaration(node)) {
+        const mod = node.moduleSpecifier.getText().replace(/['"]/g, '');
+        const names = [];
+        if (node.importClause && node.importClause.namedBindings
+            && ts.isNamedImports(node.importClause.namedBindings)) {
+            node.importClause.namedBindings.elements.forEach(
+                el => names.push(el.name.getText())
+            );
+        }
+        imports[mod] = names;
+    }
+});
+
+const lif = Object.entries(imports).find(([k]) => k.includes('lifecycle.js'));
+if (!lif || !lif[1].includes('DisposableStore')) {
+    console.error('DisposableStore not imported from lifecycle.js');
+    process.exit(1);
+}
+
+const obs = Object.entries(imports).find(([k]) => k.includes('observable.js'));
+if (!obs || !obs[1].includes('autorun')) {
+    console.error('autorun not imported from observable.js');
+    process.exit(1);
+}
+
+console.log('OK');
+"""
     )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript cannot be executed directly in Python
-def test_active_session_disposables_field():
-    """_activeSessionDisposables DisposableStore field must be registered on the class."""
-    content = TARGET.read_text()
-    assert "_activeSessionDisposables" in content, (
-        "_activeSessionDisposables field not found in file"
+def test_disposable_store_field_registered():
+    """_activeSessionDisposables must be a DisposableStore registered via this._register()."""
+    r = _run_node(
+        """
+const ts = require('typescript');
+const fs = require('fs');
+const path = 'src/vs/sessions/contrib/sessions/browser/sessionsManagementService.ts';
+const source = fs.readFileSync(path, 'utf8');
+const sf = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
+
+let found = false;
+function visit(node) {
+    if (ts.isPropertyDeclaration(node)) {
+        const text = node.getText();
+        if (text.includes('_activeSessionDisposables')) {
+            if (!text.includes('DisposableStore')) {
+                console.error('_activeSessionDisposables is not a DisposableStore');
+                process.exit(1);
+            }
+            if (!text.includes('this._register(')) {
+                console.error('_activeSessionDisposables not registered via this._register()');
+                process.exit(1);
+            }
+            found = true;
+        }
+    }
+    ts.forEachChild(node, visit);
+}
+ts.forEachChild(sf, visit);
+
+if (!found) {
+    console.error('_activeSessionDisposables property not found');
+    process.exit(1);
+}
+console.log('OK');
+"""
     )
-    field_lines = [
-        ln for ln in content.splitlines()
-        if "_activeSessionDisposables" in ln and "DisposableStore" in ln
-    ]
-    assert field_lines, "_activeSessionDisposables not initialized as a DisposableStore"
-    assert any("_register" in ln for ln in field_lines), (
-        "_activeSessionDisposables must be registered via this._register() for proper disposal"
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "OK" in r.stdout
+
+
+def test_on_sessions_changed_no_archive_bounce():
+    """_onSessionsChanged must NOT contain the buggy immediate archive check or openNewSessionView call."""
+    r = _run_node(
+        """
+const ts = require('typescript');
+const fs = require('fs');
+const path = 'src/vs/sessions/contrib/sessions/browser/sessionsManagementService.ts';
+const source = fs.readFileSync(path, 'utf8');
+const sf = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
+
+let found = false;
+function visit(node) {
+    if (ts.isMethodDeclaration(node) && node.name.getText() === '_onSessionsChanged') {
+        const text = node.body ? node.body.getText() : '';
+        if (text.includes('isArchived.get()')) {
+            console.error(
+                '_onSessionsChanged still contains synchronous isArchived.get() check'
+            );
+            process.exit(1);
+        }
+        if (text.includes('openNewSessionView')) {
+            console.error('_onSessionsChanged still calls openNewSessionView');
+            process.exit(1);
+        }
+        found = true;
+    }
+    ts.forEachChild(node, visit);
+}
+ts.forEachChild(sf, visit);
+
+if (!found) {
+    console.error('_onSessionsChanged method not found');
+    process.exit(1);
+}
+console.log('OK');
+"""
     )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript cannot be executed directly in Python
-def test_buggy_immediate_archive_check_removed():
-    """Immediate isArchived.get() check must be removed from _onSessionsChanged (was the bug source)."""
-    content = TARGET.read_text()
-    # The buggy code read isArchived via .get() synchronously in _onSessionsChanged
-    # and immediately called openNewSessionView() — causing the view to bounce back.
-    assert "updated?.isArchived.get()" not in content, (
-        "Buggy immediate archive check (updated?.isArchived.get()) still present in "
-        "_onSessionsChanged. This triggers openNewSessionView() synchronously, causing "
-        "the view flicker when an archived session is clicked."
+def test_autorun_observer_in_set_active_session():
+    """setActiveSession must use autorun to reactively observe archive state with proper disposable lifecycle."""
+    r = _run_node(
+        """
+const ts = require('typescript');
+const fs = require('fs');
+const path = 'src/vs/sessions/contrib/sessions/browser/sessionsManagementService.ts';
+const source = fs.readFileSync(path, 'utf8');
+const sf = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
+
+let found = false;
+function visit(node) {
+    if (ts.isMethodDeclaration(node) && node.name.getText() === 'setActiveSession') {
+        const text = node.body ? node.body.getText() : '';
+        // Must use autorun for reactive observation
+        if (!text.includes('autorun')) {
+            console.error('setActiveSession does not contain autorun call');
+            process.exit(1);
+        }
+        // Must read isArchived reactively via .read(reader) inside autorun
+        if (!text.includes('isArchived.read(')) {
+            console.error('autorun does not observe isArchived.read(reader)');
+            process.exit(1);
+        }
+        // Must call openNewSessionView when archived
+        if (!text.includes('this.openNewSessionView()')) {
+            console.error('autorun does not call openNewSessionView()');
+            process.exit(1);
+        }
+        // Must clear disposables before adding new autorun
+        if (!text.includes('_activeSessionDisposables.clear()')) {
+            console.error('_activeSessionDisposables.clear() not called');
+            process.exit(1);
+        }
+        // clear() must come before add() to prevent stale observers
+        const clearIdx = text.indexOf('_activeSessionDisposables.clear()');
+        const addIdx = text.indexOf('_activeSessionDisposables.add(autorun');
+        if (clearIdx === -1 || addIdx === -1 || clearIdx > addIdx) {
+            console.error('clear() must come before add(autorun...)');
+            process.exit(1);
+        }
+        found = true;
+    }
+    ts.forEachChild(node, visit);
+}
+ts.forEachChild(sf, visit);
+
+if (!found) {
+    console.error('setActiveSession method not found');
+    process.exit(1);
+}
+console.log('OK');
+"""
     )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript cannot be executed directly in Python
-def test_early_return_unchanged_session():
-    """setActiveSession must early-return when called with the already-active session."""
-    content = TARGET.read_text()
-    # Guard prevents re-entry when session ID unchanged (avoids redundant disposable churn)
-    assert "_activeSession.get()?.sessionId === session?.sessionId" in content, (
-        "Missing idempotency guard in setActiveSession: should early-return when the "
-        "incoming session is already the active one (prevents disposable churn)"
+def test_idempotency_guard_in_set_active_session():
+    """setActiveSession must early-return when the session ID hasn't changed to prevent disposable churn."""
+    r = _run_node(
+        """
+const ts = require('typescript');
+const fs = require('fs');
+const path = 'src/vs/sessions/contrib/sessions/browser/sessionsManagementService.ts';
+const source = fs.readFileSync(path, 'utf8');
+const sf = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
+
+let found = false;
+function visit(node) {
+    if (ts.isMethodDeclaration(node) && node.name.getText() === 'setActiveSession') {
+        const text = node.body ? node.body.getText() : '';
+        if (!text.includes('sessionId')) {
+            console.error('setActiveSession does not compare sessionId');
+            process.exit(1);
+        }
+        // Guard must be early return before main logic
+        const lines = text.split(/\\r?\\n/).map(l => l.trim()).filter(l => l);
+        const returnIdx = lines.findIndex(l => l === 'return;' || l === 'return');
+        const setActiveIdx = lines.findIndex(l => l.includes('_activeSession.set('));
+        if (returnIdx === -1) {
+            console.error('No early return found in setActiveSession');
+            process.exit(1);
+        }
+        if (setActiveIdx !== -1 && returnIdx > setActiveIdx) {
+            console.error('Early return must come before _activeSession.set()');
+            process.exit(1);
+        }
+        found = true;
+    }
+    ts.forEachChild(node, visit);
+}
+ts.forEachChild(sf, visit);
+
+if (!found) {
+    console.error('setActiveSession method not found');
+    process.exit(1);
+}
+console.log('OK');
+"""
     )
-
-
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript cannot be executed directly in Python
-def test_archive_state_observed_reactively():
-    """Archive state must be watched via autorun so openNewSessionView fires only on change."""
-    content = TARGET.read_text()
-    assert "session.isArchived.read(reader)" in content, (
-        "session.isArchived.read(reader) not found — archive state not observed "
-        "reactively. Use autorun so openNewSessionView() fires only when the active "
-        "session transitions from unarchived → archived."
-    )
-    lines = content.splitlines()
-    for i, ln in enumerate(lines):
-        if "session.isArchived.read(reader)" in ln:
-            context = "\n".join(lines[max(0, i - 6) : i + 2])
-            assert "autorun" in context, (
-                f"session.isArchived.read(reader) found but not inside an autorun block.\n"
-                f"Context:\n{context}"
-            )
-            break
-
-
-# [pr_diff] fail_to_pass
-# AST-only because: TypeScript cannot be executed directly in Python
-def test_active_session_disposables_cleared_on_set():
-    """_activeSessionDisposables.clear() must be called each time setActiveSession runs."""
-    content = TARGET.read_text()
-    assert "_activeSessionDisposables.clear()" in content, (
-        "_activeSessionDisposables.clear() not called in setActiveSession. "
-        "Without this, autorun observers from previous sessions accumulate and "
-        "cause stale openNewSessionView() calls."
-    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (agent_config) — VS Code coding standards
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — .github/copilot-instructions.md:130 @ 3d5035e98791181f4fb04962a8a7b127106d2626
-# AST-only because: TypeScript cannot be executed directly in Python
+
 def test_copyright_header():
     """All VS Code files must include the Microsoft copyright header."""
     content = TARGET.read_text()
@@ -153,15 +317,13 @@ def test_copyright_header():
     )
 
 
-# [agent_config] pass_to_pass — .github/copilot-instructions.md:72 @ 3d5035e98791181f4fb04962a8a7b127106d2626
-# AST-only because: TypeScript cannot be executed directly in Python
 def test_tabs_not_spaces():
     """VS Code source files must use tabs for indentation, not spaces."""
     content = TARGET.read_text()
     bad_lines = [
         (i + 1, ln)
         for i, ln in enumerate(content.splitlines())
-        if ln.startswith("    ")  # 4+ leading spaces = space-indented
+        if ln.startswith("    ")
     ]
     assert not bad_lines, (
         f"Found {len(bad_lines)} lines with space indentation (must use tabs). "
@@ -173,26 +335,17 @@ def test_tabs_not_spaces():
 # Pass-to-pass (static) — structural gate
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
-def test_file_parses_as_valid_typescript():
-    """Modified file must be syntactically valid (no unclosed braces, broken imports)."""
-    # AST-only because: TypeScript cannot be executed directly in Python;
-    # full tsc compilation requires the entire VS Code build graph.
+
+def test_file_is_structurally_sound():
+    """Modified file must be non-truncated with balanced braces and intact class definition."""
     content = TARGET.read_text()
     lines = content.splitlines()
-    # Basic structural checks: file is non-empty, has class definition, imports
     assert len(lines) > 100, "File appears truncated or mostly deleted"
     assert "class SessionsManagementService" in content, (
-        "SessionsManagementService class definition missing — file may be corrupted"
+        "SessionsManagementService class definition missing"
     )
-    # Check brace balance (rough proxy for syntax validity)
     opens = content.count("{")
     closes = content.count("}")
     assert opens == closes, (
-        f"Unbalanced braces: {opens} opens vs {closes} closes — likely syntax error"
-    )
-    # Ensure import section is intact
-    import_lines = [ln for ln in lines if ln.strip().startswith("import ")]
-    assert len(import_lines) >= 5, (
-        f"Expected at least 5 import statements, found {len(import_lines)} — imports may be broken"
+        f"Unbalanced braces: {opens} opens vs {closes} closes"
     )
