@@ -8,31 +8,42 @@ checks:
 - id: syntax_check
   type: pass_to_pass
   origin: static
-  description: Modified TypeScript files have valid syntax
+  description: Modified TypeScript files have valid syntax (balanced braces, non-empty)
 - id: constants_separation
   type: fail_to_pass
   origin: pr_diff
-  description: constants.ts exports both PROJECT_ROOT (compiler root) and BABEL_PLUGIN_ROOT
-    (babel-plugin path)
+  description: Root path constant resolves to compiler/ dir (2 levels up), not babel-plugin
+    subdir
 - id: compile_command_registered
   type: fail_to_pass
   origin: pr_diff
-  description: runner.ts registers a 'compile' subcommand with path and debug options
+  description: runner.ts registers a compile subcommand via yargs with path and debug
+    options
 - id: minimize_positional_path
   type: fail_to_pass
   origin: pr_diff
-  description: minimize command accepts path as a positional argument instead of --path
+  description: minimize command accepts path as positional argument instead of --path
     option
 - id: path_resolution_not_cwd
   type: fail_to_pass
   origin: pr_diff
-  description: "Relative paths NOT resolved from process.cwd() \u2014 use project\
-    \ root constant instead"
+  description: path.resolve calls in runner.ts do not use process.cwd() directly
+- id: runner_watch_uses_plugin_root
+  type: fail_to_pass
+  origin: pr_diff
+  description: runner-watch.ts imports babel plugin root constant, not PROJECT_ROOT
 - id: compile_handler_not_stub
-  type: pass_to_pass
-  origin: static
-  description: Compile command handler has real logic (file reading, compilation,
-    output)
+  type: fail_to_pass
+  origin: pr_diff
+  description: Compile handler has real logic (file reading, compilation, output)
+- id: claude_md_documents_compile
+  type: fail_to_pass
+  origin: pr_diff
+  description: compiler/CLAUDE.md documents the yarn snap compile command
+- id: dev_guide_documents_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: compiler/docs/DEVELOPMENT_GUIDE.md documents compile and minimize commands
 rubric:
 - rule: Documentation updates are consistent with the style of the existing CLAUDE.md
     content
@@ -46,104 +57,3 @@ rubric:
     path: compiler/CLAUDE.md
     lines: 28-34
     commit: cd0c4879a2959db91f9bd51a09dafefedd95fb17
-- rule: compiler/CLAUDE.md documents the 'yarn snap compile' command for arbitrary
-    files
-  source:
-    path: compiler/CLAUDE.md
-    lines: 37-60
-    commit: 3ce1316b05968d2a8cffe42a110f2726f2c44c3e
-  reference: '## Compiling Arbitrary Files
-
-
-    Use `yarn snap compile` to compile any file (not just fixtures) with the React
-    Compiler:
-
-
-    ```bash
-
-    # Compile a file and see the output
-
-    yarn snap compile <path>
-
-
-    # Compile with debug logging to see the state after each compiler pass
-
-    # This is an alternative to `yarn snap -d -p <pattern>` when you don''t have a
-    fixture file yet
-
-    yarn snap compile --debug <path>
-
-    ```
-
-
-    ## Minimizing Test Cases
-
-
-    Use `yarn snap minimize` to automatically reduce a failing test case to its mini'
-- rule: compiler/docs/DEVELOPMENT_GUIDE.md documents compile and minimize commands
-  source:
-    path: compiler/docs/DEVELOPMENT_GUIDE.md
-    lines: 21-48
-    commit: 3ce1316b05968d2a8cffe42a110f2726f2c44c3e
-  reference: '# compiler/CLAUDE.md
-
-    ## Compiling Arbitrary Files
-
-
-    Use `yarn snap compile` to compile any file (not just fixtures) with the React
-    Compiler:
-
-
-    ```bash
-
-    # Compile a file and see the output
-
-    yarn snap compile <path>
-
-
-    # Compile with debug logging to see the state after each compiler pass
-
-    # This is an alternative to `yarn snap -d -p <pattern>` when you don''t have a
-    fixture file yet
-
-    yarn snap compile --debug <path>
-
-    ```
-
-
-    ## Minimizing Test Cases
-
-
-    Use `yarn snap minimize` to automatically reduce a failing '
-- rule: Old PROJECT_SRC constant removed from snap source files, runner-watch uses
-    plugin root
-  reference: '# compiler/CLAUDE.md
-
-    ## Compiling Arbitrary Files
-
-
-    Use `yarn snap compile` to compile any file (not just fixtures) with the React
-    Compiler:
-
-
-    ```bash
-
-    # Compile a file and see the output
-
-    yarn snap compile <path>
-
-
-    # Compile with debug logging to see the state after each compiler pass
-
-    # This is an alternative to `yarn snap -d -p <pattern>` when you don''t have a
-    fixture file yet
-
-    yarn snap compile --debug <path>
-
-    ```
-
-
-    ## Minimizing Test Cases
-
-
-    Use `yarn snap minimize` to automatically reduce a failing '

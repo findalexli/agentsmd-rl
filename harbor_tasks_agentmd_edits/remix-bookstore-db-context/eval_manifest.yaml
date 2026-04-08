@@ -4,7 +4,6 @@ source:
   repo: "remix-run/remix"
   pr: 11186
   base_commit: "b29fc874293468babb25b90e95edc208f1d652be"
-  merge_commit: "d6c59a14dfba9f6c43d43c4a7bd17cc4ed6c7fb4"
 
 checks:
   - id: files_exist_and_nonempty
@@ -12,43 +11,35 @@ checks:
     origin: static
     description: "Key modified files exist and are non-empty"
 
-  - id: middleware_uses_context_set
+  - id: database_middleware_context_api
     type: fail_to_pass
     origin: pr_diff
-    description: "database middleware uses context.set(Database, db) not context.db = db"
+    description: "database middleware uses context.set(Database, db) with proper import from remix/data-table"
 
-  - id: handlers_use_get_database
+  - id: handlers_use_get_database_pattern
     type: fail_to_pass
     origin: pr_diff
-    description: "handler files use get(Database) instead of destructuring db"
+    description: "handler files import Database and use get(Database) instead of destructuring db"
 
   - id: auth_middleware_uses_get_database
     type: fail_to_pass
     origin: pr_diff
-    description: "auth middleware uses get(Database) pattern"
+    description: "auth middleware imports Database and uses get(Database)"
 
   - id: no_module_augmentation
     type: fail_to_pass
     origin: pr_diff
     description: "context.db module augmentation file is deleted"
 
-  - id: readme_documents_get_database_pattern
+  - id: readme_documents_new_pattern
     type: fail_to_pass
     origin: pr_diff
-    description: "README documents the context.get(Database) / context.set(Database) pattern"
-    source:
-      path: "demos/bookstore/README.md"
-      lines: "31"
-      commit: "d6c59a14dfba9f6c43d43c4a7bd17cc4ed6c7fb4"
+    description: "README documents the context.set(Database) / get(Database) pattern"
 
-  - id: readme_removes_old_context_db_reference
+  - id: readme_no_old_context_db
     type: fail_to_pass
     origin: pr_diff
     description: "README no longer describes old context.db pattern in database middleware section"
-    source:
-      path: "demos/bookstore/README.md"
-      lines: "39"
-      commit: "b29fc874293468babb25b90e95edc208f1d652be"
 
 rubric:
   - rule: "Documentation update is consistent with the style of the existing README"

@@ -5,35 +5,40 @@ source:
   base_commit: 9c5343ad06d7ecb11537d6c45e24086877a1fa08
   merge_commit: 390ce6f9ccb47272eec1b9e7390c5d3b18d94a14
 checks:
-- id: syntax_check
+- id: test_syntax_check
   type: pass_to_pass
   origin: static
   description: Modified XML files must be well-formed
-- id: translucent_resource_removed
+- id: test_translucent_resource_removed
   type: fail_to_pass
   origin: pr_diff
   description: expo_splash_screen_status_bar_translucent string removed from all apps'
-    strings.xml
-- id: splash_screen_no_translucent_param
+    strings.xml via XML parsing
+- id: test_splash_screen_no_translucent_param
   type: fail_to_pass
   origin: pr_diff
   description: SplashScreen.kt show/ensureShown no longer accept statusBarTranslucent
     parameter
-- id: status_bar_set_translucent_simplified
+- id: test_status_bar_set_translucent_simplified
   type: fail_to_pass
   origin: pr_diff
   description: SplashScreenStatusBar renamed configureTranslucent to setTranslucent
-    with no boolean
-- id: experience_utils_set_translucent_no_boolean
+    with no boolean, always applies insets
+- id: test_experience_utils_set_translucent_no_boolean
   type: fail_to_pass
   origin: pr_diff
   description: ExperienceActivityUtils.setTranslucent takes only activity, no boolean
     param
-- id: get_status_bar_translucent_removed
+- id: test_get_status_bar_translucent_removed
   type: fail_to_pass
   origin: pr_diff
   description: getStatusBarTranslucent helper removed from lifecycle listener
-- id: status_bar_still_applies_insets
+- id: test_experience_activity_splash_screen_call
+  type: fail_to_pass
+  origin: pr_diff
+  description: ExperienceActivity SplashScreen.show call no longer passes translucent
+    boolean arg
+- id: test_status_bar_still_applies_insets
   type: pass_to_pass
   origin: static
   description: SplashScreenStatusBar.setTranslucent still applies window insets logic

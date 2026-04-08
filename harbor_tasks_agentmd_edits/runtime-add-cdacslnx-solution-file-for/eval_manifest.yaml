@@ -5,26 +5,42 @@ source:
   base_commit: 0f8072851a62a1e1cbb90f0372a20961ce8991f0
   merge_commit: ffdfb260b6ea228194da6ca1e3cbf081233e3e67
 checks:
-- id: slnx_valid_xml
+- id: test_slnx_valid_and_projects_resolve
   type: fail_to_pass
   origin: pr_diff
-  description: cdac.slnx must exist and be valid XML with Solution root element
-- id: slnx_includes_all_library_projects
+  description: cdac.slnx must be valid XML and every Project path must resolve to a real file
+- id: test_slnx_includes_legacy_and_dumptests
   type: fail_to_pass
   origin: pr_diff
-  description: Solution must include all five cDAC library projects
-- id: slnx_includes_legacy_project
+  description: Solution must include Legacy library and DumpTests (both missing from old template)
+- id: test_slnx_folder_organisation
   type: fail_to_pass
   origin: pr_diff
-  description: Solution must include Legacy project (missing from old README template)
-- id: slnx_includes_both_test_projects
+  description: Solution must have separate Folder elements for libraries and tests with relative paths
+- id: test_readme_no_manual_slnx_setup
   type: fail_to_pass
   origin: pr_diff
-  description: Solution must include both unit test and dump test projects
-- id: slnx_uses_relative_paths
+  description: README must not contain the old manual 'Setting up a solution' section
+- id: test_readme_references_checked_in_file
   type: fail_to_pass
   origin: pr_diff
-  description: Project paths must be relative to cdac directory, not repo root
+  description: README must reference the checked-in cdac.slnx file
+- id: test_no_trailing_whitespace_in_readme
+  type: pass_to_pass
+  origin: agent_config
+  description: Markdown files must have no trailing whitespace
+  source:
+    path: .github/copilot-instructions.md
+    lines: '40'
+    commit: 0f8072851a62a1e1cbb90f0372a20961ce8991f0
+- id: test_no_trailing_whitespace_in_slnx
+  type: pass_to_pass
+  origin: agent_config
+  description: cdac.slnx should have no trailing whitespace
+  source:
+    path: .github/copilot-instructions.md
+    lines: '40'
+    commit: 0f8072851a62a1e1cbb90f0372a20961ce8991f0
 rubric:
 - rule: The README update is consistent with the style and tone of the existing documentation
   source:
@@ -47,9 +63,4 @@ rubric:
   source:
     path: src/native/managed/cdac/README.md
     lines: 71-96
-    commit: 0f8072851a62a1e1cbb90f0372a20961ce8991f0
-- rule: Markdown files must have no trailing whitespace
-  source:
-    path: .github/copilot-instructions.md
-    lines: '47'
     commit: 0f8072851a62a1e1cbb90f0372a20961ce8991f0

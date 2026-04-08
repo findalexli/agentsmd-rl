@@ -5,14 +5,30 @@ source:
   base_commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
   merge_commit: 18d19b4124ab54f507b977c82d8424dbeba20fee
 checks:
-- id: package_json_valid
+- id: test_package_json_valid
   type: pass_to_pass
   origin: static
   description: package.json must be valid JSON with scripts.setup
-- id: setup_script_removed
+- id: test_setup_script_removed
   type: fail_to_pass
   origin: pr_diff
   description: .github/scripts/setup.js must be deleted
+- id: test_setup_script_simplified
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json setup script must not invoke setup.js and must use --recursive
+- id: test_docs_setup_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/README.md setup section must not mention database initialization
+- id: test_docs_dev_description
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/README.md yarn dev description must mention frontend dev servers
+- id: test_docs_reset_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/README.md must use yarn reset:data instead of knex-migrator
 rubric:
 - rule: Documentation updates are consistent with the style and tone of existing docs/README.md
     content
@@ -20,26 +36,8 @@ rubric:
     path: docs/README.md
     lines: 1-10
     commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
-- rule: setup script must use --recursive for submodule init
-- rule: docs/README.md must not describe yarn setup as initializing the database
-  source:
-    path: docs/README.md
-    lines: 32-35
-    commit: 18d19b4124ab54f507b977c82d8424dbeba20fee
-- rule: docs/README.md should use yarn reset:data instead of knex-migrator
-  source:
-    path: docs/README.md
-    lines: 57-58
-    commit: 18d19b4124ab54f507b977c82d8424dbeba20fee
-- rule: docs/README.md must not have old yarn dev description omitting frontend dev
-    servers
-  source:
-    path: docs/README.md
-    lines: '39'
-    commit: 18d19b4124ab54f507b977c82d8424dbeba20fee
-- rule: "CLAUDE.md mandates yarn \u2014 setup script must not use npm"
+- rule: "CLAUDE.md mandates yarn — setup script must not use npm"
   source:
     path: CLAUDE.md
     lines: '5'
     commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
-- rule: package.json setup script must not invoke setup.js

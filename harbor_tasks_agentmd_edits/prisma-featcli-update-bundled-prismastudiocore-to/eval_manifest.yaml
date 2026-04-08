@@ -3,33 +3,47 @@ source:
   repo: prisma/prisma
   pr: 29376
   base_commit: 32fb24b53c2a46971f3093eee9934c18e0f47642
-  merge_commit: 74839a9078e233c8bf8f7fe7416832d3bd6e4175
 checks:
 - id: syntax_check
   type: pass_to_pass
   origin: static
   description: Studio.ts must be valid TypeScript (no unterminated strings or brackets)
-- id: transaction_procedure_handler
-  type: fail_to_pass
-  origin: pr_diff
-  description: Studio BFF must handle the 'transaction' procedure via executeTransaction
-- id: favicon_endpoint
-  type: fail_to_pass
-  origin: pr_diff
-  description: Studio must serve a favicon at /favicon.ico as SVG
-- id: import_map_includes_radix_toggle
-  type: fail_to_pass
-  origin: pr_diff
-  description: HTML import map must include @radix-ui/react-toggle with React dep
-    pinning
 - id: existing_bff_procedures_preserved
   type: pass_to_pass
   origin: static
   description: Existing BFF procedures (query, sequence, sql-lint) must still be present
-- id: not_stub
+- id: transaction_procedure_handler
   type: fail_to_pass
-  origin: static
-  description: Transaction handler must have real logic, not just a pass-through
+  origin: pr_diff
+  description: BFF must handle transaction procedure with executeTransaction and error
+    handling
+- id: favicon_endpoint
+  type: fail_to_pass
+  origin: pr_diff
+  description: Studio must serve a valid SVG favicon at /favicon.ico with link tag
+    in HTML
+- id: import_map_includes_radix_toggle
+  type: fail_to_pass
+  origin: pr_diff
+  description: Import map must include @radix-ui/react-toggle with React dep pinning
+- id: import_map_includes_chartjs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Import map must include chart.js/auto via esm.sh
+- id: react_version_constant
+  type: fail_to_pass
+  origin: pr_diff
+  description: React version must be a constant, not hardcoded in multiple import
+    map URLs
+- id: agents_md_studio_import_map_docs
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must document Studio import map alignment with new browser
+    imports
+- id: agents_md_react_pinning_docs
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must document esm.sh React version pinning pattern
 rubric:
 - rule: AGENTS.md updates should be consistent with the existing bullet-point style
     under the CLI commands section
@@ -43,44 +57,3 @@ rubric:
     path: AGENTS.md
     lines: 108-114
     commit: 32fb24b53c2a46971f3093eee9934c18e0f47642
-- rule: React version should be a constant, not hardcoded in multiple import map URLs
-  reference: "# AGENTS.md\n- For isolated Studio verification, you can run `packages/cli/src/Studio.ts`\
-    \ directly via `pnpm exec tsx` and pass a config object that preserves `loadedFromFile`;\
-    \ this keeps SQLite URLs resolving relative to the config file while avoiding\
-    \ unrelated `packages/cli/src/bin.ts` imports.\n  - Recent `@prisma/studio-core`\
-    \ bumps can require keeping the CLI's HTML import map in `packages/cli/src/Studio.ts`\
-    \ aligned with new bare browser imports (for example `@radix-ui/react-toggle`\
-    \ and `chart"
-- rule: AGENTS.md must document that Studio import map needs alignment with new browser
-    imports
-  source:
-    path: AGENTS.md
-    lines: 67-68
-    commit: 74839a9078e233c8bf8f7fe7416832d3bd6e4175
-  reference: "- For isolated Studio verification, you can run `packages/cli/src/Studio.ts`\
-    \ directly via `pnpm exec tsx` and pass a config object that preserves `loadedFromFile`;\
-    \ this keeps SQLite URLs resolving relative to the config file while avoiding\
-    \ unrelated `packages/cli/src/bin.ts` imports.\n  - Recent `@prisma/studio-core`\
-    \ bumps can require keeping the CLI's HTML import map in `packages/cli/src/Studio.ts`\
-    \ aligned with new bare browser imports (for example `@radix-ui/react-toggle`\
-    \ and `chart.js/auto`), "
-- rule: AGENTS.md must document React version pinning for esm.sh dependencies
-  source:
-    path: AGENTS.md
-    lines: '69'
-    commit: 74839a9078e233c8bf8f7fe7416832d3bd6e4175
-  reference: "- For isolated Studio verification, you can run `packages/cli/src/Studio.ts`\
-    \ directly via `pnpm exec tsx` and pass a config object that preserves `loadedFromFile`;\
-    \ this keeps SQLite URLs resolving relative to the config file while avoiding\
-    \ unrelated `packages/cli/src/bin.ts` imports.\n  - Recent `@prisma/studio-core`\
-    \ bumps can require keeping the CLI's HTML import map in `packages/cli/src/Studio.ts`\
-    \ aligned with new bare browser imports (for example `@radix-ui/react-toggle`\
-    \ and `chart.js/auto`), "
-- rule: HTML import map must include chart.js/auto via esm.sh
-  reference: "# AGENTS.md\n- For isolated Studio verification, you can run `packages/cli/src/Studio.ts`\
-    \ directly via `pnpm exec tsx` and pass a config object that preserves `loadedFromFile`;\
-    \ this keeps SQLite URLs resolving relative to the config file while avoiding\
-    \ unrelated `packages/cli/src/bin.ts` imports.\n  - Recent `@prisma/studio-core`\
-    \ bumps can require keeping the CLI's HTML import map in `packages/cli/src/Studio.ts`\
-    \ aligned with new bare browser imports (for example `@radix-ui/react-toggle`\
-    \ and `chart"

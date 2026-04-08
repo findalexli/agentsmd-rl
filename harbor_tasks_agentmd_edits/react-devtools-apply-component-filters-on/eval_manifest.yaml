@@ -12,16 +12,26 @@ checks:
 - id: install_hook_accepts_component_filters
   type: fail_to_pass
   origin: pr_diff
-  description: installHook() accepts a componentFilters parameter
-- id: no_global_component_filters_mechanism
-  type: fail_to_pass
-  origin: pr_diff
-  description: Component filters no longer passed via __REACT_DEVTOOLS_COMPONENT_FILTERS__
-    global
-- id: renderer_accepts_component_filters
+  description: installHook() in hook.js accepts a componentFilters parameter
+- id: renderer_attach_accepts_component_filters
   type: fail_to_pass
   origin: pr_diff
   description: Fiber renderer attach() accepts component filters for initial load
+- id: no_global_component_filters_mechanism
+  type: fail_to_pass
+  origin: pr_diff
+  description: __REACT_DEVTOOLS_COMPONENT_FILTERS__ global removed from backend and
+    renderer
+- id: standalone_passes_filters_via_initialize_arg
+  type: fail_to_pass
+  origin: pr_diff
+  description: standalone.js passes component filters as initialize() argument instead
+    of global
+- id: readme_documents_component_filters_parameter
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md documents the componentFilters parameter and filter type
+    specifications
 rubric:
 - rule: Component filter documentation should be consistent with the style and format
     of the existing README tables
@@ -30,13 +40,3 @@ rubric:
     lines: 1-40
     commit: 2c30ebc4e397d57fe75f850e32aa44e353052944
 - rule: Modified JS files exist and are non-empty
-- rule: README.md documents the componentFilters parameter for initialize()
-  source:
-    path: packages/react-devtools-core/README.md
-    lines: 28-31
-    commit: 3e319a943cff862b8fbb8e96868f9f153a9e199d
-- rule: README.md documents available component filter type specifications
-  source:
-    path: packages/react-devtools-core/README.md
-    lines: 38-50
-    commit: 3e319a943cff862b8fbb8e96868f9f153a9e199d

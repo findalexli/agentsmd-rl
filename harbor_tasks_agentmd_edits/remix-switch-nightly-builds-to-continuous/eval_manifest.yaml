@@ -13,26 +13,40 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Old nightly.yml workflow is deleted
-- id: preview_workflow_has_push_trigger
+- id: preview_workflow_push_trigger
   type: fail_to_pass
   origin: pr_diff
-  description: preview.yml triggers on push to main for continuous builds
-- id: preview_workflow_builds_on_push
+  description: preview.yml has push trigger targeting main branch (YAML parsed via subprocess)
+- id: script_no_branch_flag
   type: fail_to_pass
   origin: pr_diff
-  description: preview.yml builds and pushes a preview branch on push events
+  description: setup-installable-branch.ts parseArgs config rejects --branch flag (executed
+    via Node subprocess)
 - id: script_requires_branch_name
   type: fail_to_pass
   origin: pr_diff
-  description: setup-installable-branch.ts requires positional arg, no nightly default
+  description: setup-installable-branch.ts must not silently default to nightly with
+    no args (executed via Node subprocess)
 - id: script_removes_overwrite_protection
   type: fail_to_pass
   origin: pr_diff
   description: setup-installable-branch.ts removes nightly-specific overwrite protection
+- id: preview_workflow_builds_on_push
+  type: fail_to_pass
+  origin: pr_diff
+  description: preview.yml builds and pushes a preview branch on push events
 - id: script_comments_reference_preview
   type: fail_to_pass
   origin: pr_diff
   description: setup-installable-branch.ts JSDoc references preview, not nightly
+- id: readme_nightly_to_preview
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md install commands reference preview branch, not nightly
+- id: contributing_nightly_to_preview
+  type: fail_to_pass
+  origin: pr_diff
+  description: CONTRIBUTING.md references preview builds, not nightly builds
 - id: preview_workflow_retains_pr_previews
   type: pass_to_pass
   origin: static

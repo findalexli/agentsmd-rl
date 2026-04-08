@@ -8,50 +8,49 @@ checks:
 - id: syntax_check
   type: pass_to_pass
   origin: static
-  description: Modified TypeScript files must exist and be non-empty
-- id: release_pr_script_renamed
+  description: Core TypeScript utility files must exist and be non-empty
+- id: release_pr_import_chain
   type: fail_to_pass
   origin: pr_diff
-  description: Main PR script renamed from changes-version-pr.ts to release-pr.ts
-- id: release_pr_utils_renamed
+  description: release-pr.ts exists with import to utils/release-pr.ts, old files removed
+- id: pr_config_values
   type: fail_to_pass
   origin: pr_diff
-  description: Utility module renamed from version-pr.ts to release-pr.ts
-- id: pr_title_is_release
+  description: release-pr.ts sets prTitle='Release' and prBranch='release-pr/main'
+- id: commit_subject_is_release
   type: fail_to_pass
   origin: pr_diff
-  description: release-pr.ts uses 'Release' as PR title instead of 'Version Packages'
-- id: commit_message_subject
+  description: generateCommitMessage in changes.ts uses 'Release' as commit subject
+- id: git_tag_and_release_url
   type: fail_to_pass
   origin: pr_diff
-  description: generateCommitMessage uses 'Release' as commit subject
-- id: dependency_bumps_in_package_release
+  description: getGitTag and getGitHubReleaseUrl produce correct tag and URL format
+    when executed
+- id: dependency_bump_type_and_field
   type: fail_to_pass
   origin: pr_diff
-  description: PackageRelease interface includes dependencyBumps field and DependencyBump
-    type
-- id: get_transitive_dependents_exists
+  description: DependencyBump interface with required fields, dependencyBumps in PackageRelease
+- id: transitive_dependents_exported
   type: fail_to_pass
   origin: pr_diff
   description: packages.ts exports getTransitiveDependents, buildReverseDependencyGraph,
-    getGitHubReleaseUrl
+    getPackageDependencies
+- id: workflow_renamed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Workflow renamed from changes-version-pr.yaml to release-pr.yaml
+- id: agents_md_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md references release-pr workflow and 'Release' PR naming
+- id: contributing_md_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: CONTRIBUTING.md uses 'Release' naming and release-pr references
 - id: workflow_references_consistent
   type: pass_to_pass
   origin: static
-  description: Workflow YAML and scripts use consistent naming without old 'Version
-    Packages' references
-- id: agents_md_references_release_pr
-  type: fail_to_pass
-  origin: pr_diff
-  description: AGENTS.md references the release-pr workflow, not changes-version-pr
-- id: agents_md_uses_release_naming
-  type: fail_to_pass
-  origin: pr_diff
-  description: AGENTS.md uses 'Release' PR naming and references release-pr.ts
-- id: contributing_md_uses_release_naming
-  type: fail_to_pass
-  origin: pr_diff
-  description: CONTRIBUTING.md uses 'Release' PR naming throughout, no old references
+  description: Workflow YAML and scripts use consistent naming
 rubric:
 - rule: Config updates (AGENTS.md, CONTRIBUTING.md) are consistent with the style
     and formatting of the surrounding documentation

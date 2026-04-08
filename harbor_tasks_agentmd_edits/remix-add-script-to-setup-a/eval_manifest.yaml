@@ -5,18 +5,38 @@ source:
   base_commit: 598a92e3dc3488b02da7e4edafd1ff2498cc4c34
   merge_commit: aff458aa4826f6d7e5c0457542b19d4dead701ad
 checks:
-- id: syntax_check
+- id: process_ts_exists
   type: pass_to_pass
   origin: static
-  description: Modified TypeScript files parse without errors
-- id: log_and_exec_capture_support
+  description: scripts/utils/process.ts exists and exports logAndExec
+- id: logandexec_capture_returns_output
   type: fail_to_pass
   origin: pr_diff
-  description: logAndExec accepts captureOutput boolean and returns string
-- id: log_and_exec_pipe_stdio
+  description: logAndExec(cmd, true) returns the command stdout as a string
+- id: logandexec_default_returns_string
   type: fail_to_pass
   origin: pr_diff
-  description: logAndExec uses stdio:'pipe' when capturing output
+  description: logAndExec(cmd) without capture returns empty string (not void)
+- id: setup_script_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: scripts/setup-installable-branch.ts exists with key functionality
+- id: package_json_has_setup_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json registers the setup-installable-branch npm script
+- id: nightly_workflow_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: GitHub Actions nightly workflow exists with correct triggers
+- id: readme_installation_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md has Installation section with nightly build instructions
+- id: contributing_nightly_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: CONTRIBUTING.md documents the nightly build process
 rubric:
 - rule: New code uses let for local variables, const only at module scope (per AGENTS.md
     Code Style)
@@ -30,97 +50,8 @@ rubric:
     path: README.md
     lines: 1-10
     commit: 598a92e3dc3488b02da7e4edafd1ff2498cc4c34
-- rule: package.json registers the setup-installable-branch npm script
-  reference: '# CONTRIBUTING.md
-
-    ## Nightly Builds
-
-
-    We also maintain installable nightly builds in a `nightly` branch as a way for
-    folks to test out the latest `main` branch without needing to publish nightly
-    releases to npm and clutter up the npm registry and version history UI.
-
-
-    This is managed via the [`nightly` workflow](/.github/workflows/nightly.yaml)
-    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
-    script to build and commit the build and required `package.json` chan'
-- rule: README.md has Installation section with nightly build install instructions
-  source:
-    path: README.md
-    lines: 64-84
-    commit: aff458aa4826f6d7e5c0457542b19d4dead701ad
-  reference: '## Installation
-
-
-    ```sh
-
-    npm install remix
-
-
-    # Or, just install a single package
-
-    npm install @remix-run/fetch-router
-
-    ```
-
-
-    If you want to play around with the bleeding edge, we also build the latest `main`
-    branch every night into a `nightly` branch which can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
-    with `pnpm` (version 9+):
-
-
-    ```sh
-
-    pnpm install "remix-run/remix#nightly&path:packages/remix"
-
-
-    # Or, just install a single packag'
-- rule: CONTRIBUTING.md documents the nightly build process and setup script
-  source:
-    path: CONTRIBUTING.md
-    lines: 161-176
-    commit: aff458aa4826f6d7e5c0457542b19d4dead701ad
-  reference: '## Nightly Builds
-
-
-    We also maintain installable nightly builds in a `nightly` branch as a way for
-    folks to test out the latest `main` branch without needing to publish nightly
-    releases to npm and clutter up the npm registry and version history UI.
-
-
-    This is managed via the [`nightly` workflow](/.github/workflows/nightly.yaml)
-    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
-    script to build and commit the build and required `package.json` changes to the
-    `nightl'
 - rule: New script uses .ts extensions in relative imports per AGENTS.md
   source:
     path: AGENTS.md
     lines: '23'
     commit: 598a92e3dc3488b02da7e4edafd1ff2498cc4c34
-  reference: '# CONTRIBUTING.md
-
-    ## Nightly Builds
-
-
-    We also maintain installable nightly builds in a `nightly` branch as a way for
-    folks to test out the latest `main` branch without needing to publish nightly
-    releases to npm and clutter up the npm registry and version history UI.
-
-
-    This is managed via the [`nightly` workflow](/.github/workflows/nightly.yaml)
-    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
-    script to build and commit the build and required `package.json` chan'
-- rule: setup-installable-branch.ts implements gitignore and package dep update operations
-  reference: '# CONTRIBUTING.md
-
-    ## Nightly Builds
-
-
-    We also maintain installable nightly builds in a `nightly` branch as a way for
-    folks to test out the latest `main` branch without needing to publish nightly
-    releases to npm and clutter up the npm registry and version history UI.
-
-
-    This is managed via the [`nightly` workflow](/.github/workflows/nightly.yaml)
-    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
-    script to build and commit the build and required `package.json` chan'

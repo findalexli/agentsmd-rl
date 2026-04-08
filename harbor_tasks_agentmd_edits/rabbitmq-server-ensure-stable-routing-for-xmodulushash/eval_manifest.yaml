@@ -3,20 +3,42 @@ source:
   repo: rabbitmq/rabbitmq-server
   pr: 15859
   base_commit: f5c203919fe89ebe26d7a5650a58cced4ab807a6
-  merge_commit: 564e1b2f48d2c30a00e4cb8fc75d3c45b33ce9ae
 checks:
+- id: core_module_exists_with_stable_routing
+  type: fail_to_pass
+  origin: pr_diff
+  description: Core exchange module exists in deps/rabbit/src/ and sorts destinations
+    for stable routing
+- id: core_module_registers_as_boot_step
+  type: fail_to_pass
+  origin: pr_diff
+  description: Core module registers x-modulus-hash exchange type as a rabbit boot
+    step
+- id: core_module_implements_all_callbacks
+  type: fail_to_pass
+  origin: pr_diff
+  description: Core module implements all required rabbit_exchange_type callbacks
+- id: old_sharding_module_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old sharding exchange module removed from plugin directory
+- id: readme_documents_builtin_exchange
+  type: fail_to_pass
+  origin: pr_diff
+  description: Sharding README documents x-modulus-hash as built-in to core RabbitMQ
+- id: readme_documents_stable_routing
+  type: fail_to_pass
+  origin: pr_diff
+  description: Sharding README documents the stable routing guarantee
+- id: makefile_includes_modulus_hash_ct
+  type: fail_to_pass
+  origin: pr_diff
+  description: Makefile includes rabbit_exchange_type_modulus_hash in parallel CT test
+    sets
 - id: erlang_module_well_formed
   type: pass_to_pass
   origin: static
   description: Core exchange module has valid Erlang module structure
-- id: core_module_routes_with_sorting
-  type: fail_to_pass
-  origin: pr_diff
-  description: Core exchange module sorts destinations for stable routing
-- id: core_module_registers_exchange
-  type: fail_to_pass
-  origin: pr_diff
-  description: Core module registers x-modulus-hash as a rabbit boot step
 rubric:
 - rule: Only add very important comments, both in tests and in the implementation
   source:
@@ -28,77 +50,8 @@ rubric:
     path: deps/rabbitmq_sharding/README.md
     lines: 1-10
     commit: f5c203919fe89ebe26d7a5650a58cced4ab807a6
-- rule: Sharding README states x-modulus-hash is built-in to core RabbitMQ
-  source:
-    path: deps/rabbitmq_sharding/README.md
-    lines: 51-56
-    commit: 564e1b2f48d2c30a00e4cb8fc75d3c45b33ce9ae
-  reference: 'RabbitMQ provides a built-in exchange type, `"x-modulus-hash"`, that
-    will use
-
-    across a number of regular queues (shards). This exchange type is available
-
-    in core RabbitMQ and does not require enabling this plugin to be used.
-
-    This exchange guarantees stable routing. As long as the bindings to the exchange
-    remain the same,
-
-    messages with the same routing key will always be routed to exactly the same destination
-    queue,
-
-    even across node restarts.'
-- rule: Sharding README documents stable routing guarantee
-  source:
-    path: deps/rabbitmq_sharding/README.md
-    lines: 62-65
-    commit: 564e1b2f48d2c30a00e4cb8fc75d3c45b33ce9ae
-  reference: 'RabbitMQ provides a built-in exchange type, `"x-modulus-hash"`, that
-    will use
-
-    across a number of regular queues (shards). This exchange type is available
-
-    in core RabbitMQ and does not require enabling this plugin to be used.
-
-    This exchange guarantees stable routing. As long as the bindings to the exchange
-    remain the same,
-
-    messages with the same routing key will always be routed to exactly the same destination
-    queue,
-
-    even across node restarts.'
 - rule: Comments placed above the line they refer to, not inline
   source:
     path: CLAUDE.md
     lines: '111'
     commit: f5c203919fe89ebe26d7a5650a58cced4ab807a6
-  reference: '# deps/rabbitmq_sharding/README.md
-
-    RabbitMQ provides a built-in exchange type, `"x-modulus-hash"`, that will use
-
-    across a number of regular queues (shards). This exchange type is available
-
-    in core RabbitMQ and does not require enabling this plugin to be used.
-
-    This exchange guarantees stable routing. As long as the bindings to the exchange
-    remain the same,
-
-    messages with the same routing key will always be routed to exactly the same destination
-    queue,
-
-    even across node restarts.'
-- rule: Core module implements all rabbit_exchange_type callbacks
-  reference: '# deps/rabbitmq_sharding/README.md
-
-    RabbitMQ provides a built-in exchange type, `"x-modulus-hash"`, that will use
-
-    across a number of regular queues (shards). This exchange type is available
-
-    in core RabbitMQ and does not require enabling this plugin to be used.
-
-    This exchange guarantees stable routing. As long as the bindings to the exchange
-    remain the same,
-
-    messages with the same routing key will always be routed to exactly the same destination
-    queue,
-
-    even across node restarts.'

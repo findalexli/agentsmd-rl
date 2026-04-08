@@ -9,26 +9,30 @@ checks:
   type: pass_to_pass
   origin: static
   description: PowerShell script exists and is non-trivial
-- id: update_labels_function_defined
+- id: update_labels_function_logic
   type: fail_to_pass
   origin: pr_diff
-  description: Script defines Update-VerificationLabels with label add/remove via
-    REST API
-- id: label_names_defined
+  description: Update-VerificationLabels function has correct toggle logic with REST
+    API DELETE/POST and error handling
+- id: label_names_and_constants
   type: fail_to_pass
   origin: pr_diff
-  description: Script defines s/ai-reproduction-confirmed and s/ai-reproduction-failed
+  description: Script defines $LabelConfirmed and $LabelFailed constants with correct
     label strings
-- id: labels_called_on_verification_pass
+- id: labels_called_on_all_paths
   type: fail_to_pass
   origin: pr_diff
-  description: Update-VerificationLabels called with $true in both simple and full
-    verification pass paths
-- id: labels_called_on_verification_fail
+  description: Update-VerificationLabels called with correct bool in all 4 verification
+    paths
+- id: pr_detection_fallback
   type: fail_to_pass
   origin: pr_diff
-  description: Update-VerificationLabels called with $false in both simple and full
-    verification fail paths
+  description: PR detection has gh pr list --head fallback for fork branches
+- id: skill_md_labels_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md has PR Labels section documenting both labels, table, and
+    toggle behavior
 - id: existing_verify_failure_mode_preserved
   type: pass_to_pass
   origin: static
@@ -72,7 +76,7 @@ rubric:
     commit: e8f0031d821766f32bd5d1f59d73eea342061876
   reference: "4. **Updates PR labels** based on result\n5. Reports result\n9. **Updates\
     \ PR labels** based on result\n10. Reports result\n\n## PR Labels\n\nThe skill\
-    \ automatically manages two labels on the PR to indicate verification status:\n\
+    \ automatically manage two labels on the PR to indicate verification status:\n\
     \n| Label | Color | When Applied |\n|-------|-------|--------------|\n| `s/ai-reproduction-confirmed`\
     \ | \U0001F7E2 Green (#2E7D32) | Tests correctly FAIL without fix (AI verified\
     \ tests catch the bug) |\n| `s/ai-reproduction-failed` | \U0001F7E0 Orange (#E65100)\

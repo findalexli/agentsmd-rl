@@ -9,7 +9,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Remix is a large monorepo — use depth limit for faster clone
-RUN git clone --depth=100 https://github.com/remix-run/remix.git /workspace/remix && \
+RUN git clone --depth=1000 https://github.com/remix-run/remix.git /workspace/remix && \
     cd /workspace/remix && \
     git checkout 721dac4c6704d5b3e8428887af21accdcb3b23ea && \
     git config user.email "agent@test" && \

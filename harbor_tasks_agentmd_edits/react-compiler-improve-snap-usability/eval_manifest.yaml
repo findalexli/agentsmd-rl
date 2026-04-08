@@ -9,18 +9,26 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files parse without syntax errors
-- id: filter_constant_removed
+- id: yargs_debug_option
   type: fail_to_pass
   origin: pr_diff
-  description: constants.ts no longer defines FILTER_FILENAME or FILTER_PATH
-- id: debug_cli_option_added
+  description: runner.ts defines --debug/-d boolean CLI option and removes --filter
+- id: filter_mechanism_removed
   type: fail_to_pass
   origin: pr_diff
-  description: runner.ts defines a --debug / -d CLI option via yargs
-- id: testfilter_function_removed
+  description: FILTER constants and readTestFilter function removed from snap packages
+- id: runner_state_interactive_fields
   type: fail_to_pass
   origin: pr_diff
-  description: fixture-utils.ts no longer exports readTestFilter
+  description: RunnerState type includes debug, inputMode, and inputBuffer fields
+- id: claude_md_documents_snap_cli
+  type: fail_to_pass
+  origin: pr_diff
+  description: compiler/CLAUDE.md documents snap CLI with -p, -d, and -u flags
+- id: claude_md_documents_project_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: compiler/CLAUDE.md documents project structure and key concepts
 rubric:
 - rule: CLAUDE.md documentation is clear, accurate, and consistent with the actual
     CLI interface
@@ -28,44 +36,14 @@ rubric:
     path: compiler/CLAUDE.md
     lines: 1-221
     commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
-- rule: runner.ts no longer has --filter CLI option, replaced by --pattern and --debug
-  reference: "# compiler/CLAUDE.md\n# React Compiler Knowledge Base\n\nThis document\
-    \ contains knowledge about the React Compiler gathered during development sessions.\
-    \ It serves as a reference for understanding the codebase architecture and key\
-    \ concepts.\n\n## Project Structure\n\n- `packages/babel-plugin-react-compiler/`\
-    \ - Main compiler package\n  - `src/HIR/` - High-level Intermediate Representation\
-    \ types and utilities\n  - `src/Inference/` - Effect inference passes (aliasing,\
-    \ mutation, etc.)\n  - `src/Validation/` - "
 - rule: compiler/CLAUDE.md documents snap CLI with -p pattern and -d debug flags
   source:
     path: compiler/CLAUDE.md
     lines: 21-35
     commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
-  reference: "# React Compiler Knowledge Base\n\nThis document contains knowledge\
-    \ about the React Compiler gathered during development sessions. It serves as\
-    \ a reference for understanding the codebase architecture and key concepts.\n\n\
-    ## Project Structure\n\n- `packages/babel-plugin-react-compiler/` - Main compiler\
-    \ package\n  - `src/HIR/` - High-level Intermediate Representation types and utilities\n\
-    \  - `src/Inference/` - Effect inference passes (aliasing, mutation, etc.)\n \
-    \ - `src/Validation/` - Validation passes tha"
 - rule: compiler/CLAUDE.md documents compiler project structure and key concepts (HIR,
     fixtures)
   source:
     path: compiler/CLAUDE.md
     lines: 1-20
     commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
-  reference: "# React Compiler Knowledge Base\n\nThis document contains knowledge\
-    \ about the React Compiler gathered during development sessions. It serves as\
-    \ a reference for understanding the codebase architecture and key concepts.\n\n\
-    ## Project Structure\n\n- `packages/babel-plugin-react-compiler/` - Main compiler\
-    \ package\n  - `src/HIR/` - High-level Intermediate Representation types and utilities\n\
-    \  - `src/Inference/` - Effect inference passes (aliasing, mutation, etc.)\n \
-    \ - `src/Validation/` - Validation passes tha"
-- rule: RunnerState has debug and inputMode fields for interactive watch mode
-  reference: "# compiler/CLAUDE.md\n# React Compiler Knowledge Base\n\nThis document\
-    \ contains knowledge about the React Compiler gathered during development sessions.\
-    \ It serves as a reference for understanding the codebase architecture and key\
-    \ concepts.\n\n## Project Structure\n\n- `packages/babel-plugin-react-compiler/`\
-    \ - Main compiler package\n  - `src/HIR/` - High-level Intermediate Representation\
-    \ types and utilities\n  - `src/Inference/` - Effect inference passes (aliasing,\
-    \ mutation, etc.)\n  - `src/Validation/` - "

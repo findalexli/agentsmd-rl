@@ -7,27 +7,28 @@ source:
   merge_commit: "0951cf4968a8332220a10df37ee0bdb0ed0bab2e"
 
 checks:
-  # Code behavior checks
+  # Behavioral type check — verifies update() returns Promise<AbortSignal>
   - id: handle_update_returns_promise
     type: fail_to_pass
     origin: pr_diff
-    description: "Handle.update() returns Promise<AbortSignal> instead of accepting task callback"
+    description: "handle.update() returns Promise<AbortSignal> — TypeScript type check"
 
+  # Structural code checks
   - id: cascading_update_guard
     type: fail_to_pass
     origin: pr_diff
-    description: "Scheduler detects and stops infinite cascading update loops"
+    description: "Scheduler defines MAX_CASCADING_UPDATES and detects infinite loops"
 
   - id: render_ctrl_cleanup
     type: fail_to_pass
     origin: pr_diff
     description: "Component remove() aborts renderCtrl alongside connectedCtrl"
 
-  # Config/documentation update checks
+  # Documentation update checks
   - id: agents_md_promise_api
     type: fail_to_pass
     origin: pr_diff
-    description: "AGENTS.md documents handle.update() as returning Promise<AbortSignal>"
+    description: "AGENTS.md documents handle.update() with Promise/await pattern"
 
   - id: readme_md_promise_api
     type: fail_to_pass
@@ -37,7 +38,7 @@ checks:
   - id: handle_md_promise_api
     type: fail_to_pass
     origin: pr_diff
-    description: "docs/handle.md reflects the Promise-based handle.update() API"
+    description: "docs/handle.md documents the await handle.update() pattern"
 
 rubric:
   - rule: "Documentation updates are consistent in style with existing content"

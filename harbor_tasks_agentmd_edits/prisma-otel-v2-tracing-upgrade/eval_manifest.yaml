@@ -9,26 +9,31 @@ checks:
   type: pass_to_pass
   origin: static
   description: All modified TypeScript files exist and are non-empty
-- id: resource_from_attributes_in_test_files
+- id: v2_otel_provider_pattern
   type: fail_to_pass
   origin: pr_diff
-  description: Tracing test files use resourceFromAttributes instead of new Resource
-- id: semantic_conventions_v2_in_test_files
+  description: >-
+    OTel v2 provider initialization (resourceFromAttributes, spanProcessors in
+    constructor, trace.setGlobalTracerProvider) works at runtime and all tracing
+    test files use v2 patterns
+- id: v2_semantic_conventions
   type: fail_to_pass
   origin: pr_diff
-  description: Test files use ATTR_SERVICE_NAME/VERSION instead of SEMRESATTRS_*
-- id: set_global_tracer_provider_in_test_files
-  type: fail_to_pass
-  origin: pr_diff
-  description: Test files use trace.setGlobalTracerProvider() instead of .register()
-- id: span_processors_constructor_option
-  type: fail_to_pass
-  origin: pr_diff
-  description: Test files pass spanProcessors in constructor instead of addSpanProcessor
+  description: >-
+    OTel v2 semantic convention constants (ATTR_SERVICE_NAME/VERSION) resolve
+    at runtime and test files use them instead of deprecated SEMRESATTRS_*
 - id: parent_span_context_property
   type: fail_to_pass
   origin: pr_diff
-  description: tracing/tests.ts uses parentSpanContext?.spanId instead of parentSpanId
+  description: >-
+    tracing/tests.ts uses parentSpanContext?.spanId (v2) instead of parentSpanId
+    (v1) for root span filtering and tree building
+- id: readme_v2_example
+  type: fail_to_pass
+  origin: pr_diff
+  description: >-
+    README.md Jaeger example uses v2 OTel APIs (resourceFromAttributes,
+    ATTR_SERVICE_NAME/VERSION, spanProcessors, trace.setGlobalTracerProvider)
 - id: not_stub
   type: pass_to_pass
   origin: static
@@ -39,42 +44,18 @@ rubric:
     path: packages/instrumentation/README.md
     lines: 42-44
     commit: c5249341dc04490c790e535062224821be4c39b0
-  reference: "import { context, trace } from '@opentelemetry/api'\nimport { resourceFromAttributes\
-    \ } from '@opentelemetry/resources'\nimport { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION\
-    \ } from '@opentelemetry/semantic-conventions'\n  resource: resourceFromAttributes({\n\
-    \    [ATTR_SERVICE_NAME]: 'test-tracing-service',\n    [ATTR_SERVICE_VERSION]:\
-    \ '1.0.0',\n  spanProcessors: [new SimpleSpanProcessor(otlpTraceExporter)],\n\
-    trace.setGlobalTracerProvider(provider)"
 - rule: README.md example uses ATTR_SERVICE_NAME/VERSION instead of SEMRESATTRS_*
   source:
     path: packages/instrumentation/README.md
     lines: 40-46
     commit: c5249341dc04490c790e535062224821be4c39b0
-  reference: "import { context, trace } from '@opentelemetry/api'\nimport { resourceFromAttributes\
-    \ } from '@opentelemetry/resources'\nimport { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION\
-    \ } from '@opentelemetry/semantic-conventions'\n  resource: resourceFromAttributes({\n\
-    \    [ATTR_SERVICE_NAME]: 'test-tracing-service',\n    [ATTR_SERVICE_VERSION]:\
-    \ '1.0.0',\n  spanProcessors: [new SimpleSpanProcessor(otlpTraceExporter)],\n\
-    trace.setGlobalTracerProvider(provider)"
 - rule: README.md example uses trace.setGlobalTracerProvider()
   source:
     path: packages/instrumentation/README.md
     lines: '64'
     commit: c5249341dc04490c790e535062224821be4c39b0
-  reference: "import { context, trace } from '@opentelemetry/api'\nimport { resourceFromAttributes\
-    \ } from '@opentelemetry/resources'\nimport { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION\
-    \ } from '@opentelemetry/semantic-conventions'\n  resource: resourceFromAttributes({\n\
-    \    [ATTR_SERVICE_NAME]: 'test-tracing-service',\n    [ATTR_SERVICE_VERSION]:\
-    \ '1.0.0',\n  spanProcessors: [new SimpleSpanProcessor(otlpTraceExporter)],\n\
-    trace.setGlobalTracerProvider(provider)"
 - rule: README.md example passes spanProcessors in constructor
   source:
     path: packages/instrumentation/README.md
     lines: '60'
     commit: c5249341dc04490c790e535062224821be4c39b0
-  reference: "import { context, trace } from '@opentelemetry/api'\nimport { resourceFromAttributes\
-    \ } from '@opentelemetry/resources'\nimport { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION\
-    \ } from '@opentelemetry/semantic-conventions'\n  resource: resourceFromAttributes({\n\
-    \    [ATTR_SERVICE_NAME]: 'test-tracing-service',\n    [ATTR_SERVICE_VERSION]:\
-    \ '1.0.0',\n  spanProcessors: [new SimpleSpanProcessor(otlpTraceExporter)],\n\
-    trace.setGlobalTracerProvider(provider)"

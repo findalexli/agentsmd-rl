@@ -1,53 +1,58 @@
 version: "2.0"
 
 source:
-  repo: "{{OWNER}}/{{REPO}}"
-  pr: 0  # {{PR_NUMBER}}
-  base_commit: "{{BASE_COMMIT}}"
-  merge_commit: "{{MERGE_COMMIT}}"
+  repo: "remix-run/remix"
+  pr: 10823
+  base_commit: "90016e313b24a05c5862a853a3b518290d9017ba"
 
 checks:
-  - id: syntax_check
+  - id: test_core_files_exist
     type: pass_to_pass
     origin: static
-    description: "Modified files must parse without errors"
+    description: "Core interaction source files exist with substantial content"
 
-  - id: core_bug_fixed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TODO: describe the core behavioral change"
-
-  - id: edge_case
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TODO: describe a second input or edge case"
-
-  - id: existing_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Upstream test suite still passes"
-
-  - id: not_stub
+  - id: test_core_exports_preserved
     type: pass_to_pass
     origin: static
-    description: "Modified function has real logic, not just pass/return"
+    description: "Core API functions still exported: on, createContainer, defineInteraction"
 
-  # Uncomment and fill if agent config rules exist:
-  # - id: config_rule
-  #   type: fail_to_pass
-  #   origin: agent_config
-  #   description: "TODO: rule from agent config"
-  #   source:
-  #     path: "AGENTS.md"
-  #     lines: "30"
-  #     commit: "{{BASE_COMMIT}}"
+  - id: test_create_container_on_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "createContainer accepts { onError } option and calls it when a listener throws"
 
-rubric:
-  # Soft rules for LLM judge. Only rules genuinely needing subjective evaluation.
-  # Remove this section if no applicable soft rules exist.
-  []
-  # - rule: "TODO: verbatim text from config file"
-  #   source:
-  #     path: "AGENTS.md"
-  #     lines: "45"
-  #     commit: "{{BASE_COMMIT}}"
+  - id: test_descriptor_object_syntax
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Descriptor objects with { once: true, listener } work as inline descriptors"
+
+  - id: test_old_helpers_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "capture() and listenWith() are no longer exported from index.ts"
+
+  - id: test_new_types_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Interaction and ContainerOptions types are exported from index.ts"
+
+  - id: test_interaction_context_pattern
+    type: fail_to_pass
+    origin: pr_diff
+    description: "InteractionSetup uses this: Interaction context instead of positional args"
+
+  - id: test_readme_descriptor_syntax
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README shows new descriptor object syntax, not old capture()/listenWith() calls"
+
+  - id: test_changelog_unreleased_heading
+    type: fail_to_pass
+    origin: agent_config
+    description: "CHANGELOG uses ## Unreleased heading per AGENTS.md convention"
+    source:
+      path: AGENTS.md
+      lines: "25"
+      commit: "90016e313b24a05c5862a853a3b518290d9017ba"
+
+rubric: []

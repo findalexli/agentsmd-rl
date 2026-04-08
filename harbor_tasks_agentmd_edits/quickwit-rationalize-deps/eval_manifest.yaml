@@ -9,38 +9,26 @@ checks:
   type: pass_to_pass
   origin: static
   description: Cargo.toml must be valid TOML after modifications
-- id: hyper_util_not_full
-  type: fail_to_pass
-  origin: pr_diff
-  description: hyper-util must not use 'full' feature, should list specific features
-- id: tokio_util_not_full
-  type: fail_to_pass
-  origin: pr_diff
-  description: tokio-util must not use 'full' feature, should list specific features
-- id: prometheus_defaults_disabled
-  type: fail_to_pass
-  origin: pr_diff
-  description: prometheus must have default-features = false (protobuf not needed)
-- id: dialoguer_defaults_disabled
-  type: fail_to_pass
-  origin: pr_diff
-  description: dialoguer must have default-features = false
-- id: zstd_defaults_disabled
-  type: fail_to_pass
-  origin: pr_diff
-  description: zstd must have default-features = false
-- id: env_logger_defaults_disabled
-  type: fail_to_pass
-  origin: pr_diff
-  description: env_logger must have default-features = false
 - id: essential_deps_unchanged
   type: pass_to_pass
   origin: static
   description: Critical dependencies must still be present in workspace
-- id: hyper_util_has_required_features
-  type: pass_to_pass
-  origin: static
-  description: hyper-util must retain essential features (tokio, service)
+- id: deps_rationalized
+  type: fail_to_pass
+  origin: pr_diff
+  description: All 6 deps must have default-features disabled and no 'full' feature
+- id: hyper_util_essential_features
+  type: fail_to_pass
+  origin: pr_diff
+  description: hyper-util must retain essential features (tokio, service) after rationalization
+- id: skill_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: rationalize-deps SKILL.md must exist with YAML frontmatter
+- id: skill_documents_workflow
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must document the dependency rationalization workflow
 rubric:
 - rule: The SKILL.md should be well-structured with clear step-by-step instructions,
     consistent with the style of existing skills in .claude/skills/

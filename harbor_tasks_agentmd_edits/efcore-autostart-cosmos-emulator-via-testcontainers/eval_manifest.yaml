@@ -5,27 +5,39 @@ source:
   base_commit: dd9da572feeb9851a0c4a6579b05163c48574c29
   merge_commit: 23054e87c735a09e93487ad572d8660d35fe3202
 checks:
-- id: syntax_check
+- id: test_syntax_check
   type: pass_to_pass
   origin: static
   description: Modified C# files are present and non-empty
-- id: testenvironment_has_initialize_async
+- id: test_testenvironment_initialize_async_logic
   type: fail_to_pass
   origin: pr_diff
-  description: "TestEnvironment.cs has InitializeAsync with 3-path logic (configured\u2192\
-    probe\u2192testcontainer)"
-- id: cosmos_config_default_connection_null
+  description: "TestEnvironment.cs has InitializeAsync with 3-path logic (configured\
+    \u2192probe\u2192testcontainer)"
+- id: test_cosmos_config_default_connection_null
   type: fail_to_pass
   origin: pr_diff
   description: cosmosConfig.json DefaultConnection changed from hardcoded URL to null
-- id: docker_scripts_removed
+- id: test_docker_scripts_removed
   type: fail_to_pass
   origin: pr_diff
   description: eng/testing/run-cosmos-container.ps1 and .sh deleted
-- id: testcontainers_package_referenced
+- id: test_testcontainers_package_referenced
   type: fail_to_pass
   origin: pr_diff
-  description: Testcontainers.CosmosDb added as package dependency
+  description: Testcontainers.CosmosDb added as package dependency in props and csproj
+- id: test_cosmosteststore_mutable_and_calls_initialize
+  type: fail_to_pass
+  origin: pr_diff
+  description: CosmosTestStore has mutable connection properties and calls TestEnvironment.InitializeAsync
+- id: test_options_builder_uses_http_handler
+  type: fail_to_pass
+  origin: pr_diff
+  description: CosmosDbContextOptionsBuilderExtensions uses TestEnvironment.HttpMessageHandler
+- id: test_helix_simplified
+  type: fail_to_pass
+  origin: pr_diff
+  description: helix.proj no longer references old Docker startup scripts
 rubric:
 - rule: SKILL.md update is consistent with the style of existing skill documentation
   source:

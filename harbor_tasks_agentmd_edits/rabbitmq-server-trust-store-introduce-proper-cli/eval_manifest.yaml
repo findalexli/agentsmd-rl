@@ -21,13 +21,25 @@ checks:
 - id: list_certificates_function
   type: fail_to_pass
   origin: pr_diff
-  description: rabbit_trust_store.erl exports list_certificates returning structured
-    map data
+  description: rabbit_trust_store.erl exports list_certificates in an -export directive
 - id: list_certificates_map_keys
   type: fail_to_pass
   origin: pr_diff
   description: list_certificates returns maps with name, serial, subject, issuer,
     validity keys
+- id: readme_documents_list_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: README documents the list_trust_store_certificates CLI command
+- id: readme_documents_refresh_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: README documents the refresh_trust_store CLI command
+- id: readme_no_eval_instructions
+  type: fail_to_pass
+  origin: pr_diff
+  description: README no longer instructs users to use rabbitmqctl eval for trust store
+    operations
 rubric:
 - rule: README documentation is consistent with the style of the existing trust store
     README
@@ -40,68 +52,3 @@ rubric:
     path: CLAUDE.md
     lines: 37-38
     commit: 95cfcbac9099290f72f99665a8b9ba7f63a8c266
-- rule: README.md documents the list_trust_store_certificates CLI command
-  source:
-    path: deps/rabbitmq_trust_store/README.md
-    lines: 163-172
-    commit: 9e4767cc9ffb4a8757f009f3ac3c38a0f4e31406
-  reference: "To list the currently loaded certificates, use `rabbitmqctl`:\n``` sh\n\
-    # Available as of RabbitMQ `4.3.0`, `4.2.6`\nrabbitmqctl list_trust_store_certificates\n\
-    This will output a table of certificates similar to:\nListing trust store certificates\
-    \ on node rabbit@hostname...\nname\tserial\tsubject\tissuer\tvalidity\ncert.pem\t\
-    0x1\tO=client,CN=snowman.local\tL=87613,CN=MyTestRootCA\t2016-05-24T15:28:25Z\
-    \ - 2026-05-22T15:28:25Z\n### Refreshing certificates\n\nTo trigger a manual refresh\
-    \ of the trust store certificates,"
-- rule: README.md documents the refresh_trust_store CLI command
-  source:
-    path: deps/rabbitmq_trust_store/README.md
-    lines: 174-181
-    commit: 9e4767cc9ffb4a8757f009f3ac3c38a0f4e31406
-  reference: "To list the currently loaded certificates, use `rabbitmqctl`:\n``` sh\n\
-    # Available as of RabbitMQ `4.3.0`, `4.2.6`\nrabbitmqctl list_trust_store_certificates\n\
-    This will output a table of certificates similar to:\nListing trust store certificates\
-    \ on node rabbit@hostname...\nname\tserial\tsubject\tissuer\tvalidity\ncert.pem\t\
-    0x1\tO=client,CN=snowman.local\tL=87613,CN=MyTestRootCA\t2016-05-24T15:28:25Z\
-    \ - 2026-05-22T15:28:25Z\n### Refreshing certificates\n\nTo trigger a manual refresh\
-    \ of the trust store certificates,"
-- rule: README.md no longer instructs users to use rabbitmqctl eval for trust store
-    operations
-  source:
-    path: deps/rabbitmq_trust_store/README.md
-    lines: 163-196
-    commit: 9e4767cc9ffb4a8757f009f3ac3c38a0f4e31406
-  reference: "To list the currently loaded certificates, use `rabbitmqctl`:\n``` sh\n\
-    # Available as of RabbitMQ `4.3.0`, `4.2.6`\nrabbitmqctl list_trust_store_certificates\n\
-    This will output a table of certificates similar to:\nListing trust store certificates\
-    \ on node rabbit@hostname...\nname\tserial\tsubject\tissuer\tvalidity\ncert.pem\t\
-    0x1\tO=client,CN=snowman.local\tL=87613,CN=MyTestRootCA\t2016-05-24T15:28:25Z\
-    \ - 2026-05-22T15:28:25Z\n### Refreshing certificates\n\nTo trigger a manual refresh\
-    \ of the trust store certificates,"
-- rule: list_certificates function has real logic, not just a stub
-  reference: "# deps/rabbitmq_trust_store/README.md\nTo list the currently loaded\
-    \ certificates, use `rabbitmqctl`:\n``` sh\n# Available as of RabbitMQ `4.3.0`,\
-    \ `4.2.6`\nrabbitmqctl list_trust_store_certificates\nThis will output a table\
-    \ of certificates similar to:\nListing trust store certificates on node rabbit@hostname...\n\
-    name\tserial\tsubject\tissuer\tvalidity\ncert.pem\t0x1\tO=client,CN=snowman.local\t\
-    L=87613,CN=MyTestRootCA\t2016-05-24T15:28:25Z - 2026-05-22T15:28:25Z\n### Refreshing\
-    \ certificates\n\nTo trigger a manual re"
-- rule: New Erlang files have no end-of-line comments (per CLAUDE.md comment rules)
-  source:
-    path: CLAUDE.md
-    lines: 133-134
-    commit: 95cfcbac9099290f72f99665a8b9ba7f63a8c266
-  reference: "# deps/rabbitmq_trust_store/README.md\nTo list the currently loaded\
-    \ certificates, use `rabbitmqctl`:\n``` sh\n# Available as of RabbitMQ `4.3.0`,\
-    \ `4.2.6`\nrabbitmqctl list_trust_store_certificates\nThis will output a table\
-    \ of certificates similar to:\nListing trust store certificates on node rabbit@hostname...\n\
-    name\tserial\tsubject\tissuer\tvalidity\ncert.pem\t0x1\tO=client,CN=snowman.local\t\
-    L=87613,CN=MyTestRootCA\t2016-05-24T15:28:25Z - 2026-05-22T15:28:25Z\n### Refreshing\
-    \ certificates\n\nTo trigger a manual re"
-- rule: The original list/0 function in rabbit_trust_store.erl is still exported
-  reference: "# deps/rabbitmq_trust_store/README.md\nTo list the currently loaded\
-    \ certificates, use `rabbitmqctl`:\n``` sh\n# Available as of RabbitMQ `4.3.0`,\
-    \ `4.2.6`\nrabbitmqctl list_trust_store_certificates\nThis will output a table\
-    \ of certificates similar to:\nListing trust store certificates on node rabbit@hostname...\n\
-    name\tserial\tsubject\tissuer\tvalidity\ncert.pem\t0x1\tO=client,CN=snowman.local\t\
-    L=87613,CN=MyTestRootCA\t2016-05-24T15:28:25Z - 2026-05-22T15:28:25Z\n### Refreshing\
-    \ certificates\n\nTo trigger a manual re"

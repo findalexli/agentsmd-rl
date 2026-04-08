@@ -9,28 +9,33 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files exist and are non-empty
+- id: middleware_has_real_logic
+  type: pass_to_pass
+  origin: static
+  description: database.ts middleware has real logic (exports loadDatabase, calls next)
 - id: database_middleware_uses_context_set
   type: fail_to_pass
   origin: pr_diff
-  description: database.ts uses context.set(Database, db) instead of context.db =
-    db
-- id: database_imported_in_middleware
-  type: fail_to_pass
-  origin: pr_diff
-  description: database.ts imports Database from remix/data-table
+  description: database.ts imports Database from remix/data-table and uses context.set(Database,
+    db) instead of context.db
 - id: handlers_use_get_database
   type: fail_to_pass
   origin: pr_diff
-  description: Route handlers use get(Database) to retrieve the database
+  description: Route handler files use get(Database) to retrieve the database
 - id: type_augmentation_removed
   type: fail_to_pass
   origin: pr_diff
   description: The context.db.ts type augmentation file is removed
-- id: middleware_has_real_logic
-  type: pass_to_pass
-  origin: static
-  description: database.ts middleware has real logic (exports loadDatabase, calls
-    next)
+- id: auth_middleware_uses_get_database
+  type: fail_to_pass
+  origin: pr_diff
+  description: auth.ts middleware imports Database and uses get(Database) instead of
+    destructuring db
+- id: readme_documents_context_set_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md describes the context.set/get(Database) pattern without duplicate
+    entries
 rubric:
 - rule: Documentation update is consistent with the style of existing README bullet
     points

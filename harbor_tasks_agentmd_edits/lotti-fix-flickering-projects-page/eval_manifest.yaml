@@ -9,14 +9,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified Dart file has balanced braces and parentheses
-- id: skip_loading_on_reload
+- id: skip_loading_on_reload_in_when
   type: fail_to_pass
   origin: pr_diff
-  description: recordAsync.when() sets skipLoadingOnReload to true
-- id: skip_loading_inside_when_call
+  description: recordAsync.when() includes skipLoadingOnReload: true as a named parameter
+- id: readme_documents_reload_behavior
   type: fail_to_pass
   origin: pr_diff
-  description: skipLoadingOnReload is a parameter of the recordAsync.when() call
+  description: Feature README documents the skip-loading-on-reload behavior
+- id: when_call_still_has_loading_error_data
+  type: pass_to_pass
+  origin: static
+  description: The .when() call retains loading, error, and data callbacks
 rubric:
 - rule: Documentation update is consistent with the architecture-first style of the
     existing projects README

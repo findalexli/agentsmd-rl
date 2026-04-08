@@ -15,9 +15,9 @@ index b5b128e8d89..4467d8b31ab 100644
 --- a/packages/interaction/CHANGELOG.md
 +++ b/packages/interaction/CHANGELOG.md
 @@ -2,6 +2,77 @@
-
- This is the changelog for [`interaction`](https://github.com/remix-run/remix/tree/main/packages/interaction). It follows [semantic versioning](https://semver.org).
-
+ 
+ This is the changelog for [`interaction`](https://github.com/remix-run/remix/tree/main/packages/interaction). It follows [semantic versioning](https://semver.org/).
+ 
 +## Unreleased
 +
 +- BREAKING CHANGE: Interaction API refactor - interactions now use `this` context with `this.on()`, `this.target`, `this.signal`, and `this.raise`
@@ -90,7 +90,7 @@ index b5b128e8d89..4467d8b31ab 100644
 +  ```
 +
  ## v0.1.0 (2025-11-03)
-
+ 
  This is the initial release of the `@remix-run/interaction` package.
 diff --git a/packages/interaction/README.md b/packages/interaction/README.md
 index 099c956393e..81b4f50176b 100644
@@ -98,11 +98,11 @@ index 099c956393e..81b4f50176b 100644
 +++ b/packages/interaction/README.md
 @@ -36,19 +36,25 @@ on(inputElement, {
  Listeners can be arrays. They run in order and preserve normal DOM semantics (including `stopImmediatePropagation`).
-
+ 
  ```ts
 -import { on, capture, listenWith } from '@remix-run/interaction'
 +import { on } from '@remix-run/interaction'
-
+ 
  on(inputElement, {
    input: [
      (event) => {
@@ -131,11 +131,11 @@ index 099c956393e..81b4f50176b 100644
  ```
 @@ -112,21 +118,27 @@ on(inputElement, {
  All DOM [`AddEventListenerOptions`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#options) are supported via descriptors:
-
+ 
  ```ts
 -import { on, listenWith, capture } from '@remix-run/interaction'
 +import { on } from '@remix-run/interaction'
-
+ 
  on(button, {
 -  click: capture((event) => {
 -    console.log('capture phase')
@@ -157,18 +157,18 @@ index 099c956393e..81b4f50176b 100644
 +  },
  })
  ```
-
+ 
  ### Updating listeners efficiently
-
+ 
 -Use `createContainer(target, signal?)` when you need to update listeners in place (e.g., in a component system). The container diffs and updates existing bindings without unnecessary `removeEventListener`/`addEventListener` churn.
 +Use `createContainer` when you need to update listeners in place (e.g., in a component system). The container diffs and updates existing bindings without unnecessary `removeEventListener`/`addEventListener` churn.
-
+ 
  ```ts
  import { createContainer } from '@remix-run/interaction'
 @@ -167,15 +179,18 @@ import { on, createContainer } from '@remix-run/interaction'
  let dispose = on(button, { click: () => {} })
  dispose()
-
+ 
 -// Using an external AbortSignal
 -let controller = new AbortController()
 -on(button, controller.signal, { click: () => {} })
@@ -187,26 +187,26 @@ index 099c956393e..81b4f50176b 100644
 +container.set({ resize: () => {} })
 +eventsController.abort()
  ```
-
+ 
  ### Stop propagation semantics
 @@ -200,7 +215,7 @@ on(button, {
  Define semantic interactions that can dispatch custom events and be reused declaratively.
-
+ 
  ```ts
 -import { defineInteraction, on } from '@remix-run/interaction'
 +import { defineInteraction, on, type Interaction } from '@remix-run/interaction'
-
+ 
  // Provide type safety for consumers
  declare global {
 @@ -209,13 +224,13 @@ declare global {
    }
  }
-
+ 
 -function KeydownEnter(target: EventTarget, signal: AbortSignal) {
 -  if (!(target instanceof HTMLElement)) return
 +function KeydownEnter(this: Interaction) {
 +  if (!(this.target instanceof HTMLElement)) return
-
+ 
 -  on(target, signal, {
 +  this.on(this.target, {
      keydown(event) {
@@ -241,7 +241,7 @@ index 40d4db18860..ec08a324c23 100644
 +++ b/packages/interaction/src/lib/interaction.test.ts
 @@ -1,14 +1,13 @@
  import { describe, it, expect, vi } from 'vitest'
-
+ 
  import {
 -  capture,
    createContainer,
@@ -254,11 +254,11 @@ index 40d4db18860..ec08a324c23 100644
 +  type Interaction,
  } from './interaction.ts'
  import type { Assert, Equal } from './test/utils.ts'
-
+ 
 @@ -55,7 +54,7 @@ describe('interaction', () => {
        expect(listener1).toHaveBeenCalledTimes(1)
        expect(spy).toHaveBeenCalledTimes(0)
-
+ 
 -      container.set({ test: listenWith({ capture: true }, listener2) })
 +      container.set({ test: { capture: true, listener: listener2 } })
        target.dispatchEvent(new Event('test'))
@@ -267,33 +267,33 @@ index 40d4db18860..ec08a324c23 100644
 @@ -103,13 +102,13 @@ describe('interaction', () => {
        expect(() => container.set({ test: () => {} })).toThrow('Container has been disposed')
      })
-
+ 
 -    describe('listenWith', () => {
 -      it('provides options with listenWith', () => {
 +    describe('descriptors', () => {
 +      it('provides options with descriptors', () => {
          let target = new EventTarget()
          let listener = vi.fn()
-
+ 
          createContainer(target).set({
 -          test: listenWith({ once: true }, listener),
 +          test: { once: true, listener },
          })
-
+ 
          target.dispatchEvent(new Event('test'))
 @@ -117,9 +116,7 @@ describe('interaction', () => {
          target.dispatchEvent(new Event('test'))
          expect(listener).toHaveBeenCalledTimes(1)
        })
 -    })
--
+ 
 -    describe('capture', () => {
        it('captures events', () => {
          let button = document.createElement('button')
          document.body.appendChild(button)
 @@ -128,10 +125,13 @@ describe('interaction', () => {
          let bubbled = false
-
+ 
          createContainer(document.body).set({
 -          click: capture((event) => {
 -            event.stopPropagation()
@@ -307,12 +307,12 @@ index 40d4db18860..ec08a324c23 100644
 +            },
 +          },
          })
-
+ 
          // add event to the target to test that it's not captured and prove its
 @@ -147,6 +147,41 @@ describe('interaction', () => {
        })
      })
-
+ 
 +    describe('error handling', () => {
 +      it('calls onError when a listener throws synchronously', () => {
 +        let target = new EventTarget()
@@ -369,11 +369,11 @@ index 40d4db18860..ec08a324c23 100644
 -      })
      })
    })
-
+ 
 @@ -221,10 +244,10 @@ describe('interaction', () => {
        let hostType = 'host-event'
        let myType = defineInteraction('my:type', Test)
-
+ 
 -      function Test(target: EventTarget, signal: AbortSignal) {
 -        on(target, signal, {
 +      function Test(this: Interaction) {
@@ -387,7 +387,7 @@ index 40d4db18860..ec08a324c23 100644
 @@ -262,10 +285,10 @@ describe('interaction', () => {
      let hostType = 'host-event'
      let myType = defineInteraction('my:type', Test)
-
+ 
 -    function Test(target: EventTarget, signal: AbortSignal) {
 -      on(target, signal, {
 +    function Test(this: Interaction) {
@@ -414,7 +414,7 @@ index 85bf5084064..8b0aac55b2f 100644
 @@ -36,10 +36,33 @@ export type EventListeners<target extends EventTarget = EventTarget> = Partial<{
      | Array<ListenerOrDescriptor<ListenerFor<target, k>>>
  }>
-
+ 
 +/**
 + * Context object provided to interaction setup functions via `this`.
 + */
@@ -443,9 +443,9 @@ index 85bf5084064..8b0aac55b2f 100644
   */
 -export type InteractionSetup = (target: EventTarget, signal: AbortSignal) => void
 +export type InteractionSetup = (this: Interaction) => void
-
+ 
  // interactions ------------------------------------------------------------------------------------
-
+ 
 @@ -64,11 +87,11 @@ export type InteractionSetup = (target: EventTarget, signal: AbortSignal) => voi
   * }
   *
@@ -462,8 +462,9 @@ index 85bf5084064..8b0aac55b2f 100644
   *     },
   *   })
 @@ -89,6 +112,20 @@ export function defineInteraction<type extends string>(type: type, interaction:
+ 
  // container ---------------------------------------------------------------------------------------
-
+ 
 +/**
 + * Options for creating an event container.
 + */
@@ -500,7 +501,7 @@ index 85bf5084064..8b0aac55b2f 100644
    /**
 @@ -116,19 +163,25 @@ export function createContainer<target extends EventTarget>(
    target: target,
-
+ 
    /**
 -   * An optional abort signal to dispose the container when the signal is aborted
 +   * Optional configuration for the container
@@ -509,63 +510,154 @@ index 85bf5084064..8b0aac55b2f 100644
     * ```ts
     * let controller = new AbortController()
 -   * let container = createContainer(target, controller.signal)
-+   * let container = createContainer(target, { signal: controller.signal })
++   * let container = createContainer(target, {
++   *   signal: controller.signal,
++   *   onError(error) {
++   *     console.error(error)
++   *   },
++   * })
+    * // will remove all listeners and dispose the container
+    * controller.abort()
     * ```
     */
 -  signal?: AbortSignal,
 +  options?: ContainerOptions,
  ): EventsContainer<target> {
-   let signal = options?.signal
-+  let onError = options?.onError ?? defaultOnError
-+
-   let bindings = new Map<string, Map<string, Binding<unknown>>>()
-
-+  function set(listeners: EventListeners<target>) {
-+    updateBindings(listeners, /* force */ false)
-+  }
-+
-   let container: EventsContainer<target> = {
-     set(listeners) {
-       updateBindings(listeners, /* force */ false)
-@@ -146,8 +199,8 @@ export function createContainer<target extends EventTarget>(
-   }
-
-   let containerSignal = controller.signal
--  if (signal) {
--    signal.addEventListener('abort', () => controller.abort())
-+  if (containerSignal !== signal && signal) {
-+    signal.addEventListener('abort', () => controller.abort(), { once: true })
-   }
-
-   function updateBindings(listeners: EventListeners<target>, force: boolean) {
-@@ -176,7 +229,7 @@ export function createContainer<target extends EventTarget>(
-       if (containerSignal.aborted) return
-       let binding = createBinding(
-         target, eventType, listener, descriptor as AddEventListenerOptions,
--        containerSignal,
-+        containerSignal, onError,
-       )
-       bindings.get(eventType)!.set(normalizedKey, binding)
-       binding.bind()
-@@ -253,17 +306,21 @@ function on<target extends EventTarget>(
+   let controller = new AbortController()
++  let { signal, onError = defaultOnError } = options ?? {}
+ 
+   if (signal) {
+     signal.addEventListener('abort', () => controller.abort(), { once: true })
+@@ -159,9 +212,10 @@ export function createContainer<target extends EventTarget>(
+ 
+           let existing = bindings[type]
+           if (!existing) {
+-            bindings[type] = descriptors.map((d) =>
+-              createBinding(target, type, d.listener, d.options, controller.signal),
+-            )
++            bindings[type] = descriptors.map((d) => {
++              let { listener, ...options } = d
++              return createBinding(target, type, listener, options, controller.signal, onError)
++            })
+             return
+           }
+ 
+@@ -170,10 +224,11 @@ export function createContainer<target extends EventTarget>(
+           for (let i = 0; i < min; i++) {
+             let d = descriptors[i]
+             let b = existing[i]
+-            if (optionsChanged(d.options, b.options)) {
+-              b.rebind(d.listener, d.options)
++            let { listener, ...options } = d
++            if (optionsChanged(options, b.options)) {
++              b.rebind(listener, options)
+             } else {
+-              b.setListener(d.listener)
++              b.setListener(listener)
+             }
+           }
+ 
+@@ -181,7 +236,10 @@ export function createContainer<target extends EventTarget>(
+           if (descriptors.length > existing.length) {
+             for (let i = existing.length; i < descriptors.length; i++) {
+               let d = descriptors[i]
+-              existing.push(createBinding(target, type, d.listener, d.options, controller.signal))
++              let { listener, ...options } = d
++              existing.push(
++                createBinding(target, type, listener, options, controller.signal, onError),
++              )
+             }
+           }
+ 
+@@ -205,16 +263,14 @@ export function createContainer<target extends EventTarget>(
+ /**
+  * ### Description
+  *
+- * Add event listeners with async reentry protection and semantic Interactions.
+- *
+- * ### Basic usage:
++ * Add event listeners with async reentry protection and semantic Interactions. Shorthand for `createContainer` without options.
+  *
+  * ```ts
+  * import { on } from "@remix-run/interaction"
+  * import { longPress } from "@remix-run/interaction/press"
+  *
+  * let button = document.createElement('button')
+- * on(button, {
++ * let dispose = on(button, {
+  *   click(event, signal) {
+  *     console.log('clicked')
+  *   },
+@@ -222,75 +278,22 @@ export function createContainer<target extends EventTarget>(
+  *     console.log('long pressed')
+  *   },
+  * })
+- * ```
+- *
+- * ### With abort signal to dispose the container:
+- *
+- * ```ts
+- * let controller = new AbortController()
+- * on(button, controller.signal, {
+- *   click(event, signal) {
+- *     console.log('clicked')
+- *   },
+- * })
+- * // will remove all listeners and dispose the container
+- * controller.abort()
+- * ```
+- *
+- * ### With array of listeners on a type:
+  *
+- * ```ts
+- * on(button, {
+- *   click: [
+- *     (event, signal) => {
+- *       if (someCondition) {
+- *         event.stopImmediatePropagation()
+- *       }
+- *       console.log('called')
+- *     },
+- *     (event, signal) => {
+- *       console.log('not called')
+- *     },
+- *   ],
+- * })
++ * // later
++ * dispose()
   * ```
   */
- function on<target extends EventTarget>(
+ export function on<target extends EventTarget>(
    target: target,
--  ...args: [signal: AbortSignal, listeners: EventListeners<target>] | [listeners: EventListeners<target>]
-+  listeners: EventListeners<target>,
- ) {
--  let [a, b] = args
--  let actualListeners = b ?? a
--  let signal = b ? (a as AbortSignal) : undefined
--
--  container.set(listeners)
--  return container.dispose
+-  signal: AbortSignal,
+   listeners: EventListeners<target>,
+-): () => void
+-export function on<target extends EventTarget>(
+-  target: target,
+-  listeners: EventListeners<target>,
+-): () => void
+-export function on(
+-  target: EventTarget,
+-  signalOrListeners: AbortSignal | EventListeners,
+-  listeners?: EventListeners,
+ ): () => void {
+-  if (!(signalOrListeners instanceof AbortSignal)) {
+-    let container = createContainer(target)
+-    container.set(signalOrListeners)
+-    return container.dispose
+-  } else if (listeners) {
+-    let container = createContainer(target, signalOrListeners)
+-    container.set(listeners)
+-    return container.dispose
+-  }
+-  throw new Error('Invalid arguments')
++  let container = createContainer(target)
 +  container.set(listeners)
 +  return container.dispose
  }
+ 
  // descriptors -------------------------------------------------------------------------------------
-
+ 
 -export function listenWith<L>(options: AddEventListenerOptions, listener: L): Descriptor<L> {
 -  return { options, listener }
 -}
@@ -573,13 +665,14 @@ index 85bf5084064..8b0aac55b2f 100644
 -export function capture<L>(listener: L): Descriptor<L> {
 -  return listenWith({ capture: true }, listener)
 -}
+-
  // TypedEventTarget --------------------------------------------------------------------------------
-
+ 
  export class TypedEventTarget<eventMap> extends EventTarget {
 @@ -327,10 +330,33 @@ type TypedEventListener<eventMap> = {
  let interactions = new Map<string, InteractionSetup>()
  let initializedTargets = new WeakMap<EventTarget, Map<Function, number>>()
-
+ 
 +function defaultOnError(error: unknown) {
 +  throw error
 +}
@@ -605,13 +698,13 @@ index 85bf5084064..8b0aac55b2f 100644
 +}
 +
  type ListenerOrDescriptor<Listener> = Listener | Descriptor<Listener>
-
+ 
 -interface Descriptor<L> {
 -  options: AddEventListenerOptions
 +interface Descriptor<L> extends AddEventListenerOptions {
    listener: L
  }
-
+ 
 @@ -338,15 +364,13 @@ function normalizeDescriptors<Listener>(
    raw: ListenerOrDescriptor<Listener> | ListenerOrDescriptor<Listener>[],
  ): Descriptor<Listener>[] {
@@ -624,12 +717,12 @@ index 85bf5084064..8b0aac55b2f 100644
 -  return [isDescriptor<Listener>(raw) ? raw : { listener: raw, options: {} }]
 +  return [isDescriptor<Listener>(raw) ? raw : { listener: raw }]
  }
-
+ 
  function isDescriptor<L>(value: any): value is Descriptor<L> {
 -  return typeof value === 'object' && value !== null && 'options' in value && 'listener' in value
 +  return typeof value === 'object' && value !== null && 'listener' in value
  }
-
+ 
  type Binding<L> = {
 @@ -375,6 +399,7 @@ function createBinding<target extends EventTarget, k extends EventType<target>>(
    listener: ListenerFor<target, k>,
@@ -640,7 +733,7 @@ index 85bf5084064..8b0aac55b2f 100644
    let reentry = new AbortController()
    let disposed = false
 @@ -386,8 +411,15 @@ function createBinding<target extends EventTarget, k extends EventType<target>>(
-
+ 
    let wrappedListener = (event: Event) => {
      abort()
 -    // TODO: figure out if we can remove this cast
@@ -655,7 +748,7 @@ index 85bf5084064..8b0aac55b2f 100644
 +      onError(error)
 +    }
    }
-
+ 
    function bind() {
 @@ -437,7 +469,8 @@ function createBinding<target extends EventTarget, k extends EventType<target>>(
      }
@@ -674,24 +767,24 @@ index 4ec42d28215..63fcff5c18d 100644
 @@ -1,4 +1,4 @@
 -import { defineInteraction } from '../interaction.ts'
 +import { defineInteraction, type Interaction } from '../interaction.ts'
-
+ 
  /**
   * Called when the target's form is reset. Useful for resetting custom component
 @@ -22,15 +22,20 @@ declare global {
    }
  }
-
+ 
 -function FormReset(target: EventTarget, signal: AbortSignal) {
 -  if (!(target instanceof HTMLElement)) return
 +function FormReset(this: Interaction) {
 +  if (!(this.target instanceof HTMLElement)) return
-
+ 
 +  let target = this.target
    let form =
      'form' in target && target.form instanceof HTMLFormElement
        ? target.form
        : target.closest('form')
-
+ 
    if (form) {
 -    form.addEventListener('reset', () => target.dispatchEvent(new Event(formReset)), { signal })
 +    this.on(form, {
@@ -708,7 +801,7 @@ index 8e294507e1d..21d7e34ed34 100644
 @@ -1,4 +1,4 @@
 -import { defineInteraction, on } from '../interaction.ts'
 +import { defineInteraction, type Interaction } from '../interaction.ts'
-
+ 
  /**
   * Binds the escape key to an element and automatically prevents the default
 @@ -116,6 +116,40 @@ declare global {
@@ -750,12 +843,12 @@ index 8e294507e1d..21d7e34ed34 100644
 +    [tab]: KeyboardEvent
 +  }
  }
-
+ 
  const keys = [
 @@ -135,11 +169,18 @@ const keys = [
    'Tab',
  ]
-
+ 
 -function Keys(target: EventTarget, signal: AbortSignal) {
 -  if (!(target instanceof HTMLElement || target instanceof Document || target instanceof Window))
 +function Keys(this: Interaction) {
@@ -767,7 +860,7 @@ index 8e294507e1d..21d7e34ed34 100644
 +    )
 +  )
      return
-
+ 
 -  on(target, signal, {
 +  let target = this.target
 +  this.on(this.target, {
@@ -781,25 +874,25 @@ index 5818aa9cb30..82b509b38b8 100644
 @@ -1,4 +1,4 @@
 -import { defineInteraction, on } from '../interaction'
 +import { defineInteraction, type Interaction } from '../interaction'
-
+ 
  /**
   * ### Description
 @@ -64,16 +64,17 @@ declare global {
    }
  }
-
+ 
 -function Popover(target: EventTarget, signal: AbortSignal) {
 -  if (!(target instanceof HTMLElement)) return
 +function Popover(this: Interaction) {
 +  if (!(this.target instanceof HTMLElement)) return
-
+ 
 +  let target = this.target
    let popoverId = target.getAttribute('popovertarget')
    if (!popoverId) return
-
+ 
    let popover = target.ownerDocument.getElementById(popoverId)
    if (!(popover instanceof HTMLElement)) return
-
+ 
 -  on(popover, signal, {
 +  this.on(popover, {
      toggle(event) {
@@ -812,18 +905,18 @@ index 72fff3e6d8b..450bfb74788 100644
 @@ -1,4 +1,4 @@
 -import { defineInteraction, on } from '../interaction.ts'
 +import { defineInteraction, type Interaction } from '../interaction.ts'
-
+ 
  /**
   * Normalized press events for pointer and keyboard input. A press is dispatched
 @@ -105,9 +105,10 @@ export class PressEvent extends Event {
    }
  }
-
+ 
 -function Press(target: EventTarget, signal: AbortSignal) {
 -  if (!(target instanceof HTMLElement)) return
 +function Press(this: Interaction) {
 +  if (!(this.target instanceof HTMLElement)) return
-
+ 
 +  let target = this.target
    let isPointerDown = false
    let isKeyboardDown = false
@@ -831,7 +924,7 @@ index 72fff3e6d8b..450bfb74788 100644
 @@ -127,7 +128,7 @@ function Press(target: EventTarget, signal: AbortSignal) {
      }, 500)
    }
-
+ 
 -  on(target, signal, {
 +  this.on(this.target, {
      pointerdown(event) {
@@ -840,7 +933,7 @@ index 72fff3e6d8b..450bfb74788 100644
 @@ -205,7 +206,7 @@ function Press(target: EventTarget, signal: AbortSignal) {
      },
    })
-
+ 
 -  on(target.ownerDocument, signal, {
 +  this.on(target.ownerDocument, {
      pointerup() {
@@ -849,7 +942,6 @@ index 72fff3e6d8b..450bfb74788 100644
 diff --git a/packages/interaction/tsconfig.json b/packages/interaction/tsconfig.json
 index b26ac4889ed..860c46dcf6f 100644
 --- a/packages/interaction/tsconfig.json
-+--- a/packages/interaction/tsconfig.json
 +++ b/packages/interaction/tsconfig.json
 @@ -1,7 +1,7 @@
  {
@@ -860,7 +952,6 @@ index b26ac4889ed..860c46dcf6f 100644
      "module": "ES2022",
      "moduleResolution": "Bundler",
      "target": "ESNext",
-
 PATCH
 
 echo "Patch applied successfully."

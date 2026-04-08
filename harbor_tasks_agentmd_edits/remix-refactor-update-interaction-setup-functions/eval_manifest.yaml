@@ -13,61 +13,46 @@ checks:
   type: pass_to_pass
   origin: static
   description: InteractionSetup type is still exported from interaction.ts
-- id: interaction_setup_type_uses_parameter
+- id: calling_convention_behavioral
   type: fail_to_pass
   origin: pr_diff
-  description: InteractionSetup type uses parameter style instead of 'this' context
-- id: runtime_call_uses_direct_invocation
+  description: Call site uses direct invocation interaction(ctx), not .call(), verified
+    by executing the calling convention at runtime
+- id: type_signature_uses_parameter
   type: fail_to_pass
   origin: pr_diff
-  description: Setup functions called via direct invocation, not .call()
-- id: builtin_setup_functions_use_handle
+  description: InteractionSetup type uses parameter style, not 'this' context, verified
+    by runtime execution
+- id: builtin_functions_use_handle
   type: fail_to_pass
   origin: pr_diff
   description: All built-in setup functions (Press, Popover, FormReset, keys) use
-    handle parameter
+    handle parameter instead of 'this'
+- id: readme_custom_interactions_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: README Custom Interactions examples use handle parameter pattern
+- id: changeset_documents_breaking_change
+  type: fail_to_pass
+  origin: pr_diff
+  description: Changeset file documents the handle-parameter breaking change with
+    BREAKING CHANGE prefix
 rubric:
 - rule: Code examples in README.md are consistent with the actual API signatures in
     source code
   source:
-    path: packages/interaction/README.md
-    lines: 1-10
+    path: AGENTS.md
+    lines: '28-33'
     commit: 0b0ca631198af88cda1ecceef5a51d20e1b3b3e2
 - rule: Changeset description clearly explains the migration path from old to new
     API
   source:
     path: AGENTS.md
-    lines: 28-33
+    lines: '28-33'
     commit: 0b0ca631198af88cda1ecceef5a51d20e1b3b3e2
-- rule: README.md Custom Interactions example uses handle parameter pattern
-  source:
-    path: packages/interaction/README.md
-    lines: 224-236
-    commit: 062a033ce6500c3989782444b8e8d0132a2e202b
-  reference: "function KeydownEnter(handle: Interaction) {\n  if (!(handle.target\
-    \ instanceof HTMLElement)) return\n  handle.on(handle.target, {\n        handle.target.dispatchEvent(new\
-    \ KeyboardEvent(keydownEnter, { key: 'Enter' }))"
-- rule: 'Changeset file exists documenting the breaking change with BREAKING CHANGE:
-    prefix'
-  source:
-    path: packages/interaction/.changes/minor.interaction-handle-parameter.md
-    lines: 1-17
-    commit: 062a033ce6500c3989782444b8e8d0132a2e202b
-  reference: "# packages/interaction/README.md\nfunction KeydownEnter(handle: Interaction)\
-    \ {\n  if (!(handle.target instanceof HTMLElement)) return\n  handle.on(handle.target,\
-    \ {\n        handle.target.dispatchEvent(new KeyboardEvent(keydownEnter, { key:\
-    \ 'Enter' }))"
 - rule: Modified files use 'let' for locals, not 'var', per AGENTS.md
   source:
     path: AGENTS.md
     lines: '17'
     commit: 0b0ca631198af88cda1ecceef5a51d20e1b3b3e2
-  reference: "# packages/interaction/README.md\nfunction KeydownEnter(handle: Interaction)\
-    \ {\n  if (!(handle.target instanceof HTMLElement)) return\n  handle.on(handle.target,\
-    \ {\n        handle.target.dispatchEvent(new KeyboardEvent(keydownEnter, { key:\
-    \ 'Enter' }))"
 - rule: JSDoc on Interaction interface describes parameter-based API, not 'this'
-  reference: "# packages/interaction/README.md\nfunction KeydownEnter(handle: Interaction)\
-    \ {\n  if (!(handle.target instanceof HTMLElement)) return\n  handle.on(handle.target,\
-    \ {\n        handle.target.dispatchEvent(new KeyboardEvent(keydownEnter, { key:\
-    \ 'Enter' }))"

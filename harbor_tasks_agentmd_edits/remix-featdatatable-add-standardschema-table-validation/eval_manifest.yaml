@@ -9,26 +9,34 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files must parse without errors
-- id: table_standard_schema_property
+- id: standard_schema_validation
   type: fail_to_pass
   origin: pr_diff
-  description: createTable must attach ~standard property with version, vendor, validate
-- id: table_validate_partial_row_input_function
-  type: fail_to_pass
-  origin: pr_diff
-  description: validatePartialRowInput helper powers both ~standard and write validation
+  description: createTable produces Standard Schema-compatible tables with parseSafe support
 - id: validate_partial_row_exported
   type: fail_to_pass
   origin: pr_diff
-  description: validatePartialRow must be exported from table.ts
+  description: validatePartialRow is exported from table.ts and callable
 - id: write_path_uses_shared_validator
   type: fail_to_pass
   origin: pr_diff
-  description: database.ts must import and use validatePartialRow from table.ts
-- id: dataschemma_type_removed_from_exports
+  description: database.ts imports and uses validatePartialRow from table.ts
+- id: dataschema_type_removed_from_exports
   type: fail_to_pass
   origin: pr_diff
   description: DataSchema type no longer re-exported from data-table index
+- id: timestamp_schema_uses_create_schema
+  type: fail_to_pass
+  origin: pr_diff
+  description: timestampSchema uses createSchema from data-schema instead of inline ~standard
+- id: agents_md_cross_package_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md documents cross-package boundary rule about re-exports
+- id: readme_data_validation
+  type: fail_to_pass
+  origin: pr_diff
+  description: README documents data validation and Standard Schema compatibility
 - id: table_still_exports_core_api
   type: pass_to_pass
   origin: static
