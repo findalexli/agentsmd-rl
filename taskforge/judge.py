@@ -42,7 +42,7 @@ def load_manifest_rubric(manifest_path: str) -> list[dict]:
         return []
     data = yaml.safe_load(Path(manifest_path).read_text())
     rules = []
-    for r in data.get("rubric", []):
+    for r in (data.get("rubric") or []):
         if isinstance(r, dict):
             rules.append({
                 "rule": r.get("rule", ""),

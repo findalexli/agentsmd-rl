@@ -88,7 +88,7 @@ Copy `taskforge/templates/task_template/tests/test_outputs.py` to `harbor_tasks/
 5. **For non-Python repos:** Use `subprocess.run()` to compile and execute.
    ```python
    # Rust: compile then test binary behavior
-   r = subprocess.run(["cargo", "check"], cwd=REPO, capture_output=True, timeout=120)
+   r = subprocess.run(["cargo", "check"], cwd=REPO, capture_output=True, timeout=600)
    assert r.returncode == 0
    
    # Node: execute JS and check output

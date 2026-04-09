@@ -174,7 +174,8 @@ async def run_one(
     When *pool* is provided, acquires a backend slot and injects per-subprocess
     env vars.  On 429, retries with the next available backend.
     """
-    log_file = log_dir / f"{task}.json"
+    safe_name = task.replace("/", "_").replace("#", "_")
+    log_file = log_dir / f"{safe_name}.json"
     ts = lambda: datetime.now().strftime("%H:%M:%S")
 
     result: dict = {
@@ -195,12 +196,18 @@ async def run_one(
                 result["error"] = str(e)[:500]
                 print(f"  [{ts()}] ERROR {task}: {e}")
 
-            # Report to pool and maybe retry on 429
+            # Report to pool and maybe retry on 429 or dead backend
             backend = result.pop("_backend", None)
             if pool and backend:
                 combined = (result.get("result", "") or "") + (result.get("stderr_tail", "") or "")
-                is_429 = "429" in combined or "Rate limit" in combined
-                if result["status"] == "error" and is_429:
+                combined_lower = combined.lower()
+                is_429 = "429" in combined or "Rate limit" in combined or "hit your limit" in combined_lower
+                is_dead = "not logged in" in combined_lower or "please run /login" in combined_lower
+                if result["status"] == "error" and is_dead:
+                    pool.report_dead(backend)
+                    if attempt < max_attempts:
+                        continue
+                elif result["status"] == "error" and is_429:
                     pool.report_429(backend)
                     if attempt < max_attempts:
                         continue
@@ -687,8 +694,17 @@ async def _cmd_scaffold_from_prs(args: argparse.Namespace) -> None:
 
     log_dir = LOG_DIR / f"scaffold_{'agentmd_' if args.agentmd else ''}{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
+    # Resolve backend pool
+    pool = None
+    if args.pool:
+        from taskforge.backends import BackendPool, backends_from_env
+        backends = backends_from_env()
+        if backends:
+            pool = BackendPool(backends)
+            print(f"Backend pool: {pool.names}")
+
     print(f"Workers: {args.workers}, Model: {model}, Budget: ${budget}")
-    await run_batch(items, model, budget, timeout, args.workers, log_dir, args.dry_run)
+    await run_batch(items, model, budget, timeout, args.workers, log_dir, args.dry_run, pool=pool)
 
 
 if __name__ == "__main__":

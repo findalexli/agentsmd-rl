@@ -1,10 +1,14 @@
 # Improve Tests
 
-Upgrade tests in an existing agentmd-edit task from grep/structural to behavioral (code-executing) tests.
+Upgrade tests in an existing task from grep/structural to behavioral (code-executing) tests.
+
+## Context
+
+Read `/workspace/task/status.json` if it exists — the `nodes` section has notes from previous validation steps (e.g., lint results explaining why tests need improvement). Update the `improve` node when you're done with what you changed.
 
 ## Input
 
-`$ARGUMENTS` = task name in `$TASK_DIR/` (e.g., `remix-add-charset-to-contenttype-for`)
+Task files are at `/workspace/task/`.
 
 ## Problem
 
@@ -14,7 +18,7 @@ The task's `test_outputs.py` currently only reads files and checks strings (grep
 
 ### 1. Read ALL task files
 
-Read every file in `$TASK_DIR/$ARGUMENTS/`:
+Read every file in `/workspace/task/`:
 - `instruction.md` — what the task asks the agent to do
 - `solution/solve.sh` — the gold patch (shows exactly what changed)
 - `tests/test_outputs.py` — CURRENT tests (you will rewrite these)
@@ -101,7 +105,7 @@ def test_compilation():
     """Modified crate compiles without errors."""
     r = subprocess.run(
         ["cargo", "check", "--manifest-path", f"{REPO}/Cargo.toml"],
-        capture_output=True, text=True, timeout=120,
+        capture_output=True, text=True, timeout=600,
     )
     assert r.returncode == 0, f"Compile failed: {r.stderr}"
 ```
@@ -113,12 +117,44 @@ def test_go_vet():
     """Package passes go vet."""
     r = subprocess.run(
         ["go", "vet", "./..."],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"go vet failed: {r.stderr}"
 ```
 
-### 5. Preserve config/structural tests
+### 5. Add repo CI/CD as pass_to_pass gates
+
+Most repos have their own test suites. Discover and leverage them:
+
+**Step 5a: Find the repo's test commands.** Check:
+- `package.json` → `scripts.test`, `scripts.check`, `scripts.lint`
+- `Makefile` / `Justfile` → `test`, `check`, `lint` targets
+- `Cargo.toml` → `cargo test`, `cargo check`
+- `pyproject.toml` / `setup.cfg` → `pytest`, `python -m pytest`
+- `.github/workflows/*.yml` → CI test commands
+- `go.mod` → `go test ./...`, `go vet ./...`
+
+**Step 5b: Add p2p tests that run the repo's own tests.** These MUST pass on both the base commit AND after the gold patch:
+
+```python
+def test_repo_tests_pass():
+    """Repo's own test suite passes (pass_to_pass gate)."""
+    # Pick the most relevant subset — don't run the full suite if it takes >60s
+    r = subprocess.run(
+        ["npm", "test", "--", "--testPathPattern", "relevant-module"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Repo tests failed:\n{r.stderr[-500:]}"
+```
+
+**Guidelines for repo tests:**
+- Run only the **relevant subset** (tests touching modified files), not the entire suite
+- Set timeouts based on observed runtime (e.g., 2x what the command actually takes)
+- If the repo has a `typecheck` or `lint` command, add that too (catches regressions)
+- Mark these as `type: pass_to_pass` and `origin: repo_tests` in eval_manifest.yaml
+- If a repo test is flaky or requires network/GPU, skip it
+
+### 6. Preserve config/structural tests
 
 Keep existing pass_to_pass and agent_config tests if they are correct. Only rewrite the fail_to_pass tests that are grep-only.
 

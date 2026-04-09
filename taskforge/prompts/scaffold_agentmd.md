@@ -38,6 +38,26 @@ Understand:
 2. What does the config/doc update say? Why was it needed alongside the code change?
 3. How do they relate? (e.g., new feature → document new API, bug fix → update troubleshooting, refactor → update architecture docs, new lint rule → add to CLAUDE.md)
 
+### 2b. Abandon check
+
+After reading the PR metadata and diff, decide if this PR is suitable. **Abandon immediately** by writing this file and stopping:
+
+```bash
+echo '{"abandoned": true, "reason": "your reason"}' > /workspace/task/status.json
+```
+
+Abandon if ANY of these apply:
+- **Docs/CI only**: PR only changes markdown, workflows, configs with no functional code
+- **Too large**: PR touches >10 files or >500 lines of functional code changes
+- **Needs secrets/accounts**: Requires API keys, OAuth tokens, cloud accounts, or paid services
+- **Needs GPU/special hardware**: CUDA kernels, model weights, TPU, etc. that can't be tested on CPU
+- **Repo deleted/archived**: Can't clone or checkout the base commit
+- **Trivial rename/typo**: One-line change with no behavioral difference to test
+- **No config edit**: PR doesn't actually change any agent instruction files (misclassified)
+- **No testable behavior**: The change is purely visual (CSS, UI layout) with no programmatic way to verify
+
+If the PR looks good, continue to step 3.
+
 ### 3. Discover and load ALL agent config files
 
 This is critical — our benchmark tests how well agents follow repo instructions.
@@ -69,10 +89,13 @@ Read completely — do NOT grep for snippets.
 
 ### 4. Copy template and fill placeholders
 
+**IMPORTANT**: All task files MUST be created under `/workspace/task/`. This is the expected output location.
+
 ```bash
-TASK_NAME="<repo-short>-<descriptive-slug>"
-cp -r taskforge/templates/task_template/ harbor_tasks_agentmd_edits/$TASK_NAME/
+mkdir -p /workspace/task/{environment,solution,tests}
 ```
+
+Create all files from scratch in `/workspace/task/` — there is no template to copy from.
 
 Replace all `{{PLACEHOLDER}}` tokens across files.
 
@@ -92,9 +115,9 @@ Replace all `{{PLACEHOLDER}}` tokens across files.
 - Ensure `cd /workspace/{{REPO_SHORT}}` at the top
 
 #### task.toml
+- Set `name = "<repo-short>-<descriptive-slug>"` (e.g., `name = "playwright-chorecli-add-network-route"`)
 - Set difficulty, tags, time estimates
 - Add tag `agentmd-edit` to mark this as a config-edit task
-- Adjust timeouts if needed
 
 #### test_outputs.py — THE CORE WORK
 
@@ -132,12 +155,12 @@ console.log(JSON.stringify({ out }))
 
 # Rust: compile and run
 def test_cargo_check():
-    r = subprocess.run(["cargo", "check"], cwd=REPO, capture_output=True, timeout=120)
+    r = subprocess.run(["cargo", "check"], cwd=REPO, capture_output=True, timeout=600)
     assert r.returncode == 0, f"Compilation failed:\n{r.stderr.decode()}"
 
 # Go: build and test
 def test_go_build():
-    r = subprocess.run(["go", "build", "./..."], cwd=REPO, capture_output=True, timeout=120)
+    r = subprocess.run(["go", "build", "./..."], cwd=REPO, capture_output=True, timeout=600)
     assert r.returncode == 0, f"Build failed:\n{r.stderr.decode()}"
 ```
 
@@ -200,7 +223,7 @@ The template test.sh is standardized boilerplate. Do not add task-specific logic
 - One `check` entry per `def test_*` function in test_outputs.py (keep ids in sync)
 - **REQUIRED**: At least one check that verifies the config/instruction file update
 - Add `source` refs for all `agent_config` checks (pointing to the rule in CLAUDE.md/AGENTS.md, NOT the file being edited)
-- Add rubric rules (soft, LLM-judge-only) or leave empty `[]`
+- Add rubric rules from agent config files. Every soft/subjective rule from CLAUDE.md, AGENTS.md, SKILL.md etc. that is relevant to this PR's changes MUST become a rubric entry with source ref. For agentmd-edit tasks, rubric MUST NOT be empty — extract at least 3-5 rules covering both code style and config/doc conventions.
 
 ```yaml
 version: "2.0"
@@ -276,27 +299,73 @@ But do NOT reveal exactly what to write — the agent should figure that out.
 - Do NOT copy from the PR body, reveal patch details, or mention test files
 - Some ambiguity is OK
 
-### 6. Self-audit
+### 6. Build Docker and discover repo CI/CD
 
-After filling all files, verify:
+**6a. Build the Docker image first:**
+```bash
+cd /workspace/task/environment && docker build -t task-env .
+```
+If it fails, fix the Dockerfile and retry until it builds.
 
-1. **Python validity**: Run `python3 -c "import ast; ast.parse(open('test_outputs.py').read())"` mentally. Every assertion is inside a `def test_*():`. No orphaned code blocks, no bare assertions, no raw non-Python code pasted into the file.
-2. **Subprocess check**: At least one f2p test uses `subprocess.run()` to execute the actual code (not just read files as text). Exception: pure Python repos can import directly.
-3. **Stub walk**: mentally run every test with `def f(): pass`. All must fail → reward 0.
-4. **F2P coverage**: at least 2 tests must fail on the base commit (at least 1 code + 1 config).
-5. **Gold patch completeness**: solve.sh includes BOTH code and config changes.
-6. **Anti-pattern scan**: check each test against the 10 anti-patterns above.
-7. **Manifest sync**: every `def test_*` has a matching check in eval_manifest.yaml. No extra, no missing.
-8. **Source ref verification**: For every `agent_config` check, verify the `source.path` file actually EXISTS at the `source.commit` (base commit). Run mentally: `gh api repos/OWNER/REPO/contents/PATH?ref=COMMIT`. If the file doesn't exist, the ref is fabricated — change origin to `pr_diff` or find the correct file. Source refs MUST use the **base commit** (not merge commit) — the rule must have existed before this PR.
+**6b. Discover CI/CD commands.** From the Dockerfile WORKDIR, check:
+- `package.json` → `scripts.test`, `scripts.lint`, `scripts.check`, `scripts.typecheck`, `scripts.build`
+- `Makefile` / `Justfile` → test/lint/check targets
+- `Cargo.toml` → `cargo test`, `cargo check`, `cargo clippy`
+- `pyproject.toml` → pytest, ruff, mypy
+- `go.mod` → `go test`, `go vet`
+- `.github/workflows/*.yml` → actual CI commands
+
+**6c. Test which commands work** inside the Docker container on the base commit:
+```bash
+docker run --rm task-env <command>
+```
+Only add commands that actually succeed on the base commit. Skip commands that require network access, GPU, or special accounts. When writing test timeouts, use what you observe — if a command takes 30s, set timeout=60; if it takes 200s, set timeout=600. Check `.github/workflows/` for the repo's own CI timeout settings as a reference.
+
+**6d. Add p2p tests** for each working CI command and matching checks in eval_manifest.yaml.
+
+### 7. Docker validation (REQUIRED)
+
+The image is already built from step 6a. Now validate:
+
+**7b. NOP test (base commit — expect reward=0):**
+```bash
+rm -f /logs/verifier/reward.txt
+docker run --rm -v /workspace/task/tests:/tests:ro -v /logs/verifier:/logs/verifier task-env bash /tests/test.sh
+cat /logs/verifier/reward.txt
+```
+Must be `0`. If `1`, your f2p tests are too weak — rewrite them.
+
+**7c. Gold test (apply fix — expect reward=1):**
+```bash
+docker rm -f task-solved 2>/dev/null || true
+docker run --name task-solved -v /workspace/task/solution:/solution:ro task-env bash /solution/solve.sh
+docker commit task-solved task-env-gold
+docker rm task-solved
+rm -f /logs/verifier/reward.txt
+docker run --rm -v /workspace/task/tests:/tests:ro -v /logs/verifier:/logs/verifier task-env-gold bash /tests/test.sh
+cat /logs/verifier/reward.txt
+```
+Must be `1`. If `0`, read pytest output, fix solve.sh or tests, rebuild and retry.
+
+**Keep iterating until NOP=0 and GOLD=1.**
+
+### 8. Self-audit
+
+After Docker validation passes:
+
+1. **Source ref verification**: For every `agent_config` check, verify `source.path` EXISTS at `source.commit` (base commit). Source refs MUST use the base commit, not merge commit.
+2. **Gold patch completeness**: solve.sh includes BOTH code and config changes.
+3. **F2P coverage**: at least 2 f2p tests (at least 1 code + 1 config).
+4. **P2P coverage**: at least 1 pass_to_pass test from repo CI/CD.
+5. **Anti-pattern scan**: check each test against the 10 anti-patterns above.
+6. **Manifest sync**: every `def test_*` has a matching check in eval_manifest.yaml.
 
 ```
 Self-audit:
-  Python valid: yes (no orphaned blocks, no bare assertions)
-  Subprocess tests: N (for non-Python: _run_ts, cargo check, etc.)
+  Docker: NOP=0, GOLD=1
   Tests: N total (X f2p code, Y f2p config, Z p2p)
-  Stub score: 0 (all must fail on stub)
+  CI/CD tests: [list commands added]
   Gold patch includes config changes: yes
-  Anti-patterns: none
+  Source refs verified: yes
   Manifest sync: yes
-  Source refs verified: yes (all agent_config paths exist at base commit)
 ```

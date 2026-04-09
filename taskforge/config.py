@@ -161,9 +161,15 @@ def gh_json(cmd: list[str], retries: int = 3, timeout: int = 120) -> list | dict
                 return json.loads(result.stdout)
             except json.JSONDecodeError:
                 return []
-        if "rate limit" in result.stderr.lower() or "abuse" in result.stderr.lower():
+        stderr_lower = result.stderr.lower()
+        if "rate limit" in stderr_lower or "abuse" in stderr_lower:
             wait = 30 * (attempt + 1)
             print(f"  Rate limited, waiting {wait}s...", file=sys.stderr)
+            time.sleep(wait)
+            continue
+        if "502" in result.stderr or "503" in result.stderr or "stream error" in stderr_lower:
+            wait = 5 * (attempt + 1)
+            print(f"  Server error, retrying in {wait}s... ({result.stderr[:100]})", file=sys.stderr)
             time.sleep(wait)
             continue
         if result.stderr:

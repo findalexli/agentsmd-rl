@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import random
 import re
 import time
 from contextlib import asynccontextmanager
@@ -102,7 +103,7 @@ class _Slot:
 class BackendPool:
     """Routes requests across backends, cheapest-first, with 429 fallback."""
 
-    def __init__(self, backends: list[Backend], acquire_timeout: float = 600):
+    def __init__(self, backends: list[Backend], acquire_timeout: float = 3600):
         self._slots = sorted(
             [_Slot(b) for b in backends],
             key=lambda s: s.backend.cost_tier,
@@ -128,6 +129,31 @@ class BackendPool:
         deadline = time.monotonic() + self._timeout
         while True:
             now = time.monotonic()
+
+            # Prefer waiting for a cheap backend in short cooldown over
+            # immediately falling back to an expensive one.
+            # Note: _value check + await acquire() is safe in asyncio because
+            # acquire() returns immediately (no yield) when _value > 0.
+            cheapest_wait: float | None = None
+            for s in self._slots:
+                if not s.available:
+                    continue
+                if direct_only and not s.backend.supports_direct:
+                    continue
+                remaining = s.cooldown_until - now
+                if remaining <= 0 and s.sem._value > 0:
+                    await s.sem.acquire()
+                    return s
+                if 0 < remaining <= 15 and s.sem._value > 0:
+                    if cheapest_wait is None or remaining < cheapest_wait:
+                        cheapest_wait = remaining
+
+            # If a cheap backend is cooling down briefly, wait for it
+            if cheapest_wait is not None:
+                await asyncio.sleep(cheapest_wait + 0.1)
+                continue
+
+            # Otherwise try any available backend (expensive tiers)
             for s in self._slots:
                 if not s.available:
                     continue
@@ -139,14 +165,14 @@ class BackendPool:
                     await s.sem.acquire()
                     return s
 
-            # Sleep until earliest cooldown or 1s.
+            # All busy or cooling — sleep until earliest cooldown.
             waits = [
                 s.cooldown_until - now
                 for s in self._slots
                 if s.available and now < s.cooldown_until
                 and (not direct_only or s.backend.supports_direct)
             ]
-            delay = max(0.1, min(min(waits, default=1.0), 2.0))
+            delay = max(0.1, min(min(waits, default=2.0), 5.0))
             if time.monotonic() + delay > deadline:
                 raise TimeoutError(
                     f"No backend available within {self._timeout}s. "
@@ -165,9 +191,15 @@ class BackendPool:
         s = self._find(backend)
         s.consecutive_429s += 1
         s.total_429 += 1
-        delay = min(10 * (2 ** (s.consecutive_429s - 1)), 300)
+        # Exponential backoff with jitter — 10-20 min caps to let backends recover
+        if s.backend.cost_tier <= 1:
+            base = 30 * (2 ** (s.consecutive_429s - 1))
+            delay = min(base, 600) + random.uniform(0, 60)   # cap 10 min + jitter
+        else:
+            base = 60 * (2 ** (s.consecutive_429s - 1))
+            delay = min(base, 1200) + random.uniform(0, 120)  # cap 20 min + jitter
         s.cooldown_until = time.monotonic() + delay
-        print(f"  [{_ts()}] 429 on {backend.name}, cooldown {delay}s")
+        print(f"  [{_ts()}] 429 on {backend.name}, cooldown {delay:.0f}s (consecutive: {s.consecutive_429s})")
 
     def report_dead(self, backend: Backend) -> None:
         self._find(backend).available = False
@@ -398,11 +430,28 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
             base_url="https://api.z.ai/api/anthropic",
             api_key=_get("GLM_API_KEY"),
             model_map={"opus": "glm-5.1", "sonnet": "glm-5.1", "haiku": "glm-4.5-air"},
-            max_concurrent=4,
+            max_concurrent=0,
             cost_tier=0,
         ))
 
+    # Kimi K2.5 via Fireworks — Anthropic-compatible API, supports subprocess
+    # Tier 1: preferred fallback after GLM (cheap, high concurrency)
+    if _get("FIREWORKS_API_KEY"):
+        backends.append(Backend(
+            name="fireworks",
+            base_url="https://api.fireworks.ai/inference",
+            api_key=_get("FIREWORKS_API_KEY"),
+            model_map={
+                "opus": "accounts/fireworks/routers/kimi-k2p5-turbo",
+                "sonnet": "accounts/fireworks/routers/kimi-k2p5-turbo",
+                "haiku": "accounts/fireworks/routers/kimi-k2p5-turbo",
+            },
+            max_concurrent=40,
+            cost_tier=1,
+        ))
+
     # OAuth — subscription, subprocess-only (direct API returns 401)
+    # Tier 2: use sparingly, daily limit
     oauth_token = os.environ.get("CLAUDE_ACCESS_TOKEN", "")
     if not oauth_token:
         creds = Path.home() / ".claude" / ".credentials_backup.json"
@@ -419,54 +468,9 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
             base_url="",
             api_key=oauth_token,
             auth_type="bearer",
-            max_concurrent=8,
-            cost_tier=1,
-            supports_direct=False,
-        ))
-
-    # Kimi K2.5 via OpenRouter — cheap, fast, OpenAI format
-    if _get("OPENROUTER_API_KEY"):
-        backends.append(Backend(
-            name="kimi",
-            base_url="https://openrouter.ai/api/v1",
-            api_key=_get("OPENROUTER_API_KEY"),
-            auth_type="bearer",
-            api_format="openai",
-            model_map={
-                "opus": "moonshotai/kimi-k2.5",
-                "sonnet": "moonshotai/kimi-k2.5",
-                "haiku": "moonshotai/kimi-k2.5",
-            },
-            max_concurrent=10,
-            cost_tier=1,
-            supports_subprocess=False,  # needs litellm proxy
-        ))
-
-    # Fireworks — if key available, alternative to OpenRouter for Kimi
-    if _get("FIREWORKS_API_KEY"):
-        backends.append(Backend(
-            name="fireworks",
-            base_url="https://api.fireworks.ai/inference/v1",
-            api_key=_get("FIREWORKS_API_KEY"),
-            auth_type="bearer",
-            api_format="openai",
-            model_map={
-                "opus": "accounts/fireworks/models/kimi-k2-5-instruct",
-                "sonnet": "accounts/fireworks/models/kimi-k2-5-instruct",
-            },
-            max_concurrent=10,
-            cost_tier=1,
-            supports_subprocess=False,
-        ))
-
-    # Anthropic API key — pay-per-token, high limits
-    if _get("ANTHROPIC_API_KEY"):
-        backends.append(Backend(
-            name="apikey",
-            base_url="",
-            api_key=_get("ANTHROPIC_API_KEY"),
-            max_concurrent=20,
+            max_concurrent=4,
             cost_tier=2,
+            supports_direct=False,
         ))
 
     return backends

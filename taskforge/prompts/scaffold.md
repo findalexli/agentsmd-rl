@@ -16,6 +16,26 @@ gh api repos/<owner/repo>/commits/<merge_sha> --jq '.parents[0].sha'   # base co
 gh pr diff <N> --repo <owner/repo>                                      # full diff
 ```
 
+### 1b. Abandon check
+
+After reading the PR metadata and diff, decide if this PR is suitable for a benchmark task. **Abandon immediately** by writing this file and stopping:
+
+```bash
+echo '{"abandoned": true, "reason": "your reason"}' > /workspace/task/status.json
+```
+
+Abandon if ANY of these apply:
+- **Docs/CI only**: PR only changes markdown, workflows, configs with no functional code
+- **Too large**: PR touches >10 files or >500 lines of functional code changes
+- **Needs secrets/accounts**: Requires API keys, OAuth tokens, cloud accounts, or paid services
+- **Needs GPU/special hardware**: CUDA kernels, model weights, TPU, etc. that can't be tested on CPU
+- **Repo deleted/archived**: Can't clone or checkout the base commit
+- **Trivial rename/typo**: One-line change with no behavioral difference to test
+- **Reverted PR**: The merge commit was later reverted
+- **No testable behavior**: The change is purely visual (CSS, UI layout) with no programmatic way to verify
+
+If the PR looks good, continue to step 2.
+
 ### 2. Discover and load ALL agent config files
 
 This is critical — our benchmark tests how well agents follow repo instructions.
@@ -48,10 +68,13 @@ Aim for **more rules rather than fewer** — better to include a borderline rule
 
 ### 3. Copy template and fill placeholders
 
+**IMPORTANT**: All task files MUST be created under `/workspace/task/`. This is the expected output location.
+
 ```bash
-TASK_NAME="<repo-short>-<descriptive-slug>"
-cp -r taskforge/templates/task_template/ harbor_tasks/$TASK_NAME/
+mkdir -p /workspace/task/{environment,solution,tests}
 ```
+
+Create all files from scratch in `/workspace/task/` — there is no template to copy from.
 
 Replace all `{{PLACEHOLDER}}` tokens across files:
 
@@ -85,8 +108,8 @@ Replace all `{{PLACEHOLDER}}` tokens across files:
 - Ensure `cd /workspace/{{REPO_SHORT}}` at the top
 
 #### task.toml
+- Set `name = "<repo-short>-<descriptive-slug>"` (e.g., `name = "ruff-dedent-formfeed-strip"`)
 - Set difficulty, tags, time estimates
-- Adjust timeouts if needed (default: 1800s agent, 120s verifier)
 
 #### test_outputs.py — THE CORE WORK
 
@@ -109,7 +132,7 @@ Replace each `raise NotImplementedError(...)` placeholder with real tests. Every
 ```python
 # Rust example
 def test_cargo_check():
-    r = subprocess.run(["cargo", "check"], cwd=REPO, capture_output=True, timeout=120)
+    r = subprocess.run(["cargo", "check"], cwd=REPO, capture_output=True, timeout=600)
     assert r.returncode == 0, f"Compilation failed:\n{r.stderr.decode()}"
 
 # Node example
@@ -142,8 +165,7 @@ The template test.sh is standardized boilerplate. It installs pytest, runs test_
 - Fill in source PR metadata
 - One `check` entry per `def test_*` function in test_outputs.py (keep ids in sync)
 - Add `source` refs for all `agent_config` checks
-- Add rubric rules (soft, LLM-judge-only) or leave empty `[]`
-- Repos with NO agent configs: remove the agent_config check and rubric section
+- Add rubric rules from agent config files. Every soft/subjective rule from CLAUDE.md, AGENTS.md, SKILL.md etc. that is relevant to this PR's changes MUST become a rubric entry with source ref. If the repo has agent configs, the rubric section MUST NOT be empty — extract at least 2-3 rules. Only leave `rubric: []` if the repo has NO agent config files at all.
 
 #### instruction.md — WRITE THIS LAST
 
@@ -155,21 +177,84 @@ By now you know exactly what test_outputs.py checks. Describe the *symptom* thos
 - Some ambiguity is OK — the agent should explore
 - Delete the HTML comment guidelines before finishing
 
-### 5. Self-audit
+### 5. Build Docker and discover repo CI/CD
 
-After filling all files, verify:
+**5a. Build the Docker image first:**
+```bash
+cd /workspace/task/environment && docker build -t task-env .
+```
+If it fails, fix the Dockerfile and retry until it builds.
 
-1. **Stub walk**: mentally run every test with `def f(): pass`. All must fail → reward 0.
-2. **Alternative fix**: think of a different valid implementation. Does it pass all tests? If not, the test is too narrow — fix it.
-3. **F2P coverage**: at least 2 tests must fail on the base commit.
-4. **Anti-pattern scan**: check each test against the 10 anti-patterns above.
-5. **Manifest sync**: every `def test_*` has a matching check in eval_manifest.yaml.
+**5b. Discover CI/CD commands.** From the Dockerfile WORKDIR, check:
+- `package.json` → `scripts.test`, `scripts.lint`, `scripts.check`, `scripts.typecheck`, `scripts.build`
+- `Makefile` / `Justfile` → test/lint/check targets
+- `Cargo.toml` → `cargo test`, `cargo check`, `cargo clippy`
+- `pyproject.toml` → pytest, ruff, mypy
+- `go.mod` → `go test`, `go vet`
+- `.github/workflows/*.yml` → actual CI commands
+
+**5c. Test which commands work** inside the Docker container on the base commit:
+```bash
+docker run --rm task-env <command>
+```
+Only add commands that actually succeed on the base commit. Skip commands that require network access, GPU, or special accounts. When writing test timeouts, use what you observe — if a command takes 30s, set timeout=60; if it takes 200s, set timeout=600. Check `.github/workflows/` for the repo's own CI timeout settings as a reference.
+
+**5d. Add p2p tests** to test_outputs.py for each working CI command:
+```python
+def test_repo_lint():
+    """Repo's linter passes (pass_to_pass)."""
+    r = subprocess.run(["npm", "run", "lint"], capture_output=True, text=True, timeout=600, cwd=REPO)
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+```
+
+**5e. Add matching checks** in eval_manifest.yaml:
+```yaml
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's linter passes
+```
+
+### 6. Docker validation (REQUIRED)
+
+The image is already built from step 5a. Now validate:
+
+**6b. NOP test (base commit — expect reward=0):**
+```bash
+rm -f /logs/verifier/reward.txt
+docker run --rm -v /workspace/task/tests:/tests:ro -v /logs/verifier:/logs/verifier task-env bash /tests/test.sh
+cat /logs/verifier/reward.txt
+```
+Must be `0`. If `1`, your f2p tests are too weak — they pass even without the fix. Rewrite them.
+
+**6c. Gold test (apply fix — expect reward=1):**
+```bash
+docker rm -f task-solved 2>/dev/null || true
+docker run --name task-solved -v /workspace/task/solution:/solution:ro task-env bash /solution/solve.sh
+docker commit task-solved task-env-gold
+docker rm task-solved
+rm -f /logs/verifier/reward.txt
+docker run --rm -v /workspace/task/tests:/tests:ro -v /logs/verifier:/logs/verifier task-env-gold bash /tests/test.sh
+cat /logs/verifier/reward.txt
+```
+Must be `1`. If `0`, read the pytest output (`-v --tb=short`), fix solve.sh or tests, rebuild and retry.
+
+**Keep iterating until NOP=0 and GOLD=1.** Do not finish without passing both.
+
+### 7. Self-audit
+
+After Docker validation passes:
+
+1. **Anti-pattern scan**: check each test against the 10 anti-patterns above.
+2. **Manifest sync**: every `def test_*` has a matching check in eval_manifest.yaml.
+3. **P2P coverage**: at least 1 pass_to_pass test from repo CI/CD.
+4. **F2P coverage**: at least 2 fail_to_pass tests that fail on base commit.
 
 ```
 Self-audit:
+  Docker: NOP=0, GOLD=1
   Tests: N total (X f2p, Y p2p)
-  Stub score: 0 (all must fail on stub)
-  Alternative fix passes: yes
+  CI/CD tests: [list commands added]
   Anti-patterns: none
   Manifest sync: yes
 ```

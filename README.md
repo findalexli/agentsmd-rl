@@ -10,14 +10,37 @@ Every major SWE benchmark (SWE-Gym, SWE-rebench V2, SWE-Universe, SWE-Next) mine
 
 See [research/agent-manifest-confounding.md](research/agent-manifest-confounding.md) for the full analysis.
 
+## Task Classes
+
+The benchmark has two complementary task classes, both mined from merged PRs in repos with agent instruction files:
+
+### Class A: Code Bug Fixes (`harbor_tasks/`, ~630 tasks)
+
+Standard SWE-bench-style tasks. The PR fixed a bug; the agent must reproduce the fix. Evaluation is purely execution-based: fail-to-pass tests must fail on the base commit and pass after the fix, pass-to-pass tests must pass on both.
+
+### Class B: Code + Config Edits (`harbor_tasks_agentmd_edits/`, ~350 tasks)
+
+The PR changed both functional code AND agent instruction files (CLAUDE.md, AGENTS.md, SKILL.md, .cursorrules, etc.). These tasks test whether agents can follow and update the repo's own guidance files. Evaluation adds a rubric judge layer: an LLM checks whether the gold solution's config edits follow the style/convention rules declared in `eval_manifest.yaml`.
+
+| | Class A (code-only) | Class B (code + config) |
+|---|---|---|
+| **Directory** | `harbor_tasks/` | `harbor_tasks_agentmd_edits/` |
+| **PR changes** | Code only | Code + agent config files |
+| **eval_manifest checks** | `pr_diff`, `repo_tests`, `static` | Also `agent_config` with source refs |
+| **Rubric rules** | Sometimes | Almost always |
+| **Rubric judge** | Optional | Required (ICR >= 0.8) |
+| **What it measures** | Can the agent fix bugs? | Can the agent fix bugs AND maintain config files? |
+
+Both classes share identical file structure and are processed by the same pipeline.
+
 ## Repository Structure
 
 ```
 claude-code-rl-w-tinker/    # RL training library (proxy + GRPO + Tinker API)
-taskforge/                   # Task construction toolkit (models, pipeline, judge)
-harbor_tasks/                # Benchmark tasks: code-only bug fixes (~420 tasks)
-harbor_tasks_agentmd_edits/  # Benchmark tasks: code + config file edits (~236 tasks)
-scripts/                     # Shell orchestrators for overnight batch pipelines
+taskforge/                   # Task construction toolkit (models, pipeline, judge, E2B worker)
+harbor_tasks/                # Class A: code-only bug fixes (~630 tasks)
+harbor_tasks_agentmd_edits/  # Class B: code + config file edits (~350 tasks)
+scripts/                     # Batch pipeline launchers
 research/                    # Research docs and analysis
 .claude/skills/              # Claude Code skills for task scaffolding/validation
 .claude/agents/              # Headless agent definitions for batch pipelines
@@ -42,29 +65,27 @@ train.py → Harbor Trial → reward → GRPO → Tinker forward_backward
 
 Key design: logprobs captured at generation time (not post-hoc), per-turn datums (AReaL "individual" style), Harbor as a black box. See [claude-code-rl-w-tinker/README.md](claude-code-rl-w-tinker/README.md) for architecture details.
 
-### `harbor_tasks/` — Code Bug Fix Tasks
+### Task File Structure (both classes)
 
-~420 Harbor-compatible tasks mined from merged PRs in repos with agent configs. Each task:
+Each task directory contains:
 - `instruction.md` — bug description (what the agent sees)
 - `environment/Dockerfile` — repo cloned at pre-fix commit
-- `tests/test.sh` — deterministic tests → `/logs/verifier/reward.txt` (binary: 0 or 1)
-- `eval_manifest.yaml` — check declarations with source traceability
+- `tests/test.sh` → `test_outputs.py` — deterministic tests → `/logs/verifier/reward.txt` (binary: 0 or 1)
+- `eval_manifest.yaml` — check declarations with source traceability + rubric rules
 - `solution/solve.sh` — gold patch (idempotent)
-- `task.toml` — Harbor metadata
-
-### `harbor_tasks_agentmd_edits/` — Code + Config Edit Tasks
-
-~236 tasks where the PR changed both functional code AND agent config files (CLAUDE.md, AGENTS.md, etc.). Config edit quality is evaluated via LLM judge with gold references extracted from solve.sh, not exact string matching.
+- `task.toml` — Harbor metadata (difficulty, source PR, timeouts)
+- `status.json` — validation provenance (per-node model/backend/time, history)
 
 ### `taskforge/` — Task Construction Toolkit
 
 Python package for building and validating tasks:
 - `models.py` — Pydantic models: `EvalManifest`, `Check`, `RubricRule`, `SourceRef`
 - `config.py` — shared config patterns, `is_config_file()`, `extract_config_hunks()`
-- `pipeline.py` — parallel pipeline orchestrator (`claude -p` against tasks)
-- `judge.py` — LLM judge for config edit rubric (side-by-side gold vs agent diff)
-- `e2b.py` — E2B sandbox validation
-- `lint.py`, `filters.py`, `status.py` — quality checks
+- `pipeline.py` — local parallel pipeline orchestrator (`claude -p` against tasks)
+- `e2b_worker.py` — E2B sandbox pipeline: agent-chain architecture (see below)
+- `judge.py` — rubric judge for config edit quality (eval_manifest.yaml rubric rules)
+- `backends.py` — multi-backend LLM pool (GLM, Fireworks/Kimi, OAuth) with auto-fallback
+- `prompts/` — focused agent prompts (P2P enrich, improve tests, validate+fix)
 
 ### `research/`
 
@@ -131,18 +152,51 @@ Following [OpenAI's critique of SWE-bench Verified](https://openai.com/index/why
 
 ## Task Construction Pipeline
 
+### E2B Agent-Chain Pipeline (primary)
+
+Each task runs through 4 focused `claude -p` agents inside an E2B Firecracker microVM with Docker:
+
+```
+[Scaffold] → [P2P Enrich] → [Improve Tests] → [Validate+Fix] → [Rubric Judge]
+```
+
+| Agent | What it does | Docker access? |
+|-------|-------------|----------------|
+| **P2P Enrich** | Discover repo CI/CD, add pass-to-pass tests | Yes (runs CI commands) |
+| **Improve Tests** | Upgrade grep-only tests to behavioral subprocess tests | No |
+| **Validate+Fix** | Docker build → NOP test (expect 0) → Gold test (expect 1) → fix issues | Yes (builds & runs containers) |
+| **Rubric Judge** | Check config edits against eval_manifest.yaml rubric rules | No (programmatic) |
+
+Inter-agent communication via `status.json` — each agent reads previous nodes' notes, writes its own findings with model/backend provenance.
+
+```bash
+# Validate all unvalidated tasks (80 concurrent E2B sandboxes)
+set -a && source .env && set +a && export GH_TOKEN=$(gh auth token)
+.venv/bin/python scripts/validate_batch.py --concurrency 80
+
+# Only tasks from last 24 hours
+.venv/bin/python scripts/validate_batch.py --recent 24 --concurrency 80
+```
+
+### Backend Pool
+
+LLM calls inside sandboxes route through a multi-backend pool with automatic fallback:
+
+```
+Tier 0: GLM-5.1 (free)        → 40 concurrent slots
+Tier 1: Kimi K2.5 / Fireworks → 40 concurrent slots (fallback on GLM 429)
+```
+
+Rate-limited tasks auto-retry (up to 2x) on a different backend.
+
+### Local Pipeline (legacy)
+
 ```bash
 # Scout PRs from repos with agent configs
 python -m taskforge.scout scout --agentmd --repos-file scouted_repos.jsonl --output scouted.jsonl
 
 # Scaffold tasks (via Claude Code agent)
-claude -p --agent task-scaffolder "owner/repo#123"
-
-# Or batch scaffold
-python -m taskforge.pipeline scaffold --workers 4
-
-# Validate (Docker oracle: nop=0, gold=1)
-python -m taskforge.pipeline validate --workers 8
+python -m taskforge.pipeline scaffold-from-prs --input scouted.jsonl --workers 8 --pool
 ```
 
 ## Differentiation from Existing Work
@@ -158,4 +212,4 @@ python -m taskforge.pipeline validate --workers 8
 
 ## Status
 
-~650 tasks across two datasets, ~400 passing validation. RL training loop verified end-to-end with Qwen3.5-35B-A3B on Harbor.
+~978 tasks across two classes (631 code-only + 347 code+config), 649 passing Docker oracle validation. E2B agent-chain pipeline operational. RL training loop verified end-to-end with Qwen3.5-35B-A3B on Harbor.
