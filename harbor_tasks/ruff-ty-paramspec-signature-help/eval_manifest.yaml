@@ -1,0 +1,59 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24399
+  base_commit: "ad30af4cd00b549037456ebafc803a60e4c53b37"
+  merge_commit: "8106a4b299fa63e9f7b91b14eccbd70e7a064a9f"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "ty_ide crate compiles without errors"
+
+  - id: signature_help_paramspec_class_constructor
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Signature help for ParamSpec-generic class constructors inside subscripts renders correctly"
+
+  - id: bare_paramspec_active_parameter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Bare ParamSpec signature keeps active parameter for later arguments"
+
+  - id: no_keyword_completions_bare_paramspec
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Bare ParamSpec signatures produce no keyword argument completions"
+
+  - id: no_panic_unwrap
+    type: pass_to_pass
+    origin: agent_config
+    description: "No panic!/unreachable!/unwrap in modified files"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "ad30af4cd00b549037456ebafc803a60e4c53b37"
+
+  - id: no_local_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No local use/import statements inside functions"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "ad30af4cd00b549037456ebafc803a60e4c53b37"
+
+rubric:
+  - rule: "Try hard to avoid patterns that require panic!, unreachable!, or .unwrap()."
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "ad30af4cd00b549037456ebafc803a60e4c53b37"
+
+  - rule: "Rust imports should always go at the top of the file, never locally in functions."
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "ad30af4cd00b549037456ebafc803a60e4c53b37"

@@ -1,0 +1,67 @@
+version: "2.0"
+
+source:
+  repo: "dotnet/maui"
+  pr: 34275
+  base_commit: "ecd6428d324e395ca07f8d375600c0fc93d0dd3c"
+  merge_commit: "84e28fac0179cc829e166eb1f40d69a5cec4578b"
+
+checks:
+  # -------------------------------------------------------------------------
+  # Gates (pass_to_pass, static)
+  # -------------------------------------------------------------------------
+  - id: csharp_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified C# files must have valid syntax"
+
+  # -------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # -------------------------------------------------------------------------
+  - id: header_footer_guard_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SelectableItemsViewAdapter has the header/footer selection guard that prevents ArgumentOutOfRangeException"
+
+  - id: guard_has_correct_comment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The guard includes explanatory comment about why header/footer ViewHolders are excluded from selection tracking"
+
+  - id: adapter_compiles_with_fix
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The Controls.Core project compiles successfully with the guard fix applied"
+
+  # -------------------------------------------------------------------------
+  # Pass-to-pass (static) — anti-stub
+  # -------------------------------------------------------------------------
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified OnBindViewHolder method has real logic, not just pass/return"
+
+  # -------------------------------------------------------------------------
+  # Config-derived (agent_config) — rules from copilot-instructions.md
+  # -------------------------------------------------------------------------
+  - id: nullable_enable_documented
+    type: fail_to_pass
+    origin: agent_config
+    description: "copilot-instructions.md documents the #nullable enable must be line 1 rule"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "141-160"
+      commit: "ecd6428d324e395ca07f8d375600c0fc93d0dd3c"
+
+  - id: bash_script_provided
+    type: fail_to_pass
+    origin: agent_config
+    description: "copilot-instructions.md includes the safe bash pattern for PublicAPI.Unshipped.txt file handling"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "148-157"
+      commit: "ecd6428d324e395ca07f8d375600c0fc93d0dd3c"
+
+rubric:
+  # Soft rules for LLM judge - none needed for this task as rules are programmatically verifiable
+  []

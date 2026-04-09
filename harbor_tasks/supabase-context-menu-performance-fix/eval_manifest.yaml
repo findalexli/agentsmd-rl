@@ -1,0 +1,47 @@
+version: "2.0"
+
+source:
+  repo: "supabase/supabase"
+  pr: 44578
+  base_commit: "2af6b3eaec65971a8fa6986afad44d6581075ac5"
+  merge_commit: "fbb0770b47186ae9f3cae46f0950f63f0180c605"
+
+checks:
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must compile without errors"
+
+  - id: single_context_menu_pattern
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Results.tsx uses single shared context menu instead of per-cell (prevents 1000s of keydown listeners)"
+
+  - id: results_utils_functions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "formatClipboardValue and formatCellValue utility functions work correctly and are extracted to Results.utils.ts"
+
+  - id: queryblock_flex_layout
+    type: fail_to_pass
+    origin: pr_diff
+    description: "QueryBlock uses flex layout instead of overflow-auto to fix double scrollbar issue"
+
+  - id: results_component_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "The Results component test for single context menu passes"
+
+rubric:
+  # Soft rules for LLM judge based on studio-testing skill
+  - rule: "Remove logic from components into .utils.ts files as pure functions: arguments in, return value out."
+    source:
+      path: ".claude/skills/studio-testing/SKILL.md"
+      lines: "47-51"
+      commit: "2af6b3eaec65971a8fa6986afad44d6581075ac5"
+
+  - rule: "Test every permutation of utility functions: happy path, malformed input, empty values, edge cases."
+    source:
+      path: ".claude/skills/studio-testing/SKILL.md"
+      lines: "69-77"
+      commit: "2af6b3eaec65971a8fa6986afad44d6581075ac5"

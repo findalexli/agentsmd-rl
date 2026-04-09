@@ -1,0 +1,77 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 16446
+  base_commit: "be9b4d1bcde39341c7813b66c5c19150a01bb8c2"
+  merge_commit: "b7e208b4f1e6641a1cbb1e13f59789c7b7f4c60a"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Gates (pass_to_pass) — syntax verification
+  # ---------------------------------------------------------------------------
+  - id: typescript_parses
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files have valid syntax"
+
+  - id: spec_files_parse
+    type: pass_to_pass
+    origin: static
+    description: "Modified spec files have valid TypeScript syntax"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core code refactoring
+  # ---------------------------------------------------------------------------
+  - id: actions_has_slug_from_url
+    type: fail_to_pass
+    origin: pr_diff
+    description: "actions.ts exports slugFromUrl function with correct regex"
+
+  - id: actions_has_wait_slug
+    type: fail_to_pass
+    origin: pr_diff
+    description: "actions.ts exports waitSlug async function with polling logic"
+
+  - id: duplicated_helpers_removed_from_specs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Duplicated slugFromUrl/waitSlug functions removed from spec files"
+
+  - id: specs_import_shared_helpers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Spec files import slugFromUrl and waitSlug from ../actions"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (agent_config) — config/documentation update (REQUIRED)
+  # ---------------------------------------------------------------------------
+  - id: agents_md_documents_new_helpers
+    type: fail_to_pass
+    origin: agent_config
+    description: "AGENTS.md documents the new slugFromUrl and waitSlug helpers"
+    source:
+      path: "packages/app/e2e/AGENTS.md"
+      lines: "175"
+      commit: "be9b4d1bcde39341c7813b66c5c19150a01bb8c2"
+
+  - id: agents_md_documents_routing_guidance
+    type: fail_to_pass
+    origin: agent_config
+    description: "AGENTS.md includes guidance on using shared helpers for routing"
+    source:
+      path: "packages/app/e2e/AGENTS.md"
+      lines: "175"
+      commit: "be9b4d1bcde39341c7813b66c5c19150a01bb8c2"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static) — additional verification
+  # ---------------------------------------------------------------------------
+  - id: session_id_from_url_still_present
+    type: pass_to_pass
+    origin: static
+    description: "sessionIDFromUrl function still present in actions.ts"
+
+rubric:
+  # Soft rules for LLM judge — none needed for this task
+  []

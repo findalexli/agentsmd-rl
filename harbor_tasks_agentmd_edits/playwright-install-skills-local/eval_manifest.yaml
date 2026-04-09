@@ -1,0 +1,72 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39078
+  base_commit: "6a928b02f4de1efc633a8fae0331cd1fa821950e"
+  merge_commit: "5c749f58b0c958606c0fc29150c61bfeeed3c14e"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must exist and be non-empty"
+
+  - id: install_skills_command_declared
+    type: fail_to_pass
+    origin: pr_diff
+    description: "commands.ts declares an install-skills command"
+
+  - id: install_renamed_to_install_browser
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The install command is renamed to install-browser"
+
+  - id: route_capability_network
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Route tools use network capability instead of core"
+
+  - id: network_capability_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "config.d.ts includes network in the ToolCapability union type"
+
+  - id: install_skills_implementation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "program.ts implements installSkills with command handler and copy logic"
+
+  - id: skill_md_documents_network_commands
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md documents route/unroute commands under a Network section"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "29-30"
+      commit: "6a928b02f4de1efc633a8fae0331cd1fa821950e"
+
+  - id: skill_md_documents_install_commands
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md documents install-browser and install-skills commands"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "29-30"
+      commit: "6a928b02f4de1efc633a8fae0331cd1fa821950e"
+
+  - id: request_mocking_cli_commands
+    type: fail_to_pass
+    origin: agent_config
+    description: "request-mocking.md documents direct CLI route commands"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "29-30"
+      commit: "6a928b02f4de1efc633a8fae0331cd1fa821950e"
+
+rubric:
+  - rule: "Skill documentation updates are consistent with the style and structure of the existing SKILL.md"
+    source:
+      path: "packages/playwright/src/skill/SKILL.md"
+      lines: "1-10"
+      commit: "6a928b02f4de1efc633a8fae0331cd1fa821950e"

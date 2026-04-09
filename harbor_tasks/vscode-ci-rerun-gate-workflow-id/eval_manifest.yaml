@@ -15,32 +15,32 @@ checks:
   - id: parse_workflow_run_id_exported
     type: fail_to_pass
     origin: pr_diff
-    description: "parseWorkflowRunId must be exported from githubPullRequestCIModel.ts"
+    description: "parseWorkflowRunId must be exported and callable from external modules"
 
-  - id: parse_workflow_run_id_imported_in_widget
+  - id: widget_imports_and_uses_parse_workflow_run_id
     type: fail_to_pass
     origin: pr_diff
-    description: "ciStatusWidget.ts must import parseWorkflowRunId from the model module"
+    description: "ciStatusWidget.ts must successfully import and use parseWorkflowRunId (compiles)"
 
-  - id: gate_condition_in_ci_widget
+  - id: gate_condition_checks_for_valid_workflow
     type: fail_to_pass
     origin: pr_diff
-    description: "The 'Rerun Check' action must be gated on parseWorkflowRunId returning non-undefined"
-
-  - id: function_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "parseWorkflowRunId must contain real URL parsing logic for '/actions/runs/'"
+    description: "The 'Rerun Check' action is gated on parseWorkflowRunId returning non-undefined"
 
   - id: parse_workflow_run_id_behavior
     type: pass_to_pass
     origin: static
     description: "parseWorkflowRunId correctly extracts run IDs or returns undefined for diverse inputs"
 
+  - id: model_compiles_cleanly
+    type: pass_to_pass
+    origin: pr_diff
+    description: "The model TypeScript file compiles without errors"
+
   - id: uses_tabs_not_spaces
     type: pass_to_pass
     origin: agent_config
-    description: "Modified code must use tabs for indentation, not spaces"
+    description: "Modified code uses tabs for indentation, not spaces"
     source:
       path: ".github/copilot-instructions.md"
       lines: "72"

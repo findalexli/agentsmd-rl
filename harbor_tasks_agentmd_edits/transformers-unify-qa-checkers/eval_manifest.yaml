@@ -1,0 +1,82 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44879
+  base_commit: "28af8184fb00a0e9bc778c3defdec39bbe7e8839"
+  merge_commit: "b3d7942fbaedda791668d7fe42eaaa323ed7a089"
+
+checks:
+  # Behavioral: checkers.py module (subprocess)
+  - id: checkers_module_imports
+    type: fail_to_pass
+    origin: pr_diff
+    description: "utils/checkers.py imports with CHECKERS dict containing all 21 expected checker names"
+
+  - id: checkers_cli_lists_all
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Running checkers.py --list outputs all checker names"
+
+  - id: checkers_rejects_unknown
+    type: fail_to_pass
+    origin: pr_diff
+    description: "checkers.py rejects unknown checker names with non-zero exit and Unknown message"
+
+  # Behavioral: Makefile targets via make -n (subprocess)
+  - id: makefile_check_code_quality
+    type: fail_to_pass
+    origin: pr_diff
+    description: "make check-code-quality target exists and invokes checkers.py"
+
+  - id: makefile_check_repository_consistency
+    type: fail_to_pass
+    origin: pr_diff
+    description: "make check-repository-consistency target exists and invokes checkers.py"
+
+  - id: makefile_check_repo_keep_going
+    type: fail_to_pass
+    origin: pr_diff
+    description: "make check-repo invokes checkers.py with --keep-going"
+
+  - id: makefile_fix_repo_fix
+    type: fail_to_pass
+    origin: pr_diff
+    description: "make fix-repo invokes checkers.py with --fix"
+
+  # Config update: .ai/AGENTS.md
+  - id: agents_md_check_repo_updated
+    type: fail_to_pass
+    origin: agent_config
+    description: "AGENTS.md no longer says 'CI-style consistency checks' for check-repo"
+    source:
+      path: ".ai/AGENTS.md"
+      lines: "5"
+      commit: "28af8184fb00a0e9bc778c3defdec39bbe7e8839"
+
+  - id: agents_md_removes_ci_check_reference
+    type: fail_to_pass
+    origin: agent_config
+    description: "AGENTS.md no longer claims CI will run check-repo"
+    source:
+      path: ".ai/AGENTS.md"
+      lines: "8"
+      commit: "28af8184fb00a0e9bc778c3defdec39bbe7e8839"
+
+  # Dependency changes
+  - id: setup_py_includes_tomli
+    type: fail_to_pass
+    origin: pr_diff
+    description: "setup.py includes tomli in quality extras"
+
+  - id: dependency_versions_table_has_tomli
+    type: fail_to_pass
+    origin: pr_diff
+    description: "dependency_versions_table.py has tomli entry (verified via import)"
+
+rubric:
+  - rule: "Documentation update in AGENTS.md should be consistent with the existing style of the Useful commands section"
+    source:
+      path: ".ai/AGENTS.md"
+      lines: "1-10"
+      commit: "28af8184fb00a0e9bc778c3defdec39bbe7e8839"

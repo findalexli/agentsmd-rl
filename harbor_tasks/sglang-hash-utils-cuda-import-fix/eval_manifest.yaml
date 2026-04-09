@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22214
+  base_commit: "5e2b0f860c020bfa49ad280203b98941500757f1"
+  merge_commit: "49cb7d546ebce7e88615cd582d7e05202513a0c5"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified Python files must parse without errors"
+
+  - id: import_hash_utils_from_utils
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Hash functions can be imported from utils module (lightweight, no CUDA deps)"
+
+  - id: hash_functions_correctness
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Hash functions produce expected output for various inputs"
+
+  - id: hash_bigram_mode
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Hash function supports EAGLE bigram mode with tuple tokens"
+
+  - id: import_sites_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Import sites use utils module instead of hicache_storage"
+
+  - id: hicache_storage_functions_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Hash functions are removed from hicache_storage module"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "New hash functions have real implementation logic"
+
+rubric: []

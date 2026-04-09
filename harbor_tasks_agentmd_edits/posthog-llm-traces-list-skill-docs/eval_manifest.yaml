@@ -1,0 +1,70 @@
+version: "2.0"
+
+source:
+  repo: "PostHog/posthog"
+  pr: 53160
+  base_commit: "bfcaca7712c5a0c3b4b24d2d3f76e79fefc62d87"
+  merge_commit: "50ce146588e0a192c1d2b626738a007c6134380b"
+
+checks:
+  # Gate — SKILL.md frontmatter remains valid after edits
+  - id: skill_frontmatter_valid
+    type: pass_to_pass
+    origin: static
+    description: "Both SKILL.md files have valid YAML frontmatter"
+
+  # Jinja2 template conversion (code change)
+  - id: jinja2_template_valid
+    type: fail_to_pass
+    origin: pr_diff
+    description: "example-llm-trace.md.j2 exists and is valid Jinja2 using render_hogql_example()"
+
+  - id: static_trace_replaced_by_template
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Old static example-llm-trace.md removed, replaced by .j2 template"
+
+  # New traces list reference document
+  - id: traces_list_reference_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New example-llm-traces-list.md with two-phase SQL query pattern"
+
+  - id: traces_list_has_cost_columns
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Traces list Phase 2 query aggregates input/output/total cost"
+
+  # SKILL.md config updates
+  - id: exploring_skill_schema_discovery
+    type: fail_to_pass
+    origin: pr_diff
+    description: "exploring-llm-traces SKILL.md has schema discovery guidance"
+
+  - id: exploring_skill_filter_examples
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md includes AND-ed filter and person property filter examples"
+
+  - id: exploring_skill_cross_references
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md cross-references the query-examples skill documents"
+
+  - id: query_examples_links_traces_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "query-examples SKILL.md links to the new traces list reference"
+
+rubric:
+  - rule: "Documentation updates use American English spelling and semantic line breaks"
+    source:
+      path: "AGENTS.md"
+      lines: "106-107"
+      commit: "bfcaca7712c5a0c3b4b24d2d3f76e79fefc62d87"
+
+  - rule: "SKILL.md edits preserve existing formatting style and section structure"
+    source:
+      path: "products/llm_analytics/skills/exploring-llm-traces/SKILL.md"
+      lines: "1-10"
+      commit: "bfcaca7712c5a0c3b4b24d2d3f76e79fefc62d87"

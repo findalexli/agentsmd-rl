@@ -1,0 +1,73 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 1448
+  base_commit: "05165f6c09009c1b2ed3e4c93997152f8cfb6e29"
+  merge_commit: "594cbabde264971630f1d25f7287dac387377e22"
+
+checks:
+  # Gates (syntax/compatibility)
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files parse without errors"
+
+  # Fail-to-pass (core behavioral changes) - all use subprocess.run() for code execution
+  - id: interleave_rollout_returns_none_for_empty_trajectory
+    type: fail_to_pass
+    origin: pr_diff
+    description: "interleave_rollout returns None when trajectory is empty (subprocess execution)"
+
+  - id: branch_rollout_returns_none_for_empty_trajectory
+    type: fail_to_pass
+    origin: pr_diff
+    description: "branch_rollout returns None when trajectory is empty (subprocess execution)"
+
+  - id: interleave_rollout_zeros_completion_mask_on_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "interleave_rollout zeros completion_mask when state has error (subprocess execution)"
+
+  - id: branch_rollout_zeros_completion_mask_on_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "branch_rollout zeros completion_mask when state has error (subprocess execution)"
+
+  - id: orchestrator_imports_no_get_is_truncated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "orchestrator.py no longer imports get_is_truncated from utils.vf"
+
+  - id: trajectories_return_type_annotation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "interleave_rollout and branch_rollout have correct return type annotations with None"
+
+  # Pass-to-pass (regression + functionality)
+  - id: upstream_trajectory_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream trajectory unit tests still pass (subprocess execution)"
+
+  - id: interleave_rollout_normal_case_works
+    type: pass_to_pass
+    origin: static
+    description: "interleave_rollout works normally when no error and non-empty trajectory (subprocess execution)"
+
+  - id: branch_rollout_normal_case_works
+    type: pass_to_pass
+    origin: static
+    description: "branch_rollout works normally when no error and non-empty trajectory (subprocess execution)"
+
+  - id: orchestrator_has_error_handling
+    type: pass_to_pass
+    origin: static
+    description: "orchestrator.py safely handles None return from make_train_example"
+
+  - id: orchestrator_uses_rollout_is_truncated
+    type: pass_to_pass
+    origin: static
+    description: "orchestrator.py uses rollout['is_truncated'] directly instead of get_is_truncated()"
+
+rubric: []

@@ -61,7 +61,6 @@ for node in ast.walk(tree):
         break
 assert func_node is not None, "configure() not found"
 
-# Extract the function source
 lines = source.splitlines()
 func_code = "\n".join(lines[func_node.lineno - 1 : func_node.end_lineno])
 
@@ -104,37 +103,45 @@ print("PASS")
 
 # [pr_diff] fail_to_pass
 def test_local_scheduler_reads_error_key():
-    """local.py scheduler reads 'error' key from RPC JSON responses."""
+    """local.py extracts actual error messages from server's {"error": "..."} responses."""
     r = _run_python(r"""
-import ast
+import re
 from pathlib import Path
 
 source = Path("areal/infra/scheduler/local.py").read_text()
-tree = ast.parse(source)
 
-# Find all .get(key, "Unknown error") patterns via AST
-get_keys = []
-for node in ast.walk(tree):
-    if (isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Attribute)
-        and node.func.attr == "get"
-        and len(node.args) >= 2):
-        key_arg, default_arg = node.args[0], node.args[1]
-        if (isinstance(key_arg, ast.Constant) and isinstance(key_arg.value, str)
-            and isinstance(default_arg, ast.Constant)
-            and default_arg.value == "Unknown error"):
-            get_keys.append(key_arg.value)
+# Mock response matching what the majority of RPC server endpoints return
+class MockResponse:
+    def json(self):
+        return {"error": "Engine onload failed: CUDA OOM on device 0"}
 
-detail_keys = [k for k in get_keys if k == "detail"]
-assert len(detail_keys) == 0, f"local.py still reads 'detail' key in {len(detail_keys)} places"
-error_keys = [k for k in get_keys if k == "error"]
-assert len(error_keys) >= 2, f"Expected >= 2 .get('error', ...) calls, found {len(error_keys)}"
+response = MockResponse()
 
-# Behavioral: simulate actual data flow — server sends {"error": msg}, client reads it
-server_response = {"error": "Configuration failed: missing parameter"}
-for key in get_keys:
-    msg = server_response.get(key, "Unknown error")
-    assert msg != "Unknown error", f"Error message lost with key '{key}'"
+# Find every error-extraction expression in the actual source and eval() it.
+# Sync pattern: response.json().get("KEY", "Unknown error")
+sync_exprs = re.findall(
+    r'response\.json\(\)\.get\(\s*"[^"]+"\s*,\s*"Unknown error"\s*\)',
+    source
+)
+
+# Async pattern: (await response.json()).get("KEY", "Unknown error")
+# May span multiple lines; strip 'await' so eval works with our sync mock.
+async_exprs_raw = re.findall(
+    r'\(await response\.json\(\)\)\.get\(\s*"[^"]+"\s*,\s*"Unknown error"\s*\)',
+    source
+)
+async_exprs = [e.replace("await ", "") for e in async_exprs_raw]
+
+all_exprs = sync_exprs + async_exprs
+assert len(all_exprs) >= 2, f"Expected >=2 error extraction calls, found {len(all_exprs)}"
+
+expected = "Engine onload failed: CUDA OOM on device 0"
+for expr in all_exprs:
+    result = eval(expr)
+    assert result == expected, (
+        f"`{expr.strip()[:80]}` returned '{result}' — "
+        f"the real error message was silently lost!"
+    )
 
 print("PASS")
 """)
@@ -144,35 +151,40 @@ print("PASS")
 
 # [pr_diff] fail_to_pass
 def test_slurm_scheduler_reads_error_key():
-    """slurm.py scheduler reads 'error' key from RPC JSON responses."""
+    """slurm.py extracts actual error messages from server's {"error": "..."} responses."""
     r = _run_python(r"""
-import ast
+import re
 from pathlib import Path
 
 source = Path("areal/infra/scheduler/slurm.py").read_text()
-tree = ast.parse(source)
 
-get_keys = []
-for node in ast.walk(tree):
-    if (isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Attribute)
-        and node.func.attr == "get"
-        and len(node.args) >= 2):
-        key_arg, default_arg = node.args[0], node.args[1]
-        if (isinstance(key_arg, ast.Constant) and isinstance(key_arg.value, str)
-            and isinstance(default_arg, ast.Constant)
-            and default_arg.value == "Unknown error"):
-            get_keys.append(key_arg.value)
+class MockResponse:
+    def json(self):
+        return {"error": "Worker config failed: invalid rank"}
 
-detail_keys = [k for k in get_keys if k == "detail"]
-assert len(detail_keys) == 0, f"slurm.py still reads 'detail' key in {len(detail_keys)} places"
-error_keys = [k for k in get_keys if k == "error"]
-assert len(error_keys) >= 2, f"Expected >= 2 .get('error', ...) calls, found {len(error_keys)}"
+response = MockResponse()
 
-server_response = {"error": "Configuration failed: missing parameter"}
-for key in get_keys:
-    msg = server_response.get(key, "Unknown error")
-    assert msg != "Unknown error", f"Error message lost with key '{key}'"
+sync_exprs = re.findall(
+    r'response\.json\(\)\.get\(\s*"[^"]+"\s*,\s*"Unknown error"\s*\)',
+    source
+)
+
+async_exprs_raw = re.findall(
+    r'\(await response\.json\(\)\)\.get\(\s*"[^"]+"\s*,\s*"Unknown error"\s*\)',
+    source
+)
+async_exprs = [e.replace("await ", "") for e in async_exprs_raw]
+
+all_exprs = sync_exprs + async_exprs
+assert len(all_exprs) >= 2, f"Expected >=2 error extraction calls, found {len(all_exprs)}"
+
+expected = "Worker config failed: invalid rank"
+for expr in all_exprs:
+    result = eval(expr)
+    assert result == expected, (
+        f"`{expr.strip()[:80]}` returned '{result}' — "
+        f"the real error message was silently lost!"
+    )
 
 print("PASS")
 """)
@@ -182,56 +194,62 @@ print("PASS")
 
 # [pr_diff] fail_to_pass
 def test_server_client_key_consistency():
-    """Server and schedulers use the same JSON key for error responses."""
+    """Server configure() and scheduler clients agree on JSON error key."""
     r = _run_python(r"""
-import ast
+import ast, re
 from pathlib import Path
 
-# Find server's error key in configure()
+# 1) Execute configure() to discover which key it actually uses
 server_src = Path("areal/infra/rpc/rpc_server.py").read_text()
 tree = ast.parse(server_src)
 func_node = next(
     n for n in ast.walk(tree)
     if isinstance(n, ast.FunctionDef) and n.name == "configure"
 )
-func_src = "\n".join(server_src.splitlines()[func_node.lineno-1:func_node.end_lineno])
-func_tree = ast.parse(func_src)
+func_code = "\n".join(server_src.splitlines()[func_node.lineno - 1 : func_node.end_lineno])
 
-server_keys = set()
-for n in ast.walk(func_tree):
-    if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "jsonify":
-        for arg in n.args:
-            if isinstance(arg, ast.Dict):
-                for key in arg.keys:
-                    if isinstance(key, ast.Constant) and key.value in ("error", "detail"):
-                        server_keys.add(key.value)
+captured = {}
+class MockRequest:
+    def get_json(self):
+        return None  # triggers first error path
 
-# configure() must use "error" exclusively (matching the other 42 endpoints)
-assert server_keys == {"error"}, f"configure() error keys must be {{'error'}}, got {server_keys}"
+def mock_jsonify(d, **kw):
+    captured["resp"] = d
+    return (d, 400)
 
-# Verify each client reads "error" for "Unknown error" fallbacks
+ns = {"request": MockRequest(), "jsonify": mock_jsonify, "deserialize_value": lambda x: x}
+exec(func_code, ns)
+ns["configure"]()
+
+server_key = [k for k in captured["resp"] if k in ("error", "detail")][0]
+
+# configure() must use "error" — matching the other 42 server endpoints
+assert server_key == "error", (
+    f"configure() uses '{server_key}' but the other 42 endpoints use 'error'"
+)
+
+# 2) Verify clients also use "error" — round-trip with mock response
+class MockResponse:
+    def json(self):
+        return captured["resp"]
+
+response = MockResponse()
+
 for path in ["areal/infra/scheduler/local.py", "areal/infra/scheduler/slurm.py"]:
     src = Path(path).read_text()
-    tree = ast.parse(src)
-    client_keys = set()
-    for n in ast.walk(tree):
-        if (isinstance(n, ast.Call)
-            and isinstance(n.func, ast.Attribute)
-            and n.func.attr == "get"
-            and len(n.args) >= 2):
-            k, d = n.args[0], n.args[1]
-            if (isinstance(k, ast.Constant) and isinstance(d, ast.Constant)
-                and d.value == "Unknown error"
-                and k.value in ("error", "detail")):
-                client_keys.add(k.value)
+    exprs = re.findall(
+        r'(?:response\.json\(\)|(?:\(await response\.json\(\)\)))\.get\(\s*"[^"]+"\s*,\s*"Unknown error"\s*\)',
+        src
+    )
+    assert len(exprs) >= 2, f"{path}: expected >=2 error extraction points"
 
-    assert client_keys == {"error"}, f"{path} error keys must be {{'error'}}, got {client_keys}"
-
-    # Behavioral round-trip: server sends {"error": msg}, client reads it
-    server_response = {"error": "Test error message"}
-    for ck in client_keys:
-        actual = server_response.get(ck, "Unknown error")
-        assert actual == "Test error message", f"Round-trip failed for '{ck}': got '{actual}'"
+    for expr in exprs:
+        cleaned = expr.replace("await ", "")
+        result = eval(cleaned)
+        assert result != "Unknown error", (
+            f"Round-trip broken in {path}: server sends {captured['resp']}, "
+            f"client expr `{cleaned[:60]}...` returns 'Unknown error'"
+        )
 
 print("PASS")
 """)

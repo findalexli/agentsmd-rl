@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24371
+  base_commit: "de6d6be794a1b649ba5d60af6fe956c194dc9b2a"
+  merge_commit: "50ee3c2e70ccd8b945b1280cc1a1bf92612744db"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "The crate must compile without errors"
+
+  - id: fix_safe_in_preview
+    type: fail_to_pass
+    origin: pr_diff
+    description: "With --preview, SIM102 collapsible-if fix applicability must be 'safe'"
+
+  - id: fix_safe_in_preview_varied_inputs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Preview-safe fix works across multiple different collapsible-if patterns"
+
+  - id: preview_function_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "preview.rs must define is_collapsible_if_fix_safe_enabled"
+
+  - id: fix_unsafe_without_preview
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Without --preview, the SIM102 fix must remain 'unsafe'"
+
+  - id: sim102_snapshot_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream SIM102 snapshot tests must pass"
+
+  - id: no_unwrap_or_panic
+    type: pass_to_pass
+    origin: agent_config
+    description: "No panic!(), unreachable!(), or .unwrap() in modified rule files"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "de6d6be794a1b649ba5d60af6fe956c194dc9b2a"
+
+  - id: rust_imports_at_top
+    type: pass_to_pass
+    origin: agent_config
+    description: "Rust imports must be at top of file, not inside functions"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "de6d6be794a1b649ba5d60af6fe956c194dc9b2a"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "de6d6be794a1b649ba5d60af6fe956c194dc9b2a"
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "de6d6be794a1b649ba5d60af6fe956c194dc9b2a"

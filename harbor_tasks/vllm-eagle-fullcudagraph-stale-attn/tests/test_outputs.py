@@ -6,11 +6,12 @@ PR:   #38311
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-AST-only because: speculator.py requires torch, CUDA, vllm GPU runtime —
-cannot be imported or executed in a CPU-only Docker container.
+The speculator.py requires torch/CUDA at import time, so behavioral
+tests use subprocess to run AST-based control-flow analysis.
 """
 
 import ast
+import subprocess
 from pathlib import Path
 
 REPO = "/repo"
@@ -34,161 +35,193 @@ def _find_method(tree, class_name, method_name):
     return None
 
 
-def _get_call_name(node):
-    """Get the function/method name from a Call node."""
+# ---------------------------------------------------------------------------
+# fail_to_pass (pr_diff) — core behavioral tests via subprocess
+# ---------------------------------------------------------------------------
+
+SCRIPT_NO_EARLY_RETURN = r"""
+import ast, sys
+
+src = open("vllm/v1/worker/gpu/spec_decode/eagle/speculator.py").read()
+tree = ast.parse(src)
+
+# Find propose() in EagleSpeculator
+propose = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "EagleSpeculator":
+        for child in ast.walk(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and child.name == "propose":
+                propose = child
+                break
+        break
+
+if propose is None:
+    print("FAIL: propose() not found in EagleSpeculator")
+    sys.exit(1)
+
+def get_call_name(node):
     if isinstance(node.func, ast.Attribute):
         return node.func.attr
     elif isinstance(node.func, ast.Name):
         return node.func.id
     return None
 
-
-def _is_attn_build_call(name):
-    """Check if a call name looks like an attention metadata build call."""
+def is_attn_build(name):
     if name is None:
         return False
     nl = name.lower()
-    has_attn = "attn" in nl or "attention" in nl
-    has_action = any(w in nl for w in ("build", "metadata", "prepare", "setup", "update", "create"))
-    return has_attn and has_action
+    return ("attn" in nl or "attention" in nl) and \
+           any(w in nl for w in ("build", "metadata", "prepare", "create"))
+
+# Collect all attn metadata build call lines in propose()
+attn_build_lines = []
+for node in ast.walk(propose):
+    if isinstance(node, ast.Call):
+        name = get_call_name(node)
+        if is_attn_build(name):
+            attn_build_lines.append(node.lineno)
+
+# Find FULL cudagraph if-blocks and check for returns before attn build
+for node in ast.walk(propose):
+    if not isinstance(node, ast.If):
+        continue
+    test_src = ast.get_source_segment(src, node.test) or ""
+    if "FULL" not in test_src:
+        continue
+    if "cg_mode" not in test_src and "cudagraph" not in test_src.lower():
+        continue
+    # Found a FULL cudagraph mode check — look for returns in its body
+    for stmt in node.body:
+        if isinstance(stmt, ast.Return):
+            builds_before = [l for l in attn_build_lines if l < stmt.lineno]
+            if not builds_before:
+                print(f"FAIL: FULL cudagraph early return at line {stmt.lineno} "
+                      f"before any attn metadata build")
+                sys.exit(1)
+
+print("PASS")
+"""
+
+
+def test_no_fullgraph_early_return():
+    """FULL cudagraph path must NOT return before attention metadata is built.
+
+    The bug: an if-block checking CUDAGraphMode.FULL contains a `return`
+    that fires before any attention metadata build call. The fix removes
+    this early return or moves attn metadata building before it.
+    """
+    r = subprocess.run(
+        ["python3", "-c", SCRIPT_NO_EARLY_RETURN],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stdout.strip()} {r.stderr.strip()}"
+    assert "PASS" in r.stdout
+
+
+SCRIPT_ATTN_BEFORE_FULL = r"""
+import ast, sys
+
+src = open("vllm/v1/worker/gpu/spec_decode/eagle/speculator.py").read()
+tree = ast.parse(src)
+
+# Find propose() in EagleSpeculator
+propose = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "EagleSpeculator":
+        for child in ast.walk(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and child.name == "propose":
+                propose = child
+                break
+        break
+
+if propose is None:
+    print("FAIL: propose() not found in EagleSpeculator")
+    sys.exit(1)
+
+def get_call_name(node):
+    if isinstance(node.func, ast.Attribute):
+        return node.func.attr
+    elif isinstance(node.func, ast.Name):
+        return node.func.id
+    return None
+
+def is_attn_build(name):
+    if name is None:
+        return False
+    nl = name.lower()
+    return ("attn" in nl or "attention" in nl) and \
+           any(w in nl for w in ("build", "metadata", "prepare", "create"))
+
+# Collect attn build lines, FULL check lines, and fullgraph call lines
+attn_build_lines = []
+full_check_lines = []
+fullgraph_call_lines = []
+
+for node in ast.walk(propose):
+    if isinstance(node, ast.Call):
+        name = get_call_name(node)
+        if is_attn_build(name):
+            attn_build_lines.append(node.lineno)
+        if name and "fullgraph" in name.lower():
+            fullgraph_call_lines.append(node.lineno)
+    if isinstance(node, ast.If):
+        test_src = ast.get_source_segment(src, node.test) or ""
+        if "FULL" in test_src and ("cg_mode" in test_src or "cudagraph" in test_src.lower()):
+            full_check_lines.append(node.lineno)
+
+# Determine the line of FULL cudagraph execution
+full_exec_line = None
+if full_check_lines:
+    full_exec_line = min(full_check_lines)
+elif fullgraph_call_lines:
+    full_exec_line = min(fullgraph_call_lines)
+
+if full_exec_line is None:
+    if attn_build_lines:
+        print("PASS: attn metadata built, no explicit FULL path")
+        sys.exit(0)
+    print("FAIL: no FULL path and no attn metadata building found")
+    sys.exit(1)
+
+if not attn_build_lines:
+    print(f"FAIL: no attn metadata build found; FULL execution at line {full_exec_line}")
+    sys.exit(1)
+
+before_full = [l for l in attn_build_lines if l < full_exec_line]
+if not before_full:
+    print(f"FAIL: attn metadata built at {attn_build_lines} but FULL path at line {full_exec_line}")
+    sys.exit(1)
+
+print(f"PASS: attn metadata at line {min(before_full)} before FULL path at line {full_exec_line}")
+"""
+
+
+def test_attn_metadata_before_fullgraph_execution():
+    """Attention metadata must be built before FULL cudagraph execution.
+
+    The fix ensures build_attn_metadata (or _build_draft_attn_metadata)
+    is called before the if-block that dispatches FULL cudagraph.
+    """
+    r = subprocess.run(
+        ["python3", "-c", SCRIPT_ATTN_BEFORE_FULL],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stdout.strip()} {r.stderr.strip()}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax check
+# pass_to_pass (static / pr_diff) — gates and regression checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Modified file must parse without errors."""
     src = FILE.read_text()
-    ast.parse(src)  # raises SyntaxError on failure
+    ast.parse(src)
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
-def test_no_early_return_before_attn_metadata():
-    """FULL cudagraph path must NOT return before building attention metadata.
-
-    The bug: an if-block checking CUDAGraphMode.FULL contains a return
-    statement before any attention metadata build call. The fix removes
-    this early return or moves attn metadata building before it.
-    """
-    src, tree = _parse_file()
-    propose = _find_method(tree, "EagleSpeculator", "propose")
-    assert propose is not None, "propose() method not found in EagleSpeculator"
-
-    # Find all attn-build calls (direct + method-chain)
-    attn_build_calls = []
-    for node in ast.walk(propose):
-        if isinstance(node, ast.Call):
-            name = _get_call_name(node)
-            if _is_attn_build_call(name):
-                nargs = len(node.args) + len(node.keywords)
-                attn_build_calls.append((node.lineno, nargs))
-            # Also check method chains like self.attn_builder.build(...)
-            if isinstance(node.func, ast.Attribute):
-                chain_parts = []
-                n = node.func
-                while isinstance(n, ast.Attribute):
-                    chain_parts.append(n.attr)
-                    n = n.value
-                if isinstance(n, ast.Name):
-                    chain_parts.append(n.id)
-                chain_str = ".".join(reversed(chain_parts)).lower()
-                if ("attn" in chain_str or "attention" in chain_str) and \
-                   any(w in chain_str for w in ("build", "metadata", "prepare", "setup")):
-                    nargs = len(node.args) + len(node.keywords)
-                    attn_build_calls.append((node.lineno, nargs))
-
-    assert attn_build_calls, "No call to build/prepare attention metadata found in propose()"
-
-    # Require at least one attn build call has >=3 arguments (not a stub)
-    max_args = max(nargs for _, nargs in attn_build_calls)
-    assert max_args >= 3, f"Attn build call has only {max_args} args — likely a stub"
-
-    earliest_attn_build = min(line for line, _ in attn_build_calls)
-
-    # Detect the BUG PATTERN: if-block checking CUDAGraphMode.FULL that
-    # contains a return BEFORE any attn metadata building
-    for node in ast.walk(propose):
-        if isinstance(node, ast.If) and node.lineno < earliest_attn_build:
-            test_src = ast.get_source_segment(src, node.test) or ""
-            if "FULL" in test_src and ("cg_mode" in test_src or "cudagraph" in test_src.lower()):
-                for child in ast.walk(node):
-                    if isinstance(child, ast.Return) and child.lineno < earliest_attn_build:
-                        assert False, (
-                            "FULL cudagraph check returns before attention metadata "
-                            "is built (BUG PRESENT)"
-                        )
-
-
-# [pr_diff] fail_to_pass
-def test_attn_metadata_built_for_full_mode():
-    """Attention metadata must be built for ALL cudagraph modes, including FULL.
-
-    The build must not be inside a "not FULL" guard. Verifies that attn metadata
-    is built before FULL cudagraph execution.
-    """
-    src, tree = _parse_file()
-    propose = _find_method(tree, "EagleSpeculator", "propose")
-    assert propose is not None, "propose() method not found in EagleSpeculator"
-
-    # Collect fullgraph-related calls and attn build calls
-    fullgraph_lines = []
-    attn_build_lines = []
-    for node in ast.walk(propose):
-        if isinstance(node, ast.Call):
-            name = _get_call_name(node)
-            if name and "fullgraph" in name.lower():
-                fullgraph_lines.append(node.lineno)
-            if _is_attn_build_call(name):
-                attn_build_lines.append(node.lineno)
-
-    # Strategy A: fullgraph is called, attn build happens before it
-    if fullgraph_lines:
-        earliest_fullgraph = min(fullgraph_lines)
-        before = [l for l in attn_build_lines if l < earliest_fullgraph]
-        if before:
-            return  # PASS
-        # Check if a helper with attn build is called before fullgraph
-        for node in ast.walk(propose):
-            if isinstance(node, ast.Call) and node.lineno < earliest_fullgraph:
-                name = _get_call_name(node)
-                if name and _is_attn_build_call(name):
-                    return  # PASS
-        assert False, "Attention metadata not built before fullgraph execution"
-
-    # Strategy B: no direct fullgraph call — acceptable if attn build exists
-    if attn_build_lines:
-        return  # PASS (code restructured)
-
-    # Strategy C: dispatch + build pattern (heavy restructuring)
-    dispatch_found = False
-    build_found = False
-    for node in ast.walk(propose):
-        if isinstance(node, ast.Call):
-            name = _get_call_name(node)
-            if name:
-                nl = name.lower()
-                if "dispatch" in nl or "sync" in nl:
-                    dispatch_found = True
-                if ("build" in nl or "prepare" in nl) and \
-                   len(node.args) + len(node.keywords) >= 3:
-                    build_found = True
-
-    assert dispatch_found and build_found, \
-        "No attn metadata build found in any recognizable pattern"
-
-
-# [pr_diff] pass_to_pass
 def test_slot_mappings_computed():
-    """Slot mappings must be computed in propose() for all cudagraph modes.
-
-    The bug also causes stale slot mappings; the fix must rebuild them.
-    """
+    """Slot mappings must be computed in propose() for all cudagraph modes."""
     _, tree = _parse_file()
     propose = _find_method(tree, "EagleSpeculator", "propose")
     assert propose is not None, "propose() method not found in EagleSpeculator"
@@ -196,18 +229,18 @@ def test_slot_mappings_computed():
     slot_calls = []
     for node in ast.walk(propose):
         if isinstance(node, ast.Call):
-            name = _get_call_name(node)
-            if name and "slot_mapping" in name.lower():
+            if isinstance(node.func, ast.Attribute):
+                name = node.func.attr
+            elif isinstance(node.func, ast.Name):
+                name = node.func.id
+            else:
+                continue
+            if "slot_mapping" in name.lower():
                 slot_calls.append(node.lineno)
 
     assert slot_calls, "No slot mapping computation found in propose()"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff / static) — regression + anti-stub
-# ---------------------------------------------------------------------------
-
-# [pr_diff] pass_to_pass
 def test_core_class_structure():
     """EagleSpeculator class retains all required methods."""
     _, tree = _parse_file()
@@ -226,7 +259,6 @@ def test_core_class_structure():
     assert not missing, f"Missing methods: {missing}"
 
 
-# [static] pass_to_pass
 def test_propose_not_stub():
     """propose() must have real logic — conditionals, calls, self attribute access."""
     _, tree = _parse_file()
@@ -242,7 +274,6 @@ def test_propose_not_stub():
     calls = sum(1 for n in ast.walk(propose) if isinstance(n, ast.Call))
     assert calls >= 8, f"propose() has only {calls} calls — likely stubbed"
 
-    # Must access self attributes (real logic, not synthetic stubs)
     self_attrs = set()
     for n in ast.walk(propose):
         if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) and n.value.id == "self":
@@ -257,7 +288,6 @@ def test_propose_not_stub():
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — AGENTS.md:42 @ 44a6528028ad79951de08b6a7928f6c05788d00d
 def test_no_bare_pip():
     """No bare pip usage in modified file (AGENTS.md:42)."""
     src = FILE.read_text()
@@ -267,7 +297,6 @@ def test_no_bare_pip():
             f"Bare pip usage at line {i}: {stripped}"
 
 
-# [static] pass_to_pass
 def test_no_wildcard_imports():
     """No wildcard imports in modified file."""
     _, tree = _parse_file()

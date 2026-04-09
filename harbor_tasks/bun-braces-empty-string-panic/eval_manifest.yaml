@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28487
+  base_commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
+  merge_commit: "3ca678c93ee1d620873f7896af45486f9954553a"
+
+checks:
+  - id: flatten_tokens_has_empty_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "flattenTokens must have early return guard for empty token list"
+
+  - id: advance_has_underflow_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Parser.advance must guard prev() to prevent usize underflow"
+
+  - id: braces_zig_compiles
+    type: pass_to_pass
+    origin: static
+    description: "src/shell/braces.zig must have valid Zig syntax"
+
+  - id: no_regression_in_brace_parsing
+    type: pass_to_pass
+    origin: static
+    description: "Normal brace expansion patterns should still be parseable"
+
+  - id: regression_test_added
+    type: pass_to_pass
+    origin: pr_diff
+    description: "The gold patch should add regression test for empty string"
+
+rubric: []

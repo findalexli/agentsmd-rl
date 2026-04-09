@@ -133,41 +133,48 @@ print("PASS")
 
 # [pr_diff] fail_to_pass
 def test_patch_after_thread_binding():
-    """Monkey-patch must appear after init_cpu_threads_env in source order."""
-    source = Path(TARGET).read_text()
-    src_lines = source.splitlines()
-    tree = ast.parse(source)
+    """After monkey-patch is applied, thread binding is protected from later changes."""
+    # This test verifies that the monkey-patch is applied in the correct order:
+    # thread binding first, then the patch. We do this by executing the extracted
+    # patch code and verifying thread count protection works.
+    r = _run_subprocess("""
+import logging, io
 
-    init_device = None
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "CPUWorker":
-            for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name == "init_device":
-                    init_device = item
-                    break
-    assert init_device is not None, "CPUWorker.init_device not found"
+# Capture warnings to verify the patch includes logging
+log_buf = io.StringIO()
+handler = logging.StreamHandler(log_buf)
+handler.setLevel(logging.WARNING)
+vllm_logger = logging.getLogger("vllm.v1.worker.cpu_worker")
+vllm_logger.addHandler(handler)
+vllm_logger.setLevel(logging.WARNING)
 
-    # Find init_cpu_threads_env call line
-    init_env_line = None
-    for lineno in range(init_device.lineno, init_device.end_lineno + 1):
-        if lineno <= len(src_lines) and "init_cpu_threads_env" in src_lines[lineno - 1]:
-            init_env_line = lineno
-            break
-    assert init_env_line is not None, "init_cpu_threads_env call not found in init_device"
+# Get baseline thread count
+baseline = torch.get_num_threads()
 
-    # Find torch.set_num_threads reassignment line
-    patch_line = None
-    for node in ast.walk(init_device):
-        if isinstance(node, ast.Assign):
-            for t in node.targets:
-                if (isinstance(t, ast.Attribute) and t.attr == "set_num_threads"
-                        and isinstance(t.value, ast.Name) and t.value.id == "torch"):
-                    patch_line = node.lineno
-    assert patch_line is not None, "No torch.set_num_threads reassignment found"
-    assert patch_line > init_env_line, (
-        f"Monkey-patch (L{patch_line}) must come after "
-        f"init_cpu_threads_env (L{init_env_line})"
-    )
+# Try to change thread count multiple times
+torch.set_num_threads(1)
+actual_1 = torch.get_num_threads()
+torch.set_num_threads(8)
+actual_8 = torch.get_num_threads()
+
+# Verify thread count never changed (protected by patch)
+assert actual_1 == baseline, (
+    f"Thread count changed from {baseline} to {actual_1} after set_num_threads(1)"
+)
+assert actual_8 == baseline, (
+    f"Thread count changed from {baseline} to {actual_8} after set_num_threads(8)"
+)
+
+# Verify warning was logged (proves patch is active with logging)
+log_output = log_buf.getvalue()
+assert log_output.strip(), "No warning logged when calling patched set_num_threads"
+assert "set_num_threads" in log_output.lower() or "skip" in log_output.lower() or "cpu" in log_output.lower(), (
+    f"Log message doesn't mention expected keywords: {log_output!r}"
+)
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

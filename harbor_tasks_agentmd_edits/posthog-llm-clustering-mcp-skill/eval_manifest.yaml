@@ -1,0 +1,79 @@
+version: "2.0"
+
+source:
+  repo: "PostHog/posthog"
+  pr: 53107
+  base_commit: "d67b05b91702b8d6c5fcf03a1361d1afe7daf287"
+  merge_commit: "ee9eb212266b294edb421b0030c567fba458fb68"
+
+checks:
+  # Code behavior — MCP tool configuration
+  - id: clustering_list_tool_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tools.yaml enables llm-analytics-clustering-jobs-list with scopes, annotations, title, and description"
+
+  - id: clustering_retrieve_tool_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tools.yaml enables llm-analytics-clustering-jobs-retrieve with scopes, annotations, title, and description"
+
+  # Code behavior — print_clusters.py script
+  - id: print_clusters_direct_array
+    type: fail_to_pass
+    origin: pr_diff
+    description: "print_clusters.py parses direct cluster array input and prints summary with cluster titles, sizes, and traces"
+
+  - id: print_clusters_sql_result
+    type: fail_to_pass
+    origin: pr_diff
+    description: "print_clusters.py parses SQL result format extracting clusters JSON and run metadata"
+
+  # Code behavior — lint config updates
+  - id: pyproject_ruff_excludes_skills
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pyproject.toml excludes products/*/skills/*/scripts from ruff linting"
+
+  - id: package_json_excludes_skills
+    type: fail_to_pass
+    origin: pr_diff
+    description: "package.json lint-staged excludes skill scripts from Python linting"
+
+  # Config/documentation update — SKILL.md
+  - id: skill_md_frontmatter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md has required YAML frontmatter with lowercase kebab-case name and description"
+
+  - id: skill_md_cluster_documentation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md documents cluster event schema ($ai_trace_clusters, $ai_generation_clusters, key properties)"
+
+  - id: skill_md_investigation_workflow
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md provides SQL query patterns and investigation workflows for exploring clusters"
+
+  # Agent config compliance — writing-skills convention
+  - id: skill_name_convention
+    type: fail_to_pass
+    origin: agent_config
+    description: "Skill name follows writing-skills convention: lowercase kebab-case with gerund form"
+    source:
+      path: ".agents/skills/writing-skills/SKILL.md"
+      lines: "44"
+      commit: "d67b05b91702b8d6c5fcf03a1361d1afe7daf287"
+
+rubric:
+  - rule: "SKILL.md tone describes workflow and reasoning, not a rigid script — trust the agent to adapt"
+    source:
+      path: ".agents/skills/writing-skills/SKILL.md"
+      lines: "48"
+      commit: "d67b05b91702b8d6c5fcf03a1361d1afe7daf287"
+  - rule: "Tools are basic capabilities — atomic CRUD operations, not bundled workflows"
+    source:
+      path: ".agents/skills/implementing-mcp-tools/SKILL.md"
+      lines: "64"
+      commit: "d67b05b91702b8d6c5fcf03a1361d1afe7daf287"

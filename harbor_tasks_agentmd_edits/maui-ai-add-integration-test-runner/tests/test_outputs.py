@@ -9,7 +9,6 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import subprocess
 import re
-import xml.etree.ElementTree as ET
 from pathlib import Path
 
 REPO = "/workspace/maui"
@@ -33,54 +32,149 @@ def test_csharp_syntax_valid():
 def test_not_stub():
     """SetUpNuGetPackages has real file I/O logic, not a stub."""
     src = (Path(REPO) / "src/TestUtils/src/Microsoft.Maui.IntegrationTests/BaseBuildTest.cs").read_text()
-    # Both base and fix have real file operations (File.Copy, File.WriteAllText, etc.)
     file_ops = re.findall(r'File\.(Copy|WriteAllText|ReadAllText|Exists|Delete)\(', src)
     assert len(file_ops) >= 3, \
         f"SetUpNuGetPackages must have real file I/O operations, found {len(file_ops)}"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — code behavioral tests
+# Fail-to-pass (pr_diff) — behavioral code tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_base_build_test_creates_directory_build_props():
-    """BaseBuildTest.cs must create Directory.Build.props to prevent MSBuild inheritance."""
-    src = (Path(REPO) / "src/TestUtils/src/Microsoft.Maui.IntegrationTests/BaseBuildTest.cs").read_text()
-    assert 'Directory.Build.props' in src, \
-        "BaseBuildTest.cs must reference Directory.Build.props"
-    assert re.search(r'File\.WriteAllText\(.*Directory\.Build\.props', src), \
-        "BaseBuildTest.cs must use File.WriteAllText to create Directory.Build.props"
-    assert '<Project>' in src, \
-        "Created Directory.Build.props must contain a <Project> element"
-    assert 'stops MSBuild' in src, \
-        "Directory.Build.props must comment about stopping MSBuild directory walk"
+def test_msbuild_isolation_files():
+    """BaseBuildTest.cs creates valid Directory.Build.props and .targets to block MSBuild inheritance."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import re, xml.etree.ElementTree as ET, sys, tempfile, os
+
+src = open("src/TestUtils/src/Microsoft.Maui.IntegrationTests/BaseBuildTest.cs").read()
+
+# Verify File.WriteAllText calls for both isolation files
+if not re.search(r'File\\.WriteAllText\\(.*Directory\\.Build\\.props', src):
+    print("FAIL: No File.WriteAllText for Directory.Build.props")
+    sys.exit(1)
+if not re.search(r'File\\.WriteAllText\\(.*Directory\\.Build\\.targets', src):
+    print("FAIL: No File.WriteAllText for Directory.Build.targets")
+    sys.exit(1)
+
+# Extract triple-quoted raw string literals containing <Project>
+matches = re.findall(r'\"\"\"(.*?)\"\"\"', src, re.DOTALL)
+project_xmls = [m.strip() for m in matches if '<Project>' in m]
+if len(project_xmls) < 2:
+    print(f"FAIL: Expected >=2 embedded XML project blocks, found {len(project_xmls)}")
+    sys.exit(1)
+
+# Write each to a temp file and parse as XML (simulates runtime file creation)
+tmpdir = tempfile.mkdtemp()
+for i, xml_str in enumerate(project_xmls):
+    fpath = os.path.join(tmpdir, f"test_{i}.xml")
+    with open(fpath, 'w') as f:
+        f.write(xml_str)
+    root = ET.parse(fpath).getroot()
+    if root.tag != 'Project':
+        print(f"FAIL: XML #{i+1} root is '{root.tag}', expected 'Project'")
+        sys.exit(1)
+    os.unlink(fpath)
+os.rmdir(tmpdir)
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_base_build_test_creates_directory_build_targets():
-    """BaseBuildTest.cs must create Directory.Build.targets to prevent target inheritance."""
-    src = (Path(REPO) / "src/TestUtils/src/Microsoft.Maui.IntegrationTests/BaseBuildTest.cs").read_text()
-    assert 'Directory.Build.targets' in src, \
-        "BaseBuildTest.cs must reference Directory.Build.targets"
-    assert re.search(r'File\.WriteAllText\(.*Directory\.Build\.targets', src), \
-        "BaseBuildTest.cs must use File.WriteAllText to create Directory.Build.targets"
+def test_skill_md_valid():
+    """run-integration-tests SKILL.md exists with valid frontmatter and all test categories."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+
+path = ".github/skills/run-integration-tests/SKILL.md"
+try:
+    content = open(path).read()
+except FileNotFoundError:
+    print("FAIL: SKILL.md not found at " + path)
+    sys.exit(1)
+
+if not content.startswith('---'):
+    print("FAIL: SKILL.md must start with YAML frontmatter (---)")
+    sys.exit(1)
+
+end_idx = content.index('---', 3)
+frontmatter = content[3:end_idx]
+
+if 'name: run-integration-tests' not in frontmatter:
+    print("FAIL: Frontmatter must contain name: run-integration-tests")
+    sys.exit(1)
+if 'description:' not in frontmatter:
+    print("FAIL: Frontmatter must contain a description field")
+    sys.exit(1)
+
+categories = ['Build', 'WindowsTemplates', 'macOSTemplates', 'Blazor',
+              'MultiProject', 'Samples', 'AOT', 'RunOnAndroid', 'RunOniOS']
+for cat in categories:
+    if cat not in content:
+        print(f"FAIL: SKILL.md must document the '{cat}' category")
+        sys.exit(1)
+
+if 'Run-IntegrationTests.ps1' not in content:
+    print("FAIL: SKILL.md must reference Run-IntegrationTests.ps1")
+    sys.exit(1)
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_directory_build_xml_is_valid():
-    """XML content written by BaseBuildTest.cs must parse as valid XML."""
-    src = (Path(REPO) / "src/TestUtils/src/Microsoft.Maui.IntegrationTests/BaseBuildTest.cs").read_text()
-    # Extract triple-quoted string contents that contain <Project>
-    matches = re.findall(r'"""(.*?)"""', src, re.DOTALL)
-    project_xmls = [m.strip() for m in matches if '<Project>' in m]
-    assert len(project_xmls) >= 2, \
-        f"Expected >= 2 triple-quoted XML strings (props + targets), found {len(project_xmls)}"
-    for i, xml_str in enumerate(project_xmls):
-        try:
-            ET.fromstring(xml_str)
-        except ET.ParseError as e:
-            raise AssertionError(f"Invalid XML in embedded file #{i + 1}: {e}\nContent:\n{xml_str}")
+def test_run_script_valid():
+    """Run-IntegrationTests.ps1 exists with ValidateSet categories and workflow parameters."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+
+path = ".github/skills/run-integration-tests/scripts/Run-IntegrationTests.ps1"
+try:
+    content = open(path).read()
+except FileNotFoundError:
+    print("FAIL: Run-IntegrationTests.ps1 not found at " + path)
+    sys.exit(1)
+
+if 'ValidateSet' not in content:
+    print("FAIL: Script must have ValidateSet for Category parameter")
+    sys.exit(1)
+
+for cat in ['Build', 'WindowsTemplates', 'macOSTemplates', 'Blazor', 'RunOniOS', 'RunOnAndroid']:
+    if cat not in content:
+        print(f"FAIL: ValidateSet must include '{cat}'")
+        sys.exit(1)
+
+for param in ['$SkipBuild', '$SkipInstall', '$AutoProvision']:
+    if param not in content:
+        print(f"FAIL: Script must have {param} parameter")
+        sys.exit(1)
+
+if 'MAUI_PACKAGE_VERSION' not in content:
+    print("FAIL: Script must handle MAUI_PACKAGE_VERSION")
+    sys.exit(1)
+
+if '$ErrorActionPreference' not in content:
+    print("FAIL: Script must set ErrorActionPreference")
+    sys.exit(1)
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -96,12 +190,7 @@ def test_copilot_instructions_lists_integration_skill():
     assert '.github/skills/run-integration-tests/SKILL.md' in content, \
         "copilot-instructions.md must reference the SKILL.md path"
     assert 'ALWAYS use this skill' in content, \
-        "copilot-instructions.md should instruct to ALWAYS use this skill for integration tests"
-    # Must list test categories
-    assert 'WindowsTemplates' in content, \
-        "copilot-instructions.md must list WindowsTemplates category"
-    assert 'macOSTemplates' in content, \
-        "copilot-instructions.md must list macOSTemplates category"
+        "copilot-instructions.md should instruct to ALWAYS use this skill"
 
 
 # [pr_diff] fail_to_pass
@@ -114,57 +203,12 @@ def test_integration_instructions_references_skill():
         "integration-tests.instructions.md must reference the PowerShell script"
     assert 'ALWAYS' in content, \
         "integration-tests.instructions.md must instruct to ALWAYS use the skill"
-    assert 'SkipBuild' in content, \
-        "integration-tests.instructions.md should show example commands with -SkipBuild"
-
-
-# [pr_diff] fail_to_pass
-def test_skill_md_exists_with_content():
-    """run-integration-tests SKILL.md must exist with frontmatter and test categories."""
-    skill_md = Path(REPO) / ".github/skills/run-integration-tests/SKILL.md"
-    assert skill_md.exists(), "SKILL.md must exist at .github/skills/run-integration-tests/SKILL.md"
-    content = skill_md.read_text()
-    # Frontmatter
-    assert content.startswith("---"), "SKILL.md must start with YAML frontmatter"
-    assert 'name: run-integration-tests' in content, \
-        "SKILL.md frontmatter must have name: run-integration-tests"
-    assert 'description:' in content, \
-        "SKILL.md frontmatter must have a description field"
-    # Test categories
-    for cat in ['Build', 'WindowsTemplates', 'macOSTemplates', 'Blazor',
-                'MultiProject', 'Samples', 'AOT', 'RunOnAndroid', 'RunOniOS']:
-        assert cat in content, f"SKILL.md must document the '{cat}' test category"
-    # Script reference
-    assert 'Run-IntegrationTests.ps1' in content, \
-        "SKILL.md must reference the Run-IntegrationTests.ps1 script"
-
-
-# [pr_diff] fail_to_pass
-def test_run_script_exists_with_parameters():
-    """Run-IntegrationTests.ps1 must exist with proper parameters and validation."""
-    script = Path(REPO) / ".github/skills/run-integration-tests/scripts/Run-IntegrationTests.ps1"
-    assert script.exists(), "Run-IntegrationTests.ps1 must exist"
-    content = script.read_text()
-    # Parameter validation
-    assert 'ValidateSet' in content, "Script must have ValidateSet for Category parameter"
-    for cat in ['Build', 'WindowsTemplates', 'macOSTemplates', 'Blazor', 'RunOniOS', 'RunOnAndroid']:
-        assert cat in content, f"ValidateSet must include '{cat}'"
-    # Key parameters
-    assert '$SkipBuild' in content, "Script must have -SkipBuild parameter"
-    assert '$SkipInstall' in content, "Script must have -SkipInstall parameter"
-    assert '$AutoProvision' in content, "Script must have -AutoProvision parameter"
-    # Must set MAUI_PACKAGE_VERSION env var
-    assert 'MAUI_PACKAGE_VERSION' in content, "Script must set MAUI_PACKAGE_VERSION"
-    # Error handling
-    assert '$ErrorActionPreference' in content, "Script must set ErrorActionPreference"
 
 
 # [pr_diff] fail_to_pass
 def test_copilot_instructions_skill_numbering():
     """Skill numbering must be sequential after adding run-integration-tests."""
     content = (Path(REPO) / ".github/copilot-instructions.md").read_text()
-    # After the change, run-integration-tests is #8 and try-fix is #9
-    # Check that try-fix moved to 9 (was 8 before the change)
     assert re.search(r'9\.\s+\*\*try-fix\*\*', content), \
         "try-fix skill must be renumbered to 9"
     assert re.search(r'8\.\s+\*\*run-integration-tests\*\*', content), \

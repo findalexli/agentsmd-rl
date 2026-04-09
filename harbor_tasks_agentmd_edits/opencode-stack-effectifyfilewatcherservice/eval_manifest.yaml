@@ -1,0 +1,107 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 17827
+  base_commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
+  merge_commit: "9e740d9947e6a4c61680c8dd00cb1fd11adf12af"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Static checks
+  # ---------------------------------------------------------------------------
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files compile without errors"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # ---------------------------------------------------------------------------
+  - id: filewatcher_service_exports
+    type: fail_to_pass
+    origin: pr_diff
+    description: "FileWatcherService is exported as a proper Effect service with static layer property"
+
+  - id: instance_bind_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Instance.bind method exists for ALS context capture in native callbacks"
+
+  - id: flag_uses_effect_config
+    type: fail_to_pass
+    origin: pr_diff
+    description: "FileWatcher-related flags use Effect.Config instead of static truthy() reads"
+
+  - id: instances_includes_filewatcherservice
+    type: fail_to_pass
+    origin: pr_diff
+    description: "FileWatcherService is imported and included in InstanceServices union and Layer.mergeAll"
+
+  - id: bootstrap_uses_filewatcherservice
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Bootstrap uses FileWatcherService.use with runPromiseInstance instead of FileWatcher.init()"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass tests
+  # ---------------------------------------------------------------------------
+  - id: upstream_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream FileWatcher tests pass (or skip gracefully if native bindings unavailable)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "FileWatcherService has real Effect.gen implementation with proper lifecycle management"
+
+  # ---------------------------------------------------------------------------
+  # Config-derived (agent_config) — rules from AGENTS.md
+  # ---------------------------------------------------------------------------
+  - id: agentsmd_instance_bind_documented
+    type: fail_to_pass
+    origin: agent_config
+    description: "AGENTS.md documents Instance.bind for ALS context in native callbacks"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "46-50"
+      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
+
+  - id: agentsmd_effect_callback_documented
+    type: fail_to_pass
+    origin: agent_config
+    description: "AGENTS.md documents Effect.callback (not Effect.async) for callback-based APIs"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "37"
+      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
+
+  - id: agentsmd_instance_scoped_services_documented
+    type: fail_to_pass
+    origin: agent_config
+    description: "AGENTS.md documents Instance-scoped Effect services pattern with FileWatcherService as example"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "46-57"
+      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
+
+rubric:
+  # Soft rules for LLM judge
+  - rule: "Use `Effect.callback` (not `Effect.async`) for callback-based APIs."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "37"
+      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
+
+  - rule: "Services that need per-directory lifecycle go through the `Instances` LayerMap."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "46-51"
+      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
+
+  - rule: "Use `Instance.bind(fn)` when passing callbacks to native C/C++ addons that need to call `Bus.publish` or read `Instance.directory`."
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "53-61"
+      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"

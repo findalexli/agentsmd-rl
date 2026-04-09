@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 25830
+  base_commit: "ce9788716f66e2782c0ce5ae46a179fbb9f7c447"
+  merge_commit: "bf937f7294762d5e1a11a0d72f63fbeb00de9468"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files have balanced braces"
+
+  - id: undefined_filtering_behavior
+    type: fail_to_pass
+    origin: pr_diff
+    description: "buildDefinedColumnsAndQuery in shared.ts correctly filters undefined columns and checks all items in bulk inserts"
+
+  - id: adapters_import_shared_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All three SQL adapters (sqlite, mysql, postgres) import and use buildDefinedColumnsAndQuery from shared.ts"
+
+  - id: claude_md_toequal_guidance
+    type: fail_to_pass
+    origin: pr_diff
+    description: "test/CLAUDE.md updated with guidance to prefer .toEqual over many .toBe assertions for nested objects"
+
+rubric:
+  - rule: "Config update is consistent with the style of existing test/CLAUDE.md documentation sections"
+    source:
+      path: "test/CLAUDE.md"
+      lines: "1-10"
+      commit: "ce9788716f66e2782c0ce5ae46a179fbb9f7c447"
+  - rule: "Follow existing code style — check neighboring files for patterns"
+    source:
+      path: "CLAUDE.md"
+      lines: "75"
+      commit: "ce9788716f66e2782c0ce5ae46a179fbb9f7c447"

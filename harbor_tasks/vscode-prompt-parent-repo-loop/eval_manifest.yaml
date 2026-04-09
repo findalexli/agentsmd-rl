@@ -1,0 +1,33 @@
+version: "2.0"
+source:
+  repo: microsoft/vscode
+  base_commit: 68cb51843c3f0f4e551479f825d18c954e88c778
+
+checks:
+  - id: test_file_exists
+    type: pass_to_pass
+    origin: static
+    description: Target promptFilesLocator.ts file must exist
+
+  - id: test_loop_terminates_at_drive_root
+    type: fail_to_pass
+    origin: pr_diff
+    description: >
+      Loop in findParentRepoFolders must use while(true) with
+      isEqual(current, parent) fixed-point check and terminate
+      at filesystem roots including Windows drive roots
+
+  - id: test_parent_computed_inside_loop
+    type: fail_to_pass
+    origin: pr_diff
+    description: >
+      dirname(current) must be computed inside the while(true)
+      body, not pre-computed before the loop
+
+  - id: test_break_with_all_termination_conditions
+    type: fail_to_pass
+    origin: pr_diff
+    description: >
+      Break guard must check all four conditions: dirname fixed-point,
+      root path, user home boundary, and seen-set deduplication —
+      using parent (not current) for the latter two

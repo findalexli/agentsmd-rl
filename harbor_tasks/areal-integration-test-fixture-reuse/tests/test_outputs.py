@@ -8,7 +8,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 NOTE: The test modules transitively import torch, sglang, and other
 GPU-dependent packages that are not installed in the verification
-environment. F2P checks use subprocess to execute Python AST analysis.
+environment. F2P checks use subprocess to evaluate code fragments
+(decorator expressions, assignments) in a mock environment.
 """
 
 import ast
@@ -38,55 +39,84 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
-# Gate (pass_to_pass, static) — syntax check
+# Gate (pass_to_pass, static) — syntax + byte-compilation check
 # ---------------------------------------------------------------------------
 
 
 def test_syntax_valid():
-    """All three test files must be valid Python."""
-    for fpath in ALL_FILES:
-        source = Path(fpath).read_text()
-        ast.parse(source)  # raises SyntaxError on failure
+    """All three test files must be valid Python that compiles to bytecode."""
+    r = _run_py(f'''
+from pathlib import Path
+
+for fpath in {ALL_FILES!r}:
+    source = Path(fpath).read_text()
+    # compile() verifies both syntax AND byte-compilation (unlike ast.parse)
+    compile(source, fpath, "exec")
+print("PASS")
+''')
+    assert r.returncode == 0, f"Syntax/compilation check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 
 def test_fixtures_module_scoped():
-    """local_scheduler, gateway_controller, gateway_controller_full_init
-    must be scoped module or session (not function)."""
+    """Evaluate fixture decorator expressions with a mock pytest.fixture
+    to verify scope is 'module' or 'session' at runtime."""
     r = _run_py(f'''
-import ast
+import ast, types
 from pathlib import Path
 
-tree = ast.parse(Path({CTRL_FILE!r}).read_text())
-scopes = {{}}
+# Mock pytest.fixture that records the scope kwarg when called
+recorded = {{}}
+def mock_fixture(**kwargs):
+    def wrap(name):
+        recorded[name] = kwargs
+    return wrap
+
+source = Path({CTRL_FILE!r}).read_text()
+tree = ast.parse(source)
+
+TARGET = ("local_scheduler", "gateway_controller", "gateway_controller_full_init")
+
 for node in ast.walk(tree):
-    if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+    if not isinstance(node, ast.FunctionDef):
+        continue
+    if node.name not in TARGET:
         continue
     for dec in node.decorator_list:
         if isinstance(dec, ast.Call):
-            func = dec.func
-            is_fixture = (
-                (isinstance(func, ast.Attribute) and func.attr == "fixture")
-                or (isinstance(func, ast.Name) and func.id == "fixture")
-            )
-            if is_fixture:
-                scope = None
-                for kw in dec.keywords:
-                    if kw.arg == "scope" and isinstance(kw.value, ast.Constant):
-                        scope = kw.value.value
-                scopes[node.name] = scope
-        elif isinstance(dec, ast.Attribute) and dec.attr == "fixture":
-            scopes[node.name] = None
+            dec_src = ast.get_source_segment(source, dec)
+            if dec_src and "fixture" in dec_src:
+                ns = {{"pytest": types.SimpleNamespace(fixture=mock_fixture)}}
+                wrapper = eval(dec_src, ns)
+                wrapper(node.name)
 
-required = ["local_scheduler", "gateway_controller", "gateway_controller_full_init"]
-for name in required:
-    scope = scopes.get(name)
+for name in TARGET:
+    assert name in recorded, (
+        f"{{name}}: fixture decorator not evaluated "
+        f"(bare @pytest.fixture without scope?)"
+    )
+    scope = recorded[name].get("scope")
     assert scope in ("module", "session"), (
-        f"{{name}} has scope={{scope!r}}, expected module or session"
+        f"{{name}}: scope={{scope!r}}, expected 'module' or 'session'"
+    )
+
+# Also verify parameter lists are compatible with module scope
+params = {{}}
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name in TARGET:
+        params[node.name] = [a.arg for a in node.args.args]
+
+assert "tmp_path_factory" in params.get("local_scheduler", []), (
+    f"local_scheduler missing tmp_path_factory, got: {{params.get('local_scheduler')}}"
+)
+for name in ("gateway_controller", "gateway_controller_full_init"):
+    assert "tmp_path" not in params.get(name, []), (
+        f"{{name}} still has function-scoped tmp_path param"
     )
 print("PASS")
 ''')
@@ -95,36 +125,41 @@ print("PASS")
 
 
 def test_pytestmark_sglang_present():
-    """All 3 test files must have module-level pytestmark with
-    pytest.mark.sglang."""
+    """Execute the pytestmark assignment in each file with a mock pytest
+    module and verify it evaluates to pytest.mark.sglang at runtime."""
     r = _run_py(f'''
-import ast
+import ast, types
 from pathlib import Path
 
-
-def _has_sglang_mark(node):
-    if isinstance(node, ast.Attribute) and node.attr == "sglang":
-        return True
-    if isinstance(node, ast.Call):
-        return _has_sglang_mark(node.func)
-    return False
-
+SENTINEL = object()
 
 for fpath in {ALL_FILES!r}:
-    tree = ast.parse(Path(fpath).read_text())
+    source = Path(fpath).read_text()
+    tree = ast.parse(source)
     found = False
+
     for node in ast.iter_child_nodes(tree):
         if not isinstance(node, ast.Assign):
             continue
         for target in node.targets:
             if not (isinstance(target, ast.Name) and target.id == "pytestmark"):
                 continue
-            val = node.value
-            if _has_sglang_mark(val):
+            # Build mock pytest where mark.sglang is a sentinel
+            mock_mark = types.SimpleNamespace(sglang=SENTINEL)
+            mock_pytest = types.SimpleNamespace(mark=mock_mark)
+
+            assign_src = ast.get_source_segment(source, node)
+            ns = {{"pytest": mock_pytest}}
+            exec(assign_src, ns)
+
+            val = ns.get("pytestmark")
+            if val is SENTINEL:
                 found = True
-            elif isinstance(val, (ast.List, ast.Tuple)):
-                found = any(_has_sglang_mark(elt) for elt in val.elts)
-    assert found, f"{{fpath}} missing pytestmark containing pytest.mark.sglang"
+            elif isinstance(val, (list, tuple)):
+                found = any(v is SENTINEL for v in val)
+            break
+
+    assert found, f"{{fpath}}: pytestmark does not evaluate to pytest.mark.sglang"
 print("PASS")
 ''')
     assert r.returncode == 0, f"pytestmark check failed: {r.stderr}"
@@ -214,6 +249,35 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
+def test_consumer_batch_size_increased():
+    """gateway_controller fixture must have consumer_batch_size >= 3
+    (increased from 2 to accommodate module-scoped fixture reuse)."""
+    r = _run_py(f'''
+import ast
+from pathlib import Path
+
+tree = ast.parse(Path({CTRL_FILE!r}).read_text())
+for node in ast.walk(tree):
+    if not isinstance(node, ast.FunctionDef):
+        continue
+    if node.name != "gateway_controller":
+        continue
+    found = False
+    for child in ast.walk(node):
+        if isinstance(child, ast.keyword) and child.arg == "consumer_batch_size":
+            if isinstance(child.value, ast.Constant) and isinstance(child.value.value, (int, float)):
+                assert child.value.value >= 3, (
+                    f"consumer_batch_size={{child.value.value}}, expected >= 3 (was 2)"
+                )
+                found = True
+    assert found, "gateway_controller: consumer_batch_size keyword not found"
+    break
+print("PASS")
+''')
+    assert r.returncode == 0, f"consumer_batch_size check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (agent_config) — config-derived check via subprocess
 # ---------------------------------------------------------------------------
@@ -221,7 +285,7 @@ print("PASS")
 
 def test_fixture_no_tmp_path():
     """Module-scoped local_scheduler must not use function-scoped tmp_path.
-    Should use tmp_path_factory or tempfile.mkdtemp instead."""
+    Must use tmp_path_factory instead (module-scoped fixture)."""
     r = _run_py(f'''
 import ast
 from pathlib import Path
@@ -233,6 +297,11 @@ for node in ast.walk(tree):
         assert "tmp_path" not in params, (
             f"local_scheduler uses tmp_path (function-scoped), "
             f"incompatible with module scope. Parameters: {{params}}"
+        )
+        # Behavioral: verify the module-scoped replacement IS present
+        assert "tmp_path_factory" in params, (
+            f"local_scheduler must accept tmp_path_factory for module scope. "
+            f"Parameters: {{params}}"
         )
         break
 else:

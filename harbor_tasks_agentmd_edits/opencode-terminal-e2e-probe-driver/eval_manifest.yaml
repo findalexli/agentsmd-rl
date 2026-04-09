@@ -1,0 +1,49 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 17144
+  base_commit: "c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90"
+  merge_commit: "328c6de80d51704c09bdd962df2ddf5b9d7c82ea"
+
+checks:
+  # Gate checks
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "testing/terminal.ts exists and is valid TypeScript"
+
+  # Core behavioral tests — probe module
+  - id: terminal_attr_constant
+    type: fail_to_pass
+    origin: pr_diff
+    description: "terminalAttr exports 'data-pty-id' from testing/terminal.ts"
+
+  - id: terminal_probe_state_tracking
+    type: fail_to_pass
+    origin: pr_diff
+    description: "terminalProbe tracks connected, rendered, and settled state"
+
+  - id: terminal_probe_drop
+    type: fail_to_pass
+    origin: pr_diff
+    description: "terminalProbe.drop() removes the terminal entry from state"
+
+  # Pass-to-pass
+  - id: terminal_probe_noop_without_window
+    type: pass_to_pass
+    origin: static
+    description: "Probe methods are safe no-ops when window is undefined"
+
+  # Config/documentation update checks
+  - id: agents_md_documents_helpers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "e2e/AGENTS.md documents waitTerminalReady and runTerminal helpers"
+
+  - id: agents_md_terminal_testing_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "e2e/AGENTS.md includes terminal testing guidelines section"
+
+rubric: []

@@ -1,0 +1,41 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 39088
+  base_commit: "731055548262317579c35189a46cde6932fcc376"
+  merge_commit: "92b9afeecde83bb0e0fef8ec8e30e7dae6b43bdc"
+
+checks:
+  - id: triton_mla_valid_python
+    type: pass_to_pass
+    origin: static
+    description: "triton_mla.py must be valid Python syntax"
+
+  - id: unquantized_moe_valid_python
+    type: pass_to_pass
+    origin: static
+    description: "unquantized_fused_moe_method.py must be valid Python syntax"
+
+  - id: triton_mla_no_cuda_get_device_properties
+    type: fail_to_pass
+    origin: pr_diff
+    description: "triton_mla.py must not use torch.cuda.get_device_properties — use platform API instead"
+
+  - id: triton_mla_uses_platform_compute_units
+    type: fail_to_pass
+    origin: pr_diff
+    description: "triton_mla.py must use num_compute_units() for platform-agnostic compute unit count"
+
+  - id: triton_mla_imports_current_platform
+    type: fail_to_pass
+    origin: pr_diff
+    description: "triton_mla.py must import current_platform from vllm.platforms"
+
+  - id: moe_xpu_condition_uses_backend_enum
+    type: fail_to_pass
+    origin: pr_diff
+    description: "XPU branch in process_weights_after_loading must use backend enum, not platform detection"
+
+rubric:
+  []

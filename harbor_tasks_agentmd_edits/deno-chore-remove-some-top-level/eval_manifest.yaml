@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: "denoland/deno"
+  pr: 32022
+  base_commit: "0b38d25ba7c1893757e15fbb2a68537b0191321f"
+  merge_commit: "c006bba8061e2d96004823c64287515937b0897d"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Static / Pass-to-pass gates
+  # ---------------------------------------------------------------------------
+  - id: cargo_toml_valid
+    type: pass_to_pass
+    origin: static
+    description: "Cargo.toml must be valid TOML with tests/bench_util in workspace members"
+
+  - id: bench_util_moved
+    type: pass_to_pass
+    origin: static
+    description: "bench_util directory exists at new location tests/bench_util"
+
+  - id: docs_tsgo_moved
+    type: pass_to_pass
+    origin: static
+    description: "docs/tsgo.md content moved to cli/tsc/README.md"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (core behavioral tests)
+  # ---------------------------------------------------------------------------
+  - id: cargo_check_passes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cargo workspace compiles after bench_util move to tests/bench_util"
+
+  - id: lint_js_detects_top_level_directories
+    type: fail_to_pass
+    origin: pr_diff
+    description: "lint.js listTopLevelEntries correctly detects directories (not just files)"
+
+  - id: lint_js_blocks_unauthorized_top_level
+    type: fail_to_pass
+    origin: pr_diff
+    description: "lint.js ensureNoNewTopLevelEntries validates against allowed set of entries"
+
+  - id: bench_util_compiles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "deno_bench_util crate compiles at new tests/bench_util location"
+
+  # ---------------------------------------------------------------------------
+  # Repo tests (regression)
+  # ---------------------------------------------------------------------------
+  - id: cargo_lock_updated
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Cargo.lock is consistent with Cargo.toml workspace changes"
+
+rubric:
+  # Soft rules from CLAUDE.md - only if LLM_JUDGE=1
+  - rule: "Keep the root of the repository clean. When adding anything to top-level, it must be discussed."
+    source:
+      path: "CLAUDE.md"
+      lines: "1-50"
+      commit: "0b38d25ba7c1893757e15fbb2a68537b0191321f"

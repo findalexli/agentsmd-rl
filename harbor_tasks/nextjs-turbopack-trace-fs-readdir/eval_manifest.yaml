@@ -1,0 +1,60 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92148
+  base_commit: "4582b5fa93dd65b6f9ed1dff7e66bdb93ddd653c"
+  merge_commit: "a5c0a897f8e692a26e3bf550a6629607805b3a0d"
+
+checks:
+  - id: source_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "Required source files exist and are not stubbed"
+
+  - id: fsreaddir_enum_variant
+    type: fail_to_pass
+    origin: pr_diff
+    description: "WellKnownFunctionKind enum has FsReadDir variant in correct ASCII-order position"
+
+  - id: readdir_sync_mapping
+    type: fail_to_pass
+    origin: pr_diff
+    description: "well_known.rs maps both readdir and readdirSync to WellKnownFunctionKind::FsReadDir"
+
+  - id: dir_asset_reference_handler
+    type: fail_to_pass
+    origin: pr_diff
+    description: "references/mod.rs has FsReadDir handler with DirAssetReference, dynamic pattern detection, and error handling"
+
+  - id: fsreaddir_description_in_impl
+    type: fail_to_pass
+    origin: pr_diff
+    description: "FsReadDir has human-readable description in WellKnownFunction impl block"
+
+  - id: wildcard_fixtures_have_fs_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: "NFT test fixture files have const fs = require('fs') for readdir tracing"
+
+  - id: nft_unit_tests_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "NFT unit test cases dirname_emit, dirname_emit_concat, wildcard_require, wildcard3 are enabled"
+
+  - id: well_known_module_intact
+    type: pass_to_pass
+    origin: static
+    description: "well_known.rs fs_module_member function has substantial body with all existing fs method mappings"
+
+  - id: references_module_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "references/mod.rs has substantial code in tracing handler section"
+
+rubric:
+  - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run cargo fmt"
+    source:
+      path: "AGENTS.md"
+      lines: "414"
+      commit: "4582b5fa93dd65b6f9ed1dff7e66bdb93ddd653c"

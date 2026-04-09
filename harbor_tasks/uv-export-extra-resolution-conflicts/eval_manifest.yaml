@@ -1,0 +1,74 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 18888
+  base_commit: "8b0e9e5fb997cbdc2f4f58b43cd805d22e57bd1b"
+  merge_commit: "0da0cd8b4310d3ac4be96223bd1e24ada109af9e"
+
+checks:
+  - id: cargo_check_resolver
+    type: pass_to_pass
+    origin: static
+    description: "uv-resolver crate compiles without errors"
+
+  - id: resolve_handles_package_scope
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Extra resolution function accepts scope_package for unencoded extras"
+
+  - id: edge_carries_dep_extras
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Edge enum variants carry dependency extras information"
+
+  - id: unencoded_extra_lookup
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Resolve function handles unencoded extras via scope package lookup"
+
+  - id: dep_extras_fed_into_conflict_map
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Reachability traversal propagates dep_extras into the conflict map"
+
+  - id: existing_resolve_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing universal_marker::tests::resolve unit tests still pass"
+
+  - id: resolve_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Resolve function has substantial logic (not a stub)"
+
+  - id: no_bare_unwrap_in_resolve
+    type: pass_to_pass
+    origin: agent_config
+    description: "No bare .unwrap() calls in resolve function (CLAUDE.md:7)"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "8b0e9e5fb997cbdc2f4f58b43cd805d22e57bd1b"
+
+rubric:
+  - rule: "PREFER patterns like `if let` to handle fallibility"
+    source:
+      path: "CLAUDE.md"
+      lines: "8"
+      commit: "8b0e9e5fb997cbdc2f4f58b43cd805d22e57bd1b"
+  - rule: "PREFER let chains (`if let` combined with `&&`) over nested `if let` statements"
+    source:
+      path: "CLAUDE.md"
+      lines: "11"
+      commit: "8b0e9e5fb997cbdc2f4f58b43cd805d22e57bd1b"
+  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
+    source:
+      path: "CLAUDE.md"
+      lines: "17-18"
+      commit: "8b0e9e5fb997cbdc2f4f58b43cd805d22e57bd1b"
+  - rule: "PREFER top-level imports over local imports or fully qualified names"
+    source:
+      path: "CLAUDE.md"
+      lines: "16"
+      commit: "8b0e9e5fb997cbdc2f4f58b43cd805d22e57bd1b"

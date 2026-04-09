@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35947
+  base_commit: "aac12ce597b49093a5add54b00deee3d8980f874"
+  merge_commit: "4cc5b7a90bac7e1f8ac51a9ac570d3ada3bddcb3"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Target file exists and declares trackSchedulerEvent, resolveEventType, resolveEventTimeStamp"
+
+  - id: resolve_event_type_modern
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resolveEventType returns event.type for modern events (click, keydown, scroll)"
+
+  - id: resolve_event_type_legacy
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resolveEventType handles legacy RN events via dispatchConfig.phasedRegistrationNames with on-prefix stripping"
+
+  - id: resolve_event_timestamp
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resolveEventTimeStamp returns actual event.timeStamp instead of hardcoded -1.1"
+
+  - id: tracked_event_excluded
+    type: fail_to_pass
+    origin: pr_diff
+    description: "trackSchedulerEvent captures current event; same event returns defaults, different event returns real values"
+
+  - id: no_event_returns_defaults
+    type: pass_to_pass
+    origin: static
+    description: "Without global.event, resolveEventType returns null and resolveEventTimeStamp returns -1.1"
+
+rubric: []

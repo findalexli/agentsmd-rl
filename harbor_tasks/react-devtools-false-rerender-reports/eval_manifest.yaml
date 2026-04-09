@@ -16,22 +16,25 @@ checks:
     type: fail_to_pass
     origin: pr_diff
     description: >
-      renderer.js must have the 'prevFiber !== fiber && didFiberRender' guard in the
-      profiling data loop so bailed-out fibers are not reported as re-rendered
+      Node.js subprocess verifies the prevFiber !== fiber guard exists in the profiling
+      section (near actualDuration) AND executes the guard logic to confirm bailed-out
+      fibers (prevFiber === fiber) are blocked while real updates pass through
 
   - id: prevfiber_guard_trace_update
     type: fail_to_pass
     origin: pr_diff
     description: >
-      traceNearestHostComponentUpdate assignment must be guarded by
-      if (prevFiber !== nextFiber) to avoid false trace flags for filtered fibers
+      Node.js subprocess verifies traceNearestHostComponentUpdate is guarded by
+      prevFiber !== nextFiber and executes the guard logic to confirm bailed-out
+      fibers do not trigger false trace flags
 
   - id: prevfiber_guard_inspect_update
     type: fail_to_pass
     origin: pr_diff
     description: >
-      hasElementUpdatedSinceLastInspected assignment must be guarded by
-      if (prevFiber !== nextFiber) to avoid spurious cache invalidation on bailed-out fibers
+      Node.js subprocess verifies hasElementUpdatedSinceLastInspected is guarded by
+      prevFiber !== nextFiber and executes the guard logic to confirm bailed-out
+      fibers do not cause spurious cache invalidation
 
   - id: profiling_data_logic_intact
     type: pass_to_pass

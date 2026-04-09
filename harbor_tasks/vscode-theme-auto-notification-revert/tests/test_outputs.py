@@ -15,6 +15,19 @@ REPO = "/workspace/vscode"
 THEME_FILE = f"{REPO}/src/vs/workbench/services/themes/browser/workbenchThemeService.ts"
 
 
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -35,40 +48,108 @@ def test_typescript_syntax():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests (subprocess execution)
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_notification_method_removed():
     """showThemeAutoUpdatedNotification method must not exist after the fix."""
-    content = Path(THEME_FILE).read_text()
-    # Check both the method declaration and any references
-    assert "showThemeAutoUpdatedNotification" not in content, \
-        "showThemeAutoUpdatedNotification method was not removed"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const content = readFileSync(
+  'src/vs/workbench/services/themes/browser/workbenchThemeService.ts', 'utf8'
+);
+// Extract the class body
+const classIdx = content.indexOf('class WorkbenchThemeService');
+if (classIdx === -1) { console.error('Class not found'); process.exit(1); }
+const classBody = content.slice(classIdx);
+// Collect all method declarations (private/public/protected + optional static/readonly/async)
+const methodRe = /(?:private|public|protected)\\s+(?:static\\s+)?(?:readonly\\s+)?(?:async\\s+)?(\\w+)\\s*\\(/g;
+const methods = new Set();
+let m;
+while ((m = methodRe.exec(classBody)) !== null) methods.add(m[1]);
+if (methods.has('showThemeAutoUpdatedNotification')) {
+  console.error('showThemeAutoUpdatedNotification method still declared');
+  process.exit(1);
+}
+// Also check no standalone call reference exists (e.g. this.showThemeAutoUpdatedNotification())
+const callRe = /this\\.showThemeAutoUpdatedNotification\\s*\\(/;
+if (callRe.test(content)) {
+  console.error('this.showThemeAutoUpdatedNotification() call still present');
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Method or call still exists: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_notification_key_removed():
     """THEME_AUTO_UPDATED_NOTIFICATION_KEY constant must not exist after the fix."""
-    content = Path(THEME_FILE).read_text()
-    assert "THEME_AUTO_UPDATED_NOTIFICATION_KEY" not in content, \
-        "THEME_AUTO_UPDATED_NOTIFICATION_KEY constant was not removed"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const content = readFileSync(
+  'src/vs/workbench/services/themes/browser/workbenchThemeService.ts', 'utf8'
+);
+// Collect all private static readonly constants declared in the class
+const constRe = /private\\s+static\\s+readonly\\s+(\\w+)\\s*=/g;
+const constants = new Set();
+let m;
+while ((m = constRe.exec(content)) !== null) constants.add(m[1]);
+if (constants.has('THEME_AUTO_UPDATED_NOTIFICATION_KEY')) {
+  console.error('THEME_AUTO_UPDATED_NOTIFICATION_KEY constant still exists');
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Constant still exists: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_notification_call_removed():
     """The call to showThemeAutoUpdatedNotification() must not exist in initialize()."""
-    content = Path(THEME_FILE).read_text()
-    assert "this.showThemeAutoUpdatedNotification()" not in content, \
-        "showThemeAutoUpdatedNotification() call was not removed from initialize()"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const content = readFileSync(
+  'src/vs/workbench/services/themes/browser/workbenchThemeService.ts', 'utf8'
+);
+// Extract the initialize() method body — starts with 'async initialize(' and ends at next closing brace at column 0
+const initRe = /async\\s+initialize\\s*\\([\\s\\S]*?\\n\\t\\}/;
+const initMatch = content.match(initRe);
+if (!initMatch) {
+  console.error('initialize() method not found');
+  process.exit(1);
+}
+const initBody = initMatch[0];
+if (initBody.includes('showThemeAutoUpdatedNotification')) {
+  console.error('initialize() still references showThemeAutoUpdatedNotification');
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Call still present in initialize(): {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_revert_notification_string_removed():
     """The notification localization string for auto-updated theme must be removed."""
-    content = Path(THEME_FILE).read_text()
-    assert "newDefaultThemeAutoUpdated" not in content, \
-        "The 'newDefaultThemeAutoUpdated' localization key was not removed"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const content = readFileSync(
+  'src/vs/workbench/services/themes/browser/workbenchThemeService.ts', 'utf8'
+);
+// The localization key 'newDefaultThemeAutoUpdated' should not appear anywhere
+if (content.includes('newDefaultThemeAutoUpdated')) {
+  console.error('newDefaultThemeAutoUpdated localization key still present');
+  process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Localization key still exists: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

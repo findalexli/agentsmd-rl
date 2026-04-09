@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39116
+  base_commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+  merge_commit: "f864c2ee9cfd5d15b31d4a6a52977e2ac20df2ea"
+
+checks:
+  # Gate — TypeScript compilation
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript project builds without errors after changes"
+
+  # Core behavioral — CLI executes kill-all command
+  - id: kill_all_cli_output
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Running kill-all with no daemons prints expected message"
+
+  # Core behavioral — command registration
+  - id: kill_all_command_registered
+    type: fail_to_pass
+    origin: pr_diff
+    description: "kill-all is registered in the commands map"
+
+  # Config update — SKILL.md documents new command
+  - id: skill_md_documents_kill_all
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md must document the kill-all command"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "29-30"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+
+  # Config update — session-management.md documents new command
+  - id: session_management_documents_kill_all
+    type: fail_to_pass
+    origin: agent_config
+    description: "session-management.md reference must document the kill-all command"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "29-30"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+
+  # Regression — existing commands still documented
+  - id: existing_session_commands_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Existing session management commands still documented in SKILL.md"
+
+rubric:
+  - rule: "Update skill file at packages/playwright/src/skill/SKILL.md and references if necessary in packages/playwright/src/skill/references/"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "29-30"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+  - rule: "kill-all documentation is consistent with the style and formatting of existing session commands in the skill file"
+    source:
+      path: "packages/playwright/src/skill/SKILL.md"
+      lines: "182-191"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"

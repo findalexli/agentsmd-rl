@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/vllm"
@@ -19,20 +20,13 @@ FLAKY_FUNCS = [
 ]
 
 
-def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Execute Python validation code in a subprocess."""
-    script = Path(REPO) / "_eval_tmp.py"
-    script.write_text(code)
-    try:
-        return subprocess.run(
-            ["python3", str(script)],
-            capture_output=True, text=True, timeout=timeout, cwd=REPO,
-        )
-    finally:
-        script.unlink(missing_ok=True)
+def _load_target_ast() -> ast.AST:
+    """Parse and return the AST of the target test file."""
+    source = Path(TARGET).read_text()
+    return ast.parse(source)
 
 
-def _find_functions(tree, names):
+def _find_functions(tree: ast.AST, names: list) -> dict:
     """Return dict of {name: AST node} for async function defs matching names."""
     return {
         node.name: node
@@ -41,9 +35,20 @@ def _find_functions(tree, names):
     }
 
 
-# ---------------------------------------------------------------------------
+def _get_keyword_value(node: ast.Call, keyword: str):
+    """Extract the value of a keyword argument from a Call node."""
+    for kw in node.keywords:
+        if kw.arg == keyword:
+            if isinstance(kw.value, ast.Constant):
+                return kw.value.value
+            if isinstance(kw.value, (ast.Num, ast.Str)):  # Python < 3.8 compat
+                return kw.value.n if isinstance(kw.value, ast.Num) else kw.value.s
+    return None
+
+
+# -----------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_syntax_check():
@@ -52,135 +57,112 @@ def test_syntax_check():
     compile(source, TARGET, "exec")
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests via subprocess
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — behavioral tests via AST inspection
+# -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_temperature_deterministic():
     """Both flaky test functions must set temperature=0.0 for deterministic output."""
-    r = _run_py(
-        f"""
-import ast
-from pathlib import Path
+    tree = _load_target_ast()
+    funcs = _find_functions(tree, FLAKY_FUNCS)
+    assert len(funcs) == len(FLAKY_FUNCS), f"Missing: {set(FLAKY_FUNCS) - set(funcs)}"
 
-TARGET = {TARGET!r}
-FLAKY_FUNCS = {FLAKY_FUNCS!r}
-
-tree = ast.parse(Path(TARGET).read_text())
-funcs = {{
-    node.name: node
-    for node in ast.walk(tree)
-    if isinstance(node, ast.AsyncFunctionDef) and node.name in FLAKY_FUNCS
-}}
-assert len(funcs) == len(FLAKY_FUNCS), f"Missing: {{set(FLAKY_FUNCS) - set(funcs)}}"
-
-for name, node in funcs.items():
-    found = False
-    for child in ast.walk(node):
-        if isinstance(child, ast.Call):
-            for kw in child.keywords:
-                if kw.arg == "temperature":
-                    if isinstance(kw.value, ast.Constant) and kw.value.value in (0, 0.0):
-                        found = True
-                if kw.arg is None and isinstance(kw.value, ast.Dict):
-                    for k, v in zip(kw.value.keys, kw.value.values):
-                        if isinstance(k, ast.Constant) and k.value == "temperature":
-                            if isinstance(v, ast.Constant) and v.value in (0, 0.0):
-                                found = True
-    assert found, f"{{name}} must set temperature=0.0 for deterministic generation"
-print("PASS")
-"""
-    )
-    assert r.returncode == 0, f"temperature check failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    for name, node in funcs.items():
+        found = False
+        for child in ast.walk(node):
+            if isinstance(child, ast.Call):
+                temp = _get_keyword_value(child, "temperature")
+                if temp in (0, 0.0):
+                    found = True
+                    break
+        assert found, f"{name} must set temperature=0.0 for deterministic generation"
 
 
 # [pr_diff] fail_to_pass
 def test_max_tokens_reduced():
     """Both flaky test functions must use max_tokens <= 8 to force length cutoff."""
-    r = _run_py(
-        f"""
-import ast
-from pathlib import Path
+    tree = _load_target_ast()
+    funcs = _find_functions(tree, FLAKY_FUNCS)
+    assert len(funcs) == len(FLAKY_FUNCS), f"Missing: {set(FLAKY_FUNCS) - set(funcs)}"
 
-TARGET = {TARGET!r}
-FLAKY_FUNCS = {FLAKY_FUNCS!r}
-
-tree = ast.parse(Path(TARGET).read_text())
-funcs = {{
-    node.name: node
-    for node in ast.walk(tree)
-    if isinstance(node, ast.AsyncFunctionDef) and node.name in FLAKY_FUNCS
-}}
-assert len(funcs) == len(FLAKY_FUNCS), f"Missing: {{set(FLAKY_FUNCS) - set(funcs)}}"
-
-for name, node in funcs.items():
-    found = False
-    for child in ast.walk(node):
-        if isinstance(child, ast.Call):
-            for kw in child.keywords:
-                if kw.arg in ("max_tokens", "max_completion_tokens"):
-                    if isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, (int, float)):
-                        if kw.value.value <= 8:
-                            found = True
-    assert found, f"{{name}} must set max_tokens <= 8 (was 16) to ensure model hits token limit"
-print("PASS")
-"""
-    )
-    assert r.returncode == 0, f"max_tokens check failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    for name, node in funcs.items():
+        found = False
+        for child in ast.walk(node):
+            if isinstance(child, ast.Call):
+                for kw in ("max_tokens", "max_completion_tokens"):
+                    val = _get_keyword_value(child, kw)
+                    if val is not None and isinstance(val, (int, float)) and val <= 8:
+                        found = True
+                        break
+            if found:
+                break
+        assert found, f"{name} must set max_tokens <= 8 (was 16) to ensure model hits token limit"
 
 
 # [pr_diff] fail_to_pass
 def test_debug_output_added():
     """Both flaky test functions must include debug output referencing finish_reason."""
-    r = _run_py(
-        f"""
-import ast
-from pathlib import Path
+    tree = _load_target_ast()
+    funcs = _find_functions(tree, FLAKY_FUNCS)
+    assert len(funcs) == len(FLAKY_FUNCS), f"Missing: {set(FLAKY_FUNCS) - set(funcs)}"
 
-TARGET = {TARGET!r}
-FLAKY_FUNCS = {FLAKY_FUNCS!r}
+    for name, node in funcs.items():
+        has_debug = False
+        for child in ast.walk(node):
+            if isinstance(child, ast.Call):
+                func_name = ""
+                if isinstance(child.func, ast.Name):
+                    func_name = child.func.id
+                elif isinstance(child.func, ast.Attribute):
+                    func_name = child.func.attr
 
-tree = ast.parse(Path(TARGET).read_text())
-funcs = {{
-    node.name: node
-    for node in ast.walk(tree)
-    if isinstance(node, ast.AsyncFunctionDef) and node.name in FLAKY_FUNCS
-}}
-assert len(funcs) == len(FLAKY_FUNCS), f"Missing: {{set(FLAKY_FUNCS) - set(funcs)}}"
-
-for name, node in funcs.items():
-    has_debug = False
-    for child in ast.walk(node):
-        if isinstance(child, ast.Call):
-            call_src = ast.dump(child)
-            func_name = ""
-            if isinstance(child.func, ast.Name):
-                func_name = child.func.id
-            elif isinstance(child.func, ast.Attribute):
-                func_name = child.func.attr
-            if func_name in ("print", "debug", "info", "warning", "log"):
-                if "finish_reason" in call_src:
-                    has_debug = True
+                if func_name == "print":
+                    # Check if any argument contains "finish_reason"
+                    for arg in child.args:
+                        if isinstance(arg, ast.JoinedStr):
+                            # f-string - check format specifiers
+                            for val in arg.values:
+                                if isinstance(val, ast.FormattedValue):
+                                    if isinstance(val.value, ast.Attribute):
+                                        if val.value.attr == "finish_reason":
+                                            has_debug = True
+                                            break
+                        elif isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                            if "finish_reason" in arg.value:
+                                has_debug = True
+                                break
+                if has_debug:
                     break
-    assert has_debug, f"{{name}} must include debug output referencing finish_reason"
-print("PASS")
-"""
-    )
-    assert r.returncode == 0, f"debug output check failed: {r.stderr}"
-    assert "PASS" in r.stdout
+        assert has_debug, f"{name} must include debug output referencing finish_reason"
 
 
-# ---------------------------------------------------------------------------
+# [pr_diff] fail_to_pass
+def test_turn_variable_used():
+    """Both flaky test functions must use 'turn' variable in the loop (changed from '_')."""
+    tree = _load_target_ast()
+    funcs = _find_functions(tree, FLAKY_FUNCS)
+    assert len(funcs) == len(FLAKY_FUNCS), f"Missing: {set(FLAKY_FUNCS) - set(funcs)}"
+
+    for name, node in funcs.items():
+        found_turn_loop = False
+        for child in ast.walk(node):
+            if isinstance(child, ast.AsyncFor):
+                # Check if the target is 'turn' (not '_')
+                if isinstance(child.target, ast.Name) and child.target.id == "turn":
+                    found_turn_loop = True
+                    break
+        assert found_turn_loop, f"{name} must use 'turn' as loop variable (changed from '_')"
+
+
+# -----------------------------------------------------------------------------
 # Pass-to-pass (pr_diff / static) — regression + anti-stub
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
 def test_interleaved_test_preserved():
     """Third test function (interleaved) must still exist with a real body."""
-    tree = ast.parse(Path(TARGET).read_text())
+    tree = _load_target_ast()
     funcs = _find_functions(tree, ["test_online_audio_in_video_interleaved"])
     assert "test_online_audio_in_video_interleaved" in funcs, (
         "test_online_audio_in_video_interleaved must not be deleted"
@@ -197,7 +179,7 @@ def test_interleaved_test_preserved():
 # [pr_diff] pass_to_pass
 def test_assertions_preserved():
     """Both flaky functions must still assert finish_reason=='length' and len(choices)==1."""
-    tree = ast.parse(Path(TARGET).read_text())
+    tree = _load_target_ast()
     funcs = _find_functions(tree, FLAKY_FUNCS)
     assert len(funcs) == len(FLAKY_FUNCS), f"Missing functions: {set(FLAKY_FUNCS) - set(funcs)}"
 
@@ -205,14 +187,17 @@ def test_assertions_preserved():
         has_finish_assert = False
         has_choices_assert = False
         for child in ast.walk(node):
-            if isinstance(child, ast.Assert) and isinstance(child.test, ast.Compare):
-                left_dump = ast.dump(child.test.left)
-                if "finish_reason" in left_dump:
-                    for comp in child.test.comparators:
-                        if isinstance(comp, ast.Constant) and comp.value == "length":
-                            has_finish_assert = True
-                if "choices" in left_dump:
-                    has_choices_assert = True
+            if isinstance(child, ast.Assert):
+                # Check for finish_reason == "length"
+                if isinstance(child.test, ast.Compare):
+                    left_dump = ast.dump(child.test.left)
+                    if "finish_reason" in left_dump:
+                        for comp in child.test.comparators:
+                            if isinstance(comp, ast.Constant) and comp.value == "length":
+                                has_finish_assert = True
+                    # Check for len(choices) == 1
+                    if "choices" in left_dump:
+                        has_choices_assert = True
         assert has_finish_assert, f"{name} must assert finish_reason == 'length'"
         assert has_choices_assert, f"{name} must assert len(choices) == 1"
 
@@ -220,7 +205,7 @@ def test_assertions_preserved():
 # [static] pass_to_pass
 def test_not_stubs():
     """Both flaky functions must have substantial bodies (loop, await, assert)."""
-    tree = ast.parse(Path(TARGET).read_text())
+    tree = _load_target_ast()
     funcs = _find_functions(tree, FLAKY_FUNCS)
     assert len(funcs) == len(FLAKY_FUNCS), f"Missing functions: {set(FLAKY_FUNCS) - set(funcs)}"
 
@@ -245,7 +230,7 @@ def test_not_stubs():
 # [pr_diff] pass_to_pass
 def test_mm_processor_kwargs_preserved():
     """Both flaky functions must pass mm_processor_kwargs with use_audio_in_video."""
-    tree = ast.parse(Path(TARGET).read_text())
+    tree = _load_target_ast()
     funcs = _find_functions(tree, FLAKY_FUNCS)
     assert len(funcs) == len(FLAKY_FUNCS), f"Missing functions: {set(FLAKY_FUNCS) - set(funcs)}"
 

@@ -1,0 +1,53 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 90543
+  base_commit: "46761a321042e8ac1863f4cfc8d73d527956e181"
+  merge_commit: "ef970c06fb7ef8337db50ef962bb13f3f2d3204f"
+
+checks:
+  # p2p gates
+  - id: root_package_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "Root package.json is valid JSON with build script preserved"
+
+  - id: next_swc_package_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "next-swc package.json is valid JSON with scripts"
+
+  # f2p code behavior
+  - id: build_all_script_via_node
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Root package.json has build-all script including build-native-auto"
+
+  - id: next_swc_build_native_auto
+    type: fail_to_pass
+    origin: pr_diff
+    description: "next-swc package.json has build-native-auto running maybe-build-native"
+
+  - id: turbo_config_task_renamed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Turbo config has build-native-auto task instead of build"
+
+  # f2p config updates
+  - id: agents_md_documents_build_all
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md references pnpm build-all for full JS+Rust builds"
+
+  - id: agents_md_build_js_clarification
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md no longer describes pnpm build as building everything"
+
+rubric:
+  - rule: "AGENTS.md update is consistent with the existing documentation style and structure"
+    source:
+      path: "AGENTS.md"
+      lines: "55-65"
+      commit: "46761a321042e8ac1863f4cfc8d73d527956e181"

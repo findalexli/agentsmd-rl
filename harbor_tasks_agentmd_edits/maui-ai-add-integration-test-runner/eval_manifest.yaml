@@ -19,20 +19,20 @@ checks:
     description: "SetUpNuGetPackages has real file I/O operations, not a stub"
 
   # --- Code behavior (fail_to_pass) ---
-  - id: base_build_test_creates_directory_build_props
+  - id: msbuild_isolation_files
     type: fail_to_pass
     origin: pr_diff
-    description: "BaseBuildTest.cs creates Directory.Build.props to prevent MSBuild inheritance"
+    description: "BaseBuildTest.cs creates valid Directory.Build.props and .targets XML to prevent MSBuild inheritance"
 
-  - id: base_build_test_creates_directory_build_targets
+  - id: skill_md_valid
     type: fail_to_pass
     origin: pr_diff
-    description: "BaseBuildTest.cs creates Directory.Build.targets to prevent target inheritance"
+    description: "run-integration-tests SKILL.md exists with valid frontmatter and all test categories"
 
-  - id: directory_build_xml_is_valid
+  - id: run_script_valid
     type: fail_to_pass
     origin: pr_diff
-    description: "XML content written by BaseBuildTest.cs parses as valid XML"
+    description: "Run-IntegrationTests.ps1 exists with ValidateSet categories and workflow parameters"
 
   # --- Config/documentation updates (fail_to_pass) ---
   - id: copilot_instructions_lists_integration_skill
@@ -44,16 +44,6 @@ checks:
     type: fail_to_pass
     origin: pr_diff
     description: "integration-tests.instructions.md references the run-integration-tests skill"
-
-  - id: skill_md_exists_with_content
-    type: fail_to_pass
-    origin: pr_diff
-    description: "run-integration-tests SKILL.md exists with frontmatter and all test categories"
-
-  - id: run_script_exists_with_parameters
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Run-IntegrationTests.ps1 exists with ValidateSet categories and workflow steps"
 
   - id: copilot_instructions_skill_numbering
     type: fail_to_pass

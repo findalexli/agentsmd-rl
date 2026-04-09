@@ -1,0 +1,31 @@
+version: "2.0"
+
+source:
+  repo: facebook/react
+  base_commit: 9c0323e2cf9be543d6eaa44419598622603f
+
+checks:
+  - id: test_flow_interfaces_and_chrome_typed
+    type: fail_to_pass
+    origin: pr_diff
+    description: ExtensionRuntimePort and ExtensionAPI interfaces fully defined with chrome typed as ExtensionAPI
+
+  - id: test_background_script_typed
+    type: fail_to_pass
+    origin: pr_diff
+    description: Background index.js has @flow annotation, typed function parameters, and uses ExtensionRuntimePort
+
+  - id: test_main_uses_shared_types
+    type: fail_to_pass
+    origin: pr_diff
+    description: Main index.js uses shared ExtensionRuntimePort type, local ExtensionPort typedef removed
+
+  - id: test_modified_files_parse
+    type: pass_to_pass
+    origin: static
+    description: Modified JS files parse as valid Flow-enabled JavaScript via babel
+
+  - id: test_modified_files_exist
+    type: pass_to_pass
+    origin: static
+    description: All modified files exist and are non-empty

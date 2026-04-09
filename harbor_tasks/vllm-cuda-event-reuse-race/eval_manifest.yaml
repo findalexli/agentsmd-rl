@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 39115
+  base_commit: "b2b2c5239ec65fc6ba1109b0d06cb7462d99b70e"
+  merge_commit: "62095e82c1ef7ed91be5223d36c6109958e9aec6"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  - id: async_output_no_shared_event_param
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AsyncOutput.__init__ must not accept a required copy_event parameter"
+
+  - id: async_pooling_no_shared_event_param
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AsyncPoolingOutput.__init__ must not accept a required copy_event parameter"
+
+  - id: async_output_creates_own_event
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AsyncOutput.__init__ must create its own torch.cuda.Event() internally"
+
+  - id: async_pooling_creates_own_event
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AsyncPoolingOutput.__init__ must create its own torch.cuda.Event() internally"
+
+  - id: model_runner_no_shared_event
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GPUModelRunner must not store a shared output_copy_event attribute"
+
+  - id: async_output_init_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "AsyncOutput.__init__ has real logic, not just pass/return"
+
+rubric: []

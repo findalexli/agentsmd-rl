@@ -12,35 +12,45 @@ checks:
     origin: static
     description: "Modified Rust files must parse without syntax errors"
 
-  - id: new_method_quiet_enabled
-    type: fail_to_pass
+  - id: compilation
+    type: pass_to_pass
     origin: pr_diff
-    description: "New Printer method returns Stderr::Enabled for Quiet variant (the core fix)"
+    description: "Modified crate compiles without errors"
 
-  - id: new_method_silent_disabled
+  - id: new_stderr_important_exists
     type: fail_to_pass
     origin: pr_diff
-    description: "New method returns Stderr::Disabled for Silent (double-quiet suppresses all)"
+    description: "Printer has new stderr_important method (besides stderr())"
 
-  - id: new_method_all_non_silent_enabled
+  - id: stderr_important_quiet_enabled
     type: fail_to_pass
     origin: pr_diff
-    description: "New method returns Enabled for Default, Verbose, and NoProgress"
+    description: "stderr_important returns Stderr::Enabled for Quiet variant (the core fix)"
+
+  - id: stderr_important_silent_disabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "stderr_important returns Stderr::Disabled for Silent (double-quiet suppresses all)"
+
+  - id: stderr_important_non_silent_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "stderr_important returns Enabled for Default, Verbose, and NoProgress"
 
   - id: stderr_quiet_still_disabled
     type: pass_to_pass
     origin: pr_diff
     description: "Original stderr() still returns Disabled for Quiet and Silent (no regression)"
 
-  - id: self_update_wiring
+  - id: self_update_uses_stderr_important
     type: fail_to_pass
     origin: pr_diff
-    description: "self_update.rs uses the new method for important messages in ≥3 call sites"
+    description: "self_update.rs uses stderr_important() for important messages in >=3 call sites"
 
-  - id: new_method_not_stub
+  - id: stderr_important_not_stub
     type: fail_to_pass
     origin: static
-    description: "New method has real branching logic with match/if, not a trivial stub"
+    description: "stderr_important has real branching logic with match/if, not a trivial stub"
 
   - id: no_panic_unwrap_in_new_method
     type: fail_to_pass

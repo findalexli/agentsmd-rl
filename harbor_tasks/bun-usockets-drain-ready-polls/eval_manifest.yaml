@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28823
+  base_commit: "3f41407f47eb009c654e45def5f3f67d6ce6c8ee"
+  merge_commit: "ea83a741b4fd78331a8163a377cceccb0129e15f"
+
+checks:
+  - id: c_file_readable
+    type: pass_to_pass
+    origin: static
+    description: "Modified C file exists and has expected structure"
+
+  - id: hardcoded_1024_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Hardcoded 1024 in epoll/kevent calls replaced with LIBUS_MAX_READY_POLLS"
+
+  - id: drain_logic_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Logic exists to re-poll when ready_polls buffer is saturated"
+
+  - id: drain_uses_zero_timeout
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Drain logic re-polls with zero/non-blocking timeout"
+
+  - id: drain_has_iteration_cap
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Drain loop is capped to prevent unbounded spinning"
+
+  - id: both_loop_functions_dispatch_extra
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both us_loop_run and us_loop_run_bun_tick have extra dispatch after initial poll"
+
+  - id: drain_has_real_logic
+    type: pass_to_pass
+    origin: static
+    description: "Drain function has substantial implementation, not a stub"
+
+  - id: saturation_guard_present
+    type: pass_to_pass
+    origin: static
+    description: "Drain checks for buffer saturation before re-polling"
+
+rubric: []

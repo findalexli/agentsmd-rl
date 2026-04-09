@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35886
+  base_commit: "bd76b456c127222f59888953348d40cf8f03e3a0"
+  merge_commit: "c0060cf2a695d719152c939cfc3cced8f7da3e52"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified JS files must not have syntax errors"
+
+  - id: backend_uri_includes_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "connectToDevTools URI must append the path parameter"
+
+  - id: standalone_client_overrides_in_response
+    type: fail_to_pass
+    origin: pr_diff
+    description: "startServer response template must use client override variables"
+
+  - id: standalone_retry_passes_all_params
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error retry handlers must forward all parameters to startServer"
+
+  - id: preload_returns_client_fields
+    type: fail_to_pass
+    origin: pr_diff
+    description: "preload.js readEnv must return path, clientHost, clientPort, clientUseHttps"
+
+  - id: app_passes_client_options
+    type: fail_to_pass
+    origin: pr_diff
+    description: "app.html must pass clientOptions to startServer"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Key modified functions have real logic, not stubs"
+
+rubric: []

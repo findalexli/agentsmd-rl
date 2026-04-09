@@ -1,0 +1,59 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92354
+  base_commit: "15d9b4d7f923e637d1661b109df639a918f59c8a"
+  merge_commit: "b6017fac6a98a2337ce8c173ab72ad527e2b556a"
+
+checks:
+  - id: webToReadable_edge_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "webToReadable must check NEXT_RUNTIME === 'edge' before require('node:stream')"
+
+  - id: streamToUint8Array_edge_delegation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "streamToUint8Array must delegate to webstreamToUint8Array in edge runtime"
+
+  - id: prerender_tee_edge_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReactServerResult tee must guard node:stream usage with edge runtime check"
+
+  - id: render_result_edge_guards
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RenderResult must guard all node:stream requires with edge runtime checks"
+
+  - id: edge_error_codes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "errors.json must include edge-runtime-specific error messages"
+
+  - id: require_node_stream_dce_safe
+    type: fail_to_pass
+    origin: agent_config
+    description: "All require('node:stream') must be in else branches of if/else for DCE safety"
+    source:
+      path: "AGENTS.md"
+      lines: "404"
+      commit: "15d9b4d7f923e637d1661b109df639a918f59c8a"
+
+  - id: modified_files_valid
+    type: pass_to_pass
+    origin: static
+    description: "All modified TypeScript files exist and have substantial content"
+
+rubric:
+  - rule: "In edge builds, force feature flags that gate Node-only imports to false in define-env.ts."
+    source:
+      path: "AGENTS.md"
+      lines: "405"
+      commit: "15d9b4d7f923e637d1661b109df639a918f59c8a"
+  - rule: "Use if/else (not two independent if blocks) when assigning a variable conditionally on process.env.X. TypeScript cannot prove exhaustiveness across if (flag) { x = a }; if (!flag) { x = b } and will error with 'variable used before being assigned'. The if/else pattern satisfies both TypeScript (definite assignment) and webpack DCE."
+    source:
+      path: ".agents/skills/dce-edge/SKILL.md"
+      lines: "38"
+      commit: "15d9b4d7f923e637d1661b109df639a918f59c8a"

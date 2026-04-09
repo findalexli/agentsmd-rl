@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38915
+  base_commit: "81994e1d0ea6e0486cfbdad02e00942614c55264"
+  merge_commit: "062f1a2d706cfb631521461f6a7ad533cf69a4a8"
+
+checks:
+  - id: swap_blocks_batch_exists
+    type: pass_to_pass
+    origin: static
+    description: "swap_blocks_batch function must still be defined"
+
+  - id: memcpy_batch_async_still_used
+    type: pass_to_pass
+    origin: static
+    description: "cuMemcpyBatchAsync must still be called within swap_blocks_batch"
+
+  - id: cuda13_version_conditional
+    type: fail_to_pass
+    origin: pr_diff
+    description: "swap_blocks_batch must have a CUDA 13 version guard for changed API"
+
+  - id: dual_memcpy_batch_paths
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Two cuMemcpyBatchAsync call sites for CUDA 13+ (8-arg) and older (9-arg)"
+
+  - id: cuda13_branch_no_fail_idx
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CUDA 13+ code path must not pass fail_idx (removed from API)"
+
+rubric: []

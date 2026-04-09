@@ -7,7 +7,9 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/opencode"
@@ -19,6 +21,14 @@ def _read_vcs():
     return VCS_TS.read_text()
 
 
+def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute a Node.js script in the repo directory."""
+    return subprocess.run(
+        ["node", "-e", script],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
 def _code_lines(src: str) -> list[str]:
     """Return non-comment, non-blank lines."""
     lines = []
@@ -28,26 +38,6 @@ def _code_lines(src: str) -> list[str]:
             continue
         lines.append(line)
     return lines
-
-
-def _extract_generators(src: str) -> list[str]:
-    """Extract generator function bodies via brace counting."""
-    generators = []
-    depth = 0
-    in_gen = False
-    current: list[str] = []
-    for line in src.splitlines():
-        if re.search(r"function\s*\*", line) and not in_gen:
-            in_gen = True
-            depth = 0
-            current = []
-        if in_gen:
-            current.append(line)
-            depth += line.count("{") - line.count("}")
-            if depth <= 0 and len(current) > 3:
-                generators.append("\n".join(current))
-                in_gen = False
-    return generators
 
 
 # ---------------------------------------------------------------------------
@@ -63,86 +53,198 @@ def test_vcs_file_nontrivial():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core migration tests
+# Fail-to-pass (pr_diff) — behavioral tests via Node subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_no_effect_promise():
     """Effect.promise must not appear — it bypasses Effect's scope and interruption model."""
-    src = _read_vcs()
-    assert "Effect.promise" not in src, "vcs.ts still uses Effect.promise"
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/opencode/src/project/vcs.ts', 'utf8');
+
+// Strip single-line comments and check remaining code for Effect.promise
+const lines = src.split('\n');
+const codeLines = lines.filter(l => {
+    const t = l.trim();
+    return t && !t.startsWith('//') && !t.startsWith('*');
+});
+
+const found = codeLines.filter(l => l.includes('Effect.promise'));
+if (found.length > 0) {
+    console.error('Effect.promise found in code:');
+    found.forEach(l => console.error('  ' + l.trim()));
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"vcs.ts still uses Effect.promise:\n{r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_no_util_git_import():
     """The old @/util/git async utility must not be imported."""
-    src = _read_vcs()
-    assert "@/util/git" not in src, "vcs.ts still imports @/util/git"
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/opencode/src/project/vcs.ts', 'utf8');
+
+// Parse import lines and check for @/util/git
+const importLines = src.split('\n').filter(l => /^\s*import\s/.test(l));
+const gitImports = importLines.filter(l => l.includes('@/util/git'));
+if (gitImports.length > 0) {
+    console.error('Still imports @/util/git:');
+    gitImports.forEach(l => console.error('  ' + l.trim()));
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"vcs.ts still imports @/util/git:\n{r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_imports_child_process_spawner():
     """Must import ChildProcess/ChildProcessSpawner from effect's process module."""
-    src = _read_vcs()
-    has_import = re.search(
-        r"""import\s.*(?:ChildProcess|ChildProcessSpawner).*from\s+['"]effect/unstable/process['"]""",
-        src,
-    )
-    assert has_import, "Missing ChildProcess/ChildProcessSpawner import from effect/unstable/process"
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/opencode/src/project/vcs.ts', 'utf8');
+
+// Parse import statements and find ChildProcessSpawner from effect/unstable/process
+const importLines = src.split('\n').filter(l => /^\s*import\s/.test(l));
+const spawnerImport = importLines.find(l =>
+    (l.includes('ChildProcess') || l.includes('ChildProcessSpawner')) &&
+    l.includes('effect/unstable/process')
+);
+
+if (!spawnerImport) {
+    console.error('Missing ChildProcess/ChildProcessSpawner import from effect/unstable/process');
+    console.error('Found imports:');
+    importLines.forEach(l => console.error('  ' + l.trim()));
+    process.exit(1);
+}
+
+console.log(JSON.stringify({ import: spawnerImport.trim() }));
+""")
+    assert r.returncode == 0, f"Missing ChildProcessSpawner import:\n{r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert "ChildProcess" in data["import"]
 
 
 # [pr_diff] fail_to_pass
 def test_generator_git_helper_complete():
     """A generator must spawn a child process, read exit code, and extract stdout text."""
-    src = _read_vcs()
-    generators = _extract_generators(src)
-    assert generators, "No generator functions found in vcs.ts"
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/opencode/src/project/vcs.ts', 'utf8');
 
-    found = False
-    for gen in generators:
-        has_spawn = bool(re.search(r"spawn|ChildProcess\.make", gen))
-        has_exit = bool(re.search(r"\.code\b|\.exitCode\b|exitCode", gen))
-        has_output = bool(re.search(r"\.stdout\b|\.text\b|mkString|decodeText", gen))
-        has_yield = bool(re.search(r"yield\s*\*", gen))
-        if has_spawn and has_exit and has_output and has_yield:
-            found = True
-            break
+// Extract generator function bodies using brace-depth tracking
+const lines = src.split('\n');
+const generators = [];
+let depth = 0, inGen = false, current = [];
 
-    assert found, (
-        "No generator found that spawns a child process, checks exit code, "
-        "and extracts stdout text"
-    )
+for (const line of lines) {
+    if (/function\s*\*/.test(line) && !inGen) {
+        inGen = true;
+        depth = 0;
+        current = [];
+    }
+    if (inGen) {
+        current.push(line);
+        depth += (line.match(/{/g) || []).length - (line.match(/}/g) || []).length;
+        if (depth <= 0 && current.length > 3) {
+            generators.push(current.join('\n'));
+            inGen = false;
+        }
+    }
+}
+
+if (generators.length === 0) {
+    console.error('No generator functions found in vcs.ts');
+    process.exit(1);
+}
+
+// Find a generator that spawns a child process, reads exit code, and extracts stdout
+const complete = generators.find(g => {
+    const hasSpawn = /spawn|ChildProcess\.make/.test(g);
+    const hasExit = /\.code\b|\.exitCode\b|exitCode/.test(g);
+    const hasOutput = /\.stdout\b|\.text\b|mkString|decodeText/.test(g);
+    const hasYield = /yield\s*\*/.test(g);
+    return hasSpawn && hasExit && hasOutput && hasYield;
+});
+
+if (!complete) {
+    console.error('No generator found with spawn+exitCode+stdout chain');
+    console.error(`Checked ${generators.length} generator(s)`);
+    process.exit(1);
+}
+
+console.log(JSON.stringify({ generators: generators.length, status: 'PASS' }));
+""")
+    assert r.returncode == 0, f"Generator check failed:\n{r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["status"] == "PASS"
 
 
 # [pr_diff] fail_to_pass
 def test_layer_declares_spawner_dependency():
     """The layer type signature must include ChildProcessSpawner as a dependency."""
-    src = _read_vcs()
-    layer_match = re.search(
-        r"export\s+const\s+layer.*?Layer\.Layer<[^>]+>", src, re.DOTALL
-    )
-    assert layer_match, "Could not find 'export const layer' with Layer.Layer<...> type"
-    assert "ChildProcessSpawner" in layer_match.group(0), (
-        "layer type does not declare ChildProcessSpawner dependency"
-    )
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/opencode/src/project/vcs.ts', 'utf8');
+
+// Find 'export const layer' and extract its Layer.Layer<...> type annotation
+const layerMatch = src.match(/export\s+const\s+layer.*?Layer\.Layer<[^>]+>/s);
+if (!layerMatch) {
+    console.error("Could not find 'export const layer' with Layer.Layer<...> type");
+    process.exit(1);
+}
+
+const typeAnnotation = layerMatch[0];
+if (!typeAnnotation.includes('ChildProcessSpawner')) {
+    console.error('Layer type does not declare ChildProcessSpawner dependency');
+    console.error('Found: ' + typeAnnotation);
+    process.exit(1);
+}
+
+console.log(JSON.stringify({ type: typeAnnotation.trim(), status: 'PASS' }));
+""")
+    assert r.returncode == 0, f"Layer type check failed:\n{r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["status"] == "PASS"
 
 
 # [pr_diff] fail_to_pass
 def test_default_layer_provides_spawner():
     """defaultLayer must wire in a concrete spawner (CrossSpawnSpawner or equivalent)."""
-    src = _read_vcs()
-    dl_idx = src.find("defaultLayer")
-    assert dl_idx >= 0, "defaultLayer not found"
-    has_spawner_import = bool(
-        re.search(r"import.*(?:CrossSpawn|cross-spawn-spawner)", src, re.IGNORECASE)
-    )
-    after_dl = src[dl_idx : dl_idx + 500]
-    dl_refs_spawner = bool(
-        re.search(r"(?:CrossSpawn|Spawner|spawner)", after_dl, re.IGNORECASE)
-    )
-    assert has_spawner_import and dl_refs_spawner, (
-        "defaultLayer does not provide a concrete spawner implementation"
-    )
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/opencode/src/project/vcs.ts', 'utf8');
+
+// Check for CrossSpawnSpawner import
+const hasImport = /import.*(?:CrossSpawn|cross-spawn-spawner)/i.test(src);
+if (!hasImport) {
+    console.error('No CrossSpawnSpawner import found');
+    process.exit(1);
+}
+
+// Check defaultLayer wires in the spawner
+const dlIdx = src.indexOf('defaultLayer');
+if (dlIdx < 0) {
+    console.error('defaultLayer not found');
+    process.exit(1);
+}
+
+const afterDl = src.slice(dlIdx, dlIdx + 500);
+if (!/(?:CrossSpawn|Spawner|spawner)/i.test(afterDl)) {
+    console.error('defaultLayer does not reference a spawner implementation');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"defaultLayer spawner check failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -152,17 +254,29 @@ def test_default_layer_provides_spawner():
 # [agent_config] fail_to_pass — packages/opencode/AGENTS.md:47 @ b242a8d8e42839496c7213d020e8cba19a76e111
 def test_uses_child_process_make():
     """Must use ChildProcess.make() to construct child process descriptors (not raw spawn)."""
-    src = _read_vcs()
-    assert re.search(r"ChildProcess\.make\s*\(", src), (
-        "vcs.ts must use ChildProcess.make() per packages/opencode/AGENTS.md"
-    )
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/opencode/src/project/vcs.ts', 'utf8');
+
+// Verify ChildProcess.make() is called within a generator body
+const lines = src.split('\n');
+const makeLines = lines.filter(l => /ChildProcess\.make\s*\(/.test(l));
+if (makeLines.length === 0) {
+    console.error('ChildProcess.make() not found — required by packages/opencode/AGENTS.md');
+    process.exit(1);
+}
+
+console.log(JSON.stringify({ calls: makeLines.length, status: 'PASS' }));
+""")
+    assert r.returncode == 0, f"ChildProcess.make() check failed:\n{r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["status"] == "PASS"
 
 
 # [agent_config] pass_to_pass — packages/opencode/AGENTS.md:45 @ b242a8d8e42839496c7213d020e8cba19a76e111
 def test_no_raw_platform_api():
     """Must not use raw Node.js child_process or async exec — use Effect services instead."""
     src = _read_vcs()
-    # Check for raw Node.js process APIs that bypass Effect
     for pattern, label in [
         (r"""from\s+['"]child_process['"]""", "raw child_process import"),
         (r"""from\s+['"]node:child_process['"]""", "raw node:child_process import"),

@@ -1,0 +1,63 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24362
+  base_commit: "a617c54b0708a8c1eb850cc3b2a5caee21137a28"
+  merge_commit: "130da28d610a466721bb942e8a5e0ec47bbe3469"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "ty_python_semantic crate compiles without errors"
+
+  - id: required_rejected_in_extra_items
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ty reports invalid-type-form when Required is used in TypedDict extra_items"
+
+  - id: not_required_rejected_in_extra_items
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ty reports invalid-type-form when NotRequired is used in TypedDict extra_items"
+
+  - id: classvar_rejected_in_extra_items
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ty reports invalid-type-form when ClassVar is used in TypedDict extra_items"
+
+  - id: final_rejected_in_extra_items
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ty reports invalid-type-form when Final is used in TypedDict extra_items"
+
+  - id: readonly_extra_items_accepted
+    type: pass_to_pass
+    origin: pr_diff
+    description: "ty does not report invalid-type-form for ReadOnly or plain types in extra_items"
+
+rubric:
+  - rule: "Rust imports should always go at the top of the file, never locally in functions."
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "a617c54b0708a8c1eb850cc3b2a5caee21137a28"
+
+  - rule: "Prefer let chains (`if let` combined with `&&`) over nested `if let` statements to reduce indentation and improve readability."
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "a617c54b0708a8c1eb850cc3b2a5caee21137a28"
+
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "a617c54b0708a8c1eb850cc3b2a5caee21137a28"
+
+  - rule: "Avoid writing significant amounts of new code. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "a617c54b0708a8c1eb850cc3b2a5caee21137a28"

@@ -1,0 +1,30 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 14124
+  base_commit: "57b63ea83d5926ee23f72185c6fb8894654e2981"
+  merge_commit: "a8347c3762881f03e096e484a72302302f025a65"
+
+checks:
+  - id: typescript_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must parse without errors"
+
+  - id: uses_existssync_not_bun_file
+    type: fail_to_pass
+    origin: pr_diff
+    description: "db.ts must use existsSync from fs instead of Bun.file().size"
+
+  - id: skill_file_deleted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The bun-file-io SKILL.md file must be deleted as part of migration away from Bun APIs"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified function has real logic, not just pass/return"
+
+rubric: []

@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24402
+  base_commit: "62a863cf518086135dfd2321c92fbc3823f95de8"
+  merge_commit: "f6ef72c291d597fc6716fd00a0ee170b2da076c9"
+
+checks:
+  - id: compiles
+    type: pass_to_pass
+    origin: static
+    description: "ty_project crate compiles successfully after changes"
+
+  - id: rejects_unsupported_python_27
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Deserializing python-version='2.7' in config must fail"
+
+  - id: rejects_unsupported_python_36
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Deserializing python-version='3.6' in config must fail"
+
+  - id: accepts_supported_python_312
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Deserializing python-version='3.12' in config still succeeds"
+
+  - id: accepts_supported_python_313
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Deserializing python-version='3.13' in config still succeeds"
+
+  - id: no_panic_unwrap_in_validation
+    type: pass_to_pass
+    origin: agent_config
+    description: "No panic!/unwrap()/unreachable!() in the version validation function"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "62a863cf518086135dfd2321c92fbc3823f95de8"
+
+  - id: imports_at_file_top
+    type: pass_to_pass
+    origin: agent_config
+    description: "Rust imports at the top of the file, not locally in functions"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "62a863cf518086135dfd2321c92fbc3823f95de8"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "62a863cf518086135dfd2321c92fbc3823f95de8"
+  - rule: "Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism that could help solve the problem. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "62a863cf518086135dfd2321c92fbc3823f95de8"
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "62a863cf518086135dfd2321c92fbc3823f95de8"

@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22266
+  base_commit: "931dbceadc49eb36d6f76477e5666a03c7c641ca"
+  merge_commit: "33c9cc8994ca0b61b5415cd6d7699ea550fd397a"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  - id: transform_patches_to_flatten_logic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "transform_patches_to_flatten correctly reshapes and permutes patches for NPU compatibility"
+
+  - id: video_preprocess_wrapper_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "npu_wrapper_video_preprocess wrapper exists for Qwen3VLVideoProcessor NPU support"
+
+  - id: video_processor_patch_registered
+    type: fail_to_pass
+    origin: pr_diff
+    description: "npu_apply_qwen_image_preprocess_patch registers the Qwen3VLVideoProcessor patch"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified functions have real logic with multiple statements"
+
+  - id: function_decomposes_permute
+    type: pass_to_pass
+    origin: static
+    description: "Function decomposes >8D permute into <=8D permutes for NPU compatibility"
+
+rubric: []

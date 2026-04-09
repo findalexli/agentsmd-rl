@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "denoland/deno"
+  pr: 33143
+  base_commit: "dba93738662f4b6ad47356095f230f5be76a7908"
+  merge_commit: "6383876893b0cfe7e6622259e9207a175fa24043"
+
+checks:
+  - id: deno_npm_compiles
+    type: pass_to_pass
+    origin: static
+    description: "The deno_npm crate compiles successfully after changes"
+
+  - id: no_raw_key_comparison_for_link_packages
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Link package lookup must not compare against raw serialized lockfile key (includes peer dep suffix)"
+
+  - id: dist_check_not_using_raw_key
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The dist assignment must not use raw serialized key for link package matching"
+
+  - id: linked_peer_deps_unit_test_passes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Unit test for linked packages with peer dep lockfile keys must exist and pass"
+
+  - id: existing_snapshot_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-existing snapshot unit tests still pass"
+
+rubric:
+  - rule: "Keep your changes minimal, don't do drive-by changes in a PR."
+    source:
+      path: "CLAUDE.md"
+      lines: "30"
+      commit: "dba93738662f4b6ad47356095f230f5be76a7908"

@@ -1,0 +1,142 @@
+"""
+Task: opencode-effect-account-branded-types
+Repo: anomalyco/opencode @ 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
+PR:   17072
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import subprocess
+from pathlib import Path
+
+REPO = "/workspace/opencode"
+PKG = f"{REPO}/packages/opencode"
+
+
+def _run_bun_ts(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Write a temp TypeScript file and run it with bun."""
+    script_path = Path(PKG) / "_eval_tmp.ts"
+    script_path.write_text(script)
+    try:
+        return subprocess.run(
+            ["bun", "run", str(script_path)],
+            capture_output=True, text=True, timeout=timeout,
+            cwd=PKG,
+        )
+    finally:
+        script_path.unlink(missing_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# ---------------------------------------------------------------------------
+
+
+def test_branded_types_exported():
+    """RefreshToken, DeviceCode, UserCode branded types must be exported from schema."""
+    result = _run_bun_ts("""
+import { RefreshToken, DeviceCode, UserCode } from "./src/account/schema"
+const rt = RefreshToken.make("test-token")
+const dc = DeviceCode.make("test-code")
+const uc = UserCode.make("test-user")
+if (!rt || !dc || !uc) throw new Error("Branded type construction failed")
+console.log("ALL_BRANDED_TYPES_OK")
+""")
+    assert result.returncode == 0, f"Branded types not available: {result.stderr}"
+    assert "ALL_BRANDED_TYPES_OK" in result.stdout
+
+
+def test_schema_class_in_service():
+    """service.ts must use Schema.Class for complex data types, not Schema.Struct."""
+    service = Path(f"{PKG}/src/account/service.ts")
+    content = service.read_text()
+    # PR converts Schema.Struct to Schema.Class for multiple data types
+    schema_class_count = content.count("extends Schema.Class")
+    assert schema_class_count >= 5, (
+        f"Expected 5+ Schema.Class usages in service.ts, found {schema_class_count}"
+    )
+    # Schema.Struct should no longer be used in service.ts
+    assert "Schema.Struct" not in content, (
+        "service.ts should use Schema.Class, not Schema.Struct"
+    )
+
+
+def test_login_uses_duration():
+    """Login schema must use Duration fields and branded types for device/user codes."""
+    schema = Path(f"{PKG}/src/account/schema.ts")
+    content = schema.read_text()
+    # Login should use Schema.Duration instead of Schema.Number for time fields
+    assert "Schema.Duration" in content, (
+        "schema.ts should use Schema.Duration for time fields"
+    )
+    # Branded types should be defined
+    assert "RefreshToken" in content, "RefreshToken branded type should be defined"
+    assert "DeviceCode" in content, "DeviceCode branded type should be defined"
+    assert "UserCode" in content, "UserCode branded type should be defined"
+
+
+def test_repo_uses_layer_effect():
+    """AccountRepo must use Layer.effect with Effect.gen and AccountRepo.of."""
+    repo = Path(f"{PKG}/src/account/repo.ts")
+    content = repo.read_text()
+    assert "Layer.effect" in content, (
+        "repo.ts should use Layer.effect (not Layer.succeed)"
+    )
+    assert "AccountRepo.of" in content, (
+        "repo.ts should return AccountRepo.of({...})"
+    )
+    assert "Effect.gen" in content, (
+        "repo.ts should use Effect.gen for service composition"
+    )
+    assert "export namespace AccountRepo" in content, (
+        "AccountRepo should export a Service namespace"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Config / instruction file update checks
+# ---------------------------------------------------------------------------
+
+
+def test_agents_md_has_effect_guide():
+    """packages/opencode/AGENTS.md must include an Effect guide section."""
+    agents_md = Path(f"{PKG}/AGENTS.md")
+    content = agents_md.read_text()
+    assert "Effect guide" in content, (
+        "AGENTS.md should have an Effect guide section"
+    )
+    # Check for key subsections documenting different patterns
+    lower = content.lower()
+    assert "schema" in lower, "Effect guide should document Schema patterns"
+    assert "service" in lower, "Effect guide should document Service patterns"
+    assert "error" in lower, "Effect guide should document Error patterns"
+
+
+def test_agents_md_branded_schema_rule():
+    """AGENTS.md must document branded schema (Schema.brand) usage."""
+    agents_md = Path(f"{PKG}/AGENTS.md")
+    content = agents_md.read_text()
+    assert "Schema.brand" in content, (
+        "AGENTS.md should document Schema.brand for single-value types"
+    )
+    assert "branded" in content.lower(), (
+        "AGENTS.md should mention branded schemas"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (agent_config) — existing behavior maintained
+# ---------------------------------------------------------------------------
+
+
+def test_drizzle_snake_case():
+    """Drizzle schema field names use snake_case per root AGENTS.md convention."""
+    sql_schema = Path(f"{PKG}/src/account/account.sql.ts")
+    content = sql_schema.read_text()
+    # Verify snake_case field names are used in Drizzle table definitions
+    assert "active_account_id" in content
+    assert "active_org_id" in content
+    assert "access_token" in content
+    assert "refresh_token" in content
+    assert "token_expiry" in content

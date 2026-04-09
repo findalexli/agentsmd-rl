@@ -1,0 +1,31 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39979
+  base_commit: "cec7b21afa00c0f48e46859c683680a2c6e9e029"
+  merge_commit: "9c069597ff7c822052832c0e46eda76f37f9c1ef"
+
+checks:
+  - id: expressions_with_arrow_not_wrapped
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Expressions containing '=>' should not be incorrectly wrapped as functions"
+
+  - id: proper_function_detection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Fix uses proper function detection with typeof === 'function' instead of includes('=>')"
+
+  - id: nullish_coalescing_for_undefined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Uses nullish coalescing operator (??) for undefined result handling"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified function has real logic, not just pass/return"
+
+rubric:
+  []

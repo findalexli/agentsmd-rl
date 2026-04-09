@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "angular/angular"
+  pr: 67018
+  base_commit: "d75046bc091699bbadcb5f2032be627e983ee6fa"
+  merge_commit: "62453330f56dbfb65711692097189e13c528d522"
+
+checks:
+  - id: symlink_exists_and_resolves
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".agent/rules/agents.md symlink exists and resolves to AGENTS.md content"
+
+  - id: agents_md_has_frontmatter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md has YAML frontmatter with trigger: always_on"
+
+  - id: prettierignore_has_agent_entry
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".prettierignore includes .agent/rules/agents.md entry"
+
+  - id: pullapprove_has_agent_glob
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".pullapprove.yml includes .agent/**/{*,.*} glob pattern"
+
+  - id: agents_md_has_environment_section
+    type: pass_to_pass
+    origin: static
+    description: "AGENTS.md retains core environment documentation"
+
+  - id: prettierignore_exists
+    type: pass_to_pass
+    origin: static
+    description: ".prettierignore file exists and has content"
+
+rubric: []

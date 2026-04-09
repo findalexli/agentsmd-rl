@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 17072
+  base_commit: "2aae0d3493ac51aa2fd3929c6db0814ab795b04b"
+  merge_commit: "981c7b9e375b7d9ac57d2d6a3179451139b2b99b"
+
+checks:
+  - id: branded_types_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RefreshToken, DeviceCode, UserCode branded types are exported and constructable"
+
+  - id: schema_class_in_service
+    type: fail_to_pass
+    origin: pr_diff
+    description: "service.ts uses Schema.Class for complex data types (not Schema.Struct)"
+
+  - id: login_uses_duration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Login schema uses Duration fields for expiry and interval, with branded types for codes"
+
+  - id: repo_uses_layer_effect
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AccountRepo uses Layer.effect with Effect.gen and AccountRepo.of pattern"
+
+  - id: agents_md_has_effect_guide
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/opencode/AGENTS.md includes an Effect guide section with schema, service, and error patterns"
+
+  - id: agents_md_branded_schema_rule
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md documents branded schema (Schema.brand) usage for single-value types"
+
+  - id: drizzle_snake_case
+    type: pass_to_pass
+    origin: agent_config
+    description: "Drizzle schema uses snake_case field names per root AGENTS.md convention"
+    source:
+      path: "AGENTS.md"
+      lines: "100-102"
+      commit: "2aae0d3493ac51aa2fd3929c6db0814ab795b04b"
+
+rubric:
+  - rule: "Code follows single-word variable naming preference from the style guide"
+    source:
+      path: "AGENTS.md"
+      lines: "19-32"
+      commit: "2aae0d3493ac51aa2fd3929c6db0814ab795b04b"

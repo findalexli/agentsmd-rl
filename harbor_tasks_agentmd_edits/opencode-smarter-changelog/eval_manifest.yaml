@@ -1,0 +1,58 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 20138
+  base_commit: "057848deb847d59250e7db08ab2402f4a69bfcda"
+  merge_commit: "93fad99f7f345173250aeb336e8e3c49d46d524e"
+
+checks:
+  # Code behavior tests (subprocess execution)
+  - id: raw_changelog_runs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "script/raw-changelog.ts exists and --help outputs usage info"
+
+  - id: changelog_wrapper_flags
+    type: fail_to_pass
+    origin: pr_diff
+    description: "script/changelog.ts --help shows new --variant, --quiet, --print flags"
+
+  - id: version_uses_bun_script
+    type: fail_to_pass
+    origin: pr_diff
+    description: "script/version.ts calls bun script/changelog.ts instead of opencode run"
+
+  # Config/instruction file update tests
+  - id: command_uses_raw_changelog
+    type: fail_to_pass
+    origin: pr_diff
+    description: "changelog.md command uses raw-changelog.ts for input generation"
+
+  - id: command_user_focus_guidance
+    type: fail_to_pass
+    origin: pr_diff
+    description: "changelog.md includes user-focused guidance about flow-on effects"
+
+  - id: command_wraps_input_in_tags
+    type: fail_to_pass
+    origin: pr_diff
+    description: "changelog.md wraps input in <changelog_input> tags"
+
+  # Regression checks (pass_to_pass)
+  - id: raw_changelog_has_sections
+    type: pass_to_pass
+    origin: pr_diff
+    description: "raw-changelog.ts defines section mapping for all product areas"
+
+  - id: command_preserves_attribution_rules
+    type: pass_to_pass
+    origin: pr_diff
+    description: "changelog.md preserves deterministic attribution rules"
+
+rubric:
+  - rule: "Config update is consistent with the style of existing command templates in .opencode/command/"
+    source:
+      path: ".opencode/command/commit.md"
+      lines: "1-30"
+      commit: "057848deb847d59250e7db08ab2402f4a69bfcda"

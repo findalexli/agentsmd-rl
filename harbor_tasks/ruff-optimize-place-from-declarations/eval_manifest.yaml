@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24444
+  base_commit: "398e2a79c488cf2ae59512ea31e00626d7dd8833"
+  merge_commit: "2deaa47e5f3006e81d13567ba8f74ae930bfa080"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "ty_python_semantic crate compiles without errors"
+
+  - id: or_else_method_semantics
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Truthiness::or_else lazy method exists and has correct semantics"
+
+  - id: lazy_deleted_reachability_eval
+    type: fail_to_pass
+    origin: pr_diff
+    description: "deleted_reachability uses or_else for lazy evaluation in place_from_bindings_impl"
+
+  - id: declarations_boundness_evaluator
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DeclarationsBoundnessEvaluator enum defined to defer reachability evaluation"
+
+  - id: is_non_exported_standalone
+    type: fail_to_pass
+    origin: pr_diff
+    description: "is_non_exported extracted as standalone function from closure"
+
+  - id: existing_crate_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing ty_python_semantic tests still pass"
+
+  - id: no_local_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Rust imports are at the top of the file, not inside functions"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "398e2a79c488cf2ae59512ea31e00626d7dd8833"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "398e2a79c488cf2ae59512ea31e00626d7dd8833"
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "398e2a79c488cf2ae59512ea31e00626d7dd8833"
+  - rule: "Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism that could help solve the problem. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "398e2a79c488cf2ae59512ea31e00626d7dd8833"

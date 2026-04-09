@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 536
+  base_commit: "5c5560039dad1359efc2dcd7e3a939bc3d95b6fe"
+  merge_commit: "04a824e3f685b6a686e3308c65c1bd637a3e8eeb"
+
+checks:
+  # === Gates (pass_to_pass, static) ===
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified Python files must parse without errors"
+
+  # === Fail-to-pass (pr_diff) — core code behavioral tests ===
+  - id: trainer_checkpoint_manager_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Trainer CheckpointManager class must exist with save/load methods"
+
+  - id: orchestrator_checkpoint_manager_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Orchestrator CheckpointManager class must exist with save/load methods"
+
+  - id: checkpoint_config_has_resume_step
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CheckpointConfig must have resume_step and save_async fields"
+
+  - id: weights_module_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "weights.py module must exist with save_weight_checkpoint function"
+
+  - id: weight_filename_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Orchestrator utils.py should use pytorch_model.bin not model.pt"
+
+  - id: client_uses_pytorch_model_bin
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Client.py should use pytorch_model.bin"
+
+  - id: orchestrator_config_path_changes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "OrchestratorConfig should use rollout_path/weights_path, not PathConfig"
+
+  - id: checkpoint_save_load_cycle
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CheckpointManager can save and load progress correctly"
+
+  # === Fail-to-pass (pr_diff) — config/documentation update tests ===
+  - id: readme_has_checkpointing_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md must document the checkpointing feature with resume_step"
+
+  - id: readme_section_renamed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md should have 'Developer' and 'Configs' sections"
+
+rubric: []

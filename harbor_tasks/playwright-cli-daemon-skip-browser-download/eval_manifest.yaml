@@ -1,0 +1,41 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39978
+  base_commit: "9c069597ff7c822052832c0e46eda76f37f9c1ef"
+  merge_commit: "367517dd29df3fb0e89b13a47b5cddff6aa1f6c4"
+
+checks:
+  - id: typescript_valid_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript file must have valid syntax (parsable)"
+
+  - id: env_var_check_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD env var check exists with correct import"
+
+  - id: resolve_and_install_helper_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resolveAndInstall() helper function exists and uses resolveBrowsers()"
+
+  - id: ffmpeg_dependency_installation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ffmpeg is resolved and installed as a dependency in findOrInstallDefaultBrowser"
+
+  - id: chromium_uses_resolve_and_install
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Chromium installation uses resolveAndInstall() helper instead of manual executable check"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified functions have real logic, not just pass/return"
+
+rubric:
+  []

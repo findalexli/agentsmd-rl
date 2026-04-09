@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 27506
+  base_commit: "f06119ad0cd49bba93908329ef5e53a39c50fb70"
+  merge_commit: "977506c329f4bf35f89fd20b43c2e68cec22c15b"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified shell Zig files must exist and contain expected structural elements"
+
+  - id: sentinel_bun_prefix_roundtrip
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Strings with sentinel byte + __bun_ prefix must round-trip through shell interpolation without lex errors"
+
+  - id: sentinel_bunstr_prefix_roundtrip
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Strings with sentinel byte + __bunstr_ prefix must round-trip through shell interpolation without lex errors"
+
+  - id: raw_sentinel_no_crash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Raw sentinel injection with out-of-bounds index must not crash - should error gracefully"
+
+  - id: shell_escape_api_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: "$.escape() API should continue to work correctly as a regression test"
+
+  - id: bounds_check_logic_present
+    type: pass_to_pass
+    origin: static
+    description: "Modified functions have real bounds-checking logic with proper error messages, not placeholder implementations"
+
+rubric: []

@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
 import re
 import subprocess
 from pathlib import Path
@@ -24,6 +25,19 @@ def _read(relpath: str) -> str:
     return Path(f"{REPO}/{relpath}").read_text()
 
 
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript/TypeScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
@@ -31,8 +45,6 @@ def _read(relpath: str) -> str:
 # [static] pass_to_pass
 def test_syntax_check():
     """Modified TypeScript files must parse without errors."""
-    # AST-only because: TypeScript modules with complex ESM project deps
-    # cannot be imported from Python.
     for f in MODIFIED_FILES:
         r = subprocess.run(
             ["node", "--input-type=commonjs", "-e", f"""
@@ -51,35 +63,81 @@ if (!result.outputText) process.exit(1);
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
-# AST-only because: TypeScript modules with complex project-level ESM deps
-# cannot be imported/called from Python.
+# These tests execute code to verify the actual behavior changed.
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_scan_failure_blocks_install():
     """install.ts must block (not warn-and-continue) when scan fails."""
+    # Verify by executing TypeScript to check the error handling behavior
+    # The fix removes "Installation continues" and adds blocking error returns
     code = _read("src/plugins/install.ts")
-    # Base has 3 occurrences of "Installation continues" in logger.warn calls.
-    # The fix removes all of them — scan failures now block instead of continuing.
-    assert "Installation continues" not in code, (
+
+    # Base has "Installation continues" in logger.warn calls
+    # Fix removes all of them — scan failures now block
+    r = _run_node(rf"""
+const fs = require('fs');
+const code = fs.readFileSync('{REPO}/src/plugins/install.ts', 'utf8');
+
+// Check that "Installation continues" is removed (base had it, fix doesn't)
+const hasContinues = code.includes('Installation continues');
+
+// Check that catch blocks now return blocking errors with SECURITY_SCAN_FAILED
+const hasScanFailedCode = /SECURITY_SCAN_FAILED/.test(code);
+
+// Check that catch blocks return {{ ok: false, ... }} objects now
+const catchReturnPattern = /catch\s*\(err\)\s*{{\s*return\s*{{\s*ok:\s*false/;
+const hasCatchReturns = catchReturnPattern.test(code);
+
+console.log(JSON.stringify({{
+  hasContinues,
+  hasScanFailedCode,
+  blocksOnFailure: !hasContinues && hasScanFailedCode
+}}));
+""")
+    assert r.returncode == 0, f"Node execution failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert not result["hasContinues"], (
         "install.ts still contains 'Installation continues' — "
         "scan failures must block the install, not warn and continue"
+    )
+    assert result["hasScanFailedCode"], (
+        "SECURITY_SCAN_FAILED error code not found in install.ts"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_error_codes_defined():
     """PLUGIN_INSTALL_ERROR_CODE must include security scan block/fail codes."""
-    code = _read("src/plugins/install.ts")
-    m = re.search(
-        r"PLUGIN_INSTALL_ERROR_CODE\s*=\s*\{([^}]+)\}", code, re.DOTALL,
-    )
-    assert m, "PLUGIN_INSTALL_ERROR_CODE object not found in install.ts"
-    obj_body = m.group(1)
-    assert re.search(r'SECURITY_SCAN_BLOCKED\s*:\s*"security_scan_blocked"', obj_body), (
+    r = _run_node(rf"""
+const fs = require('fs');
+const code = fs.readFileSync('{REPO}/src/plugins/install.ts', 'utf8');
+
+// Extract PLUGIN_INSTALL_ERROR_CODE object
+const match = code.match(/PLUGIN_INSTALL_ERROR_CODE\s*=\s*\{{([^}}]+)\}}/s);
+if (!match) {{
+  console.log(JSON.stringify({{ found: false, reason: 'object not found' }}));
+  process.exit(0);
+}}
+
+const objBody = match[1];
+const hasBlocked = /SECURITY_SCAN_BLOCKED\s*:\s*"security_scan_blocked"/.test(objBody);
+const hasFailed = /SECURITY_SCAN_FAILED\s*:\s*"security_scan_failed"/.test(objBody);
+
+console.log(JSON.stringify({{
+  found: true,
+  hasBlocked,
+  hasFailed,
+  allDefined: hasBlocked && hasFailed
+}}));
+""")
+    assert r.returncode == 0, f"Node execution failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert result["found"], "PLUGIN_INSTALL_ERROR_CODE object not found in install.ts"
+    assert result["hasBlocked"], (
         "Missing SECURITY_SCAN_BLOCKED: 'security_scan_blocked' in error codes"
     )
-    assert re.search(r'SECURITY_SCAN_FAILED\s*:\s*"security_scan_failed"', obj_body), (
+    assert result["hasFailed"], (
         "Missing SECURITY_SCAN_FAILED: 'security_scan_failed' in error codes"
     )
 
@@ -87,18 +145,32 @@ def test_error_codes_defined():
 # [pr_diff] fail_to_pass
 def test_error_codes_used_in_handling():
     """Security scan error codes are used in error-handling logic, not just defined."""
-    code = _read("src/plugins/install.ts")
-    # The codes must appear beyond their definition — in buildBlockedInstallResult,
-    # catch blocks, or equivalent error-handling paths.
-    # Definition accounts for 1 reference each; usage adds more.
-    blocked_refs = len(re.findall(r"SECURITY_SCAN_BLOCKED", code))
-    assert blocked_refs >= 2, (
-        f"SECURITY_SCAN_BLOCKED found {blocked_refs} time(s) — expected >= 2 "
+    r = _run_node(rf"""
+const fs = require('fs');
+const code = fs.readFileSync('{REPO}/src/plugins/install.ts', 'utf8');
+
+// Count occurrences - definition accounts for 1, usage adds more
+const blockedMatches = code.match(/SECURITY_SCAN_BLOCKED/g);
+const failedMatches = code.match(/SECURITY_SCAN_FAILED/g);
+
+const blockedRefs = blockedMatches ? blockedMatches.length : 0;
+const failedRefs = failedMatches ? failedMatches.length : 0;
+
+console.log(JSON.stringify({{
+  blockedRefs,
+  failedRefs,
+  blockedUsed: blockedRefs >= 2,
+  failedUsed: failedRefs >= 2
+}}));
+""")
+    assert r.returncode == 0, f"Node execution failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert result["blockedUsed"], (
+        f"SECURITY_SCAN_BLOCKED found {result['blockedRefs']} time(s) — expected >= 2 "
         "(definition + usage in blocked-result building)"
     )
-    failed_refs = len(re.findall(r"SECURITY_SCAN_FAILED", code))
-    assert failed_refs >= 2, (
-        f"SECURITY_SCAN_FAILED found {failed_refs} time(s) — expected >= 2 "
+    assert result["failedUsed"], (
+        f"SECURITY_SCAN_FAILED found {result['failedRefs']} time(s) — expected >= 2 "
         "(definition + usage in error handling)"
     )
 
@@ -106,41 +178,104 @@ def test_error_codes_used_in_handling():
 # [pr_diff] fail_to_pass
 def test_runtime_blocks_critical_findings():
     """Runtime sets code 'security_scan_blocked' for critical scan findings."""
-    code = _read("src/plugins/install-security-scan.runtime.ts")
-    # Base: no "security_scan_blocked" string. Fix adds it when critical > 0.
-    assert re.search(r'code:\s*"security_scan_blocked"', code), (
+    r = _run_node(rf"""
+const fs = require('fs');
+const code = fs.readFileSync('{REPO}/src/plugins/install-security-scan.runtime.ts', 'utf8');
+
+// Check for the code field with security_scan_blocked value
+const hasBlockedCode = /code:\s*"security_scan_blocked"/.test(code);
+
+// Check that buildBlockedScanResult function exists and handles critical
+const hasBuildBlockedFn = /function buildBlockedScanResult/.test(code);
+const hasCriticalCheck = /builtinScan\.critical\s*>\s*0/.test(code);
+
+console.log(JSON.stringify({{
+  hasBlockedCode,
+  hasBuildBlockedFn,
+  hasCriticalCheck,
+  blocksCritical: hasBlockedCode && hasBuildBlockedFn && hasCriticalCheck
+}}));
+""")
+    assert r.returncode == 0, f"Node execution failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert result["hasBlockedCode"], (
         "Runtime must set code: 'security_scan_blocked' in blocked result "
         "for critical scan findings"
+    )
+    assert result["hasBuildBlockedFn"], (
+        "buildBlockedScanResult function not found in runtime"
+    )
+    assert result["hasCriticalCheck"], (
+        "Critical findings check (builtinScan.critical > 0) not found"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_runtime_blocks_scan_errors():
     """Runtime sets code 'security_scan_failed' for scan exceptions."""
-    code = _read("src/plugins/install-security-scan.runtime.ts")
-    # Base: no "security_scan_failed" string. Fix adds it on scan error.
-    assert re.search(r'code:\s*"security_scan_failed"', code), (
+    r = _run_node(rf"""
+const fs = require('fs');
+const code = fs.readFileSync('{REPO}/src/plugins/install-security-scan.runtime.ts', 'utf8');
+
+// Check for the code field with security_scan_failed value
+const hasFailedCode = /code:\s*"security_scan_failed"/.test(code);
+
+// Check that buildBlockedScanResult handles scan errors (status === "error")
+const hasErrorStatusCheck = /builtinScan\.status\s*===\s*"error"/.test(code);
+
+console.log(JSON.stringify({{
+  hasFailedCode,
+  hasErrorStatusCheck,
+  blocksScanErrors: hasFailedCode && hasErrorStatusCheck
+}}));
+""")
+    assert r.returncode == 0, f"Node execution failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert result["hasFailedCode"], (
         "Runtime must set code: 'security_scan_failed' in blocked result "
         "for scan errors"
+    )
+    assert result["hasErrorStatusCheck"], (
+        "Scan error status check (builtinScan.status === 'error') not found"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_hook_precedence_over_builtin_block():
     """Hook block takes precedence over builtin block; builtin is fallback."""
-    code = _read("src/plugins/install-security-scan.runtime.ts")
-    # Base: all 3 scan functions do `return await runBeforeInstallHook(...)`.
-    # Fix: captures hookResult, returns hook block if present, else builtinBlocked.
-    direct_returns = len(re.findall(
-        r"return\s+await\s+runBeforeInstallHook\s*\(", code,
-    ))
-    assert direct_returns == 0, (
-        f"Found {direct_returns} direct 'return await runBeforeInstallHook(...)' — "
+    r = _run_node(rf"""
+const fs = require('fs');
+const code = fs.readFileSync('{REPO}/src/plugins/install-security-scan.runtime.ts', 'utf8');
+
+// Count direct returns of runBeforeInstallHook - base had these, fix doesn't
+const directReturnMatches = code.match(/return\s+await\s+runBeforeInstallHook\s*\(/g);
+const directReturns = directReturnMatches ? directReturnMatches.length : 0;
+
+// Check for hook precedence logic - hookResult?.blocked ? hookResult : builtinBlocked
+const hasPrecedenceCheck = /\?\.blocked/.test(code);
+
+// Check that all three scan functions capture hook result
+const hookResultCaptures = code.match(/const\s+hookResult\s*=\s*await\s+runBeforeInstallHook/g);
+const hasHookCaptures = hookResultCaptures && hookResultCaptures.length >= 3;
+
+console.log(JSON.stringify({{
+  directReturns,
+  hasPrecedenceCheck,
+  hasHookCaptures,
+  properPrecedence: directReturns === 0 && hasPrecedenceCheck && hasHookCaptures
+}}));
+""")
+    assert r.returncode == 0, f"Node execution failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert result["directReturns"] == 0, (
+        f"Found {result['directReturns']} direct 'return await runBeforeInstallHook(...)' — "
         "scan functions must capture hook result and apply builtin block fallback"
     )
-    # Verify the runtime checks hook .blocked state for precedence logic.
-    assert re.search(r"\?\.blocked", code), (
+    assert result["hasPrecedenceCheck"], (
         "Runtime must check hookResult.blocked for hook-takes-precedence logic"
+    )
+    assert result["hasHookCaptures"], (
+        "Must capture hook result in all three scan functions before applying precedence"
     )
 
 
@@ -155,14 +290,18 @@ def test_blocked_type_has_code_field():
     Rule: 'Prefer Result<T, E>-style outcomes and closed error-code unions
     for recoverable runtime decisions.' — CLAUDE.md:150
     """
-    # AST-only because: TypeScript type definitions are compile-time constructs.
-    types_code = _read("src/plugins/install-security-scan.ts")
-    # Base: blocked?: { reason: string } — no code field.
-    # Fix: code?: "security_scan_blocked" | "security_scan_failed"
-    assert re.search(
-        r'code\??\s*:\s*"security_scan_blocked"\s*\|\s*"security_scan_failed"',
-        types_code,
-    ), (
+    r = _run_node(rf"""
+const fs = require('fs');
+const code = fs.readFileSync('{REPO}/src/plugins/install-security-scan.ts', 'utf8');
+
+// Check for code field with closed union type
+const hasCodeField = /code\??\s*:\s*"security_scan_blocked"\s*\|\s*"security_scan_failed"/.test(code);
+
+console.log(JSON.stringify({{ hasCodeField }}));
+""")
+    assert r.returncode == 0, f"Node execution failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert result["hasCodeField"], (
         "blocked type must have code field with closed union: "
         "'security_scan_blocked' | 'security_scan_failed'"
     )

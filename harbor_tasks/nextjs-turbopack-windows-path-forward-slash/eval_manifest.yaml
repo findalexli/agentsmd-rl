@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92076
+  base_commit: "a21f3f4008a7d4c1778649d533de76b62dffabaa"
+  merge_commit: "5be8d2eee1386eb53011026717d5c3e63c28de6a"
+
+checks:
+  - id: forward_slash_windows_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Windows paths with forward slashes (C:/path) must be recognized by WINDOWS_PATH regex"
+
+  - id: unc_path_not_mid_string
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Double-backslash must only match at start of string, not embedded mid-string"
+
+  - id: backslash_windows_path
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Traditional C:\\path format must still be recognized"
+
+  - id: unc_path_at_start
+    type: pass_to_pass
+    origin: pr_diff
+    description: "UNC paths (\\\\server\\share) at start of string must still match"
+
+  - id: regex_valid_and_nontrivial
+    type: pass_to_pass
+    origin: static
+    description: "WINDOWS_PATH regex compiles and has non-trivial content"
+
+rubric:
+  - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run `cargo fmt`"
+    source:
+      path: "CLAUDE.md"
+      lines: "414"
+      commit: "a21f3f4008a7d4c1778649d533de76b62dffabaa"

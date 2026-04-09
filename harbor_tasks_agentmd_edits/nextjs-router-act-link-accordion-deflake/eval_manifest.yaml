@@ -1,0 +1,58 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91492
+  base_commit: "8283b1260ba3eb187baf20727e739fbd8ba7bbf6"
+  merge_commit: "a060fbf9f7ba603bb32ab9cf9da48bfa9d3739d2"
+
+checks:
+  # Pass-to-pass: existing infrastructure
+  - id: link_accordion_component_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "LinkAccordion component exists at expected path (pre-existing fixture)"
+
+  # Fail-to-pass: code behavior tests
+  - id: hub_pages_structure
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Hub pages (hub-a, hub-b, hub-c) exist with LinkAccordion, connection(), and Suspense"
+
+  - id: stale_pages_link_to_hubs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dynamic stale pages have LinkAccordion links to hub pages"
+
+  - id: test_uses_hub_navigation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Test navigates via hub pages instead of browser.back()"
+
+  # Fail-to-pass: config/instruction file updates
+  - id: agents_md_router_act_rule
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md documents the LinkAccordion/router-act rule with BFCache warning"
+
+  - id: router_act_skill_created
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Router act SKILL.md exists with core patterns: LinkAccordion, hub pages, no-requests, BFCache"
+
+  - id: skill_documents_no_requests_pattern
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md documents the no-requests assertion and includes matching patterns"
+
+rubric:
+  - rule: "Skill content is consistent with the style of existing skills in .agents/skills/"
+    source:
+      path: ".agents/skills/authoring-skills/SKILL.md"
+      lines: "1-30"
+      commit: "8283b1260ba3eb187baf20727e739fbd8ba7bbf6"
+  - rule: "Hub page components follow the same patterns as existing test fixture pages"
+    source:
+      path: "AGENTS.md"
+      lines: "235-265"
+      commit: "8283b1260ba3eb187baf20727e739fbd8ba7bbf6"

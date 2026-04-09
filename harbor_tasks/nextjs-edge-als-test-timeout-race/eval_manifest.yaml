@@ -7,37 +7,37 @@ source:
   merge_commit: "542b2b029ca439815299067b47306a451587dff6"
 
 checks:
-  - id: single_fixture_executes_correctly
+  - id: test_single_fixture_executes_correctly
     type: fail_to_pass
     origin: pr_diff
     description: "Single ALS fixture file exists and returns {id: <req-id>} when invoked"
 
-  - id: multiple_fixture_executes_correctly
+  - id: test_multiple_fixture_executes_correctly
     type: fail_to_pass
     origin: pr_diff
     description: "Multiple ALS fixture file exists and returns {id, nestedId} with nested ALS"
 
-  - id: no_per_test_instance_creation
+  - id: test_no_per_test_instance_creation
     type: fail_to_pass
     origin: pr_diff
     description: "createNext not called inside test body (race condition fixed)"
 
-  - id: no_inline_route_code
+  - id: test_no_inline_route_code
     type: fail_to_pass
     origin: pr_diff
     description: "No inline route handler code as template strings in test file"
 
-  - id: uses_fetchViaHTTP
+  - id: test_uses_fetchViaHTTP
     type: pass_to_pass
     origin: pr_diff
     description: "Test still uses fetchViaHTTP from next-test-utils"
 
-  - id: concurrent_requests_with_req_id
+  - id: test_concurrent_requests_with_req_id
     type: pass_to_pass
     origin: pr_diff
     description: "Test still sends concurrent requests with req-id headers via Promise.all"
 
-  - id: uses_nexttestsetup
+  - id: test_uses_nexttestsetup
     type: fail_to_pass
     origin: agent_config
     description: "Uses nextTestSetup() API instead of createNext per AGENTS.md"
@@ -46,7 +46,7 @@ checks:
       lines: "207-221"
       commit: "9f181bd11af5f532c529a6f168fe40505f0a4d75"
 
-  - id: uses_fixture_directory
+  - id: test_uses_fixture_directory
     type: fail_to_pass
     origin: agent_config
     description: "Uses fixture directory reference (not inline files object) per AGENTS.md"
@@ -55,7 +55,7 @@ checks:
       lines: "207-221"
       commit: "9f181bd11af5f532c529a6f168fe40505f0a4d75"
 
-  - id: no_deprecated_check_function
+  - id: test_no_deprecated_check_function
     type: pass_to_pass
     origin: agent_config
     description: "Does not use deprecated check() function per AGENTS.md"
@@ -64,7 +64,7 @@ checks:
       lines: "194-205"
       commit: "9f181bd11af5f532c529a6f168fe40505f0a4d75"
 
-  - id: no_settimeout_waiting
+  - id: test_no_settimeout_waiting
     type: pass_to_pass
     origin: agent_config
     description: "Does not use setTimeout for waiting — use retry() instead per AGENTS.md"
@@ -73,7 +73,7 @@ checks:
       lines: "180-192"
       commit: "9f181bd11af5f532c529a6f168fe40505f0a4d75"
 
-  - id: not_stub
+  - id: test_not_stub
     type: pass_to_pass
     origin: static
     description: "Test file has real structure with describe/it/expect and 15+ meaningful lines"

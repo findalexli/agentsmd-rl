@@ -12,70 +12,40 @@ checks:
     origin: static
     description: "PowerShell script and SKILL.md files exist"
 
-  - id: script_default_category_is_default
+  - id: script_param_defaults
     type: fail_to_pass
     origin: pr_diff
-    description: "Script -Category default changed from 'all' to 'default'"
-
-  - id: script_default_limit_is_100
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script -Limit default changed from 10 to 100"
+    description: "Script param defaults: Category='default' (was 'all'), Limit=100 (was 10)"
 
   - id: script_validate_set_has_new_categories
     type: fail_to_pass
     origin: pr_diff
-    description: "Script ValidateSet includes approved, ready-to-review, agent-reviewed, default"
+    description: "Script ValidateSet includes default, approved, ready-to-review, agent-reviewed"
 
-  - id: script_has_assignees_field
+  - id: script_new_functions_and_fields
     type: fail_to_pass
     origin: pr_diff
-    description: "Script includes Assignees in processed PR objects"
+    description: "Script defines Write-PREntry and Get-ReadyToReviewPRNumbers, includes Assignees field and agent label handling"
 
-  - id: script_queries_agent_reviewed_prs
+  - id: script_default_mode_logic
     type: fail_to_pass
     origin: pr_diff
-    description: "Script queries for agent-reviewed and agent-approved PRs via labels"
+    description: "Script implements 'default' mode showing P/0 + milestoned, filtering CHANGES_REQUESTED"
 
-  - id: script_has_write_pr_entry_helper
+  - id: skill_md_priority_categories
     type: fail_to_pass
     origin: pr_diff
-    description: "Script has Write-PREntry helper function to avoid output repetition"
+    description: "SKILL.md lists 9 priority categories including Approved, Agent Reviewed, Ready To Review"
 
-  - id: script_has_default_mode_logic
+  - id: skill_md_param_table_defaults
     type: fail_to_pass
     origin: pr_diff
-    description: "Script implements default mode showing only P/0 + milestoned, filtering changes-requested"
+    description: "SKILL.md parameter table shows Category='default' and Limit=100"
 
-  - id: skill_md_documents_nine_categories
+  - id: skill_md_new_category_docs
     type: fail_to_pass
     origin: pr_diff
-    description: "SKILL.md lists 9 priority categories (was 6)"
-
-  - id: skill_md_documents_approved_category
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md documents the Approved (Not Merged) category"
-
-  - id: skill_md_documents_agent_reviewed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md documents the Agent Reviewed category"
-
-  - id: skill_md_default_category_value
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md parameter table shows 'default' as Category default"
-
-  - id: skill_md_limit_default_100
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md parameter table shows 100 as Limit default"
-
-  - id: skill_md_step3_includes_assignees_column
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md Step 3 mentions Assignees column in table format"
+    description: "SKILL.md documents Approved (Not Merged), Agent Reviewed, Ready To Review, and Assignees column"
 
 rubric:
   - rule: "Documentation updates are consistent with the style and formatting of the existing SKILL.md"

@@ -5,11 +5,10 @@ PR:   306184
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
-
-Note: TypeScript repo — tests use structural/regex checks on source files.
-# AST-only because: TypeScript cannot be imported or executed in Python
 """
 
+import subprocess
+import json
 import re
 from pathlib import Path
 
@@ -20,6 +19,19 @@ COPY_ACTIONS_SRC = REPO / "src/vs/workbench/contrib/chat/browser/actions/chatCop
 LIST_WIDGET_SRC = REPO / "src/vs/workbench/contrib/chat/browser/widget/chatListWidget.ts"
 APPROVAL_TEST = REPO / "src/vs/workbench/contrib/chat/test/browser/agentSessions/agentSessionApprovalModel.test.ts"
 CONTROLLER_TEST = REPO / "src/vs/workbench/contrib/chat/test/browser/agentSessions/localAgentSessionsController.test.ts"
+
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node.js in the repo directory."""
+    script = REPO / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=str(REPO),
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 def _extract_method_body(content: str, method_sig: str, max_chars: int = 3000) -> str:
@@ -40,15 +52,132 @@ def _extract_method_body(content: str, method_sig: str, max_chars: int = 3000) -
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — interface & implementation
+# Fail-to-pass (pr_diff) — behavioral: algorithm correctness via Node.js
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_getFinalResponse_algorithm():
+    """getFinalResponse correctly extracts the last contiguous markdown block from response parts."""
+    r = _run_node(r"""
+import { readFileSync } from 'fs';
+
+const src = readFileSync('src/vs/workbench/contrib/chat/common/model/chatModel.ts', 'utf-8');
+
+// Find getFinalResponse method
+const sig = 'getFinalResponse(): string';
+const sigIdx = src.indexOf(sig);
+if (sigIdx === -1) {
+    process.stderr.write('getFinalResponse method not found in source');
+    process.exit(1);
+}
+
+// Extract method body by brace matching
+let bi = src.indexOf('{', sigIdx);
+let depth = 0, ei = -1;
+for (let i = bi; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    if (src[i] === '}') { depth--; if (depth === 0) { ei = i; break; } }
+}
+if (ei === -1) { process.stderr.write('Unmatched braces'); process.exit(1); }
+
+let body = src.substring(bi + 1, ei);
+
+// Remove TS type annotations (e.g. ": string[]")
+body = body.replace(/:\s*string\[\]/g, '');
+
+// Build a standalone function using a Proxy to mock 'this' context.
+// The Proxy returns the input parts array for any property containing "part"
+// and returns a mock function for method calls (like inlineRefToRepr).
+const fnCode = [
+    'const self = new Proxy({}, {',
+    '  get(_, prop) {',
+    '    if (typeof prop === "string" && (prop.includes("Part") || prop.includes("part") || prop.includes("_resp"))) return inputParts;',
+    '    return function() {',
+    '      const p = arguments[0];',
+    '      if (p && p.inlineReference !== undefined) return typeof p.inlineReference === "string" ? p.inlineReference : String(p.inlineReference);',
+    '      return "";',
+    '    };',
+    '  }',
+    '});',
+    'return (function() {',
+    body,
+    '}).call(self);',
+].join('\n');
+
+let testFn;
+try {
+    testFn = new Function('inputParts', fnCode);
+} catch (e) {
+    process.stderr.write('Failed to create function from extracted body: ' + e.message);
+    process.exit(1);
+}
+
+function runTest(name, parts, check) {
+    try {
+        const r = testFn(parts);
+        return { test: name, pass: check(r), got: r };
+    } catch (e) {
+        return { test: name, pass: false, got: 'ERROR: ' + e.message };
+    }
+}
+
+const results = [
+    // Test 1: Last markdown after tool call
+    runTest('after_tool_call', [
+        { kind: 'markdownContent', content: { value: 'Early text' } },
+        { kind: 'externalToolInvocationUpdate' },
+        { kind: 'markdownContent', content: { value: 'Final text' } },
+    ], r => r === 'Final text'),
+
+    // Test 2: Skip trailing empty markdown and tool calls
+    runTest('skip_trailing_empty', [
+        { kind: 'markdownContent', content: { value: 'Before' } },
+        { kind: 'externalToolInvocationUpdate' },
+        { kind: 'markdownContent', content: { value: 'Answer: 42' } },
+        { kind: 'externalToolInvocationUpdate' },
+        { kind: 'markdownContent', content: { value: '' } },
+    ], r => r === 'Answer: 42'),
+
+    // Test 3: Only tool calls -> empty string
+    runTest('no_markdown', [
+        { kind: 'externalToolInvocationUpdate' },
+    ], r => r === ''),
+
+    // Test 4: All markdown, no tool calls -> joined
+    runTest('all_markdown', [
+        { kind: 'markdownContent', content: { value: 'Hello ' } },
+        { kind: 'markdownContent', content: { value: 'World' } },
+    ], r => r === 'Hello World'),
+
+    // Test 5: Inline references included
+    runTest('inline_ref', [
+        { kind: 'externalToolInvocationUpdate' },
+        { kind: 'markdownContent', content: { value: 'See ' } },
+        { kind: 'inlineReference', inlineReference: 'https://example.com/' },
+        { kind: 'markdownContent', content: { value: ' for details.' } },
+    ], r => r.includes('See ') && r.includes('for details')),
+];
+
+console.log(JSON.stringify(results));
+""")
+    assert r.returncode == 0, f"Node.js execution failed:\nstderr: {r.stderr}"
+    output = r.stdout.strip()
+    assert output, f"No output from Node.js script. stderr: {r.stderr}"
+    results = json.loads(output)
+    for t in results:
+        assert t["pass"], (
+            f"getFinalResponse scenario '{t['test']}' failed: got '{t['got']}'"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — interface declaration
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_interface_has_getFinalResponse():
     """IResponse interface declares getFinalResponse(): string."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
     content = CHATMODEL_SRC.read_text()
-    # Must be in the IResponse interface (not just anywhere in the file)
     iface_match = re.search(
         r"export\s+interface\s+IResponse\s*\{(.*?)\n\}",
         content,
@@ -64,91 +193,13 @@ def test_interface_has_getFinalResponse():
     )
 
 
-# [pr_diff] fail_to_pass
-def test_getFinalResponse_impl_exists():
-    """AbstractResponse/Response class implements getFinalResponse with real logic."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
-    content = CHATMODEL_SRC.read_text()
-    body = _extract_method_body(content, "getFinalResponse(): string {")
-    # Must have meaningful logic, not a stub
-    lines = [
-        ln.strip()
-        for ln in body.splitlines()
-        if ln.strip() and not ln.strip().startswith("//") and not ln.strip().startswith("*")
-    ]
-    assert len(lines) >= 8, (
-        f"getFinalResponse implementation has only {len(lines)} non-comment lines — "
-        "expected substantial logic for walking backwards through response parts"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_impl_handles_three_part_kinds():
-    """getFinalResponse handles markdownContent, markdownVuln, and inlineReference."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
-    content = CHATMODEL_SRC.read_text()
-    body = _extract_method_body(content, "getFinalResponse(): string {")
-    assert "markdownContent" in body, (
-        "getFinalResponse must handle 'markdownContent' parts"
-    )
-    assert "markdownVuln" in body, (
-        "getFinalResponse must handle 'markdownVuln' parts"
-    )
-    assert "inlineReference" in body, (
-        "getFinalResponse must handle 'inlineReference' parts"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_impl_reverse_iteration():
-    """getFinalResponse walks backwards through parts (reverse iteration)."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
-    content = CHATMODEL_SRC.read_text()
-    body = _extract_method_body(content, "getFinalResponse(): string {")
-    # The algorithm must iterate in reverse — check for decrement or reverse patterns
-    has_decrement = "i--" in body or "i -= 1" in body or "--i" in body
-    has_reverse = ".reverse()" in body or "reduceRight" in body
-    has_length_minus = re.search(r"\.length\s*-\s*1", body)
-    assert has_decrement or has_reverse or has_length_minus, (
-        "getFinalResponse must walk backwards through response parts — "
-        "expected reverse iteration (i--, .reverse(), or similar)"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_impl_skips_empty_content():
-    """getFinalResponse skips empty markdown parts."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
-    content = CHATMODEL_SRC.read_text()
-    body = _extract_method_body(content, "getFinalResponse(): string {")
-    # Must check for empty content (length > 0 or length === 0 or similar)
-    has_length_check = re.search(r"\.(?:length|value)\s*[><=!]", body)
-    has_empty_check = '""' in body or "=== ''" in body or ".length" in body
-    assert has_length_check or has_empty_check, (
-        "getFinalResponse must check for empty markdown content to skip trailing empties"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_impl_returns_empty_for_no_parts():
-    """getFinalResponse returns empty string when no eligible parts found."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
-    content = CHATMODEL_SRC.read_text()
-    body = _extract_method_body(content, "getFinalResponse(): string {")
-    # Must have an early return for the case where no markdown parts exist
-    assert "return ''" in body or 'return ""' in body, (
-        "getFinalResponse must return empty string when no markdown parts are found"
-    )
-
-
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — action registration & overlay
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_action_registered():
-    """CopyFinalResponseAction is registered in chatCopyActions.ts."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
+def test_action_registered_and_functional():
+    """CopyFinalResponseAction is registered, calls getFinalResponse, writes to clipboard, gated by isResponse."""
     content = COPY_ACTIONS_SRC.read_text()
     assert "CopyFinalResponseAction" in content, (
         "CopyFinalResponseAction not found in chatCopyActions.ts"
@@ -156,56 +207,23 @@ def test_action_registered():
     assert "registerAction2" in content, (
         "CopyFinalResponseAction must be registered via registerAction2"
     )
-
-
-# [pr_diff] fail_to_pass
-def test_action_invokes_getFinalResponse():
-    """CopyFinalResponseAction calls getFinalResponse() on the response."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
-    content = COPY_ACTIONS_SRC.read_text()
-    assert "getFinalResponse()" in content, (
+    idx = content.find("CopyFinalResponseAction")
+    action_block = content[idx : idx + 1500]
+    assert "getFinalResponse()" in action_block, (
         "CopyFinalResponseAction must call getFinalResponse() on the response"
     )
-
-
-# [pr_diff] fail_to_pass
-def test_action_writes_to_clipboard():
-    """CopyFinalResponseAction writes the result to the clipboard."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
-    content = COPY_ACTIONS_SRC.read_text()
-    idx = content.find("CopyFinalResponseAction")
-    assert idx != -1, "CopyFinalResponseAction not found"
-    action_block = content[idx : idx + 1500]
     assert "clipboardService" in action_block.lower() or "writeText" in action_block, (
-        "CopyFinalResponseAction must write to the clipboard via clipboardService"
+        "CopyFinalResponseAction must write to the clipboard"
     )
-
-
-# [pr_diff] fail_to_pass
-def test_action_gated_by_isResponse():
-    """CopyFinalResponseAction menu is gated by ChatContextKeys.isResponse."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
-    content = COPY_ACTIONS_SRC.read_text()
-    # Find the CopyFinalResponseAction section
-    idx = content.find("CopyFinalResponseAction")
-    assert idx != -1
-    action_block = content[idx : idx + 800]
     assert "isResponse" in action_block, (
-        "CopyFinalResponseAction must use ChatContextKeys.isResponse for menu visibility"
+        "CopyFinalResponseAction must be gated by ChatContextKeys.isResponse"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_context_key_in_overlay():
     """isResponse context key is added to createOverlay() in chatListWidget.ts."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
     content = LIST_WIDGET_SRC.read_text()
-    # The overlay must include ChatContextKeys.isResponse.key (not just isResponseVM)
-    assert "ChatContextKeys.isResponse.key" in content, (
-        "ChatContextKeys.isResponse.key not found in chatListWidget.ts — "
-        "needed for the context menu to show/hide the copy action"
-    )
-    # Verify it's in the createOverlay call context
     overlay_idx = content.find("createOverlay")
     assert overlay_idx != -1, "createOverlay() call not found in chatListWidget.ts"
     window = content[overlay_idx : overlay_idx + 500]
@@ -220,18 +238,12 @@ def test_context_key_in_overlay():
 
 # [pr_diff] fail_to_pass
 def test_unit_tests_added():
-    """chatModel.test.ts contains getFinalResponse unit tests."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
+    """chatModel.test.ts contains getFinalResponse unit tests covering multiple scenarios."""
     content = CHATMODEL_TEST.read_text()
     assert "getFinalResponse" in content, (
         "chatModel.test.ts must have tests for getFinalResponse"
     )
-    # Verify multiple test cases exist (at least 3 of the 5 expected scenarios)
-    test_patterns = [
-        "tool call",     # after tool call scenario
-        "empty",         # empty markdown / empty response scenario
-        "inline",        # inline reference scenario
-    ]
+    test_patterns = ["tool call", "empty", "inline"]
     matches = sum(1 for p in test_patterns if p.lower() in content.lower())
     assert matches >= 2, (
         f"Expected at least 2 distinct getFinalResponse test scenarios, found {matches}"
@@ -240,14 +252,11 @@ def test_unit_tests_added():
 
 # [pr_diff] fail_to_pass
 def test_mocks_updated():
-    """Mock IResponse objects include getFinalResponse in test helper files."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
+    """Mock IResponse objects include getFinalResponse in agent session test files."""
     found = 0
     for test_file in [APPROVAL_TEST, CONTROLLER_TEST]:
-        if test_file.exists():
-            content = test_file.read_text()
-            if "getFinalResponse" in content:
-                found += 1
+        if test_file.exists() and "getFinalResponse" in test_file.read_text():
+            found += 1
     assert found >= 1, (
         "At least one mock response in agentSessions test files must include getFinalResponse"
     )
@@ -260,7 +269,6 @@ def test_mocks_updated():
 # [repo_tests] pass_to_pass
 def test_original_interface_preserved():
     """IResponse still declares getMarkdown() and toString() (not broken by changes)."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
     content = CHATMODEL_SRC.read_text()
     iface_match = re.search(
         r"export\s+interface\s+IResponse\s*\{(.*?)\n\}",
@@ -280,9 +288,7 @@ def test_original_interface_preserved():
 # [agent_config] fail_to_pass — .github/copilot-instructions.md:99 @ 94c7bf8213beb59e3181fdb61992a032fc65e9a2
 def test_action_label_title_case():
     """Copy Final Response action label uses title-case capitalization."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
     content = COPY_ACTIONS_SRC.read_text()
-    # Title-style capitalization required for command labels (copilot-instructions.md:99)
     assert "Copy Final Response" in content, (
         "Action label should be 'Copy Final Response' (title case) — "
         "required by .github/copilot-instructions.md:99"
@@ -292,7 +298,6 @@ def test_action_label_title_case():
 # [agent_config] fail_to_pass — .github/copilot-instructions.md:140 @ 94c7bf8213beb59e3181fdb61992a032fc65e9a2
 def test_no_any_in_getFinalResponse():
     """getFinalResponse body does not use 'any' or 'unknown' types."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
     content = CHATMODEL_SRC.read_text()
     body = _extract_method_body(content, "getFinalResponse(): string {")
     assert ": any" not in body, (
@@ -306,7 +311,6 @@ def test_no_any_in_getFinalResponse():
 # [agent_config] fail_to_pass — .github/copilot-instructions.md:132 @ 94c7bf8213beb59e3181fdb61992a032fc65e9a2
 def test_action_label_localized():
     """CopyFinalResponseAction label uses localize/localize2 (not a raw string)."""
-    # AST-only because: TypeScript cannot be imported or executed in Python
     content = COPY_ACTIONS_SRC.read_text()
     idx = content.find("CopyFinalResponseAction")
     assert idx != -1, "CopyFinalResponseAction not found"

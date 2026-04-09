@@ -1,0 +1,52 @@
+version: "2.0"
+
+source:
+  repo: "anthropics/claude-code"
+  pr: 10826
+  base_commit: "ae411f846195b38c8bec88914dd06132e00eadf8"
+  merge_commit: "b8a98a8df7605c0030469fb0eaa2e3f14aa3366f"
+
+checks:
+  # [pr_diff] fail_to_pass — Plugin manifest is valid
+  - id: test_plugin_json_valid
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Plugin manifest exists and is valid JSON with required fields"
+
+  # [pr_diff] fail_to_pass — Hooks configuration is valid
+  - id: test_hooks_json_valid
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Hooks configuration exists and has valid SessionStart hook"
+
+  # [pr_diff] fail_to_pass — Session-start script executes correctly
+  - id: test_session_start_executable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Session-start hook script is executable and outputs valid JSON"
+
+  # [pr_diff] fail_to_pass — README exists
+  - id: test_readme_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md exists and contains required documentation"
+
+  # [pr_diff] fail_to_pass — .gitignore updated
+  - id: test_gitignore_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".gitignore exists at root and ignores .DS_Store"
+
+  # [static] pass_to_pass — Directory structure
+  - id: test_plugin_directory_structure
+    type: pass_to_pass
+    origin: static
+    description: "Plugin directory structure matches expected layout"
+
+  # [static] pass_to_pass — Script has shebang
+  - id: test_session_start_has_shebang
+    type: pass_to_pass
+    origin: static
+    description: "Session-start script has proper shebang line"
+
+rubric: []

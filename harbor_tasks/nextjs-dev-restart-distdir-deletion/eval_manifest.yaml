@@ -1,0 +1,49 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92135
+  base_commit: "cb0d88f6e3e340216d478e0ba0c201ec23f7c15c"
+  merge_commit: "35f26a2fac583b84baee785d680e4acf0a217b34"
+
+checks:
+  - id: remove_event_handler
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Watchpack 'remove' handler exists and triggers process exit on directory deletion"
+
+  - id: missing_option_in_watchpack
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Watchpack watch call includes 'missing' option for directory deletion detection"
+
+  - id: distdir_ancestor_walking
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Ancestor directories of absDistDir inside dir are collected for watching"
+
+  - id: change_handler_guards_config_files
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Change handler only responds to config file changes, not directory changes"
+
+  - id: file_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "start-server.ts has balanced braces and no obvious syntax issues"
+
+  - id: restart_exit_code_in_remove
+    type: pass_to_pass
+    origin: static
+    description: "Remove handler uses RESTART_EXIT_CODE for process exit"
+
+  - id: dev_only_code_guard
+    type: pass_to_pass
+    origin: agent_config
+    description: "File watching code is inside the if (isDev) guard"
+    source:
+      path: "AGENTS.md"
+      lines: "300"
+      commit: "cb0d88f6e3e340216d478e0ba0c201ec23f7c15c"
+
+rubric: []

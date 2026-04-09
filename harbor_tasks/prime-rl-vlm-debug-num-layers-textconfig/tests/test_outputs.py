@@ -8,11 +8,183 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 import textwrap
 from pathlib import Path
 
 REPO = "/workspace"
 MODEL_PY = Path(f"{REPO}/src/prime_rl/trainer/model.py")
+
+# Shared preamble: extracts the debug.num_layers if-block from model.py and
+# provides a mock logger + config builder for subprocess-based tests.
+_PREAMBLE = r"""
+import ast, textwrap
+from pathlib import Path
+
+source = Path('src/prime_rl/trainer/model.py').read_text()
+tree = ast.parse(source)
+lines = source.splitlines(keepends=True)
+
+def _find_block():
+    for node in ast.walk(tree):
+        if isinstance(node, ast.If):
+            for child in ast.walk(node.test):
+                if (isinstance(child, ast.Attribute) and child.attr == 'num_layers'
+                        and isinstance(child.value, ast.Attribute)
+                        and child.value.attr == 'debug'):
+                    return textwrap.dedent(''.join(lines[node.lineno - 1:node.end_lineno]))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef):
+            for child in ast.walk(node):
+                if isinstance(child, ast.If):
+                    for gc in ast.walk(child.test):
+                        if (isinstance(gc, ast.Attribute) and gc.attr == 'num_layers'
+                                and isinstance(gc.value, ast.Attribute)
+                                and gc.value.attr == 'debug'):
+                            return textwrap.dedent(''.join(lines[child.lineno - 1:child.end_lineno]))
+    return None
+
+block = _find_block()
+assert block is not None, "Could not find debug.num_layers if-block in model.py"
+
+class _Logger:
+    def __init__(self):
+        self.warnings = []
+    def warning(self, msg, *a, **kw):
+        self.warnings.append(msg)
+    def debug(self, *a, **kw): pass
+    def info(self, *a, **kw): pass
+
+def _make_config(num_layers):
+    class D: pass
+    class C: pass
+    d = D(); d.num_layers = num_layers
+    c = C(); c.debug = d
+    return c
+
+def _run(model_config, config):
+    logger = _Logger()
+    exec(block, {'config': config, 'model_config': model_config,
+                 'logger': logger, 'min': min, 'max': max,
+                 '__builtins__': __builtins__})
+    return logger
+"""
+
+
+def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Run Python code in a subprocess inside the repo working directory."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static)
+# ---------------------------------------------------------------------------
+
+
+# [static] pass_to_pass
+def test_syntax_check():
+    """model.py must parse without syntax errors."""
+    source = MODEL_PY.read_text()
+    ast.parse(source)
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
+# ---------------------------------------------------------------------------
+
+
+# [pr_diff] fail_to_pass
+def test_vlm_no_toplevel():
+    """VLM config with num_hidden_layers only under text_config must not crash."""
+    r = _run_python(_PREAMBLE + """
+class TextConfig:
+    num_hidden_layers = 32
+
+class ModelConfig:
+    text_config = TextConfig()
+
+model_config = ModelConfig()
+_run(model_config, _make_config(num_layers=4))
+assert model_config.text_config.num_hidden_layers == 4, (
+    f"Expected 4, got {model_config.text_config.num_hidden_layers}")
+print("PASS")
+""")
+    assert r.returncode == 0, f"Subprocess failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_vlm_both_attrs():
+    """When both levels have num_hidden_layers, text_config must be modified."""
+    r = _run_python(_PREAMBLE + """
+class TextConfig:
+    num_hidden_layers = 24
+
+class ModelConfig:
+    text_config = TextConfig()
+    num_hidden_layers = 48
+
+model_config = ModelConfig()
+_run(model_config, _make_config(num_layers=6))
+assert model_config.text_config.num_hidden_layers == 6, (
+    f"Expected text_config.num_hidden_layers == 6, got {model_config.text_config.num_hidden_layers}")
+print("PASS")
+""")
+    assert r.returncode == 0, f"Subprocess failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_vlm_min_clamp():
+    """debug.num_layers > actual layers should clamp via min()."""
+    r = _run_python(_PREAMBLE + """
+class TextConfig:
+    num_hidden_layers = 8
+
+class ModelConfig:
+    text_config = TextConfig()
+
+model_config = ModelConfig()
+_run(model_config, _make_config(num_layers=100))
+assert model_config.text_config.num_hidden_layers == 8, (
+    f"Expected 8 (clamped), got {model_config.text_config.num_hidden_layers}")
+print("PASS")
+""")
+    assert r.returncode == 0, f"Subprocess failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_vlm_warning_message():
+    """Warning log must not crash for VLMs and report correct skipped layer count."""
+    r = _run_python(_PREAMBLE + """
+# Test with multiple layer counts to prevent hardcoding
+for total, requested, expected_skipped in [(32, 4, 28), (16, 4, 12), (24, 10, 14)]:
+    class TextConfig:
+        num_hidden_layers = total
+
+    class ModelConfig:
+        text_config = TextConfig()
+
+    model_config = ModelConfig()
+    logger = _run(model_config, _make_config(num_layers=requested))
+    assert logger.warnings, (
+        f"No warning logged for {total} layers, requesting {requested}")
+    assert str(expected_skipped) in str(logger.warnings[0]), (
+        f"Warning should mention {expected_skipped} skipped layers "
+        f"(total={total}, requested={requested}), got: {logger.warnings[0]}")
+print("PASS")
+""")
+    assert r.returncode == 0, f"Subprocess failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (pr_diff) — backward compatibility
+# ---------------------------------------------------------------------------
 
 
 def _extract_debug_num_layers_block():
@@ -34,7 +206,6 @@ def _extract_debug_num_layers_block():
             block_src = "".join(lines[node.lineno - 1 : node.end_lineno])
             return textwrap.dedent(block_src)
 
-    # Also check inside nested functions
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef):
             for child in ast.walk(node):
@@ -88,100 +259,6 @@ def _make_config(num_layers):
     c = Config()
     c.debug = d
     return c
-
-
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
-
-
-# [static] pass_to_pass
-def test_syntax_check():
-    """model.py must parse without syntax errors."""
-    source = MODEL_PY.read_text()
-    ast.parse(source)
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
-
-
-# [pr_diff] fail_to_pass
-def test_vlm_no_toplevel():
-    """VLM config with num_hidden_layers only under text_config must not crash."""
-    block = _extract_debug_num_layers_block()
-
-    class TextConfig:
-        num_hidden_layers = 32
-
-    class ModelConfig:
-        text_config = TextConfig()
-
-    model_config = ModelConfig()
-    _run_block(block, model_config, _make_config(num_layers=4))
-    assert model_config.text_config.num_hidden_layers == 4
-
-
-# [pr_diff] fail_to_pass
-def test_vlm_both_attrs():
-    """When both levels have num_hidden_layers, text_config must be modified."""
-    block = _extract_debug_num_layers_block()
-
-    class TextConfig:
-        num_hidden_layers = 24
-
-    class ModelConfig:
-        text_config = TextConfig()
-        num_hidden_layers = 48
-
-    model_config = ModelConfig()
-    _run_block(block, model_config, _make_config(num_layers=6))
-    assert model_config.text_config.num_hidden_layers == 6
-
-
-# [pr_diff] fail_to_pass
-def test_vlm_min_clamp():
-    """debug.num_layers > actual layers should clamp via min()."""
-    block = _extract_debug_num_layers_block()
-
-    class TextConfig:
-        num_hidden_layers = 8
-
-    class ModelConfig:
-        text_config = TextConfig()
-
-    model_config = ModelConfig()
-    _run_block(block, model_config, _make_config(num_layers=100))
-    assert model_config.text_config.num_hidden_layers == 8
-
-
-# [pr_diff] fail_to_pass
-def test_vlm_warning_message():
-    """Warning log must not crash for VLMs and report correct skipped layer count."""
-    block = _extract_debug_num_layers_block()
-
-    # Test with multiple layer counts to prevent hardcoding
-    for total, requested, expected_skipped in [(32, 4, 28), (16, 4, 12), (24, 10, 14)]:
-
-        class TextConfig:
-            num_hidden_layers = total
-
-        class ModelConfig:
-            text_config = TextConfig()
-
-        model_config = ModelConfig()
-        logger = _run_block(block, model_config, _make_config(num_layers=requested))
-        assert logger.warnings, f"No warning logged for {total} layers, requesting {requested}"
-        assert str(expected_skipped) in str(logger.warnings[0]), (
-            f"Warning should mention {expected_skipped} skipped layers (total={total}, "
-            f"requested={requested}), got: {logger.warnings[0]}"
-        )
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — backward compatibility
-# ---------------------------------------------------------------------------
 
 
 # [pr_diff] pass_to_pass

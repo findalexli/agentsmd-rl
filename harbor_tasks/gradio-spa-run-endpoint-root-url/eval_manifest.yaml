@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12894
+  base_commit: "a8e6b7ba1e6af793b6a200d4cc6b07f3151f229e"
+  merge_commit: "e0cd4cadb6d73ba70727c51cf37d7068c3cf4fbf"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "gradio/routes.py must parse without syntax errors"
+
+  - id: predict_run_endpoint_passes_actual_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "predict() passes request.url.path (not hardcoded prefix) as route_path for /run/ endpoint"
+
+  - id: predict_run_endpoint_varied_api_name
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Same route_path fix verified with a different api_name to prevent hardcoding"
+
+  - id: root_url_correct_for_run_endpoint
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Root URL from get_root_url does not contain the /run/ route path"
+
+  - id: predict_api_endpoint_root_url
+    type: pass_to_pass
+    origin: repo_tests
+    description: "/gradio_api/api/ endpoint still produces correct root URL"
+
+rubric: []

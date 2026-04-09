@@ -1,53 +1,58 @@
 version: "2.0"
 
 source:
-  repo: "{{OWNER}}/{{REPO}}"
-  pr: 0  # {{PR_NUMBER}}
-  base_commit: "{{BASE_COMMIT}}"
-  merge_commit: "{{MERGE_COMMIT}}"
+  repo: "oven-sh/bun"
+  pr: 28846
+  base_commit: "485ec522a22b469b336aece8276b507a71665a87"
+  merge_commit: "0d09afea645d2ecd0998fb8f5867536b264fed45"
 
 checks:
-  - id: syntax_check
+  # Gates
+  - id: test_source_files_exist
     type: pass_to_pass
     origin: static
-    description: "Modified files must parse without errors"
+    description: "Modified source files (config.ts, download.ts, clean.ts, CLAUDE.md) exist"
 
-  - id: core_bug_fixed
+  # Code behavior — fail-to-pass
+  - id: test_cachedir_branches_on_ci
     type: fail_to_pass
     origin: pr_diff
-    description: "TODO: describe the core behavioral change"
+    description: "resolveConfig() defaults cacheDir to shared build-cache for local builds, <buildDir>/cache for CI"
 
-  - id: edge_case
+  - id: test_download_pid_unique_temps
     type: fail_to_pass
     origin: pr_diff
-    description: "TODO: describe a second input or edge case"
+    description: "downloadWithRetry and fetchPrebuilt use process.pid in temp paths for concurrent safety"
 
-  - id: existing_tests_pass
+  - id: test_clean_cache_preset
+    type: fail_to_pass
+    origin: pr_diff
+    description: "clean.ts defines a 'cache' preset targeting the shared build cache directory"
+
+  # Config documentation — fail-to-pass (agent_config)
+  - id: test_claudemd_documents_shared_cache
+    type: fail_to_pass
+    origin: agent_config
+    description: "scripts/build/CLAUDE.md Gotchas section documents shared cache and that rm -rf build/ doesn't clear it locally"
+    source:
+      path: "scripts/build/CLAUDE.md"
+      lines: "223-235"
+      commit: "485ec522a22b469b336aece8276b507a71665a87"
+
+  # Regression — pass-to-pass
+  - id: test_cachedir_explicit_override_preserved
     type: pass_to_pass
-    origin: repo_tests
-    description: "Upstream test suite still passes"
+    origin: pr_diff
+    description: "Explicit cacheDir override still takes precedence over CI/local defaults"
 
-  - id: not_stub
+  - id: test_config_imports_homedir
     type: pass_to_pass
     origin: static
-    description: "Modified function has real logic, not just pass/return"
-
-  # Uncomment and fill if agent config rules exist:
-  # - id: config_rule
-  #   type: fail_to_pass
-  #   origin: agent_config
-  #   description: "TODO: rule from agent config"
-  #   source:
-  #     path: "AGENTS.md"
-  #     lines: "30"
-  #     commit: "{{BASE_COMMIT}}"
+    description: "config.ts imports homedir from node:os for shared cache path resolution"
 
 rubric:
-  # Soft rules for LLM judge. Only rules genuinely needing subjective evaluation.
-  # Remove this section if no applicable soft rules exist.
-  []
-  # - rule: "TODO: verbatim text from config file"
-  #   source:
-  #     path: "AGENTS.md"
-  #     lines: "45"
-  #     commit: "{{BASE_COMMIT}}"
+  - rule: "Code comments follow the existing pattern of explaining WHY, not just WHAT"
+    source:
+      path: "scripts/build/CLAUDE.md"
+      lines: "16-18"
+      commit: "485ec522a22b469b336aece8276b507a71665a87"

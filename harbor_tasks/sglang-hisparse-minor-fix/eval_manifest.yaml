@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22131
+  base_commit: "20ee59bcfc2956cb2aef2c1a4ae1e8bbda4ba52d"
+  merge_commit: "30ba1f78b0982f1fcd1d87d3b58713c11a422ee5"
+
+checks:
+  - id: syntax_check_python
+    type: pass_to_pass
+    origin: static
+    description: "Modified Python files must parse without errors"
+
+  - id: syntax_check_cuda
+    type: pass_to_pass
+    origin: static
+    description: "Modified CUDA files must have valid syntax"
+
+  - id: hisparse_coordinator_retract_in_release_req
+    type: fail_to_pass
+    origin: pr_diff
+    description: "hisparse_coordinator.retract_req must be called in release_req method"
+
+  - id: batch_is_full_reset_after_hisparse
+    type: fail_to_pass
+    origin: pr_diff
+    description: "batch_is_full must be reset to False after hisparse_coordinator assignment"
+
+  - id: retract_req_removed_from_scheduler
+    type: fail_to_pass
+    origin: pr_diff
+    description: "retract_req call must be removed from scheduler's update_running_batch method"
+
+  - id: transfer_item_warp_128bit_alignment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "transfer_item_warp must use 128-bit (16-byte) paired transfers with tail handling"
+
+  - id: not_stub_schedule_batch
+    type: pass_to_pass
+    origin: static
+    description: "release_req in schedule_batch.py has real logic"
+
+  - id: not_stub_scheduler
+    type: pass_to_pass
+    origin: static
+    description: "get_next_batch_to_run in scheduler.py has real logic"
+
+  - id: not_stub_hisparse_cuh
+    type: pass_to_pass
+    origin: static
+    description: "transfer_item_warp in hisparse.cuh has real logic"
+
+rubric: []

@@ -1,0 +1,107 @@
+version: "2.0"
+
+source:
+  repo: "dotnet/maui"
+  pr: 33179
+  base_commit: "260770c977f376c9b0190c03ed1a41920725f079"
+  merge_commit: "ef3ba62440f2365a9bba0ac3f61a4605f4cece9f"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Gates (pass_to_pass, static)
+  # ---------------------------------------------------------------------------
+
+  - id: permissions_file_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified Permissions.windows.cs compiles without errors"
+
+  - id: copilot_instructions_valid
+    type: pass_to_pass
+    origin: static
+    description: "Copilot instructions file still exists and has valid markdown structure"
+
+  - id: skill_md_valid
+    type: pass_to_pass
+    origin: static
+    description: "SKILL.md still exists and has valid structure"
+
+  - id: example_md_valid
+    type: pass_to_pass
+    origin: static
+    description: "complete-example.md still exists and has valid structure"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # ---------------------------------------------------------------------------
+
+  - id: microphone_uses_packaged_check
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Microphone permission checks IsPackagedApp before EnsureDeclared"
+
+  - id: checkstatusasync_conditional_ensuredeclared
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CheckStatusAsync only calls EnsureDeclared for packaged apps"
+
+  - id: requestasync_conditional_ensuredeclared
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RequestAsync only calls EnsureDeclared for packaged apps"
+
+  - id: tryrequestpermissionasync_extracted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TryRequestPermissionAsync helper method is extracted from RequestAsync"
+
+  - id: copilot_instructions_pr_note_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Stale PR testing note removed from copilot-instructions.md"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "200-213"
+      commit: "260770c977f376c9b0190c03ed1a41920725f079"
+
+  - id: skill_md_pr_note_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Stale PR testing note removed from SKILL.md"
+    source:
+      path: ".github/skills/pr-finalize/SKILL.md"
+      lines: "127-137"
+      commit: "260770c977f376c9b0190c03ed1a41920725f079"
+
+  - id: example_md_pr_note_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Stale PR testing note removed from complete-example.md"
+    source:
+      path: ".github/skills/pr-finalize/references/complete-example.md"
+      lines: "9-12"
+      commit: "260770c977f376c9b0190c03ed1a41920725f079"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static) — regression checks
+  # ---------------------------------------------------------------------------
+
+  - id: permissions_file_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Permissions.windows.cs has real implementation, not just stubs"
+
+  # ---------------------------------------------------------------------------
+  # Config-derived (agent_config)
+  # ---------------------------------------------------------------------------
+
+  - id: config_copilot_instructions_updated
+    type: fail_to_pass
+    origin: agent_config
+    description: "Agent config files updated to remove stale PR note per Copilot instructions"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "200-213"
+      commit: "260770c977f376c9b0190c03ed1a41920725f079"
+
+rubric: []

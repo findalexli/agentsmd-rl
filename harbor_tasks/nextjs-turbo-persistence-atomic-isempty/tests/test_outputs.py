@@ -1,0 +1,212 @@
+"""
+Task: nextjs-turbo-persistence-atomic-isempty
+Repo: next.js @ e513488d0d3bc19ae9b16b08ef43add7e4faab7c
+PR:   92481
+
+Replace RwLock-based is_empty() in TurboPersistence with lock-free AtomicBool.
+The is_empty() method is called on the hot read path (lookup_task_candidates) and
+previously acquired a read lock purely to check a boolean state that changes
+infrequently. The fix adds an AtomicBool mirror that is updated at the two
+mutation points (load_directory and commit).
+
+No Rust toolchain is available in the Docker image — cargo check would exceed
+timeout on this monorepo. Tests use subprocess to execute Python analysis scripts
+that parse the Rust source.
+"""
+
+import subprocess
+from pathlib import Path
+
+REPO = "/workspace/next.js"
+DB_FILE = f"{REPO}/turbopack/crates/turbo-persistence/src/db.rs"
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute a Python snippet via subprocess."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static)
+# ---------------------------------------------------------------------------
+
+
+# [static] pass_to_pass
+def test_source_file_valid():
+    """Source file exists with TurboPersistence struct and core structure."""
+    r = _run_py(f"""
+import sys
+from pathlib import Path
+p = Path("{DB_FILE}")
+if not p.is_file():
+    print("FAIL: db.rs missing")
+    sys.exit(1)
+src = p.read_text()
+if "struct TurboPersistence" not in src:
+    print("FAIL: TurboPersistence struct missing")
+    sys.exit(1)
+if "fn is_empty" not in src:
+    print("FAIL: is_empty method missing")
+    sys.exit(1)
+if "struct Inner" not in src:
+    print("FAIL: Inner struct missing")
+    sys.exit(1)
+lines = src.split("\\n")
+if len(lines) < 400:
+    print(f"FAIL: db.rs only {{len(lines)}} lines — likely stubbed")
+    sys.exit(1)
+print("PASS")
+""")
+    assert r.returncode == 0, f"Source check failed: {r.stdout}\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# ---------------------------------------------------------------------------
+
+
+# [pr_diff] fail_to_pass
+def test_struct_has_atomic_bool():
+    """TurboPersistence struct contains an AtomicBool field for is_empty state.
+
+    The fix adds an AtomicBool field that mirrors the emptiness of
+    inner.meta_files, avoiding lock contention on the hot read path.
+    The struct already has active_write_operation: AtomicBool on the base
+    commit, so we specifically check for a NEW AtomicBool field.
+    """
+    r = _run_py(f"""
+import re, sys
+src = open("{DB_FILE}").read()
+
+# Find TurboPersistence struct body
+match = re.search(r'pub struct TurboPersistence.*?\\{{', src, re.DOTALL)
+if not match:
+    print("FAIL: TurboPersistence struct not found")
+    sys.exit(1)
+
+# Extract struct body
+start = match.end()
+depth = 1
+pos = start
+while pos < len(src) and depth > 0:
+    if src[pos] == '{{':
+        depth += 1
+    elif src[pos] == '}}':
+        depth -= 1
+    pos += 1
+struct_body = src[start:pos]
+
+# Find all AtomicBool fields
+atomic_fields = re.findall(r'(\\w+):\\s*AtomicBool', struct_body)
+
+# active_write_operation already uses AtomicBool on the base commit
+# We need at least one MORE AtomicBool field for the is_empty mirror
+non_write_atomics = [f for f in atomic_fields if f != 'active_write_operation']
+if not non_write_atomics:
+    print("FAIL: No new AtomicBool field in TurboPersistence (only active_write_operation)")
+    sys.exit(1)
+
+print(f"PASS: found AtomicBool field(s): {{non_write_atomics}}")
+""")
+    assert r.returncode == 0, f"AtomicBool check failed: {r.stdout}\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_isempty_lock_free():
+    """is_empty() uses atomic load instead of acquiring RwLock read lock.
+
+    Before: self.inner.read().meta_files.is_empty()  (acquires read lock)
+    After:  self.is_empty.load(Ordering::Relaxed)     (lock-free atomic read)
+    """
+    r = _run_py(f"""
+import re, sys
+src = open("{DB_FILE}").read()
+
+# Find the is_empty method body
+pattern = r'pub fn is_empty\\s*\\(&self\\)\\s*->\\s*bool\\s*\\{{'
+match = re.search(pattern, src)
+if not match:
+    print("FAIL: is_empty() method signature not found")
+    sys.exit(1)
+
+start = match.end()
+depth = 1
+pos = start
+while pos < len(src) and depth > 0:
+    if src[pos] == '{{':
+        depth += 1
+    elif src[pos] == '}}':
+        depth -= 1
+    pos += 1
+method_body = src[start:pos - 1]
+
+# Negative check: must NOT use self.inner.read()
+if 'self.inner.read()' in method_body:
+    print("FAIL: is_empty() still acquires RwLock read lock via self.inner.read()")
+    sys.exit(1)
+
+# Positive check: must use atomic load
+if '.load(' not in method_body:
+    print("FAIL: is_empty() doesn't use atomic load — expected .load(Ordering::...)")
+    sys.exit(1)
+
+# Anti-stub: must not be a hardcoded constant
+stripped = method_body.strip()
+if stripped in ('true', 'false'):
+    print("FAIL: is_empty() is stubbed as a constant")
+    sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Lock-free check failed: {r.stdout}\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_atomic_synced_on_mutation():
+    """AtomicBool is updated at both meta_files mutation points.
+
+    The atomic must be stored/updated wherever inner.meta_files is modified:
+    1. In load_directory — after reading meta files from disk
+    2. In commit — after appending/removing meta files
+    Without both updates, the atomic becomes stale and is_empty() returns
+    incorrect results.
+    """
+    r = _run_py(f"""
+import re, sys
+src = open("{DB_FILE}").read()
+
+# Count .store() calls that reference meta_files.is_empty()
+# Pattern: something.store(something_meta_files.is_empty(), Ordering::...)
+store_calls = re.findall(r'\\.store\\([^)]*meta_files\\.is_empty\\(\\)[^)]*\\)', src)
+if len(store_calls) < 2:
+    print(f"FAIL: Found {{len(store_calls)}} atomic store(s) with meta_files.is_empty(), need at least 2")
+    sys.exit(1)
+
+# Verify stores are in different functions (at least 30 lines apart)
+lines = src.split("\\n")
+store_line_nums = []
+for i, line in enumerate(lines):
+    if '.store(' in line and 'meta_files.is_empty()' in line:
+        store_line_nums.append(i)
+
+if len(store_line_nums) < 2:
+    print(f"FAIL: Found atomic store on {{len(store_line_nums)}} line(s), need at least 2")
+    sys.exit(1)
+
+# Ensure they're spread across different methods (not duplicated in one place)
+if abs(store_line_nums[-1] - store_line_nums[0]) < 30:
+    print(f"FAIL: All store calls within 30 lines (lines {{store_line_nums}}) — likely same function")
+    sys.exit(1)
+
+print(f"PASS: found {{len(store_calls)}} store syncs at lines {{store_line_nums}}")
+""")
+    assert r.returncode == 0, f"Mutation sync check failed: {r.stdout}\n{r.stderr}"
+    assert "PASS" in r.stdout

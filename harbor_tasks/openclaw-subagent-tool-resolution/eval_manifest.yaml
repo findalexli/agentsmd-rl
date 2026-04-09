@@ -12,15 +12,15 @@ checks:
     origin: static
     description: "src/plugins/tools.ts must parse without errors (balanced braces, expected exports)"
 
+  - id: subagent_uses_active_registry
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Sub-agent tool resolution must reuse the gateway's active plugin registry instead of calling the loader directly (vitest behavioral test)"
+
   - id: active_registry_import
     type: fail_to_pass
     origin: pr_diff
     description: "tools.ts must import getActivePluginRegistry from ./runtime.js for subagent fallback"
-
-  - id: registry_selection_logic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Registry selection must branch on allowGatewaySubagentBinding and prefer active registry with fallback to resolveRuntimePluginRegistry"
 
   - id: resolve_tools_delegates_registry
     type: fail_to_pass

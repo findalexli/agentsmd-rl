@@ -12,17 +12,17 @@ checks:
     origin: static
     description: "Target file exists and htmlContent.js import with MarkdownString is present"
 
-  - id: escape_function_not_imported
+  - id: invocation_message_no_double_escape
     type: fail_to_pass
     origin: pr_diff
-    description: "escapeMarkdownSyntaxTokens must not be imported from htmlContent.js"
+    description: "Simulates invocation message pipeline — commands with underscores must not be double-escaped by escapeMarkdownSyntaxTokens"
 
-  - id: escaped_display_command_removed
+  - id: escape_function_not_in_scope
     type: fail_to_pass
     origin: pr_diff
-    description: "const escapedDisplayCommand variable and all references must be removed"
+    description: "escapeMarkdownSyntaxTokens must not be imported from htmlContent.js or referenced anywhere in the file"
 
-  - id: invocation_messages_use_display_command_directly
+  - id: all_localize_calls_use_display_command
     type: fail_to_pass
     origin: pr_diff
     description: "All 4 localize invocation calls must pass displayCommand directly (not escapedDisplayCommand)"

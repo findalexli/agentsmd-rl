@@ -1,0 +1,84 @@
+version: "2.0"
+
+source:
+  repo: "dotnet/maui"
+  pr: 33771
+  base_commit: "f6bafa6e590e1d1dba4b2df2e4dc20a6bad67b7a"
+  merge_commit: "62894e405b36c5b6cede44fdfe56832e26cdc8af"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Gates (pass_to_pass) — syntax / compilation checks
+  # ---------------------------------------------------------------------------
+
+  - id: powershell_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified PowerShell script parses without errors"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # ---------------------------------------------------------------------------
+
+  - id: reviewnumber_parameter_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReviewNumber parameter is removed from the script"
+
+  - id: reviewdescription_parameter_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReviewDescription parameter is removed from the script"
+
+  - id: titleissues_parameter_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TitleIssues parameter is added to the script"
+
+  - id: two_section_format
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script builds two separate sections (Title and Description) instead of per-review"
+
+  - id: comment_replaces_existing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script replaces existing comment instead of merging reviews"
+
+  - id: title_status_detection_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TitleStatus auto-detection looks for explicit status in Title Assessment section"
+
+  - id: overall_status_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Overall status calculation for reviews is removed"
+
+  - id: skillmd_updated_format
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md documents the new two-section format"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static) — structural checks
+  # ---------------------------------------------------------------------------
+
+  - id: script_not_empty
+    type: pass_to_pass
+    origin: static
+    description: "Modified script has meaningful content, not truncated"
+
+  - id: skillmd_not_empty
+    type: pass_to_pass
+    origin: static
+    description: "Modified SKILL.md has meaningful content"
+
+  - id: pr_finalize_marker_preserved
+    type: pass_to_pass
+    origin: static
+    description: "PR finalization comment marker is preserved"
+
+rubric:
+  # Soft rules for LLM judge — none needed for this structural refactor
+  []

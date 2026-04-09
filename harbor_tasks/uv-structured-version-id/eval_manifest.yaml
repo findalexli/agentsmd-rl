@@ -1,0 +1,59 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 18840
+  base_commit: "5108919f039509703656f394cb647bc01dd09766"
+  merge_commit: "c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "uv-distribution-types crate must compile without errors"
+
+  - id: archive_urls_ignore_hash_fragments
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Two archive URLs differing only in hash digest must produce equal VersionIds"
+
+  - id: archive_urls_with_subdirectory_ignore_hash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Archive URLs sharing a subdirectory but with different hashes must be equal"
+
+  - id: archive_urls_different_subdirectories_differ
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Archive URLs with different subdirectories must produce different VersionIds"
+
+  - id: git_urls_ignore_irrelevant_fragments
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Git URLs with/without irrelevant fragments (egg=) must be equal when subdirectory matches"
+
+  - id: no_unwrap_in_production_code
+    type: pass_to_pass
+    origin: agent_config
+    description: "No .unwrap() in production (non-test) code of id.rs"
+    source:
+      path: "AGENTS.md"
+      lines: "7"
+      commit: "5108919f039509703656f394cb647bc01dd09766"
+
+rubric:
+  - rule: "PREFER top-level imports over local imports or fully qualified names"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "5108919f039509703656f394cb647bc01dd09766"
+  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
+    source:
+      path: "AGENTS.md"
+      lines: "17-18"
+      commit: "5108919f039509703656f394cb647bc01dd09766"
+  - rule: "PREFER [`TypeName`] references when writing Rust doc comments"
+    source:
+      path: "AGENTS.md"
+      lines: "19"
+      commit: "5108919f039509703656f394cb647bc01dd09766"

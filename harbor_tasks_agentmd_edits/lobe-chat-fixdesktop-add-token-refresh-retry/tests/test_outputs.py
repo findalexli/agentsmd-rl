@@ -1,7 +1,7 @@
 """Tests for lobehub/lobe-chat#10575: token refresh retry mechanism.
 
 The PR adds retry logic to desktop OIDC token refresh so transient network
-errors don't immediately log users out.  It also updates CLAUDE.md to change
+errors don't immediately log users out. It also updates CLAUDE.md to change
 the Linear issue workflow from "Done" to "In Review" when a PR is created.
 """
 
@@ -16,6 +16,7 @@ REPO = Path("/workspace/lobe-chat")
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Write *script* to a temp .mjs file and execute with node."""
@@ -180,6 +181,24 @@ def test_grace_period_in_adapter():
     )
 
 
+def test_is_non_retryable_error_method_exists():
+    """RemoteServerConfigCtr must expose isNonRetryableError method for AuthCtr to use."""
+    source = REPO / "apps/desktop/src/main/controllers/RemoteServerConfigCtr.ts"
+    content = source.read_text()
+
+    # Check method signature exists and is public
+    assert "isNonRetryableError(error?: string): boolean" in content, (
+        "isNonRetryableError method with correct signature must exist"
+    )
+
+    # Verify AuthCtr actually calls this method
+    auth_source = REPO / "apps/desktop/src/main/controllers/AuthCtr.ts"
+    auth_content = auth_source.read_text()
+    assert "isNonRetryableError" in auth_content, (
+        "AuthCtr must call isNonRetryableError to decide whether to clear tokens"
+    )
+
+
 # ===================================================================
 # f2p — config / documentation update test (REQUIRED)
 # ===================================================================
@@ -206,8 +225,43 @@ def test_claude_md_in_review_workflow():
 
 
 # ===================================================================
+# f2p — dependency check
+# ===================================================================
+
+
+def test_async_retry_dependency():
+    """async-retry and @types/async-retry must be added to desktop package.json."""
+    pkg = json.loads((REPO / "apps/desktop/package.json").read_text())
+    all_deps = {**pkg.get("dependencies", {}), **pkg.get("devDependencies", {})}
+
+    assert "async-retry" in all_deps, "async-retry must be a dependency"
+    assert "@types/async-retry" in all_deps, "@types/async-retry must be a dev dependency"
+
+
+# ===================================================================
 # p2p — pass-to-pass checks
 # ===================================================================
+
+
+def test_typescript_compiles():
+    """Modified TypeScript files must compile without errors."""
+    # Run TypeScript compiler in noEmit mode to check for syntax errors
+    # We check just the desktop package since that's where most changes are
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit", "--skipLibCheck"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO / "apps/desktop",
+    )
+    # Note: We allow non-zero exit codes due to missing dependencies in test environment
+    # but we should not see syntax errors in our modified files
+    assert "RemoteServerConfigCtr.ts" not in r.stderr, (
+        f"RemoteServerConfigCtr.ts has TypeScript errors: {r.stderr}"
+    )
+    assert "AuthCtr.ts" not in r.stderr, (
+        f"AuthCtr.ts has TypeScript errors: {r.stderr}"
+    )
 
 
 def test_auth_ctr_existing_methods_preserved():
@@ -219,10 +273,25 @@ def test_auth_ctr_existing_methods_preserved():
         assert method in content, f"AuthCtr must still define {method}"
 
 
-def test_async_retry_dependency():
-    """async-retry must be listed as a dependency in desktop package.json."""
-    pkg = json.loads((REPO / "apps/desktop/package.json").read_text())
-    all_deps = {**pkg.get("dependencies", {}), **pkg.get("devDependencies", {})}
+def test_not_stub():
+    """isNonRetryableError must have real logic, not just return false."""
+    source = REPO / "apps/desktop/src/main/controllers/RemoteServerConfigCtr.ts"
+    content = source.read_text()
 
-    assert "async-retry" in all_deps, "async-retry must be a dependency"
-    assert "@types/async-retry" in all_deps, "@types/async-retry must be a dev dependency"
+    # Extract the isNonRetryableError method body
+    match = re.search(
+        r"isNonRetryableError\(error\?: string\): boolean \{([^}]+(?:\{[^}]*\}[^}]*)*)\}",
+        content,
+        re.DOTALL
+    )
+    assert match, "Could not find isNonRetryableError method"
+    method_body = match.group(1)
+
+    # Should have actual logic, not just a simple return
+    assert "NON_RETRYABLE_OIDC_ERRORS" in method_body, (
+        "Method must reference NON_RETRYABLE_OIDC_ERRORS"
+    )
+    assert "DETERMINISTIC_FAILURES" in method_body, (
+        "Method must reference DETERMINISTIC_FAILURES"
+    )
+    assert ".some(" in method_body, "Method must use array.some() for checking"

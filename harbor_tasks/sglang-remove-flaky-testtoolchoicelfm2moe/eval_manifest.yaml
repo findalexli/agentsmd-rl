@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22137
+  base_commit: "dd49127fe612800d2f2aa258c9b7086043f103fa"
+  merge_commit: "675100b53a5f0195c4d7d90d9b3b0276c4600b80"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified test file must parse without syntax errors"
+
+  - id: flaky_class_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestToolChoiceLfm2Moe flaky test class must be removed"
+
+  - id: other_test_classes_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Other test classes (TestToolChoiceLlama32, TestToolChoiceLfm2, etc.) must still exist"
+
+  - id: main_guard_preserved
+    type: pass_to_pass
+    origin: static
+    description: "The unittest main guard must be preserved"
+
+  - id: file_structure_valid
+    type: pass_to_pass
+    origin: static
+    description: "The test file must have valid Python structure with correct classes"
+
+rubric: []

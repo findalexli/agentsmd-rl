@@ -1,0 +1,49 @@
+version: "2.0"
+
+source:
+  repo: sgl-project/sglang
+  pr: 22100
+  base_commit: 1ad6839659085732a6fe308f97141841d67f6323
+  merge_commit: e9d92b0e33770651fd065c04ea28d0a5564e229d
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified test file must parse without errors"
+
+  - id: accuracy_threshold_v1
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestStandaloneSpeculativeDecodingBase.accuracy_threshold is 0.69"
+
+  - id: accuracy_threshold_v2
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestStandaloneV2SpeculativeDecodingBase.accuracy_threshold is 0.69"
+
+  - id: gsm8k_uses_greater_equal_v1
+    type: fail_to_pass
+    origin: pr_diff
+    description: "V1 test_gsm8k uses assertGreaterEqual for accuracy comparison"
+
+  - id: gsm8k_uses_greater_equal_v2
+    type: fail_to_pass
+    origin: pr_diff
+    description: "V2 test_gsm8k uses assertGreaterEqual for accuracy comparison"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "test_gsm8k methods have real logic, not just pass/return"
+
+  - id: inherits_custom_test_case
+    type: pass_to_pass
+    origin: agent_config
+    description: "Both base classes inherit from CustomTestCase"
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "12"
+      commit: 1ad6839659085732a6fe308f97141841d67f6323
+
+rubric: []

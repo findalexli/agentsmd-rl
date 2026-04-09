@@ -16,7 +16,7 @@ README = Path(REPO) / "src/workerd/server/tests/container-client/README.md"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -24,90 +24,110 @@ def test_syntax_check():
     """Modified JS files must parse without syntax errors."""
     r = subprocess.run(
         ["node", "--check", str(TEST_JS)],
-        capture_output=True,
-        timeout=30,
+        capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, (
-        f"test.js has syntax errors:\n{r.stderr.decode()}"
-    )
+    assert r.returncode == 0, f"test.js has syntax errors:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-def test_ws_promise_not_wrapped():
-    """WebSocket message listener must not be wrapped in a new Promise() constructor."""
+# [pr_diff] fail_to_pass — BEHAVIORAL: extracts + runs actual code from test.js
+def test_ws_timeout_mechanism():
+    """WebSocket promise rejects with timeout instead of hanging when no message arrives.
+
+    Extracts the promise-creation code from testInterceptWebSocket, provides a
+    mock WebSocket that never fires messages, and verifies the promise rejects
+    (fix has timeout) rather than hanging forever (base has no timeout).
+    """
     content = TEST_JS.read_text()
-    lines = content.split("\n")
-    # Find the addEventListener('message') call in testInterceptWebSocket
-    # and verify it's NOT wrapped inside a `new Promise((resolve) => { ... })` block
-    in_ws_test = False
-    for i, line in enumerate(lines):
-        if "testInterceptWebSocket" in line:
-            in_ws_test = True
-        if in_ws_test and "addEventListener" in line and "'message'" in line:
-            # Look at the 10 lines before this for a new Promise wrapper
-            context = "\n".join(lines[max(0, i - 10):i])
-            assert "new Promise" not in context, (
-                "WebSocket message listener should not be wrapped in new Promise() — "
-                "use Promise.withResolvers() or another modern pattern"
-            )
-            return
-        if in_ws_test and "ws.close()" in line:
-            break
-    # If addEventListener('message') is gone entirely, the test structure changed
-    # which is also acceptable (they may have used a completely different approach)
-    assert "addEventListener" in content and "'message'" in content, (
-        "testInterceptWebSocket should still listen for WebSocket messages"
+
+    # Find the testInterceptWebSocket method first, then locate markers within it
+    ws_method = content.find("testInterceptWebSocket")
+    assert ws_method != -1, "Could not find testInterceptWebSocket method in test.js"
+
+    start_marker = "// Listen for response"
+    end_marker = "// Send a test message"
+    start = content.find(start_marker, ws_method)
+    end = content.find(end_marker, max(start, 0))
+    assert start != -1 and end != -1, (
+        "Could not find promise creation section (between '// Listen for response' "
+        "and '// Send a test message' comments) in testInterceptWebSocket"
     )
+
+    block = content[start + len(start_marker) : end].strip()
+    # Patch 5-second timeout down to 200ms for fast testing
+    block = block.replace("5_000", "200").replace("5000", "200")
+
+    script_content = (
+        "// Mock WebSocket -- addEventListener is no-op, message never arrives\n"
+        "const ws = {\n"
+        "    accept() {},\n"
+        "    send() {},\n"
+        "    close() {},\n"
+        "    addEventListener() {}\n"
+        "};\n\n"
+        + block
+        + "\n\n"
+        "// Detect promise variable: 'promise' (fix) or 'messagePromise' (base)\n"
+        "const p = typeof promise !== 'undefined' ? promise\n"
+        "        : typeof messagePromise !== 'undefined' ? messagePromise\n"
+        "        : null;\n"
+        "if (!p) { console.error('No promise variable found'); process.exit(1); }\n\n"
+        "const HARD_LIMIT = 3000;\n"
+        "const result = await Promise.race([\n"
+        "    p.then(() => 'resolved').catch(e => 'rejected:' + e.message),\n"
+        "    new Promise(r => setTimeout(() => r('hung'), HARD_LIMIT))\n"
+        "]);\n\n"
+        "if (result.startsWith('rejected:')) {\n"
+        "    console.log('PASS');\n"
+        "} else if (result === 'hung') {\n"
+        "    console.error('FAIL: promise hangs -- no timeout mechanism');\n"
+        "    process.exit(1);\n"
+        "} else {\n"
+        "    console.error('FAIL: promise resolved unexpectedly');\n"
+        "    process.exit(1);\n"
+        "}\n"
+    )
+
+    script = Path(REPO) / "_eval_ws_timeout.mjs"
+    script.write_text(script_content)
+    try:
+        r = subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=15, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+    assert r.returncode == 0, f"WebSocket timeout test failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_ws_has_timeout():
-    """WebSocket test must have a timeout for the WebSocket message wait."""
+def test_retry_no_verbose_logging():
+    """TCP port retry loop must not log verbose info on each retry attempt."""
     content = TEST_JS.read_text()
-    lines = content.split("\n")
-    # Find the testInterceptWebSocket method and check for a timeout mechanism
-    # within that method's body (between its definition and ws.close())
-    in_ws_test = False
-    has_timeout = False
-    for line in lines:
-        if "testInterceptWebSocket" in line:
-            in_ws_test = True
-        if in_ws_test:
-            # Look for setTimeout, AbortSignal.timeout, or a timeout variable
-            # that guards the WebSocket message promise
-            if "setTimeout" in line or "Promise.race" in line:
-                has_timeout = True
-                break
-            if "Websocket message not received" in line or "timed out" in line.lower():
-                has_timeout = True
-                break
-        if in_ws_test and "ws.close()" in line:
-            break
-    assert has_timeout, (
-        "testInterceptWebSocket should have a timeout to avoid hanging when "
-        "the WebSocket message is never received"
+    assert "Retrying getTcpPort" not in content, (
+        "Verbose console.info retry logging still present -- "
+        "remove the per-retry console.info messages"
     )
 
 
 # [pr_diff] fail_to_pass
+def test_readme_safe_docker_cleanup():
+    """README uses pipe-based docker cleanup that is safe when no containers match."""
+    content = README.read_text()
+    assert "docker rm -f $(" not in content, (
+        "README uses $() subshell for docker cleanup -- errors when no containers exist. "
+        "Use pipe: docker ps -aq ... | xargs -r docker rm -f"
+    )
 
 
-# ---------------------------------------------------------------------------
-# Config edit (config_edit) — README documentation updates
-# ---------------------------------------------------------------------------
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
-
-
-# ---------------------------------------------------------------------------
-# Agent config (agent_config) — rules from AGENTS.md
-# ---------------------------------------------------------------------------
-
-# [agent_config] fail_to_pass
+# [pr_diff] fail_to_pass
+def test_readme_correct_target():
+    """README uses correct Bazel target with :container-client@ suffix."""
+    content = README.read_text()
+    assert ":container-client@" in content, (
+        "README should specify the full Bazel target with :container-client@ suffix"
+    )

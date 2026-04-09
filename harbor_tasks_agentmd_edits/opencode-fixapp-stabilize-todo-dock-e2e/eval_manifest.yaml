@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 17267
+  base_commit: "dcb17c6a678918ce0786640729fcc8cd8adb1746"
+  merge_commit: "96b1d8f639991e896bc8d31afe64d6309bf3ccd2"
+
+checks:
+  - id: ts_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files exist and are structurally valid"
+
+  - id: composer_module_runtime
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New session-composer module exports composerEvent, composerEnabled, composerDriver, composerProbe and they behave correctly in Node"
+
+  - id: state_integrates_driver
+    type: fail_to_pass
+    origin: pr_diff
+    description: "session-composer-state.ts imports and uses the composer driver/probe testing module"
+
+  - id: todo_dock_accepts_session_id
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SessionTodoDock component accepts a sessionID prop"
+
+  - id: todo_dock_uses_probe
+    type: fail_to_pass
+    origin: pr_diff
+    description: "session-todo-dock.tsx imports and uses composerProbe from testing module"
+
+  - id: region_passes_session_id
+    type: fail_to_pass
+    origin: pr_diff
+    description: "session-composer-region.tsx passes sessionID to SessionTodoDock from route params"
+
+  - id: agents_md_wait_on_state
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/app/e2e/AGENTS.md documents wait-on-state rules against wall-clock waits"
+
+  - id: agents_md_add_hooks
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/app/e2e/AGENTS.md documents rules for adding test-only hooks/probes"
+
+  - id: agents_md_prefer_helpers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/app/e2e/AGENTS.md documents preference for fluent helpers"
+
+rubric:
+  - rule: "New e2e testing rules are consistent with the style and structure of existing AGENTS.md content"
+    source:
+      path: "packages/app/e2e/AGENTS.md"
+      lines: "1-10"
+      commit: "dcb17c6a678918ce0786640729fcc8cd8adb1746"
+  - rule: "Test-only hooks follow the established pattern from packages/app/src/testing/terminal.ts"
+    source:
+      path: "packages/app/e2e/AGENTS.md"
+      lines: "174-177"
+      commit: "dcb17c6a678918ce0786640729fcc8cd8adb1746"

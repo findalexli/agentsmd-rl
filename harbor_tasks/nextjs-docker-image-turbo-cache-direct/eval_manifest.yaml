@@ -1,0 +1,60 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92029
+  base_commit: "7bce97d6485599cab2964ef58fde8a55d19904d3"
+  merge_commit: "eab7a23533d9009f24694016d2bdbdc1318df52d"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "All modified JS/MJS files parse without Node.js syntax errors"
+
+  - id: artifact_url_vercel
+    type: fail_to_pass
+    origin: pr_diff
+    description: "turbo-cache.mjs artifactUrl() returns correct vercel.com API path with /api/v8/artifacts/ prefix"
+
+  - id: artifact_url_selfhosted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "turbo-cache.mjs artifactUrl() returns /v8/artifacts/ path (no /api/) for self-hosted servers"
+
+  - id: artifact_url_team_param
+    type: fail_to_pass
+    origin: pr_diff
+    description: "turbo-cache.mjs artifactUrl() appends teamId query parameter for vercel.com"
+
+  - id: turbo_cache_exports
+    type: fail_to_pass
+    origin: pr_diff
+    description: "turbo-cache.mjs exports all required API functions (exists, get, getStream, put, artifactUrl, healthCheck)"
+
+  - id: no_build_docker_script
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/next-swc/package.json no longer has build-docker-image script entry"
+
+  - id: native_build_direct_invocation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "docker-native-build.js calls docker-image-cache.js directly instead of pnpm turbo task"
+
+  - id: build_image_preserved
+    type: pass_to_pass
+    origin: static
+    description: "docker-image-cache.js preserves the buildImage function with real docker build logic"
+
+  - id: turbo_jsonc_no_docker_task
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/next-swc/turbo.jsonc no longer defines the build-docker-image task"
+
+rubric:
+  - rule: "Always treat environment variable values as sensitive unless they are known test-mode flags. Never print or paste secret values (tokens, API keys, cookies) in chat responses, commits, or shared logs."
+    source:
+      path: "CLAUDE.md"
+      lines: "302-310"
+      commit: "7bce97d6485599cab2964ef58fde8a55d19904d3"

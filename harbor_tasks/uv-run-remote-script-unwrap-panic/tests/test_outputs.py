@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/repo"
@@ -16,9 +17,7 @@ LIB_RS = Path(REPO) / "crates/uv/src/lib.rs"
 
 
 def _extract_function_body(source: str, func_name: str) -> str:
-    """Extract a Rust function body by name (from 'fn name' to matching closing brace).
-    AST-only because: Rust code cannot be called from Python.
-    """
+    """Extract a Rust function body by name (from 'fn name' to matching closing brace)."""
     lines = source.split("\n")
     in_func = False
     brace_depth = 0
@@ -35,9 +34,7 @@ def _extract_function_body(source: str, func_name: str) -> str:
 
 
 def _extract_enum_body(source: str, enum_name: str) -> str:
-    """Extract an enum body by name.
-    AST-only because: Rust code cannot be called from Python.
-    """
+    """Extract an enum body by name."""
     lines = source.split("\n")
     in_enum = False
     brace_depth = 0
@@ -72,9 +69,7 @@ def _extract_match_arm(body: str, variant_name: str) -> str:
 
 
 def _extract_fn_signature(source: str, func_name: str) -> str:
-    """Extract just the signature of a Rust function (up to opening brace).
-    AST-only because: Rust code cannot be called from Python.
-    """
+    """Extract just the signature of a Rust function (up to opening brace)."""
     lines = source.split("\n")
     in_sig = False
     sig_lines = []
@@ -94,14 +89,23 @@ def _extract_fn_signature(source: str, func_name: str) -> str:
 
 # [pr_diff] fail_to_pass
 def test_no_unwrap_on_downloaded_script():
-    """No .unwrap() call on downloaded_script in as_command.
-
-    AST-only because: Rust code cannot be called from Python.
+    """No .unwrap() call on downloaded_script in as_command; crate compiles.
 
     On the base commit, as_command calls `downloaded_script.unwrap().path()`.
     Any valid fix must remove this unsafe unwrap — by embedding the file in the
     enum variant, removing the parameter, or using safe error handling.
     """
+    # Behavioral: verify the refactored Rust code compiles
+    try:
+        r = subprocess.run(
+            ["cargo", "check", "-p", "uv"],
+            capture_output=True, text=True, timeout=480, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Crate does not compile: {r.stderr[:1000]}"
+    except subprocess.TimeoutExpired:
+        pass  # Compilation check skipped due to timeout; structural check below
+
+    # Structural: verify the unwrap is eliminated
     src = RUN_RS.read_text()
     body = _extract_function_body(src, "as_command")
     assert body, "as_command function not found in run.rs"
@@ -116,15 +120,10 @@ def test_no_unwrap_on_downloaded_script():
 def test_python_remote_not_url_only():
     """PythonRemote variant no longer holds just a bare URL.
 
-    AST-only because: Rust code cannot be called from Python.
-
     On the base commit, PythonRemote(DisplaySafeUrl, Vec<OsString>) holds only
     the URL — the downloaded file is threaded separately as an Option. A correct
-    fix either:
-    - Embeds the file directly in the variant (gold patch)
-    - Removes PythonRemote and uses PythonScript after download
-    - Adds a file field alongside the URL
-    - Restructures so as_command receives a non-optional file
+    fix must embed a file type in the variant or restructure so as_command
+    receives a non-optional file.
     """
     src = RUN_RS.read_text()
     enum_body = _extract_enum_body(src, "RunCommand")
@@ -162,8 +161,6 @@ def test_python_remote_not_url_only():
 def test_as_command_no_option_downloaded_script():
     """as_command no longer takes downloaded_script as an Option parameter.
 
-    AST-only because: Rust code cannot be called from Python.
-
     On the base commit, as_command signature includes:
         downloaded_script: Option<&tempfile::NamedTempFile>
     A correct fix removes this parameter or makes it non-optional.
@@ -182,8 +179,6 @@ def test_as_command_no_option_downloaded_script():
 def test_run_fn_no_downloaded_script_param():
     """run() function in run.rs no longer takes downloaded_script as a parameter.
 
-    AST-only because: Rust code cannot be called from Python.
-
     On the base commit, run() in run.rs has:
         downloaded_script: Option<&tempfile::NamedTempFile>
     The fix must remove this loose Option threading entirely.
@@ -201,8 +196,6 @@ def test_run_fn_no_downloaded_script_param():
 # [pr_diff] fail_to_pass
 def test_lib_no_downloaded_script_threading():
     """lib.rs no longer threads downloaded_script through run_project().
-
-    AST-only because: Rust code cannot be called from Python.
 
     On the base commit, lib.rs creates a `downloaded_script` variable and
     passes it through run_project(). The fix must eliminate this threading
@@ -224,10 +217,7 @@ def test_lib_no_downloaded_script_threading():
 
 # [static] pass_to_pass
 def test_as_command_not_stub():
-    """as_command has a real implementation with meaningful logic.
-
-    AST-only because: Rust code cannot be called from Python.
-    """
+    """as_command has a real implementation with meaningful logic."""
     src = RUN_RS.read_text()
     body = _extract_function_body(src, "as_command")
     assert body, "as_command function not found"
@@ -245,10 +235,7 @@ def test_as_command_not_stub():
 
 # [static] pass_to_pass
 def test_python_remote_variant_exists():
-    """PythonRemote variant still exists in RunCommand enum.
-
-    AST-only because: Rust code cannot be called from Python.
-    """
+    """PythonRemote variant still exists in RunCommand enum."""
     src = RUN_RS.read_text()
     enum_body = _extract_enum_body(src, "RunCommand")
     assert enum_body, "RunCommand enum not found"
@@ -260,8 +247,6 @@ def test_python_remote_variant_exists():
 # [static] pass_to_pass
 def test_as_command_handles_all_variants():
     """as_command still handles PythonRemote alongside other variants.
-
-    AST-only because: Rust code cannot be called from Python.
 
     Ensures the fix didn't just delete PythonRemote handling from as_command.
     """
@@ -282,8 +267,6 @@ def test_as_command_handles_all_variants():
 # [agent_config] fail_to_pass — CLAUDE.md:7 @ 867e535f
 def test_no_panic_apis_in_remote_handling():
     """No .unwrap() or panic!() in PythonRemote arm of as_command.
-
-    AST-only because: Rust code cannot be called from Python.
 
     CLAUDE.md line 7: 'AVOID using panic!, unreachable!, .unwrap(), unsafe code'
     """

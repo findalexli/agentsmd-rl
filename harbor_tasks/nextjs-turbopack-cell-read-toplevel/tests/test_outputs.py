@@ -6,21 +6,47 @@ PR:   91699
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-NOTE: All checks are source-inspection based because turbopack requires
-nightly Rust + 200+ crates to compile; the Docker image (node:22-slim) has
-no Rust toolchain.
-# AST-only because: Rust code, no Rust toolchain in Docker image
+f2p tests use subprocess (git diff) to verify actual code changes were applied.
+p2p tests use structural analysis of current file state.
+No Rust toolchain in Docker image — compilation tests not possible.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/next.js"
-MANAGER = Path(REPO) / "turbopack/crates/turbo-tasks/src/manager.rs"
-TEST_FILE = (
-    Path(REPO)
-    / "turbopack/crates/turbo-tasks-backend/tests/top_level_task_consistency.rs"
+MANAGER_REL = "turbopack/crates/turbo-tasks/src/manager.rs"
+TEST_REL = (
+    "turbopack/crates/turbo-tasks-backend/tests/"
+    "top_level_task_consistency.rs"
 )
+MANAGER = Path(REPO) / MANAGER_REL
+TEST_FILE = Path(REPO) / TEST_REL
+
+
+def _git_diff(*rel_paths: str) -> str:
+    """Get diff between HEAD and working tree via subprocess."""
+    r = subprocess.run(
+        ["git", "diff", "HEAD", "--", *rel_paths],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"git diff failed: {r.stderr}"
+    return r.stdout
+
+
+def _diff_lines(diff: str, kind: str) -> list[str]:
+    """Extract stripped added (+) or removed (-) lines from a unified diff."""
+    prefix = "+" if kind == "added" else "-"
+    skip = "+++" if kind == "added" else "---"
+    return [
+        line[1:].strip()
+        for line in diff.splitlines()
+        if line.startswith(prefix) and not line.startswith(skip)
+    ]
 
 
 def _strip_comments(src: str) -> str:
@@ -31,26 +57,16 @@ def _strip_comments(src: str) -> str:
 
 
 def _find_fn_body(src: str, fn_name: str) -> str | None:
-    """Extract a Rust function/method body using brace-counting.
-
-    More reliable than regex lookahead for nested structures.
-    Returns the full text from 'fn <name>' through the closing '}'.
-    Operates on comment-stripped source to avoid false matches.
-    Skips trait method signatures (no body, just `;`).
-    """
+    """Extract a Rust function/method body using brace-counting."""
     clean = _strip_comments(src)
-    # Find all occurrences — skip trait signatures (`;` before `{`)
     for match in re.finditer(rf"\bfn\s+{fn_name}\b", clean):
-        # Check whether this is a trait signature (no body)
-        rest = clean[match.end():]
+        rest = clean[match.end() :]
         brace_idx = rest.find("{")
         semi_idx = rest.find(";")
         if brace_idx == -1:
             continue
-        # If semicolon comes before opening brace, it's a trait signature
         if 0 <= semi_idx < brace_idx:
             continue
-
         brace_pos = match.end() + brace_idx
         depth = 0
         for i in range(brace_pos, len(clean)):
@@ -64,84 +80,73 @@ def _find_fn_body(src: str, fn_name: str) -> str | None:
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via git diff
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
 def test_debug_assert_removed_from_cell_read():
-    """debug_assert_not_in_top_level_task must not appear in try_read_task_cell.
+    """debug_assert_not_in_top_level_task removed from try_read_task_cell.
 
-    Cell reads are strongly consistent, so the top-level-task guard is wrong.
-    Comments are stripped before analysis to reject commented-out code.
+    Uses git diff to verify the actual code was removed.
     """
-    src = MANAGER.read_text()
-    body = _find_fn_body(src, "try_read_task_cell")
-    assert body is not None, "Could not find try_read_task_cell method in manager.rs"
+    diff = _git_diff(MANAGER_REL)
+    assert diff.strip(), f"{MANAGER_REL} was not modified"
 
-    assert "debug_assert_not_in_top_level_task" not in body, (
-        "debug_assert_not_in_top_level_task must be removed from "
-        "try_read_task_cell — cell reads are strongly consistent"
+    removed = _diff_lines(diff, "removed")
+    assert any(
+        "debug_assert_not_in_top_level_task" in line and "read_task_cell" in line
+        for line in removed
+    ), (
+        "debug_assert_not_in_top_level_task(\"read_task_cell\") "
+        "must be removed from try_read_task_cell"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_cell_read_test_expects_success():
-    """Cell-read integration test expects success (no #[should_panic]).
+    """Cell-read test renamed and no longer expects panic.
 
-    Any test function with 'cell_read' in its name that uses
-    resolve_strongly_consistent must NOT have #[should_panic].
+    Uses git diff to verify #[should_panic] removed and test renamed.
     """
-    src = TEST_FILE.read_text()
+    diff = _git_diff(TEST_REL)
+    assert diff.strip(), f"{TEST_REL} was not modified"
 
-    # Reject: old test name still present with should_panic
-    if re.search(
-        r"#\[should_panic\].*?fn\s+test_cell_read_in_top_level_task_fails",
-        src,
-        re.DOTALL,
-    ):
-        assert False, (
-            "test_cell_read_in_top_level_task_fails still has #[should_panic]"
-        )
+    removed = _diff_lines(diff, "removed")
+    added = _diff_lines(diff, "added")
 
-    # Find a cell-read test (uses resolve_strongly_consistent) without should_panic
-    found = False
-    for m in re.finditer(r"async\s+fn\s+(test_\w*cell_read\w*)", src):
-        fn_start = m.start()
-        attr_region = src[max(0, fn_start - 300) : fn_start]
-        if "should_panic" not in attr_region:
-            found = True
-            break
-
-    assert found, (
-        "No cell-read test found that expects success (without #[should_panic])"
+    assert any("should_panic" in line for line in removed), (
+        "#[should_panic] must be removed from the cell-read test"
+    )
+    assert any("test_cell_read_in_top_level_task_fails" in line for line in removed), (
+        "Old test name test_cell_read_in_top_level_task_fails must be removed"
+    )
+    assert any("test_cell_read_in_top_level_task_succeeds" in line for line in added), (
+        "Test must be renamed to test_cell_read_in_top_level_task_succeeds"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_cell_read_test_asserts_value():
-    """Cell-read test asserts the read value instead of discarding with let _.
+    """Cell-read test asserts the read value instead of discarding.
 
-    The old test used `let _ = cell.await?` (discard). The fix must use the
-    value (e.g., assert_eq! on the result).
+    Uses git diff to verify the discard pattern was replaced with an assertion.
     """
-    src = _strip_comments(TEST_FILE.read_text())
+    diff = _git_diff(TEST_REL)
+    assert diff.strip(), f"{TEST_REL} was not modified"
 
-    for m in re.finditer(r"resolve_strongly_consistent", src):
-        region = src[m.start() : m.start() + 500]
+    removed = _diff_lines(diff, "removed")
+    added = _diff_lines(diff, "added")
 
-        # Reject: value discarded
-        if re.search(r"let\s+_\s*=\s*\w+\.await", region):
-            assert False, (
-                "Cell read value is discarded with `let _ = ...await` "
-                "— must assert the value"
-            )
-
-        # Accept: some form of assertion on the result
-        if re.search(r"(assert|assert_eq|assert_ne|expect\()", region):
-            return
-
-    assert False, "No assertion found on cell read result in the cell-read test"
+    assert any("let _" in line and "cell.await" in line for line in removed), (
+        "The discard pattern `let _ = cell.await?` must be removed"
+    )
+    assert any(
+        "let value" in line and "cell.await" in line for line in added
+    ), "The result must be bound to a variable (let value = cell.await?)"
+    assert any(
+        "assert_eq" in line and "value" in line and "42" in line for line in added
+    ), "Must assert the cell value (e.g., assert_eq!(value.value, 42))"
 
 
 # ---------------------------------------------------------------------------
@@ -152,8 +157,7 @@ def test_cell_read_test_asserts_value():
 # [pr_diff] pass_to_pass
 def test_debug_assert_preserved_in_output_methods():
     """debug_assert_not_in_top_level_task preserved in try_read_task_output
-    and try_read_local_output — those ARE eventually consistent and must
-    keep the guard.
+    and try_read_local_output — those ARE eventually consistent.
     """
     src = MANAGER.read_text()
     stripped = _strip_comments(src)
@@ -174,11 +178,7 @@ def test_debug_assert_preserved_in_output_methods():
 
 # [pr_diff] pass_to_pass
 def test_eventual_read_test_expects_panic():
-    """Eventual-read test still expects panic (#[should_panic]).
-
-    Eventual reads from top-level tasks are NOT strongly consistent and must
-    remain forbidden.
-    """
+    """Eventual-read test still expects panic (#[should_panic])."""
     src = TEST_FILE.read_text()
 
     found = False

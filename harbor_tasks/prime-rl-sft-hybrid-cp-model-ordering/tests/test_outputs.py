@@ -8,9 +8,11 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 from pathlib import Path
 
-FILE = Path("/workspace/src/prime_rl/trainer/sft/train.py")
+REPO = "/workspace"
+FILE = Path(f"{REPO}/src/prime_rl/trainer/sft/train.py")
 
 
 def _parse_train_func():
@@ -41,7 +43,6 @@ def _find_calls(node, name):
 # [static] pass_to_pass
 def test_syntax_check():
     """train.py must be valid Python."""
-    # AST-only because: train.py requires torch/distributed/CUDA — cannot import
     source = FILE.read_text()
     compile(source, str(FILE), "exec")
 
@@ -54,64 +55,135 @@ def test_syntax_check():
 def test_model_assigned_before_hybrid_cp():
     """model must be assigned (via setup_model) before setup_hybrid_cp(model, ...) is called.
 
-    The base-commit bug: setup_hybrid_cp(model, ...) runs on ~line 108 but
-    model = setup_model(...) doesn't happen until ~line 125.
-    The fix moves setup_hybrid_cp after the model assignment.
+    Executes a dataflow simulation: walks train() body in execution order,
+    tracking when 'model' is assigned and when setup_hybrid_cp(model, ...) is
+    called. Catches the base-commit bug where model is used before definition.
     """
-    # AST-only because: train.py requires torch/distributed/CUDA — cannot import
-    _, train_node = _parse_train_func()
+    script = Path(REPO) / "_eval_flow_check.py"
+    script.write_text(r'''
+import ast, sys
 
-    # Find lines where 'model' is assigned (model = ... or model, ... = ...)
-    model_assign_lines = []
-    for node in ast.walk(train_node):
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == "model":
-                    model_assign_lines.append(node.lineno)
-                elif isinstance(target, ast.Tuple):
-                    for elt in target.elts:
-                        if isinstance(elt, ast.Name) and elt.id == "model":
-                            model_assign_lines.append(node.lineno)
+source = open("/workspace/src/prime_rl/trainer/sft/train.py").read()
+tree = ast.parse(source)
 
-    assert model_assign_lines, "No assignment to 'model' found in train()"
+train_func = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "train":
+        train_func = node
+        break
+assert train_func, "train() not found"
 
-    # Find setup_hybrid_cp call
-    hybrid_cp_calls = _find_calls(train_node, "setup_hybrid_cp")
-    assert hybrid_cp_calls, "setup_hybrid_cp() call not found in train()"
+# Walk function body in statement order, tracking model assignment and
+# setup_hybrid_cp usage. Recurse into if/for/while/with/try blocks.
+state = {"model_assigned": None, "hybrid_cp_called": None}
 
-    hybrid_line = hybrid_cp_calls[0].lineno
+def scan(stmts):
+    for stmt in stmts:
+        # Check for model assignment at this statement level
+        if isinstance(stmt, ast.Assign):
+            for t in stmt.targets:
+                names = []
+                if isinstance(t, ast.Name):
+                    names.append(t.id)
+                elif isinstance(t, ast.Tuple):
+                    names.extend(e.id for e in t.elts if isinstance(e, ast.Name))
+                if "model" in names and state["model_assigned"] is None:
+                    state["model_assigned"] = stmt.lineno
 
-    # At least one model assignment must come BEFORE setup_hybrid_cp
-    assert any(ml < hybrid_line for ml in model_assign_lines), (
-        f"model is not assigned before setup_hybrid_cp (line {hybrid_line}). "
-        f"Model assignments at lines: {model_assign_lines}"
-    )
+        # Check for setup_hybrid_cp call anywhere in this statement's subtree
+        for child in ast.walk(stmt):
+            if isinstance(child, ast.Call):
+                name = getattr(child.func, "id", None) or getattr(child.func, "attr", None)
+                if name == "setup_hybrid_cp" and state["hybrid_cp_called"] is None:
+                    state["hybrid_cp_called"] = child.lineno
+
+        # Recurse into control flow bodies
+        if isinstance(stmt, ast.If):
+            scan(stmt.body)
+            scan(stmt.orelse)
+        elif isinstance(stmt, (ast.For, ast.While)):
+            scan(stmt.body)
+        elif isinstance(stmt, ast.With):
+            scan(stmt.body)
+        elif isinstance(stmt, ast.Try):
+            scan(stmt.body)
+            for h in stmt.handlers:
+                scan(h.body)
+            scan(stmt.orelse)
+            scan(stmt.finalbody)
+
+scan(train_func.body)
+
+assert state["model_assigned"], "model never assigned in train()"
+assert state["hybrid_cp_called"], "setup_hybrid_cp never called in train()"
+
+if state["hybrid_cp_called"] < state["model_assigned"]:
+    print(f"FAIL: setup_hybrid_cp at line {state['hybrid_cp_called']} before model assigned at line {state['model_assigned']}")
+    sys.exit(1)
+print("PASS")
+''')
+    try:
+        r = subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_hybrid_cp_after_model_init():
     """setup_hybrid_cp() must be called AFTER setup_model() in train().
 
-    AST ordering check: the line number of setup_hybrid_cp must be greater
-    than the line number of setup_model. Tests multiple orderings to ensure
-    the fix isn't fragile.
+    Executes a script that compares line numbers of setup_model() and
+    setup_hybrid_cp() calls to verify correct initialization ordering.
     """
-    # AST-only because: train.py requires torch/distributed/CUDA — cannot import
-    _, train_node = _parse_train_func()
+    script = Path(REPO) / "_eval_call_order.py"
+    script.write_text(r'''
+import ast, sys
 
-    setup_model_calls = _find_calls(train_node, "setup_model")
-    setup_hybrid_cp_calls = _find_calls(train_node, "setup_hybrid_cp")
+source = open("/workspace/src/prime_rl/trainer/sft/train.py").read()
+tree = ast.parse(source)
 
-    assert setup_model_calls, "setup_model() call not found in train()"
-    assert setup_hybrid_cp_calls, "setup_hybrid_cp() call not found in train()"
+train_func = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "train":
+        train_func = node
+        break
+assert train_func, "train() not found"
 
-    sm_line = setup_model_calls[0].lineno
-    shcp_line = setup_hybrid_cp_calls[0].lineno
+setup_model_lines = []
+setup_hybrid_cp_lines = []
+for node in ast.walk(train_func):
+    if isinstance(node, ast.Call):
+        name = getattr(node.func, "id", None) or getattr(node.func, "attr", None)
+        if name == "setup_model":
+            setup_model_lines.append(node.lineno)
+        elif name == "setup_hybrid_cp":
+            setup_hybrid_cp_lines.append(node.lineno)
 
-    assert shcp_line > sm_line, (
-        f"setup_hybrid_cp (line {shcp_line}) must come after "
-        f"setup_model (line {sm_line}) in train()"
-    )
+assert setup_model_lines, "setup_model() not found in train()"
+assert setup_hybrid_cp_lines, "setup_hybrid_cp() not found in train()"
+
+sm = min(setup_model_lines)
+shcp = min(setup_hybrid_cp_lines)
+
+if shcp <= sm:
+    print(f"FAIL: setup_hybrid_cp (line {shcp}) before setup_model (line {sm})")
+    sys.exit(1)
+print(f"PASS: setup_model (line {sm}) before setup_hybrid_cp (line {shcp})")
+''')
+    try:
+        r = subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -121,7 +193,6 @@ def test_hybrid_cp_after_model_init():
 # [pr_diff] pass_to_pass
 def test_setup_hybrid_cp_retained():
     """setup_hybrid_cp call must still exist — not deleted to dodge NameError."""
-    # AST-only because: train.py requires torch/distributed/CUDA — cannot import
     _, train_node = _parse_train_func()
     calls = _find_calls(train_node, "setup_hybrid_cp")
     assert calls, "setup_hybrid_cp() call was removed from train()"
@@ -130,7 +201,6 @@ def test_setup_hybrid_cp_retained():
 # [pr_diff] pass_to_pass
 def test_substitute_ring_attn_present():
     """substitute_ring_attn must still be called (regression guard)."""
-    # AST-only because: train.py requires torch/distributed/CUDA — cannot import
     source = FILE.read_text()
     tree = ast.parse(source)
     for node in ast.walk(tree):
@@ -144,7 +214,6 @@ def test_substitute_ring_attn_present():
 # [pr_diff] pass_to_pass
 def test_setup_model_present():
     """setup_model must still be called."""
-    # AST-only because: train.py requires torch/distributed/CUDA — cannot import
     _, train_node = _parse_train_func()
     calls = _find_calls(train_node, "setup_model")
     assert calls, "setup_model() call was removed from train()"
@@ -153,7 +222,6 @@ def test_setup_model_present():
 # [static] pass_to_pass
 def test_train_not_stub():
     """train() must have >= 20 top-level statements (reject total rewrites)."""
-    # AST-only because: train.py requires torch/distributed/CUDA — cannot import
     _, train_node = _parse_train_func()
     assert len(train_node.body) >= 20, (
         f"train() has only {len(train_node.body)} statements — likely a stub"
@@ -163,7 +231,6 @@ def test_train_not_stub():
 # [pr_diff] pass_to_pass
 def test_setup_ckpt_managers_retained():
     """setup_ckpt_managers must still be called (reject gutted rewrites)."""
-    # AST-only because: train.py requires torch/distributed/CUDA — cannot import
     source = FILE.read_text()
     tree = ast.parse(source)
     for node in ast.walk(tree):
@@ -177,17 +244,11 @@ def test_setup_ckpt_managers_retained():
 # [pr_diff] pass_to_pass
 def test_hybrid_cp_guarded_by_cp_enabled():
     """setup_hybrid_cp must be inside a cp_enabled conditional (not called unconditionally)."""
-    # AST-only because: train.py requires torch/distributed/CUDA — cannot import
     _, train_node = _parse_train_func()
-
-    # Walk the train function to find setup_hybrid_cp calls
-    # and verify each is inside an If node that tests cp_enabled
     for node in ast.walk(train_node):
         if isinstance(node, ast.If):
-            # Check if this If tests cp_enabled (attribute or name)
             test_src = ast.dump(node.test)
             if "cp_enabled" in test_src:
-                # Check if setup_hybrid_cp is called inside this If body
                 for child in ast.walk(node):
                     if isinstance(child, ast.Call):
                         name = getattr(child.func, "id", None) or getattr(child.func, "attr", None)
@@ -206,7 +267,6 @@ def test_hybrid_cp_guarded_by_cp_enabled():
 # [agent_config] pass_to_pass — AGENTS.md:5 @ b7afd84024531074830143d88bf0f60f506e1588
 def test_no_try_except_around_hybrid_cp():
     """setup_hybrid_cp must not be wrapped in try/except (AGENTS.md: avoid unnecessary try/except)."""
-    # AST-only because: train.py requires torch/distributed/CUDA — cannot import
     source = FILE.read_text()
     tree = ast.parse(source)
     for node in ast.walk(tree):

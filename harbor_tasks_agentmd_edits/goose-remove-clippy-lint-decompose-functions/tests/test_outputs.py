@@ -7,10 +7,17 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
-from pathlib import Path
+import subprocess
 
 REPO = "/workspace/goose"
+
+
+def _run(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute a Python script in the repo directory."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -20,51 +27,91 @@ REPO = "/workspace/goose"
 
 def test_build_session_decomposed():
     """build_session must be refactored into focused helper functions."""
-    builder = Path(f"{REPO}/crates/goose-cli/src/session/builder.rs")
-    content = builder.read_text()
+    r = _run("""
+import sys
 
-    # The original monolithic build_session should now delegate to helpers
-    required_helpers = [
-        "fn resolve_provider_and_model",
-        "fn resolve_session_id",
-        "fn handle_resumed_session_workdir",
-        "fn resolve_and_load_extensions",
-        "fn configure_session_prompts",
-    ]
+with open("crates/goose-cli/src/session/builder.rs") as f:
+    content = f.read()
 
-    for helper in required_helpers:
-        assert helper in content, f"Missing helper function: {helper}"
+# Helper functions must exist as standalone fn declarations
+helpers = [
+    "fn resolve_provider_and_model",
+    "fn resolve_session_id",
+    "fn handle_resumed_session_workdir",
+    "fn resolve_and_load_extensions",
+    "fn configure_session_prompts",
+]
 
-    # build_session must call the helpers (not just define them)
-    assert "resolve_provider_and_model(" in content, \
-        "build_session must call resolve_provider_and_model"
-    assert "resolve_session_id(" in content, \
-        "build_session must call resolve_session_id"
-    assert "handle_resumed_session_workdir(" in content, \
-        "build_session must call handle_resumed_session_workdir"
+for sig in helpers:
+    if sig not in content:
+        print("FAIL: Missing " + sig)
+        sys.exit(1)
+
+# build_session must delegate to each helper
+calls = [
+    "resolve_provider_and_model(",
+    "resolve_session_id(",
+    "handle_resumed_session_workdir(",
+    "resolve_and_load_extensions(",
+    "configure_session_prompts(",
+]
+
+for call in calls:
+    if call not in content:
+        print("FAIL: build_session does not call " + call)
+        sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 def test_clippy_toml_created():
-    """clippy.toml must exist with too-many-lines-threshold setting."""
-    clippy_toml = Path(f"{REPO}/clippy.toml")
-    assert clippy_toml.exists(), "clippy.toml must exist"
-    content = clippy_toml.read_text()
-    assert "too-many-lines-threshold" in content, \
-        "clippy.toml must contain too-many-lines-threshold"
-    match = re.search(r"too-many-lines-threshold\s*=\s*(\d+)", content)
-    assert match, "too-many-lines-threshold must have a numeric value"
-    threshold = int(match.group(1))
-    assert threshold > 0, "too-many-lines-threshold must be positive"
+    """clippy.toml must exist with valid too-many-lines-threshold setting."""
+    r = _run("""
+import re, sys
+
+with open("clippy.toml") as f:
+    content = f.read()
+
+match = re.search(r"too-many-lines-threshold\\s*=\\s*(\\d+)", content)
+if not match:
+    print("FAIL: clippy.toml missing too-many-lines-threshold")
+    sys.exit(1)
+
+threshold = int(match.group(1))
+if threshold <= 0:
+    print("FAIL: threshold must be positive, got " + str(threshold))
+    sys.exit(1)
+
+print("PASS: too-many-lines-threshold = " + str(threshold))
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 def test_old_infrastructure_removed():
     """Old custom clippy scripts and baseline files must be removed."""
-    assert not Path(f"{REPO}/scripts/clippy-lint.sh").exists(), \
-        "scripts/clippy-lint.sh must be removed"
-    assert not Path(f"{REPO}/scripts/clippy-baseline.sh").exists(), \
-        "scripts/clippy-baseline.sh must be removed"
-    assert not Path(f"{REPO}/clippy-baselines/too_many_lines.txt").exists(), \
-        "clippy-baselines/too_many_lines.txt must be removed"
+    r = _run("""
+import sys
+from pathlib import Path
+
+must_not_exist = [
+    "scripts/clippy-lint.sh",
+    "scripts/clippy-baseline.sh",
+    "clippy-baselines/too_many_lines.txt",
+]
+
+for f in must_not_exist:
+    if Path(f).exists():
+        print("FAIL: " + f + " must be removed")
+        sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -74,57 +121,84 @@ def test_old_infrastructure_removed():
 
 def test_agents_md_standard_clippy():
     """AGENTS.md must reference standard cargo clippy, not ./scripts/clippy-lint.sh."""
-    agents_md = Path(f"{REPO}/AGENTS.md")
-    content = agents_md.read_text()
+    r = _run("""
+import sys
 
-    assert "./scripts/clippy-lint.sh" not in content, \
-        "AGENTS.md should not reference ./scripts/clippy-lint.sh"
-    assert "cargo clippy --all-targets" in content, \
-        "AGENTS.md must reference 'cargo clippy --all-targets'"
-    assert "Merge without running clippy" in content, \
-        "AGENTS.md 'Never' rule should use generic clippy reference"
+with open("AGENTS.md") as f:
+    content = f.read()
+
+if "./scripts/clippy-lint.sh" in content:
+    print("FAIL: AGENTS.md still references ./scripts/clippy-lint.sh")
+    sys.exit(1)
+if "cargo clippy --all-targets" not in content:
+    print("FAIL: AGENTS.md must reference cargo clippy --all-targets")
+    sys.exit(1)
+if "Merge without running clippy" not in content:
+    print("FAIL: AGENTS.md Never rule should say Merge without running clippy")
+    sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 def test_copilot_instructions_updated():
     """.github/copilot-instructions.md must use standard cargo clippy."""
-    copilot = Path(f"{REPO}/.github/copilot-instructions.md")
-    content = copilot.read_text()
+    r = _run("""
+import sys
 
-    assert "./scripts/clippy-lint.sh" not in content, \
-        "copilot-instructions.md should not reference ./scripts/clippy-lint.sh"
-    assert "cargo clippy --all-targets" in content, \
-        "copilot-instructions.md must reference 'cargo clippy --all-targets'"
-    assert "CI handles this (clippy)" in content, \
-        "copilot-instructions.md should reference standard clippy in skip section"
+with open(".github/copilot-instructions.md") as f:
+    content = f.read()
+
+if "./scripts/clippy-lint.sh" in content:
+    print("FAIL: copilot-instructions.md still references ./scripts/clippy-lint.sh")
+    sys.exit(1)
+if "cargo clippy --all-targets" not in content:
+    print("FAIL: copilot-instructions.md must reference cargo clippy --all-targets")
+    sys.exit(1)
+if "CI handles this (clippy)" not in content:
+    print("FAIL: copilot-instructions.md should reference standard clippy")
+    sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 def test_doc_files_consistent():
     """HOWTOAI.md, CONTRIBUTING.md, and Justfile must use standard clippy."""
-    # HOWTOAI.md
-    howtoai = Path(f"{REPO}/HOWTOAI.md")
-    content = howtoai.read_text()
-    assert "./scripts/clippy-lint.sh" not in content, \
-        "HOWTOAI.md should not reference ./scripts/clippy-lint.sh"
-    assert "cargo clippy --all-targets" in content, \
-        "HOWTOAI.md must reference standard clippy command"
-    assert "clippy.toml" in content, \
-        "HOWTOAI.md should reference clippy.toml (not clippy-baselines/)"
+    r = _run("""
+import sys
 
-    # CONTRIBUTING.md
-    contributing = Path(f"{REPO}/CONTRIBUTING.md")
-    content = contributing.read_text()
-    assert "./scripts/clippy-lint.sh" not in content, \
-        "CONTRIBUTING.md should not reference ./scripts/clippy-lint.sh"
-    assert "cargo clippy --all-targets" in content, \
-        "CONTRIBUTING.md must reference standard clippy command"
+with open("HOWTOAI.md") as f:
+    c = f.read()
+if "./scripts/clippy-lint.sh" in c:
+    print("FAIL: HOWTOAI.md still references ./scripts/clippy-lint.sh"); sys.exit(1)
+if "cargo clippy --all-targets" not in c:
+    print("FAIL: HOWTOAI.md must reference standard clippy command"); sys.exit(1)
+if "clippy.toml" not in c:
+    print("FAIL: HOWTOAI.md should reference clippy.toml"); sys.exit(1)
 
-    # Justfile
-    justfile = Path(f"{REPO}/Justfile")
-    content = justfile.read_text()
-    assert "./scripts/clippy-lint.sh" not in content, \
-        "Justfile should not reference ./scripts/clippy-lint.sh"
-    assert "cargo clippy --all-targets" in content, \
-        "Justfile must reference standard clippy command"
+with open("CONTRIBUTING.md") as f:
+    c = f.read()
+if "./scripts/clippy-lint.sh" in c:
+    print("FAIL: CONTRIBUTING.md still references ./scripts/clippy-lint.sh"); sys.exit(1)
+if "cargo clippy --all-targets" not in c:
+    print("FAIL: CONTRIBUTING.md must reference standard clippy command"); sys.exit(1)
+
+with open("Justfile") as f:
+    c = f.read()
+if "./scripts/clippy-lint.sh" in c:
+    print("FAIL: Justfile still references ./scripts/clippy-lint.sh"); sys.exit(1)
+if "cargo clippy --all-targets" not in c:
+    print("FAIL: Justfile must reference standard clippy command"); sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -134,15 +208,25 @@ def test_doc_files_consistent():
 
 def test_rust_syntax_valid():
     """builder.rs must have valid Rust function syntax (balanced braces, fn declarations)."""
-    builder = Path(f"{REPO}/crates/goose-cli/src/session/builder.rs")
-    content = builder.read_text()
+    r = _run("""
+import re, sys
 
-    open_braces = content.count("{")
-    close_braces = content.count("}")
-    assert open_braces == close_braces, \
-        f"Unbalanced braces in builder.rs: {open_braces} open, {close_braces} close"
+with open("crates/goose-cli/src/session/builder.rs") as f:
+    content = f.read()
 
-    fn_pattern = r"(?:pub\s+)?(?:async\s+)?fn\s+\w+"
-    functions = re.findall(fn_pattern, content)
-    assert len(functions) >= 10, \
-        f"builder.rs should have at least 10 function declarations, found {len(functions)}"
+open_b = content.count("{")
+close_b = content.count("}")
+if open_b != close_b:
+    print("FAIL: Unbalanced braces: " + str(open_b) + " open, " + str(close_b) + " close")
+    sys.exit(1)
+
+fn_pattern = r"(?:pub\\s+)?(?:async\\s+)?fn\\s+\\w+"
+functions = re.findall(fn_pattern, content)
+if len(functions) < 10:
+    print("FAIL: Expected >= 10 functions, found " + str(len(functions)))
+    sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout

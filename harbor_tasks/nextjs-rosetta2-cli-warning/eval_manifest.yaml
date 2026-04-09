@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92220
+  base_commit: "a6df8603a4e164da7d758d0eb4082dc70353450d"
+  merge_commit: "93dc872d0d6df3552abef6a7b598d79a9566eea2"
+
+checks:
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "next.ts has valid syntax (balanced braces, reasonable size)"
+
+  - id: rosetta_warning_darwin_x64_apple
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Rosetta 2 detection fires warning when darwin+x64+Apple CPU"
+
+  - id: os_import_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The os module is imported (needed for CPU model detection)"
+
+  - id: warning_message_content
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Warning mentions Apple Silicon and degraded performance"
+
+  - id: no_false_positive_arm64
+    type: pass_to_pass
+    origin: pr_diff
+    description: "darwin+arm64 (native ARM) must not trigger Rosetta warning"
+
+  - id: no_false_positive_linux
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Linux must not trigger Rosetta warning regardless of arch"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Detection uses all three checks: platform, arch, AND CPU model"
+
+rubric: []

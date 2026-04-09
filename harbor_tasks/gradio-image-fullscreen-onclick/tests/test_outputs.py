@@ -18,6 +18,70 @@ REPO = "/workspace"
 FILE = Path(REPO) / "js/image/shared/ImagePreview.svelte"
 
 
+def _run_node(script: str, timeout: int = 15) -> subprocess.CompletedProcess:
+    """Execute a Node.js script in the repo directory."""
+    tmp = Path(REPO) / "_eval_tmp.cjs"
+    tmp.write_text(script)
+    try:
+        return subprocess.run(
+            ["node", str(tmp)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+# Node.js extraction script: reads ImagePreview.svelte, finds the
+# FullscreenButton block, and extracts the onclick handler body using
+# brace-counting (robust against nested {}).
+_EXTRACT_JS = """\
+const fs = require('fs');
+const src = fs.readFileSync('js/image/shared/ImagePreview.svelte', 'utf8');
+
+const result = {
+    blockFound: false,
+    hasOnclick: false,
+    hasOnFullscreen: false,
+    handler: null,
+};
+
+const blockMatch = src.match(/<FullscreenButton[\\s\\S]*?\\/>/);
+if (!blockMatch) {
+    console.log(JSON.stringify(result));
+    process.exit(0);
+}
+
+result.blockFound = true;
+const block = blockMatch[0];
+result.hasOnFullscreen = block.includes('on:fullscreen');
+
+const onclickIdx = block.indexOf('onclick');
+if (onclickIdx === -1) {
+    console.log(JSON.stringify(result));
+    process.exit(0);
+}
+
+result.hasOnclick = true;
+
+// Extract handler body using brace-counting (handles nested {})
+const eqIdx = block.indexOf('=', onclickIdx);
+const braceStart = block.indexOf('{', eqIdx);
+if (braceStart === -1) {
+    console.log(JSON.stringify(result));
+    process.exit(0);
+}
+let depth = 1, i = braceStart + 1;
+while (i < block.length && depth > 0) {
+    if (block[i] === '{') depth++;
+    else if (block[i] === '}') depth--;
+    i++;
+}
+result.handler = block.substring(braceStart + 1, i - 1).trim();
+
+console.log(JSON.stringify(result));
+"""
+
+
 @pytest.fixture(scope="module")
 def svelte_src():
     """Read the ImagePreview.svelte source."""
@@ -26,131 +90,97 @@ def svelte_src():
 
 
 @pytest.fixture(scope="module")
-def fullscreen_button_block(svelte_src):
-    """Extract the FullscreenButton component usage block from the template."""
-    # Find the FullscreenButton component tag (possibly multi-line)
-    # Match from <FullscreenButton to the closing />
-    m = re.search(
-        r"<FullscreenButton\b([\s\S]*?)/>",
-        svelte_src,
-    )
-    assert m is not None, "FullscreenButton component not found in template"
-    return m.group(0)
+def handler_info():
+    """Extract FullscreenButton onclick handler info via Node.js."""
+    r = _run_node(_EXTRACT_JS)
+    assert r.returncode == 0, f"Node extraction failed: {r.stderr}"
+    return json.loads(r.stdout)
 
 
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax check
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_svelte_syntax(svelte_src):
     """ImagePreview.svelte must have valid Svelte structure (script + template)."""
-    # Verify basic Svelte file structure: has <script> and template content
     assert "<script" in svelte_src, "Missing <script> tag"
-    assert "FullscreenButton" in svelte_src, "FullscreenButton component missing from file"
+    assert "FullscreenButton" in svelte_src, "FullscreenButton component missing"
 
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-def test_onclick_prop_present(fullscreen_button_block):
+def test_onclick_prop_present(handler_info):
     """FullscreenButton must receive an onclick prop (not on:fullscreen directive)."""
-    assert "onclick" in fullscreen_button_block, \
-        "No onclick prop found on FullscreenButton"
+    assert handler_info["blockFound"], "FullscreenButton not found in template"
+    assert handler_info["hasOnclick"], "No onclick prop found on FullscreenButton"
 
 
-# [pr_diff] fail_to_pass
-def test_onclick_updates_state():
+def test_onclick_updates_state(handler_info):
     """onclick handler must set fullscreen to the value passed by FullscreenButton.
 
-    We extract the onclick handler from the Svelte source and evaluate it in Node.js
+    Extracts the handler via brace-counting in Node.js, then evaluates it
     with multiple input values to verify it updates state correctly.
     """
-    src = FILE.read_text()
-    # Extract the onclick handler: onclick={(is_fullscreen) => { ... }}
-    # or onclick={someFunction} etc.
-    m = re.search(
-        r"<FullscreenButton\b[\s\S]*?onclick\s*=\s*\{([\s\S]*?)\}\s*(?=\n\s*[/\w{])",
-        src,
-    )
-    assert m is not None, "Could not extract onclick handler from FullscreenButton"
-    handler_src = m.group(1).strip()
+    handler_src = handler_info.get("handler")
+    assert handler_src, "Could not extract onclick handler from FullscreenButton"
 
-    # Test with multiple values: true, false, true again
-    test_script = f"""
-    const results = [];
-    for (const val of [true, false, true, false]) {{
-      let fullscreen = !val;  // start with opposite
-      const dispatch = (...args) => {{ results.push(args); }};
-      const handler = {handler_src};
-      handler(val);
-      results.push({{ input: val, fullscreen }});
-    }}
-    console.log(JSON.stringify(results));
-    """
+    test_script = f"""\
+const handlerSrc = {json.dumps(handler_src)};
+const results = [];
+for (const val of [true, false, true, false]) {{
+    let fullscreen = !val;
+    const dispatch = () => {{}};
+    const handler = eval('(' + handlerSrc + ')');
+    handler(val);
+    results.push({{ input: val, fullscreen }});
+}}
+console.log(JSON.stringify(results));
+"""
 
-    r = subprocess.run(
-        ["node", "-e", test_script],
-        capture_output=True, text=True, timeout=10, cwd=REPO,
-    )
+    r = _run_node(test_script)
     assert r.returncode == 0, f"Handler evaluation failed:\n{r.stderr}"
-
-    data = json.loads(r.stdout)
-    # data alternates: dispatch args, state check, dispatch args, state check, ...
-    # Each pair: dispatch call args, then {input, fullscreen}
-    for i in range(0, len(data), 2):
-        state = data[i + 1]
+    results = json.loads(r.stdout.strip())
+    for state in results:
         assert state["fullscreen"] == state["input"], \
             f"onclick({state['input']}) did not set fullscreen = {state['input']}"
 
 
-# [pr_diff] fail_to_pass
-def test_onclick_dispatches_event():
+def test_onclick_dispatches_event(handler_info):
     """onclick handler must dispatch a fullscreen event for parent components.
 
     Verifies dispatch is called with correct arguments for multiple input values.
     """
-    src = FILE.read_text()
-    m = re.search(
-        r"<FullscreenButton\b[\s\S]*?onclick\s*=\s*\{([\s\S]*?)\}\s*(?=\n\s*[/\w{])",
-        src,
-    )
-    assert m is not None, "Could not extract onclick handler from FullscreenButton"
-    handler_src = m.group(1).strip()
+    handler_src = handler_info.get("handler")
+    assert handler_src, "Could not extract onclick handler from FullscreenButton"
 
-    test_script = f"""
-    const dispatched = [];
-    for (const val of [true, false]) {{
-      let fullscreen = !val;
-      const dispatch = (event, detail) => {{ dispatched.push({{ event, detail }}); }};
-      const handler = {handler_src};
-      handler(val);
-    }}
-    console.log(JSON.stringify(dispatched));
-    """
+    test_script = f"""\
+const handlerSrc = {json.dumps(handler_src)};
+const dispatched = [];
+for (const val of [true, false]) {{
+    let fullscreen = !val;
+    const dispatch = (event, detail) => dispatched.push({{ event, detail }});
+    const handler = eval('(' + handlerSrc + ')');
+    handler(val);
+}}
+console.log(JSON.stringify(dispatched));
+"""
 
-    r = subprocess.run(
-        ["node", "-e", test_script],
-        capture_output=True, text=True, timeout=10, cwd=REPO,
-    )
+    r = _run_node(test_script)
     assert r.returncode == 0, f"Handler evaluation failed:\n{r.stderr}"
-
-    dispatched = json.loads(r.stdout)
+    dispatched = json.loads(r.stdout.strip())
     assert len(dispatched) >= 2, \
-        f"Expected dispatch to be called for each input, got {len(dispatched)} calls"
-
-    # Verify the event name includes "fullscreen"
+        f"Expected dispatch called for each input, got {len(dispatched)} calls"
     for call in dispatched:
         assert "fullscreen" in str(call.get("event", "")).lower(), \
-            f"Dispatch event name should reference fullscreen, got: {call}"
+            f"Dispatch event should reference fullscreen, got: {call}"
 
 
-# [pr_diff] fail_to_pass
-def test_no_on_fullscreen_directive(fullscreen_button_block):
+def test_no_on_fullscreen_directive(handler_info):
     """Broken on:fullscreen event directive must be removed from FullscreenButton."""
-    assert "on:fullscreen" not in fullscreen_button_block, \
+    assert handler_info["blockFound"], "FullscreenButton not found in template"
+    assert not handler_info["hasOnFullscreen"], \
         "FullscreenButton still uses broken on:fullscreen directive"
 
 
@@ -158,28 +188,20 @@ def test_no_on_fullscreen_directive(fullscreen_button_block):
 # Pass-to-pass (pr_diff) — regression
 # ---------------------------------------------------------------------------
 
-# [pr_diff] pass_to_pass
 def test_download_link_preserved(svelte_src):
     """DownloadLink component must still be rendered in the template."""
-    assert "DownloadLink" in svelte_src, "DownloadLink was removed from template"
-    assert re.search(r"<DownloadLink\b", svelte_src), \
-        "DownloadLink component tag not found"
+    assert "<DownloadLink" in svelte_src, "DownloadLink was removed from template"
 
 
-# [pr_diff] pass_to_pass
 def test_share_button_preserved(svelte_src):
     """ShareButton component must still be rendered in the template."""
-    # ShareButton is conditionally rendered — check it exists in the template
-    assert re.search(r"<ShareButton\b", svelte_src) or \
-        re.search(r"ShareButton", svelte_src), \
-        "ShareButton reference removed from template"
+    assert "ShareButton" in svelte_src, "ShareButton reference removed from template"
 
 
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — AGENTS.md:45 @ 4a4c7f3b0d6fd8009fdafc580d5852984f961db1
 def test_tab_indentation(svelte_src):
     """Modified file must use tab indentation consistent with surrounding code."""
     lines = svelte_src.split("\n")
@@ -190,7 +212,6 @@ def test_tab_indentation(svelte_src):
         f"Too many space-indented lines ({space_lines}), file uses tabs"
 
 
-# [agent_config] pass_to_pass — AGENTS.md:44 @ 4a4c7f3b0d6fd8009fdafc580d5852984f961db1
 def test_no_trailing_whitespace(svelte_src):
     """Modified Svelte file must not have trailing whitespace on lines."""
     for i, line in enumerate(svelte_src.split("\n"), 1):

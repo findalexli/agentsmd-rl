@@ -14,39 +14,16 @@ from pathlib import Path
 REPO = "/workspace/transformers"
 
 
-def _discover_extraction_fn():
-    """Find the template variable extraction function by behavior, not name.
-
-    Scans chat_template_utils for any callable that accepts a Jinja2 template
-    string and returns a set/frozenset of undeclared variable names.
-    """
-    sys.path.insert(0, f"{REPO}/src")
-    import transformers.utils.chat_template_utils as ctm
-
-    test_template = "{{ messages }}{{ bos_token }}{% if custom_var %}yes{% endif %}"
-    expected = {"messages", "bos_token", "custom_var"}
-
-    # Functions that exist in the base commit — skip these
-    KNOWN_EXISTING = {
-        "render_jinja_template",
-        "get_json_schema",
-        "_compile_jinja_template",
-        "_render_with_assistant_indices",
-    }
-
-    for name in sorted(dir(ctm)):
-        if name in KNOWN_EXISTING or name.startswith("__"):
-            continue
-        obj = getattr(ctm, name)
-        if not callable(obj) or isinstance(obj, type):
-            continue
-        try:
-            result = obj(test_template)
-            if isinstance(result, (set, frozenset)) and expected.issubset(result):
-                return name, obj
-        except Exception:
-            continue
-    return None, None
+def _run_python_code(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in the repo environment via subprocess."""
+    return subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=REPO,
+        env={"PYTHONPATH": f"{REPO}/src"},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -70,166 +47,372 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests using subprocess
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
-def test_template_variable_extraction():
-    """Extraction function finds undeclared Jinja2 variables including custom ones."""
-    _, fn = _discover_extraction_fn()
-    assert fn is not None, "No template variable extraction function found in chat_template_utils"
+def test_template_variable_extraction_subprocess():
+    """Extraction function exists and finds undeclared Jinja2 variables including custom ones."""
+    code = """
+import sys
+sys.path.insert(0, "/workspace/transformers/src")
 
-    # Standard + custom variables
-    t1 = "{{ messages }}{{ bos_token }}{% if custom_var %}yes{% endif %}"
-    v1 = fn(t1)
-    assert isinstance(v1, (set, frozenset)), f"Expected set/frozenset, got {type(v1)}"
-    assert {"messages", "bos_token", "custom_var"}.issubset(v1)
+import transformers.utils.chat_template_utils as ctm
 
-    # Loop variables must be excluded (only undeclared variables)
-    t2 = (
-        "{% for msg in messages %}{{ msg['role'] }}: {{ msg['content'] }}{% endfor %}"
-        "{% if add_generation_prompt %}assistant:{% endif %}"
-    )
-    v2 = fn(t2)
-    assert "messages" in v2
-    assert "add_generation_prompt" in v2
-    assert "msg" not in v2, f"Loop variable 'msg' should not be undeclared: {v2}"
+test_template = "{{ messages }}{{ bos_token }}{% if custom_var %}yes{% endif %}"
+expected = {"messages", "bos_token", "custom_var"}
 
-    # Empty/literal template has no variables
-    v3 = fn("Hello world")
-    assert len(v3) == 0, f"Expected no variables, got {v3}"
+# Functions that exist in the base commit — skip these
+KNOWN_EXISTING = {
+    "render_jinja_template",
+    "get_json_schema",
+    "_compile_jinja_template",
+    "_render_with_assistant_indices",
+}
 
-    # Nested conditionals
-    t4 = "{% if a %}{% if b %}{{ c }}{% endif %}{% endif %}"
-    v4 = fn(t4)
-    assert {"a", "b", "c"}.issubset(v4), f"Missing vars in {v4}"
+fn = None
+for name in sorted(dir(ctm)):
+    if name in KNOWN_EXISTING or name.startswith("__"):
+        continue
+    obj = getattr(ctm, name)
+    if not callable(obj) or isinstance(obj, type):
+        continue
+    try:
+        result = obj(test_template)
+        if isinstance(result, (set, frozenset)) and expected.issubset(result):
+            fn = obj
+            break
+    except Exception:
+        continue
 
+assert fn is not None, "No template variable extraction function found in chat_template_utils"
 
-# [pr_diff] fail_to_pass
-def test_extraction_varies_by_template():
-    """Extraction is dynamic (not a hardcoded list) — different templates yield different results."""
-    _, fn = _discover_extraction_fn()
-    assert fn is not None, "No extraction function found"
+# Test standard + custom variables
+t1 = "{{ messages }}{{ bos_token }}{% if custom_var %}yes{% endif %}"
+v1 = fn(t1)
+assert isinstance(v1, (set, frozenset)), f"Expected set/frozenset, got {type(v1)}"
+assert {"messages", "bos_token", "custom_var"}.issubset(v1), f"Missing vars: {v1}"
 
-    v1 = fn("{{ x }}{{ y }}")
-    v2 = fn("{{ z }}")
-    assert "x" in v1 and "y" in v1, f"Expected x,y in {v1}"
-    assert "z" in v2 and "x" not in v2, f"Expected only z in {v2}"
+# Loop variables must be excluded
+t2 = (
+    "{% for msg in messages %}{{ msg['role'] }}: {{ msg['content'] }}{% endfor %}"
+    "{% if add_generation_prompt %}assistant:{% endif %}"
+)
+v2 = fn(t2)
+assert "messages" in v2, f"messages not in {v2}"
+assert "add_generation_prompt" in v2, f"add_generation_prompt not in {v2}"
+assert "msg" not in v2, f"Loop variable 'msg' should not be undeclared: {v2}"
 
-    # Template with many custom vars
-    v3 = fn("{{ num_frames }}{{ fps }}{{ custom_flag }}{{ messages }}")
-    assert {"num_frames", "fps", "custom_flag", "messages"}.issubset(v3)
+# Empty/literal template
+v3 = fn("Hello world")
+assert len(v3) == 0, f"Expected no variables, got {v3}"
 
+# Nested conditionals
+t4 = "{% if a %}{% if b %}{{ c }}{% endif %}{% endif %}"
+v4 = fn(t4)
+assert {"a", "b", "c"}.issubset(v4), f"Missing vars in {v4}"
 
-# [pr_diff] fail_to_pass
-def test_kwargs_separation():
-    """Template introspection correctly separates template vars from processor kwargs."""
-    _, fn = _discover_extraction_fn()
-    assert fn is not None, "No extraction function found"
-
-    template = (
-        "{% for msg in messages %}{{ msg['content'] }}{% endfor %}"
-        "{% if add_generation_prompt %}assistant: {% endif %}"
-    )
-    variables = fn(template)
-
-    # Template vars correctly identified
-    assert "messages" in variables
-    assert "add_generation_prompt" in variables
-
-    # Processor kwargs should NOT be template variables
-    for k in ["padding", "max_length", "return_tensors", "truncation"]:
-        assert k not in variables, f"'{k}' should not be a template variable"
-
-    # Simulate the separation logic the fix enables
-    all_kwargs = {
-        "messages": [{"role": "user", "content": "hi"}],
-        "add_generation_prompt": True,
-        "padding": "max_length",
-        "max_length": 50,
-    }
-    processor_kwargs = {k: v for k, v in all_kwargs.items() if k not in variables}
-    assert "padding" in processor_kwargs
-    assert "max_length" in processor_kwargs
-    assert "messages" not in processor_kwargs
-    assert "add_generation_prompt" not in processor_kwargs
-
-    # Custom variable in a different template routes correctly
-    t2 = "{% for msg in messages %}{{ msg.content }}{% endfor %}{% if custom_flag %}yes{% endif %}"
-    v2 = fn(t2)
-    proc2 = {k: v for k, v in {"custom_flag": True, "padding": "max_length"}.items() if k not in v2}
-    assert "custom_flag" not in proc2, "custom_flag is a template var, should not be in processor_kwargs"
-    assert "padding" in proc2, "padding is always a processor kwarg"
+print("PASS")
+"""
+    r = _run_python_code(code, timeout=30)
+    assert r.returncode == 0, f"Test failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_apply_chat_template_uses_introspection():
-    """apply_chat_template calls the extraction function for kwarg routing."""
-    import importlib
-    from unittest.mock import MagicMock, patch
+def test_extraction_is_dynamic():
+    """Extraction varies by template (dynamic, not hardcoded)."""
+    code = """
+import sys
+sys.path.insert(0, "/workspace/transformers/src")
 
-    sys.path.insert(0, f"{REPO}/src")
-    import transformers.processing_utils as pu
-    from transformers.processing_utils import ProcessorMixin
+import transformers.utils.chat_template_utils as ctm
 
-    fn_name, original_fn = _discover_extraction_fn()
-    assert fn_name is not None, "No extraction function found"
+test_template = "{{ messages }}{{ bos_token }}{% if custom_var %}yes{% endif %}"
+expected = {"messages", "bos_token", "custom_var"}
 
-    # Verify the function is imported into processing_utils
-    fn_in_pu = getattr(pu, fn_name, None)
-    assert fn_in_pu is not None, f"{fn_name} not imported into processing_utils"
+KNOWN_EXISTING = {
+    "render_jinja_template",
+    "get_json_schema",
+    "_compile_jinja_template",
+    "_render_with_assistant_indices",
+}
 
-    # Track whether apply_chat_template calls it
-    call_log = []
+fn = None
+for name in sorted(dir(ctm)):
+    if name in KNOWN_EXISTING or name.startswith("__"):
+        continue
+    obj = getattr(ctm, name)
+    if not callable(obj) or isinstance(obj, type):
+        continue
+    try:
+        result = obj(test_template)
+        if isinstance(result, (set, frozenset)) and expected.issubset(result):
+            fn = obj
+            break
+    except Exception:
+        continue
 
-    def tracking_wrapper(t):
-        call_log.append(t)
-        return original_fn(t)
+assert fn is not None, "No extraction function found"
 
-    template = '{% for msg in messages %}{{ msg["content"] }}{% endfor %}'
-    mock_self = MagicMock()
-    mock_self.chat_template = {"default": template}
-    mock_self.tokenizer.special_tokens_map = {}
-    mock_self.tokenizer.__class__.__name__ = "TestTokenizer"
+v1 = fn("{{ x }}{{ y }}")
+v2 = fn("{{ z }}")
+assert "x" in v1 and "y" in v1, f"Expected x,y in {v1}"
+assert "z" in v2 and "x" not in v2, f"Expected only z in {v2}"
 
-    with patch.object(pu, fn_name, side_effect=tracking_wrapper):
-        try:
-            ProcessorMixin.apply_chat_template(
-                mock_self,
-                [{"role": "user", "content": "hello"}],
-            )
-        except Exception:
-            pass  # May fail due to mock limitations; we only care about the call
+# Template with many custom vars
+v3 = fn("{{ num_frames }}{{ fps }}{{ custom_flag }}{{ messages }}")
+assert {"num_frames", "fps", "custom_flag", "messages"}.issubset(v3), f"Missing in {v3}"
 
-    assert len(call_log) > 0, f"apply_chat_template did NOT call {fn_name}"
-    assert call_log[0] == template, f"Called with wrong template: {call_log[0]}"
+print("PASS")
+"""
+    r = _run_python_code(code, timeout=30)
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_extraction_cached():
-    """Extraction function caches results for performance."""
-    _, fn = _discover_extraction_fn()
-    assert fn is not None, "No extraction function found"
+    """Extraction function uses caching for performance."""
+    code = """
+import sys
+sys.path.insert(0, "/workspace/transformers/src")
 
-    t = "{{ messages }}{{ custom }}"
-    r1 = fn(t)
-    r2 = fn(t)
+import transformers.utils.chat_template_utils as ctm
 
-    cached = False
-    # functools.lru_cache / functools.cache expose cache_info()
-    if hasattr(fn, "cache_info"):
-        info = fn.cache_info()
-        cached = info.hits >= 1
-    # Cached functions return the same object (identity check)
-    elif id(r1) == id(r2):
-        cached = True
+test_template = "{{ messages }}{{ bos_token }}{% if custom_var %}yes{% endif %}"
+expected = {"messages", "bos_token", "custom_var"}
 
-    assert cached, "Extraction function does not appear to be cached"
+KNOWN_EXISTING = {
+    "render_jinja_template",
+    "get_json_schema",
+    "_compile_jinja_template",
+    "_render_with_assistant_indices",
+}
 
-    # Different inputs must produce different cached results
-    r3 = fn("{{ other_var }}")
-    assert r3 != r1, "Different templates should not return same result"
+fn = None
+for name in sorted(dir(ctm)):
+    if name in KNOWN_EXISTING or name.startswith("__"):
+        continue
+    obj = getattr(ctm, name)
+    if not callable(obj) or isinstance(obj, type):
+        continue
+    try:
+        result = obj(test_template)
+        if isinstance(result, (set, frozenset)) and expected.issubset(result):
+            fn = obj
+            break
+    except Exception:
+        continue
+
+assert fn is not None, "No extraction function found"
+
+t = "{{ messages }}{{ custom }}"
+r1 = fn(t)
+r2 = fn(t)
+
+# Check for lru_cache / functools.cache
+cached = False
+if hasattr(fn, "cache_info"):
+    info = fn.cache_info()
+    cached = info.hits >= 1
+# If no cache_info, check if same object returned
+elif r1 is r2:
+    cached = True
+
+assert cached, "Extraction function does not appear to be cached"
+
+# Different inputs produce different results
+r3 = fn("{{ other_var }}")
+assert r3 != r1, "Different templates should not return same result"
+
+print("PASS")
+"""
+    r = _run_python_code(code, timeout=30)
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_processing_utils_imports_extraction():
+    """processing_utils imports and uses the extraction function for kwarg routing."""
+    code = """
+import sys
+sys.path.insert(0, "/workspace/transformers/src")
+
+# First discover the extraction function name
+import transformers.utils.chat_template_utils as ctm
+
+test_template = "{{ messages }}{{ bos_token }}{% if custom_var %}yes{% endif %}"
+expected = {"messages", "bos_token", "custom_var"}
+
+KNOWN_EXISTING = {
+    "render_jinja_template",
+    "get_json_schema",
+    "_compile_jinja_template",
+    "_render_with_assistant_indices",
+}
+
+fn_name = None
+for name in sorted(dir(ctm)):
+    if name in KNOWN_EXISTING or name.startswith("__"):
+        continue
+    obj = getattr(ctm, name)
+    if not callable(obj) or isinstance(obj, type):
+        continue
+    try:
+        result = obj(test_template)
+        if isinstance(result, (set, frozenset)) and expected.issubset(result):
+            fn_name = name
+            break
+    except Exception:
+        continue
+
+assert fn_name is not None, "Could not discover extraction function name"
+
+# Now check that processing_utils imports it
+import transformers.processing_utils as pu
+
+fn_in_pu = getattr(pu, fn_name, None)
+assert fn_in_pu is not None, f"{fn_name} not imported into processing_utils"
+
+# Check that it appears in the source
+source_file = "/workspace/transformers/src/transformers/processing_utils.py"
+with open(source_file) as f:
+    source = f.read()
+
+# Should be imported from chat_template_utils
+assert f"from .utils.chat_template_utils import" in source or \
+       "from transformers.utils.chat_template_utils import" in source or \
+       f"{fn_name}" in source, f"{fn_name} not referenced in processing_utils"
+
+print("PASS")
+"""
+    r = _run_python_code(code, timeout=30)
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_kwargs_separation_behavior():
+    """Template introspection correctly separates template vars from processor kwargs."""
+    code = """
+import sys
+sys.path.insert(0, "/workspace/transformers/src")
+
+import transformers.utils.chat_template_utils as ctm
+
+test_template = "{{ messages }}{{ bos_token }}{% if custom_var %}yes{% endif %}"
+expected = {"messages", "bos_token", "custom_var"}
+
+KNOWN_EXISTING = {
+    "render_jinja_template",
+    "get_json_schema",
+    "_compile_jinja_template",
+    "_render_with_assistant_indices",
+}
+
+fn = None
+for name in sorted(dir(ctm)):
+    if name in KNOWN_EXISTING or name.startswith("__"):
+        continue
+    obj = getattr(ctm, name)
+    if not callable(obj) or isinstance(obj, type):
+        continue
+    try:
+        result = obj(test_template)
+        if isinstance(result, (set, frozenset)) and expected.issubset(result):
+            fn = obj
+            break
+    except Exception:
+        continue
+
+assert fn is not None, "No extraction function found"
+
+# Test template separation
+template = (
+    "{% for msg in messages %}{{ msg['content'] }}{% endfor %}"
+    "{% if add_generation_prompt %}assistant: {% endif %}"
+)
+variables = fn(template)
+
+assert "messages" in variables, f"messages should be a template var"
+assert "add_generation_prompt" in variables, f"add_generation_prompt should be a template var"
+
+# Processor kwargs should NOT be template variables
+for k in ["padding", "max_length", "return_tensors", "truncation"]:
+    assert k not in variables, f"'{k}' should not be a template variable"
+
+# Simulate the separation logic
+all_kwargs = {
+    "messages": [{"role": "user", "content": "hi"}],
+    "add_generation_prompt": True,
+    "padding": "max_length",
+    "max_length": 50,
+}
+processor_kwargs = {k: v for k, v in all_kwargs.items() if k not in variables}
+assert "padding" in processor_kwargs, "padding should be in processor_kwargs"
+assert "max_length" in processor_kwargs, "max_length should be in processor_kwargs"
+assert "messages" not in processor_kwargs, "messages should NOT be in processor_kwargs"
+assert "add_generation_prompt" not in processor_kwargs, "add_generation_prompt should NOT be in processor_kwargs"
+
+# Custom variable test
+t2 = "{% for msg in messages %}{{ msg.content }}{% endfor %}{% if custom_flag %}yes{% endif %}"
+v2 = fn(t2)
+proc2 = {k: v for k, v in {"custom_flag": True, "padding": "max_length"}.items() if k not in v2}
+assert "custom_flag" not in proc2, "custom_flag is a template var, should not be in processor_kwargs"
+assert "padding" in proc2, "padding is always a processor kwarg"
+
+print("PASS")
+"""
+    r = _run_python_code(code, timeout=30)
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — regression tests
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_render_jinja_template_backward_compat():
+    """render_jinja_template still works after changes (subprocess execution)."""
+    code = """
+import sys
+sys.path.insert(0, "/workspace/transformers/src")
+
+from transformers.utils.chat_template_utils import render_jinja_template
+
+template = '{% for msg in messages %}{{ msg["role"] }}: {{ msg["content"] }}\\n{% endfor %}'
+conversations = [[{"role": "user", "content": "Hello"}]]
+prompt, indices = render_jinja_template(
+    conversations=conversations,
+    chat_template=template,
+    add_generation_prompt=False,
+)
+assert "user: Hello" in prompt[0], f"Unexpected prompt: {prompt}"
+
+# Batched conversations
+conversations2 = [
+    [{"role": "user", "content": "Hi"}],
+    [{"role": "user", "content": "Bye"}],
+]
+prompt2, _ = render_jinja_template(
+    conversations=conversations2,
+    chat_template=template,
+    add_generation_prompt=False,
+)
+assert len(prompt2) == 2, f"Expected 2 prompts, got {len(prompt2)}"
+assert "Hi" in prompt2[0], f"'Hi' not in {prompt2[0]}"
+assert "Bye" in prompt2[1], f"'Bye' not in {prompt2[1]}"
+
+print("PASS")
+"""
+    r = _run_python_code(code, timeout=30)
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -257,38 +440,3 @@ def test_ruff_style_check():
         cwd=REPO,
     )
     assert result.returncode == 0, f"ruff check failed:\n{result.stdout}\n{result.stderr}"
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — regression
-# ---------------------------------------------------------------------------
-
-
-# [repo_tests] pass_to_pass
-def test_render_jinja_template_backward_compat():
-    """render_jinja_template still works after changes."""
-    sys.path.insert(0, f"{REPO}/src")
-    from transformers.utils.chat_template_utils import render_jinja_template
-
-    template = '{% for msg in messages %}{{ msg["role"] }}: {{ msg["content"] }}\n{% endfor %}'
-    conversations = [[{"role": "user", "content": "Hello"}]]
-    prompt, indices = render_jinja_template(
-        conversations=conversations,
-        chat_template=template,
-        add_generation_prompt=False,
-    )
-    assert "user: Hello" in prompt[0], f"Unexpected prompt: {prompt}"
-
-    # Batched conversations
-    conversations2 = [
-        [{"role": "user", "content": "Hi"}],
-        [{"role": "user", "content": "Bye"}],
-    ]
-    prompt2, _ = render_jinja_template(
-        conversations=conversations2,
-        chat_template=template,
-        add_generation_prompt=False,
-    )
-    assert len(prompt2) == 2
-    assert "Hi" in prompt2[0]
-    assert "Bye" in prompt2[1]

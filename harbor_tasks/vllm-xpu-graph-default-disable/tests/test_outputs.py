@@ -8,59 +8,29 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import importlib.util
-import os
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/repo"
 
 
-def _discover_xpu_graph_var():
-    """Find the VLLM_* env var controlling XPU graph in envs.py."""
-    content = Path(f"{REPO}/vllm/envs.py").read_text()
-    candidates = re.findall(r'"(VLLM_\w*XPU\w*GRAPH\w*)"', content)
-    if not candidates:
-        candidates = re.findall(r'"(VLLM_\w*GRAPH\w*XPU\w*)"', content)
-    if not candidates:
-        candidates = re.findall(r'"(VLLM_XPU_\w+)"', content)
-    assert candidates, "No XPU graph env var found in envs.py"
-    return candidates[0]
-
-
-def _load_envs():
-    """Import envs.py directly (avoids vllm/__init__.py GPU imports)."""
-    spec = importlib.util.spec_from_file_location(
-        "vllm_envs_test", f"{REPO}/vllm/envs.py"
-    )
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
-def _extract_lambda(var_name):
-    """Extract and compile the lambda for var_name from environment_variables dict."""
-    source = Path(f"{REPO}/vllm/envs.py").read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Dict):
-            for key, value in zip(node.keys, node.values):
-                if isinstance(key, ast.Constant) and key.value == var_name:
-                    assert isinstance(value, ast.Lambda), (
-                        f"{var_name} entry is not a lambda"
-                    )
-                    lambda_expr = ast.Expression(body=value)
-                    ast.fix_missing_locations(lambda_expr)
-                    code = compile(lambda_expr, "vllm/envs.py", "eval")
-                    return eval(code, {"os": os, "__builtins__": __builtins__})
-    assert False, f"Lambda for {var_name} not found in environment_variables dict"
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in a subprocess within the repo."""
+    script = Path("/tmp/_eval_harness.py")
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
+# pass_to_pass (static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Both modified files must parse without syntax errors."""
     for f in ["vllm/envs.py", "vllm/platforms/xpu.py"]:
@@ -69,74 +39,129 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# fail_to_pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_env_var_lambda_defaults_disabled():
     """XPU graph env var lambda defaults to disabled when unset."""
-    var = _discover_xpu_graph_var()
-    fn = _extract_lambda(var)
+    r = _run_py("""\
+import ast, os
+from pathlib import Path
 
-    # Unset → must be falsy (os.getenv falls through to default "0")
-    os.environ.pop(var, None)
-    assert not fn(), f"Default (unset) should be falsy, got {fn()}"
+source = Path('/repo/vllm/envs.py').read_text()
+tree = ast.parse(source)
 
-    # Explicitly "0" → must be falsy
-    os.environ[var] = "0"
-    try:
-        assert not fn(), f"'0' should be falsy, got {fn()}"
-    finally:
-        os.environ.pop(var, None)
+for node in ast.walk(tree):
+    if isinstance(node, ast.Dict):
+        for key, value in zip(node.keys, node.values):
+            if (isinstance(key, ast.Constant) and isinstance(key.value, str)
+                    and 'XPU' in key.value and 'GRAPH' in key.value):
+                expr = ast.Expression(body=value)
+                ast.fix_missing_locations(expr)
+                code = compile(expr, 'envs.py', 'eval')
+                fn = eval(code, {'os': os, '__builtins__': __builtins__})
+
+                os.environ.pop(key.value, None)
+                result = fn()
+                assert not result, f'Default should be falsy, got {result}'
+
+                os.environ[key.value] = '0'
+                result = fn()
+                assert not result, f'"0" should be falsy, got {result}'
+
+                os.environ.pop(key.value, None)
+                print('PASS')
+                raise SystemExit(0)
+
+assert False, 'No XPU GRAPH env var lambda found in environment_variables dict'
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_env_var_lambda_parses_toggle_values():
     """XPU graph env var lambda parses '1'/'2' as enabled and '0' as disabled."""
-    var = _discover_xpu_graph_var()
-    fn = _extract_lambda(var)
+    r = _run_py("""\
+import ast, os
+from pathlib import Path
 
-    try:
-        # Truthy values
-        for val in ("1", "2", "10"):
-            os.environ[var] = val
-            assert fn(), f"'{val}' should be truthy, got {fn()}"
+source = Path('/repo/vllm/envs.py').read_text()
+tree = ast.parse(source)
 
-        # Falsy value
-        os.environ[var] = "0"
-        assert not fn(), f"'0' should be falsy, got {fn()}"
-    finally:
-        os.environ.pop(var, None)
+for node in ast.walk(tree):
+    if isinstance(node, ast.Dict):
+        for key, value in zip(node.keys, node.values):
+            if (isinstance(key, ast.Constant) and isinstance(key.value, str)
+                    and 'XPU' in key.value and 'GRAPH' in key.value):
+                expr = ast.Expression(body=value)
+                ast.fix_missing_locations(expr)
+                code = compile(expr, 'envs.py', 'eval')
+                fn = eval(code, {'os': os, '__builtins__': __builtins__})
+
+                for val in ('1', '2', '10'):
+                    os.environ[key.value] = val
+                    result = fn()
+                    assert result, f"'{val}' should be truthy, got {result}"
+
+                os.environ[key.value] = '0'
+                result = fn()
+                assert not result, f"'0' should be falsy, got {result}"
+
+                os.environ.pop(key.value, None)
+                print('PASS')
+                raise SystemExit(0)
+
+assert False, 'No XPU GRAPH env var lambda found in environment_variables dict'
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_env_var_module_access():
     """XPU graph env var accessible via vllm.envs module, defaults disabled, toggles on."""
-    var = _discover_xpu_graph_var()
+    r = _run_py("""\
+import importlib.util, os
 
-    # Default → falsy
-    os.environ.pop(var, None)
-    envs = _load_envs()
-    val = getattr(envs, var, "__MISSING__")
-    assert val != "__MISSING__", (
-        f"{var} not found on envs module (not in environment_variables or TYPE_CHECKING)"
-    )
-    assert not val, f"Default should be falsy via module, got {val}"
+# Clear any XPU graph env vars
+for key in list(os.environ):
+    if 'XPU' in key and 'GRAPH' in key:
+        del os.environ[key]
 
-    # Set to "1" → truthy
-    os.environ[var] = "1"
-    envs2 = _load_envs()
-    val2 = getattr(envs2, var, "__MISSING__")
-    assert val2, f"'1' should be truthy via module, got {val2}"
+# Load envs module directly (avoid vllm/__init__.py GPU imports)
+spec = importlib.util.spec_from_file_location('vllm_envs', '/repo/vllm/envs.py')
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
 
-    os.environ.pop(var, None)
+# Discover XPU graph var from module attributes
+var = None
+for name in dir(mod):
+    if name.startswith('VLLM') and 'XPU' in name and 'GRAPH' in name:
+        var = name
+        break
+assert var is not None, 'No VLLM_*XPU*GRAPH* attribute found on envs module'
+
+val = getattr(mod, var)
+assert not val, f'{var} default should be falsy, got {val}'
+
+# Test toggling on
+os.environ[var] = '1'
+spec2 = importlib.util.spec_from_file_location('vllm_envs2', '/repo/vllm/envs.py')
+mod2 = importlib.util.module_from_spec(spec2)
+spec2.loader.exec_module(mod2)
+val2 = getattr(mod2, var)
+assert val2, f'{var} should be truthy when set to "1", got {val2}'
+
+os.environ.pop(var, None)
+print('PASS')
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — regression
+# pass_to_pass (repo_tests)
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
 def test_existing_env_vars_preserved():
     """Existing env vars and XPU platform class still present after changes."""
     envs_content = Path(f"{REPO}/vllm/envs.py").read_text()
@@ -150,14 +175,12 @@ def test_existing_env_vars_preserved():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — xpu.py integration
-# AST required: xpu.py imports vllm_xpu_kernels (Intel C ext unavailable in CPU env)
+# fail_to_pass (pr_diff) — xpu.py integration (AST-based)
+# xpu.py imports vllm_xpu_kernels (Intel C extension unavailable in CPU env)
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_xpu_check_and_update_config_uses_env_var():
     """check_and_update_config conditionally disables cudagraph based on XPU env var."""
-    var = _discover_xpu_graph_var()
     source = Path(f"{REPO}/vllm/platforms/xpu.py").read_text()
     tree = ast.parse(source)
 
@@ -172,7 +195,7 @@ def test_xpu_check_and_update_config_uses_env_var():
             has_envs_import = True
     assert has_envs_import, "vllm.envs not imported in xpu.py"
 
-    # Find method, verify env var reference and cudagraph assignment
+    # Find check_and_update_config, verify env var reference and cudagraph assignment
     for node in ast.walk(tree):
         if (
             isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
@@ -181,14 +204,12 @@ def test_xpu_check_and_update_config_uses_env_var():
             has_env_ref = False
             has_cudagraph_assign = False
             for child in ast.walk(node):
-                if isinstance(child, ast.Attribute) and child.attr == var:
-                    has_env_ref = True
-                if (
-                    isinstance(child, ast.Constant)
-                    and isinstance(child.value, str)
-                    and var in child.value
-                ):
-                    has_env_ref = True
+                if isinstance(child, ast.Attribute) and isinstance(child.attr, str):
+                    if "XPU" in child.attr and "GRAPH" in child.attr:
+                        has_env_ref = True
+                if isinstance(child, ast.Constant) and isinstance(child.value, str):
+                    if "XPU" in child.value and "GRAPH" in child.value:
+                        has_env_ref = True
                 if isinstance(child, ast.Assign):
                     for target in child.targets:
                         if (
@@ -196,7 +217,7 @@ def test_xpu_check_and_update_config_uses_env_var():
                             and "cudagraph" in target.attr.lower()
                         ):
                             has_cudagraph_assign = True
-            assert has_env_ref, f"{var} not referenced in check_and_update_config"
+            assert has_env_ref, "XPU graph env var not referenced in check_and_update_config"
             assert has_cudagraph_assign, (
                 "No cudagraph_mode assignment in check_and_update_config"
             )

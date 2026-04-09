@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92473
+  base_commit: "cf328d3afe3660e71496fed499376921c75eb3e3"
+  merge_commit: "1297f606beff803e1e411694b537a62f7c30ad94"
+
+checks:
+  - id: files_exist_and_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified Rust files exist with real code (anti-stub gate)"
+
+  - id: non_dropping_whole_app_method
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Project has a method that computes whole-app graph WITHOUT dropping issues"
+
+  - id: scale_down_logic_deduplicated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Node pool scale-down logic extracted from whole_app_module_graphs into shared helper"
+
+  - id: compilation_issues_uses_whole_app_graph
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_all_compilation_issues_inner_operation calls a whole-app graph method"
+
+  - id: no_endpoint_group_iteration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_all_compilation_issues_inner_operation no longer iterates endpoint groups"
+
+  - id: new_method_is_turbo_tasks_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The new whole-app graph method has #[turbo_tasks::function] attribute"
+
+  - id: original_whole_app_module_graphs_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Original whole_app_module_graphs method still exists with drop_issues in dev path"
+
+  - id: project_impl_structure_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "impl Project block and key functions preserved"
+
+rubric:
+  - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run `cargo fmt`"
+    source:
+      path: "CLAUDE.md"
+      lines: "422"
+      commit: "cf328d3afe3660e71496fed499376921c75eb3e3"

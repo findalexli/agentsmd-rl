@@ -12,15 +12,15 @@ checks:
     origin: static
     description: "Modified file must parse without errors"
 
-  - id: no_early_return_before_attn_metadata
+  - id: no_fullgraph_early_return
     type: fail_to_pass
     origin: pr_diff
-    description: "FULL cudagraph path must not return before building attention metadata"
+    description: "FULL cudagraph path must not early-return before building attention metadata"
 
-  - id: attn_metadata_built_for_full_mode
+  - id: attn_metadata_before_fullgraph_execution
     type: fail_to_pass
     origin: pr_diff
-    description: "Attention metadata built before FULL cudagraph execution for all modes"
+    description: "Attention metadata must be built before FULL cudagraph execution"
 
   - id: slot_mappings_computed
     type: pass_to_pass

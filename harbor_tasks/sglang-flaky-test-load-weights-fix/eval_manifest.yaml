@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: sgl-project/sglang
+  pr: 22150
+  base_commit: df9c831ab80c78495142b4dbcb1dfa537c9e1c73
+  merge_commit: 3a4f4cbc525b9106bb57a69b96420c545a90f7ae
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Test file must parse without errors"
+
+  - id: transfer_engine_flag_hardcoded_false
+    type: fail_to_pass
+    origin: pr_diff
+    description: "remote_instance_weight_loader_start_seed_via_transfer_engine must be hardcoded to False, not conditional on backend"
+
+  - id: fixme_comment_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "FIXME comment about random behavior must be added before random.choice calls"
+
+  - id: no_conditional_transfer_engine_expression
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The conditional expression checking backend == 'transfer_engine' must be removed from Engine init"
+
+  - id: file_structure_intact
+    type: pass_to_pass
+    origin: static
+    description: "The test file should still have expected structure with key imports and functions"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "The fix hardcodes False for the parameter and removes conditional logic"
+
+rubric: []

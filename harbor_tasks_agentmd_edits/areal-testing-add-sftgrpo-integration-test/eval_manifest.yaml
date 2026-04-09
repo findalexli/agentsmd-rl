@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 726
+  base_commit: "d64f8688833cd73648a1b06932f1fbec542694e3"
+  merge_commit: "2710fd08c476f99659d7c13822d5eb5cc88bac03"
+
+checks:
+  - id: grpo_parametrized_with_megatron
+    type: fail_to_pass
+    origin: pr_diff
+    description: "test_grpo is parametrized with @pytest.mark.parametrize for fsdp and megatron backends"
+
+  - id: sft_parametrized_with_megatron
+    type: fail_to_pass
+    origin: pr_diff
+    description: "test_sft is parametrized with @pytest.mark.parametrize for fsdp and megatron backends"
+
+  - id: megatron_grpo_config_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "config_megatron.yaml exists for GRPO tests with megatron allocation_mode"
+
+  - id: megatron_sft_config_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "config_megatron.yaml exists for SFT tests with megatron allocation_mode"
+
+  - id: megatron_sft_ref_losses
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ref_losses_megatron.json exists with 16 float reference loss values"
+
+  - id: grpo_uses_backend_config_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "test_grpo.py loads config via config_{backend}.yaml pattern, not hardcoded config.yaml"
+
+  - id: python_files_parse
+    type: pass_to_pass
+    origin: static
+    description: "Modified test Python files parse without syntax errors"
+
+  - id: config_uses_parametrize
+    type: fail_to_pass
+    origin: agent_config
+    description: "Tests use pytest.mark.parametrize for backend variants per AGENTS.md rule"
+    source:
+      path: "AGENTS.md"
+      lines: "261"
+      commit: "d64f8688833cd73648a1b06932f1fbec542694e3"
+
+rubric: []

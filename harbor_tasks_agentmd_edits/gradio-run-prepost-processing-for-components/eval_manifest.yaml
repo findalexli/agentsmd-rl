@@ -1,0 +1,69 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 13168
+  base_commit: "835e4bd1adcaf5716283fa379e909f916a032b8a"
+  merge_commit: "a8e0cc66b0c5a9032e8c70de320419a724e674e1"
+
+checks:
+  # Gate — syntax
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files parse without errors"
+
+  # Code behavior — profiling sync utilities
+  - id: trace_phase_sync_records_timing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "trace_phase_sync context manager records timing into RequestTrace"
+
+  - id: traced_sync_decorator_records_timing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "traced_sync decorator wraps a function and records phase timing"
+
+  - id: request_trace_has_new_phase_fields
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RequestTrace has upload_ms and component-specific phase fields"
+
+  - id: to_dict_includes_new_phase_keys
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RequestTrace.to_dict() includes new component-level phase keys"
+
+  - id: trace_phase_sync_no_trace_noop
+    type: fail_to_pass
+    origin: pr_diff
+    description: "trace_phase_sync is a no-op when no current trace is set"
+
+  # Config/documentation update
+  - id: benchmark_readme_documents_results_directory_structure
+    type: fail_to_pass
+    origin: pr_diff
+    description: "scripts/benchmark/README.md documents results directory structure with tier details"
+
+  - id: benchmark_readme_documents_ab_test_structure
+    type: fail_to_pass
+    origin: pr_diff
+    description: "scripts/benchmark/README.md explains A/B test directory layout"
+
+  # Regression — existing functionality preserved
+  - id: trace_phase_async_still_exists
+    type: pass_to_pass
+    origin: static
+    description: "Existing async trace_phase function still works correctly"
+
+  - id: set_phase_accumulates
+    type: pass_to_pass
+    origin: static
+    description: "RequestTrace.set_phase accumulates values across multiple calls"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "835e4bd1adcaf5716283fa379e909f916a032b8a"

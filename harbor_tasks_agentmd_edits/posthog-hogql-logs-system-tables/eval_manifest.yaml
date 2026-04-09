@@ -1,0 +1,70 @@
+version: "2.0"
+
+source:
+  repo: "PostHog/posthog"
+  pr: 53525
+  base_commit: "51c06f3b577793a61dd32d10b5922d8b61393118"
+  merge_commit: "e8a082c2c1d8504d9db7d50c21502bf67939e886"
+
+checks:
+  # Gate — syntax
+  - id: system_py_syntax
+    type: pass_to_pass
+    origin: static
+    description: "system.py must parse without syntax errors"
+
+  # Code behavior — table definitions (consolidated tests)
+  - id: logs_views_table_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "logs_views is defined as PostgresTable with correct fields, postgres_table_name, and access_scope"
+
+  - id: logs_alerts_table_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "logs_alerts is defined as PostgresTable with alert-specific fields, postgres_table_name, and access_scope"
+
+  - id: logs_tables_registered_in_system_tables
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SystemTables.children includes logs_alerts and logs_views"
+
+  # Config/doc updates — skill reference
+  - id: skill_md_references_logs
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md lists a Logs reference in its data schema section"
+    source:
+      path: "products/posthog_ai/skills/query-examples/SKILL.md"
+      lines: "21"
+      commit: "51c06f3b577793a61dd32d10b5922d8b61393118"
+
+  - id: guidelines_lists_logs_tables
+    type: fail_to_pass
+    origin: agent_config
+    description: "guidelines.md lists system.logs_alerts and system.logs_views in the system data table"
+    source:
+      path: "products/posthog_ai/skills/query-examples/references/guidelines.md"
+      lines: "42"
+      commit: "51c06f3b577793a61dd32d10b5922d8b61393118"
+
+  - id: guidelines_references_logs_model
+    type: fail_to_pass
+    origin: agent_config
+    description: "guidelines.md System Models Reference links to models-logs reference doc"
+    source:
+      path: "products/posthog_ai/skills/query-examples/references/guidelines.md"
+      lines: "60"
+      commit: "51c06f3b577793a61dd32d10b5922d8b61393118"
+
+  - id: models_logs_reference_created
+    type: fail_to_pass
+    origin: pr_diff
+    description: "models-logs.md exists and documents both logs_views and logs_alerts tables"
+
+rubric:
+  - rule: "Config update is consistent with the style of existing model reference docs and table listings"
+    source:
+      path: "products/posthog_ai/skills/query-examples/SKILL.md"
+      lines: "19-30"
+      commit: "51c06f3b577793a61dd32d10b5922d8b61393118"

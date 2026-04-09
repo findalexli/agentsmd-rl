@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28829
+  base_commit: "686eda3cb4773bb1ffe77cbdef6d0507d8fc2314"
+  merge_commit: "de10885151f54491daaa9352b4ff07db002a7339"
+
+checks:
+  - id: zig_file_parses
+    type: pass_to_pass
+    origin: static
+    description: "Modified Zig file must be readable and have expected structure"
+
+  - id: no_fixed_buffer_used
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The vulnerable fixed 1024-byte buffer pattern must be removed"
+
+  - id: stack_fallback_pattern_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The safe stackFallback allocator pattern must be present"
+
+  - id: dynamic_allocation_with_dupeZ
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The fix must use dupeZ for dynamic allocation of the hostname"
+
+  - id: proper_cleanup_with_defer_free
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The fix must properly free the allocated memory with defer"
+
+  - id: lookup_function_has_real_logic
+    type: pass_to_pass
+    origin: static
+    description: "LibInfo.lookup function must have substantial implementation"
+
+rubric: []

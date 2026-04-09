@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28974
+  base_commit: "c99fd9d1e17ec73ce4c0edd1c49f34be8e8edc25"
+  merge_commit: "7e142ca82492a23c1e9bb2e0422ceccf69dbf7c4"
+
+checks:
+  - id: cert_not_expired
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TLS certificate notAfter must be in the future"
+
+  - id: cert_long_validity
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Certificate must be valid for at least 5 years (not just 1 year)"
+
+  - id: cert_cn_localhost
+    type: pass_to_pass
+    origin: static
+    description: "Certificate CN must be 'localhost'"
+
+  - id: cert_san_localhost
+    type: pass_to_pass
+    origin: static
+    description: "Certificate SAN must include DNS:localhost"
+
+  - id: key_matches_cert
+    type: pass_to_pass
+    origin: static
+    description: "Private key modulus must match certificate modulus"
+
+  - id: cert_self_signed
+    type: pass_to_pass
+    origin: static
+    description: "Certificate must be self-signed (issuer == subject)"
+
+rubric: []

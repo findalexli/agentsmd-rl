@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35999
+  base_commit: "3f0b9e61c467cd6e09cac6fb69f6e8f68cd3c5d7"
+  merge_commit: "b4546cd0d4db2b913d8e7503bee86e1844073b2e"
+
+checks:
+  - id: workloop_has_core_functions
+    type: pass_to_pass
+    origin: static
+    description: "Core functions (throwIfInfiniteUpdateLoopDetected, flushSpawnedWork) must still exist"
+
+  - id: nested_update_kind_constants
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Three distinct constants (NO_NESTED_UPDATE, NESTED_UPDATE_SYNC_LANE, NESTED_UPDATE_PHASE_SPAWN) must be defined"
+
+  - id: nested_update_kind_tracking
+    type: fail_to_pass
+    origin: pr_diff
+    description: "nestedUpdateKind variable must track different update kinds in flushSpawnedWork"
+
+  - id: phase_spawn_uses_console_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "NESTED_UPDATE_PHASE_SPAWN path in throwIfInfiniteUpdateLoopDetected must warn via console.error"
+
+  - id: sync_lane_branches_on_render_context
+    type: fail_to_pass
+    origin: pr_diff
+    description: "NESTED_UPDATE_SYNC_LANE path must check RenderContext to decide warn vs throw"
+
+  - id: else_resets_nested_update_state
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Else branch in flushSpawnedWork must reset rootWithNestedUpdates and nestedUpdateKind"
+
+rubric: []

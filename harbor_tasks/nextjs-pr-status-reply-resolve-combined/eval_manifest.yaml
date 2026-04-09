@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92450
+  base_commit: "fea754747872122d167dd8bf1fc5581044e50521"
+  merge_commit: "6d572c27e01cbdb19dfbdf5bce94604229478088"
+
+checks:
+  - id: reply_and_resolve_subcommand_no_args
+    type: fail_to_pass
+    origin: pr_diff
+    description: "reply-and-resolve-thread subcommand exists and prints usage when called without args"
+
+  - id: reply_and_resolve_subcommand_missing_body
+    type: fail_to_pass
+    origin: pr_diff
+    description: "reply-and-resolve-thread requires both threadId and body args"
+
+  - id: generate_thread_md_includes_combined_command
+    type: fail_to_pass
+    origin: pr_diff
+    description: "generateThreadMd outputs the reply-and-resolve-thread command for unresolved threads"
+
+  - id: reply_to_thread_uses_rest_api
+    type: fail_to_pass
+    origin: pr_diff
+    description: "replyToThread uses REST API endpoint instead of GraphQL mutation"
+
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "scripts/pr-status.js must parse without syntax errors"
+
+  - id: reply_thread_usage_error
+    type: pass_to_pass
+    origin: static
+    description: "Existing reply-thread subcommand still validates args correctly"
+
+  - id: resolve_thread_usage_error
+    type: pass_to_pass
+    origin: static
+    description: "Existing resolve-thread subcommand still validates args correctly"
+
+  - id: skill_md_thread_interaction_commands
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md must document thread interaction commands including the combined command"
+    source:
+      path: ".agents/skills/pr-status-triage/SKILL.md"
+      lines: "22"
+      commit: "fea754747872122d167dd8bf1fc5581044e50521"
+
+  - id: workflow_md_one_step_resolve
+    type: fail_to_pass
+    origin: agent_config
+    description: "workflow.md must document the one-step reply-and-resolve alternative"
+    source:
+      path: ".agents/skills/pr-status-triage/workflow.md"
+      lines: "29-44"
+      commit: "fea754747872122d167dd8bf1fc5581044e50521"
+
+rubric:
+  - rule: "After addressing review comments, reply to the thread describing what was done, then resolve it. Use reply-and-resolve-thread to do both in one step, or use reply-thread + resolve-thread separately."
+    source:
+      path: ".agents/skills/pr-status-triage/SKILL.md"
+      lines: "22"
+      commit: "fea754747872122d167dd8bf1fc5581044e50521"

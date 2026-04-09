@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 45109
+  base_commit: "38593c2e83964079576eb646fe9b68cce16114dc"
+  merge_commit: "d55f0350a25333406daeafb7c250bb4ba3bf43a1"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  - id: t5attention_tp_compatible
+    type: fail_to_pass
+    origin: pr_diff
+    description: "T5Attention correctly infers n_heads from tensor shape when inner_dim is sharded"
+
+  - id: kv_attention_shape_correct
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Key/value attention uses dynamic shape from current_states instead of config n_heads"
+
+  - id: position_bias_dynamic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "position_bias shape uses query_states.shape[1] instead of config n_heads"
+
+  - id: attn_output_reshape
+    type: fail_to_pass
+    origin: pr_diff
+    description: "attn_output.view uses seq_length as fixed dim and -1 for heads dimension"
+
+  - id: copied_files_updated
+    type: fail_to_pass
+    origin: agent_config
+    description: "T5-family model copies (mt5, longt5, etc.) have been updated with the same fix"
+    source:
+      path: "CLAUDE.md"
+      lines: "45-55"
+      commit: "38593c2e83964079576eb646fe9b68cce16114dc"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "T5Attention.forward has real logic, not just pass/return"
+
+rubric:
+  # Soft rule for copy sync verification
+  - rule: "When fixing code that is copied across model files, ensure all copies are updated or the copy link is properly broken."
+    source:
+      path: "CLAUDE.md"
+      lines: "45-55"
+      commit: "38593c2e83964079576eb646fe9b68cce16114dc"

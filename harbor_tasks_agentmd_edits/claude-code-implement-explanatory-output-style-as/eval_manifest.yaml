@@ -1,0 +1,47 @@
+version: "2.0"
+
+source:
+  repo: "anthropics/claude-code"
+  pr: 10495
+  base_commit: "4dc23d0275ff615ba1dccbdd76ad2b12a3ede591"
+  merge_commit: "0c7d02b56f97d53d3526eb5d9d201e69cec0a1c3"
+
+checks:
+  # fail_to_pass tests - core behavioral tests for the plugin
+  - id: test_plugin_files_exist
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Plugin directory and all required files must exist"
+
+  - id: test_session_start_outputs_valid_json
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Session start script must output valid JSON when executed"
+
+  - id: test_session_start_has_explanatory_content
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Session start output must contain the explanatory mode instructions"
+
+  - id: test_plugin_json_valid
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Plugin manifest must be valid JSON with required fields"
+
+  - id: test_hooks_json_valid
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Hooks configuration must be valid JSON with SessionStart handler"
+
+  # pass_to_pass tests - static quality checks
+  - id: test_shell_script_executable
+    type: pass_to_pass
+    origin: static
+    description: "Session start script must be executable with proper shebang"
+
+  - id: test_readme_documents_usage
+    type: pass_to_pass
+    origin: static
+    description: "README must document the plugin purpose and usage"
+
+rubric: []

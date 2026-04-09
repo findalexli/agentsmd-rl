@@ -7,87 +7,124 @@ source:
   merge_commit: "92dcf444055fdc6379cfd469f0d1adaab6886e55"
 
 checks:
+  # --- YAML validation (behavioral) ---
+  - id: test_tools_yaml_valid
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tools.yaml must be valid parseable YAML"
+
   # --- Code behavior: tools.yaml configuration ---
-  - id: eval_summary_tool_enabled
+  - id: test_eval_summary_tool_enabled
     type: fail_to_pass
     origin: pr_diff
     description: "tools.yaml must have llm-analytics-evaluation-summary-create enabled"
 
-  - id: eval_summary_tool_scopes
+  - id: test_eval_summary_tool_scopes
     type: fail_to_pass
     origin: pr_diff
     description: "Tool must declare llm_analytics:write scope"
 
-  - id: eval_summary_tool_annotations_and_consent
+  - id: test_eval_summary_tool_annotations_and_consent
     type: fail_to_pass
     origin: pr_diff
     description: "Tool must have correct annotations (not readOnly, not destructive, idempotent) and requires_ai_consent"
 
-  # --- Code behavior: generated TypeScript ---
-  - id: zod_schema_exported_in_api_ts
+  - id: test_eval_summary_tool_description_complete
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tool must have a descriptive title and description with evaluation_id, filter, pass, and fail documented"
+
+  # --- TypeScript validation (behavioral) ---
+  - id: test_typescript_api_file_compiles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Generated api.ts must have valid TypeScript syntax with exports and Zod schemas"
+
+  - id: test_zod_schema_exported_in_api_ts
     type: fail_to_pass
     origin: pr_diff
     description: "Generated api.ts must export the LlmAnalyticsEvaluationSummaryCreateBody Zod schema with evaluation_id, filter, force_refresh, generation_ids fields"
 
-  - id: tool_handler_registered_in_generated_tools
+  - id: test_tool_handler_registered_in_generated_tools
     type: fail_to_pass
     origin: pr_diff
-    description: "Generated llm_analytics.ts must register the evaluation-summary handler in GENERATED_TOOLS"
+    description: "Generated llm_analytics.ts must register the evaluation-summary handler with correct schema reference"
 
-  - id: tool_def_json_has_entry
+  - id: test_generated_tools_record_has_entry
     type: fail_to_pass
     origin: pr_diff
-    description: "generated-tool-definitions.json must include the evaluation summary tool with scopes and consent"
+    description: "GENERATED_TOOLS record must include the evaluation-summary tool entry"
 
-  - id: snapshot_json_exists_and_valid
+  # --- JSON validation (behavioral) ---
+  - id: test_tool_def_json_valid_and_has_entry
+    type: fail_to_pass
+    origin: pr_diff
+    description: "generated-tool-definitions.json must be valid JSON and include the tool with scopes and consent"
+
+  - id: test_tool_def_all_json_has_entry
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tool-definitions-all.json must also include the evaluation summary tool"
+
+  - id: test_snapshot_json_exists_and_valid
     type: fail_to_pass
     origin: pr_diff
     description: "JSON snapshot for the tool schema must exist with required properties (evaluation_id, filter, force_refresh, generation_ids)"
 
-  # --- Config/documentation: skills README ---
-  - id: skills_readme_lists_evaluations
+  # --- Config/documentation: skills README (behavioral) ---
+  - id: test_skills_readme_valid_markdown
     type: fail_to_pass
     origin: pr_diff
-    description: "products/llm_analytics/skills/README.md must list the exploring-llm-evaluations skill"
+    description: "products/llm_analytics/skills/README.md must be valid markdown and list the exploring-llm-evaluations skill"
 
-  # --- Config/documentation: SKILL.md ---
-  - id: skill_md_exists_with_frontmatter
+  # --- Config/documentation: SKILL.md (behavioral) ---
+  - id: test_skill_md_exists_with_valid_frontmatter
     type: fail_to_pass
     origin: pr_diff
-    description: "exploring-llm-evaluations/SKILL.md must exist with valid YAML frontmatter (name, description)"
+    description: "exploring-llm-evaluations/SKILL.md must exist with valid YAML frontmatter (name, description) mentioning evaluations"
 
-  - id: skill_md_documents_summary_tool
+  - id: test_skill_md_documents_summary_tool
     type: fail_to_pass
     origin: pr_diff
     description: "SKILL.md must document the evaluation summary tool including filter and force_refresh parameters"
 
-  - id: skill_md_covers_both_evaluation_types
+  - id: test_skill_md_covers_both_evaluation_types
     type: fail_to_pass
     origin: pr_diff
     description: "SKILL.md must document both hog and llm_judge evaluation types with their characteristics"
 
-  - id: skill_md_has_workflow_sections
+  - id: test_skill_md_has_workflow_sections
     type: fail_to_pass
     origin: pr_diff
     description: "SKILL.md must contain workflow guidance and reference the $ai_evaluation event schema"
 
-  # --- Agent config compliance: existing rules ---
-  - id: skill_md_frontmatter_follows_conventions
+  # --- Agent config compliance: naming conventions ---
+  - id: test_skill_md_follows_naming_conventions
     type: pass_to_pass
     origin: agent_config
-    description: "SKILL.md frontmatter follows naming conventions from writing-skills guide"
+    description: "SKILL.md frontmatter follows naming conventions from writing-skills guide (kebab-case, description < 1024 chars)"
     source:
       path: ".agents/skills/writing-skills/SKILL.md"
       lines: "31-37"
       commit: "69f47d880ee65fd3e9a769a12a7d80997dea555e"
 
+  # --- Agent config compliance: no wildcard imports ---
+  - id: test_no_wildcard_imports_in_generated_code
+    type: pass_to_pass
+    origin: agent_config
+    description: "Generated TypeScript must not use wildcard imports"
+    source:
+      path: ".agents/skills/implementing-mcp-tools/SKILL.md"
+      lines: "1-50"
+      commit: "69f47d880ee65fd3e9a769a12a7d80997dea555e"
+
   # --- Pass-to-pass: regression ---
-  - id: existing_clustering_tool_unchanged
+  - id: test_existing_clustering_tool_unchanged
     type: pass_to_pass
     origin: pr_diff
     description: "Previously enabled clustering-jobs-list tool must remain enabled"
 
-  - id: existing_skills_remain_in_readme
+  - id: test_existing_skills_remain_in_readme
     type: pass_to_pass
     origin: pr_diff
     description: "Previously listed skills must still appear in skills/README.md"

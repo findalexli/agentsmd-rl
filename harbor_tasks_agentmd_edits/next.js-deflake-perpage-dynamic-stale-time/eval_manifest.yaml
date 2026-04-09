@@ -1,0 +1,63 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91492
+  base_commit: "3af4cc14ea400ebc01fdc267f3d3495bfe086a7e"
+  merge_commit: "a060fbf9f7ba603bb32ab9cf9da48bfa9d3739d2"
+
+checks:
+  # [static] pass_to_pass
+  - id: hub_pages_created
+    type: pass_to_pass
+    origin: static
+    description: "Hub pages (hub-a, hub-b, hub-c) must exist with proper structure"
+
+  # [static] pass_to_pass
+  - id: skill_file_created
+    type: pass_to_pass
+    origin: static
+    description: "Router act SKILL.md must exist with proper documentation"
+
+  # [static] pass_to_pass
+  - id: dynamic_pages_updated
+    type: pass_to_pass
+    origin: static
+    description: "Dynamic pages must have LinkAccordion links to hub pages"
+
+  # [pr_diff] fail_to_pass
+  - id: test_uses_hub_navigation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Test must use hub navigation instead of browser.back()"
+
+  # [pr_diff] fail_to_pass
+  - id: agents_md_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md must contain router act rule about LinkAccordion"
+
+  # [static] pass_to_pass
+  - id: typescript_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must have valid syntax"
+
+  # [static] pass_to_pass
+  - id: test_file_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Test file must have meaningful content, not just placeholders"
+
+  # [agent_config] pass_to_pass
+  - id: router_act_rule_present
+    type: pass_to_pass
+    origin: agent_config
+    description: "AGENTS.md must document router act testing patterns"
+    source:
+      path: "AGENTS.md"
+      lines: "410"
+      commit: "3af4cc14ea400ebc01fdc267f3d3495bfe086a7e"
+
+rubric:
+  []

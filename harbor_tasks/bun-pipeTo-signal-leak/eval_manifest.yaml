@@ -1,0 +1,93 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28491
+  base_commit: "fe4a66e086bebd2c3c5a238effa801426d736278"
+  merge_commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
+
+checks:
+  - id: cpp_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified C++ files must have valid syntax"
+
+  - id: jsabortalgorithm_uses_weak_ref
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSAbortAlgorithm must use JSCallbackDataWeak instead of JSCallbackDataStrong"
+
+  - id: jsabortalgorithm_has_visit_js_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSAbortAlgorithm must implement visitJSFunction for GC marking"
+
+  - id: abort_signal_has_abort_algorithms_vector
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AbortSignal must have m_abortAlgorithms vector and lock for GC visibility"
+
+  - id: abort_signal_has_visit_abort_algorithms
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AbortSignal must implement visitAbortAlgorithms for GC thread visitation"
+
+  - id: js_abort_signal_visits_abort_algorithms
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSAbortSignal::visitAdditionalChildrenInGCThread must call visitAbortAlgorithms"
+
+  - id: add_abort_algorithm_uses_new_vector
+    type: fail_to_pass
+    origin: pr_diff
+    description: "addAbortAlgorithmToSignal must use m_abortAlgorithms instead of addAlgorithm"
+
+  - id: remove_abort_algorithm_uses_new_vector
+    type: fail_to_pass
+    origin: pr_diff
+    description: "removeAbortAlgorithmFromSignal must remove from m_abortAlgorithms"
+
+  - id: run_abort_steps_handles_new_vector
+    type: fail_to_pass
+    origin: pr_diff
+    description: "runAbortSteps must process m_abortAlgorithms under lock"
+
+  - id: handle_event_checks_callback_validity
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSAbortAlgorithm::handleEvent must check callback validity (Weak ref can be null)"
+
+  - id: memory_cost_includes_abort_algorithms
+    type: fail_to_pass
+    origin: pr_diff
+    description: "memoryCost must include m_abortAlgorithms size for accurate reporting"
+
+  - id: fix_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Fix must have substantial implementation, not be a stub"
+
+  - id: includes_proper_headers
+    type: pass_to_pass
+    origin: static
+    description: "All necessary headers must be included (wtf/Lock.h)"
+
+rubric:
+  # From CLAUDE.md / AGENTS.md
+  - rule: "Follow existing code style - check neighboring files for patterns"
+    source:
+      path: "CLAUDE.md"
+      lines: "5"
+      commit: "fe4a66e086bebd2c3c5a238effa801426d736278"
+
+  - rule: "When implementing JavaScript classes in C++, use JSC::DestructibleObject for C++ fields, follow HashTableValue pattern, add iso subspaces if needed"
+    source:
+      path: ".claude/skills/implementing-jsc-classes-cpp/SKILL.md"
+      lines: "1-50"
+      commit: "fe4a66e086bebd2c3c5a238effa801426d736278"
+
+  - rule: "Be humble & honest - NEVER overstate what got done or what actually works"
+    source:
+      path: "CLAUDE.md"
+      lines: "20"
+      commit: "fe4a66e086bebd2c3c5a238effa801426d736278"

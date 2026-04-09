@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 13172
+  base_commit: "9487b60670f6532eaccb3251d15f5505fa23d4e3"
+  merge_commit: "03a9d4c99f3c9466e4fc162d02800850ed67a29e"
+
+checks:
+  - id: file_exists
+    type: pass_to_pass
+    origin: static
+    description: "Target file gradio_helper.ts exists and contains formatter function"
+
+  - id: function_extractable
+    type: pass_to_pass
+    origin: static
+    description: "formatter function can be extracted and loaded by Node"
+
+  - id: nested_key_returns_string_not_object
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When translate() returns an object (nested i18n key), formatter returns the original string instead of the object"
+
+  - id: various_nested_keys_return_strings
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Multiple labels matching nested i18n keys (file, audio, common) all return strings"
+
+  - id: array_translate_returns_string
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When translate() returns an array (non-string), formatter returns original string"
+
+  - id: normal_string_translation_works
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Normal i18n translations (string to string) still work correctly"
+
+  - id: null_undefined_return_empty
+    type: pass_to_pass
+    origin: pr_diff
+    description: "formatter(null) and formatter(undefined) return empty string"
+
+  - id: untranslated_label_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When translate returns the same string (no translation), original label preserved"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "9487b60670f6532eaccb3251d15f5505fa23d4e3"

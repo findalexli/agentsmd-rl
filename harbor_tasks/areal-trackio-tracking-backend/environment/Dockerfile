@@ -1,0 +1,28 @@
+FROM python:3.12-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        git curl ca-certificates build-essential tmux && \
+    rm -rf /var/lib/apt/lists/*
+
+ARG BASE_COMMIT=92c467e56bf17d730bd26855de33d5e4e13ba435
+
+RUN git init /workspace/AReaL && \
+    cd /workspace/AReaL && \
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
+
+RUN mkdir -p /logs/verifier
+
+WORKDIR /workspace/AReaL
+
+# Install minimal deps needed for testing (no torch/GPU packages)
+# Tests extract config dataclasses from source and call them directly
+RUN pip install --no-cache-dir pyyaml
+
+# Configure git for any agent that wants to commit
+RUN git config --global user.email "agent@test.local" && \
+    git config --global user.name "Test Agent"
+
+ENV PYTHONPATH="/workspace/AReaL:${PYTHONPATH:-}"

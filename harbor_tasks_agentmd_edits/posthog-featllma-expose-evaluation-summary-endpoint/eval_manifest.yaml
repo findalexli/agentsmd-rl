@@ -1,53 +1,53 @@
 version: "2.0"
 
 source:
-  repo: "{{OWNER}}/{{REPO}}"
-  pr: 0  # {{PR_NUMBER}}
-  base_commit: "{{BASE_COMMIT}}"
-  merge_commit: "{{MERGE_COMMIT}}"
+  repo: "PostHog/posthog"
+  pr: 53656
+  base_commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"
+  merge_commit: "92dcf444055fdc6379cfd469f0d1adaab6886e55"
 
 checks:
-  - id: syntax_check
+  - id: yaml_valid_syntax
     type: pass_to_pass
     origin: static
-    description: "Modified files must parse without errors"
+    description: "tools.yaml parses as valid YAML without errors"
 
-  - id: core_bug_fixed
+  - id: tool_enabled_in_yaml
     type: fail_to_pass
     origin: pr_diff
-    description: "TODO: describe the core behavioral change"
+    description: "llm-analytics-evaluation-summary-create is enabled in tools.yaml"
 
-  - id: edge_case
+  - id: tool_has_description_and_title
     type: fail_to_pass
     origin: pr_diff
-    description: "TODO: describe a second input or edge case"
+    description: "Enabled tool has title and description metadata"
 
-  - id: existing_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Upstream test suite still passes"
+  - id: skill_file_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "exploring-llm-evaluations SKILL.md exists with evaluation content"
 
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified function has real logic, not just pass/return"
+  - id: skills_readme_references_evaluations
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Skills README lists the exploring-llm-evaluations skill"
 
-  # Uncomment and fill if agent config rules exist:
-  # - id: config_rule
-  #   type: fail_to_pass
-  #   origin: agent_config
-  #   description: "TODO: rule from agent config"
-  #   source:
-  #     path: "AGENTS.md"
-  #     lines: "30"
-  #     commit: "{{BASE_COMMIT}}"
+  - id: tool_has_required_yaml_fields
+    type: fail_to_pass
+    origin: agent_config
+    description: "Enabled tool has scopes and annotations per MCP tools guide"
+    source:
+      path: ".agents/skills/implementing-mcp-tools/SKILL.md"
+      lines: "116-146"
+      commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"
 
-rubric:
-  # Soft rules for LLM judge. Only rules genuinely needing subjective evaluation.
-  # Remove this section if no applicable soft rules exist.
-  []
-  # - rule: "TODO: verbatim text from config file"
-  #   source:
-  #     path: "AGENTS.md"
-  #     lines: "45"
-  #     commit: "{{BASE_COMMIT}}"
+  - id: skill_has_frontmatter
+    type: fail_to_pass
+    origin: agent_config
+    description: "Skill file has name and description frontmatter per writing-skills guide"
+    source:
+      path: ".agents/skills/writing-skills/SKILL.md"
+      lines: "42-49"
+      commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"
+
+rubric: []

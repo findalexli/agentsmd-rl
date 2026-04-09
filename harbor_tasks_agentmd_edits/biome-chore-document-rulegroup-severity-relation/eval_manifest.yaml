@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "biomejs/biome"
+  pr: 7827
+  base_commit: "72afdfa3451eb02d499c1a2a7dc826b37e3d5f8d"
+  merge_commit: "ee2f5bfcef2c5f44366465b754fce7d250996c99"
+
+checks:
+  - id: errors_struct_refactored
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Errors struct uses named 'message' field with new() constructor, not old tuple struct"
+
+  - id: group_severity_checks
+    type: fail_to_pass
+    origin: pr_diff
+    description: "check_rules() validates severity for a11y/correctness/security, complexity/style, performance, and suspicious groups"
+
+  - id: contributing_severity_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CONTRIBUTING.md documents rule-group severity constraints for all groups"
+
+  - id: check_rules_function_exists
+    type: pass_to_pass
+    origin: static
+    description: "The check_rules() public function still exists in lib.rs"
+
+  - id: contributing_existing_sections
+    type: pass_to_pass
+    origin: static
+    description: "Existing CONTRIBUTING.md sections (Rule severity, Rule domains) still present"
+
+rubric: []

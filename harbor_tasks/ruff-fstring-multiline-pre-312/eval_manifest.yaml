@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24377
+  base_commit: "9a55bc6568caeba0c78c6f3358cd2f9475006f72"
+  merge_commit: "1fe1c5f32c8b49eaed0e46439871d98da5081ab9"
+
+checks:
+  - id: ruff_builds
+    type: pass_to_pass
+    origin: static
+    description: "Ruff compiles successfully after changes"
+
+  - id: fstring_no_multiline_expansion_pre312
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Non-triple-quoted f-string replacement fields must not expand to multiline on pre-3.12"
+
+  - id: fstring_mixed_fields_pre312
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Already-multiline fields preserved but compact fields stay flat on pre-3.12"
+
+  - id: fstring_multiline_allowed_on_312
+    type: pass_to_pass
+    origin: pr_diff
+    description: "On Python 3.12+, compact f-string fields can still expand to multiline"
+
+  - id: no_unwrap_panic_in_modified_file
+    type: pass_to_pass
+    origin: agent_config
+    description: "No .unwrap()/panic!/unreachable! in production code of modified file"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "9a55bc6568caeba0c78c6f3358cd2f9475006f72"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "9a55bc6568caeba0c78c6f3358cd2f9475006f72"
+  - rule: "Rust imports should always go at the top of the file, never locally in functions."
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "9a55bc6568caeba0c78c6f3358cd2f9475006f72"
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "9a55bc6568caeba0c78c6f3358cd2f9475006f72"

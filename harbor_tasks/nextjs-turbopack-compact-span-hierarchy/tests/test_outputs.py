@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 import re
 from pathlib import Path
 
@@ -19,96 +20,120 @@ def _strip_comments(text: str) -> str:
     return re.sub(r"//[^\n]*", "", text)
 
 
-def _read_stripped(path: Path) -> str:
-    """Read file and strip // comments."""
-    return _strip_comments(path.read_text())
+def _extract_fn_body(src: str, fn_name: str) -> str | None:
+    """Extract the body of a named function from Rust source."""
+    in_fn = False
+    depth = 0
+    lines = []
+    for line in src.splitlines():
+        stripped = line.strip()
+        if re.search(rf"fn\s+{fn_name}\b", stripped):
+            in_fn = True
+            depth = 0
+        if in_fn:
+            depth += stripped.count("{") - stripped.count("}")
+            lines.append(stripped)
+            if depth <= 0 and len(lines) > 1:
+                break
+    return "\n".join(lines) if lines else None
+
+
+def _find_span_macros(src: str) -> list[dict]:
+    """Find all tracing span macros and their arguments in Rust source."""
+    results = []
+    for m in re.finditer(
+        r"(info_span!|trace_span!|debug_span!|warn_span!|error_span!|span!)\s*\(", src
+    ):
+        name = m.group(1)
+        start = m.end()
+        d = 1
+        i = start
+        while i < len(src) and d > 0:
+            if src[i] == "(":
+                d += 1
+            elif src[i] == ")":
+                d -= 1
+            i += 1
+        body = src[start : i - 1] if d == 0 else src[start : start + 300]
+        results.append({"name": name, "body": body, "pos": m.start()})
+    return results
+
+
+def _run_node(code: str, *args: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute a Node.js script that analyzes Rust source files."""
+    script = Path("/workspace/next.js/_eval_tmp.mjs")
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script), *args],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd="/workspace/next.js",
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
+
 
 # [pr_diff] fail_to_pass
 def test_compact_span_removed_from_db():
     """compact() in db.rs must no longer create its own tracing span."""
-    src = _read_stripped(DB_FILE)
-    # Look for any tracing span macro with "compact" in its string argument.
-    # We search line-by-line in the compact() function region to avoid
-    # regex issues with nested parentheses across multiple lines.
-    in_compact_fn = False
-    brace_depth = 0
-    for line in src.splitlines():
-        stripped = line.strip()
-        # Detect the compact function definition
-        if re.search(r"fn\s+compact\b", stripped):
-            in_compact_fn = True
-            brace_depth = 0
-        if in_compact_fn:
-            brace_depth += stripped.count("{") - stripped.count("}")
-            # Check for any span macro with "compact" on this line
-            if re.search(
-                r"(?:info_span!|trace_span!|debug_span!|warn_span!|error_span!|span!)",
-                stripped,
-            ) and re.search(r'"[^"]*compact[^"]*"', stripped, re.IGNORECASE):
-                assert False, f"Found compact-related span still in db.rs: {stripped[:80]}"
-            # Also check if span macro + compact string are on separate lines
-            # by looking for span macro assignment with compact in the string arg
-            if brace_depth <= 0 and in_compact_fn and "{" in src[:src.find(stripped) + 1]:
-                # We've exited the function
-                pass
-    # Also do a broad multiline search as a safety net
-    # Match span macros where "compact" appears in the same macro invocation
-    for m in re.finditer(
-        r"(?:info_span!|trace_span!|debug_span!|warn_span!|error_span!|span!)\s*\(",
-        src,
-    ):
-        # Find the matching close paren (handle nesting)
-        start = m.end()
-        depth = 1
-        i = start
-        while i < len(src) and depth > 0:
-            if src[i] == "(":
-                depth += 1
-            elif src[i] == ")":
-                depth -= 1
-            i += 1
-        macro_body = src[start : i - 1] if depth == 0 else src[start : start + 200]
-        if re.search(r'"[^"]*compact[^"]*"', macro_body, re.IGNORECASE):
-            # This span macro references "compact" — it shouldn't be in db.rs
-            assert False, f"Found compact-related span in db.rs: {macro_body[:80]}"
+    r = _run_node(
+        """
+import { readFileSync } from 'fs';
+const src = readFileSync(process.argv[1], 'utf8').replace(/\\/\\/[^\\n]*/g, '');
+const lines = src.split('\\n');
+let inFn = false, depth = 0, body = [];
+for (const line of lines) {
+    const s = line.trim();
+    if (/fn\\s+compact\\b/.test(s)) { inFn = true; depth = 0; }
+    if (inFn) {
+        depth += (s.match(/{/g)||[]).length - (s.match(/}/g)||[]).length;
+        body.push(s);
+        if (depth <= 0 && body.length > 1) break;
+    }
+}
+const fnText = body.join('\\n');
+const spanRe = /(?:info_span!|trace_span!|debug_span!|warn_span!|error_span!|span!)\\s*\\(/g;
+let match;
+while ((match = spanRe.exec(fnText)) !== null) {
+    let start = match.index + match[0].length, d = 1, i = start;
+    while (i < fnText.length && d > 0) {
+        if (fnText[i] === '(') d++; else if (fnText[i] === ')') d--;
+        i++;
+    }
+    const macroBody = fnText.slice(start, i - 1);
+    if (/"[^"]*compact[^"]*"/i.test(macroBody)) {
+        process.stderr.write('compact span still in db.rs: ' + macroBody.slice(0, 80));
+        process.exit(1);
+    }
+}
+console.log('PASS');
+""",
+        str(DB_FILE),
+    )
+    assert r.returncode == 0, f"Node analysis failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_compact_span_added_to_mod():
     """A compact-related tracing span must exist in mod.rs (the call site)."""
-    src = _read_stripped(MOD_FILE)
-    # Search for span macros and check if any reference "compact"
-    for m in re.finditer(
-        r"(?:info_span!|trace_span!|debug_span!|warn_span!|error_span!|span!)\s*\(",
-        src,
-    ):
-        start = m.end()
-        depth = 1
-        i = start
-        while i < len(src) and depth > 0:
-            if src[i] == "(":
-                depth += 1
-            elif src[i] == ")":
-                depth -= 1
-            i += 1
-        macro_body = src[start : i - 1] if depth == 0 else src[start : start + 300]
-        if re.search(r'"[^"]*compact[^"]*"', macro_body, re.IGNORECASE):
-            return  # Found a compact span in mod.rs
-
-    # Fallback: check if there's a span macro within 15 lines of .compact() call
+    src = _strip_comments(MOD_FILE.read_text())
+    for span in _find_span_macros(src):
+        if re.search(r'"[^"]*compact[^"]*"', span["body"], re.IGNORECASE):
+            return
+    # Fallback: check near .compact() call
     lines = src.splitlines()
     for idx, line in enumerate(lines):
         if ".compact()" in line:
             window = "\n".join(lines[max(0, idx - 15) : idx + 5])
-            if re.search(
-                r"(?:info_span!|trace_span!|debug_span!|warn_span!|error_span!|span!)\s*\(",
-                window,
-            ):
+            if _find_span_macros(window):
                 return
     assert False, "No compact-related tracing span found in mod.rs"
 
@@ -116,7 +141,7 @@ def test_compact_span_added_to_mod():
 # [pr_diff] fail_to_pass
 def test_root_span_in_mod():
     """A root span (parent: None) must exist in mod.rs for background work."""
-    src = _read_stripped(MOD_FILE)
+    src = MOD_FILE.read_text()
     patterns = [
         r"(?:info_span!|trace_span!|debug_span!|span!)\s*\(\s*parent\s*:\s*None",
         r"parent\s*:\s*None\s*,\s*\"",
@@ -131,37 +156,39 @@ def test_root_span_in_mod():
 # [pr_diff] fail_to_pass
 def test_sync_span_not_info_level():
     """'sync new files' span in db.rs must not be at info level."""
-    src = DB_FILE.read_text()
-
-    # Removed entirely is acceptable
-    if '"sync new files"' not in src:
-        return
-
-    # Find lines with the span string and check the macro level
-    lines = src.splitlines()
-    for i, line in enumerate(lines):
-        if '"sync new files"' not in line:
-            continue
-        # Check this line and a few lines before for the macro
-        context = "\n".join(lines[max(0, i - 3) : i + 1])
-        context_no_comments = _strip_comments(context)
-        assert not re.search(r"info_span!|warn_span!", context_no_comments), (
-            "'sync new files' still at info level or higher"
-        )
-        if re.search(r"trace_span!|debug_span!|Level::TRACE|Level::DEBUG", context_no_comments):
-            return
-
-    assert False, "Could not determine 'sync new files' span level"
+    r = _run_node(
+        """
+import { readFileSync } from 'fs';
+const src = readFileSync(process.argv[1], 'utf8');
+if (!src.includes('"sync new files"')) { console.log('PASS'); process.exit(0); }
+const lines = src.split('\\n');
+for (let i = 0; i < lines.length; i++) {
+    if (!lines[i].includes('"sync new files"')) continue;
+    const ctx = lines.slice(Math.max(0, i - 3), i + 1).join('\\n')
+        .replace(/\\/\\/[^\\n]*/g, '');
+    if (/info_span!|warn_span!/.test(ctx)) {
+        process.stderr.write('sync new files still at info level');
+        process.exit(1);
+    }
+    if (/trace_span!|debug_span!|Level::TRACE|Level::DEBUG/.test(ctx)) {
+        console.log('PASS'); process.exit(0);
+    }
+}
+process.stderr.write('Could not determine sync new files span level');
+process.exit(1);
+""",
+        str(DB_FILE),
+    )
+    assert r.returncode == 0, f"Node analysis failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_snapshot_and_persist_not_called_with_none():
     """snapshot_and_persist must not be called with None as first arg."""
-    src = _read_stripped(MOD_FILE)
-    # Find all calls and extract the first argument
+    src = _strip_comments(MOD_FILE.read_text())
     calls = re.findall(r"snapshot_and_persist\(\s*([^,)]+)", src)
     if not calls:
-        # Function restructured / renamed — acceptable if "None" isn't passed
         assert "snapshot_and_persist" not in src, (
             "snapshot_and_persist exists but no calls found"
         )
@@ -174,16 +201,17 @@ def test_snapshot_and_persist_not_called_with_none():
 # Pass-to-pass — regression + anti-stub
 # ---------------------------------------------------------------------------
 
+
 # [pr_diff] pass_to_pass
 def test_compact_call_still_present():
-    """The compaction logic must still invoke compact() on backing storage."""
+    """Compaction logic must still invoke compact() on backing storage."""
     src = MOD_FILE.read_text()
     assert re.search(r"\.compact\(\)", src), "compact() call missing from mod.rs"
 
 
 # [static] pass_to_pass
 def test_mod_rs_not_stub():
-    """mod.rs must have substantial content (not a stub replacement)."""
+    """mod.rs has substantial content (not a stub replacement)."""
     line_count = len(MOD_FILE.read_text().splitlines())
     assert line_count > 2000, f"mod.rs has only {line_count} lines (possible stub)"
 
@@ -192,9 +220,10 @@ def test_mod_rs_not_stub():
 # Config-derived (agent_config) — CLAUDE.md rules
 # ---------------------------------------------------------------------------
 
+
 # [agent_config] pass_to_pass — CLAUDE.md:414 @ df886d4a
 def test_no_formatting_issues():
-    """No tabs or trailing whitespace in modified files (cargo fmt, CLAUDE.md:414)."""
+    """No tabs or trailing whitespace in modified files (cargo fmt)."""
     issues = []
     for path in [DB_FILE, MOD_FILE]:
         for i, line in enumerate(path.read_text().splitlines(), 1):

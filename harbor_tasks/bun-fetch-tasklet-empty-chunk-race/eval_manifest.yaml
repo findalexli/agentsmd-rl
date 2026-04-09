@@ -1,0 +1,58 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28982
+  base_commit: "770893d28ff94013abed5520482848609a6872f9"
+  merge_commit: "479d29f770c934d89af3182c5c0b11103d624d3b"
+
+checks:
+  - id: zig_syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "FetchTasklet.zig must have valid Zig syntax"
+
+  - id: empty_chunk_guard_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The empty non-terminal chunk guard must be present in onBodyReceived"
+
+  - id: guard_placement_correct
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The guard must be placed before onBodyReceived() inside is_waiting_body block"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "FetchTasklet implementation must have substantial logic"
+
+  - id: zig_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Zig code must pass fmt --check validation"
+
+  - id: stream_api_not_broken
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Basic streaming must still work after the fix (no regression)"
+
+rubric:
+  # From src/CLAUDE.md and src/AGENTS.md - Zig conventions
+  - rule: "Always use bun.* APIs instead of std.*. The bun namespace provides cross-platform wrappers that preserve OS error info and never use unreachable."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "22-38"
+      commit: "770893d28ff94013abed5520482848609a6872f9"
+
+  - rule: "Never use @import() inline inside of functions. Always put them at the bottom of the file or containing struct."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "12-14"
+      commit: "770893d28ff94013abed5520482848609a6872f9"
+
+  - rule: "Follow existing code style - check neighboring files for patterns"
+    source:
+      path: "CLAUDE.md"
+      lines: "168"
+      commit: "770893d28ff94013abed5520482848609a6872f9"

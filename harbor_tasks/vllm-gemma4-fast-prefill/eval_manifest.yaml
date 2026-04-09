@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38879
+  base_commit: "e69a265135ef48312d78130f64b7bfce4cd81a37"
+  merge_commit: "47e605092b7fce3d64264b34250b1a286f344633"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "gemma4.py must parse without syntax errors"
+
+  - id: gemma4_model_class_exists
+    type: pass_to_pass
+    origin: static
+    description: "Gemma4Model class still exists with forward and __init__"
+
+  - id: self_decoder_layers_class
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Gemma4SelfDecoderLayers nn.Module with embedding + forward methods"
+
+  - id: cross_decoder_layers_class
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Gemma4CrossDecoderLayers nn.Module with forward method"
+
+  - id: run_decoder_layers_helper
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_run_decoder_layers standalone function for layer iteration"
+
+  - id: fast_prefill_forward_method
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Gemma4Model.fast_prefill_forward method with non-trivial body"
+
+  - id: fast_prefill_calls_both_decoders
+    type: fail_to_pass
+    origin: pr_diff
+    description: "fast_prefill_forward invokes both self_decoder and cross_decoder"
+
+  - id: forward_branches_on_fast_prefill
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Gemma4Model.forward branches on fast_prefill_enabled"
+
+  - id: yoco_split_in_init
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Gemma4Model.__init__ creates self_decoder and cross_decoder"
+
+rubric: []

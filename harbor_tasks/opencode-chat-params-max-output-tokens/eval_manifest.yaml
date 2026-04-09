@@ -1,0 +1,60 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 21220
+  base_commit: "5a6d10cd5363bd47c8e666bbc63435853a1f25b5"
+  merge_commit: "40e4cd27a19f41f65e21056dc6eb19fa6399bbff"
+
+checks:
+  - id: modified_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "Both modified files exist and have substantial content"
+
+  - id: max_output_tokens_in_hook_params
+    type: fail_to_pass
+    origin: pr_diff
+    description: "maxOutputTokens included in Plugin.trigger('chat.params') output object"
+
+  - id: stream_text_uses_params_max_output_tokens
+    type: fail_to_pass
+    origin: pr_diff
+    description: "streamText call uses params.maxOutputTokens, not a bare local variable"
+
+  - id: hook_type_includes_max_output_tokens
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Hooks interface for chat.params output type includes maxOutputTokens"
+
+  - id: max_output_tokens_computed_before_hook
+    type: fail_to_pass
+    origin: pr_diff
+    description: "maxOutputTokens is computed before Plugin.trigger('chat.params'), not after"
+
+  - id: hook_preserves_existing_params
+    type: pass_to_pass
+    origin: repo_tests
+    description: "chat.params hook output type still includes temperature, topP, topK, options"
+
+  - id: stream_text_still_passes_core_params
+    type: pass_to_pass
+    origin: static
+    description: "streamText call still passes temperature, topP, topK from params"
+
+rubric:
+  - rule: "Avoid using the `any` type"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "5a6d10cd5363bd47c8e666bbc63435853a1f25b5"
+  - rule: "Prefer `const` over `let`. Use ternaries or early returns instead of reassignment."
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "5a6d10cd5363bd47c8e666bbc63435853a1f25b5"
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "5a6d10cd5363bd47c8e666bbc63435853a1f25b5"

@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92459
+  base_commit: "98330e3faeff95a51d2c185fc98f1f40bd86726f"
+  merge_commit: "985394417f2ef72466238497576a060ca936821c"
+
+checks:
+  - id: typescript_syntax
+    type: pass_to_pass
+    origin: static
+    description: "render.tsx must be valid TypeScript with expected structure"
+
+  - id: no_concurrent_style_collection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "styledJsxInsertedHTML must not be called inside Promise.all (race condition)"
+
+  - id: styles_collected_after_content_rendering
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Style collection must happen after page content is fully rendered"
+
+  - id: flush_before_style_read
+    type: fail_to_pass
+    origin: pr_diff
+    description: "jsxStyleRegistry.flush() must occur before the standalone styledJsxInsertedHTML call"
+
+  - id: content_html_composition
+    type: pass_to_pass
+    origin: static
+    description: "contentHTML must still be composed from rawStyledJsxInsertedHTML + content"
+
+  - id: null_content_handling
+    type: pass_to_pass
+    origin: static
+    description: "Null content guard must still be present"
+
+rubric: []

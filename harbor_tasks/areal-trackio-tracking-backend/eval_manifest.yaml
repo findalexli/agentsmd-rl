@@ -1,0 +1,116 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 1113
+  base_commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
+  merge_commit: "c4ccc3947855e3f96e66081bd8f0a92ac75d3618"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  - id: trackio_config_exists_with_fields
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TrackioConfig class exists with mode, project, name, space_id fields"
+
+  - id: trackio_config_rejects_invalid_modes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TrackioConfig rejects invalid mode values with ValueError"
+
+  - id: trackio_config_accepts_valid_modes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TrackioConfig accepts disabled, online, local modes"
+
+  - id: trackio_config_defaults
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TrackioConfig defaults: mode=disabled, project/name/space_id=None"
+
+  - id: stats_logger_config_trackio_field
+    type: fail_to_pass
+    origin: pr_diff
+    description: "StatsLoggerConfig has a trackio field"
+
+  - id: stats_logger_trackio_init
+    type: fail_to_pass
+    origin: pr_diff
+    description: "StatsLogger.init() calls trackio.init() with project and name"
+
+  - id: stats_logger_trackio_commit
+    type: fail_to_pass
+    origin: pr_diff
+    description: "StatsLogger.commit() calls trackio.log() when enabled"
+
+  - id: stats_logger_trackio_close
+    type: fail_to_pass
+    origin: pr_diff
+    description: "StatsLogger.close() calls trackio.finish() when enabled"
+
+  - id: logging_helper_trackio
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Logging helper includes trackio.log with graceful import fallback"
+
+  - id: trackio_config_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "TrackioConfig.__post_init__ has real validation logic"
+
+  - id: trackio_config_post_init_validation
+    type: fail_to_pass
+    origin: agent_config
+    description: "TrackioConfig uses __post_init__ with ValueError for validation"
+    source:
+      path: ".claude/rules/api-config.md"
+      lines: "37-38"
+      commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
+
+  - id: trackio_config_has_docstring
+    type: fail_to_pass
+    origin: agent_config
+    description: "TrackioConfig class has a docstring"
+    source:
+      path: ".claude/rules/api-config.md"
+      lines: "60"
+      commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
+
+  - id: trackio_config_field_help_metadata
+    type: fail_to_pass
+    origin: agent_config
+    description: "StatsLoggerConfig.trackio field has help metadata"
+    source:
+      path: ".claude/rules/api-config.md"
+      lines: "54"
+      commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No wildcard imports in modified files"
+    source:
+      path: "CLAUDE.md"
+      lines: "93"
+      commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
+
+rubric:
+  - rule: "Follow existing code patterns in the same module (match the style of WandBConfig, SwanlabConfig, TensorBoardConfig)"
+    source:
+      path: "CLAUDE.md"
+      lines: "76"
+      commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
+  - rule: "Prefer composition over inheritance; keep class hierarchies shallow"
+    source:
+      path: ".claude/rules/code-style.md"
+      lines: "7-11"
+      commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
+  - rule: "Heavy optional deps inside functions (trackio import should use graceful fallback)"
+    source:
+      path: "AGENTS.md"
+      lines: "101"
+      commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"

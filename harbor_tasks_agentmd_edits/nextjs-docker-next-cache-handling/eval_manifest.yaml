@@ -1,0 +1,53 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 90651
+  base_commit: "15fcfb9ce4ec73c6ff8d08d72201726b983127fa"
+  merge_commit: "7643fc948398c38fe0792836fb4c014a45f6fb07"
+
+checks:
+  # F2P — Code behavior (Dockerfile changes)
+  - id: dockerfile_no_buildkit_cache_mount
+    type: fail_to_pass
+    origin: pr_diff
+    description: "BuildKit cache mount on .next/cache removed from build RUN command"
+
+  - id: dockerfile_runner_mkdir_executes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Runner stage creates .next directory with RUN mkdir .next"
+
+  - id: dockerfile_runner_chown_next
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Runner stage sets .next ownership to node:node for writable prerender cache"
+
+  - id: dockerfile_bun_runner_creates_writable_next
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dockerfile.bun runner stage creates .next and sets ownership to bun:bun"
+
+  # F2P — Config / documentation updates
+  - id: readme_documents_writable_next_dir
+    type: fail_to_pass
+    origin: pr_diff
+    description: "with-docker README documents the writable .next directory and prerender cache"
+
+  - id: readme_cache_mount_description_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README explains .next/cache mount is optional, not default"
+
+  # P2P — Structural checks
+  - id: dockerfile_runner_commands_valid_shell
+    type: pass_to_pass
+    origin: static
+    description: "RUN commands in runner stage have valid shell syntax"
+
+  - id: dockerfile_build_command_present
+    type: pass_to_pass
+    origin: static
+    description: "Dockerfile builder stage has a build command"
+
+rubric: []

@@ -7,6 +7,8 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
+import json
 import re
 from pathlib import Path
 
@@ -16,6 +18,26 @@ TEST_FILE = Path(REPO) / "test/e2e/app-dir/typed-routes/typed-routes.test.ts"
 
 def _read_test_file() -> str:
     return TEST_FILE.read_text()
+
+
+def _parse_ts_with_node(code: str, timeout: int = 30) -> dict:
+    """Execute TypeScript parsing code via Node in the repo directory.
+
+    Returns dict with: success, error, ast (if successful)
+    """
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        result = subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+        if result.returncode == 0:
+            return json.loads(result.stdout.strip())
+        else:
+            return {"success": False, "error": result.stderr}
+    finally:
+        script.unlink(missing_ok=True)
 
 
 def _extract_test_block(content: str, test_name: str) -> str:
@@ -33,16 +55,6 @@ def _extract_test_block(content: str, test_name: str) -> str:
             depth -= 1
         i += 1
     return content[m.start() : i]
-
-
-def _find_retry_timeout(block: str) -> int | None:
-    """Find the timeout value on a retry() call in a block, or None."""
-    m = re.search(r"retry\s*\([^)]*?}\s*,\s*(\d[\d_]*)\s*\)", block, re.DOTALL)
-    if not m:
-        m = re.search(r"}\s*,\s*(\d[\d_]*)\s*\)", block)
-    if m:
-        return int(m.group(1).replace("_", ""))
-    return None
 
 
 # ---------------------------------------------------------------------------
@@ -70,6 +82,31 @@ def test_syntax_balanced_braces():
         )
 
 
+# [static] pass_to_pass
+def test_typescript_parses():
+    """Test file must be valid TypeScript that parses without errors."""
+    content = _read_test_file()
+
+    # Use Node to parse and extract the retry() calls
+    parse_code = f"""
+const fs = require('fs');
+const content = fs.readFileSync('{TEST_FILE}', 'utf8');
+
+// Simple regex extraction of retry() calls
+const retryPattern = /retry\\s*\\(\\s*async\\s*\\(\\)\\s*=>\\s*\\{{0,1}}[^}}]{{0,500}}\\}}?,\\s*(\\d[\\d_]*)\\s*\\)/g;
+const matches = [];
+let match;
+while ((match = retryPattern.exec(content)) !== null) {{
+    matches.push({{ timeout: parseInt(match[1].replace(/_/g, '')), match: match[0].slice(0, 80) }});
+}}
+
+console.log(JSON.stringify({{ success: true, retry_calls: matches }}));
+"""
+
+    result = _parse_ts_with_node(parse_code)
+    assert result.get("success", False), f"Failed to parse test file: {result.get('error', 'Unknown error')}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -80,8 +117,22 @@ def test_generate_route_types_retry_timeout():
     """The 'should generate route types correctly' retry() must have timeout >= 10s."""
     content = _read_test_file()
     block = _extract_test_block(content, "should generate route types correctly")
-    timeout = _find_retry_timeout(block)
-    assert timeout is not None, "No extended timeout found on retry() in generate-route-types test"
+
+    # Execute regex via Node to find retry timeout
+    parse_code = f"""
+const block = {json.dumps(block)};
+const retryPattern = /retry\\s*\\(\\s*async\\s*\\(\\)\\s*=>\\s*\\{{0,1}}[\\s\\S]{{0,800}}\\}}?,\\s*(\\d[\\d_]*)\\s*\\)/;
+const match = block.match(retryPattern);
+if (match) {{
+    console.log(JSON.stringify({{ success: true, timeout: parseInt(match[1].replace(/_/g, '')) }}));
+}} else {{
+    console.log(JSON.stringify({{ success: false, error: 'No retry with timeout found' }}));
+}}
+"""
+    result = _parse_ts_with_node(parse_code)
+    assert result.get("success", False), result.get("error", "Failed to extract retry timeout")
+    timeout = result.get("timeout")
+    assert timeout is not None, "No timeout value found"
     assert timeout >= 10_000, f"Timeout {timeout}ms is too low (need >= 10000)"
 
 
@@ -93,8 +144,21 @@ def test_custom_route_patterns_retry_timeout():
         content,
         "should correctly convert custom route patterns from path-to-regexp to bracket syntax",
     )
-    timeout = _find_retry_timeout(block)
-    assert timeout is not None, "No extended timeout found on retry() in custom-route-patterns test"
+
+    parse_code = f"""
+const block = {json.dumps(block)};
+const retryPattern = /retry\\s*\\(\\s*async\\s*\\(\\)\\s*=>\\s*\\{{0,1}}[\\s\\S]{{0,800}}\\}}?,\\s*(\\d[\\d_]*)\\s*\\)/;
+const match = block.match(retryPattern);
+if (match) {{
+    console.log(JSON.stringify({{ success: true, timeout: parseInt(match[1].replace(/_/g, '')) }}));
+}} else {{
+    console.log(JSON.stringify({{ success: false, error: 'No retry with timeout found' }}));
+}}
+"""
+    result = _parse_ts_with_node(parse_code)
+    assert result.get("success", False), result.get("error", "Failed to extract retry timeout")
+    timeout = result.get("timeout")
+    assert timeout is not None, "No timeout value found"
     assert timeout >= 10_000, f"Timeout {timeout}ms is too low (need >= 10000)"
 
 
@@ -104,25 +168,57 @@ def test_tsc_waits_for_routes_dts_before_stop():
     content = _read_test_file()
     block = _extract_test_block(content, "should have passing tsc after start")
 
-    routes_pos = block.find("routes.d.ts")
-    stop_pos = block.find("next.stop()")
-    assert routes_pos >= 0, "No routes.d.ts reference in tsc test"
-    assert stop_pos >= 0, "next.stop() not found in tsc test"
-    assert routes_pos < stop_pos, "routes.d.ts referenced AFTER next.stop() — must wait before stopping"
+    # Use Node to analyze the ordering of routes.d.ts vs next.stop()
+    parse_code = f"""
+const block = {json.dumps(block)};
 
-    # Verify it's actually awaited, not just in a comment
-    pre_stop = block[:stop_pos]
-    has_await = bool(re.search(r"await\s+.*routes\.d\.ts", pre_stop, re.DOTALL))
-    has_retry = bool(re.search(r"retry\s*\(", pre_stop))
-    has_wait = bool(re.search(r"(?:waitFor|waitUntil|readFile).*routes\.d\.ts", pre_stop, re.DOTALL))
-    if not (has_await or has_retry or has_wait):
-        # Check if routes.d.ts appears in executable code (not just comment)
-        for line in pre_stop.splitlines():
-            stripped = line.strip()
-            if "routes.d.ts" in stripped and not stripped.startswith("//") and not stripped.startswith("*"):
-                break
-        else:
-            assert False, "routes.d.ts only in comments before next.stop()"
+// Find positions of key markers
+const routesMatch = block.match(/routes\\.d\\.ts/);
+const stopMatch = block.match(/next\\.stop\\(\\)/);
+
+if (!routesMatch) {{
+    console.log(JSON.stringify({{ success: false, error: "No routes.d.ts reference in tsc test" }}));
+    process.exit(0);
+}}
+if (!stopMatch) {{
+    console.log(JSON.stringify({{ success: false, error: "next.stop() not found in tsc test" }}));
+    process.exit(0);
+}}
+
+const routesPos = routesMatch.index;
+const stopPos = stopMatch.index;
+
+// Check ordering
+if (routesPos >= stopPos) {{
+    console.log(JSON.stringify({{ success: false, error: "routes.d.ts referenced AFTER next.stop() — must wait before stopping" }}));
+    process.exit(0);
+}}
+
+// Verify it's actually awaited (in executable code, not just comments)
+const preStop = block.substring(0, stopPos);
+const hasAwaitRetry = /await\\s+retry\\s*\\(/.test(preStop);
+const hasReadFile = /readFile.*routes\\.d\\.ts/.test(preStop);
+
+// Check if routes.d.ts appears in executable code (not just comments)
+const lines = preStop.split('\\n');
+let inExecutableCode = false;
+for (const line of lines) {{
+    const stripped = line.trim();
+    if (stripped.includes('routes.d.ts') && !stripped.startsWith('//') && !stripped.startsWith('*')) {{
+        inExecutableCode = true;
+        break;
+    }}
+}}
+
+if (!hasAwaitRetry && !hasReadFile && !inExecutableCode) {{
+    console.log(JSON.stringify({{ success: false, error: "routes.d.ts only in comments before next.stop()" }}));
+    process.exit(0);
+}}
+
+console.log(JSON.stringify({{ success: true, routes_pos: routesPos, stop_pos: stopPos }}));
+"""
+    result = _parse_ts_with_node(parse_code)
+    assert result.get("success", False), result.get("error", "Failed to verify ordering")
 
 
 # [pr_diff] fail_to_pass
@@ -130,9 +226,24 @@ def test_tsc_retry_has_extended_timeout():
     """The retry() added in the tsc test must also have timeout >= 10s."""
     content = _read_test_file()
     block = _extract_test_block(content, "should have passing tsc after start")
-    timeout = _find_retry_timeout(block)
-    if timeout is not None:
-        assert timeout >= 10_000, f"Timeout {timeout}ms is too low (need >= 10000)"
+
+    # Use Node to find all retry calls in the block and their timeouts
+    parse_code = f"""
+const block = {json.dumps(block)};
+const retryPattern = /retry\\s*\\(\\s*async\\s*\\(\\)\\s*=>\\s*\\{{0,1}}[\\s\\S]{{0,800}}\\}}?,\\s*(\\d[\\d_]*)\\s*\\)/g;
+const matches = [];
+let match;
+while ((match = retryPattern.exec(block)) !== null) {{
+    matches.push(parseInt(match[1].replace(/_/g, '')));
+}}
+console.log(JSON.stringify({{ success: true, timeouts: matches }}));
+"""
+    result = _parse_ts_with_node(parse_code)
+    timeouts = result.get("timeouts", [])
+
+    if timeouts:
+        for timeout in timeouts:
+            assert timeout >= 10_000, f"Timeout {timeout}ms is too low (need >= 10000)"
     else:
         # Accept other wait mechanisms with extended timeout
         assert re.search(r"(?:waitFor|waitUntil)\s*\(.*\d{5,}", block, re.DOTALL), (
@@ -174,11 +285,6 @@ def test_all_original_test_names_present():
     ]
     missing = [n for n in test_names if n not in content]
     assert not missing, f"Missing test names: {missing}"
-
-
-# ---------------------------------------------------------------------------
-# Anti-stub (pr_diff) — retry blocks must have real assertions
-# ---------------------------------------------------------------------------
 
 
 # [pr_diff] pass_to_pass

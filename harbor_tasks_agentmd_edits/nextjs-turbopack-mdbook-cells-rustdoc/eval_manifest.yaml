@@ -1,0 +1,85 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91126
+  base_commit: "196ed2b83919892d45eaf7aed80852d0c9cc38c7"
+  merge_commit: "885016306d325fb682e831e0e9679a0990a1e6b1"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Gates (pass_to_pass, static) — syntax / compilation checks
+  # ---------------------------------------------------------------------------
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified Rust files must parse and compile without errors"
+
+  - id: doc_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rust documentation tests must pass"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core documentation refactor tests
+  # ---------------------------------------------------------------------------
+  - id: vc_readme_created
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New Vc README.md file must be created with the mdbook content"
+
+  - id: vc_mod_uses_include_str
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Vc mod.rs must use include_str! to embed README.md documentation"
+
+  - id: readme_updated_cells_description
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Main turbo-tasks README.md must be updated to consolidate Cells into Vc description"
+
+  - id: lib_rs_docs_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "lib.rs documentation for value macro must be updated (serde -> bincode)"
+
+  - id: raw_vc_docs_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "raw_vc.rs must have updated intra-doc links for Vc references"
+
+  - id: typo_fixed_resolved_vc
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Typo in mod.rs upcast_non_strict docs must be fixed"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static) — anti-stub and quality checks
+  # ---------------------------------------------------------------------------
+  - id: vc_readme_not_empty
+    type: pass_to_pass
+    origin: static
+    description: "Vc README.md must have substantial content, not be a stub"
+
+  - id: resolved_vc_docs_updated
+    type: pass_to_pass
+    origin: pr_diff
+    description: "resolved.rs must have new 'Reading a ResolvedVc' section"
+
+  - id: alexrc_updated
+    type: pass_to_pass
+    origin: pr_diff
+    description: ".alexrc file should have 'dirty' added to the denylist"
+
+rubric:
+  - rule: "Documentation should be clear, well-structured, and consistent with existing rustdoc conventions in the codebase"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-50"
+      commit: "196ed2b83919892d45eaf7aed80852d0c9cc38c7"
+
+  - rule: "README files should be read before editing files in a directory"
+    source:
+      path: "CLAUDE.md"
+      lines: "28-35"
+      commit: "196ed2b83919892d45eaf7aed80852d0c9cc38c7"

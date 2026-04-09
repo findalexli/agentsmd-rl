@@ -1,0 +1,69 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 15924
+  base_commit: "570038ac3c4ae02378e5de38793d3014587a33e1"
+  merge_commit: "3ebebe0a96de5ec4757de12a21cb9f933e0fbba0"
+
+checks:
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must compile without errors"
+
+  - id: worker_stop_idempotent
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TUI thread has idempotent stop() function that unregisters listeners and terminates worker"
+
+  - id: worker_shutdown_timeout_bounded
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Worker shutdown uses timeout-bounded cleanup instead of Promise.race with timeout"
+
+  - id: mcp_descendants_cleanup
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MCP cleanup kills descendant processes before closing clients"
+
+  - id: timer_unref_prevents_hang
+    type: fail_to_pass
+    origin: pr_diff
+    description: "setTimeout for checkUpgrade uses unref to prevent keeping process alive"
+
+  - id: typecheck_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Bun typecheck passes on modified files"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified functions have real logic, not just pass/return"
+
+  - id: agents_naming_enforcement
+    type: fail_to_pass
+    origin: agent_config
+    description: "AGENTS.md contains mandatory naming enforcement section"
+    source:
+      path: "AGENTS.md"
+      lines: "23-31"
+      commit: "570038ac3c4ae02378e5de38793d3014587a33e1"
+
+rubric:
+  - rule: "Use single word names by default for new locals, params, and helper functions."
+    source:
+      path: "AGENTS.md"
+      lines: "23-31"
+      commit: "570038ac3c4ae02378e5de38793d3014587a33e1"
+  - rule: "Multi-word names are allowed only when a single word would be unclear or ambiguous."
+    source:
+      path: "AGENTS.md"
+      lines: "23-31"
+      commit: "570038ac3c4ae02378e5de38793d3014587a33e1"
+  - rule: "Do not introduce new camelCase compounds when a short single-word alternative is clear."
+    source:
+      path: "AGENTS.md"
+      lines: "23-31"
+      commit: "570038ac3c4ae02378e5de38793d3014587a33e1"

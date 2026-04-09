@@ -1,0 +1,41 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92034
+  base_commit: "9a0214a12f1ed1901c4b01e84073ab854848eea0"
+  merge_commit: "c43965275556c3e0243de822e5bd21e07cf9d48c"
+
+checks:
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "hot-reloader-turbopack.ts exists and has substantial content"
+
+  - id: metadata_route_hmr_exclusion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "usesServerHmr must exclude metadata routes via isMetadataRoute check"
+
+  - id: is_metadata_route_imported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isMetadataRoute must be imported in hot-reloader-turbopack.ts"
+
+  - id: entry_page_extracted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The page property must be extracted from splitEntryKey for the metadata check"
+
+  - id: server_hmr_preserves_app_entry_check
+    type: pass_to_pass
+    origin: pr_diff
+    description: "usesServerHmr must still require entryType === 'app'"
+
+  - id: server_hmr_preserves_edge_exclusion
+    type: pass_to_pass
+    origin: pr_diff
+    description: "usesServerHmr must still exclude edge runtime endpoints"
+
+rubric:
+  []

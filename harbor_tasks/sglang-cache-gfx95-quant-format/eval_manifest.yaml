@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22143
+  base_commit: "52801ff20c3d48ef594912bae3f2e49fbabe0a71"
+  merge_commit: "e835601fb72ef2cbb53b2c6e2b00fe3370d3020e"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  - id: cached_quant_format_attribute
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DeepseekV2DecoderLayer must cache _gfx95_quant_format in __init__"
+
+  - id: detect_gfx95_quant_format_method
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DeepseekV2DecoderLayer must have _detect_gfx95_quant_format method"
+
+  - id: forward_uses_cached_quant_format
+    type: fail_to_pass
+    origin: pr_diff
+    description: "forward() must use self._gfx95_quant_format instead of recomputing"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified function is not a stub (has real logic, not just pass/return)"
+
+  - id: detect_method_has_proper_logic
+    type: pass_to_pass
+    origin: static
+    description: "_detect_gfx95_quant_format must have proper dtype checking logic"
+
+rubric: []

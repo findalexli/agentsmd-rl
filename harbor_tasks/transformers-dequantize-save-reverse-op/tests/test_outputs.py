@@ -228,6 +228,111 @@ def test_reverse_op_identity_multiple_entries():
     assert result["w3"].dtype == torch.bfloat16
 
 
+# [pr_diff] fail_to_pass
+def test_save_pretrained_dequantize_flow():
+    """The full save_pretrained flow with dequantize works without NotImplementedError.
+
+    This test simulates what happens during save_pretrained: the system iterates
+    over conversion ops and calls reverse_op on each. Before the fix, this would
+    raise NotImplementedError for dequantize operations.
+    """
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+
+import torch
+from transformers.core_model_loading import ConversionOps
+
+# Mock quantizer classes
+class MockFP8Config:
+    weight_block_size = None
+
+class MockFP8Quantizer:
+    quantization_config = MockFP8Config()
+
+class MockMetalConfig:
+    bits = 4
+    group_size = 32
+
+class MockMetalQuantizer:
+    quantization_config = MockMetalConfig()
+
+class MockMxfp4Config:
+    pass
+
+class MockMxfp4Quantizer:
+    quantization_config = MockMxfp4Config()
+
+errors = []
+
+# Test FP8 dequantize reverse_op
+try:
+    from transformers.integrations.finegrained_fp8 import Fp8Dequantize
+    fp8 = Fp8Dequantize(MockFP8Quantizer())
+    rev = fp8.reverse_op
+    if not isinstance(rev, ConversionOps):
+        errors.append(f"Fp8Dequantize.reverse_op is not ConversionOps: {type(rev)}")
+    # Test the reverse op actually works
+    data = {"test.weight": torch.randn(8, 8)}
+    result = rev.convert(data)
+    if "test.weight" not in result:
+        errors.append("Fp8Dequantize reverse_op did not preserve key")
+except NotImplementedError as e:
+    errors.append(f"Fp8Dequantize.reverse_op raised NotImplementedError: {e}")
+except ImportError:
+    pass  # GPU-dependent imports not available, skip
+
+# Test Metal dequantize reverse_op
+try:
+    from transformers.integrations.metal_quantization import MetalDequantize
+    metal = MetalDequantize(MockMetalQuantizer())
+    rev = metal.reverse_op
+    if not isinstance(rev, ConversionOps):
+        errors.append(f"MetalDequantize.reverse_op is not ConversionOps: {type(rev)}")
+    data = {"test.weight": torch.randn(8, 8)}
+    result = rev.convert(data)
+    if "test.weight" not in result:
+        errors.append("MetalDequantize reverse_op did not preserve key")
+except NotImplementedError as e:
+    errors.append(f"MetalDequantize.reverse_op raised NotImplementedError: {e}")
+except ImportError:
+    pass  # GPU-dependent imports not available, skip
+
+# Test MXFP4 dequantize reverse_op
+try:
+    from transformers.integrations.mxfp4 import Mxfp4Dequantize
+    mxfp4 = Mxfp4Dequantize(MockMxfp4Quantizer())
+    rev = mxfp4.reverse_op
+    if not isinstance(rev, ConversionOps):
+        errors.append(f"Mxfp4Dequantize.reverse_op is not ConversionOps: {type(rev)}")
+    data = {"test.weight": torch.randn(8, 8)}
+    result = rev.convert(data)
+    if "test.weight" not in result:
+        errors.append("Mxfp4Dequantize reverse_op did not preserve key")
+except NotImplementedError as e:
+    errors.append(f"Mxfp4Dequantize.reverse_op raised NotImplementedError: {e}")
+except ImportError:
+    pass  # GPU-dependent imports not available, skip
+
+if errors:
+    print("FAILURES:")
+    for e in errors:
+        print(f"  - {e}")
+    sys.exit(1)
+else:
+    print("PASS: All dequantize reverse_op work correctly")
+    sys.exit(0)
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) — regression
 # ---------------------------------------------------------------------------

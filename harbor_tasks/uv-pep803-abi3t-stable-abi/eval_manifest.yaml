@@ -1,0 +1,69 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 18767
+  base_commit: "30e33420497d6d493d70895291e849f5dcf4f2b5"
+  merge_commit: "222f98860116165f39d4d990bebc449ae7d14732"
+
+checks:
+  - id: cargo_check_compiles
+    type: pass_to_pass
+    origin: static
+    description: "All changed crates must compile without errors"
+
+  - id: abi3t_tag_parsing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AbiTag::from_str('abi3t') must succeed and roundtrip through Display"
+
+  - id: abi3t_is_stable_abi
+    type: fail_to_pass
+    origin: pr_diff
+    description: "is_stable_abi() must return true for abi3t"
+
+  - id: abi3t_pretty_description
+    type: fail_to_pass
+    origin: pr_diff
+    description: "abi3t pretty() must mention free-threading"
+
+  - id: abi3t_wheel_filename_parsing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Wheel filename with abi3t ABI tag must parse and contain abi3t"
+
+  - id: existing_abi_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing ABI tag unit tests must still pass"
+
+rubric:
+  - rule: "AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy rule ignores in production (non-test) code"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "30e33420497d6d493d70895291e849f5dcf4f2b5"
+
+  - rule: "ALWAYS attempt to add a test case for changed behavior"
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "30e33420497d6d493d70895291e849f5dcf4f2b5"
+
+  - rule: "ALWAYS read and copy the style of similar tests when adding new cases"
+    source:
+      path: "CLAUDE.md"
+      lines: "15"
+      commit: "30e33420497d6d493d70895291e849f5dcf4f2b5"
+
+  - rule: "PREFER top-level imports over local imports or fully qualified names"
+    source:
+      path: "CLAUDE.md"
+      lines: "16"
+      commit: "30e33420497d6d493d70895291e849f5dcf4f2b5"
+
+  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
+    source:
+      path: "CLAUDE.md"
+      lines: "17-18"
+      commit: "30e33420497d6d493d70895291e849f5dcf4f2b5"

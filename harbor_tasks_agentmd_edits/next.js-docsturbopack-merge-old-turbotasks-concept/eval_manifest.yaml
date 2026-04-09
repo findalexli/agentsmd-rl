@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: vercel/next.js
+  pr: 78073
+  base_commit: "581975d7cfa5c9aa8a008df3306d8779a175bfc7"
+  merge_commit: "04b3596fceaefeef645884a75283e1493c489159"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified Rust files must compile without errors"
+
+  - id: monorepo_package_detection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "package_name() extracts monorepo package names from /packages/ paths"
+
+  - id: node_modules_still_works
+    type: fail_to_pass
+    origin: pr_diff
+    description: "package_name() still extracts node_modules package names (existing behavior)"
+
+  - id: app_vendors_split_uses_package_name_split
+    type: fail_to_pass
+    origin: pr_diff
+    description: "app_vendors_split() calls package_name_split() for app chunk items instead of folder_split()"
+
+  - id: monorepo_priority
+    type: fail_to_pass
+    origin: pr_diff
+    description: "node_modules takes priority over monorepo when both patterns match"
+
+  - id: doc_comment_updated
+    type: pass_to_pass
+    origin: static
+    description: "Doc comment for package_name_split mentions monorepo packages"
+
+  - id: regexes_compiled_with_lazy
+    type: pass_to_pass
+    origin: static
+    description: "Both regexes use Lazy::new for static compilation"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified function has real logic with both regex checks"
+
+  - id: existing_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Turbopack-core crate compiles and existing tests pass"
+
+rubric: []

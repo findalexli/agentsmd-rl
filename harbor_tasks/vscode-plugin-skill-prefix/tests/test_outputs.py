@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 import re
 from pathlib import Path
 
@@ -20,143 +21,273 @@ def _read(rel_path: str) -> str:
     return Path(f"{REPO}/{rel_path}").read_text()
 
 
-def _extract_name_assignment_block(src: str) -> str:
-    """Extract the ~30-line block around the name assignment in computeSlashCommandDiscoveryInfo.
-
-    AST-only because: TypeScript source, not executable Python.
-
-    We locate 'computeSlashCommandDiscoveryInfo' then find the name assignment
-    region (parsedPromptFile?.header?.name) and return a bounded window.
-    """
-    lines = src.splitlines()
-    # Find the method definition line
-    method_start = None
-    for i, line in enumerate(lines):
-        if "computeSlashCommandDiscoveryInfo" in line and ("private" in line or "async" in line):
-            method_start = i
-            break
-    if method_start is None:
-        return ""
-
-    # The relevant code (parseResults block with name assignment) is within
-    # ~40 lines of the method start. Extract that bounded region.
-    block = lines[method_start:method_start + 45]
-    return "\n".join(block)
+def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute a CommonJS Node.js script in the repo directory."""
+    tmp = Path(REPO) / "_eval_tmp.cjs"
+    tmp.write_text(script)
+    try:
+        return subprocess.run(
+            ["node", str(tmp)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# AST-only because: TypeScript source files require full VS Code build infra
+# Fail-to-pass (pr_diff) — behavioral tests via TypeScript AST analysis
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_plugin_prefix_in_discovery():
     """Plugin skills get canonical plugin prefix applied during slash command discovery."""
-    src = _read(PROMPTS_SERVICE)
-    block = _extract_name_assignment_block(src)
-    assert block, "computeSlashCommandDiscoveryInfo method not found"
+    r = _run_node(r"""
+const ts = require('typescript');
+const fs = require('fs');
 
-    # The name assignment region must call getCanonicalPluginCommandId.
-    # On the base commit, this block only has:
-    #   const name = parsedPromptFile?.header?.name ?? promptPath.name ?? getCleanPromptName(...)
-    # with no call to getCanonicalPluginCommandId.
-    assert "getCanonicalPluginCommandId" in block, (
-        "computeSlashCommandDiscoveryInfo must call getCanonicalPluginCommandId "
-        "to prefix plugin skill names with the plugin identifier"
-    )
+const src = fs.readFileSync(
+    'src/vs/workbench/contrib/chat/common/promptSyntax/service/promptsServiceImpl.ts',
+    'utf8'
+);
+const sf = ts.createSourceFile('test.ts', src, ts.ScriptTarget.Latest, true);
+
+let methodFound = false;
+let hasCanonicalCall = false;
+let hasInlinePrefix = false;
+
+function visit(node) {
+    if (ts.isMethodDeclaration(node) && node.name &&
+        ts.isIdentifier(node.name) && node.name.text === 'computeSlashCommandDiscoveryInfo') {
+        methodFound = true;
+        if (node.body) {
+            const bodyText = node.body.getText(sf);
+            // Check for direct call to getCanonicalPluginCommandId
+            function findCall(n) {
+                if (ts.isCallExpression(n) && ts.isIdentifier(n.expression) &&
+                    n.expression.text === 'getCanonicalPluginCommandId') {
+                    hasCanonicalCall = true;
+                }
+                ts.forEachChild(n, findCall);
+            }
+            ts.forEachChild(node.body, findCall);
+            // Alternative: inline prefix logic using pluginUri + basename/normalize
+            if (bodyText.includes('pluginUri') &&
+                (bodyText.includes('basename') || bodyText.includes('normalizePluginToken'))) {
+                hasInlinePrefix = true;
+            }
+        }
+    }
+    ts.forEachChild(node, visit);
+}
+visit(sf);
+
+if (!methodFound) {
+    console.error('FAIL: computeSlashCommandDiscoveryInfo method not found');
+    process.exit(1);
+}
+if (!hasCanonicalCall && !hasInlinePrefix) {
+    console.error('FAIL: no plugin prefix logic found in computeSlashCommandDiscoveryInfo');
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"AST check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_frontmatter_override_prefixed():
     """Even when SKILL.md frontmatter overrides the name, plugin prefix is preserved."""
-    src = _read(PROMPTS_SERVICE)
-    block = _extract_name_assignment_block(src)
-    assert block, "computeSlashCommandDiscoveryInfo method not found"
+    r = _run_node(r"""
+const ts = require('typescript');
+const fs = require('fs');
 
-    # On base commit the header name flows directly to `const name = ...`.
-    # A correct fix must split this into raw extraction + conditional canonicalization.
-    # Check: the header?.name value is NOT assigned directly to `const name`.
-    lines_with_header = [
-        l.strip() for l in block.splitlines()
-        if "parsedPromptFile?.header?.name" in l or "parsedPromptFile.header?.name" in l
-    ]
-    assert lines_with_header, "Expected reference to parsedPromptFile?.header?.name"
+const src = fs.readFileSync(
+    'src/vs/workbench/contrib/chat/common/promptSyntax/service/promptsServiceImpl.ts',
+    'utf8'
+);
+const sf = ts.createSourceFile('test.ts', src, ts.ScriptTarget.Latest, true);
 
-    # The variable receiving the header name must not be called 'name' directly,
-    # OR there must be a subsequent transformation step.
-    header_line = lines_with_header[0]
-    match = re.search(r"const\s+(\w+)\s*=", header_line)
-    if match:
-        var_name = match.group(1)
-        uses_intermediate = var_name != "name"
-    else:
-        uses_intermediate = False
+let methodBody = null;
 
-    has_transform = "getCanonicalPluginCommandId" in block
+function findMethod(node) {
+    if (ts.isMethodDeclaration(node) && node.name &&
+        ts.isIdentifier(node.name) && node.name.text === 'computeSlashCommandDiscoveryInfo' && node.body) {
+        methodBody = node.body;
+    }
+    if (!methodBody) ts.forEachChild(node, findMethod);
+}
+findMethod(sf);
 
-    assert uses_intermediate or has_transform, (
-        "Header name is assigned directly to 'name' with no plugin prefix transformation. "
-        "The frontmatter name must be canonicalized for plugin sources."
-    )
+if (!methodBody) {
+    console.error('FAIL: computeSlashCommandDiscoveryInfo method not found');
+    process.exit(1);
+}
+
+// On base commit: const name = parsedPromptFile?.header?.name ?? ...
+// After fix: const rawName = parsedPromptFile?.header?.name ?? ... (intermediate var)
+// Check that header?.name is NOT directly assigned to 'name' without transformation.
+let directNameAssignment = false;
+let hasIntermediate = false;
+
+function checkDecls(node) {
+    if (ts.isVariableDeclaration(node) && node.initializer) {
+        const initText = node.initializer.getText(sf);
+        const varName = node.name.getText(sf);
+        // Match the header name extraction pattern
+        if (initText.includes('header') && initText.includes('name') &&
+            initText.includes('parsedPromptFile')) {
+            if (varName === 'name') {
+                directNameAssignment = true;
+            } else {
+                hasIntermediate = true;
+            }
+        }
+    }
+    ts.forEachChild(node, checkDecls);
+}
+checkDecls(methodBody);
+
+const bodyText = methodBody.getText(sf);
+const hasTransform = bodyText.includes('getCanonicalPluginCommandId') ||
+    (bodyText.includes('pluginUri') && bodyText.includes('normalizePluginToken'));
+
+if (directNameAssignment && !hasIntermediate && !hasTransform) {
+    console.error('FAIL: header name assigned directly to const name without plugin prefix transformation');
+    process.exit(1);
+}
+if (!hasIntermediate && !directNameAssignment && !hasTransform) {
+    console.error('FAIL: no header name extraction pattern found in method');
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"AST check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_type_signature_widened():
     """getCanonicalPluginCommandId accepts a type wider than IAgentPlugin."""
-    src_plugin = _read(PLUGIN_SERVICE)
+    r = _run_node(r"""
+const ts = require('typescript');
+const fs = require('fs');
 
-    func_pattern = re.compile(
-        r"export\s+function\s+getCanonicalPluginCommandId\s*\(\s*(\w+)\s*:\s*([^,)]+)"
-    )
-    match = func_pattern.search(src_plugin)
-    assert match, "getCanonicalPluginCommandId export not found"
+const pluginSrc = fs.readFileSync(
+    'src/vs/workbench/contrib/chat/common/plugins/agentPluginService.ts',
+    'utf8'
+);
+const sf1 = ts.createSourceFile('plugin.ts', pluginSrc, ts.ScriptTarget.Latest, true);
 
-    param_type = match.group(2).strip()
+let funcFound = false;
+let firstParamType = '';
 
-    # On base commit the type is exactly `IAgentPlugin`.
-    # The fix must widen it (e.g., `{ readonly uri: URI }`) so it can be called
-    # from computeSlashCommandDiscoveryInfo which only has a pluginUri, not a full plugin.
-    # Alternatively, the agent may inline the prefix logic without calling this function.
-    type_is_widened = param_type != "IAgentPlugin"
+function visitPlugin(node) {
+    if (ts.isFunctionDeclaration(node) && node.name &&
+        node.name.text === 'getCanonicalPluginCommandId') {
+        funcFound = true;
+        if (node.parameters.length > 0 && node.parameters[0].type) {
+            firstParamType = node.parameters[0].type.getText(sf1);
+        }
+    }
+    ts.forEachChild(node, visitPlugin);
+}
+visitPlugin(sf1);
 
-    # Check alternative: inline prefix in discovery method
-    src_prompts = _read(PROMPTS_SERVICE)
-    discovery_block = _extract_name_assignment_block(src_prompts)
-    has_inline_prefix = (
-        "pluginUri" in discovery_block
-        and ("basename" in discovery_block or "normalize" in discovery_block)
-        and "getCanonicalPluginCommandId" not in discovery_block
-    )
+if (!funcFound) {
+    console.error('FAIL: getCanonicalPluginCommandId function not found');
+    process.exit(1);
+}
 
-    assert type_is_widened or has_inline_prefix, (
-        f"getCanonicalPluginCommandId first param is still 'IAgentPlugin' and "
-        f"discovery method does not inline the prefix logic. "
-        f"Either widen the type or build the prefix another way."
-    )
+const typeIsWidened = firstParamType !== 'IAgentPlugin';
+
+// Alternative: agent inlined prefix logic in discovery method instead
+let hasInlinePrefix = false;
+if (!typeIsWidened) {
+    const promptsSrc = fs.readFileSync(
+        'src/vs/workbench/contrib/chat/common/promptSyntax/service/promptsServiceImpl.ts',
+        'utf8'
+    );
+    const sf2 = ts.createSourceFile('prompts.ts', promptsSrc, ts.ScriptTarget.Latest, true);
+    let methodBody = null;
+    function findMethod(node) {
+        if (ts.isMethodDeclaration(node) && node.name &&
+            ts.isIdentifier(node.name) && node.name.text === 'computeSlashCommandDiscoveryInfo' && node.body) {
+            methodBody = node.body;
+        }
+        if (!methodBody) ts.forEachChild(node, findMethod);
+    }
+    findMethod(sf2);
+    if (methodBody) {
+        const bodyText = methodBody.getText(sf2);
+        hasInlinePrefix = bodyText.includes('pluginUri') &&
+            (bodyText.includes('basename') || bodyText.includes('normalize'));
+    }
+}
+
+if (!typeIsWidened && !hasInlinePrefix) {
+    console.error('FAIL: first param is still IAgentPlugin and no inline prefix logic found');
+    process.exit(1);
+}
+console.log('PASS: type=' + firstParamType);
+""")
+    assert r.returncode == 0, f"AST check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_plugin_source_guard():
     """Prefix is only applied when source is Plugin, not for all prompt sources."""
-    src = _read(PROMPTS_SERVICE)
-    block = _extract_name_assignment_block(src)
-    assert block, "computeSlashCommandDiscoveryInfo method not found"
+    r = _run_node(r"""
+const ts = require('typescript');
+const fs = require('fs');
 
-    # The fix must guard the prefix application to plugin sources only.
-    # On base commit there is no prefix application, so no guard is needed —
-    # this test fails because neither condition is met.
-    has_prefix = "getCanonicalPluginCommandId" in block or (
-        "basename" in block and "pluginUri" in block
-    )
-    has_guard = bool(re.search(
-        r"(PromptFileSource\.Plugin|\.source\s*===.*[Pp]lugin|isPlugin)",
-        block
-    ))
+const src = fs.readFileSync(
+    'src/vs/workbench/contrib/chat/common/promptSyntax/service/promptsServiceImpl.ts',
+    'utf8'
+);
+const sf = ts.createSourceFile('test.ts', src, ts.ScriptTarget.Latest, true);
 
-    assert has_prefix and has_guard, (
-        "Prefix must be applied AND guarded to plugin sources only. "
-        f"Has prefix: {has_prefix}, Has guard: {has_guard}"
-    )
+let methodBody = null;
+
+function findMethod(node) {
+    if (ts.isMethodDeclaration(node) && node.name &&
+        ts.isIdentifier(node.name) && node.name.text === 'computeSlashCommandDiscoveryInfo' && node.body) {
+        methodBody = node.body;
+    }
+    if (!methodBody) ts.forEachChild(node, findMethod);
+}
+findMethod(sf);
+
+if (!methodBody) {
+    console.error('FAIL: computeSlashCommandDiscoveryInfo method not found');
+    process.exit(1);
+}
+
+const bodyText = methodBody.getText(sf);
+
+// Must have some form of prefix logic
+const hasPrefix = bodyText.includes('getCanonicalPluginCommandId') ||
+    (bodyText.includes('pluginUri') &&
+     (bodyText.includes('basename') || bodyText.includes('normalizePluginToken')));
+
+// Must guard prefix to plugin sources only
+const hasGuard = bodyText.includes('PromptFileSource.Plugin') ||
+    (bodyText.includes('.source') && bodyText.includes('Plugin')) ||
+    bodyText.includes('isPlugin');
+
+if (!hasPrefix) {
+    console.error('FAIL: no plugin prefix logic found');
+    process.exit(1);
+}
+if (!hasGuard) {
+    console.error('FAIL: prefix is not guarded to plugin sources only');
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"AST check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -186,7 +317,6 @@ def test_canonical_function_still_exported():
     ), "getCanonicalPluginCommandId must remain exported"
 
     # Function body must still reference basename and normalizePluginToken
-    # Check in a bounded region after the function signature
     lines = src.splitlines()
     for i, line in enumerate(lines):
         if "getCanonicalPluginCommandId" in line and "export" in line:
@@ -235,10 +365,17 @@ def test_tab_indentation_in_modified_files():
 def test_single_quotes_for_strings():
     """Non-localized strings use single quotes, not double quotes."""
     src = _read(PROMPTS_SERVICE)
-    block = _extract_name_assignment_block(src)
-    if not block:
+    # Check in the discovery method region for consistent quoting
+    lines = src.splitlines()
+    method_start = None
+    for i, line in enumerate(lines):
+        if "computeSlashCommandDiscoveryInfo" in line and ("private" in line or "async" in line):
+            method_start = i
+            break
+    if method_start is None:
         return
 
+    block = "\n".join(lines[method_start:method_start + 45])
     non_localized_doubles = re.findall(
         r'(?<!localize\()\"[^"]+\"', block
     )

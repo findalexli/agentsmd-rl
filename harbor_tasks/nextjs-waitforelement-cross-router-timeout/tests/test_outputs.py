@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
 import re
 import subprocess
 from pathlib import Path
@@ -19,20 +20,21 @@ def _read_test_file() -> str:
     return Path(TEST_FILE).read_text()
 
 
-def _code_lines(src: str) -> list[str]:
-    """Return non-comment lines from the source."""
-    out = []
-    for line in src.splitlines():
-        t = line.strip()
-        if t.startswith("//") or t.startswith("*") or t.startswith("/*"):
-            continue
-        out.append(line)
-    return out
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node.js in the repo directory."""
+    return subprocess.run(
+        ["node", "-e", code],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
+
 
 # [static] pass_to_pass
 def test_syntax_check():
@@ -50,132 +52,163 @@ def test_syntax_check():
 # [static] pass_to_pass
 def test_anti_stub_real_waitfor_calls():
     """At least 6 real .waitForElementByCss calls in non-comment code."""
-    code_text = "\n".join(_code_lines(_read_test_file()))
-    count = len(re.findall(r"\.waitForElementByCss\(", code_text))
-    assert count >= 6, f"Only {count}/6 real .waitForElementByCss calls found"
+    r = _run_node(
+        f"const fs = require('fs'); "
+        f"const src = fs.readFileSync('{TEST_FILE}', 'utf8'); "
+        f"const lines = src.split('\\n'); "
+        f"const codeLines = lines.filter(l => {{ const t = l.trim(); "
+        f"return !t.startsWith('//') && !t.startsWith('*') && !t.startsWith('/*'); }}); "
+        f"const count = codeLines.join('\\n').split('.waitForElementByCss(').length - 1; "
+        f"if (count < 6) {{ console.error('Only ' + count + '/6 calls found'); process.exit(1); }} "
+        f"console.log(count + ' waitForElementByCss calls found');"
+    )
+    assert r.returncode == 0, f"Anti-stub check failed: {r.stderr.strip()}"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests using subprocess execution
 # ---------------------------------------------------------------------------
+
 
 # [pr_diff] fail_to_pass
 def test_all_waitfor_calls_have_timeout():
-    """Every .waitForElementByCss call must have an explicit timeout >= 15000."""
-    src = _read_test_file()
-    lines = src.splitlines()
-    code_lines = []
-    for i, line in enumerate(lines):
-        t = line.strip()
-        if t.startswith("//") or t.startswith("*") or t.startswith("/*"):
-            continue
-        code_lines.append((i, line))
+    """Every .waitForElementByCss call must have an explicit timeout >= 15000ms."""
+    r = _run_node(
+        """
+const fs = require('fs');
+const src = fs.readFileSync(process.argv[0] || '""" + TEST_FILE + """', 'utf8');
+const lines = src.split('\\n');
 
-    call_count = 0
-    with_timeout = 0
-    failures = []
+// Collect non-comment lines with their original line numbers
+const codeLines = [];
+for (let i = 0; i < lines.length; i++) {
+    const t = lines[i].trim();
+    if (!t.startsWith('//') && !t.startsWith('*') && !t.startsWith('/*')) {
+        codeLines.push({ idx: i, line: lines[i] });
+    }
+}
 
-    for idx, (i, line) in enumerate(code_lines):
-        if ".waitForElementByCss(" not in line:
-            continue
-        call_count += 1
+let callCount = 0;
+let withTimeout = 0;
+const failures = [];
 
-        # Gather context: this line + next 4 original lines (for multiline calls)
-        context = "\n".join(lines[i : min(i + 5, len(lines))])
+for (const { idx, line } of codeLines) {
+    if (!line.includes('.waitForElementByCss(')) continue;
+    callCount++;
 
-        # Check for inline { timeout: N }
-        inline = re.search(
-            r"waitForElementByCss\s*\([^)]*,\s*\{[^}]*timeout\s*:", context, re.DOTALL
-        )
-        # Check for numeric second arg like waitForElementByCss('#sel', 30000)
-        numeric_arg = re.search(
-            r"waitForElementByCss\s*\(\s*['\"`][^'\"` ]*['\"`]\s*,\s*(\d+)\s*\)",
-            context,
-        )
-        # Check for variable arg defined elsewhere with timeout
-        var_match = re.search(
-            r"waitForElementByCss\s*\(\s*['\"`][^'\"`]*['\"`]\s*,\s*([a-zA-Z_]\w*)\s*\)",
-            context,
-        )
-        var_timeout = False
-        if var_match:
-            var_name = var_match.group(1)
-            if re.search(rf"{var_name}\s*=\s*\{{[^}}]*timeout\s*:", src, re.DOTALL):
-                var_timeout = True
+    // Gather multiline context: this line + next 4
+    const context = lines.slice(idx, Math.min(idx + 5, lines.length)).join('\\n');
 
-        if inline:
-            val_match = re.search(r"timeout\s*:\s*(\d[\d_]*)", context)
-            if val_match:
-                val = int(val_match.group(1).replace("_", ""))
-                if val < 15000:
-                    failures.append(f"Line {i + 1}: timeout={val} < 15000")
-                    continue
-            with_timeout += 1
-        elif numeric_arg:
-            val = int(numeric_arg.group(1))
-            if val < 15000:
-                failures.append(f"Line {i + 1}: timeout={val} < 15000")
-                continue
-            with_timeout += 1
-        elif var_timeout:
-            with_timeout += 1
-        else:
-            failures.append(f"Line {i + 1}: no timeout option found")
+    // Pattern 1: inline { timeout: N }
+    const inlineMatch = context.match(/waitForElementByCss\\s*\\([^)]*\\{[^}]*timeout\\s*:\\s*(\\d[\\d_]*)/);
+    if (inlineMatch) {
+        const val = parseInt(inlineMatch[1].replace(/_/g, ''));
+        if (val < 15000) { failures.push(`Line ${idx+1}: timeout=${val} < 15000`); continue; }
+        withTimeout++;
+        continue;
+    }
 
-    assert call_count > 0, "No .waitForElementByCss calls found"
-    assert with_timeout == call_count, (
-        f"{with_timeout}/{call_count} have timeout. Issues: {'; '.join(failures)}"
+    // Pattern 2: numeric second arg waitForElementByCss('#sel', 30000)
+    const numericMatch = context.match(/waitForElementByCss\\s*\\(\\s*['"\\`][^'"\\`]*['"\\`]\\s*,\\s*(\\d+)\\s*\\)/);
+    if (numericMatch) {
+        const val = parseInt(numericMatch[1]);
+        if (val < 15000) { failures.push(`Line ${idx+1}: timeout=${val} < 15000`); continue; }
+        withTimeout++;
+        continue;
+    }
+
+    // Pattern 3: check for any { timeout: in the context (multiline object)
+    const anyTimeout = context.match(/\\{[^}]*timeout\\s*:/);
+    if (anyTimeout) {
+        const valMatch = context.match(/timeout\\s*:\\s*(\\d[\\d_]*)/);
+        if (valMatch) {
+            const val = parseInt(valMatch[1].replace(/_/g, ''));
+            if (val < 15000) { failures.push(`Line ${idx+1}: timeout=${val} < 15000`); continue; }
+        }
+        withTimeout++;
+        continue;
+    }
+
+    failures.push(`Line ${idx+1}: no timeout option found`);
+}
+
+if (callCount === 0) { console.error('No .waitForElementByCss calls found'); process.exit(1); }
+if (withTimeout !== callCount) {
+    console.error(`${withTimeout}/${callCount} have timeout. Issues: ${failures.join('; ')}`);
+    process.exit(1);
+}
+console.log(`All ${callCount} waitForElementByCss calls have timeout >= 15000`);
+"""
     )
+    assert r.returncode == 0, f"Timeout check failed: {r.stderr.strip()}"
 
 
 # [pr_diff] fail_to_pass
 def test_at_least_6_calls_with_timeout():
-    """At least 6 waitForElementByCss calls have explicit timeout (covers all cross-router waits)."""
-    src = _read_test_file()
-    code_text = "\n".join(_code_lines(src))
+    """At least 6 waitForElementByCss calls have explicit timeout argument."""
+    r = _run_node(
+        """
+const fs = require('fs');
+const src = fs.readFileSync('""" + TEST_FILE + """', 'utf8');
+const lines = src.split('\\n');
+const codeLines = lines.filter(l => {
+    const t = l.trim();
+    return !t.startsWith('//') && !t.startsWith('*') && !t.startsWith('/*');
+});
+const codeText = codeLines.join('\\n');
 
-    # Count calls that have a second argument (timeout)
-    # Pattern: .waitForElementByCss('...', <something>)  or  .waitForElementByCss('...', { timeout: ... })
-    calls_with_arg = len(
-        re.findall(
-            r"\.waitForElementByCss\(\s*['\"`#][^)]*,\s*(?:\{|[0-9])", code_text
-        )
+// Count waitForElementByCss calls with a second argument (timeout)
+const callsWithArg = codeText.match(/\\.waitForElementByCss\\(\\s*['"\\`#][^)]*,\\s*(?:\\{|[0-9])/g);
+const count = callsWithArg ? callsWithArg.length : 0;
+
+if (count < 6) {
+    console.error(`Only ${count}/6 waitForElementByCss calls have timeout arg`);
+    process.exit(1);
+}
+console.log(`${count} calls with timeout found`);
+"""
     )
-    assert calls_with_arg >= 6, (
-        f"Only {calls_with_arg}/6 waitForElementByCss calls have timeout arg"
-    )
+    assert r.returncode == 0, f"Call count check failed: {r.stderr.strip()}"
 
 
 # [pr_diff] fail_to_pass
 def test_explanatory_comment_present():
     """A comment near waitForElementByCss explaining why timeout is increased."""
-    src = _read_test_file()
-    lines = src.splitlines()
+    r = _run_node(
+        """
+const fs = require('fs');
+const src = fs.readFileSync('""" + TEST_FILE + """', 'utf8');
+const lines = src.split('\\n');
 
-    for i, line in enumerate(lines):
-        t = line.strip()
-        if not t.startswith("//"):
-            continue
-        lower = t.lower()
-        # Must mention reason (compilation/CI/on-demand/slow/cross-router/dev)
-        if not re.search(
-            r"compil|on.?demand|cross.?router|dev.?mode|ci\b|resource|load|slow|flak|build|longer|increas",
-            lower,
-        ):
-            continue
-        # Must mention timeout/wait
-        if not re.search(r"timeout|wait|time", lower):
-            continue
-        # Must be within 10 lines of a waitForElementByCss call
-        for j in range(max(0, i - 10), min(len(lines), i + 10)):
-            if j != i and "waitForElementByCss" in lines[j]:
-                return  # PASS
-    assert False, "No explanatory comment found near waitForElementByCss about increased timeout"
+for (let i = 0; i < lines.length; i++) {
+    const t = lines[i].trim();
+    if (!t.startsWith('//')) continue;
+    const lower = t.toLowerCase();
+
+    // Must mention reason (compilation/CI/on-demand/slow/cross-router/dev)
+    if (!/(?:compil|on.?demand|cross.?router|dev.?mode|ci\\b|resource|load|slow|flak|build|longer|increas)/.test(lower)) continue;
+    // Must mention timeout/wait
+    if (!/(?:timeout|wait|time)/.test(lower)) continue;
+
+    // Must be within 10 lines of a waitForElementByCss call
+    for (let j = Math.max(0, i - 10); j < Math.min(lines.length, i + 10); j++) {
+        if (j !== i && lines[j].includes('waitForElementByCss')) {
+            console.log('Explanatory comment found at line ' + (i + 1));
+            process.exit(0);
+        }
+    }
+}
+console.error('No explanatory comment found near waitForElementByCss about increased timeout');
+process.exit(1);
+"""
+    )
+    assert r.returncode == 0, f"Comment check failed: {r.stderr.strip()}"
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) — regression: test structure preserved
 # ---------------------------------------------------------------------------
+
 
 # [pr_diff] pass_to_pass
 def test_all_four_test_cases_present():
@@ -194,56 +227,102 @@ def test_all_four_test_cases_present():
 # [pr_diff] pass_to_pass
 def test_infrastructure_intact():
     """Core test infrastructure (describe, webdriver import, createNext) present."""
-    code_text = "\n".join(_code_lines(_read_test_file()))
-    assert re.search(r"describe\s*\(", code_text), "Missing describe() block"
-    assert "webdriver" in code_text and re.search(
-        r"import|require", code_text
-    ), "Missing webdriver import"
-    assert "createNext" in code_text, "Missing createNext call"
+    r = _run_node(
+        """
+const fs = require('fs');
+const src = fs.readFileSync('""" + TEST_FILE + """', 'utf8');
+const codeLines = src.split('\\n').filter(l => {
+    const t = l.trim();
+    return !t.startsWith('//') && !t.startsWith('*') && !t.startsWith('/*');
+});
+const codeText = codeLines.join('\\n');
+
+if (!/describe\\s*\\(/.test(codeText)) { console.error('Missing describe() block'); process.exit(1); }
+if (!codeText.includes('webdriver') || !/import|require/.test(codeText)) { console.error('Missing webdriver import'); process.exit(1); }
+if (!codeText.includes('createNext')) { console.error('Missing createNext call'); process.exit(1); }
+console.log('Infrastructure intact');
+"""
+    )
+    assert r.returncode == 0, f"Infrastructure check failed: {r.stderr.strip()}"
 
 
 # [pr_diff] pass_to_pass
 def test_navigation_logic_intact():
     """Navigation actions (click, back, forward) and element checks present."""
-    code_text = "\n".join(_code_lines(_read_test_file()))
-    assert re.search(r"\.click\s*\(", code_text), "Missing .click() calls"
-    assert re.search(r"\.back\s*\(", code_text) or re.search(
-        r"\.forward\s*\(", code_text
-    ), "Missing .back()/.forward() calls"
-    assert re.search(
-        r"elementByCss|waitForElementByCss", code_text
-    ), "Missing element check calls"
+    r = _run_node(
+        """
+const fs = require('fs');
+const src = fs.readFileSync('""" + TEST_FILE + """', 'utf8');
+const codeLines = src.split('\\n').filter(l => {
+    const t = l.trim();
+    return !t.startsWith('//') && !t.startsWith('*') && !t.startsWith('/*');
+});
+const codeText = codeLines.join('\\n');
+
+if (!/\\.click\\s*\\(/.test(codeText)) { console.error('Missing .click() calls'); process.exit(1); }
+if (!/\\.back\\s*\\(/.test(codeText) && !/\\.forward\\s*\\(/.test(codeText)) { console.error('Missing .back()/.forward() calls'); process.exit(1); }
+if (!/elementByCss|waitForElementByCss/.test(codeText)) { console.error('Missing element check calls'); process.exit(1); }
+console.log('Navigation logic intact');
+"""
+    )
+    assert r.returncode == 0, f"Navigation logic check failed: {r.stderr.strip()}"
 
 
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
+
 # [agent_config] pass_to_pass — AGENTS.md:180 @ ad65b1bdcf3d10e5213c80bea56a73038bbf1c99
 def test_no_settimeout_for_waiting():
     """No setTimeout or manual Promise delays used for waiting (use retry/waitFor helpers)."""
-    code_lines = _code_lines(_read_test_file())
-    for line in code_lines:
-        assert not re.search(
-            r"setTimeout|new\s+Promise\s*\(\s*\(?\s*resolve\b", line
-        ), f"setTimeout/Promise delay found: {line.strip()}"
+    r = _run_node(
+        """
+const fs = require('fs');
+const src = fs.readFileSync('""" + TEST_FILE + """', 'utf8');
+const codeLines = src.split('\\n').filter(l => {
+    const t = l.trim();
+    return !t.startsWith('//') && !t.startsWith('*') && !t.startsWith('/*');
+});
+for (const line of codeLines) {
+    if (/setTimeout|new\\s+Promise\\s*\\(\\s*\\(?\\s*resolve\\b/.test(line)) {
+        console.error('setTimeout/Promise delay found: ' + line.trim());
+        process.exit(1);
+    }
+}
+console.log('No setTimeout/Promise delays');
+"""
+    )
+    assert r.returncode == 0, f"setTimeout check failed: {r.stderr.strip()}"
 
 
 # [agent_config] pass_to_pass — AGENTS.md:194 @ ad65b1bdcf3d10e5213c80bea56a73038bbf1c99
 def test_no_deprecated_check():
     """No deprecated check() usage (use retry() + expect() instead)."""
-    code_lines = _code_lines(_read_test_file())
-    for line in code_lines:
-        assert not re.search(r"(?<!\w)check\s*\(", line), (
-            f"Deprecated check() found: {line.strip()}"
-        )
+    r = _run_node(
+        """
+const fs = require('fs');
+const src = fs.readFileSync('""" + TEST_FILE + """', 'utf8');
+const codeLines = src.split('\\n').filter(l => {
+    const t = l.trim();
+    return !t.startsWith('//') && !t.startsWith('*') && !t.startsWith('/*');
+});
+for (const line of codeLines) {
+    if (/(?<!\\w)check\\s*\\(/.test(line)) {
+        console.error('Deprecated check() found: ' + line.trim());
+        process.exit(1);
+    }
+}
+console.log('No deprecated check() usage');
+"""
+    )
+    assert r.returncode == 0, f"Deprecated check() found: {r.stderr.strip()}"
 
 
 # [agent_config] pass_to_pass — AGENTS.md:207-220 @ ad65b1bdcf3d10e5213c80bea56a73038bbf1c99
 def test_no_inline_fixture_files():
     """createNext/nextTestSetup must use a real fixture directory, not an inline files object."""
     src = _read_test_file()
-    # Inline files object pattern: files: { 'some/path': `...` or '...' }
     assert not re.search(
         r"(?:createNext|nextTestSetup)\s*\(\s*\{[^}]*files\s*:\s*\{",
         src,

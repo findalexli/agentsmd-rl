@@ -1,6 +1,4 @@
 FROM python:3.12-slim
-# For Node/TS repos: FROM node:22-slim  (add python3 for test runner)
-# For Rust repos:    FROM rust:1.85-slim (add python3 for test runner)
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
@@ -10,24 +8,16 @@ RUN apt-get update && \
         git curl ca-certificates build-essential tmux && \
     rm -rf /var/lib/apt/lists/*
 
-# Clone repo at base commit (use --depth=N for large monorepos)
-RUN git clone --filter=blob:none https://github.com/{{OWNER}}/{{REPO}}.git /workspace/{{REPO_SHORT}} && \
-    cd /workspace/{{REPO_SHORT}} && \
-    git checkout {{BASE_COMMIT}} && \
+# Shallow clone at base commit (bun is a huge monorepo)
+RUN git init /workspace/bun && \
+    cd /workspace/bun && \
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin 485ec522a22b469b336aece8276b507a71665a87 && \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 
-WORKDIR /workspace/{{REPO_SHORT}}
-
-# For Python repos: uncomment if tests import from the repo
-# ENV PYTHONPATH="/workspace/{{REPO_SHORT}}"
-
-# For Rust repos: pre-fetch deps for faster agent builds
-# RUN cargo fetch && cargo check 2>&1 || true
-
-# Install minimal deps needed by test_outputs.py (NOT full project deps)
-# TODO: add only what test_outputs.py imports
-# RUN pip install --no-cache-dir numpy ruff  # example
+WORKDIR /workspace/bun
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

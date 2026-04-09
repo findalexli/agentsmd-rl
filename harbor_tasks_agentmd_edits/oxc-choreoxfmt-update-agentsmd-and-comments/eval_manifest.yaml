@@ -1,0 +1,58 @@
+version: "2.0"
+
+source:
+  repo: "oxc-project/oxc"
+  pr: 20637
+  base_commit: "828b56a30708f7db749405f245262ca53125fc1b"
+  merge_commit: "ff8422ab18601112251effdfcbec533c7949c02e"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Gates (pass_to_pass, static)
+  # ---------------------------------------------------------------------------
+
+  - id: agents_md_exists
+    type: pass_to_pass
+    origin: static
+    description: "AGENTS.md file exists in the correct location"
+
+  - id: agents_md_valid_markdown
+    type: pass_to_pass
+    origin: static
+    description: "AGENTS.md is valid markdown with proper structure"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # ---------------------------------------------------------------------------
+
+  - id: comparing_with_prettier_section_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The 'Comparing with Prettier' section is added to AGENTS.md"
+
+  - id: prettier_section_content
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The Prettier comparison section contains required documentation about config files and printWidth"
+
+  - id: prettier_section_code_examples
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The Prettier comparison section contains the correct oxfmt and prettier command examples"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests / static) — regression + anti-stub
+  # ---------------------------------------------------------------------------
+
+  - id: agents_md_structure_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "AGENTS.md maintains its original structure with the new section properly inserted"
+
+  - id: no_stub_content
+    type: pass_to_pass
+    origin: static
+    description: "The added content is not a stub — has meaningful documentation with code blocks"
+
+rubric: []
+# No soft rules requiring LLM judge for this documentation task

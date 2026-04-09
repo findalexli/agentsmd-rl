@@ -8,11 +8,9 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import asyncio
 import subprocess
 import textwrap
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -33,9 +31,23 @@ def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         script.unlink(missing_ok=True)
 
 
-def _extract_async_func(func_name: str):
-    """Extract async function from source, exec with mocks, return callable + AST node."""
-    source = Path(FILE).read_text()
+# ---------------------------------------------------------------------------
+# Behavioral test helper — written to repo dir so subprocess scripts can import it.
+# Extracts async endpoint functions from source via AST, executes them with
+# mocked engine clients, and tracks pause/rpc/resume call ordering.
+# ---------------------------------------------------------------------------
+
+_HELPER_CODE = '''\
+import ast
+import asyncio
+from unittest.mock import AsyncMock, MagicMock
+
+FILE = "/workspace/AReaL/areal/engine/vllm_ext/areal_vllm_server.py"
+
+
+def extract_func(func_name):
+    """Extract an async function from source, exec it with stubs, return (callable, ast_node)."""
+    source = open(FILE).read()
     tree = ast.parse(source)
 
     func_node = None
@@ -44,20 +56,20 @@ def _extract_async_func(func_name: str):
             func_node = node
             break
 
-    assert func_node is not None, f"async function '{func_name}' not found"
+    assert func_node is not None, f"{func_name} not found in {FILE}"
 
     lines = source.splitlines(keepends=True)
     func_src = "".join(lines[func_node.lineno - 1 : func_node.end_lineno])
 
-    ns = {
-        "__builtins__": __builtins__,
-        "logger": MagicMock(),
-        "build_response": lambda x: x,
-        "to_json_response": lambda *a, **kw: {"ok": True},
-        "_generation_run_event": MagicMock(),
-        "_register_runtime_lora_name": lambda *a, **kw: None,
-        "asyncio": asyncio,
-    }
+    ns = dict(
+        __builtins__=__builtins__,
+        logger=MagicMock(),
+        build_response=lambda x: x,
+        to_json_response=lambda *a, **kw: dict(ok=True),
+        _generation_run_event=MagicMock(),
+        _register_runtime_lora_name=lambda *a, **kw: None,
+        asyncio=asyncio,
+    )
     for tname in [
         "UpdateWeightsRequest", "UpdateWeightsRequestLora",
         "UpdateGroupRequest", "UpdateWeightsFromXcclRequest",
@@ -66,13 +78,11 @@ def _extract_async_func(func_name: str):
         ns[tname] = MagicMock()
 
     exec(compile(func_src, FILE, "exec"), ns)
-    func = ns[func_name]
-    assert callable(func), f"{func_name} not callable after exec"
-    return func, func_node
+    return ns[func_name], func_node
 
 
-def _make_tracked_client():
-    """Create AsyncMock engine client that logs pause/rpc/resume calls."""
+def make_tracked_client(rpc_raises=False):
+    """Create an AsyncMock engine client that logs pause/rpc/resume call order."""
     client = AsyncMock()
     call_log = []
 
@@ -84,6 +94,8 @@ def _make_tracked_client():
 
     async def _rpc(*a, **kw):
         call_log.append("rpc")
+        if rpc_raises:
+            raise RuntimeError("simulated RPC failure")
         return [(True, "ok")]
 
     client.pause_generation.side_effect = _pause
@@ -92,8 +104,8 @@ def _make_tracked_client():
     return client, call_log
 
 
-def _invoke(func, func_node, client):
-    """Call extracted function with mock raw_request wired to client."""
+def invoke(func, func_node, client, catch_errors=False):
+    """Call extracted async endpoint function with mock request objects."""
     raw_request = MagicMock()
     raw_request.app.state.engine_client = client
     request = MagicMock()
@@ -104,10 +116,25 @@ def _invoke(func, func_node, client):
     request.base_model_name = "base_model"
 
     nparams = len(func_node.args.args)
-    if nparams >= 2:
-        return asyncio.run(func(request, raw_request))
-    else:
-        return asyncio.run(func(raw_request))
+    try:
+        if nparams >= 2:
+            return asyncio.run(func(request, raw_request))
+        else:
+            return asyncio.run(func(raw_request))
+    except Exception:
+        if not catch_errors:
+            raise
+'''
+
+_HELPER_PATH = Path(REPO) / "_eval_behavioral_helper.py"
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _write_behavioral_helper():
+    """Write shared helper module to repo directory for subprocess import."""
+    _HELPER_PATH.write_text(_HELPER_CODE)
+    yield
+    _HELPER_PATH.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -121,7 +148,10 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests (exec-based)
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
+# Each test extracts the actual async endpoint function from source, executes
+# it in an isolated subprocess with mocked engine clients, and verifies the
+# call pattern (pause -> rpc -> resume).
 # ---------------------------------------------------------------------------
 
 WEIGHT_UPDATE_ENDPOINTS = [
@@ -135,104 +165,134 @@ WEIGHT_UPDATE_ENDPOINTS = [
 @pytest.mark.parametrize("func_name", WEIGHT_UPDATE_ENDPOINTS)
 def test_weight_update_call_ordering(func_name):
     """Weight update must call pause_generation -> collective_rpc -> resume_generation."""
-    func, func_node = _extract_async_func(func_name)
-    client, call_log = _make_tracked_client()
-    _invoke(func, func_node, client)
+    r = _run_python(f"""
+        import sys
+        from _eval_behavioral_helper import extract_func, make_tracked_client, invoke
 
-    assert "pause" in call_log, "pause_generation() never called"
-    assert "rpc" in call_log, "collective_rpc() never called"
-    assert "resume" in call_log, "resume_generation() never called"
-    assert call_log.index("pause") < call_log.index("rpc"), (
-        f"pause must precede rpc: {call_log}"
-    )
-    assert call_log.index("rpc") < call_log.index("resume"), (
-        f"rpc must precede resume: {call_log}"
-    )
+        func, node = extract_func("{func_name}")
+        client, log = make_tracked_client()
+        invoke(func, node, client)
+
+        if log != ["pause", "rpc", "resume"]:
+            print("FAIL: expected [pause, rpc, resume], got " + str(log), file=sys.stderr)
+            sys.exit(1)
+        print("PASS")
+    """)
+    assert r.returncode == 0, f"Call ordering failed for {func_name}: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 @pytest.mark.parametrize("func_name", WEIGHT_UPDATE_ENDPOINTS)
 def test_weight_update_pause_kwargs(func_name):
     """pause_generation must be called with wait_for_inflight_requests=False, clear_cache=True."""
-    func, func_node = _extract_async_func(func_name)
-    client, _ = _make_tracked_client()
-    _invoke(func, func_node, client)
+    r = _run_python(f"""
+        import sys
+        from _eval_behavioral_helper import extract_func, make_tracked_client, invoke
 
-    client.pause_generation.assert_called_once()
-    _, kwargs = client.pause_generation.call_args
-    assert kwargs.get("wait_for_inflight_requests") is False, (
-        f"Expected wait_for_inflight_requests=False, got {kwargs}"
-    )
-    assert kwargs.get("clear_cache") is True, (
-        f"Expected clear_cache=True, got {kwargs}"
-    )
+        func, node = extract_func("{func_name}")
+        client, _ = make_tracked_client()
+        invoke(func, node, client)
+
+        client.pause_generation.assert_called_once()
+        _, kwargs = client.pause_generation.call_args
+        if kwargs.get("wait_for_inflight_requests") is not False:
+            print("FAIL: wait_for_inflight_requests should be False, got " + repr(kwargs), file=sys.stderr)
+            sys.exit(1)
+        if kwargs.get("clear_cache") is not True:
+            print("FAIL: clear_cache should be True, got " + repr(kwargs), file=sys.stderr)
+            sys.exit(1)
+        print("PASS")
+    """)
+    assert r.returncode == 0, f"Pause kwargs failed for {func_name}: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 @pytest.mark.parametrize("func_name", WEIGHT_UPDATE_ENDPOINTS)
 def test_weight_update_error_resilience(func_name):
     """resume_generation must be called even when collective_rpc raises."""
-    func, func_node = _extract_async_func(func_name)
-    client, call_log = _make_tracked_client()
+    r = _run_python(f"""
+        import sys
+        from _eval_behavioral_helper import extract_func, make_tracked_client, invoke
 
-    async def _rpc_raise(*a, **kw):
-        call_log.append("rpc")
-        raise RuntimeError("simulated RPC failure")
+        func, node = extract_func("{func_name}")
+        client, log = make_tracked_client(rpc_raises=True)
+        invoke(func, node, client, catch_errors=True)
 
-    client.collective_rpc.side_effect = _rpc_raise
-
-    raw_request = MagicMock()
-    raw_request.app.state.engine_client = client
-    request = MagicMock()
-
-    nparams = len(func_node.args.args)
-    try:
-        if nparams >= 2:
-            asyncio.run(func(request, raw_request))
-        else:
-            asyncio.run(func(raw_request))
-    except RuntimeError:
-        pass
-
-    assert "pause" in call_log, "pause_generation NOT called before RPC attempt"
-    assert "resume" in call_log, "resume_generation NOT called after RPC failure"
+        if "pause" not in log:
+            print("FAIL: pause_generation NOT called before RPC attempt", file=sys.stderr)
+            sys.exit(1)
+        if "resume" not in log:
+            print("FAIL: resume_generation NOT called after RPC failure", file=sys.stderr)
+            sys.exit(1)
+        print("PASS")
+    """)
+    assert r.returncode == 0, f"Error resilience failed for {func_name}: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_pause_endpoint_uses_native_api():
     """areal_pause_generation must call llm.pause_generation, not abort_all_reqs."""
-    func, _ = _extract_async_func("areal_pause_generation")
-    client, call_log = _make_tracked_client()
-    client.engine_core = MagicMock()
-    client.engine_core.call_utility_async = AsyncMock()
+    r = _run_python("""
+        import sys, asyncio
+        from unittest.mock import AsyncMock, MagicMock
+        from _eval_behavioral_helper import extract_func
 
-    raw_request = MagicMock()
-    raw_request.app.state.engine_client = client
-    asyncio.run(func(raw_request))
+        func, _ = extract_func("areal_pause_generation")
 
-    assert "pause" in call_log, "pause_generation() never called"
-    assert not client.engine_core.call_utility_async.called, (
-        "still calls abort via engine_core.call_utility_async"
-    )
+        client = AsyncMock()
+        called = []
+        async def _pause(*a, **kw):
+            called.append("pause")
+        client.pause_generation.side_effect = _pause
+        client.engine_core = MagicMock()
+        client.engine_core.call_utility_async = AsyncMock()
+
+        raw_request = MagicMock()
+        raw_request.app.state.engine_client = client
+        asyncio.run(func(raw_request))
+
+        if "pause" not in called:
+            print("FAIL: pause_generation() never called", file=sys.stderr)
+            sys.exit(1)
+        if client.engine_core.call_utility_async.called:
+            print("FAIL: still calls abort via engine_core.call_utility_async", file=sys.stderr)
+            sys.exit(1)
+        print("PASS")
+    """)
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_continue_endpoint_calls_resume():
     """areal_continue_generation must call llm.resume_generation."""
-    func, _ = _extract_async_func("areal_continue_generation")
-    client = AsyncMock()
-    resume_called = []
+    r = _run_python("""
+        import sys, asyncio
+        from unittest.mock import AsyncMock, MagicMock
+        from _eval_behavioral_helper import extract_func
 
-    async def _resume(*a, **kw):
-        resume_called.append(True)
+        func, _ = extract_func("areal_continue_generation")
 
-    client.resume_generation.side_effect = _resume
+        client = AsyncMock()
+        called = []
+        async def _resume(*a, **kw):
+            called.append("resume")
+        client.resume_generation.side_effect = _resume
 
-    raw_request = MagicMock()
-    raw_request.app.state.engine_client = client
-    asyncio.run(func(raw_request))
+        raw_request = MagicMock()
+        raw_request.app.state.engine_client = client
+        asyncio.run(func(raw_request))
 
-    assert resume_called, "resume_generation() never called"
+        if "resume" not in called:
+            print("FAIL: resume_generation() never called", file=sys.stderr)
+            sys.exit(1)
+        print("PASS")
+    """)
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — subprocess-based structural checks
+# Fail-to-pass (pr_diff) — subprocess structural checks
 # ---------------------------------------------------------------------------
 
 def test_no_monkey_patching():

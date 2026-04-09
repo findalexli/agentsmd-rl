@@ -1,0 +1,62 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24497
+  base_commit: "8106a4b299fa63e9f7b91b14eccbd70e7a064a9f"
+  merge_commit: "0c5c701e6880f00c1799bf1a4686d95e8b4df601"
+
+checks:
+  - id: compiles
+    type: pass_to_pass
+    origin: static
+    description: "ty_python_semantic crate compiles successfully"
+
+  - id: slash_star_display
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Callable with positional-only + keyword-only params displays '/' before '*'"
+
+  - id: display_ordering_structure
+    type: fail_to_pass
+    origin: pr_diff
+    description: "In the display loop, is_positional_only() check precedes is_keyword_only()"
+
+  - id: no_panic_unwrap_in_display_fn
+    type: pass_to_pass
+    origin: agent_config
+    description: "No panic!/unwrap in DisplayParameters FmtDetailed impl"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "8106a4b299fa63e9f7b91b14eccbd70e7a064a9f"
+
+  - id: no_local_imports_in_display_fn
+    type: pass_to_pass
+    origin: agent_config
+    description: "No local use statements inside the display impl"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "8106a4b299fa63e9f7b91b14eccbd70e7a064a9f"
+
+  - id: no_allow_lint_suppression
+    type: pass_to_pass
+    origin: agent_config
+    description: "Prefer #[expect()] over #[allow()] for lint suppression"
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "8106a4b299fa63e9f7b91b14eccbd70e7a064a9f"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "8106a4b299fa63e9f7b91b14eccbd70e7a064a9f"
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "8106a4b299fa63e9f7b91b14eccbd70e7a064a9f"

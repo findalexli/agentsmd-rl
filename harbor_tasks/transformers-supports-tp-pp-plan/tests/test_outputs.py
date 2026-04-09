@@ -16,6 +16,18 @@ REPO = "/workspace/transformers"
 TARGET = f"{REPO}/src/transformers/modeling_utils.py"
 
 
+def _run_in_subprocess(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Run Python code in a subprocess with proper PYTHONPATH."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=REPO,
+        env={"PYTHONPATH": REPO},
+    )
+
+
 def _read_source():
     return Path(TARGET).read_text()
 
@@ -106,7 +118,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests (using subprocess)
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -122,11 +134,23 @@ def test_supports_tp_plan_empty_dict_false():
         ({}, {}, {}),        # all empty dicts
     ]
     for tp, base_tp, cfg_tp in cases:
-        ns = {}
-        exec(_build_supports_tp_harness(prop, tp_plan=tp, base_tp_plan=base_tp, config_tp_plan=cfg_tp), ns)
-        assert ns["result"] is False, (
-            f"supports_tp_plan should be False for tp={tp!r}, base={base_tp!r}, config={cfg_tp!r}"
+        harness = _build_supports_tp_harness(
+            prop, tp_plan=tp, base_tp_plan=base_tp, config_tp_plan=cfg_tp
         )
+        code = harness + "print('RESULT:', result)"
+        r = _run_in_subprocess(code)
+        assert r.returncode == 0, f"Harness failed: {r.stderr}"
+        # Parse result from output
+        for line in r.stdout.strip().split("\n"):
+            if line.startswith("RESULT:"):
+                result_str = line.replace("RESULT:", "").strip()
+                result = result_str == "True"
+                assert result is False, (
+                    f"supports_tp_plan should be False for tp={tp!r}, base={base_tp!r}, config={cfg_tp!r}"
+                )
+                break
+        else:
+            raise AssertionError(f"Could not find RESULT in output: {r.stdout}")
 
 
 # [pr_diff] fail_to_pass
@@ -141,11 +165,22 @@ def test_supports_pp_plan_empty_dict_false():
         ({}, {}, {}),
     ]
     for pp, base_pp, cfg_pp in cases:
-        ns = {}
-        exec(_build_supports_pp_harness(prop, pp_plan=pp, base_pp_plan=base_pp, config_pp_plan=cfg_pp), ns)
-        assert ns["result"] is False, (
-            f"supports_pp_plan should be False for pp={pp!r}, base={base_pp!r}, config={cfg_pp!r}"
+        harness = _build_supports_pp_harness(
+            prop, pp_plan=pp, base_pp_plan=base_pp, config_pp_plan=cfg_pp
         )
+        code = harness + "print('RESULT:', result)"
+        r = _run_in_subprocess(code)
+        assert r.returncode == 0, f"Harness failed: {r.stderr}"
+        for line in r.stdout.strip().split("\n"):
+            if line.startswith("RESULT:"):
+                result_str = line.replace("RESULT:", "").strip()
+                result = result_str == "True"
+                assert result is False, (
+                    f"supports_pp_plan should be False for pp={pp!r}, base={base_pp!r}, config={cfg_pp!r}"
+                )
+                break
+        else:
+            raise AssertionError(f"Could not find RESULT in output: {r.stdout}")
 
 
 # [pr_diff] fail_to_pass
@@ -160,11 +195,22 @@ def test_supports_pp_plan_checks_config():
         {"single": ("a", "b")},
     ]
     for cfg_val in config_values:
-        ns = {}
-        exec(_build_supports_pp_harness(prop, pp_plan=None, base_pp_plan=None, config_pp_plan=cfg_val), ns)
-        assert ns["result"] is True, (
-            f"supports_pp_plan should be True when config has pp_plan={cfg_val!r}"
+        harness = _build_supports_pp_harness(
+            prop, pp_plan=None, base_pp_plan=None, config_pp_plan=cfg_val
         )
+        code = harness + "print('RESULT:', result)"
+        r = _run_in_subprocess(code)
+        assert r.returncode == 0, f"Harness failed: {r.stderr}"
+        for line in r.stdout.strip().split("\n"):
+            if line.startswith("RESULT:"):
+                result_str = line.replace("RESULT:", "").strip()
+                result = result_str == "True"
+                assert result is True, (
+                    f"supports_pp_plan should be True when config has pp_plan={cfg_val!r}"
+                )
+                break
+        else:
+            raise AssertionError(f"Could not find RESULT in output: {r.stdout}")
 
 
 # [pr_diff] fail_to_pass
@@ -182,10 +228,18 @@ def test_pp_setter_rejects_non_dict():
             f"    M().pp_plan = {bad!r}\n"
             f"except (ValueError, TypeError):\n"
             f"    raised = True\n"
+            f"print('RESULT:', raised)"
         )
-        ns = {}
-        exec(code, ns)
-        assert ns["raised"], f"pp_plan setter should reject {type(bad).__name__} input: {bad!r}"
+        r = _run_in_subprocess(code)
+        assert r.returncode == 0, f"Harness failed: {r.stderr}"
+        for line in r.stdout.strip().split("\n"):
+            if line.startswith("RESULT:"):
+                result_str = line.replace("RESULT:", "").strip()
+                raised = result_str == "True"
+                assert raised, f"pp_plan setter should reject {type(bad).__name__} input: {bad!r}"
+                break
+        else:
+            raise AssertionError(f"Could not find RESULT in output: {r.stdout}")
 
 
 # [pr_diff] fail_to_pass
@@ -198,19 +252,24 @@ def test_pp_setter_handles_none():
     code = base + (
         "\nm = M()\n"
         "m.pp_plan = None\n"
-        "result = m._pp_plan\n"
+        "print('RESULT:', repr(m._pp_plan))"
     )
-    ns = {}
-    exec(code, ns)
-    assert ns["result"] == {}, (
-        f"pp_plan setter should convert None to {{}}, got {ns['result']!r}"
-    )
+    r = _run_in_subprocess(code)
+    assert r.returncode == 0, f"Harness failed: {r.stderr}"
+    for line in r.stdout.strip().split("\n"):
+        if line.startswith("RESULT:"):
+            result_str = line.replace("RESULT:", "").strip()
+            assert result_str == "{}", (
+                f"pp_plan setter should convert None to {{}}, got {result_str!r}"
+            )
+            break
+    else:
+        raise AssertionError(f"Could not find RESULT in output: {r.stdout}")
 
 
 # [pr_diff] fail_to_pass
 def test_pipeline_parallel_enum_removed():
     """PipelineParallel enum class must not exist in modeling_utils.py."""
-    # AST-only because: checking for absence of a class definition, not calling code
     source = _read_source()
     tree = ast.parse(source)
     for node in ast.walk(tree):
@@ -230,19 +289,52 @@ def test_supports_tp_plan_nonempty_true():
 
     # True from model's own plan
     for tp in [{"layer0": "col"}, {"a": "row", "b": "col"}]:
-        ns = {}
-        exec(_build_supports_tp_harness(prop, tp_plan=tp, base_tp_plan=None, config_tp_plan=None), ns)
-        assert ns["result"] is True, f"should be True for tp_plan={tp!r}"
+        harness = _build_supports_tp_harness(
+            prop, tp_plan=tp, base_tp_plan=None, config_tp_plan=None
+        )
+        code = harness + "print('RESULT:', result)"
+        r = _run_in_subprocess(code)
+        assert r.returncode == 0, f"Harness failed: {r.stderr}"
+        for line in r.stdout.strip().split("\n"):
+            if line.startswith("RESULT:"):
+                result_str = line.replace("RESULT:", "").strip()
+                result = result_str == "True"
+                assert result is True, f"should be True for tp_plan={tp!r}"
+                break
+        else:
+            raise AssertionError(f"Could not find RESULT in output: {r.stdout}")
 
     # True from base model's plan
-    ns = {}
-    exec(_build_supports_tp_harness(prop, tp_plan={}, base_tp_plan={"x": "col"}, config_tp_plan=None), ns)
-    assert ns["result"] is True, "should be True when base_model has tp plan"
+    harness = _build_supports_tp_harness(
+        prop, tp_plan={}, base_tp_plan={"x": "col"}, config_tp_plan=None
+    )
+    code = harness + "print('RESULT:', result)"
+    r = _run_in_subprocess(code)
+    assert r.returncode == 0, f"Harness failed: {r.stderr}"
+    for line in r.stdout.strip().split("\n"):
+        if line.startswith("RESULT:"):
+            result_str = line.replace("RESULT:", "").strip()
+            result = result_str == "True"
+            assert result is True, "should be True when base_model has tp plan"
+            break
+    else:
+        raise AssertionError(f"Could not find RESULT in output: {r.stdout}")
 
     # True from config
-    ns = {}
-    exec(_build_supports_tp_harness(prop, tp_plan={}, base_tp_plan=None, config_tp_plan={"y": "row"}), ns)
-    assert ns["result"] is True, "should be True when config has tp plan"
+    harness = _build_supports_tp_harness(
+        prop, tp_plan={}, base_tp_plan=None, config_tp_plan={"y": "row"}
+    )
+    code = harness + "print('RESULT:', result)"
+    r = _run_in_subprocess(code)
+    assert r.returncode == 0, f"Harness failed: {r.stderr}"
+    for line in r.stdout.strip().split("\n"):
+        if line.startswith("RESULT:"):
+            result_str = line.replace("RESULT:", "").strip()
+            result = result_str == "True"
+            assert result is True, "should be True when config has tp plan"
+            break
+    else:
+        raise AssertionError(f"Could not find RESULT in output: {r.stdout}")
 
 
 # [pr_diff] pass_to_pass
@@ -253,19 +345,52 @@ def test_supports_pp_plan_nonempty_true():
 
     # True from model's own plan
     for pp in [{"layer0": ("input", "output")}, {"a": ("i", "o"), "b": ("i", "o")}]:
-        ns = {}
-        exec(_build_supports_pp_harness(prop, pp_plan=pp, base_pp_plan=None, config_pp_plan=None), ns)
-        assert ns["result"] is True, f"should be True for pp_plan={pp!r}"
+        harness = _build_supports_pp_harness(
+            prop, pp_plan=pp, base_pp_plan=None, config_pp_plan=None
+        )
+        code = harness + "print('RESULT:', result)"
+        r = _run_in_subprocess(code)
+        assert r.returncode == 0, f"Harness failed: {r.stderr}"
+        for line in r.stdout.strip().split("\n"):
+            if line.startswith("RESULT:"):
+                result_str = line.replace("RESULT:", "").strip()
+                result = result_str == "True"
+                assert result is True, f"should be True for pp_plan={pp!r}"
+                break
+        else:
+            raise AssertionError(f"Could not find RESULT in output: {r.stdout}")
 
     # True from base model's plan
-    ns = {}
-    exec(_build_supports_pp_harness(prop, pp_plan={}, base_pp_plan={"x": ("i", "o")}, config_pp_plan=None), ns)
-    assert ns["result"] is True, "should be True when base_model has pp plan"
+    harness = _build_supports_pp_harness(
+        prop, pp_plan={}, base_pp_plan={"x": ("i", "o")}, config_pp_plan=None
+    )
+    code = harness + "print('RESULT:', result)"
+    r = _run_in_subprocess(code)
+    assert r.returncode == 0, f"Harness failed: {r.stderr}"
+    for line in r.stdout.strip().split("\n"):
+        if line.startswith("RESULT:"):
+            result_str = line.replace("RESULT:", "").strip()
+            result = result_str == "True"
+            assert result is True, "should be True when base_model has pp plan"
+            break
+    else:
+        raise AssertionError(f"Could not find RESULT in output: {r.stdout}")
 
     # True from config
-    ns = {}
-    exec(_build_supports_pp_harness(prop, pp_plan={}, base_pp_plan=None, config_pp_plan={"y": ("i", "o")}), ns)
-    assert ns["result"] is True, "should be True when config has pp plan"
+    harness = _build_supports_pp_harness(
+        prop, pp_plan={}, base_pp_plan=None, config_pp_plan={"y": ("i", "o")}
+    )
+    code = harness + "print('RESULT:', result)"
+    r = _run_in_subprocess(code)
+    assert r.returncode == 0, f"Harness failed: {r.stderr}"
+    for line in r.stdout.strip().split("\n"):
+        if line.startswith("RESULT:"):
+            result_str = line.replace("RESULT:", "").strip()
+            result = result_str == "True"
+            assert result is True, "should be True when config has pp plan"
+            break
+    else:
+        raise AssertionError(f"Could not find RESULT in output: {r.stdout}")
 
 
 # [pr_diff] pass_to_pass
@@ -284,11 +409,18 @@ def test_pp_setter_accepts_valid_dict():
         code = base + (
             f"\nm = M()\n"
             f"m.pp_plan = {d!r}\n"
-            f"result = m._pp_plan\n"
+            f"print('RESULT:', repr(m._pp_plan))"
         )
-        ns = {}
-        exec(code, ns)
-        assert ns["result"] == d, f"pp_plan setter should store {d!r}, got {ns['result']!r}"
+        r = _run_in_subprocess(code)
+        assert r.returncode == 0, f"Harness failed: {r.stderr}"
+        for line in r.stdout.strip().split("\n"):
+            if line.startswith("RESULT:"):
+                result_str = line.replace("RESULT:", "").strip()
+                expected = repr(d)
+                assert result_str == expected, f"pp_plan setter should store {d!r}, got {result_str!r}"
+                break
+        else:
+            raise AssertionError(f"Could not find RESULT in output: {r.stdout}")
 
 
 # [static] pass_to_pass
@@ -296,7 +428,8 @@ def test_ruff_imports_clean():
     """Changed file passes ruff import sorting check."""
     r = subprocess.run(
         ["ruff", "check", "--select", "I", TARGET],
-        capture_output=True, timeout=30,
+        capture_output=True,
+        timeout=30,
     )
     assert r.returncode == 0, (
         f"ruff import check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
@@ -308,7 +441,8 @@ def test_ruff_check_clean():
     """Changed file passes ruff check (all default rules) as required by make style."""
     r = subprocess.run(
         ["ruff", "check", TARGET],
-        capture_output=True, timeout=30,
+        capture_output=True,
+        timeout=30,
         cwd=REPO,
     )
     assert r.returncode == 0, (

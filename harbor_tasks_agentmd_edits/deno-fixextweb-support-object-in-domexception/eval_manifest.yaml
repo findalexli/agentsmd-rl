@@ -1,0 +1,61 @@
+version: "2.0"
+
+source:
+  repo: "denoland/deno"
+  pr: 31939
+  base_commit: "e6e72e57c2e2566b54f4672e03a6ff4d91d7b167"
+  merge_commit: "59fe2aa577891618d6610a47f8a4ddadd3a39e2a"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Gates (pass_to_pass, static)
+  # ---------------------------------------------------------------------------
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified DOMException file must be valid JavaScript"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # ---------------------------------------------------------------------------
+  - id: domexception_supports_options_object
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DOMException constructor accepts options object with name and cause properties"
+
+  - id: domexception_backwards_compatible_string
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DOMException constructor still accepts string as second argument (backwards compat)"
+
+  - id: domexception_cause_with_error_object
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DOMException cause property can be an Error object"
+
+  - id: domexception_options_defaults
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DOMException with options object defaults name to undefined (converts to 'Error')"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests / static)
+  # ---------------------------------------------------------------------------
+  - id: existing_domexception_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream DOMException tests still pass after the fix"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified DOMException constructor has real logic, not just pass/return"
+
+  - id: reflecthas_imported
+    type: pass_to_pass
+    origin: static
+    description: "ReflectHas is imported from primordials (needed for the fix)"
+
+rubric:
+  # No soft rules from CLAUDE.md that need LLM judge for this task
+  []

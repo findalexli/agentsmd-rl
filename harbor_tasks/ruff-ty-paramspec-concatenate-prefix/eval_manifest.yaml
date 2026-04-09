@@ -1,0 +1,84 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24474
+  base_commit: "9311680c97e2ab9db027303671d2da9fa4b0de0b"
+  merge_commit: "6ad36f8be239475137b5cccf5e8463adb4639418"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "ty binary exists (compilation succeeded)"
+
+  - id: paramspec_in_concatenate_prefix_pep695
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ty reports invalid-type-form for bare ParamSpec in Concatenate prefix inside subscript (PEP 695)"
+
+  - id: paramspec_in_list_specialization_pep695
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ty reports invalid-type-form for bare ParamSpec in list/tuple inside subscript specialization"
+
+  - id: paramspec_in_concatenate_prefix_legacy
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ty reports invalid-type-form for bare ParamSpec in subscript specialization (legacy typing)"
+
+  - id: paramspec_in_default_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ty reports invalid-type-form for bare ParamSpec in default list for another ParamSpec"
+
+  - id: paramspec_in_concatenate_nonlast_prefix
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ty reports invalid-type-form for bare ParamSpec in non-last position of Concatenate inside subscript"
+
+  - id: valid_callable_paramspec
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Valid Callable[P, int] still works without false positives"
+
+  - id: valid_concatenate_tail
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Valid Concatenate[int, P] still works without false positives"
+
+  - id: valid_pep695_concatenate
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Valid PEP 695 Concatenate[int, P] inside subscript still works"
+
+  - id: no_panic_unwrap
+    type: pass_to_pass
+    origin: agent_config
+    description: "No panic!/unreachable!/unwrap in modified files"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "9311680c97e2ab9db027303671d2da9fa4b0de0b"
+
+  - id: no_local_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "No local use/import statements inside functions"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "9311680c97e2ab9db027303671d2da9fa4b0de0b"
+
+rubric:
+  - rule: "Try hard to avoid patterns that require panic!, unreachable!, or .unwrap()."
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "9311680c97e2ab9db027303671d2da9fa4b0de0b"
+
+  - rule: "Rust imports should always go at the top of the file, never locally in functions."
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "9311680c97e2ab9db027303671d2da9fa4b0de0b"

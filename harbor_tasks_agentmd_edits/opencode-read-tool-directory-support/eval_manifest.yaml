@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 13090
+  base_commit: "e3471526f4c71b2c4ee00117e125e179da01e6e2"
+  merge_commit: "6b4d617df080cef71cd8f4b041601cf47ce0edf3"
+
+checks:
+  # Gate: syntax
+  - id: ts_balanced_braces
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files have balanced braces and parentheses"
+
+  # Gate: agent config convention
+  - id: bun_api_convention
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified code uses Bun.file() API per SKILL.md convention"
+    source:
+      path: ".opencode/skill/bun-file-io/SKILL.md"
+      lines: "28"
+      commit: "e3471526f4c71b2c4ee00117e125e179da01e6e2"
+
+  # Core code behavior
+  - id: stat_based_existence
+    type: fail_to_pass
+    origin: pr_diff
+    description: "read.ts uses stat() not exists() for file/dir existence detection"
+
+  - id: directory_listing_branch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "read.ts has directory listing with readdir, sorting, and XML output"
+
+  - id: output_format_modernized
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Read output uses N:line format and content/path/type XML tags"
+
+  # Config/documentation updates
+  - id: skill_md_directory_note
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md documents that Bun.file().exists() returns false for directories"
+
+  - id: read_txt_directory_support
+    type: fail_to_pass
+    origin: pr_diff
+    description: "read.txt describes directory reading capability"
+
+  - id: edit_txt_line_format
+    type: fail_to_pass
+    origin: pr_diff
+    description: "edit.txt references the new colon-based line number format"
+
+rubric:
+  - rule: "Prefer promise .catch(...) over try/catch when possible."
+    source:
+      path: ".opencode/skill/bun-file-io/SKILL.md"
+      lines: "39"
+      commit: "e3471526f4c71b2c4ee00117e125e179da01e6e2"
+  - rule: "Keep things in one function unless composable or reusable"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "e3471526f4c71b2c4ee00117e125e179da01e6e2"

@@ -1,0 +1,53 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 746
+  base_commit: "b942ed019df2c66b851c397c0836fd31a3787b70"
+  merge_commit: "524d1d90f506f25436754e82d31f2703a61ee8d2"
+
+checks:
+  - id: python_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Training script parses without syntax errors"
+
+  - id: format_reward_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "format_reward returns correct scores for matching and non-matching inputs"
+
+  - id: yaml_config_structure
+    type: fail_to_pass
+    origin: pr_diff
+    description: "YAML config parses and contains required training keys (actor, vllm, datasets)"
+
+  - id: shell_script_references
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Shell launcher references correct Python script, YAML config, and USE_OPTIMIZED_MODEL=0"
+
+  - id: readme_documents_npu
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README documents NPU hardware requirements and training results"
+
+  - id: no_wildcard_imports
+    type: fail_to_pass
+    origin: agent_config
+    description: "No wildcard imports in the training script"
+    source:
+      path: "AGENTS.md"
+      lines: "119"
+      commit: "b942ed019df2c66b851c397c0836fd31a3787b70"
+
+  - id: reward_fn_signature
+    type: fail_to_pass
+    origin: agent_config
+    description: "Reward function accepts (prompt, completions, prompt_ids, completion_ids, **data)"
+    source:
+      path: "AGENTS.md"
+      lines: "184-185"
+      commit: "b942ed019df2c66b851c397c0836fd31a3787b70"
+
+rubric: []

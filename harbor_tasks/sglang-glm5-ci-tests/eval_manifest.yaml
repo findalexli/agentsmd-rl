@@ -1,0 +1,75 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22285
+  base_commit: "c3c13dd5e3b42850d5a96adca4092deb72bf1e4a"
+  merge_commit: "213af1d4f7690cc304a2a9a9a81ab8ca0d7a7b36"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Syntax checks (static, pass_to_pass)
+  # ---------------------------------------------------------------------------
+  - id: basic_file_syntax
+    type: pass_to_pass
+    origin: static
+    description: "The renamed test_dsa_models_basic.py must compile without errors"
+
+  - id: mtp_file_syntax
+    type: pass_to_pass
+    origin: static
+    description: "The renamed test_dsa_models_mtp.py must compile without errors"
+
+  # ---------------------------------------------------------------------------
+  # Core structural changes (pr_diff, fail_to_pass)
+  # ---------------------------------------------------------------------------
+  - id: glm5_model_path_constant_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GLM5_MODEL_PATH constant must be defined in both test files"
+
+  - id: glm5_test_classes_exist
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GLM5 test classes (TestGLM5DP, TestGLM5TP, TestGLM5DPMTP, TestGLM5TPMTP) must be defined"
+
+  - id: est_time_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "register_cuda_ci est_time must be updated from 360 to 720 in basic test"
+
+  - id: mtp_env_override_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SGLANG_ENABLE_SPEC_V2 environment override must wrap server launch in GLM5 MTP tests"
+
+  - id: mtp_class_renamed_correctly
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestDeepseekV32DPMTPV2 must be renamed to TestDeepseekV32TPMTP"
+
+  - id: mtp_mem_frac_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "mem-frac should be updated from 0.7 to 0.8 in GLM5 MTP tests"
+
+  # ---------------------------------------------------------------------------
+  # Regression + anti-stub (static, pass_to_pass)
+  # ---------------------------------------------------------------------------
+  - id: old_files_removed
+    type: pass_to_pass
+    origin: static
+    description: "Old test file names should not exist (they were renamed)"
+
+  - id: new_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "New test file names (test_dsa_models_*.py) should exist"
+
+  - id: glm5_classes_have_required_methods
+    type: pass_to_pass
+    origin: static
+    description: "GLM5 test classes must have setUpClass, tearDownClass, and test methods"
+
+rubric: []
+  # No soft rules from agent configs applicable to this structural task

@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22304
+  base_commit: "eca62ab8f48359bfc8d1602c36aa88f7ba84a46c"
+  merge_commit: "1c5c6dad5e912829cff2a249de26691511fc6092"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified file must parse without errors"
+
+  - id: nullcontext_import_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The nullcontext import must be removed as it's no longer needed"
+
+  - id: locking_pattern_fixed_in_distributed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "update_weights_from_distributed must hold is_pause_cond during update when paused"
+
+  - id: locking_pattern_fixed_in_tensor
+    type: fail_to_pass
+    origin: pr_diff
+    description: "update_weights_from_tensor must hold is_pause_cond during update when paused"
+
+  - id: locking_pattern_fixed_in_ipc
+    type: fail_to_pass
+    origin: pr_diff
+    description: "update_weights_from_ipc must hold is_pause_cond during update when paused"
+
+  - id: functions_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified functions have real logic, not just pass/return"
+
+rubric: []

@@ -1,0 +1,59 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 21134
+  base_commit: "4712c18a5833da85cd3946357662b148e78573f7"
+  merge_commit: "f0f1e51c5c48111198612f9eca652aeffbad49d7"
+
+checks:
+  - id: typecheck
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript typechecking must pass for the opencode package"
+
+  - id: build_config_options_model_output
+    type: fail_to_pass
+    origin: pr_diff
+    description: "buildConfigOptions produces a model option with type 'select' and correct fields"
+
+  - id: build_config_options_mode_output
+    type: fail_to_pass
+    origin: pr_diff
+    description: "buildConfigOptions includes mode option when modes are provided"
+
+  - id: config_options_in_session_lifecycle
+    type: fail_to_pass
+    origin: pr_diff
+    description: "configOptions must be set in at least 2 session response paths"
+
+  - id: set_session_config_option_dispatch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "setSessionConfigOption must handle model and mode configIds and reject unknown"
+
+  - id: no_any_type_in_new_code
+    type: fail_to_pass
+    origin: agent_config
+    description: "New configOptions code must not use the 'any' type"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "4712c18a5833da85cd3946357662b148e78573f7"
+
+rubric:
+  - rule: "Avoid `else` statements. Prefer early returns."
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "4712c18a5833da85cd3946357662b148e78573f7"
+  - rule: "Use single word names by default for new locals, params, and helper functions. Multi-word names are allowed only when a single word would be unclear or ambiguous."
+    source:
+      path: "AGENTS.md"
+      lines: "27-28"
+      commit: "4712c18a5833da85cd3946357662b148e78573f7"
+  - rule: "Reduce total variable count by inlining when a value is only used once."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "4712c18a5833da85cd3946357662b148e78573f7"

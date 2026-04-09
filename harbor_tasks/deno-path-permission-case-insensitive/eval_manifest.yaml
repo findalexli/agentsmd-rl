@@ -1,0 +1,61 @@
+version: "2.0"
+
+source:
+  repo: "denoland/deno"
+  pr: 33073
+  base_commit: "7c57830506e4ded88a7bfee2a03a5e0530787fbe"
+  merge_commit: "2bb06663c1d7ee6532f6737d721ea1adb89fd884"
+
+checks:
+  - id: comparison_path_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "comparison_path() function exists with cfg!(windows) branch and non-Windows fallback"
+
+  - id: cmp_path_field_in_path_query_descriptor
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PathQueryDescriptor struct has a cmp_path: PathBuf field"
+
+  - id: cmp_path_field_in_path_descriptor
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PathDescriptor struct has a cmp_path: PathBuf field"
+
+  - id: equality_uses_cmp_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All 3 PartialEq impls compare cmp_path instead of path"
+
+  - id: hash_uses_cmp_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Hash impl for PathDescriptor hashes cmp_path, not path"
+
+  - id: starts_with_uses_cmp_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both starts_with methods use cmp_path for prefix checking"
+
+  - id: ordering_uses_cmp_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "cmp_allow_allow and cmp_allow_deny use cmp_path for ordering"
+
+  - id: not_stub_comparison_path
+    type: pass_to_pass
+    origin: static
+    description: "comparison_path function has real logic (not a stub)"
+
+rubric:
+  - rule: "Keep your changes minimal, don't do drive-by changes in a PR."
+    source:
+      path: "CLAUDE.md"
+      lines: "39"
+      commit: "7c57830506e4ded88a7bfee2a03a5e0530787fbe"
+
+  - rule: "Match existing patterns in the codebase. When suggesting changes to a function, look for similar functions nearby that solve analogous problems."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "308-315"
+      commit: "7c57830506e4ded88a7bfee2a03a5e0530787fbe"

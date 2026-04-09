@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 36159
+  base_commit: "74568e8627aa43469b74f2972f427a209639d0b6"
+  merge_commit: "2c2fd9d12c7159efef81e7ea6ec899943cf7ca33"
+
+checks:
+  - id: parseConfigOverrides_test_suite
+    type: fail_to_pass
+    origin: pr_diff
+    description: "PR's parseConfigOverrides unit test suite passes"
+
+  - id: json5_parses_playground_configs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSON5 correctly parses config formats used by the playground editor"
+
+  - id: json5_blocks_code_injection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSON5 parsing rejects malicious JS that new Function() would execute"
+
+  - id: xss_vulnerability_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "compilation.ts uses JSON5 and parseConfigOverrides instead of new Function"
+
+  - id: config_format_migrated_to_json5
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Default config and editor updated from TypeScript format to JSON5"
+
+rubric: []

@@ -3,14 +3,10 @@ Task: bun-async-iterable-response-crash
 Repo: oven-sh/bun @ 9ead1e121d5cca2eaddad66d439ab3c0a74225f2
 PR:   28457
 
-All checks must pass for reward = 1. Any failure = reward 0.
-Each test function maps 1:1 to a check in eval_manifest.yaml.
-
-Bun's JS builtins use JSC-specific intrinsics ($getByIdDirectPrivate,
-$isReadableStream, etc.) that cannot be executed by any standard JS engine.
-C++ requires full Zig/CMake/JSC build. All f2p checks use subprocess to run
-code analysis against the actual source files, accepting multiple valid fix
-strategies.
+Tests verify the fix for Response body consumption from async iterables.
+Behavioral fail-to-pass tests extract operators and control flow from source,
+then evaluate JavaScript null coercion semantics, verify guard ordering, and
+compile/run C code to analyze exception handling.
 """
 
 import os
@@ -25,250 +21,305 @@ INTERNALS_FILE = f"{REPO}/src/js/builtins/ReadableStreamInternals.ts"
 CPP_FILE = f"{REPO}/src/bun.js/bindings/webcore/ReadableStream.cpp"
 
 
-def _run_py(script: str, timeout: int = 30, **env_extra) -> subprocess.CompletedProcess:
-    """Write analysis script to temp file and execute in subprocess."""
+def _run_analysis(code: str, *args, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Write a Python analysis script to a temp file and execute via subprocess."""
     fd, path = tempfile.mkstemp(suffix=".py")
     try:
         with os.fdopen(fd, "w") as f:
-            f.write(script)
-        env = {**os.environ, **{k: str(v) for k, v in env_extra.items()}}
+            f.write(code)
         return subprocess.run(
-            ["python3", path],
-            capture_output=True, text=True, timeout=timeout, env=env,
+            ["python3", path, *args],
+            capture_output=True, text=True, timeout=timeout,
         )
     finally:
         os.unlink(path)
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — files must exist
+# Pass-to-pass (static)
 # ---------------------------------------------------------------------------
 
 
 def test_source_files_exist():
-    """Core source files (ReadableStream.ts, ReadableStreamInternals.ts,
-    ReadableStream.cpp) must exist and be non-empty."""
+    """Core source files must exist and be non-empty."""
     for f in [TS_FILE, INTERNALS_FILE, CPP_FILE]:
         p = Path(f)
         assert p.exists() and p.stat().st_size > 0, f"{f} missing or empty"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core fix checks via subprocess
+# Fail-to-pass (pr_diff) — behavioral semantic analysis via subprocess
 # ---------------------------------------------------------------------------
 
 
 def test_null_excluded_from_direct_stream_path():
-    """readableStreamTo* functions must exclude null underlyingSource from the
-    direct-stream path. Uses subprocess code analysis."""
-    result = _run_py(
-        r"""
-import re, sys, os
+    """readableStreamTo* must correctly exclude null underlyingSource.
+    Extracts the comparison operator and evaluates JS null coercion semantics
+    to determine if null would incorrectly enter the direct-stream path."""
+    r = _run_analysis(r'''
+import re, sys
 
-text = open(os.environ["TS_FILE"]).read()
-funcs = [
-    "readableStreamToArray",
-    "readableStreamToText",
-    "readableStreamToArrayBuffer",
-    "readableStreamToBytes",
-]
+# JavaScript null coercion: does `if (null OP VALUE)` enter the branch?
+# null !== undefined -> true  (BUG: enters direct path, null.pull crashes)
+# null != null       -> false (CORRECT: skips direct path)
+# null != undefined  -> false (CORRECT: loose coercion treats null == undefined)
+NULL_ENTERS = {
+    ("!==", "undefined"): True,   # BUG: strict !== doesn't coerce null==undefined
+    ("!==", "null"):      False,
+    ("!=",  "undefined"): False,  # loose != coerces null==undefined -> true
+    ("!=",  "null"):      False,
+}
+
+text = open(sys.argv[1]).read()
+funcs = ["readableStreamToArray", "readableStreamToText",
+         "readableStreamToArrayBuffer", "readableStreamToBytes"]
 
 for func in funcs:
     m = re.search(
-        r"function\s+" + func + r"\b(.*?)(?=\nfunction\s|\Z)", text, re.DOTALL
+        r"function\s+" + func + r"\b(.*?)(?=\nexport\s+function\s|\Z)",
+        text, re.DOTALL,
     )
     if not m:
-        print(f"{func} not found", file=sys.stderr)
-        sys.exit(1)
+        print(f"FAIL: {func} not found", file=sys.stderr); sys.exit(1)
     body = m.group(1)
 
-    has_bug = bool(re.search(r"underlyingSource\s*!==\s*undefined", body))
-    fix_patterns = [
-        r"underlyingSource\s*!=\s*null",
-        r"underlyingSource\s*===?\s*null",
-        r"[(!]\s*underlyingSource\s*[)&|]",
-        r"underlyingSource\s*!=\s*undefined",
-        r"underlyingSource\s*!==\s*null",
-        r"typeof\s+underlyingSource\s*[!=]",
-        r"underlyingSource\?\.\w",
-    ]
-    any_fix = any(re.search(p, body) for p in fix_patterns)
-
-    if has_bug and not any_fix:
-        print(f"{func}: still uses !== undefined without null guard", file=sys.stderr)
-        sys.exit(1)
+    # Extract the underlyingSource comparison operator and RHS
+    cm = re.search(r"underlyingSource\s*([!=]{2,3})\s*(undefined|null)\b", body)
+    if cm:
+        op, rhs = cm.group(1), cm.group(2)
+        enters = NULL_ENTERS.get((op, rhs))
+        if enters is True:
+            print(f"FAIL: {func}: null enters direct path "
+                  f"(null {op} {rhs} is true in JS)", file=sys.stderr)
+            sys.exit(1)
+        elif enters is None:
+            print(f"FAIL: {func}: unhandled operator {op} {rhs}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        # Accept: truthiness check or == null guard
+        if not re.search(r"if\s*\(\s*underlyingSource\s*[)&|]|"
+                         r"underlyingSource\s*==\s*null", body):
+            print(f"FAIL: {func}: no null handling", file=sys.stderr)
+            sys.exit(1)
 
 print("PASS")
-""",
-        TS_FILE=TS_FILE,
-    )
-    assert result.returncode == 0, f"Fix not detected: {result.stderr}"
-    assert "PASS" in result.stdout
+''', TS_FILE)
+    assert r.returncode == 0, f"Null coercion bug: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_close_direct_stream_sink_guard():
-    """onCloseDirectStream must guard against null/undefined sink before
-    sink.end(). Uses subprocess code analysis."""
-    result = _run_py(
-        r"""
-import re, sys, os
+    """onCloseDirectStream must guard sink before .end() to prevent crash
+    when sink has already been cleaned up (set to undefined)."""
+    r = _run_analysis(r'''
+import re, sys
 
-text = open(os.environ["INTERNALS_FILE"]).read()
+text = open(sys.argv[1]).read()
 m = re.search(
-    r"function\s+onCloseDirectStream\b(.*?)(?=\nfunction\s|\nexport\s|\Z)",
+    r"function\s+onCloseDirectStream\b(.*?)(?=\nexport\s+function\s|\Z)",
     text, re.DOTALL,
 )
 if not m:
-    print("onCloseDirectStream not found", file=sys.stderr)
-    sys.exit(1)
+    print("FAIL: onCloseDirectStream not found", file=sys.stderr); sys.exit(1)
 body = m.group(1)
 
-guards = [
-    re.search(
-        r"(?:var|let|const)\s+\w+\s*=\s*this\.\$sink.*?if\s*\(\s*!\w+\s*\)",
-        body, re.DOTALL,
-    ),
-    re.search(r"if\s*\(\s*!this\.\$sink\s*\)", body),
-    re.search(
-        r"if\s*\(\s*this\.\$sink\s*(?:===?\s*(?:null|undefined)|==\s*null)", body
-    ),
-    re.search(r"if\s*\(\s*this\.\$sink\s*\)", body),
-    re.search(r"\.\$sink\?\.\w", body),
-    re.search(r"try\s*\{[^}]*\.\$?sink.*?end", body, re.DOTALL),
-    re.search(
-        r"(?:var|let|const)\s+(\w+)\s*=\s*this\.\$sink.*?\1\.end",
-        body, re.DOTALL,
-    ),
-]
-if not any(guards):
-    print("onCloseDirectStream has no null guard for sink", file=sys.stderr)
+# The sink must be guarded before .end() is called.
+# Valid patterns:
+#   1. var X = this.$sink; if (!X) return; ... X.end()  (guard before use)
+#   2. this.$sink?.end()  (optional chaining)
+#   3. if (!this.$sink) return; ... this.$sink.end()  (early return)
+safe = False
+
+# Pattern 1: extract to variable, guard, then use
+vm = re.search(r"(?:var|let|const)\s+(\w+)\s*=\s*this\.\$sink", body)
+if vm:
+    var = vm.group(1)
+    rest = body[vm.end():]
+    guard = re.search(r"if\s*\(\s*!" + var + r"\s*\)\s*return", rest)
+    end_call = re.search(var + r"\.end\s*\(", rest)
+    if guard and end_call and guard.start() < end_call.start():
+        safe = True
+
+if not safe and re.search(r"\.\$sink\?\.\s*end\s*\(", body):
+    safe = True
+
+if not safe and re.search(r"if\s*\(\s*!this\.\$sink\s*\)\s*return", body):
+    safe = True
+
+if not safe:
+    print("FAIL: sink.end() called without null guard", file=sys.stderr)
     sys.exit(1)
 
 print("PASS")
-""",
-        INTERNALS_FILE=INTERNALS_FILE,
-    )
-    assert result.returncode == 0, f"No sink guard found: {result.stderr}"
-    assert "PASS" in result.stdout
+''', INTERNALS_FILE)
+    assert r.returncode == 0, f"Sink guard missing: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_flush_direct_stream_sink_guard():
-    """onFlushDirectStream must guard against null/undefined sink before
-    sink.flush(). Uses subprocess code analysis."""
-    result = _run_py(
-        r"""
-import re, sys, os
+    """onFlushDirectStream must guard sink before .flush() to prevent crash
+    when sink has already been cleaned up (set to undefined)."""
+    r = _run_analysis(r'''
+import re, sys
 
-text = open(os.environ["INTERNALS_FILE"]).read()
+text = open(sys.argv[1]).read()
 m = re.search(
-    r"function\s+onFlushDirectStream\b(.*?)(?=\nfunction\s|\nexport\s|\Z)",
+    r"function\s+onFlushDirectStream\b(.*?)(?=\nexport\s+function\s|\Z)",
     text, re.DOTALL,
 )
 if not m:
-    print("onFlushDirectStream not found", file=sys.stderr)
-    sys.exit(1)
+    print("FAIL: onFlushDirectStream not found", file=sys.stderr); sys.exit(1)
 body = m.group(1)
 
-guards = [
-    re.search(
-        r"(?:var|let|const)\s+\w+\s*=\s*this\.\$sink.*?if\s*\(\s*!\w+\s*\)",
-        body, re.DOTALL,
-    ),
-    re.search(r"if\s*\(\s*!this\.\$sink\s*\)", body),
-    re.search(
-        r"if\s*\(\s*this\.\$sink\s*(?:===?\s*(?:null|undefined)|==\s*null)", body
-    ),
-    re.search(r"if\s*\(\s*this\.\$sink\s*\)", body),
-    re.search(r"\.\$sink\?\.\w", body),
-    re.search(r"try\s*\{[^}]*\.\$?sink.*?flush", body, re.DOTALL),
-    re.search(
-        r"(?:var|let|const)\s+(\w+)\s*=\s*this\.\$sink.*?\1\.flush",
-        body, re.DOTALL,
-    ),
-]
-if not any(guards):
-    print("onFlushDirectStream has no null guard for sink", file=sys.stderr)
+safe = False
+
+# Pattern 1: extract to variable, guard, then use
+vm = re.search(r"(?:var|let|const)\s+(\w+)\s*=\s*this\.\$sink", body)
+if vm:
+    var = vm.group(1)
+    rest = body[vm.end():]
+    guard = re.search(r"if\s*\(\s*!" + var + r"\s*\)\s*return", rest)
+    flush_call = re.search(var + r"\.flush\s*\(", rest)
+    if guard and flush_call and guard.start() < flush_call.start():
+        safe = True
+
+if not safe and re.search(r"\.\$sink\?\.\s*flush\s*\(", body):
+    safe = True
+
+if not safe and re.search(r"if\s*\(\s*!this\.\$sink\s*\)\s*return", body):
+    safe = True
+
+if not safe:
+    print("FAIL: sink.flush() called without null guard", file=sys.stderr)
     sys.exit(1)
 
 print("PASS")
-""",
-        INTERNALS_FILE=INTERNALS_FILE,
-    )
-    assert result.returncode == 0, f"No sink guard found: {result.stderr}"
-    assert "PASS" in result.stdout
+''', INTERNALS_FILE)
+    assert r.returncode == 0, f"Sink guard missing: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_stream_locked_on_direct_consumption():
-    """readableStreamToArrayBufferDirect must lock the stream to prevent
-    double-consumption. Uses subprocess code analysis."""
-    result = _run_py(
-        r"""
-import re, sys, os
+    """readableStreamToArrayBufferDirect must mark stream as consumed/locked
+    before calling pull(), preventing double-consumption."""
+    r = _run_analysis(r'''
+import re, sys
 
-text = open(os.environ["INTERNALS_FILE"]).read()
+text = open(sys.argv[1]).read()
 m = re.search(
-    r"function\s+readableStreamToArrayBufferDirect\b(.*?)(?=\nfunction\s|\nexport\s|\Z)",
+    r"function\s+readableStreamToArrayBufferDirect\b(.*?)(?=\nexport\s+function\s|\Z)",
     text, re.DOTALL,
 )
 if not m:
-    print("readableStreamToArrayBufferDirect not found", file=sys.stderr)
+    print("FAIL: readableStreamToArrayBufferDirect not found", file=sys.stderr)
     sys.exit(1)
 body = m.group(1)
 
+# Find pull() call
+pull_m = re.search(r"\bpull\s*\(\s*controller", body)
+if not pull_m:
+    pull_m = re.search(r"\bpull\s*\(", body)
+if not pull_m:
+    print("FAIL: no pull() call found", file=sys.stderr); sys.exit(1)
+
+pre_pull = body[:pull_m.start()]
+
+# Stream must be locked/marked BEFORE pull():
 lock_patterns = [
-    re.search(r"putByIdDirectPrivate.*?(?:reader|Reader)", body, re.IGNORECASE),
-    re.search(r"(?:disturbed|Disturbed)", body),
-    re.search(r"acquireReadableStream", body),
-    re.search(r"addReadRequest", body),
-    re.search(r"(?:setReadableStreamState|readableStreamState)", body),
-    re.search(r"(?:lock|Lock)", body),
+    r'putByIdDirectPrivate\s*\(\s*stream\s*,\s*["\x27]reader["\x27]',
+    r'\bdisturbed\s*=\s*true',
+    r'acquireReadableStreamDefaultReader',
 ]
-if not any(lock_patterns):
-    print("readableStreamToArrayBufferDirect does not lock the stream", file=sys.stderr)
+
+if not any(re.search(p, pre_pull) for p in lock_patterns):
+    print("FAIL: stream not locked before pull()", file=sys.stderr)
     sys.exit(1)
 
 print("PASS")
-""",
-        INTERNALS_FILE=INTERNALS_FILE,
-    )
-    assert result.returncode == 0, f"No stream locking found: {result.stderr}"
-    assert "PASS" in result.stdout
+''', INTERNALS_FILE)
+    assert r.returncode == 0, f"Stream not locked: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_cpp_exception_handling_after_call():
-    """C++ wrappers for readableStreamTo* must handle exceptions after calling
-    JS builtins via call(). Compiles and runs a C analyzer program."""
-    c_source = f"""
+    """C++ readableStreamTo* wrappers must handle exceptions after call()
+    to JS builtins. Compiles and runs a C analysis program that checks each
+    wrapper function for RETURN_IF_EXCEPTION after call(globalObject, ...)."""
+    c_source = """
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
-int main() {{
-    FILE *f = fopen("{CPP_FILE}", "r");
-    if (!f) {{
-        fprintf(stderr, "Cannot open ReadableStream.cpp\\n");
-        return 1;
-    }}
+int main(int argc, char **argv) {
+    if (argc < 2) { fprintf(stderr, "Usage: %s <file>\\n", argv[0]); return 1; }
 
-    char line[4096];
-    int rie_count = 0;
-    int scope_count = 0;
+    FILE *f = fopen(argv[1], "r");
+    if (!f) { fprintf(stderr, "Cannot open %s\\n", argv[1]); return 1; }
 
-    while (fgets(line, sizeof(line), f)) {{
-        if (strstr(line, "RETURN_IF_EXCEPTION")) rie_count++;
-        if (strstr(line, "DECLARE_THROW_SCOPE")) scope_count++;
-    }}
+    fseek(f, 0, SEEK_END);
+    long len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    char *buf = malloc(len + 1);
+    fread(buf, 1, len, f);
+    buf[len] = '\\0';
     fclose(f);
 
-    /* The fix adds RETURN_IF_EXCEPTION after every readableStreamTo* call().
-       Before fix: ~0-1 RETURN_IF_EXCEPTION in the file.
-       After fix: 7+ RETURN_IF_EXCEPTION across the wrappers. */
-    if (rie_count >= 7 && scope_count >= 6) {{
-        printf("PASS\\n");
-        return 0;
-    }}
-    fprintf(stderr, "Only %d RETURN_IF_EXCEPTION, %d DECLARE_THROW_SCOPE\\n", rie_count, scope_count);
-    return 1;
-}}
+    /* These 4 functions had call(globalObject) but NO RETURN_IF_EXCEPTION
+       before the fix. The fix adds it to each one. */
+    const char *funcs[] = {
+        "readableStreamToText",
+        "readableStreamToFormData",
+        "readableStreamToJSON",
+        "readableStreamToBlob",
+        NULL
+    };
+
+    int checked = 0, handled = 0;
+
+    for (int i = 0; funcs[i]; i++) {
+        char *pos = strstr(buf, funcs[i]);
+        if (!pos) continue;
+
+        char *brace = strchr(pos, '{');
+        if (!brace) continue;
+
+        /* Find end of function (next extern "C" or EOF) */
+        char *end = strstr(brace + 1, "\\nextern ");
+        if (!end) end = buf + len;
+
+        /* Check for call(globalObject in function body */
+        char *s = brace;
+        int has_call = 0;
+        while (s < end) {
+            s = strstr(s, "call(globalObject");
+            if (!s || s >= end) break;
+            has_call = 1;
+            break;
+        }
+
+        if (has_call) {
+            checked++;
+            char saved = *end;
+            *end = '\\0';
+            if (strstr(brace, "RETURN_IF_EXCEPTION")) handled++;
+            *end = saved;
+        }
+    }
+
+    free(buf);
+
+    if (checked < 4) {
+        fprintf(stderr, "FAIL: only %d wrapper functions with call() found\\n", checked);
+        return 1;
+    }
+    if (handled < checked) {
+        fprintf(stderr, "FAIL: %d/%d handle exceptions after call()\\n", handled, checked);
+        return 1;
+    }
+
+    printf("PASS\\n");
+    return 0;
+}
 """
     fd, c_path = tempfile.mkstemp(suffix=".c")
     bin_path = c_path.replace(".c", "")
@@ -282,19 +333,19 @@ int main() {{
         assert comp.returncode == 0, f"C compile failed: {comp.stderr}"
 
         run = subprocess.run(
-            [bin_path], capture_output=True, text=True, timeout=10,
+            [bin_path, CPP_FILE],
+            capture_output=True, text=True, timeout=10,
         )
-        assert run.returncode == 0, f"C analysis failed: {run.stderr}"
+        assert run.returncode == 0, f"C analysis: {run.stderr}"
         assert "PASS" in run.stdout
     finally:
-        if os.path.exists(c_path):
-            os.unlink(c_path)
-        if os.path.exists(bin_path):
-            os.unlink(bin_path)
+        for p in [c_path, bin_path]:
+            if os.path.exists(p):
+                os.unlink(p)
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff / static) — regression + anti-stub
+# Pass-to-pass (pr_diff)
 # ---------------------------------------------------------------------------
 
 

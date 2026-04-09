@@ -49,6 +49,7 @@ class MockInp:
 class MockMatch:
     def __init__(self):
         self.replaced = False
+        self.kwargs_data = {{}}
     def replace_by_example(self, *args, **kwargs):
         self.replaced = True
     def __getattr__(self, name):
@@ -74,7 +75,7 @@ for node in ast.walk(tree):
         fn = ns["unfuse_bias_add_to_pointwise"]
         break
 else:
-    print("FAIL:unfuse_bias_add_to_pointwise not found")
+    print("FAIL:function_not_found")
     sys.exit(1)
 
 dtype = torch_mock.__dict__[{dtype_name!r}]
@@ -112,7 +113,7 @@ def _run_subprocess(dtype_name: str, timeout: int = 30) -> dict:
 # ---------------------------------------------------------------------------
 
 def test_syntax_check():
-    """post_grad.py must parse without errors."""
+    """post_grad.py must parse without syntax errors."""
     with open(POST_GRAD) as f:
         ast.parse(f.read())
 
@@ -125,8 +126,8 @@ def test_bfloat16_not_unfused():
     """bfloat16 addmm must NOT be unfused — guard prevents replacement."""
     out = _run_subprocess("bfloat16")
     assert out["_returncode"] == 0, f"Subprocess failed: {out['_stderr']}"
-    assert out["replaced"] == "False", (
-        "bfloat16 was not guarded — replacement proceeded"
+    assert out.get("replaced") == "False", (
+        "bfloat16 was not guarded — replacement proceeded (should return early)"
     )
 
 
@@ -134,8 +135,8 @@ def test_float16_not_unfused():
     """float16 addmm must NOT be unfused — guard prevents replacement."""
     out = _run_subprocess("float16")
     assert out["_returncode"] == 0, f"Subprocess failed: {out['_stderr']}"
-    assert out["replaced"] == "False", (
-        "float16 was not guarded — replacement proceeded"
+    assert out.get("replaced") == "False", (
+        "float16 was not guarded — replacement proceeded (should return early)"
     )
 
 
@@ -144,21 +145,21 @@ def test_guard_returns_early():
     for dtype_name in ("bfloat16", "float16"):
         out = _run_subprocess(dtype_name)
         assert out["_returncode"] == 0, f"{dtype_name} subprocess failed: {out['_stderr']}"
-        assert out["replaced"] == "False", f"{dtype_name} was not guarded"
-        assert out["result"] == "None", (
-            f"Expected None return for {dtype_name}, got {out['result']}"
+        assert out.get("replaced") == "False", f"{dtype_name} was not guarded"
+        assert out.get("result") == "None", (
+            f"Expected None return for {dtype_name}, got {out.get('result')}"
         )
 
 
 # ---------------------------------------------------------------------------
-# [pr_diff] pass_to_pass — regression guards
+# [pr_diff] pass_to_pass — regression guards (make sure fix isn't over-broad)
 # ---------------------------------------------------------------------------
 
 def test_float32_still_unfused():
     """float32 addmm MUST still be unfused (guard is not overbroad)."""
     out = _run_subprocess("float32")
     assert out["_returncode"] == 0, f"Subprocess failed: {out['_stderr']}"
-    assert out["replaced"] == "True", (
+    assert out.get("replaced") == "True", (
         "float32 was incorrectly guarded — replacement did NOT proceed"
     )
 
@@ -167,7 +168,7 @@ def test_float64_still_unfused():
     """float64 addmm MUST still be unfused (guard is not overbroad)."""
     out = _run_subprocess("float64")
     assert out["_returncode"] == 0, f"Subprocess failed: {out['_stderr']}"
-    assert out["replaced"] == "True", (
+    assert out.get("replaced") == "True", (
         "float64 was incorrectly guarded — replacement did NOT proceed"
     )
 
@@ -234,5 +235,25 @@ def test_python310_compat():
             for child in ast.walk(node):
                 if hasattr(ast, 'TryStar') and isinstance(child, ast.TryStar):
                     raise AssertionError("except* (ExceptionGroup) syntax requires Python 3.11+")
+            return
+    raise AssertionError("unfuse_bias_add_to_pointwise not found")
+
+
+# CLAUDE.md:53-56 @ bac7b59c6fe3241bb6d6cca89cb1da0662788
+def test_no_dynamic_attr_access():
+    """unfuse_bias_add_to_pointwise must not use dynamic setattr/getattr for state management."""
+    with open(POST_GRAD) as f:
+        source = f.read()
+    tree = ast.parse(source)
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "unfuse_bias_add_to_pointwise":
+            for child in ast.walk(node):
+                if isinstance(child, ast.Call):
+                    func = child.func
+                    if isinstance(func, ast.Name) and func.id in ("setattr", "getattr"):
+                        raise AssertionError(
+                            f"Dynamic {func.id}() used in unfuse_bias_add_to_pointwise"
+                        )
             return
     raise AssertionError("unfuse_bias_add_to_pointwise not found")

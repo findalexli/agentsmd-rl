@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22267
+  base_commit: "233f3e31bfec68c77c17066b7b270380e773da6b"
+  merge_commit: "fae90abf6e15aaffb6fd924a439253674771487d"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified test file must parse without errors"
+
+  - id: test_moved_to_nightly_suite
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Test registration must use nightly-8-gpu-common suite with nightly=True"
+
+  - id: est_time_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Test registration must have est_time=1800 (not 1000)"
+
+  - id: soft_watchdog_timeout_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Test must have --soft-watchdog-timeout 1800 in base_args"
+
+  - id: no_old_stage_c_registration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Test must not be registered in stage-c-test-8-gpu-h200 suite"
+
+  - id: no_comment_registration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Test registration must not be commented out"
+
+rubric: []

@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "electric-sql/electric"
+  pr: 3819
+  base_commit: "7ba32193cc9f970835acdcb2de48101f1a812ae9"
+  merge_commit: "20e151bb2d90241a4086795c6884683e341fa7e1"
+
+checks:
+  - id: claude_md_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md file is created with correct content linking to AGENTS.md"
+
+  - id: pr_review_command_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".claude/commands/pr-review.md contains the 5-phase review process"
+
+  - id: workflow_label_trigger_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".github/workflows/claude-code-review.yml workflow for label-triggered reviews exists"
+
+  - id: workflow_mention_trigger_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".github/workflows/claude.yml workflow for @claude mentions exists"
+
+  - id: gitignore_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".gitignore changed from .claude to .claude/settings.local.json"
+
+  - id: claude_md_links_agents_md
+    type: fail_to_pass
+    origin: agent_config
+    description: "CLAUDE.md correctly links to AGENTS.md as per project conventions"
+    source:
+      path: "AGENTS.md"
+      lines: "1-10"
+      commit: "7ba32193cc9f970835acdcb2de48101f1a812ae9"
+
+  - id: yaml_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Workflow YAML files have valid syntax"
+
+  - id: markdown_files_valid
+    type: pass_to_pass
+    origin: static
+    description: "Markdown command files have valid structure"
+
+rubric: []

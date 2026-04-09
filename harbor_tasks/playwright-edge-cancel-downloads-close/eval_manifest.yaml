@@ -1,0 +1,49 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 40034
+  base_commit: "72310c757282e397fcd280e85602adcdf0d581ca"
+  merge_commit: "883825e4d62aac69939b8f4c0f1cf41e72882079"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files have valid syntax"
+
+  - id: download_cancel_method
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Download class has a cancel() method that delegates to cancelDownload with uuid"
+
+  - id: context_close_cancels_downloads
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CRBrowserContext close method cancels all downloads before disposing the browser context"
+
+  - id: cancel_uses_instance_uuid
+    type: fail_to_pass
+    origin: pr_diff
+    description: "cancel() references this._uuid (instance field), not a closure-captured variable"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Download.cancel() has real logic, not an empty body"
+
+  - id: cancel_method_public_naming
+    type: fail_to_pass
+    origin: agent_config
+    description: "cancel() follows CLAUDE.md naming convention: public method (no underscore) since it's used in other files"
+    source:
+      path: "CLAUDE.md"
+      lines: "99-102"
+      commit: "72310c757282e397fcd280e85602adcdf0d581ca"
+
+rubric:
+  - rule: "For exported classes: method() (public) — used in other files; _method() (no private) — used by other code in the same file, but not outside the file"
+    source:
+      path: "CLAUDE.md"
+      lines: "99-102"
+      commit: "72310c757282e397fcd280e85602adcdf0d581ca"

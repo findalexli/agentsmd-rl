@@ -1,0 +1,53 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 38517
+  base_commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
+  merge_commit: "c9bfd527ad32c485079b03f6153a3fd2849a421c"
+
+checks:
+  # Core code behavioral tests
+  - id: runcode_function_invocation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "browser_run_code invokes user code as a function with page argument"
+
+  - id: runcode_schema_describes_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Schema description says 'function' not 'snippet'"
+
+  - id: runcode_addcode_wraps_invocation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "response.addCode shows function invocation format"
+
+  - id: runcode_no_iife_wrapper
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Old IIFE wrapper pattern is removed"
+
+  # Config update tests — agent definitions list browser_run_code
+  - id: claude_agent_has_browser_run_code
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Claude agent planner includes browser_run_code in tools"
+
+  - id: packages_agent_has_browser_run_code
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Packages agent planner includes browser_run_code in tools"
+
+  - id: github_agent_has_browser_run_code
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GitHub agent planner includes browser_run_code in tools"
+
+  # Structural sanity
+  - id: runcode_uses_vm_context
+    type: pass_to_pass
+    origin: static
+    description: "runCode.ts still uses vm.createContext and vm.runInContext"
+
+rubric: []

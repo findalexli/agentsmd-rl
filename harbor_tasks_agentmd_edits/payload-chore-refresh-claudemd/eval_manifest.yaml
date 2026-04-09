@@ -1,0 +1,80 @@
+version: "2.0"
+
+source:
+  repo: "payloadcms/payload"
+  pr: 14268
+  base_commit: "fdea8d8457fafe59be4b877a52a00990a735fd38"
+  merge_commit: "05a869d37e1d6b45c36e450828b6f3b5abe71e0b"
+
+checks:
+  # Gates (pass_to_pass) - basic file existence
+  - id: claude_md_exists
+    type: pass_to_pass
+    origin: static
+    description: "CLAUDE.md must exist as a regular file (not a symlink)"
+
+  - id: agents_md_is_symlink
+    type: pass_to_pass
+    origin: static
+    description: "AGENTS.md must exist as a symlink"
+
+  - id: gitignore_exists
+    type: pass_to_pass
+    origin: static
+    description: ".gitignore must exist"
+
+  # CLAUDE.md content tests (fail_to_pass)
+  - id: claude_md_has_project_structure
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md must contain Project Structure section with key directories"
+
+  - id: claude_md_has_build_commands
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md must document build commands (pnpm build, pnpm build:all)"
+
+  - id: claude_md_has_development_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md must have Development section with dev server commands"
+
+  - id: claude_md_has_testing_instructions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md must have Testing section with test commands"
+
+  - id: claude_md_has_pr_guidelines
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md must document PR guidelines with Conventional Commits"
+
+  # Symlink and gitignore tests (fail_to_pass)
+  - id: agents_md_symlink_points_to_claude
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md symlink must point to CLAUDE.md"
+
+  - id: gitignore_has_claude_local_patterns
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".gitignore must include patterns for local AI agent files (.claude/commands/*.local.md, .claude/artifacts)"
+
+  # Content quality tests (fail_to_pass)
+  - id: claude_md_not_stub
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md must have substantial content (not a stub)"
+
+  # Behavioral subprocess tests (fail_to_pass)
+  - id: symlink_behaviorally_works
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md symlink behaviorally resolves to CLAUDE.md content"
+
+  - id: gitignore_patterns_work
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".gitignore patterns for .claude files are correctly formatted"
+
+rubric: []

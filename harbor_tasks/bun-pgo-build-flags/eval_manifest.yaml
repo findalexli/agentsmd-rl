@@ -1,0 +1,71 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28805
+  base_commit: "d2e67536514b059cb317beea23ebbeafe2fa6c1a"
+  merge_commit: "0ebe66d060031aa3138eaf1a089319a26bbed862"
+
+checks:
+  - id: typescript_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must parse without errors"
+
+  - id: pgo_flags_in_config_interface
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Config interface includes pgoGenerate and pgoUse fields"
+
+  - id: pgo_mutual_exclusivity_check
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resolveConfig throws BuildError when both pgoGenerate and pgoUse are provided"
+
+  - id: pgo_flags_in_cli_args
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLI argument parsing includes pgoGenerate and pgoUse flags"
+
+  - id: pgo_feature_flags_in_output
+    type: fail_to_pass
+    origin: pr_diff
+    description: "formatConfig shows pgo-gen/pgo-use in feature list when enabled"
+
+  - id: pgo_compile_flags_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "globalFlags includes PGO compile-side flags"
+
+  - id: pgo_link_flags_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "linkerFlags includes PGO link-side flags"
+
+  - id: webkit_pgo_forwarding
+    type: fail_to_pass
+    origin: pr_diff
+    description: "WebKit dependency forwards PGO flags via CMAKE_C/CXX_FLAGS"
+
+  - id: existing_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream build script tests still pass"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "resolveConfig has real PGO validation logic, not placeholder"
+
+rubric:
+  - rule: "Follow existing code style - check neighboring files for patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "117"
+      commit: "d2e67536514b059cb317beea23ebbeafe2fa6c1a"
+
+  - rule: "All changes must be tested - if you're not testing your changes, you're not done."
+    source:
+      path: "CLAUDE.md"
+      lines: "110"
+      commit: "d2e67536514b059cb317beea23ebbeafe2fa6c1a"

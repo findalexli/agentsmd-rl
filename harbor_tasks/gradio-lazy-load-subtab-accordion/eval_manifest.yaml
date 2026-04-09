@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12906
+  base_commit: "ccff8b8cacffe36a270fcea9fc8ba29b78c31c8d"
+  merge_commit: "81482b58706ee9948d0f04e84e632ebb8d4bf7ea"
+
+checks:
+  - id: tabs_selective_visibility
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tabs node only makes selected tab's children visible, not all tabs"
+
+  - id: closed_accordion_lazy_load
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Closed accordion does not eagerly load its children"
+
+  - id: tab_initial_tabs_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tabs without selected prop fall back to initial_tabs[0]"
+
+  - id: open_accordion_children_visible
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Open accordion children are still made visible (regression)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified functions have real logic, not stubs"
+
+rubric: []

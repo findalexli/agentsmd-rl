@@ -1,0 +1,47 @@
+version: "2.0"
+
+source:
+  repo: "supabase/supabase"
+  pr: 44572
+  base_commit: "e7bec24021de77053a9b9b05c06ab17789f1269b"
+  merge_commit: "a020be54c0d18e06ea2f59398f2e6ac4e846867f"
+
+checks:
+  - id: typescript_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript file must be structurally valid"
+
+  - id: uses_org_hook_not_props
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Component should use useSelectedOrganizationQuery hook instead of receiving org via props"
+
+  - id: component_has_no_params
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Component should take no parameters (uses hook instead of props)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Component is not a stub - has the actual implementation logic"
+
+  - id: imports_correct
+    type: pass_to_pass
+    origin: static
+    description: "Component imports required dependencies correctly"
+
+rubric:
+  # Soft rules for LLM judge based on agent config
+  - rule: "Data fetching should use TanStack Query hooks with the queryOptions pattern"
+    source:
+      path: ".claude/skills/studio-queries/SKILL.md"
+      lines: "1-20"
+      commit: "e7bec24021de77053a9b9b05c06ab17789f1269b"
+
+  - rule: "Component should not receive data via props when a query hook is available"
+    source:
+      path: ".claude/skills/studio-best-practices/SKILL.md"
+      lines: "60-70"
+      commit: "e7bec24021de77053a9b9b05c06ab17789f1269b"

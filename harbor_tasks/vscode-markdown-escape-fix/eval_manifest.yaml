@@ -1,0 +1,22 @@
+version: "2.0"
+source:
+  repo: microsoft/vscode
+  base_commit: 33250873ecbd4047cd2e29b0f04ae0e7284aa342
+
+checks:
+  - id: test_no_double_escape_in_invocation
+    type: fail_to_pass
+    origin: pr_diff
+    description: >-
+      Invocation messages must not double-escape markdown characters via
+      escapeMarkdownSyntaxTokens before MarkdownString
+
+  - id: test_escape_import_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: escapeMarkdownSyntaxTokens must not be imported (unused after fix)
+
+  - id: test_markdown_string_still_used
+    type: pass_to_pass
+    origin: pr_diff
+    description: MarkdownString must still be used for invocation messages

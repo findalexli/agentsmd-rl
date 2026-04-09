@@ -7,18 +7,25 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/maui"
 
-ALERT_MANAGER_PATH = (
-    Path(REPO)
-    / "src/Controls/src/Core/Platform/AlertManager/AlertManager.iOS.cs"
-)
-COPILOT_PATH = Path(REPO) / ".github/copilot-instructions.md"
-SKILL_PATH = Path(REPO) / ".github/skills/pr-finalize/SKILL.md"
-EXAMPLE_PATH = Path(REPO) / ".github/skills/pr-finalize/references/complete-example.md"
+ALERT_MANAGER_REL = "src/Controls/src/Core/Platform/AlertManager/AlertManager.iOS.cs"
+COPILOT_REL = ".github/copilot-instructions.md"
+SKILL_REL = ".github/skills/pr-finalize/SKILL.md"
+EXAMPLE_REL = ".github/skills/pr-finalize/references/complete-example.md"
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in the repo directory."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -27,68 +34,83 @@ EXAMPLE_PATH = Path(REPO) / ".github/skills/pr-finalize/references/complete-exam
 
 def test_syntax_check():
     """Modified C# and markdown files have basic syntax sanity."""
-    # C# brace balance
-    content = ALERT_MANAGER_PATH.read_text()
+    content = Path(REPO, ALERT_MANAGER_REL).read_text()
     opens = content.count("{")
     closes = content.count("}")
     assert opens == closes, (
         f"AlertManager.iOS.cs: unbalanced braces ({opens} open vs {closes} close)"
     )
 
-    # Markdown files should not have leftover merge conflict markers
-    for fpath in [COPILOT_PATH, SKILL_PATH, EXAMPLE_PATH]:
-        md = fpath.read_text()
-        assert "<<<<<<" not in md, f"{fpath.name}: merge conflict marker found"
-        assert ">>>>>>" not in md, f"{fpath.name}: merge conflict marker found"
+    for rel in [COPILOT_REL, SKILL_REL, EXAMPLE_REL]:
+        md = Path(REPO, rel).read_text()
+        assert "<<<<<<" not in md, f"{rel}: merge conflict marker found"
+        assert ">>>>>>" not in md, f"{rel}: merge conflict marker found"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests for the code fix
+# Fail-to-pass (pr_diff) — core behavioral test for the C# fix
 # ---------------------------------------------------------------------------
 
 def test_isbeingdismissed_check_in_while_loop():
     """GetTopUIViewController must check IsBeingDismissed before following
     the PresentedViewController chain.
 
+    Parses the C# method in a subprocess, extracts the while-loop condition,
+    and verifies it is a compound expression that rejects dismissing VCs.
     Without this check, during modal dismissal, PresentedViewController
     remains non-null until the animation completes, causing the method to
-    return a view controller that is being dismissed. iOS silently ignores
-    presentation requests from dismissing view controllers.
+    return a view controller that iOS silently ignores for presentation.
     """
-    content = ALERT_MANAGER_PATH.read_text()
+    r = _run_py(r"""
+import re, json, sys
 
-    # Extract GetTopUIViewController method
-    method_match = re.search(
-        r"static\s+UIViewController\s+GetTopUIViewController\s*\(",
-        content,
-    )
-    assert method_match, "GetTopUIViewController method not found"
+content = open(
+    "src/Controls/src/Core/Platform/AlertManager/AlertManager.iOS.cs"
+).read()
 
-    # Find the while loop in the method
-    after_method = content[method_match.start():]
-    while_match = re.search(
-        r"while\s*\((.*?)\)\s*\{",
-        after_method,
-        re.DOTALL,
-    )
-    assert while_match, "while loop not found in GetTopUIViewController"
+# Locate GetTopUIViewController method
+m = re.search(
+    r"static\s+UIViewController\s+GetTopUIViewController\s*\([^)]*\)\s*\{",
+    content,
+)
+if not m:
+    print(json.dumps({"error": "GetTopUIViewController not found"}))
+    sys.exit(1)
 
-    condition = while_match.group(1)
+# Extract the while loop condition within the method
+after = content[m.start():]
+wm = re.search(r"while\s*\((.*?)\)\s*\{", after, re.DOTALL)
+if not wm:
+    print(json.dumps({"error": "while loop not found in method"}))
+    sys.exit(1)
 
-    # Must check PresentedViewController is not null
-    assert "PresentedViewController" in condition, (
-        "While condition must reference PresentedViewController"
-    )
-    # Must check IsBeingDismissed
-    assert "IsBeingDismissed" in condition, (
-        "While condition must check IsBeingDismissed to avoid following "
-        "dismissing view controllers"
-    )
-    # Must negate IsBeingDismissed (stop when being dismissed)
-    assert re.search(r"!\s*\w+\.IsBeingDismissed", condition), (
-        "IsBeingDismissed check must be negated (stop at dismissing VC)"
-    )
+cond = wm.group(1).strip()
 
+checks = {
+    "has_presented_vc": "PresentedViewController" in cond,
+    "has_isbeingdismissed": "IsBeingDismissed" in cond,
+    "has_negation": bool(re.search(r"!\s*\w+\.IsBeingDismissed", cond)),
+    "is_compound": "&&" in cond,
+}
+
+failures = [k for k, v in checks.items() if not v]
+if failures:
+    print(json.dumps({
+        "error": f"Failed: {', '.join(failures)}",
+        "condition": cond,
+    }))
+    sys.exit(1)
+
+print(json.dumps({"status": "PASS"}))
+""")
+    assert r.returncode == 0, f"While-loop check failed:\n{r.stderr}\n{r.stdout}"
+    data = json.loads(r.stdout.strip())
+    assert data.get("status") == "PASS", f"Condition validation failed: {data}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — traversal preserved (still a structural check)
+# ---------------------------------------------------------------------------
 
 def test_while_loop_preserves_traversal():
     """The while loop must still traverse the VC hierarchy for normal
@@ -97,9 +119,8 @@ def test_while_loop_preserves_traversal():
     The fix should only stop traversal when a VC is being dismissed,
     not remove the traversal entirely.
     """
-    content = ALERT_MANAGER_PATH.read_text()
+    content = Path(REPO, ALERT_MANAGER_REL).read_text()
 
-    # Extract the while loop block
     while_match = re.search(
         r"while\s*\(.*?\)\s*\{(.*?)^\t\t\t\t\}",
         content,
@@ -109,7 +130,6 @@ def test_while_loop_preserves_traversal():
 
     body = while_match.group(1)
 
-    # Must still have the traversal assignment
     assert "topUIViewController" in body, (
         "While loop body must still traverse by assigning topUIViewController"
     )
@@ -126,65 +146,88 @@ def test_copilot_instructions_removes_opening_prs_section():
     """copilot-instructions.md must not have the 'Opening PRs' section
     that required a NOTE block at the top of PR descriptions.
 
-    The NOTE block was an obsolete requirement that has been removed.
-    The '### Opening PRs' heading and its NOTE block content should not
-    appear in the file.
+    Uses subprocess to parse the file and confirm both the heading and
+    the NOTE block template text are absent.
     """
-    content = COPILOT_PATH.read_text()
+    r = _run_py("""
+import json, sys
 
-    assert "### Opening PRs" not in content, (
-        "copilot-instructions.md should not have '### Opening PRs' section"
-    )
-    # The specific NOTE block template should not be present
-    assert "test the resulting artifacts" not in content, (
-        "copilot-instructions.md should not contain the NOTE block template "
-        "about testing PR artifacts"
-    )
+content = open(".github/copilot-instructions.md").read()
+errors = []
+if "### Opening PRs" in content:
+    errors.append("'### Opening PRs' heading still present")
+if "test the resulting artifacts" in content:
+    errors.append("NOTE block template text still present")
+
+if errors:
+    print(json.dumps({"error": "; ".join(errors)}))
+    sys.exit(1)
+
+print(json.dumps({"status": "PASS"}))
+""")
+    assert r.returncode == 0, f"Config check failed:\n{r.stderr}\n{r.stdout}"
+    data = json.loads(r.stdout.strip())
+    assert data.get("status") == "PASS"
 
 
 def test_skill_md_removes_note_from_description_requirements():
     """pr-finalize SKILL.md must not require the NOTE block in PR
-    descriptions. The 'Description Requirements' section should list
-    steps starting with template sections, not with the NOTE block.
+    descriptions. Parses the Description Requirements section in a
+    subprocess and confirms the NOTE block instructions are gone.
     """
-    content = SKILL_PATH.read_text()
+    r = _run_py(r"""
+import re, json, sys
 
-    # Find the Description Requirements section
-    desc_match = re.search(
-        r"## Description Requirements(.*?)(?=\n## |\Z)",
-        content,
-        re.DOTALL,
-    )
-    assert desc_match, "## Description Requirements section not found in SKILL.md"
+content = open(".github/skills/pr-finalize/SKILL.md").read()
+dm = re.search(r"## Description Requirements(.*?)(?=\n## |\Z)", content, re.DOTALL)
+if not dm:
+    print(json.dumps({"error": "Description Requirements section not found"}))
+    sys.exit(1)
 
-    desc_section = desc_match.group(1)
+section = dm.group(1)
+errors = []
+if "Start with the required NOTE block" in section:
+    errors.append("NOTE block instruction still in description requirements")
+if "test the resulting artifacts" in section:
+    errors.append("NOTE block template text still present")
 
-    # Should NOT mention "Start with the required NOTE block"
-    assert "Start with the required NOTE block" not in desc_section, (
-        "SKILL.md description requirements should not instruct to start "
-        "with the NOTE block"
-    )
-    # Should NOT contain the NOTE block template in the description example
-    assert "test the resulting artifacts" not in desc_section, (
-        "SKILL.md description section should not contain the NOTE block template"
-    )
+if errors:
+    print(json.dumps({"error": "; ".join(errors)}))
+    sys.exit(1)
+
+print(json.dumps({"status": "PASS"}))
+""")
+    assert r.returncode == 0, f"Config check failed:\n{r.stderr}\n{r.stdout}"
+    data = json.loads(r.stdout.strip())
+    assert data.get("status") == "PASS"
 
 
 def test_complete_example_removes_note_block():
     """complete-example.md must not include the NOTE block in the
-    example PR description. The example should start directly with
-    the Root Cause or Description of Change section.
+    example PR description. Uses subprocess to verify the NOTE block
+    text is absent while substantive content remains.
     """
-    content = EXAMPLE_PATH.read_text()
+    r = _run_py("""
+import json, sys
 
-    # The example should not contain the NOTE block
-    assert "test the resulting artifacts" not in content, (
-        "complete-example.md should not contain the NOTE block template"
-    )
-    # The example should still have substantive content
-    assert "Root Cause" in content or "Description of Change" in content, (
-        "complete-example.md should still contain example PR sections"
-    )
+content = open(
+    ".github/skills/pr-finalize/references/complete-example.md"
+).read()
+errors = []
+if "test the resulting artifacts" in content:
+    errors.append("NOTE block template still present")
+if "Root Cause" not in content and "Description of Change" not in content:
+    errors.append("Example PR sections missing — file may be corrupted")
+
+if errors:
+    print(json.dumps({"error": "; ".join(errors)}))
+    sys.exit(1)
+
+print(json.dumps({"status": "PASS"}))
+""")
+    assert r.returncode == 0, f"Config check failed:\n{r.stderr}\n{r.stdout}"
+    data = json.loads(r.stdout.strip())
+    assert data.get("status") == "PASS"
 
 
 # ---------------------------------------------------------------------------
@@ -196,7 +239,7 @@ def test_existing_alert_manager_logic_intact():
     still return a UIViewController and use RootViewController as the
     starting point.
     """
-    content = ALERT_MANAGER_PATH.read_text()
+    content = Path(REPO, ALERT_MANAGER_REL).read_text()
 
     method_match = re.search(
         r"static\s+UIViewController\s+GetTopUIViewController\s*\(.*?\)\s*\{(.*?)^\t\t\t\t\}",
@@ -217,10 +260,9 @@ def test_existing_alert_manager_logic_intact():
 
 def test_copilot_instructions_key_sections_intact():
     """Key sections of copilot-instructions.md must remain intact after
-    removing the Opening PRs section. The Code Review Instructions,
-    Repository Overview, and Custom Agents sections must still exist.
+    removing the Opening PRs section.
     """
-    content = COPILOT_PATH.read_text()
+    content = Path(REPO, COPILOT_REL).read_text()
 
     assert "## Code Review Instructions" in content, (
         "Code Review Instructions section must remain"
@@ -237,7 +279,7 @@ def test_skill_md_never_approve_rule_intact():
     """The CRITICAL rule about never approving PRs must remain in SKILL.md.
     Removing the NOTE block should not affect this important safety rule.
     """
-    content = SKILL_PATH.read_text()
+    content = Path(REPO, SKILL_REL).read_text()
 
     assert "NEVER" in content and "approve" in content.lower(), (
         "SKILL.md must retain the NEVER approve rule"

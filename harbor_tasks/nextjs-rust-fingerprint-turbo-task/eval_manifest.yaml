@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92167
+  base_commit: "8a241bb504bf167d191b96e914b7785156510038"
+  merge_commit: "4b62ff78c0ad4117477ab78806df809f4c1f8b33"
+
+checks:
+  - id: turbo_json_valid_syntax
+    type: pass_to_pass
+    origin: static
+    description: "turbo.json must parse as valid JSON"
+
+  - id: rust_fingerprint_writes_stamp
+    type: fail_to_pass
+    origin: pr_diff
+    description: "rust-fingerprint.js writes TURBO_HASH to stamp file when env var is set"
+
+  - id: rust_fingerprint_skips_without_turbo_hash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "rust-fingerprint.js exits 0 and skips when TURBO_HASH is unset"
+
+  - id: turbo_jsonc_has_fingerprint_task
+    type: fail_to_pass
+    origin: pr_diff
+    description: "turbo.jsonc defines rust-fingerprint task with Rust source inputs and stamp output"
+
+  - id: build_tasks_depend_on_fingerprint
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Rust build/check tasks depend on rust-fingerprint instead of duplicating globs"
+
+  - id: build_tasks_use_stamp_not_globs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Build tasks use stamp file input, not old duplicated Rust source globs"
+
+  - id: sccache_passthrough_env
+    type: fail_to_pass
+    origin: pr_diff
+    description: "turbo.json globalPassThroughEnv includes SCCACHE_* and RUSTC_WRAPPER"
+
+  - id: ci_in_global_env
+    type: fail_to_pass
+    origin: pr_diff
+    description: "turbo.json globalEnv includes CI"
+
+  - id: package_json_fingerprint_script
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/next-swc/package.json defines rust-fingerprint script"
+
+rubric: []

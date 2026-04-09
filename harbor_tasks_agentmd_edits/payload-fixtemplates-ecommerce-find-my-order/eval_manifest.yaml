@@ -1,0 +1,95 @@
+version: "2.0"
+
+source:
+  repo: "payloadcms/payload"
+  pr: 15736
+  base_commit: "7f3c6c8f4628fb066002e2fd5c3cc6b83ddf4ccc"
+  merge_commit: "b317eaa59124eb3a1a7e26c8ccdf909bbea03f96"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Key TypeScript files have balanced braces and parentheses"
+
+  - id: access_token_field_in_plugin
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Plugin config adds accessToken field to orders collection with UUID generation hook"
+
+  - id: access_token_in_confirm_order_response
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Stripe confirmOrder includes accessToken in success response"
+
+  - id: order_page_requires_access_token
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Order detail page requires accessToken for guest access"
+
+  - id: send_order_access_email_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Server action sendOrderAccessEmail exists and sends email with access link"
+
+  - id: find_order_form_uses_email_flow
+    type: fail_to_pass
+    origin: pr_diff
+    description: "FindOrderForm sends email instead of navigating directly to order page"
+
+  - id: checkout_redirects_include_access_token
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Checkout components pass accessToken in redirect URLs"
+
+  - id: existing_plugin_config_intact
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing plugin configuration (customers, payments, stripe) still present"
+
+  - id: readme_updated
+    type: pass_to_pass
+    origin: static
+    description: "README documents the accessToken-based guest order access flow"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified functions have real logic, not just pass/return"
+
+rubric:
+  - rule: "Documentation updates in README.md should be consistent with the existing style and structure of the file"
+    source:
+      path: "templates/ecommerce/README.md"
+      lines: "1-120"
+      commit: "7f3c6c8f4628fb066002e2fd5c3cc6b83ddf4ccc"
+
+  - rule: "Code follows Payload conventions: prefer single object parameters, use import type for types"
+    source:
+      path: "CLAUDE.md"
+      lines: "52-55"
+      commit: "7f3c6c8f4628fb066002e2fd5c3cc6b83ddf4ccc"
+
+  - rule: "Logger usage follows the pattern: payload.logger.error({ msg: '...', err: error }) with err not error"
+    source:
+      path: "CLAUDE.md"
+      lines: "63-65"
+      commit: "7f3c6c8f4628fb066002e2fd5c3cc6b83ddf4ccc"
+
+  - rule: "README documents the accessToken-based guest order access flow and security rationale"
+    source:
+      path: "templates/ecommerce/README.md"
+      lines: "122-146"
+      commit: "b317eaa59124eb3a1a7e26c8ccdf909bbea03f96"
+
+  - rule: "README Guests section describes guest checkout flow with accessToken"
+    source:
+      path: "templates/ecommerce/README.md"
+      lines: "131-140"
+      commit: "b317eaa59124eb3a1a7e26c8ccdf909bbea03f96"
+
+  - rule: "Access control section notes guests need accessToken for order access"
+    source:
+      path: "templates/ecommerce/README.md"
+      lines: "122"
+      commit: "b317eaa59124eb3a1a7e26c8ccdf909bbea03f96"

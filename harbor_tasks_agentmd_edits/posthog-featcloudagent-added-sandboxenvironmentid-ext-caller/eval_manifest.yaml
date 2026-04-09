@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "PostHog/posthog"
+  pr: 53163
+  base_commit: "a65a8fd19c2bed0c06c111f1d65b0deb87f31313"
+  merge_commit: "3cce0ef6d910d304d205b9b4654952b3fdc0678f"
+
+checks:
+  # Gate checks
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified Python file parses without errors"
+
+  # Core behavioral tests (code changes)
+  - id: create_and_run_accepts_sandbox_env_id
+    type: fail_to_pass
+    origin: pr_diff
+    description: "create_and_run accepts sandbox_environment_id keyword argument defaulting to None"
+
+  - id: invalid_sandbox_env_id_raises_valueerror
+    type: fail_to_pass
+    origin: pr_diff
+    description: "create_and_run validates sandbox_environment_id via SandboxEnvironment.objects.filter and raises ValueError if invalid"
+
+  - id: sandbox_env_id_stored_in_extra_state
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Valid sandbox_environment_id is stored as string in extra_state dict for downstream consumption"
+
+  # Agent config compliance
+  - id: team_filter_in_sandbox_lookup
+    type: fail_to_pass
+    origin: agent_config
+    description: "SandboxEnvironment lookup filters by team per AGENTS.md rule: always filter querysets by team_id"
+    source:
+      path: "AGENTS.md"
+      lines: "87"
+      commit: "a65a8fd19c2bed0c06c111f1d65b0deb87f31313"
+
+  # Documentation update checks (REQUIRED for agentmd-edit)
+  - id: docs_parameter_table_includes_sandbox_env_id
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Handbook Parameters section documents sandbox_environment_id with SandboxEnvironment reference"
+
+  - id: docs_include_usage_example
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Handbook includes code example showing SandboxEnvironment creation and passing ID to create_and_run"
+
+  # Anti-stub
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "create_and_run has substantive sandbox_environment_id logic, not just a parameter declaration"
+
+rubric:
+  - rule: "Documentation update is consistent with the style of existing parameter descriptions in the handbook"
+    source:
+      path: "docs/published/handbook/engineering/ai/sandboxed-agents.md"
+      lines: "70-82"
+      commit: "a65a8fd19c2bed0c06c111f1d65b0deb87f31313"

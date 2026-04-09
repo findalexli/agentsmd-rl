@@ -1,0 +1,67 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 572
+  base_commit: "6a122196c2696fa971bcd9da5a92da739df5c9cf"
+  merge_commit: "f640f66dda0885ee903ff64b01a614c2d3fe0807"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Gates (pass_to_pass, static) — syntax / compilation checks
+  # ---------------------------------------------------------------------------
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests for code changes
+  # ---------------------------------------------------------------------------
+  - id: trainer_config_has_bench_field
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TrainerConfig must have bench field with auto_setup_bench validator"
+
+  - id: orchestrator_config_validator_renamed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "OrchestratorConfig validator must be renamed from validate_bench to auto_setup_bench"
+
+  - id: rl_config_bench_propagation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RLConfig must have bench field that propagates to trainer and orchestrator"
+
+  - id: trainer_utils_print_benchmark
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Trainer utils module must have print_benchmark function"
+
+  - id: orchestrator_utils_column_rename
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Orchestrator utils must use 'time/orchestrator' not 'time/infer' in print_benchmark"
+
+  - id: orchestrator_imports_format_num
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Orchestrator must import format_num from utils"
+
+  # ---------------------------------------------------------------------------
+  # Config/documentation update tests (REQUIRED for agentmd-edit tasks)
+  # ---------------------------------------------------------------------------
+  - id: readme_documents_bench_flag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md must document the --bench flag for benchmarking"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static) — anti-stub
+  # ---------------------------------------------------------------------------
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified functions have real logic, not just pass/return"
+
+rubric: []

@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 40026
+  base_commit: "c7d0163db5580377d6e94953d593adb799d32c22"
+  merge_commit: "babc50480f55f00b1fa1334aad52186e39d3f37f"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "browserFactory.ts must exist and contain valid TypeScript"
+
+  - id: array_args_preserved
+    type: fail_to_pass
+    origin: pr_diff
+    description: "User-provided ignoreDefaultArgs array is merged with --disable-extensions"
+
+  - id: true_passthrough
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ignoreDefaultArgs: true passes through as boolean, not replaced with array"
+
+  - id: config_extracted_before_spread
+    type: fail_to_pass
+    origin: pr_diff
+    description: "config value extracted before spread to avoid overwrite"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "createPersistentBrowser has real implementation, not a stub"
+
+rubric: []

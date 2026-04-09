@@ -1,0 +1,31 @@
+version: "2.0"
+
+source:
+  repo: oven-sh/bun
+  pr: 28949
+  base_commit: 0ff0065f9e5a34c26bd8d1bede19d4239bb95b55
+  merge_commit: c99fd9d1e17ec73ce4c0edd1c49f34be8e8edc25
+  target_file: src/js/node/dns.ts
+
+checks:
+  - id: getdefaultresultorder_returns_string_not_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "dns.getDefaultResultOrder() returns a string, not the function object"
+
+  - id: promises_getdefaultresultorder_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "dns.promises.getDefaultResultOrder is a function returning a string"
+
+  - id: promises_getservers_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "dns.promises.getServers is a function returning an array"
+
+  - id: shared_state_consistency
+    type: fail_to_pass
+    origin: pr_diff
+    description: "dns and dns.promises share the same default result order state"
+
+rubric: []

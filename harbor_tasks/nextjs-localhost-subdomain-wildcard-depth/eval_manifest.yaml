@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92262
+  base_commit: "feae4cc4305a991233ca5c529d897b7ed1136872"
+  merge_commit: "daca04d09bf9aaee9e1c63324166985b643e9844"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "block-cross-site-dev.ts must be syntactically valid TypeScript"
+
+  - id: multi_level_localhost_allowed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Multi-level .localhost subdomains (e.g., sub.app.localhost) must be allowed"
+
+  - id: deeply_nested_localhost
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Deeply nested .localhost subdomains (4+ levels) must be allowed"
+
+  - id: single_level_localhost_still_allowed
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Single-level .localhost subdomains must still be allowed (regression)"
+
+  - id: non_localhost_still_blocked
+    type: pass_to_pass
+    origin: static
+    description: "Non-localhost origins must remain blocked by the default allowlist"
+
+rubric: []

@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92205
+  base_commit: "3421858b5bef076965d99fd88fedc483193a496e"
+  merge_commit: "e464ca398c5992c4ec9fb23192fc60ef7b1b5f94"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "scripts/pr-status.js must parse without syntax errors"
+
+  - id: categorize_timed_out_as_failed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "categorizeJobs must classify timed_out and startup_failure conclusions as failed"
+
+  - id: get_all_jobs_throws_on_persistent_failure
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getAllJobs must throw on persistent first-page API failure instead of silently returning empty array"
+
+  - id: get_failed_jobs_includes_conclusion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getFailedJobs must include conclusion field in returned job objects"
+
+  - id: conclusion_annotation_in_report
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Report table must annotate non-failure conclusions like (timed_out)"
+
+  - id: flaky_detection_includes_timed_out
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Flaky test detection must consider timed_out and startup_failure conclusions"
+
+  - id: categorize_failure_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "categorizeJobs must still correctly classify failure and success conclusions"
+
+rubric:
+  - rule: "Assume failures are real until disproven; use 'Known Flaky Tests' as context, not auto-dismissal."
+    source:
+      path: "AGENTS.md"
+      lines: "246"
+      commit: "3421858b5bef076965d99fd88fedc483193a496e"

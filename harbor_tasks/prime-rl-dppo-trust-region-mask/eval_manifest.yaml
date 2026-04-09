@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 2187
+  base_commit: "09293f3e3eb8bd0fc643bac2d2b80014f0529641"
+  merge_commit: "ff4b125e4b97d0bfeca7fb18d225bd342cedc345"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files parse without syntax errors"
+
+  - id: dppo_config_fields
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DefaultLossConfig has dppo_mask_low and dppo_mask_high fields"
+
+  - id: old_ipo_config_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DefaultLossConfig no longer has ipo_mask_low or ipo_mask_high fields"
+
+  - id: mask_positive_adv_ignores_low_violation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Positive advantages with low-only violations are not masked"
+
+  - id: mask_negative_adv_ignores_high_violation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Negative advantages with high-only violations are not masked"
+
+  - id: mask_mixed_advantages_selective
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mixed advantages apply masking selectively based on advantage sign"
+
+  - id: mask_positive_adv_applies_high_violation
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Positive advantages with high violations are still masked"
+
+  - id: mask_negative_adv_applies_low_violation
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Negative advantages with low violations are still masked"
+
+rubric:
+  - rule: "Use targeted comments sparingly to clarify ambiguous logic. Don't explain your work process or reference old code."
+    source:
+      path: "AGENTS.md"
+      lines: "6"
+      commit: "09293f3e3eb8bd0fc643bac2d2b80014f0529641"

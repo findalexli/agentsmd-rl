@@ -1,0 +1,78 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28870
+  base_commit: "6ecf46742afdcd69aff84173ee81a4c8a06fa22a"
+  merge_commit: "1336813825f8b7b16ca8a4988c7934821142acaf"
+
+checks:
+  # Gates (syntax checks)
+  - id: typescript_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must have valid syntax"
+
+  # Fail-to-pass (pr_diff) - Core fixes
+  - id: chrome_test_async_fix
+    type: fail_to_pass
+    origin: pr_diff
+    description: "webview-chrome.test.ts must not have double await on expect().rejects.toThrow()"
+
+  - id: chrome_test_has_correct_async_pattern
+    type: fail_to_pass
+    origin: pr_diff
+    description: "webview-chrome.test.ts must have correct async pattern: await expect(view.click(...)).rejects.toThrow()"
+
+  - id: itrendering_helper_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "webview.test.ts must define itRendering helper for rAF-dependent tests"
+
+  - id: itrendering_applied_to_click_tests
+    type: fail_to_pass
+    origin: pr_diff
+    description: "itRendering must be applied to click(selector) tests that depend on rAF"
+
+  - id: itrendering_applied_to_scroll_tests
+    type: fail_to_pass
+    origin: pr_diff
+    description: "itRendering must be applied to scroll tests that depend on rAF"
+
+  - id: itpersistent_data_store_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "itPersistentDataStore helper must be defined for macOS 15.2+ tests"
+
+  - id: persistent_data_store_test_uses_helper
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The persistent dataStore test must use itPersistentDataStore helper"
+
+  - id: is_mac_os_version_at_least_imported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isMacOSVersionAtLeast must be imported from harness"
+
+  # Pass-to-pass (static checks)
+  - id: no_test_todo_if_direct_usage
+    type: pass_to_pass
+    origin: static
+    description: "The old buggy pattern 'test.todoIf(isCI)(' should not exist directly"
+
+  - id: close_all_test_navigate_fix
+    type: pass_to_pass
+    origin: static
+    description: "WebView.closeAll() test must use encodeURIComponent in navigate call"
+
+  - id: close_all_test_stderr_inherit
+    type: pass_to_pass
+    origin: static
+    description: "WebView.closeAll() test should use stderr: 'inherit' not 'pipe'"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files are not stubs - they contain actual test code"
+
+rubric: []

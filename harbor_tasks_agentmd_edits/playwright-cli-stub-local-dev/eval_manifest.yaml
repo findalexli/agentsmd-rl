@@ -1,0 +1,52 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39432
+  base_commit: "23b2c1599085bb6dad0f8fb916b631e3cb50ba4b"
+  merge_commit: "03d79f60d61f8abea8f2c557524bd4af87380247"
+
+checks:
+  # Gate — root package.json remains valid
+  - id: root_package_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "Root package.json must be valid JSON after modifications"
+
+  # Code: stub JS file exists and is syntactically valid
+  - id: stub_js_syntax
+    type: fail_to_pass
+    origin: pr_diff
+    description: "playwright-cli-stub.js must be valid JavaScript"
+
+  # Code: stub package.json declares correct bin field
+  - id: stub_package_bin_field
+    type: fail_to_pass
+    origin: pr_diff
+    description: "playwright-cli-stub package.json must declare bin.playwright-cli"
+
+  # Code: stub requires the correct program module
+  - id: stub_requires_program_module
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Stub JS must import program from playwright/lib/cli/client/program"
+
+  # Code: old npm script removed from root package.json
+  - id: root_cli_script_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Root package.json must not have old 'playwright-cli' npm script"
+
+  # Config: SKILL.md updated to recommend npx first
+  - id: skill_md_npx_before_global
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md Installation section must recommend npx playwright-cli before global install"
+
+  # Config: SKILL.md old wording removed
+  - id: skill_md_old_text_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md must not have old 'install globally first' wording"
+
+rubric: []

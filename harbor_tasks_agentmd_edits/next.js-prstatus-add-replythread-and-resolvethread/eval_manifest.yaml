@@ -1,0 +1,58 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 90773
+  base_commit: "c300a63cc9e0b9eeea6632f0b2150114de8c5d23"
+  merge_commit: "a2c29645187fb1d722c057a78915826d36a47fe5"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  - id: reply_thread_function_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "replyToThread function exists with correct GraphQL mutation"
+
+  - id: resolve_thread_function_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resolveThread function exists with correct GraphQL mutation using threadId field"
+
+  - id: subcommand_dispatch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Main function dispatches reply-thread and resolve-thread subcommands"
+
+  - id: thread_commands_section_in_output
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Thread markdown output includes Commands section with ready-to-use commands"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified functions have real logic with execFileSync and GraphQL mutations"
+
+  - id: skill_documentation_updated
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md documents the new review thread workflow"
+    source:
+      path: ".agents/skills/pr-status-triage/SKILL.md"
+      lines: "22"
+      commit: "c300a63cc9e0b9eeea6632f0b2150114de8c5d23"
+
+  - id: workflow_documentation_updated
+    type: fail_to_pass
+    origin: agent_config
+    description: "workflow.md includes Resolving Review Threads section with command documentation"
+    source:
+      path: ".agents/skills/pr-status-triage/workflow.md"
+      lines: "28-45"
+      commit: "c300a63cc9e0b9eeea6632f0b2150114de8c5d23"
+
+rubric: []

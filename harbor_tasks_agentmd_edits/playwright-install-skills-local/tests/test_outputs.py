@@ -1,0 +1,189 @@
+"""
+Task: playwright-install-skills-local
+Repo: microsoft/playwright @ 6a928b02f4de1efc633a8fae0331cd1fa821950e
+PR:   39078
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import json
+import subprocess
+from pathlib import Path
+
+REPO = "/workspace/playwright"
+
+
+def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Run a Node.js script in the repo directory."""
+    return subprocess.run(
+        ["node", "-e", script],
+        cwd=REPO, capture_output=True, text=True, timeout=timeout,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static)
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_syntax_check():
+    """Modified TypeScript files must exist and be non-empty."""
+    files = [
+        "packages/playwright/src/mcp/browser/tools/route.ts",
+        "packages/playwright/src/mcp/config.d.ts",
+        "packages/playwright/src/mcp/terminal/commands.ts",
+        "packages/playwright/src/mcp/terminal/program.ts",
+    ]
+    for f in files:
+        p = Path(REPO) / f
+        assert p.exists(), f"File not found: {f}"
+        content = p.read_text()
+        assert len(content) > 100, f"File suspiciously small: {f}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — code behavior tests
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_install_skills_command_declared():
+    """commands.ts must declare an install-skills command."""
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright/src/mcp/terminal/commands.ts', 'utf8');
+
+// Extract command names from declareCommand blocks
+const re = /declareCommand\(\{[\s\S]*?name:\s*['"]([^'"]+)['"]/g;
+const names = [];
+let m;
+while ((m = re.exec(src)) !== null) names.push(m[1]);
+
+const result = { names, found: names.includes('install-skills') };
+console.log(JSON.stringify(result));
+process.exit(result.found ? 0 : 1);
+""")
+    assert r.returncode == 0, f"install-skills not found in commands: {r.stdout}\n{r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert "install-skills" in data["names"], f"Command names: {data['names']}"
+
+
+# [pr_diff] fail_to_pass
+def test_install_renamed_to_install_browser():
+    """The old 'install' command must be renamed to 'install-browser'."""
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright/src/mcp/terminal/commands.ts', 'utf8');
+
+const re = /declareCommand\(\{[\s\S]*?name:\s*['"]([^'"]+)['"]/g;
+const names = [];
+let m;
+while ((m = re.exec(src)) !== null) names.push(m[1]);
+
+const hasInstallBrowser = names.includes('install-browser');
+const hasBareInstall = names.includes('install');
+console.log(JSON.stringify({ hasInstallBrowser, hasBareInstall }));
+process.exit(hasInstallBrowser && !hasBareInstall ? 0 : 1);
+""")
+    assert r.returncode == 0, f"install not renamed to install-browser: {r.stdout}\n{r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["hasInstallBrowser"], "install-browser command missing"
+    assert not data["hasBareInstall"], "bare 'install' command still exists"
+
+
+# [pr_diff] fail_to_pass
+def test_route_capability_network():
+    """Route tools (route, routeList, unroute) must use 'network' capability."""
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright/src/mcp/browser/tools/route.ts', 'utf8');
+
+// Find all capability assignments in defineTool blocks
+const re = /defineTool\(\{[\s\S]*?capability:\s*['"]([^'"]+)['"]/g;
+const caps = [];
+let m;
+while ((m = re.exec(src)) !== null) caps.push(m[1]);
+
+const allNetwork = caps.length >= 3 && caps.every(c => c === 'network');
+console.log(JSON.stringify({ caps, allNetwork }));
+process.exit(allNetwork ? 0 : 1);
+""")
+    assert r.returncode == 0, f"Route tools not using network: {r.stdout}\n{r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert len(data["caps"]) >= 3, f"Expected >= 3 route tools, got {len(data['caps'])}"
+    assert data["allNetwork"], f"Not all network capability: {data['caps']}"
+
+
+# [pr_diff] fail_to_pass
+def test_network_capability_type():
+    """config.d.ts must include 'network' in the ToolCapability union type."""
+    config = Path(REPO) / "packages/playwright/src/mcp/config.d.ts"
+    content = config.read_text()
+    assert "'network'" in content or '"network"' in content, \
+        "ToolCapability type missing 'network' member"
+
+
+# [pr_diff] fail_to_pass
+def test_install_skills_implementation():
+    """program.ts must implement installSkills with command handler and copy logic."""
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright/src/mcp/terminal/program.ts', 'utf8');
+
+const checks = {
+    hasFunction: src.includes('installSkills'),
+    handlesCommand: src.includes("'install-skills'") || src.includes('"install-skills"'),
+    copiesSkills: src.includes('.claude') && src.includes('skill') &&
+                  (src.includes('.cp(') || src.includes('cpSync') || src.includes('.cp (')),
+};
+
+console.log(JSON.stringify(checks));
+const ok = Object.values(checks).every(Boolean);
+process.exit(ok ? 0 : 1);
+""")
+    assert r.returncode == 0, f"installSkills implementation failed: {r.stdout}\n{r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["hasFunction"], "installSkills function not found in program.ts"
+    assert data["handlesCommand"], "install-skills command not handled in program.ts"
+    assert data["copiesSkills"], "installSkills doesn't copy skill files to .claude/skills"
+
+
+# ---------------------------------------------------------------------------
+# Config/documentation update tests (agent_config)
+# ---------------------------------------------------------------------------
+
+# [agent_config] fail_to_pass — .claude/skills/playwright-mcp-dev/SKILL.md:29-30
+def test_skill_md_documents_network_commands():
+    """SKILL.md must document route/unroute commands under a Network section."""
+    skill = Path(REPO) / "packages/playwright/src/skill/SKILL.md"
+    content = skill.read_text()
+    content_lower = content.lower()
+    assert "### network" in content_lower or "## network" in content_lower, \
+        "SKILL.md missing Network section header"
+    assert "route-list" in content, \
+        "SKILL.md missing route-list command"
+    assert "unroute" in content, \
+        "SKILL.md missing unroute command"
+
+
+# [agent_config] fail_to_pass — .claude/skills/playwright-mcp-dev/SKILL.md:29-30
+def test_skill_md_documents_install_commands():
+    """SKILL.md must document install-browser and install-skills commands."""
+    skill = Path(REPO) / "packages/playwright/src/skill/SKILL.md"
+    content = skill.read_text()
+    assert "install-browser" in content, \
+        "SKILL.md missing install-browser command documentation"
+    assert "install-skills" in content, \
+        "SKILL.md missing install-skills command documentation"
+
+
+# [agent_config] fail_to_pass — .claude/skills/playwright-mcp-dev/SKILL.md:29-30
+def test_request_mocking_cli_commands():
+    """request-mocking.md must document direct CLI route commands."""
+    ref = Path(REPO) / "packages/playwright/src/skill/references/request-mocking.md"
+    content = ref.read_text()
+    # Must have direct CLI route commands (not just page.route via run-code)
+    assert "playwright-cli route-list" in content, \
+        "request-mocking.md should document 'playwright-cli route-list'"
+    assert "playwright-cli unroute" in content, \
+        "request-mocking.md should document 'playwright-cli unroute'"

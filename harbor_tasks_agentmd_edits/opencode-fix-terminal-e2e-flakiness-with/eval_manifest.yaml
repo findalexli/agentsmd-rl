@@ -1,0 +1,75 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 17144
+  base_commit: "c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90"
+  merge_commit: "328c6de80d51704c09bdd962df2ddf5b9d7c82ea"
+
+checks:
+  - id: typescript_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must parse without errors"
+
+  - id: terminal_testing_module_created
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Terminal testing module exists with proper exports (terminalAttr, E2EWindow, TerminalProbeState, terminalProbe)"
+
+  - id: wait_terminal_ready_helper_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "waitTerminalReady helper exported from actions.ts with proper implementation"
+
+  - id: run_terminal_helper_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "runTerminal helper exported from actions.ts with proper implementation"
+
+  - id: terminal_component_integrates_probe
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Terminal component integrates the terminal probe (init, connect, render, settle, drop)"
+
+  - id: fixtures_initializes_terminal_state
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Fixtures initialize terminal testing state in seedStorage"
+
+  - id: agents_md_documents_terminal_testing
+    type: pass_to_pass
+    origin: agent_config
+    description: "AGENTS.md documents terminal testing patterns"
+    source:
+      path: "packages/app/e2e/AGENTS.md"
+      lines: "1-180"
+      commit: "c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90"
+
+  - id: terminal_tests_use_new_helpers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing terminal tests use new waitTerminalReady helper"
+
+  - id: slash_terminal_test_updated
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Slash terminal test uses waitTerminalReady instead of toBeVisible"
+
+  - id: settings_keybinds_test_updated
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Settings keybinds test uses waitTerminalReady"
+
+rubric:
+  - rule: "In terminal tests, type through the browser. Do not write to the PTY through the SDK."
+    source:
+      path: "packages/app/e2e/AGENTS.md"
+      lines: "173"
+      commit: "c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90"
+
+  - rule: "Avoid waitForTimeout and custom DOM or data-* readiness checks."
+    source:
+      path: "packages/app/e2e/AGENTS.md"
+      lines: "177"
+      commit: "c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90"

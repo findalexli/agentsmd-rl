@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: block/goose
+  pr: 7310
+  base_commit: e2d174ac1d4ed3304d9949f04572803467d343cb
+  merge_commit: 85ab108645b7a1dfdeac584fa0ef4cd75c0361a3
+
+checks:
+  - id: test_summon_mcp_file_created
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New summon-mcp.md exists with proper YAML frontmatter (title, description)"
+
+  - id: test_summon_mcp_example_content
+    type: fail_to_pass
+    origin: pr_diff
+    description: "summon-mcp.md has Configuration, Example Usage sections and references skills, recipes, subagents"
+
+  - id: test_skills_mcp_deprecated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "skills-mcp.md has deprecation caution with link to Summon extension"
+
+  - id: test_using_extensions_list_summon
+    type: fail_to_pass
+    origin: pr_diff
+    description: "using-extensions.md lists Summon in built-in extensions instead of Skills"
+
+  - id: test_using_skills_guide_summon
+    type: fail_to_pass
+    origin: pr_diff
+    description: "using-skills.md references Summon extension instead of Skills"
+
+  - id: test_playwright_tutorial_summon
+    type: fail_to_pass
+    origin: pr_diff
+    description: "playwright-skill.md references Summon extension with extensionName=Summon"
+
+  - id: test_remotion_tutorial_summon
+    type: fail_to_pass
+    origin: pr_diff
+    description: "remotion-video-creation.md references Summon extension"
+
+  - id: test_summon_retro_image
+    type: fail_to_pass
+    origin: pr_diff
+    description: "summon-retro-site.png screenshot exists in static/img/"
+
+  - id: test_existing_markdown_valid
+    type: pass_to_pass
+    origin: static
+    description: "Pre-existing markdown files still parse correctly after changes"
+
+rubric: []

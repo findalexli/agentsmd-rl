@@ -1,0 +1,30 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 986
+  base_commit: "036ab1692854c327ab817aa231c1b1ec19063c72"
+  merge_commit: "e08e4e64da2675fd022abcf0379352c27c28a949"
+
+checks:
+  - id: alloc_mode_error_hint_url
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error hint in alloc_mode.py parser references correct /en/ URL for megatron tutorial"
+
+  - id: readme_no_broken_deep_links
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md deep links to docs site all include /en/ or /zh/ language prefix"
+
+  - id: pyproject_docs_url
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pyproject.toml Documentation URL includes /en/ language prefix"
+
+  - id: alloc_mode_compiles
+    type: pass_to_pass
+    origin: static
+    description: "areal/api/alloc_mode.py parses without syntax errors"
+
+rubric: []

@@ -1,0 +1,58 @@
+version: "2.0"
+
+source:
+  repo: "anthropics/claude-code"
+  pr: 1537
+  base_commit: "0b881fcb4d7e0d223584aca58b27055084fffd0c"
+  merge_commit: "d1510f5eefb1fec3af91b1a8add6f976d7816bef"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests (using subprocess.run)
+  # ---------------------------------------------------------------------------
+
+  - id: demo_gif_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The demo.gif file exists and is a valid GIF (verified via subprocess)"
+
+  - id: readme_has_gif_reference
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md contains the demo GIF reference with correct HTML tag (verified via subprocess)"
+
+  - id: readme_streamlined_description
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README has concise one-paragraph description instead of bullet list (verified via subprocess)"
+
+  - id: readme_simplified_get_started
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README has simplified 2-step get started section (verified via subprocess)"
+
+  - id: readme_reporting_bugs_heading
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README has 'Reporting Bugs' as H2 (##) not H3 (###) (verified via subprocess)"
+
+  - id: readme_data_usage_heading
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README has 'How we use your data' as H3 (###) not H4 (####) (verified via subprocess)"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static) — anti-regression checks (using subprocess.run)
+  # ---------------------------------------------------------------------------
+
+  - id: readme_has_key_elements
+    type: pass_to_pass
+    origin: static
+    description: "README still contains essential elements that should not be removed (verified via subprocess)"
+
+  - id: readme_valid_markdown
+    type: pass_to_pass
+    origin: static
+    description: "README is valid markdown with proper structure (verified via subprocess)"
+
+rubric: []

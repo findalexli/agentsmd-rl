@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 import re
 from pathlib import Path
 
@@ -32,80 +33,62 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests using subprocess execution
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_changelog_runs_without_llm_sdk():
-    """changelog.ts must not import @opencode-ai/sdk or @opencode-ai/script.
+def test_changelog_help_deterministic():
+    """Running `bun script/changelog.ts --help` must show 'non-draft' release behavior.
 
-    Base code: top-level imports of both packages exist.  The correct fix
-    removes those imports entirely so the script gathers commits
-    deterministically without the LLM SDK.
-
-    Structural check because: TS module — can only execute via bun subprocess,
-    and the SDK packages happen to be installed in the Docker image so the
-    import itself wouldn't crash.  We need to verify the imports are gone.
+    Base help text says "Starting version (default: latest GitHub release)".
+    Fixed help text says "Starting version (default: latest non-draft GitHub release)".
+    The --help flag is supported in both versions but the output content differs,
+    making this a reliable behavioral fail-to-pass test.
     """
-    src = (Path(REPO) / "script/changelog.ts").read_text()
-    assert "@opencode-ai/sdk" not in src, (
-        "changelog.ts still imports @opencode-ai/sdk — script relies on LLM SDK"
+    r = subprocess.run(
+        ["bun", "script/changelog.ts", "--help"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert "@opencode-ai/script" not in src, (
-        "changelog.ts still imports @opencode-ai/script — script relies on LLM SDK"
+    assert r.returncode == 0, f"--help failed: {r.stderr}"
+    assert "non-draft" in r.stdout, (
+        "Help text doesn't mention 'non-draft' — script still uses old release logic.\n"
+        f"Output: {r.stdout[:500]}"
     )
 
 
 # [pr_diff] fail_to_pass
-def test_help_documents_from_and_to_flags():
-    """changelog.ts must not import LLM SDK and must declare --from/--to flags.
+def test_changelog_transpile_no_llm_sdk():
+    """Transpiling changelog.ts with Bun must not contain LLM SDK references.
 
-    Base code: @opencode-ai imports at the top level mean the script depends on
-    the LLM SDK.  Fixed code removes those imports; the CLI flags --from and
-    --to must also be present for deterministic range control.
+    Base code has top-level imports:
+      import { createOpencode } from "@opencode-ai/sdk/v2"
+      import { Script } from "@opencode-ai/script"
+    and calls session.create() / session.prompt() for LLM-based summarisation.
 
-    Structural check because: base code's SDK packages may be installed in
-    the Docker image, so bun --help would succeed on both base and fixed.
-    The f2p signal comes from the SDK import removal.
+    Fixed code removes all of these so the script gathers commits deterministically.
+    Uses Bun.Transpiler to convert TypeScript to JavaScript and inspects the output.
     """
-    src = (Path(REPO) / "script/changelog.ts").read_text()
-    assert "@opencode-ai" not in src, (
-        "LLM SDK imports still present — script still depends on LLM"
+    r = subprocess.run(
+        ["bun", "-e",
+         'const s = await Bun.file("script/changelog.ts").text();'
+         'const t = new Bun.Transpiler({loader:"ts"});'
+         'console.log(t.transformSync(s));'],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert "--from" in src, "changelog.ts missing --from flag"
-    assert "--to" in src, "changelog.ts missing --to flag"
-
-
-# [pr_diff] fail_to_pass
-def test_changelog_accepts_from_to_without_import_errors():
-    """changelog.ts must use deterministic gh api / git log, not LLM calls.
-
-    Base code: calls createOpencode(), session.create(), session.prompt() — the
-    LLM resolves the commit range.  Fixed code replaces this with gh api + git
-    log calls so commit gathering is deterministic.
-
-    Structural check because: actual execution needs GitHub API access and a
-    valid release history.
-    """
-    src = (Path(REPO) / "script/changelog.ts").read_text()
-    # No LLM SDK usage
-    assert "createOpencode" not in src, (
-        "changelog.ts still calls createOpencode() — LLM still owns the commit range"
+    assert r.returncode == 0, f"Transpile failed: {r.stderr}"
+    assert "createOpencode" not in r.stdout, (
+        "Transpiled output references createOpencode — LLM SDK still imported"
     )
-    assert "session.create" not in src, (
-        "changelog.ts still calls session.create() — LLM session still present"
+    assert "@opencode-ai" not in r.stdout, (
+        "Transpiled output references @opencode-ai SDK packages"
     )
-    assert "session.prompt" not in src, (
-        "changelog.ts still calls session.prompt() — LLM summarisation still present"
-    )
-    # Deterministic commands present
-    assert re.search(r"gh api|git log", src), (
-        "changelog.ts missing deterministic gh api / git log calls"
+    assert "session.prompt" not in r.stdout, (
+        "Transpiled output calls session.prompt() — LLM summarisation still present"
     )
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — structural checks on fixed files
+# Fail-to-pass (pr_diff) — structural checks on non-executable files
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass

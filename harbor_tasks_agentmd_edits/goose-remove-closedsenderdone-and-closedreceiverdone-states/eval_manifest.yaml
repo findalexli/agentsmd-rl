@@ -1,0 +1,69 @@
+version: "2.0"
+
+source:
+  repo: "goose-lang/goose"
+  pr: 130
+  base_commit: "16144157af4b64fe96deac36fcd2638503fdc2e2"
+  merge_commit: "19ad1172300110ee1b520b927ad68cbc77ed435d"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static) — syntax / compilation
+  # ---------------------------------------------------------------------------
+  - id: go_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified Go files parse without syntax errors"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral changes
+  # ---------------------------------------------------------------------------
+  - id: new_states_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Channel model uses new explicit state constants (SndWait, RcvWait, SndDone, RcvDone, Closed)"
+
+  - id: old_states_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Old state constants (offer, accepted) removed from OfferState enum"
+
+  - id: send_refactored
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Send method refactored to use TrySend in for loop instead of Select1"
+
+  - id: receive_refactored
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Receive method refactored to use TryReceive in for loop instead of Select1"
+
+  - id: unbuffered_try_send_unified
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TrySend unifies buffered and unbuffered channel handling with switch on state"
+
+  - id: unbuffered_try_receive_unified
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TryReceive unifies buffered and unbuffered channel handling with switch on state"
+
+  - id: helper_methods_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Helper methods (BufferedTrySend, BufferedTryReceive, UnbufferedTrySend, UnbufferedTryReceive) removed"
+
+  - id: state_field_not_pointer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Channel v field changed from pointer (*T) to value (T) type"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests) — regression
+  # ---------------------------------------------------------------------------
+  - id: go_model_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go model tests still pass after channel refactor"
+
+rubric: []

@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24363
+  base_commit: "37f5d61595f88591b91b914aa05550644300ce19"
+  merge_commit: "a0356f1a5b2c5d91f940bef195ea3f51b0ce7b7d"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "The crate must compile without errors"
+
+  - id: em101_fix_no_shadow
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When msg is already defined, EM101 fix must use a fresh name (msg_0) instead of shadowing"
+
+  - id: em101_fix_no_shadow_varied
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Fresh binding avoidance works across varied patterns (parameter, try block, double-taken)"
+
+  - id: em101_fix_uses_msg_when_available
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When msg is NOT defined, the fix should still use plain msg"
+
+  - id: em101_snapshot_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream flake8-errmsg snapshot tests must pass"
+
+  - id: no_unwrap_or_panic
+    type: pass_to_pass
+    origin: agent_config
+    description: "No panic!(), unreachable!(), or .unwrap() in modified rule files"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "37f5d61595f88591b91b914aa05550644300ce19"
+
+  - id: rust_imports_at_top
+    type: pass_to_pass
+    origin: agent_config
+    description: "Rust imports must be at top of file, not inside functions"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "37f5d61595f88591b91b914aa05550644300ce19"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "37f5d61595f88591b91b914aa05550644300ce19"
+  - rule: "Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism that could help solve the problem. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "37f5d61595f88591b91b914aa05550644300ce19"
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "37f5d61595f88591b91b914aa05550644300ce19"

@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24381
+  base_commit: "1f430e68af6e627569776dfbcd03b98ac7c29eb6"
+  merge_commit: "7fdb55618994916ca3af84ce2501589848725f35"
+
+checks:
+  - id: ruff_builds
+    type: pass_to_pass
+    origin: static
+    description: "Ruff compiles successfully after changes"
+
+  - id: formfeed_ruf072_fix_valid_python
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RUF072 fix on code preceded by form feed produces valid Python"
+
+  - id: formfeed_ruf072_fix_correct_dedent
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RUF072 fix on form-feed-prefixed try produces correctly dedented output"
+
+  - id: multiple_formfeeds_ruf072_fix
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RUF072 fix works with multiple consecutive form feeds before try"
+
+  - id: existing_dedent_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream dedent unit tests in ruff_python_trivia still pass"
+
+  - id: no_unwrap_panic_in_dedent_to
+    type: pass_to_pass
+    origin: agent_config
+    description: "No panic!/unreachable!/.unwrap() in dedent_to function"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "1f430e68af6e627569776dfbcd03b98ac7c29eb6"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "1f430e68af6e627569776dfbcd03b98ac7c29eb6"
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "1f430e68af6e627569776dfbcd03b98ac7c29eb6"

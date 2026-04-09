@@ -7,64 +7,30 @@ source:
   merge_commit: "24982fe88918092ea75d6572ef227338f6d07758"
 
 checks:
-  # Interface & implementation — fail_to_pass
+  # Behavioral — algorithm correctness via Node.js execution
+  - id: getFinalResponse_algorithm
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getFinalResponse correctly extracts the last contiguous markdown block (5 scenarios executed in Node.js)"
+
+  # Interface declaration
   - id: interface_has_getFinalResponse
     type: fail_to_pass
     origin: pr_diff
     description: "IResponse interface declares getFinalResponse(): string"
 
-  - id: getFinalResponse_impl_exists
+  # Action & overlay
+  - id: action_registered_and_functional
     type: fail_to_pass
     origin: pr_diff
-    description: "AbstractResponse implements getFinalResponse with substantial logic"
-
-  - id: impl_handles_three_part_kinds
-    type: fail_to_pass
-    origin: pr_diff
-    description: "getFinalResponse handles markdownContent, markdownVuln, and inlineReference"
-
-  - id: impl_reverse_iteration
-    type: fail_to_pass
-    origin: pr_diff
-    description: "getFinalResponse walks backwards through response parts"
-
-  - id: impl_skips_empty_content
-    type: fail_to_pass
-    origin: pr_diff
-    description: "getFinalResponse skips trailing empty markdown parts"
-
-  - id: impl_returns_empty_for_no_parts
-    type: fail_to_pass
-    origin: pr_diff
-    description: "getFinalResponse returns empty string when no eligible parts found"
-
-  # Action & overlay — fail_to_pass
-  - id: action_registered
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CopyFinalResponseAction registered in chatCopyActions.ts"
-
-  - id: action_invokes_getFinalResponse
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CopyFinalResponseAction calls getFinalResponse() on the response"
-
-  - id: action_writes_to_clipboard
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CopyFinalResponseAction writes result to the clipboard"
-
-  - id: action_gated_by_isResponse
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CopyFinalResponseAction menu gated by ChatContextKeys.isResponse"
+    description: "CopyFinalResponseAction registered, calls getFinalResponse, writes to clipboard, gated by isResponse"
 
   - id: context_key_in_overlay
     type: fail_to_pass
     origin: pr_diff
     description: "isResponse key added to createOverlay() in chatListWidget.ts"
 
-  # Tests & mocks — fail_to_pass
+  # Tests & mocks
   - id: unit_tests_added
     type: fail_to_pass
     origin: pr_diff
@@ -75,13 +41,13 @@ checks:
     origin: pr_diff
     description: "Mock IResponse objects include getFinalResponse in agent session tests"
 
-  # Regression — pass_to_pass
+  # Regression
   - id: original_interface_preserved
     type: pass_to_pass
     origin: repo_tests
     description: "IResponse still declares getMarkdown() and toString()"
 
-  # Agent config — fail_to_pass
+  # Agent config
   - id: action_label_title_case
     type: fail_to_pass
     origin: agent_config

@@ -38,6 +38,11 @@ checks:
     origin: pr_diff
     description: "adapter.ts defines REFRESH_TOKEN_GRACE_PERIOD_SECONDS = 180"
 
+  - id: is_non_retryable_error_method_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RemoteServerConfigCtr exposes isNonRetryableError method used by AuthCtr to decide token clearing"
+
   # --- f2p: config/documentation update test (REQUIRED) ---
   - id: claude_md_in_review_workflow
     type: fail_to_pass
@@ -50,10 +55,20 @@ checks:
     origin: pr_diff
     description: "async-retry and @types/async-retry added to desktop package.json"
 
-  # --- p2p: regression check ---
+  # --- p2p: regression checks ---
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files compile without errors"
+
   - id: auth_ctr_existing_methods_preserved
     type: pass_to_pass
     origin: static
     description: "Core AuthCtr methods (startAutoRefresh, refreshAccessToken, initializeAutoRefresh) still exist"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "isNonRetryableError has real logic, not just return false"
 
 rubric: []

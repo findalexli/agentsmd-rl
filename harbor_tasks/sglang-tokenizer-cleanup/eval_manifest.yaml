@@ -15,17 +15,17 @@ checks:
   - id: basereq_rid_uniqueness_validation
     type: fail_to_pass
     origin: pr_diff
-    description: "BaseReq has a method that raises ValueError on duplicate batch rids and accepts valid inputs"
+    description: "BaseReq._validate_rid_uniqueness raises ValueError on duplicate batch rids via subprocess execution"
 
   - id: inflight_rid_separation
     type: fail_to_pass
     origin: pr_diff
-    description: "TokenizerManager in-flight check raises on conflicts but does NOT reject non-inflight duplicates"
+    description: "TM._validate_rid_not_in_flight raises on in-flight conflicts via subprocess execution"
 
   - id: regenerate_rid_preserved
     type: pass_to_pass
     origin: pr_diff
-    description: "BaseReq.regenerate_rid still works for both list and single rids"
+    description: "BaseReq.regenerate_rid still works for list and single rids via subprocess execution"
 
   - id: normalize_calls_rid_validation
     type: fail_to_pass

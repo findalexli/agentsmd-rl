@@ -1,0 +1,44 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 36106
+  base_commit: "b4546cd0d4db2b913d8e7503bee86e1844073b2e"
+  merge_commit: "d594643e5e5b662f064c584018ab3773754c792d"
+
+checks:
+  - id: enableViewTransition_native_fb
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableViewTransition is enabled in ReactFeatureFlags.native-fb.js"
+
+  - id: enableViewTransition_test_renderer_native_fb
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableViewTransition is enabled in ReactFeatureFlags.test-renderer.native-fb.js"
+
+  - id: enableViewTransition_test_renderer_www
+    type: fail_to_pass
+    origin: pr_diff
+    description: "enableViewTransition is enabled in ReactFeatureFlags.test-renderer.www.js"
+
+  - id: flag_files_readable
+    type: pass_to_pass
+    origin: static
+    description: "All modified flag files exist and contain expected exports"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Flag value is a boolean literal, not a placeholder or variable"
+
+  - id: all_fork_files_consistent
+    type: fail_to_pass
+    origin: agent_config
+    description: "enableViewTransition is consistently enabled across all three modified fork files"
+    source:
+      path: ".claude/skills/feature-flags/SKILL.md"
+      lines: "78"
+      commit: "b4546cd0d4db2b913d8e7503bee86e1844073b2e"
+
+rubric: []

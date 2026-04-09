@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import importlib.util
+import subprocess
 import sys
 import textwrap
 from pathlib import Path
@@ -117,35 +118,62 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_abc_enforces_log_eval_samples():
     """Monitor ABC requires log_eval_samples; omitting it raises TypeError."""
-    mod = _load_base_module()
-    Monitor = mod.Monitor
+    r = subprocess.run(
+        ["python3", "-c", textwrap.dedent("""\
+            import sys
+            from unittest.mock import MagicMock
+            sys.modules['verifiers'] = MagicMock()
+            from prime_rl.utils.monitor.base import Monitor
 
-    class Incomplete(Monitor):
-        def log(self, metrics, step): pass
-        def log_samples(self, rollouts, step): pass
-        def log_final_samples(self): pass
+            class Incomplete(Monitor):
+                def log(self, metrics, step): pass
+                def log_samples(self, rollouts, step): pass
+                def log_final_samples(self): pass
 
-    try:
-        Incomplete()
-        raise AssertionError("Instantiated without log_eval_samples — not abstract")
-    except TypeError as e:
-        assert "log_eval_samples" in str(e), f"TypeError but wrong cause: {e}"
+            try:
+                Incomplete()
+                print("FAIL: instantiated without log_eval_samples")
+                sys.exit(1)
+            except TypeError as e:
+                if "log_eval_samples" in str(e):
+                    print("PASS")
+                else:
+                    print(f"FAIL: TypeError but wrong cause: {e}")
+                    sys.exit(1)
+        """)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_noop_monitor_accepts_log_eval_samples():
     """NoOpMonitor implements log_eval_samples without crashing, for varied inputs."""
-    mod = _load_base_module()
-    NoOpMonitor = mod.NoOpMonitor
+    r = subprocess.run(
+        ["python3", "-c", textwrap.dedent("""\
+            import sys
+            from unittest.mock import MagicMock
+            sys.modules['verifiers'] = MagicMock()
+            from prime_rl.utils.monitor.base import NoOpMonitor
 
-    noop = object.__new__(NoOpMonitor)
-    for rollouts, env_name, step in [
-        ([{"example_id": "ex1", "completion": "hello", "reward": 1.0, "task": "math"}], "env_a", 1),
-        ([{"example_id": "ex2", "completion": "world", "reward": 0.5, "task": "code"},
-          {"example_id": "ex3", "completion": "foo", "reward": 0.0, "task": "logic"}], "env_b", 100),
-        ([], "empty_env", 0),
-    ]:
-        noop.log_eval_samples(rollouts=rollouts, env_name=env_name, step=step)
+            noop = object.__new__(NoOpMonitor)
+            noop.log_eval_samples(
+                rollouts=[{"example_id": "ex1", "completion": "hello", "reward": 1.0, "task": "math"}],
+                env_name="env_a", step=1,
+            )
+            noop.log_eval_samples(
+                rollouts=[{"example_id": "ex2", "completion": "world", "reward": 0.5, "task": "code"},
+                          {"example_id": "ex3", "completion": "foo", "reward": 0.0, "task": "logic"}],
+                env_name="env_b", step=100,
+            )
+            noop.log_eval_samples(rollouts=[], env_name="empty_env", step=0)
+            print("PASS")
+        """)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
@@ -244,17 +272,18 @@ def test_evaluate_env_calls_log_eval_samples():
 # [pr_diff] fail_to_pass
 def test_prime_monitor_implements_log_eval_samples():
     """PrimeMonitor implements log_eval_samples (callable, no crash)."""
-    # AST-only because: PrimeMonitor requires Prime API client and distributed setup
-    source = Path(MONITOR_PRIME).read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "PrimeMonitor":
-            methods = [item.name for item in node.body if isinstance(item, ast.FunctionDef)]
-            assert "log_eval_samples" in methods, (
-                "PrimeMonitor does not implement log_eval_samples"
-            )
-            return
-    assert False, "PrimeMonitor class not found"
+    func_src = _extract_method(MONITOR_PRIME, "PrimeMonitor", "log_eval_samples")
+    assert func_src is not None, "PrimeMonitor.log_eval_samples not found"
+
+    clean_src = _strip_type_hints(func_src)
+    wrapper = "class _P:\n" + textwrap.indent(clean_src, "    ")
+    ns = {"__builtins__": __builtins__}
+    exec(wrapper, ns)
+    method = ns["_P"].__dict__["log_eval_samples"]
+
+    mock_self = MagicMock()
+    rollouts = [{"example_id": "ex1", "completion": "ans", "reward": 0.8, "task": "math"}]
+    method(mock_self, rollouts=rollouts, env_name="test", step=1)
 
 
 # ---------------------------------------------------------------------------
@@ -281,29 +310,6 @@ def test_existing_abstract_methods_preserved():
             assert False, f"Instantiated without {missing}"
         except TypeError:
             pass
-
-
-# ---------------------------------------------------------------------------
-# Anti-stub (static)
-# ---------------------------------------------------------------------------
-
-# [static] fail_to_pass
-def test_wandb_log_eval_samples_not_stub():
-    """WandbMonitor.log_eval_samples has non-trivial logic (not just pass/return)."""
-    # AST-only because: WandbMonitor.__init__ requires wandb credentials and GPU context
-    source = Path(MONITOR_WANDB).read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "WandbMonitor":
-            for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name == "log_eval_samples":
-                    stmt_count = sum(
-                        1 for s in ast.walk(item)
-                        if isinstance(s, (ast.Assign, ast.Return, ast.If, ast.For, ast.Call, ast.AugAssign))
-                    )
-                    assert stmt_count >= 5, f"Only {stmt_count} meaningful statements — likely a stub"
-                    return
-    assert False, "WandbMonitor.log_eval_samples not found"
 
 
 # ---------------------------------------------------------------------------

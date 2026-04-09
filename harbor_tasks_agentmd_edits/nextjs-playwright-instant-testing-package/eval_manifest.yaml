@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 90470
+  base_commit: "0f851c5ecd1872a209595770c5fe8b2b24274715"
+  merge_commit: "574ac9f0f81379acbdac0054e76876c726af1c73"
+
+checks:
+  - id: tsconfig_valid_json
+    type: pass_to_pass
+    origin: static
+    description: "Root tsconfig.json remains valid JSON"
+
+  - id: package_typescript_compiles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The @next/playwright package compiles without TypeScript errors"
+
+  - id: package_exports_instant
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Package exports instant() function with cookie-based protocol"
+
+  - id: package_json_valid
+    type: fail_to_pass
+    origin: pr_diff
+    description: "package.json defines @next/playwright with correct configuration"
+
+  - id: test_file_imports_package
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Test file imports instant() from @next/playwright package"
+
+  - id: inline_implementation_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Old inline instant() implementation removed from test file"
+
+  - id: root_tsconfig_has_alias
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Root tsconfig.json includes path alias for @next/playwright"
+
+  - id: readme_documents_instant_navigation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md documents instant() with key concepts (cookie, cache, Playwright)"
+
+  - id: readme_has_usage_examples
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md includes TypeScript code examples with instant() usage"
+
+  - id: readme_documents_design
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md explains the design and cookie protocol mechanism"
+
+rubric:
+  - rule: "README follows the documentation patterns of other packages in the monorepo"
+    source:
+      path: "CLAUDE.md"
+      lines: "44-53"
+      commit: "0f851c5ecd1872a209595770c5fe8b2b24274715"

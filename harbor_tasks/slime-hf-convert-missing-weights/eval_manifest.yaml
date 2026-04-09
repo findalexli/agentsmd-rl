@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1812
+  base_commit: "ce769774350ad70fe94f5ab17485177751793097"
+  merge_commit: "31c99b2e4e1e1a8c649e52bbee7e754a04dd5b6d"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "tools/convert_torch_dist_to_hf.py must parse without errors"
+
+  - id: save_tensors_accepts_origin_hf_dir
+    type: fail_to_pass
+    origin: pr_diff
+    description: "save_tensors function must accept an origin_hf_dir parameter"
+
+  - id: missing_weights_included_from_origin
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Weights only in origin HF checkpoint must appear in final output"
+
+  - id: converted_weights_not_duplicated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Already-converted weights must not be overwritten by origin values"
+
+  - id: add_missing_from_origin_hf_cli_flag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLI parser must include --add-missing-from-origin-hf flag"
+
+  - id: multiple_origin_safetensors_shards
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Missing weights spread across multiple shard files must all be included"
+
+  - id: save_tensors_without_origin
+    type: pass_to_pass
+    origin: pr_diff
+    description: "save_tensors still works when origin_hf_dir is not provided"
+
+rubric: []

@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace/bun
+
+# Idempotent: skip if already applied
+if grep -q 'AulvwBjtit0+4zSc1QGePy6oR7Y' test/js/valkey/docker-unified/server.crt 2>/dev/null; then
+    echo "Patch already applied."
+    exit 0
+fi
+
+# Use --whitespace=fix if patch has trailing whitespace issues
+# IMPORTANT: patch content MUST end with a blank line before the PATCH delimiter
+git apply - <<'PATCH'
+diff --git a/test/js/valkey/docker-unified/server.crt b/test/js/valkey/docker-unified/server.crt
+index 4e79fbc0498..19076016672 100644
+--- a/test/js/valkey/docker-unified/server.crt
++++ b/test/js/valkey/docker-unified/server.crt
+@@ -1,19 +1,19 @@
+ -----BEGIN CERTIFICATE-----
+-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
+ -----END CERTIFICATE-----
+diff --git a/test/js/valkey/docker-unified/server.key b/test/js/valkey/docker-unified/server.key
+index 8185ea8b0cd..e444c009ac7 100644
+--- a/test/js/valkey/docker-unified/server.key
++++ b/test/js/valkey/docker-unified/server.key
+@@ -1,28 +1,28 @@
+ -----BEGIN PRIVATE KEY-----
+-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDzwqpEB3HXepBx
+-E4p5Ki12l9Q/M96Sls19601mMGyZ/o23ia0CGcBomk8qRa+zWkMDn+oPdnEBwsRr
+-fXL0BjvpO+BkqrTKIPYxM5gUVNyy3HlWiLYwutJg3xehursruvnNAPtOscS7RLex
+-J0DwYO3KvHZbyjC422pS3WgENFhFmhM27f9vCPO4EZSut1jDMFC+vlc4De/bIB7G
+-B9855LPxxm29H4EvSzG7pIM3VWlB7/8odDLWNkQdfSY69GgH73kx/EcSALs7x9hy
+-vGweSmO9pyOHtOs6WVuRwQCav97E4LAwudmXnteLttAxUA8zVNHjWZKa8d6yw+49
+-cKvNUqfRAgMBAAECggEAVuBq6asTll4+66YwxKVVJb7QLSRx76HipD3ATKr2kd3p
+-KWBesnB2JHHWxDSo/c2uM7UDaTZn6V4+viasWS99m8801vwGSkH8LKX8Tka+j9rH
+-PiGkeXKkN1VbqU8RlXDixf9TEgWGnc3MgE2Ctgl9xrNrpaRGwCOnXdg+Ub1MNqWU
+-nmxMGP+G2b0ZgbirwECpdGIOvdeygQ8/Jo6brbGaPcewo1/5545wWHPpb+zXrBra
+-E//3i6geb9NJUAMKl0cTURoZWY3pF4yElV2ZZcE+cH5/fesYN7ZTZAccvo1lBPjy
+-OiC/fEuhSAH5iobH1KPrQbOby2YdUUOxg3dXR6qV5wKBgQD88jFV/a4togqaEv9x
+-yoCOtSE6CQmRZmCGhZSk60yR6JdFWQ1Uvc8brJdc2MRC/WRWr+nI6jGgobEbMZFO
+-KjHKALwOokFiSzj8I9u+IxGLM7TuGJFtKAT3AEwbQrWp3CxCrKsrIYwVkSwtViG0
+-cOVXQCkmuw3ewneHdnnWxiJq/wKBgQD2tBTQRWc/fOeR9TucGp6yQpFQaYL8qA4m
+-FpihxbX2JcTS8ge28ggc+c1seMqYfSBtnIRCWWdDB7BjquQT/lnQqZq5TEW1/FbD
+-9MML0VCM5TCAH1v6rcgMRRpsRYhB+vhbLcenSZGQoojozxEQts8/1HCSHTw0PzjK
+-dRVClb39LwKBgHGdY7WpPZw3paVxFRYKjFYNW8BSoN6TapXh2FN/cSQ0ogW/KzK+
+-ExHuIwrMPtOMN46Mc2kQcHwjRIbfa9H9N+HxFIdKMC4zdYQjoyczX0T0U7eCh4fN
+-KvW7R3QTMb/7KlJEdpnn9qEVVQ+EGZ2P/COFqTZBXMiK9t98wttKodkHAoGAfGV1
+-kUdNto+u3MRBWId7ufsi9t8dM3UyHTaLpBbjl8iXpJ5yEWede67iTG3kClwdu+eO
+-MT6PeRcpdDg5ZXN9ql+7KvAwvoEM5yZGK3FSIpl2iURGxvJVywoVNr8g49Q+4wsE
+-f2/zPHEYg/vVaQ4lFtRyJtsi/l1ar4u2Oqry7/UCgYEAh9+0SIBhdVny48EqQXmi
+-5WFiKhb5BcEUuLFlZji/z+y6a7LopCisDoegvboiDByxPizbKGzIChxLqO3SQKXb
+-kKiGsAITmMZ2Kl6jRhMUDgq4/DsjBo/h3guk+xQZ2DHtT9v1FLvBqCi8poP4XUMy
+-9BbnrT03dl7N2+9fIdjnC9Y=
++MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDpqw2yrlYb3tT0
++1lq8CwoSjJ+OhbSbA4sTdCga9cnRDnzP9WG6gjimOBY8CSr2WxQkT2z3KnMKFB/y
++NR5hUVvlIDMMWs83K7WHLLhFBGWuL2WkMlsJ02d8LHo8R5PlO0eDVM6d28c0s6f3
++SJW6stME+rin64qM2jwcU92jszDo7DR4zlibm6RDfCjdXNJwojoo477dmE9Q7gIm
++IKghUE6odcUa9xdidDXSOeM35698oyWq9b7u1xtZvwx4J4JUvzEGsOYlIRyxO4il
++ZCBvjEwZZSSAv4W6wc024K5d3uFxl5vIMx5PpDdBraXSN4lQGlA3uwCo6K9Njyet
++vv2FvrbVAgMBAAECggEAQ8Ae9qHpwab4ZA0Kvd8NipdPZAmMdi2u03ModbiyTXU/
++5yQks+kx96/ncnzOAiQiUOzekUOzm0Z+hMG2D02BsYuGgZyK3FpGBe2HeCtwN/Ly
++K4uWLeEn7i8POg8e6KYpdADQ76BbwAIfP2nCUCGtYZI4nCeFQpW8PBJs/xvjoITe
++TCtaHHY3ZgdZtMCnW2GHggeD5WCWjjsw/m4avN8RU5gN2yy8I92qBwjfh9dVYLYR
++s359VuPnMo3XaDDLuIz8I/9mpua1+7AJDTIvOXA+n6n5cDwXmtDlCDv6+QTIVvkD
++6UOD8SSsb1xf5d+ZeXiG6bzkmaD4+rwM2iAtoefTeQKBgQD6Jgw6OjyGZUeQfVNI
++bcNn1mIBoPOJ9A4ylhtfND3oXtikSjx43alSgJ/3saTC8fYUJ5DDHarZKE3NFl8s
++EW2YXj9oaXOIB2WjFbx4HAdKYn55RSZ/MTapMBU+BQ22LTOidpvBMzau7PxFhkrl
++iS9dLwIBa+chs/QgoyHokDty2wKBgQDvIlEVJBF9yYdmOuA7Tka1LJvnQiJApmHh
++6rpj6U1g48WUT1w94zV0fInoSA/SG8ehUnXrqKGugQXEMO3s/9330BW8e5zPLnu0
++Ewv3YvdHEid0o+7tRywi6BdaL2EyON3wnKO3CwNuP4DptdmgLdGkrQGN2UNe1AjO
++GvR+QdO0DwKBgQCx2z2UZPXFxNsWQ9VkSQ7HlKlIaSzfqFQz6YB6t4VQ46b7YQEQ
++GuKaE3Qpw/fW1/zUJbGK2VwxXLO8nyx6A8Y9sL06usd3L3M3emvvplYUsGUmSmFt
++zAsGTna8CxHNtuPgnp5txsEZrMxNjodQHrM7eQHfCt5imzV3wyWH2o06QwKBgQCZ
++tgdEfZC4uCfOcJ3dwSz2HByChCIcSFa2rvjsa/SPCRnhgTmblkav/7Vtl5SDy9OA
++QM8HkbeLweeA+qqVIsr9FcZDB3n+OrTNRUj11al5B5RRB2b3Ij6emW0ZTUc+zwrq
++NOWPLQchgLROhdPDgHA3V/Wdxj/l3oliYjUySwHXxQKBgQCvtASqHOBNgZKs2oGX
++0Z+rs7cKayblEeSuzX+Dcq0E/qHLC2ifbp1YVnGu3KgevNuSoBn0CChNKU8ZnqBk
++FRZ1GdAm4Noko0VOUa8Z8ShNQg78IRVgwoQrHvv9ccgugGGrGkdy3+h509wzXU3n
++lS7Y96IkEKj4lEe6ARA4K1vfNw==
+ -----END PRIVATE KEY-----
+
+PATCH
+
+echo "Patch applied successfully."

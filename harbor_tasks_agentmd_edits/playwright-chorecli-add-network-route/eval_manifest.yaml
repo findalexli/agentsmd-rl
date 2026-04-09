@@ -1,0 +1,86 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39071
+  base_commit: "824f63da57edf990c6eeab6301d5f1b65dcb4ca8"
+  merge_commit: "8d91d675afb863c1953af92d3b4d2837a7ef6ab7"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Key source files must exist"
+
+  - id: route_tool_definition
+    type: fail_to_pass
+    origin: agent_config
+    description: "route.ts must exist with browser_route tool and correct schema"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "9"
+      commit: "824f63da57edf990c6eeab6301d5f1b65dcb4ca8"
+
+  - id: route_fulfill_and_continue
+    type: fail_to_pass
+    origin: pr_diff
+    description: "browser_route handler calls fulfill for body/status, continue for headers"
+
+  - id: route_list_and_unroute_tools
+    type: fail_to_pass
+    origin: pr_diff
+    description: "route.ts defines browser_route_list and browser_unroute tools"
+
+  - id: context_route_management
+    type: fail_to_pass
+    origin: pr_diff
+    description: "context.ts exports RouteEntry type and has addRoute/removeRoute/routes methods"
+
+  - id: route_tools_registered
+    type: fail_to_pass
+    origin: agent_config
+    description: "tools.ts imports and spreads route module into browserTools"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "10"
+      commit: "824f63da57edf990c6eeab6301d5f1b65dcb4ca8"
+
+  - id: network_category_and_help
+    type: fail_to_pass
+    origin: agent_config
+    description: "command.ts and helpGenerator.ts include network category"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "22-23"
+      commit: "824f63da57edf990c6eeab6301d5f1b65dcb4ca8"
+
+  - id: cli_commands_registered
+    type: fail_to_pass
+    origin: agent_config
+    description: "commands.ts declares route/route-list/unroute CLI commands"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "24"
+      commit: "824f63da57edf990c6eeab6301d5f1b65dcb4ca8"
+
+  - id: skill_md_building_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md has Building sections with development guidance"
+
+  - id: skill_md_lint_command
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md lint command uses npm run flint (not flint:mcp)"
+
+rubric:
+  - rule: "New tool implementations follow the patterns of existing MCP tools (defineTool, schema shape, handle signature)"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "8-12"
+      commit: "824f63da57edf990c6eeab6301d5f1b65dcb4ca8"
+  - rule: "SKILL.md updates are consistent with the style and tone of the existing content"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "1-33"
+      commit: "824f63da57edf990c6eeab6301d5f1b65dcb4ca8"

@@ -1,0 +1,53 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24375
+  base_commit: "23364ae6a52b47c855db63c203893325a9aab1fa"
+  merge_commit: "2fb7c8ddd806aec98f8bba8f4c78d4a7c22f9d56"
+
+checks:
+  - id: snapshot_errors_sorted_by_location
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Errors in each snapshot section are sorted by source line number"
+
+  - id: sort_applied_to_errors
+    type: fail_to_pass
+    origin: pr_diff
+    description: "fixtures.rs applies sorting to unsupported syntax errors before diagnosis"
+
+  - id: hashmap_iteration_order_addressed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "HashMap non-deterministic iteration order is addressed via sorting"
+
+  - id: no_panic_unwrap_in_sorting_section
+    type: pass_to_pass
+    origin: agent_config
+    description: "No panic!/unwrap in the sorting logic (AGENTS.md:79)"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "23364ae6a52b47c855db63c203893325a9aab1fa"
+
+  - id: no_local_imports_in_modified_function
+    type: pass_to_pass
+    origin: agent_config
+    description: "No local use statements inside ensure_unchanged_ast (AGENTS.md:76)"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "23364ae6a52b47c855db63c203893325a9aab1fa"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "23364ae6a52b47c855db63c203893325a9aab1fa"
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "23364ae6a52b47c855db63c203893325a9aab1fa"

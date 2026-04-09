@@ -8,11 +8,122 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/openclaw"
 TARGET = Path(REPO) / "src" / "plugins" / "tools.ts"
 PLUGINS_DIR = Path(REPO) / "src" / "plugins"
+
+# ---------------------------------------------------------------------------
+# Vitest test for behavioral verification of subagent tool resolution.
+#
+# On the base commit, resolvePluginTools calls resolveRuntimePluginRegistry
+# directly, ignoring any active registry set during gateway startup.
+# The fix adds a resolvePluginToolRegistry helper that checks
+# getActivePluginRegistry() first when allowGatewaySubagentBinding is true,
+# so sub-agent sessions reuse the gateway's active registry.
+#
+# This vitest test:
+#   1. Mocks the loader (resolveRuntimePluginRegistry) to return undefined
+#   2. Sets an active registry via the real runtime module
+#   3. Calls resolvePluginTools with allowGatewaySubagentBinding=true
+#   4. Asserts the tools come from the active registry (not the mock loader)
+#   5. Asserts the mock loader was NOT called
+#
+# On base: loader IS called (returns undefined) → empty tools → FAIL
+# On fix:  active registry IS used → tools returned → PASS
+# ---------------------------------------------------------------------------
+_VITEST_SUBAGENT_TEST = '''\
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const resolveRuntimePluginRegistryMock = vi.fn();
+const applyPluginAutoEnableMock = vi.fn();
+
+vi.mock("./loader.js", () => ({
+  resolveRuntimePluginRegistry: (params: unknown) =>
+    resolveRuntimePluginRegistryMock(params),
+}));
+
+vi.mock("../config/plugin-auto-enable.js", () => ({
+  applyPluginAutoEnable: (params: unknown) => applyPluginAutoEnableMock(params),
+}));
+
+let resolvePluginTools: typeof import("./tools.js").resolvePluginTools;
+let resetPluginRuntimeStateForTest: typeof import("./runtime.js").resetPluginRuntimeStateForTest;
+let setActivePluginRegistry: typeof import("./runtime.js").setActivePluginRegistry;
+
+function makeTool(name: string) {
+  return {
+    name,
+    description: `${name} tool`,
+    parameters: { type: "object", properties: {} },
+    async execute() {
+      return { content: [{ type: "text", text: "ok" }] };
+    },
+  };
+}
+
+function createContext() {
+  return {
+    config: {
+      plugins: {
+        enabled: true,
+        allow: ["optional-demo"],
+        load: { paths: ["/tmp/plugin.js"] },
+      },
+    },
+    workspaceDir: "/tmp",
+  };
+}
+
+describe("subagent tool resolution", () => {
+  beforeEach(async () => {
+    vi.resetModules();
+    resolveRuntimePluginRegistryMock.mockReset();
+    resolveRuntimePluginRegistryMock.mockReturnValue(undefined);
+    applyPluginAutoEnableMock.mockReset();
+    applyPluginAutoEnableMock.mockImplementation(
+      ({ config }: { config: unknown }) => ({ config, changes: [] }),
+    );
+    ({ resetPluginRuntimeStateForTest, setActivePluginRegistry } =
+      await import("./runtime.js"));
+    resetPluginRuntimeStateForTest();
+    ({ resolvePluginTools } = await import("./tools.js"));
+  });
+
+  it("reuses active registry for gateway-bindable loads instead of calling loader", () => {
+    const activeRegistry = {
+      tools: [
+        {
+          pluginId: "optional-demo",
+          optional: true,
+          source: "/tmp/optional-demo.js",
+          factory: () => makeTool("optional_tool"),
+        },
+      ],
+      diagnostics: [] as Array<{
+        level: string;
+        pluginId: string;
+        source: string;
+        message: string;
+      }>,
+    };
+    setActivePluginRegistry(activeRegistry as never, "gateway-startup");
+
+    const tools = resolvePluginTools({
+      context: createContext() as never,
+      toolAllowlist: ["optional_tool"],
+      allowGatewaySubagentBinding: true,
+    });
+
+    expect(tools.map((t) => t.name)).toEqual(["optional_tool"]);
+    expect(resolveRuntimePluginRegistryMock).not.toHaveBeenCalled();
+  });
+});
+'''
+
+_EVAL_TEST_PATH = Path(REPO) / "src" / "plugins" / "_eval_subagent_binding.test.ts"
 
 
 # ---------------------------------------------------------------------------
@@ -23,7 +134,6 @@ PLUGINS_DIR = Path(REPO) / "src" / "plugins"
 def test_syntax_check():
     """src/plugins/tools.ts must parse as valid TypeScript (balanced braces, no truncation)."""
     content = TARGET.read_text()
-    # Basic structural checks: balanced braces, non-empty, has expected exports
     opens = content.count("{")
     closes = content.count("}")
     assert abs(opens - closes) <= 1, (
@@ -36,10 +146,35 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral / structural checks
+# Fail-to-pass (pr_diff) — behavioral + structural checks
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
+# [pr_diff] fail_to_pass — behavioral (subprocess)
+def test_subagent_uses_active_registry():
+    """Sub-agent sessions must reuse the gateway's active plugin registry.
+
+    Runs a vitest test that sets an active registry via the real runtime module,
+    then calls resolvePluginTools with allowGatewaySubagentBinding=true.
+    Verifies the tools come from the active registry and the loader mock was
+    NOT called. Fails on the base commit where resolvePluginTools always calls
+    resolveRuntimePluginRegistry directly (ignoring the active registry).
+    """
+    _EVAL_TEST_PATH.write_text(_VITEST_SUBAGENT_TEST)
+    try:
+        r = subprocess.run(
+            ["pnpm", "exec", "vitest", "run", str(_EVAL_TEST_PATH),
+             "--reporter=verbose", "--no-color"],
+            capture_output=True, text=True, timeout=120, cwd=REPO,
+        )
+        assert r.returncode == 0, (
+            f"Subagent tool resolution does not reuse active registry:\n"
+            f"{r.stdout[-2000:]}\n{r.stderr[-1000:]}"
+        )
+    finally:
+        _EVAL_TEST_PATH.unlink(missing_ok=True)
+
+
+# [pr_diff] fail_to_pass — structural
 def test_active_registry_import():
     """tools.ts must import getActivePluginRegistry from ./runtime.js.
 
@@ -60,77 +195,7 @@ def test_active_registry_import():
     )
 
 
-# [pr_diff] fail_to_pass
-def test_registry_selection_logic():
-    """Registry selection must branch on allowGatewaySubagentBinding and prefer active registry.
-
-    The fix must implement logic equivalent to:
-      if (allowGatewaySubagentBinding) {
-        return getActivePluginRegistry() ?? resolveRuntimePluginRegistry(loadOptions);
-      }
-      return resolveRuntimePluginRegistry(loadOptions);
-
-    This ensures sub-agent sessions reuse the gateway's active registry when available,
-    while non-sub-agent paths continue to use the loader directly.
-    """
-    content = TARGET.read_text()
-
-    # All three elements must be present
-    assert "getActivePluginRegistry" in content, "Missing getActivePluginRegistry"
-    assert "resolveRuntimePluginRegistry" in content, "Missing resolveRuntimePluginRegistry"
-    assert "allowGatewaySubagentBinding" in content, "Missing allowGatewaySubagentBinding"
-
-    # getActivePluginRegistry must be CALLED (not just imported)
-    assert re.search(r"getActivePluginRegistry\s*\(", content), (
-        "getActivePluginRegistry is imported but never called"
-    )
-
-    # The call to getActivePluginRegistry() must appear in a context that
-    # also references allowGatewaySubagentBinding — verifying they're logically connected.
-    lines = content.splitlines()
-    call_lines = [i for i, l in enumerate(lines) if "getActivePluginRegistry(" in l]
-    assert call_lines, "getActivePluginRegistry() is never called"
-
-    # Check a window around each call site for allowGatewaySubagentBinding
-    found_connection = False
-    for call_line in call_lines:
-        window_start = max(0, call_line - 15)
-        window_end = min(len(lines), call_line + 5)
-        window = "\n".join(lines[window_start:window_end])
-        if "allowGatewaySubagentBinding" in window:
-            found_connection = True
-            break
-    assert found_connection, (
-        "getActivePluginRegistry() call is not connected to "
-        "allowGatewaySubagentBinding — the registry fallback must be conditional "
-        "on the subagent binding context"
-    )
-
-    # The fallback pattern: getActivePluginRegistry() must have a fallback to
-    # resolveRuntimePluginRegistry (via ?? or || or if/else)
-    found_fallback = False
-    for call_line in call_lines:
-        window_start = max(0, call_line - 2)
-        window_end = min(len(lines), call_line + 3)
-        window = "\n".join(lines[window_start:window_end])
-        if "resolveRuntimePluginRegistry" in window:
-            found_fallback = True
-            break
-
-    if not found_fallback:
-        # Check for conditional pattern (if/else with both calls)
-        content_no_ws = re.sub(r"\s+", " ", content)
-        has_conditional = (
-            re.search(r"getActivePluginRegistry\s*\(\s*\)\s*\?\?", content_no_ws)
-            or re.search(r"getActivePluginRegistry\s*\(\s*\)\s*\|\|", content_no_ws)
-        )
-        assert has_conditional, (
-            "getActivePluginRegistry() must have a fallback to "
-            "resolveRuntimePluginRegistry when no active registry exists"
-        )
-
-
-# [pr_diff] fail_to_pass
+# [pr_diff] fail_to_pass — structural
 def test_resolve_tools_delegates_registry():
     """resolvePluginTools must not call resolveRuntimePluginRegistry directly at the assignment site.
 

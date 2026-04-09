@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92028
+  base_commit: "d84e3bb56ecfdd9ff6ab5ee479e85be2780b8ba9"
+  merge_commit: "04f137e40bbe8c3a7ac98eb082024ad875b759f3"
+
+checks:
+  - id: struct_field_named_module
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SingleModuleReference struct field is 'module', not 'asset'"
+
+  - id: no_asset_getter_in_impl
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The asset() getter method is removed from SingleModuleReference impl"
+
+  - id: constructor_param_named_module
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The new() constructor takes 'module' as parameter name"
+
+  - id: resolve_reference_uses_module_field
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resolve_reference uses self.module, not self.asset"
+
+  - id: rust_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "The modified file has balanced braces and valid structure"
+
+  - id: description_field_preserved
+    type: pass_to_pass
+    origin: static
+    description: "The description field is preserved in SingleModuleReference"
+
+  - id: new_returns_cell
+    type: pass_to_pass
+    origin: static
+    description: "new() still uses Self::cell to construct the value"
+
+rubric: []

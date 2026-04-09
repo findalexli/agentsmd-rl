@@ -32,6 +32,26 @@ def _node(script: str, timeout: int = 15) -> str:
     return r.stdout.strip()
 
 
+def _transpile_ts(ts_code: str) -> str:
+    """Strip TypeScript types to make code runnable in Node.js."""
+    # Remove type annotations from variable declarations (const x: number = 1 -> const x = 1)
+    result = re.sub(r'(\w+)\s*:\s*\w+\s*=', r'\1 =', ts_code)
+    # Remove type assertions (x as Type -> x)
+    result = re.sub(r'\s+as\s+(?:"[^"]*"|\'[^\']*\'|\w+)', '', result)
+    # Remove generic type parameters from function calls
+    result = re.sub(r'<[^<>]*>', '', result)
+    return result
+
+
+def _run_in_node(ts_code: str, timeout: int = 15) -> subprocess.CompletedProcess:
+    """Execute TypeScript code by transpiling and running in Node.js."""
+    js_code = _transpile_ts(ts_code)
+    return subprocess.run(
+        ["node", "-e", js_code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
 def _eval_store() -> dict:
     """Extract createStore initial state by evaluating the JS with constants injected."""
     return json.loads(_node(f"""
@@ -52,8 +72,8 @@ def _eval_store() -> dict:
         let block = src.substring(start, end + 1);
         block = block.replace(/\\bas\\s+(?:"[^"]*"|'[^']*')\\s*(?:\\|[^,}}]*)?/g, '');
         block = block.replace(/\\bas\\s+(?:Record|Map|Set|Array|typeof)\\s*<[^>]*>/g, '');
-        block = block.replace(/\\bas\\s+\\([^)]*\\)/g, '');
-        block = block.replace(/\\bas\\s+\\w+(?:\\[\\])?/g, '');
+        block = block.replace(/\\bas\\s*\\([^)]*\\)/g, '');
+        block = block.replace(/\\bas\\s*\\w+(?:\\[\\])?/g, '');
         const constDefs = Object.entries(constants).map(([k,v]) => 'const ' + k + '=' + v + ';').join('');
         const store = new Function(constDefs + 'return (' + block + ')')();
         console.log(JSON.stringify({{
@@ -109,23 +129,82 @@ def test_layout_module_structure():
 # [pr_diff] fail_to_pass
 def test_filetree_defaults_closed():
     """fileTree must default to opened: false in createStore initial state."""
-    store = _eval_store()
-    assert "error" not in store, f"Store eval failed: {store}"
-    assert store["fileTree"]["opened"] is False, \
-        f"fileTree.opened={store['fileTree']['opened']}, expected false"
+    # Run Node.js code that checks the actual initial state in the source
+    script = """
+    const fs = require('fs');
+    const src = fs.readFileSync('LAYOUT_PATH', 'utf8');
+
+    // Find the createStore call and extract fileTree.opened value
+    const csIdx = src.indexOf('createStore(');
+    if (csIdx === -1) {
+        console.log(JSON.stringify({passed: false, error: 'createStore not found'}));
+        process.exit(0);
+    }
+
+    // Find the fileTree object within createStore
+    const afterCreate = src.substring(csIdx);
+    const ftMatch = afterCreate.match(/fileTree:\\s*\\{[^}]*opened:\\s*(true|false)/);
+    if (!ftMatch) {
+        console.log(JSON.stringify({passed: false, error: 'fileTree.opened not found'}));
+        process.exit(0);
+    }
+
+    const openedValue = ftMatch[1] === 'true';
+    console.log(JSON.stringify({passed: !openedValue, opened: openedValue}));
+    """.replace("LAYOUT_PATH", LAYOUT)
+
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True, text=True, timeout=15, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node execution failed: {r.stderr}"
+
+    result = json.loads(r.stdout.strip())
+    assert result.get("passed"), f"fileTree.opened = {result.get('opened')}, expected false"
 
 
 # [pr_diff] fail_to_pass
 def test_filetree_width_less_than_sidebar():
     """fileTree default width must be less than sidebar default width."""
-    store = _eval_store()
-    assert "error" not in store, f"Store eval failed: {store}"
-    ft_width = store["fileTree"]["width"]
-    sb_width = store["sidebar"]["width"]
-    assert isinstance(ft_width, (int, float)) and isinstance(sb_width, (int, float)), \
-        f"Widths not numeric: ft={ft_width}, sb={sb_width}"
-    assert 0 < ft_width < sb_width, \
-        f"fileTree width ({ft_width}) must be >0 and < sidebar width ({sb_width})"
+    # Execute code that extracts and compares the widths
+    script = """
+    const fs = require('fs');
+    const src = fs.readFileSync('LAYOUT_PATH', 'utf8');
+
+    // Extract all top-level numeric constants
+    const constants = {};
+    const cre = /(?:const|let|var)\\s+(\\w+)\\s*(?::\\s*\\w+)?\\s*=\\s*(\\d+)/g;
+    let cm;
+    while ((cm = cre.exec(src)) !== null) constants[cm[1]] = parseInt(cm[2]);
+
+    // Find createStore and extract widths
+    const csIdx = src.indexOf('createStore(');
+    const afterCreate = src.substring(csIdx);
+
+    // Get sidebar width
+    const sbMatch = afterCreate.match(/sidebar:\\s*\\{[^}]*width:\\s*(\\d+|\\w+)/);
+    const sbWidth = sbMatch ? (parseInt(sbMatch[1]) || constants[sbMatch[1]] || null) : null;
+
+    // Get fileTree width
+    const ftMatch = afterCreate.match(/fileTree:\\s*\\{[^}]*width:\\s*(\\d+|\\w+)/);
+    const ftWidth = ftMatch ? (parseInt(ftMatch[1]) || constants[ftMatch[1]] || null) : null;
+
+    console.log(JSON.stringify({
+        ftWidth: ftWidth,
+        sbWidth: sbWidth,
+        passed: ftWidth !== null && sbWidth !== null && ftWidth < sbWidth && ftWidth > 0
+    }));
+    """.replace("LAYOUT_PATH", LAYOUT)
+
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True, text=True, timeout=15, cwd=REPO,
+    )
+    assert r.returncode == 0, "Node execution failed: " + r.stderr
+
+    result = json.loads(r.stdout.strip())
+    assert result.get("passed"), \
+        "fileTree width (" + str(result.get('ftWidth')) + ") must be > 0 and < sidebar width (" + str(result.get('sbWidth')) + ")"
 
 
 # [pr_diff] fail_to_pass
@@ -140,7 +219,7 @@ def test_helper_methods_use_filetree_width():
 
         // Get sidebar width from createStore
         const csIdx = src.indexOf('createStore(');
-        const sbMatch = src.substring(csIdx).match(/sidebar:\\s*{{[^}}]*width:\\s*(\\w+)/);
+        const sbMatch = src.substring(csIdx).match(/sidebar:\\s*\\{{[^}}]*width:\\s*(\\w+)/);
         let sbWidth = null;
         if (sbMatch) {{
             const n = parseInt(sbMatch[1]);
@@ -148,7 +227,7 @@ def test_helper_methods_use_filetree_width():
         }}
 
         // Find all setStore('fileTree', {{...width:X...}}) calls
-        const setStoreRe = /setStore\\s*\\(\\s*['"]fileTree['"].*?{{[^}}]*width\\s*:\\s*(\\w+)/g;
+        const setStoreRe = /setStore\\s*\\(\\s*['"]fileTree['"].*?\\{{[^}}]*width\\s*:\\s*(\\w+)/g;
         const widths = [];
         let sm;
         while ((sm = setStoreRe.exec(src)) !== null) {{
@@ -163,7 +242,7 @@ def test_helper_methods_use_filetree_width():
     """))
     widths = result["widths"]
     sb_width = result["sbWidth"]
-    assert len(widths) > 0, "No setStore('fileTree', {width:...}) calls found"
+    assert len(widths) > 0, "No setStore('fileTree', {{width:...}}) calls found"
     assert sb_width is not None, "Could not determine sidebar width"
     for w in widths:
         assert isinstance(w, (int, float)), f"Unresolved width: {w}"

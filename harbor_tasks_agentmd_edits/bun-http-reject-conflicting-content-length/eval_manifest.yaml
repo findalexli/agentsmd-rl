@@ -1,0 +1,49 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28838
+  base_commit: "5b3ca83b84f90ccc9c71005db0ab9bd87850bc70"
+  merge_commit: "196ed8a1bd4d5c9915e71816ce64a6a281eee23e"
+
+checks:
+  # Code behavior checks — HTTP parser fix
+  - id: http_parser_validates_duplicate_content_length
+    type: fail_to_pass
+    origin: pr_diff
+    description: "HttpParser validates all Content-Length headers and rejects conflicting values"
+
+  - id: http_parser_rejects_empty_content_length
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Empty Content-Length values are rejected to prevent smuggling bypass"
+
+  # Code behavior checks — pr-comments.ts script
+  - id: pr_comments_script_parses
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pr-comments.ts exists and is valid TypeScript that bun can transpile"
+
+  # Config/documentation update checks
+  - id: claude_md_documents_pr_comments
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md documents the pr:comments script with usage examples"
+
+  - id: package_json_has_pr_comments
+    type: fail_to_pass
+    origin: pr_diff
+    description: "package.json includes pr:comments script entry pointing to pr-comments.ts"
+
+  # Pass-to-pass regression
+  - id: http_parser_content_length_parsing_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Basic Content-Length and Transfer-Encoding parsing still intact"
+
+rubric:
+  - rule: "Follow existing code style - check neighboring files for patterns"
+    source:
+      path: "CLAUDE.md"
+      lines: "245"
+      commit: "5b3ca83b84f90ccc9c71005db0ab9bd87850bc70"

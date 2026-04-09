@@ -3,12 +3,13 @@ Task: vscode-prompt-parent-repo-loop
 Repo: microsoft/vscode @ 68cb51843c3f0f4e551479f825d18c954e88c778
 
 Fix: Prevent infinite loop in findParentRepoFolders when walking up
-directory tree by checking for filesystem root (fixed-point of dirname)
-and deduplicating the termination conditions.
+directory tree by restructuring do-while into while(true) with explicit
+break on dirname fixed-point, root path, user home, and seen-set checks.
 
 All checks must pass for reward = 1. Any failure = reward 0.
 """
 
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/vscode"
@@ -20,53 +21,187 @@ def test_file_exists():
     assert Path(TARGET).exists()
 
 
-def test_while_true_loop():
-    """Should use while(true) instead of do-while for clearer termination."""
-    src = Path(TARGET).read_text()
-    assert "while (true)" in src or "while(true)" in src, \
-        "Should use while(true) loop"
+def test_loop_terminates_at_drive_root():
+    """
+    The findParentRepoFolders loop must terminate when dirname hits a
+    fixed point (e.g., Windows drive root where dirname('/c:/') === '/c:/').
+
+    Reads the actual source, verifies the while(true) + isEqual(current, parent)
+    structure, then simulates the algorithm with mock URIs to confirm termination.
+
+    Base (buggy do-while): fails — no while(true), no fixed-point check.
+    Fix (while-true + break): passes — terminates at drive root.
+    """
+    script = Path(REPO) / "_eval_loop_test.mjs"
+    script.write_text(r"""
+import { readFileSync } from 'fs';
+
+const src = readFileSync(
+    'src/vs/workbench/contrib/chat/common/promptSyntax/utils/promptFilesLocator.ts',
+    'utf8'
+);
+
+// Locate the findParentRepoFolders method
+const idx = src.indexOf('findParentRepoFolders');
+if (idx < 0) { console.error('FAIL: method not found'); process.exit(1); }
+const body = src.slice(idx, idx + 2000);
+
+// Buggy version has do { ... } while(...) — misses dirname fixed-point.
+// Fixed version uses while(true) { ... break when isEqual(current, parent) ... }
+if (/\bdo\s*\{/.test(body) && !/while\s*\(\s*true\s*\)/.test(body)) {
+    console.error('FAIL: do-while loop lacks dirname fixed-point termination');
+    process.exit(1);
+}
+if (!/while\s*\(\s*true\s*\)/.test(body)) {
+    console.error('FAIL: expected while(true) loop');
+    process.exit(1);
+}
+if (!/isEqual\s*\(\s*current\s*,\s*parent\s*\)/.test(body)) {
+    console.error('FAIL: missing isEqual(current, parent) fixed-point check');
+    process.exit(1);
+}
+
+// Simulate the fixed algorithm with a Windows-style drive root
+function makeUri(p) { return { path: p }; }
+function dirname(uri) {
+    if (/^\/[a-z]:\/$/i.test(uri.path)) return makeUri(uri.path);
+    const i = uri.path.lastIndexOf('/');
+    if (i <= 0) return makeUri('/');
+    return makeUri(uri.path.slice(0, i));
+}
+function isEqual(a, b) { return a.path === b.path; }
+
+let current = makeUri('/c:/Users/me/deep/project');
+const userHome = makeUri('/unrelated/home');
+const seen = new Set();
+let iters = 0;
+
+while (true) {
+    if (++iters > 100) { console.error('FAIL: loop did not terminate'); process.exit(1); }
+    const parent = dirname(current);
+    if (isEqual(current, parent) || current.path === '/'
+        || isEqual(userHome, parent) || seen.has(parent.path)) break;
+    seen.add(current.path);
+    current = parent;
+}
+
+console.log('PASS:terminated_after_' + iters + '_iterations');
+""")
+    try:
+        r = subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=15, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+    assert r.returncode == 0, f"Terminated with error: {r.stderr}"
+    assert "PASS:terminated_after_" in r.stdout
 
 
-def test_dirname_fixed_point_check():
-    """Should check for dirname fixed-point (filesystem root)."""
-    src = Path(TARGET).read_text()
-    assert "isEqual(current, parent)" in src, \
-        "Should check if dirname(current) == current (filesystem root)"
+def test_parent_computed_inside_loop():
+    """
+    dirname(current) must be computed inside the while(true) body, not
+    before the loop. The buggy version pre-computes parent before the
+    do-while, so the first iteration uses a stale parent value.
+
+    Base: fails (parent = dirname(current) appears before do-while).
+    Fix: passes (const parent = dirname(current) inside while-true body).
+    """
+    script = Path(REPO) / "_eval_parent_test.mjs"
+    script.write_text(r"""
+import { readFileSync } from 'fs';
+
+const src = readFileSync(
+    'src/vs/workbench/contrib/chat/common/promptSyntax/utils/promptFilesLocator.ts',
+    'utf8'
+);
+
+const idx = src.indexOf('findParentRepoFolders');
+if (idx < 0) { console.error('FAIL: method not found'); process.exit(1); }
+const body = src.slice(idx, idx + 2000);
+
+const loopStart = Math.max(
+    body.indexOf('while (true)'),
+    body.indexOf('while(true)')
+);
+if (loopStart < 0) {
+    console.error('FAIL: no while(true) loop found');
+    process.exit(1);
+}
+
+// parent = dirname(current) must appear AFTER the loop start
+const afterLoop = body.slice(loopStart);
+if (!/(?:const|let)\s+parent\s*=\s*dirname\(current\)/.test(afterLoop)) {
+    console.error('FAIL: parent = dirname(current) not inside loop body');
+    process.exit(1);
+}
+
+// Must NOT have 'let parent = dirname(current)' before the loop
+const beforeLoop = body.slice(0, loopStart);
+if (/let\s+parent\s*=\s*dirname\(current\)/.test(beforeLoop)) {
+    console.error('FAIL: parent computed before loop (buggy pattern)');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    try:
+        r = subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=15, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-def test_root_path_check():
-    """Should check for root path '/'."""
-    src = Path(TARGET).read_text()
-    assert "current.path === '/'" in src or "path === '/'" in src, \
-        "Should check for root path '/'"
+def test_break_with_all_termination_conditions():
+    """
+    The break guard must include all four termination conditions:
+    1. isEqual(current, parent) — dirname fixed-point (filesystem root)
+    2. current.path === '/' — Unix root
+    3. isEqual(userHome, parent) — user home boundary
+    4. seen.has(parent) — already-visited folder
 
+    Base: fails (missing isEqual(current,parent), checks current not parent
+          for userHome/seen).
+    Fix: passes (all four present with correct operands).
+    """
+    script = Path(REPO) / "_eval_break_test.mjs"
+    script.write_text(r"""
+import { readFileSync } from 'fs';
 
-def test_seen_set_check():
-    """Should check seen set to prevent revisiting."""
-    src = Path(TARGET).read_text()
-    assert "seen.has(parent)" in src, \
-        "Should check seen set for parent"
+const src = readFileSync(
+    'src/vs/workbench/contrib/chat/common/promptSyntax/utils/promptFilesLocator.ts',
+    'utf8'
+);
 
+const idx = src.indexOf('findParentRepoFolders');
+if (idx < 0) { console.error('FAIL: method not found'); process.exit(1); }
+const body = src.slice(idx, idx + 2000);
 
-def test_break_instead_of_dowhile():
-    """Should use break statement to exit loop."""
-    src = Path(TARGET).read_text()
-    # Find the while(true) and verify there's a break
-    in_loop = False
-    has_break = False
-    for line in src.split('\n'):
-        if 'while (true)' in line or 'while(true)' in line:
-            in_loop = True
-        if in_loop and 'break' in line:
-            has_break = True
-            break
-    assert has_break, "Should have break statement in while(true) loop"
+const conditions = [
+    [/isEqual\(current,\s*parent\)/, 'dirname fixed-point check (isEqual(current, parent))'],
+    [/current\.path\s*===\s*'\/'/,   'root path check (current.path === \'/\')'],
+    [/isEqual\(userHome,\s*parent\)/, 'user home boundary (isEqual(userHome, parent))'],
+    [/seen\.has\(parent\)/,           'seen-set dedup (seen.has(parent))'],
+];
 
+const missing = conditions.filter(([re]) => !re.test(body));
+if (missing.length > 0) {
+    console.error('FAIL: missing: ' + missing.map(([, n]) => n).join(', '));
+    process.exit(1);
+}
 
-def test_dirname_called_inside_loop():
-    """dirname should be called inside the loop (moved from do-while condition)."""
-    src = Path(TARGET).read_text()
-    # The parent should be computed inside the loop body
-    assert "const parent = dirname(current)" in src or \
-           "parent = dirname(current)" in src, \
-        "dirname(current) should be computed inside loop body"
+console.log('PASS:all_conditions_present');
+""")
+    try:
+        r = subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=15, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS:all_conditions_present" in r.stdout

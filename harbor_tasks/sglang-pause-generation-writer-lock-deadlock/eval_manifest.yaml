@@ -1,0 +1,36 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22290
+  base_commit: "8c3d80eabec2d2a41ccff4d15b5fc81e59d24fbe"
+  merge_commit: "6c2a759a04232ef4cb0c845528d75516ddbd9fe2"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  - id: update_weights_from_ipc_uses_pause_check
+    type: fail_to_pass
+    origin: pr_diff
+    description: "update_weights_from_ipc must check is_pause before acquiring writer_lock to avoid deadlock"
+
+  - id: pattern_matches_reference_implementation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Fix must match the established pause-aware locking pattern in update_weights_from_distributed"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified function has real logic, not just pass/return"
+
+  - id: function_structure_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Function maintains proper async structure and exception handling"
+
+rubric:
+  []

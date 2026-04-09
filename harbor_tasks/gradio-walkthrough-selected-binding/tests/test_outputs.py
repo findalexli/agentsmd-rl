@@ -18,7 +18,7 @@ TARGET = REPO / "js" / "tabs" / "Index.svelte"
 
 def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute JavaScript code via Node.js in the repo directory."""
-    script = REPO / "_eval_tmp.mjs"
+    script = REPO / "_eval_tmp.cjs"
     script.write_text(code)
     try:
         return subprocess.run(

@@ -8,7 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import importlib.util
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/prime-rl"
@@ -16,11 +16,12 @@ CONFIG_PY = f"{REPO}/src/prime_rl/trainer/models/nemotron_h/configuration_nemotr
 MODELING_PY = f"{REPO}/src/prime_rl/trainer/models/nemotron_h/modeling_nemotron_h.py"
 
 
-def _load_config_class():
-    spec = importlib.util.spec_from_file_location("configuration_nemotron_h", CONFIG_PY)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod.NemotronHConfig
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in a subprocess with the repo on PYTHONPATH."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -42,48 +43,60 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_nano_30b_dimension_invariant():
     """Config mamba_expand yields correct intermediate_size for Nano-30B."""
-    NemotronHConfig = _load_config_class()
-    # Nemotron-3-Nano-30B: mamba_num_heads=64, mamba_head_dim=64, hidden_size=2688
-    # Bug: raw mamba_expand=2 gives int(2*2688)=5376, expected 64*64=4096
-    config = NemotronHConfig(hidden_size=2688, mamba_num_heads=64, mamba_head_dim=64, mamba_expand=2)
-    expected = 64 * 64  # 4096
-    actual = int(config.mamba_expand * config.hidden_size)
-    assert actual == expected, f"intermediate_size={actual}, expected {expected}"
+    r = _run_py("""
+from prime_rl.trainer.models.nemotron_h.configuration_nemotron_h import NemotronHConfig
+config = NemotronHConfig(hidden_size=2688, mamba_num_heads=64, mamba_head_dim=64, mamba_expand=2)
+expected = 64 * 64  # 4096
+actual = int(config.mamba_expand * config.hidden_size)
+assert actual == expected, f"intermediate_size={actual}, expected {expected}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_multiple_dimension_combos():
     """Config mamba_expand correct for varied hidden_size / head combos."""
-    NemotronHConfig = _load_config_class()
-    # Each case: (hidden_size, mamba_num_heads, mamba_head_dim, raw_mamba_expand)
-    # All chosen so raw_expand * hidden_size != heads * head_dim
-    cases = [
-        (1024, 32, 48, 3),   # expected 1536, raw gives 3072
-        (512,  16, 48, 2),   # expected  768, raw gives 1024
-        (2048, 64, 64, 1),   # expected 4096, raw gives 2048
-    ]
-    for hs, nh, hd, me in cases:
-        config = NemotronHConfig(hidden_size=hs, mamba_num_heads=nh, mamba_head_dim=hd, mamba_expand=me)
-        expected = nh * hd
-        actual = int(config.mamba_expand * config.hidden_size)
-        assert actual == expected, f"hs={hs} nh={nh} hd={hd}: got {actual}, expected {expected}"
+    r = _run_py("""
+from prime_rl.trainer.models.nemotron_h.configuration_nemotron_h import NemotronHConfig
+cases = [
+    (1024, 32, 48, 3),   # expected 1536, raw gives 3072
+    (512,  16, 48, 2),   # expected  768, raw gives 1024
+    (2048, 64, 64, 1),   # expected 4096, raw gives 2048
+]
+for hs, nh, hd, me in cases:
+    config = NemotronHConfig(hidden_size=hs, mamba_num_heads=nh, mamba_head_dim=hd, mamba_expand=me)
+    expected = nh * hd
+    actual = int(config.mamba_expand * config.hidden_size)
+    assert actual == expected, f"hs={hs} nh={nh} hd={hd}: got {actual}, expected {expected}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_fractional_expand_precision():
     """No off-by-one from float truncation when expand is not a clean fraction."""
-    NemotronHConfig = _load_config_class()
-    # 3840 / 2688 = 1.42857142857... (repeating)
-    config = NemotronHConfig(hidden_size=2688, mamba_num_heads=80, mamba_head_dim=48, mamba_expand=2)
-    expected = 80 * 48  # 3840
-    actual = int(config.mamba_expand * config.hidden_size)
-    assert actual == expected, f"Fractional case: got {actual}, expected {expected}"
+    r = _run_py("""
+from prime_rl.trainer.models.nemotron_h.configuration_nemotron_h import NemotronHConfig
 
-    # 3072 / 1536 = 2.0 (clean fraction, should still work)
-    config2 = NemotronHConfig(hidden_size=1536, mamba_num_heads=48, mamba_head_dim=64, mamba_expand=4)
-    expected2 = 48 * 64  # 3072
-    actual2 = int(config2.mamba_expand * config2.hidden_size)
-    assert actual2 == expected2, f"Clean fraction case: got {actual2}, expected {expected2}"
+# 3840 / 2688 = 1.42857142857... (repeating)
+config = NemotronHConfig(hidden_size=2688, mamba_num_heads=80, mamba_head_dim=48, mamba_expand=2)
+expected = 80 * 48  # 3840
+actual = int(config.mamba_expand * config.hidden_size)
+assert actual == expected, f"Fractional case: got {actual}, expected {expected}"
+
+# 3072 / 1536 = 2.0 (clean fraction, should still work)
+config2 = NemotronHConfig(hidden_size=1536, mamba_num_heads=48, mamba_head_dim=64, mamba_expand=4)
+expected2 = 48 * 64  # 3072
+actual2 = int(config2.mamba_expand * config2.hidden_size)
+assert actual2 == expected2, f"Clean fraction case: got {actual2}, expected {expected2}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -93,13 +106,17 @@ def test_fractional_expand_precision():
 # [pr_diff] pass_to_pass
 def test_120b_default_config():
     """120B default config still produces correct mamba_expand."""
-    NemotronHConfig = _load_config_class()
-    # Default config (120B): hidden_size=4096, mamba_num_heads=128, mamba_head_dim=64
-    config = NemotronHConfig()
-    expected = 128 * 64  # 8192
-    actual = int(config.mamba_expand * config.hidden_size)
-    assert actual == expected, f"120B: got {actual}, expected {expected}"
-    assert config.mamba_expand > 0, "mamba_expand must be positive"
+    r = _run_py("""
+from prime_rl.trainer.models.nemotron_h.configuration_nemotron_h import NemotronHConfig
+config = NemotronHConfig()
+expected = 128 * 64  # 8192
+actual = int(config.mamba_expand * config.hidden_size)
+assert actual == expected, f"120B: got {actual}, expected {expected}"
+assert config.mamba_expand > 0, "mamba_expand must be positive"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [static] pass_to_pass

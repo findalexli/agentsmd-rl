@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92081
+  base_commit: "4b62ff78c0ad4117477ab78806df809f4c1f8b33"
+  merge_commit: "9b66a376e7e66c51d1a0952a96e3c377b56bd81a"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "config.ts must be valid TypeScript (parseable by Node)"
+
+  - id: dynamicio_fatal_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "dynamicIO in experimental config must produce a fatal error mentioning cacheComponents"
+
+  - id: dynamicio_includes_docs_link
+    type: fail_to_pass
+    origin: pr_diff
+    description: "dynamicIO fatal error must include a link to the cacheComponents docs"
+
+  - id: turbopack_handling_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "turbopackPersistentCaching must still produce a fatal error"
+
+  - id: generic_unrecognized_key_is_warning
+    type: pass_to_pass
+    origin: pr_diff
+    description: "An unrecognized experimental key (not dynamicIO or turbopack) should be a warning, not fatal"
+
+rubric: []

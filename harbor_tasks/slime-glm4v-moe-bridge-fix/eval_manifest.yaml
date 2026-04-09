@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1738
+  base_commit: "e4d22dc929169fcc2cdf538d1798d9a5473f4d1d"
+  merge_commit: "f71f7103dfdffdc65064d5798a4b68a242461084"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified file must parse without syntax errors"
+
+  - id: decoder_block_spec_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_gpt_decoder_block_spec must be imported instead of legacy get_gpt_layer_with_transformer_engine_spec"
+
+  - id: moe_layer_freq_is_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "moe_layer_freq must be constructed as a list, not a string expression"
+
+  - id: moe_layer_freq_varied_configs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "moe_layer_freq list must be correct for various first_k_dense / num_layers combinations"
+
+  - id: provide_uses_decoder_block_spec
+    type: fail_to_pass
+    origin: pr_diff
+    description: "provide() must call get_gpt_decoder_block_spec with config= keyword argument"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "provider_bridge and provide methods have real logic, not stubs"
+
+rubric: []

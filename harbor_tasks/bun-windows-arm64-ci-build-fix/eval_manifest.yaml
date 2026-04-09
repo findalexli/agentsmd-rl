@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28922
+  base_commit: "cd4459476a5f0af4e45b8594ac88732ba6d79afb"
+  merge_commit: "5b3ca83b84f90ccc9c71005db0ab9bd87850bc70"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified ci.mjs file must parse as valid JavaScript"
+
+  - id: windows_arm64_uses_bun_runtime
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Windows ARM64 target uses 'bun' runtime instead of 'node --experimental-strip-types' to fix 0xC0000409 crash"
+
+  - id: skip_size_check_option_parsed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "skipSizeCheck option is parsed from commit message flags like '[skip size check]'"
+
+  - id: binary_size_step_function_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getBinarySizeStep function exists with proper step structure including key, command, and threshold"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified getBuildCommand function has real logic with runtime variable, not just simple return"
+
+  - id: other_platforms_use_node
+    type: pass_to_pass
+    origin: static
+    description: "Non-Windows-ARM64 platforms still use node --experimental-strip-types runtime"
+
+rubric: []

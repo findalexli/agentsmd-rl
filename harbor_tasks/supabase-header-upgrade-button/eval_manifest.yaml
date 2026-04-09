@@ -1,0 +1,86 @@
+version: "2.0"
+
+source:
+  repo: "supabase/supabase"
+  pr: 44494
+  base_commit: "cccae29569c129e52178837d6d4662baa11f5986"
+  merge_commit: "b9e83b25e1ba5d7135a4a608ad4cad926d6bd62a"
+
+checks:
+  - id: header_upgrade_button_component
+    type: fail_to_pass
+    origin: pr_diff
+    description: "HeaderUpgradeButton component exists with experiment gating and free-plan check"
+
+  - id: header_upgrade_tracks_click_event
+    type: fail_to_pass
+    origin: pr_diff
+    description: "HeaderUpgradeButton tracks header_upgrade_cta_clicked on click via useTrack"
+
+  - id: upgrade_plan_button_accepts_onclick
+    type: fail_to_pass
+    origin: pr_diff
+    description: "UpgradePlanButton accepts an onClick callback prop and forwards it to Button"
+
+  - id: telemetry_event_interface_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "HeaderUpgradeCtaClickedEvent interface defined with correct action in telemetry-constants.ts"
+
+  - id: layout_header_renders_upgrade_button
+    type: fail_to_pass
+    origin: pr_diff
+    description: "LayoutHeader imports and renders HeaderUpgradeButton"
+
+  - id: mobile_nav_renders_upgrade_button
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MobileNavigationBar imports and renders HeaderUpgradeButton"
+
+  - id: telemetry_event_naming_convention
+    type: fail_to_pass
+    origin: agent_config
+    description: "Telemetry event name follows [object]_[verb] snake_case with approved verb"
+    source:
+      path: ".claude/skills/telemetry-standards/SKILL.md"
+      lines: "15-19"
+      commit: "cccae29569c129e52178837d6d4662baa11f5986"
+
+  - id: telemetry_event_in_union_type
+    type: fail_to_pass
+    origin: agent_config
+    description: "HeaderUpgradeCtaClickedEvent added to TelemetryEvent union type"
+    source:
+      path: ".claude/skills/telemetry-standards/SKILL.md"
+      lines: "158"
+      commit: "cccae29569c129e52178837d6d4662baa11f5986"
+
+  - id: node_parses_modified_files
+    type: pass_to_pass
+    origin: static
+    description: "All modified TypeScript files are readable and non-empty"
+
+rubric:
+  - rule: "Co-locate sub-components with parent. Avoid barrel re-export files."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "36"
+      commit: "cccae29569c129e52178837d6d4662baa11f5986"
+
+  - rule: "Keep components under 200-300 lines. Split when you see multiple distinct UI sections, complex conditional rendering, multiple unrelated useState calls."
+    source:
+      path: ".claude/skills/studio-best-practices/SKILL.md"
+      lines: "55-60"
+      commit: "cccae29569c129e52178837d6d4662baa11f5986"
+
+  - rule: "Use descriptive boolean prefixes: is (state/identity), has (possession), can (capability), should (conditional behavior). Derive booleans from existing state rather than storing separately."
+    source:
+      path: ".claude/skills/studio-best-practices/SKILL.md"
+      lines: "13-20"
+      commit: "cccae29569c129e52178837d6d4662baa11f5986"
+
+  - rule: "Prop callbacks use on prefix (onClose, onSave). Internal handlers use handle prefix (handleSubmit, handleCancel)."
+    source:
+      path: ".claude/skills/studio-best-practices/SKILL.md"
+      lines: "123-126"
+      commit: "cccae29569c129e52178837d6d4662baa11f5986"

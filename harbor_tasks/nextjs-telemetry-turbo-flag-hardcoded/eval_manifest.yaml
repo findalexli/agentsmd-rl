@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92149
+  base_commit: "a215ea60a2d0012a9c52f96a97fcaf9af1f5d453"
+  merge_commit: "e3b81e05b28c0e888534092717be2074a1aa24c9"
+
+checks:
+  - id: build_turbo_flag_not_hardcoded
+    type: fail_to_pass
+    origin: pr_diff
+    description: "turboFlag in build/index.ts telemetry must not be hardcoded to false"
+
+  - id: export_turbo_flag_not_hardcoded
+    type: fail_to_pass
+    origin: pr_diff
+    description: "turboFlag in export/index.ts telemetry must not be hardcoded to false"
+
+  - id: build_turbo_flag_references_bundler
+    type: fail_to_pass
+    origin: pr_diff
+    description: "turboFlag in build/index.ts must reference the bundler, not a boolean literal"
+
+  - id: export_options_has_bundler_field
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ExportAppOptions interface must include a bundler field"
+
+  - id: export_imports_bundler
+    type: fail_to_pass
+    origin: pr_diff
+    description: "export/index.ts must import Bundler to resolve the enum for turboFlag"
+
+  - id: bundler_enum_exists
+    type: pass_to_pass
+    origin: static
+    description: "Bundler enum must exist with Turbopack member"
+
+  - id: telemetry_record_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Build and export files must still contain turboFlag telemetry field"
+
+rubric: []

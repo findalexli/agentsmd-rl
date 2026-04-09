@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38997
+  base_commit: "f53fa26e05c476a43f6db048a9e3b43bcb2b72fb"
+  merge_commit: "4dd49b06f81af2238ac5a86cfb0b7220083eb125"
+
+checks:
+  - id: encoder_cudagraph_internal_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: "encoder_cudagraph.py must import encoder_cudagraph_defs from vllm.v1.worker, not vllm.v1.worker.gpu.mm"
+
+  - id: qwen3_vl_lazy_imports
+    type: fail_to_pass
+    origin: pr_diff
+    description: "qwen3_vl.py lazy imports of encoder_cudagraph_defs must use correct module path"
+
+  - id: gpu_model_runner_imports
+    type: fail_to_pass
+    origin: pr_diff
+    description: "gpu_model_runner.py must import encoder_cudagraph modules from vllm.v1.worker"
+
+  - id: no_stale_import_paths
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No .py file in the codebase references the non-existent vllm.v1.worker.gpu.mm.encoder_cudagraph path"
+
+  - id: encoder_modules_at_correct_location
+    type: pass_to_pass
+    origin: static
+    description: "encoder_cudagraph.py and encoder_cudagraph_defs.py exist at vllm/v1/worker/"
+
+rubric: []

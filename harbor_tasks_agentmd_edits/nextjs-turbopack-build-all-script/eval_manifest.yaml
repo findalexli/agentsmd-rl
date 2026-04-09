@@ -1,0 +1,44 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 90543
+  base_commit: "46761a321042e8ac1863f4cfc8d73d527956e181"
+  merge_commit: "ef970c06fb7ef8337db50ef962bb13f3f2d3204f"
+
+checks:
+  # Syntax validation
+  - id: json_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified JSON files must be syntactically valid"
+
+  # Core code changes - build script separation
+  - id: build_all_script_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Root package.json has build-all script referencing build-native-auto"
+
+  - id: next_swc_script_renamed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/next-swc/package.json build script renamed to build-native-auto"
+
+  - id: turbo_jsonc_task_renamed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "turbo.jsonc has build-native-auto task with explanatory comment"
+
+  # Config documentation updates (at least one required for agentmd-edit)
+  - id: agents_md_documents_build_all
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md documents pnpm build-all and distinguishes it from pnpm build"
+
+  - id: agents_md_branch_switch_uses_build_all
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md recommends build-all for branch switches and Turbopack edits"
+
+rubric:
+  []

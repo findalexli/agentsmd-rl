@@ -1,0 +1,66 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 17144
+  base_commit: "c9c0318e0e5c2fcd80fc1a32a1ccfe360f182f90"
+  merge_commit: "328c6de80d51704c09bdd962df2ddf5b9d7c82ea"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Gates (pass_to_pass, static) — syntax / compilation checks
+  # ---------------------------------------------------------------------------
+  - id: typescript_syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "New and modified TypeScript files must parse without errors"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # ---------------------------------------------------------------------------
+  - id: terminal_probe_file_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The terminal probe/driver file must be created with proper exports"
+
+  - id: actions_has_terminal_helpers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "actions.ts must export waitTerminalReady and runTerminal helpers"
+
+  - id: terminal_component_integrates_probe
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Terminal component must integrate the terminal probe system"
+
+  - id: fixtures_enables_terminal_driver
+    type: fail_to_pass
+    origin: pr_diff
+    description: "fixtures.ts must enable the test-only terminal driver in init script"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (agent_config) — config documentation update tests
+  # ---------------------------------------------------------------------------
+  - id: agents_md_documents_terminal_testing
+    type: fail_to_pass
+    origin: agent_config
+    description: "AGENTS.md must document the terminal testing pattern with waitTerminalReady and runTerminal"
+    source:
+      path: "packages/app/e2e/AGENTS.md"
+      lines: "167-180"
+      commit: "c9c0318e0e5c2fcd80fc1a32a1ccfe360f182f90"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static) — anti-stub checks
+  # ---------------------------------------------------------------------------
+  - id: terminal_probe_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Terminal probe implementation must have real logic, not just empty functions"
+
+  - id: run_terminal_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "runTerminal helper must have real implementation with typing and waiting logic"
+
+rubric: []

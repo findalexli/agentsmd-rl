@@ -1,0 +1,52 @@
+version: "2.0"
+
+source:
+  repo: "goose-lang/goose"
+  pr: 94
+  base_commit: "3be88bbb4982f58e5813b6f0344302d5582c8e8a"
+  merge_commit: "0fda1a638596598c27aa37345101ee254ba48c55"
+
+checks:
+  # Core behavior: dependencies added to go.mod
+  - id: go_mod_deps_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "go.mod includes goose-lang/primitive and goose-lang/std dependencies"
+
+  # Core behavior: dependencies in go.sum
+  - id: go_sum_deps_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "go.sum includes checksums for goose-lang/primitive and goose-lang/std"
+
+  # Core behavior: channel model created
+  - id: channel_model_created
+    type: fail_to_pass
+    origin: pr_diff
+    description: "model/channel/channel.go created with Channel struct and methods"
+
+  # Core behavior: channel README created
+  - id: channel_readme_created
+    type: fail_to_pass
+    origin: pr_diff
+    description: "model/channel/README.md created with documentation"
+
+  # Core behavior: code compiles
+  - id: go_build_succeeds
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Go code compiles without errors after adding channel model"
+
+  # Syntax check: Go files are valid
+  - id: go_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified Go files have valid syntax"
+
+  # Anti-stub: channel.go has substantial content
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "channel.go has real implementation, not just stubs"
+
+rubric: []

@@ -1,0 +1,162 @@
+"""
+Task: playwright-dashboard-workspace-ordering
+Repo: microsoft/playwright @ 883825e4d62aac69939b8f4c0f1cf41e72882079
+PR:   40069
+
+Dashboard should show the current workspace's sessions first and expanded,
+defaulting to 'Global' when launched from a non-workspace directory.
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import subprocess
+import os
+
+REPO = "/workspace/playwright"
+
+
+def _node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Run a node -e script in the repo directory."""
+    return subprocess.run(
+        ["node", "-e", script],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# ---------------------------------------------------------------------------
+
+
+# [pr_diff] fail_to_pass
+def test_grid_workspace_ordering():
+    """Grid must sort current workspace first, defaulting to 'Global' when
+    workspaceDir is undefined. Extracts the fallback from source and
+    simulates the sorting logic to verify behavior."""
+    script = r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/dashboard/src/grid.tsx', 'utf8');
+
+// 1) Extract the fallback value from: const currentWorkspace = clientInfo?.workspaceDir || 'Global'
+const m = src.match(/currentWorkspace\s*=\s*clientInfo\?\.workspaceDir\s*\|\|\s*['"]([^'"]+)['"]/);
+if (!m) throw new Error('Missing: currentWorkspace = clientInfo?.workspaceDir || "Global"');
+if (m[1] !== 'Global') throw new Error('Expected Global fallback, got: ' + m[1]);
+
+// 2) Verify currentWorkspace is used in the filter (not raw clientInfo?.workspaceDir)
+if (!src.includes('key === currentWorkspace'))
+  throw new Error('Filter must use currentWorkspace, not clientInfo?.workspaceDir');
+
+// 3) Simulate the sorting logic with the extracted fallback
+function sortGroups(groups, workspaceDir) {
+  const cw = workspaceDir || 'Global';
+  const entries = [...groups.entries()];
+  const current = entries.filter(([k]) => k === cw);
+  const other = entries.filter(([k]) => k !== cw).sort((a, b) => a[0].localeCompare(b[0]));
+  return [...current, ...other];
+}
+
+const groups = new Map([
+  ['Global', [{title: 'g'}]],
+  ['/home/user/proj', [{title: 'p'}]],
+]);
+
+// undefined workspaceDir -> Global first
+const r1 = sortGroups(groups, undefined);
+if (r1[0][0] !== 'Global') throw new Error('Global should be first when workspaceDir is undefined');
+
+// specific workspaceDir -> that workspace first
+const r2 = sortGroups(groups, '/home/user/proj');
+if (r2[0][0] !== '/home/user/proj') throw new Error('Specific workspace should be first');
+
+// workspaceDir not matching any group -> all sorted alphabetically
+const groups3 = new Map([['Beta', [1]], ['Alpha', [2]]]);
+const r3 = sortGroups(groups3, undefined);
+if (r3[0][0] !== 'Alpha' || r3[1][0] !== 'Beta') throw new Error('Non-matching groups should be sorted');
+
+console.log('OK');
+"""
+    r = _node(script)
+    assert r.returncode == 0, f"Grid workspace ordering failed:\n{r.stderr}"
+
+
+# [pr_diff] fail_to_pass
+def test_dashboard_api_sends_client_info():
+    """dashboardApp.ts must import createClientInfo and include clientInfo
+    in the /api/sessions/list response."""
+    script = r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright-core/src/tools/dashboard/dashboardApp.ts', 'utf8');
+
+// 1) Must import createClientInfo from the correct path
+if (!src.includes("import { createClientInfo } from '../cli-client/registry'"))
+  throw new Error("Missing: import { createClientInfo } from '../cli-client/registry'");
+
+// 2) The /api/sessions/list handler must create clientInfo
+const listSection = src.match(/api\/sessions\/list[\s\S]*?return;\s*\}/);
+if (!listSection) throw new Error('Could not find /api/sessions/list handler');
+const handler = listSection[0];
+if (!handler.includes('createClientInfo()'))
+  throw new Error('/api/sessions/list handler must call createClientInfo()');
+
+// 3) sendJSON must include clientInfo alongside sessions
+if (!handler.includes('clientInfo'))
+  throw new Error('sendJSON response must include clientInfo');
+
+// 4) Verify the response shape: { sessions, clientInfo }
+if (!handler.match(/sendJSON\(response,\s*\{\s*sessions\s*,\s*clientInfo\s*\}\)/))
+  throw new Error('sendJSON must send { sessions, clientInfo }');
+
+console.log('OK');
+"""
+    r = _node(script)
+    assert r.returncode == 0, f"Dashboard API client info check failed:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (pr_diff) — regression checks
+# ---------------------------------------------------------------------------
+
+
+# [pr_diff] pass_to_pass
+def test_grid_alphabetical_sorting():
+    """Non-current workspace groups must still be sorted alphabetically
+    (localeCompare). This is preserved behavior from the base commit."""
+    script = r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/dashboard/src/grid.tsx', 'utf8');
+
+// The 'other' groups must use localeCompare for sorting
+if (!src.includes('.localeCompare('))
+  throw new Error('Missing localeCompare for alphabetical sorting');
+
+// The sort must apply to the 'other' (non-current) entries
+const sortPattern = /\.sort\(\(a,\s*b\)\s*=>\s*a\[0\]\.localeCompare\(b\[0\]\)\)/;
+if (!sortPattern.test(src))
+  throw new Error('Sorting pattern changed — expected .sort((a, b) => a[0].localeCompare(b[0]))');
+
+console.log('OK');
+"""
+    r = _node(script)
+    assert r.returncode == 0, f"Alphabetical sorting check failed:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Config-derived (agent_config) — rules from CLAUDE.md
+# ---------------------------------------------------------------------------
+
+
+# [agent_config] fail_to_pass — CLAUDE.md:95 @ 883825e4d62aac69939b8f4c0f1cf41e72882079
+def test_deps_declares_cli_client_import():
+    """CLAUDE.md DEPS rule: 'When creating or moving files, update the
+    relevant DEPS.list to declare allowed imports.'
+    The new import from ../cli-client/registry must be listed in DEPS.list."""
+    deps_path = os.path.join(REPO, "packages/playwright-core/src/tools/dashboard/DEPS.list")
+    with open(deps_path) as f:
+        content = f.read()
+    assert "../cli-client/registry.ts" in content, (
+        "DEPS.list must declare the ../cli-client/registry.ts import"
+    )

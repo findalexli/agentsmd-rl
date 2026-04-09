@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "denoland/deno"
+  pr: 33201
+  base_commit: "8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e"
+  merge_commit: "5085a59aef53fa90dc58c8859e4feb887f0a742a"
+
+checks:
+  - id: cipheriv_update_rejects_large_input
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cipheriv.prototype.update must check buffer size >= 2^31-1 and throw"
+
+  - id: decipheriv_update_rejects_large_input
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Decipheriv.prototype.update must check buffer size >= 2^31-1 and throw"
+
+  - id: error_message_matches_nodejs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both cipher/decipher must throw 'Trying to add data in unsupported state'"
+
+  - id: size_check_before_encrypt_call
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Size check must appear before the encrypt/decrypt op call"
+
+  - id: cipher_file_structure
+    type: pass_to_pass
+    origin: static
+    description: "cipher.ts must define both Cipheriv and Decipheriv with update methods"
+
+rubric:
+  - rule: "Node.js compatibility code is in ext/node/polyfills/. When reviewing these files, check behavior against Node.js docs, not just Deno conventions."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "322-325"
+      commit: "8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e"

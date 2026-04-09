@@ -12,12 +12,26 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/vscode"
 TARGET = Path(
     f"{REPO}/src/vs/workbench/contrib/terminalContrib/chatAgentTools/browser/tools/runInTerminalTool.ts"
 )
+
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node.js in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -34,73 +48,188 @@ def test_file_exists_and_has_imports():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral changes
+# Fail-to-pass (pr_diff) — core behavioral changes via code execution
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_escape_function_not_imported():
-    """escapeMarkdownSyntaxTokens must not be imported from htmlContent.js.
+def test_invocation_message_no_double_escape():
+    """Simulate the invocation message pipeline: commands with markdown-special
+    characters (underscores, asterisks) must NOT be double-escaped.
 
-    Base commit: import includes escapeMarkdownSyntaxTokens.
-    After fix: import only contains MarkdownString and IMarkdownString.
+    Base: escapeMarkdownSyntaxTokens is called on displayCommand, so a command
+    like 'npm_run_script' becomes 'npm\\_run\\_script' inside the code span.
+    Fix: displayCommand is passed directly, so underscores render cleanly.
     """
-    content = TARGET.read_text()
-    # Collect all import lines that pull from htmlContent.js
-    htmlcontent_imports = [
-        line for line in content.splitlines()
-        if "htmlContent.js" in line and line.strip().startswith("import")
-    ]
-    assert len(htmlcontent_imports) >= 1, "htmlContent.js import line is missing"
-    for line in htmlcontent_imports:
-        assert "escapeMarkdownSyntaxTokens" not in line, (
-            f"escapeMarkdownSyntaxTokens still imported: {line.strip()}"
-        )
+    r = _run_node(r"""
+import { readFileSync } from 'fs';
+
+// escapeMarkdownSyntaxTokens from src/vs/base/common/htmlContent.ts:
+//   text.replace(/[\\`*_{}[\]()#+\-!~]/g, '\\$&')
+// Escapes markdown syntax chars with a preceding backslash.
+function escapeMarkdownSyntaxTokens(text) {
+    return text.replace(/[\\`*_{}\[\]()#+\-!~]/g, '\\$&');
+}
+
+// 2. Read the target file and find the invocation message section
+const target = readFileSync(
+    'src/vs/workbench/contrib/terminalContrib/chatAgentTools/browser/tools/runInTerminalTool.ts',
+    'utf8'
+);
+
+// 3. Check which variable is used in the localize calls for invocation messages
+const invocationLines = target.split('\n').filter(
+    l => l.includes('localize(') && l.includes('runInTerminal.invocation')
+);
+const usesEscapedVar = invocationLines.some(l => l.includes('escapedDisplayCommand'));
+
+// 4. Simulate the pipeline with a test command containing markdown chars
+const testCommand = 'npm_run_my_script --flag=test_value';
+const processed = usesEscapedVar
+    ? escapeMarkdownSyntaxTokens(testCommand)
+    : testCommand;
+
+// 5. Construct the message like VS Code does: Running `{0}`
+const message = `Running \`${processed}\``;
+
+// 6. Check for double-escaping
+if (message.includes('\\_') || message.includes('\\-')) {
+    console.log('FAIL: Double-escaped markdown chars found: ' + message);
+    process.exit(1);
+}
+if (!message.includes('npm_run_my_script')) {
+    console.log('FAIL: Command not found in message: ' + message);
+    process.exit(1);
+}
+console.log('PASS: Command renders cleanly: ' + message);
+""")
+    assert r.returncode == 0, (
+        f"Invocation message double-escapes markdown characters:\n"
+        f"stdout: {r.stdout}\nstderr: {r.stderr}"
+    )
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_escaped_display_command_removed():
-    """The escapedDisplayCommand variable must be fully removed.
+def test_escape_function_not_in_scope():
+    """escapeMarkdownSyntaxTokens must not be imported or referenced in the target file.
 
-    Base commit: const escapedDisplayCommand = escapeMarkdownSyntaxTokens(displayCommand);
-    After fix: no such variable exists.
+    Base: the import line includes escapeMarkdownSyntaxTokens, and it's called.
+    Fix: the import is removed and no references remain.
+
+    Uses Node.js to parse the file and extract all import bindings from htmlContent.js.
     """
-    content = TARGET.read_text()
-    assert "const escapedDisplayCommand" not in content, (
-        "escapedDisplayCommand variable declaration still present"
+    r = _run_node(r"""
+import { readFileSync } from 'fs';
+
+const target = readFileSync(
+    'src/vs/workbench/contrib/terminalContrib/chatAgentTools/browser/tools/runInTerminalTool.ts',
+    'utf8'
+);
+
+// Find import lines from htmlContent.js
+const importLines = target.split('\n').filter(
+    l => l.includes('htmlContent.js') && l.trimStart().startsWith('import')
+);
+
+if (importLines.length === 0) {
+    console.error('FAIL: No htmlContent.js import found at all');
+    process.exit(1);
+}
+
+// Check each import line for the escape function
+for (const line of importLines) {
+    // Extract the import specifiers between { and }
+    const specMatch = line.match(/\{([^}]+)\}/);
+    if (specMatch) {
+        const specifiers = specMatch[1].split(',').map(s => s.trim().replace(/^type\s+/, ''));
+        if (specifiers.includes('escapeMarkdownSyntaxTokens')) {
+            console.log('FAIL: escapeMarkdownSyntaxTokens is still imported: ' + line.trim());
+            process.exit(1);
+        }
+    }
+}
+
+// Also verify no references to the function or its variable remain
+const nonImportLines = target.split('\n').filter(
+    l => !l.trimStart().startsWith('import')
+);
+const bodyText = nonImportLines.join('\n');
+if (bodyText.includes('escapeMarkdownSyntaxTokens')) {
+    console.log('FAIL: escapeMarkdownSyntaxTokens still referenced in file body');
+    process.exit(1);
+}
+if (bodyText.includes('escapedDisplayCommand')) {
+    console.log('FAIL: escapedDisplayCommand variable still present in file body');
+    process.exit(1);
+}
+
+console.log('PASS: escapeMarkdownSyntaxTokens not imported or referenced');
+""")
+    assert r.returncode == 0, (
+        f"escapeMarkdownSyntaxTokens still in scope:\n"
+        f"stdout: {r.stdout}\nstderr: {r.stderr}"
     )
-    assert "escapedDisplayCommand" not in content, (
-        "References to escapedDisplayCommand still exist in file"
-    )
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_invocation_messages_use_display_command_directly():
+def test_all_localize_calls_use_display_command():
     """All 4 localize invocation calls must pass displayCommand (not escapedDisplayCommand).
 
-    Base commit: all 4 calls end with `escapedDisplayCommand)`.
-    After fix: all 4 calls end with `displayCommand)`.
+    Uses Node.js to parse the target file, find all 4 localize calls for invocation
+    messages, and verify each uses the correct variable.
     """
-    content = TARGET.read_text()
-    invocation_keys = [
-        "runInTerminal.invocation.sandbox.background",
-        "runInTerminal.invocation.sandbox",
-        "runInTerminal.invocation.background",
-        "runInTerminal.invocation",
-    ]
-    for key in invocation_keys:
-        matching = [
-            line.strip() for line in content.splitlines()
-            if key in line and "localize(" in line
-        ]
-        assert len(matching) >= 1, f"Localize call for '{key}' not found"
-        for line in matching:
-            assert "escapedDisplayCommand" not in line, (
-                f"Localize call for '{key}' still uses escapedDisplayCommand:\n  {line}"
-            )
-            # After the fix, displayCommand must appear as the argument
-            assert "displayCommand" in line, (
-                f"Localize call for '{key}' does not pass displayCommand:\n  {line}"
-            )
+    r = _run_node(r"""
+import { readFileSync } from 'fs';
+
+const target = readFileSync(
+    'src/vs/workbench/contrib/terminalContrib/chatAgentTools/browser/tools/runInTerminalTool.ts',
+    'utf8'
+);
+
+const requiredKeys = [
+    'runInTerminal.invocation.sandbox.background',
+    'runInTerminal.invocation.sandbox',
+    'runInTerminal.invocation.background',
+    'runInTerminal.invocation',
+];
+
+// For each key, the final argument to the localize call must be 'displayCommand'
+// (a bare identifier, not 'escapedDisplayCommand')
+const errors = [];
+for (const key of requiredKeys) {
+    // Find lines containing this localize key
+    // Use exact key match to avoid 'runInTerminal.invocation' matching the longer keys
+    const keyPattern = `'${key}'`;
+    const matchingLines = target.split('\n').filter(
+        l => l.includes('localize(') && l.includes(keyPattern)
+    );
+
+    if (matchingLines.length === 0) {
+        errors.push(`Localize call for '${key}' not found`);
+        continue;
+    }
+
+    for (const line of matchingLines) {
+        if (line.includes('escapedDisplayCommand')) {
+            errors.push(`'${key}' still uses escapedDisplayCommand: ${line.trim()}`);
+        } else if (!line.includes('displayCommand')) {
+            errors.push(`'${key}' does not pass displayCommand: ${line.trim()}`);
+        }
+    }
+}
+
+if (errors.length > 0) {
+    console.log('FAIL:\n' + errors.join('\n'));
+    process.exit(1);
+}
+console.log('PASS: All 4 localize calls use displayCommand directly');
+""")
+    assert r.returncode == 0, (
+        f"Localize calls not using displayCommand directly:\n"
+        f"stdout: {r.stdout}\nstderr: {r.stderr}"
+    )
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

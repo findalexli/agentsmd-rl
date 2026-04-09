@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35958
+  base_commit: "4b568a8dbb4cb84b0067f353b9c0bec1ddb61d8e"
+  merge_commit: "23b2d8514f13f109b980b0a1f4f3aab906ad51d0"
+
+checks:
+  - id: proxy_js_valid_syntax
+    type: pass_to_pass
+    origin: static
+    description: "proxy.js must be valid JavaScript after stripping Flow types"
+
+  - id: pageshow_defers_during_prerender
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When document.prerendering is true, pageshow must not inject the proxy"
+
+  - id: prerenderingchange_deferred_injection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "During prerender, a prerenderingchange listener must be registered and injection deferred until it fires"
+
+  - id: flow_document_prerendering
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Flow type for Document must include prerendering: boolean"
+
+  - id: pageshow_injects_when_not_prerendering
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When not prerendering, pageshow must still inject the proxy"
+
+  - id: pagereveal_still_registered
+    type: pass_to_pass
+    origin: static
+    description: "pagereveal event handler must still be registered"
+
+rubric: []

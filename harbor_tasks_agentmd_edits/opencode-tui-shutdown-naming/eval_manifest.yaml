@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 15924
+  base_commit: "2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2"
+  merge_commit: "3ebebe0a96de5ec4757de12a21cb9f933e0fbba0"
+
+checks:
+  # Gates (pass_to_pass)
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files are syntactically well-formed"
+
+  - id: with_timeout_behavior
+    type: pass_to_pass
+    origin: static
+    description: "withTimeout utility resolves within timeout correctly"
+
+  # Core behavioral fixes (fail_to_pass)
+  - id: thread_imports_with_timeout
+    type: fail_to_pass
+    origin: pr_diff
+    description: "thread.ts imports withTimeout for bounded shutdown"
+
+  - id: thread_idempotent_stop
+    type: fail_to_pass
+    origin: pr_diff
+    description: "thread.ts has idempotent stop() function with stopped guard and worker.terminate()"
+
+  - id: thread_helpers_extracted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "thread.ts extracts target() and input() as standalone helper functions"
+
+  - id: worker_shutdown_simplified
+    type: fail_to_pass
+    origin: pr_diff
+    description: "worker.ts shutdown calls Instance.disposeAll() directly without Promise.race"
+
+  # Agent config compliance (fail_to_pass, agent_config)
+  - id: short_variable_names
+    type: fail_to_pass
+    origin: agent_config
+    description: "thread.ts uses short single-word variable names per AGENTS.md naming convention"
+    source:
+      path: "AGENTS.md"
+      lines: "21"
+      commit: "2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2"
+
+  # Config file update (fail_to_pass, pr_diff)
+  - id: agents_md_naming_enforcement
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md contains Naming Enforcement section with mandatory single-word naming rule"
+
+rubric:
+  - rule: "Code follows the style guide in AGENTS.md: prefer single-word variable names, avoid unnecessary destructuring, use const over let, prefer early returns."
+    source:
+      path: "AGENTS.md"
+      lines: "9-38"
+      commit: "2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2"
+  - rule: "Naming enforcement section is consistent with the existing style examples in AGENTS.md"
+    source:
+      path: "AGENTS.md"
+      lines: "20-30"
+      commit: "2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2"

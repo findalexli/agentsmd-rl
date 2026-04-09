@@ -1,0 +1,73 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 90543
+  base_commit: "e2ef94e2efb4d0067d62ce492dba5568ad1379d9"
+  merge_commit: "ef970c06fb7ef8337db50ef962bb13f3f2d3204f"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Static gates — validation checks
+  # ---------------------------------------------------------------------------
+  - id: package_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "Root package.json must be valid JSON"
+
+  - id: next_swc_package_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "packages/next-swc/package.json must be valid JSON"
+
+  - id: turbo_jsonc_valid
+    type: pass_to_pass
+    origin: static
+    description: "turbo.jsonc must exist and have valid structure"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # ---------------------------------------------------------------------------
+  - id: build_all_script_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Root package.json has build-all script that runs build and build-native-auto"
+
+  - id: next_swc_build_native_auto_script
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/next-swc/package.json has build-native-auto script instead of build"
+
+  - id: turbo_jsonc_task_renamed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "turbo.jsonc has build-native-auto task renamed from build"
+
+  - id: turbo_jsonc_has_comment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "turbo.jsonc includes explanatory comment about build-native-auto purpose"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (agent_config) — config file checks
+  # ---------------------------------------------------------------------------
+  - id: agents_md_documents_build_all
+    type: pass_to_pass
+    origin: agent_config
+    description: "AGENTS.md documents the build-all command for JS+Rust builds"
+    source:
+      path: "AGENTS.md"
+      lines: "58-65"
+      commit: "e2ef94e2efb4d0067d62ce492dba5568ad1379d9"
+
+  - id: agents_md_build_command_documentation
+    type: pass_to_pass
+    origin: agent_config
+    description: "AGENTS.md documents pnpm build as JS-only build"
+    source:
+      path: "AGENTS.md"
+      lines: "58-65"
+      commit: "e2ef94e2efb4d0067d62ce492dba5568ad1379d9"
+
+rubric:
+  []

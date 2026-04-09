@@ -4,11 +4,9 @@ Repo: microsoft/vscode @ 39a50d8d3f4cb82f8d23f6ed762d8feda0a8032f
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
-
-This is a TypeScript/CSS repo — checks use static file content analysis.
-# AST-only because: TypeScript/CSS files cannot be executed in the test environment
 """
 
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/vscode"
@@ -19,112 +17,318 @@ INPUT_CSS = Path(REPO) / "src/vs/sessions/contrib/agentFeedback/browser/media/ag
 WIDGET_CSS = Path(REPO) / "src/vs/sessions/contrib/agentFeedback/browser/media/agentFeedbackEditorWidget.css"
 
 
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — required files exist
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_required_files_exist():
     """All modified files must be present in the workspace."""
-    # AST-only because: TypeScript/CSS files cannot be executed in the test environment
     for p in [THEME, INPUT_CONTRIB, WIDGET_CONTRIB, INPUT_CSS, WIDGET_CSS]:
         assert p.exists(), f"Required file missing: {p}"
 
 
-# [static] pass_to_pass
 def test_copyright_headers_preserved():
     """Microsoft copyright header must remain in all modified TypeScript files."""
-    # AST-only because: TypeScript/CSS files cannot be executed in the test environment
     for p in [THEME, INPUT_CONTRIB, WIDGET_CONTRIB]:
         header = p.read_text(encoding="utf-8")[:400]
         assert "Copyright" in header, f"Copyright header missing from {p.name}"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via Node.js execution
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_theme_border_uses_editor_widget_border():
     """agentFeedbackInputWidgetBorder must use editorWidgetBorder, not transparent(iconForeground)."""
-    # AST-only because: TypeScript/CSS files cannot be executed in the test environment
-    src = THEME.read_text(encoding="utf-8")
-    assert "editorWidgetBorder" in src, "theme.ts must import/use editorWidgetBorder"
-    assert "transparent(iconForeground" not in src, \
-        "theme.ts must not use transparent(iconForeground) for the border color"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+
+const src = readFileSync('src/vs/sessions/common/theme.ts', 'utf-8');
+
+// Extract the registerColor call for agentFeedbackInputWidget.border
+const match = src.match(/registerColor\\(\\s*['\u0060"]agentFeedbackInputWidget\\.border['\u0060"][\\s\\S]*?\\)/);
+if (!match) {
+    console.error('Could not find registerColor call for agentFeedbackInputWidget.border');
+    process.exit(1);
+}
+
+const colorDef = match[0];
+
+// Must use editorWidgetBorder for dark/light themes
+if (!colorDef.includes('editorWidgetBorder')) {
+    console.error('Border color definition does not use editorWidgetBorder');
+    process.exit(1);
+}
+
+// Must NOT use transparent(iconForeground, ...) anymore
+if (colorDef.includes('iconForeground')) {
+    console.error('Border color definition still uses iconForeground');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr or r.stdout}"
 
 
-# [pr_diff] fail_to_pass
 def test_icon_foreground_removed_from_theme():
     """iconForeground import must be removed from theme.ts after border fix."""
-    # AST-only because: TypeScript/CSS files cannot be executed in the test environment
-    src = THEME.read_text(encoding="utf-8")
-    assert "iconForeground" not in src, \
-        "iconForeground should be removed from theme.ts (replaced by editorWidgetBorder)"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+
+const src = readFileSync('src/vs/sessions/common/theme.ts', 'utf-8');
+
+// Extract all import statements
+const imports = src.split('\\n').filter(l => /^import\\s/.test(l));
+
+// iconForeground must not appear in any import
+const bad = imports.filter(l => l.includes('iconForeground'));
+if (bad.length > 0) {
+    console.error('iconForeground is still imported: ' + bad[0].trim());
+    process.exit(1);
+}
+
+// Double-check: no usage anywhere in the file
+if (src.includes('iconForeground')) {
+    console.error('iconForeground is still referenced somewhere in theme.ts');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr or r.stdout}"
 
 
-# [pr_diff] fail_to_pass
 def test_apply_font_info_removed():
     """applyFontInfo calls must be removed from agentFeedbackEditorInputContribution.ts."""
-    # AST-only because: TypeScript/CSS files cannot be executed in the test environment
-    src = INPUT_CONTRIB.read_text(encoding="utf-8")
-    assert "applyFontInfo" not in src, \
-        "applyFontInfo calls should be removed to stop applying monospace editor font to feedback widget"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+
+const src = readFileSync(
+    'src/vs/sessions/contrib/agentFeedback/browser/agentFeedbackEditorInputContribution.ts',
+    'utf-8'
+);
+
+// Find method calls to applyFontInfo (e.g., this._editor.applyFontInfo(...))
+const calls = src.match(/\\.applyFontInfo\\s*\\(/g);
+if (calls && calls.length > 0) {
+    console.error('Found ' + calls.length + ' applyFontInfo call(s) — should be removed');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr or r.stdout}"
 
 
-# [pr_diff] fail_to_pass
 def test_animation_keyframes_added():
-    """agentFeedbackEditorInput.css must include the agentFeedbackInputAppear keyframe animation."""
-    # AST-only because: TypeScript/CSS files cannot be executed in the test environment
-    src = INPUT_CSS.read_text(encoding="utf-8")
-    assert "@keyframes agentFeedbackInputAppear" in src, \
-        "Missing @keyframes agentFeedbackInputAppear animation"
-    assert "opacity: 0" in src, "Keyframe must animate from opacity: 0"
-    assert "translateY" in src, "Keyframe must animate with translateY"
+    """agentFeedbackEditorInput.css must include agentFeedbackInputAppear keyframe animation."""
+    r = _run_node("""
+import { readFileSync } from 'fs';
+
+const css = readFileSync(
+    'src/vs/sessions/contrib/agentFeedback/browser/media/agentFeedbackEditorInput.css',
+    'utf-8'
+);
+
+// 1. @keyframes block must exist
+const kfMatch = css.match(/@keyframes\\s+agentFeedbackInputAppear\\s*\\{([\\s\\S]*?)\\n\\}/);
+if (!kfMatch) {
+    console.error('Missing @keyframes agentFeedbackInputAppear');
+    process.exit(1);
+}
+
+const kfBody = kfMatch[1];
+
+// 2. Must animate opacity (from 0 to 1)
+if (!kfBody.includes('opacity')) {
+    console.error('Keyframe must animate opacity');
+    process.exit(1);
+}
+
+// 3. Must animate transform via translateY
+if (!kfBody.includes('translateY')) {
+    console.error('Keyframe must use translateY transform');
+    process.exit(1);
+}
+
+// 4. Widget rule must reference this animation
+const widgetRule = css.match(/\\.agent-feedback-input-widget\\s*\\{([^}]+)\\}/);
+if (!widgetRule || !widgetRule[1].includes('agentFeedbackInputAppear')) {
+    console.error('.agent-feedback-input-widget must use agentFeedbackInputAppear animation');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr or r.stdout}"
 
 
-# [pr_diff] fail_to_pass
 def test_reduced_motion_accessibility():
     """agentFeedbackEditorInput.css must include prefers-reduced-motion media query."""
-    # AST-only because: TypeScript/CSS files cannot be executed in the test environment
-    src = INPUT_CSS.read_text(encoding="utf-8")
-    assert "@media (prefers-reduced-motion: reduce)" in src, \
-        "Missing prefers-reduced-motion media query for accessibility"
-    # Verify the media query actually disables animation
-    idx = src.index("prefers-reduced-motion")
-    context = src[idx : idx + 200]
-    assert "animation: none" in context, \
-        "prefers-reduced-motion block must set animation: none"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+
+const css = readFileSync(
+    'src/vs/sessions/contrib/agentFeedback/browser/media/agentFeedbackEditorInput.css',
+    'utf-8'
+);
+
+// Find prefers-reduced-motion media query
+const mqMatch = css.match(/@media\\s*\\(prefers-reduced-motion:\\s*reduce\\)\\s*\\{([\\s\\S]*?)\\n\\}/);
+if (!mqMatch) {
+    console.error('Missing @media (prefers-reduced-motion: reduce) query');
+    process.exit(1);
+}
+
+const mqBody = mqMatch[1];
+
+// Must disable animation inside the media query
+if (!/animation\\s*:\\s*none/.test(mqBody)) {
+    console.error('prefers-reduced-motion block must set animation: none');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr or r.stdout}"
 
 
-# [pr_diff] fail_to_pass
 def test_font_inherit_in_input_css():
     """textarea and measure elements in agentFeedbackEditorInput.css must use font: inherit."""
-    # AST-only because: TypeScript/CSS files cannot be executed in the test environment
-    src = INPUT_CSS.read_text(encoding="utf-8")
-    count = src.count("font: inherit")
-    assert count >= 2, \
-        f"Expected at least 2 'font: inherit' declarations (textarea + measure), found {count}"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+
+const css = readFileSync(
+    'src/vs/sessions/contrib/agentFeedback/browser/media/agentFeedbackEditorInput.css',
+    'utf-8'
+);
+
+// Count font: inherit declarations
+const matches = css.match(/font\\s*:\\s*inherit/g) || [];
+if (matches.length < 2) {
+    console.error(
+        'Expected at least 2 font: inherit declarations (textarea + measure), found ' + matches.length
+    );
+    process.exit(1);
+}
+
+// Verify they're in the right context (textarea rule and measure rule)
+const textareaRule = css.match(/textarea\\s*\\{([^}]+)\\}/);
+const measureRule = css.match(/measure[^{]*\\{([^}]+)\\}/);
+
+if (!textareaRule || !/font\\s*:\\s*inherit/.test(textareaRule[1])) {
+    console.error('textarea rule must have font: inherit');
+    process.exit(1);
+}
+if (!measureRule || !/font\\s*:\\s*inherit/.test(measureRule[1])) {
+    console.error('measure element rule must have font: inherit');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr or r.stdout}"
 
 
-# [pr_diff] fail_to_pass
 def test_comment_icon_in_header():
     """Widget header must include a decorative comment icon with aria-hidden."""
-    # AST-only because: TypeScript/CSS files cannot be executed in the test environment
-    src = WIDGET_CONTRIB.read_text(encoding="utf-8")
-    assert "Codicon.comment" in src, "Comment icon (Codicon.comment) must be added to widget header"
-    assert 'aria-hidden' in src, "Comment icon must have aria-hidden attribute for accessibility"
-    assert "commentIcon" in src, "Variable 'commentIcon' must exist in widget header setup"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+
+const src = readFileSync(
+    'src/vs/sessions/contrib/agentFeedback/browser/agentFeedbackEditorWidgetContribution.ts',
+    'utf-8'
+);
+
+// Must use renderIcon(Codicon.comment)
+if (!src.includes('Codicon.comment')) {
+    console.error('Widget must use Codicon.comment icon');
+    process.exit(1);
+}
+
+const hasRenderIcon = /renderIcon\\s*\\(\\s*Codicon\\.comment\\s*\\)/.test(src);
+if (!hasRenderIcon) {
+    console.error('Must call renderIcon(Codicon.comment)');
+    process.exit(1);
+}
+
+// Must set aria-hidden for accessibility (decorative icon)
+if (!src.includes('aria-hidden')) {
+    console.error('Comment icon must have aria-hidden attribute');
+    process.exit(1);
+}
+
+// Must append to header node
+if (!src.includes('_headerNode.appendChild')) {
+    console.error('Comment icon must be appended to _headerNode');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr or r.stdout}"
 
 
-# [pr_diff] fail_to_pass
 def test_single_comment_shows_text_not_label():
     """When there is exactly one comment, title must show comment text, not '1 comment' label."""
-    # AST-only because: TypeScript/CSS files cannot be executed in the test environment
-    src = WIDGET_CONTRIB.read_text(encoding="utf-8")
-    # Must use the first comment's text
-    assert "this._commentItems[0].text" in src, \
-        "_updateTitle must display commentItems[0].text when count === 1"
-    # Must not fall back to the old hardcoded "1 comment" localized string
-    assert "nls.localize('oneComment'" not in src and 'localize("oneComment"' not in src, \
-        "Old '1 comment' localized string must be removed"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+
+const src = readFileSync(
+    'src/vs/sessions/contrib/agentFeedback/browser/agentFeedbackEditorWidgetContribution.ts',
+    'utf-8'
+);
+
+// Extract the _updateTitle method body
+const methodMatch = src.match(/_updateTitle\\s*\\(\\s*\\)\\s*(?::\\s*void\\s*)?\\{([\\s\\S]*?)^\\t\\}/m);
+if (!methodMatch) {
+    // Fallback: find count === 1 block
+    const blockMatch = src.match(/count\\s*===\\s*1[\\s\\S]*?\\}/);
+    if (!blockMatch) {
+        console.error('Could not find _updateTitle method or count === 1 block');
+        process.exit(1);
+    }
+    const block = blockMatch[0];
+    if (!block.includes('_commentItems[0].text')) {
+        console.error('count === 1 block must use _commentItems[0].text');
+        process.exit(1);
+    }
+    if (block.includes("localize('oneComment'") || block.includes('localize("oneComment"')) {
+        console.error("Old localize('oneComment') string must be removed");
+        process.exit(1);
+    }
+    console.log('PASS');
+    process.exit(0);
+}
+
+const methodBody = methodMatch[1];
+
+// Must use _commentItems[0].text for single comment preview
+if (!methodBody.includes('_commentItems[0].text')) {
+    console.error('_updateTitle must use _commentItems[0].text when count === 1');
+    process.exit(1);
+}
+
+// Must NOT use the old localized "1 comment" string
+if (methodBody.includes("localize('oneComment'") || methodBody.includes('localize("oneComment"')) {
+    console.error("Old localize('oneComment') string must be removed");
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr or r.stdout}"

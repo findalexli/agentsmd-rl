@@ -11,7 +11,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/biome"
@@ -21,7 +21,7 @@ REPO = "/workspace/biome"
 # Gates (pass_to_pass, static) — file existence and module structure
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+
 def test_new_module_registered():
     """biome_html_syntax::lib.rs must declare the new directive_ext module."""
     lib_rs = Path(f"{REPO}/crates/biome_html_syntax/src/lib.rs").read_text()
@@ -30,170 +30,276 @@ def test_new_module_registered():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — code behavior tests
+# Fail-to-pass (pr_diff) — code behavior tests via subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
+
 def test_directive_ext_initializer():
-    """directive_ext.rs must provide initializer() covering all 8 Svelte directive types."""
-    directive_ext = Path(f"{REPO}/crates/biome_html_syntax/src/directive_ext.rs")
-    assert directive_ext.exists(), "directive_ext.rs must exist"
-    content = directive_ext.read_text()
+    """directive_ext.rs implements initializer() with a complete match over all 8 Svelte directive variants."""
+    r = subprocess.run(
+        ["python3", "-c", r"""
+import re, sys
 
-    # Must define initializer() method on AnySvelteDirective
-    assert "pub fn initializer" in content, \
-        "AnySvelteDirective must have a public initializer() method"
-    assert "HtmlAttributeInitializerClause" in content, \
-        "initializer() must return HtmlAttributeInitializerClause"
+content = open('/workspace/biome/crates/biome_html_syntax/src/directive_ext.rs').read()
 
-    # Must handle all 8 Svelte directive variants
-    expected_variants = [
-        "SvelteBindDirective",
-        "SvelteTransitionDirective",
-        "SvelteInDirective",
-        "SvelteOutDirective",
-        "SvelteUseDirective",
-        "SvelteAnimateDirective",
-        "SvelteStyleDirective",
-        "SvelteClassDirective",
-    ]
-    for variant in expected_variants:
-        assert variant in content, \
-            f"initializer() must handle {variant}"
+# Must define the initializer method
+if 'pub fn initializer' not in content:
+    print("FAIL: No pub fn initializer method found")
+    sys.exit(1)
+
+# Must return HtmlAttributeInitializerClause
+if 'HtmlAttributeInitializerClause' not in content:
+    print("FAIL: Missing HtmlAttributeInitializerClause return type")
+    sys.exit(1)
+
+# Extract the match self block
+match_block = re.search(r'match self \{(.*?)\}', content, re.DOTALL)
+if not match_block:
+    print("FAIL: No 'match self' block found")
+    sys.exit(1)
+
+arms_text = match_block.group(1)
+
+# All 8 expected Svelte directive variants
+expected = {
+    'SvelteBindDirective', 'SvelteTransitionDirective', 'SvelteInDirective',
+    'SvelteOutDirective', 'SvelteUseDirective', 'SvelteAnimateDirective',
+    'SvelteStyleDirective', 'SvelteClassDirective',
+}
+
+# Extract variant names from match arms
+variants = set(re.findall(r'Self::(\w+)\(', arms_text))
+if variants != expected:
+    missing = expected - variants
+    extra = variants - expected
+    parts = []
+    if missing:
+        parts.append(f"Missing variants: {missing}")
+    if extra:
+        parts.append(f"Unexpected variants: {extra}")
+    print("FAIL: " + "; ".join(parts))
+    sys.exit(1)
+
+# Every arm must chain .value().ok()?.initializer()
+if arms_text.count('.value().ok()?.initializer()') < 8:
+    print("FAIL: Not all match arms call .value().ok()?.initializer()")
+    sys.exit(1)
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"directive_ext check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_vue_directive_tracking():
-    """html.rs must parse all 4 Vue directive variants as embedded JS."""
-    html_rs = Path(f"{REPO}/crates/biome_service/src/file_handlers/html.rs").read_text()
+    """html.rs parses all 4 Vue directive types with cast_ref, initializer extraction, and EmbeddingKind::Vue."""
+    r = subprocess.run(
+        ["python3", "-c", r"""
+import re, sys
 
-    # Must handle all 4 Vue directive types
-    vue_types = [
-        "VueVOnShorthandDirective",     # @click
-        "VueVBindShorthandDirective",    # :prop
-        "VueVSlotShorthandDirective",    # #slot
-        "VueDirective",                  # v-if, v-show, etc.
-    ]
-    for vue_type in vue_types:
-        assert f"{vue_type}::cast_ref" in html_rs, \
-            f"html.rs must cast {vue_type}"
+content = open('/workspace/biome/crates/biome_service/src/file_handlers/html.rs').read()
 
-    # Must use EmbeddingKind::Vue for all Vue directive handling
-    assert html_rs.count("EmbeddingKind::Vue") >= 4, \
-        "Each Vue directive handler should use EmbeddingKind::Vue"
+# 1) Imports — all 4 Vue directive types must be imported
+import_block = re.search(r'use biome_html_syntax::\{([^}]+)\}', content)
+if not import_block:
+    print("FAIL: No biome_html_syntax import block found")
+    sys.exit(1)
 
-    # Must call initializer() on directives
-    assert "directive.initializer()" in html_rs, \
-        "Must extract initializer from directive to get the value"
+imports_text = import_block.group(1)
+required_types = [
+    'VueDirective',
+    'VueVOnShorthandDirective',
+    'VueVBindShorthandDirective',
+    'VueVSlotShorthandDirective',
+]
+for t in required_types:
+    if t not in imports_text:
+        print(f"FAIL: Missing import for {t}")
+        sys.exit(1)
 
-    # Must call parse_directive_string_value for Vue directives
-    assert "parse_directive_string_value" in html_rs, \
-        "Must use parse_directive_string_value to extract Vue directive JS"
+# Also need TextSize import
+if 'TextSize' not in content:
+    print("FAIL: Missing TextSize import (needed for offset calculation)")
+    sys.exit(1)
+
+# 2) Each type must be cast with ::cast_ref
+for t in required_types:
+    if f'{t}::cast_ref' not in content:
+        print(f"FAIL: No {t}::cast_ref call found")
+        sys.exit(1)
+
+# 3) Must call directive.initializer() to get the value clause
+if 'directive.initializer()' not in content:
+    print("FAIL: Must call directive.initializer() to extract Vue directive value")
+    sys.exit(1)
+
+# 4) Must use EmbeddingKind::Vue (at least once per directive type = 4)
+vue_count = content.count('EmbeddingKind::Vue')
+if vue_count < 4:
+    print(f"FAIL: Expected >= 4 EmbeddingKind::Vue, got {vue_count}")
+    sys.exit(1)
+
+# 5) Must call parse_directive_string_value for Vue directives
+if 'parse_directive_string_value' not in content:
+    print("FAIL: Missing parse_directive_string_value function for Vue directives")
+    sys.exit(1)
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Vue tracking check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_svelte_directive_tracking():
-    """html.rs must parse Svelte directives (bind:, class:, etc.) as embedded JS."""
-    html_rs = Path(f"{REPO}/crates/biome_service/src/file_handlers/html.rs").read_text()
+    """html.rs parses AnySvelteDirective with initializer extraction and EmbeddingKind::Svelte."""
+    r = subprocess.run(
+        ["python3", "-c", r"""
+import re, sys
 
-    # Must handle AnySvelteDirective
-    assert "AnySvelteDirective::cast_ref" in html_rs, \
-        "html.rs must cast AnySvelteDirective"
+content = open('/workspace/biome/crates/biome_service/src/file_handlers/html.rs').read()
 
-    # Must use EmbeddingKind::Svelte
-    assert "EmbeddingKind::Svelte" in html_rs, \
-        "Must use EmbeddingKind::Svelte for Svelte directives"
+# 1) AnySvelteDirective must be imported
+import_block = re.search(r'use biome_html_syntax::\{([^}]+)\}', content)
+if not import_block or 'AnySvelteDirective' not in import_block.group(1):
+    print("FAIL: Missing AnySvelteDirective import")
+    sys.exit(1)
 
-    # Must call initializer() on the directive
-    assert "directive.initializer()" in html_rs, \
-        "Must extract initializer from Svelte directive"
+# 2) Must use AnySvelteDirective::cast_ref to match directives
+if 'AnySvelteDirective::cast_ref' not in content:
+    print("FAIL: No AnySvelteDirective::cast_ref call found")
+    sys.exit(1)
 
-    # Must use parse_directive_text_expression for Svelte directives
-    assert "parse_directive_text_expression" in html_rs, \
-        "Must use parse_directive_text_expression to extract Svelte directive JS"
+# 3) Must use EmbeddingKind::Svelte
+if 'EmbeddingKind::Svelte' not in content:
+    print("FAIL: Missing EmbeddingKind::Svelte for Svelte directives")
+    sys.exit(1)
+
+# 4) Must call directive.initializer() to get value from directive
+if 'directive.initializer()' not in content:
+    print("FAIL: Must call directive.initializer() on Svelte directive")
+    sys.exit(1)
+
+# 5) Must use parse_directive_text_expression for Svelte (curly brace syntax)
+if 'parse_directive_text_expression' not in content:
+    print("FAIL: Missing parse_directive_text_expression for Svelte directives")
+    sys.exit(1)
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Svelte tracking check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_parse_directive_helpers():
-    """parse_directive_string_value and parse_directive_text_expression must exist with correct logic."""
-    html_rs = Path(f"{REPO}/crates/biome_service/src/file_handlers/html.rs").read_text()
+    """parse_directive_string_value and parse_directive_text_expression have correct signatures and internal logic."""
+    r = subprocess.run(
+        ["python3", "-c", r"""
+import re, sys
 
-    # parse_directive_string_value: for Vue (quoted strings)
-    assert "fn parse_directive_string_value" in html_rs, \
-        "parse_directive_string_value function must exist"
-    assert "inner_string_text()" in html_rs, \
-        "parse_directive_string_value must use inner_string_text() to strip quotes"
-    assert "TextSize::from(1)" in html_rs, \
-        "Must offset by 1 for the opening quote character"
+content = open('/workspace/biome/crates/biome_service/src/file_handlers/html.rs').read()
 
-    # parse_directive_text_expression: for Svelte (curly braces)
-    assert "fn parse_directive_text_expression" in html_rs, \
-        "parse_directive_text_expression function must exist"
-    assert "as_html_attribute_single_text_expression" in html_rs, \
-        "Must extract text expression from Svelte directive value"
+# --- parse_directive_string_value (Vue: extracts from quoted strings) ---
+fn1 = re.search(
+    r'fn parse_directive_string_value\((.*?)\)\s*->\s*Option<',
+    content, re.DOTALL,
+)
+if not fn1:
+    print("FAIL: parse_directive_string_value function not found")
+    sys.exit(1)
+
+# Takes HtmlAttributeInitializerClause parameter
+if 'HtmlAttributeInitializerClause' not in fn1.group(1):
+    print("FAIL: parse_directive_string_value must take HtmlAttributeInitializerClause param")
+    sys.exit(1)
+
+# Must use inner_string_text() to strip quotes
+if 'inner_string_text()' not in content:
+    print("FAIL: Must use inner_string_text() to extract quoted string content")
+    sys.exit(1)
+
+# Must offset by TextSize::from(1) for opening quote
+if 'TextSize::from(1)' not in content:
+    print("FAIL: Must offset by TextSize::from(1) for opening quote character")
+    sys.exit(1)
+
+# --- parse_directive_text_expression (Svelte: extracts from curly braces) ---
+fn2 = re.search(
+    r'fn parse_directive_text_expression\((.*?)\)\s*->\s*Option<',
+    content, re.DOTALL,
+)
+if not fn2:
+    print("FAIL: parse_directive_text_expression function not found")
+    sys.exit(1)
+
+if 'HtmlAttributeInitializerClause' not in fn2.group(1):
+    print("FAIL: parse_directive_text_expression must take HtmlAttributeInitializerClause param")
+    sys.exit(1)
+
+# Must extract as_html_attribute_single_text_expression
+if 'as_html_attribute_single_text_expression' not in content:
+    print("FAIL: Must use as_html_attribute_single_text_expression for Svelte values")
+    sys.exit(1)
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Directive helpers check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — config/documentation update tests
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
+
 def test_biome_developer_skill_created():
-    """.claude/skills/biome-developer/SKILL.md must exist with key content."""
+    """.claude/skills/biome-developer/SKILL.md must exist with frontmatter and key content."""
     skill_path = Path(f"{REPO}/.claude/skills/biome-developer/SKILL.md")
     assert skill_path.exists(), "biome-developer/SKILL.md must exist"
     content = skill_path.read_text()
 
-    # Must have frontmatter with correct name
     assert "name: biome-developer" in content, \
         "SKILL.md must have correct frontmatter name"
-
-    # Must cover key topics relevant to the fix
     assert "inner_string_text" in content, \
         "Skill must document inner_string_text() for string extraction"
     assert "quick_test" in content, \
         "Skill must reference quick_test for AST inspection"
     assert "EmbeddingKind" in content, \
         "Skill must cover embedded language handling with EmbeddingKind"
-
-    # Must have the common gotchas section
     assert "Common Gotchas" in content or "Common API Confusion" in content, \
         "Skill must include common gotchas or API confusion sections"
 
 
-# [pr_diff] fail_to_pass
 def test_agents_md_updated():
     """AGENTS.md must include new do's and don'ts about AST inspection and legacy syntax."""
     agents_md = Path(f"{REPO}/AGENTS.md").read_text()
 
-    # New "don't" rules
     assert "widely used" in agents_md.lower() and "without evidence" in agents_md.lower(), \
         "AGENTS.md must warn against claiming patterns are 'widely used' without evidence"
     assert "legacy" in agents_md.lower() and "deprecated" in agents_md.lower(), \
         "AGENTS.md must warn against implementing legacy/deprecated syntax without checking"
-
-    # New "do" rules
     assert "quick_test" in agents_md or "Inspect AST" in agents_md or "inspect" in agents_md.lower(), \
         "AGENTS.md must recommend inspecting AST structure before implementing"
     assert ".claude/skills/" in agents_md, \
         "AGENTS.md must reference skills directory for implementation details"
 
 
-# [pr_diff] fail_to_pass
 def test_testing_codegen_skill_updated():
-    """testing-codegen SKILL.md must include parser quick test section."""
+    """testing-codegen SKILL.md must include parser quick test section with just qt and biome_html_parser."""
     skill_path = Path(f"{REPO}/.claude/skills/testing-codegen/SKILL.md")
     content = skill_path.read_text()
 
-    # Must have parser quick test section
     assert "Quick Test for Parser" in content or "Parser Development" in content, \
         "testing-codegen SKILL.md must have parser quick test section"
-
-    # Must mention just qt command
     assert "just qt" in content, \
         "Must document 'just qt' command for quick test"
-
-    # Must mention biome_html_parser for HTML/embedded language work
     assert "biome_html_parser" in content, \
         "Must reference biome_html_parser for HTML/embedded language testing"
 
@@ -202,11 +308,10 @@ def test_testing_codegen_skill_updated():
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+
 def test_directive_ext_not_stub():
     """directive_ext.rs must have real match arms, not just return None."""
     content = Path(f"{REPO}/crates/biome_html_syntax/src/directive_ext.rs").read_text()
-    # Count match arms — should have all 8 Svelte directive variants
     match_arms = content.count(".value().ok()?.initializer()")
     assert match_arms >= 8, \
         f"directive_ext.rs must have 8 match arms (has {match_arms}) — not a stub"

@@ -1,0 +1,65 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 87943
+  base_commit: "c74cb2ae25bbe515c600b85f1e974f7eb26db576"
+  merge_commit: "3c47bd99afb7babc202898f71a815a8663db42b1"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # ---------------------------------------------------------------------------
+
+  - id: test_claude_md_exists_with_content
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md created with Next.js development guide content"
+
+  - id: test_claude_ci_failures_command_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".claude/commands/ci-failures.md created with CI analysis instructions"
+
+  - id: test_gitignore_updated_for_claude
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".gitignore updated to ignore Claude Code local settings"
+
+  - id: test_alexignore_updated_for_claude
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".alexignore updated to ignore .claude/ directory and CLAUDE.md"
+
+  - id: test_claude_md_has_graphite_safety_rules
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md contains Graphite stack safety rules"
+
+  - id: test_claude_md_has_testing_commands
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md contains testing commands section with pnpm test commands"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static) — anti-stub and structural checks
+  # ---------------------------------------------------------------------------
+
+  - id: test_claude_md_not_empty
+    type: pass_to_pass
+    origin: static
+    description: "CLAUDE.md is not empty or stub"
+
+  - id: test_ci_failures_md_not_empty
+    type: pass_to_pass
+    origin: static
+    description: ".claude/commands/ci-failures.md is not empty or stub"
+
+  - id: test_claude_directory_structure_correct
+    type: pass_to_pass
+    origin: static
+    description: ".claude/ directory exists with correct structure"
+
+rubric:
+  # No soft rules needed - all checks are programmatically verifiable
+  []

@@ -1,0 +1,58 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92153
+  base_commit: "b7f99c773ed73e8916bd14ebc9709f625220c838"
+  merge_commit: "373d2c448a1370e653e10ff6e42ee3038201fc20"
+
+checks:
+  # Gates (pass_to_pass, static)
+  - id: source_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "Required Rust source files exist and are non-trivial"
+
+  # Fail-to-pass (pr_diff)
+  - id: require_from_variant_in_enum
+    type: fail_to_pass
+    origin: pr_diff
+    description: "WellKnownFunctionKind enum has RequireFrom variant with Box<ConstantString>"
+
+  - id: require_from_handler_resolves_from_relative_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "RequireFrom handler uses rel.as_str() to construct resolve origin via parent().join()"
+
+  - id: url_pattern_mapped_to_require_from
+    type: fail_to_pass
+    origin: pr_diff
+    description: "value_visitor_inner maps JsValue::Url(rel, Relative) to RequireFrom"
+
+  - id: display_impl_for_require_from
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Display impl for RequireFrom produces createRequire('<path>') diagnostic"
+
+  - id: unit_cases_enabled
+    type: fail_to_pass
+    origin: pr_diff
+    description: "6 previously-commented create-require test cases in unit.rs are active"
+
+  - id: entry_name_mjs_mapping
+    type: fail_to_pass
+    origin: pr_diff
+    description: "entry_name match maps 5 create-require test inputs to input.mjs"
+
+  # Pass-to-pass (static)
+  - id: existing_variants_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Core WellKnownFunctionKind variants (Require, RequireResolve, etc.) still exist"
+
+  - id: create_require_handler_unchanged
+    type: pass_to_pass
+    origin: static
+    description: "Original createRequire(import.meta.url) handler branch is preserved"
+
+rubric: []

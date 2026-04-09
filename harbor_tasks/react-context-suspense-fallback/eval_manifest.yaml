@@ -1,0 +1,44 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 36160
+  base_commit: "f944b4c5352be02623d2d7415c0806350f875114"
+  merge_commit: "9627b5a1caa64c1488643bffdf04495106fa3247"
+
+checks:
+  - id: context_propagation_to_suspense_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Context change above a suspended Suspense must propagate to fallback consumers"
+
+  - id: sequential_context_updates_in_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Multiple sequential context updates must all propagate to Suspense fallback"
+
+  - id: existing_context_propagation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing context propagation tests must still pass"
+
+  - id: prettier_formatting
+    type: pass_to_pass
+    origin: agent_config
+    description: "Changed file must pass prettier formatting"
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "10"
+      commit: "f944b4c5352be02623d2d7415c0806350f875114"
+
+rubric:
+  - rule: "Run Flow type checking (yarn flow dom-node) — the code must type-check cleanly"
+    source:
+      path: ".claude/skills/flow/SKILL.md"
+      lines: "22"
+      commit: "f944b4c5352be02623d2d7415c0806350f875114"
+  - rule: "Run yarn linc to check for remaining lint issues — lint errors will fail CI"
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "11"
+      commit: "f944b4c5352be02623d2d7415c0806350f875114"

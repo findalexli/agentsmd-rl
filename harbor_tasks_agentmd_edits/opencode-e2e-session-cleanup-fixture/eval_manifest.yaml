@@ -1,0 +1,67 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 16439
+  base_commit: "28bb16ca2a374439973d4f3f4b71d72f7fdae9cd"
+  merge_commit: "0b7a5b1e7bc7619c85e7cf4e30a1a0d4885779b6"
+
+checks:
+  # Pass-to-pass gates
+  - id: ts_files_readable
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files exist and are readable"
+
+  # Code behavior: cleanupSession and helpers
+  - id: cleanup_session_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "actions.ts exports async cleanupSession function"
+
+  - id: cleanup_session_waits_aborts_deletes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "cleanupSession waits for idle, aborts if needed, waits stable, then deletes"
+
+  - id: wait_session_idle_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "actions.ts exports waitSessionIdle that polls for idle status"
+
+  - id: with_session_uses_cleanup
+    type: fail_to_pass
+    origin: pr_diff
+    description: "withSession calls cleanupSession instead of direct sdk.session.delete"
+
+  - id: fixtures_track_and_cleanup
+    type: fail_to_pass
+    origin: pr_diff
+    description: "withProject fixture provides trackSession/trackDirectory with concurrent teardown"
+
+  # Config/documentation checks
+  - id: agents_md_documents_new_helpers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md documents withProject, trackSession, and trackDirectory helpers"
+
+  - id: agents_md_recommends_fixture_cleanup
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md recommends fixture-managed cleanup over direct sdk.session.delete()"
+
+  - id: agents_md_error_handling_updated
+    type: fail_to_pass
+    origin: agent_config
+    description: "AGENTS.md Error Handling section updated with withSession preference and tracking guidance"
+    source:
+      path: "packages/app/e2e/AGENTS.md"
+      lines: "110-123"
+      commit: "28bb16ca2a374439973d4f3f4b71d72f7fdae9cd"
+
+rubric:
+  - rule: "Documentation additions should match the existing style of the AGENTS.md helper list and Error Handling section"
+    source:
+      path: "packages/app/e2e/AGENTS.md"
+      lines: "67-74"
+      commit: "28bb16ca2a374439973d4f3f4b71d72f7fdae9cd"

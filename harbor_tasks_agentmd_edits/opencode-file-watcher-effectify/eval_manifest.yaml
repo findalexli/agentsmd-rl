@@ -1,0 +1,113 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 17827
+  base_commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
+  merge_commit: "9e740d9947e6a4c61680c8dd00cb1fd11adf12af"
+
+checks:
+  # --- Code behavior (f2p, subprocess) ---
+  - id: watcher_is_effect_service
+    type: fail_to_pass
+    origin: pr_diff
+    description: "FileWatcherService is a class extending ServiceMap.Service with static layer"
+
+  - id: instance_bind_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Instance.bind() method captures and restores ALS context"
+
+  - id: flags_config_boolean
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Watcher flags use Config.boolean() from effect, not truthy()"
+
+  - id: pty_uses_instance_bind
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Pty onData and onExit callbacks wrapped with Instance.bind()"
+
+  - id: bootstrap_uses_service
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Bootstrap uses FileWatcherService + runPromiseInstance instead of FileWatcher.init()"
+
+  - id: instances_registers_service
+    type: fail_to_pass
+    origin: pr_diff
+    description: "FileWatcherService added to InstanceServices union and Layer.mergeAll"
+
+  # --- Config/documentation update (f2p) ---
+  - id: agents_md_effect_callback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md documents Effect.callback pattern (renamed from Effect.async)"
+
+  - id: agents_md_instance_scoped_services
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md documents instance-scoped Effect services pattern"
+
+  - id: agents_md_instance_bind
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md documents Instance.bind for native callback ALS context"
+
+  - id: agents_md_flag_config_migration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md documents Flag -> Effect.Config migration pattern"
+
+  # --- Agent config compliance (f2p) ---
+  - id: layer_uses_service_of
+    type: fail_to_pass
+    origin: agent_config
+    description: "Layer returns FileWatcherService.of({...}) per AGENTS.md rule"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "24"
+      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
+
+  # --- Regression / public API (p2p) ---
+  - id: file_watcher_event_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "FileWatcher.Event namespace still exported"
+
+  # --- Agent config compliance (p2p) ---
+  - id: service_follows_naming_convention
+    type: pass_to_pass
+    origin: agent_config
+    description: "FileWatcherService follows ServiceMap.Service naming convention"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "23"
+      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
+
+  - id: layer_uses_effect_gen
+    type: pass_to_pass
+    origin: agent_config
+    description: "Layer uses Effect.gen(function* ...) for composition"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "34"
+      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
+
+  # --- Anti-stub (p2p) ---
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "watcher.ts retains substantial logic, not gutted"
+
+rubric:
+  - rule: "New AGENTS.md sections should be consistent with the existing documentation style (markdown headings, bullet lists, code fences)"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "1-44"
+      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
+  - rule: "Effect service cleanup uses Effect.addFinalizer rather than manual dispose callbacks"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "23-24"
+      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"

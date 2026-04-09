@@ -162,49 +162,66 @@ if (missing.length > 0) {{
     assert result.get("pass"), "Positioning vars not declared with $state()"
 
 
-def test_no_bare_positioning_declarations():
-    """The old buggy pattern — bare 'let <var>: type;' with no initialiser —
-    must be absent for all 3 positioning variables. Verified by running Node.js
-    to parse and inspect the script block programmatically."""
-    r = _run_node("""
-import { readFileSync } from 'fs';
+def test_compile_reactive_positioning():
+    """Compile the component with Svelte 5 and verify the compiled JS output
+    creates reactive signals for all positioning variables.  On the broken base
+    commit the three positioning vars are bare 'let' declarations that produce
+    no reactive signals; after the fix they use $state(0) which compiles to
+    $.state(0) calls in the generated client code."""
+    _ensure_svelte()
+    r = _run_node(f"""
+import {{ createRequire }} from 'module';
+const require = createRequire(import.meta.url);
+const {{ compile }} = require('{_SVELTE_DIR}/node_modules/svelte/compiler');
+import {{ readFileSync }} from 'fs';
+
 const src = readFileSync('js/dropdown/shared/DropdownOptions.svelte', 'utf8');
-const m = src.match(/<script[^>]*>([\\s\\S]*?)<\\/script>/);
-if (!m) {
-    console.log(JSON.stringify({ error: 'no script block' }));
+
+let result;
+try {{
+    result = compile(src, {{
+        filename: 'DropdownOptions.svelte',
+        generate: 'client',
+    }});
+}} catch (e) {{
+    console.log(JSON.stringify({{ error: e.message }}));
     process.exit(0);
-}
-const script = m[1];
-const vars = ['distance_from_top', 'distance_from_bottom', 'input_height'];
-const bare = [];
+}}
 
-for (const v of vars) {
-    // Look for bare declaration: let varName: type; (no = assignment)
-    const lines = script.split('\\n');
-    for (const line of lines) {
-        const trimmed = line.trim();
-        // Match: let varName: SomeType;
-        // Must NOT contain '=' (that would be an initializer like $state)
-        if (trimmed.startsWith('let ' + v) && trimmed.includes(':') && !trimmed.includes('=')) {
-            bare.push(v);
-            break;
-        }
-    }
-}
+const code = result.js.code;
 
-if (bare.length > 0) {
-    console.log(JSON.stringify({ bare }));
-} else {
-    console.log(JSON.stringify({ pass: true }));
-}
+// In Svelte 5 compiled output, $state(value) becomes $.state(value).
+// The component has several $state(0) declarations:
+//   Base commit (3): input_width, max_height, innerHeight
+//   After fix  (6): + distance_from_top, distance_from_bottom, input_height
+// Count reactive signal creations initialized to 0.
+const patterns = [
+    /\\$\\.state\\(\\s*0\\s*\\)/g,
+    /\\$\\.source\\(\\s*0\\s*\\)/g,
+    /\\$\\.mutable_source\\(\\s*0\\s*\\)/g,
+];
+
+let count = 0;
+for (const p of patterns) {{
+    const m = code.match(p);
+    if (m) count += m.length;
+}}
+
+// Diagnostic: capture the runtime helpers actually used
+const helpers = [...new Set((code.match(/\\$\\.\\w+\\(/g) || []))].sort();
+
+console.log(JSON.stringify({{ count, helpers }}));
 """)
     assert r.returncode == 0, f"Node failed: {r.stderr}"
     result = json.loads(r.stdout.strip().splitlines()[-1])
     if "error" in result:
-        assert False, f"Parse error: {result['error']}"
-    if "bare" in result:
-        assert False, f"Bare declarations remain: {result['bare']}"
-    assert result.get("pass"), "Bare declarations still present"
+        assert False, f"Svelte compile error: {result['error']}"
+    # Base commit produces 3 reactive $state(0) signals; fix raises this to 6.
+    assert result["count"] >= 6, (
+        f"Expected >= 6 reactive $state(0) signals in compiled output, "
+        f"got {result['count']}. Positioning vars may lack $state(). "
+        f"Compiler helpers found: {result.get('helpers', [])}"
+    )
 
 
 # ---------------------------------------------------------------------------

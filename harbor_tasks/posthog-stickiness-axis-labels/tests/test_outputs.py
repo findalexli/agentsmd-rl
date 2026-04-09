@@ -1,0 +1,175 @@
+"""
+Task: posthog-stickiness-axis-labels
+Repo: posthog @ 314b93aa807030d5ef1c9bb17d44cb3609f10cb3
+PR:   #53655
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import json
+import re
+import subprocess
+from pathlib import Path
+
+REPO = "/workspace/posthog"
+DATES_TS = f"{REPO}/frontend/src/lib/charts/utils/dates.ts"
+LINEGRAPH_TSX = f"{REPO}/frontend/src/scenes/insights/views/LineGraph/LineGraph.tsx"
+
+
+def _call_tick_callback(allDays, interval="day", numericTickPrefix=None, test_values=None):
+    """
+    Transpile dates.ts via the TypeScript compiler API, stub out imports
+    (the numeric-allDays early-return path does not touch dayjs), then call
+    createXAxisTickCallback and return results as {value_index: output}.
+    """
+    opts = {"interval": interval, "allDays": allDays, "timezone": "UTC"}
+    if numericTickPrefix is not None:
+        opts["numericTickPrefix"] = numericTickPrefix
+
+    if test_values is None:
+        test_values = [[v, i] for i, v in enumerate(allDays)]
+
+    script = (
+        "const ts = require('typescript');\n"
+        "const fs = require('fs');\n"
+        "const src = fs.readFileSync('__DATES__', 'utf8');\n"
+        "const js = ts.transpileModule(src, {\n"
+        "  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },\n"
+        "}).outputText;\n"
+        "const m = { exports: {} };\n"
+        "new Function('module', 'exports', 'require', js)(m, m.exports, () => ({}));\n"
+        "const fn = m.exports.createXAxisTickCallback;\n"
+        "if (!fn) { console.error('createXAxisTickCallback not exported'); process.exit(1); }\n"
+        "const cb = fn(__OPTS__);\n"
+        "const results = {};\n"
+        "const inputs = __INPUTS__;\n"
+        "for (const [val, idx] of inputs) {\n"
+        "  results[String(val) + '_' + String(idx)] = cb(val, idx);\n"
+        "}\n"
+        "console.log(JSON.stringify(results));\n"
+    )
+    script = script.replace("__DATES__", DATES_TS)
+    script = script.replace("__OPTS__", json.dumps(opts))
+    script = script.replace("__INPUTS__", json.dumps(test_values))
+
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True, timeout=30, text=True,
+    )
+    assert r.returncode == 0, (
+        f"Node script failed (exit {r.returncode}):\n{r.stderr}\n{r.stdout}"
+    )
+    return json.loads(r.stdout.strip())
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_prefix_day_ticks():
+    """createXAxisTickCallback returns 'Day N' when numericTickPrefix='Day' with numeric allDays."""
+    results = _call_tick_callback(
+        allDays=[1, 2, 3, 4, 5],
+        interval="day",
+        numericTickPrefix="Day",
+        test_values=[[1, 0], [3, 2], [5, 4]],
+    )
+    assert results["1_0"] == "Day 1", f"Expected 'Day 1', got {results['1_0']!r}"
+    assert results["3_2"] == "Day 3", f"Expected 'Day 3', got {results['3_2']!r}"
+    assert results["5_4"] == "Day 5", f"Expected 'Day 5', got {results['5_4']!r}"
+
+
+# [pr_diff] fail_to_pass
+def test_prefix_week_and_month_ticks():
+    """numericTickPrefix works for 'Week' and 'Month' prefixes, not just 'Day'."""
+    week = _call_tick_callback(
+        allDays=[1, 2, 3],
+        interval="week",
+        numericTickPrefix="Week",
+        test_values=[[1, 0], [2, 1], [3, 2]],
+    )
+    assert week["1_0"] == "Week 1", f"Expected 'Week 1', got {week['1_0']!r}"
+    assert week["2_1"] == "Week 2", f"Expected 'Week 2', got {week['2_1']!r}"
+    assert week["3_2"] == "Week 3", f"Expected 'Week 3', got {week['3_2']!r}"
+
+    month = _call_tick_callback(
+        allDays=[1, 2, 3],
+        interval="month",
+        numericTickPrefix="Month",
+        test_values=[[1, 0], [3, 2]],
+    )
+    assert month["1_0"] == "Month 1", f"Expected 'Month 1', got {month['1_0']!r}"
+    assert month["3_2"] == "Month 3", f"Expected 'Month 3', got {month['3_2']!r}"
+
+
+# [pr_diff] fail_to_pass
+def test_linegraph_stickiness_wiring():
+    """LineGraph.tsx passes numericTickPrefix to createXAxisTickCallback when isStickiness."""
+    script = (
+        "const ts = require('typescript');\n"
+        "const fs = require('fs');\n"
+        "const src = fs.readFileSync('__FILE__', 'utf8');\n"
+        "const sf = ts.createSourceFile('LineGraph.tsx', src, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);\n"
+        "let hasNumericTickPrefix = false;\n"
+        "let hasIsStickiness = false;\n"
+        "function visit(node) {\n"
+        "  if (ts.isPropertyAssignment(node) && node.name.getText(sf) === 'numericTickPrefix') {\n"
+        "    hasNumericTickPrefix = true;\n"
+        "  }\n"
+        "  if (ts.isIdentifier(node) && node.text === 'isStickiness') {\n"
+        "    hasIsStickiness = true;\n"
+        "  }\n"
+        "  ts.forEachChild(node, visit);\n"
+        "}\n"
+        "visit(sf);\n"
+        "console.log(JSON.stringify({ hasNumericTickPrefix, hasIsStickiness }));\n"
+    ).replace("__FILE__", LINEGRAPH_TSX)
+
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True, timeout=30, text=True,
+    )
+    assert r.returncode == 0, f"Node script failed:\n{r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert result["hasNumericTickPrefix"], (
+        "LineGraph.tsx must pass numericTickPrefix to createXAxisTickCallback"
+    )
+    assert result["hasIsStickiness"], (
+        "LineGraph.tsx must reference isStickiness to determine when to add prefix"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — regression + config guards
+# ---------------------------------------------------------------------------
+
+# [pr_diff] pass_to_pass
+def test_no_prefix_returns_plain_numbers():
+    """Without numericTickPrefix, numeric allDays still return plain number strings."""
+    results = _call_tick_callback(
+        allDays=[1, 2, 3, 4, 5],
+        interval="day",
+        # No numericTickPrefix — existing behavior
+        test_values=[[1, 0], [3, 2], [5, 4]],
+    )
+    assert results["1_0"] == "1", f"Expected '1', got {results['1_0']!r}"
+    assert results["3_2"] == "3", f"Expected '3', got {results['3_2']!r}"
+    assert results["5_4"] == "5", f"Expected '5', got {results['5_4']!r}"
+
+
+# [agent_config] pass_to_pass — AGENTS.md:95
+def test_dayjs_import_convention():
+    """dates.ts must import dayjs from 'lib/dayjs', not directly from 'dayjs' package (AGENTS.md:95)."""
+    src = Path(DATES_TS).read_text()
+    # Bad: import from 'dayjs' directly
+    direct_import = re.search(r"from\s+['\"]dayjs['\"]", src) or re.search(
+        r"from\s+['\"]dayjs/", src
+    )
+    assert direct_import is None, (
+        "dates.ts must use 'lib/dayjs', not import directly from 'dayjs' package"
+    )
+    # Good: import from 'lib/dayjs'
+    lib_import = re.search(r"from\s+['\"]lib/dayjs['\"]", src)
+    assert lib_import is not None, "dates.ts must import from 'lib/dayjs'"

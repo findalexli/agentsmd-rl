@@ -8,88 +8,74 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import textwrap
-import types
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/gradio"
 TARGET = f"{REPO}/gradio/utils.py"
 
+# Common preamble: extract the post-exec code region from utils.py and test it.
+_EXTRACT_PREAMBLE = """\
+import sys, textwrap, types
+from pathlib import Path
 
-def _extract_post_exec_region():
-    """Extract code between exec(no_reload_source_code...) and sys.modules[/while."""
-    source = Path(TARGET).read_text()
-    lines = source.splitlines()
+source = Path("/workspace/gradio/gradio/utils.py").read_text()
+lines = source.splitlines()
 
-    exec_idx = None
-    end_idx = None
-    for i, line in enumerate(lines):
-        if "exec(no_reload_source_code" in line:
-            exec_idx = i
-        if exec_idx is not None and i > exec_idx:
-            stripped = line.strip()
-            if stripped.startswith("sys.modules[") or stripped.startswith("while "):
-                end_idx = i
-                break
+exec_idx = end_idx = None
+for i, line in enumerate(lines):
+    if "exec(no_reload_source_code" in line:
+        exec_idx = i
+    if exec_idx is not None and i > exec_idx:
+        if line.strip().startswith("sys.modules[") or line.strip().startswith("while "):
+            end_idx = i
+            break
 
-    assert exec_idx is not None, "exec(no_reload_source_code) not found in utils.py"
-    if end_idx is None:
-        end_idx = min(exec_idx + 30, len(lines))
+assert exec_idx is not None, "exec(no_reload_source_code) not found in utils.py"
+if end_idx is None:
+    end_idx = min(exec_idx + 30, len(lines))
 
-    region = lines[exec_idx + 1 : end_idx]
-    return textwrap.dedent("\n".join(region))
+region = textwrap.dedent("\\n".join(lines[exec_idx + 1 : end_idx]))
 
-
-def _run_region(blocks, initial_context_id, demo_name="demo", demo_exists=True):
-    """Run extracted post-exec region with mocks, return final Context.id."""
-    code = _extract_post_exec_region()
-
-    real_lines = [l for l in code.splitlines() if l.strip() and not l.strip().startswith("#")]
-    assert len(real_lines) >= 1, "No executable code between exec() and sys.modules (bug not fixed)"
-
+def _run_with_mocks(Context_id, blocks, demo_exists=True):
     class Context:
-        id = initial_context_id
-
-    class Demo:
-        def __init__(self, blks):
-            self.blocks = blks
+        id = Context_id
 
     class Reloader:
-        pass
-
-    Reloader.demo_name = demo_name
+        demo_name = "demo"
 
     module = types.ModuleType("test_module")
-    if demo_exists:
-        module.demo = Demo(blocks) if blocks is not None else None
+    if demo_exists and blocks is not None:
+        class Demo:
+            def __init__(self, blks):
+                self.blocks = blks
+        module.demo = Demo(blocks)
+
     reloader = Reloader()
-
     ns = {
-        "Context": Context,
-        "module": module,
-        "reloader": reloader,
-        "getattr": getattr,
-        "hasattr": hasattr,
-        "max": max,
-        "len": len,
-        "list": list,
-        "set": set,
-        "dict": dict,
-        "int": int,
-        "print": print,
-        "type": type,
-        "__builtins__": __builtins__,
+        "Context": Context, "module": module, "reloader": reloader,
+        "getattr": getattr, "hasattr": hasattr, "max": max, "len": len,
+        "list": list, "set": set, "dict": dict, "int": int,
+        "print": print, "type": type, "__builtins__": __builtins__,
     }
-
-    exec(code, ns)
+    exec(region, ns)
     return Context.id
+"""
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in the repo environment via subprocess."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+
 def test_syntax_check():
     """gradio/utils.py must parse without syntax errors."""
     source = Path(TARGET).read_text()
@@ -97,63 +83,80 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
+
 def test_context_id_bumped_past_block_ids():
     """After module re-exec, Context.id must exceed max existing block ID."""
-    result = _run_region(
-        blocks={0: "b0", 1: "b1", 5: "b5", 10: "b10"},
-        initial_context_id=3,
-    )
-    assert result >= 11, f"Context.id = {result}, expected >= 11 (max block key was 10)"
+    r = _run_py(_EXTRACT_PREAMBLE + """
+cid = _run_with_mocks(
+    Context_id=3,
+    blocks={0: "b0", 1: "b1", 5: "b5", 10: "b10"},
+)
+assert cid >= 11, f"Context.id = {cid}, expected >= 11 (max block key was 10)"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_context_id_varied_block_distributions():
-    """Fix handles sequential, sparse, and single-block scenarios."""
-    scenarios = [
-        ({0: "x", 1: "x", 2: "x"}, 0, 3, "sequential 0-2"),
-        ({0: "x", 5: "x", 100: "x"}, 2, 101, "sparse up to 100"),
-        ({42: "x"}, 0, 43, "single block at 42"),
-    ]
-    for blocks, init_id, min_expected, desc in scenarios:
-        result = _run_region(blocks=blocks, initial_context_id=init_id)
-        assert result >= min_expected, f"[{desc}] Context.id={result}, expected >= {min_expected}"
+    """Fix handles sequential, sparse, and single-block ID distributions."""
+    r = _run_py(_EXTRACT_PREAMBLE + """
+scenarios = [
+    ({0: "x", 1: "x", 2: "x"}, 0, 3, "sequential 0-2"),
+    ({0: "x", 5: "x", 100: "x"}, 2, 101, "sparse up to 100"),
+    ({42: "x"}, 0, 43, "single block at 42"),
+]
+for blocks, init_id, min_expected, desc in scenarios:
+    cid = _run_with_mocks(Context_id=init_id, blocks=blocks)
+    assert cid >= min_expected, f"[{desc}] Context.id={cid}, expected >= {min_expected}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_context_id_preserved_when_already_high():
     """If Context.id already exceeds max block ID, it must not decrease."""
-    result = _run_region(
-        blocks={0: "x", 5: "x", 10: "x"},
-        initial_context_id=200,
-    )
-    assert result >= 200, f"Context.id={result}, expected >= 200 (was already high)"
+    r = _run_py(_EXTRACT_PREAMBLE + """
+cid = _run_with_mocks(
+    Context_id=200,
+    blocks={0: "x", 5: "x", 10: "x"},
+)
+assert cid >= 200, f"Context.id={cid}, expected >= 200 (was already high)"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_no_crash_when_demo_absent():
     """Fix must not crash when demo is missing, None, or has empty blocks."""
-    # demo attribute not set on module
-    cid = _run_region(blocks=None, initial_context_id=5, demo_exists=False)
-    assert cid == 5, f"Context.id changed to {cid} when demo absent"
+    r = _run_py(_EXTRACT_PREAMBLE + """
+# demo attribute not set on module
+cid = _run_with_mocks(blocks=None, Context_id=5, demo_exists=False)
+assert cid == 5, f"Context.id changed to {cid} when demo absent"
 
-    # demo is None
-    cid = _run_region(blocks=None, initial_context_id=7, demo_exists=True)
-    assert cid == 7, f"Context.id changed to {cid} when demo is None"
+# demo is None (not set on module, blocks=None)
+cid = _run_with_mocks(blocks=None, Context_id=7, demo_exists=True)
+assert cid == 7, f"Context.id changed to {cid} when demo is None"
 
-    # demo has empty blocks dict
-    cid = _run_region(blocks={}, initial_context_id=9)
-    assert cid == 9, f"Context.id changed to {cid} when blocks empty"
+# demo has empty blocks dict
+cid = _run_with_mocks(blocks={}, Context_id=9, demo_exists=True)
+assert cid == 9, f"Context.id changed to {cid} when blocks empty"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff / static) — regression
 # ---------------------------------------------------------------------------
 
-# [pr_diff] pass_to_pass
+
 def test_watchfn_structure_preserved():
     """Core watchfn landmarks must still be present."""
     source = Path(TARGET).read_text()
@@ -162,7 +165,6 @@ def test_watchfn_structure_preserved():
     assert "reloader.should_watch" in source, "reloader.should_watch loop missing"
 
 
-# [pr_diff] pass_to_pass
 def test_context_reset_precedes_exec():
     """Context.id = 0 must appear before exec(no_reload_source_code)."""
     lines = Path(TARGET).read_text().splitlines()
@@ -175,7 +177,6 @@ def test_context_reset_precedes_exec():
     )
 
 
-# [static] pass_to_pass
 def test_not_stub():
     """utils.py must not be a stub — needs substantial content."""
     source = Path(TARGET).read_text()

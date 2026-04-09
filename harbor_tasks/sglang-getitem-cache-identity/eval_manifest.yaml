@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22184
+  base_commit: "ef2d4013d77cf1267e032d7a7a745dc3a6f74880"
+  merge_commit: "494bb86169669f8dece646873b7c33904d8ddf6e"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  - id: generate_req_caching_implemented
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GenerateReqInput.__getitem__ implements identity caching with _sub_obj_cache"
+
+  - id: embedding_req_caching_implemented
+    type: fail_to_pass
+    origin: pr_diff
+    description: "EmbeddingReqInput.__getitem__ implements identity caching with _sub_obj_cache"
+
+  - id: lora_id_propagation_to_cached_subobjects
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tokenizer_manager._resolve_lora_path propagates lora_id to cached sub-objects"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified __getitem__ methods have real caching logic, not just return statements"
+
+rubric: []

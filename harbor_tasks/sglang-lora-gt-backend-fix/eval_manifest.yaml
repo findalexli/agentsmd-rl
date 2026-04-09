@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22157
+  base_commit: "41c7c97ff30a8f5e969cefc3efac57f0f3fdbb64"
+  merge_commit: "2f00e425550e39b1a424c44604b694a47f884c3b"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified file must parse without errors"
+
+  - id: is_lora_case_function_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The _is_lora_case helper function must be added"
+
+  - id: is_lora_case_checks_all_lora_paths
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_is_lora_case must check lora_path, dynamic_lora_path, and second_lora_path"
+
+  - id: lora_case_skips_forced_diffusers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "In GT mode, LoRA cases should NOT be forced to --backend diffusers"
+
+  - id: dynamic_lora_runs_in_gt_mode
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dynamic LoRA loading should NOT be skipped in GT mode"
+
+  - id: gt_comment_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The comment about GT mode must reflect the LoRA exception"
+
+  - id: dynamic_lora_comment_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The comment for dynamic LoRA must reflect GT mode support"
+
+rubric: []

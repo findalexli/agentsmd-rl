@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 1021
+  base_commit: "1927decc369d30df0037854b5d58ec7a9ca2a3b7"
+  merge_commit: "a3e36d4af66ac6fa88e723675060cde591ca133e"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without Python syntax errors"
+
+  - id: lora_xccl_update_payload_has_lora_fields
+    type: fail_to_pass
+    origin: pr_diff
+    description: "XCCL update request payload must contain lora_name/lora_int_id when use_lora=True"
+
+  - id: lora_xccl_update_payload_varies_with_version
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Versioned LoRA name in XCCL update payload changes correctly with version number"
+
+  - id: lora_xccl_endpoint_updates_lora_registry
+    type: fail_to_pass
+    origin: pr_diff
+    description: "After LoRA XCCL weight update, openai_serving_models registry reflects the new LoRA name"
+
+  - id: non_lora_xccl_payload_empty
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When use_lora is False, the XCCL update request payload remains empty"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files must not use wildcard imports"
+    source:
+      path: "CLAUDE.md"
+      lines: "93"
+      commit: "1927decc369d30df0037854b5d58ec7a9ca2a3b7"
+
+rubric:
+  - rule: "Follow existing code patterns in the same module"
+    source:
+      path: "CLAUDE.md"
+      lines: "76"
+      commit: "1927decc369d30df0037854b5d58ec7a9ca2a3b7"
+  - rule: "Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation."
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "1927decc369d30df0037854b5d58ec7a9ca2a3b7"

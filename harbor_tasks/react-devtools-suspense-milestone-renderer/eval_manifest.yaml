@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35927
+  base_commit: "e0cc7202e14418b453c69c4f06dc00c64151f202"
+  merge_commit: "93a3935d0292d66e0bf426a7e28bb1433bbeea30"
+
+checks:
+  - id: agent_targets_single_renderer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "overrideSuspenseMilestone only calls the renderer matching the given rendererID"
+
+  - id: suspense_step_type_has_renderer_id
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SuspenseTimelineStep type includes rendererID field"
+
+  - id: bridge_milestone_type_has_renderer_id
+    type: fail_to_pass
+    origin: pr_diff
+    description: "OverrideSuspenseMilestone bridge type includes rendererID"
+
+  - id: store_passes_renderer_id
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Store timeline methods thread rendererID through step construction"
+
+  - id: timeline_groups_by_renderer_id
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SuspenseTimeline groups suspended set per renderer ID"
+
+rubric: []

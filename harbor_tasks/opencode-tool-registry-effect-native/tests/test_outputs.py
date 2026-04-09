@@ -5,16 +5,28 @@ PR:   anomalyco/opencode#19363
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
-
-AST-only because: TypeScript + Effect framework deps not installed in container.
 """
 
+import subprocess
 import re
 from pathlib import Path
 
 REPO = "/workspace/opencode"
 REGISTRY = Path(REPO) / "packages/opencode/src/tool/registry.ts"
 PLUGIN = Path(REPO) / "packages/opencode/src/plugin/index.ts"
+
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 def _strip_comments(code: str) -> str:
@@ -27,103 +39,176 @@ def _strip_comments(code: str) -> str:
     return s
 
 
-def _state_init_block(code: str) -> str:
-    """Extract the InstanceState.make closure body."""
-    match = re.search(r"InstanceState\.make.*?return\s*\{", code, re.DOTALL)
-    assert match, "Cannot find InstanceState.make block"
-    return match.group(0)
-
-
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via Node subprocess
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
 def test_no_facade_in_state_init():
     """Module-level Config/Plugin facades must not be called in InstanceState.make."""
-    code = _strip_comments(REGISTRY.read_text())
-    block = _state_init_block(code)
+    r = _run_node(r"""
+import { readFileSync } from 'fs';
 
-    # Check Effect.promise blocks don't wrap facades
-    promise_blocks = list(re.finditer(r"Effect\.promise\s*\(", block))
-    for pb in promise_blocks:
-        nearby = block[pb.start() : pb.start() + 500]
-        assert not any(
-            facade in nearby
-            for facade in ["Config.directories", "Config.waitForDependencies", "Plugin.list"]
-        ), "Config/Plugin facades still wrapped in Effect.promise in state init"
+const code = readFileSync('packages/opencode/src/tool/registry.ts', 'utf-8');
 
-    # Module-level facades must not be called directly either (should use yielded instance)
-    for facade in ["Config.directories()", "Config.waitForDependencies()", "Plugin.list()"]:
-        assert facade not in block, (
-            f"Module-level facade {facade} called directly in state init "
-            "— should use yielded service instance"
-        )
+const makeIdx = code.indexOf('InstanceState.make');
+if (makeIdx === -1) {
+  console.error('FAIL: Cannot find InstanceState.make');
+  process.exit(1);
+}
+
+const endIdx = code.indexOf('return { custom }', makeIdx);
+if (endIdx === -1) {
+  console.error('FAIL: Cannot find end of InstanceState.make block');
+  process.exit(1);
+}
+const block = code.slice(makeIdx, endIdx + 20);
+
+// Module-level async facades must NOT appear in the block
+const facades = ['Config.directories()', 'Config.waitForDependencies()', 'Plugin.list()'];
+for (const facade of facades) {
+  if (block.includes(facade)) {
+    console.error('FAIL: Module-level facade ' + facade + ' found in InstanceState.make');
+    process.exit(1);
+  }
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_all_is_effectful():
     """all() must be an Effect function (Effect.fn or Effect.gen), not async."""
-    code = _strip_comments(REGISTRY.read_text())
-    assert not re.search(
-        r"\basync\s+function\s+all\s*\(", code
-    ), "all() is still a plain async function"
-    # Positive: must be defined via Effect.fn or Effect.gen
-    has_effect_fn = bool(re.search(r"\ball\s*=\s*Effect\.fn\b", code))
-    has_effect_gen = bool(re.search(r"\ball\s*=\s*Effect\.gen\b", code))
-    assert has_effect_fn or has_effect_gen, (
-        "all() is not defined as Effect.fn or Effect.gen"
-    )
+    r = _run_node(r"""
+import { readFileSync } from 'fs';
+
+const code = readFileSync('packages/opencode/src/tool/registry.ts', 'utf-8');
+
+if (/\basync\s+function\s+all\s*\(/.test(code)) {
+  console.error('FAIL: all() is still a plain async function');
+  process.exit(1);
+}
+
+if (/\ball\s*=\s*Effect\.fn\b/.test(code) || /\ball\s*=\s*Effect\.gen\b/.test(code)) {
+  console.log('PASS');
+} else {
+  console.error('FAIL: all() not defined as Effect.fn or Effect.gen');
+  process.exit(1);
+}
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_effect_concurrency():
     """Promise.all replaced with Effect.forEach or Effect.all for concurrent tool init."""
-    code = _strip_comments(REGISTRY.read_text())
-    assert "Promise.all" not in code, "Promise.all still used in registry.ts"
-    # Positive: Effect concurrency primitive must be present
-    has_foreach = "Effect.forEach" in code
-    has_effect_all = bool(re.search(r"Effect\.all\s*\(", code))
-    assert has_foreach or has_effect_all, (
-        "No Effect concurrency primitive (Effect.forEach or Effect.all) found"
-    )
+    r = _run_node(r"""
+import { readFileSync } from 'fs';
+
+const code = readFileSync('packages/opencode/src/tool/registry.ts', 'utf-8');
+
+if (code.includes('Promise.all')) {
+  console.error('FAIL: Promise.all still used in registry.ts');
+  process.exit(1);
+}
+
+if (!code.includes('Effect.forEach') && !/Effect\.all\s*\(/.test(code)) {
+  console.error('FAIL: No Effect concurrency primitive found');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_services_yielded_in_layer():
     """Config.Service and Plugin.Service must be obtained via Effect dependency graph."""
-    code = _strip_comments(REGISTRY.read_text())
-    for svc in ["Config.Service", "Plugin.Service"]:
-        esc = re.escape(svc)
-        has_yield = bool(re.search(rf"yield\*?\s+.*{esc}", code))
-        has_service = bool(re.search(rf"Effect\.service\s*\(\s*{esc}", code))
-        has_context = bool(re.search(rf"Context\.get\s*\(\s*{esc}", code))
-        assert has_yield or has_service or has_context, (
-            f"{svc} not obtained via Effect dependency graph"
-        )
+    r = _run_node(r"""
+import { readFileSync } from 'fs';
+
+const code = readFileSync('packages/opencode/src/tool/registry.ts', 'utf-8');
+
+const layerIdx = code.indexOf('Layer.effect');
+if (layerIdx === -1) {
+  console.error('FAIL: Cannot find Layer.effect definition');
+  process.exit(1);
+}
+
+const makeIdx = code.indexOf('InstanceState.make', layerIdx);
+if (makeIdx === -1) {
+  console.error('FAIL: Cannot find InstanceState.make');
+  process.exit(1);
+}
+
+// The region between Layer.effect and InstanceState.make must yield both services
+const preamble = code.slice(layerIdx, makeIdx);
+
+for (const svc of ['Config.Service', 'Plugin.Service']) {
+  const pattern = new RegExp('yield\\s*\\*\\s*' + svc.replace('.', '\\.'));
+  if (!pattern.test(preamble)) {
+    console.error('FAIL: ' + svc + ' not yielded in layer generator before InstanceState.make');
+    process.exit(1);
+  }
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_plugin_default_layer_exported():
     """Plugin module must export defaultLayer for layer composition."""
-    code = _strip_comments(PLUGIN.read_text())
-    exported = bool(
-        re.search(r"\bexport\s+(const|let|var)\s+defaultLayer\b", code)
-        or re.search(r"\bexport\s*\{[^}]*\bdefaultLayer\b", code)
-    )
-    assert exported, "Plugin.defaultLayer is not exported"
+    r = _run_node(r"""
+import { readFileSync } from 'fs';
+
+const code = readFileSync('packages/opencode/src/plugin/index.ts', 'utf-8');
+
+if (!/\bexport\s+(const|let|var)\s+defaultLayer\b/.test(code) &&
+    !/\bexport\s*\{[^}]*\bdefaultLayer\b/.test(code)) {
+  console.error('FAIL: Plugin.defaultLayer is not exported');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_registry_default_layer_exported():
     """ToolRegistry must export a composed defaultLayer providing dependencies."""
-    code = _strip_comments(REGISTRY.read_text())
-    exported = bool(
-        re.search(r"\bexport\s+(const|let|var)\s+defaultLayer\b", code)
-        or re.search(r"\bexport\s*\{[^}]*\bdefaultLayer\b", code)
-    )
-    assert exported, "ToolRegistry.defaultLayer is not exported"
+    r = _run_node(r"""
+import { readFileSync } from 'fs';
+
+const code = readFileSync('packages/opencode/src/tool/registry.ts', 'utf-8');
+
+if (!/\bexport\s+(const|let|var)\s+defaultLayer\b/.test(code) &&
+    !/\bexport\s*\{[^}]*\bdefaultLayer\b/.test(code)) {
+  console.error('FAIL: ToolRegistry.defaultLayer is not exported');
+  process.exit(1);
+}
+
+// Must compose Config and Plugin dependencies
+if (!code.includes('Config.defaultLayer') || !code.includes('Plugin.defaultLayer')) {
+  console.error('FAIL: defaultLayer does not compose Config.defaultLayer and Plugin.defaultLayer');
+  process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

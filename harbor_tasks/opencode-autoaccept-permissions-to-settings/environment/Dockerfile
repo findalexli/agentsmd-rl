@@ -1,0 +1,28 @@
+FROM node:22-slim
+
+RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
+    git curl ca-certificates build-essential python3 tmux \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install bun
+RUN npm install -g bun@latest
+
+# Clone repo at base commit (before fix)
+RUN git init /workspace/opencode && \
+    cd /workspace/opencode && \
+    git remote add origin https://github.com/anomalyco/opencode.git && \
+    git fetch --depth=1 origin c2d2ca352252a922354c89bfbdb135cf1abfe1b6 && \
+    git checkout FETCH_HEAD
+RUN mkdir -p /logs/verifier
+
+WORKDIR /workspace/opencode
+RUN git checkout c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+
+# Install dependencies (needed for typecheck / TS parser)
+RUN bun install --frozen-lockfile || bun install
+
+# Configure git for agent commits
+RUN git config user.name "agent" && git config user.email "agent@test.com"
+
+ENV PYTHONPATH=/
+WORKDIR /workspace/opencode

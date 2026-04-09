@@ -1,0 +1,103 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 1416
+  base_commit: "e6277883011bed744a066cec86b86d5a82236ba3"
+  merge_commit: "c1aa49253d417b024645c33a69f99554322924c6"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Gates (pass_to_pass, static)
+  # ---------------------------------------------------------------------------
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) - core behavioral tests
+  # ---------------------------------------------------------------------------
+  - id: interleave_rollout_returns_none_on_empty_trajectory
+    type: fail_to_pass
+    origin: pr_diff
+    description: "interleave_rollout must return None when trajectory is empty"
+
+  - id: branch_rollout_returns_none_on_empty_trajectory
+    type: fail_to_pass
+    origin: pr_diff
+    description: "branch_rollout must return None when trajectory is empty"
+
+  - id: interleave_rollout_zeros_mask_on_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "interleave_rollout must zero out completion_mask when state has error"
+
+  - id: branch_rollout_zeros_mask_on_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "branch_rollout must zero out completion_mask when state has error"
+
+  - id: interleave_rollout_preserves_mask_without_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "interleave_rollout preserves original completion_mask when no error"
+
+  - id: branch_rollout_preserves_mask_without_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "branch_rollout preserves original completion_mask when no error"
+
+  # ---------------------------------------------------------------------------
+  # Config-derived (pr_diff) - new config files
+  # ---------------------------------------------------------------------------
+  - id: math_python_config_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "configs/math_python/math_python.toml must exist with correct structure"
+
+  - id: math_python_readme_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "configs/math_python/README.md must exist with setup and usage instructions"
+
+  - id: changelog_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CHANGELOG.md must include the new auto-set api_server_count note"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (pr_diff) - regression + anti-stub
+  # ---------------------------------------------------------------------------
+  - id: pyproject_verifiers_updated
+    type: pass_to_pass
+    origin: pr_diff
+    description: "pyproject.toml must have updated verifiers revision to ca75d04"
+
+  - id: return_type_annotation_updated
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Both functions must have updated return type annotations to include None"
+
+  - id: orchestrator_uses_rollout_is_truncated
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Orchestrator must use rollout['is_truncated'] directly instead of get_is_truncated"
+
+  - id: trajectory_functions_not_stub
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Modified functions have meaningful error handling logic, not just stubs"
+
+  - id: test_fixtures_include_error_field
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Test fixtures must include the error field in state definitions"
+
+rubric:
+  # Soft rules for LLM judge. This PR adds documentation/config, so style consistency matters.
+  - rule: "Config update is consistent with the style of existing documentation in configs/"
+    source:
+      path: "configs/README.md"
+      lines: "1-20"
+      commit: "e6277883011bed744a066cec86b86d5a82236ba3"

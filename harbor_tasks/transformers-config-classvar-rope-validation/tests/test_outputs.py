@@ -15,6 +15,14 @@ REPO = "/workspace/transformers"
 sys.path.insert(0, f"{REPO}/src")
 
 
+def _run_python(code: str, timeout: int = 60) -> subprocess.CompletedProcess:
+    """Execute Python code in the repo environment."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -35,85 +43,109 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests (subprocess-based)
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_validate_rope_empty_dict_no_crash():
     """validate_rope must handle empty rope_parameters dict without crashing or mutating."""
-    from transformers.modeling_rope_utils import RotaryEmbeddingConfigMixin
+    r = _run_python("""
+import sys
+sys.path.insert(0, "/workspace/transformers/src")
+from transformers.modeling_rope_utils import RotaryEmbeddingConfigMixin
 
-    validate_rope = RotaryEmbeddingConfigMixin.validate_rope
+validate_rope = RotaryEmbeddingConfigMixin.validate_rope
 
-    class Config:
-        def __init__(self):
-            self.rope_parameters = {}
-            self.layer_types = None
+class Config:
+    def __init__(self):
+        self.rope_parameters = {}
+        self.layer_types = None
 
-    config = Config()
-    validate_rope(config)
-    assert config.rope_parameters == {}, (
-        f"rope_parameters mutated from {{}} to {dict(config.rope_parameters)}"
-    )
+config = Config()
+validate_rope(config)
+assert config.rope_parameters == {}, f"rope_parameters mutated from {{}} to {dict(config.rope_parameters)}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"validate_rope crashed on empty dict: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_validate_rope_empty_dict_multiple_configs():
     """validate_rope handles empty dict on multiple sequential configs."""
-    from transformers.modeling_rope_utils import RotaryEmbeddingConfigMixin
+    r = _run_python("""
+import sys
+sys.path.insert(0, "/workspace/transformers/src")
+from transformers.modeling_rope_utils import RotaryEmbeddingConfigMixin
 
-    validate_rope = RotaryEmbeddingConfigMixin.validate_rope
+validate_rope = RotaryEmbeddingConfigMixin.validate_rope
 
-    # Test with multiple independent configs to catch state leaks
-    for i in range(5):
-        class Cfg:
-            def __init__(self):
-                self.rope_parameters = {}
-                self.layer_types = None
+for i in range(5):
+    class Cfg:
+        def __init__(self):
+            self.rope_parameters = {}
+            self.layer_types = None
 
-        c = Cfg()
-        validate_rope(c)
-        assert c.rope_parameters == {}, f"Iteration {i}: empty rope_parameters should remain empty"
+    c = Cfg()
+    validate_rope(c)
+    assert c.rope_parameters == {}, f"Iteration {i}: empty rope_parameters should remain empty"
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"validate_rope failed on multiple configs: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_transformers_version_not_classvar():
-    """transformers_version must be an instance field, not ClassVar."""
-    import dataclasses
-    from transformers.configuration_utils import PreTrainedConfig
+    """transformers_version must be an instance field, not ClassVar, with per-instance isolation."""
+    r = _run_python("""
+import sys, dataclasses
+sys.path.insert(0, "/workspace/transformers/src")
+from transformers.configuration_utils import PreTrainedConfig
 
-    field_names = [f.name for f in dataclasses.fields(PreTrainedConfig)]
-    assert "transformers_version" in field_names, (
-        "transformers_version not in dataclasses.fields() — still ClassVar?"
-    )
-    # Verify per-instance isolation: two configs can hold different values
-    c1 = PreTrainedConfig()
-    c2 = PreTrainedConfig()
-    c1.transformers_version = "1.0.0"
-    c2.transformers_version = "2.0.0"
-    assert c1.transformers_version == "1.0.0", "transformers_version leaked across instances"
-    assert c2.transformers_version == "2.0.0", "transformers_version leaked across instances"
+field_names = [f.name for f in dataclasses.fields(PreTrainedConfig)]
+assert "transformers_version" in field_names, (
+    "transformers_version not in dataclasses.fields() — still ClassVar?"
+)
+
+c1 = PreTrainedConfig()
+c2 = PreTrainedConfig()
+c1.transformers_version = "1.0.0"
+c2.transformers_version = "2.0.0"
+assert c1.transformers_version == "1.0.0", "transformers_version leaked across instances"
+assert c2.transformers_version == "2.0.0", "transformers_version leaked across instances"
+print("PASS")
+""")
+    assert r.returncode == 0, f"transformers_version ClassVar check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_architectures_not_classvar():
-    """architectures must be an instance field, not ClassVar."""
-    import dataclasses
-    from transformers.configuration_utils import PreTrainedConfig
+    """architectures must be an instance field, not ClassVar, with per-instance isolation."""
+    r = _run_python("""
+import sys, dataclasses
+sys.path.insert(0, "/workspace/transformers/src")
+from transformers.configuration_utils import PreTrainedConfig
 
-    field_names = [f.name for f in dataclasses.fields(PreTrainedConfig)]
-    assert "architectures" in field_names, (
-        "architectures not in dataclasses.fields() — still ClassVar?"
-    )
-    # Verify per-instance isolation with diverse values
-    c1 = PreTrainedConfig()
-    c2 = PreTrainedConfig()
-    c1.architectures = ["BertForMaskedLM"]
-    c2.architectures = ["GPT2LMHeadModel", "GPT2ForSequenceClassification"]
-    assert c1.architectures == ["BertForMaskedLM"], "architectures leaked across instances"
-    assert c2.architectures == ["GPT2LMHeadModel", "GPT2ForSequenceClassification"], (
-        "architectures leaked across instances"
-    )
+field_names = [f.name for f in dataclasses.fields(PreTrainedConfig)]
+assert "architectures" in field_names, (
+    "architectures not in dataclasses.fields() — still ClassVar?"
+)
+
+c1 = PreTrainedConfig()
+c2 = PreTrainedConfig()
+c1.architectures = ["BertForMaskedLM"]
+c2.architectures = ["GPT2LMHeadModel", "GPT2ForSequenceClassification"]
+assert c1.architectures == ["BertForMaskedLM"], "architectures leaked across instances"
+assert c2.architectures == ["GPT2LMHeadModel", "GPT2ForSequenceClassification"], (
+    "architectures leaked across instances"
+)
+print("PASS")
+""")
+    assert r.returncode == 0, f"architectures ClassVar check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
@@ -135,40 +167,40 @@ def test_auto_docstring_parameter_filtering():
 # [pr_diff] fail_to_pass
 def test_auto_docstring_filtering_behavior():
     """allowed_params actually filters out parameters not in the set."""
-    import inspect
-    from transformers.utils.auto_docstring import _process_regular_parameters
+    r = _run_python("""
+import sys, inspect
+sys.path.insert(0, "/workspace/transformers/src")
+from transformers.utils.auto_docstring import _process_regular_parameters
 
-    # Create a function with three named params
-    def mock_init(self, alpha: int = 0, beta: str = "x", gamma: float = 1.0):
-        pass
+def mock_init(self, alpha: int = 0, beta: str = "x", gamma: float = 1.0):
+    pass
 
-    sig = inspect.signature(mock_init)
+sig = inspect.signature(mock_init)
 
-    # _process_regular_parameters returns undocumented params as missing_args
-    # when documented_params is empty. With allowed_params filtering, 'beta'
-    # should NOT appear in the missing_args dict.
-    _, missing_filtered = _process_regular_parameters(
-        sig, mock_init, "MockConfig", {}, 2, [], {}, None,
-        allowed_params={"alpha", "gamma"},
-    )
+_, missing_filtered = _process_regular_parameters(
+    sig, mock_init, "MockConfig", {}, 2, [], {}, None,
+    allowed_params={"alpha", "gamma"},
+)
+assert "beta" not in missing_filtered, (
+    f"'beta' should be filtered out but found in missing_args: {list(missing_filtered.keys())}"
+)
+assert "alpha" in missing_filtered, (
+    f"'alpha' should be in missing_args but not found: {list(missing_filtered.keys())}"
+)
+assert "gamma" in missing_filtered, (
+    f"'gamma' should be in missing_args but not found: {list(missing_filtered.keys())}"
+)
 
-    assert "beta" not in missing_filtered, (
-        f"'beta' should be filtered out but found in missing_args: {list(missing_filtered.keys())}"
-    )
-    assert "alpha" in missing_filtered, (
-        f"'alpha' should be in missing_args but not found: {list(missing_filtered.keys())}"
-    )
-    assert "gamma" in missing_filtered, (
-        f"'gamma' should be in missing_args but not found: {list(missing_filtered.keys())}"
-    )
-
-    # Without allowed_params, all three should appear
-    _, missing_all = _process_regular_parameters(
-        sig, mock_init, "MockConfig", {}, 2, [], {}, None,
-    )
-    assert "alpha" in missing_all and "beta" in missing_all and "gamma" in missing_all, (
-        f"Without allowed_params, all params should appear. Got: {list(missing_all.keys())}"
-    )
+_, missing_all = _process_regular_parameters(
+    sig, mock_init, "MockConfig", {}, 2, [], {}, None,
+)
+assert "alpha" in missing_all and "beta" in missing_all and "gamma" in missing_all, (
+    f"Without allowed_params, all params should appear. Got: {list(missing_all.keys())}"
+)
+print("PASS")
+""")
+    assert r.returncode == 0, f"auto_docstring filtering test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -186,7 +218,6 @@ def test_validate_rope_none_still_works():
         def __init__(self):
             self.rope_parameters = None
 
-    # Should not raise for None
     validate_rope(Config())
 
 
@@ -215,45 +246,49 @@ def test_validate_rope_dispatches_for_real_config():
     )
 
 
-# [repo_tests] pass_to_pass
+# [repo_tests] fail_to_pass
 def test_upstream_config_kwargs_complete():
-    """Upstream test_config_common_kwargs_is_complete logic must pass."""
-    import ast as _ast
-    from transformers import PreTrainedConfig
+    """config_common_kwargs completeness check accounts for transformers_version as instance field."""
+    r = _run_python("""
+import sys, ast as _ast
+from pathlib import Path
 
-    # config_common_kwargs is defined as a dict literal in tests/utils/test_configuration_utils.py.
-    # Extract it via AST to avoid import side-effects and relative-import issues.
-    source = Path(f"{REPO}/tests/utils/test_configuration_utils.py").read_text()
-    tree = _ast.parse(source)
-    config_common_kwargs = None
-    for node in _ast.walk(tree):
-        if isinstance(node, _ast.Assign):
-            for target in node.targets:
-                if isinstance(target, _ast.Name) and target.id == "config_common_kwargs":
-                    config_common_kwargs = _ast.literal_eval(node.value)
-                    break
-    assert config_common_kwargs is not None, "config_common_kwargs not found"
+sys.path.insert(0, "/workspace/transformers/src")
+from transformers import PreTrainedConfig
 
-    base_config = PreTrainedConfig()
-    missing_keys = [key for key in base_config.__dict__ if key not in config_common_kwargs]
+source = Path("/workspace/transformers/tests/utils/test_configuration_utils.py").read_text()
+tree = _ast.parse(source)
+config_common_kwargs = None
+for node in _ast.walk(tree):
+    if isinstance(node, _ast.Assign):
+        for target in node.targets:
+            if isinstance(target, _ast.Name) and target.id == "config_common_kwargs":
+                config_common_kwargs = _ast.literal_eval(node.value)
+                break
+assert config_common_kwargs is not None, "config_common_kwargs not found"
 
-    # After the fix, transformers_version is an instance field and appears
-    # in __dict__, so the expected list must include it.
-    expected = [
-        "transformers_version",
-        "is_encoder_decoder",
-        "tokenizer_class",
-        "_name_or_path",
-        "_commit_hash",
-        "_output_attentions",
-        "_attn_implementation_internal",
-        "_experts_implementation_internal",
-    ]
-    assert missing_keys == expected, (
-        f"config_common_kwargs completeness check failed.\n"
-        f"  Expected missing: {expected}\n"
-        f"  Got missing:      {missing_keys}"
-    )
+base_config = PreTrainedConfig()
+missing_keys = [key for key in base_config.__dict__ if key not in config_common_kwargs]
+
+expected = [
+    "transformers_version",
+    "is_encoder_decoder",
+    "tokenizer_class",
+    "_name_or_path",
+    "_commit_hash",
+    "_output_attentions",
+    "_attn_implementation_internal",
+    "_experts_implementation_internal",
+]
+assert missing_keys == expected, (
+    f"config_common_kwargs completeness check failed.\\n"
+    f"  Expected missing: {expected}\\n"
+    f"  Got missing:      {missing_keys}"
+)
+print("PASS")
+""")
+    assert r.returncode == 0, f"config kwargs complete check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -263,7 +298,6 @@ def test_upstream_config_kwargs_complete():
 # [agent_config] fail_to_pass — CLAUDE.md:5 @ eb3d67aaafe368863afc77e4b60fa60c2077c8b5
 def test_check_config_attributes_allowlist():
     """ATTRIBUTES_TO_ALLOW must include transformers_version and architectures."""
-    # AST-only because: check_config_attributes.py is a standalone lint script with heavy imports
     import ast
 
     src = Path(f"{REPO}/utils/check_config_attributes.py").read_text()
@@ -288,9 +322,7 @@ def test_check_config_attributes_allowlist():
 
 # [agent_config] pass_to_pass — CLAUDE.md:2 @ eb3d67aaafe368863afc77e4b60fa60c2077c8b5
 def test_ruff_lint_clean():
-    """Changed files must pass ruff lint (make style)."""
-    # All changed files have pre-existing E501 violations. Check E/W rules
-    # except E501 (line length) which is not enforced in this repo's ruff config.
+    """Changed files must pass ruff lint."""
     r = subprocess.run(
         [
             "python3", "-m", "ruff", "check",

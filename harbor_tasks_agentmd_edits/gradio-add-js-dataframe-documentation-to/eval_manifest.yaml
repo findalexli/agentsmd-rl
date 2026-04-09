@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: gradio-app/gradio
+  pr: 11766
+  base_commit: f67faa464add0ef6a4a58d60eb2ae850125ebb87
+  merge_commit: dfc0e0305068dbd16ce905afc73d139e1e51eb46
+
+checks:
+  - id: test_readme_has_comprehensive_docs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "js/dataframe/README.md has full documentation with Install, Usage, Props, Events, and Custom Styling sections"
+
+  - id: test_standalone_readme_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "js/dataframe/standalone/README.md has been removed (content merged into main README)"
+
+  - id: test_js_page_redirects_to_dataframe
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The /docs/js page redirect logic checks for dataframe page existence and falls back to js-client"
+
+  - id: test_syntax_highlighting_supports_svelte
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Documentation page servers import prism-svelte and register svelte language"
+
+  - id: test_layout_filters_to_documented_components
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The docs layout server filters js_pages to only dataframe and js-client using components_to_document array"
+
+  - id: test_package_exports_has_default
+    type: fail_to_pass
+    origin: pr_diff
+    description: "js/code/package.json exports include default field for compatibility"
+
+  - id: test_syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files have valid syntax"
+
+  - id: test_changelog_has_prism_svelte
+    type: pass_to_pass
+    origin: static
+    description: "Changelog page server also has prism-svelte support for consistency"
+
+rubric: []

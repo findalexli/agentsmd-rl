@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28993
+  base_commit: "b6a45f9f50c71afe1102bb4396dd304ce1c57b30"
+  merge_commit: "1afabdde2eb7fe609933b770364611854f8e8dda"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified file must be valid JavaScript/Node.js syntax"
+
+  - id: uses_buildplatforms_find
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getBinarySizeStep should use buildPlatforms.find() to get the correct agent config with features: ['docker']"
+
+  - id: no_handbuilt_platform_object
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Should not use hand-built platform object that omits features field, causing Image not found error"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "getBinarySizeStep function has real implementation with key, label, agents, and depends_on"
+
+  - id: binary_size_step_structure
+    type: pass_to_pass
+    origin: static
+    description: "getBinarySizeStep returns properly structured step object with all required Buildkite step properties"
+
+rubric: []

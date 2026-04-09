@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "dotnet/maui"
+  pr: 34690
+  base_commit: "bfe8e58dcab8b030d6d87edf30fbe3f53827795d"
+  merge_commit: "3176108e30a0c7c3e84a82b6ab79c93ba8e2996d"
+
+checks:
+  - id: yaml_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified YAML files must parse without errors"
+
+  - id: ci_uitests_pools_split
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ci-uitests.yml has separate internal/public pool parameters"
+
+  - id: ci_uitests_conditional_pool_selection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ci-uitests.yml uses System.TeamProject conditional for pool selection"
+
+  - id: no_hardcoded_netcore_public
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Pool defaults no longer reference non-existent NetCore-Public pool"
+
+  - id: ci_device_tests_conditional_windows
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ci-device-tests.yml uses conditional pool selection for Windows"
+
+  - id: aces_shared_pool_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AcesShared pool is used for public Android/iOS tests"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files contain actual changes, not just comments"
+
+  - id: yaml_structure_valid
+    type: pass_to_pass
+    origin: static
+    description: "YAML structure is valid and contains expected sections"
+
+rubric: []

@@ -1,0 +1,66 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24395
+  base_commit: "2f839db9e4045e93de0ef6b67a62cb9fc31fe373"
+  merge_commit: "ee9084695ec4d70bc66083ac2b3cf598cc45101a"
+
+checks:
+  - id: source_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "Required source files (types.rs, with/sync.md) exist with substantial content"
+
+  - id: typealias_before_no_instance_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Type::TypeAlias match arm appears before no_instance_fallback guard in member_lookup_with_policy"
+
+  - id: typealias_unwraps_to_value_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TypeAlias arm delegates to value_type().member_lookup_with_policy()"
+
+  - id: mdtest_type_alias_with_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Regression mdtest section for type aliases in with statements with all three alias forms"
+
+  - id: descriptor_protocol_still_exists
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Descriptor protocol fallback (no_instance_fallback) still present after reordering"
+
+  - id: member_lookup_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "member_lookup_with_policy has substantial body with multiple match arms"
+
+  - id: no_local_use_statements
+    type: pass_to_pass
+    origin: agent_config
+    description: "No Rust use statements inside function bodies (must be at file top level)"
+    source:
+      path: "AGENTS.md"
+      lines: "32"
+      commit: "2f839db9e4045e93de0ef6b67a62cb9fc31fe373"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "30"
+      commit: "2f839db9e4045e93de0ef6b67a62cb9fc31fe373"
+
+  - rule: "Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism that could help solve the problem. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "34"
+      commit: "2f839db9e4045e93de0ef6b67a62cb9fc31fe373"
+
+  - rule: "Try hard to avoid patterns that require panic!, unreachable!, or .unwrap(). Instead, try to encode those constraints in the type system."
+    source:
+      path: "AGENTS.md"
+      lines: "33"
+      commit: "2f839db9e4045e93de0ef6b67a62cb9fc31fe373"

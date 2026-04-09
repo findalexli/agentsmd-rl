@@ -1,0 +1,63 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 25682
+  base_commit: "5715b54614cbdb885ab42584d401c300cdff9519"
+  merge_commit: "81b4a40fbdcce6d5ac08ca68c179c854b2393286"
+
+checks:
+  # Code behavior checks (build system migration)
+  - id: cmake_uses_ccache_only
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CMakeLists.txt includes SetupCcache directly, SetupSccache.cmake deleted"
+
+  - id: ccache_not_required
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SetupCcache.cmake no longer requires ccache (graceful skip when missing)"
+
+  - id: bootstrap_uses_ccache
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bootstrap.sh has install_ccache using package managers, no sccache download"
+
+  - id: build_cache_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "scripts/build-cache/ removed, build.mjs uses ccache not sccache"
+
+  # Config/documentation update checks
+  - id: docs_use_ccache
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CONTRIBUTING.md documents ccache (not sccache) for build caching"
+
+  - id: docs_contributing_mdx_ccache
+    type: fail_to_pass
+    origin: pr_diff
+    description: "docs/project/contributing.mdx documents ccache (not sccache)"
+
+  - id: building_windows_docs_ccache
+    type: fail_to_pass
+    origin: pr_diff
+    description: "docs/project/building-windows.mdx references ccache for Windows builds"
+
+  # Syntax validation (pass_to_pass)
+  - id: cmake_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "CMakeLists.txt can be read and parsed by cmake"
+
+  - id: bootstrap_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "scripts/bootstrap.sh is syntactically valid bash"
+
+rubric:
+  - rule: "Follow existing code style - check neighboring files for patterns"
+    source:
+      path: "CLAUDE.md"
+      lines: "201"
+      commit: "5715b54614cbdb885ab42584d401c300cdff9519"

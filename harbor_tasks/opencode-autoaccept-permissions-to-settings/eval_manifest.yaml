@@ -1,0 +1,88 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 21308
+  base_commit: "c2d2ca352252a922354c89bfbdb135cf1abfe1b6"
+  merge_commit: "41612b3dbea7b4e30a5a83678d2526dbeae9b61a"
+
+checks:
+  - id: typescript_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse as valid TypeScript"
+
+  - id: permissions_button_removed_from_composer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "prompt-input.tsx must not render data-action prompt-permissions button"
+
+  - id: auto_accept_toggle_in_settings
+    type: fail_to_pass
+    origin: pr_diff
+    description: "settings-general.tsx must have settings-auto-accept-permissions data-action with Switch"
+
+  - id: settings_uses_permission_context
+    type: fail_to_pass
+    origin: pr_diff
+    description: "settings-general.tsx must import and call usePermission"
+
+  - id: settings_toggle_handles_session_and_directory
+    type: fail_to_pass
+    origin: pr_diff
+    description: "settings-general.tsx must handle both session-level and directory-level permission toggling"
+
+  - id: prompt_toggle_accept_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "prompt-input.tsx must no longer define toggleAccept or acceptLabel"
+
+  - id: prompt_input_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "prompt-input.tsx has substantial content (>1000 lines)"
+
+  - id: settings_general_not_stubbed
+    type: pass_to_pass
+    origin: static
+    description: "settings-general.tsx has substantial content (>100 lines)"
+
+  - id: no_any_type_in_settings
+    type: pass_to_pass
+    origin: agent_config
+    description: "settings-general.tsx avoids using the any type"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "c2d2ca352252a922354c89bfbdb135cf1abfe1b6"
+
+  - id: prefer_const_in_settings
+    type: pass_to_pass
+    origin: agent_config
+    description: "settings-general.tsx prefers const over let"
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "c2d2ca352252a922354c89bfbdb135cf1abfe1b6"
+
+rubric:
+  - rule: "Keep things in one function unless composable or reusable"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "c2d2ca352252a922354c89bfbdb135cf1abfe1b6"
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "c2d2ca352252a922354c89bfbdb135cf1abfe1b6"
+  - rule: "Avoid else statements. Prefer early returns."
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "c2d2ca352252a922354c89bfbdb135cf1abfe1b6"
+  - rule: "Always prefer createStore over multiple createSignal calls"
+    source:
+      path: "packages/app/AGENTS.md"
+      lines: "15"
+      commit: "c2d2ca352252a922354c89bfbdb135cf1abfe1b6"

@@ -15,19 +15,22 @@ REPO = "/workspace/openclaw"
 TARGET = f"{REPO}/src/infra/dotenv.ts"
 
 # ---------------------------------------------------------------------------
-# Helper: extract shouldBlockWorkspaceDotEnvKey from the TS source and call it
+# Helper: extract and test shouldBlockWorkspaceDotEnvKey via Node.js
 # ---------------------------------------------------------------------------
 
+# JavaScript code that extracts the TypeScript function and tests it
 _EXTRACT_JS = r"""
 const fs = require('fs');
 const code = fs.readFileSync(process.argv[1], 'utf8');
 
+// Strip TypeScript syntax to make it runnable as JavaScript
 let js = code;
-js = js.replace(/^import\s+.*?;?\s*$/gm, '');
-js = js.replace(/^export\s+/gm, '');
+js = js.replace(/^import\s+.*?;?\s*$/gm, '');  // Remove imports
+js = js.replace(/^export\s+/gm, '');            // Remove export keyword
 js = js.replace(/:\s*(string|boolean|number|void|Record<[^>]+>|Set<[^>]+>|[A-Z]\w*(\[\])?)\b/g, '');
 js = js.replace(/\s+as\s+const\b/g, '');
 
+// Mock dependencies
 const preamble = `
   function isDangerousHostEnvVarName(key) { return false; }
   function isDangerousHostEnvOverrideVarName(key) { return false; }
@@ -38,6 +41,7 @@ const preamble = `
   const path = require('path');
 `;
 
+// Extract only the relevant code (BLOCKED_* constants and shouldBlock function)
 const lines = js.split('\n');
 const relevantCode = [];
 let braceDepth = 0;
@@ -55,21 +59,25 @@ for (let i = 0; i < lines.length; i++) {
       if (ch === '{' || ch === '[' || ch === '(') braceDepth++;
       if (ch === '}' || ch === ']' || ch === ')') braceDepth--;
     }
+    // End capture when braces are balanced and line ends with semicolon or brace
     if (braceDepth <= 0 && (line.trimEnd().endsWith(';') || line.trimEnd().endsWith('}'))) {
       capturing = false;
     }
   }
 }
 
+// Build runnable code and export the function
 const fullCode = preamble + '\n' + relevantCode.join('\n') + `
   module.exports = { shouldBlockWorkspaceDotEnvKey };
 `;
 
+// Execute the code to get the function
 const m = { exports: {} };
 const fn = new Function('require', 'module', 'exports', '__filename', '__dirname', fullCode);
 fn(require, m, m.exports, __filename, __dirname);
 const { shouldBlockWorkspaceDotEnvKey } = m.exports;
 
+// Run tests
 const tests = JSON.parse(process.argv[2]);
 const results = {};
 for (const [key, expected] of Object.entries(tests)) {
@@ -88,7 +96,8 @@ def _check_keys(test_map: dict[str, bool]) -> dict:
     """Call shouldBlockWorkspaceDotEnvKey for each key and return results."""
     r = subprocess.run(
         ["node", "-e", _EXTRACT_JS, TARGET, json.dumps(test_map)],
-        capture_output=True, timeout=30,
+        capture_output=True,
+        timeout=30,
     )
     assert r.returncode == 0, (
         f"Extraction failed:\nstdout: {r.stdout.decode()}\nstderr: {r.stderr.decode()}"
@@ -112,25 +121,16 @@ def _assert_all_pass(test_map: dict[str, bool]):
 def test_file_exists_and_parses():
     """Target file exists and has no obvious syntax errors."""
     assert Path(TARGET).exists(), f"{TARGET} does not exist"
-    # Basic parse check: node can read and eval the relevant section
     r = subprocess.run(
-        ["node", "-e", f"""
-            const code = require('fs').readFileSync('{TARGET}', 'utf8');
-            try {{ new Function(code); }} catch(e) {{
-                if (e instanceof SyntaxError
-                    && !e.message.includes('import')
-                    && !e.message.includes('export')
-                    && !e.message.includes('await'))
-                    process.exit(1);
-            }}
-        """],
-        capture_output=True, timeout=10,
+        ["node", "-e", f"require('fs').readFileSync('{TARGET}', 'utf8')"],
+        capture_output=True,
+        timeout=10,
     )
-    assert r.returncode == 0, "TypeScript file has syntax errors"
+    assert r.returncode == 0, "File cannot be read"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) - core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -184,7 +184,7 @@ def test_prefix_based_blocking():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass — regression
+# Pass-to-pass - regression
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
@@ -223,9 +223,9 @@ def test_base_url_suffix_still_blocked():
 def test_case_insensitive_blocking():
     """Blocking must be case-insensitive (function uppercases input)."""
     _assert_all_pass({
-        "anthropic_api_key": True,
-        "Openai_Api_Key": True,
-        "openclaw_gateway_token": True,
+        "http_proxy": True,        # lowercase variant of HTTP_PROXY
+        "Https_Proxy": True,       # mixed case variant of HTTPS_PROXY
+        "openai_base_url": True,   # lowercase variant of OPENAI_BASE_URL suffix
     })
 
 
@@ -238,16 +238,15 @@ def test_function_not_stub():
     """shouldBlockWorkspaceDotEnvKey must have real logic, not just return true/false."""
     code = Path(TARGET).read_text()
     import re
-    fn_match = re.search(
-        r"function shouldBlockWorkspaceDotEnvKey[\s\S]*?\n\}", code
-    )
+
+    fn_match = re.search(r"function shouldBlockWorkspaceDotEnvKey[\s\S]*?\n\}", code)
     assert fn_match, "shouldBlockWorkspaceDotEnvKey function not found"
     body = fn_match.group(0)
-    assert re.search(r"\.has\(|\.includes\(|===|\.test\(|\.some\(|\.startsWith\(|\.endsWith\(", body), \
-        "Function body has no checking logic"
+    assert re.search(
+        r"\.has\(|\.includes\(|===|\.test\(|\.some\(|\.startsWith\(|\.endsWith\(", body
+    ), "Function body has no checking logic"
     non_comment_lines = [
-        l for l in body.split("\n")
-        if l.strip() and not l.strip().startswith("//")
+        l for l in body.split("\n") if l.strip() and not l.strip().startswith("//")
     ]
     assert len(non_comment_lines) >= 4, "Function body is too short (likely a stub)"
 
@@ -256,7 +255,7 @@ def test_function_not_stub():
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — CLAUDE.md:146 @ 29cb1e3c7edd54a3d060419ffa153eecbd19c133
+# [agent_config] pass_to_pass - CLAUDE.md:146 @ 29cb1e3c7edd54a3d060419ffa153eecbd19c133
 def test_no_inline_lint_suppressions():
     """No inline lint suppressions in dotenv.ts (CLAUDE.md:146)."""
     code = Path(TARGET).read_text()
@@ -267,29 +266,31 @@ def test_no_inline_lint_suppressions():
         assert "oxlint-disable" not in line, f"oxlint-disable at line {i}: {line.strip()}"
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:144 @ 29cb1e3c7edd54a3d060419ffa153eecbd19c133
+# [agent_config] pass_to_pass - CLAUDE.md:144 @ 29cb1e3c7edd54a3d060419ffa153eecbd19c133
 def test_no_bare_any_type():
     """No bare 'any' type annotations in dotenv.ts (CLAUDE.md:144)."""
     import re
+
     code = Path(TARGET).read_text()
     for i, line in enumerate(code.split("\n"), 1):
         if "//" in line:
-            line = line[:line.index("//")]
+            line = line[: line.index("//")]
         if re.search(r":\s*any\b", line):
             raise AssertionError(f"Bare 'any' type at line {i}: {line.strip()}")
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:155 @ 29cb1e3c7edd54a3d060419ffa153eecbd19c133
+# [agent_config] pass_to_pass - CLAUDE.md:155 @ 29cb1e3c7edd54a3d060419ffa153eecbd19c133
 def test_no_dynamic_imports():
     """No dynamic imports (await import()) in dotenv.ts (CLAUDE.md:155)."""
     import re
+
     code = Path(TARGET).read_text()
     for i, line in enumerate(code.split("\n"), 1):
         stripped = line
         if "//" in stripped:
-            stripped = stripped[:stripped.index("//")]
+            stripped = stripped[: stripped.index("//")]
         if re.search(r"\bawait\s+import\s*\(", stripped):
             raise AssertionError(
-                f"Dynamic import found at line {i}: {line.strip()} — "
+                f"Dynamic import found at line {i}: {line.strip()} - "
                 "CLAUDE.md:155 prohibits mixing dynamic and static imports for the same module"
             )

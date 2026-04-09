@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 36159
+  base_commit: "74568e8627aa43469b74f2972f427a209639d0b6"
+  merge_commit: "2c2fd9d12c7159efef81e7ea6ec899943cf7ca33"
+
+checks:
+  # Fail-to-pass (pr_diff) — core behavioral tests that prove the fix
+
+  - id: test_parse_config_overrides_rejects_xss_patterns
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parseConfigOverrides uses JSON5.parse (not new Function) - proven by XSS rejection"
+
+  - id: test_parse_config_overrides_parses_valid_json5
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parseConfigOverrides correctly parses valid JSON5 configs including comments and trailing commas"
+
+  - id: test_default_config_is_valid_json5
+    type: fail_to_pass
+    origin: pr_diff
+    description: "defaultStore.ts default config can be parsed as valid JSON5 without TypeScript syntax"
+
+  - id: test_json5_dependency_in_package_json
+    type: fail_to_pass
+    origin: pr_diff
+    description: "json5 is listed as a dependency in playground package.json"
+
+  - id: test_parse_config_unit_tests_pass
+    type: fail_to_pass
+    origin: pr_diff
+    description: "parseConfigOverrides unit tests exist and pass"
+
+  # Pass-to-pass (static) — regression + security property checks
+
+  - id: test_config_editor_uses_json_language
+    type: pass_to_pass
+    origin: static
+    description: "ConfigEditor.tsx uses JSON language mode for config"
+
+  - id: test_json5_safely_rejects_injection
+    type: pass_to_pass
+    origin: static
+    description: "JSON5 parsing rejects common XSS/injection patterns"
+
+  - id: test_json5_parses_valid_configs
+    type: pass_to_pass
+    origin: static
+    description: "JSON5 correctly parses valid JSON5 config patterns"
+
+rubric: []

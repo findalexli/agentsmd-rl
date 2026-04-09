@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 90651
+  base_commit: "15fcfb9ce4ec73c6ff8d08d72201726b983127fa"
+  merge_commit: "7643fc948398c38fe0792836fb4c014a45f6fb07"
+
+checks:
+  - id: dockerfile_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "RUN commands in Dockerfiles have valid shell syntax"
+
+  - id: standalone_copy_intact
+    type: pass_to_pass
+    origin: static
+    description: "COPY .next/standalone and .next/static still present"
+
+  - id: dockerfile_runner_creates_dotnext
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dockerfile runner stage creates .next directory with node ownership"
+
+  - id: dockerfile_build_no_cache_mount
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Build RUN command no longer mounts cache on .next/cache"
+
+  - id: dockerfile_bun_creates_dotnext
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dockerfile.bun runner stage creates .next directory with bun ownership"
+
+  - id: readme_documents_writable_dotnext
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md documents the writable .next directory for prerender cache"
+
+  - id: readme_describes_cache_tradeoff
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md explains the BuildKit .next/cache mount is optional"
+
+rubric: []

@@ -1,0 +1,84 @@
+version: "2.0"
+
+source:
+  repo: "lobehub/lobe-chat"
+  pr: 13164
+  base_commit: "12280badbdf288b7018a9d5b907898780cd31a96"
+  merge_commit: "4e89a00d2a8e98fe4d680d15f2094081beb555ab"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Gates (pass_to_pass, static)
+  # ---------------------------------------------------------------------------
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript source files compile without errors"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # ---------------------------------------------------------------------------
+  - id: completion_command_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The completion command outputs a valid shell completion script"
+
+  - id: completion_bash_output
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The completion command outputs valid bash completion script"
+
+  - id: complete_internal_command_suggests_commands
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The __complete internal command suggests subcommands"
+
+  - id: complete_internal_nested_subcommands
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The __complete command suggests nested subcommands in context"
+
+  - id: tsdown_build_config_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The tsdown.config.ts exists and is valid"
+
+  - id: tsup_config_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The old tsup.config.ts is removed"
+
+  - id: package_json_uses_tsdown
+    type: fail_to_pass
+    origin: pr_diff
+    description: "package.json uses tsdown instead of tsup for build"
+
+  - id: completion_utils_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The completion utility module exists with required exports"
+
+  - id: completion_command_module_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The completion command module exists and exports register function"
+
+  - id: index_imports_completion
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The CLI index imports and registers the completion command"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests / static)
+  # ---------------------------------------------------------------------------
+  - id: upstream_completion_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "The upstream completion.test.ts unit tests pass"
+
+  - id: not_stub_completion_utils
+    type: pass_to_pass
+    origin: static
+    description: "The completion utils have meaningful implementation, not stubs"
+
+rubric: []

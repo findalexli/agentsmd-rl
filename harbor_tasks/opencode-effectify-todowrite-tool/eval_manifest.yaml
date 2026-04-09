@@ -1,0 +1,81 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 20789
+  base_commit: "ae7e2eb3fb32b12e0c45681950540df7379e021a"
+  merge_commit: "f2d4ced8ea527dd6518e87354b886204a2819cab"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must exist and be non-empty"
+
+  - id: todowrite_is_effect
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TodoWriteTool must be an Effect (via Tool.defineEffect), not a plain Tool.Info"
+
+  - id: todo_default_layer_exported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Todo.defaultLayer must be exported from session/todo.ts"
+
+  - id: registry_provides_todo_layer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ToolRegistry.defaultLayer must provide Todo.defaultLayer"
+
+  - id: todowrite_yields_service
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TodoWriteTool must yield Todo.Service inside Effect.gen"
+
+  - id: typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "bun typecheck passes from packages/opencode"
+
+  - id: effect_gen_composition
+    type: fail_to_pass
+    origin: agent_config
+    description: "todo.ts must use Effect.gen(function* () { ... }) for composition"
+    source:
+      path: "packages/opencode/AGENTS.md"
+      lines: "20"
+      commit: "ae7e2eb3fb32b12e0c45681950540df7379e021a"
+
+  - id: no_any_type
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified tool files must not use the `any` type annotation"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "ae7e2eb3fb32b12e0c45681950540df7379e021a"
+
+rubric:
+  - rule: "Keep things in one function unless composable or reusable"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "ae7e2eb3fb32b12e0c45681950540df7379e021a"
+
+  - rule: "Prefer single word variable names where possible"
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "ae7e2eb3fb32b12e0c45681950540df7379e021a"
+
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "ae7e2eb3fb32b12e0c45681950540df7379e021a"
+
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "ae7e2eb3fb32b12e0c45681950540df7379e021a"

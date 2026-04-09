@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: oven-sh/bun
+  pr: 28940
+  base_commit: 49221ca7440128b32222aefd0df53c359b3fd5fd
+  merge_commit: 10a573cf2ca9eb1fca161b53390db27d596c3796
+
+checks:
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Zig code has valid syntax (parses with zig fmt)
+
+  - id: warm_uses_target_not_delta
+    type: fail_to_pass
+    origin: pr_diff
+    description: warm() compares against target (min(count, max_threads)) instead of delta
+
+  - id: cmpxchg_correct_logic
+    type: fail_to_pass
+    origin: pr_diff
+    description: cmpxchgWeak spawns on success and retries on failure
+
+  - id: stack_size_used_consistently
+    type: fail_to_pass
+    origin: pr_diff
+    description: Both warm() and notifySlow() use self.stack_size
+
+  - id: thread_spawn_follows_cmpxchg_success
+    type: fail_to_pass
+    origin: pr_diff
+    description: Thread.spawn happens after successful cmpxchg, not before or on failure
+
+  - id: sync_updated_after_successful_spawn
+    type: fail_to_pass
+    origin: pr_diff
+    description: After successful spawn, sync is updated to new_sync for correct state tracking
+
+rubric: []

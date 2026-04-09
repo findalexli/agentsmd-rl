@@ -1,0 +1,75 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22102
+  base_commit: "bb9e058f5b9d4754ac2965bb36864fee1cd978e8"
+  merge_commit: "904bb476d86b62aed1bf840db3be3ae2b1cf128b"
+
+checks:
+  - id: reasoning_tokens_kit_syntax
+    type: pass_to_pass
+    origin: static
+    description: "New reasoning_tokens_kit.py must be valid Python"
+
+  - id: modified_files_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Modified test files must parse without errors"
+
+  - id: reasoning_tokens_kit_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "reasoning_tokens_kit.py must exist with ReasoningTokenUsageMixin"
+
+  - id: mixin_has_required_methods
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReasoningTokenUsageMixin must have all 5 test methods"
+
+  - id: mixin_has_init_reasoning_token_verifier
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mixin must have init_reasoning_token_verifier classmethod"
+
+  - id: test_enable_thinking_imports_mixin
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestEnableThinking must import and use ReasoningTokenUsageMixin"
+
+  - id: test_enable_thinking_sets_reasoning_parser
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestEnableThinking must set reasoning_parser_name = qwen3"
+
+  - id: test_qwen35_mtp_imports_mixin
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestQwen35FP4MTP must import and use ReasoningTokenUsageMixin"
+
+  - id: test_qwen35_mtpv2_imports_mixin
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestQwen35FP4MTPV2 must import and use ReasoningTokenUsageMixin"
+
+  - id: test_qwen35_fp4_uses_custom_test_case
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestQwen35FP4 must use CustomTestCase instead of unittest.TestCase"
+
+  - id: old_reasoning_usage_tokens_deleted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Old standalone test_reasoning_usage_tokens.py must be deleted"
+
+  - id: test_enable_thinking_calls_init_verifier
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestEnableThinking setUpClass must call init_reasoning_token_verifier"
+
+  - id: test_qwen35_mtp_calls_init_verifier
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestQwen35FP4MTP setUpClass must call init_reasoning_token_verifier"
+
+rubric: []

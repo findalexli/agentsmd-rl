@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35886
+  base_commit: "bd76b456c127222f59888953348d40cf8f03e3a0"
+  merge_commit: "c0060cf2a695d719152c939cfc3cced8f7da3e52"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified JS files parse without syntax errors"
+
+  - id: path_prefix_uri_construction
+    type: fail_to_pass
+    origin: pr_diff
+    description: "backend.js constructs WebSocket URI with path, auto-adding leading /"
+
+  - id: client_options_fallback
+    type: fail_to_pass
+    origin: pr_diff
+    description: "standalone.js uses clientOptions to override server values for served script"
+
+  - id: backend_connect_options_has_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ConnectOptions Flow type includes optional path field"
+
+  - id: preload_reads_devtools_env_vars
+    type: fail_to_pass
+    origin: pr_diff
+    description: "preload.js reads REACT_DEVTOOLS_PATH and REACT_DEVTOOLS_CLIENT_* env vars"
+
+  - id: devtools_core_readme_documents_client_options
+    type: fail_to_pass
+    origin: pr_diff
+    description: "react-devtools-core README documents clientOptions for reverse proxy"
+
+  - id: devtools_readme_env_var_table
+    type: fail_to_pass
+    origin: pr_diff
+    description: "react-devtools README documents REACT_DEVTOOLS_CLIENT_* env vars"
+
+rubric: []

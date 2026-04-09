@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 24200
+  base_commit: "995d988c736293572f0a5a2c8a49fd1a2b6ca84c"
+  merge_commit: "782f684b2e67ed08ef6fa61b65c30f4ed5e7979c"
+
+checks:
+  # --- Pass-to-pass (static gates) ---
+  - id: cmake_structure_valid
+    type: pass_to_pass
+    origin: static
+    description: "CMakeLists.txt has balanced include directives and valid structure"
+
+  - id: bootstrap_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "bootstrap.sh is syntactically valid bash"
+
+  # --- Fail-to-pass: code behavior (build system migration) ---
+  - id: sccache_cmake_created
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SetupSccache.cmake exists with S3 bucket config, AWS credential checking, and CI detection"
+
+  - id: ccache_cmake_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SetupCcache.cmake is deleted (replaced by SetupSccache.cmake)"
+
+  - id: cmake_includes_sccache
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CMakeLists.txt includes SetupSccache, not SetupCcache"
+
+  - id: cache_strategy_no_write_only
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CACHE_STRATEGY option no longer includes write-only mode"
+
+  - id: build_mjs_sccache_migration
+    type: fail_to_pass
+    origin: pr_diff
+    description: "build.mjs removes old ccache functions and integrates sccache stats (subprocess)"
+
+  - id: bootstrap_sccache_install
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bootstrap.sh installs sccache from GitHub releases with correct version"
+
+  # --- Fail-to-pass: config/documentation (CONTRIBUTING.md) ---
+  - id: contributing_sccache_install_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CONTRIBUTING.md documents sccache installation with S3 support"
+
+  - id: contributing_aws_credentials_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CONTRIBUTING.md documents AWS credentials setup for core developers"
+
+  - id: contributing_install_commands_use_sccache
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CONTRIBUTING.md macOS install command uses sccache, not ccache"
+
+rubric: []

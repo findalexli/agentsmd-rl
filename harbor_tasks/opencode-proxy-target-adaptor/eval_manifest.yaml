@@ -1,0 +1,98 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 21239
+  base_commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
+  merge_commit: "37883a9f3a8542ab93ccfa85808b51d9b54cfd9f"
+
+checks:
+  - id: typecheck
+    type: pass_to_pass
+    origin: static
+    description: "All modified packages must pass type checking"
+
+  - id: target_type_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Target discriminated union with local and remote variants must exist in types.ts"
+
+  - id: adaptor_has_target_not_fetch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Adaptor interface must have target() method and not fetch()"
+
+  - id: worktree_target_returns_local
+    type: fail_to_pass
+    origin: pr_diff
+    description: "WorktreeAdaptor must implement target() returning local type"
+
+  - id: proxy_module_exports
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ServerProxy module must export http() and websocket() functions"
+
+  - id: proxy_strips_hop_headers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "HTTP proxy must strip hop-by-hop headers per RFC 2616"
+
+  - id: workspace_uses_target
+    type: fail_to_pass
+    origin: pr_diff
+    description: "workspaceEventLoop must use adaptor.target() and return early for local"
+
+  - id: router_branches_on_target
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Router must branch on target.type instead of workspace.type"
+
+  - id: router_websocket_proxy
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Router must delegate websocket upgrades through proxy module"
+
+  - id: router_workspace_header
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Router must accept workspace ID from x-opencode-workspace header"
+
+  - id: no_try_catch_in_proxy
+    type: fail_to_pass
+    origin: agent_config
+    description: "Proxy module must avoid try/catch (AGENTS.md style rule)"
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
+
+  - id: no_else_in_proxy
+    type: fail_to_pass
+    origin: agent_config
+    description: "Proxy module must avoid else statements (AGENTS.md style rule)"
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
+
+rubric:
+  - rule: "Keep things in one function unless composable or reusable"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
+  - rule: "Prefer single word variable names where possible"
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
+  - rule: "Reduce total variable count by inlining when a value is only used once"
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "55-57"
+      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"

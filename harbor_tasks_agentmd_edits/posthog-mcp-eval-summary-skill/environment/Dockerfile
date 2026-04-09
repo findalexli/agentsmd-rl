@@ -5,7 +5,8 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential && \
+        git curl ca-certificates build-essential \
+        nodejs npm && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone PostHog monorepo at base commit

@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "denoland/deno"
+  pr: 33172
+  base_commit: "ad725eea313df6204d342d84ace4af1b11cc341f"
+  merge_commit: "00d46fe27611060fd87432010c401bbb3ca55a6e"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must exist and retain core structure (TCP class, listen method, EXPECTED_VIOLATIONS)"
+
+  - id: legacy_listen_branch_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "listen() must not branch on kUseNativeWrap to a legacy path"
+
+  - id: dead_legacy_methods_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dead #listenLegacy, #accept, #acceptBackoff methods and Deno.listen usage must be removed"
+
+  - id: lint_violations_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Lint plugin must not list tcp_wrap.ts in EXPECTED_VIOLATIONS with count > 0"
+
+  - id: unused_imports_cleaned
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Imports only used by dead legacy code (delay, INITIAL_ACCEPT_BACKOFF_DELAY, MAX_ACCEPT_BACKOFF_DELAY) must be removed"
+
+rubric: []

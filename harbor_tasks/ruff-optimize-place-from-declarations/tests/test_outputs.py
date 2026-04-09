@@ -1,0 +1,298 @@
+"""
+Task: ruff-optimize-place-from-declarations
+Repo: ruff @ 398e2a79c488cf2ae59512ea31e00626d7dd8833
+PR:   24444
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import os
+import re
+import subprocess
+from pathlib import Path
+
+REPO = "/workspace/ruff"
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static) — compilation check
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_cargo_check():
+    """ty_python_semantic crate compiles without errors."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty_python_semantic"],
+        cwd=REPO, capture_output=True, timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"cargo check failed:\n{r.stderr.decode()[-3000:]}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_or_else_method_semantics():
+    """Truthiness::or_else lazy method exists and has correct semantics.
+
+    Injects a Rust unit test into types.rs that exercises or_else with
+    multiple Truthiness variants and verifies lazy closure invocation.
+    Fails on base commit (method does not exist -> compilation error).
+    """
+    types_rs = Path(REPO) / "crates" / "ty_python_semantic" / "src" / "types.rs"
+    original = types_rs.read_text()
+
+    test_module = '''
+
+// === INJECTED TEST START ===
+#[cfg(test)]
+mod or_else_verification_test {
+    use super::Truthiness;
+
+    #[test]
+    fn or_else_always_true_short_circuits() {
+        let mut called = false;
+        let result = Truthiness::AlwaysTrue.or_else(|| {
+            called = true;
+            Truthiness::AlwaysFalse
+        });
+        assert!(matches!(result, Truthiness::AlwaysTrue));
+        assert!(!called, "or_else must not call closure when self is AlwaysTrue");
+    }
+
+    #[test]
+    fn or_else_always_false_delegates() {
+        let result = Truthiness::AlwaysFalse.or_else(|| Truthiness::Ambiguous);
+        assert!(matches!(result, Truthiness::Ambiguous));
+
+        let result2 = Truthiness::AlwaysFalse.or_else(|| Truthiness::AlwaysTrue);
+        assert!(matches!(result2, Truthiness::AlwaysTrue));
+
+        let result3 = Truthiness::AlwaysFalse.or_else(|| Truthiness::AlwaysFalse);
+        assert!(matches!(result3, Truthiness::AlwaysFalse));
+    }
+
+    #[test]
+    fn or_else_ambiguous_propagates() {
+        let result = Truthiness::Ambiguous.or_else(|| Truthiness::AlwaysTrue);
+        assert!(matches!(result, Truthiness::AlwaysTrue));
+
+        let result2 = Truthiness::Ambiguous.or_else(|| Truthiness::AlwaysFalse);
+        assert!(matches!(result2, Truthiness::Ambiguous));
+
+        let result3 = Truthiness::Ambiguous.or_else(|| Truthiness::Ambiguous);
+        assert!(matches!(result3, Truthiness::Ambiguous));
+    }
+}
+// === INJECTED TEST END ===
+'''
+    try:
+        types_rs.write_text(original + test_module)
+        r = subprocess.run(
+            [
+                "cargo", "test", "-p", "ty_python_semantic",
+                "--", "or_else_verification_test",
+            ],
+            cwd=REPO, capture_output=True, timeout=600,
+            env={**os.environ, "CARGO_PROFILE_DEV_OPT_LEVEL": "1"},
+        )
+        assert r.returncode == 0, (
+            f"or_else test failed:\n{r.stderr.decode()[-3000:]}"
+        )
+        stdout = r.stdout.decode()
+        # Verify all 3 sub-tests ran
+        assert "3 passed" in stdout or "test result: ok" in stdout, (
+            f"Expected 3 passing tests, got:\n{stdout[-1000:]}"
+        )
+    finally:
+        # Restore original file
+        types_rs.write_text(original)
+
+
+# [pr_diff] fail_to_pass
+def test_lazy_deleted_reachability_eval():
+    """deleted_reachability uses or_else (lazy) instead of or (eager) in place_from_bindings_impl."""
+    place_rs = Path(REPO) / "crates" / "ty_python_semantic" / "src" / "place.rs"
+    content = place_rs.read_text()
+
+    # Find the place_from_bindings_impl function and check for or_else usage
+    # The fix changes: deleted_reachability = deleted_reachability.or(...)
+    # to:              deleted_reachability = deleted_reachability.or_else(|| {...})
+    fn_match = re.search(
+        r"fn place_from_bindings_impl.*?\n\}",
+        content,
+        re.DOTALL,
+    )
+    assert fn_match is not None, "place_from_bindings_impl function not found"
+    fn_body = fn_match.group(0)
+
+    # Must use or_else for lazy evaluation of deleted reachability
+    assert "deleted_reachability.or_else" in fn_body or "deleted_reachability = deleted_reachability.or_else" in content, (
+        "place_from_bindings_impl should use or_else for lazy evaluation of deleted_reachability. "
+        "Found eager .or() instead."
+    )
+    # Must NOT use the eager .or( pattern for deleted_reachability
+    eager_pattern = re.search(
+        r"deleted_reachability\s*=\s*deleted_reachability\.or\(\s*\n?\s*reachability_constraints\.evaluate",
+        fn_body,
+    )
+    assert eager_pattern is None, (
+        "deleted_reachability should use .or_else() (lazy), not .or() (eager)"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_declarations_boundness_evaluator():
+    """DeclarationsBoundnessEvaluator enum defined to defer reachability evaluation."""
+    place_rs = Path(REPO) / "crates" / "ty_python_semantic" / "src" / "place.rs"
+    content = place_rs.read_text()
+
+    # The enum must be defined
+    assert "enum DeclarationsBoundnessEvaluator" in content, (
+        "DeclarationsBoundnessEvaluator enum not found in place.rs"
+    )
+
+    # It must have the two expected variants
+    enum_match = re.search(
+        r"enum DeclarationsBoundnessEvaluator.*?\{(.*?)\n\}",
+        content,
+        re.DOTALL,
+    )
+    assert enum_match is not None, "Could not parse DeclarationsBoundnessEvaluator enum body"
+    enum_body = enum_match.group(1)
+    assert "AssumeBound" in enum_body, "Missing AssumeBound variant"
+    assert "BasedOnUnboundVisibility" in enum_body, "Missing BasedOnUnboundVisibility variant"
+
+    # It must have an evaluate method
+    impl_match = re.search(
+        r"impl.*DeclarationsBoundnessEvaluator.*\{.*?fn evaluate\(",
+        content,
+        re.DOTALL,
+    )
+    assert impl_match is not None, (
+        "DeclarationsBoundnessEvaluator must have an evaluate() method"
+    )
+
+    # The evaluator must actually be used in place_from_declarations_impl
+    fn_match = re.search(
+        r"fn place_from_declarations_impl.*?\n\}",
+        content,
+        re.DOTALL,
+    )
+    assert fn_match is not None, "place_from_declarations_impl not found"
+    fn_body = fn_match.group(0)
+    assert "boundness_evaluator" in fn_body.lower() or "DeclarationsBoundnessEvaluator" in fn_body, (
+        "DeclarationsBoundnessEvaluator must be used in place_from_declarations_impl"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_is_non_exported_standalone():
+    """is_non_exported extracted as standalone function from closure."""
+    place_rs = Path(REPO) / "crates" / "ty_python_semantic" / "src" / "place.rs"
+    content = place_rs.read_text()
+
+    # Must have a standalone fn is_non_exported (not just a closure)
+    fn_pattern = re.search(
+        r"\nfn is_non_exported[<(]",
+        content,
+    )
+    assert fn_pattern is not None, (
+        "is_non_exported must be a standalone function, not a closure. "
+        "Expected 'fn is_non_exported' at module level in place.rs"
+    )
+
+    # Verify it takes db, declaration, and requires_explicit_reexport params
+    fn_sig_match = re.search(
+        r"fn is_non_exported.*?\(.*?db.*?declaration.*?requires_explicit_reexport.*?\)",
+        content,
+        re.DOTALL,
+    )
+    assert fn_sig_match is not None, (
+        "is_non_exported should take db, declaration, and requires_explicit_reexport parameters"
+    )
+
+    # The function should be called in place_from_declarations_impl
+    decl_fn = re.search(
+        r"fn place_from_declarations_impl.*?\n\}",
+        content,
+        re.DOTALL,
+    )
+    assert decl_fn is not None
+    assert "is_non_exported(" in decl_fn.group(0), (
+        "is_non_exported() must be called in place_from_declarations_impl"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests / static) — regression + config checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_existing_crate_tests():
+    """Existing ty_python_semantic tests still pass (focused subset)."""
+    # Run the place-related tests which directly exercise the changed code
+    r = subprocess.run(
+        [
+            "cargo", "test", "-p", "ty_python_semantic",
+            "--", "place", "--test-threads=2",
+        ],
+        cwd=REPO, capture_output=True, timeout=600,
+        env={**os.environ, "CARGO_PROFILE_DEV_OPT_LEVEL": "1"},
+    )
+    assert r.returncode == 0, (
+        f"Existing crate tests failed:\n{r.stderr.decode()[-3000:]}"
+    )
+
+
+# [agent_config] pass_to_pass — AGENTS.md:76
+def test_no_local_imports():
+    """Rust imports are at the top of the file, not inside functions.
+
+    AGENTS.md line 76: 'Rust imports should always go at the top of the file,
+    never locally in functions.'
+    """
+    modified_files = [
+        "crates/ty_python_semantic/src/place.rs",
+        "crates/ty_python_semantic/src/types.rs",
+        "crates/ty_python_semantic/src/semantic_index.rs",
+        "crates/ty_python_semantic/src/semantic_index/use_def.rs",
+    ]
+    for rel_path in modified_files:
+        filepath = Path(REPO) / rel_path
+        if not filepath.exists():
+            continue
+        content = filepath.read_text()
+        lines = content.split("\n")
+
+        in_function = False
+        brace_depth = 0
+        fn_start_line = 0
+
+        for i, line in enumerate(lines, 1):
+            stripped = line.strip()
+
+            # Track function entry (simplified: look for fn declarations)
+            if re.match(r"^\s*(pub(\(crate\))?\s+)?fn\s+\w+", line) and not stripped.startswith("//"):
+                in_function = True
+                fn_start_line = i
+                brace_depth = 0
+
+            if in_function:
+                brace_depth += line.count("{") - line.count("}")
+                if brace_depth <= 0 and i > fn_start_line:
+                    in_function = False
+
+                # Check for use statements inside function bodies
+                if in_function and i > fn_start_line and re.match(r"\s+use\s+", line):
+                    # Allow use in test modules (cfg(test))
+                    if "use super::" not in line:
+                        assert False, (
+                            f"Local import found inside function body at "
+                            f"{rel_path}:{i}: {stripped!r}. "
+                            f"AGENTS.md requires imports at the top of the file."
+                        )

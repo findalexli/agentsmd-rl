@@ -1,0 +1,79 @@
+version: "2.0"
+
+source:
+  repo: "payloadcms/payload"
+  pr: 15110
+  base_commit: "5ebda61c74724cf68d2b1b1dc9886dde6f55b0ff"
+  merge_commit: "40081f457d3b89ea0acdb43042926e343de81342"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Static checks (pass_to_pass)
+  # ---------------------------------------------------------------------------
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must compile without errors"
+
+  - id: test_claude_md_updated
+    type: pass_to_pass
+    origin: static
+    description: "CLAUDE.md has been updated with testing best practices"
+    source:
+      path: "CLAUDE.md"
+      lines: "82-125"
+      commit: "5ebda61c74724cf68d2b1b1dc9886dde6f55b0ff"
+
+  - id: test_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified functions have real logic, not just pass/return"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass checks (pr_diff) — core behavioral changes
+  # ---------------------------------------------------------------------------
+  - id: test_buildschema_finds_nested_id_field
+    type: fail_to_pass
+    origin: pr_diff
+    description: "buildSchema finds custom ID fields nested in tabs via flattenedFields"
+
+  - id: test_buildschema_accepts_flattenedfields_param
+    type: fail_to_pass
+    origin: pr_diff
+    description: "buildSchema function accepts and uses flattenedFields parameter"
+
+  - id: test_afterread_preserves_top_level_id
+    type: fail_to_pass
+    origin: pr_diff
+    description: "afterRead preserves top-level custom ID even when hidden"
+
+  - id: test_fielddepth_tracked_in_afterread
+    type: fail_to_pass
+    origin: pr_diff
+    description: "afterRead hooks track fieldDepth parameter through traversal"
+
+rubric:
+  # Soft rules for LLM judge — the CLAUDE.md testing guidelines
+  - rule: "Tests MUST be self-contained and clean up after themselves."
+    source:
+      path: "CLAUDE.md"
+      lines: "85-88"
+      commit: "5ebda61c74724cf68d2b1b1dc9886dde6f55b0ff"
+
+  - rule: "If you create a database record in a test, you MUST delete it before the test completes."
+    source:
+      path: "CLAUDE.md"
+      lines: "87"
+      commit: "5ebda61c74724cf68d2b1b1dc9886dde6f55b0ff"
+
+  - rule: "For multiple tests with similar cleanup needs, use afterEach to centralize cleanup logic."
+    source:
+      path: "CLAUDE.md"
+      lines: "88"
+      commit: "5ebda61c74724cf68d2b1b1dc9886dde6f55b0ff"
+
+  - rule: "Use descriptive test names starting with 'should'."
+    source:
+      path: "CLAUDE.md"
+      lines: "109"
+      commit: "5ebda61c74724cf68d2b1b1dc9886dde6f55b0ff"

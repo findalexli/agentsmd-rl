@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 13049
+  base_commit: "a35f5896e43d2585d9206e8256b4d7e321fcd0fe"
+  merge_commit: "9ea8359458afbbae5431e581486fa739b85366a2"
+
+checks:
+  - id: verify_rejects_tcp_only_server
+    type: fail_to_pass
+    origin: pr_diff
+    description: "verify_server_startup rejects TCP-only server that doesn't speak HTTP"
+
+  - id: verify_rejects_500_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "verify_server_startup rejects server returning HTTP 500"
+
+  - id: verify_default_timeout_increased
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Default timeout increased from 5s to handle slower startups"
+
+  - id: ts_http_readiness_polling
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TypeScript app-launcher uses HTTP polling for server readiness"
+
+  - id: verify_accepts_healthy_server
+    type: pass_to_pass
+    origin: pr_diff
+    description: "verify_server_startup accepts a healthy HTTP server returning 200"
+
+  - id: verify_returns_false_no_server
+    type: pass_to_pass
+    origin: pr_diff
+    description: "verify_server_startup returns False when no server is running"
+
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified Python file parses without syntax errors"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "a35f5896e43d2585d9206e8256b4d7e321fcd0fe"

@@ -10,6 +10,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import functools
 import importlib.util
+import subprocess
 from pathlib import Path
 
 REPO = "/repo"
@@ -49,21 +50,33 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_is_vlm_architecture_classifies_configs():
     """is_vlm_architecture returns True for VLM types, False for text-only types."""
-    vlm = _load_vlm_module()
-    fn = vlm.is_vlm_architecture
+    r = subprocess.run(
+        ["python3", "-c", """
+from prime_rl.utils.vlm import is_vlm_architecture
 
-    # VLM architectures in registry must return True
-    for mt in ["qwen3_5_moe", "qwen3_5", "qwen3_vl"]:
-        assert fn(_MockConfig(mt)) is True, f"{mt} should be VLM"
+class MockConfig:
+    def __init__(self, model_type):
+        self.model_type = model_type
 
-    # Non-VLM model types must return False
-    for mt in ["llama", "gpt2", "mistral", "gemma", "phi"]:
-        assert fn(_MockConfig(mt)) is False, f"{mt} should not be VLM"
+# VLM architectures in registry must return True
+for mt in ["qwen3_5_moe", "qwen3_5", "qwen3_vl"]:
+    assert is_vlm_architecture(MockConfig(mt)) is True, f"{mt} should be VLM"
 
-    # Edge cases
-    assert fn(_MockConfig(None)) is False, "None model_type should be False"
-    assert fn(_MockConfig("")) is False, "empty model_type should be False"
-    assert fn(_MockConfig("nonexistent_model_999")) is False
+# Non-VLM model types must return False
+for mt in ["llama", "gpt2", "mistral", "gemma", "phi"]:
+    assert is_vlm_architecture(MockConfig(mt)) is False, f"{mt} should not be VLM"
+
+# Edge cases
+assert is_vlm_architecture(MockConfig(None)) is False, "None model_type"
+assert is_vlm_architecture(MockConfig("")) is False, "empty model_type"
+assert is_vlm_architecture(MockConfig("nonexistent_model_999")) is False
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass

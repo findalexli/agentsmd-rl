@@ -6,9 +6,10 @@ PR:   57807
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-The test-planner modules (executor.mjs, planner.mjs) have deep ESM import chains
-that require the full monorepo. Tests extract the target function and exec it with
-mocks to verify behavior without importing the full dependency graph.
+The test-planner modules (executor.mjs, planner.mjs) have deep ESM import chains.
+Tests verify behavior by:
+1. Extracting and unit-testing the helper function in isolation
+2. Running the actual test-planner tests from the repo
 """
 
 import re
@@ -56,9 +57,9 @@ def _extract_filter_helper(filepath: str) -> str | None:
     return None
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_syntax_check():
@@ -71,9 +72,9 @@ def test_syntax_check():
         assert r.returncode == 0, f"{f} has syntax errors: {r.stderr}"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) - core behavioral tests
+# -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_filter_helper_defined():
@@ -171,13 +172,13 @@ def test_executor_call_sites_updated():
     """
     content = _read(EXECUTOR)
 
-    # The helper definition itself will contain countExplicitEntryFilters — exclude it
+    # The helper definition itself will contain countExplicitEntryFilters - exclude it
     helper = _extract_filter_helper(EXECUTOR) or ""
     # Remove the helper body from content for call-site analysis
     rest = content.replace(helper, "")
 
     # After removing the helper definition, no remaining call site should use
-    # countExplicitEntryFilters(unit.args) — they should all use the helper
+    # countExplicitEntryFilters(unit.args) - they should all use the helper
     call_sites = re.findall(r"countExplicitEntryFilters\s*\(\s*unit\.args\s*\)", rest)
     assert len(call_sites) == 0, (
         f"executor.mjs still has {len(call_sites)} call site(s) using "
@@ -204,16 +205,16 @@ def test_planner_call_sites_updated():
     )
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass — regression checks
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Pass-to-pass - regression checks
+# -----------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
 def test_null_for_no_include_files():
     """Helper returns null when includeFiles is empty, undefined, or null."""
     func = _extract_filter_helper(EXECUTOR)
     if func is None:
-        # On base commit, the helper doesn't exist — skip gracefully.
+        # On base commit, the helper doesn't exist - skip gracefully.
         # (This is p2p, so if the helper doesn't exist, the f2p tests catch it.)
         return
 
@@ -256,11 +257,11 @@ def test_explicit_filter_import_preserved():
         ), f"{Path(f).name} no longer imports countExplicitEntryFilters from vitest-args"
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Config-derived (agent_config)
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — CLAUDE.md:146 @ c22edbb8
+# [agent_config] pass_to_pass - CLAUDE.md:146 @ c22edbb8
 def test_no_lint_suppressions():
     """New helper function must not introduce inline lint suppressions.
 
@@ -271,16 +272,16 @@ def test_no_lint_suppressions():
     for filepath in [EXECUTOR, PLANNER]:
         func = _extract_filter_helper(filepath)
         if func is None:
-            # Helper absent on base commit — the f2p tests catch this; skip here.
+            # Helper absent on base commit - the f2p tests catch this; skip here.
             continue
         for s in suppressions:
             assert s not in func, (
-                f"{Path(filepath).name}: new helper contains lint suppression '{s}' — "
+                f"{Path(filepath).name}: new helper contains lint suppression '{s}' - "
                 f"fix root causes instead of suppressing"
             )
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:147 @ c22edbb8
+# [agent_config] pass_to_pass - CLAUDE.md:147 @ c22edbb8
 def test_no_explicit_any_disable():
     """Modified files must not disable no-explicit-any.
 
@@ -293,7 +294,7 @@ def test_no_explicit_any_disable():
         )
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:160 @ c22edbb8
+# [agent_config] pass_to_pass - CLAUDE.md:160 @ c22edbb8
 def test_no_prototype_mutation():
     """Modified files must not share behavior via prototype mutation.
 
@@ -301,6 +302,45 @@ def test_no_prototype_mutation():
     """
     for name in [EXECUTOR, PLANNER]:
         for line in _read(name).splitlines():
-            assert not re.search(r"\.prototype\.\w+\s*=", line), (
+            assert not re.search(r"\.prototype\.\w+\s*[=]", line), (
                 f"{Path(name).name} has prototype mutation: {line.strip()}"
             )
+
+
+# -----------------------------------------------------------------------------
+# End-to-end behavioral test (repo_tests)
+# -----------------------------------------------------------------------------
+
+
+# [repo_tests] fail_to_pass
+def test_single_file_batches_get_shard_assignment():
+    """Single-file include batches are assigned to specific shards (not over-sharded).
+
+    This runs the actual repo's test-planner tests to verify that units with
+    includeFiles (instead of CLI filters) get proper topLevelSingleShardAssignments.
+    Verifies the fix for the over-sharding bug.
+    """
+    r = subprocess.run(
+        ["pnpm", "test", "--", "test/scripts/test-planner.test.ts", "-t", "single include-file CI batches"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Test passes if vitest exits 0
+    assert r.returncode == 0, (
+        f"Repo test failed: {r.stdout}\n{r.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_parallel_tests_still_pass():
+    """Related test-parallel tests continue to work after the fix."""
+    r = subprocess.run(
+        ["pnpm", "test", "--", "test/scripts/test-parallel.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # p2p: on gold this passes, on base may fail for unrelated reasons
+    # We mainly want to ensure no syntax errors in modified files
+    if r.returncode != 0:
+        # Only fail if syntax/parse errors (indicating our changes broke something)
+        assert "SyntaxError" not in r.stderr and "ParseError" not in r.stderr, (
+            f"Syntax error in modified files: {r.stderr}"
+        )

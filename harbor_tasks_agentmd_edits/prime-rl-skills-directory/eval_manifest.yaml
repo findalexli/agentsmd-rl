@@ -1,0 +1,53 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 1747
+  base_commit: "31b48b8b10db390d835909a6fd976f29d9880c81"
+  merge_commit: "5cdada64575330a37488cf156e49d9914cf7c369"
+
+checks:
+  # Static structural checks
+  - id: agents_md_exists
+    type: pass_to_pass
+    origin: static
+    description: "AGENTS.md must exist and be readable"
+
+  # Fail-to-pass: skills directory structure
+  - id: skills_directory_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "skills/ directory must exist"
+
+  - id: inference_server_skill_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "skills/inference-server/SKILL.md must exist with proper content"
+
+  - id: toml_config_skill_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "skills/toml-config/SKILL.md must exist with proper content"
+
+  - id: claude_skills_symlink_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: ".claude/skills symlink must point to ../skills"
+
+  # Fail-to-pass: AGENTS.md documentation updates
+  - id: agents_md_documents_skills_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md must have a Skills section documenting the skills system"
+
+  - id: agents_md_documents_skill_maintenance
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md must explain skill maintenance responsibilities"
+
+  - id: agents_md_references_toml_config_skill
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md must reference the toml-config skill for CLI usage"
+
+rubric: []

@@ -1,0 +1,73 @@
+version: "2.0"
+
+source:
+  repo: "biomejs/biome"
+  pr: 8833
+  base_commit: "cb112ce872c8428414d78bc90c6ed26a102ac0e0"
+  merge_commit: "375792e7c94db6c676222b0b3ecdb7ad89d4ece6"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Gates (pass_to_pass, static) — compilation check
+  # ---------------------------------------------------------------------------
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified crates compile without errors"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests via subprocess
+  # ---------------------------------------------------------------------------
+  - id: element_list_imports_css_display
+    type: fail_to_pass
+    origin: pr_diff
+    description: "element_list.rs imports CssDisplay from css_display module"
+
+  - id: block_like_element_break_logic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "element_list.rs handles visible block-like elements adjacent to text with force_multiline"
+
+  - id: display_none_whitespace_handling
+    type: fail_to_pass
+    origin: pr_diff
+    description: "element_list.rs handles display:none elements without introducing whitespace"
+
+  - id: multiline_text_after_block
+    type: fail_to_pass
+    origin: pr_diff
+    description: "element_list.rs keeps words after block-like elements on their own line when multiline"
+
+  - id: block_before_text_line_mode
+    type: fail_to_pass
+    origin: pr_diff
+    description: "element_list.rs uses LineMode::Hard for block-like elements followed by text"
+
+  - id: css_display_comment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "css_display.rs has FIXME comment about display:none being whitespace sensitive"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — config/documentation update tests
+  # ---------------------------------------------------------------------------
+  - id: prettier_compare_skill_created
+    type: fail_to_pass
+    origin: agent_config
+    description: ".claude/skills/prettier-compare/SKILL.md must exist with proper content"
+    source:
+      path: ".claude/skills/prettier-compare/SKILL.md"
+      lines: "1-48"
+      commit: "cb112ce872c8428414d78bc90c6ed26a102ac0e0"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static) — anti-stub
+  # ---------------------------------------------------------------------------
+  - id: element_list_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "element_list.rs modifications have real logic, not just stubs"
+
+rubric:
+  # No soft rules requiring LLM judge for this task
+  []

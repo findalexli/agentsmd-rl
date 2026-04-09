@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/opencode"
@@ -33,6 +34,19 @@ def _instance_state_body(src: str) -> str:
     )
     assert m, "Could not find InstanceState.make body"
     return m.group(1)
+
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -67,27 +81,45 @@ def test_no_monolithic_effect_promise():
 
     The fix breaks the monolithic promise into individual yield* statements.
     """
-    src = _plugin_src()
-    make_idx = src.index("InstanceState.make")
-    after_make = src[make_idx:make_idx + 3000]
-    # Each Effect.promise should be small (dynamic import, single hook call) — not contain
-    # Config.get(), plugin loops, or other heavy logic
-    effect_promises = list(re.finditer(r"Effect\.promise\s*\(\s*(?:async\s*)?\(\)\s*=>", after_make))
-    for ep in effect_promises:
-        start = ep.end()
-        depth = 1
-        pos = start
-        while pos < len(after_make) and depth > 0:
-            if after_make[pos] == "(":
-                depth += 1
-            elif after_make[pos] == ")":
-                depth -= 1
-            pos += 1
-        promise_body = after_make[start:pos]
-        assert "Config.get()" not in promise_body, \
-            "Config.get() still inside Effect.promise — monolithic wrapper not removed"
-        assert "INTERNAL_PLUGINS" not in promise_body, \
-            "Plugin loading loop still inside single Effect.promise — not broken out"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const src = readFileSync('packages/opencode/src/plugin/index.ts', 'utf8');
+
+const makeIdx = src.indexOf('InstanceState.make');
+if (makeIdx === -1) { console.error('InstanceState.make not found'); process.exit(1); }
+const section = src.slice(makeIdx, makeIdx + 3000);
+
+// Find Effect.promise(async ...) blocks — the monolithic pattern.
+// On the fix, Effect.promise uses () => (not async), so only async blocks are suspect.
+let searchFrom = 0;
+while (true) {
+    const idx = section.indexOf('Effect.promise(async', searchFrom);
+    if (idx === -1) break;
+
+    const braceIdx = section.indexOf('{', idx + 'Effect.promise(async'.length);
+    if (braceIdx === -1) { searchFrom = idx + 1; continue; }
+
+    let depth = 1, pos = braceIdx + 1;
+    while (pos < section.length && depth > 0) {
+        if (section[pos] === '{') depth++;
+        else if (section[pos] === '}') depth--;
+        pos++;
+    }
+    const body = section.slice(braceIdx, pos);
+
+    if (body.includes('Config.get()')) {
+        console.error('Config.get() still inside Effect.promise(async) — monolithic wrapper not removed');
+        process.exit(1);
+    }
+    if (body.includes('INTERNAL_PLUGINS')) {
+        console.error('Plugin loading loop still inside single Effect.promise(async) — not broken out');
+        process.exit(1);
+    }
+    searchFrom = pos;
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Node check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [pr_diff] fail_to_pass
@@ -123,23 +155,30 @@ def test_plugin_loading_uses_effect_try_promise():
 # [pr_diff] fail_to_pass
 def test_trigger_yields_hooks_individually():
     """The trigger helper must yield each hook call individually, not batch in one Effect.promise."""
-    src = _plugin_src()
-    # trigger is: const trigger = Effect.fn("Plugin.trigger")(function* <...>(...) { ... return output })
-    trigger_match = re.search(
-        r'Effect\.fn\(\s*"Plugin\.trigger"\s*\)\s*\(\s*function\*[\s\S]*?return\s+output\s*\}',
-        src,
-    )
-    assert trigger_match, "Could not find Plugin.trigger function"
-    trigger_body = trigger_match.group(0)
-    # Old pattern: Effect.promise(async () => { for ... await fn() }) — one promise wrapping loop
-    # New pattern: for loop with yield* Effect.promise(() => fn(input, output)) per hook
-    promises = list(re.finditer(r"Effect\.promise\s*\(", trigger_body))
-    if promises:
-        for_match = re.search(r"for\s*\(", trigger_body)
-        assert for_match, "trigger must have a for loop over hooks"
-        for p in promises:
-            assert p.start() > for_match.start(), \
-                "Effect.promise wraps the for loop — should be inside it (per-hook yield)"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const src = readFileSync('packages/opencode/src/plugin/index.ts', 'utf8');
+
+// Find the trigger function by its tracing label
+const labelIdx = src.indexOf('"Plugin.trigger"');
+if (labelIdx === -1) { console.error('Plugin.trigger function not found'); process.exit(1); }
+
+const chunk = src.slice(labelIdx, labelIdx + 1000);
+const returnIdx = chunk.indexOf('return output');
+if (returnIdx === -1) { console.error('Could not find return output in trigger'); process.exit(1); }
+const trigger = chunk.slice(0, returnIdx + 'return output'.length);
+
+// Old pattern: Effect.promise(async () => { for ... }) — async wrapper around for loop
+// New pattern: for loop with yield* Effect.promise(() => fn(...)) per hook
+const asyncIdx = trigger.indexOf('async () =>');
+const forIdx = trigger.indexOf('for (');
+if (asyncIdx !== -1 && forIdx !== -1 && asyncIdx < forIdx) {
+    console.error('trigger wraps hooks in Effect.promise(async () => { for ... }) — should yield individually');
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Node check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [pr_diff] fail_to_pass
@@ -155,22 +194,34 @@ def test_config_default_layer_provided():
 # [pr_diff] fail_to_pass
 def test_config_hook_uses_effect_ignore():
     """Config hook error isolation must use Effect.tryPromise piped through Effect.ignore."""
-    src = _plugin_src()
-    # Find the config hook notification section
-    config_hook_match = re.search(
-        r"(?:Notify|notify|config hook|plugin config)[\s\S]{0,500}?\.config\?\.",
-        src, re.IGNORECASE,
-    )
-    if not config_hook_match:
-        config_hook_match = re.search(r"hook\b[\s\S]{0,100}?\.config\?\.", src)
-    assert config_hook_match, "Could not find config hook notification section"
-    start = max(0, config_hook_match.start() - 200)
-    end = min(len(src), config_hook_match.end() + 500)
-    section = src[start:end]
-    assert "try {" not in section or "Effect.tryPromise" in section, \
-        "Config hook still uses try/catch — should use Effect.tryPromise"
-    assert "Effect.ignore" in section, \
-        "Config hook errors not piped through Effect.ignore"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+const src = readFileSync('packages/opencode/src/plugin/index.ts', 'utf8');
+
+// Find the config hook notification section by its error message
+const marker = 'plugin config hook failed';
+const markerIdx = src.indexOf(marker);
+if (markerIdx === -1) { console.error('Config hook error logging not found'); process.exit(1); }
+
+const start = Math.max(0, markerIdx - 500);
+const end = Math.min(src.length, markerIdx + marker.length + 500);
+const section = src.slice(start, end);
+
+// Must NOT use bare try { ... } catch pattern.
+// Note: Effect.tryPromise({ try: ... }) uses 'try:' not 'try {', so this distinguishes them.
+if (section.includes('try {') && !section.includes('Effect.tryPromise')) {
+    console.error('Config hook still uses try/catch — should use Effect.tryPromise');
+    process.exit(1);
+}
+
+// Must pipe through Effect.ignore for error isolation
+if (!section.includes('Effect.ignore')) {
+    console.error('Config hook errors not piped through Effect.ignore');
+    process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Node check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [pr_diff] fail_to_pass

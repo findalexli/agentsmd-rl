@@ -7,41 +7,50 @@ source:
   merge_commit: "5e25583c42b01fe8b1fae3b8ef05057cfdb4090c"
 
 checks:
-  - id: helper_signatures_return_python_installation
+  # Primary behavioral fail-to-pass: the refactored code compiles
+  - id: refactored_code_compiles
     type: fail_to_pass
     origin: pr_diff
-    description: "Internal helpers return PythonInstallation, not (PythonSource, Interpreter) tuples"
+    description: "The refactored uv-python crate compiles successfully with cargo check"
 
+  # Secondary structural fail-to-pass: specific removal
   - id: from_tuple_removed
     type: fail_to_pass
     origin: pr_diff
-    description: "from_tuple conversion method removed from both discovery.rs and installation.rs"
+    description: "from_tuple conversion method removed from installation.rs"
 
-  - id: find_python_installations_calls_renamed_helpers
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Public find_python_installations function calls the renamed helper functions"
-
-  - id: python_installation_constructed_in_from_executables
-    type: fail_to_pass
-    origin: pr_diff
-    description: "PythonInstallation struct constructed inside python_installations_from_executables"
-
-  - id: closures_use_field_access_not_tuple_destructuring
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Closures use .source/.interpreter field access instead of tuple destructuring"
-
+  # Pass-to-pass structural checks: verify refactoring patterns
   - id: find_python_installations_still_public
     type: pass_to_pass
     origin: repo_tests
     description: "find_python_installations remains a public function"
+
+  - id: helper_signatures_return_python_installation
+    type: pass_to_pass
+    origin: static
+    description: "Internal helpers return PythonInstallation, not (PythonSource, Interpreter) tuples"
 
   - id: helper_bodies_not_stubs
     type: pass_to_pass
     origin: static
     description: "Renamed helper functions have real implementations (>= 8 non-blank lines)"
 
+  - id: find_python_installations_calls_renamed_helpers
+    type: pass_to_pass
+    origin: static
+    description: "Public find_python_installations function calls the renamed helper functions"
+
+  - id: python_installation_constructed_in_from_executables
+    type: pass_to_pass
+    origin: static
+    description: "PythonInstallation struct constructed inside python_installations_from_executables"
+
+  - id: closures_use_field_access_not_tuple_destructuring
+    type: pass_to_pass
+    origin: static
+    description: "Closures use .source/.interpreter field access instead of tuple destructuring"
+
+  # Config-derived checks from CLAUDE.md
   - id: no_unwrap_panic_unreachable
     type: pass_to_pass
     origin: agent_config

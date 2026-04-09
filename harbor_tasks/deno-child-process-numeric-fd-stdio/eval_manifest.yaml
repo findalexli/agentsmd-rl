@@ -1,0 +1,70 @@
+version: "2.0"
+
+source:
+  repo: "denoland/deno"
+  pr: 33140
+  base_commit: "d198cda44b7fddb56d892a8ef2349d1630adfa37"
+  merge_commit: "ff775b28644c15915919b0d64cc5010cd3eef87d"
+
+checks:
+  - id: stdio_or_fd_enum
+    type: fail_to_pass
+    origin: pr_diff
+    description: "StdioOrRid enum renamed to StdioOrFd in ext/process/lib.rs"
+
+  - id: fd_variant_with_i32
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Fd(i32) variant replaces Rid(ResourceId) in the enum"
+
+  - id: as_stdio_fd_duplication
+    type: fail_to_pass
+    origin: pr_diff
+    description: "as_stdio duplicates fd using libc::dup on Unix"
+
+  - id: child_process_stdio_struct
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ChildProcessStdio struct added to ext/io/lib.rs for handle inheritance"
+
+  - id: extra_stdio_accepts_stdio_or_fd
+    type: fail_to_pass
+    origin: pr_diff
+    description: "extra_stdio field accepts StdioOrFd for numeric fd passthrough"
+
+  - id: inherit_uses_child_process_stdio
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Inherit mode borrows ChildProcessStdio from OpState instead of hardcoded Rid"
+
+  - id: file_resource_import_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "FileResource import removed, ChildProcessStdio imported instead"
+
+  - id: numeric_fd_deserialization
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Numeric values deserialized as Fd with i64/i32 validation"
+
+  - id: stdio_string_deserialization_preserved
+    type: pass_to_pass
+    origin: static
+    description: "String variants (inherit, piped, null) still handled in Deserialize"
+
+  - id: child_stdio_struct_fields
+    type: pass_to_pass
+    origin: static
+    description: "ChildStdio struct retains stdin/stdout/stderr fields"
+
+rubric:
+  - rule: "Node.js compatibility code is in ext/node/polyfills/. When reviewing these files, check behavior against Node.js docs, not just Deno conventions."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "322-325"
+      commit: "d198cda44b7fddb56d892a8ef2349d1630adfa37"
+  - rule: "Keep your changes minimal, don't do drive-by changes in a PR."
+    source:
+      path: "CLAUDE.md"
+      lines: "39-41"
+      commit: "d198cda44b7fddb56d892a8ef2349d1630adfa37"

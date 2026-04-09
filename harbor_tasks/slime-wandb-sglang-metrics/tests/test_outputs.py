@@ -8,10 +8,10 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import sys
+import json
+import subprocess
 import textwrap
 from pathlib import Path
-from unittest.mock import MagicMock
 
 REPO = "/workspace/slime"
 
@@ -22,6 +22,14 @@ TRAIN = Path(f"{REPO}/train.py")
 TRAIN_ASYNC = Path(f"{REPO}/train_async.py")
 
 MODIFIED_FILES = [WANDB_UTILS, LOGGING_UTILS, ROLLOUT, TRAIN, TRAIN_ASYNC]
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in a subprocess within the repo directory."""
+    return subprocess.run(
+        ["python3", "-c", textwrap.dedent(code)],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 def _parse(path: Path) -> ast.Module:
@@ -35,59 +43,11 @@ def _find_func(tree: ast.Module, name: str) -> ast.FunctionDef | None:
     return None
 
 
-def _func_arg_names(func: ast.FunctionDef) -> list[str]:
-    return [a.arg for a in func.args.args] + [a.arg for a in func.args.kwonlyargs]
-
-
 def _non_docstring_stmts(func: ast.FunctionDef) -> list[ast.stmt]:
     return [
         s for s in func.body
         if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant))
     ]
-
-
-def _extract_func_source(path: Path, name: str) -> str:
-    """Extract a top-level function's source code by AST line range."""
-    src_lines = path.read_text().splitlines(keepends=True)
-    tree = _parse(path)
-    func = _find_func(tree, name)
-    assert func is not None, f"{name} not found in {path.name}"
-    return textwrap.dedent("".join(src_lines[func.lineno - 1 : func.end_lineno]))
-
-
-def _make_mock_args(**overrides):
-    """Create a mock args object with common wandb attributes."""
-    args = MagicMock()
-    args.use_wandb = True
-    args.wandb_run_id = "test-run-id"
-    args.wandb_team = "test-team"
-    args.wandb_project = "test-project"
-    args.wandb_dir = None
-    for k, v in overrides.items():
-        setattr(args, k, v)
-    return args
-
-
-def _exec_reinit_func():
-    """Extract reinit_wandb_primary_with_open_metrics, exec with mocks, return (func, wandb_mock)."""
-    src = _extract_func_source(WANDB_UTILS, "reinit_wandb_primary_with_open_metrics")
-
-    mock_wandb = MagicMock()
-    mock_sglang = MagicMock()
-    mock_sglang.__version__ = "slime-custom-0.1"
-
-    # Keep mock installed in sys.modules so the function can `import sglang_router`
-    # when called by tests (the import runs at call time, not at exec/definition time).
-    sys.modules["sglang_router"] = mock_sglang
-
-    namespace = {
-        "wandb": mock_wandb,
-        "logger": MagicMock(),
-        "_is_offline_mode": lambda args: False,
-        "_init_wandb_common": MagicMock(),
-    }
-    exec(compile(src, "<test>", "exec"), namespace)
-    return namespace["reinit_wandb_primary_with_open_metrics"], mock_wandb
 
 
 # ---------------------------------------------------------------------------
@@ -102,47 +62,113 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_router_addr_removed_from_secondary():
     """init_wandb_secondary must not accept router_addr parameter."""
-    # AST-only because: init_wandb_secondary body uses wandb internal Settings that can't be mocked cleanly
-    tree = _parse(WANDB_UTILS)
-    func = _find_func(tree, "init_wandb_secondary")
-    assert func is not None, "init_wandb_secondary function not found"
-    params = _func_arg_names(func)
-    assert "router_addr" not in params, (
-        f"router_addr still in init_wandb_secondary signature: {params}"
+    r = _run_py("""
+        import ast, json
+        from pathlib import Path
+
+        src = Path("/workspace/slime/slime/utils/wandb_utils.py").read_text()
+        tree = ast.parse(src)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "init_wandb_secondary":
+                params = [a.arg for a in node.args.args] + [a.arg for a in node.args.kwonlyargs]
+                print(json.dumps({"params": params}))
+                break
+        else:
+            print(json.dumps({"error": "init_wandb_secondary not found"}))
+    """)
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert "error" not in data, data.get("error")
+    assert "router_addr" not in data["params"], (
+        f"router_addr still in init_wandb_secondary signature: {data['params']}"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_reinit_function_exists():
     """reinit_wandb_primary_with_open_metrics must exist with args + router_addr params."""
-    tree = _parse(WANDB_UTILS)
-    func = _find_func(tree, "reinit_wandb_primary_with_open_metrics")
-    assert func is not None, "reinit_wandb_primary_with_open_metrics not found"
-    params = _func_arg_names(func)
-    assert "args" in params, "reinit function must accept 'args'"
-    assert "router_addr" in params, "reinit function must accept 'router_addr'"
+    r = _run_py("""
+        import ast, json
+        from pathlib import Path
+
+        src = Path("/workspace/slime/slime/utils/wandb_utils.py").read_text()
+        tree = ast.parse(src)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "reinit_wandb_primary_with_open_metrics":
+                params = [a.arg for a in node.args.args] + [a.arg for a in node.args.kwonlyargs]
+                print(json.dumps({"params": params}))
+                break
+        else:
+            print(json.dumps({"error": "function not found"}))
+    """)
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert "error" not in data, data["error"]
+    assert "args" in data["params"], "reinit function must accept 'args'"
+    assert "router_addr" in data["params"], "reinit function must accept 'router_addr'"
 
 
 # [pr_diff] fail_to_pass
 def test_reinit_calls_wandb_finish_and_init():
     """reinit function calls wandb.finish() then wandb.init() to re-initialize."""
-    func, mock_wandb = _exec_reinit_func()
+    r = _run_py("""
+        import ast, sys, textwrap, json
+        from pathlib import Path
+        from unittest.mock import MagicMock
 
-    call_order = []
-    mock_wandb.finish.side_effect = lambda *a, **k: call_order.append("finish")
-    mock_wandb.init.side_effect = lambda *a, **k: call_order.append("init")
+        path = Path("/workspace/slime/slime/utils/wandb_utils.py")
+        src_lines = path.read_text().splitlines(keepends=True)
+        tree = ast.parse(path.read_text())
 
-    func(_make_mock_args(), "http://10.0.0.1:30000")
+        func_node = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "reinit_wandb_primary_with_open_metrics":
+                func_node = node
+                break
+        assert func_node is not None, "reinit_wandb_primary_with_open_metrics not found"
 
-    assert "finish" in call_order, "reinit must call wandb.finish()"
-    assert "init" in call_order, "reinit must call wandb.init()"
-    assert call_order.index("finish") < call_order.index("init"), (
+        func_src = textwrap.dedent("".join(src_lines[func_node.lineno - 1 : func_node.end_lineno]))
+
+        mock_wandb = MagicMock()
+        mock_sglang = MagicMock()
+        mock_sglang.__version__ = "slime-custom-0.1"
+        sys.modules["sglang_router"] = mock_sglang
+
+        namespace = {
+            "wandb": mock_wandb,
+            "logger": MagicMock(),
+            "_is_offline_mode": lambda args: False,
+            "_init_wandb_common": MagicMock(),
+        }
+        exec(compile(func_src, "<test>", "exec"), namespace)
+
+        call_order = []
+        mock_wandb.finish.side_effect = lambda *a, **k: call_order.append("finish")
+        mock_wandb.init.side_effect = lambda *a, **k: call_order.append("init")
+
+        args = MagicMock()
+        args.use_wandb = True
+        args.wandb_run_id = "test-run-id"
+        args.wandb_team = "test-team"
+        args.wandb_project = "test-project"
+        args.wandb_dir = None
+
+        namespace["reinit_wandb_primary_with_open_metrics"](args, "http://10.0.0.1:30000")
+
+        print(json.dumps({"call_order": call_order}))
+    """)
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    order = data["call_order"]
+    assert "finish" in order, "reinit must call wandb.finish()"
+    assert "init" in order, "reinit must call wandb.init()"
+    assert order.index("finish") < order.index("init"), (
         "wandb.finish() must be called before wandb.init()"
     )
 
@@ -150,23 +176,75 @@ def test_reinit_calls_wandb_finish_and_init():
 # [pr_diff] fail_to_pass
 def test_reinit_configures_metrics_endpoints():
     """reinit function configures sgl_engine metrics endpoints with resume mode."""
-    func, mock_wandb = _exec_reinit_func()
+    r = _run_py("""
+        import ast, sys, textwrap, json
+        from pathlib import Path
+        from unittest.mock import MagicMock
 
-    # Test with multiple different router addresses to prevent hardcoding
-    for addr in ["http://10.0.0.1:30000", "http://192.168.1.5:8080", "http://localhost:9090"]:
-        mock_wandb.reset_mock()
-        func(_make_mock_args(), addr)
+        path = Path("/workspace/slime/slime/utils/wandb_utils.py")
+        src_lines = path.read_text().splitlines(keepends=True)
+        tree = ast.parse(path.read_text())
 
-        # Must call wandb.init with resume mode
-        assert mock_wandb.init.called, f"wandb.init not called for addr={addr}"
-        init_kwargs = mock_wandb.init.call_args.kwargs
-        assert init_kwargs.get("resume"), f"resume not set in init kwargs for addr={addr}"
+        func_node = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "reinit_wandb_primary_with_open_metrics":
+                func_node = node
+                break
+        assert func_node is not None, "reinit_wandb_primary_with_open_metrics not found"
 
-        # Must call wandb.Settings with metrics endpoint containing the router address
-        assert mock_wandb.Settings.called, f"wandb.Settings not called for addr={addr}"
-        settings_kwargs = mock_wandb.Settings.call_args.kwargs
-        endpoints = settings_kwargs.get("x_stats_open_metrics_endpoints", {})
-        assert any(addr in str(v) for v in endpoints.values()), (
+        func_src = textwrap.dedent("".join(src_lines[func_node.lineno - 1 : func_node.end_lineno]))
+
+        results = []
+        for addr in ["http://10.0.0.1:30000", "http://192.168.1.5:8080", "http://localhost:9090"]:
+            mock_wandb = MagicMock()
+            mock_sglang = MagicMock()
+            mock_sglang.__version__ = "slime-custom-0.1"
+            sys.modules["sglang_router"] = mock_sglang
+
+            namespace = {
+                "wandb": mock_wandb,
+                "logger": MagicMock(),
+                "_is_offline_mode": lambda args: False,
+                "_init_wandb_common": MagicMock(),
+            }
+            exec(compile(func_src, "<test>", "exec"), namespace)
+
+            args = MagicMock()
+            args.use_wandb = True
+            args.wandb_run_id = "test-run-id"
+            args.wandb_team = "test-team"
+            args.wandb_project = "test-project"
+            args.wandb_dir = None
+
+            namespace["reinit_wandb_primary_with_open_metrics"](args, addr)
+
+            init_called = mock_wandb.init.called
+            init_kwargs = dict(mock_wandb.init.call_args.kwargs) if init_called else {}
+            settings_called = mock_wandb.Settings.called
+            settings_kwargs = dict(mock_wandb.Settings.call_args.kwargs) if settings_called else {}
+
+            endpoints = settings_kwargs.get("x_stats_open_metrics_endpoints", {})
+            endpoints_str = {k: str(v) for k, v in endpoints.items()}
+
+            results.append({
+                "addr": addr,
+                "init_called": init_called,
+                "resume": init_kwargs.get("resume"),
+                "settings_called": settings_called,
+                "endpoints": endpoints_str,
+            })
+
+        print(json.dumps(results))
+    """)
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    results = json.loads(r.stdout.strip())
+    for item in results:
+        addr = item["addr"]
+        assert item["init_called"], f"wandb.init not called for addr={addr}"
+        assert item["resume"], f"resume not set for addr={addr}"
+        assert item["settings_called"], f"wandb.Settings not called for addr={addr}"
+        endpoints = item["endpoints"]
+        assert any(addr in v for v in endpoints.values()), (
             f"Router addr {addr} not in metrics endpoints: {endpoints}"
         )
 
@@ -174,87 +252,177 @@ def test_reinit_configures_metrics_endpoints():
 # [pr_diff] fail_to_pass
 def test_reinit_noop_when_no_router():
     """reinit returns early without touching wandb when router_addr is None."""
-    func, mock_wandb = _exec_reinit_func()
+    r = _run_py("""
+        import ast, sys, textwrap, json
+        from pathlib import Path
+        from unittest.mock import MagicMock
 
-    func(_make_mock_args(), None)
+        path = Path("/workspace/slime/slime/utils/wandb_utils.py")
+        src_lines = path.read_text().splitlines(keepends=True)
+        tree = ast.parse(path.read_text())
 
-    assert not mock_wandb.finish.called, (
-        "wandb.finish() must not be called when router_addr is None"
-    )
-    assert not mock_wandb.init.called, (
-        "wandb.init() must not be called when router_addr is None"
-    )
+        func_node = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "reinit_wandb_primary_with_open_metrics":
+                func_node = node
+                break
+        assert func_node is not None, "reinit_wandb_primary_with_open_metrics not found"
+
+        func_src = textwrap.dedent("".join(src_lines[func_node.lineno - 1 : func_node.end_lineno]))
+
+        mock_wandb = MagicMock()
+        mock_sglang = MagicMock()
+        mock_sglang.__version__ = "slime-custom-0.1"
+        sys.modules["sglang_router"] = mock_sglang
+
+        namespace = {
+            "wandb": mock_wandb,
+            "logger": MagicMock(),
+            "_is_offline_mode": lambda args: False,
+            "_init_wandb_common": MagicMock(),
+        }
+        exec(compile(func_src, "<test>", "exec"), namespace)
+
+        args = MagicMock()
+        args.use_wandb = True
+
+        namespace["reinit_wandb_primary_with_open_metrics"](args, None)
+
+        print(json.dumps({
+            "finish_called": mock_wandb.finish.called,
+            "init_called": mock_wandb.init.called,
+        }))
+    """)
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert not data["finish_called"], "wandb.finish() must not be called when router_addr is None"
+    assert not data["init_called"], "wandb.init() must not be called when router_addr is None"
 
 
 # [pr_diff] fail_to_pass
 def test_update_tracking_bridge_exists():
     """logging_utils exposes update_tracking_open_metrics bridging to wandb_utils."""
-    # AST-only because: logging_utils imports wandb_utils at module level (heavy deps)
-    tree = _parse(LOGGING_UTILS)
-    func = _find_func(tree, "update_tracking_open_metrics")
-    assert func is not None, "update_tracking_open_metrics not found in logging_utils"
-    params = _func_arg_names(func)
-    assert "args" in params, "must accept args"
-    assert "router_addr" in params, "must accept router_addr"
-    src = ast.unparse(func)
-    assert "reinit_wandb_primary_with_open_metrics" in src, (
-        "must delegate to reinit_wandb_primary_with_open_metrics"
-    )
+    r = _run_py("""
+        import ast, json
+        from pathlib import Path
+
+        src = Path("/workspace/slime/slime/utils/logging_utils.py").read_text()
+        tree = ast.parse(src)
+
+        func = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "update_tracking_open_metrics":
+                func = node
+                break
+
+        if func is None:
+            print(json.dumps({"error": "update_tracking_open_metrics not found"}))
+        else:
+            params = [a.arg for a in func.args.args] + [a.arg for a in func.args.kwonlyargs]
+            body_src = ast.unparse(func)
+            print(json.dumps({
+                "params": params,
+                "delegates_to_reinit": "reinit_wandb_primary_with_open_metrics" in body_src,
+            }))
+    """)
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert "error" not in data, data.get("error")
+    assert "args" in data["params"], "must accept args"
+    assert "router_addr" in data["params"], "must accept router_addr"
+    assert data["delegates_to_reinit"], "must delegate to reinit_wandb_primary_with_open_metrics"
 
 
 # [pr_diff] fail_to_pass
 def test_public_get_metrics_router_addr():
     """Rollout manager exposes public get_metrics_router_addr method."""
-    # AST-only because: rollout.py requires ray, placement groups, GPU servers
-    tree = _parse(ROLLOUT)
-    func = _find_func(tree, "get_metrics_router_addr")
-    assert func is not None, "get_metrics_router_addr not found in rollout.py"
-    body = _non_docstring_stmts(func)
-    assert len(body) >= 1, "get_metrics_router_addr must have a real body"
-    src = ast.unparse(func)
-    assert "_get_metrics_router_addr" in src or "router" in src.lower(), (
-        "get_metrics_router_addr must return router address info"
-    )
+    r = _run_py("""
+        import ast, json
+        from pathlib import Path
+
+        src = Path("/workspace/slime/slime/ray/rollout.py").read_text()
+        tree = ast.parse(src)
+
+        func = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "get_metrics_router_addr":
+                func = node
+                break
+
+        if func is None:
+            print(json.dumps({"error": "get_metrics_router_addr not found"}))
+        else:
+            body = [s for s in func.body
+                    if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant))]
+            body_src = ast.unparse(func)
+            print(json.dumps({
+                "body_stmts": len(body),
+                "references_router": "_get_metrics_router_addr" in body_src or "router" in body_src.lower(),
+            }))
+    """)
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert "error" not in data, data["error"]
+    assert data["body_stmts"] >= 1, "get_metrics_router_addr must have a real body"
+    assert data["references_router"], "get_metrics_router_addr must return router address info"
 
 
 # [pr_diff] fail_to_pass
 def test_train_calls_update_tracking():
     """train.py imports and calls update_tracking_open_metrics after rollout manager."""
-    # AST-only because: train.py orchestrates ray actors, cannot execute
-    src = TRAIN.read_text()
-    assert "update_tracking_open_metrics" in src, (
-        "train.py must reference update_tracking_open_metrics"
-    )
-    tree = _parse(TRAIN)
-    calls = [
-        node for node in ast.walk(tree)
-        if isinstance(node, ast.Call)
-        and (
-            (isinstance(node.func, ast.Name) and node.func.id == "update_tracking_open_metrics")
-            or (isinstance(node.func, ast.Attribute) and node.func.attr == "update_tracking_open_metrics")
-        )
-    ]
-    assert len(calls) >= 1, "train.py must call update_tracking_open_metrics"
+    r = _run_py("""
+        import ast, json
+        from pathlib import Path
+
+        src = Path("/workspace/slime/train.py").read_text()
+        tree = ast.parse(src)
+
+        has_ref = "update_tracking_open_metrics" in src
+
+        calls = [
+            node for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and (
+                (isinstance(node.func, ast.Name) and node.func.id == "update_tracking_open_metrics")
+                or (isinstance(node.func, ast.Attribute) and node.func.attr == "update_tracking_open_metrics")
+            )
+        ]
+
+        print(json.dumps({"has_ref": has_ref, "call_count": len(calls)}))
+    """)
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["has_ref"], "train.py must reference update_tracking_open_metrics"
+    assert data["call_count"] >= 1, "train.py must call update_tracking_open_metrics"
 
 
 # [pr_diff] fail_to_pass
 def test_train_async_calls_update_tracking():
     """train_async.py imports and calls update_tracking_open_metrics after rollout manager."""
-    # AST-only because: train_async.py orchestrates ray actors, cannot execute
-    src = TRAIN_ASYNC.read_text()
-    assert "update_tracking_open_metrics" in src, (
-        "train_async.py must reference update_tracking_open_metrics"
-    )
-    tree = _parse(TRAIN_ASYNC)
-    calls = [
-        node for node in ast.walk(tree)
-        if isinstance(node, ast.Call)
-        and (
-            (isinstance(node.func, ast.Name) and node.func.id == "update_tracking_open_metrics")
-            or (isinstance(node.func, ast.Attribute) and node.func.attr == "update_tracking_open_metrics")
-        )
-    ]
-    assert len(calls) >= 1, "train_async.py must call update_tracking_open_metrics"
+    r = _run_py("""
+        import ast, json
+        from pathlib import Path
+
+        src = Path("/workspace/slime/train_async.py").read_text()
+        tree = ast.parse(src)
+
+        has_ref = "update_tracking_open_metrics" in src
+
+        calls = [
+            node for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and (
+                (isinstance(node.func, ast.Name) and node.func.id == "update_tracking_open_metrics")
+                or (isinstance(node.func, ast.Attribute) and node.func.attr == "update_tracking_open_metrics")
+            )
+        ]
+
+        print(json.dumps({"has_ref": has_ref, "call_count": len(calls)}))
+    """)
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["has_ref"], "train_async.py must reference update_tracking_open_metrics"
+    assert data["call_count"] >= 1, "train_async.py must call update_tracking_open_metrics"
 
 
 # ---------------------------------------------------------------------------

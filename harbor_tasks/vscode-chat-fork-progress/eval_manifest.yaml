@@ -1,0 +1,55 @@
+version: "2.0"
+source:
+  repo: microsoft/vscode
+  pr: 306207
+  base_commit: 99a7b4b0842dca767b056a303efa2412edfa16d8
+
+checks:
+  - id: test_no_progress_service_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: IProgressService import must be removed from chatForkActions.ts
+
+  - id: test_pending_fork_deduplication_map
+    type: fail_to_pass
+    origin: pr_diff
+    description: pendingFork Map declared as class property for deduplication
+
+  - id: test_fork_called_via_this
+    type: fail_to_pass
+    origin: pr_diff
+    description: forkContributedChatSession called as instance method via this
+
+  - id: test_standalone_fn_no_progress_param
+    type: fail_to_pass
+    origin: pr_diff
+    description: Standalone forkContributedChatSession function no longer accepts progressService
+
+  - id: test_dedup_finally_cleanup
+    type: fail_to_pass
+    origin: pr_diff
+    description: pendingFork entry cleaned up in finally block after fork completes
+
+  - id: test_typescript_compiles
+    type: fail_to_pass
+    origin: pr_diff
+    description: Modified file compiles without TypeScript errors related to removed progressService
+
+  - id: test_file_exists
+    type: pass_to_pass
+    origin: static
+    description: Target chatForkActions.ts file must exist
+
+  - id: test_fork_contributed_session_function_exists
+    type: pass_to_pass
+    origin: pr_diff
+    description: Standalone forkContributedChatSession helper function still exists
+
+  - id: test_no_blank_lines_in_import_block
+    type: pass_to_pass
+    origin: agent_config
+    description: No blank lines left behind when removing imports
+    source:
+      path: .github/copilot-instructions.md
+      lines: "139"
+      commit: 99a7b4b0842dca767b056a303efa2412edfa16d8

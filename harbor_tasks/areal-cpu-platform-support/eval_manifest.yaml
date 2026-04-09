@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "inclusionAI/AReaL"
+  pr: 1003
+  base_commit: "6208006db64ac29aded7be33963e86503ba9e28e"
+  merge_commit: "eb494def6af8390b115ac2409dc86a221c9d3f83"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified Python files must parse without errors"
+
+  - id: cpu_platform_memory_allocated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CpuPlatform must implement memory_allocated() returning 0"
+
+  - id: cpu_platform_memory_reserved
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CpuPlatform must implement memory_reserved() returning 0"
+
+  - id: cpu_platform_mem_get_info
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CpuPlatform must implement mem_get_info() returning a 2-tuple of zeros"
+
+  - id: cpu_platform_empty_cache
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CpuPlatform must implement empty_cache() as a no-op"
+
+  - id: fsdp_engine_cpu_device
+    type: fail_to_pass
+    origin: pr_diff
+    description: "FSDP engine _create_device_model must set device to cpu when platform is CPU"
+
+  - id: scheduler_device_env_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Scheduler must guard device_control_env_var assignment against empty string"
+
+  - id: no_wildcard_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified files must not use wildcard imports"
+    source:
+      path: "CLAUDE.md"
+      lines: "93"
+      commit: "6208006db64ac29aded7be33963e86503ba9e28e"
+
+rubric:
+  - rule: "Follow existing code patterns in the same module"
+    source:
+      path: "CLAUDE.md"
+      lines: "76"
+      commit: "6208006db64ac29aded7be33963e86503ba9e28e"
+  - rule: "Prefer composition over inheritance: Avoid deep class hierarchies"
+    source:
+      path: ".claude/rules/code-style.md"
+      lines: "7"
+      commit: "6208006db64ac29aded7be33963e86503ba9e28e"

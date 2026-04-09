@@ -12,20 +12,15 @@ checks:
     origin: static
     description: "All modified files exist and are non-trivial"
 
-  - id: changelog_runs_without_llm_sdk
+  - id: changelog_help_deterministic
     type: fail_to_pass
     origin: pr_diff
-    description: "changelog.ts does not import @opencode-ai/sdk or @opencode-ai/script"
+    description: "Running --help must show 'non-draft' release behavior (behavioral: bun execution)"
 
-  - id: help_documents_from_and_to_flags
+  - id: changelog_transpile_no_llm_sdk
     type: fail_to_pass
     origin: pr_diff
-    description: "changelog.ts has no LLM SDK imports and declares --from/--to flags"
-
-  - id: changelog_accepts_from_to_without_import_errors
-    type: fail_to_pass
-    origin: pr_diff
-    description: "changelog.ts has no LLM session calls and uses deterministic gh api / git log"
+    description: "Transpiling changelog.ts with Bun must not contain LLM SDK references (behavioral: Bun.Transpiler)"
 
   - id: version_pins_upper_bound
     type: fail_to_pass

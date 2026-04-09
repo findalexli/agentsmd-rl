@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "vllm-project/vllm"
+  pr: 38853
+  base_commit: "062f1a2d706cfb631521461f6a7ad533cf69a4a8"
+  merge_commit: "cab4064cd5a64e3a13ac2af96aa346439b8a6b8f"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified file must parse without errors"
+
+  - id: workspace_default_size
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Default WorkspaceManager (num_ubatches=None) must have exactly 1 slot, not hardcoded 2"
+
+  - id: workspace_custom_size
+    type: fail_to_pass
+    origin: pr_diff
+    description: "WorkspaceManager with num_ubatches=3 must have exactly 3 slots"
+
+  - id: workspace_all_slots_accessible
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All slots in _current_workspaces must be indexable for num_ubatches in [1, 4, 5]"
+
+  - id: workspace_manager_has_methods
+    type: pass_to_pass
+    origin: static
+    description: "WorkspaceManager must have real lock/unlock/get_simultaneous methods"
+
+rubric: []

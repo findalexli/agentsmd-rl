@@ -1,0 +1,44 @@
+version: "2.0"
+
+source:
+  repo: "cloudflare/workers-sdk"
+  pr: 13245
+  base_commit: "f23c455ca2f762f0067ed0bfc810209ee3ab8323"
+  merge_commit: "10e731d83895f229a9383828e30c6d92a3ba9526"
+
+checks:
+  - id: eslint_disable_comments_resolved
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Bare eslint-disable-next-line no-restricted-imports comments are removed or justified"
+
+  - id: helpers_accept_expect_param
+    type: fail_to_pass
+    origin: pr_diff
+    description: "E2E helper functions accept expect as an injected parameter instead of importing it"
+
+  - id: mocks_throw_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "mocks.ts uses throw new Error() instead of expect.fail() for validation checks"
+
+  - id: call_sites_pass_expect
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Test files pass expect as an argument to refactored helper functions"
+
+  - id: type_only_vitest_import
+    type: fail_to_pass
+    origin: agent_config
+    description: "Helper files use type-only imports for vitest types per consistent-type-imports rule"
+    source:
+      path: "AGENTS.md"
+      lines: "91"
+      commit: "f23c455ca2f762f0067ed0bfc810209ee3ab8323"
+
+rubric:
+  - rule: "Import order enforced: builtins -> third-party -> parent -> sibling -> index -> types"
+    source:
+      path: "AGENTS.md"
+      lines: "105"
+      commit: "f23c455ca2f762f0067ed0bfc810209ee3ab8323"

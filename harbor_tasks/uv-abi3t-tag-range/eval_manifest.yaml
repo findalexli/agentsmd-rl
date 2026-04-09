@@ -1,0 +1,47 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 18777
+  base_commit: "b7d5faf568b30c86daf7503f8518e11cbfeeaa81"
+  merge_commit: "3e6c46e3775ab44d20cb5855a6b6f033c42173a8"
+
+checks:
+  - id: crate_compiles
+    type: pass_to_pass
+    origin: static
+    description: "The uv-platform-tags crate must compile without errors"
+
+  - id: abi3t_tags_for_lower_versions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Free-threaded CPython 3.15 must emit abi3t tags for versions 3.2-3.14"
+
+  - id: abi3t_tags_with_python313
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Free-threaded CPython 3.13 must also emit abi3t tags (3.2-3.13)"
+
+  - id: existing_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream snapshot test for free-threaded tags still passes"
+
+rubric:
+  - rule: "ALWAYS attempt to add a test case for changed behavior"
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "b7d5faf568b30c86daf7503f8518e11cbfeeaa81"
+
+  - rule: "AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy rule ignores"
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "b7d5faf568b30c86daf7503f8518e11cbfeeaa81"
+
+  - rule: "ALWAYS read and copy the style of similar tests when adding new cases"
+    source:
+      path: "CLAUDE.md"
+      lines: "15"
+      commit: "b7d5faf568b30c86daf7503f8518e11cbfeeaa81"

@@ -7,7 +7,8 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import json
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/supabase"
@@ -21,27 +22,38 @@ DELETE_FILE = f"{QUEUE_DIR}/database-queue-messages-delete-mutation.ts"
 ALL_FILES = [SEND_FILE, QUERY_FILE, ARCHIVE_FILE, DELETE_FILE]
 
 
+def _run_tsx(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute TypeScript code via tsx in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.ts"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["tsx", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax checks
+# Gates (pass_to_pass, static) — syntax and structure checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+
 def test_syntax_check():
     """Modified TypeScript files must parse without syntax errors."""
-    # AST-only because: TS monorepo requires pnpm install + full toolchain to compile
     for fpath in ALL_FILES:
         src = Path(fpath).read_text()
-        open_braces = src.count("{")
-        close_braces = src.count("}")
-        assert abs(open_braces - close_braces) <= 1, (
-            f"{Path(fpath).name}: unbalanced braces ({open_braces} open, {close_braces} close)"
+        open_b = src.count("{")
+        close_b = src.count("}")
+        assert abs(open_b - close_b) <= 1, (
+            f"{Path(fpath).name}: unbalanced braces ({open_b} open, {close_b} close)"
         )
         assert "executeSql" in src, f"{Path(fpath).name}: missing executeSql call"
 
 
-# [static] pass_to_pass
 def test_sql_functions_still_present():
-    """All four queue SQL functions still exist and have executeSql calls."""
+    """All four queue SQL functions still exist with executeSql calls."""
     for fpath, fn_name in [
         (SEND_FILE, "sendDatabaseQueueMessage"),
         (QUERY_FILE, "getDatabaseQueue"),
@@ -51,112 +63,131 @@ def test_sql_functions_still_present():
         src = Path(fpath).read_text()
         assert fn_name in src, f"{Path(fpath).name}: function {fn_name} not found"
         assert "executeSql" in src, f"{Path(fpath).name}: executeSql call not found"
-        assert re.search(r"sql\s*:", src), (
-            f"{Path(fpath).name}: no sql: property in executeSql"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — behavioral + structural tests
+# ---------------------------------------------------------------------------
+
+
+def test_literal_escapes_sql_injection():
+    """literal() must correctly escape single quotes and all four files must import it."""
+    # --- Behavioral: run the actual literal() function with SQL injection payloads ---
+    r = _run_tsx("""
+import { literal } from './packages/pg-meta/src/pg-format/index.ts'
+
+// Single quotes must be doubled
+const r1 = literal("it's a value")
+console.log(JSON.stringify({name: "single_quote", out: r1}))
+
+// Classic SQL injection payload
+const r2 = literal("'; DROP TABLE users; --")
+console.log(JSON.stringify({name: "drop_table", out: r2}))
+
+// Object with special chars gets jsonb cast
+const r3 = literal({key: "it's dangerous"})
+console.log(JSON.stringify({name: "object", out: r3}))
+
+// null returns NULL (unquoted)
+const r4 = literal(null)
+console.log(JSON.stringify({name: "null", out: r4}))
+
+// number returns plain numeric string (no quotes)
+const r5 = literal(42)
+console.log(JSON.stringify({name: "number", out: r5}))
+""")
+    assert r.returncode == 0, f"tsx execution failed: {r.stderr}"
+
+    results = {}
+    for line in r.stdout.strip().splitlines():
+        if line.startswith("{"):
+            data = json.loads(line)
+            results[data["name"]] = data["out"]
+
+    assert results["single_quote"] == "'it''s a value'", f"Got: {results['single_quote']}"
+    assert results["drop_table"] == "'''; DROP TABLE users; --'", f"Got: {results['drop_table']}"
+    assert "::jsonb" in results["object"], f"Object missing jsonb cast: {results['object']}"
+    assert results["null"] == "NULL", f"Got: {results['null']}"
+    assert results["number"] == "42", f"Got: {results['number']}"
+
+    # --- Structural: all four files must import literal (fails on base commit) ---
+    for fpath in ALL_FILES:
+        src = Path(fpath).read_text()
+        assert "import { literal }" in src, (
+            f"{Path(fpath).name}: literal not imported — SQL injection not fixed"
         )
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
 def test_send_payload_escaped():
-    """Send mutation must not use raw string interpolation for payload, queueName, or delay in SQL."""
-    # AST-only because: TS monorepo; executeSql requires full React/Next.js context
+    """Send mutation must use literal() for queueName, payload, and delay in SQL."""
     src = Path(SEND_FILE).read_text()
 
-    # The vulnerable patterns: raw '${var}' in SQL template
-    assert "'${payload}'" not in src, (
-        "Send mutation uses raw '${payload}' interpolation — SQL injection risk"
-    )
-    assert "'${queueName}'" not in src, (
-        "Send mutation uses raw '${queueName}' interpolation — SQL injection risk"
-    )
+    # No raw string interpolation in SQL
+    assert "'${queueName}'" not in src, "Send mutation still has raw '${queueName}'"
+    assert "'${payload}'" not in src, "Send mutation still has raw '${payload}'"
 
-    # Verify pgmq.send SQL still exists
-    assert "pgmq.send" in src, "Send mutation missing pgmq.send SQL call"
-
-    # The pgmq.send line must not have raw ${payload} or ${delay}
+    # pgmq.send line must use literal() for all user-controlled params
     send_lines = [l for l in src.splitlines() if "pgmq.send" in l]
     assert len(send_lines) > 0, "No pgmq.send line found"
     for line in send_lines:
-        assert "'${payload}'" not in line, "pgmq.send uses raw '${payload}'"
-        assert "'${queueName}'" not in line, "pgmq.send uses raw '${queueName}'"
-        # delay: on base it's ${delay} (no quotes, but still raw interpolation)
-        if "${delay}" in line:
-            assert re.search(r"\$\{\w+\(delay\)\}", line), (
-                "pgmq.send uses raw ${delay} without escaping function"
-            )
+        assert "literal(queueName)" in line, (
+            f"pgmq.send missing literal(queueName): {line.strip()}"
+        )
+        assert "literal(payload)" in line, (
+            f"pgmq.send missing literal(payload): {line.strip()}"
+        )
+        assert "literal(delay)" in line, (
+            f"pgmq.send missing literal(delay): {line.strip()}"
+        )
 
 
-# [pr_diff] fail_to_pass
 def test_query_timestamp_escaped():
-    """Infinite query must not use raw string interpolation for afterTimestamp in SQL."""
-    # AST-only because: TS monorepo; executeSql requires full React/Next.js context
+    """Infinite query must use literal() for afterTimestamp in WHERE clause."""
     src = Path(QUERY_FILE).read_text()
 
-    # The vulnerable pattern: WHERE enqueued_at > '${afterTimestamp}'
-    assert "'${afterTimestamp}'" not in src, (
-        "Infinite query uses raw '${afterTimestamp}' — SQL injection risk"
-    )
-
-    # Verify WHERE clause still references enqueued_at
+    assert "'${afterTimestamp}'" not in src, "Query still has raw '${afterTimestamp}'"
     assert "enqueued_at" in src, "Query missing enqueued_at filter"
 
-    # The specific afterTimestamp WHERE line must not have raw interpolation
+    # The WHERE clause must use literal(afterTimestamp)
     for line in src.splitlines():
-        if "afterTimestamp" in line:
-            assert "'${afterTimestamp}'" not in line, (
-                f"Raw afterTimestamp interpolation: {line.strip()}"
+        if "afterTimestamp" in line and "enqueued_at" in line:
+            assert "literal(afterTimestamp)" in line, (
+                f"WHERE clause missing literal(afterTimestamp): {line.strip()}"
             )
 
 
-# [pr_diff] fail_to_pass
 def test_archive_params_escaped():
-    """Archive mutation must not use raw string interpolation for queueName or messageId."""
-    # AST-only because: TS monorepo; executeSql requires full React/Next.js context
+    """Archive mutation must use literal() for queueName and messageId in SQL."""
     src = Path(ARCHIVE_FILE).read_text()
 
-    # Check for raw '${queueName}' in the file
-    assert "'${queueName}'" not in src, (
-        "Archive mutation uses raw '${queueName}' in SQL"
-    )
+    assert "'${queueName}'" not in src, "Archive still has raw '${queueName}'"
 
-    # Check pgmq.archive line — messageId must be wrapped in escaping function
     archive_lines = [l for l in src.splitlines() if "pgmq.archive" in l]
     assert len(archive_lines) > 0, "No pgmq.archive line found"
     for line in archive_lines:
-        assert "'${queueName}'" not in line, "Archive uses raw '${queueName}'"
-        if "${messageId}" in line:
-            assert re.search(r"\$\{\w+\(messageId\)\}", line), (
-                "Archive uses raw ${messageId} without escaping function"
-            )
+        assert "literal(queueName)" in line, f"Missing literal(queueName): {line.strip()}"
+        assert "literal(messageId)" in line, f"Missing literal(messageId): {line.strip()}"
 
 
-# [pr_diff] fail_to_pass
 def test_delete_params_escaped():
-    """Delete mutation must not use raw string interpolation for queueName or messageId."""
-    # AST-only because: TS monorepo; executeSql requires full React/Next.js context
+    """Delete mutation must use literal() for queueName and messageId in SQL."""
     src = Path(DELETE_FILE).read_text()
 
-    # Check for raw '${queueName}' in the file
-    assert "'${queueName}'" not in src, (
-        "Delete mutation uses raw '${queueName}' in SQL"
-    )
+    assert "'${queueName}'" not in src, "Delete still has raw '${queueName}'"
 
-    # Check pgmq.delete line — messageId must be wrapped in escaping function
     delete_lines = [l for l in src.splitlines() if "pgmq.delete" in l]
     assert len(delete_lines) > 0, "No pgmq.delete line found"
     for line in delete_lines:
-        assert "'${queueName}'" not in line, "Delete uses raw '${queueName}'"
-        if "${messageId}" in line:
-            assert re.search(r"\$\{\w+\(messageId\)\}", line), (
-                "Delete uses raw ${messageId} without escaping function"
-            )
+        assert "literal(queueName)" in line, f"Missing literal(queueName): {line.strip()}"
+        assert "literal(messageId)" in line, f"Missing literal(messageId): {line.strip()}"
 
 
-# [agent_config] pass_to_pass — .claude/skills/studio-best-practices/SKILL.md:36 @ 273102323d2959bf5e24678a3388409e91e2ccb4
+# ---------------------------------------------------------------------------
+# agent_config (pass_to_pass)
+# ---------------------------------------------------------------------------
+
+
+# .claude/skills/studio-best-practices/SKILL.md:36 @ 273102323d2959bf5e24678a3388409e91e2ccb4
 def test_no_as_any_casts():
     """Modified TypeScript files must not use 'as any' type casts."""
     for fpath in ALL_FILES:

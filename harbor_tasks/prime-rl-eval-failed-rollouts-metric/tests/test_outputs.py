@@ -10,10 +10,13 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import asyncio
 import importlib
+import os
 import re
+import subprocess
 import sys
 import types
 from pathlib import Path
+from textwrap import dedent
 from unittest.mock import AsyncMock, MagicMock
 
 REPO = "/workspace"
@@ -22,7 +25,74 @@ VF_UTILS_PATH = f"{REPO}/src/prime_rl/orchestrator/vf_utils.py"
 
 
 # ---------------------------------------------------------------------------
-# Helpers — shared mock setup (each test reimports fresh via importlib)
+# Helpers — subprocess execution for behavioral tests
+# ---------------------------------------------------------------------------
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code via subprocess in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.py"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+            env={**os.environ, "PYTHONPATH": f"{REPO}/src"},
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
+# Mock preamble for subprocess scripts — stubs out GPU/verifiers dependencies
+_MOCK_PREAMBLE = dedent('''\
+import sys, types, asyncio, importlib
+from unittest.mock import AsyncMock, MagicMock
+
+vf_mock = types.ModuleType("verifiers")
+vf_mock.Environment = type("Env", (), {})
+vf_mock.ClientConfig = type("CC", (), {})
+vf_mock.RolloutOutput = dict
+vf_mock.RolloutInput = lambda **kw: kw
+sys.modules["verifiers"] = vf_mock
+for m in ["verifiers.serve", "verifiers.utils", "verifiers.utils.serve_utils"]:
+    sys.modules[m] = types.ModuleType(m)
+sys.modules["verifiers.serve"].EnvClient = MagicMock
+sys.modules["verifiers.serve"].ZMQEnvClient = MagicMock
+sys.modules["verifiers.serve"].ZMQEnvServer = MagicMock
+sys.modules["verifiers.utils.serve_utils"].get_free_port = lambda: 12345
+
+for mod_name in ["prime_rl", "prime_rl.configs", "prime_rl.utils", "prime_rl.orchestrator"]:
+    mod = types.ModuleType(mod_name)
+    mod.__path__ = [f"/workspace/src/{mod_name.replace('.', '/')}"]
+    sys.modules[mod_name] = mod
+sys.modules["prime_rl.configs.orchestrator"] = types.ModuleType("prime_rl.configs.orchestrator")
+sys.modules["prime_rl.configs.orchestrator"].EvalSamplingConfig = MagicMock
+
+mock_logger = MagicMock()
+logger_mod = types.ModuleType("prime_rl.utils.logger")
+logger_mod.get_logger = lambda: mock_logger
+logger_mod.InterceptHandler = MagicMock
+logger_mod.ProgressTracker = MagicMock(return_value=MagicMock())
+sys.modules["prime_rl.utils.logger"] = logger_mod
+
+mock_monitor = MagicMock()
+monitor_mod = types.ModuleType("prime_rl.utils.monitor")
+monitor_mod.get_monitor = lambda: mock_monitor
+sys.modules["prime_rl.utils.monitor"] = monitor_mod
+
+utils_mod = types.ModuleType("prime_rl.utils.utils")
+utils_mod.capitalize = lambda s: s.capitalize()
+sys.modules["prime_rl.utils.utils"] = utils_mod
+
+mock_evaluate = AsyncMock()
+vf_utils_mod = types.ModuleType("prime_rl.orchestrator.vf_utils")
+vf_utils_mod.evaluate = mock_evaluate
+vf_utils_mod.get_completion_len = lambda x: x.get("_clen", 50)
+sys.modules["prime_rl.orchestrator.vf_utils"] = vf_utils_mod
+''')
+
+
+# ---------------------------------------------------------------------------
+# Helpers — in-process mock setup (for tests needing direct mock references)
 # ---------------------------------------------------------------------------
 
 def _setup_mocks():
@@ -103,92 +173,103 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_failed_rollouts_normal_metrics():
     """evaluate_env tracks failed_rollouts in metrics when some rollouts fail.
 
-    Scenario: 10 inputs requested, 7 outputs returned → 3 failed.
-    On base: metrics dict has no failure key → FAIL.
-    On fix: metrics dict includes failed_rollouts=3 → PASS.
+    Scenario: 10 inputs requested, 7 outputs returned -> 3 failed.
+    On base: metrics dict has no failure key -> FAIL.
+    On fix: metrics dict includes failed_rollouts=3 -> PASS.
     """
-    mock_logger, mock_monitor, mock_evaluate = _setup_mocks()
+    r = _run_py(_MOCK_PREAMBLE + dedent('''\
 
-    eval_utils = _fresh_import("prime_rl.orchestrator.eval_utils")
+        eval_utils = importlib.import_module("prime_rl.orchestrator.eval_utils")
 
-    mock_env = MagicMock()
-    mock_env._get_eval_inputs.return_value = [{"id": i} for i in range(10)]
+        mock_env = MagicMock()
+        mock_env._get_eval_inputs.return_value = [{"id": i} for i in range(10)]
 
-    outputs = [
-        {
-            "example_id": i % 5, "reward": 0.5, "completion": "x",
-            "is_truncated": False, "error": None, "_clen": 50,
-            "trajectory": [{"tokens": {"prompt_ids": list(range(10)),
-                                       "completion_ids": list(range(50))},
-                            "response": {}}],
-        }
-        for i in range(7)
-    ]
-    mock_evaluate.return_value = outputs
-    mock_monitor.reset_mock()
+        outputs = [
+            {
+                "example_id": i % 5, "reward": 0.5, "completion": "x",
+                "is_truncated": False, "error": None, "_clen": 50,
+                "trajectory": [{"tokens": {"prompt_ids": list(range(10)),
+                                           "completion_ids": list(range(50))},
+                                "response": {}}],
+            }
+            for i in range(7)
+        ]
+        mock_evaluate.return_value = outputs
+        mock_monitor.reset_mock()
 
-    asyncio.run(eval_utils.evaluate_env(
-        env=mock_env, env_name="test_env", model_name="m",
-        sampling_args={}, num_examples=5, rollouts_per_example=2,
-        max_retries=0, ckpt_step=100, step=50, get_client=AsyncMock(),
-    ))
+        asyncio.run(eval_utils.evaluate_env(
+            env=mock_env, env_name="test_env", model_name="m",
+            sampling_args={}, num_examples=5, rollouts_per_example=2,
+            max_retries=0, ckpt_step=100, step=50, get_client=AsyncMock(),
+        ))
 
-    assert mock_monitor.log.called, "monitor.log was not called"
-    metrics = mock_monitor.log.call_args_list[0][0][0]
-    fail_keys = {k: v for k, v in metrics.items() if "fail" in k.lower()}
-    assert fail_keys, f"No failure metric found in logged metrics: {list(metrics.keys())}"
-    assert any(v == 3 for v in fail_keys.values()), \
-        f"Expected failure count of 3, got: {fail_keys}"
+        assert mock_monitor.log.called, "monitor.log was not called"
+        metrics = mock_monitor.log.call_args_list[0][0][0]
+        fail_keys = {k: v for k, v in metrics.items() if "fail" in k.lower()}
+        assert fail_keys, f"No failure metric found in logged metrics: {list(metrics.keys())}"
+        assert any(v == 3 for v in fail_keys.values()), \\
+            f"Expected failure count of 3, got: {fail_keys}"
+        print("PASS")
+    '''))
+    assert r.returncode == 0, f"Subprocess failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_failed_rollouts_all_fail():
     """When all rollouts fail, failure count is still logged to monitor.
 
-    Scenario: 8 inputs requested, 0 outputs returned → 8 failed.
-    On base: all-fail branch returns without calling monitor.log → FAIL.
-    On fix: monitor.log called with failure count=8 → PASS.
+    Scenario: 8 inputs requested, 0 outputs returned -> 8 failed.
+    On base: all-fail branch returns without calling monitor.log -> FAIL.
+    On fix: monitor.log called with failure count=8 -> PASS.
     """
-    mock_logger, mock_monitor, mock_evaluate = _setup_mocks()
+    r = _run_py(_MOCK_PREAMBLE + dedent('''\
 
-    # Override evaluate to return empty list (all fail)
-    mock_evaluate.return_value = []
+        mock_evaluate.return_value = []
 
-    eval_utils = _fresh_import("prime_rl.orchestrator.eval_utils")
+        eval_utils = importlib.import_module("prime_rl.orchestrator.eval_utils")
 
-    mock_env = MagicMock()
-    mock_env._get_eval_inputs.return_value = [{"id": i} for i in range(8)]
-    mock_monitor.reset_mock()
+        mock_env = MagicMock()
+        mock_env._get_eval_inputs.return_value = [{"id": i} for i in range(8)]
+        mock_monitor.reset_mock()
 
-    asyncio.run(eval_utils.evaluate_env(
-        env=mock_env, env_name="math", model_name="m",
-        sampling_args={}, num_examples=4, rollouts_per_example=2,
-        max_retries=0, ckpt_step=200, step=100, get_client=AsyncMock(),
-    ))
+        asyncio.run(eval_utils.evaluate_env(
+            env=mock_env, env_name="math", model_name="m",
+            sampling_args={}, num_examples=4, rollouts_per_example=2,
+            max_retries=0, ckpt_step=200, step=100, get_client=AsyncMock(),
+        ))
 
-    assert mock_monitor.log.called, \
-        "monitor.log not called in all-fail case (buggy: returns without logging)"
-    metrics = mock_monitor.log.call_args[0][0]
-    fail_keys = {k: v for k, v in metrics.items() if "fail" in k.lower()}
-    assert fail_keys, f"No failure metric in all-fail metrics: {list(metrics.keys())}"
-    assert any(v == 8 for v in fail_keys.values()), \
-        f"Expected failure count of 8, got: {fail_keys}"
+        assert mock_monitor.log.called, \\
+            "monitor.log not called in all-fail case (buggy: returns without logging)"
+        metrics = mock_monitor.log.call_args[0][0]
+        fail_keys = {k: v for k, v in metrics.items() if "fail" in k.lower()}
+        assert fail_keys, f"No failure metric in all-fail metrics: {list(metrics.keys())}"
+        assert any(v == 8 for v in fail_keys.values()), \\
+            f"Expected failure count of 8, got: {fail_keys}"
+        print("PASS")
+    '''))
+    assert r.returncode == 0, f"Subprocess failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
 
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — additional behavioral tests via importlib
+# ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_failed_groups_aggregate_warning():
     """generate() logs aggregate warning when some groups fail.
 
-    Scenario: 5 groups, 2 raise exceptions → summary warning with count.
-    On base: no summary warning (only individual Group failed messages) → FAIL.
-    On fix: summary warning mentioning 2 failed groups → PASS.
+    Scenario: 5 groups, 2 raise exceptions -> summary warning with count.
+    On base: no summary warning (only individual Group failed messages) -> FAIL.
+    On fix: summary warning mentioning 2 failed groups -> PASS.
     """
     mock_logger, mock_monitor, mock_evaluate = _setup_mocks()
 
@@ -230,15 +311,11 @@ def test_failed_groups_aggregate_warning():
         f"Summary warning doesn't mention failure count (2). Summaries: {summary_warnings}"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass — varied inputs
-# ---------------------------------------------------------------------------
-
 # [pr_diff] fail_to_pass
 def test_failed_rollouts_varied_counts():
     """evaluate_env correctly computes failure count across different input sizes.
 
-    Scenario: 20 inputs requested, 15 returned → 5 failed.
+    Scenario: 20 inputs requested, 15 returned -> 5 failed.
     Validates the fix generalizes beyond the specific counts in other tests.
     """
     mock_logger, mock_monitor, mock_evaluate = _setup_mocks()

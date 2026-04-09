@@ -1,0 +1,70 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92271
+  base_commit: "a43cf0c247b72915d82b44539c0dbde13efccfc9"
+  merge_commit: "fea754747872122d167dd8bf1fc5581044e50521"
+
+checks:
+  - id: typescript_syntax
+    type: pass_to_pass
+    origin: static
+    description: "All modified TypeScript files parse without syntax errors"
+
+  - id: module_exports_class
+    type: pass_to_pass
+    origin: static
+    description: "Module still exports AppRouteRouteModule class and AppRouteUserlandModule type"
+
+  - id: template_lazy_userland_factory
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Template uses lazy require factory instead of static import for userland"
+
+  - id: module_ensure_userland
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AppRouteRouteModule has public async ensureUserland() method with non-trivial body"
+
+  - id: module_init_from_userland
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Module has _initFromUserland() extracted as separate method calling autoImplementMethods"
+
+  - id: getUserland_synchronous
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getUserland option returns AppRouteUserlandModule synchronously (not Promise)"
+
+  - id: export_route_calls_ensure_userland
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Export route calls ensureUserland() before accessing module.userland"
+
+  - id: base_class_userland_getter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Base RouteModule uses protected _userland with getter for lazy loading support"
+
+  - id: module_accepts_userland_factory
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AppRouteRouteModuleOptions accepts factory function for userland parameter"
+
+  - id: handle_calls_ensure_userland
+    type: fail_to_pass
+    origin: pr_diff
+    description: "handle() method calls ensureUserland() and uses resolveHandler()"
+
+rubric:
+  - rule: "Keep require() behind compile-time if/else branches for DCE (avoid early-return/throw patterns)."
+    source:
+      path: "AGENTS.md"
+      lines: "404"
+      commit: "a43cf0c247b72915d82b44539c0dbde13efccfc9"
+  - rule: "Webpack only DCEs a require() when it sits inside the dead branch of an if/else whose condition DefinePlugin can evaluate at compile time."
+    source:
+      path: ".agents/skills/dce-edge/SKILL.md"
+      lines: "18"
+      commit: "a43cf0c247b72915d82b44539c0dbde13efccfc9"

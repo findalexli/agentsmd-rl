@@ -1,0 +1,77 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 89309
+  base_commit: "b2f193b0964212c3ef0213efb74fe40dfd5be43b"
+  merge_commit: "0d49dd888fbe6767ee6a4e0dd6845dd22f5044bf"
+
+checks:
+  # Code behavior: ArcSlice → ArcBytes with Mmap backing
+  - id: arc_bytes_replaces_arc_slice
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ArcSlice<T> replaced by ArcBytes with Mmap backing support"
+
+  # Code behavior: CompressionConfig enum with Uncompressed variant
+  - id: compression_config_optional
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CompressionConfig enum added with TryCompress and Uncompressed variants"
+
+  # Code behavior: Index blocks skip compression
+  - id: index_blocks_skip_compression
+    type: fail_to_pass
+    origin: pr_diff
+    description: "write_index_block uses Uncompressed config instead of TryCompress"
+
+  # Code behavior: Zero-copy mmap for uncompressed blocks
+  - id: uncompressed_block_zero_copy_mmap
+    type: fail_to_pass
+    origin: pr_diff
+    description: "read_block returns zero-copy mmap slice when uncompressed_length == 0"
+
+  # Code behavior: 7/8 compression threshold
+  - id: compression_threshold_78
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Compression uses 7/8 threshold (LevelDB/RocksDB pattern)"
+
+  # Config update: README documents new block compression format
+  - id: readme_documents_block_compression
+    type: fail_to_pass
+    origin: agent_config
+    description: "README.md updated to document optional block compression format"
+    source:
+      path: "CLAUDE.md"
+      lines: "44-46"
+      commit: "b2f193b0964212c3ef0213efb74fe40dfd5be43b"
+
+  # Module rename: lib.rs exports ArcBytes
+  - id: lib_exports_arc_bytes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "lib.rs exports ArcBytes (renamed from ArcSlice)"
+
+  # Regression: README retains SST format documentation
+  - id: readme_has_sst_format_section
+    type: pass_to_pass
+    origin: agent_config
+    description: "README retains SST file on-disk format documentation"
+    source:
+      path: "CLAUDE.md"
+      lines: "44-46"
+      commit: "b2f193b0964212c3ef0213efb74fe40dfd5be43b"
+
+  # Anti-stub
+  - id: anti_stub_builder
+    type: pass_to_pass
+    origin: static
+    description: "static_sorted_file_builder.rs has substantial content (not stubbed)"
+
+rubric:
+  - rule: "README update is consistent with the style and structure of the existing SST file format documentation"
+    source:
+      path: "turbopack/crates/turbo-persistence/README.md"
+      lines: "1-10"
+      commit: "b2f193b0964212c3ef0213efb74fe40dfd5be43b"

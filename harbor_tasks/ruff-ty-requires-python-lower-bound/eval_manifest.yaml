@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24401
+  base_commit: "af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca"
+  merge_commit: "62a863cf518086135dfd2321c92fbc3823f95de8"
+
+checks:
+  - id: ty_binary_exists
+    type: pass_to_pass
+    origin: static
+    description: "ty binary was built successfully during Docker build"
+
+  - id: requires_python_27_no_panic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ty handles requires-python='==2.7' gracefully, resolving to the lowest supported version instead of panicking"
+
+  - id: requires_python_future_version_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ty gives a clear error for requires-python='==44.44' instead of panicking"
+
+  - id: requires_python_normal_version
+    type: pass_to_pass
+    origin: pr_diff
+    description: "ty works normally with standard requires-python specifier '>=3.10'"
+
+  - id: requires_python_310_exact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "ty works with exact-version requires-python '==3.10'"
+
+  - id: no_unwrap_in_resolve_requires_python
+    type: pass_to_pass
+    origin: agent_config
+    description: "resolve_requires_python avoids .unwrap() and panic! (AGENTS.md: avoid panic!/unwrap)"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca"
+
+  - id: no_local_imports_in_resolve
+    type: pass_to_pass
+    origin: agent_config
+    description: "No local use/import statements inside functions (AGENTS.md: imports at top of file)"
+    source:
+      path: "AGENTS.md"
+      lines: "76"
+      commit: "af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca"
+
+rubric:
+  - rule: "Try hard to avoid patterns that require panic!, unreachable!, or .unwrap(). Instead, try to encode those constraints in the type system."
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca"
+
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca"

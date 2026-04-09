@@ -9,44 +9,28 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified JS files parse without syntax errors
-- id: ws_promise_not_wrapped
+- id: ws_timeout_mechanism
   type: fail_to_pass
   origin: pr_diff
-  description: WebSocket message listener not wrapped in new Promise() constructor
-- id: ws_has_timeout
+  description: WebSocket promise rejects with timeout when no message arrives instead
+    of hanging forever
+- id: retry_no_verbose_logging
   type: fail_to_pass
   origin: pr_diff
-  description: WebSocket test has a timeout mechanism to avoid hanging indefinitely
+  description: TCP port retry loop does not have verbose console.info logging on each
+    retry
+- id: readme_safe_docker_cleanup
+  type: fail_to_pass
+  origin: pr_diff
+  description: README uses pipe-based docker cleanup that is safe when no containers
+    match
+- id: readme_correct_target
+  type: fail_to_pass
+  origin: pr_diff
+  description: README uses correct Bazel target with container-client@ suffix
 rubric:
-- rule: README cleanup commands should be safe to run when no matching containers/images
-    exist
-  source:
-    path: src/workerd/server/tests/container-client/README.md
-    lines: 1-39
-    commit: e5eaa43c16c57bab977e5b53f4e57ca4418d084d
-- rule: README uses xargs-based docker cleanup instead of $() subshell
-  source:
-    path: src/workerd/server/tests/container-client/README.md
-    lines: '20'
-    commit: 5722c9fd916552cdb2a5e7c6ab66d563d925bcaf
-  reference: "docker ps -aq --filter name=workerd-container-client-test | xargs -r\
-    \ docker rm -f\n   just stream-test //src/workerd/server/tests/container-client:container-client@"
-- rule: README documents correct Bazel target with :container-client@ suffix
-  source:
-    path: src/workerd/server/tests/container-client/README.md
-    lines: '38'
-    commit: 5722c9fd916552cdb2a5e7c6ab66d563d925bcaf
-  reference: "docker ps -aq --filter name=workerd-container-client-test | xargs -r\
-    \ docker rm -f\n   just stream-test //src/workerd/server/tests/container-client:container-client@"
 - rule: Test target in README ends with @ suffix per AGENTS.md conventions
   source:
     path: AGENTS.md
     lines: '81'
     commit: e5eaa43c16c57bab977e5b53f4e57ca4418d084d
-  reference: "# src/workerd/server/tests/container-client/README.md\ndocker ps -aq\
-    \ --filter name=workerd-container-client-test | xargs -r docker rm -f\n   just\
-    \ stream-test //src/workerd/server/tests/container-client:container-client@"
-- rule: Verbose console.info retry logging removed from TCP port retry loop
-  reference: "# src/workerd/server/tests/container-client/README.md\ndocker ps -aq\
-    \ --filter name=workerd-container-client-test | xargs -r docker rm -f\n   just\
-    \ stream-test //src/workerd/server/tests/container-client:container-client@"

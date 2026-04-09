@@ -7,19 +7,86 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
+import json
 import re
 from pathlib import Path
 
 REPO = "/workspace/opencode"
 FILE = Path(REPO) / "packages/opencode/src/skill/index.ts"
 
+# ---------------------------------------------------------------------------
+# Node.js analysis script — executed once via subprocess, result cached
+# ---------------------------------------------------------------------------
+_ANALYSIS_JS = r"""
+import { readFileSync } from 'node:fs';
+
+const code = readFileSync('packages/opencode/src/skill/index.ts', 'utf8');
+// Strip single-line and multi-line comments for reliable matching
+const s = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+
+const result = {
+  // Effect generator checks
+  add_is_async: /\bconst\s+add\s*=\s*async\b/.test(s),
+  add_is_effect_gen: /\bconst\s+add\s*=\s*Effect\.(fnUntraced|fn|gen)\b/.test(s),
+
+  scan_is_async: /\bconst\s+scan\s*=\s*async\b/.test(s),
+  scan_is_effect_gen: /\bconst\s+scan\s*=\s*Effect\.(fnUntraced|fn|gen)\b/.test(s),
+
+  loadskills_is_async_fn: /\basync\s+function\s+loadSkills\b/.test(s),
+  loadskills_is_async_const: /\bconst\s+loadSkills\s*=\s*async\b/.test(s),
+  loadskills_is_effect_gen: /\bloadSkills\s*=\s*Effect\.(fnUntraced|fn|gen)\b/.test(s),
+
+  // Static facade checks
+  has_config_get_static: /\bConfig\.get\s*\(/.test(s),
+  has_config_directories_static: /\bConfig\.directories\s*\(/.test(s),
+
+  // Promise bridge checks
+  has_effect_run_promise: /\bEffect\.runPromise\b/.test(s),
+  has_effect_promise_loadskills: /Effect\.promise\s*\([\s\S]{0,80}loadSkills/.test(s),
+  has_then_chain: /\.then\s*\(/.test(s),
+  has_promise_all: /\bPromise\.all\b/.test(s),
+
+  // Layer dependency checks
+  yields_config_service: /yield\*\s*Config\.Service/.test(s),
+  layer_type_has_config: /Layer\.Layer<[^>]*Config\.Service/.test(s),
+  yields_bus_service: /yield\*\s*Bus\.Service/.test(s),
+  layer_type_has_bus: /Layer\.Layer<[^>]*Bus\.Service/.test(s),
+
+  // defaultLayer checks
+  provides_config_layer: /Layer\.provide\(\s*Config\.\w+/.test(s),
+  provides_bus_layer: /Layer\.provide\(\s*Bus\.\w+/.test(s),
+};
+
+console.log(JSON.stringify(result));
+"""
+
+_cached_analysis = None
+
+
+def _get_analysis():
+    """Run Node.js analysis of skill/index.ts via subprocess; cache the result."""
+    global _cached_analysis
+    if _cached_analysis is not None:
+        return _cached_analysis
+    script = Path(REPO) / "_eval_analysis.mjs"
+    script.write_text(_ANALYSIS_JS)
+    try:
+        r = subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Node analysis failed: {r.stderr}"
+        _cached_analysis = json.loads(r.stdout)
+    finally:
+        script.unlink(missing_ok=True)
+    return _cached_analysis
+
 
 def _read_stripped():
     """Read the file and strip comments for reliable pattern matching."""
     code = FILE.read_text()
-    # Strip single-line comments
     stripped = re.sub(r"//.*$", "", code, flags=re.MULTILINE)
-    # Strip multi-line comments
     stripped = re.sub(r"/\*[\s\S]*?\*/", "", stripped)
     return code, stripped
 
@@ -31,83 +98,63 @@ def _read_stripped():
 # [pr_diff] fail_to_pass
 def test_loadskills_is_effect_generator():
     """loadSkills must be a native Effect generator, not an async function."""
-    _, stripped = _read_stripped()
-    assert not re.search(r"\basync\s+function\s+loadSkills\b", stripped), \
+    a = _get_analysis()
+    assert not a["loadskills_is_async_fn"], \
         "loadSkills is still declared as async function"
-    assert not re.search(r"\bconst\s+loadSkills\s*=\s*async\b", stripped), \
+    assert not a["loadskills_is_async_const"], \
         "loadSkills is still an async arrow/expression"
-    assert re.search(r"\bloadSkills\s*=\s*Effect\.(fnUntraced|fn|gen)\b", stripped), \
+    assert a["loadskills_is_effect_gen"], \
         "loadSkills must be assigned to Effect.fnUntraced/fn/gen"
 
 
 # [pr_diff] fail_to_pass
 def test_add_helper_is_effect_generator():
     """add helper must be a native Effect generator, not async."""
-    _, stripped = _read_stripped()
-    assert not re.search(r"\bconst\s+add\s*=\s*async\b", stripped), \
-        "add helper is still async"
-    assert re.search(r"\bconst\s+add\s*=\s*Effect\.(fnUntraced|fn|gen)\b", stripped), \
-        "add must be assigned to Effect.fnUntraced/fn/gen"
+    a = _get_analysis()
+    assert not a["add_is_async"], "add helper is still async"
+    assert a["add_is_effect_gen"], "add must be assigned to Effect.fnUntraced/fn/gen"
 
 
 # [pr_diff] fail_to_pass
 def test_scan_helper_is_effect_generator():
     """scan helper must be a native Effect generator, not async."""
-    _, stripped = _read_stripped()
-    assert not re.search(r"\bconst\s+scan\s*=\s*async\b", stripped), \
-        "scan helper is still async"
-    assert re.search(r"\bconst\s+scan\s*=\s*Effect\.(fnUntraced|fn|gen)\b", stripped), \
-        "scan must be assigned to Effect.fnUntraced/fn/gen"
+    a = _get_analysis()
+    assert not a["scan_is_async"], "scan helper is still async"
+    assert a["scan_is_effect_gen"], "scan must be assigned to Effect.fnUntraced/fn/gen"
 
 
 # [pr_diff] fail_to_pass
 def test_static_config_facades_removed():
-    """Config.get() and Config.directories() static facades must be removed.
-
-    The fix yields Config.Service and calls methods on the instance instead.
-    Tests capitalized static calls; lowercase instance calls (config.get()) are fine.
-    """
-    _, stripped = _read_stripped()
-    assert not re.search(r"\bConfig\.get\s*\(", stripped), \
+    """Config.get() and Config.directories() static facades must be removed."""
+    a = _get_analysis()
+    assert not a["has_config_get_static"], \
         "Static Config.get() facade still present -- yield Config.Service and use the instance"
-    assert not re.search(r"\bConfig\.directories\s*\(", stripped), \
+    assert not a["has_config_directories_static"], \
         "Static Config.directories() facade still present"
 
 
 # [pr_diff] fail_to_pass
 def test_effect_run_promise_removed():
     """Effect.runPromise bridge must be removed -- discovery.pull() should be yielded natively."""
-    _, stripped = _read_stripped()
-    assert not re.search(r"\bEffect\.runPromise\b", stripped), \
+    a = _get_analysis()
+    assert not a["has_effect_run_promise"], \
         "Effect.runPromise bridge still present -- yield* the Effect directly"
 
 
 # [pr_diff] fail_to_pass
 def test_monolithic_promise_wrapper_removed():
-    """The monolithic Effect.promise(() => loadSkills(...)) wrapper must be removed.
-
-    The InstanceState.make closure should call loadSkills natively via yield*.
-    """
-    _, stripped = _read_stripped()
-    assert not re.search(r"Effect\.promise\s*\([\s\S]{0,80}loadSkills", stripped), \
+    """The monolithic Effect.promise(() => loadSkills(...)) wrapper must be removed."""
+    a = _get_analysis()
+    assert not a["has_effect_promise_loadskills"], \
         "Monolithic Effect.promise(() => loadSkills(...)) wrapper still present"
 
 
 # [pr_diff] fail_to_pass
 def test_layer_declares_config_and_bus_deps():
-    """The layer type must declare Config.Service and Bus.Service as dependencies.
-
-    Either via the Layer.Layer<...> type annotation or by yielding them in the body.
-    """
-    _, stripped = _read_stripped()
-    has_config = (
-        re.search(r"yield\*\s*Config\.Service", stripped)
-        or re.search(r"Layer\.Layer<[^>]*Config\.Service", stripped)
-    )
-    has_bus = (
-        re.search(r"yield\*\s*Bus\.Service", stripped)
-        or re.search(r"Layer\.Layer<[^>]*Bus\.Service", stripped)
-    )
+    """The layer type must declare Config.Service and Bus.Service as dependencies."""
+    a = _get_analysis()
+    has_config = a["yields_config_service"] or a["layer_type_has_config"]
+    has_bus = a["yields_bus_service"] or a["layer_type_has_bus"]
     assert has_config, "Config.Service not yielded or declared in layer dependencies"
     assert has_bus, "Bus.Service not yielded or declared in layer dependencies"
 
@@ -115,35 +162,24 @@ def test_layer_declares_config_and_bus_deps():
 # [pr_diff] fail_to_pass
 def test_default_layer_provides_config_and_bus():
     """defaultLayer must provide Config and Bus layers alongside Discovery."""
-    _, stripped = _read_stripped()
-    # Look for Layer.provide with Config and Bus layer references near defaultLayer
-    assert re.search(r"Layer\.provide\(\s*Config\.\w+", stripped), \
-        "defaultLayer does not provide a Config layer"
-    assert re.search(r"Layer\.provide\(\s*Bus\.\w+", stripped), \
-        "defaultLayer does not provide a Bus layer"
+    a = _get_analysis()
+    assert a["provides_config_layer"], "defaultLayer does not provide a Config layer"
+    assert a["provides_bus_layer"], "defaultLayer does not provide a Bus layer"
 
 
 # [pr_diff] fail_to_pass
 def test_no_promise_then_chains():
-    """Promise .then() chains must be replaced with Effect combinators.
-
-    The base code uses .then((matches) => Promise.all(...)) which should become
-    Effect.forEach with concurrency.
-    """
-    _, stripped = _read_stripped()
-    assert not re.search(r"\.then\s*\(", stripped), \
+    """Promise .then() chains must be replaced with Effect combinators."""
+    a = _get_analysis()
+    assert not a["has_then_chain"], \
         ".then() promise chain still present -- use Effect combinators instead"
 
 
 # [pr_diff] fail_to_pass
 def test_no_promise_all():
-    """Promise.all must be replaced with Effect.forEach or Effect.all.
-
-    The base code uses Promise.all(matches.map(...)) which should become
-    Effect.forEach(matches, ..., { concurrency: \"unbounded\" }).
-    """
-    _, stripped = _read_stripped()
-    assert not re.search(r"\bPromise\.all\b", stripped), \
+    """Promise.all must be replaced with Effect.forEach or Effect.all."""
+    a = _get_analysis()
+    assert not a["has_promise_all"], \
         "Promise.all still present -- use Effect.forEach or Effect.all instead"
 
 
@@ -185,7 +221,6 @@ def test_no_try_catch():
 def test_no_any_type():
     """No 'any' type annotations (AGENTS.md: 'Avoid using the any type')."""
     _, stripped = _read_stripped()
-    # Match type annotation patterns: `: any`, `as any`, `<any>`
     any_annotations = re.findall(r":\s*any\b|as\s+any\b|<any[>,]", stripped)
     assert len(any_annotations) == 0, \
         f"Found {len(any_annotations)} 'any' type annotation(s) -- use specific types instead"

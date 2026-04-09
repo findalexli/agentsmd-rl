@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "denoland/deno"
+  pr: 33071
+  base_commit: "6710d587bc05e4275c2336fb1cc5104d5eee9fdc"
+  merge_commit: "8b9d1aa92bdab59b117ce85777e20d443d20e905"
+
+checks:
+  - id: win_escape_ampersand_pipe
+    type: fail_to_pass
+    origin: pr_diff
+    description: "escapeShellArg (Windows) must quote args containing & or |"
+
+  - id: win_escape_angle_brackets_caret
+    type: fail_to_pass
+    origin: pr_diff
+    description: "escapeShellArg (Windows) must quote args containing <, >, or ^"
+
+  - id: win_escape_exclamation_parens
+    type: fail_to_pass
+    origin: pr_diff
+    description: "escapeShellArg (Windows) must quote args containing !, (, or )"
+
+  - id: win_escape_existing_specials_still_quoted
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Args with spaces, quotes, or backslashes must still be quoted"
+
+  - id: win_escape_plain_args_passthrough
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Plain alphanumeric args must pass through unchanged"
+
+rubric:
+  - rule: "Node.js compatibility code is in ext/node/polyfills/. When reviewing these files, check behavior against Node.js docs, not just Deno conventions."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "322-325"
+      commit: "6710d587bc05e4275c2336fb1cc5104d5eee9fdc"
+  - rule: "Keep your changes minimal, don't do drive-by changes in a PR."
+    source:
+      path: "CLAUDE.md"
+      lines: "39"
+      commit: "6710d587bc05e4275c2336fb1cc5104d5eee9fdc"

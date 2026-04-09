@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "dotnet/maui"
+  pr: 32835
+  base_commit: "d2e5dfa5d0b19e4c306e9f4cef62f72c845ef726"
+  merge_commit: "c6edcd24ba14b7c1f153042ff1a3073b4f3ec17a"
+
+checks:
+  - id: test_readme_file_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md must exist at src/Controls/src/NuGet/README.md"
+
+  - id: test_csproj_package_readme_property
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Controls.NuGet.csproj must declare PackageReadmeFile=README.md in a PropertyGroup"
+
+  - id: test_csproj_packs_readme
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Controls.NuGet.csproj must include README.md in the NuGet package via None item with Pack=true"
+
+  - id: test_readme_has_required_sections
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md must contain key sections: .NET MAUI title, Getting Started, Supported Platforms, package name, NuGet badge"
+
+  - id: test_nuget_package_contains_readme
+    type: fail_to_pass
+    origin: pr_diff
+    description: "dotnet pack produces a nupkg containing README.md at the package root"
+
+  - id: test_csproj_well_formed_xml
+    type: pass_to_pass
+    origin: static
+    description: "Controls.NuGet.csproj must be well-formed XML"
+
+  - id: test_readme_valid_markdown
+    type: pass_to_pass
+    origin: static
+    description: "README.md must be non-trivial markdown with 50+ lines and 5+ section headings"
+
+rubric: []

@@ -1,0 +1,36 @@
+version: "2.0"
+
+source:
+  repo: "analogjs/analog"
+  pr: 1756
+  base_commit: "3f475f278250ab3c2b5da22f03d9e2b7ccbf6000"
+  merge_commit: "6b7380dd2e2a955fa45b57fa565081a0a6c08291"
+
+checks:
+  - id: package_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "package.json must be valid JSON with a files array"
+
+  - id: template_angular_v19_in_files
+    type: fail_to_pass
+    origin: pr_diff
+    description: "template-angular-v19 must be listed in package.json files array"
+
+  - id: template_angular_v19_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "template-angular-v19 directory must exist in the filesystem"
+
+  - id: other_templates_still_present
+    type: pass_to_pass
+    origin: static
+    description: "Other template entries should not be removed from files array"
+
+  - id: template_files_non_empty
+    type: pass_to_pass
+    origin: static
+    description: "template-angular-v19 directory must contain actual template files"
+
+rubric:
+  []

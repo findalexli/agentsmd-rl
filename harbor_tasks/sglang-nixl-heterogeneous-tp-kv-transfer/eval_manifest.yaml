@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22145
+  base_commit: "ba78f6e0efb925fbb0f99e7f060eb2cb410331df"
+  merge_commit: "3148742ddb2ccd3478065c91f0222bb4817903f0"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified conn.py must parse without errors"
+
+  - id: notification_key_uses_engine_rank
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Notification key must use engine_rank, not pp_rank, to avoid key collision when PP=1"
+
+  - id: head_distribution_calculation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Head distribution must use total_kv_head_num with max(1, ...) guards, not per-rank kv_head_num"
+
+  - id: gqa_replication_handling
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GQA replication must be handled via src_replication and unique_head_idx calculations"
+
+  - id: module_imports
+    type: pass_to_pass
+    origin: static
+    description: "Module classes (NixlKVManager, TransferStatus) must be defined"
+
+  - id: send_kvcache_slice_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "send_kvcache_slice must have real implementation with KV pointer setup"
+
+  - id: add_transfer_request_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "add_transfer_request must have real implementation calling send_kvcache and maybe_send_extra"
+
+rubric: []

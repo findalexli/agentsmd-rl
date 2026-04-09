@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 2154
+  base_commit: "04da032d968418edef069173d368e3a6080bfcb2"
+  merge_commit: "355956e0c3f89c0537110c0b3ca504832d480dbb"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "ckpt.py must parse without syntax errors"
+
+  - id: gc_imported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "gc module must be imported for gc.collect() to break circular refs"
+
+  - id: memory_reclamation_on_cpu_offload
+    type: fail_to_pass
+    origin: pr_diff
+    description: "load_state_dict must call gc.collect() and torch.cuda.empty_cache() to reclaim GPU memory after CPU offload load"
+
+  - id: cleanup_gated_on_offload
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Memory cleanup must be conditional on CPUOffloadOptimizer presence, not unconditional"
+
+  - id: load_state_dict_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "load_state_dict has substantial logic, not a stub"
+
+rubric:
+  - rule: "Minimal try/except: let errors propagate — silent failures hide bugs. Only catch exceptions for intentional fault tolerance (retries, robustness)."
+    source:
+      path: "AGENTS.md"
+      lines: "5"
+      commit: "04da032d968418edef069173d368e3a6080bfcb2"
+  - rule: "Targeted comments: don't explain your work process or reference old code. Use targeted comments sparingly to clarify ambiguous logic."
+    source:
+      path: "AGENTS.md"
+      lines: "6"
+      commit: "04da032d968418edef069173d368e3a6080bfcb2"

@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92292
+  base_commit: "5a922bc9bb9b4435da87f5b6783e3b14e26aadf9"
+  merge_commit: "81d5e070f4a84b34bb0efe2524c200584fed3215"
+
+checks:
+  - id: files_exist_and_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified files exist with real Rust code (anti-stub gate)"
+
+  - id: emit_and_emit_rebase_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "emit() and emit_rebase() turbo_tasks functions still exist"
+
+  - id: emit_assets_function_signature
+    type: pass_to_pass
+    origin: pr_diff
+    description: "emit_assets function signature preserved with all original parameters"
+
+  - id: emit_conflict_issue_struct
+    type: fail_to_pass
+    origin: pr_diff
+    description: "EmitConflictIssue struct exists with asset_path: FileSystemPath and detail: RcStr fields"
+
+  - id: emit_conflict_issue_impls_issue
+    type: fail_to_pass
+    origin: pr_diff
+    description: "EmitConflictIssue implements Issue trait with Emit stage, Error severity, and conflict title"
+
+  - id: assets_diff_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "assets_diff turbo_tasks function compares two assets' content and writes conflicting versions"
+
+  - id: issue_stage_emit_variant
+    type: fail_to_pass
+    origin: pr_diff
+    description: "IssueStage::Emit variant exists and displays as 'emit'"
+
+  - id: emit_assets_dedup_logic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "emit_assets groups assets by path, checks for duplicate conflicts, uses join! for parallel emission"
+
+  - id: imports_cargo_fmt_sorted
+    type: fail_to_pass
+    origin: agent_config
+    description: "New imports in emit.rs follow ASCII sort order per cargo fmt convention"
+    source:
+      path: "CLAUDE.md"
+      lines: "414"
+      commit: "5a922bc9bb9b4435da87f5b6783e3b14e26aadf9"
+
+rubric:
+  - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run `cargo fmt`"
+    source:
+      path: "CLAUDE.md"
+      lines: "414"
+      commit: "5a922bc9bb9b4435da87f5b6783e3b14e26aadf9"

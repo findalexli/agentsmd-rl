@@ -1,0 +1,79 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 91126
+  base_commit: "545eba1ff6a6e74042c6e9c7412e3315a6f36d19~1"
+  merge_commit: "885016306d325fb682e831e0e9679a0990a1e6b1"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Gates (pass_to_pass) — syntax / compilation checks
+  # ---------------------------------------------------------------------------
+  - id: crate_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified crate compiles without errors"
+
+  - id: rustdoc_builds
+    type: pass_to_pass
+    origin: static
+    description: "Documentation builds successfully with cargo doc"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # ---------------------------------------------------------------------------
+  - id: vc_readme_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Vc README.md file is created with cells documentation"
+
+  - id: mod_rs_uses_include_str
+    type: fail_to_pass
+    origin: pr_diff
+    description: "mod.rs uses include_str! to embed README.md as module docs"
+
+  - id: vc_readme_has_cells_content
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md contains the merged cells page content (key sections)"
+
+  - id: lib_rs_docs_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "lib.rs documentation updated with improved Vc descriptions"
+
+  - id: raw_vc_docs_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "raw_vc.rs documentation updated with Vc links"
+
+  - id: resolved_vc_docs_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "resolved.rs documentation updated with reading section"
+
+  - id: crate_readme_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "turbo-tasks README.md simplified (cells section merged into Vc description)"
+
+  - id: mod_rs_typo_fixed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Typo fixed in mod.rs (missing backtick)"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests / static) — regression + anti-stub
+  # ---------------------------------------------------------------------------
+  - id: existing_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream test suite (cargo test) still passes"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "README.md has substantial content, not just a placeholder"
+
+rubric: []

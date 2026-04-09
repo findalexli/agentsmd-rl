@@ -8,73 +8,82 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import builtins
-import types
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/pytorch"
 TARGET = f"{REPO}/torch/_dynamo/decorators.py"
 
+# Reusable subprocess script that extracts _allow_in_graph_einops, mocks
+# allow_in_graph / torch, executes the function, and prints which einops
+# function names were passed to allow_in_graph (one per line).
+_MOCK_EXEC_SCRIPT = r"""
+import ast, builtins, types, json
+from pathlib import Path
 
-def _extract_func_source():
-    """Extract _allow_in_graph_einops source as a string."""
-    source = Path(TARGET).read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "_allow_in_graph_einops":
-            lines = source.splitlines(keepends=True)
-            return "".join(lines[node.lineno - 1 : node.end_lineno])
-    raise AssertionError("_allow_in_graph_einops not found in source")
+TARGET = "/workspace/pytorch/torch/_dynamo/decorators.py"
+source = Path(TARGET).read_text()
+tree = ast.parse(source)
+
+func_src = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "_allow_in_graph_einops":
+        lines = source.splitlines(keepends=True)
+        func_src = "".join(lines[node.lineno - 1 : node.end_lineno])
+        break
+
+assert func_src is not None, "_allow_in_graph_einops not found in source"
+
+called = []
+
+def mock_allow_in_graph(fn):
+    called.append(getattr(fn, "__name__", str(fn)))
+
+torch_mock = types.ModuleType("torch")
+torch_mock.randn = lambda *a, **kw: None
+
+orig_import = builtins.__import__
+
+def mock_import(name, *args, **kwargs):
+    if "_torch_specific" in str(name):
+        raise ImportError("mocked")
+    return orig_import(name, *args, **kwargs)
+
+builtins.__import__ = mock_import
+try:
+    ns = {
+        "allow_in_graph": mock_allow_in_graph,
+        "torch": torch_mock,
+        "__builtins__": builtins,
+    }
+    exec(func_src, ns)
+    ns["_allow_in_graph_einops"]()
+finally:
+    builtins.__import__ = orig_import
+
+print(json.dumps(called))
+"""
 
 
-def _exec_with_mock_allow_in_graph(func_src):
-    """Execute extracted function with mocked allow_in_graph.
+def _run_mock_exec(timeout: int = 30) -> list[str]:
+    """Run the mock-execution script in a subprocess, return list of wrapped names."""
+    import json
 
-    The function body is exec'd with mocks for allow_in_graph, torch,
-    and imports. Returns the list of function names passed to allow_in_graph.
-    """
-    called = []
-
-    def mock_allow_in_graph(fn):
-        called.append(getattr(fn, "__name__", str(fn)))
-
-    torch_mock = types.ModuleType("torch")
-    torch_mock.randn = lambda *a, **kw: None
-
-    orig_import = builtins.__import__
-
-    def mock_import(name, *args, **kwargs):
-        if "_torch_specific" in str(name):
-            raise ImportError("mocked")
-        return orig_import(name, *args, **kwargs)
-
-    builtins.__import__ = mock_import
+    script = Path(REPO) / "_eval_mock_exec.py"
+    script.write_text(_MOCK_EXEC_SCRIPT)
     try:
-        ns = {
-            "allow_in_graph": mock_allow_in_graph,
-            "torch": torch_mock,
-            "__builtins__": builtins,
-        }
-        exec(func_src, ns)
-        ns["_allow_in_graph_einops"]()
+        r = subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Mock-exec script failed:\n{r.stderr}"
+        return json.loads(r.stdout.strip())
     finally:
-        builtins.__import__ = orig_import
-
-    return called
-
-
-def _has_commented_version_check(func_src):
-    """Check that the version check block is commented out (not active code)."""
-    tree = ast.parse(func_src)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Compare):
-            if isinstance(node.left, ast.Attribute) and node.left.attr == "__version__":
-                return False
-    return True
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests (subprocess)
 # ---------------------------------------------------------------------------
 
 
@@ -85,8 +94,7 @@ def test_allow_in_graph_wraps_core_ops():
     einops >= 0.8.2, so allow_in_graph is never called. The fix must
     ensure these core ops are always wrapped.
     """
-    func_src = _extract_func_source()
-    called = _exec_with_mock_allow_in_graph(func_src)
+    called = _run_mock_exec()
     for op in ["rearrange", "reduce"]:
         assert op in called, f"{op} not wrapped via allow_in_graph; called={called}"
 
@@ -97,8 +105,7 @@ def test_multiple_einops_functions_wrapped():
     einops exposes: rearrange, reduce, repeat, einsum, pack, unpack.
     A correct fix should wrap most or all of them.
     """
-    func_src = _extract_func_source()
-    called = _exec_with_mock_allow_in_graph(func_src)
+    called = _run_mock_exec()
     expected = {"rearrange", "reduce", "repeat", "einsum", "pack", "unpack"}
     found = set(called) & expected
     assert len(found) >= 4, f"Only {len(found)} einops functions wrapped: {sorted(found)}"
@@ -111,8 +118,7 @@ def test_version_check_does_not_skip_wrapping():
     without calling allow_in_graph at all. A correct fix ensures the
     function reaches the allow_in_graph calls regardless of einops version.
     """
-    func_src = _extract_func_source()
-    called = _exec_with_mock_allow_in_graph(func_src)
+    called = _run_mock_exec()
     assert len(called) > 0, (
         "allow_in_graph was never called — version check is still causing early return"
     )
@@ -124,11 +130,23 @@ def test_version_check_is_commented_out():
     The base commit has an active `if einops.__version__ >= "0.8.2":`
     comparison that causes the early return. The fix comments this out.
     """
-    func_src = _extract_func_source()
-    assert _has_commented_version_check(func_src), (
-        "Active version check still present — "
-        "the `if einops.__version__ >= '0.8.2':` block must be commented out"
-    )
+    source = Path(TARGET).read_text()
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "_allow_in_graph_einops":
+            lines = source.splitlines(keepends=True)
+            func_src = "".join(lines[node.lineno - 1 : node.end_lineno])
+            break
+    else:
+        raise AssertionError("_allow_in_graph_einops not found")
+    func_tree = ast.parse(func_src)
+    for node in ast.walk(func_tree):
+        if isinstance(node, ast.Compare):
+            if isinstance(node.left, ast.Attribute) and node.left.attr == "__version__":
+                raise AssertionError(
+                    "Active version check still present — "
+                    "the `if einops.__version__ >= '0.8.2':` block must be commented out"
+                )
 
 
 # ---------------------------------------------------------------------------

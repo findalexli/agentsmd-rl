@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: sgl-project/sglang
+  pr: 22158
+  base_commit: 5dd2c243eb52dfd04f27b998e2595fe0c66437b1
+  merge_commit: 75ab75d0276eea94287cf8707246f8d41674a6d4
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified test file must parse without errors"
+
+  - id: think_end_id_passed_in_reasoner_test
+    type: fail_to_pass
+    origin: pr_diff
+    description: "test_reasoner_wrapping_on_builtin_backend passes think_end_id=42 to create_grammar_backend"
+
+  - id: think_end_id_none_in_no_wrapping_test
+    type: fail_to_pass
+    origin: pr_diff
+    description: "test_no_reasoner_wrapping_without_think_end_id passes think_end_id=None"
+
+  - id: think_end_id_passed_in_no_parser_test
+    type: fail_to_pass
+    origin: pr_diff
+    description: "test_no_reasoner_wrapping_without_reasoning_parser passes think_end_id=42"
+
+  - id: no_tokenizer_think_end_id_assignment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tokenizer.think_end_id = N assignments removed from reasoner test methods"
+
+  - id: production_function_has_think_end_id_param
+    type: pass_to_pass
+    origin: static
+    description: "Production create_grammar_backend accepts think_end_id parameter"
+
+  - id: test_methods_preserved
+    type: pass_to_pass
+    origin: static
+    description: "All original test methods still exist"
+
+rubric:
+  - rule: "Prefer mock over real server — when testing logic that doesn't need a server / engine launch, use unittest.mock.patch / MagicMock and place tests in test/registered/unit/."
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "16"
+      commit: 5dd2c243eb52dfd04f27b998e2595fe0c66437b1

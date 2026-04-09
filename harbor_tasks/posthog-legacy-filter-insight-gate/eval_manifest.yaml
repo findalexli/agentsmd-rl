@@ -1,0 +1,69 @@
+version: "2.0"
+
+source:
+  repo: "PostHog/posthog"
+  pr: 53653
+  base_commit: "011a93306e5dfe5e26464fba7c61680076df62c8"
+  merge_commit: "9605abc9a963ca91597ae0a16a217bf683de7fb4"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "posthog/api/insight.py must parse without syntax errors"
+
+  - id: legacy_filters_flag_constant
+    type: fail_to_pass
+    origin: pr_diff
+    description: "LEGACY_INSIGHT_FILTERS_BLOCKED_FLAG constant defined with value 'legacy-insight-filters-disabled'"
+
+  - id: filters_blocked_returns_false_without_distinct_id
+    type: fail_to_pass
+    origin: pr_diff
+    description: "is_legacy_insight_filters_blocked returns False when user has no distinct_id"
+
+  - id: filters_blocked_delegates_to_feature_flag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "is_legacy_insight_filters_blocked calls posthoganalytics.feature_enabled with correct flag name, distinct_id, and org/project groups"
+
+  - id: filters_blocked_returns_feature_flag_result
+    type: fail_to_pass
+    origin: pr_diff
+    description: "is_legacy_insight_filters_blocked returns whatever feature_enabled returns (True or False)"
+
+  - id: serializer_validate_blocks_legacy_filters
+    type: fail_to_pass
+    origin: pr_diff
+    description: "InsightSerializer.validate raises PermissionDenied for legacy filter payloads when gate is active"
+
+  - id: serializer_validate_allows_query_insights
+    type: fail_to_pass
+    origin: pr_diff
+    description: "InsightSerializer.validate does not block query-based insight writes and calls super().validate()"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "is_legacy_insight_filters_blocked has real logic, not just pass/return"
+
+  - id: new_function_has_type_hints
+    type: fail_to_pass
+    origin: agent_config
+    description: "New function has type annotations on parameters and return type per AGENTS.md style rule"
+    source:
+      path: "AGENTS.md"
+      lines: "92"
+      commit: "011a93306e5dfe5e26464fba7c61680076df62c8"
+
+rubric:
+  - rule: "Comments: explain _why_, not _what_ — if the reason isn't important, skip the comment"
+    source:
+      path: "AGENTS.md"
+      lines: "99"
+      commit: "011a93306e5dfe5e26464fba7c61680076df62c8"
+  - rule: "When touching a viewset or serializer, ensure schema annotations are present (@extend_schema or @validated_request on viewset methods, help_text on serializer fields)"
+    source:
+      path: "AGENTS.md"
+      lines: "85"
+      commit: "011a93306e5dfe5e26464fba7c61680076df62c8"

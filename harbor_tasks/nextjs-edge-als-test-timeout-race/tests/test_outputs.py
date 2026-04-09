@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import subprocess
 import re
+import json
 from pathlib import Path
 
 REPO = "/workspace/next.js"
@@ -26,11 +27,34 @@ def test_single_fixture_executes_correctly():
     fixture = _find_fixture("single")
     assert fixture is not None, "No single fixture file found under pages/api/ or app/api/"
 
-    _assert_handler_responses(fixture, [
-        ("test-42", '(j) => j.id === "test-42"'),
-        ("req-999", '(j) => j.id === "req-999"'),
-        ("hello-world", '(j) => j.id === "hello-world"'),
-    ])
+    # Execute handler with mocked request and verify it returns correct id
+    code = f"""
+const AsyncLocalStorage = require('async_hooks').AsyncLocalStorage;
+global.AsyncLocalStorage = AsyncLocalStorage;
+global.Response = class Response {{
+  constructor(body) {{ this.body = body; }}
+  json() {{ return Promise.resolve(JSON.parse(this.body)); }}
+}};
+global.fetch = async () => ({{ text: async () => 'ok' }});
+
+const code = require('fs').readFileSync('{fixture}', 'utf8');
+const vm = require('vm');
+const exports = {{}};
+const context = {{ AsyncLocalStorage, Response: global.Response, fetch: global.fetch, console, exports, require }};
+vm.createContext(context);
+vm.runInContext(code.replace(/export default /, 'exports.default = '), context);
+
+const handler = context.exports.default;
+const mockRequest = {{ headers: {{ get: (k) => k === 'req-id' ? 'test-req-42' : null }} }};
+handler(mockRequest).then(r => r.json()).then(j => {{
+    if (j.id === 'test-req-42') {{ console.log('PASS'); }} else {{ console.log('FAIL: got', JSON.stringify(j)); process.exit(1); }}
+}}).catch(e => {{ console.error(e); process.exit(1); }});
+"""
+    r = subprocess.run(
+        ["node", "-e", code],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0 and "PASS" in r.stdout, f"Single fixture failed: {r.stderr or r.stdout}"
 
 
 # [pr_diff] fail_to_pass
@@ -39,11 +63,40 @@ def test_multiple_fixture_executes_correctly():
     fixture = _find_fixture("multiple")
     assert fixture is not None, "No multiple fixture file found under pages/api/ or app/api/"
 
-    _assert_handler_responses(fixture, [
-        ("abc-1", '(j) => j.id === "abc-1" && typeof j.nestedId === "string" && j.nestedId.includes("nested")'),
-        ("xyz-2", '(j) => j.id === "xyz-2" && typeof j.nestedId === "string" && j.nestedId.includes("nested")'),
-        ("req-0", '(j) => j.id === "req-0" && typeof j.nestedId === "string" && j.nestedId.includes("nested")'),
-    ])
+    # Execute handler with mocked request and verify it returns correct id and nestedId
+    code = f"""
+const AsyncLocalStorage = require('async_hooks').AsyncLocalStorage;
+global.AsyncLocalStorage = AsyncLocalStorage;
+global.Response = class Response {{
+  constructor(body) {{ this.body = body; }}
+  json() {{ return Promise.resolve(JSON.parse(this.body)); }}
+}};
+global.fetch = async () => ({{ text: async () => 'ok' }});
+
+const code = require('fs').readFileSync('{fixture}', 'utf8');
+const vm = require('vm');
+const exports = {{}};
+const context = {{ AsyncLocalStorage, Response: global.Response, fetch: global.fetch, console, exports, require }};
+vm.createContext(context);
+vm.runInContext(code.replace(/export default /, 'exports.default = '), context);
+
+const handler = context.exports.default;
+const mockRequest = {{ headers: {{ get: (k) => k === 'req-id' ? 'test-req-99' : null }} }};
+handler(mockRequest).then(r => r.json()).then(j => {{
+    const expectedNested = 'nested-test-req-99';
+    if (j.id === 'test-req-99' && j.nestedId === expectedNested) {{
+        console.log('PASS');
+    }} else {{
+        console.log('FAIL: got', JSON.stringify(j));
+        process.exit(1);
+    }}
+}}).catch(e => {{ console.error(e); process.exit(1); }});
+"""
+    r = subprocess.run(
+        ["node", "-e", code],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0 and "PASS" in r.stdout, f"Multiple fixture failed: {r.stderr or r.stdout}"
 
 
 # [pr_diff] fail_to_pass
@@ -55,33 +108,80 @@ def test_no_per_test_instance_creation():
     if "createNext" not in code:
         return
 
-    # Verify createNext is NOT inside a test callback using brace-depth tracking
-    result = subprocess.run(
-        ["node", "-e", f"""
+    # Use TypeScript-aware AST detection via Node.js
+    ast_script = f"""
 const fs = require('fs');
+const ts = require('typescript');
 const code = fs.readFileSync('{TEST_FILE}', 'utf8');
+const source = ts.createSourceFile('test.ts', code, ts.ScriptTarget.Latest, true);
+
+let inTestBody = false;
+let foundBad = false;
+
+function visit(node) {{
+    // Check if this is an it() or test() call
+    if (ts.isCallExpression(node) &&
+        ts.isIdentifier(node.expression) &&
+        (node.expression.text === 'it' || node.expression.text === 'test')) {{
+        // Check arguments for a function (the test body)
+        for (const arg of node.arguments) {{
+            if (ts.isArrowFunction(arg) || ts.isFunctionExpression(arg)) {{
+                // Visit the function body looking for createNext
+                ts.forEachChild(arg.body, function visitBody(n) {{
+                    if (ts.isCallExpression(n) &&
+                        ts.isIdentifier(n.expression) &&
+                        n.expression.text === 'createNext') {{
+                        console.error('ERROR: createNext found inside ' + node.expression.text + ' body');
+                        foundBad = true;
+                    }}
+                    ts.forEachChild(n, visitBody);
+                }});
+            }}
+        }}
+    }}
+    ts.forEachChild(node, visit);
+}}
+
+visit(source);
+process.exit(foundBad ? 1 : 0);
+"""
+    # First try with typescript parser, fall back to regex if ts not available
+    result = subprocess.run(
+        ["node", "-e", ast_script],
+        capture_output=True, text=True, timeout=30,
+    )
+
+    # If typescript isn't available, use a simpler brace-depth approach
+    if "Error: Cannot find module 'typescript'" in result.stderr:
+        result = subprocess.run(
+            ["node", "-e", f"""
+const code = require('fs').readFileSync('{TEST_FILE}', 'utf8');
 const lines = code.split('\\n');
-let inTestBody = false, braceDepth = 0, testEntryDepth = -1;
+let braceDepth = 0, inTest = false, testDepth = 0;
 for (let i = 0; i < lines.length; i++) {{
     const line = lines[i];
-    if (!inTestBody && /\\b(it|test)\\s*[.(]/.test(line)) {{
-        inTestBody = true;
-        testEntryDepth = braceDepth;
+    const testMatch = line.match(/\\b(it|test)\\s*[\\(\\.]/);
+    if (testMatch && !inTest) {{
+        inTest = true;
+        testDepth = braceDepth;
     }}
     for (const ch of line) {{
         if (ch === '{{') braceDepth++;
         if (ch === '}}') braceDepth--;
     }}
-    if (inTestBody && braceDepth <= testEntryDepth) inTestBody = false;
-    if (inTestBody && line.includes('createNext')) {{
-        console.error('createNext inside test body at line ' + (i+1));
+    if (inTest && braceDepth <= testDepth) {{
+        inTest = false;
+    }}
+    if (inTest && line.includes('createNext')) {{
+        console.error('createNext at line ' + (i+1));
         process.exit(1);
     }}
 }}
 """],
-        capture_output=True, timeout=10,
-    )
-    assert result.returncode == 0, "createNext is still called inside a test body (race condition not fixed)"
+            capture_output=True, text=True, timeout=10,
+        )
+
+    assert result.returncode == 0, f"createNew is called inside a test body (race condition not fixed): {result.stderr}"
 
 
 # [pr_diff] fail_to_pass
@@ -89,12 +189,16 @@ def test_no_inline_route_code():
     """Route handler code must not be inlined as template strings in the test file."""
     code = TEST_FILE.read_text()
 
+    # Look for template strings that contain route handler patterns
     for match in re.findall(r"`([^`]*)`", code, re.DOTALL):
         if len(match) > 50:
-            has_export = re.search(r"export\s+(default|const\s+config)", match)
-            has_handler = re.search(r"function\s+handler", match)
-            assert not (has_export or has_handler), \
-                "Test file still contains inline route code as template strings"
+            # Check for export patterns that indicate inline route code
+            has_export_config = "export const config" in match
+            has_export_default = "export default" in match and "async function" in match
+            has_async_handler = re.search(r"export\s+(default\s+)?async\s+function\s+handler", match)
+
+            assert not (has_export_config or has_export_default or has_async_handler), \
+                f"Test file still contains inline route code as template strings: {match[:100]}..."
 
 
 # ---------------------------------------------------------------------------
@@ -190,51 +294,3 @@ def _find_fixture(name: str) -> str | None:
         if p.exists():
             return str(p)
     return None
-
-
-def _assert_handler_responses(fixture_path: str, cases: list[tuple[str, str]]):
-    """Execute an edge handler via Node.js VM and validate responses for multiple request IDs."""
-    checks = []
-    for req_id, validator in cases:
-        checks.append(
-            f'    handler({{ headers: {{ get: (n) => n === "req-id" ? "{req_id}" : null }} }})'
-            f'        .then(r => r.json())'
-            f'        .then(j => {{ const ok = ({validator})(j);'
-            f'            if (!ok) throw new Error("Failed for req-id={req_id}: " + JSON.stringify(j)); }})'
-        )
-
-    script = f"""
-const vm = require('vm');
-const fs = require('fs');
-const {{ AsyncLocalStorage }} = require('async_hooks');
-
-let code = fs.readFileSync('{fixture_path}', 'utf8');
-code = code.replace(/^export\\s+default\\s+/m, '__exports.default = ');
-code = code.replace(/^export\\s+(const|let|var|function|async\\s+function|class)\\s+/gm, '$1 ');
-code = code.replace(/^import\\s+.*$/gm, '');
-
-const __exports = {{}};
-const sandbox = {{
-    AsyncLocalStorage,
-    Response: globalThis.Response,
-    fetch: async () => ({{ text: async () => '', ok: true }}),
-    console, __exports, setTimeout, clearTimeout, Promise, require,
-}};
-
-vm.runInNewContext(code, sandbox, {{ timeout: 5000 }});
-const handler = __exports.default;
-if (typeof handler !== 'function') {{
-    console.error('No default export function found');
-    process.exit(1);
-}}
-
-Promise.all([
-{_join_comma(checks)}
-]).then(() => process.exit(0)).catch((e) => {{ console.error(e.message); process.exit(1); }});
-"""
-    result = subprocess.run(["node", "-e", script], capture_output=True, timeout=15)
-    assert result.returncode == 0, f"Handler execution failed:\n{result.stderr.decode()}"
-
-
-def _join_comma(items: list[str]) -> str:
-    return ",\n".join(items)

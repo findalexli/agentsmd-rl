@@ -1,0 +1,68 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 18861
+  base_commit: "2cf99b91ec336f3884c400634e61ec6d1bd77e5a"
+  merge_commit: "bca76afb9c459dc27287ee98e90ed833fb3a9f95"
+
+checks:
+  - id: cargo_check_cli
+    type: pass_to_pass
+    origin: static
+    description: "uv-cli crate compiles successfully"
+
+  - id: tool_list_args_has_outdated
+    type: pass_to_pass
+    origin: static
+    description: "ToolListArgs still has outdated field (anti-regression)"
+
+  - id: settings_resolve_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "ToolListSettings::resolve has meaningful implementation"
+
+  - id: exclude_newer_arg_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ToolListArgs has exclude_newer field for --exclude-newer CLI flag"
+
+  - id: settings_resolves_exclude_newer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ToolListSettings processes exclude_newer from CLI args and filesystem config"
+
+  - id: list_fn_receives_resolver_options
+    type: fail_to_pass
+    origin: pr_diff
+    description: "list() in tool/list.rs receives resolver options for --exclude-newer"
+
+  - id: options_combined_in_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Resolver options are merged with tool config in tool/list.rs"
+
+rubric:
+  - rule: "ALWAYS attempt to add a test case for changed behavior"
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "2cf99b91ec336f3884c400634e61ec6d1bd77e5a"
+
+  - rule: "PREFER integration tests, e.g., at `it/...` over unit tests"
+    source:
+      path: "CLAUDE.md"
+      lines: "3"
+      commit: "2cf99b91ec336f3884c400634e61ec6d1bd77e5a"
+
+  - rule: "ALWAYS read and copy the style of similar tests when adding new cases"
+    source:
+      path: "CLAUDE.md"
+      lines: "15"
+      commit: "2cf99b91ec336f3884c400634e61ec6d1bd77e5a"
+
+  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
+    source:
+      path: "CLAUDE.md"
+      lines: "17-18"
+      commit: "2cf99b91ec336f3884c400634e61ec6d1bd77e5a"

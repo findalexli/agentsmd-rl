@@ -62,7 +62,7 @@ if len(lines) < 500:
     sys.exit(1)
 print("PASS")
 """)
-    assert r.returncode == 0, f"Source check failed: {r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"Source check failed: {r.stdout}\\n{r.stderr}"
     assert "PASS" in r.stdout
 
 
@@ -73,13 +73,12 @@ print("PASS")
 
 # [pr_diff] fail_to_pass
 def test_deadlock_pattern_removed():
-    """self.get_task_name removed from stats.entry() calls and cfg blocks;
-    stats collection code preserved (not just deleted).
+    """The deadlock-causing self.get_task_name pattern is removed from stats code.
 
-    Executes a Python script that parses the Rust source to verify:
-    - No .entry() call passes self.get_task_name as argument
+    Verifies that the fix for the RwLock deadlock has been applied:
+    - No .entry() call passes self.get_task_name (which would re-lock)
     - No cfg(print_cache_item_size) block contains self.get_task_name
-    - At least one .entry() call exists in cfg blocks (stats not deleted)
+    - Stats collection code still exists (not just deleted to avoid the bug)
     """
     r = _run_py(f"""
 import re, sys
@@ -94,16 +93,18 @@ if entry_calls:
 # Part B: self.get_task_name must not appear in any cfg block
 lines = src.split("\\n")
 in_cfg = False
+cfg_start_line = 0
 depth = 0
 for i, line in enumerate(lines):
     if 'cfg(feature = "print_cache_item_size' in line:
         in_cfg = True
+        cfg_start_line = i + 1
         depth = 0
         continue
     if in_cfg:
         depth += line.count("{{") - line.count("}}")
         if "self.get_task_name" in line:
-            print(f"FAIL: self.get_task_name at line {{i+1}} inside cfg block")
+            print(f"FAIL: self.get_task_name at line {{i+1}} inside cfg block starting at {{cfg_start_line}}")
             sys.exit(1)
         if depth <= 0 and "{{" not in line and "}}" not in line:
             in_cfg = False
@@ -123,24 +124,24 @@ for line in lines:
             found_entry = True
         if depth <= 0 and "{{" not in line and "}}" not in line:
             in_cfg = False
+
 if not found_entry:
-    print("FAIL: No .entry() in cfg blocks — stats code deleted?")
+    print("FAIL: No .entry() in cfg blocks — stats code deleted instead of fixed")
     sys.exit(1)
 
 print("PASS")
 """)
-    assert r.returncode == 0, f"Deadlock check failed: {r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"Deadlock check failed: {r.stdout}\\n{r.stderr}"
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_task_name_from_storage():
-    """Task name derived from storage reference (inner), not self.
+    """Task name is derived from storage reference, not via self re-lock.
 
-    Executes a Python script that:
-    - Finds all .entry() calls inside cfg(print_cache_item_size) blocks
-    - Verifies no entry() uses self.get_task_name, string literals, or String ctors
-    - Verifies the surrounding context references storage/inner/task_storage
+    Verifies that TaskCacheStats::task_name(inner) is used instead of
+    self.get_task_name(task_id, turbo_tasks), which would cause deadlock
+    by trying to acquire a write lock while holding a read lock.
     """
     r = _run_py(f"""
 import re, sys
@@ -170,48 +171,50 @@ if not entry_contexts:
     sys.exit(1)
 
 for lineno, entry_line, context in entry_contexts:
-    # Reject: string literal argument
+    # Reject: string literal argument (would be a stub)
     if re.search(r'\\.entry\\(\\s*"', entry_line):
-        print(f"FAIL: line {{lineno}}: .entry() uses a string literal")
+        print(f"FAIL: line {{lineno}}: .entry() uses a string literal — likely stubbed")
         sys.exit(1)
-    # Reject: String::new() / String::from()
+    # Reject: String::new() / String::from() (would be a stub)
     if re.search(r"\\.entry\\(\\s*String::(new|from)", entry_line):
-        print(f"FAIL: line {{lineno}}: .entry() uses String constructor")
+        print(f"FAIL: line {{lineno}}: .entry() uses String constructor — likely stubbed")
         sys.exit(1)
-    # Reject: self. in entry argument
+    # Reject: self. in entry argument (deadlock risk)
     if re.search(r"\\.entry\\([^)]*\\bself\\.", entry_line):
         print(f"FAIL: line {{lineno}}: .entry() references self — deadlock risk")
         sys.exit(1)
     # Accept: context must reference storage/inner for task name derivation
+    # The fix uses TaskCacheStats::task_name(inner) which extracts from storage
     storage_patterns = [
-        r"\\binner\\b",
-        r"\\bstorage\\b",
-        r"\\btask_storage\\b",
-        r"get_persistent_task_type",
-        r"task_name\\s*\\(",
-        r"task_type\\s*\\(",
+        r"TaskCacheStats::task_name",
+        r"task_name\\s*\\(\\s*inner",
+        r"task_name\\s*\\(\\s*storage",
+        r"\\binner\\b.*get_persistent_task_type",
+        r"\\bstorage\\b.*get_persistent_task_type",
     ]
     found = any(re.search(pat, context) for pat in storage_patterns)
     if not found:
-        print(f"FAIL: line {{lineno}}: .entry() argument doesn't reference storage/inner")
+        print(f"FAIL: line {{lineno}}: .entry() argument doesn't reference correct task name source")
+        print(f"Context: {{context[:200]}}")
         sys.exit(1)
 
 print("PASS")
 """)
-    assert r.returncode == 0, f"Task name check failed: {r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"Task name check failed: {r.stdout}\\n{r.stderr}"
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_cargo_feature_split():
-    """print_cache_item_size decoupled from lzzzz; separate feature for
-    compressed reporting.
+    """Cargo feature dependencies correctly split between basic and compressed.
 
-    Executes a Python script that parses [features] from Cargo.toml and
-    verifies the dependency split.
+    Verifies that:
+    1. print_cache_item_size exists as a standalone feature (no lzzzz dep)
+    2. A separate feature extends it with lzzzz for compressed reporting
+    This allows using the stats without pulling in the lz4 dependency.
     """
     r = _run_py(f"""
-import sys
+import re, sys
 content = open("{CARGO_FILE}").read()
 
 # Parse [features] section
@@ -224,7 +227,7 @@ for line in content.split("\\n"):
         continue
     if in_features and stripped.startswith("[") and stripped != "[features]":
         break
-    if in_features and "=" in stripped:
+    if in_features and "=" in stripped and not stripped.startswith("#"):
         name, val = stripped.split("=", 1)
         features[name.strip()] = val.strip()
 
@@ -232,33 +235,41 @@ if "print_cache_item_size" not in features:
     print("FAIL: print_cache_item_size feature missing from Cargo.toml")
     sys.exit(1)
 
+# Basic feature must NOT depend on lzzzz
 if "lzzzz" in features["print_cache_item_size"]:
-    print("FAIL: print_cache_item_size still depends on lzzzz")
+    print("FAIL: print_cache_item_size still depends on lzzzz (should be standalone)")
     sys.exit(1)
 
-# A separate feature must combine print_cache_item_size + lzzzz
-found_compressed = any(
-    name != "print_cache_item_size"
-    and "print_cache_item_size" in val
-    and "lzzzz" in val
-    for name, val in features.items()
-)
+# Must have a separate feature for compressed reporting
+found_compressed = False
+for name, val in features.items():
+    if name != "print_cache_item_size":
+        if "print_cache_item_size" in val and "lzzzz" in val:
+            found_compressed = True
+            break
+
 if not found_compressed:
-    print("FAIL: No feature extends print_cache_item_size with lzzzz")
+    print("FAIL: No feature combines print_cache_item_size with lzzzz for compressed reporting")
     sys.exit(1)
 
+# Verify standalone feature is not empty (must enable something)
+if features["print_cache_item_size"] == "[]":
+    print("PASS_EMPTY")  # Empty is valid for this fix
+else:
+    print("PASS_WITH_DEPS")
 print("PASS")
 """)
-    assert r.returncode == 0, f"Feature split check failed: {r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"Feature split check failed: {r.stdout}\\n{r.stderr}"
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_add_counts_covers_data():
-    """add_counts triggered on data OR meta modified, not meta-only.
+    """add_counts called when data OR meta modified, not meta-only.
 
-    Executes a Python script that finds every .add_counts() call site and
-    verifies the enclosing if-guard includes encode_data.
+    The original bug: add_counts was only called when encode_meta was true,
+    missing tasks that only had data modifications. After fix, it should be
+    called when encode_data || encode_meta.
     """
     r = _run_py(f"""
 import sys
@@ -276,31 +287,66 @@ if not call_sites:
     print("FAIL: No .add_counts() call sites found")
     sys.exit(1)
 
-# For each call site, walk upward to find the nearest if guard
-ok = False
+# For each call site, check the enclosing if-guard
+all_ok = True
 for idx in call_sites:
-    for j in range(idx - 1, max(idx - 8, -1), -1):
+    found_guard = False
+    ok_for_this_site = False
+    for j in range(idx - 1, max(idx - 10, -1), -1):
         guard = lines[j].strip()
         if guard.startswith("if "):
+            found_guard = True
+            # Must include encode_data (not meta-only)
             if "encode_data" in guard:
-                ok = True
-                break
-            # If guard is meta-only, that's the old bug
-            if "encode_meta" in guard and "encode_data" not in guard:
-                break  # still meta-only gated
-            # Some other guard — accept if it doesn't exclude data
-            ok = True
+                ok_for_this_site = True
+            elif "encode_meta" in guard and "encode_data" not in guard:
+                ok_for_this_site = False  # Still meta-only gated
+            else:
+                ok_for_this_site = True  # Some other guard that doesn't exclude data
             break
-    if ok:
+    if not found_guard or not ok_for_this_site:
+        all_ok = False
         break
 
-if not ok:
-    print("FAIL: add_counts still guarded by encode_meta only — data-only tasks excluded")
+if not all_ok:
+    print("FAIL: add_counts still guarded by encode_meta only — data-only tasks excluded from stats")
     sys.exit(1)
 
 print("PASS")
 """)
-    assert r.returncode == 0, f"add_counts check failed: {r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"add_counts check failed: {r.stdout}\\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_formatsizes_struct_exists():
+    """FormatSizes helper struct exists for DRY size formatting.
+
+    Part of the fix refactors the duplicated size formatting code into
+    a FormatSizes struct with Display implementation.
+    """
+    r = _run_py(f"""
+import re, sys
+src = open("{MOD_FILE}").read()
+
+# Check for FormatSizes struct
+if "struct FormatSizes" not in src:
+    print("FAIL: FormatSizes struct not found")
+    sys.exit(1)
+
+# Check for Display impl
+if "impl std::fmt::Display for FormatSizes" not in src:
+    print("FAIL: Display impl for FormatSizes not found")
+    sys.exit(1)
+
+# Check for conditional compressed_size field
+if '#[cfg(feature = "print_cache_item_size_with_compressed")]' not in src:
+    print("FAIL: cfg gating for compressed feature not found")
+    sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"FormatSizes check failed: {r.stdout}\\n{r.stderr}"
     assert "PASS" in r.stdout
 
 
@@ -311,16 +357,16 @@ print("PASS")
 
 # [pr_diff] pass_to_pass
 def test_persist_snapshot_and_stats_struct_intact():
-    """persist_snapshot method and TaskCacheStats struct with core fields
-    still exist.
+    """persist_snapshot method and TaskCacheStats struct with core fields exist.
 
-    Executes a Python script that parses the struct definition and verifies
-    all required fields are present.
+    Regression test: verifies that the fix didn't delete essential infrastructure.
+    These elements exist on both base commit and after the fix.
     """
     r = _run_py(f"""
 import re, sys
 src = open("{MOD_FILE}").read()
 
+# Check essential methods and types exist (both base and fix)
 if "fn snapshot_and_persist" not in src:
     print("FAIL: snapshot_and_persist method missing")
     sys.exit(1)
@@ -328,7 +374,7 @@ if "struct TaskCacheStats" not in src:
     print("FAIL: TaskCacheStats struct missing")
     sys.exit(1)
 
-# Extract struct body
+# Extract struct body for field checking - core fields exist on both base and fix
 struct_match = re.search(r"struct TaskCacheStats\\s*\\{{", src)
 if not struct_match:
     print("FAIL: TaskCacheStats struct declaration not found")
@@ -345,24 +391,24 @@ while pos < len(src) and depth > 0:
     pos += 1
 struct_body = src[start:pos]
 
-for field in ["data:", "data_count:", "meta:", "meta_count:", "upper_count:"]:
+# Core fields that exist on both base and fix
+required_fields = ["data:", "data_count:", "meta:", "meta_count:", "upper_count:"]
+for field in required_fields:
     if field not in struct_body:
-        print(f"FAIL: TaskCacheStats missing field '{{field}}'")
+        print(f"FAIL: TaskCacheStats missing required field '{{field}}'")
         sys.exit(1)
 
 print("PASS")
 """)
-    assert r.returncode == 0, f"Struct check failed: {r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"Struct check failed: {r.stdout}\\n{r.stderr}"
     assert "PASS" in r.stdout
 
 
 # [static] pass_to_pass
 def test_cfg_blocks_not_stubbed():
-    """cfg(print_cache_item_size) blocks have meaningful code, stats
-    infrastructure intact.
+    """cfg(print_cache_item_size) blocks have meaningful code.
 
-    Executes a Python script that counts non-comment lines in cfg blocks
-    and verifies TaskCacheStats impl has >=2 methods.
+    Anti-stub test: verifies stats infrastructure wasn't just stubbed out.
     """
     r = _run_py(f"""
 import re, sys
@@ -387,15 +433,15 @@ for line in lines:
             in_cfg = False
 
 if cfg_lines < 15:
-    print(f"FAIL: Only {{cfg_lines}} non-comment lines in cfg blocks — deleted?")
+    print(f"FAIL: Only {{cfg_lines}} non-comment lines in cfg blocks — likely stubbed")
     sys.exit(1)
 
-# Stats collection infrastructure
-if "Mutex<" not in src or "TaskCacheStats" not in src:
-    print("FAIL: Stats collection infrastructure (Mutex + TaskCacheStats) missing")
+# Stats collection infrastructure must exist
+if "Mutex<" not in src:
+    print("FAIL: Stats collection infrastructure (Mutex) missing")
     sys.exit(1)
 
-# TaskCacheStats impl with methods
+# TaskCacheStats must have multiple methods (not just a stub struct)
 impl_match = re.search(r"impl\\s+TaskCacheStats\\s*\\{{", src)
 if not impl_match:
     print("FAIL: No impl block for TaskCacheStats")
@@ -412,11 +458,11 @@ while pos < len(src) and depth > 0:
     pos += 1
 impl_body = src[start:pos]
 fn_count = len(re.findall(r"\\bfn\\s+\\w+", impl_body))
-if fn_count < 2:
+if fn_count < 3:
     print(f"FAIL: TaskCacheStats impl has only {{fn_count}} methods — likely stubbed")
     sys.exit(1)
 
 print("PASS")
 """)
-    assert r.returncode == 0, f"Cfg blocks check failed: {r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"Cfg blocks check failed: {r.stdout}\\n{r.stderr}"
     assert "PASS" in r.stdout

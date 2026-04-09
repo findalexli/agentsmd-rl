@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "PostHog/posthog"
+  pr: 53639
+  base_commit: "43d0423b3f819335cfecfae1f1844ea883ba97ac"
+  merge_commit: "4ce482b0c20cadfe64e649f7cc42a04609e8e014"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Target file parses without syntax errors"
+
+  - id: read_actions_includes_values
+    type: fail_to_pass
+    origin: pr_diff
+    description: "scope_object_read_actions includes 'values' so API tokens with error_tracking:read can access the values endpoint"
+
+  - id: write_actions_includes_custom_actions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "scope_object_write_actions includes custom actions (merge, split, assign, cohort, bulk) so API tokens with error_tracking:write can use them"
+
+  - id: standard_read_actions_preserved
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Standard DRF read actions (list, retrieve) are preserved in scope_object_read_actions since setting the attribute overrides defaults"
+
+  - id: standard_write_actions_preserved
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Standard DRF write actions (create, update, partial_update) are preserved in scope_object_write_actions since setting the attribute overrides defaults"
+
+  - id: scope_object_still_error_tracking
+    type: pass_to_pass
+    origin: static
+    description: "scope_object remains 'error_tracking' for correct resource type mapping"
+
+  - id: viewset_class_has_substance
+    type: pass_to_pass
+    origin: static
+    description: "ErrorTrackingIssueViewSet has substantial body (not a stub)"
+
+rubric:
+  - rule: "When touching a viewset or serializer, ensure schema annotations are present (@extend_schema or @validated_request on viewset methods, help_text on serializer fields)"
+    source:
+      path: "AGENTS.md"
+      lines: "85"
+      commit: "43d0423b3f819335cfecfae1f1844ea883ba97ac"

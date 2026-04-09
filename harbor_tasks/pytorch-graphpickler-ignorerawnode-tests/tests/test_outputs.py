@@ -5,15 +5,23 @@ PR:   176954
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
-
-NOTE: torch is not installed; all checks are AST-based.
 """
 
 import ast
+import json
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/pytorch"
 TARGET = f"{REPO}/test/fx/test_graph_pickler.py"
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code via subprocess."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout,
+    )
 
 
 def _source():
@@ -32,7 +40,6 @@ def _find_agent_test_methods():
             for item in node.body:
                 if isinstance(item, ast.FunctionDef) and item.name.startswith("test_"):
                     result.append(item)
-    # Also catch top-level test functions
     for node in ast.iter_child_nodes(_tree()):
         if (isinstance(node, ast.FunctionDef) and node.name.startswith("test_")
                 and "ignore_raw_node" in ast.dump(node)):
@@ -46,8 +53,9 @@ def _find_agent_test_methods():
 
 # [static] pass_to_pass
 def test_syntax_check():
-    """Target test file must parse without syntax errors."""
-    ast.parse(_source())
+    """Target test file must compile without syntax errors."""
+    r = _run_py(f"compile(open('{TARGET}').read(), '{TARGET}', 'exec')")
+    assert r.returncode == 0, f"Syntax error: {r.stderr}"
 
 
 # ---------------------------------------------------------------------------
@@ -57,7 +65,23 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_has_ignore_raw_node_tests():
     """Agent must add at least one test method that exercises ignore_raw_node."""
-    methods = _find_agent_test_methods()
+    r = _run_py(f'''
+import ast, json
+tree = ast.parse(open("{TARGET}").read())
+methods = []
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and "ignore_raw_node" in ast.dump(node):
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name.startswith("test_"):
+                methods.append(item.name)
+for node in ast.iter_child_nodes(tree):
+    if (isinstance(node, ast.FunctionDef) and node.name.startswith("test_")
+            and "ignore_raw_node" in ast.dump(node)):
+        methods.append(node.name)
+print(json.dumps(methods))
+''')
+    assert r.returncode == 0, f"Analysis failed: {r.stderr}"
+    methods = json.loads(r.stdout.strip())
     assert len(methods) >= 1, (
         "No test methods found that reference ignore_raw_node — "
         "add tests for GraphPickler.Options(ignore_raw_node=...)"
@@ -67,13 +91,22 @@ def test_has_ignore_raw_node_tests():
 # [pr_diff] fail_to_pass
 def test_default_raises_covered():
     """A test must verify GraphPickler.dumps raises by default on raw Node metadata."""
-    methods = _find_agent_test_methods()
-    assert len(methods) >= 1, "No test methods found"
-    for m in methods:
-        dump = ast.dump(m)
-        if ("assertRaises" in dump or "assertRaisesRegex" in dump) and "dumps" in dump:
-            return
-    assert False, (
+    r = _run_py(f'''
+import ast, json
+tree = ast.parse(open("{TARGET}").read())
+found = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and "ignore_raw_node" in ast.dump(node):
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name.startswith("test_"):
+                dump = ast.dump(item)
+                if ("assertRaises" in dump or "assertRaisesRegex" in dump) and "dumps" in dump:
+                    found = True
+print(json.dumps(found))
+''')
+    assert r.returncode == 0, f"Analysis failed: {r.stderr}"
+    found = json.loads(r.stdout.strip())
+    assert found, (
         "No test method covers the default-raises behavior: "
         "expected assertRaises/assertRaisesRegex + GraphPickler.dumps call"
     )
@@ -97,21 +130,27 @@ def test_ignore_true_round_trip():
 # [pr_diff] fail_to_pass
 def test_raw_node_in_meta():
     """Tests must inject a raw Node into node.meta to trigger the code path."""
-    tree = _tree()
-    for cls in ast.walk(tree):
-        if not isinstance(cls, ast.ClassDef):
-            continue
-        if "ignore_raw_node" not in ast.dump(cls):
-            continue
-        for child in ast.walk(cls):
-            # Match: something.meta[key] = value
-            if (isinstance(child, ast.Assign)
-                    and child.targets
-                    and isinstance(child.targets[0], ast.Subscript)
-                    and isinstance(child.targets[0].value, ast.Attribute)
-                    and child.targets[0].value.attr == "meta"):
-                return
-    assert False, (
+    r = _run_py(f'''
+import ast, json
+tree = ast.parse(open("{TARGET}").read())
+found = False
+for cls in ast.walk(tree):
+    if not isinstance(cls, ast.ClassDef):
+        continue
+    if "ignore_raw_node" not in ast.dump(cls):
+        continue
+    for child in ast.walk(cls):
+        if (isinstance(child, ast.Assign)
+                and child.targets
+                and isinstance(child.targets[0], ast.Subscript)
+                and isinstance(child.targets[0].value, ast.Attribute)
+                and child.targets[0].value.attr == "meta"):
+            found = True
+print(json.dumps(found))
+''')
+    assert r.returncode == 0, f"Analysis failed: {r.stderr}"
+    found = json.loads(r.stdout.strip())
+    assert found, (
         "No assignment into node.meta found in agent's test code — "
         "tests must inject a raw Node (e.g. call_node.meta['key'] = call_node) "
         "to exercise the ignore_raw_node code path"
@@ -163,7 +202,6 @@ def test_uses_pytorch_test_class():
     assert len(agent_classes) > 0, "No test class found for ignore_raw_node feature"
 
     for cls in agent_classes:
-        # Reject: class Foo(unittest.TestCase)
         for base in cls.bases:
             if (isinstance(base, ast.Attribute) and base.attr == "TestCase"
                     and isinstance(base.value, ast.Name)
@@ -172,7 +210,6 @@ def test_uses_pytorch_test_class():
                     f"{cls.name} uses unittest.TestCase; "
                     "use TestCase from torch.testing._internal.common_utils — CLAUDE.md:17-27"
                 )
-        # Require: bare TestCase name (imported from torch)
         good = any(isinstance(b, ast.Name) and b.id == "TestCase" for b in cls.bases)
         assert good, (
             f"{cls.name} must inherit from TestCase "
@@ -183,8 +220,8 @@ def test_uses_pytorch_test_class():
 # [agent_config] pass_to_pass — .claude/skills/pr-review/review-checklist.md:57 @ e931ab4802816cec55aa5a25b51f27cb941c924e
 def test_has_owner_label():
     """Test file must have a valid # Owner(s): label, not 'module: unknown'."""
-    src = _source()
     import re
+    src = _source()
     match = re.search(r"#\s*Owner\(s\):\s*\[([^\]]*)\]", src)
     assert match, (
         "Test file is missing a '# Owner(s): [...]' label — "
@@ -201,7 +238,6 @@ def test_has_owner_label():
 def test_has_run_tests():
     """Test file must end with 'if __name__ == \"__main__\": run_tests()'."""
     tree = _tree()
-    # Look for: if __name__ == "__main__": run_tests()
     for node in ast.walk(tree):
         if not isinstance(node, ast.If):
             continue
@@ -212,7 +248,6 @@ def test_has_run_tests():
                 and len(test.comparators) == 1
                 and isinstance(test.comparators[0], ast.Constant)
                 and test.comparators[0].value == "__main__"):
-            # Check body contains run_tests()
             for stmt in ast.walk(node):
                 if (isinstance(stmt, ast.Call)
                         and isinstance(stmt.func, ast.Name)

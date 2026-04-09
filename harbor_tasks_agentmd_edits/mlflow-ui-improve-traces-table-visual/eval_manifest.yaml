@@ -1,0 +1,89 @@
+version: "2.0"
+
+source:
+  repo: "mlflow/mlflow"
+  pr: 20437
+  base_commit: "bc59a546e39cd15f9ae92d32a3766b0892c40007"
+  merge_commit: "cfdbd62244c3ce26ecff309470330d737f094f6b"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Gates (pass_to_pass, static) - TypeScript compilation
+  # ---------------------------------------------------------------------------
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must compile without errors"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) - Core behavioral tests
+  # ---------------------------------------------------------------------------
+  - id: tree_component_imported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Column selector must import and use Tree component from design system"
+
+  - id: usecallback_for_handlers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Event handlers must be memoized with useCallback for performance"
+
+  - id: search_functionality_implemented
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Search input with SearchIcon must be present for filtering columns"
+
+  - id: dropdown_replaces_dialog_combobox
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DialogCombobox must be replaced with Dropdown component"
+
+  - id: tree_performance_optimized
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tree must have motion disabled for performance (motion: null)"
+
+  - id: group_selection_logic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tree must handle group-level selection/deselection via GROUP- keys"
+
+  - id: genai_traces_table_uses_grouped_selector
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GenAITracesTable must use EvaluationsOverviewColumnSelectorGrouped"
+
+  - id: correct_props_passed_to_selector
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GenAITracesTable must pass correct props (toggleColumns, setSelectedColumns) to selector"
+
+  - id: search_highlighting_implemented
+    type: fail_to_pass
+    origin: pr_diff
+    description: "createHighlightedNode function must exist for search result highlighting"
+
+  - id: memoized_dropdown_content
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dropdown content must be memoized with useMemo to prevent re-renders"
+
+  - id: dropdown_visibility_state
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dropdown visibility must be controlled with dropdownVisible state"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static) - Regression checks
+  # ---------------------------------------------------------------------------
+  - id: component_exports_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Component must still export EvaluationsOverviewColumnSelectorGrouped"
+
+  - id: props_interface_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Component Props interface must have required properties"
+
+rubric: []

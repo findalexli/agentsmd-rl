@@ -12,35 +12,49 @@ checks:
     origin: static
     description: "FakeProcessGroup.hpp must have balanced braces"
 
-  - id: allgather_guards_mismatched_sizes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "allgather must have a conditional size check before copy_"
-
-  - id: mismatched_tensors_skipped
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Mismatched output tensors must be skipped, not copied"
-
-  - id: size_check_references_both_tensors
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Size guard must compare output tensor against inputTensors[0]"
-
-  - id: copy_still_in_allgather_loop
-    type: pass_to_pass
-    origin: pr_diff
-    description: "copy_ must still be present inside the allgather for-loop"
-
-  - id: allgather_not_stub
+  - id: syntax_valid
     type: pass_to_pass
     origin: static
-    description: "allgather method has real logic referencing outputTensors and inputTensors"
+    description: "C++ code must be syntactically valid (clang -fsyntax-only)"
 
-  - id: allgather_iterates_output_tensors
+  - id: allgather_size_guard_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "allgather must have a size(0) comparison guard before copy_"
+
+  - id: allgather_continue_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Mismatched tensors must be skipped via continue statement"
+
+  - id: allgather_uneven_behavior_simulation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Simulated loop behavior shows uneven tensors are skipped without crash"
+
+  - id: original_broken_behavior
     type: pass_to_pass
-    origin: static
-    description: "allgather loop must iterate over outputTensors[0]"
+    origin: pr_diff
+    description: "Confirmed original code would crash on uneven tensors (anti-regression)"
+
+  - id: allgather_copy_present
+    type: pass_to_pass
+    origin: pr_diff
+    description: "copy_ must still be present in the allgather loop (regression check)"
+
+  - id: allgather_loop_structure
+    type: pass_to_pass
+    origin: pr_diff
+    description: "allgather must have a for-loop over outputTensors[0]"
+
+  - id: no_over_engineering
+    type: pass_to_pass
+    origin: agent_config
+    description: "Change should be minimal per CLAUDE.md guidelines"
+    source:
+      path: "CLAUDE.md"
+      lines: "51"
+      commit: "8401fdeb9abd665b36465c52b7aefd591cc3dbcb"
 
 rubric:
   - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."

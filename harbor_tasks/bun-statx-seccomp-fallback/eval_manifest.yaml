@@ -1,0 +1,79 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28825
+  base_commit: "159a285841539c8f166509116c12b11e15b47fdf"
+  merge_commit: "90538306b1b1d82f99735db9718c38a49c9d6266"
+
+checks:
+  - id: source_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "Core source file src/sys.zig must exist and be non-empty"
+
+  - id: statx_handles_eperm
+    type: fail_to_pass
+    origin: pr_diff
+    description: "statxImpl must fall back on EPERM (seccomp-blocked statx)"
+
+  - id: statx_handles_einval
+    type: fail_to_pass
+    origin: pr_diff
+    description: "statxImpl must fall back on EINVAL (old Android builds)"
+
+  - id: statx_handles_positive_rc
+    type: fail_to_pass
+    origin: pr_diff
+    description: "statxImpl must detect abnormal positive rc (QEMU/S390) and fall back"
+
+  - id: statx_errnos_grouped_in_switch
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All four errno cases (NOSYS, OPNOTSUPP, PERM, INVAL) must be grouped together in fallback logic"
+
+  - id: statx_fallback_helper_exists
+    type: pass_to_pass
+    origin: pr_diff
+    description: "statxFallback function exists with correct stat/lstat/fstat delegation"
+
+  - id: existing_errno_cases_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Original NOSYS and EOPNOTSUPP fallback cases must still work"
+
+  - id: statximpl_structure_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "statxImpl retains core structure: while loop, statx call, EINTR retry"
+
+  - id: uses_bun_sys_not_std
+    type: pass_to_pass
+    origin: agent_config
+    description: "Uses bun.sys patterns (Maybe(T)), not std.posix"
+    source:
+      path: "src/AGENTS.md"
+      lines: "30-32"
+      commit: "159a285841539c8f166509116c12b11e15b47fdf"
+
+  - id: error_handling_pattern
+    type: pass_to_pass
+    origin: agent_config
+    description: "Error handling follows bun.sys Maybe(T) switch pattern"
+    source:
+      path: ".claude/skills/zig-system-calls/SKILL.md"
+      lines: "64-66"
+      commit: "159a285841539c8f166509116c12b11e15b47fdf"
+
+rubric:
+  - rule: "Always use bun.* APIs instead of std.*. Using std.fs, std.posix, or std.os directly is wrong in this codebase."
+    source:
+      path: "src/AGENTS.md"
+      lines: "16"
+      commit: "159a285841539c8f166509116c12b11e15b47fdf"
+
+  - rule: "bun.sys functions return Maybe(T) — a tagged union of .result: T or .err: bun.sys.Error. Handle with switch or .unwrap()."
+    source:
+      path: ".claude/skills/zig-system-calls/SKILL.md"
+      lines: "64-66"
+      commit: "159a285841539c8f166509116c12b11e15b47fdf"

@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 92210
+  base_commit: "3e0158846e490509c6a26a4536d33777d9778101"
+  merge_commit: "9e1509307e336bc422bc6d1c1cc0a32ce00d9523"
+
+checks:
+  - id: source_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "mod.rs exists and is not stubbed"
+
+  - id: persistent_task_ref_released
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DashMap Ref consumed inline in get_or_create_persistent_task before ConnectChildOperation::run"
+
+  - id: transient_task_ref_released
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DashMap Ref consumed inline in get_or_create_transient_task before ConnectChildOperation::run"
+
+  - id: no_dangling_deref_after_cache_get
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No separate 'let task_id = *task_id;' after task_cache.get() that keeps Ref alive"
+
+  - id: cache_lookup_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Both functions still perform cache lookup and ConnectChildOperation (not deleted)"
+
+rubric:
+  - rule: "Before editing or creating files in any subdirectory (e.g., packages/*, crates/*), read all README.md files in the directory path from the repo root up to and including the target file's directory."
+    source:
+      path: "CLAUDE.md"
+      lines: "46"
+      commit: "3e0158846e490509c6a26a4536d33777d9778101"
+  - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run cargo fmt"
+    source:
+      path: "CLAUDE.md"
+      lines: "414"
+      commit: "3e0158846e490509c6a26a4536d33777d9778101"

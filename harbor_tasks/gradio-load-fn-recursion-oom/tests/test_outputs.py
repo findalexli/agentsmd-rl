@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -15,6 +16,15 @@ from pathlib import Path
 import pytest
 
 REPO = "/repo"
+
+
+def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in a subprocess with the repo on sys.path."""
+    env = {**os.environ, "PYTHONPATH": REPO}
+    return subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO, env=env,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -36,7 +46,8 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_closure_no_self_recursion():
     """fn variable in from_model must not shadow the closure, preventing infinite recursion.
-    AST-only because: from_model requires HuggingFace API access to call directly."""
+    Extracts the actual variable name via AST, then simulates the closure pattern
+    in a subprocess to verify no recursion occurs."""
     source = Path(f"{REPO}/gradio/external.py").read_text()
     tree = ast.parse(source)
 
@@ -67,75 +78,92 @@ def test_closure_no_self_recursion():
 
     assert pop_var is not None, "kwargs.pop('fn', ...) assignment not found in from_model"
 
-    # Behaviorally verify: simulate the closure pattern with the actual variable name.
-    # In from_model, `fn` is the pipeline function captured by the query closure.
-    # If kwargs.pop("fn") is assigned back to `fn`, the closure calls itself → recursion.
-    old_limit = sys.getrecursionlimit()
-    sys.setrecursionlimit(50)
-    try:
-        ns = {}
-        exec(
-            f"def pipeline(*data): return 'pipeline_result'\n"
-            f"fn = pipeline\n"
-            f"def query(*data): return fn(*data)\n"
-            f"kwargs = {{'fn': query}}\n"
-            f"{pop_var} = kwargs.pop('fn', None)\n"
-            f"result = query('test_input')\n",
-            ns,
-        )
-        assert ns["result"] == "pipeline_result", (
-            f"Closure returned {ns['result']!r}, expected 'pipeline_result'"
-        )
-    except RecursionError:
-        raise AssertionError(
-            f"Variable '{pop_var}' shadows the closure — query() recurses infinitely"
-        )
-    finally:
-        sys.setrecursionlimit(old_limit)
+    # Behaviorally verify in a subprocess: simulate the closure pattern with a
+    # low recursion limit. If pop_var == 'fn', query() recurses into itself.
+    r = _run_python(f"""
+import sys
+sys.setrecursionlimit(50)
+
+def pipeline(*data):
+    return 'pipeline_result'
+
+fn = pipeline
+def query(*data):
+    return fn(*data)
+
+kwargs = {{'fn': query}}
+{pop_var} = kwargs.pop('fn', None)
+result = query('test_input')
+print(result)
+""")
+    assert r.returncode == 0, (
+        f"Recursion or error with var '{pop_var}': {r.stderr}"
+    )
+    assert "pipeline_result" in r.stdout, f"Unexpected output: {r.stdout}"
 
 
 # [pr_diff] fail_to_pass
 def test_stop_iteration_handled():
     """handle_hf_error must catch StopIteration and raise an informative Error."""
-    sys.path.insert(0, REPO)
-    from gradio.exceptions import Error
-    from gradio.external_utils import handle_hf_error
+    r = _run_python("""
+import sys
+from gradio.exceptions import Error
+from gradio.external_utils import handle_hf_error
 
-    # Bare StopIteration (no message)
-    with pytest.raises(Error, match=r".{10,}"):
-        handle_hf_error(StopIteration())
+# Bare StopIteration (no message)
+try:
+    handle_hf_error(StopIteration())
+except StopIteration:
+    print("FAIL: StopIteration leaked through unhandled")
+    sys.exit(1)
+except Error as e:
+    msg = getattr(e, 'message', str(e))
+    if len(msg.strip()) < 10:
+        print(f"FAIL: message too short: {msg!r}")
+        sys.exit(1)
 
-    # StopIteration with a value
-    with pytest.raises(Error, match=r".{10,}"):
-        handle_hf_error(StopIteration("no provider"))
+# StopIteration with a value
+try:
+    handle_hf_error(StopIteration("no provider"))
+except StopIteration:
+    print("FAIL: StopIteration leaked through unhandled")
+    sys.exit(1)
+except Error as e:
+    msg = getattr(e, 'message', str(e))
+    if len(msg.strip()) < 10:
+        print(f"FAIL: message too short: {msg!r}")
+        sys.exit(1)
 
-    # Must NOT leak as a raw StopIteration
-    try:
-        handle_hf_error(StopIteration())
-    except Error:
-        pass  # correct
-    except StopIteration:
-        pytest.fail("StopIteration leaked through unhandled")
+print("PASS")
+""")
+    assert r.returncode == 0, f"StopIteration handling failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_empty_exception_non_empty_message():
     """handle_hf_error must produce a non-empty error message for exceptions
     with no string representation."""
-    sys.path.insert(0, REPO)
-    from gradio.exceptions import Error
-    from gradio.external_utils import handle_hf_error
+    r = _run_python("""
+import sys
+from gradio.exceptions import Error
+from gradio.external_utils import handle_hf_error
 
-    for exc in [Exception(), RuntimeError(), ValueError(), OSError()]:
-        try:
-            handle_hf_error(exc)
-            pytest.fail(f"handle_hf_error should have raised for {type(exc).__name__}")
-        except Error as e:
-            # Use e.message (raw string), not str(e) which Gradio wraps in quotes
-            msg = getattr(e, "message", e.args[0] if e.args else "")
-            assert len(msg.strip()) > 0, (
-                f"Empty error message for {type(exc).__name__}"
-            )
+for exc in [Exception(), RuntimeError(), ValueError(), OSError()]:
+    try:
+        handle_hf_error(exc)
+        print(f"FAIL: handle_hf_error should have raised for {type(exc).__name__}")
+        sys.exit(1)
+    except Error as e:
+        msg = getattr(e, 'message', e.args[0] if e.args else "")
+        if len(msg.strip()) == 0:
+            print(f"FAIL: empty message for {type(exc).__name__}")
+            sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Empty exception message test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -182,8 +210,7 @@ def test_too_many_requests_still_handled():
 
 # [static] pass_to_pass
 def test_handle_hf_error_not_stub():
-    """handle_hf_error has real branching logic, not just pass/return.
-    AST-only because: checking structural complexity of function body."""
+    """handle_hf_error has real branching logic, not just pass/return."""
     source = Path(f"{REPO}/gradio/external_utils.py").read_text()
     tree = ast.parse(source)
     for node in ast.walk(tree):

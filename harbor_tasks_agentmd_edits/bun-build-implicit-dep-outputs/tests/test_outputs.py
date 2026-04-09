@@ -3,15 +3,16 @@ Task: bun-build-implicit-dep-outputs
 Repo: oven-sh/bun @ c721d357ad9ed04017bb24d21decf5739dba3911
 PR:   #28858
 
+Behavioral tests using Node.js subprocess execution to analyze TypeScript
+build-system code. F2P code tests parse bun.ts via brace-counting extraction
+in a real JS engine — not grep on raw text.
+
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
-
-NOTE: This is a TypeScript build-system task (requires full toolchain to
-actually build). Tests analyze the TypeScript source code to verify the
-correct ninja dependency patterns are used.
 """
 
 import subprocess
+import json
 import re
 from pathlib import Path
 
@@ -22,15 +23,87 @@ CLAUDE_MD = Path(REPO) / "scripts/build/CLAUDE.md"
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Node.js setup & helpers
 # ---------------------------------------------------------------------------
 
-def _run_analysis(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Execute a Python analysis script via subprocess."""
-    return subprocess.run(
-        ["python3", "-c", code],
-        capture_output=True, text=True, timeout=timeout,
-    )
+_NODE_BIN = None
+
+
+def _ensure_node() -> bool:
+    """Install Node.js via apt-get if not already present."""
+    global _NODE_BIN
+    for name in ("node", "nodejs"):
+        r = subprocess.run(["which", name], capture_output=True, text=True)
+        if r.returncode == 0:
+            _NODE_BIN = name
+            return True
+    try:
+        subprocess.run(
+            ["apt-get", "update", "-qq"],
+            capture_output=True, text=True, timeout=60,
+        )
+        subprocess.run(
+            ["apt-get", "install", "-y", "-qq", "nodejs"],
+            capture_output=True, text=True, timeout=120,
+        )
+        for name in ("node", "nodejs"):
+            r = subprocess.run(["which", name], capture_output=True, text=True)
+            if r.returncode == 0:
+                _NODE_BIN = name
+                return True
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+    return False
+
+
+_NODE_OK = _ensure_node()
+
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node.js subprocess.
+
+    Uses .cjs extension to force CommonJS mode regardless of any
+    package.json ``"type": "module"`` in the repo.
+    """
+    script = Path(REPO) / "_eval_tmp.cjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            [_NODE_BIN, str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
+# Shared JS: brace-aware block extraction + file reader
+_JS_HELPERS = r"""
+const fs = require('fs');
+
+function readBunTs() {
+  return fs.readFileSync('scripts/build/bun.ts', 'utf8');
+}
+
+// Extract a braced block { ... } starting from startIdx.
+// Returns the text including the outer braces, or null.
+function extractBlock(text, startIdx) {
+  let i = startIdx;
+  while (i < text.length && text[i] !== '{') i++;
+  if (i >= text.length) return null;
+  const start = i;
+  let depth = 1;
+  i++;
+  while (i < text.length && depth > 0) {
+    if (text[i] === '{') depth++;
+    else if (text[i] === '}') depth--;
+    i++;
+  }
+  return text.slice(start, i);
+}
+
+// Parse last JSON line from stdout (safe against stray console output).
+function out(obj) { console.log(JSON.stringify(obj)); }
+"""
 
 
 def _get_section(text: str, heading: str, next_heading: str = "## ") -> str | None:
@@ -41,160 +114,160 @@ def _get_section(text: str, heading: str, next_heading: str = "## ") -> str | No
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — source files exist and are non-empty
+# Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+
 def test_source_files_exist():
-    """Modified source files must exist and be non-empty."""
+    """Modified source files (bun.ts, compile.ts, CLAUDE.md) exist."""
     for f in [BUN_TS, COMPILE_TS, CLAUDE_MD]:
         assert f.exists(), f"{f} does not exist"
         assert f.stat().st_size > 0, f"{f} is empty"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via Node.js subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
+
 def test_cc_implicit_dep_outputs():
-    """The compileC lambda must pass depOutputs as implicitInputs (not
-    orderOnlyInputs) to cc(). This is the core fix: C files need implicit deps
-    on dep outputs so ninja invalidates when dep libs change."""
-    r = _run_analysis(f'''
-import re, sys
-text = open("{BUN_TS}").read()
+    """compileC lambda passes depOutputs as implicitInputs to cc(), with
+    codegenOrderOnly as orderOnlyInputs. Core fix: C files need implicit
+    deps on dep outputs so ninja invalidates when dep libs change."""
+    assert _NODE_OK, "Node.js is required for behavioral tests"
 
-# Find the compileC lambda
-m = re.search(r"const compileC\s*=\s*\(src:\s*string\)\s*:\s*string\s*=>\s*{{", text)
-if not m:
-    print("FAIL:compileC_not_found"); sys.exit(0)
-body = text[m.end():m.end()+1000]
+    r = _run_node(_JS_HELPERS + r"""
+const text = readBunTs();
 
-# Must have implicitInputs: depOutputs
-if not re.search(r"implicitInputs\s*:\s*depOutputs", body):
-    print("FAIL:no_implicit_depOutputs"); sys.exit(0)
+// Locate the compileC lambda
+const m = text.match(/const\s+compileC\s*=\s*\(src:\s*string\)\s*:\s*string\s*=>\s*\{/);
+if (!m) { out({pass:false,reason:"compileC_not_found"}); process.exit(0); }
 
-# Must have orderOnlyInputs: codegenOrderOnly (NOT depOrderOnly)
-if not re.search(r"orderOnlyInputs\s*:\s*codegenOrderOnly", body):
-    print("FAIL:no_codegenOrderOnly"); sys.exit(0)
+// Extract the lambda body via brace counting (not regex)
+const body = extractBlock(text, m.index + m[0].length - 1);
+if (!body) { out({pass:false,reason:"body_extract_failed"}); process.exit(0); }
 
-# Must NOT have old depOrderOnly variable in the cc call
-if re.search(r"depOrderOnly", body):
-    print("FAIL:old_depOrderOnly_in_cc"); sys.exit(0)
+// Find the cc() call inside the body
+const ccMatch = body.match(/cc\s*\(/);
+if (!ccMatch) { out({pass:false,reason:"cc_call_not_found"}); process.exit(0); }
+const ccBody = body.slice(ccMatch.index);
 
-print("PASS")
-''')
-    assert r.returncode == 0, f"Script error: {r.stderr}"
-    assert "PASS" in r.stdout, f"cc() dep check failed: {r.stdout.strip()}"
+// Structural checks on the cc() call arguments
+const checks = {
+  hasImplicitDepOutputs: /implicitInputs\s*:\s*depOutputs/.test(ccBody),
+  hasCodegenOrderOnly:   /orderOnlyInputs\s*:\s*codegenOrderOnly/.test(ccBody),
+  noOldDepOrderOnly:     !/depOrderOnly/.test(ccBody)
+};
+
+out({pass: checks.hasImplicitDepOutputs && checks.hasCodegenOrderOnly && checks.noOldDepOrderOnly, checks});
+""")
+    assert r.returncode == 0, f"Node error: {r.stderr}"
+    result = json.loads(r.stdout.strip().split('\n')[-1])
+    assert result["pass"], f"cc() dep check failed: {result.get('checks', {})}"
 
 
-# [pr_diff] fail_to_pass
 def test_no_pch_cxx_implicit_dep_outputs():
-    """In the no-PCH cxx path (else branch), opts must use implicitInputs
-    with depOutputs and orderOnlyInputs with codegenOrderOnly."""
-    r = _run_analysis(f'''
-import re, sys
-text = open("{BUN_TS}").read()
+    """No-PCH cxx path uses implicitInputs with depOutputs and
+    orderOnlyInputs with codegenOrderOnly. On the base commit this path
+    incorrectly used orderOnlyInputs for depOutputs."""
+    assert _NODE_OK, "Node.js is required for behavioral tests"
 
-# Find the else branch for no-PCH cxx
-m = re.search(r"\}}\s*else\s*\{{", text)
-if not m:
-    print("FAIL:no_else_branch"); sys.exit(0)
+    r = _run_node(_JS_HELPERS + r"""
+const text = readBunTs();
+const elsePat = /\}\s*else\s*\{/g;
+let match, found = false;
 
-# Find the else branch that has "No PCH" comment nearby
-all_else = list(re.finditer(r"\}}\s*else\s*\{{", text))
-found = False
-for em in all_else:
-    # Check the surrounding context for no-PCH indicators
-    context = text[max(0, em.start()-200):em.end()+600]
-    if "No PCH" in context or "no PCH" in context or "pchOut" in context:
-        body = context
-        # Must have implicitInputs = depOutputs
-        if re.search(r"implicitInputs\s*=\s*depOutputs", body):
-            # Must have orderOnlyInputs = codegenOrderOnly
-            if re.search(r"orderOnlyInputs\s*=\s*codegenOrderOnly", body):
-                found = True
-                break
+while ((match = elsePat.exec(text)) !== null) {
+  // Identify the no-PCH else branch by checking context for pchOut
+  const before = text.slice(Math.max(0, match.index - 300), match.index);
+  if (!/pchOut/.test(before)) continue;
 
-if not found:
-    print("FAIL:no_implicit_in_no_pch_path"); sys.exit(0)
-print("PASS")
-''')
-    assert r.returncode == 0, f"Script error: {r.stderr}"
-    assert "PASS" in r.stdout, f"No-PCH cxx check failed: {r.stdout.strip()}"
+  const body = extractBlock(text, match.index + match[0].length - 1);
+  if (!body) continue;
+
+  // Check for assignment patterns (not just string occurrence)
+  if (/implicitInputs\s*=\s*depOutputs/.test(body) &&
+      /orderOnlyInputs\s*=\s*codegenOrderOnly/.test(body)) {
+    found = true;
+    break;
+  }
+}
+
+out({pass: found});
+""")
+    assert r.returncode == 0, f"Node error: {r.stderr}"
+    result = json.loads(r.stdout.strip().split('\n')[-1])
+    assert result["pass"], \
+        "No-PCH cxx path must use implicitInputs=depOutputs, orderOnlyInputs=codegenOrderOnly"
 
 
-# [pr_diff] fail_to_pass
 def test_codegen_order_only_separate():
-    """The codegenOrderOnly variable must be just codegen.cppAll, NOT
-    including depOutputs. The old code had depOrderOnly = [...depOutputs,
-    ...codegen.cppAll] which lumped them together."""
-    text = BUN_TS.read_text()
-    # Must have the new variable name
-    assert re.search(r"const codegenOrderOnly\s*=\s*codegen\.cppAll", text), \
-        "codegenOrderOnly must be assigned from codegen.cppAll only"
-    # Must NOT have the old depOrderOnly variable
-    assert not re.search(r"const depOrderOnly", text), \
-        "Old depOrderOnly variable must be removed (replaced by codegenOrderOnly)"
+    """codegenOrderOnly variable is just codegen.cppAll. Old depOrderOnly
+    variable (which lumped depOutputs + codegen together) must be gone."""
+    assert _NODE_OK, "Node.js is required for behavioral tests"
+
+    r = _run_node(_JS_HELPERS + r"""
+const text = readBunTs();
+const hasNew = /const\s+codegenOrderOnly\s*=\s*codegen\.cppAll/.test(text);
+const hasOld = /const\s+depOrderOnly/.test(text);
+out({pass: hasNew && !hasOld, checks: {hasNew, hasOld}});
+""")
+    assert r.returncode == 0, f"Node error: {r.stderr}"
+    result = json.loads(r.stdout.strip().split('\n')[-1])
+    assert result["pass"], f"codegenOrderOnly check failed: {result.get('checks', {})}"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — config/documentation update tests
+# Fail-to-pass (pr_diff) — config/documentation tests
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
+
 def test_claude_md_gotchas_implicit_deps():
-    """scripts/build/CLAUDE.md Gotchas section must state that PCH, cc, and
-    no-PCH cxx all need implicit dep on depOutputs — not just PCH."""
+    """Gotchas states PCH, cc, and no-PCH cxx all need implicit dep on
+    depOutputs — not just PCH alone."""
     text = CLAUDE_MD.read_text()
     gotchas = _get_section(text, "## Gotchas")
     assert gotchas is not None, "Gotchas section not found in CLAUDE.md"
 
-    # Must mention all three: PCH, cc, and no-PCH cxx together
+    # Must mention all three together
     assert re.search(r"PCH.*cc.*no-PCH cxx", gotchas) or \
            re.search(r"PCH, cc, and no-PCH cxx", gotchas), \
         "Gotchas must mention PCH, cc, and no-PCH cxx needing implicit dep"
 
-    # Must mention "implicit dep" (not "order-only") for depOutputs
+    # Must say implicit dep (not order-only) for depOutputs
     assert re.search(r"implicit dep on `depOutputs`", gotchas), \
         "Gotchas must say 'implicit dep on depOutputs'"
 
-    # Must NOT have the old separate rules
-    assert not re.search(r"PCH needs implicit dep.*\n.*\n.*cxx needs order-only", gotchas), \
-        "Old separate PCH/cxx rules must be replaced with unified rule"
+    # Must NOT have old separate rules for PCH and cxx
+    assert not re.search(
+        r"PCH needs implicit dep.*\n.*\n.*cxx needs order-only", gotchas
+    ), "Old separate PCH/cxx rules must be replaced with unified rule"
 
 
-# [pr_diff] fail_to_pass
 def test_claude_md_ninja_primer_implicit_example():
-    """The ninja primer example must show dep output (lib*.a) as an implicit
-    dep (|), not order-only (||). The old example had the dep as order-only."""
+    """Ninja primer example shows dep output (lib*.a) as implicit dep (|),
+    not order-only (||)."""
     text = CLAUDE_MD.read_text()
-    # Find the ninja primer section
     primer = _get_section(text, "## Ninja primer", "## Iterating")
     assert primer is not None, "Ninja primer section not found"
 
-    # The example build line must show implicit dep on dep output
-    # Pattern: | deps/zstd/libzstd.a (implicit) not || ../../vendor/zstd/.ref (order-only)
+    # Must show lib output after | (implicit), not || (order-only)
     assert re.search(r"\|\s*deps/zstd/libzstd\.a", primer) or \
            re.search(r"\|\s*\w+/zstd/libzstd\.a", primer), \
         "Ninja example must show dep output as implicit dep (|)"
 
-    # Must NOT show the old pattern with .ref as the dep
+    # Must NOT show old .ref order-only pattern
     assert not re.search(r"\|\|\s*\.\./\.\./vendor/zstd/\.ref", primer), \
         "Old .ref order-only pattern must be removed from example"
 
 
-# [pr_diff] fail_to_pass
 def test_claude_md_depfile_explains_implicit():
-    """The depfile explanation in CLAUDE.md must distinguish codegen headers
-    (order-only) from dep outputs (implicit), explaining that local sub-builds
-    rewrite forwarding headers as undeclared side effects."""
+    """depfile section distinguishes codegen headers (order-only) from dep
+    outputs (implicit) with WebKit side-effect explanation."""
     text = CLAUDE_MD.read_text()
-    # Find the depfile section
+
     depfile_section = None
     for m in re.finditer(r"\*\*`depfile`\*\*", text):
-        # Get surrounding paragraph
         start = m.start()
         end = text.find("\n\n", start)
         if end == -1:
@@ -204,24 +277,22 @@ def test_claude_md_depfile_explains_implicit():
 
     assert depfile_section is not None, "depfile section not found in CLAUDE.md"
 
-    # Must explain dep outputs as implicit
     assert "implicit" in depfile_section.lower(), \
         "depfile section must mention implicit deps for dep outputs"
 
-    # Must explain why: local sub-builds rewrite forwarding headers
     assert "forwarding headers" in depfile_section.lower() or \
            "undeclared side effect" in depfile_section.lower(), \
         "depfile section must explain WebKit forwarding header side effects"
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff / static) — regression + anti-stub
+# Pass-to-pass — regression + anti-stub
 # ---------------------------------------------------------------------------
 
-# [pr_diff] pass_to_pass
+
 def test_dep_outputs_comment_updated():
-    """The depOutputs variable comment must describe its new purpose as
-    'implicit-dep signal' not 'PCH order-only-deps'."""
+    """depOutputs variable comment describes implicit-dep signal, not
+    PCH order-only-deps."""
     text = BUN_TS.read_text()
     assert re.search(r"implicit-dep signal", text), \
         "depOutputs comment must mention 'implicit-dep signal'"
@@ -229,19 +300,18 @@ def test_dep_outputs_comment_updated():
         "Old 'PCH order-only-deps' comment must be removed"
 
 
-# [pr_diff] pass_to_pass
 def test_compile_opts_docs_updated():
-    """compile.ts CompileOpts.implicitInputs doc must mention dep outputs
-    (lib*.a) as the invalidation signal. orderOnlyInputs doc must redirect
-    dep outputs to implicitInputs."""
+    """CompileOpts docs mention dep outputs in implicitInputs and redirect
+    from orderOnlyInputs."""
     text = COMPILE_TS.read_text()
+
     # implicitInputs must mention dep outputs
     assert re.search(r"implicitInputs.*dep outputs|dep outputs.*implicitInputs", text, re.DOTALL) or \
            re.search(r"lib\*\.a.*invalidation signal", text) or \
            re.search(r"dep outputs.*\n.*invalidation signal", text), \
         "implicitInputs doc must mention dep outputs / lib*.a invalidation signal"
 
-    # orderOnlyInputs must say "codegen headers" not "dep outputs"
+    # orderOnlyInputs must mention codegen or redirect
     m = re.search(r"orderOnlyInputs.*?(?=\n\s*/\*\*|\n\s*\})", text, re.DOTALL)
     if m:
         section = m.group(0)
@@ -250,15 +320,13 @@ def test_compile_opts_docs_updated():
             "orderOnlyInputs doc must redirect dep outputs to implicitInputs"
 
 
-# [static] pass_to_pass
 def test_not_stub():
-    """emitBun must have substantial implementation (not just pass/return).
-    Verify the function has real logic with control flow and multiple calls."""
+    """emitBun has substantial implementation (>= 50 real lines, control
+    flow, compile calls)."""
     text = BUN_TS.read_text()
     m = re.search(r"export function emitBun\b", text)
     assert m, "emitBun function not found"
 
-    # Extract function body (up to next export function or end of file)
     body_start = text.index("{", m.start())
     brace_count = 0
     body_end = body_start
@@ -276,6 +344,8 @@ def test_not_stub():
                   if l.strip() and not l.strip().startswith("//")
                   and l.strip() not in ("{", "}", "};")]
 
-    assert len(real_lines) >= 50, f"emitBun has only {len(real_lines)} real lines, need >= 50"
+    assert len(real_lines) >= 50, \
+        f"emitBun has only {len(real_lines)} real lines, need >= 50"
     assert "const " in body, "emitBun must have variable declarations"
-    assert "cc(" in body or "cxx(" in body, "emitBun must call cc/cxx compile functions"
+    assert "cc(" in body or "cxx(" in body, \
+        "emitBun must call cc/cxx compile functions"

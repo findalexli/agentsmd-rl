@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44934
+  base_commit: "d4895f0810fd57bf5ee8cf65c3fe20d2f622cd0a"
+  merge_commit: "a8732d5546d84bfb4519b6dbf461c947a5de45f6"
+
+checks:
+  - id: qwen2_test_file_parses
+    type: pass_to_pass
+    origin: static
+    description: "Qwen2 test file must parse without syntax errors"
+
+  - id: t5_test_file_parses
+    type: pass_to_pass
+    origin: static
+    description: "T5 test file must parse without syntax errors"
+
+  - id: qwen2_speculative_generation_uses_consistent_model
+    type: fail_to_pass
+    origin: pr_diff
+    description: "test_speculative_generation must use Qwen2-0.5B for tokenizer (not 7B)"
+
+  - id: qwen2_speculative_generation_uses_expectations
+    type: fail_to_pass
+    origin: pr_diff
+    description: "test_speculative_generation must use Expectations wrapper with platform-specific expectations"
+
+  - id: t5_compile_static_cache_uses_decode
+    type: fail_to_pass
+    origin: pr_diff
+    description: "test_compile_static_cache must use tokenizer.decode(), not batch_decode()"
+
+  - id: fixes_are_substantive
+    type: pass_to_pass
+    origin: static
+    description: "Fixes must include actual code changes (Expectations, decode calls)"
+
+rubric: []

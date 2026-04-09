@@ -16,6 +16,20 @@ REPO = "/workspace/opencode"
 SYSTEM_TS = f"{REPO}/packages/opencode/src/session/system.ts"
 PROMPT_DIR = f"{REPO}/packages/opencode/src/session/prompt"
 
+
+def _run_bun(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute TypeScript code via bun in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.ts"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["bun", "run", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
 # Routing harness — patches system.ts imports, runs with bun, returns mapping
 # ---------------------------------------------------------------------------
@@ -153,14 +167,14 @@ def test_generic_gpt_gets_dedicated_prompt():
 
 # [pr_diff] fail_to_pass
 def test_gpt_prompt_file_exists():
-    """A GPT-specific prompt file must exist in the prompt directory with real content."""
-    prompt_dir = Path(PROMPT_DIR)
-    gpt_files = list(prompt_dir.glob("gpt*"))
-    assert gpt_files, f"No gpt* prompt file found in {PROMPT_DIR}"
-    content = gpt_files[0].read_text()
-    assert len(content) >= 50, (
-        f"GPT prompt file too short ({len(content)} chars): {gpt_files[0].name}"
-    )
+    """GPT prompt file must exist and be importable by bun with real content."""
+    r = _run_bun("""
+import p from "./packages/opencode/src/session/prompt/gpt.txt"
+console.log(p.length)
+""")
+    assert r.returncode == 0, f"gpt.txt not importable via bun: {r.stderr}"
+    length = int(r.stdout.strip())
+    assert length >= 50, f"GPT prompt too short ({length} chars)"
 
 
 # [pr_diff] fail_to_pass
@@ -205,20 +219,23 @@ def test_existing_routing_preserved():
 
 # [pr_diff] fail_to_pass
 def test_gpt_prompt_distinct_from_codex():
-    """A GPT prompt file must exist and not be a near-copy of the codex prompt."""
-    import difflib
-
-    codex_path = Path(f"{PROMPT_DIR}/codex.txt")
-    assert codex_path.exists(), "codex.txt missing"
-
-    gpt_files = list(Path(PROMPT_DIR).glob("gpt*"))
-    assert gpt_files, "No gpt prompt file found"
-
-    gpt_text = gpt_files[0].read_text()
-    codex_text = codex_path.read_text()
-    similarity = difflib.SequenceMatcher(None, gpt_text, codex_text).ratio()
-    assert similarity <= 0.90, (
-        f"GPT prompt is too similar to codex prompt (similarity: {similarity:.2f})"
+    """GPT prompt must not be a near-copy of codex (verified via bun execution)."""
+    r = _run_bun("""
+import gpt from "./packages/opencode/src/session/prompt/gpt.txt"
+import codex from "./packages/opencode/src/session/prompt/codex.txt"
+// Line-level Jaccard similarity
+const gLines = new Set(gpt.split("\\n"))
+const cLines = new Set(codex.split("\\n"))
+let shared = 0
+for (const l of gLines) if (cLines.has(l)) shared++
+const union = new Set([...gLines, ...cLines]).size
+const sim = union > 0 ? shared / union : 0
+console.log(sim.toFixed(4))
+""")
+    assert r.returncode == 0, f"Prompt comparison failed: {r.stderr}"
+    sim = float(r.stdout.strip())
+    assert sim <= 0.90, (
+        f"GPT prompt too similar to codex (line Jaccard: {sim:.2f})"
     )
 
 

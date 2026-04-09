@@ -6,14 +6,12 @@ PR:   (internal sync)
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-Strategy: AST-extract _start_router and exec with mocked globals, because the
-module imports ray/torch/sglang (heavy GPU deps unavailable on CPU).
+Strategy: Each behavioral test uses subprocess.run() to exec the extracted
+_start_router source with mocked GPU deps (ray/torch/sglang unavailable on CPU).
 """
 
 import ast
-import copy
-import sys
-import types
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -22,201 +20,179 @@ REPO = "/workspace/slime"
 TARGET_FILE = f"{REPO}/slime/ray/rollout.py"
 
 
-# ---------------------------------------------------------------------------
-# Shared helpers — extract _start_router and run it with mocked globals
-# ---------------------------------------------------------------------------
-
-def _extract_function_source():
-    """AST-extract _start_router source from rollout.py."""
-    source = Path(TARGET_FILE).read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "_start_router":
-            lines = source.splitlines()
-            return "\n".join(lines[node.lineno - 1 : node.end_lineno])
-    raise RuntimeError("_start_router not found in rollout.py")
-
-
-class _MockRouterArgs:
-    @classmethod
-    def from_cli_args(cls, args, use_router_prefix=False):
-        return cls()
-
-
-class _MockLogger:
-    def info(self, msg): pass
-    def warning(self, msg): pass
-    def error(self, msg): pass
-
-
-def _install_mock_modules():
-    """Install lightweight mock modules so `import slime.router...` works."""
-    mock_slime_router = types.ModuleType("slime.router.router")
-    mock_slime_router.run_router = lambda *a, **kw: None
-    mock_sglang_router = types.ModuleType("sglang_router.launch_router")
-    mock_sglang_router.RouterArgs = _MockRouterArgs
-    mock_http_utils = types.ModuleType("slime.utils.http_utils")
-    mock_http_utils.run_router = lambda *a, **kw: None
-
-    for name, mod in [
-        ("slime", types.ModuleType("slime")),
-        ("slime.router", types.ModuleType("slime.router")),
-        ("slime.router.router", mock_slime_router),
-        ("sglang_router", types.ModuleType("sglang_router")),
-        ("sglang_router.launch_router", mock_sglang_router),
-        ("slime.utils", types.ModuleType("slime.utils")),
-        ("slime.utils.http_utils", mock_http_utils),
-    ]:
-        sys.modules[name] = mod
-
-
-def _make_base_ns():
-    import random
-    import time
-    return {
-        "time": time,
-        "random": random,
-        "copy": copy,
-        "logger": _MockLogger(),
-        "_wrap_ipv6": lambda x: x,
-        "find_available_port": lambda x: 12345,
-        "get_host_info": lambda: ("host", "127.0.0.1"),
-    }
-
-
-def _make_args(use_slime_router=False, sglang_router_ip=None,
-               sglang_router_port=None, sglang_router_request_timeout_secs=30):
-    return types.SimpleNamespace(
-        use_slime_router=use_slime_router,
-        sglang_router_ip=sglang_router_ip,
-        sglang_router_port=sglang_router_port,
-        sglang_router_request_timeout_secs=sglang_router_request_timeout_secs,
+def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in the repo context via subprocess."""
+    return subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
     )
 
 
-def _run_start_router(func_source, base_ns, args, **kwargs):
-    """Exec _start_router with a Process mock that captures router_args."""
-    captured = {"called": False, "target_args": None}
+# Shared preamble injected into every subprocess — extracts _start_router and
+# provides lightweight mocks for heavy GPU dependencies.
+_PREAMBLE = r"""
+import ast, copy, sys, types, random, time
 
-    class CapturingProcess:
+TARGET = '""" + TARGET_FILE + r"""'
+source = open(TARGET).read()
+tree = ast.parse(source)
+func_src = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "_start_router":
+        lines = source.splitlines()
+        func_src = "\n".join(lines[node.lineno - 1 : node.end_lineno])
+        break
+if func_src is None:
+    raise RuntimeError("_start_router not found in " + TARGET)
+
+class MockRouterArgs:
+    @classmethod
+    def from_cli_args(cls, *a, **kw):
+        return cls()
+
+class MockLogger:
+    def info(self, *a): pass
+    def warning(self, *a): pass
+    def error(self, *a): pass
+
+for name in ["slime", "slime.router", "slime.router.router",
+             "sglang_router", "sglang_router.launch_router",
+             "slime.utils", "slime.utils.http_utils"]:
+    sys.modules.setdefault(name, types.ModuleType(name))
+sys.modules["slime.router.router"].run_router = lambda *a, **kw: None
+sys.modules["sglang_router.launch_router"].RouterArgs = MockRouterArgs
+sys.modules["slime.utils.http_utils"].run_router = lambda *a, **kw: None
+
+def make_args(**kw):
+    defaults = dict(use_slime_router=False, sglang_router_ip=None,
+                    sglang_router_port=None, sglang_router_request_timeout_secs=30)
+    defaults.update(kw)
+    return type("Args", (), defaults)()
+
+def run_start_router(args, **kwargs):
+    captured = {}
+    class Proc:
         daemon = False
         def __init__(self, target=None, args=None):
             captured["called"] = True
-            captured["target_args"] = args
+            captured["args"] = args
         def start(self): pass
         def is_alive(self): return True
-
-    ns = dict(base_ns)
-    ns["multiprocessing"] = types.SimpleNamespace(Process=CapturingProcess)
-    exec(func_source, ns)
+    ns = {"time": time, "random": random, "copy": copy, "logger": MockLogger(),
+          "_wrap_ipv6": lambda x: x, "find_available_port": lambda x: 12345,
+          "get_host_info": lambda: ("host", "127.0.0.1"),
+          "multiprocessing": type("mp", (), {"Process": Proc})()}
+    exec(func_src, ns)
     result = ns["_start_router"](args, **kwargs)
-    router_args = captured["target_args"][0] if captured["target_args"] else None
-    return result, router_args, captured["called"]
+    ra = captured["args"][0] if captured.get("args") else None
+    return result, ra, captured.get("called", False)
+"""
 
 
 # ---------------------------------------------------------------------------
-# Module-level setup
+# pass_to_pass (static)
 # ---------------------------------------------------------------------------
 
-_install_mock_modules()
-_FUNC_SOURCE = _extract_function_source()
-_BASE_NS = _make_base_ns()
-
-
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
 def test_syntax_check():
     """rollout.py must parse without syntax errors."""
-    import py_compile
-    py_compile.compile(TARGET_FILE, doraise=True)
+    r = _run_python(
+        f"import py_compile; py_compile.compile('{TARGET_FILE}', doraise=True); print('PASS')"
+    )
+    assert r.returncode == 0, f"Syntax error: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# fail_to_pass (pr_diff) — subprocess-executed behavioral tests
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_slime_router_pd_disagg_no_crash():
-    """Slime router + PD disagg must not crash (old assertion removed) and must spawn a Process."""
-    args = _make_args(use_slime_router=True)
-    result, router_args, proc_called = _run_start_router(
-        _FUNC_SOURCE, _BASE_NS, args, has_pd_disaggregation=True
-    )
-    assert proc_called, "Process was not spawned"
-    assert isinstance(result, (tuple, list)) and len(result) >= 2, \
-        f"Expected (ip, port) tuple, got {result}"
-    assert result[0] is not None and result[1] is not None, \
-        f"ip or port is None: {result}"
+    """Slime router + PD disagg no longer crashes and spawns a Process returning (ip, port)."""
+    r = _run_python(_PREAMBLE + """
+args = make_args(use_slime_router=True)
+result, router_args, called = run_start_router(args, has_pd_disaggregation=True)
+assert called, "Process was not spawned"
+assert isinstance(result, (tuple, list)) and len(result) >= 2, \
+    f"Expected (ip, port) tuple, got {result}"
+assert result[0] is not None and result[1] is not None, \
+    f"ip or port is None: {result}"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_slime_router_pd_flag_set():
-    """Slime router with PD disagg must set slime_router_pd_disaggregation on router_args."""
-    args = _make_args(use_slime_router=True)
-    _, router_args, _ = _run_start_router(
-        _FUNC_SOURCE, _BASE_NS, args, has_pd_disaggregation=True
-    )
-    assert router_args is not None, "router_args not captured"
-    assert getattr(router_args, "slime_router_pd_disaggregation", False) is True, \
-        "slime_router_pd_disaggregation not set on router_args"
+    """Slime router with PD disagg sets slime_router_pd_disaggregation=True on router_args."""
+    r = _run_python(_PREAMBLE + """
+args = make_args(use_slime_router=True)
+_, router_args, _ = run_start_router(args, has_pd_disaggregation=True)
+assert router_args is not None, "router_args not captured"
+assert getattr(router_args, "slime_router_pd_disaggregation", False) is True, \
+    "slime_router_pd_disaggregation not set on router_args"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_circuit_breaker_disabled_with_pd():
-    """Non-slime router + PD disagg must set disable_circuit_breaker=True."""
-    args = _make_args(use_slime_router=False)
-    _, router_args, proc_called = _run_start_router(
-        _FUNC_SOURCE, _BASE_NS, args, has_pd_disaggregation=True
-    )
-    assert proc_called, "Process was not spawned"
-    assert router_args is not None, "router_args not captured"
-    assert getattr(router_args, "disable_circuit_breaker", False) is True, \
-        "disable_circuit_breaker not set on router_args"
+    """Non-slime router with PD disagg sets disable_circuit_breaker=True on router_args."""
+    r = _run_python(_PREAMBLE + """
+args = make_args(use_slime_router=False)
+_, router_args, called = run_start_router(args, has_pd_disaggregation=True)
+assert called, "Process was not spawned"
+assert router_args is not None, "router_args not captured"
+assert getattr(router_args, "disable_circuit_breaker", False) is True, \
+    "disable_circuit_breaker not set on router_args"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression checks
+# pass_to_pass (pr_diff) — regression checks
 # ---------------------------------------------------------------------------
 
-# [pr_diff] pass_to_pass
 def test_slime_router_without_pd_still_works():
-    """Slime router without PD disagg must still launch normally."""
-    args = _make_args(use_slime_router=True)
-    result, router_args, proc_called = _run_start_router(
-        _FUNC_SOURCE, _BASE_NS, args, has_pd_disaggregation=False
-    )
-    assert proc_called, "Process was not spawned"
-    assert isinstance(result, (tuple, list)) and len(result) >= 2, \
-        f"Expected (ip, port) tuple, got {result}"
-    assert result[0] is not None and result[1] is not None
-    # PD disagg flag should NOT be set when not requested
-    assert getattr(router_args, "slime_router_pd_disaggregation", False) is not True, \
-        "slime_router_pd_disaggregation should not be set without PD disagg"
+    """Slime router without PD disagg still launches normally (regression)."""
+    r = _run_python(_PREAMBLE + """
+args = make_args(use_slime_router=True)
+result, router_args, called = run_start_router(args, has_pd_disaggregation=False)
+assert called, "Process was not spawned"
+assert isinstance(result, (tuple, list)) and len(result) >= 2, \
+    f"Expected (ip, port) tuple, got {result}"
+assert result[0] is not None and result[1] is not None
+assert getattr(router_args, "slime_router_pd_disaggregation", False) is not True, \
+    "slime_router_pd_disaggregation should not be set without PD disagg"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] pass_to_pass
 def test_no_circuit_breaker_without_pd():
-    """Non-slime router without PD disagg must NOT set disable_circuit_breaker."""
-    args = _make_args(use_slime_router=False)
-    _, router_args, proc_called = _run_start_router(
-        _FUNC_SOURCE, _BASE_NS, args, has_pd_disaggregation=False
-    )
-    assert proc_called, "Process was not spawned"
-    assert router_args is not None, "router_args not captured"
-    assert getattr(router_args, "disable_circuit_breaker", False) is not True, \
-        "disable_circuit_breaker should not be set without PD disagg"
+    """Non-slime router without PD disagg does not set disable_circuit_breaker (regression)."""
+    r = _run_python(_PREAMBLE + """
+args = make_args(use_slime_router=False)
+_, router_args, called = run_start_router(args, has_pd_disaggregation=False)
+assert called, "Process was not spawned"
+assert router_args is not None, "router_args not captured"
+assert getattr(router_args, "disable_circuit_breaker", False) is not True, \
+    "disable_circuit_breaker should not be set without PD disagg"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
 # Anti-stub (static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_not_stub():
-    """_start_router must have real logic (not stubbed out)."""
+    """_start_router has real logic, not stubbed out."""
     source = Path(TARGET_FILE).read_text()
     tree = ast.parse(source)
     for node in ast.walk(tree):

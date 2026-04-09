@@ -1,0 +1,25 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 36024
+  base_commit: "1e3152365df2f7a23a5ad947e83f40914413be16"
+  merge_commit: "5e9eedb57843dc161defdf93ed457ab7d982e324"
+
+checks:
+  - id: reentrant_chunk_no_stale_reason
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Flight stream must not crash from stale chunk.reason after reentrant module initialization"
+
+  - id: all_init_sites_clear_reason
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All chunk initialization sites (initializeModelChunk, initializeModuleChunk, loadServerReference) must reset reason after successful init"
+
+  - id: existing_flight_error_recovery
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing 'recover from direct reference erroring server-side' test must still pass"
+
+rubric: []

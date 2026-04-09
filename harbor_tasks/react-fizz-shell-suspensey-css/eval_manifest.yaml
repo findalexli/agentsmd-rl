@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35824
+  base_commit: "f247ebaf44317ac6648b62f99ceaed1e4fc4dc01"
+  merge_commit: "38cd020c1fb8a1e88b7852160796f411926a6fac"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified JS files must have balanced braces"
+
+  - id: shell_flush_skips_css_only_outlining
+    type: fail_to_pass
+    origin: pr_diff
+    description: "hasSuspenseyContent returns false for CSS-only content during shell flush"
+
+  - id: flushing_shell_tracked_in_server
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReactFizzServer declares flushingShell flag and toggles it around root segment flush"
+
+  - id: shell_awareness_in_flush_segment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "flushSegment passes dynamic shell state to hasSuspenseyContent"
+
+  - id: all_renderers_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All renderer configs accept flushingInShell parameter in hasSuspenseyContent"
+
+  - id: streaming_still_outlines_for_css
+    type: pass_to_pass
+    origin: pr_diff
+    description: "When not in shell flush, stylesheets still trigger outlining"
+
+rubric: []

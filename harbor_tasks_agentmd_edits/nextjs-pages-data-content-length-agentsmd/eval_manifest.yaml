@@ -1,0 +1,44 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 90304
+  base_commit: "fb85660ab1f70e294465af0074dc7c941e3540ca"
+  merge_commit: "962e5b166cea3fdb6589837a8fd3ea62031be17d"
+
+checks:
+  # Code behavior tests (f2p)
+  - id: data_response_path_no_buffer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSON data response path must not wrap JSON.stringify in Buffer.from"
+
+  - id: isr_fallback_path_no_buffer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ISR fallback path must not wrap cached HTML in Buffer.from"
+
+  # AGENTS.md config update tests (f2p)
+  - id: agents_md_new_test_forward_args
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md must use correct 'pnpm new-test -- --args' syntax with -- forwarder"
+
+  - id: agents_md_smoke_test_gotchas_syntax
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md Test Gotchas section must use correct new-test -- --args syntax"
+
+  # Behavioral verification (p2p)
+  - id: string_render_result_enables_headers
+    type: pass_to_pass
+    origin: pr_diff
+    description: "RenderResult with string input produces Content-Length and ETag headers (not with Buffer)"
+
+  # Anti-stub (p2p)
+  - id: handler_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Handler retains core code paths with substantial content"
+
+rubric: []

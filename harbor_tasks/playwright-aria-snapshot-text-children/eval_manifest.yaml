@@ -1,0 +1,30 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 40086
+  base_commit: "5a56d44a6f0d94b87e044f45f432522132da557c"
+  merge_commit: "5435c64f6d14293b2ce0dcdbfaa237b015bfd63e"
+
+checks:
+  - id: function_exists
+    type: pass_to_pass
+    origin: static
+    description: "Source file contains textContributesInfo function and LCS call"
+
+  - id: text_contributes_unique_short_text
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Short text with unique info included when accessible name is longer than text"
+
+  - id: text_contributes_partial_overlap
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Text with partial name overlap but unique info is included in snapshot"
+
+  - id: preserved_exclusions
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Text fully covered by name is still excluded; empty text excluded; no-name text included"
+
+rubric: []

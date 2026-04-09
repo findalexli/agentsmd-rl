@@ -184,12 +184,74 @@ def test_retry_delay_increased():
 def test_chmod_cached_binaries():
     """Downloaded browser binaries in Puppeteer cache must be chmod'd executable."""
     code = _code_lines(_src())
-    assert "chmod" in code, "No chmod call to make cached browser binaries executable"
-    binary_names = ["chrome-headless-shell", "Google Chrome for Testing", "chrome"]
-    found = [name for name in binary_names if name in code]
-    assert found, (
-        "chmod present but doesn't target a browser binary (chrome/chrome-headless-shell)"
+
+    # Extract the actual execSync chmod commands from the source, create a temp
+    # directory with non-executable dummy binaries, run the commands, and verify
+    # the binaries become executable.
+    r = _run_node(
+        f"""
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const {{ execSync }} = require('child_process');
+
+const src = {json.dumps(code)};
+
+// Extract execSync calls containing chmod from backtick template strings
+const chmodRegex = /execSync\\(\\s*`([^`]*chmod[^`]*)`/g;
+const cmds = [];
+let m;
+while ((m = chmodRegex.exec(src)) !== null) cmds.push(m[1]);
+
+if (cmds.length === 0) {{
+    console.error('No execSync chmod commands found in source');
+    process.exit(1);
+}}
+
+// Verify commands target key browser binaries
+if (!cmds.some(c => c.includes('chrome-headless-shell'))) {{
+    console.error('No chmod targeting chrome-headless-shell');
+    process.exit(1);
+}}
+if (!cmds.some(c => c.includes('chrome') && !c.includes('headless'))) {{
+    console.error('No chmod targeting chrome binary');
+    process.exit(1);
+}}
+
+// Create temp dir with non-executable dummy binaries
+const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'puppeteer-'));
+const subDir = path.join(tmpDir, 'chrome', 'linux');
+fs.mkdirSync(subDir, {{ recursive: true }});
+
+const hsPath = path.join(subDir, 'chrome-headless-shell');
+const crPath = path.join(subDir, 'chrome');
+fs.writeFileSync(hsPath, '#!/bin/sh', {{ mode: 0o644 }});
+fs.writeFileSync(crPath, '#!/bin/sh', {{ mode: 0o644 }});
+
+// Run extracted chmod commands with template variable substituted to temp dir
+for (const cmd of cmds) {{
+    const resolved = cmd.replace(/\\$\\{{[^}}]+\\}}/g, tmpDir);
+    try {{ execSync(resolved, {{ stdio: 'ignore' }}); }} catch(e) {{}}
+}}
+
+// Verify chrome-headless-shell is now executable
+const hsMode = fs.statSync(hsPath).mode;
+if ((hsMode & 0o111) === 0) {{
+    console.error('chrome-headless-shell not executable after chmod');
+    process.exit(1);
+}}
+const crMode = fs.statSync(crPath).mode;
+if ((crMode & 0o111) === 0) {{
+    console.error('chrome not executable after chmod');
+    process.exit(1);
+}}
+
+console.log('PASS');
+fs.rmSync(tmpDir, {{ recursive: true }});
+"""
     )
+    assert r.returncode == 0, f"chmod verification failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

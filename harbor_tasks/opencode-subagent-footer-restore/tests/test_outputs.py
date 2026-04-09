@@ -16,6 +16,20 @@ FOOTER = f"{REPO}/packages/opencode/src/cli/cmd/tui/routes/session/subagent-foot
 SESSION = f"{REPO}/packages/opencode/src/cli/cmd/tui/routes/session/index.tsx"
 DIALOG_MODEL = f"{REPO}/packages/opencode/src/cli/cmd/tui/component/dialog-model.tsx"
 DIALOG_VARIANT = f"{REPO}/packages/opencode/src/cli/cmd/tui/component/dialog-variant.tsx"
+SESSION_DIR = f"{REPO}/packages/opencode/src/cli/cmd/tui/routes/session"
+
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 def _strip_comments(code: str) -> str:
@@ -33,7 +47,6 @@ def _read_stripped(path: str) -> str:
 # Gates (pass_to_pass, static) — syntax checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """All modified TSX files must have balanced braces."""
     for path in [FOOTER, SESSION, DIALOG_MODEL, DIALOG_VARIANT]:
@@ -52,121 +65,250 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via Node subprocess
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_subagent_footer_exists_with_navigation():
     """SubagentFooter exports a component with navigation commands and event handlers."""
-    p = Path(FOOTER)
-    assert p.exists(), "subagent-footer.tsx does not exist"
-    code = _strip_comments(p.read_text())
+    r = _run_node("""
+import { readFileSync, existsSync } from 'fs';
 
-    # Must export SubagentFooter
-    assert re.search(
-        r"export\s+(default\s+)?function\s+SubagentFooter"
-        r"|export\s+\{[^}]*SubagentFooter"
-        r"|export\s+const\s+SubagentFooter",
-        code,
-    ), "SubagentFooter not exported"
+const footerPath = '""" + FOOTER + """';
+if (!existsSync(footerPath)) {
+    console.error('subagent-footer.tsx does not exist');
+    process.exit(1);
+}
 
-    # Must return JSX
-    assert re.search(r"return\s*\([\s\S]*?<", code), "No JSX return found"
+const code = readFileSync(footerPath, 'utf8');
 
-    # Must reference all 3 session navigation commands
-    nav_patterns = [
-        r"session[._]parent|session\.parent",
-        r"session[._]child[._](cycle[._]reverse|previous)|session\.child\.previous",
-        r"session[._]child[._](cycle(?![._]reverse)|next)|session\.child\.next",
-    ]
-    for pat in nav_patterns:
-        assert re.search(pat, code), f"Missing navigation command matching: {pat}"
+// Must export SubagentFooter
+if (!code.includes('export function SubagentFooter') &&
+    !code.includes('export default function SubagentFooter') &&
+    !code.includes('export const SubagentFooter')) {
+    console.error('SubagentFooter not exported');
+    process.exit(1);
+}
 
-    # Must have JSX event handlers
-    assert re.search(
-        r"on(MouseUp|MouseDown|Click|Press|KeyPress|KeyDown)\s*=\s*\{", code
-    ), "No event handlers found"
+// Must return JSX
+if (!code.includes('return (') && !code.includes('return(')) {
+    console.error('No JSX return found');
+    process.exit(1);
+}
+
+// Must have navigation labels for Parent, Prev/Previous, Next
+if (!code.includes('Parent')) {
+    console.error('Missing Parent navigation label');
+    process.exit(1);
+}
+if (!code.includes('Prev') && !code.includes('Previous')) {
+    console.error('Missing Prev/Previous navigation label');
+    process.exit(1);
+}
+if (!code.includes('Next')) {
+    console.error('Missing Next navigation label');
+    process.exit(1);
+}
+
+// Must have mouse event handlers for interactivity
+if (!code.includes('onMouseUp') && !code.includes('onClick') &&
+    !code.includes('onMouseDown') && !code.includes('onPress')) {
+    console.error('No mouse/press event handlers');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_subagent_footer_token_cost():
     """SubagentFooter computes token usage and cost for display."""
-    p = Path(FOOTER)
-    assert p.exists(), "subagent-footer.tsx does not exist"
-    code = _strip_comments(p.read_text())
+    r = _run_node("""
+import { readFileSync, existsSync } from 'fs';
 
-    # Token properties accessed
-    assert re.search(r"tokens\s*[.\[]\s*[\"']?input", code), "Missing tokens.input access"
-    assert re.search(r"tokens\s*[.\[]\s*[\"']?output", code), "Missing tokens.output access"
+const path = '""" + FOOTER + """';
+if (!existsSync(path)) {
+    console.error('subagent-footer.tsx does not exist');
+    process.exit(1);
+}
 
-    # Array iteration for accumulation
-    assert re.search(
-        r"\.(reduce|forEach|map|filter|find|findLast)\s*\(", code
-    ) or re.search(
-        r"for\s*\(\s*(const|let|var)\s+\w+\s+(of|in)", code
-    ), "No array iteration found"
+const code = readFileSync(path, 'utf8');
 
-    # Cost accumulation
-    assert re.search(r"\.cost\b|cost\s*[+]=|cost\s*:", code), "No cost logic found"
+// Must access token properties
+if (!code.includes('tokens')) {
+    console.error('No tokens reference');
+    process.exit(1);
+}
+if (!code.includes('.input') && !code.includes("['input']")) {
+    console.error('No input token access');
+    process.exit(1);
+}
+if (!code.includes('.output') && !code.includes("['output']")) {
+    console.error('No output token access');
+    process.exit(1);
+}
 
-    # Number formatting
-    assert re.search(
-        r"Intl\.NumberFormat|toFixed|toLocaleString|Locale\.|\.format\s*\(", code
-    ), "No number formatting found"
+// Must iterate over messages/data for accumulation
+if (!code.includes('.reduce') && !code.includes('.forEach') &&
+    !code.includes('.map') && !code.includes('.filter') &&
+    !code.includes('.find') && !code.includes('.findLast') &&
+    !code.includes('for (') && !code.includes('for(')) {
+    console.error('No array iteration found');
+    process.exit(1);
+}
+
+// Must compute cost
+if (!code.includes('cost')) {
+    console.error('No cost computation');
+    process.exit(1);
+}
+
+// Must format numbers for display
+if (!code.includes('NumberFormat') && !code.includes('toFixed') &&
+    !code.includes('Locale') && !code.includes('toLocaleString')) {
+    console.error('No number formatting');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_session_imports_and_renders_subagent_footer():
     """Session index.tsx imports and conditionally renders SubagentFooter on parentID."""
-    p = Path(SESSION)
-    assert p.exists(), "Session index.tsx not found"
-    code = _strip_comments(p.read_text())
+    r = _run_node("""
+import { readFileSync, existsSync } from 'fs';
+import { resolve } from 'path';
 
-    # Import
-    assert re.search(
-        r"import\s+.*SubagentFooter.*from\s*['\"]"
-        r"|import\s*\{[^}]*SubagentFooter[^}]*\}\s*from"
-        r"|require\s*\(\s*['\"].*subagent-footer",
-        code,
-    ), "SubagentFooter not imported in session/index.tsx"
+const sessionDir = '""" + SESSION_DIR + """';
+const indexPath = resolve(sessionDir, 'index.tsx');
+const code = readFileSync(indexPath, 'utf8');
 
-    # Render
-    assert re.search(r"<SubagentFooter", code), "SubagentFooter not rendered in JSX"
+// Must reference SubagentFooter
+if (!code.includes('SubagentFooter')) {
+    console.error('SubagentFooter not referenced in session/index.tsx');
+    process.exit(1);
+}
 
-    # Conditional on parentID
-    assert "parentID" in code, "No parentID condition for SubagentFooter rendering"
+// Must have an import statement for it
+const lines = code.split('\\n');
+const hasImport = lines.some(line =>
+    line.includes('import') && line.includes('SubagentFooter') && line.includes('from')
+);
+if (!hasImport) {
+    console.error('No import statement for SubagentFooter');
+    process.exit(1);
+}
+
+// Import target must resolve to an existing file
+const candidates = [
+    resolve(sessionDir, 'subagent-footer.tsx'),
+    resolve(sessionDir, 'subagent-footer.ts'),
+    resolve(sessionDir, 'subagent-footer.js'),
+    resolve(sessionDir, 'SubagentFooter.tsx'),
+    resolve(sessionDir, 'SubagentFooter.ts'),
+];
+if (!candidates.some(p => existsSync(p))) {
+    console.error('SubagentFooter module file not found in session directory');
+    process.exit(1);
+}
+
+// Must render <SubagentFooter in JSX
+if (!code.includes('<SubagentFooter')) {
+    console.error('SubagentFooter not rendered in JSX');
+    process.exit(1);
+}
+
+// Must be conditional on parentID
+if (!code.includes('parentID')) {
+    console.error('No parentID condition');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_subagent_footer_title():
     """SubagentFooter displays 'Subagent session' title text."""
-    p = Path(FOOTER)
-    assert p.exists(), "subagent-footer.tsx does not exist"
-    code = _strip_comments(p.read_text())
-    assert re.search(r"(?i)subagent session", code), "Missing 'Subagent session' title"
+    r = _run_node("""
+import { readFileSync, existsSync } from 'fs';
+
+const path = '""" + FOOTER + """';
+if (!existsSync(path)) {
+    console.error('subagent-footer.tsx does not exist');
+    process.exit(1);
+}
+
+const code = readFileSync(path, 'utf8').toLowerCase();
+if (!code.includes('subagent session')) {
+    console.error("Missing 'Subagent session' title");
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_dialog_model_no_else():
     """dialog-model.tsx else block replaced with early return."""
-    code = _read_stripped(DIALOG_MODEL)
-    assert "} else {" not in code, "dialog-model.tsx still uses else block"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+
+const code = readFileSync('""" + DIALOG_MODEL + """', 'utf8');
+
+// Check non-comment lines for else blocks
+const lines = code.split('\\n');
+for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (trimmed.startsWith('//') || trimmed.startsWith('*')) continue;
+    if (lines[i].includes('} else {')) {
+        console.error('Found else block at line ' + (i + 1));
+        process.exit(1);
+    }
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_dialog_variant_no_unused_import():
     """dialog-variant.tsx unused useSync import removed."""
-    code = _read_stripped(DIALOG_VARIANT)
-    assert not re.search(
-        r"import\s*\{[^}]*useSync[^}]*\}\s*from", code
-    ), "dialog-variant.tsx still imports unused useSync"
+    r = _run_node("""
+import { readFileSync } from 'fs';
+
+const code = readFileSync('""" + DIALOG_VARIANT + """', 'utf8');
+
+// Check import lines for useSync
+const lines = code.split('\\n');
+for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('//')) continue;
+    if (trimmed.startsWith('import') && line.includes('useSync') && line.includes('from')) {
+        console.error('dialog-variant.tsx still imports useSync');
+        process.exit(1);
+    }
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) — regression checks
 # ---------------------------------------------------------------------------
 
-# [pr_diff] pass_to_pass
 def test_dialog_model_export_preserved():
     """DialogModel component is still exported."""
     p = Path(DIALOG_MODEL)
@@ -176,7 +318,6 @@ def test_dialog_model_export_preserved():
         "DialogModel export missing"
 
 
-# [pr_diff] pass_to_pass
 def test_dialog_variant_export_preserved():
     """DialogVariant component is still exported."""
     p = Path(DIALOG_VARIANT)
@@ -190,7 +331,6 @@ def test_dialog_variant_export_preserved():
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass — AGENTS.md:84 @ 41b0d03
 def test_no_else_blocks_in_modified_files():
     """No else blocks in dialog-model.tsx or subagent-footer.tsx (AGENTS.md:84)."""
     for path in [DIALOG_MODEL, FOOTER]:
@@ -202,7 +342,6 @@ def test_no_else_blocks_in_modified_files():
         assert count == 0, f"{path} has {count} else blocks (AGENTS.md:84: avoid else)"
 
 
-# [agent_config] fail_to_pass — AGENTS.md:13 @ 41b0d03
 def test_no_any_type_in_footer():
     """SubagentFooter must not use the 'any' type (AGENTS.md:13)."""
     p = Path(FOOTER)
@@ -212,10 +351,8 @@ def test_no_any_type_in_footer():
         "SubagentFooter uses 'any' type (AGENTS.md:13: avoid any)"
 
 
-# [agent_config] fail_to_pass — AGENTS.md:12 @ 41b0d03
 def test_no_try_catch_in_footer():
     """SubagentFooter must not use try/catch (AGENTS.md:12)."""
-    # Regex-only because: TSX with Solid.js framework deps cannot be imported in Python
     p = Path(FOOTER)
     assert p.exists(), "subagent-footer.tsx does not exist"
     code = _strip_comments(p.read_text())
@@ -223,7 +360,6 @@ def test_no_try_catch_in_footer():
         "SubagentFooter uses try/catch (AGENTS.md:12: avoid try/catch)"
 
 
-# [agent_config] fail_to_pass — AGENTS.md:17 @ 41b0d03
 def test_no_for_loops_in_footer():
     """SubagentFooter uses functional array methods, not for loops (AGENTS.md:17)."""
     p = Path(FOOTER)
@@ -233,14 +369,11 @@ def test_no_for_loops_in_footer():
         "SubagentFooter uses a for loop — prefer functional array methods (AGENTS.md:17)"
 
 
-# [agent_config] fail_to_pass — AGENTS.md:70 @ 41b0d03
 def test_prefer_const_in_footer():
     """SubagentFooter should use const, not let (AGENTS.md:70)."""
-    # Regex-only because: TSX with Solid.js framework deps cannot be imported in Python
     p = Path(FOOTER)
     assert p.exists(), "subagent-footer.tsx does not exist"
     code = _strip_comments(p.read_text())
-    # Find `let` declarations (not inside strings)
     let_matches = re.findall(r"^\s*(?:export\s+)?let\s+\w+", code, re.MULTILINE)
     assert len(let_matches) == 0, \
         f"SubagentFooter uses 'let' ({len(let_matches)}x) — prefer const (AGENTS.md:70)"

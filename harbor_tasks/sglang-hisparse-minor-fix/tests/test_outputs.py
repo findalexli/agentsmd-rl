@@ -1,0 +1,254 @@
+"""
+Task: sglang-hisparse-minor-fix
+Repo: sglang @ 20ee59bcfc2956cb2aef2c1a4ae1e8bbda4ba52d
+PR:   22131
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import ast
+import subprocess
+from pathlib import Path
+
+REPO = "/workspace/sglang"
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static) — syntax checks
+# ---------------------------------------------------------------------------
+
+def test_syntax_check_python():
+    """Modified Python files must parse without errors."""
+    python_files = [
+        "python/sglang/srt/managers/schedule_batch.py",
+        "python/sglang/srt/managers/scheduler.py",
+    ]
+    for file_path in python_files:
+        full_path = Path(f"{REPO}/{file_path}")
+        src = full_path.read_text()
+        ast.parse(src)
+
+
+def test_syntax_check_cuda():
+    """Modified CUDA files must have valid syntax (no unclosed braces, valid PTX asm)."""
+    cuda_file = Path(f"{REPO}/python/sglang/jit_kernel/csrc/hisparse.cuh")
+    src = cuda_file.read_text()
+
+    # Check for unbalanced braces
+    open_count = src.count("{")
+    close_count = src.count("}")
+    assert open_count == close_count, f"Unbalanced braces: {open_count} open, {close_count} close"
+
+    # Check for basic CUDA syntax patterns
+    assert "__device__" in src, "Missing __device__ qualifier"
+    assert "__forceinline__" in src, "Missing __forceinline__ qualifier"
+
+    # Validate asm volatile statements are properly formed
+    for line in src.split("\n"):
+        if "asm volatile" in line:
+            assert line.count("(") == line.count(")"), f"Unbalanced parens in asm: {line}"
+            assert '"' in line, f"Missing quotes in asm: {line}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# ---------------------------------------------------------------------------
+
+def test_hisparse_coordinator_retract_in_release_req():
+    """hisparse_coordinator.retract_req must be called in release_req method."""
+    src_path = Path(f"{REPO}/python/sglang/srt/managers/schedule_batch.py")
+    src = src_path.read_text()
+    tree = ast.parse(src)
+
+    # Find the ScheduleBatch class and release_req method
+    found_release_req = False
+    has_hisparse_check = False
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            if node.name == "ScheduleBatch" or "ScheduleBatch" in [
+                base.id if isinstance(base, ast.Name) else base.attr if isinstance(base, ast.Attribute) else ""
+                for base in node.bases
+            ]:
+                for item in node.body:
+                    if isinstance(item, ast.FunctionDef) and item.name == "release_req":
+                        found_release_req = True
+                        # Check for hisparse_coordinator.retract_req call
+                        for stmt in ast.walk(item):
+                            if isinstance(stmt, ast.Call):
+                                # Check for retract_req call
+                                if isinstance(stmt.func, ast.Attribute) and stmt.func.attr == "retract_req":
+                                    has_hisparse_check = True
+                                # Also check for the None check pattern
+                                if isinstance(stmt.func, ast.Attribute) and stmt.func.attr == "retract_req":
+                                    # Look for the if self.hisparse_coordinator is not None pattern
+                                    pass
+
+    # More robust: search for the specific pattern in source
+    assert "release_req" in src, "release_req method not found"
+
+    # Find the release_req method body by looking at the AST more carefully
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "release_req":
+            # Get the method body as string
+            method_start = node.lineno - 1
+            method_end = node.end_lineno
+            method_lines = src.split("\n")[method_start:method_end]
+            method_src = "\n".join(method_lines)
+
+            # Check for hisparse_coordinator check and retract_req call
+            assert "hisparse_coordinator" in method_src, "hisparse_coordinator not referenced in release_req"
+            assert "retract_req" in method_src, "retract_req not called in release_req"
+            assert "is not None" in method_src or "if self.hisparse_coordinator" in method_src, \
+                "Missing None check for hisparse_coordinator"
+            has_hisparse_check = True
+            break
+
+    assert has_hisparse_check, "hisparse_coordinator.retract_req not properly called in release_req"
+
+
+def test_batch_is_full_reset_after_hisparse():
+    """batch_is_full must be reset to False after hisparse_coordinator assignment."""
+    src_path = Path(f"{REPO}/python/sglang/srt/managers/scheduler.py")
+    src = src_path.read_text()
+
+    # Find the pattern where hisparse_coordinator is assigned and batch_is_full is reset
+    # Look for: self.running_batch.hisparse_coordinator = ... followed by batch_is_full = False
+
+    # Parse and find the specific pattern
+    tree = ast.parse(src)
+
+    found_pattern = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "get_next_batch_to_run":
+            # Check the method body for the pattern
+            method_start = node.lineno - 1
+            method_end = node.end_lineno
+            method_lines = src.split("\n")[method_start:method_end]
+            method_src = "\n".join(method_lines)
+
+            # Should have hisparse_coordinator assignment and batch_is_full = False
+            if "hisparse_coordinator" in method_src and "batch_is_full = False" in method_src:
+                found_pattern = True
+                break
+
+    assert found_pattern, "batch_is_full must be reset to False after hisparse_coordinator assignment"
+
+
+def test_retract_req_removed_from_scheduler():
+    """retract_req call must be removed from scheduler's update_running_batch method."""
+    src_path = Path(f"{REPO}/python/sglang/srt/managers/scheduler.py")
+    src = src_path.read_text()
+    tree = ast.parse(src)
+
+    # Find update_running_batch method
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "update_running_batch":
+            method_start = node.lineno - 1
+            method_end = node.end_lineno
+            method_lines = src.split("\n")[method_start:method_end]
+            method_src = "\n".join(method_lines)
+
+            # Should NOT have retract_req in this method anymore
+            assert "retract_req" not in method_src, \
+                "retract_req should be removed from update_running_batch (moved to release_req)"
+            break
+    else:
+        # Method might not exist with exact name, that's okay
+        pass
+
+
+def test_transfer_item_warp_128bit_alignment():
+    """transfer_item_warp must use 128-bit (16-byte) paired transfers with tail handling."""
+    src_path = Path(f"{REPO}/python/sglang/jit_kernel/csrc/hisparse.cuh")
+    src = src_path.read_text()
+
+    # Check for 128-bit transfer pattern
+    assert "total_pairs = item_size_bytes / 16" in src or "item_size_bytes / 16" in src, \
+        "Must use 16-byte (128-bit) chunks for bulk transfer"
+
+    # Check for paired 64-bit loads (v2.b64)
+    assert "ld.global.nc.v2.b64" in src, \
+        "Must use 128-bit load instruction (ld.global.nc.v2.b64)"
+    assert "st.global.cg.v2.b64" in src, \
+        "Must use 128-bit store instruction (st.global.cg.v2.b64)"
+
+    # Check for tail handling
+    assert "tail_8B" in src or "tail" in src, \
+        "Must handle tail case for sizes not multiple of 16"
+
+    # Check for 8-byte tail handling
+    assert "ld.global.nc.b64" in src and src.count("ld.global.nc.b64") >= 1, \
+        "Must have 64-bit fallback for tail handling"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) — anti-stub checks
+# ---------------------------------------------------------------------------
+
+def test_not_stub_schedule_batch():
+    """release_req in schedule_batch.py has real logic."""
+    src_path = Path(f"{REPO}/python/sglang/srt/managers/schedule_batch.py")
+    src = src_path.read_text()
+    tree = ast.parse(src)
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "release_req":
+            # Count non-trivial statements (excluding Pass, docstrings)
+            stmts = [s for s in node.body if not isinstance(s, (ast.Pass, ast.Expr))]
+            # Should have at least 3 meaningful statements (if check + method body)
+            assert len(stmts) >= 2, "release_req is a stub - needs more logic"
+            break
+    else:
+        assert False, "release_req method not found"
+
+
+def test_not_stub_scheduler():
+    """get_next_batch_to_run in scheduler.py has real logic."""
+    src_path = Path(f"{REPO}/python/sglang/srt/managers/scheduler.py")
+    src = src_path.read_text()
+    tree = ast.parse(src)
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "get_next_batch_to_run":
+            stmts = [s for s in node.body if not isinstance(s, (ast.Pass, ast.Expr))]
+            # This is a large method, should have many statements
+            assert len(stmts) >= 10, "get_next_batch_to_run seems too small - may be a stub"
+            break
+    else:
+        assert False, "get_next_batch_to_run method not found"
+
+
+def test_not_stub_hisparse_cuh():
+    """transfer_item_warp in hisparse.cuh has real logic."""
+    src_path = Path(f"{REPO}/python/sglang/jit_kernel/csrc/hisparse.cuh")
+    src = src_path.read_text()
+
+    # Find transfer_item_warp function
+    assert "transfer_item_warp" in src, "transfer_item_warp function not found"
+
+    # Extract the function body (rough approximation)
+    lines = src.split("\n")
+    in_function = False
+    brace_count = 0
+    function_lines = []
+
+    for line in lines:
+        if "transfer_item_warp" in line and "__device__" in line:
+            in_function = True
+
+        if in_function:
+            function_lines.append(line)
+            brace_count += line.count("{") - line.count("}")
+            if brace_count == 0 and "{" in function_lines[0] or (len(function_lines) > 1 and "{" in "".join(function_lines[:2])):
+                if line.strip().endswith("}") or brace_count == 0 and "}" in line:
+                    if len(function_lines) > 5:  # Make sure we got the whole function
+                        break
+
+    function_src = "\n".join(function_lines)
+
+    # Should have meaningful CUDA code
+    assert "for" in function_src, "transfer_item_warp should have a for loop"
+    assert "asm volatile" in function_src, "transfer_item_warp should use inline assembly"
+    assert function_src.count("asm volatile") >= 2, "Should have multiple asm statements"

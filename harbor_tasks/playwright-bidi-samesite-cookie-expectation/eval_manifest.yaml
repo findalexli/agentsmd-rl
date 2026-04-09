@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 40091
+  base_commit: "5435c64f6d14293b2ce0dcdbfaa237b015bfd63e"
+  merge_commit: "ab4f133c0690f0de47fc983867624fa3908d5544"
+
+checks:
+  - id: spec_file_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript spec file is non-empty with balanced braces"
+
+  - id: isBidi_in_test_signature
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The SameSite set-cookie test must include isBidi in its fixture destructuring"
+
+  - id: bidi_cookie_rejection_condition
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cookie rejection condition for SameSite=None must OR-combine isBidi with chromium"
+
+  - id: bidi_expectation_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "BiDi expectations file must not list this test as failing"
+
+  - id: condition_is_not_narrowed
+    type: pass_to_pass
+    origin: static
+    description: "Existing Chromium and webkit cookie conditions must remain intact"
+
+rubric: []

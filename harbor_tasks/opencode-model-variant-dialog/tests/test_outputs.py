@@ -7,12 +7,90 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
+import subprocess, json, re
 from pathlib import Path
 
 REPO = "/workspace/opencode"
 APP_FILE = Path(REPO) / "packages/opencode/src/cli/cmd/tui/app.tsx"
 VARIANT_FILE = Path(REPO) / "packages/opencode/src/cli/cmd/tui/component/dialog-variant.tsx"
+
+# --------------------------------------------------------------------------
+# Helpers
+# --------------------------------------------------------------------------
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node.js in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
+_NODE_ANALYSIS = """
+import { readFileSync } from 'fs';
+
+const src = readFileSync('packages/opencode/src/cli/cmd/tui/app.tsx', 'utf8');
+const lines = src.split('\\n');
+
+// Check for DialogVariant import
+const importLines = lines.filter(l => l.includes('import') && l.includes('DialogVariant'));
+const hasImport = importLines.length > 0;
+
+// Find variant_cycle keybind and extract surrounding context
+const idx = lines.findIndex(l => l.includes('variant_cycle'));
+let title = null;
+let hasDialogCall = false;
+let hasDialogVariant = false;
+let hasBlindCycle = false;
+
+if (idx >= 0) {
+    const start = Math.max(0, idx - 12);
+    const end = Math.min(lines.length, idx + 12);
+    const context = lines.slice(start, end).join('\\n');
+
+    hasDialogCall = context.includes('dialog.replace(') ||
+                    context.includes('dialog.open(') ||
+                    context.includes('dialog.show(') ||
+                    context.includes('dialog.push(');
+
+    hasDialogVariant = context.includes('DialogVariant');
+    hasBlindCycle = context.includes('.variant.cycle(');
+
+    for (let i = start; i < end; i++) {
+        const m = lines[i].match(/title:\\s*["'`]([^"'`]+)["'`]/);
+        if (m) {
+            title = m[1];
+            break;
+        }
+    }
+}
+
+console.log(JSON.stringify({
+    found: idx >= 0,
+    hasImport,
+    hasDialogCall,
+    hasDialogVariant,
+    hasBlindCycle,
+    title,
+}));
+"""
+
+_analysis_cache = None
+
+
+def _get_analysis():
+    """Run the Node.js analysis script once and cache the result."""
+    global _analysis_cache
+    if _analysis_cache is None:
+        r = _run_node(_NODE_ANALYSIS)
+        assert r.returncode == 0, f"Node analysis script failed: {r.stderr}"
+        _analysis_cache = json.loads(r.stdout.strip())
+    return _analysis_cache
 
 
 def _strip_comments(src: str) -> str:
@@ -26,63 +104,44 @@ def _read_app_stripped() -> str:
     return _strip_comments(APP_FILE.read_text())
 
 
-def _extract_variant_handler(stripped: str) -> str:
-    """Extract the onSelect handler body near the variant_cycle keybind."""
-    patterns = [
-        r"""["'`]variant[._]cycle["'`][\s\S]{0,300}onSelect\s*:\s*\(\)\s*=>\s*\{([\s\S]{0,500}?)\}""",
-        r"""onSelect\s*:\s*\(\)\s*=>\s*\{([\s\S]{0,500}?)\}[\s\S]{0,300}["'`]variant[._]cycle["'`]""",
-        r"""\{[^{}]*["'`]variant[._]cycle["'`][^{}]*onSelect\s*:\s*\(\)\s*=>\s*\{([^}]*)\}""",
-    ]
-    for pat in patterns:
-        m = re.search(pat, stripped)
-        if m:
-            return m.group(1)
-    return ""
-
-
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests via Node.js execution
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_handler_opens_dialog_variant():
     """variant_cycle handler must open DialogVariant via dialog API."""
-    stripped = _read_app_stripped()
-    handler = _extract_variant_handler(stripped)
-    assert handler, "Could not find variant_cycle onSelect handler"
-    assert re.search(r"dialog\s*\.\s*(replace|open|show|push)\s*\(", handler), \
+    data = _get_analysis()
+    assert data["found"], "variant_cycle keybind not found in app.tsx"
+    assert data["hasDialogCall"], \
         "Handler does not call dialog.replace/open/show/push"
-    assert "DialogVariant" in handler, \
+    assert data["hasDialogVariant"], \
         "Handler does not reference DialogVariant component"
 
 
 # [pr_diff] fail_to_pass
 def test_dialog_variant_imported():
     """DialogVariant must be imported in app.tsx."""
-    stripped = _read_app_stripped()
-    has_named = bool(re.search(r"import\s*\{[^}]*\bDialogVariant\b[^}]*\}\s*from", stripped))
-    has_default = bool(re.search(r"import\s+DialogVariant\s+from", stripped))
-    assert has_named or has_default, "DialogVariant is not imported in app.tsx"
+    data = _get_analysis()
+    assert data["hasImport"], "DialogVariant is not imported in app.tsx"
 
 
 # [pr_diff] fail_to_pass
 def test_no_blind_cycle_in_handler():
     """The old .variant.cycle() call must be removed from the handler."""
-    stripped = _read_app_stripped()
-    handler = _extract_variant_handler(stripped)
-    assert handler, "Could not find variant_cycle onSelect handler"
-    assert not re.search(r"\.variant\s*\.\s*cycle\s*\(", handler), \
+    data = _get_analysis()
+    assert data["found"], "variant_cycle keybind not found in app.tsx"
+    assert not data["hasBlindCycle"], \
         "Handler still calls .variant.cycle() — should open dialog instead"
 
 
 # [pr_diff] fail_to_pass
 def test_title_not_variant_cycle():
     """Title for the variant action must not be the old 'Variant cycle'."""
-    stripped = _read_app_stripped()
-    # The entry must still exist (variant_keybind_preserved checks that).
-    # Just verify the old literal title is gone.
-    assert not re.search(r'''["'`]Variant cycle["'`]''', stripped), \
-        "'Variant cycle' title still present — should be a selection-oriented label"
+    data = _get_analysis()
+    assert data["found"], "variant_cycle keybind not found in app.tsx"
+    assert data["title"] != "Variant cycle", \
+        f"Title is still 'Variant cycle' — should be a selection-oriented label"
 
 
 # ---------------------------------------------------------------------------

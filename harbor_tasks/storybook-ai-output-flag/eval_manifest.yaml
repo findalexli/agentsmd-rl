@@ -7,30 +7,30 @@ source:
   merge_commit: "f8950318a6f05658e576e345a73c9609a5145176"
 
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files must parse without syntax errors"
-
-  - id: output_option_in_types
+  - id: output_option_typechecks
     type: fail_to_pass
     origin: pr_diff
-    description: "AiPrepareOptions interface must include an output field"
+    description: "AiPrepareOptions accepts output field — verified by TypeScript compiler"
 
-  - id: file_write_with_output_option
+  - id: aiPrepare_file_write_logic
     type: fail_to_pass
     origin: pr_diff
-    description: "aiPrepare imports writeFile and writes to file when output is set"
+    description: "aiPrepare writes to file when output is specified, falls back to logger otherwise"
 
   - id: output_flag_registered_in_cli
     type: fail_to_pass
     origin: pr_diff
-    description: "The ai or prepare command registers -o/--output option"
+    description: "The ai command registers -o/--output option"
 
-  - id: prepare_receives_output_option
+  - id: parent_options_merged
     type: fail_to_pass
     origin: pr_diff
-    description: "Prepare subcommand action has access to the output option"
+    description: "Prepare subcommand merges parent options so --output reaches aiPrepare"
+
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files parse without syntax errors"
 
   - id: not_stub
     type: pass_to_pass
@@ -40,7 +40,7 @@ checks:
   - id: uses_storybook_logger
     type: pass_to_pass
     origin: agent_config
-    description: "Output messages use storybook logger instead of console.log"
+    description: "Output uses storybook logger instead of console.log"
     source:
       path: "AGENTS.md"
       lines: "242-249"

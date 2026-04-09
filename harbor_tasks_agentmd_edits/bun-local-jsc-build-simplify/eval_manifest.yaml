@@ -1,0 +1,69 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 26645
+  base_commit: "a14a89ca953910e89697895dfdfb4cdf4c90a151"
+  merge_commit: "6c119d608e4007530ec9d7b4c58e803e80f6e5b3"
+
+checks:
+  # Gate
+  - id: cmake_files_exist
+    type: pass_to_pass
+    origin: static
+    description: "Modified CMake and doc files must exist"
+
+  # CMake code changes (fail-to-pass)
+  - id: setupwebkit_jsc_configure
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SetupWebKit.cmake contains JSC configure integration with -DPORT=JSCOnly"
+
+  - id: setupwebkit_webkit_build_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SetupWebKit.cmake defines WEBKIT_BUILD_TYPE option"
+
+  - id: setupwebkit_jsc_custom_target
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SetupWebKit.cmake defines a jsc custom target for building JSC"
+
+  - id: buildbun_jsc_dependency
+    type: fail_to_pass
+    origin: pr_diff
+    description: "BuildBun.cmake adds jsc as a build dependency for local WebKit"
+
+  - id: buildbun_system_icu_for_local
+    type: fail_to_pass
+    origin: pr_diff
+    description: "BuildBun.cmake uses find_package(ICU) for WEBKIT_LOCAL on Linux"
+
+  # Documentation updates (fail-to-pass)
+  - id: contributing_simplified_build
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CONTRIBUTING.md describes build:local as a single auto-build command"
+
+  - id: contributing_no_manual_jsc_steps
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CONTRIBUTING.md removes old manual jsc:build:debug steps"
+
+  - id: contributing_mdx_simplified
+    type: fail_to_pass
+    origin: pr_diff
+    description: "docs/project/contributing.mdx matches simplified build:local docs"
+
+  # Regression (pass-to-pass)
+  - id: setupwebkit_retains_prebuilt_path
+    type: pass_to_pass
+    origin: pr_diff
+    description: "SetupWebKit.cmake still supports prebuilt WebKit downloads"
+
+rubric:
+  - rule: "Follow existing code style — check neighboring files for patterns"
+    source:
+      path: "CLAUDE.md"
+      lines: "203"
+      commit: "a14a89ca953910e89697895dfdfb4cdf4c90a151"

@@ -1,0 +1,72 @@
+version: "2.0"
+
+source:
+  repo: "dotnet/maui"
+  pr: 33451
+  base_commit: "f73f0f7dabecaa2af50231522313e609ff78dcb7"
+  merge_commit: "d0e3fdb46cc7c3771ab5885c1fd7cf49469d3bcf"
+
+checks:
+  # -------------------------------------------------------------------------
+  # Gates (pass_to_pass, static)
+  # -------------------------------------------------------------------------
+  - id: shell_navigation_manager_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified ShellNavigationManager.cs must have valid C# syntax"
+
+  - id: issue33415_test_file_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Added Issue33415.cs test file must have valid C# syntax"
+
+  # -------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # -------------------------------------------------------------------------
+  - id: fix_has_empty_query_guard_shellcontent
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ShellContent path has guard: skip ApplyQueryAttributes if empty and popping"
+
+  - id: fix_has_empty_query_guard_islastitem
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isLastItem path has guard: skip SetValue if empty and popping"
+
+  - id: fix_has_explanatory_comment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Fix includes explanatory comment about query.Clear() behavior"
+
+  # -------------------------------------------------------------------------
+  # Pass-to-pass (static) — anti-stub
+  # -------------------------------------------------------------------------
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified ApplyQueryAttributes method has real logic, not just pass/return"
+
+  # -------------------------------------------------------------------------
+  # Config-derived (agent_config) — rules from copilot-instructions.md
+  # -------------------------------------------------------------------------
+  - id: nullable_enable_documented
+    type: fail_to_pass
+    origin: agent_config
+    description: "copilot-instructions.md documents the #nullable enable must be line 1 rule"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "141-160"
+      commit: "f73f0f7dabecaa2af50231522313e609ff78dcb7"
+
+  - id: bash_script_for_publicapi
+    type: fail_to_pass
+    origin: agent_config
+    description: "copilot-instructions.md includes safe bash pattern for PublicAPI.Unshipped.txt handling"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "148-157"
+      commit: "f73f0f7dabecaa2af50231522313e609ff78dcb7"
+
+rubric:
+  # Soft rules for LLM judge - none needed as rules are programmatically verifiable
+  []

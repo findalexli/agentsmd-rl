@@ -8,12 +8,14 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/next.js"
-ENDPOINT = f"{REPO}/crates/next-napi-bindings/src/next_api/endpoint.rs"
-PROJECT = f"{REPO}/crates/next-napi-bindings/src/next_api/project.rs"
-UTILS = f"{REPO}/crates/next-napi-bindings/src/next_api/utils.rs"
+CRATE_PATH = f"{REPO}/crates/next-napi-bindings"
+ENDPOINT = f"{CRATE_PATH}/src/next_api/endpoint.rs"
+PROJECT = f"{CRATE_PATH}/src/next_api/project.rs"
+UTILS = f"{CRATE_PATH}/src/next_api/utils.rs"
 
 RCSTR = r"(?:turbo_rcstr::)?RcStr"
 ALLOC_PATTERNS = [r"\.to_string\s*\(\)", r"\.into_owned\s*\(\)", r"\.to_owned\s*\(\)", r"String::from"]
@@ -41,6 +43,14 @@ def _assert_no_alloc(body: str, context: str, fields: list[str]):
             assert not re.search(rf"{field}\s*:\s*[^,]*?{pat}", body), (
                 f"{context}: {field} still uses allocating conversion"
             )
+
+
+def _cargo_check(crate_path: str, timeout: int = 120) -> subprocess.CompletedProcess:
+    """Run cargo check on a specific crate."""
+    return subprocess.run(
+        ["cargo", "check", "--manifest-path", f"{crate_path}/Cargo.toml"],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -194,6 +204,13 @@ def test_from_impls_avoid_allocation():
     )
     assert source_m, "From<&PlainSource> for NapiSource impl not found"
     _assert_no_alloc(source_m.group(1), "From<&PlainSource>", ["ident", "file_path"])
+
+
+# [pr_diff] fail_to_pass — BEHAVIORAL: compilation check
+def test_napi_bindings_compile():
+    """Modified next-napi-bindings crate compiles after RcStr changes (behavioral check)."""
+    r = _cargo_check(CRATE_PATH, timeout=120)
+    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr}\n{r.stdout}"
 
 
 # ---------------------------------------------------------------------------

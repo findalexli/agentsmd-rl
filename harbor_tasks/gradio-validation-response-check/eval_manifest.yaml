@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 13205
+  base_commit: "0cbbbce8348cbb3254d4f93c48580151fe048daf"
+  merge_commit: "348327f6d7014feaf3f0b4cfb7e2653a1078ea33"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  - id: dict_invalid_response_detected
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dict validation_response with is_valid=False must be detected as invalid"
+
+  - id: dict_invalid_response_data_preserved
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Invalid dict response must appear in returned validation_data list"
+
+  - id: dict_invalid_varied_inputs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Multiple different dict inputs with is_valid=False all detected"
+
+  - id: list_validation_response_works
+    type: pass_to_pass
+    origin: pr_diff
+    description: "List validation responses are still processed correctly"
+
+  - id: dict_valid_fallthrough
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Dict without is_valid=False falls through as valid"
+
+  - id: ruff_format_check
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified Python file passes ruff linting"
+    source:
+      path: "AGENTS.md"
+      lines: "43"
+      commit: "0cbbbce8348cbb3254d4f93c48580151fe048daf"
+
+rubric:
+  - rule: "Be consistent with the style of the surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "0cbbbce8348cbb3254d4f93c48580151fe048daf"

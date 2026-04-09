@@ -1,0 +1,60 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 21135
+  base_commit: "3a0e00dd7f9192730f6d0eeee37ae0a5fb023927"
+  merge_commit: "68f4aa220ea68c539bd1e316a4e96fdd76b93560"
+
+checks:
+  - id: modified_files_importable
+    type: pass_to_pass
+    origin: static
+    description: "Both modified TypeScript source files import without errors"
+
+  - id: parse_basic_specifiers
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Simple and scoped package specifiers still parse correctly"
+
+  - id: parse_git_ssh_urls
+    type: fail_to_pass
+    origin: pr_diff
+    description: "git+ssh URLs with embedded @ in host are correctly parsed"
+
+  - id: parse_bare_npm_protocol
+    type: fail_to_pass
+    origin: pr_diff
+    description: "npm:@scope/pkg@version extracts the scoped package name without npm: prefix"
+
+  - id: parse_unversioned_npm_protocol
+    type: fail_to_pass
+    origin: pr_diff
+    description: "npm:@scope/pkg returns the scoped package name with version 'latest'"
+
+  - id: parse_npm_alias
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pkg@npm:@scope/pkg@version keeps the alias name as the package"
+
+rubric:
+  - rule: "Use single word names by default for new locals, params, and helper functions."
+    source:
+      path: "AGENTS.md"
+      lines: "23-32"
+      commit: "3a0e00dd7f9192730f6d0eeee37ae0a5fb023927"
+  - rule: "Avoid `else` statements. Prefer early returns."
+    source:
+      path: "AGENTS.md"
+      lines: "82-84"
+      commit: "3a0e00dd7f9192730f6d0eeee37ae0a5fb023927"
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "55-57"
+      commit: "3a0e00dd7f9192730f6d0eeee37ae0a5fb023927"
+  - rule: "Prefer `const` over `let`. Use ternaries or early returns instead of reassignment."
+    source:
+      path: "AGENTS.md"
+      lines: "68-70"
+      commit: "3a0e00dd7f9192730f6d0eeee37ae0a5fb023927"

@@ -7,7 +7,9 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/next.js"
@@ -17,49 +19,101 @@ TEST_FILE = (
 )
 
 
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
+
 def _read_test_file() -> str:
     return Path(TEST_FILE).read_text()
 
 
 def _extract_function(src: str, name: str) -> str:
     """Extract body of `async function <name>(...)` (top-level in describe)."""
-    # Matches indented async function inside describe block
     pattern = rf"async function {name}\b[^{{]*\{{(.*?)\n  \}}"
     m = re.search(pattern, src, re.DOTALL)
     return m.group(1) if m else ""
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
 def test_click_start_no_instant_selector():
     """clickStartClientNav must not use elementByCssInstant for the client button."""
-    src = _read_test_file()
-    body = _extract_function(src, "clickStartClientNav")
-    assert body, "clickStartClientNav function not found"
-    assert "elementByCssInstant" not in body, (
-        "clickStartClientNav still uses elementByCssInstant — "
-        "this races Playwright IPC and causes flakes"
-    )
+    r = _run_node(f"""
+const fs = require('fs');
+const src = fs.readFileSync('{TEST_FILE}', 'utf8');
+
+// Extract clickStartClientNav function body
+const regex = /async function clickStartClientNav\\b[^{{]*\\{{([\\s\\S]*?)\\n  \\}}/;
+const m = regex.exec(src);
+if (!m) {{
+    console.error('clickStartClientNav function not found');
+    process.exit(1);
+}}
+
+const body = m[1];
+if (body.includes('elementByCssInstant')) {{
+    console.error('clickStartClientNav still uses elementByCssInstant');
+    process.exit(1);
+}}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_click_start_uses_bounded_wait():
-    """clickStartClientNav should use a non-instant selector with bounded timeout."""
-    src = _read_test_file()
-    body = _extract_function(src, "clickStartClientNav")
-    assert body, "clickStartClientNav function not found"
-    # Acceptable patterns: elementByCss with timeout, waitForElementByCss, retry
-    has_css_timeout = "elementByCss(" in body and "timeout" in body
-    has_wait_for = "waitForElementByCss" in body
-    has_retry = "retry(" in body
-    assert has_css_timeout or has_wait_for or has_retry, (
-        "clickStartClientNav should use elementByCss with timeout, "
-        "waitForElementByCss, or retry — not a zero-timeout instant selector"
-    )
+    """clickStartClientNav should use elementByCss with an explicit timeout option."""
+    r = _run_node(f"""
+const fs = require('fs');
+const src = fs.readFileSync('{TEST_FILE}', 'utf8');
+
+// Extract clickStartClientNav function body
+const regex = /async function clickStartClientNav\\b[^{{]*\\{{([\\s\\S]*?)\\n  \\}}/;
+const m = regex.exec(src);
+if (!m) {{
+    console.error('clickStartClientNav function not found');
+    process.exit(1);
+}}
+
+const body = m[1];
+
+// Must use elementByCss (not elementByCssInstant) with a timeout option
+const hasElementByCss = body.includes('elementByCss(');
+const hasTimeout = /timeout\\s*:/.test(body);
+
+// Also accept waitForElementByCss or retry as alternatives
+const hasWaitFor = body.includes('waitForElementByCss');
+const hasRetry = /retry\\(/.test(body);
+
+if (!hasElementByCss && !hasWaitFor && !hasRetry) {{
+    console.error('No bounded wait mechanism found (elementByCss/waitFor/retry)');
+    process.exit(1);
+}}
+
+if (hasElementByCss && !hasTimeout) {{
+    console.error('elementByCss found but missing timeout option');
+    process.exit(1);
+}}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

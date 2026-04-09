@@ -1,0 +1,64 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 90651
+  base_commit: "ef993b251cef0a71050515665c26cfd41cdf090f"
+  merge_commit: "7643fc948398c38fe0792836fb4c014a45f6fb07"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # ---------------------------------------------------------------------------
+
+  - id: dockerfile_no_buildkit_cache_mount
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dockerfile build stage no longer uses BuildKit cache mount on .next/cache (which trapped fetch cache in unreachable volume)"
+
+  - id: dockerfile_has_mkdir_chown
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dockerfile runner stage creates writable .next directory with correct ownership (node:node)"
+
+  - id: dockerfile_has_optional_cache_copy
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dockerfile includes commented line for optional fetch cache persistence from build stage"
+
+  - id: dockerfile_bun_has_mkdir_chown
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dockerfile.bun runner stage creates writable .next directory with correct ownership (bun:bun)"
+
+  - id: readme_no_emoji_prefixes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README features list uses plain markdown bullets instead of emoji checkmarks"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static) — syntax / structure checks
+  # ---------------------------------------------------------------------------
+
+  - id: dockerfile_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Dockerfile has valid basic structure with multi-stage build"
+
+  - id: dockerfile_bun_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Dockerfile.bun has valid basic structure"
+
+  - id: dockerfile_has_build_stage
+    type: pass_to_pass
+    origin: static
+    description: "Dockerfile has builder stage with build command"
+
+  - id: dockerfile_has_runner_stage
+    type: pass_to_pass
+    origin: static
+    description: "Dockerfile has runner stage with production server"
+
+rubric: []
+  # No subjective rules from agent config files needed for this Dockerfile fix

@@ -1,0 +1,30 @@
+version: "2.0"
+
+source:
+  repo: facebook/react
+  pr: 35948
+  base_commit: 23b2d8514f13f109b980b0a1f4f3aab906ad51d0
+  merge_commit: ee4699f5a1833bd12701d21556f36376d6ebad8b
+
+checks:
+  - id: on_recoverable_error_calls_console_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "onRecoverableError in noop renderer calls console.error with the error"
+
+  - id: usememo_test_imports_assert_console_error_dev
+    type: fail_to_pass
+    origin: pr_diff
+    description: "useMemoCache test imports assertConsoleErrorDev from internal-test-utils"
+
+  - id: no_spylonDev_console_error
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Old spyOnDev(console, 'error') pattern replaced with assertConsoleErrorDev"
+
+  - id: source_file_balanced
+    type: pass_to_pass
+    origin: static
+    description: "createReactNoop.js has balanced braces"
+
+rubric: []

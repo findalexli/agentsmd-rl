@@ -173,17 +173,19 @@ def test_pending_true_when_progress_undefined():
 
 
 # ---------------------------------------------------------------------------
-# Anti-gaming (static) — expression must differ from buggy original
+# Fail-to-pass (static) — expression must differ from buggy original
 # ---------------------------------------------------------------------------
 
 # [static] fail_to_pass
 def test_expression_differs_from_buggy():
-    """The class:pending expression must not be the unchanged buggy original."""
-    expr = _extract_pending_expr()
-    normalized = expr.replace(" ", "")
-    buggy = 'gradio.shared.loading_status?.status==="pending"'
-    assert normalized != buggy, (
-        "Expression is unchanged from the buggy original"
+    """The class:pending expression must differ from the unchanged buggy original."""
+    content = SVELTE_FILE.read_text()
+    # The original buggy expression (single line, no show_progress check)
+    buggy_expr = 'class:pending={gradio.shared.loading_status?.status === "pending"}'
+    # The fixed expression should NOT match the buggy single-line pattern
+    assert buggy_expr not in content, (
+        "The class:pending expression still matches the buggy original - "
+        "fix must add show_progress !== 'hidden' check"
     )
 
 

@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24451
+  base_commit: "770cca65a1dc44241b503df7b1064a784f970499"
+  merge_commit: "398e2a79c488cf2ae59512ea31e00626d7dd8833"
+
+checks:
+  - id: compilation
+    type: pass_to_pass
+    origin: static
+    description: "Crate ty_python_semantic must compile without errors"
+
+  - id: any_reachable_method_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DeclarationsIterator must have any_reachable method (renamed from all_reachable)"
+
+  - id: lazy_evaluation_pattern
+    type: fail_to_pass
+    origin: pr_diff
+    description: "any_reachable uses self.any() with predicate checked before reachability evaluation"
+
+  - id: call_sites_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Both call sites use any_reachable with is_defined_and (De Morgan transform)"
+
+  - id: no_stale_all_reachable_calls
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No remaining .all_reachable() calls in the crate source"
+
+  - id: any_reachable_not_stub
+    type: fail_to_pass
+    origin: pr_diff
+    description: "any_reachable method has real logic, not just a stub"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "770cca65a1dc44241b503df7b1064a784f970499"
+  - rule: "Avoid writing significant amounts of new code. This is often a sign that we are missing an existing method or mechanism that could help solve the problem. Look for existing utilities first."
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "770cca65a1dc44241b503df7b1064a784f970499"
+  - rule: "Use comments purposefully. Do not use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "770cca65a1dc44241b503df7b1064a784f970499"

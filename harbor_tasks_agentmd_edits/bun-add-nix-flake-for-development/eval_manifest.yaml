@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 23406
+  base_commit: "6e3359dd16aced2f6fca2a8e2de71f09e0bcb3cb"
+  merge_commit: "f65e28052155a8c44469b70e24d59ccf602e2738"
+
+checks:
+  - id: test_flake_nix_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "flake.nix file exists and is valid Nix syntax"
+
+  - id: test_shell_nix_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "shell.nix file exists and is valid Nix syntax"
+
+  - id: test_flake_nix_dev_shell
+    type: pass_to_pass
+    origin: pr_diff
+    description: "flake.nix provides a Nix flake dev shell with LLVM 19 and required build tools"
+
+  - id: test_shell_nix_build_env
+    type: pass_to_pass
+    origin: pr_diff
+    description: "shell.nix provides a non-flake Nix shell with matching build tools"
+
+  - id: test_cmake_nix_cc_zlib_compression
+    type: fail_to_pass
+    origin: pr_diff
+    description: "cmake uses zlib debug symbol compression instead of zstd when NIX_CC is set"
+
+  - id: test_cmake_nix_cc_fortify_guard
+    type: fail_to_pass
+    origin: pr_diff
+    description: "cmake skips _FORTIFY_SOURCE=3 when NIX_CC is set (Nix glibc sets it already)"
+
+  - id: test_contributing_nix_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CONTRIBUTING.md has a Using Nix section with nix develop instructions"
+
+  - id: test_cmake_retains_default_zstd
+    type: pass_to_pass
+    origin: static
+    description: "Default (non-Nix) code path still uses zstd compression for debug symbols"
+
+  - id: test_contributing_install_section_exists
+    type: pass_to_pass
+    origin: static
+    description: "CONTRIBUTING.md still has the package manager install instructions"
+
+rubric: []

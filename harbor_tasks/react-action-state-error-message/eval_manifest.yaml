@@ -1,0 +1,39 @@
+version: "2.0"
+
+source:
+  repo: "facebook/react"
+  pr: 35790
+  base_commit: "3bc2d414287e62a7b74731c6c7b837270353a339"
+  merge_commit: "93882bd40ee48dc6d072dfc0b6cc7801fac1be31"
+
+checks:
+  - id: codes_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "error-codes/codes.json must be valid JSON with entry 485"
+
+  - id: error_message_in_hooks
+    type: fail_to_pass
+    origin: pr_diff
+    description: "dispatchActionState error must say 'action state' not 'form state'"
+
+  - id: error_code_485
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error code 485 in codes.json must say 'action state' (verified via Node)"
+
+  - id: test_expects_action_state
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ReactDOMForm test waitForThrow must use 'action state' wording"
+
+  - id: error_codes_in_sync
+    type: fail_to_pass
+    origin: agent_config
+    description: "Error code 485 in codes.json must match the source throw message"
+    source:
+      path: ".claude/skills/extract-errors/SKILL.md"
+      lines: "10-12"
+      commit: "3bc2d414287e62a7b74731c6c7b837270353a339"
+
+rubric: []

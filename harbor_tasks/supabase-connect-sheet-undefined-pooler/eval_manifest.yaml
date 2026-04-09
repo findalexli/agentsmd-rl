@@ -1,0 +1,40 @@
+version: "2.0"
+
+source:
+  repo: "supabase/supabase"
+  pr: 44611
+  base_commit: "042248fd6d70bc56d49db6c16462a8cc237c2945"
+  merge_commit: "474c125da46f042ee4b93c7b6dfe0c5ccdad8de9"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without TypeScript errors"
+
+  - id: optional_chaining_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Optional chaining operator (?.) used to safely access ipv4SupportedForDedicatedPooler"
+
+  - id: explicit_typing_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Explicit type annotation ConnectionStringPooler | undefined added for connectionStringPooler"
+
+  - id: nullish_coalescing_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Nullish coalescing (?? false) used for safe boolean default"
+
+  - id: imports_connection_string_pooler_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ConnectionStringPooler type imported from Connect.types"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified component has real logic, not a stub"
+
+rubric: []

@@ -10,11 +10,13 @@ The agent edits docker/patch/latest/sglang.patch to fix this.
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-# AST-only because: the patched code targets sglang's DeepseekV2AttentionMLA which
-# requires torch, triton, CUDA — none available in this CPU container. We analyse
-# the patch text (the artifact being modified) structurally instead.
+The patched code targets sglang's DeepseekV2AttentionMLA which requires torch,
+triton, CUDA — none available in this CPU container. Fail-to-pass tests use
+subprocess to run scope-aware analysis of the patch control flow rather than
+simple string matching.
 """
 
+import subprocess
 import pytest
 from pathlib import Path
 
@@ -23,7 +25,94 @@ PATCH_FILE = Path(REPO) / "docker/patch/latest/sglang.patch"
 
 
 # ---------------------------------------------------------------------------
-# Helpers — extract the deepseek_v2.py section from sglang.patch
+# Subprocess script: scope-aware analysis of attribute initialization
+# ---------------------------------------------------------------------------
+
+UNCONDITIONAL_INIT_CHECK = r'''
+"""Verify self.<attr> is initialized unconditionally in sglang.patch.
+
+Parses the deepseek_v2.py hunks from the patch and traces control flow
+scope to ensure the assignment is NOT nested inside `if self.use_nsa:`
+or `if is_nextn:` conditional blocks.
+"""
+import sys
+from pathlib import Path
+
+ATTR = sys.argv[1]
+patch = Path("/workspace/slime/docker/patch/latest/sglang.patch").read_text()
+
+# Extract deepseek_v2.py section
+dsv2 = ""
+for sec in patch.split("diff --git "):
+    if "deepseek_v2.py" in sec.split("\n")[0]:
+        dsv2 = sec
+        break
+if not dsv2:
+    print("FAIL: deepseek_v2.py not found in patch")
+    sys.exit(1)
+
+# Parse into individual hunks — each hunk is a contiguous code region
+hunks = []
+current = []
+for line in dsv2.split("\n"):
+    if line.startswith("@@"):
+        if current:
+            hunks.append(current)
+        current = []
+        continue
+    if line.startswith(("diff ", "index ", "--- ", "+++ ")):
+        continue
+    if line.startswith("-") and not line.startswith("---"):
+        continue  # removed lines not in final code
+    if line.startswith("+") and not line.startswith("+++"):
+        current.append(("added", line[1:]))
+    elif line.startswith(" "):
+        current.append(("context", line[1:]))
+if current:
+    hunks.append(current)
+
+# Search each hunk for self.ATTR = ... in added lines, then trace scope
+for hunk in hunks:
+    for idx, (tag, line) in enumerate(hunk):
+        stripped = line.strip()
+        if (tag == "added"
+            and f"self.{ATTR}" in stripped
+            and "=" in stripped
+            and "==" not in stripped
+            and "offset" not in stripped):
+
+            indent = len(line) - len(line.lstrip())
+
+            # At method-body level (indent <= 8), guaranteed unconditional
+            if indent <= 8:
+                print(f"PASS: self.{ATTR} at indent {indent} — method-body level")
+                sys.exit(0)
+
+            # Trace backward within this hunk to find nearest enclosing scope
+            in_nsa_or_nextn = False
+            for j in range(idx - 1, -1, -1):
+                _, prev_line = hunk[j]
+                if not prev_line.strip():
+                    continue
+                prev_indent = len(prev_line) - len(prev_line.lstrip())
+                if prev_indent < indent:
+                    ps = prev_line.strip()
+                    if ps.startswith(("if ", "elif ", "else")):
+                        if "use_nsa" in ps or "is_nextn" in ps:
+                            in_nsa_or_nextn = True
+                    break
+
+            if not in_nsa_or_nextn:
+                print(f"PASS: self.{ATTR} at indent {indent} — not inside use_nsa/is_nextn")
+                sys.exit(0)
+
+print(f"FAIL: self.{ATTR} only found inside use_nsa/is_nextn conditionals")
+sys.exit(1)
+'''
+
+
+# ---------------------------------------------------------------------------
+# Helpers (for pass_to_pass tests)
 # ---------------------------------------------------------------------------
 
 def _dsv2_section():
@@ -34,26 +123,6 @@ def _dsv2_section():
         if marker in section.split("\n")[0]:
             return section
     return ""
-
-
-def _dsv2_added_lines():
-    """Return lines from added (+) hunks in the deepseek_v2.py section.
-
-    Each returned line has its leading '+' stripped so indentation is preserved.
-    Context lines (space-prefixed) are excluded — we want only new additions.
-    """
-    section = _dsv2_section()
-    lines = []
-    in_hunk = False
-    for line in section.split("\n"):
-        if line.startswith("@@"):
-            in_hunk = True
-            continue
-        if not in_hunk:
-            continue
-        if line.startswith("+") and not line.startswith("+++"):
-            lines.append(line[1:])  # strip leading '+'
-    return lines
 
 
 def _dsv2_all_hunk_lines():
@@ -72,28 +141,12 @@ def _dsv2_all_hunk_lines():
         if not in_hunk:
             continue
         if line.startswith("-") and not line.startswith("---"):
-            continue  # skip removed lines
+            continue
         if line.startswith("+") and not line.startswith("+++"):
             lines.append(line[1:])
         elif line.startswith(" "):
             lines.append(line[1:])
     return lines
-
-
-def _min_indent_of_assignment(attr_name, added_only=True):
-    """Find minimum indentation of 'self.attr_name = ...' lines.
-
-    If added_only=True, only inspect added (+) lines; otherwise include context.
-    Returns None if the attribute assignment is not found.
-    """
-    lines = _dsv2_added_lines() if added_only else _dsv2_all_hunk_lines()
-    min_indent = float("inf")
-    for line in lines:
-        if f"self.{attr_name} = " in line and "==" not in line:
-            indent = len(line) - len(line.lstrip())
-            if indent < min_indent:
-                min_indent = indent
-    return min_indent if min_indent != float("inf") else None
 
 
 def _hunk_text():
@@ -122,44 +175,37 @@ def test_patch_targets_deepseek_v2():
 
 # [pr_diff] fail_to_pass
 def test_skip_topk_init_unconditional():
-    """self.skip_topk must be initialized unconditionally, not only inside `if is_nextn:`.
+    """self.skip_topk must be initialized unconditionally, not only inside use_nsa/is_nextn.
 
-    Base commit layout in sglang.patch (buggy):
-        +            if is_nextn:          # indent 12 — inside if self.use_nsa:
-        +                self.skip_topk = False   # indent 16, conditional
-
-    Fixed layout (correct):
-        +        self.skip_topk = False    # indent 8, unconditional before if self.use_nsa:
+    Runs a subprocess that parses the patch hunks and traces the control flow
+    scope of the assignment. On the base commit, skip_topk is inside
+    `if is_nextn:` (inside `if self.use_nsa:`) at indent 16 — this test fails.
+    After the fix, it's at method-body level (indent 8) — this test passes.
     """
-    min_indent = _min_indent_of_assignment("skip_topk")
-    assert min_indent is not None, (
-        "self.skip_topk assignment not found in sglang.patch deepseek_v2.py added lines"
+    r = subprocess.run(
+        ["python3", "-c", UNCONDITIONAL_INIT_CHECK, "skip_topk"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    # indent 8  → method body, unconditional (gold fix)
-    # indent 12 → inside if self.use_nsa: else branch (also valid)
-    # indent 16 → inside if is_nextn: inside if self.use_nsa: (BUG)
-    assert min_indent <= 12, (
-        f"self.skip_topk is only assigned at indent={min_indent} — still nested inside "
-        f"'if is_nextn:' (indent 12+). Non-NSA MLA models will get AttributeError. "
-        f"The fix must initialize skip_topk unconditionally before 'if self.use_nsa:'."
+    assert "PASS" in r.stdout, (
+        f"self.skip_topk not initialized unconditionally — non-NSA MLA models "
+        f"will raise AttributeError.\nstdout: {r.stdout.strip()}\nstderr: {r.stderr.strip()}"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_next_skip_topk_init_unconditional():
-    """self.next_skip_topk must be initialized unconditionally, not only inside `if is_nextn:`.
+    """self.next_skip_topk must be initialized unconditionally.
 
     Same bug as skip_topk: only set inside `if is_nextn:` (inside `if self.use_nsa:`),
     so non-NSA MLA models raise AttributeError in forward_absorb_prepare.
     """
-    min_indent = _min_indent_of_assignment("next_skip_topk")
-    assert min_indent is not None, (
-        "self.next_skip_topk assignment not found in sglang.patch deepseek_v2.py added lines"
+    r = subprocess.run(
+        ["python3", "-c", UNCONDITIONAL_INIT_CHECK, "next_skip_topk"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert min_indent <= 12, (
-        f"self.next_skip_topk is only assigned at indent={min_indent} — still nested inside "
-        f"'if is_nextn:'. Non-NSA MLA models will AttributeError. "
-        f"Initialize next_skip_topk unconditionally before 'if self.use_nsa:'."
+    assert "PASS" in r.stdout, (
+        f"self.next_skip_topk not initialized unconditionally — non-NSA MLA models "
+        f"will raise AttributeError.\nstdout: {r.stdout.strip()}\nstderr: {r.stderr.strip()}"
     )
 
 
@@ -200,7 +246,7 @@ def test_return_includes_topk_indices():
     """forward_absorb_prepare returns topk_indices for cross-layer caching."""
     lines = _dsv2_all_hunk_lines()
     has_tuple_return = any(
-        l.strip().startswith("return output,") and "topk" in l
+        (l.strip().startswith("return output,") and "topk" in l)
         or l.strip().startswith("return output, None")
         for l in lines
     )

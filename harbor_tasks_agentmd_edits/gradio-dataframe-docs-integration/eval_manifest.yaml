@@ -1,0 +1,89 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 11766
+  base_commit: "5a4ae4926b9dadefd5cf9d0225f5e8ed69eebb51"
+  merge_commit: "dfc0e0305068dbd16ce905afc73d139e1e51eb46"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Syntax/compilation gates (pass_to_pass)
+  # ---------------------------------------------------------------------------
+  - id: typescript_syntax_layout_server
+    type: pass_to_pass
+    origin: static
+    description: "Layout server TypeScript file must be syntactically valid"
+
+  - id: typescript_syntax_js_page_server
+    type: pass_to_pass
+    origin: static
+    description: "JS page server TypeScript file must be syntactically valid"
+
+  - id: typescript_syntax_jsdoc_page_server
+    type: pass_to_pass
+    origin: static
+    description: "JSDoc page server TypeScript file must be syntactically valid"
+
+  - id: typescript_syntax_js_client_page_server
+    type: pass_to_pass
+    origin: static
+    description: "JS client page server TypeScript file must be syntactically valid"
+
+  - id: package_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "Package.json must be valid JSON"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # ---------------------------------------------------------------------------
+  - id: dataframe_readme_has_comprehensive_docs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "js/dataframe/README.md must have comprehensive standalone documentation with Install, Usage, Props, Events sections"
+
+  - id: standalone_readme_deleted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "js/dataframe/standalone/README.md must be deleted (content moved to main README.md)"
+
+  - id: website_layout_has_components_filter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Website layout must filter js_pages to only include documented components (dataframe, js-client)"
+
+  - id: website_js_page_dynamic_redirect
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JS index page must use dynamic redirect with urlExists instead of hardcoded atoms redirect"
+
+  - id: package_exports_have_default
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Package.json exports must include 'default' field for proper module resolution"
+
+  - id: prism_svelte_import_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Prism-svelte must be imported in documentation page servers for syntax highlighting"
+
+  - id: language_map_extended
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Language map must include svelte, markdown, and css support"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static) — consistency checks
+  # ---------------------------------------------------------------------------
+  - id: types_field_unchanged
+    type: pass_to_pass
+    origin: static
+    description: "Package.json types field should remain properly ordered"
+
+  - id: navigation_links_removed
+    type: pass_to_pass
+    origin: static
+    description: "Navigation next/prev links removed from documentation pages"
+
+rubric: []

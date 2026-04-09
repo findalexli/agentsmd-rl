@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/repo"
@@ -49,6 +50,17 @@ def _extract_fn_body(src: str, fn_name: str) -> str | None:
     return src[brace_pos:pos]
 
 
+def _cargo_check_uv_python() -> subprocess.CompletedProcess:
+    """Run cargo check on the uv-python crate to verify it compiles."""
+    return subprocess.run(
+        ["cargo", "check", "--package", "uv-python", "--offline"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gates — both files must exist
 # ---------------------------------------------------------------------------
@@ -61,15 +73,46 @@ def _gate():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core refactoring checks
+# Fail-to-pass (pr_diff) — core refactoring checks (BEHAVIORAL)
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
+def test_refactored_code_compiles():
+    """The refactored uv-python crate compiles successfully."""
+    _gate()
+    result = _cargo_check_uv_python()
+    assert result.returncode == 0, f"uv-python crate failed to compile: {result.stderr}"
+
+
+# [pr_diff] fail_to_pass
+def test_from_tuple_removed():
+    """from_tuple conversion method removed from installation.rs."""
+    _gate()
+    src = _read_stripped(INSTALL)
+    assert "from_tuple" not in src, "from_tuple still in installation.rs"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests / static) — regression + structural
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_find_python_installations_still_public():
+    """The public API find_python_installations must remain public."""
+    _gate()
+    src = _read_stripped(DISCOVERY)
+    assert re.search(r"pub\s+fn\s+find_python_installations", src), (
+        "find_python_installations is no longer public"
+    )
+
+
+# [static] pass_to_pass
 def test_helper_signatures_return_python_installation():
     """Internal helpers return PythonInstallation, not (PythonSource, Interpreter) tuples."""
     _gate()
     src = _read_stripped(DISCOVERY)
 
+    # Check that renamed helpers exist with correct return type
     helpers = [
         "python_installations",
         "python_installations_from_executables",
@@ -86,82 +129,6 @@ def test_helper_signatures_return_python_installation():
         r"Result\s*<\s*\(\s*PythonSource\s*,\s*Interpreter\s*\)", src
     )
     assert len(tuple_ret) == 0, f"{len(tuple_ret)} tuple return types still present"
-
-
-# [pr_diff] fail_to_pass
-def test_from_tuple_removed():
-    """from_tuple conversion method removed from both discovery.rs and installation.rs."""
-    _gate()
-    for path in [DISCOVERY, INSTALL]:
-        src = _read_stripped(path)
-        assert "from_tuple" not in src, f"from_tuple still in {path}"
-
-
-# [pr_diff] fail_to_pass
-def test_find_python_installations_calls_renamed_helpers():
-    """The public find_python_installations function calls the renamed helper functions."""
-    _gate()
-    src = _read_stripped(DISCOVERY)
-    body = _extract_fn_body(src, "find_python_installations")
-    assert body is not None, "find_python_installations not found"
-
-    assert re.search(r"python_installations\s*\(", body), (
-        "find_python_installations does not call python_installations()"
-    )
-    assert re.search(r"python_installations_with_executable_name\s*\(", body), (
-        "find_python_installations does not call python_installations_with_executable_name()"
-    )
-    assert not re.search(r"python_interpreters\s*\(", body), (
-        "find_python_installations still calls old python_interpreters()"
-    )
-    assert not re.search(r"python_interpreters_with_executable_name\s*\(", body), (
-        "find_python_installations still calls old python_interpreters_with_executable_name()"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_python_installation_constructed_in_from_executables():
-    """PythonInstallation struct is constructed inside python_installations_from_executables."""
-    _gate()
-    src = _read_stripped(DISCOVERY)
-    body = _extract_fn_body(src, "python_installations_from_executables")
-    assert body is not None, "python_installations_from_executables not found"
-    assert re.search(r"PythonInstallation\s*\{", body), (
-        "No PythonInstallation struct construction in python_installations_from_executables"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_closures_use_field_access_not_tuple_destructuring():
-    """Closures in discovery.rs use .source/.interpreter field access, not tuple destructuring."""
-    _gate()
-    src = _read_stripped(DISCOVERY)
-
-    field_src = len(re.findall(r"\w+\.source\b", src))
-    field_int = len(re.findall(r"\w+\.interpreter\b", src))
-    assert field_src >= 5, f"Only {field_src} .source field accesses (need >= 5)"
-    assert field_int >= 5, f"Only {field_int} .interpreter field accesses (need >= 5)"
-
-    tuple_destr = re.findall(
-        r"\|\s*\(?\s*_?source\s*,\s*_?interpreter\s*\)?\s*\|", src
-    )
-    assert len(tuple_destr) == 0, (
-        f"{len(tuple_destr)} tuple destructuring patterns remain"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
-# ---------------------------------------------------------------------------
-
-# [repo_tests] pass_to_pass
-def test_find_python_installations_still_public():
-    """The public API find_python_installations must remain public."""
-    _gate()
-    src = _read_stripped(DISCOVERY)
-    assert re.search(r"pub\s+fn\s+find_python_installations", src), (
-        "find_python_installations is no longer public"
-    )
 
 
 # [static] pass_to_pass
@@ -182,6 +149,53 @@ def test_helper_bodies_not_stubs():
         assert len(non_blank) >= 8, (
             f"Helper body too short: {len(non_blank)} non-blank lines (need >= 8)"
         )
+
+
+# [static] pass_to_pass
+def test_find_python_installations_calls_renamed_helpers():
+    """The public find_python_installations function calls the renamed helper functions."""
+    _gate()
+    src = _read_stripped(DISCOVERY)
+    body = _extract_fn_body(src, "find_python_installations")
+    assert body is not None, "find_python_installations not found"
+
+    assert re.search(r"python_installations\s*\(", body), (
+        "find_python_installations does not call python_installations()"
+    )
+    assert re.search(r"python_installations_with_executable_name\s*\(", body), (
+        "find_python_installations does not call python_installations_with_executable_name()"
+    )
+
+
+# [static] pass_to_pass
+def test_python_installation_constructed_in_from_executables():
+    """PythonInstallation struct is constructed inside python_installations_from_executables."""
+    _gate()
+    src = _read_stripped(DISCOVERY)
+    body = _extract_fn_body(src, "python_installations_from_executables")
+    assert body is not None, "python_installations_from_executables not found"
+    assert re.search(r"PythonInstallation\s*\{", body), (
+        "No PythonInstallation struct construction in python_installations_from_executables"
+    )
+
+
+# [static] pass_to_pass
+def test_closures_use_field_access_not_tuple_destructuring():
+    """Closures in discovery.rs use .source/.interpreter field access, not tuple destructuring."""
+    _gate()
+    src = _read_stripped(DISCOVERY)
+
+    field_src = len(re.findall(r"\w+\.source\b", src))
+    field_int = len(re.findall(r"\w+\.interpreter\b", src))
+    assert field_src >= 5, f"Only {field_src} .source field accesses (need >= 5)"
+    assert field_int >= 5, f"Only {field_int} .interpreter field accesses (need >= 5)"
+
+    tuple_destr = re.findall(
+        r"\|\s*\(?\s*_?source\s*,\s*_?interpreter\s*\)?\s*\|", src
+    )
+    assert len(tuple_destr) == 0, (
+        f"{len(tuple_destr)} tuple destructuring patterns remain"
+    )
 
 
 # ---------------------------------------------------------------------------

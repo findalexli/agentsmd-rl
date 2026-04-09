@@ -9,20 +9,30 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import re
+import subprocess
 import textwrap
 from pathlib import Path
 
-TARGET = Path(
-    "/workspace/vllm/vllm/entrypoints/openai/chat_completion/serving.py"
-)
+REPO = "/workspace/vllm"
+TARGET = Path(f"{REPO}/vllm/entrypoints/openai/chat_completion/serving.py")
 
 
 # ---------------------------------------------------------------------------
-# Helpers: extract code blocks from the target function for behavioral exec
-# AST-only because: chat_completion_stream_generator is an async generator
-# deeply embedded in vLLM's OpenAIServingChat class, requiring model/tokenizer/
-# engine state that cannot be instantiated without GPU.
+# Helpers: extract code blocks from the target function
 # ---------------------------------------------------------------------------
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code via subprocess in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.py"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
 
 
 def _get_function_lines() -> list[str]:
@@ -41,7 +51,6 @@ def _find_block_start(func_lines: list[str]) -> int:
     """Find the start index of the index/auto_tools_called assignment block."""
     for i, line in enumerate(func_lines):
         if "auto_tools_called" in line and "False" in line:
-            # Look back for unconditional index = 0
             for j in range(i - 1, max(i - 5, -1), -1):
                 s = func_lines[j].strip()
                 if not s or s.startswith("#"):
@@ -56,14 +65,12 @@ def _find_block_start(func_lines: list[str]) -> int:
 def _extract_assignment_block(func_lines: list[str]) -> str:
     """Extract the assignment block up through should_check assignment (if present).
 
-    Stops at the if-statement that uses should_check/_should_check as a guard
-    condition (not the assignment itself).
+    Stops at the if-statement that uses should_check/_should_check as a guard.
     """
     start = _find_block_start(func_lines)
     collected = []
     for i in range(start, min(start + 30, len(func_lines))):
         stripped = func_lines[i].strip()
-        # Stop at: if should_check ... : or if ( ... _should_check ... ):
         if re.match(r"if\b.*should_check", stripped):
             break
         if re.match(r"if\b.*_should_check", stripped):
@@ -79,78 +86,30 @@ def _extract_assignment_block(func_lines: list[str]) -> str:
 
 
 def _extract_guard_condition(func_lines: list[str]) -> str:
-    """Extract the boolean condition from the if-statement guarding prev_tool_call_arr access.
-
-    Returns the condition as a string suitable for eval().
-    """
+    """Extract the boolean condition from the if-statement guarding prev_tool_call_arr access."""
     for i, line in enumerate(func_lines):
         if "_should_check" not in line and "should_check" not in line:
             continue
-
-        # Look back for the start of an if-statement (up to 5 lines)
         if_start = None
         for j in range(i, max(i - 5, -1), -1):
             s = func_lines[j].strip()
             if s.startswith("if ") or s.startswith("if("):
                 if_start = j
                 break
-
         if if_start is None:
-            # This is a should_check = ... assignment, skip
             continue
-
-        # Skip `if tool_parser:` — that's the assignment block, not the guard
         if func_lines[if_start].strip() == "if tool_parser:":
             continue
-
-        # Collect the full condition (may span multiple lines)
         cond_parts = []
         for j in range(if_start, min(if_start + 10, len(func_lines))):
             cond_parts.append(func_lines[j].strip())
             if func_lines[j].strip().endswith(":"):
                 break
-
         full = " ".join(cond_parts)
-        # Extract between 'if' and the trailing ':'
         m = re.match(r"if\s+(.+?)\s*:\s*$", full)
         if m:
             return m.group(1)
-
     raise AssertionError("Could not find should_check guard condition")
-
-
-# ---------------------------------------------------------------------------
-# Mock objects for behavioral execution
-# ---------------------------------------------------------------------------
-
-
-class _MockSelf:
-    """Mock self with _should_check_for_unstreamed_tool_arg_tokens."""
-
-    def __init__(self, result: bool):
-        self._result = result
-
-    def _should_check_for_unstreamed_tool_arg_tokens(self, delta_message, output):
-        return self._result
-
-
-class _MockToolParser:
-    """Mock tool_parser with configurable prev_tool_call_arr."""
-
-    def __init__(self, calls: list):
-        self.prev_tool_call_arr = calls
-
-
-class _MockToolCall:
-    """Mock tool call with index and arguments."""
-
-    def __init__(self, index: int = 0, arguments: str = "{}"):
-        self.index = index
-        self.arguments = arguments
-
-
-class _MockDeltaMessage:
-    tool_calls = None
 
 
 # ---------------------------------------------------------------------------
@@ -166,145 +125,162 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
 def test_index_always_defined():
-    """index must be defined after the assignment block regardless of tool_parser state.
+    """index must be unconditionally defined before the if tool_parser block.
 
-    Bug: index = 0 was only inside the 'else' branch. If tool_parser was truthy
+    Bug: index = 0 was only inside the 'else' branch. When tool_parser was set
     but prev_tool_call_arr raised, index was never assigned (NameError).
     Fix: unconditional 'index = 0' before the if/else.
 
-    Executes the extracted assignment block with multiple broken tool_parser
-    configurations and verifies index is always defined with value 0.
+    Extracts the assignment block and executes it in a subprocess with mock
+    objects to verify index is always defined with value 0.
     """
     func_lines = _get_function_lines()
     snippet = _extract_assignment_block(func_lines)
 
-    # Scenario 1: tool_parser whose prev_tool_call_arr raises RuntimeError
-    class BrokenRuntime:
-        @property
-        def prev_tool_call_arr(self):
-            raise RuntimeError("broken")
-
-    ns: dict = {"tool_parser": BrokenRuntime(), "self": _MockSelf(True),
-                "delta_message": _MockDeltaMessage(), "output": None}
+    snippet_path = Path(REPO) / "_eval_snippet.txt"
+    snippet_path.write_text(snippet)
     try:
-        exec(compile(snippet, "<test>", "exec"), ns)
-    except (RuntimeError, TypeError, IndexError):
-        pass
-    assert "index" in ns, (
-        "index was not defined when tool_parser.prev_tool_call_arr raised RuntimeError"
-    )
-    assert ns["index"] == 0, f"Expected index=0, got {ns['index']}"
+        r = _run_py("""\
+import sys
+from pathlib import Path
 
-    # Scenario 2: tool_parser whose prev_tool_call_arr raises AttributeError
-    class BrokenAttr:
-        @property
-        def prev_tool_call_arr(self):
-            raise AttributeError("no such attribute")
+snippet = Path("_eval_snippet.txt").read_text()
 
-    ns = {"tool_parser": BrokenAttr(), "self": _MockSelf(True),
-          "delta_message": _MockDeltaMessage(), "output": None}
-    try:
-        exec(compile(snippet, "<test>", "exec"), ns)
-    except (AttributeError, TypeError, RuntimeError):
-        pass
-    assert "index" in ns, (
-        "index was not defined when tool_parser.prev_tool_call_arr raised AttributeError"
-    )
-    assert ns["index"] == 0, f"Expected index=0, got {ns['index']}"
+class MockSelf:
+    def _should_check_for_unstreamed_tool_arg_tokens(self, dm, out):
+        return True
 
-    # Scenario 3: tool_parser whose prev_tool_call_arr raises TypeError
-    class BrokenType:
-        @property
-        def prev_tool_call_arr(self):
-            raise TypeError("not iterable")
+class MockDelta:
+    tool_calls = None
 
-    ns = {"tool_parser": BrokenType(), "self": _MockSelf(True),
-          "delta_message": _MockDeltaMessage(), "output": None}
-    try:
-        exec(compile(snippet, "<test>", "exec"), ns)
-    except (TypeError, RuntimeError, AttributeError):
-        pass
-    assert "index" in ns, (
-        "index was not defined when tool_parser.prev_tool_call_arr raised TypeError"
-    )
-    assert ns["index"] == 0, f"Expected index=0, got {ns['index']}"
+class BrokenParser:
+    @property
+    def prev_tool_call_arr(self):
+        raise RuntimeError("broken")
+
+# Scenario 1: tool_parser with broken prev_tool_call_arr
+ns = {"tool_parser": BrokenParser(), "self": MockSelf(),
+      "delta_message": MockDelta(), "output": None}
+try:
+    exec(compile(snippet, "<test>", "exec"), ns)
+except (RuntimeError, TypeError, IndexError):
+    pass
+
+assert "index" in ns, "index not defined when tool_parser.prev_tool_call_arr raised"
+assert ns["index"] == 0, f"Expected index=0, got {ns['index']}"
+
+# Scenario 2: tool_parser is None
+ns = {"tool_parser": None, "self": MockSelf(),
+      "delta_message": MockDelta(), "output": None}
+exec(compile(snippet, "<test>", "exec"), ns)
+assert "index" in ns, "index not defined when tool_parser is None"
+assert ns["index"] == 0, f"Expected index=0, got {ns['index']}"
+
+# Scenario 3: tool_parser with empty prev_tool_call_arr
+class EmptyParser:
+    prev_tool_call_arr = []
+
+ns = {"tool_parser": EmptyParser(), "self": MockSelf(),
+      "delta_message": MockDelta(), "output": None}
+exec(compile(snippet, "<test>", "exec"), ns)
+assert "index" in ns, "index not defined with empty parser"
+assert ns["index"] == 0, f"Expected index=0 with empty arr, got {ns['index']}"
+
+print("PASS")
+""")
+    finally:
+        snippet_path.unlink(missing_ok=True)
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_guard_prevents_empty_arr_access():
-    """The should_check guard must not allow entry when no tool calls were detected.
+    """The guard must prevent entry when no tool calls were detected.
 
-    Bug: 'if (_should_check(...) and tool_parser):' evaluated True even when
-    prev_tool_call_arr was empty, causing IndexError on arr[-1] inside the body.
-    Fix: add 'auto_tools_called' (or equivalent) to the guard condition.
+    Bug: 'if (_should_check(...) and tool_parser):' was True even when
+    prev_tool_call_arr was empty, causing IndexError on arr[-1].
+    Fix: add auto_tools_called to the guard condition.
 
-    Executes the assignment block with an empty tool_parser, then evaluates the
-    guard condition. If the guard is True, the buggy code would crash.
+    Extracts the assignment block and guard condition, executes them in a
+    subprocess with mock objects to verify the guard is False when appropriate.
     """
     func_lines = _get_function_lines()
-    assignment_block = _extract_assignment_block(func_lines)
+    snippet = _extract_assignment_block(func_lines)
+    guard = _extract_guard_condition(func_lines)
 
-    # Scenario 1: should_check True, tool_parser with empty arr
-    ns: dict = {
-        "self": _MockSelf(result=True),
-        "tool_parser": _MockToolParser([]),
-        "delta_message": _MockDeltaMessage(),
-        "output": None,
-    }
-    exec(compile(assignment_block, "<test>", "exec"), ns)
+    data_path = Path(REPO) / "_eval_data.txt"
+    data_path.write_text(f"{snippet}\n===GUARD===\n{guard}")
+    try:
+        r = _run_py("""\
+import sys
+from pathlib import Path
 
-    guard_cond = _extract_guard_condition(func_lines)
-    enters_block = bool(eval(guard_cond, dict(ns)))
-    assert not enters_block, (
-        f"Guard condition '{guard_cond}' evaluates to True when "
-        "prev_tool_call_arr is empty. This causes IndexError on "
-        "prev_tool_call_arr[-1]. Add auto_tools_called to the guard."
-    )
+raw = Path("_eval_data.txt").read_text()
+parts = raw.split("\\n===GUARD===\\n")
+snippet = parts[0]
+guard_cond = parts[1]
 
-    # Scenario 2: should_check True, tool_parser is None
-    ns = {
-        "self": _MockSelf(result=True),
-        "tool_parser": None,
-        "delta_message": _MockDeltaMessage(),
-        "output": None,
-    }
-    exec(compile(assignment_block, "<test>", "exec"), ns)
-    enters_block = bool(eval(guard_cond, dict(ns)))
-    assert not enters_block, (
-        "Guard condition must be False when tool_parser is None"
-    )
+class MockSelf:
+    def __init__(self, result):
+        self._result = result
+    def _should_check_for_unstreamed_tool_arg_tokens(self, dm, out):
+        return self._result
 
-    # Scenario 3: should_check False, tool_parser with empty arr
-    ns = {
-        "self": _MockSelf(result=False),
-        "tool_parser": _MockToolParser([]),
-        "delta_message": _MockDeltaMessage(),
-        "output": None,
-    }
-    exec(compile(assignment_block, "<test>", "exec"), ns)
-    enters_block = bool(eval(guard_cond, dict(ns)))
-    assert not enters_block, (
-        "Guard condition must be False when should_check is False"
-    )
+class MockDelta:
+    tool_calls = None
 
-    # Scenario 4: should_check True, tool_parser with calls → guard SHOULD be True
-    ns = {
-        "self": _MockSelf(result=True),
-        "tool_parser": _MockToolParser([_MockToolCall(index=0, arguments="{}")]),
-        "delta_message": _MockDeltaMessage(),
-        "output": None,
-    }
-    exec(compile(assignment_block, "<test>", "exec"), ns)
-    enters_block = bool(eval(guard_cond, dict(ns)))
-    assert enters_block, (
-        "Guard condition must be True when tool calls exist and should_check is True"
-    )
+class MockToolParser:
+    def __init__(self, calls):
+        self.prev_tool_call_arr = calls
+
+class MockToolCall:
+    def __init__(self, index=0, arguments="{}"):
+        self.index = index
+        self.arguments = arguments
+
+# Scenario 1: should_check=True, tool_parser with empty arr -> guard must be False
+ns = {"self": MockSelf(True), "tool_parser": MockToolParser([]),
+      "delta_message": MockDelta(), "output": None}
+exec(compile(snippet, "<test>", "exec"), ns)
+result = bool(eval(guard_cond, dict(ns)))
+assert not result, (
+    f"Guard '{guard_cond}' is True when prev_tool_call_arr is empty -> IndexError"
+)
+
+# Scenario 2: should_check=True, tool_parser=None -> guard must be False
+ns = {"self": MockSelf(True), "tool_parser": None,
+      "delta_message": MockDelta(), "output": None}
+exec(compile(snippet, "<test>", "exec"), ns)
+result = bool(eval(guard_cond, dict(ns)))
+assert not result, "Guard must be False when tool_parser is None"
+
+# Scenario 3: should_check=False, tool_parser with empty arr -> guard must be False
+ns = {"self": MockSelf(False), "tool_parser": MockToolParser([]),
+      "delta_message": MockDelta(), "output": None}
+exec(compile(snippet, "<test>", "exec"), ns)
+result = bool(eval(guard_cond, dict(ns)))
+assert not result, "Guard must be False when should_check is False"
+
+# Scenario 4: should_check=True, tool_parser with calls -> guard MUST be True
+ns = {"self": MockSelf(True), "tool_parser": MockToolParser([MockToolCall()]),
+      "delta_message": MockDelta(), "output": None}
+exec(compile(snippet, "<test>", "exec"), ns)
+result = bool(eval(guard_cond, dict(ns)))
+assert result, "Guard must be True when tool calls exist and should_check is True"
+
+print("PASS")
+""")
+    finally:
+        data_path.unlink(missing_ok=True)
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -314,7 +290,7 @@ def test_guard_prevents_empty_arr_access():
 
 # [pr_diff] pass_to_pass
 def test_correct_index_with_tool_calls():
-    """index must equal the last tool call's index when tool calls are present.
+    """index must equal the last tool call's index when calls are present.
 
     Executes the assignment block with various tool_parser configurations and
     verifies index is computed correctly from prev_tool_call_arr.
@@ -322,14 +298,28 @@ def test_correct_index_with_tool_calls():
     func_lines = _get_function_lines()
     snippet = _extract_assignment_block(func_lines)
 
+    class _Self:
+        def _should_check_for_unstreamed_tool_arg_tokens(self, dm, out):
+            return True
+
+    class _Delta:
+        tool_calls = None
+
+    class _Parser:
+        def __init__(self, calls):
+            self.prev_tool_call_arr = calls
+
+    class _Call:
+        pass
+
     # index = len(prev_tool_call_arr) - 1 when calls exist
     for num_calls in [1, 3, 5, 10]:
-        calls = [_MockToolCall() for _ in range(num_calls)]
+        calls = [_Call() for _ in range(num_calls)]
         expected_idx = num_calls - 1
         ns: dict = {
-            "tool_parser": _MockToolParser(calls),
-            "self": _MockSelf(True),
-            "delta_message": _MockDeltaMessage(),
+            "tool_parser": _Parser(calls),
+            "self": _Self(),
+            "delta_message": _Delta(),
             "output": None,
         }
         exec(compile(snippet, "<test>", "exec"), ns)
@@ -340,9 +330,9 @@ def test_correct_index_with_tool_calls():
 
     # Empty arr — index should be 0
     ns = {
-        "tool_parser": _MockToolParser([]),
-        "self": _MockSelf(True),
-        "delta_message": _MockDeltaMessage(),
+        "tool_parser": _Parser([]),
+        "self": _Self(),
+        "delta_message": _Delta(),
         "output": None,
     }
     exec(compile(snippet, "<test>", "exec"), ns)
@@ -351,8 +341,8 @@ def test_correct_index_with_tool_calls():
     # No tool_parser — index should be 0
     ns = {
         "tool_parser": None,
-        "self": _MockSelf(True),
-        "delta_message": _MockDeltaMessage(),
+        "self": _Self(),
+        "delta_message": _Delta(),
         "output": None,
     }
     exec(compile(snippet, "<test>", "exec"), ns)

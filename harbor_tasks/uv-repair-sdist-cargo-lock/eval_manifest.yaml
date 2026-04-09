@@ -1,0 +1,49 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/uv"
+  pr: 18831
+  base_commit: "c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87"
+  merge_commit: "f40124f1eec8a813d2040dad2f7ad624179c655a"
+
+checks:
+  - id: rejects_non_tarfile
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script exits non-zero when given a non-tarball file"
+
+  - id: rejects_missing_cargo_lock
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script exits non-zero when sdist tarball has no Cargo.lock"
+
+  - id: rejects_multi_toplevel
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script exits non-zero when tarball has multiple top-level directories"
+
+  - id: repairs_and_repacks_sdist
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script prunes stale Cargo.lock entries and repacks the tarball"
+
+  - id: cli_argument_parsing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Script provides a CLI with --help that describes its purpose"
+
+  - id: top_level_imports
+    type: fail_to_pass
+    origin: agent_config
+    description: "All imports are at module level, not inside functions"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87"
+
+rubric:
+  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
+    source:
+      path: "AGENTS.md"
+      lines: "17-18"
+      commit: "c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87"

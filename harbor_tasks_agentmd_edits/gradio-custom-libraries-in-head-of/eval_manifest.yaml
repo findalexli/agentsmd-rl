@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "gradio-app/gradio"
+  pr: 12990
+  base_commit: "0b943a4fd0d7701203f1b79b70b5afed19ee8413"
+  merge_commit: "b0b1dc3282389a64ef3e16edb98805911f97444c"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified html.py parses without syntax errors"
+
+  - id: head_parameter_accepted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "gr.HTML accepts head parameter without TypeError"
+
+  - id: head_in_config
+    type: fail_to_pass
+    origin: pr_diff
+    description: "head value is included in component config output"
+
+  - id: head_none_default
+    type: fail_to_pass
+    origin: pr_diff
+    description: "head defaults to None when not provided"
+
+  - id: head_stored_on_instance
+    type: fail_to_pass
+    origin: pr_diff
+    description: "head attribute is accessible on HTML instance"
+
+  - id: existing_html_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing HTML component tests still pass"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "HTML.get_config has real logic, not just pass/return"
+
+  - id: skill_documentation_exists
+    type: pass_to_pass
+    origin: agent_config
+    description: "SKILL.md documents HTML component parameters"
+    source:
+      path: ".agents/skills/gradio/SKILL.md"
+      lines: "1-150"
+      commit: "0b943a4fd0d7701203f1b79b70b5afed19ee8413"
+
+rubric:
+  []

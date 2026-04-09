@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22199
+  base_commit: "73fc87a74f5e6e2974403d95292dca9bb387b288"
+  merge_commit: "be0277f9a0e474ba14b3ed63e8a7316b1e2c81d1"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified test file must parse without errors"
+
+  - id: new_test_method_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestNgramSpeculativeDecodingFlashinfer must have test_output_as_corpus_boosts_accept_length method"
+
+  - id: sam_budget_flag_added
+    type: fail_to_pass
+    origin: pr_diff
+    description: "get_server_args must include --speculative-ngram-external-sam-budget 8 flag"
+
+  - id: old_smoke_class_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestNgramExternalSamSmoke class must be removed"
+
+  - id: unused_imports_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Unused imports (json, os, tempfile) should be removed"
+
+  - id: unused_helpers_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Helper functions and EXTERNAL_SAM_CORPUS_RECORDS constant should be removed"
+
+  - id: file_imports_cleanly
+    type: pass_to_pass
+    origin: static
+    description: "Test file must have valid imports and structure"
+
+  - id: base_classes_still_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core test base classes should be preserved"
+
+rubric: []

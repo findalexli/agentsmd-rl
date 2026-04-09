@@ -7,30 +7,20 @@ source:
   merge_commit: "b61f54b5f6042369840d0c02d620ff762b5010d7"  # PR head (closed without merge)
 
 checks:
-  - id: shim_h_two_arg_deleter_callback
+  - id: shim_h_two_arg_deleter_compiles
     type: fail_to_pass
     origin: pr_diff
-    description: "shim.h declares a C function with a two-arg deleter callback: void (*)(void*, void*)"
+    description: "shim.h torch_from_blob compiles with two-arg callback + void* context"
 
-  - id: shim_h_context_pointer
+  - id: ops_h_accepts_capturing_lambda
     type: fail_to_pass
     origin: pr_diff
-    description: "shim.h torch_from_blob declaration carries a separate void* context parameter after the callback"
-
-  - id: shim_cpp_wraps_two_arg_callback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "shim_common.cpp accepts a two-arg callback and wraps it for at::for_blob"
-
-  - id: ops_h_generic_callable
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ops.h from_blob accepts generic callables (template or std::function), not just DeleterFnPtr"
+    description: "ops.h from_blob accepts capturing lambdas via template (not just DeleterFnPtr)"
 
   - id: shim_cpp_context_forwarded
     type: fail_to_pass
     origin: pr_diff
-    description: "shim_common.cpp forwards the context pointer through a wrapping lambda to the two-arg callback"
+    description: "shim_common.cpp forwards context pointer through wrapping lambda"
 
   - id: no_deleter_overload_preserved
     type: pass_to_pass

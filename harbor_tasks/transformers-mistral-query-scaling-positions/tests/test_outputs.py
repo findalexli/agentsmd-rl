@@ -30,30 +30,6 @@ MODULAR_FILES = {
     "mistral4": "src/transformers/models/mistral4/modular_mistral4.py",
 }
 
-# Boilerplate for extracting and executing get_llama_4_attn_scale in a subprocess.
-_EXTRACT_BOILERPLATE = """\
-import ast, textwrap, sys
-from pathlib import Path
-import torch
-
-FILEPATH = {filepath!r}
-src = Path(FILEPATH).read_text()
-tree = ast.parse(src)
-lines = src.splitlines()
-fn = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "get_llama_4_attn_scale":
-        func_lines = lines[node.lineno - 1 : node.end_lineno]
-        func_src = textwrap.dedent("\\n".join(func_lines))
-        ns = {{"torch": torch}}
-        exec(compile(func_src, FILEPATH, "exec"), ns)
-        fn = ns["get_llama_4_attn_scale"]
-        break
-if fn is None:
-    print("FAIL: get_llama_4_attn_scale not found in " + FILEPATH, file=sys.stderr)
-    sys.exit(1)
-"""
-
 
 def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Write code to a temp file and execute via python3 in the repo directory."""
@@ -68,15 +44,9 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         script.unlink(missing_ok=True)
 
 
-def _run_scale_test(filepath: str, test_body: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Extract get_llama_4_attn_scale from filepath, then run test_body with `fn` bound."""
-    code = _EXTRACT_BOILERPLATE.format(filepath=filepath) + "\n" + test_body + '\nprint("PASS")\n'
-    return _run_py(code, timeout)
-
-
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Pass-to-pass (static) — syntax / compilation checks
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_syntax_check():
@@ -107,59 +77,71 @@ def test_not_stub():
         assert found, f"{model}: get_llama_4_attn_scale not found in {f}"
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via subprocess
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_ministral3_modeling_scale_shape():
-    """get_llama_4_attn_scale in ministral3/modeling returns 4D tensor (B,1,S,1) for varied shapes."""
-    r = _run_scale_test(
-        f"{REPO}/{MODELING_FILES['ministral3']}",
-        """
+    """get_llama_4_attn_scale in ministral3/modeling returns 4D tensor (B,1,S,1) for varied input shapes."""
+    code = f"""
+import torch
+import sys
+sys.path.insert(0, "{REPO}/src")
+from transformers.models.ministral3.modeling_ministral3 import get_llama_4_attn_scale
+
 for B, S in [(1, 3), (2, 4), (3, 1)]:
     pos = torch.randint(0, 128, (B, S))
-    result = fn(pos, beta=0.1, max_position_embeddings=4)
-    assert result.ndim == 4, f"Expected 4D, got {result.ndim}D with shape {result.shape}"
-    assert result.shape == (B, 1, S, 1), f"Expected ({B},1,{S},1), got {result.shape}"
-""",
-    )
-    assert r.returncode == 0, f"ministral3 scale shape test failed: {r.stderr}"
+    result = get_llama_4_attn_scale(pos, beta=0.1, max_position_embeddings=4)
+    assert result.ndim == 4, f"Expected 4D, got {{result.ndim}}D with shape {{result.shape}}"
+    assert result.shape == (B, 1, S, 1), f"Expected ({{B}},1,{{S}},1), got {{result.shape}}"
+
+print("PASS")
+"""
+    r = _run_py(code)
+    assert r.returncode == 0, f"ministral3 scale shape test failed: {{r.stderr}}"
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_mistral4_modeling_scale_shape():
-    """get_llama_4_attn_scale in mistral4/modeling returns 4D tensor (B,1,S,1) for varied shapes."""
-    r = _run_scale_test(
-        f"{REPO}/{MODELING_FILES['mistral4']}",
-        """
+    """get_llama_4_attn_scale in mistral4/modeling returns 4D tensor (B,1,S,1) for varied input shapes."""
+    code = f"""
+import torch
+import sys
+sys.path.insert(0, "{REPO}/src")
+from transformers.models.mistral4.modeling_mistral4 import get_llama_4_attn_scale
+
 for B, S in [(1, 3), (2, 3), (2, 1)]:
     pos = torch.randint(0, 256, (B, S))
-    result = fn(pos, beta=0.1, max_position_embeddings=64)
-    assert result.ndim == 4, f"Expected 4D, got {result.ndim}D with shape {result.shape}"
-    assert result.shape == (B, 1, S, 1), f"Expected ({B},1,{S},1), got {result.shape}"
-""",
-    )
-    assert r.returncode == 0, f"mistral4 scale shape test failed: {r.stderr}"
+    result = get_llama_4_attn_scale(pos, beta=0.1, max_position_embeddings=64)
+    assert result.ndim == 4, f"Expected 4D, got {{result.ndim}}D with shape {{result.shape}}"
+    assert result.shape == (B, 1, S, 1), f"Expected ({{B}},1,{{S}},1), got {{result.shape}}"
+
+print("PASS")
+"""
+    r = _run_py(code)
+    assert r.returncode == 0, f"mistral4 scale shape test failed: {{r.stderr}}"
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_scaling_formula_values():
     """Scaling formula 1+beta*log(1+floor(pos/max_pos)) matches expected values at 5 diverse positions."""
-    r = _run_scale_test(
-        f"{REPO}/{MODELING_FILES['ministral3']}",
-        """
+    code = f"""
+import torch
 import math
+import sys
+sys.path.insert(0, "{REPO}/src")
+from transformers.models.ministral3.modeling_ministral3 import get_llama_4_attn_scale
 
 beta = 0.1
 max_pos = 64
 pos = torch.tensor([[0, 64, 128, 256, 384]])
 
-result = fn(pos, beta=beta, max_position_embeddings=max_pos)
+result = get_llama_4_attn_scale(pos, beta=beta, max_position_embeddings=max_pos)
 
-assert result.shape == (1, 1, 5, 1), f"Expected (1,1,5,1), got {result.shape}"
+assert result.shape == (1, 1, 5, 1), f"Expected (1,1,5,1), got {{result.shape}}"
 
 expected = [
     1.0,                          # floor(0/64)=0,   log(1+0)=0
@@ -170,64 +152,154 @@ expected = [
 ]
 for i, exp in enumerate(expected):
     got = result[0, 0, i, 0].item()
-    assert abs(got - exp) < 1e-4, f"pos={pos[0, i].item()}: expected {exp:.4f}, got {got:.4f}"
-""",
-    )
-    assert r.returncode == 0, f"Scaling formula test failed: {r.stderr}"
+    assert abs(got - exp) < 1e-4, f"pos={{pos[0, i].item()}}: expected {{exp:.4f}}, got {{got:.4f}}"
+
+print("PASS")
+"""
+    r = _run_py(code)
+    assert r.returncode == 0, f"Scaling formula test failed: {{r.stderr}}"
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_per_batch_scaling_differs():
     """Different position_ids per batch item produce different scaling values and correct 4D shape."""
-    r = _run_scale_test(
-        f"{REPO}/{MODELING_FILES['mistral4']}",
-        """
-pos = torch.tensor([[0, 1, 2, 3], [100, 101, 102, 103]])
-result = fn(pos, beta=0.1, max_position_embeddings=64)
+    code = f"""
+import torch
+import sys
+sys.path.insert(0, "{REPO}/src")
+from transformers.models.mistral4.modeling_mistral4 import get_llama_4_attn_scale
 
-assert result.ndim == 4, f"Expected 4D, got {result.ndim}D"
-assert result.shape == (2, 1, 4, 1), f"Expected (2,1,4,1), got {result.shape}"
+pos = torch.tensor([[0, 1, 2, 3], [100, 101, 102, 103]])
+result = get_llama_4_attn_scale(pos, beta=0.1, max_position_embeddings=64)
+
+assert result.ndim == 4, f"Expected 4D, got {{result.ndim}}D"
+assert result.shape == (2, 1, 4, 1), f"Expected (2,1,4,1), got {{result.shape}}"
 
 batch0 = result[0, 0, :, 0]
 batch1 = result[1, 0, :, 0]
 
-assert (batch0 - 1.0).abs().max() < 1e-5, f"Batch 0 (pos 0-3) should all be 1.0, got {batch0}"
-assert (batch1 > 1.0).all(), f"Batch 1 (pos 100-103) should all be >1.0, got {batch1}"
+assert (batch0 - 1.0).abs().max() < 1e-5, f"Batch 0 (pos 0-3) should all be 1.0, got {{batch0}}"
+assert (batch1 > 1.0).all(), f"Batch 1 (pos 100-103) should all be >1.0, got {{batch1}}"
 assert not torch.allclose(batch0, batch1), "Batches must produce different scaling values"
-""",
-    )
-    assert r.returncode == 0, f"Per-batch scaling test failed: {r.stderr}"
+
+print("PASS")
+"""
+    r = _run_py(code)
+    assert r.returncode == 0, f"Per-batch scaling test failed: {{r.stderr}}"
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (agent_config) — modular file requirement from .ai/AGENTS.md
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Fail-to-pass (agent_config) — modular file requirements from .ai/AGENTS.md
+# -----------------------------------------------------------------------------
 
 # [agent_config] fail_to_pass — .ai/AGENTS.md:66 @ e94695e574f969ba5eeb8e442a7fb1e9f72ff37f
 def test_ministral3_modular_scale_shape():
     """get_llama_4_attn_scale in modular_ministral3.py is also fixed to return 4D tensor."""
-    r = _run_scale_test(
-        f"{REPO}/{MODULAR_FILES['ministral3']}",
-        """
+    code = f"""
+import torch
+import sys
+sys.path.insert(0, "{REPO}/src")
+from transformers.models.ministral3.modular_ministral3 import get_llama_4_attn_scale
+
 for B, S in [(1, 3), (2, 2), (1, 5)]:
     pos = torch.randint(0, 32, (B, S))
-    result = fn(pos, beta=0.1, max_position_embeddings=4)
-    assert result.ndim == 4, f"Expected 4D, got {result.ndim}D ({result.shape})"
-    assert result.shape == (B, 1, S, 1), f"Expected ({B},1,{S},1), got {result.shape}"
-""",
-    )
-    assert r.returncode == 0, f"Ministral3 modular scale shape test failed: {r.stderr}"
+    result = get_llama_4_attn_scale(pos, beta=0.1, max_position_embeddings=4)
+    assert result.ndim == 4, f"Expected 4D, got {{result.ndim}}D ({{result.shape}})"
+    assert result.shape == (B, 1, S, 1), f"Expected ({{B}},1,{{S}},1), got {{result.shape}}"
+
+print("PASS")
+"""
+    r = _run_py(code)
+    assert r.returncode == 0, f"Ministral3 modular scale shape test failed: {{r.stderr}}"
     assert "PASS" in r.stdout
 
 
 # [agent_config] fail_to_pass — .ai/AGENTS.md:66 @ e94695e574f969ba5eeb8e442a7fb1e9f72ff37f
-def test_modular_forward_no_absolute_positions():
-    """Both modular forward() methods no longer compute absolute_positions from cache; use position_ids directly."""
-    for model, path in MODULAR_FILES.items():
-        src = Path(f"{REPO}/{path}").read_text()
-        assert "absolute_positions" not in src, (
-            f"modular_{model}.py still uses old absolute_positions pattern — "
-            "edit the modular file to pass position_ids directly to get_llama_4_attn_scale"
-        )
+def test_mistral4_modular_scale_shape():
+    """get_llama_4_attn_scale in modular_mistral4.py is also fixed to return 4D tensor."""
+    code = f"""
+import torch
+import sys
+sys.path.insert(0, "{REPO}/src")
+from transformers.models.mistral4.modular_mistral4 import get_llama_4_attn_scale
+
+for B, S in [(1, 3), (2, 2), (1, 5)]:
+    pos = torch.randint(0, 32, (B, S))
+    result = get_llama_4_attn_scale(pos, beta=0.1, max_position_embeddings=4)
+    assert result.ndim == 4, f"Expected 4D, got {{result.ndim}}D ({{result.shape}})"
+    assert result.shape == (B, 1, S, 1), f"Expected ({{B}},1,{{S}},1), got {{result.shape}}"
+
+print("PASS")
+"""
+    r = _run_py(code)
+    assert r.returncode == 0, f"Mistral4 modular scale shape test failed: {{r.stderr}}"
+    assert "PASS" in r.stdout
+
+
+# [agent_config] fail_to_pass — .ai/AGENTS.md:66 @ e94695e574f969ba5eeb8e442a7fb1e9f72ff37f
+def test_ministral3_modular_no_absolute_positions():
+    """Ministral3 modular forward() no longer computes absolute_positions from cache; uses position_ids directly."""
+    code = f"""
+import ast
+from pathlib import Path
+
+src = Path("{REPO}/src/transformers/models/ministral3/modular_ministral3.py").read_text()
+tree = ast.parse(src)
+
+# Find Ministral3Attention.forward method
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "Ministral3Attention":
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == "forward":
+                forward_src = "\\n".join(src.splitlines()[item.lineno-1:item.end_lineno])
+                if "absolute_positions" in forward_src:
+                    print("FAIL: modular_ministral3.py forward() still uses absolute_positions")
+                    sys.exit(1)
+                if "position_ids" not in forward_src:
+                    print("FAIL: modular_ministral3.py forward() does not accept position_ids parameter")
+                    sys.exit(1)
+                print("PASS")
+                sys.exit(0)
+
+print("FAIL: Could not find Ministral3Attention.forward")
+sys.exit(1)
+"""
+    r = _run_py(code)
+    assert r.returncode == 0, f"Ministral3 modular absolute_positions check failed: {{r.stderr}}"
+    assert "PASS" in r.stdout
+
+
+# [agent_config] fail_to_pass — .ai/AGENTS.md:66 @ e94695e574f969ba5eeb8e442a7fb1e9f72ff37f
+def test_mistral4_modular_no_absolute_positions():
+    """Mistral4 modular forward() no longer computes absolute_positions from cache; uses position_ids directly."""
+    code = f"""
+import ast
+import sys
+from pathlib import Path
+
+src = Path("{REPO}/src/transformers/models/mistral4/modular_mistral4.py").read_text()
+tree = ast.parse(src)
+
+# Find Mistral4Attention.forward method
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "Mistral4Attention":
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == "forward":
+                forward_src = "\\n".join(src.splitlines()[item.lineno-1:item.end_lineno])
+                if "absolute_positions" in forward_src:
+                    print("FAIL: modular_mistral4.py forward() still uses absolute_positions")
+                    sys.exit(1)
+                if "position_ids" not in forward_src:
+                    print("FAIL: modular_mistral4.py forward() does not accept position_ids parameter")
+                    sys.exit(1)
+                print("PASS")
+                sys.exit(0)
+
+print("FAIL: Could not find Mistral4Attention.forward")
+sys.exit(1)
+"""
+    r = _run_py(code)
+    assert r.returncode == 0, f"Mistral4 modular absolute_positions check failed: {{r.stderr}}"
+    assert "PASS" in r.stdout
