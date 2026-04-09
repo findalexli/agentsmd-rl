@@ -34,6 +34,42 @@ def test_cargo_check():
     )
 
 
+# [repo_tests] pass_to_pass
+def test_cargo_clippy():
+    """turbo-persistence crate passes clippy linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "turbo-persistence"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"cargo clippy failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_test_filtered():
+    """turbo-persistence unit tests pass (excluding slow integration tests) (pass_to_pass)."""
+    # Exclude slow tests: full_cycle, merge_file_removal, partial_compaction, simulate_compactions
+    r = subprocess.run(
+        [
+            "cargo", "test", "-p", "turbo-persistence", "--lib", "--",
+            "--skip", "full_cycle",
+            "--skip", "merge_file_removal",
+            "--skip", "partial_compaction",
+            "--skip", "simulate_compactions",
+            "--test-threads=4"
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"cargo test failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core code changes
 # ---------------------------------------------------------------------------

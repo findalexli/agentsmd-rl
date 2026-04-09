@@ -71,6 +71,30 @@ checks:
       lines: "2"
       commit: "7b00e3ba398d355d5f277a4896743b16f21049eb"
 
+  # ---------------------------------------------------------------------------
+  # Repo CI/CD pass_to_pass gates — discovered from repo Makefile and workflows
+  # ---------------------------------------------------------------------------
+
+  - id: test_repo_granite_config
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Granite base config test from repo test suite passes"
+
+  - id: test_repo_granitemoe_config
+    type: pass_to_pass
+    origin: repo_tests
+    description: "GraniteMoe config test from repo test suite passes"
+
+  - id: test_repo_granitemoeshared_config
+    type: pass_to_pass
+    origin: repo_tests
+    description: "GraniteMoeShared config test from repo test suite passes"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ruff format check passes on modified config files"
+
 rubric:
   - rule: "When writing tests, they should be added to an existing file. The only exception is for PRs to add a new model, when a new test directory should be created for that model."
     source:

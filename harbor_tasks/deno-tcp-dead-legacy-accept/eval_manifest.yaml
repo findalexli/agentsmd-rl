@@ -12,6 +12,36 @@ checks:
     origin: static
     description: "Modified files must exist and retain core structure (TCP class, listen method, EXPECTED_VIOLATIONS)"
 
+  - id: test_repo_tcp_wrap_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: tcp_wrap.ts must import from _listen.ts (ceilPowOf2 used by listen path)"
+
+  - id: test_repo_listen_module_exports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: _listen.ts must export ceilPowOf2 and backoff constants"
+
+  - id: test_repo_lint_plugin_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: lint plugin must have valid EXPECTED_VIOLATIONS structure"
+
+  - id: test_repo_tcp_wrap_violation_count
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: tcp_wrap.ts Deno.* usage count must match EXPECTED_VIOLATIONS (base: 3, post-fix: 0)"
+
+  - id: test_repo_tcp_wrap_core_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: tcp_wrap.ts must have required ext:core/ops and ext:deno_node imports"
+
+  - id: test_repo_listen_module_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: _listen.ts must export ceilPowOf2 with correct signature and backoff constants"
+
   - id: legacy_listen_branch_removed
     type: fail_to_pass
     origin: pr_diff

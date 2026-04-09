@@ -214,3 +214,29 @@ def test_ruff_check():
     assert r.returncode == 0, f"ruff check failed:\n{r.stdout.decode()}"
 
 
+# [repo_tests] pass_to_pass — repo CI: ruff format check
+def test_ruff_format_check():
+    """ruff format --check passes on all changed files (repo CI via Makefile 'check-repo' target)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check"] + CHANGED_FILES,
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo CI: module import test
+def test_continuous_batching_modules_import():
+    """All modified continuous batching modules import without errors (repo CI)."""
+    import importlib
+
+    modules = [
+        "transformers.generation.configuration_utils",
+        "transformers.generation.continuous_batching.requests",
+        "transformers.generation.continuous_batching.continuous_api",
+        "transformers.generation.continuous_batching.input_outputs",
+    ]
+    for mod in modules:
+        importlib.import_module(mod)
+
+

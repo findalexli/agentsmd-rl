@@ -1,6 +1,6 @@
 """
 Task: posthog-legacy-filter-insight-gate
-Repo: posthog @ 011a93306e5dfe5e26464fba7c61680076df62c8
+Repo: posthog @ 011a93306e5dfe6e26464fba7c61680076df62c8
 PR:   53653
 
 All checks must pass for reward = 1. Any failure = reward 0.
@@ -47,6 +47,36 @@ def test_syntax_check():
     ast.parse(src)
 
 
+# [repo_tests] pass_to_pass — Repo CI/CD checks
+def test_repo_syntax_insight_py():
+    """Repo: posthog/api/insight.py passes Python syntax check (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", f"{REPO}/posthog/api/insight.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed for insight.py:\n{r.stderr}"
+
+
+def test_repo_syntax_test_insight_py():
+    """Repo: posthog/api/test/test_insight.py passes Python syntax check (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", f"{REPO}/posthog/api/test/test_insight.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed for test_insight.py:\n{r.stderr}"
+
+
+def test_repo_ast_parse_insight_files():
+    """Repo: All insight-related Python files parse as valid AST (pass_to_pass)."""
+    files = [
+        f"{REPO}/posthog/api/insight.py",
+        f"{REPO}/posthog/api/test/test_insight.py",
+    ]
+    for f in files:
+        src = Path(f).read_text()
+        ast.parse(src)  # raises SyntaxError if invalid
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -81,6 +111,8 @@ def test_filters_blocked_returns_false_without_distinct_id():
         "LEGACY_INSIGHT_FILTERS_BLOCKED_FLAG": "legacy-insight-filters-disabled",
         "getattr": getattr,
         "str": str,
+        "Any": type("Any", (), {}),
+        "Team": type("Team", (), {}),
     }
     exec(func_src, ns)
 
@@ -120,6 +152,8 @@ def test_filters_blocked_delegates_to_feature_flag():
         "LEGACY_INSIGHT_FILTERS_BLOCKED_FLAG": "legacy-insight-filters-disabled",
         "getattr": getattr,
         "str": str,
+        "Any": type("Any", (), {}),
+        "Team": type("Team", (), {}),
     }
     exec(func_src, ns)
 
@@ -167,6 +201,8 @@ def test_filters_blocked_returns_feature_flag_result():
             "LEGACY_INSIGHT_FILTERS_BLOCKED_FLAG": "legacy-insight-filters-disabled",
             "getattr": getattr,
             "str": str,
+            "Any": type("Any", (), {}),
+            "Team": type("Team", (), {}),
         }
         exec(func_src, ns)
         result = ns["is_legacy_insight_filters_blocked"](user, team)
@@ -241,7 +277,7 @@ def test_not_stub():
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass — AGENTS.md:92 @ 011a93306e5dfe5e26464fba7c61680076df62c8
+# [agent_config] fail_to_pass — AGENTS.md:92 @ 011a93306e5dfe6e26464fba7c61680076df62c8
 def test_new_function_has_type_hints():
     """New function must use type hints (AGENTS.md: 'Python: Use type hints (mypy-strict style)')."""
     src = INSIGHT_PY.read_text()

@@ -1,0 +1,83 @@
+source:
+  pr:
+    owner: JetBrains
+    repo: kotlin
+    number: 5823
+    merge_commit: c77170daaa06966d96f46895f51d33a210ad578a
+    base_commit: 8a4eec5e568ebd8e3203fc214468259678be1135
+  task:
+    name: kotlin-fe-psi-attachments
+    description: Add PSI attachments to exception in checkPsiTypeConsistency for better debugging
+    primary_file: compiler/frontend.common/src/org/jetbrains/kotlin/diagnostics/KtDiagnostic.kt
+
+checks:
+  # Pass-to-pass tests: repo CI checks that should pass on both base and fixed commits
+  - id: test_p2p_frontend_common_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - compiler:frontend.common compiles successfully
+    timeout: 900
+  - id: test_p2p_frontend_common_classes_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - compiler:frontend.common produces class files
+    timeout: 900
+  - id: test_p2p_kotlin_file_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - KtDiagnostic.kt has valid syntax
+    timeout: 60
+  - id: test_p2p_no_gradle_configuration_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - Gradle configuration has no errors for the module
+    timeout: 300
+  - id: test_p2p_gradlew_available
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - Gradle wrapper is available and executable
+    timeout: 10
+  - id: test_p2p_target_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - Target file KtDiagnostic.kt exists in expected location
+    timeout: 10
+  - id: test_p2p_module_build_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - Module build.gradle.kts exists
+    timeout: 10
+
+  # Fail-to-pass tests: verify the fix works correctly
+  - id: test_kotlin_file_compiles
+    type: f2p
+    description: The modified Kotlin file compiles successfully
+  - id: test_require_with_attachment_imported
+    type: f2p
+    description: requireWithAttachment is imported from the utils.exceptions package
+    source:
+      origin: agent_config
+      ref: "CLAUDE.md - Compiler Architecture - Commit Guidelines"
+  - id: test_with_psi_entry_imported
+    type: f2p
+    description: withPsiEntry is imported from the utils.exceptions package
+    source:
+      origin: agent_config
+      ref: "CLAUDE.md - Compiler Architecture - Commit Guidelines"
+  - id: test_require_with_attachment_used_in_function
+    type: f2p
+    description: requireWithAttachment is used in checkPsiTypeConsistency function
+  - id: test_with_psi_entry_called_for_psi_element
+    type: f2p
+    description: withPsiEntry is called for the psi element with label "psi"
+  - id: test_with_psi_entry_called_for_file
+    type: f2p
+    description: withPsiEntry is called for the file with label "file"
+  - id: test_old_require_not_used
+    type: f2p
+    description: The old require pattern is replaced with requireWithAttachment
+  - id: test_error_message_preserved
+    type: p2p
+    description: The original error message content is preserved in the new implementation
+
+rubric: []

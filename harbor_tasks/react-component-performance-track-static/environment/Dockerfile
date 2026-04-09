@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     build-essential \
     python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -19,8 +20,11 @@ RUN git clone --depth=1 https://github.com/facebook/react.git && \
     git fetch --depth=1 origin ${BASE_COMMIT} && \
     git checkout ${BASE_COMMIT}
 
-# Sanitize the snapshot
+# Install dependencies
 WORKDIR /workspace/react
+RUN npm install --legacy-peer-deps 2>&1 || npm install --force 2>&1 || true
+
+# Sanitize the snapshot
 RUN rm -rf .git && \
     git init && \
     git config user.email "agent@example.com" && \

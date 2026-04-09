@@ -47,6 +47,33 @@ def test_syntax_check():
         assert content.count("(") == content.count(")"), f"Unbalanced parens in {relpath}"
 
 
+def test_repo_typecheck():
+    """MCP package TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/services/mcp",
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lint_tool_names():
+    """MCP tool name linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint-tool-names"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/services/mcp",
+    )
+    assert r.returncode == 0, f"Lint tool names failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests():
+    """MCP unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "test", "run"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/services/mcp",
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

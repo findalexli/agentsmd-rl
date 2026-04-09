@@ -237,3 +237,56 @@ def test_handlers_not_stub():
                  and not l.strip().startswith("*")]
         assert len(lines) >= 10, \
             f"{name}: too few meaningful lines ({len(lines)}), likely a stub"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass - repo CI/CD tests (p2p enrichment)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo Prettier format check passes on modified files (pass_to_pass)."""
+    # Install pnpm and dependencies
+    subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, text=True, timeout=60)
+    subprocess.run(["pnpm", "install", "--frozen-lockfile"], capture_output=True, text=True, timeout=180, cwd=REPO)
+    r = subprocess.run(
+        ["pnpm", "format:check", "--",
+         "js/_website/src/routes/api/markdown/[doc]/+server.ts",
+         "js/_website/src/routes/api/markdown/guide/[guide]/+server.ts",
+         "js/_website/src/lib/components/DocsCopyMarkdown.svelte"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_syntax():
+    """Modified TypeScript files have valid syntax (pass_to_pass)."""
+    # Install pnpm and dependencies
+    subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, text=True, timeout=60)
+    subprocess.run(["pnpm", "install", "--frozen-lockfile"], capture_output=True, text=True, timeout=180, cwd=REPO)
+    check_script = """
+const ts = require('typescript');
+const fs = require('fs');
+const files = [
+  'js/_website/src/routes/api/markdown/[doc]/+server.ts',
+  'js/_website/src/routes/api/markdown/guide/[guide]/+server.ts'
+];
+for (const f of files) {
+  const content = fs.readFileSync(f, 'utf8');
+  const source = ts.createSourceFile(f, content, ts.ScriptTarget.Latest, true);
+  if (!source.statements) {
+    console.error('Parse error in ' + f);
+    process.exit(1);
+  }
+  console.log('OK: ' + f);
+}
+console.log('PASS');
+"""
+    script_path = f"{REPO}/check-syntax.cjs"
+    Path(script_path).write_text(check_script)
+    r = subprocess.run(["node", "check-syntax.cjs"], capture_output=True, text=True, timeout=30, cwd=REPO)
+    err = r.stderr[-500:] if r.stderr else ""
+    out = r.stdout[-500:] if r.stdout else ""
+    assert r.returncode == 0, f"TypeScript syntax check failed:\n{err}"
+    assert "PASS" in r.stdout, f"Expected PASS in output, got:\n{out}"

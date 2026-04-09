@@ -15,6 +15,10 @@ RUN git clone --depth=100 https://github.com/microsoft/vscode.git vscode \
     && git checkout ${BASE_COMMIT} \
     && rm -rf .git
 
+# Configure git first (needed for commits)
+RUN git config --global user.email "agent@example.com" \
+    && git config --global user.name "Agent"
+
 # Re-initialize git for clean state
 RUN cd vscode \
     && git init \
@@ -23,10 +27,6 @@ RUN cd vscode \
 
 # Install minimal dependencies (TypeScript compilation only)
 RUN cd vscode && npm ci --ignore-scripts 2>&1 | tail -20 || true
-
-# Configure git
-RUN git config --global user.email "agent@example.com" \
-    && git config --global user.name "Agent"
 
 # Set working directory
 WORKDIR /workspace/vscode

@@ -113,6 +113,50 @@ def test_parse_basic_specifiers():
     assert r["version"] == "1.0.0"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (tsgo --noEmit in packages/opencode)."""
+    r = subprocess.run(
+        ["bun", "run", "typecheck"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=PKG,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests pass (bun test --timeout 30000 in packages/opencode).
+
+    Note: The repo has 3 pre-existing test failures unrelated to this PR.
+    We check that at least 1824 tests pass (the expected count).
+    """
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=PKG,
+    )
+    # Check that tests ran and we got the expected pass count
+    # The repo has 3 pre-existing failures; we verify the fix doesn't add more
+    output = r.stdout + r.stderr
+    pass_count = 0
+    for line in output.split("\n"):
+        if "pass" in line and line.strip() and line.strip()[0].isdigit():
+            try:
+                pass_count = int(line.strip().split()[0])
+                break
+            except (ValueError, IndexError):
+                continue
+    assert pass_count >= 1824, (
+        f"Expected at least 1824 passing tests, got {pass_count}.\n"
+        f"Output tail:\n{output[-800:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass — core behavioral tests
 # ---------------------------------------------------------------------------

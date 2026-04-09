@@ -148,3 +148,55 @@ def test_ruff_style_check():
             capture_output=True, text=True, cwd=REPO, timeout=30,
         )
         assert r.returncode == 0, f"ruff check failed on {rel}:\n{r.stdout[:500]}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's own CI/CD tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — training_args tests
+def test_repo_training_args_tests():
+    """Repo's TrainingArguments tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/trainer/test_training_args.py",
+            "-v", "--tb=short"
+        ],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    assert r.returncode == 0, f"Training args tests failed:\n{r.stdout[-800:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — trainer_utils tests (includes sampler tests)
+def test_repo_trainer_utils_tests():
+    """Repo's trainer utility tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/trainer/test_trainer_utils.py",
+            "-v", "--tb=short"
+        ],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    assert r.returncode == 0, f"Trainer utils tests failed:\n{r.stdout[-800:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — ruff format check on modified files
+def test_repo_ruff_format_check():
+    """Modified Python files pass ruff format check (pass_to_pass)."""
+    import shutil
+
+    import pytest
+
+    if not shutil.which("ruff"):
+        pytest.skip("ruff not installed")
+    for rel in [
+        "src/transformers/training_args.py",
+        "src/transformers/trainer.py",
+    ]:
+        r = subprocess.run(
+            ["ruff", "format", "--check", rel],
+            capture_output=True, text=True, cwd=REPO, timeout=30,
+        )
+        assert r.returncode == 0, f"ruff format check failed on {rel}:\n{r.stderr[:500]}"

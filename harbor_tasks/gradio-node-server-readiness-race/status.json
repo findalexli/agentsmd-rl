@@ -1,73 +1,89 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.965437",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T01:56:54.152860",
+  "total_time": 1176.76,
+  "sandbox_id": "iys1ali2ij5r13cnm41b8",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_score": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build success, NOP test reward=0, Gold test reward=1 (11 tests passed), Rubric judge ICR=1.0",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 82.9
     },
-    {
-      "timestamp": "2026-03-30T11:48:11.528474",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 22288
+    "p2p_enrichment": {
+      "status": "completed",
+      "docker_build": "success",
+      "timestamp": "2026-04-09",
+      "ci_commands_discovered": [
+        "ruff check gradio test client - fails on base commit (3 pre-existing errors)",
+        "ruff format --check gradio test client - fails on base commit (1 file needs reformatting)",
+        "ty check - ty not installed in container",
+        "pnpm lint - pnpm/node not installed in container",
+        "pnpm format:check - pnpm/node not installed in container",
+        "pnpm ts:check - pnpm/node not installed in container",
+        "pnpm test:run - pnpm/node not installed in container",
+        "pytest - gradio dependencies not installed"
+      ],
+      "tests_added": [
+        {
+          "id": "repo_python_syntax",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "All Python files in gradio/ must have valid syntax",
+          "command": "py_compile.compile() on all gradio/*.py files"
+        }
+      ],
+      "notes": "Only added test_repo_python_syntax as it uses available tools (python stdlib). Other CI commands require Dockerfile changes (ty, pnpm, pytest deps). The ruff commands fail on base commit due to pre-existing linting/formatting issues."
     },
-    {
-      "timestamp": "2026-03-31T13:37:42-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 256.16,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-03-31T09:10:27.424846",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 9694
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.76,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-01T20:15:41.672365",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "missing",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T12:58:21.146406",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0",
-      "notes": "NotFou...\nFAILED ../../tests/test_outputs.py::test_no_server_returns_false - ModuleNotF...\nFAILED ../../tests/test_outputs.py::test_attempt_connection_not_broken - Modu...\n7 failed, 3 passed in 0.28s\n"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.945822",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.540069",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:56:53.954707"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1176.76,
+      "at": "2026-04-09T01:56:54.152860"
     }
   ]
 }

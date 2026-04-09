@@ -19,8 +19,6 @@ REPO = "/workspace/react"
 TARGET = f"{REPO}/packages/shared/ReactPerformanceTrackProperties.js"
 
 # Node.js preamble: read source file, strip Flow types, eval to get functions.
-# The source uses Flow annotations and ES module syntax that Node can't parse
-# directly, so we strip them and provide stubs for the imports.
 _PREAMBLE = r"""
 const fs = require('fs');
 const assert = require('assert');
@@ -155,3 +153,28 @@ for (const {arr, expected} of cases) {
         'Expected ' + expected + ' for ' + JSON.stringify(arr) + ', got ' + entry[1]);
 }
 """)
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates
+# These verify the repo's own lint and test commands pass on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint():
+    """Repo's ESLint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shared_package_tests():
+    """Repo's shared package tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "packages/shared", "--silent"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shared package tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

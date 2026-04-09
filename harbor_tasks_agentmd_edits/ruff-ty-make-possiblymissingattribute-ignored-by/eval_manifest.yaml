@@ -64,6 +64,18 @@ checks:
       lines: "85"
       commit: "74c7fe849fdfe8b79e8e8e031e5e7b3673be3f4a"
 
+  # CI/CD repo_tests pass_to_pass - BLOCKED: Docker image missing Rust toolchain
+  # These tests require the Dockerfile to install Rust via rustup before they can run
+  - id: test_cargo_check_workspace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo compiles with cargo check --workspace (requires Rust in Dockerfile)"
+
+  - id: test_cargo_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo passes clippy linting (requires Rust in Dockerfile)"
+
 rubric:
   - rule: "Run cargo dev generate-all after changing configuration options, CLI arguments, lint rules, or environment variable definitions."
     source:

@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import py_compile
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/slime"
@@ -27,6 +28,47 @@ def test_syntax_check():
         "slime/ray/rollout.py",
     ]:
         py_compile.compile(f"{REPO}/{rel}", doraise=True)
+
+
+# [repo_tests] pass_to_pass - CI/CD checks
+def test_repo_ruff_linting():
+    """Repo's ruff linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=120,
+    )
+    # Install may fail if already installed, ignore
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/slime/"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Plugin contracts tests
+def test_repo_plugin_contracts():
+    """Plugin contracts tests pass (pass_to_pass)."""
+    deps = [
+        "torch", "pytest", "numpy", "packaging", "pyyaml",
+        "omegaconf", "tqdm", "httpx", "pybase64", "pylatexenc",
+        "sympy", "aiohttp"
+    ]
+    # Install deps
+    r = subprocess.run(
+        ["pip", "install"] + deps + ["--quiet"],
+        capture_output=True, text=True, timeout=180,
+    )
+    # Install repo
+    r = subprocess.run(
+        ["pip", "install", "-e", REPO, "--no-deps", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # Run plugin contracts tests
+    r = subprocess.run(
+        ["python", "-m", "pytest", f"{REPO}/tests/plugin_contracts/", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin contracts tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

@@ -1,11 +1,78 @@
 {
-  "verdict": "fail",
+  "schema_version": 2,
+  "verdict": "pass",
   "nop_reward": 0.0,
-  "gold_reward": 0.0,
-  "validated_at": "2026-04-08T21:41:34.574694",
-  "sandbox_id": "idhzgi0c96jf0lxr3hlr2",
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T12:53:23.618907",
+  "total_time": 13291.14,
+  "sandbox_id": "i3flasvlibz5qxh3wxxc5",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 509.27
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 215.14,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1714.37,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed solve.sh idempotency check. The original check 'grep -q '    fn singleline'' was incorrectly matching 'fn singleline_union_element_label' function. Changed to 'grep -E '^\\s+fn singleline\\(&self\\)'' to properly detect when the patch is already applied.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 949.78
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.79,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6172.12,
+      "at": "2026-04-09T06:44:18.508052"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 13290.88,
+      "at": "2026-04-09T12:53:23.451480"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 13291.14,
+      "at": "2026-04-09T12:53:23.618907"
+    }
+  ]
 }

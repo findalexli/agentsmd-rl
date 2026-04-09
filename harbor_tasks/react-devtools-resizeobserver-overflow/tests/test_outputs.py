@@ -102,3 +102,27 @@ def test_uselayouteffect_preserved():
     assert "useLayoutEffect" in content, (
         "useLayoutEffect removed — must be preserved to avoid flash of overflowed content"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression guards
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_license_check():
+    """Repo's license check passes (no PATENTS references outside expected files)."""
+    r = subprocess.run(
+        ["./scripts/ci/check_license.sh"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"License check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint():
+    """Repo's ESLint checks pass on codebase."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"

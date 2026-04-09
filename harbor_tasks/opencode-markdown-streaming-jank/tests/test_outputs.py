@@ -241,6 +241,57 @@ def test_markdown_not_stub():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+# Install additional dependencies needed for typecheck and tests
+def _install_deps():
+    """Install additional dependencies needed for CI checks."""
+    subprocess.run(
+        ["bun", "add", "-d", "@typescript/native-preview-linux-x64"],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    subprocess.run(
+        ["bun", "add", "-d", "@happy-dom/global-registrator"],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck_ui():
+    """UI package TypeScript typecheck passes (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["bun", "run", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/ui",
+    )
+    assert r.returncode == 0, f"UI typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck_app():
+    """App package TypeScript typecheck passes (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["bun", "run", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"App typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests_app():
+    """App package unit tests pass (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["bun", "run", "test:unit"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"App unit tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 

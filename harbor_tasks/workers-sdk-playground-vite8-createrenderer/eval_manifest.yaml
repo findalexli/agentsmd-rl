@@ -1,0 +1,54 @@
+version: "2.0"
+
+source:
+  repo: "cloudflare/workers-sdk"
+  pr: 13105
+  base_commit: "49d063396f4c87bc7323be84fbd961b010a09460"
+  merge_commit: "ff41b070947de43c1ab6b2e4ff65a960d3d7c974"
+
+checks:
+  - id: vite_config_valid_structure
+    type: pass_to_pass
+    origin: static
+    description: "vite.config.ts must exist with valid structure (defineConfig, balanced braces)"
+
+  - id: jsx_runtime_alias_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Existing react/jsx-runtime.js alias must be preserved"
+
+  - id: style_provider_cjs_alias
+    type: fail_to_pass
+    origin: pr_diff
+    description: "@cloudflare/style-provider must be aliased to its CJS build (lib/) to avoid rolldown crash"
+
+  - id: no_base_playground_option
+    type: fail_to_pass
+    origin: pr_diff
+    description: "base: '/playground' must not be used — causes Wrangler asset path mismatch"
+
+  - id: assets_dir_playground
+    type: fail_to_pass
+    origin: pr_diff
+    description: "assetsDir must route assets under playground/ for correct Wrangler deployment"
+
+  - id: changeset_for_workers_playground
+    type: fail_to_pass
+    origin: agent_config
+    description: "A changeset must exist for @cloudflare/workers-playground package changes"
+    source:
+      path: "AGENTS.md"
+      lines: "100,161"
+      commit: "49d063396f4c87bc7323be84fbd961b010a09460"
+
+rubric:
+  - rule: "Tabs (not spaces), double quotes, semicolons, trailing commas (es5)"
+    source:
+      path: "AGENTS.md"
+      lines: "104"
+      commit: "49d063396f4c87bc7323be84fbd961b010a09460"
+  - rule: "Changeset descriptions can either use conventional commit prefixes or start with a capital letter"
+    source:
+      path: "AGENTS.md"
+      lines: "165"
+      commit: "49d063396f4c87bc7323be84fbd961b010a09460"

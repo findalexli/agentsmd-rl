@@ -105,3 +105,52 @@ def test_markdown_string_still_used():
     src = Path(TARGET).read_text()
     assert "new MarkdownString" in src, \
         "MarkdownString should still be used for invocation messages"
+
+
+# ============================================================================
+# Pass-to-Pass Tests: Repo CI/CD checks that must pass on both base and fixed
+# ============================================================================
+
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "compile-check-ts-native"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_monaco_compile_check():
+    """Repo's Monaco compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "monaco-compile-check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Monaco compile check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_vscode_dts_compile_check():
+    """Repo's VSCode dts compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "vscode-dts-compile-check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"VSCode dts compile check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_stylelint():
+    """Repo's stylelint checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "stylelint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Stylelint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_node_unit_tests():
+    """Repo's Node unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "test-node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node unit tests failed:\n{r.stderr[-500:]}"

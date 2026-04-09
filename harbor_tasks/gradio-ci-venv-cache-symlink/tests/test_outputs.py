@@ -253,3 +253,65 @@ def test_cache_paths_include_venv():
             assert "venv" in path, f"Cache paths do not include venv: {path}"
             return
     raise AssertionError("Cache step not found")
+
+
+# [repo_tests] pass_to_pass
+def test_action_shell_commands_valid():
+    """Shell commands in action.yml must have valid syntax (pass_to_pass)."""
+    import subprocess
+    import tempfile
+    import os
+
+    data = yaml.safe_load(Path(ACTION_FILE).read_text())
+    steps = data["runs"]["steps"]
+
+    for i, step in enumerate(steps):
+        run_cmd = step.get("run", "")
+        if not run_cmd:
+            continue
+
+        # Write command to temp file and validate with bash -n
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(run_cmd)
+            f.flush()
+            tmp_path = f.name
+
+        try:
+            result = subprocess.run(
+                ["bash", "-n", tmp_path],
+                capture_output=True, text=True, timeout=10
+            )
+            assert result.returncode == 0, (
+                f"Step {i} ({step.get('name', 'unnamed')}) has invalid shell syntax: "
+                f"{result.stderr}"
+            )
+        finally:
+            os.unlink(tmp_path)
+
+
+# [repo_tests] pass_to_pass
+def test_action_file_references_valid():
+    """Files referenced in action.yml must exist (pass_to_pass)."""
+    data = yaml.safe_load(Path(ACTION_FILE).read_text())
+    steps = data["runs"]["steps"]
+
+    # Collect file references from run commands
+    file_refs = []
+    for step in steps:
+        run_cmd = step.get("run", "")
+        if not run_cmd:
+            continue
+        # Look for source commands that reference scripts
+        for line in run_cmd.splitlines():
+            if "source scripts/" in line:
+                script = line.split("source scripts/")[1].split()[0].strip('"\'')
+                file_refs.append(f"scripts/{script}")
+            if "source ./scripts/" in line:
+                script = line.split("source ./scripts/")[1].split()[0].strip('"\'')
+                file_refs.append(f"scripts/{script}")
+
+    # Check that referenced files exist
+    repo = Path(REPO)
+    for ref in file_refs:
+        full_path = repo / ref
+        assert full_path.exists(), f"Referenced file does not exist: {ref}"

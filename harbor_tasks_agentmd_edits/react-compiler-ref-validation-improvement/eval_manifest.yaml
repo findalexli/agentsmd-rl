@@ -12,6 +12,21 @@ checks:
     origin: static
     description: "Modified TypeScript files must compile without errors"
 
+  - id: repo_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo TypeScript compilation passes (yarn tsc --noEmit)"
+
+  - id: repo_jest_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo Jest unit tests pass (yarn jest)"
+
+  - id: repo_lint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo ESLint checks pass (yarn lint)"
+
   - id: panresponder_compiles_without_ref_error
     type: fail_to_pass
     origin: pr_diff
@@ -25,7 +40,7 @@ checks:
   - id: existing_ref_validation_tests_pass
     type: pass_to_pass
     origin: repo_tests
-    description: "Existing ref validation tests should still pass"
+    description: "Ref validation source code contains expected validation logic"
 
   - id: validation_has_effect_based_logic
     type: pass_to_pass
@@ -42,7 +57,7 @@ checks:
       commit: "c0060cf2a695d719152c939cfc3cced8f7da3e52"
 
 rubric:
-  - rule: "When modifying the compiler, you MUST read the documentation about that pass in `compiler/packages/babel-plugin-react-compiler/docs/passes/`"
+  - rule: "When modifying the compiler, you MUST read the documentation about that pass in \`compiler/packages/babel-plugin-react-compiler/docs/passes/\`"
     source:
       path: "compiler/CLAUDE.md"
       lines: "12"

@@ -100,6 +100,33 @@ def test_function_extractable():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD hygiene
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    # Setup: install pnpm and dependencies
+    setup = subprocess.run(
+        "npm install -g pnpm@10.17.0 && cd /workspace/gradio && pnpm install",
+        shell=True,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert setup.returncode == 0, f"Setup failed: {setup.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

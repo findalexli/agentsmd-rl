@@ -1,88 +1,73 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.981208",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
-    },
-    {
-      "timestamp": "2026-03-30T11:48:15.959539",
-      "runner": "audit (audit-tests_20260330_114815)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 17310
-    },
-    {
-      "timestamp": "2026-03-31T09:10:27.424926",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 13007
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.712121",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-01T21:38:26-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.0,
-      "verdict": "pass",
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T11:20:53.380286",
+  "total_time": 7740.53,
+  "sandbox_id": "ih9d3maozoc918f2nu58q",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "error",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 429.14,
       "notes": ""
     },
-    {
-      "timestamp": "2026-04-02T14:28:08.953624",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'bun install --frozen-lockfile || bun install': signal: killed"
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
-    {
-      "timestamp": "2026-04-02T17:47:54.330076",
-      "phase": "local_docker_validate",
-      "runner": "local_docker_82",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Command '['docker', 'build', '-q', '-t', 'harbor-opencode-router-instance-provide:latest', 'harbor_t"
+    "validate": {
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 109.19
     },
-    {
-      "timestamp": "2026-04-03T01:18:32.087039+00:00",
-      "phase": "local_docker_retry",
-      "runner": "local_600s",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1",
+    "p2p_enrichment": {
+      "status": "error",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 377.7,
       "notes": ""
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T04:39:55.171802"
     },
     {
-      "timestamp": "2026-04-02T18:27:57.339235",
-      "phase": "e2b_highres",
-      "runner": "e2b_4cpu_4gb",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 8587.34,
+      "at": "2026-04-09T04:39:55.331718"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.572825",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 7740.26,
+      "at": "2026-04-09T11:20:53.210284"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 7740.53,
+      "at": "2026-04-09T11:20:53.380286"
     }
   ]
 }

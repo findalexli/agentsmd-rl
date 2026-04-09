@@ -1,12 +1,49 @@
 {
-  "verdict": "fail",
-  "nop_reward": -1,
-  "gold_reward": -1,
-  "validated_at": "2026-04-08T21:55:21.005520",
-  "sandbox_id": "i5n7z3gfnhyg9jyotq26g",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T05:55:26.155531",
+  "total_time": 8552.72,
+  "sandbox_id": "iexcmwe4jyw125ssri9y0",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 1335.75,
-  "error": "docker build failed:  && \\\n   7 | >>>     apt-get install -y --no-install-wget curl git ca-certificates build-essential tmux \\\n   8 | >>>         libicu-dev libssl3 && \\\n   9 | >>>     rm -rf /var/lib/apt/lists/*\n  10 |     \n--------------------\nERROR: failed to build: failed to solve: process \"/bin/sh -c apt-get update &&     apt-get install -y --no-install-wget curl git ca-certificates build-essential tmux         libicu-dev libssl3 &&     rm -rf /var/lib/apt/lists/*\" did not complete successf"
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Fixed Dockerfile: changed --no-install-wget to --no-install-recommends and replaced Microsoft repo method with direct PowerShell tar download (since Trixie doesn't have software-properties-common). Fixed solve.sh: created complete patch solution that updates SKILL.md (version 2.3, Prerequisites section, Common Mistakes table, CRITICAL warnings, Step 6 batch reload), init-triage-session.ps1 (gh check, Invoke-RestMethod for milestones), and query-issues.ps1 (gh check). All 14 tests pass: 6 pass_to_pass tests (scripts exist, SKILL.md exists, PowerShell syntax, YAML structure) and 8 fail_to_pass tests (init/query gh checks, Invoke-RestMethod, SKILL.md sections).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 835.94
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.7,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T05:55:25.991383"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8552.72,
+      "at": "2026-04-09T05:55:26.155531"
+    }
+  ]
 }

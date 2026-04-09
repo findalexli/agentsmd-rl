@@ -297,8 +297,10 @@ index b62ceb52d7..c7f0b3e1e9 100644
 PATCH
 
 # Format with prettier (AGENTS.md requires it)
-cd /svelte-tools && npm install --no-save prettier prettier-plugin-svelte >/dev/null 2>&1
-cd /svelte-tools && npx prettier --write --plugin prettier-plugin-svelte /workspace/js/_website/src/lib/components/Header.svelte >/dev/null 2>&1
+# Use the projects pnpm format:write to ensure consistency with CI
+
+cd /workspace && corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1
+pnpm format:write js/_website/src/lib/components/Header.svelte >/dev/null 2>&1
 cd /workspace
 
 echo "Patch applied successfully."

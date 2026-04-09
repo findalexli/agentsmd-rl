@@ -60,6 +60,33 @@ checks:
       lines: "103"
       commit: "9ead1e121d5cca2eaddad66d439ab3c0a74225f2"
 
+  # Repo CI/CD tests (pass_to_pass gates)
+  - id: no_undefined_equality_comparison
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No undefined equality comparisons (== undefined, != undefined) in builtins"
+    source:
+      path: "test/internal/ban-words.test.ts"
+
+  - id: no_bare_jsboolean
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No bare .jsBoolean(true/false) calls in builtins — use .true/.false"
+    source:
+      path: "test/internal/ban-words.test.ts"
+
+  - id: no_std_debug_in_builtins
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No std.debug.assert, std.debug.print in builtins"
+    source:
+      path: "test/internal/ban-words.test.ts"
+
+  - id: typescript_braces_balance
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript files must have balanced braces (basic syntax check)"
+
 rubric:
   - rule: "Use JSC intrinsics for performance"
     source:

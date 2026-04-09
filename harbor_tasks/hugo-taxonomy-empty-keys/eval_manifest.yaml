@@ -1,0 +1,43 @@
+checks:
+  # Fail-to-pass tests (behavioral)
+  - id: test_ancestors_with_problematic_config
+    type: fail_to_pass
+    origin: task
+    description: Test that .Ancestors works with problematic TOML config (TestDisableKindsEmptySliceAncestors)
+
+  - id: test_taxonomy_parsing_no_panic
+    type: fail_to_pass
+    origin: task
+    description: Verify Hugo doesn't panic or hang with empty taxonomy values
+
+  # Pass-to-pass tests (repo CI checks)
+  - id: test_compilation
+    type: pass_to_pass
+    origin: repo_tests
+    description: Hugo compiles successfully (go build)
+
+  - id: test_gofmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code passes gofmt formatting check
+
+  - id: test_config_package
+    type: pass_to_pass
+    origin: repo_tests
+    description: Config package tests pass (go test ./config/...)
+
+  - id: test_hugolib_package_smoke
+    type: pass_to_pass
+    origin: repo_tests
+    description: Hugolib basic tests pass (go test -run ^TestBuild ./hugolib/)
+
+  - id: test_disable_kinds_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: All disableKinds tests pass (go test -run ^TestDisableKinds ./hugolib/)
+
+  # Structural test
+  - id: test_taxonomies_decoder_has_filtering
+    type: structural
+    origin: task
+    description: Verify the fix is present in the decoder (empty key/value filtering)

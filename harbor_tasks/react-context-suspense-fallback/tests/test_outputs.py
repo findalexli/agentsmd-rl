@@ -105,10 +105,6 @@ describe('SuspenseFallbackContextPropagation', () => {
     }
   }
 
-  function resolveText(text) {
-    caches[caches.length - 1].resolve(text);
-  }
-
   function Text({text}) {
     Scheduler.log(text);
     return text;
@@ -328,6 +324,38 @@ def test_existing_context_propagation():
     assert r.returncode == 0, (
         f"Existing context propagation tests failed:\n"
         f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass - CI: yarn flow dom-node
+def test_repo_flow_typecheck():
+    """Repo's Flow type checking (dom-node) must pass."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-node"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Flow type checking failed:\n"
+        f"{r.stdout[-1000:]}\n{r.stderr[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass - CI: yarn linc
+def test_repo_lint_changed():
+    """Repo's ESLint check on changed files (yarn linc) must pass."""
+    r = subprocess.run(
+        ["yarn", "linc"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"ESLint (linc) failed:\n"
+        f"{r.stdout[-1000:]}\n{r.stderr[-1000:]}"
     )
 
 

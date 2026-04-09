@@ -187,6 +187,125 @@ def test_no_dynamic_attr_access_in_identity():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) -- CI/CD gates that should pass on base AND after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_flake8_syntax():
+    """Repo's Python flake8 syntax check passes (pass_to_pass)."""
+    # Ensure flake8 is installed
+    r = subprocess.run(
+        ["pip", "install", "flake8", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["flake8", TARGET, "--select=E9,F63,F7,F82", "--show-source"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flake8 syntax check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pydocstyle_module():
+    """Module has docstring and valid Python structure (pass_to_pass)."""
+    source = Path(TARGET).read_text()
+    tree = ast.parse(source)
+
+    # Check module parses and has some content
+    assert len(tree.body) > 0, "Module body is empty"
+
+    # Verify Identity class exists and has expected basic methods
+    identity_class = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "Identity":
+            identity_class = node
+            break
+
+    assert identity_class is not None, "Identity class not found"
+
+    # Verify basic methods exist (these exist on both base and gold)
+    methods = {
+        n.name for n in ast.walk(identity_class)
+        if isinstance(n, ast.FunctionDef)
+    }
+    assert "__int__" in methods, "Identity missing __int__"
+    assert "__float__" in methods, "Identity missing __float__"
+    assert "_eval_expand_identity" in methods, "Identity missing expand"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports_clean():
+    """File has no unresolved import errors at AST level (pass_to_pass)."""
+    source = Path(TARGET).read_text()
+    tree = ast.parse(source)
+
+    # Check for invalid imports at syntax level
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                assert alias.name != "*" or node.lineno > 0, "Invalid import detected"
+        elif isinstance(node, ast.ImportFrom):
+            # Module should be resolvable
+            if node.module:
+                # These are valid imports in the context
+                valid_prefixes = ("sympy", "torch", "typing", "functools")
+                if node.module.startswith(valid_prefixes):
+                    continue
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (repo_tests) -- tests that verify the fix is present
+# ---------------------------------------------------------------------------
+
+# [repo_tests] fail_to_pass
+def test_identity_has_comparison_methods():
+    """Identity class has comparison magic methods (__ge__, __gt__, __le__, __lt__)."""
+    source = Path(TARGET).read_text()
+    tree = ast.parse(source)
+
+    identity_class = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "Identity":
+            identity_class = node
+            break
+
+    assert identity_class is not None, "Identity class not found"
+
+    methods = {
+        n.name for n in ast.walk(identity_class)
+        if isinstance(n, ast.FunctionDef)
+    }
+    assert "__ge__" in methods, "Identity missing __ge__ (comparison support)"
+    assert "__gt__" in methods, "Identity missing __gt__ (comparison support)"
+    assert "__le__" in methods, "Identity missing __le__ (comparison support)"
+    assert "__lt__" in methods, "Identity missing __lt__ (comparison support)"
+
+
+# [repo_tests] fail_to_pass
+def test_identity_has_helper_compare_method():
+    """Identity class has _identity_atom_compare helper method for fast-path comparison."""
+    source = Path(TARGET).read_text()
+    tree = ast.parse(source)
+
+    identity_class = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "Identity":
+            identity_class = node
+            break
+
+    assert identity_class is not None, "Identity class not found"
+
+    methods = {
+        n.name for n in ast.walk(identity_class)
+        if isinstance(n, ast.FunctionDef)
+    }
+    assert "_identity_atom_compare" in methods, (
+        "Identity missing _identity_atom_compare helper method - "
+        "this is needed to fix the RecursionError in comparisons"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) -- anti-stub
 # ---------------------------------------------------------------------------
 

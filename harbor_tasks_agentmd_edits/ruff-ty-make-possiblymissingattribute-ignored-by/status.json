@@ -1,11 +1,50 @@
 {
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-08T22:19:48.249581",
-  "sandbox_id": "iuvjjyxvk2m2xcqu1lg48",
-  "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 2803.1
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:45:12.425704",
+  "total_time": 5791.28,
+  "sandbox_id": "if68a029961et1yyhs2oo",
+  "backend": "glm",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "blocked",
+      "reason": "Docker image missing Rust toolchain",
+      "ci_commands_discovered": [
+        "cargo clippy --workspace --all-targets --all-features -- -D warnings",
+        "cargo nextest run",
+        "cargo fmt --all --check",
+        "cargo check --workspace"
+      ],
+      "tests_added": [],
+      "note": "The Dockerfile uses python:3.12-slim base image without Rust. All CI commands require cargo/rustup which are not available. The validate agent needs to add Rust toolchain installation to the Dockerfile before p2p tests can be added."
+    },
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 212.56,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 5791.28,
+      "at": "2026-04-09T07:45:12.425704"
+    }
+  ]
 }

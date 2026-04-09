@@ -155,6 +155,24 @@ def test_mod_rs_typo_fixed():
 # Pass-to-pass (repo_tests / static) — regression + anti-stub
 # -----------------------------------------------------------------------------
 
+def test_repo_clippy():
+    """Repo's clippy linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "--all-features"],
+        capture_output=True, text=True, timeout=120, cwd=CRATE_PATH,
+    )
+    assert r.returncode == 0, f"Clippy failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_formatting():
+    """Repo's code formatting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--check"],
+        capture_output=True, text=True, timeout=60, cwd=CRATE_PATH,
+    )
+    assert r.returncode == 0, f"Formatting check failed:\n{r.stderr[-500:]}"
+
+
 def test_existing_tests_pass():
     """Upstream test suite (cargo test) still passes."""
     r = _run_cargo(["test", "--lib", "--", "--test-threads=1"], timeout=300)

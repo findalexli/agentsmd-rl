@@ -263,6 +263,54 @@ def test_syntax_check():
     ast.parse(SCHEDULER.read_text())
 
 
+# [repo_tests] pass_to_pass
+def test_repo_py_compile():
+    """Repo's Python files must compile without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", str(SCHEDULER)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python compilation failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_syntax():
+    """Repo's scheduler.py must pass ruff syntax checks (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", str(SCHEDULER), "--select=E9", "--quiet"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_debug_statements():
+    """Repo's scheduler.py must not contain debug statements like pdb (pass_to_pass)."""
+    src = SCHEDULER.read_text()
+    tree = ast.parse(src)
+    for node in ast.walk(tree):
+        # Check for import pdb or from pdb import
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name == "pdb":
+                    raise AssertionError("Found 'import pdb' in scheduler.py")
+        elif isinstance(node, ast.ImportFrom):
+            if node.module == "pdb":
+                raise AssertionError("Found 'from pdb import' in scheduler.py")
+        # Check for pdb.set_trace() or breakpoint() calls
+        elif isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Attribute):
+                if node.func.attr == "set_trace":
+                    raise AssertionError("Found pdb.set_trace() call in scheduler.py")
+            elif isinstance(node.func, ast.Name):
+                if node.func.id == "breakpoint":
+                    raise AssertionError("Found breakpoint() call in scheduler.py")
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — subprocess execution of real merge logic
 # ---------------------------------------------------------------------------

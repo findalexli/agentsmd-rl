@@ -3,7 +3,7 @@ version: "2.0"
 source:
   repo: "microsoft/playwright"
   pr: 40002
-  base_commit: "1bebb2d1759a9df0c676eb0708451abf90973fcc"
+  base_commit: "1bebb2d175a9df0c676eb0708451abf90973fcc"
   merge_commit: "fbdb1eb859b52a9ce30f0936983f71047932dff7"
 
 checks:
@@ -11,6 +11,16 @@ checks:
     type: pass_to_pass
     origin: static
     description: "Modified TypeScript files must parse without errors"
+
+  - id: repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's npm run build passes"
+
+  - id: repo_lint_packages
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's package consistency check passes"
 
   - id: repeat_index_in_types
     type: fail_to_pass

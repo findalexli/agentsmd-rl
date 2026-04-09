@@ -53,6 +53,75 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
+# pass_to_pass (repo CI tests) - run on both base and gold commits
+# All CI checks run in a single test to share yarn install (expensive)
+# ---------------------------------------------------------------------------
+
+COMPILER_DIR = f"{REPO}/compiler"
+BABEL_PLUGIN_DIR = f"{COMPILER_DIR}/packages/babel-plugin-react-compiler"
+SNAP_DIR = f"{COMPILER_DIR}/packages/snap"
+YARN_INSTALL_TIMEOUT = 180
+CI_TIMEOUT = 120
+
+
+def test_repo_ci_checks():
+    """Repo's CI checks pass - build, lint, jest, typecheck (pass_to_pass)."""
+    errors = []
+
+    # Run yarn install once
+    r = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=YARN_INSTALL_TIMEOUT, cwd=COMPILER_DIR,
+    )
+    if r.returncode != 0:
+        errors.append(f"yarn install failed: {r.stderr[-500:]}")
+        assert False, "; ".join(errors)
+
+    # Test 1: babel-plugin build
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "build"],
+        capture_output=True, text=True, timeout=CI_TIMEOUT, cwd=COMPILER_DIR,
+    )
+    if r.returncode != 0:
+        errors.append(f"babel-plugin build failed: {r.stderr[-500:]}")
+
+    # Test 2: babel-plugin lint
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "lint"],
+        capture_output=True, text=True, timeout=CI_TIMEOUT, cwd=COMPILER_DIR,
+    )
+    if r.returncode != 0:
+        errors.append(f"babel-plugin lint failed: {r.stderr[-500:]}")
+
+    # Test 3: babel-plugin jest
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "jest"],
+        capture_output=True, text=True, timeout=CI_TIMEOUT, cwd=COMPILER_DIR,
+    )
+    if r.returncode != 0:
+        errors.append(f"babel-plugin jest failed: {r.stderr[-500:]}")
+
+    # Test 4: babel-plugin typecheck
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=CI_TIMEOUT, cwd=BABEL_PLUGIN_DIR,
+    )
+    if r.returncode != 0:
+        errors.append(f"babel-plugin typecheck failed: {r.stderr[-500:]}")
+
+    # Test 5: snap typecheck
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=CI_TIMEOUT, cwd=SNAP_DIR,
+    )
+    if r.returncode != 0:
+        errors.append(f"snap typecheck failed: {r.stderr[-500:]}")
+
+    if errors:
+        assert False, "; ".join(errors)
+
+
+# ---------------------------------------------------------------------------
 # fail_to_pass (pr_diff) — behavioral tests using Node subprocess
 # ---------------------------------------------------------------------------
 

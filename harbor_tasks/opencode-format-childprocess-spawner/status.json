@@ -1,87 +1,65 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.981076",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T11:19:17.603803",
+  "total_time": 7644.74,
+  "sandbox_id": "iat4w1t3y52t1t40zt2cq",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 213.87,
+      "notes": "Discovered CI commands from .github/workflows/test.yml and typecheck.yml. Found working commands: 'bun typecheck' (runs tsgo --noEmit) and 'bun test --timeout 30000 test/format/format.test.ts'. Added 2 pass_to_pass tests to test_outputs.py: test_repo_typecheck and test_repo_format_tests. Updated eval_manifest.yaml with corresponding checks. Both commands verified passing on base commit c8909908f50afc3622d354cd8fd7a83dc3445706."
     },
-    {
-      "timestamp": "2026-03-30T11:48:15.959510",
-      "runner": "audit (audit-tests_20260330_114815)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 11650
-    },
-    {
-      "timestamp": "2026-03-31T13:44:49-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
-    },
-    {
-      "timestamp": "2026-03-31T09:10:27.424914",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 24033
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.705508",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T12:58:21.150041",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Template build: failed to run command 'cd /workspace/opencode && bun install': signal: killed"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.953039",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'cd /workspace/opencode && bun install': signal: killed"
-    },
-    {
-      "timestamp": "2026-04-02T17:47:54.327271",
-      "phase": "local_docker_validate",
-      "runner": "local_docker_82",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Command '['docker', 'build', '-q', '-t', 'harbor-opencode-format-childprocess-spawner:latest', 'harb"
-    },
-    {
-      "timestamp": "2026-04-03T01:04:31.183460+00:00",
-      "phase": "local_docker_retry",
-      "runner": "local_600s",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1",
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 460.65,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 146.07
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T23:07:01.568604",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6126.04,
+      "at": "2026-04-09T06:23:34.406950"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 7644.46,
+      "at": "2026-04-09T11:19:17.422069"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 7644.74,
+      "at": "2026-04-09T11:19:17.603803"
     }
   ]
 }

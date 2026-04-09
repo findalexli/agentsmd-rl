@@ -37,6 +37,31 @@ checks:
     origin: static
     description: "masked() and where() must not be stubs"
 
+  - id: py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "mps.py compiles to bytecode without errors"
+
+  - id: ast_parseable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "mps.py produces valid AST with expected structure"
+
+  - id: functions_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All functions in mps.py are individually compilable"
+
+  - id: metal_overrides_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "MetalOverrides class exists in mps.py"
+
+  - id: required_methods_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Required methods (where, masked, value_to_metal) exist in mps.py"
+
 rubric:
   - rule: "Match existing code style and architectural patterns."
     source:

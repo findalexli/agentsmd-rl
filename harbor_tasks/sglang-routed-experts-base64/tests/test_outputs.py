@@ -13,6 +13,7 @@ import ast
 import base64
 import importlib.util
 import io
+import subprocess
 import sys
 import types
 from pathlib import Path
@@ -260,6 +261,53 @@ def test_numa_debug_not_warning():
                         if "numactl" in arg.value.lower():
                             found_debug = True
     assert found_debug, "No logger.debug call found mentioning numactl"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) -- repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff():
+    """Repo's ruff linting passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "ruff", "check", "--select=F401,F821",
+            UTILS, DETOK, TOKMGR, NUMA
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black():
+    """Repo's black formatting check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["black", "--check", UTILS, DETOK, TOKMGR, NUMA],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort():
+    """Repo's isort check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["isort", "--check", UTILS, DETOK, TOKMGR, NUMA],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell():
+    """Repo's codespell check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["codespell", "--config", f"{REPO}/.codespellrc", UTILS, DETOK, TOKMGR, NUMA],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"codespell check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,86 @@
+source_pr:
+  owner: All-Hands-AI
+  repo: OpenHands
+  number: 13648
+  title: "fix(frontend): hide right panel when active tab is unpinned"
+  merge_commit: e1afc95b6c76b7493deb5d7f7dd4ecc2a8cb719b
+  base_commit: 6dd9046ba29f5d22b045a28d7a34c9ecfc981eab
+
+target_files:
+  - frontend/src/components/features/conversation/conversation-tabs/conversation-tabs-context-menu.tsx
+  - frontend/__tests__/components/features/conversation/conversation-tabs-context-menu.test.tsx
+
+distinctive_change:
+  file: frontend/src/components/features/conversation/conversation-tabs/conversation-tabs-context-menu.tsx
+  pattern: "selectedTab === tab && isRightPanelShown"
+
+checks:
+  # Fail-to-pass: Core fix verification
+  - id: test_active_tab_panel_close_fix_present
+    type: fail_to_pass
+    origin: behavioral
+    description: "Fix closes right panel when unpinning the currently active tab"
+
+  - id: test_conversation_store_imported
+    type: fail_to_pass
+    origin: behavioral
+    description: "Conversation store is imported to access selectedTab and isRightPanelShown"
+
+  - id: test_setrightpanelshown_destructured
+    type: fail_to_pass
+    origin: behavioral
+    description: "setRightPanelShown is destructured from localStorage hook"
+
+  - id: test_new_tests_for_active_tab_unpin
+    type: fail_to_pass
+    origin: behavioral
+    description: "New tests verify panel closes when unpinning active tab but not inactive tab"
+
+  - id: test_store_initialization_in_tests
+    type: fail_to_pass
+    origin: behavioral
+    description: "Tests properly initialize conversation store state in beforeEach"
+
+  # Pass-to-pass: Repo quality checks
+  - id: test_repo_vitest_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's vitest tests for ConversationTabsContextMenu pass"
+
+  - id: test_repo_lint_passes
+    type: pass_to_pass
+    origin: agent_config
+    source: AGENTS.md (line ~17-18)
+    description: "Frontend linting passes (required by AGENTS.md before pushing)"
+
+  - id: test_repo_typecheck_passes
+    type: pass_to_pass
+    origin: agent_config
+    source: AGENTS.md (line ~17-18)
+    description: "Frontend typecheck passes (required by AGENTS.md before pushing)"
+
+  - id: test_repo_translation_completeness
+    type: pass_to_pass
+    origin: repo_tests
+    source: .github/workflows/lint.yml
+    description: "Translation completeness check passes (all translation keys have complete language coverage)"
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    source: .github/workflows/fe-unit-tests.yml
+    description: "Frontend build succeeds (TypeScript compilation and bundling)"
+
+rubric:
+  # Soft criteria for LLM judge evaluation
+  - criterion: "Properly uses Zustand store for state management"
+    weight: 1.0
+
+  - criterion: "Updates both Zustand store and localStorage when closing panel"
+    weight: 1.0
+
+  - criterion: "Only closes panel when unpinned tab is the currently selected tab"
+    weight: 1.0
+
+  - criterion: "Follows existing code patterns in the component"
+    weight: 0.5

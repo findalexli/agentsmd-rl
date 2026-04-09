@@ -184,8 +184,28 @@ def test_not_stub():
 
 
 # ---------------------------------------------------------------------------
-# Repo tests
+# Repo tests (pass_to_pass) — CI/CD regression checks
 # ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_clippy():
+    """Repo's cargo clippy passes for turbopack-core (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "--package", "turbopack-core"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_fmt():
+    """Repo's cargo fmt check passes for turbopack-core (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--check", "--package", "turbopack-core"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fmt check failed:\n{r.stderr[-500:]}"
+
 
 # [repo_tests] pass_to_pass
 def test_existing_tests_pass():

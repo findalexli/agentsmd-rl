@@ -180,3 +180,61 @@ def test_handler_not_stub():
     code_lines = [l for l in lines if l.strip() and not re.match(r"^\s*(//|/\*|\*|\*/)", l)]
     assert len(lines) > 200, f"Handler suspiciously small: {len(lines)} lines (expected >200)"
     assert len(code_lines) > 100, f"Too few code lines: {len(code_lines)} (expected >100)"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's CI/CD checks must pass on base AND fix
+# ---------------------------------------------------------------------------
+
+
+def test_repo_typescript():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # pnpm install handles if already installed
+
+    pnpm_path = subprocess.run(
+        ["npm", "prefix", "-g"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    ).stdout.strip() + "/bin"
+
+    env = {**os.environ, "PATH": f"{pnpm_path}:{os.environ.get('PATH', '')}"}
+
+    # Install dependencies
+    r = subprocess.run(
+        ["pnpm", "install"],
+        capture_output=True, text=True, timeout=180, cwd=REPO, env=env,
+    )
+    # Install may partially fail on optional deps, continue to build
+
+    # Build the project (required for typecheck)
+    r = subprocess.run(
+        ["timeout", "120", "pnpm", "build"],
+        capture_output=True, text=True, timeout=180, cwd=REPO, env=env,
+    )
+
+    # Run TypeScript typecheck
+    r = subprocess.run(
+        ["timeout", "60", "pnpm", "typescript"],
+        capture_output=True, text=True, timeout=120, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_lint_ast_grep():
+    """Repo's AST grep linting passes (pass_to_pass)."""
+    pnpm_path = subprocess.run(
+        ["npm", "prefix", "-g"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    ).stdout.strip() + "/bin"
+
+    env = {**os.environ, "PATH": f"{pnpm_path}:{os.environ.get('PATH', '')}"}
+
+    # Run ast-grep linting (lightweight, doesn't need build)
+    r = subprocess.run(
+        ["timeout", "60", "pnpm", "lint-ast-grep"],
+        capture_output=True, text=True, timeout=120, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"AST grep lint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

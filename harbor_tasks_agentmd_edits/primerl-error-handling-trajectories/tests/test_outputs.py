@@ -22,9 +22,12 @@ from unittest.mock import MagicMock
 
 # Setup paths
 REPO = "/workspace/prime-rl"
-sys.path.insert(0, REPO)
+sys.path.insert(0, REPO + "/src")
 
-# Pre-import checks - verify source files exist and parse
+# Initialize logger for tests
+from prime_rl.utils.logger import setup_logger
+setup_logger("WARNING")
+
 def _check_source_parses(path: str) -> bool:
     """Check that a Python file parses without errors."""
     full_path = Path(REPO) / path
@@ -40,6 +43,24 @@ def _check_source_parses(path: str) -> bool:
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) - syntax / compilation checks
 # ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_repo_ruff_linting():
+    """Repo's ruff linting passes on modified files (pass_to_pass)."""
+    # Install ruff if not available
+    subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
+    # Ruff check on modified orchestrator files with project config (F, I rules)
+    modified_files = [
+        "src/prime_rl/orchestrator/trajectories.py",
+        "src/prime_rl/orchestrator/orchestrator.py",
+        "tests/unit/orchestrator/test_trajectories.py",
+    ]
+    r = subprocess.run(
+        ["ruff", "check"] + modified_files + ["--select", "F,I"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout}\n{r.stderr}"
+
 
 # [static] pass_to_pass
 def test_syntax_check():

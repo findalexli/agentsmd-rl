@@ -70,6 +70,17 @@ checks:
       lines: "396"
       commit: "56d75a0b77f2ceda8ea747810275da8e0a9a3d71"
 
+  # Repo CI/CD pass_to_pass gates
+  - id: test_repo_typescript_syntax_app_router
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's router TypeScript files parse without errors"
+
+  - id: test_repo_imports_resolvable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Router module imports are resolvable without runtime errors"
+
 rubric:
   - rule: "Keep require() behind compile-time if/else branches for DCE; avoid early-return/throw patterns that prevent dead-code elimination."
     source:

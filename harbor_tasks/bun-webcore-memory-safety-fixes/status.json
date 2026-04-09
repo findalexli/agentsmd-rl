@@ -1,72 +1,63 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.965326",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T01:46:53.369235",
+  "total_time": 575.93,
+  "sandbox_id": "i5x28s70d1dbq62uxn2d0",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 236.14,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-03-30T11:48:11.528395",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 18386
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
-    {
-      "timestamp": "2026-03-31T13:37:30-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validations passed. Docker build successful. NOP test: 7 fail-to-pass tests correctly failed (reward=0). Gold test: all 17 tests passed (reward=1). Rubric judge skipped due to missing taskforge dependency (tooling issue, not task issue).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 59.54
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.85,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-31T09:10:27.424817",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 31715
-    },
-    {
-      "timestamp": "2026-04-01T00:00:00-07:00",
-      "runner": "manual v2 remake",
-      "docker_build": true,
-      "gold_score": 1,
-      "nop_score": 0,
       "verdict": "pass",
-      "notes": "v2 remake: fixed Dockerfile (shallow fetch), fixed test regexes for broadcast_channel_weak_ptr and thread_uid_member"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:46:53.202282"
     },
     {
-      "timestamp": "2026-04-01T20:15:41.656054",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.941678",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.526395",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 575.93,
+      "at": "2026-04-09T01:46:53.369235"
     }
   ]
 }

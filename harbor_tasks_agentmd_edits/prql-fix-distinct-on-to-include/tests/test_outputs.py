@@ -42,6 +42,36 @@ def test_syntax_check():
     assert r.returncode == 0, f"cargo check failed:\n{r.stderr.decode()}"
 
 
+# [repo_tests] pass_to_pass — repo's CI clippy linting passes
+def test_repo_clippy():
+    """Repo's clippy linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "prqlc", "--all-targets", "--", "-D", "warnings"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo's CI formatting check passes
+def test_repo_fmt():
+    """Repo's rustfmt formatting check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Formatting check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo's lib and integration tests for prqlc pass
+def test_repo_prqlc_tests():
+    """Repo's prqlc lib and integration tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "prqlc", "--no-default-features", "--features=default", "--lib", "--tests"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"prqlc tests failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

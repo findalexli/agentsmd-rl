@@ -8,6 +8,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -214,3 +216,57 @@ def test_not_stub():
             break
     else:
         raise AssertionError("SpacesReloader class not found in utils.py")
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates from the actual repo
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax():
+    """Repo's Python syntax check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "py_compile", f"{REPO}/gradio/utils.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ruff lint check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "--select", "E9,F63,F7,F82",
+         "--target-version", "py310", f"{REPO}/gradio/utils.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff lint check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format():
+    """Repo's ruff format check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "format", "--check", f"{REPO}/gradio/utils.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

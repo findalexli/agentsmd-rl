@@ -33,6 +33,26 @@ def test_syntax_check():
         )
 
 
+# [repo_tests] pass_to_pass — repo CI equivalent
+def test_repo_modified_files_parse():
+    """Repo's modified .mjs files parse as valid JavaScript (pass_to_pass)."""
+    # Check all modified .mjs files in the PR parse correctly
+    modified_files = [
+        ".claude/skills/clickup/api/tasks.mjs",
+        ".claude/skills/clickup/query.mjs",
+    ]
+    for f in modified_files:
+        r = subprocess.run(
+            ["node", "--check", f],
+            cwd=REPO,
+            capture_output=True,
+            timeout=15,
+        )
+        assert r.returncode == 0, (
+            f"{f} has syntax errors:\n{r.stderr.decode()}"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

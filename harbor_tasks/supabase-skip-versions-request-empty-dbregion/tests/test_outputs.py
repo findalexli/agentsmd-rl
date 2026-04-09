@@ -172,6 +172,65 @@ def test_not_stub():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD derived checks
+# ---------------------------------------------------------------------------
+
+def test_target_file_exists():
+    """Target TypeScript file must exist and be readable (pass_to_pass)."""
+    path = Path(FULL_PATH)
+    assert path.exists(), f"Target file does not exist: {FULL_PATH}"
+    assert path.is_file(), f"Target path is not a file: {FULL_PATH}"
+    # Should be able to read the content
+    content = path.read_text()
+    assert len(content) > 0, "Target file is empty"
+
+
+def test_file_has_typescript_exports():
+    """File must have TypeScript export statements (pass_to_pass)."""
+    src = Path(FULL_PATH).read_text()
+    # Should have at least one export
+    assert "export " in src, "File missing TypeScript exports"
+    # Should export the main hook function - check the specific hook name
+    hook_export_pattern = r'export\s+(const|function)\s+useProjectCreationPostgresVersionsQuery'
+    assert re.search(hook_export_pattern, src), "Missing main hook export"
+
+
+def test_file_imports_react_query():
+    """File must import from @tanstack/react-query (pass_to_pass)."""
+    src = Path(FULL_PATH).read_text()
+    # React Query v5 uses @tanstack/react-query
+    assert "@tanstack/react-query" in src, "Missing @tanstack/react-query import"
+    # Should import useQuery
+    assert "useQuery" in src, "Missing useQuery import or usage"
+
+
+def test_file_has_proper_query_structure():
+    """File must have standard React Query structure (pass_to_pass)."""
+    src = Path(FULL_PATH).read_text()
+    # Query files should have these key properties
+    assert "queryKey:" in src, "Missing queryKey property"
+    assert "queryFn:" in src, "Missing queryFn property"
+    assert "enabled:" in src, "Missing enabled property"
+
+
+def test_file_no_commonjs_require():
+    """File should not use CommonJS require (pass_to_pass)."""
+    src = Path(FULL_PATH).read_text()
+    # TypeScript files should use ES modules, not CommonJS
+    # Check for require( usage that's not part of dynamic import()
+    require_pattern = r'\brequire\s*\('
+    matches = re.findall(require_pattern, src)
+    assert len(matches) == 0, f"File uses CommonJS require(): found {len(matches)} occurrences"
+
+
+def test_config_directory_exists():
+    """The data/config directory must exist (pass_to_pass)."""
+    config_dir = Path(f"{REPO}/apps/studio/data/config")
+    assert config_dir.exists(), "data/config directory does not exist"
+    assert config_dir.is_dir(), "data/config is not a directory"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md / SKILL.md
 # ---------------------------------------------------------------------------
 

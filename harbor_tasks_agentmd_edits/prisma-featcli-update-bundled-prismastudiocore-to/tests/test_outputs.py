@@ -33,6 +33,34 @@ def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # pass_to_pass (static) — syntax / regression checks
 # ---------------------------------------------------------------------------
 
+def test_repo_prettier():
+    """Repo's Prettier formatting check passes (pass_to_pass)."""
+    # Run in bash with corepack enabled
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/prisma && corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm run prettier-check"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_engines_override():
+    """Repo's engines override check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/prisma && corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm run check-engines-override"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Engines override check failed:\n{r.stderr[-500:]}"
+
+
+def test_studio_syntax_node_check():
+    """Studio.ts must pass Node.js syntax validation (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", str(STUDIO_TS)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Studio.ts syntax check failed:\n{r.stderr}"
+
+
 def test_syntax_check():
     """Studio.ts must be valid TypeScript (no unterminated strings or brackets)."""
     content = STUDIO_TS.read_text()
@@ -162,24 +190,33 @@ if (!src.includes('@radix-ui/react-toggle')) {
 }
 
 // 2. Find the import map block in the HTML template
-const mapMatch = src.match(/importmap[\\s\\S]*?"imports"\\s*:\\s*\\{([\\s\\S]*?)\\}/);
-if (!mapMatch) {
+// Look from 'importmap' to the closing </script> tag
+const mapStart = src.indexOf('importmap');
+if (mapStart === -1) {
     console.error('NO_IMPORT_MAP');
     process.exit(1);
 }
-const importsBlock = mapMatch[1];
+const mapEnd = src.indexOf('</script>', mapStart);
+const mapBlock = mapEnd > 0 ? src.slice(mapStart, mapEnd) : src.slice(mapStart, mapStart + 2000);
 
-// 3. @radix-ui/react-toggle must be a key in the imports
-if (!importsBlock.includes('@radix-ui/react-toggle')) {
+// 3. Check that imports section exists and contains @radix-ui/react-toggle
+const importsMatch = mapBlock.match(/"imports"\\s*:\\s*\\{/);
+if (!importsMatch) {
+    console.error('NO_IMPORTS_SECTION');
+    process.exit(1);
+}
+
+// 4. @radix-ui/react-toggle must be a key in the imports
+if (!mapBlock.includes('@radix-ui/react-toggle')) {
     console.error('RADIX_NOT_IN_IMPORTS: found in file but not in import map');
     process.exit(1);
 }
 
-// 4. The URL (constant or literal) must pin React deps to avoid hook crashes
+// 5. The URL (constant or literal) must pin React deps to avoid hook crashes
 // Check either a literal ?deps=react@ in the import map URL,
 // or a constant that resolves to such a URL
-const hasLiteralPin = importsBlock.includes('deps=react@');
-const constName = importsBlock.match(/@radix-ui\\/react-toggle"\\s*:\\s*"\\$\\{(\\w+)\\}"/);
+const hasLiteralPin = mapBlock.includes('deps=react@');
+const constName = mapBlock.match(/@radix-ui\\/react-toggle"\\s*:\\s*"\\$\\{(\\w+)\\}"/);
 let hasConstPin = false;
 if (constName) {
     const constDef = src.match(new RegExp('const\\\\s+' + constName[1] + '\\\\s*='));
@@ -217,14 +254,24 @@ if (!src.includes('chart.js/auto')) {
 }
 
 // 2. Find the import map block
-const mapMatch = src.match(/importmap[\\s\\S]*?"imports"\\s*:\\s*\\{([\\s\\S]*?)\\}/);
-if (!mapMatch) {
+// Look from 'importmap' to the closing </script> tag
+const mapStart = src.indexOf('importmap');
+if (mapStart === -1) {
     console.error('NO_IMPORT_MAP');
     process.exit(1);
 }
+const mapEnd = src.indexOf('</script>', mapStart);
+const mapBlock = mapEnd > 0 ? src.slice(mapStart, mapEnd) : src.slice(mapStart, mapStart + 2000);
 
-// 3. chart.js/auto must be a key in the imports block
-if (!mapMatch[1].includes('chart.js/auto')) {
+// 3. Check that imports section exists
+const importsMatch = mapBlock.match(/"imports"\\s*:\\s*\\{/);
+if (!importsMatch) {
+    console.error('NO_IMPORTS_SECTION');
+    process.exit(1);
+}
+
+// 4. chart.js/auto must be a key in the imports block
+if (!mapBlock.includes('chart.js/auto')) {
     console.error('CHARTJS_NOT_IN_IMPORTS');
     process.exit(1);
 }

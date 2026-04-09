@@ -11,6 +11,7 @@ import subprocess
 from pathlib import Path
 
 REPO = "/workspace/react"
+COMPILER = f"{REPO}/compiler"
 MINIMIZE_TS = f"{REPO}/compiler/packages/snap/src/minimize.ts"
 
 
@@ -42,7 +43,29 @@ def test_minimize_ts_exists():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral: errorsMatch
+# Pass-to-pass (repo CI) - TypeScript compilation
+# ---------------------------------------------------------------------------
+
+def test_snap_typescript_compiles():
+    """Snap package TypeScript must compile (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "snap", "run", "tsc", "--build"],
+        capture_output=True, text=True, timeout=120, cwd=COMPILER,
+    )
+    assert r.returncode == 0, f"Snap TypeScript compilation failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_snap_builds():
+    """Snap package must build successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "snap", "build"],
+        capture_output=True, text=True, timeout=120, cwd=COMPILER,
+    )
+    assert r.returncode == 0, f"Snap build failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) - core behavioral: errorsMatch
 # ---------------------------------------------------------------------------
 
 def test_errorsMatch_rejects_different_descriptions():
@@ -99,7 +122,7 @@ console.log('PASS');
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — description field in type definitions
+# Fail-to-pass (pr_diff) - description field in type definitions
 # ---------------------------------------------------------------------------
 
 def test_description_in_error_types():
@@ -148,7 +171,7 @@ console.log('PASS');
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — error mapping preserves description
+# Fail-to-pass (pr_diff) - error mapping preserves description
 # ---------------------------------------------------------------------------
 
 def test_error_mapping_copies_description():
@@ -196,7 +219,7 @@ console.log('PASS');
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — new generator functions
+# Fail-to-pass (pr_diff) - new generator functions
 # ---------------------------------------------------------------------------
 
 def test_new_generators_defined():
@@ -242,7 +265,7 @@ console.log('PASS');
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — strategies registered
+# Fail-to-pass (pr_diff) - strategies registered
 # ---------------------------------------------------------------------------
 
 def test_new_strategies_registered():

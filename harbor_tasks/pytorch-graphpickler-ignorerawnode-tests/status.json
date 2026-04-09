@@ -1,49 +1,79 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-04-01T20:15:41.721519",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T11:37:27.989999",
+  "total_time": 8735.2,
+  "sandbox_id": "ijxl6pa7dboa02cqmjg81",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 84.79,
+      "notes": "CI Discovery: Repo is pytorch/pytorch with build-system using cmake/ninja. CI commands found: (1) lintrunner for linting (FLAKE8, CLANGFORMAT, PYFMT, RUFF, etc. from .lintrunner.toml), (2) python test/run_test.py for running tests via CI scripts (.ci/pytorch/run_tests.sh, .ci/pytorch/test.sh), (3) pytest not directly used - tests run via custom test runner. Usable p2p gates: AST validation and import parsing (PyTorch requires full build which is not available in test env). Tests added: test_p2p_repo_ast_valid, test_p2p_repo_imports_parse. Both pass on base commit."
     },
-    {
-      "timestamp": "2026-04-01T22:50:21-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 0.0,
-      "nop_score": 0.0,
-      "verdict": "fail_gold",
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 300.59,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "icr": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build successful, NOP test reward=0 (tests correctly fail on base commit), Gold test reward=1 (tests pass with fix), Rubric judge ICR=1.0 (gold solution follows all style/convention rules).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 93.22
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.72,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T12:58:21.154373",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 6120.13,
+      "at": "2026-04-09T06:25:03.793013"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.956532",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8734.8,
+      "at": "2026-04-09T11:37:27.693900"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.586180",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8735.2,
+      "at": "2026-04-09T11:37:27.989999"
     }
   ]
 }

@@ -28,6 +28,70 @@ def _run(cmd, cwd=REPO, timeout=120, **kw):
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and after fix
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass — ox lint passes
+def test_repo_lint():
+    """Repo's oxlint passes with 0 warnings/errors (pass_to_pass)."""
+    r = _run(
+        ["npx", "oxlint", "--type-aware"],
+        timeout=90,
+    )
+    assert r.returncode == 0, f"Lint failed:\nstdout:\n{r.stdout}\nstderr:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — google extension tests pass
+def test_repo_google_extension_tests():
+    """Google extension tests pass (pass_to_pass)."""
+    r = _run(
+        ["npx", "vitest", "run", "extensions/google/", "--reporter=verbose"],
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Google extension tests failed (rc={r.returncode}):\nstdout:\n{r.stdout}\nstderr:\n{r.stderr}"
+    )
+    assert "FAIL" not in r.stdout, f"Some tests failed:\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass — no conflict markers
+def test_repo_no_conflict_markers():
+    """Repo has no conflict markers (pass_to_pass)."""
+    r = _run(["pnpm", "check:no-conflict-markers"], timeout=30)
+    assert r.returncode == 0, f"Conflict markers check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — extension boundary checks
+def test_repo_extension_no_src_outside_plugin_sdk():
+    """Extensions don't import src/** outside plugin-sdk (pass_to_pass)."""
+    r = _run(["pnpm", "lint:extensions:no-src-outside-plugin-sdk"], timeout=30)
+    assert r.returncode == 0, f"Extension boundary check failed:\n{r.stderr}"
+
+
+def test_repo_extension_no_relative_outside_package():
+    """Extensions don't use relative imports escaping package (pass_to_pass)."""
+    r = _run(["pnpm", "lint:extensions:no-relative-outside-package"], timeout=30)
+    assert r.returncode == 0, f"Extension relative import check failed:\n{r.stderr}"
+
+
+def test_repo_extension_no_plugin_sdk_internal():
+    """Extensions don't import plugin-sdk-internal (pass_to_pass)."""
+    r = _run(["pnpm", "lint:extensions:no-plugin-sdk-internal"], timeout=30)
+    assert r.returncode == 0, f"Extension plugin-sdk-internal check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — format check for modified files
+def test_repo_format_check():
+    """Modified TypeScript files are properly formatted (pass_to_pass)."""
+    r = _run(
+        ["npx", "oxfmt", "--check", "--threads=1", "extensions/google/provider-models.ts", "extensions/google/index.ts"],
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 

@@ -49,7 +49,65 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests via subprocess
+# Pass-to-pass (repo_tests) - CI/CD checks
+# ---------------------------------------------------------------------------
+
+def test_repo_compiler_typecheck():
+    """Repo's TypeScript typecheck for babel-plugin-react-compiler passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=120, cwd=REPO + "/compiler",
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_compiler_lint():
+    """Repo's ESLint for babel-plugin-react-compiler passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO + "/compiler",
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_compiler_build():
+    """Repo's build for babel-plugin-react-compiler passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO + "/compiler",
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_snap_build():
+    """Repo's build for snap package passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "snap", "run", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO + "/compiler",
+    )
+    assert r.returncode == 0, f"Snap build failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_compiler_jest():
+    """Repo's Jest tests for babel-plugin-react-compiler pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "jest", "--maxWorkers=2"],
+        capture_output=True, text=True, timeout=120, cwd=REPO + "/compiler",
+    )
+    assert r.returncode == 0, f"Jest tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_root_eslint():
+    """Repo's root-level ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Root ESLint failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) - behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 def test_yargs_debug_option():
@@ -70,9 +128,9 @@ if (!/\\.alias\\(\\s*['"]d['"]\\s*,\\s*['"]debug['"]\\s*\\)/.test(content)) {
     process.exit(1);
 }
 
-// Must NOT have .boolean('filter') — old option should be removed
+// Must NOT have .boolean('filter') - old option should be removed
 if (/\\.boolean\\(\\s*['"]filter['"]\\s*\\)/.test(content)) {
-    process.stderr.write('Still has .boolean("filter") — should be removed');
+    process.stderr.write('Still has .boolean("filter") - should be removed');
     process.exit(1);
 }
 
@@ -136,7 +194,7 @@ process.stdout.write('PASS');
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — CLAUDE.md creation
+# Fail-to-pass (pr_diff) - CLAUDE.md creation
 # ---------------------------------------------------------------------------
 
 def test_claude_md_documents_snap_cli():

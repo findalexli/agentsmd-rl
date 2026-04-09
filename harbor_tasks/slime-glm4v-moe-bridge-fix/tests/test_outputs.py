@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/slime"
@@ -56,6 +57,35 @@ def test_syntax_check():
         capture_output=True, text=True, timeout=30,
     )
     assert r.returncode == 0, f"Syntax error:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff():
+    """Repo's ruff lint check passes on megatron_bridge module (pass_to_pass)."""
+    # Install ruff if not available
+    ruff_check = subprocess.run(["which", "ruff"], capture_output=True)
+    if ruff_check.returncode != 0:
+        subprocess.run([sys.executable, "-m", "pip", "install", "ruff", "--quiet"], check=True, capture_output=True)
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/slime_plugins/megatron_bridge/"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_module_syntax():
+    """Full module AST parsing check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import ast
+with open('{TARGET}', 'r') as f:
+    ast.parse(f.read())
+print('Module AST parsing passed')
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Module syntax check failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

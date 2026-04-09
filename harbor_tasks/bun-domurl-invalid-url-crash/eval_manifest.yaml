@@ -50,6 +50,37 @@ checks:
       lines: "184"
       commit: "9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8"
 
+  # Repo CI/CD checks (pass_to_pass gates)
+  - id: repo_oxlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's JavaScript linting passes with oxlint"
+
+  - id: repo_prettier_scripts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript scripts are properly formatted"
+
+  - id: repo_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's package.json is valid JSON"
+
+  - id: repo_typos_toml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's .typos.toml is valid TOML"
+
+  - id: repo_git_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's git repository is intact"
+
+  - id: repo_shell_scripts_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's shell scripts have valid syntax"
+
 rubric:
   - rule: "Return early with `return {};` (empty encoded JS value) when error conditions are detected in binding functions, rather than continuing with potentially null pointers."
     source:
@@ -61,3 +92,29 @@ rubric:
       path: "CLAUDE.md"
       lines: "109-110"
       commit: "9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8"
+
+  # Additional repo_tests pass_to_pass gates
+  - id: repo_oxlint_no_config_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's JavaScript passes basic oxlint correctness checks (no config)"
+
+  - id: repo_build_zig_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's build.zig exists and has basic structural integrity"
+
+  - id: repo_editorconfig_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's .editorconfig is valid and has required sections"
+
+  - id: repo_prettier_packages
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's packages TypeScript files have no parse errors in prettier"
+
+  - id: repo_claude_md_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's CLAUDE.md exists and has substantial content"

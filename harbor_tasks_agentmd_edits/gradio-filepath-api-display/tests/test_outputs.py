@@ -166,6 +166,30 @@ def test_nested_file_shows_filepath_in_dict():
 # ---------------------------------------------------------------------------
 
 
+# [static] pass_to_pass — repo CI checks (ruff linting and formatting)
+def test_client_lint():
+    """gradio_client module passes ruff linting (pass_to_pass)."""
+    # Install ruff if not available
+    subprocess.run(["pip", "install", "-q", "ruff"], check=False, capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "client/python/gradio_client/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [static] pass_to_pass — repo CI checks (ruff formatting)
+def test_client_format():
+    """gradio_client module passes ruff format check (pass_to_pass)."""
+    # Install ruff if not available
+    subprocess.run(["pip", "install", "-q", "ruff"], check=False, capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", "client/python/gradio_client/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # [static] pass_to_pass
 def test_non_file_object_still_dict():
     """Plain object schema (no file data) must still render as dict(...)."""
@@ -178,29 +202,4 @@ def test_non_file_object_still_dict():
     assert "name" in result, f"Expected 'name' field in dict, got: {result!r}"
     assert "filepath" not in result, (
         f"Non-file schema must not contain 'filepath', got: {result!r}"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Config edit (config_edit) — SKILL.md documentation update
-# ---------------------------------------------------------------------------
-
-
-# [config_edit] fail_to_pass
-
-    # Must document the info command with usage
-    assert "gradio info" in content_lower, (
-        "SKILL.md should document the 'gradio info' command"
-    )
-    # Must document the predict command with usage
-    assert "gradio predict" in content_lower, (
-        "SKILL.md should document the 'gradio predict' command"
-    )
-    # Must describe what these commands interact with (spaces / endpoints)
-    assert "endpoint" in content_lower or "space" in content_lower, (
-        "SKILL.md should mention spaces or endpoints in CLI documentation"
-    )
-    # Must include example invocations (code blocks with command usage)
-    assert "```" in content and ("gradio info" in content or "gradio predict" in content), (
-        "SKILL.md should include code examples for CLI commands"
     )

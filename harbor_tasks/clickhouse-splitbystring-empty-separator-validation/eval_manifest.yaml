@@ -1,0 +1,42 @@
+task_name: clickhouse-splitbystring-empty-separator-validation
+source_pr: ClickHouse/ClickHouse#102094
+title: "Extend argument validation in splitByString tokenizer to reject empty separators"
+difficulty: medium
+tags: ["c++", "validation", "error-handling", "clickhouse"]
+estimated_time: 30
+
+# Evaluation checks - must match test_outputs.py functions 1:1
+checks:
+  - id: test_empty_separator_validation_compiles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Source code checks for empty separator strings and compiles without errors"
+
+  - id: test_error_message_updated_compiles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error message updated to 'the separators argument cannot be empty' and code compiles"
+
+  - id: test_clickhouse_style_checks
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file passes ClickHouse style checks (whitespace, tabs, etc.)"
+
+  - id: test_no_multiple_empty_lines
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Code has no more than two consecutive empty lines (ClickHouse style check)"
+
+  - id: test_allman_brace_style
+    type: pass_to_pass
+    origin: agent_config
+    source: ".claude/CLAUDE.md"
+    description: "C++ code uses Allman-style braces (opening brace on new line)"
+
+  - id: test_no_curly_brace_on_same_line
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Opening braces are on new lines, not same line as control statements (ClickHouse style check)"
+
+# Soft rules (subjective / style guidelines)
+rubric: []

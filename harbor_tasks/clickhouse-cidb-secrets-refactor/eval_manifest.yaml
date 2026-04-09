@@ -1,0 +1,120 @@
+source_pr:
+  owner: ClickHouse
+  repo: ClickHouse
+  number: 102109
+  merge_commit: da8ef1e1609917391264ae6710b3546afba8e482
+  base_commit: bc855b917b3f456bfd6198c5bc29a1bc5672aabf
+
+task_metadata:
+  name: clickhouse-cidb-secrets-refactor
+  title: Refactor CIDB secrets to use Settings instead of hardcoded values
+  description: |
+    The collect_statistics.py script hardcoded public CIDB secret names
+    (clickhouse-test-stat-url, etc.), so the NightlyStatistics job always
+    queried the public CIDB — even in private forks that override
+    Settings.SECRET_CI_DB_* via private_settings_overrides.py.
+
+    This task replaces the hardcoded Secret.Config calls with
+    Info().get_secret(Settings.SECRET_CI_DB_URL) / SECRET_CI_DB_USER /
+    SECRET_CI_DB_PASSWORD, matching the pattern used in runner.py and
+    cidb_cluster.py.
+
+  difficulty: easy
+  estimated_time: 15 min
+  tags: ["python", "refactoring", "ci", "secrets"]
+
+# Programmatic checks that run via test_outputs.py
+checks:
+  - id: "imports_correct_classes"
+    name: "Imports Info and Settings from ci.praktika"
+    type: "pass_to_pass"
+    description: "Verifies that Info and Settings are imported from ci.praktika"
+
+  - id: "no_hardcoded_secret_config"
+    name: "No hardcoded secret names"
+    type: "fail_to_pass"
+    description: "Hardcoded secret names (clickhouse-test-stat-*) must be removed"
+
+  - id: "no_secret_config_usage"
+    name: "No Secret.Config usage"
+    type: "fail_to_pass"
+    description: "Secret.Config should not be used for CIDB credentials"
+
+  - id: "uses_settings_constants"
+    name: "Uses Settings.SECRET_CI_DB_* constants"
+    type: "fail_to_pass"
+    description: "Must use Settings.SECRET_CI_DB_URL, SECRET_CI_DB_USER, SECRET_CI_DB_PASSWORD"
+
+  - id: "uses_info_get_secret"
+    name: "Uses Info().get_secret() pattern"
+    type: "fail_to_pass"
+    description: "Must use Info().get_secret() to retrieve secrets"
+
+  - id: "cidb_initialization_pattern"
+    name: "CIDB initialized with settings-derived values"
+    type: "pass_to_pass"
+    description: "CIDB must be initialized with url/user/passwd derived from settings"
+
+  - id: "syntax_valid"
+    name: "Python syntax is valid"
+    type: "pass_to_pass"
+    description: "The modified file must have valid Python syntax"
+
+  - id: "file_structure_unchanged"
+    name: "File structure preserved"
+    type: "pass_to_pass"
+    description: "Functions like get_job_stat_for_interval must still exist"
+
+  - id: "quantiles_and_days_unchanged"
+    name: "Constants unchanged"
+    type: "pass_to_pass"
+    description: "QUANTILES and DAYS constants should not be modified"
+
+  # Pass-to-pass tests: Repo CI/CD validation
+  - id: "repo_python_syntax"
+    name: "Repo Python syntax valid"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "collect_statistics.py must have valid Python syntax"
+
+  - id: "repo_praktika_module_syntax"
+    name: "Repo praktika module syntax valid"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "ci/praktika/ Python files must have valid syntax"
+
+  - id: "repo_praktika_settings_importable"
+    name: "Repo praktika.settings importable"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "ci.praktika.settings must be importable with required constants"
+
+  - id: "repo_praktika_info_importable"
+    name: "Repo praktika.info importable"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "ci.praktika.info.Info must be importable with get_secret method"
+
+  - id: "repo_ci_jobs_syntax"
+    name: "Repo CI jobs syntax valid"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "All ci/jobs/*.py files must have valid Python syntax"
+
+  - id: "repo_praktika_tests_pass"
+    name: "Repo praktika tests pass"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "ci/tests/test_pytest_xfail_xpass.py tests must pass"
+
+  - id: "repo_collect_statistics_ast_valid"
+    name: "Repo collect_statistics AST valid"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "collect_statistics.py must have valid AST structure for static analysis"
+
+# Rules from agent configs (relevant for rubric/LLM evaluation)
+agent_config: []
+
+# Soft/subjective criteria for LLM judge
+rubric: []

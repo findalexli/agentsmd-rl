@@ -1,0 +1,93 @@
+source_pr: https://github.com/MystenLabs/sui/pull/26052
+base_commit: fbb6960c6225c2a4406cd336a0899b54e53e4787
+merge_commit: b85ea336af4c727655108209640becf2c8514c0e
+description: Add additional argument checking in Move VM runtime
+
+checks:
+  # Pass-to-pass: Basic compilation
+  - id: test_compilation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "move-vm-runtime compiles successfully"
+
+  # Pass-to-pass: Happy path tests
+  - id: test_argument_count_happy_path_0_args
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Function calls with correct 0 arguments succeed"
+
+  - id: test_argument_count_happy_path_1_arg
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Function calls with correct 1 argument succeed"
+
+  # Pass-to-pass: Repo CI checks
+  - id: test_repo_cargo_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo check on move-vm-runtime passes"
+
+  - id: test_repo_cargo_check_all
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo check on all move crates passes"
+
+  - id: test_repo_cargo_test_move_vm_runtime
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo test on move-vm-runtime --lib passes"
+
+  # Fail-to-pass: Value argument count mismatches
+  - id: test_argument_count_mismatch_0_expected_1_got
+    type: fail_to_pass
+    origin: implementation
+    description: "Calling function expecting 0 args with 1 arg fails with NUMBER_OF_ARGUMENTS_MISMATCH"
+
+  - id: test_argument_count_mismatch_1_expected_0_got
+    type: fail_to_pass
+    origin: implementation
+    description: "Calling function expecting 1 arg with 0 args fails with NUMBER_OF_ARGUMENTS_MISMATCH"
+
+  - id: test_argument_count_mismatch_2_expected_1_got
+    type: fail_to_pass
+    origin: implementation
+    description: "Calling function expecting 2 args with 1 arg fails with NUMBER_OF_ARGUMENTS_MISMATCH"
+
+  - id: test_argument_count_mismatch_2_expected_3_got
+    type: fail_to_pass
+    origin: implementation
+    description: "Calling function expecting 2 args with 3 args fails with NUMBER_OF_ARGUMENTS_MISMATCH"
+
+  # Fail-to-pass: Type argument count mismatches
+  - id: test_type_argument_count_mismatch_0_expected_1_got
+    type: fail_to_pass
+    origin: implementation
+    description: "Calling generic function with 0 type args fails with NUMBER_OF_TYPE_ARGUMENTS_MISMATCH"
+
+  - id: test_type_argument_count_mismatch_1_expected_2_got
+    type: fail_to_pass
+    origin: implementation
+    description: "Calling generic function with 2 type args when 1 expected fails"
+
+  - id: test_type_argument_count_mismatch_non_generic_with_args
+    type: fail_to_pass
+    origin: implementation
+    description: "Calling non-generic function with type args fails with NUMBER_OF_TYPE_ARGUMENTS_MISMATCH"
+
+  - id: test_type_argument_count_mismatch_2_expected_1_got
+    type: fail_to_pass
+    origin: implementation
+    description: "Calling function expecting 2 type args with 1 fails"
+
+  - id: test_type_argument_count_mismatch_2_expected_3_got
+    type: fail_to_pass
+    origin: implementation
+    description: "Calling function expecting 2 type args with 3 fails"
+
+  # Agent config adherence
+  - id: test_vm_code_present
+    type: fail_to_pass
+    origin: implementation
+    description: "VM argument checking code is present in vm.rs"
+
+rubric: []

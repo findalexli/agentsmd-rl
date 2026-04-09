@@ -1,106 +1,78 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.965614",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
-    },
-    {
-      "timestamp": "2026-03-30T20:01:41.517473",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.46,
-      "verdict": "pass",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T11:14:52.267342",
+  "total_time": 7379.39,
+  "sandbox_id": "ikjhktgr8vsv5rp3j39ur",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 444.28,
       "notes": ""
     },
-    {
-      "timestamp": "2026-03-30T11:48:15.959365",
-      "runner": "audit (audit-tests_20260330_114815)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 14257
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 240.48,
+      "notes": "Verified 3 p2p repo tests pass on base commit and after gold patch"
     },
-    {
-      "timestamp": "2026-03-31T09:10:27.424891",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 29327
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
-    {
-      "timestamp": "2026-04-01T20:15:41.690433",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "format": "pytest_binary"
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build successful, NOP test correctly fails on base code (reward=0), Gold test passes after applying solve.sh (reward=1), Rubric judge ICR=1.0. The task is valid and ready for benchmarking.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 293.69
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.79,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T10:48:33.884997",
-      "phase": "e2b_validate_phase9",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "notes": "Sandbox create: 404: template 'lt4cnyim2ifi8acqr0hy' not found"
-    },
-    {
-      "timestamp": "2026-04-02T10:53:30.534199",
-      "phase": "e2b_validate_phase9_retry",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox create: 404: template 'lt4cnyim2ifi8acqr0hy' not found"
-    },
-    {
-      "timestamp": "2026-04-02T14:06:36.420777",
-      "phase": "e2b_sandbox404_retry",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'pnpm install --frozen-lockfile || pnpm install': signal: killed"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.951517",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'pnpm install --frozen-lockfile || pnpm install': signal: killed"
-    },
-    {
-      "timestamp": "2026-04-02T17:47:54.322928",
-      "phase": "local_docker_validate",
-      "runner": "local_docker_82",
-      "format": "pytest_binary",
       "verdict": "fail",
-      "notes": "nop=missing, gold=missing"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6191.46,
+      "at": "2026-04-09T06:32:45.541972"
     },
     {
-      "timestamp": "2026-04-02T18:55:00.000000",
-      "phase": "local_docker_validate",
-      "runner": "manual_remake",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "notes": "12 tests (6 f2p, 6 p2p), all passing"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 7379.13,
+      "at": "2026-04-09T11:14:52.102755"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.557729",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 7379.39,
+      "at": "2026-04-09T11:14:52.267342"
     }
   ]
 }

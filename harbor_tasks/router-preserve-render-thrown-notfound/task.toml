@@ -1,0 +1,27 @@
+name = "router-preserve-render-thrown-notfound"
+title = "Preserve render-thrown notFound errors in TanStack Router"
+description = """
+Fix a bug where notFound() errors thrown from route components lose their route context,
+causing the wrong notFoundComponent to render. The fix requires preserving the routeId
+when forwarding notFound errors through framework error boundaries in React, Solid, and Vue.
+"""
+repository = "TanStack/router"
+pr_number = 7077
+
+# Task metadata
+difficulty = "medium"  # Requires understanding framework-specific error handling
+tags = ["typescript", "react", "solid", "vue", "router", "error-handling", "monorepo"]
+
+# Time estimates (minutes)
+estimated_time = { setup = 10, fix = 25, verify = 15 }
+
+# Target files for reference
+target_files = [
+    "packages/react-router/src/Match.tsx",
+    "packages/solid-router/src/Match.tsx",
+    "packages/solid-router/src/not-found.tsx",
+    "packages/vue-router/src/Match.tsx"
+]
+
+# Testing command
+test_command = "pnpm nx run @tanstack/react-router:test:unit -- tests/not-found.test.tsx"

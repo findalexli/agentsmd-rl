@@ -1,12 +1,3 @@
-"""
-Task: nextjs-pr-status-thread-commands
-Repo: vercel/next.js @ 5102fd079423e01019266560237667aad629588e
-PR:   90773
-
-All checks must pass for reward = 1. Any failure = reward 0.
-Each test function maps 1:1 to a check in eval_manifest.yaml.
-"""
-
 import json
 import subprocess
 import textwrap
@@ -16,12 +7,13 @@ REPO = "/workspace/next.js"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass) — repo CI checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
-def test_syntax_check():
-    """scripts/pr-status.js parses without syntax errors."""
+# [repo_tests] pass_to_pass
+def test_repo_syntax_check():
+    """Repo JavaScript files have no syntax errors (pass_to_pass)."""
+    # Check the main pr-status.js script that this PR modifies
     r = subprocess.run(
         ["node", "--check", "scripts/pr-status.js"],
         cwd=REPO,
@@ -29,7 +21,7 @@ def test_syntax_check():
         text=True,
         timeout=30,
     )
-    assert r.returncode == 0, f"Syntax error in pr-status.js:\n{r.stderr}"
+    assert r.returncode == 0, f"Syntax error in scripts/pr-status.js:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

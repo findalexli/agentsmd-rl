@@ -1,0 +1,57 @@
+version: 1
+
+source:
+  repo: continuedev/continue
+  pr_number: 11915
+  base_commit: 16a540c3378b833931429db9bcb3ce7c98bd7a36
+  merge_commit: fd7ade8f3fe8c1ae51190d714fef9821bfb14b59
+title: "fix: ensure config.yaml exists and is populated when accessed"
+description: |
+  The gear icon (open config profile) should create config.yaml with defaults if the file is missing.
+  Empty config.yaml should be detected and populated with the default config instead of causing a parse error.
+  This aligns the behavior with what happens on startup.
+
+# Checks map 1:1 with test_outputs.py::test_* functions
+checks:
+  - id: missing_config_yaml_created
+    description: "getConfigYamlPath() creates config.yaml with defaults when missing"
+    origin: f2p
+
+  - id: empty_config_yaml_populated
+    description: "getConfigYamlPath() populates empty config.yaml with defaults"
+    origin: f2p
+
+  - id: existing_config_preserved
+    description: "Existing config.yaml with content is preserved"
+    origin: p2p
+
+  - id: config_handler_calls_get_config_yaml_path
+    description: "ConfigHandler calls getConfigYamlPath() when opening local profiles"
+    origin: f2p
+
+  - id: is_empty_check_logic
+    description: "The isEmpty and needsCreation logic is correctly implemented in paths.ts"
+    origin: structural
+
+  - id: paths_syntax_valid
+    description: "paths.ts compiles without syntax errors"
+    origin: p2p
+
+  - id: config_handler_syntax_valid
+    description: "ConfigHandler.ts compiles without critical syntax errors"
+    origin: p2p
+
+  - id: test_repo_tsc_check
+    description: "Repo-wide TypeScript type check passes (npm run tsc:check in core)"
+    origin: p2p
+
+  - id: test_repo_lint
+    description: "Repo linting passes (npm run lint in core)"
+    origin: p2p
+
+  - id: test_repo_unit_tests_paths
+    description: "Core unit tests for paths/util module pass"
+    origin: p2p
+
+# Agent config rules (none applicable for this repo)
+rubric: []

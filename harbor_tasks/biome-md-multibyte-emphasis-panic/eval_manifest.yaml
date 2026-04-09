@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "biomejs/biome"
+  pr: 9775
+  base_commit: "b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8"
+  merge_commit: "94fdf1aec4bafb6d50abd2e872b89399acfb9e77"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified crate must compile without errors"
+
+  - id: parse_multibyte_emphasis
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Parsing markdown with multi-byte chars in blockquote+link context must not panic"
+
+  - id: parse_multibyte_emphasis_varied
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Different multi-byte inputs in inline emphasis context must not panic"
+
+  - id: existing_markdown_parser_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing markdown parser spec tests still pass"
+
+  - id: test_repo_markdown_parser_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's clippy lints pass for markdown parser crate"
+
+  - id: test_repo_markdown_parser_all_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All markdown parser tests pass"
+
+  - id: test_repo_markdown_formatter_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Markdown formatter tests pass"
+
+  - id: test_repo_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Rust code formatting passes"
+
+  - id: test_repo_related_markdown_crates_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Related markdown crates compile without errors"
+
+rubric: []

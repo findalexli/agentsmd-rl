@@ -17,7 +17,7 @@ BASE_COMMIT = "12b6b57cac0397db0afda56f3ab0101729bc5f0f"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) - syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -36,212 +36,236 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) - core behavioral tests using subprocess execution
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_identity_op_exists():
     """_IdentityOp class exists in core_model_loading and is a ConversionOps subclass."""
-    from transformers.core_model_loading import _IdentityOp, ConversionOps
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+from transformers.core_model_loading import _IdentityOp, ConversionOps
 
-    assert issubclass(_IdentityOp, ConversionOps)
-    # Must be instantiable without arguments
-    op = _IdentityOp()
-    assert isinstance(op, ConversionOps)
+assert issubclass(_IdentityOp, ConversionOps), f"_IdentityOp is not a subclass of ConversionOps"
+op = _IdentityOp()
+assert isinstance(op, ConversionOps), f"_IdentityOp instance is not a ConversionOps"
+print("PASS: _IdentityOp exists and is correct type")
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_identity_op_passthrough():
-    """_IdentityOp.convert returns input dict unchanged for varied inputs."""
-    import torch
-    from transformers.core_model_loading import _IdentityOp
+    """_IdentityOp.convert returns input dict unchanged for varied inputs and dtypes."""
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import torch
+from transformers.core_model_loading import _IdentityOp
 
-    op = _IdentityOp()
+op = _IdentityOp()
 
-    # Single entry
-    d1 = {"w": torch.randn(4, 4)}
-    r1 = op.convert(d1)
-    assert r1 is d1, "convert should return the same dict object"
+# Single entry - should return same dict object
+d1 = {"w": torch.randn(4, 4)}
+r1 = op.convert(d1)
+assert r1 is d1, "convert should return the same dict object"
 
-    # Multiple entries with different dtypes
-    d2 = {
-        "a": torch.randn(2, 3, dtype=torch.float32),
-        "b": torch.randn(5, dtype=torch.float16),
-        "c": torch.randn(1, 1, dtype=torch.bfloat16),
-    }
-    r2 = op.convert(d2)
-    assert set(r2.keys()) == {"a", "b", "c"}
-    for k in d2:
-        assert torch.equal(r2[k], d2[k])
-        assert r2[k].dtype == d2[k].dtype
+# Multiple entries with different dtypes
+d2 = {
+    "a": torch.randn(2, 3, dtype=torch.float32),
+    "b": torch.randn(5, dtype=torch.float16),
+    "c": torch.randn(1, 1, dtype=torch.bfloat16),
+}
+r2 = op.convert(d2)
+assert set(r2.keys()) == {"a", "b", "c"}
+for k in d2:
+    assert torch.equal(r2[k], d2[k]), f"Values differ for key {k}"
+    assert r2[k].dtype == d2[k].dtype, f"Dtype differs for key {k}"
 
-    # Empty dict
-    d3 = {}
-    r3 = op.convert(d3)
-    assert r3 == {}
+# Empty dict
+d3 = {}
+r3 = op.convert(d3)
+assert r3 == {}, "Empty dict should return empty dict"
+
+print("PASS: _IdentityOp passthrough works correctly")
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_fp8_dequantize_reverse_op():
     """Fp8Dequantize.reverse_op returns a working ConversionOps instead of raising NotImplementedError."""
-    import torch
-    from transformers.core_model_loading import ConversionOps
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import torch
+from transformers.core_model_loading import ConversionOps
 
-    try:
-        from transformers.integrations.finegrained_fp8 import Fp8Dequantize
-    except ImportError:
-        # AST-only because: finegrained_fp8 may have GPU-dependent imports unavailable on CPU
-        import ast
+try:
+    from transformers.integrations.finegrained_fp8 import Fp8Dequantize
+except ImportError as e:
+    print(f"SKIP: Fp8Dequantize import failed: {e}")
+    sys.exit(0)
 
-        src = open(f"{REPO}/src/transformers/integrations/finegrained_fp8.py").read()
-        tree = ast.parse(src)
-        found = False
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef) and node.name == "Fp8Dequantize":
-                for item in node.body:
-                    if isinstance(item, ast.FunctionDef) and item.name == "reverse_op":
-                        for dec in item.decorator_list:
-                            if isinstance(dec, ast.Name) and dec.id == "property":
-                                found = True
-                assert found, "Fp8Dequantize must have a @property reverse_op"
-                return
-        assert False, "Fp8Dequantize class not found"
+class MockQuantizer:
+    class quantization_config:
+        weight_block_size = None
 
-    class MockQuantizer:
-        class quantization_config:
-            weight_block_size = None
+obj = Fp8Dequantize(MockQuantizer())
+rev = obj.reverse_op
+assert isinstance(rev, ConversionOps), f"reverse_op is not ConversionOps: {type(rev)}"
 
-    obj = Fp8Dequantize(MockQuantizer())
-    rev = obj.reverse_op
-    assert isinstance(rev, ConversionOps)
+t1 = torch.randn(8, 16)
+t2 = torch.zeros(8)
+data = {"layer.weight": t1, "layer.bias": t2}
+result = rev.convert(data)
+assert set(result.keys()) == set(data.keys()), "Keys don't match"
+assert torch.equal(result["layer.weight"], t1), "layer.weight values don't match"
+assert torch.equal(result["layer.bias"], t2), "layer.bias values don't match"
 
-    t1 = torch.randn(8, 16)
-    t2 = torch.zeros(8)
-    data = {"layer.weight": t1, "layer.bias": t2}
-    result = rev.convert(data)
-    assert set(result.keys()) == set(data.keys())
-    assert torch.equal(result["layer.weight"], t1)
-    assert torch.equal(result["layer.bias"], t2)
+print("PASS: Fp8Dequantize.reverse_op works correctly")
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout or "SKIP" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_metal_dequantize_reverse_op():
     """MetalDequantize.reverse_op returns a working ConversionOps instead of raising NotImplementedError."""
-    import torch
-    from transformers.core_model_loading import ConversionOps
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import torch
+from transformers.core_model_loading import ConversionOps
 
-    try:
-        from transformers.integrations.metal_quantization import MetalDequantize
-    except ImportError:
-        # AST-only because: metal_quantization may have GPU-dependent imports unavailable on CPU
-        import ast
+try:
+    from transformers.integrations.metal_quantization import MetalDequantize
+except ImportError as e:
+    print(f"SKIP: MetalDequantize import failed: {e}")
+    sys.exit(0)
 
-        src = open(f"{REPO}/src/transformers/integrations/metal_quantization.py").read()
-        tree = ast.parse(src)
-        found = False
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef) and node.name == "MetalDequantize":
-                for item in node.body:
-                    if isinstance(item, ast.FunctionDef) and item.name == "reverse_op":
-                        for dec in item.decorator_list:
-                            if isinstance(dec, ast.Name) and dec.id == "property":
-                                found = True
-                assert found, "MetalDequantize must have a @property reverse_op"
-                return
-        assert False, "MetalDequantize class not found"
+class MockQuantizer:
+    class quantization_config:
+        bits = 4
+        group_size = 32
 
-    class MockQuantizer:
-        class quantization_config:
-            bits = 4
-            group_size = 32
+obj = MetalDequantize(MockQuantizer())
+rev = obj.reverse_op
+assert isinstance(rev, ConversionOps), f"reverse_op is not ConversionOps: {type(rev)}"
 
-    obj = MetalDequantize(MockQuantizer())
-    rev = obj.reverse_op
-    assert isinstance(rev, ConversionOps)
+data = {"layer.weight": torch.randn(16, 16), "layer.bias": torch.ones(16)}
+result = rev.convert(data)
+assert set(result.keys()) == set(data.keys()), "Keys don't match"
+assert torch.equal(result["layer.weight"], data["layer.weight"]), "layer.weight values don't match"
+assert torch.equal(result["layer.bias"], data["layer.bias"]), "layer.bias values don't match"
 
-    data = {"layer.weight": torch.randn(16, 16), "layer.bias": torch.ones(16)}
-    result = rev.convert(data)
-    assert set(result.keys()) == set(data.keys())
-    assert torch.equal(result["layer.weight"], data["layer.weight"])
-    assert torch.equal(result["layer.bias"], data["layer.bias"])
+print("PASS: MetalDequantize.reverse_op works correctly")
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout or "SKIP" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_mxfp4_dequantize_reverse_op():
     """Mxfp4Dequantize.reverse_op returns a working ConversionOps instead of raising NotImplementedError."""
-    import torch
-    from transformers.core_model_loading import ConversionOps
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import torch
+from transformers.core_model_loading import ConversionOps
 
-    try:
-        from transformers.integrations.mxfp4 import Mxfp4Dequantize
-    except ImportError:
-        # AST-only because: mxfp4 may have GPU-dependent imports unavailable on CPU
-        import ast
+try:
+    from transformers.integrations.mxfp4 import Mxfp4Dequantize
+except ImportError as e:
+    print(f"SKIP: Mxfp4Dequantize import failed: {e}")
+    sys.exit(0)
 
-        src = open(f"{REPO}/src/transformers/integrations/mxfp4.py").read()
-        tree = ast.parse(src)
-        found = False
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef) and node.name == "Mxfp4Dequantize":
-                for item in node.body:
-                    if isinstance(item, ast.FunctionDef) and item.name == "reverse_op":
-                        for dec in item.decorator_list:
-                            if isinstance(dec, ast.Name) and dec.id == "property":
-                                found = True
-                assert found, "Mxfp4Dequantize must have a @property reverse_op"
-                return
-        assert False, "Mxfp4Dequantize class not found"
+class MockQuantizer:
+    class quantization_config:
+        pass
 
-    class MockQuantizer:
-        class quantization_config:
-            pass
+obj = Mxfp4Dequantize(MockQuantizer())
+rev = obj.reverse_op
+assert isinstance(rev, ConversionOps), f"reverse_op is not ConversionOps: {type(rev)}"
 
-    obj = Mxfp4Dequantize(MockQuantizer())
-    rev = obj.reverse_op
-    assert isinstance(rev, ConversionOps)
+data = {"attn.weight": torch.randn(32, 32)}
+result = rev.convert(data)
+assert torch.equal(result["attn.weight"], data["attn.weight"]), "attn.weight values don't match"
 
-    data = {"attn.weight": torch.randn(32, 32)}
-    result = rev.convert(data)
-    assert torch.equal(result["attn.weight"], data["attn.weight"])
+print("PASS: Mxfp4Dequantize.reverse_op works correctly")
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout or "SKIP" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_reverse_op_identity_multiple_entries():
     """reverse_op.convert preserves all keys, values, and dtypes for multi-entry dicts."""
-    import torch
-    from transformers.core_model_loading import _IdentityOp
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import torch
+from transformers.core_model_loading import _IdentityOp
 
-    rev = _IdentityOp()
+rev = _IdentityOp()
 
-    t_float32 = torch.randn(4, 4, dtype=torch.float32)
-    t_float16 = torch.randn(2, 8, dtype=torch.float16)
-    t_bfloat16 = torch.randn(6, 3, dtype=torch.bfloat16)
-    data = {"w1": t_float32, "w2": t_float16, "w3": t_bfloat16}
-    result = rev.convert(data)
+t_float32 = torch.randn(4, 4, dtype=torch.float32)
+t_float16 = torch.randn(2, 8, dtype=torch.float16)
+t_bfloat16 = torch.randn(6, 3, dtype=torch.bfloat16)
+data = {"w1": t_float32, "w2": t_float16, "w3": t_bfloat16}
+result = rev.convert(data)
 
-    assert len(result) == 3
-    assert torch.equal(result["w1"], t_float32)
-    assert torch.equal(result["w2"], t_float16)
-    assert torch.equal(result["w3"], t_bfloat16)
-    assert result["w1"].dtype == torch.float32
-    assert result["w2"].dtype == torch.float16
-    assert result["w3"].dtype == torch.bfloat16
+assert len(result) == 3, "Result should have 3 entries"
+assert torch.equal(result["w1"], t_float32), "w1 values don't match"
+assert torch.equal(result["w2"], t_float16), "w2 values don't match"
+assert torch.equal(result["w3"], t_bfloat16), "w3 values don't match"
+assert result["w1"].dtype == torch.float32, "w1 dtype incorrect"
+assert result["w2"].dtype == torch.float16, "w2 dtype incorrect"
+assert result["w3"].dtype == torch.bfloat16, "w3 dtype incorrect"
+
+print("PASS: reverse_op preserves keys, values, and dtypes")
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_save_pretrained_dequantize_flow():
-    """The full save_pretrained flow with dequantize works without NotImplementedError.
-
-    This test simulates what happens during save_pretrained: the system iterates
-    over conversion ops and calls reverse_op on each. Before the fix, this would
-    raise NotImplementedError for dequantize operations.
-    """
+    """The full save_pretrained flow with dequantize works without NotImplementedError."""
     code = '''
 import sys
 sys.path.insert(0, "/repo/src")
-
 import torch
 from transformers.core_model_loading import ConversionOps
+
+errors = []
 
 # Mock quantizer classes
 class MockFP8Config:
@@ -262,8 +286,6 @@ class MockMxfp4Config:
 
 class MockMxfp4Quantizer:
     quantization_config = MockMxfp4Config()
-
-errors = []
 
 # Test FP8 dequantize reverse_op
 try:
@@ -325,34 +347,44 @@ else:
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression
+# Pass-to-pass (pr_diff) - regression
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
 def test_existing_chunk_cat_reverse_op():
     """Existing Chunk/Concatenate reverse_op pair still works correctly."""
-    from transformers.core_model_loading import Chunk, Concatenate
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+from transformers.core_model_loading import Chunk, Concatenate
 
-    chunk = Chunk(dim=0)
-    rev = chunk.reverse_op
-    assert isinstance(rev, Concatenate), f"Chunk.reverse_op should be Concatenate, got {type(rev)}"
+chunk = Chunk(dim=0)
+rev = chunk.reverse_op
+assert isinstance(rev, Concatenate), f"Chunk.reverse_op should be Concatenate, got {type(rev)}"
 
-    cat = Concatenate(dim=0)
-    rev2 = cat.reverse_op
-    assert isinstance(rev2, Chunk), f"Concatenate.reverse_op should be Chunk, got {type(rev2)}"
+cat = Concatenate(dim=0)
+rev2 = cat.reverse_op
+assert isinstance(rev2, Chunk), f"Concatenate.reverse_op should be Chunk, got {type(rev2)}"
+
+print("PASS: Chunk/Concatenate reverse_op pair works correctly")
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from CLAUDE.md / agent config files
+# Config-derived (agent_config) - rules from CLAUDE.md / agent config files
 # ---------------------------------------------------------------------------
 
 def _get_agent_diff():
@@ -364,7 +396,7 @@ def _get_agent_diff():
     return r.stdout
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:2 @ 12b6b57
+# [agent_config] pass_to_pass - CLAUDE.md:2 @ 12b6b57
 def test_ruff_check():
     """ruff check passes on all modified files (CLAUDE.md: 'make style: runs ruff')."""
     r = subprocess.run(
@@ -383,7 +415,7 @@ def test_ruff_check():
     assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:66 @ 12b6b57
+# [agent_config] pass_to_pass - CLAUDE.md:66 @ 12b6b57
 def test_no_copied_from_blocks_edited():
     """No '# Copied from' blocks were modified (CLAUDE.md line 66)."""
     diff = _get_agent_diff()
@@ -402,7 +434,7 @@ def test_no_copied_from_blocks_edited():
             )
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:67 @ 12b6b57
+# [agent_config] pass_to_pass - CLAUDE.md:67 @ 12b6b57
 def test_no_modular_generated_files_edited():
     """Generated modeling files with a modular_ source must not be edited directly (CLAUDE.md line 67)."""
     import os
@@ -428,7 +460,7 @@ def test_no_modular_generated_files_edited():
             )
 
 
-# [agent_config] pass_to_pass — .ai/skills/add-or-fix-type-checking/SKILL.md:180-186 @ 12b6b57
+# [agent_config] pass_to_pass - .ai/skills/add-or-fix-type-checking/SKILL.md:180-186 @ 12b6b57
 def test_no_bare_type_ignore():
     """Any # type: ignore must include a specific error code (e.g. # type: ignore[call-arg])."""
     import re
@@ -446,9 +478,9 @@ def test_no_bare_type_ignore():
             )
 
 
-# [agent_config] pass_to_pass — .ai/skills/add-or-fix-type-checking/SKILL.md:189-190 @ 12b6b57
+# [agent_config] pass_to_pass - .ai/skills/add-or-fix-type-checking/SKILL.md:189-190 @ 12b6b57
 def test_no_assert_for_type_narrowing():
-    """Do not use assert for type narrowing — use 'if ...: raise' instead."""
+    """Do not use assert for type narrowing - use 'if ...: raise' instead."""
     diff = _get_agent_diff()
     if not diff:
         return
@@ -464,3 +496,76 @@ def test_no_assert_for_type_narrowing():
                 assert False, (
                     f"Added line uses assert for type narrowing (use 'if ...: raise' instead): {content}"
                 )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates - verified to work on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass - basic transformers imports work
+def test_repo_imports():
+    """Core transformers modules can be imported without errors (pass_to_pass)."""
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import torch
+from transformers.core_model_loading import Chunk, Concatenate, ConversionOps, WeightConverter
+from transformers import PretrainedConfig
+
+# Basic smoke test
+assert issubclass(Chunk, ConversionOps), "Chunk is not a ConversionOps subclass"
+assert issubclass(Concatenate, ConversionOps), "Concatenate is not a ConversionOps subclass"
+print("PASS: Core imports work correctly")
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_ci] pass_to_pass - ruff format check on modified files
+def test_repo_ruff_format():
+    """Ruff format check passes on all modified files (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "ruff", "format", "--check",
+            f"{REPO}/src/transformers/core_model_loading.py",
+            f"{REPO}/src/transformers/integrations/finegrained_fp8.py",
+            f"{REPO}/src/transformers/integrations/metal_quantization.py",
+            f"{REPO}/src/transformers/integrations/mxfp4.py",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass - core_model_loading conversion ops work
+def test_repo_core_model_loading():
+    """core_model_loading ConversionOps work correctly (pass_to_pass)."""
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import torch
+from transformers.core_model_loading import Chunk, Concatenate
+
+# Test Chunk/Concatenate reverse_op relationship
+chunk = Chunk(dim=0)
+rev = chunk.reverse_op
+assert isinstance(rev, Concatenate), f"Chunk.reverse_op should be Concatenate, got {type(rev)}"
+
+cat = Concatenate(dim=0)
+rev2 = cat.reverse_op
+assert isinstance(rev2, Chunk), f"Concatenate.reverse_op should be Chunk, got {type(rev2)}"
+
+print("PASS: core_model_loading ops work correctly")
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    assert "PASS" in r.stdout

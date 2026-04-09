@@ -294,3 +294,50 @@ def test_no_dynamic_imports():
                 f"Dynamic import found at line {i}: {line.strip()} - "
                 "CLAUDE.md:155 prohibits mixing dynamic and static imports for the same module"
             )
+
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's oxlint passes (pass_to_pass)."""
+    # Install dependencies first (idempotent)
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_no_conflict_markers():
+    """Repo's check-no-conflict-markers passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "check:no-conflict-markers"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Conflict markers check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_dotenv_unit_tests():
+    """Repo's unit tests for dotenv module pass (pass_to_pass)."""
+    # Install dependencies first (idempotent)
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts", "src/infra/dotenv.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dotenv unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

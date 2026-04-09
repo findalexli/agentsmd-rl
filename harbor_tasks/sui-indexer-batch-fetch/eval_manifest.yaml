@@ -1,0 +1,47 @@
+checks:
+  # Fail-to-pass tests: These verify the optimization is implemented correctly
+  - id: test_checkpoints_try_join_all_import
+    type: fail_to_pass
+    origin: gold_patch
+    description: Verify futures::future::try_join_all is imported in checkpoints.rs
+
+  - id: test_checkpoints_concurrent_fetch_pattern
+    type: fail_to_pass
+    origin: gold_patch
+    description: Verify checkpoints use try_join_all instead of sequential loop
+
+  - id: test_events_batch_fetch_pattern
+    type: fail_to_pass
+    origin: gold_patch
+    description: Verify events use batch_get_transactions instead of sequential calls
+
+  - id: test_events_result_processing
+    type: fail_to_pass
+    origin: gold_patch
+    description: Verify events properly process batch response results
+
+  - id: test_checkpoints_error_handling
+    type: fail_to_pass
+    origin: gold_patch
+    description: Verify checkpoints handle NotFound errors correctly in concurrent context
+
+  # Pass-to-pass tests: These verify repo CI checks still pass after the fix
+  - id: test_repo_rustfmt_checkpoints
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's rustfmt check passes on checkpoints.rs
+
+  - id: test_repo_rustfmt_events
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's rustfmt check passes on events.rs
+
+  - id: test_repo_checkpoints_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Checkpoints.rs has valid Rust syntax
+
+  - id: test_repo_events_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Events.rs has valid Rust syntax

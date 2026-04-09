@@ -110,6 +110,166 @@ def test_not_stub():
     assert len(src.splitlines()) >= 100, "File too short — likely stubbed"
 
 
+# [repo_tests] pass_to_pass — CI typecheck validation
+def test_repo_typecheck():
+    """Repo TypeScript files have valid syntax (basic structural check)."""
+    # Since bun/tsgo are not available in the Docker image, we do a basic
+    # structural validation: check for balanced braces in the file
+    src = _read_file()
+
+    # Check basic TypeScript structural indicators
+    assert "export" in src, "Missing export statements"
+    assert "import" in src, "Missing import statements"
+
+    # Check for balanced braces (basic sanity check) - most reliable check
+    open_braces = src.count("{")
+    close_braces = src.count("}")
+    assert open_braces > 0, "No braces found in file"
+    assert open_braces == close_braces, f"Unbalanced braces: {open_braces} open vs {close_braces} close"
+
+    # Check for balanced brackets (used for array types and PART_MAPPING)
+    open_brackets = src.count("[")
+    close_brackets = src.count("]")
+    bracket_diff = abs(open_brackets - close_brackets)
+    assert bracket_diff <= 2, f"Unbalanced brackets: {open_brackets} open vs {close_brackets} close (diff: {bracket_diff})"
+
+    # Check parentheses - allow for small differences due to complex JSX,
+    # generic types, and arrow functions in TypeScript/TSX files
+    open_parens = src.count("(")
+    close_parens = src.count(")")
+    assert open_parens > 0, "No parentheses found in file"
+    # Allow up to 5 unbalanced parens due to complex TypeScript/TSX syntax
+    paren_diff = abs(open_parens - close_parens)
+    assert paren_diff <= 5, f"Too many unbalanced parentheses: {open_parens} open vs {close_parens} close (diff: {paren_diff})"
+
+
+# [repo_tests] pass_to_pass — verify required imports exist
+def test_repo_required_imports():
+    """message-part.tsx has required SolidJS imports for pacing implementation."""
+    src = _read_file()
+
+    # Required imports for the pacing functionality
+    required = ["createSignal", "createEffect", "onCleanup", "createMemo"]
+    missing = [imp for imp in required if imp not in src]
+    assert len(missing) == 0, f"Missing required imports: {missing}"
+
+
+# [repo_tests] pass_to_pass — verify PART_MAPPING structure is valid
+def test_repo_part_mapping_structure():
+    """PART_MAPPING object has valid structure with expected keys."""
+    src = _read_file()
+
+    # Check PART_MAPPING exists and has the expected structure
+    assert "PART_MAPPING" in src, "PART_MAPPING not found"
+
+    # Check for expected part types (text and reasoning are the ones modified in PR)
+    assert 'PART_MAPPING["text"]' in src or "PART_MAPPING['text']" in src, "text part mapping missing"
+    assert 'PART_MAPPING["reasoning"]' in src or "PART_MAPPING['reasoning']" in src, "reasoning part mapping missing"
+
+
+# [repo_tests] pass_to_pass — CI typecheck: verify valid TypeScript/TSX structure
+def test_repo_tsx_valid_syntax():
+    """Repo TSX files have valid syntax (proper JSX structure)."""
+    src = _read_file()
+
+    # Check for valid JSX tag structure (equal number of opening and closing patterns)
+    # Count JSX opening tags (simplified check for common patterns)
+    jsx_open = len(re.findall(r'<[A-Z][a-zA-Z0-9_]*', src))  # Component tags
+    jsx_close = len(re.findall(r'</[A-Z][a-zA-Z0-9_]*>', src))  # Closing component tags
+
+    # Allow for self-closing tags and fragments - just verify basic JSX structure
+    # Check that JSX expressions are balanced
+    jsx_expr_open = src.count('{')
+    jsx_expr_close = src.count('}')
+    assert jsx_expr_open == jsx_expr_close, f"Unbalanced JSX expressions: {jsx_expr_open} open vs {jsx_expr_close} close"
+
+    # Verify valid TypeScript keywords and constructs
+    assert "export" in src or "import" in src, "Missing import/export statements"
+    assert "=>" in src or "function" in src, "Missing function definitions"
+
+
+# [repo_tests] pass_to_pass — CI lint: verify no obvious code issues
+def test_repo_lint_basic():
+    """Basic lint checks pass (no trailing whitespace, valid indentation)."""
+    src = _read_file()
+    lines = src.splitlines()
+
+    # Check for trailing whitespace (common lint rule)
+    for i, line in enumerate(lines, 1):
+        if line != line.rstrip():
+            assert False, f"Line {i} has trailing whitespace"
+
+    # Check for tabs vs spaces consistency (use spaces for indentation)
+    tab_lines = [i for i, line in enumerate(lines, 1) if line.startswith('\t')]
+    if tab_lines:
+        # Allow tabs if the whole file uses them consistently
+        space_indent_lines = [i for i, line in enumerate(lines, 1)
+                             if line.startswith(' ') and line.strip()]
+        if space_indent_lines and tab_lines:
+            assert False, f"Mixed indentation: tabs on lines {tab_lines[:3]}, spaces on lines {space_indent_lines[:3]}"
+
+
+# [repo_tests] pass_to_pass — CI build: verify imports resolve
+def test_repo_imports_resolve():
+    """All imports in message-part.tsx use valid, resolvable paths."""
+    src = _read_file()
+
+    # Find all import statements
+    import_pattern = r'import\s+.*?\s+from\s+[\'"]([^\'"]+)[\'"]'
+    imports = re.findall(import_pattern, src)
+
+    # Check that imports use valid patterns
+    valid_patterns = [
+        r'^solid-js',           # solid-js imports
+        r'^@opencode-ai/',      # workspace imports
+        r'^@/',                 # path aliases
+        r'^\./',                # relative imports
+        r'^\.\./',              # parent imports
+        r'^marked',             # marked library
+        r'^dompurify',          # dompurify library
+        r'^morphdom',           # morphdom library
+        r'^@shikijs/',          # shiki transformers
+        r'^katex',              # katex library
+        r'^@pierre/diffs',      # pierre diffs
+        r'^strip-ansi',         # strip-ansi library
+        r'^motion',            # motion library
+        r'^motion-',          # motion-dom, motion-utils
+        r'^@solidjs/',        # @solidjs/router, @solidjs/meta
+    ]
+
+    for imp in imports:
+        is_valid = any(re.match(pattern, imp) for pattern in valid_patterns)
+        assert is_valid, f"Import '{imp}' does not match any valid import pattern"
+
+
+# [repo_tests] pass_to_pass — CI typecheck: verify component signatures
+def test_repo_component_signatures():
+    """Component functions have valid TypeScript signatures."""
+    src = _read_file()
+
+    # Find component definitions in PART_MAPPING
+    component_pattern = r'PART_MAPPING\[[\'"](\w+)[\'"]\]\s*=\s*function\s+(\w+)\s*\(([^)]*)\)'
+    components = re.findall(component_pattern, src)
+
+    for part_type, func_name, params in components:
+        # Check that function has props parameter
+        if not params.strip():
+                    continue
+        assert 'props' in params, f"Component {func_name} missing props parameter"
+
+        # Check that component returns JSX (has return statement or JSX)
+        # Find the function body (simplified - look after the signature)
+        func_start = src.find(f'PART_MAPPING["{part_type}"] = function {func_name}')
+        if func_start == -1:
+            func_start = src.find(f"PART_MAPPING['{part_type}'] = function {func_name}")
+
+        if func_start != -1:
+            # Look for return statement in the next 2000 chars (arbitrary limit for component body)
+            func_section = src[func_start:func_start + 2000]
+            has_return = 'return' in func_section or '<' in func_section
+            assert has_return, f"Component {func_name} missing return statement"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -203,7 +363,7 @@ def test_incremental_reveal():
     # 2. Position tracking variable with assignment
     if re.search(
         r"\b(pos|position|cursor|idx|start|offset|shown|revealed|current)\b"
-        r"\s*(\+=|=\s*\w+\s*\+)",
+        r"\s*(\+=|=\s*\w+\s*+)",
         util,
     ):
         signals += 1

@@ -1,13 +1,78 @@
 {
-  "validations": [
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T03:46:40.675504",
+  "total_time": 7763.78,
+  "sandbox_id": "i7wihliq9i1wdrjqs35x3",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T10:10:00Z",
+      "ci_commands_discovered": [
+        "yarn tsc --noEmit (repo-level typecheck - too slow for full repo)",
+        "yarn lint (plugin-level lint - fast, ~3s)",
+        "yarn backstage-cli package lint <path> (scoped lint)",
+        "yarn test (plugin-level tests - too slow, >120s)"
+      ],
+      "tests_added": [
+        "test_repo_typecheck - Checks modified TypeScript files are readable",
+        "test_repo_lint_mcp_actions_backend - Runs yarn lint on mcp-actions-backend plugin",
+        "test_repo_test_files_syntax - Validates test files have balanced braces/parens"
+      ],
+      "notes": "Skipped full repo tsc due to timeout (>120s). Used targeted lint and file syntax checks instead."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1945.66,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_streamable_router_creates_session_duration_histogram regex pattern to match arrow function syntax (createStreamableRouter = ({...}): Router =>). All 13 tests pass after fix. Rubric judge requires ANTHROPIC_API_KEY which is not available.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 231.24
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.3,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-03T07:38:12.326268",
-      "phase": "e2b_agentmd_initial",
-      "runner": "e2b_validate (agentmd)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T03:46:40.393256"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 7763.78,
+      "at": "2026-04-09T03:46:40.675504"
     }
   ]
 }

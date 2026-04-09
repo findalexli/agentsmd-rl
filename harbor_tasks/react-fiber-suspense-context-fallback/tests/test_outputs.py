@@ -19,11 +19,6 @@ TEST_DIR = f"{REPO}/packages/react-reconciler/src/__tests__"
 def test_context_propagation_in_suspense_fallback():
     """Context updates reach consumers inside Suspense fallback through memo boundary."""
     test_file = Path(TEST_DIR) / "_eval_context_fallback-test.js"
-    # Write a Jest test that exercises the exact bug:
-    # - A memo boundary prevents the Suspense boundary from re-rendering via parent
-    # - Context propagation is the ONLY way the fallback consumer can see the update
-    # - Without the fix, propagateContextChanges sets nextFiber=null and skips fallback
-    # - With the fix, it navigates to primaryChildFragment.sibling (the fallback)
     test_file.write_text("""\
 'use strict';
 
@@ -59,9 +54,6 @@ test('context change propagates into suspense fallback through memo', async () =
     );
   }
 
-  // Memo boundary is critical: it prevents the Suspense boundary from
-  // re-rendering via parent, so only context propagation can reach the
-  // fallback consumer.
   const MemoWrapper = React.memo(function MemoWrapper() {
     return (
       <React.Suspense fallback={<FallbackConsumer />}>
@@ -87,12 +79,9 @@ test('context change propagates into suspense fallback through memo', async () =
   });
   expect(lastFallbackValue).toBe('A');
 
-  // Update context value while primary children are still suspended
   await act(async () => {
     setCtxValue('B');
   });
-  // With the fix: propagation follows fallback sibling path -> consumer re-renders
-  // Without the fix: nextFiber=null skips the Suspense subtree -> consumer stale
   expect(lastFallbackValue).toBe('B');
 });
 """)
@@ -112,8 +101,6 @@ test('context change propagates into suspense fallback through memo', async () =
 def test_suspense_fallback_sibling_navigation():
     """Fix introduces primaryChildFragment for fallback sibling navigation."""
     src = Path(TARGET).read_text()
-    # The fix replaces the broken nextFiber=null / nextFiber=fiber.child
-    # with navigation through primaryChildFragment.sibling to reach fallback
     assert "primaryChildFragment" in src, \
         "Should use primaryChildFragment to navigate to fallback sibling"
 
@@ -121,3 +108,63 @@ def test_suspense_fallback_sibling_navigation():
 def test_file_exists():
     """Target file ReactFiberNewContext.js exists."""
     assert Path(TARGET).exists()
+
+
+def test_repo_lint():
+    """Repo ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    assert r.returncode == 0, f"ESLint failed:\n{combined[-500:]}"
+
+
+def test_repo_flow():
+    """Repo Flow typecheck passes for dom-browser (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/flow.js", "dom-browser"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    assert r.returncode == 0, f"Flow check failed:\n{combined[-500:]}"
+
+
+def test_repo_unit_newcontext():
+    """Repo ReactNewContext unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern", "ReactNewContext", "--silent"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    assert r.returncode == 0, f"ReactNewContext tests failed:\n{combined[-500:]}"
+
+
+def test_repo_version_check():
+    """Repo version check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/version-check.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    assert r.returncode == 0, f"Version check failed:\n{combined[-500:]}"
+
+
+def test_repo_suspense_tests():
+    """Repo ReactSuspense tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern", "ReactSuspense", "--silent"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    assert r.returncode == 0, f"ReactSuspense tests failed:\n{combined[-500:]}"
+
+
+def test_repo_fiber_tests():
+    """Repo ReactFiber tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern", "ReactFiber", "--silent"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    assert r.returncode == 0, f"ReactFiber tests failed:\n{combined[-500:]}"

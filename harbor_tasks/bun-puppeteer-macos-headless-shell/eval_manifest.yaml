@@ -54,15 +54,27 @@ checks:
     origin: pr_diff
     description: "xattr quarantine removal for macOS Gatekeeper must be preserved"
 
-rubric:
-  - rule: "Do not write flaky tests. Unless explicitly asked, never wait for time to pass in tests. Always wait for the condition to be met instead of waiting for an arbitrary amount of time."
-    source:
-      path: "test/CLAUDE.md"
-      lines: "21"
-      commit: "5693fc1a98116743f16a7db2952d6e436bf9ec98"
+  - id: test_repo_typescript_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript file must have valid syntax"
 
-  - rule: "Do not set a timeout on tests. Bun already has timeouts."
-    source:
-      path: "test/CLAUDE.md"
-      lines: "120"
-      commit: "5693fc1a98116743f16a7db2952d6e436bf9ec98"
+  - id: test_repo_oxlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo oxlint check passes on target file"
+
+# Note on rubric: The general Bun testing guidelines in test/CLAUDE.md advise
+# against setting timeouts on tests and waiting for time to pass. However, for
+# this specific integration test file (dev-server-puppeteer.ts), the fixes are
+# about Puppeteer browser launch configuration - not Bun test timeouts. The
+# timeout values (30_000, 60_000) are for Puppeteer's launch() function, and the
+# retry delay (3000ms) handles transient macOS launch issues. These are appropriate
+# fixes for macOS Gatekeeper issues that cause browser launch failures.
+#
+# The rubric is intentionally left empty because:
+# 1. The "no timeouts" rule refers to Bun's test runner timeouts, not Puppeteer launch timeouts
+# 2. The "no waiting for time" rule refers to test assertions, not retry delays for system calls
+# 3. The gold solution intentionally adds these values to fix the macOS headless shell issues
+
+rubric: []

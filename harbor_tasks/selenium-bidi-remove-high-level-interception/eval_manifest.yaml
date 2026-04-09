@@ -1,0 +1,140 @@
+source:
+  pr:
+    owner: SeleniumHQ
+    repo: selenium
+    number: 17288
+    title: "[dotnet] [bidi] Remove high-level network interception"
+    merge_commit: 4a4c5939467b98db4c16f40f6d3c26626964c91b
+    base_commit: f455679160058286ff6a6926923110c32a3b283d
+
+task:
+  name: selenium-bidi-remove-high-level-interception
+  description: Remove high-level network interception API from Selenium .NET BiDi implementation
+  language: csharp
+  primary_files:
+    - dotnet/src/webdriver/BiDi/Network/NetworkModule.HighLevel.cs
+    - dotnet/src/webdriver/BiDi/Network/INetworkModule.cs
+    - dotnet/src/webdriver/BiDi/BrowsingContext/BrowsingContextNetworkModule.cs
+    - dotnet/src/webdriver/BiDi/BrowsingContext/IBrowsingContextNetworkModule.cs
+
+agent_config_rules:
+  - id: deprecation_policy
+    description: "Agent config from AGENTS.md: Before removing public functionality, mark as deprecated"
+    category: agent_config
+    severity: warning
+    source:
+      file: AGENTS.md
+      lines: "Deprecation policy section"
+    check: test_deprecation_policy_compliance
+
+  - id: prefer_unit_tests
+    description: "Agent config from AGENTS.md: Prefer small (unit) tests over browser tests"
+    category: agent_config
+    severity: info
+    source:
+      file: AGENTS.md
+      lines: "Testing section"
+
+  - id: avoid_mocks
+    description: "Agent config from AGENTS.md: Avoid mocks—they can misrepresent API contracts"
+    category: agent_config
+    severity: warning
+    source:
+      file: AGENTS.md
+      lines: "Testing section"
+
+  - id: async_patterns
+    description: "Agent config from dotnet/AGENTS.md: The codebase is migrating to async"
+    category: agent_config
+    severity: info
+    source:
+      file: dotnet/AGENTS.md
+      lines: "Code conventions section"
+
+  - id: api_compatibility
+    description: "Agent config from AGENTS.md: Maintain API/ABI compatibility"
+    category: agent_config
+    severity: error
+    source:
+      file: AGENTS.md
+      lines: "Invariants section"
+
+checks:
+  - id: high_level_methods_removed_from_interface
+    description: InterceptRequestAsync/InterceptResponseAsync/InterceptAuthAsync removed from INetworkModule
+    type: fail_to_pass
+    test: test_high_level_methods_removed_from_interface
+    points: 15
+
+  - id: high_level_methods_removed_from_browsingcontext
+    description: InterceptRequestAsync/InterceptResponseAsync/InterceptAuthAsync removed from IBrowsingContextNetworkModule
+    type: fail_to_pass
+    test: test_high_level_methods_removed_from_browsingcontext
+    points: 15
+
+  - id: high_level_file_deleted
+    description: NetworkModule.HighLevel.cs file is deleted
+    type: fail_to_pass
+    test: test_high_level_file_deleted
+    points: 15
+
+  - id: project_compiles
+    description: The dotnet project compiles successfully after changes
+    type: fail_to_pass
+    test: test_project_compiles
+    points: 20
+
+  - id: intercept_options_types_removed
+    description: InterceptRequestOptions, InterceptResponseOptions, InterceptAuthOptions types removed
+    type: fail_to_pass
+    test: test_intercept_options_types_removed
+    points: 10
+
+  - id: intercepted_event_types_removed
+    description: InterceptedRequest, InterceptedResponse, InterceptedAuth, Interception types removed
+    type: fail_to_pass
+    test: test_intercepted_event_types_removed
+    points: 10
+
+  - id: add_intercept_async_exists
+    description: AddInterceptAsync method still exists as replacement API
+    type: pass_to_pass
+    test: test_add_intercept_async_exists
+    points: 5
+
+  - id: event_subscription_methods_exist
+    description: Event subscription methods (OnBeforeRequestSentAsync, OnResponseStartedAsync, OnAuthRequiredAsync) exist
+    type: pass_to_pass
+    test: test_event_subscription_methods_exist
+    points: 10
+
+  # Pass-to-pass tests from repo CI/CD
+  - id: dotnet_format_style
+    description: dotnet format style check passes (repo CI linting standard)
+    type: pass_to_pass
+    origin: repo_tests
+    test: test_dotnet_format_style
+    points: 5
+
+  - id: dotnet_format_whitespace
+    description: dotnet format whitespace check passes (repo CI linting standard)
+    type: pass_to_pass
+    origin: repo_tests
+    test: test_dotnet_format_whitespace
+    points: 5
+
+  - id: repo_structure_valid
+    description: Repository structure is valid with all critical files present
+    type: pass_to_pass
+    origin: repo_tests
+    test: test_repo_structure_valid
+    points: 5
+
+  - id: bidi_module_syntax_valid
+    description: BiDi Network module files have valid C# syntax
+    type: pass_to_pass
+    origin: repo_tests
+    test: test_bidi_module_syntax_valid
+    points: 5
+
+rubric: []

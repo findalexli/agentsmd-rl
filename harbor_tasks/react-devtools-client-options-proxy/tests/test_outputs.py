@@ -15,6 +15,18 @@ from pathlib import Path
 REPO = "/workspace/react"
 
 
+def _yarn_install():
+    """Install dependencies if not already present."""
+    # Check if node_modules exists
+    if not Path(f"{REPO}/node_modules").exists():
+        r = subprocess.run(
+            ["yarn", "install", "--frozen-lockfile"],
+            cwd=REPO, capture_output=True, text=True, timeout=300,
+        )
+        if r.returncode != 0:
+            raise RuntimeError(f"yarn install failed: {r.stderr[-500:]}")
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -36,6 +48,32 @@ def test_syntax_check():
     ]:
         content = Path(f"{REPO}/{f}").read_text()
         assert len(content) > 500, f"{f} appears truncated or empty"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's own CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint():
+    """Repo's ESLint passes on all files (pass_to_pass)."""
+    _yarn_install()
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow():
+    """Repo's Flow typecheck passes for dom-node renderer (pass_to_pass)."""
+    _yarn_install()
+    r = subprocess.run(
+        ["yarn", "flow", "dom-node"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

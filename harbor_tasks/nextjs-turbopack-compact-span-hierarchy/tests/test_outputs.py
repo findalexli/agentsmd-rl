@@ -233,3 +233,75 @@ def test_no_formatting_issues():
             if stripped != line and stripped:
                 issues.append(f"{path.name}:{i}: trailing whitespace")
     assert not issues, f"Formatting issues: {issues[:5]}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI pass_to_pass — cargo check, fmt, clippy for modified crates
+# ---------------------------------------------------------------------------
+
+REPO = Path("/workspace/next.js")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check_turbo_persistence():
+    """Cargo check passes for turbo-persistence crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "turbo-persistence"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check turbo-persistence failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check_turbo_tasks_backend():
+    """Cargo check passes for turbo-tasks-backend crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "turbo-tasks-backend"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check turbo-tasks-backend failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_fmt_check():
+    """Cargo fmt check passes for workspace (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt --check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_clippy_turbo_persistence():
+    """Cargo clippy passes for turbo-persistence crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "turbo-persistence", "--", "-D", "warnings"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy turbo-persistence failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_clippy_turbo_tasks_backend():
+    """Cargo clippy passes for turbo-tasks-backend crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "turbo-tasks-backend", "--", "-D", "warnings"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy turbo-tasks-backend failed:\n{r.stderr[-500:]}"

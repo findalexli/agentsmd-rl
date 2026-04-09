@@ -164,7 +164,8 @@ tmpdir = tempfile.mkdtemp()
 try:
     # Write CMakeLists.txt with the include path
     test_cmake = os.path.join(tmpdir, "CMakeLists.txt")
-    cmake_content = '''
+    cmake_content = '''cmake_minimum_required(VERSION 3.10)
+project(test)
 set(DEBUG "DEBUG")
 set(RELEASE "RELEASE")
 set(CMAKE_SYSTEM_NAME "Linux")
@@ -354,3 +355,111 @@ def test_contributing_install_section_exists():
     assert "brew install" in content or "apt install" in content, (
         "Package manager install instructions removed"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression checks
+# ---------------------------------------------------------------------------
+
+
+def test_repo_cmakelists_exists():
+    """CMakeLists.txt exists at repo root (pass_to_pass)."""
+    cmake_path = Path(f"{REPO}/CMakeLists.txt")
+    assert cmake_path.exists(), "CMakeLists.txt missing from repo root"
+    assert cmake_path.stat().st_size > 0, "CMakeLists.txt is empty"
+
+
+def test_repo_cmake_directory_exists():
+    """cmake/ directory exists with expected files (pass_to_pass)."""
+    cmake_dir = Path(f"{REPO}/cmake")
+    assert cmake_dir.exists(), "cmake/ directory missing"
+    assert cmake_dir.is_dir(), "cmake/ is not a directory"
+
+    # Key cmake files should exist
+    expected_files = ["CompilerFlags.cmake", "Globals.cmake", "Options.cmake"]
+    for fname in expected_files:
+        fpath = cmake_dir / fname
+        assert fpath.exists(), f"cmake/{fname} missing"
+
+
+def test_repo_contributing_structure():
+    """CONTRIBUTING.md has expected structure with install sections (pass_to_pass)."""
+    contrib_path = Path(f"{REPO}/CONTRIBUTING.md")
+    assert contrib_path.exists(), "CONTRIBUTING.md missing"
+
+    content = contrib_path.read_text()
+
+    # Check for key section headers
+    assert "## Install Dependencies" in content, "Missing 'Install Dependencies' section"
+    assert "## Building" in content or "## Manual Building" in content, "Missing building section"
+
+    # Check for OS-specific install instructions
+    assert "macOS" in content or "Ubuntu" in content or "Homebrew" in content, (
+        "Missing OS-specific install instructions"
+    )
+
+
+def test_repo_prettier_config_valid():
+    """.prettierrc exists and is valid JSON (pass_to_pass)."""
+    import json
+
+    prettier_path = Path(f"{REPO}/.prettierrc")
+    assert prettier_path.exists(), ".prettierrc missing"
+
+    try:
+        config = json.loads(prettier_path.read_text())
+    except json.JSONDecodeError as e:
+        raise AssertionError(f".prettierrc is invalid JSON: {e}")
+
+    # Basic sanity checks on config structure
+    assert isinstance(config, dict), ".prettierrc should be a JSON object"
+
+
+def test_repo_oxlint_config_exists():
+    """oxlint.json exists and has valid structure (pass_to_pass)."""
+    oxlint_path = Path(f"{REPO}/oxlint.json")
+    assert oxlint_path.exists(), "oxlint.json missing"
+
+    content = oxlint_path.read_text()
+    # oxlint.json uses JSON-with-comments format
+    # Check for expected structure markers instead of strict JSON parsing
+    assert '"$schema"' in content, "Missing $schema in oxlint.json"
+    assert '"categories"' in content, "Missing categories in oxlint.json"
+    assert '"rules"' in content, "Missing rules in oxlint.json"
+
+
+def test_repo_git_directory_valid():
+    """.git directory exists and is valid (pass_to_pass)."""
+    git_dir = Path(f"{REPO}/.git")
+    assert git_dir.exists(), ".git directory missing"
+    assert git_dir.is_dir(), ".git is not a directory"
+
+    # Check for essential git files
+    head_file = git_dir / "HEAD"
+    assert head_file.exists(), ".git/HEAD missing"
+
+
+def test_repo_nix_files_syntax():
+    """Nix files have valid syntax after applying patch (pass_to_pass)."""
+    import pytest
+
+    flake_path = Path(f"{REPO}/flake.nix")
+    shell_path = Path(f"{REPO}/shell.nix")
+
+    # Only run if nix files exist (after patch)
+    if not flake_path.exists() and not shell_path.exists():
+        pytest.skip("Nix files not yet created (base commit state)")
+
+    if flake_path.exists():
+        r = subprocess.run(
+            ["nix-instantiate", "--parse", str(flake_path)],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"flake.nix has invalid syntax: {r.stderr}"
+
+    if shell_path.exists():
+        r = subprocess.run(
+            ["nix-instantiate", "--parse", str(shell_path)],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"shell.nix has invalid syntax: {r.stderr}"

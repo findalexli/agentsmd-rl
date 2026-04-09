@@ -252,3 +252,10 @@ console.log('PASS');
     )
     assert r.returncode == 0, f"Session icon method usage check failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - No additional repo-wide checks
+# VS Code is a large monorepo with complex build requirements.
+# The core fix tests above are sufficient.
+# ---------------------------------------------------------------------------

@@ -204,3 +204,49 @@ def test_not_stub():
             f"{path}: only {len(lines)} lines — expected >= {min_lines}"
         )
         assert key_fn in src, f"{path}: key function '{key_fn}' missing"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repository CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow_dom_node():
+    """Repo's Flow typecheck (dom-node renderer) passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_flight_tests():
+    """ReactFlight module tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern", "ReactFlight-test.js",
+         "--no-watchman", "--ci"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactFlight tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_flight_dom_reply_tests():
+    """ReactFlightDOMReply module tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern", "ReactFlightDOMReply-test.js",
+         "--no-watchman", "--ci"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactFlightDOMReply tests failed:\n{r.stderr[-500:]}"

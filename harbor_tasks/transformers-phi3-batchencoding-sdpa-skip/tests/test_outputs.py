@@ -249,6 +249,52 @@ def test_no_new_test_files():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that should pass on base + gold
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+REPO_TESTS = [
+    ("tests/models/phi3/test_modeling_phi3.py", "Phi3 test file"),
+    ("tests/test_modeling_common.py", "Common modeling test file"),
+]
+
+
+def test_repo_syntax_check():
+    """All target files have valid Python syntax (pass_to_pass)."""
+    import py_compile
+
+    for rel_path, desc in REPO_TESTS:
+        full_path = f"{REPO}/{rel_path}"
+        try:
+            py_compile.compile(full_path, doraise=True)
+        except Exception as e:
+            raise AssertionError(f"Syntax error in {rel_path}: {e}")
+
+
+def test_repo_ruff_check():
+    """Target files pass ruff lint (E,W, ignoring E501 line length) (pass_to_pass)."""
+    for rel_path, desc in REPO_TESTS:
+        full_path = f"{REPO}/{rel_path}"
+        r = subprocess.run(
+            ["ruff", "check", full_path, "--select", "E,W", "--ignore", "E501", "--quiet"],
+            capture_output=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, f"ruff check failed on {rel_path}:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+def test_repo_ast_parse():
+    """Target files are valid Python (AST-parsable) (pass_to_pass)."""
+    for rel_path, desc in REPO_TESTS:
+        full_path = f"{REPO}/{rel_path}"
+        source = Path(full_path).read_text()
+        try:
+            ast.parse(source)
+        except SyntaxError as e:
+            raise AssertionError(f"AST parse error in {rel_path}: {e}")
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 

@@ -126,6 +126,29 @@ def test_agents_md_branded_schema_rule():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks must pass on base and after fix
+# ---------------------------------------------------------------------------
+
+
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "turbo", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_keybind():
+    """Keybind unit tests pass (pass_to_pass) - fast, reliable subset."""
+    r = subprocess.run(
+        ["bun", "test", "test/keybind.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=PKG,
+    )
+    assert r.returncode == 0, f"Keybind tests failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (agent_config) — existing behavior maintained
 # ---------------------------------------------------------------------------
 

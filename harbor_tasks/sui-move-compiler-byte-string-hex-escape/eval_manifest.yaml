@@ -1,0 +1,73 @@
+source:
+  repo: MystenLabs/sui
+  pr_number: 26032
+  base_commit: 92bc40908e2cd3a35255295fcde7d897f6e45910
+  merge_commit: 47cc0bb95fba0d3dcdd38632a7f8d6e748f4b5ea
+  task_name: sui-move-compiler-byte-string-hex-escape
+  description: "Fix byte string hex escape handling for multi-byte UTF-8 characters"
+
+checks:
+  - id: test_multibyte_hex_escape_produces_error_not_ice
+    type: fail_to_pass
+    origin: behavior
+    description: "Multi-byte UTF-8 character after \\x escape produces proper error instead of ICE"
+
+  - id: test_valid_byte_string_compiles
+    type: pass_to_pass
+    origin: behavior
+    description: "Valid byte strings still compile correctly"
+
+  - id: test_hex_escape_error_variations
+    type: fail_to_pass
+    origin: behavior
+    description: "Various hex escape error scenarios produce proper errors"
+
+  - id: test_move_compiler_byte_string_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Move-compiler's existing byte string tests pass"
+
+  - id: test_move_compiler_check_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Move-compiler crate compiles without errors"
+
+  - id: test_move_compiler_all_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All move-compiler tests pass (repo CI)"
+
+agent_config:
+  - id: license_header
+    type: programmatic
+    origin: agent_config
+    source:
+      file: CLAUDE.md
+      section: "License comments"
+    description: "All new files must start with the Mysten Labs Apache-2.0 license header"
+
+  - id: cargo_xclippy
+    type: programmatic
+    origin: agent_config
+    source:
+      file: CLAUDE.md
+      section: "Critical Development Notes"
+    description: "ALWAYS run `cargo xclippy` after finishing development"
+
+  - id: no_test_disabling
+    type: programmatic
+    origin: agent_config
+    source:
+      file: CLAUDE.md
+      section: "Critical Development Notes"
+    description: "NEVER disable or ignore tests - all tests must pass and be enabled"
+
+  - id: no_lint_suppression
+    type: programmatic
+    origin: agent_config
+    source:
+      file: CLAUDE.md
+      section: "Critical Development Notes"
+    description: "NEVER use linting suppressions like #[allow(dead_code)] - fix underlying issues"
+
+rubric: []

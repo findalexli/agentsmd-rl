@@ -100,7 +100,7 @@ def test_suspense_tab_uses_flag():
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (agent_config) — new flags must be in ALL fork files
-# Source: .claude/skills/feature-flags/SKILL.md:45 @ 3ce1316b
+# Source: .claude/skills/feature-flags/SKILL.md:45 @ 3ce1316b05968d2a8cffe42a110f2726f2c44c3e
 # ---------------------------------------------------------------------------
 
 # [agent_config] fail_to_pass
@@ -126,3 +126,44 @@ def test_flag_files_maintain_structure():
         assert 'enableLogger' in content, (
             f"enableLogger flag missing from {path} — config file structure was corrupted"
         )
+
+
+# [repo_tests] pass_to_pass - CI lint check
+def test_repo_lint():
+    """Repo's ESLint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Flow typecheck
+def test_repo_flow():
+    """Repo's Flow typecheck passes for dom-node renderer (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - syntax validation for feature flag files
+def test_feature_flag_syntax():
+    """All feature flag config files have valid JavaScript syntax (pass_to_pass)."""
+    for path in ALL_CONFIGS:
+        r = subprocess.run(
+            ["node", "-c", path],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Syntax error in {path}:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - SuspenseTab.js syntax validation
+def test_suspense_tab_syntax():
+    """SuspenseTab.js has valid JavaScript/Flow syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-c", SUSPENSE_TAB],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax error in SuspenseTab.js:\n{r.stderr[-500:]}"

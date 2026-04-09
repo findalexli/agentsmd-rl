@@ -5,10 +5,8 @@ cd /workspace/slime
 # Idempotent: skip if already applied
 if grep -q 'tensor_parallel_output_grad=False' slime_plugins/models/hf_attention.py; then
     echo "Patch already applied"
-    exit 0
-fi
-
-git apply --whitespace=nowarn - <<'PATCH'
+else
+    git apply --whitespace=nowarn - <<'PATCH'
 diff --git a/slime/utils/reloadable_process_group.py b/slime/utils/reloadable_process_group.py
 index a8ea33a909..66055a352f 100644
 --- a/slime/utils/reloadable_process_group.py
@@ -218,3 +216,9 @@ index 482dcfe92f..c6026af869 100644
          if hf_config.layer_types[layer_id + offset] == "linear_attention":
 
 PATCH
+fi
+
+# Format the modified files to satisfy isort and black checks
+pip install -q isort black
+isort --profile=black slime_plugins/models/hf_attention.py slime_plugins/models/qwen3_5.py slime_plugins/models/qwen3_next.py slime/utils/reloadable_process_group.py
+black slime_plugins/models/hf_attention.py slime_plugins/models/qwen3_5.py slime_plugins/models/qwen3_next.py slime/utils/reloadable_process_group.py

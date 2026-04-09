@@ -149,6 +149,70 @@ console.log(JSON.stringify({ count: arr.length, versions }));
 
 
 # ---------------------------------------------------------------------------
+# CI/CD-derived (pass_to_pass) — repo_tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — oxlint check
+def test_repo_lint():
+    """Repo's oxlint check passes on test file (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "oxlint@0.16.0", "--config=oxlint.json", str(TEST_FILE)],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"oxlint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — TypeScript syntax validation via Node.js
+def test_repo_typescript_syntax():
+    """TypeScript test file has valid syntax (pass_to_pass)."""
+    r = _run_node("""\
+import { readFileSync } from 'fs';
+
+try {
+  const text = readFileSync('test/bundler/compile-windows-metadata.test.ts', 'utf8');
+
+  // Check for balanced braces (basic syntax validation)
+  let depth = 0;
+  for (const ch of text) {
+    if (ch === '{') depth++;
+    else if (ch === '}') depth--;
+    if (depth < 0) {
+      console.error('FAIL: Unbalanced braces');
+      process.exit(1);
+    }
+  }
+  if (depth !== 0) {
+    console.error('FAIL: Unbalanced braces at EOF');
+    process.exit(1);
+  }
+
+  // Check for valid test.each syntax pattern
+  if (!/test\\.each\\s*\\(/.test(text)) {
+    console.error('FAIL: No test.each pattern found');
+    process.exit(1);
+  }
+
+  console.log('PASS: TypeScript syntax appears valid');
+} catch (e) {
+  console.error('FAIL:', e.message);
+  process.exit(1);
+}
+""")
+    assert r.returncode == 0, f"TypeScript syntax check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — Prettier formatting check
+def test_repo_prettier():
+    """Repo's Prettier formatting check passes on test file (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", str(TEST_FILE)],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 

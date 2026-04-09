@@ -251,3 +251,39 @@ def test_gallery_not_stub():
     assert "<script" in src, "No <script> block — not a real Svelte component"
     assert "<style" in src, "No <style> block — not a real Svelte component"
     assert re.search(r'class=["\']', src), "No class attributes — not a real template"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and gold
+# ---------------------------------------------------------------------------
+
+def _setup_and_run(cmd: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
+    """Enable corepack, install deps, and run a pnpm command."""
+    # Setup corepack first
+    setup = subprocess.run(
+        "corepack enable && corepack prepare pnpm@latest --activate",
+        shell=True, capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # Install dependencies if needed
+    install = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Don't fail on install - might already be installed
+    
+    return subprocess.run(
+        cmd,
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
+def test_repo_format_check():
+    """Repo code formatting check passes (pass_to_pass)."""
+    r = _setup_and_run(["pnpm", "format:check"], timeout=120)
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_unit_tests():
+    """Repo unit tests pass (pass_to_pass)."""
+    r = _setup_and_run(["pnpm", "test:run"], timeout=120)
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

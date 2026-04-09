@@ -42,6 +42,19 @@ checks:
     description: "Modified functions have real logic, not just pass/return"
 
   # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests) — CI/CD checks from the repo
+  # ---------------------------------------------------------------------------
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff lint passes on all source files"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on modified files"
+
+  # ---------------------------------------------------------------------------
   # Config/documentation update checks (pr_diff — README is Tier 2 config)
   # ---------------------------------------------------------------------------
   - id: readme_documents_tmuxinator_section

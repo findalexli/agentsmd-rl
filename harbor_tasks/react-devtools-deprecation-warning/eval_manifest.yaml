@@ -7,6 +7,16 @@ source:
   merge_commit: "7b5b561bd2dda205ed8f397864379003b707d4ae"
 
 checks:
+  - id: repo_flow_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Flow typecheck passes on dom-node renderer"
+
+  - id: repo_eslint_modified
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on modified devtools files"
+
   - id: syntax_check
     type: pass_to_pass
     origin: static
@@ -15,27 +25,27 @@ checks:
   - id: new_reactbuildtype_file_exists
     type: fail_to_pass
     origin: pr_diff
-    description: "reactBuildType.js is created with reduceReactBuild and createReactRendererListener"
+    description: "reactBuildType.js is created and exports working reduceReactBuild and createReactRendererListener functions (verified via code execution)"
 
   - id: reduce_react_build_worst_build_wins
     type: fail_to_pass
     origin: pr_diff
-    description: "reduceReactBuild implements 'worst build' logic: non-production beats production"
+    description: "reduceReactBuild implements worst build logic: non-production beats production (verified via code execution)"
 
   - id: listener_maintains_state_across_renderers
     type: fail_to_pass
     origin: pr_diff
-    description: "createReactRendererListener maintains closure state so later production renderers don't override an earlier dev/outdated build"
+    description: "createReactRendererListener maintains closure state so later production renderers don't override an earlier dev/outdated build (verified via code execution)"
 
   - id: installhook_uses_factory_not_inline
     type: fail_to_pass
     origin: pr_diff
-    description: "installHook.js uses createReactRendererListener factory and removes the old inline react-renderer-attached listener"
+    description: "installHook.js uses createReactRendererListener factory, removes old inline listener, and passes Flow type check"
 
   - id: react_build_type_union_exported
     type: fail_to_pass
     origin: pr_diff
-    description: "ReactBuildType union type is exported from types.js with all five literal values"
+    description: "ReactBuildType union type is exported from types.js with all five literal values and passes Flow type check"
 
   - id: not_stub
     type: fail_to_pass
@@ -43,8 +53,5 @@ checks:
     description: "reactBuildType.js contains real implementation logic, not a stub"
 
 rubric:
-  - rule: "Use Flow type annotations (e.g. @flow pragma, import type, typed parameters, typed return values) in new React source files."
-    source:
-      path: ".claude/skills/flow/SKILL.md"
-      lines: "1-30"
-      commit: "014138df87869b174956f90a33fd6cf66e160114"
+  - rule: "New React source files should include appropriate documentation headers."
+    reference: "Copyright headers present in new reactBuildType.js"

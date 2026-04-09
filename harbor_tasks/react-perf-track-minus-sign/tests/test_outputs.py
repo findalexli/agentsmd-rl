@@ -54,6 +54,33 @@ def test_syntax_check():
     assert r.returncode == 0, f"Syntax error:\n{r.stderr}"
 
 
+def test_repo_lint():
+    """Repo's ESLint checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_flow():
+    """Repo's Flow typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-browser"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_tests_relevant():
+    """Tests for modified module pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ReactPerformanceTrack", "--no-coverage", "--verbose=false"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Tests failed:\n{r.stderr[-500:]}"
+
+
 # -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - core behavioral tests
 # -----------------------------------------------------------------------------

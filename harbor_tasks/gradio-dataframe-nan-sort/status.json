@@ -1,63 +1,70 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T23:46:02.222093",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.3,
-      "verdict": "pass",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T04:40:39.523370",
+  "total_time": 10192.44,
+  "sandbox_id": "i4blqjfatywj552tykslw",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All four validation checks passed: Docker build successful, NOP test reward=0 (2 fail-to-pass tests correctly fail on buggy base code), Gold test reward=1 (all 10 tests pass after fix), Rubric ICR=1.0 (empty rubric).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 226.21
+    },
+    "p2p_enrichment": {
+      "status": "completed",
+      "model": "kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 180.5,
+      "notes": "Added 3 repo CI/CD pass_to_pass tests: test_repo_format_check (pnpm format:check), test_repo_unit_tests (pnpm test:run), test_repo_dataframe_utils_tests (vitest on js/dataframe/test/table_utils.test.ts). Discovered CI commands from package.json scripts and .github/workflows/tests-js.yml. Tests verified passing on base commit. Skipped: lint (missing eslint deps), ts:check (416 pre-existing type errors)."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 764.23,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.72,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-30T23:47:11.709935",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.3,
       "verdict": "pass",
-      "notes": ""
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T04:40:39.359285"
     },
     {
-      "timestamp": "2026-03-29T14:30:05.193932",
-      "runner": "rubric (rebuild-rubrics_20260329_143005)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 1136
-    },
-    {
-      "timestamp": "2026-03-29T16:44:41.807292",
-      "runner": "rubric (rebuild-rubrics_20260329_164441)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 1096
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.668370",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.943597",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.532890",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 10192.44,
+      "at": "2026-04-09T04:40:39.523370"
     }
   ]
 }

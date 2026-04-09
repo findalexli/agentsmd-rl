@@ -162,4 +162,51 @@ def test_write_auth_custom_env_creates_dual_keys():
 # [config_edit] fail_to_pass
 
 
-# [config_edit] fail_to_pass
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_bash_syntax():
+    """All shell scripts must have valid bash syntax (pass_to_pass)."""
+    scripts = [
+        f"{REPO}/scripts/setup.sh",
+        f"{REPO}/skills/hook-development/scripts/hook-linter.sh",
+        f"{REPO}/skills/hook-development/scripts/test-hook.sh",
+        f"{REPO}/skills/hook-development/scripts/validate-hook-schema.sh",
+        f"{REPO}/skills/hook-development/examples/validate-bash.sh",
+        f"{REPO}/skills/hook-development/examples/validate-write.sh",
+        f"{REPO}/skills/hook-development/examples/load-context.sh",
+    ]
+    for script in scripts:
+        r = subprocess.run(
+            ["bash", "-n", script],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"Bash syntax error in {script}:\\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_hook_linter():
+    """setup.sh must pass hook-linter checks (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", f"{REPO}/skills/hook-development/scripts/hook-linter.sh", SETUP_SH],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Hook linter failed:\\n{r.stdout}\\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_syntax():
+    """All JavaScript files must have valid Node.js syntax (pass_to_pass)."""
+    scripts = [
+        f"{REPO}/scripts/lib/package-manager.js",
+        f"{REPO}/scripts/lib/utils.js",
+        f"{REPO}/scripts/setup-package-manager.js",
+    ]
+    for script in scripts:
+        r = subprocess.run(
+            ["node", "--check", script],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"Node.js syntax error in {script}:\\n{r.stderr}"

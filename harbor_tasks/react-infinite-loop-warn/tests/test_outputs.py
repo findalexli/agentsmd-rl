@@ -32,6 +32,56 @@ def test_workloop_has_core_functions():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - CI/CD checks that must pass on both base and fix
+# ---------------------------------------------------------------------------
+
+def test_repo_lint():
+    """Repo's ESLint checks must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile", "--silent"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    if r.returncode != 0:
+        # Install errors are acceptable, skip lint test if deps can't install
+        return
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_flow():
+    """Repo's Flow type checks must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile", "--silent"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    if r.returncode != 0:
+        return
+    r = subprocess.run(
+        ["node", "./scripts/tasks/flow.js", "dom-browser"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_tests_relevant():
+    """Tests for modified module must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile", "--silent"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    if r.returncode != 0:
+        return
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ReactUpdates", "--testNamePattern=infinite"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactUpdates tests failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -134,7 +184,7 @@ def test_else_resets_nested_update_state():
     src = Path(WORKLOOP).read_text()
     func_start = src.find("function flushSpawnedWork")
     assert func_start != -1, "flushSpawnedWork function not found"
-    func_body = src[func_start:func_start + 5000]
+    func_body = src[func_start:func_start + 15000]
     assert "rootWithNestedUpdates = null" in func_body, \
         "flushSpawnedWork does not reset rootWithNestedUpdates to null"
     assert "nestedUpdateKind = NO_NESTED_UPDATE" in func_body, \

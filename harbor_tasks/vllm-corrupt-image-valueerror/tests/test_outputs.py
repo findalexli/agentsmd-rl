@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 import sys
 import tempfile
 from io import BytesIO
@@ -114,6 +115,30 @@ def test_syntax_check():
     """Modified source file must be valid Python."""
     import py_compile
     py_compile.compile(SOURCE, doraise=True)
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI checks must pass on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Modified file passes ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", SOURCE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Modified file passes ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", SOURCE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

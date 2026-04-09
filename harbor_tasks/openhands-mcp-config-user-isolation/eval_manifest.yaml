@@ -1,0 +1,90 @@
+source:
+  repo: All-Hands-AI/OpenHands
+  pr_number: 13591
+  base_commit: f7b53283b5692e1ba1755bfba8a51f09c76f5ec7
+  merge_commit: 9be60bc28698f78c0d06d17624d69622fab47ea6
+  title: "fix: make MCP settings user-specific within organization"
+  description: |
+    Previously, MCP config was stored at the org level, making it visible to all users
+    in the organization. This change moves MCP config storage to the org_member table,
+    ensuring each user's MCP settings are private and isolated from other members.
+
+checks:
+  # Pass-to-pass: These tests should pass on both base commit and after fix
+  - id: test_repo_python_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: All Python files in the repo should have valid syntax
+
+  - id: test_repo_migration_102_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Migration 102 should exist as down_revision for migration 103
+
+  - id: test_repo_storage_modules_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: All storage module files should have valid Python syntax
+
+  - id: test_repo_routes_modules_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: All routes module files should have valid Python syntax
+
+  - id: test_repo_migrations_dir_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: Migrations directory should have valid structure and syntax
+
+  # Fail-to-pass: These tests fail on base commit, pass on correct fix
+  - id: test_migration_file_exists
+    type: fail_to_pass
+    origin: behavior
+    description: "Migration 103 should add mcp_config column to org_member table"
+
+  - id: test_migration_has_downgrade
+    type: fail_to_pass
+    origin: behavior
+    description: "Migration should include downgrade function to drop mcp_config column"
+
+  - id: test_org_member_model_has_mcp_config
+    type: fail_to_pass
+    origin: behavior
+    description: "OrgMember SQLAlchemy model should have mcp_config JSON column"
+
+  - id: test_saas_settings_store_load_reads_from_org_member
+    type: fail_to_pass
+    origin: behavior
+    description: "SaasSettingsStore.load() should read mcp_config from org_member.mcp_config"
+
+  - id: test_saas_settings_store_store_skips_org_mcp_config
+    type: fail_to_pass
+    origin: behavior
+    description: "SaasSettingsStore.store() should skip mcp_config when saving to org model"
+
+  - id: test_org_update_model_no_mcp_config
+    type: fail_to_pass
+    origin: behavior
+    description: "OrgUpdate Pydantic model should NOT have mcp_config field (removed)"
+
+  - id: test_store_method_preserves_other_fields
+    type: fail_to_pass
+    origin: behavior
+    description: "store() should continue saving other fields to org, only skip mcp_config"
+
+  - id: test_load_method_checks_for_none
+    type: fail_to_pass
+    origin: behavior
+    description: "load() should check if org_member.mcp_config is not None before using"
+
+  - id: test_unit_tests_exist_for_mcp_config_isolation
+    type: fail_to_pass
+    origin: behavior
+    description: "Unit tests should exist for MCP config user-specific behavior"
+
+  - id: test_migration_has_correct_revision
+    type: fail_to_pass
+    origin: behavior
+    description: "Migration should have correct revision ID (103) and down_revision (102)"
+
+rubric: []

@@ -1,0 +1,95 @@
+task_id: "clickhouse-stress-test-timeout-fix"
+source_pr:
+  owner: "ClickHouse"
+  repo: "ClickHouse"
+  number: 102014
+  merge_commit: "507d8b1523ae3c7f4b0e97fe6d13c7df9267e762"
+  base_commit: "0e2f4c6c1fef69f5c0ba46252d04b1cd4687b661"
+
+checks:
+  # Fail-to-pass tests (behavioral checks)
+  - id: test_randomization_uses_random_not_date
+    type: fail_to_pass
+    origin: gold_patch
+    description: "async_load_databases uses $RANDOM instead of date-based randomization"
+
+  - id: test_post_stress_start_server_has_timeout
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Post-stress start_server call has timeout argument of 30"
+
+  - id: test_no_date_based_randomization_anywhere
+    type: fail_to_pass
+    origin: gold_patch
+    description: "No date-based randomization patterns remain in the file"
+
+  - id: test_start_server_timeout_has_comment
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Timeout change has explanatory comment about sanitizers"
+
+  # Pass-to-pass tests (structural/repo quality checks)
+  - id: test_shellcheck_no_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shellcheck passes on the script"
+
+  - id: test_script_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Bash syntax check passes"
+
+  - id: test_stress_tests_lib_shellcheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shellcheck passes on stress_tests.lib"
+
+  - id: test_stress_tests_lib_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Bash syntax check passes on stress_tests.lib"
+
+  - id: test_utils_lib_shellcheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shellcheck passes on utils.lib"
+
+  - id: test_utils_lib_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Bash syntax check passes on utils.lib"
+
+  - id: test_upgrade_runner_shellcheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shellcheck passes on upgrade_runner.sh"
+
+  - id: test_upgrade_runner_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Bash syntax check passes on upgrade_runner.sh"
+
+# Agent configuration rules from AGENTS.md / CLAUDE.md
+agent_config:
+  - rule: "Do not use rebase or amend - add new commits instead"
+    origin: agent_config
+    source: "AGENTS.md"
+    applicable: true
+
+  - rule: "Wrap ClickHouse SQL names, classes, functions, log messages in inline code blocks"
+    origin: agent_config
+    source: "CLAUDE.md"
+    applicable: true
+
+  - rule: "Write function names as f instead of f() for mathematical purity"
+    origin: agent_config
+    source: "AGENTS.md"
+    applicable: true
+
+  - rule: "Say 'exception' instead of 'crash' for logical errors"
+    origin: agent_config
+    source: "AGENTS.md"
+    applicable: true
+
+# Rubric for soft/subjective evaluation criteria (if any)
+rubric: []

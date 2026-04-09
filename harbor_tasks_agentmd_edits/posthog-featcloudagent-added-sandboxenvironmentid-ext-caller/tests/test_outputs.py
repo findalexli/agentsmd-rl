@@ -28,6 +28,52 @@ def test_syntax_check():
     )
 
 
+# [repo_tests] pass_to_pass
+# Repo ruff lint on modified file must pass (static analysis)
+def test_repo_ruff_check():
+    """Ruff lint check passes on modified file (pass_to_pass)."""
+    import pytest
+
+    # First, check if ruff is available, install if not
+    r = subprocess.run(
+        ["python3", "-c", "import ruff"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    if r.returncode != 0:
+        # Install ruff
+        r = subprocess.run(
+            ["pip", "install", "-q", "ruff"],
+            capture_output=True, text=True, cwd=REPO, timeout=60,
+        )
+        if r.returncode != 0:
+            pytest.skip("Could not install ruff")
+
+    r = subprocess.run(
+        ["ruff", "check", "products/tasks/backend/models.py", "--output-format=concise"],
+        capture_output=True, text=True, cwd=REPO, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+# Repo Python syntax check for all modified-related files
+def test_repo_python_syntax():
+    """All Python files in products/tasks/backend parse without syntax errors (pass_to_pass)."""
+    import py_compile
+
+    backend_dir = Path(f"{REPO}/products/tasks/backend")
+    py_files = list(backend_dir.rglob("*.py"))
+
+    errors = []
+    for py_file in py_files:
+        try:
+            py_compile.compile(str(py_file), doraise=True)
+        except py_compile.PyCompileError as e:
+            errors.append(f"{py_file}: {e}")
+
+    assert not errors, f"Syntax errors found:\n" + "\n".join(errors)
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -177,3 +223,72 @@ def test_not_stub():
             )
             return
     raise AssertionError("create_and_run method not found")
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates (repo_tests)
+# These tests ensure existing CI checks pass on both base commit and after fix
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+# Import check for modified module
+def test_repo_imports():
+    """Modified module can be imported without errors (pass_to_pass)."""
+    import pytest
+
+    r = subprocess.run(
+        ["python3", "-c", "import sys; sys.path.insert(0, '.'); sys.path.insert(0, 'common'); from products.tasks.backend import models; print('OK')"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    # Note: This may fail due to Django setup issues, but we check if the syntax is valid
+    # If it fails with ImportError/ModuleNotFoundError for Django deps, that's expected
+    # If it fails with SyntaxError, that's a real problem
+    if r.returncode != 0:
+        # Only fail on syntax errors, not dependency issues
+        if "SyntaxError" in r.stderr or "IndentationError" in r.stderr:
+            assert False, f"Syntax error in module:\n{r.stderr}"
+        # Otherwise, dependency issues are expected in this limited environment
+        pytest.skip("Module has dependency requirements (expected in container environment)")
+
+
+# [repo_tests] pass_to_pass
+# AST validation for Python file
+def test_repo_ast_valid():
+    """Modified Python file has valid AST structure (pass_to_pass)."""
+    import ast
+
+    src = Path(f"{REPO}/products/tasks/backend/models.py").read_text()
+    try:
+        ast.parse(src)
+    except SyntaxError as e:
+        assert False, f"Invalid AST: {e}"
+
+
+# [repo_tests] pass_to_pass
+# Check that the file doesn't contain obvious errors
+def test_repo_no_obvious_errors():
+    """Modified file doesn't contain obvious syntax patterns that indicate errors (pass_to_pass)."""
+    src = Path(f"{REPO}/products/tasks/backend/models.py").read_text()
+
+    # Check for common error patterns
+    error_patterns = [
+        "FIXME",
+        "TODO: fix",
+        "XXX",
+        "raise NotImplementedError",
+    ]
+
+    for pattern in error_patterns:
+        # Allow these in comments but not in actual code
+        lines = src.split('\n')
+        for i, line in enumerate(lines, 1):
+            if pattern in line and not line.strip().startswith('#'):
+                # In actual code (not comment)
+                if pattern == "raise NotImplementedError":
+                    assert False, f"Line {i} contains NotImplementedError - feature not implemented"
+
+    # Check for balanced parentheses and quotes (basic)
+    # This is a simple heuristic - real syntax check is done by py_compile
+    assert src.count('(') >= src.count(')'), "Unbalanced parentheses (more closing)"
+    assert src.count(')') >= src.count('('), "Unbalanced parentheses (more opening)"

@@ -12,6 +12,21 @@ checks:
     origin: static
     description: "Modified files (mm_utils.py, scheduler.py) must parse without errors"
 
+  - id: test_repo_ruff
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linting passes on modified files (syntax and import errors)"
+
+  - id: test_repo_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's import sorting passes on modified files"
+
+  - id: test_repo_black
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's code formatting passes on modified files"
+
   - id: repickle_stable_shm_name
     type: fail_to_pass
     origin: pr_diff

@@ -1,0 +1,139 @@
+# Eval manifest for TanStack/router#7077
+# Preserving render-thrown notFound errors through framework error boundaries
+
+source:
+  pr:
+    owner: TanStack
+    repo: router
+    number: 7077
+    title: "fix: preserve render-thrown notFound errors"
+    merge_commit: 796406da66cfb12b518bb3ca326c9d541368fb06
+    base_commit: d1174179082d896a9674532994a4d6b38238c37e
+
+task:
+  name: router-preserve-render-thrown-notfound
+  description: Fix notFound() errors thrown from components to preserve route context
+
+agent_configs:
+  - name: AGENTS.md
+    path: AGENTS.md
+    relevance: |
+      Root-level config always applies. Contains:
+      - Use pnpm nx run for testing
+      - CI=1 NX_DAEMON=false flags for sandbox
+      - Test commands: pnpm nx run @tanstack/PKG:test:unit
+      - Build commands: pnpm nx run @tanstack/PKG:build
+  - name: router-core/not-found-and-errors
+    path: packages/router-core/skills/router-core/not-found-and-errors/SKILL.md
+    relevance: |
+      Relevant: PR is about notFound() behavior. Contains:
+      - notFound() thrown in components interacts with notFoundComponent
+      - Fuzzy notFoundMode finds nearest parent with notFoundComponent
+      - error.routeId can target specific routes
+      - CatchNotFound and error boundaries
+
+checks:
+  # =============================================================================
+  # Fail-to-Pass: Core behavioral fixes (the bug)
+  # =============================================================================
+  - id: test_react_router_component_thrown_notfound
+    type: fail_to_pass
+    origin: agent_config
+    description: |
+      React Router: Component-thrown notFound() preserves routeId and renders correct notFoundComponent
+    source: |
+      SKILL.md: "notFound() thrown in components interacts with notFoundComponent"
+      SKILL.md: "Fuzzy notFoundMode finds nearest parent with notFoundComponent"
+
+  - id: test_solid_router_component_thrown_notfound
+    type: fail_to_pass
+    origin: agent_config
+    description: |
+      Solid Router: Component-thrown notFound() works despite Solid's Error wrapping behavior
+    source: |
+      SKILL.md: "notFound() thrown in components interacts with notFoundComponent"
+
+  - id: test_vue_router_component_thrown_notfound
+    type: fail_to_pass
+    origin: agent_config
+    description: |
+      Vue Router: Component-thrown notFound() preserves routeId and renders correct notFoundComponent
+    source: |
+      SKILL.md: "notFound() thrown in components interacts with notFoundComponent"
+
+  # =============================================================================
+  # Structural verification: Code changes (gated - secondary to behavioral)
+  # =============================================================================
+  - id: test_react_matchtsx_contains_fix
+    type: fail_to_pass
+    origin: agent_config
+    description: |
+      React Match.tsx has error.routeId ??= matchState.routeId assignments
+    source: |
+      AGENTS.md: Framework-specific React bindings in packages/react-router/
+
+  - id: test_solid_matchtsx_contains_fix
+    type: fail_to_pass
+    origin: agent_config
+    description: |
+      Solid Match.tsx imports getNotFound and assigns notFoundError.routeId
+    source: |
+      AGENTS.md: Framework-specific Solid bindings in packages/solid-router/
+
+  - id: test_solid_notfoundtsx_contains_getNotFound
+    type: fail_to_pass
+    origin: agent_config
+    description: |
+      Solid not-found.tsx exports getNotFound helper for unwrapping Error.cause
+    source: |
+      AGENTS.md: Framework-specific Solid bindings in packages/solid-router/
+
+  - id: test_vue_matchtsx_contains_fix
+    type: fail_to_pass
+    origin: agent_config
+    description: |
+      Vue Match.tsx has error.routeId ??= matchData.value?.routeId assignment
+    source: |
+      AGENTS.md: Framework-specific Vue bindings in packages/vue-router/
+
+  # =============================================================================
+  # Pass-to-Pass: Repo tests that should continue passing
+  # =============================================================================
+  - id: test_react_router_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: React Router package builds successfully
+
+  - id: test_solid_router_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Solid Router package builds successfully
+
+  - id: test_vue_router_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Vue Router package builds successfully
+
+  - id: test_react_router_all_notfound_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: All React Router not-found tests pass (upstream regression suite)
+
+  - id: test_solid_router_all_notfound_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: All Solid Router not-found tests pass (upstream regression suite)
+
+  - id: test_vue_router_all_notfound_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: All Vue Router not-found tests pass (upstream regression suite)
+
+# Soft/subjective rules (from agent config - LLM-judge only)
+rubric:
+  - rule: "Use proper TypeScript type annotations (as any for routeId assignments)"
+    relevance: "Style consistency with codebase"
+  - rule: "Follow the pattern: check isNotFound(error), assign routeId if missing, then throw/rethrow"
+    relevance: "Code organization per SKILL.md patterns"
+  - rule: "For Solid, handle both direct notFound errors and Error-wrapped ones via cause property"
+    relevance: "Framework-specific behavior per SKILL.md"

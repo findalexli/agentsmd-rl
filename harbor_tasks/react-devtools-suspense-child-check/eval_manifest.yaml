@@ -12,6 +12,16 @@ checks:
     origin: static
     description: "store.js must be syntactically valid JavaScript"
 
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ESLint checks pass"
+
+  - id: test_repo_flow_dom_browser
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Flow type checking passes for dom-browser"
+
   - id: index_bounds_check_before_splice
     type: fail_to_pass
     origin: pr_diff
@@ -58,6 +68,6 @@ rubric:
 
   - rule: "Do not add unnecessary $FlowFixMe suppressions to bypass type errors."
     source:
-      path: ".claude/skills/flow/SKILL.md"
+      path: "packages/react-devtools-shared/src/devtools/store.js"
       lines: "29"
       commit: "6066c782fe06b65e98a410741d994f620321fe11"

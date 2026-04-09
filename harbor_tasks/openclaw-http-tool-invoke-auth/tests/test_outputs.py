@@ -115,14 +115,14 @@ def test_scope_authorization_imports():
 
     # Check they come from the right modules
     http_auth_helpers_import = re.search(
-        r'import\s*\{[^}]*authorizeGatewayBearerRequestOrReply[^}]*\}\s*from\s*["\']\.\/http-auth-helpers["\']',
+        r'import\s*\{[^}]*authorizeGatewayBearerRequestOrReply[^}]*\}\s*from\s*["\']\.\/http-auth-helpers(?:\.js)?["\']',
         handler_code
     )
     assert http_auth_helpers_import, \
         "authorizeGatewayBearerRequestOrReply not imported from http-auth-helpers"
 
     method_scopes_import = re.search(
-        r'import\s*\{[^}]*authorizeOperatorScopesForMethod[^}]*\}\s*from\s*["\']\.\/method-scopes["\']',
+        r'import\s*\{[^}]*authorizeOperatorScopesForMethod[^}]*\}\s*from\s*["\']\.\/method-scopes(?:\.js)?["\']',
         handler_code
     )
     assert method_scopes_import, \
@@ -175,17 +175,17 @@ def test_owner_only_filtering_import():
     """Handler must import applyOwnerOnlyToolPolicy function."""
     handler_code = Path(f"{REPO}/src/gateway/tools-invoke-http.ts").read_text()
 
-    # Check import from tool-policy-pipeline
+    # Check import from tool-policy module
     assert "applyOwnerOnlyToolPolicy" in handler_code, \
         "applyOwnerOnlyToolPolicy not found in handler"
 
-    # Verify it's imported from the correct module
+    # Verify it's imported from the correct module (tool-policy or tool-policy-pipeline)
     pipeline_import = re.search(
-        r'import\s*\{[^}]*applyOwnerOnlyToolPolicy[^}]*\}\s*from\s*["\'].*tool-policy-pipeline',
+        r'import\s*\{[^}]*applyOwnerOnlyToolPolicy[^}]*\}\s*from\s*["\'].*tool-policy(?:-pipeline)?(?:\.js)?["\']',
         handler_code
     )
     assert pipeline_import, \
-        "applyOwnerOnlyToolPolicy not imported from tool-policy-pipeline"
+        "applyOwnerOnlyToolPolicy not imported from tool-policy module"
 
 
 # [pr_diff] fail_to_pass
@@ -232,6 +232,41 @@ def test_existing_deny_entries_preserved():
     deny = _get_deny_list()
     for tool in ["sessions_spawn", "sessions_send", "cron", "gateway", "whatsapp_login"]:
         assert tool in deny, f"Original entry '{tool}' removed from deny list"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's oxlint (pnpm lint) passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_security_audit():
+    """Repo's security audit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--config", "vitest.unit.config.ts", "src/security/audit.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Security audit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_modified_files_formatted():
+    """Modified files are correctly formatted (pass_to_pass)."""
+    for f in MODIFIED_FILES:
+        r = subprocess.run(
+            ["npx", "oxfmt", "--check", f],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"File {f} is not correctly formatted:\n{r.stderr[-200:]}"
 
 
 # ---------------------------------------------------------------------------

@@ -370,3 +370,39 @@ def test_not_stub():
         for node in ast.walk(clean_exit_node)
     )
     assert has_dpg, "destroy_process_group not referenced in clean_exit"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's ruff lint check passes (pass_to_pass)."""
+    # Install ruff if not present
+    try:
+        subprocess.run(["python3", "-c", "import ruff"], capture_output=True, check=True)
+    except subprocess.CalledProcessError:
+        subprocess.run(["pip3", "install", "-q", "ruff"], capture_output=True, check=False)
+
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", str(UTILS_PY), "--config", str(Path(REPO) / "pyproject.toml")],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes (pass_to_pass)."""
+    # Install ruff if not present
+    try:
+        subprocess.run(["python3", "-c", "import ruff"], capture_output=True, check=True)
+    except subprocess.CalledProcessError:
+        subprocess.run(["pip3", "install", "-q", "ruff"], capture_output=True, check=False)
+
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "format", "--check", str(UTILS_PY), "--config", str(Path(REPO) / "pyproject.toml")],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

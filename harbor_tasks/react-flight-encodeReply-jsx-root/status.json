@@ -1,40 +1,85 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-04-02T15:39:51.306902",
-      "phase": "e2b_kimi_wave2",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:49:41.527881",
+  "total_time": 4344.37,
+  "sandbox_id": "ia159l4jwrgxuw9osuqqe",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T09:42:00Z",
+      "ci_commands_discovered": [
+        "yarn lint - Runs ESLint on the codebase (~24s)",
+        "yarn flow dom-node - Flow type checking for dom-node renderer (~23s)",
+        "yarn test --testPathPattern=ReactFlight-test.js - ReactFlight module tests (~12s)",
+        "yarn test --testPathPattern=ReactFlightDOMReply-test.js - ReactFlightDOMReply module tests (~6s)"
+      ],
+      "ci_commands_skipped": [
+        "yarn prettier-check - OOM error (exceeds memory limits)",
+        "yarn flow-ci - Too slow (checks all renderers)",
+        "yarn build - Not needed for pass_to_pass validation"
+      ],
+      "tests_added": [
+        "test_repo_lint() - Runs yarn lint, verifies no ESLint errors",
+        "test_repo_flow_dom_node() - Runs yarn flow dom-node, verifies Flow passes",
+        "test_repo_react_flight_tests() - Runs ReactFlight Jest tests",
+        "test_repo_react_flight_dom_reply_tests() - Runs ReactFlightDOMReply Jest tests"
+      ],
+      "notes": "Added 4 repo CI/CD tests as pass_to_pass gates. Tests selected based on: (1) pass on base commit, (2) finish in <120s, (3) don't require network/GPU."
     },
-    {
-      "timestamp": "2026-04-02T23:07:01.604384",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 732.49,
+      "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build succeeded, NOP test reward=0 (2 fail-to-pass tests correctly failed), Gold test reward=1 (all 12 tests passed), Rubric ICR=1.0 (no rubric rules to enforce).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 316.3
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.74,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-03T00:00:00.000000",
-      "phase": "v2_remake",
-      "runner": "local Docker",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0.0",
-      "gold": "1.0"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:49:41.342193"
     },
     {
-      "timestamp": "2026-04-03T18:17:47.095530",
-      "phase": "e2b_salvage_remake",
-      "runner": "e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4344.37,
+      "at": "2026-04-09T02:49:41.527881"
     }
   ]
 }

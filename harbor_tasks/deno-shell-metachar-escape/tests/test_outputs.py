@@ -113,7 +113,29 @@ def test_win_escape_exclamation_parens():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass — regression tests
+# Pass-to-pass — repo CI/CD tests (must pass on base and after fix)
+# ---------------------------------------------------------------------------
+
+def test_deno_lint():
+    """Deno lint passes on the modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["deno", "lint", SOURCE_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Deno lint failed:\n{r.stderr}"
+
+
+def test_deno_fmt():
+    """Deno format check passes on the modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["deno", "fmt", "--check", SOURCE_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Deno fmt check failed:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — regression tests (PR behavior preservation)
 # ---------------------------------------------------------------------------
 
 def test_win_escape_existing_specials_still_quoted():

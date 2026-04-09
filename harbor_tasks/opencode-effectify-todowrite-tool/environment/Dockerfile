@@ -5,7 +5,7 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential python3 tmux && \
+        git curl ca-certificates build-essential python3 tmux unzip && \
     rm -rf /var/lib/apt/lists/*
 
 # Install bun

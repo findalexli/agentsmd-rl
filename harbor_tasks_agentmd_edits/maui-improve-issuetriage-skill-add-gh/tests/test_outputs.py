@@ -34,6 +34,49 @@ def test_skill_md_exists():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD validation from the repo's actual tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_powershell_scripts_syntax():
+    """All PowerShell scripts must have valid syntax (pass_to_pass gate)."""
+    ps_scripts = [
+        INIT_SCRIPT,
+        QUERY_SCRIPT,
+        Path(REPO) / ".github" / "skills" / "issue-triage" / "scripts" / "record-triage.ps1",
+    ]
+
+    for script in ps_scripts:
+        if not script.exists():
+            continue
+        r = subprocess.run(
+            ["pwsh", "-Command",
+             f"$e = $null; [System.Management.Automation.Language.Parser]::ParseFile('{script}', [ref]$e, [ref]$e); if ($e) {{ exit 1 }} else {{ exit 0 }}"],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"PowerShell syntax error in {script.name}: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_skill_md_structure():
+    """SKILL.md must have valid YAML frontmatter structure (pass_to_pass gate)."""
+    content = SKILL_MD.read_text()
+
+    # Must have YAML frontmatter delimiters
+    assert content.startswith("---"), "SKILL.md must start with YAML frontmatter ---"
+
+    # Must have closing frontmatter
+    frontmatter_end = content.find("---", 3)
+    assert frontmatter_end != -1, "SKILL.md must have closing --- for frontmatter"
+
+    # Must have required frontmatter fields
+    frontmatter = content[:frontmatter_end]
+    assert "name:" in frontmatter, "SKILL.md frontmatter must have 'name:'"
+    assert "description:" in frontmatter, "SKILL.md frontmatter must have 'description:'"
+    assert "version:" in frontmatter, "SKILL.md frontmatter must have 'version:'"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests with subprocess execution
 # ---------------------------------------------------------------------------
 
@@ -65,7 +108,6 @@ def test_init_script_has_gh_check():
     assert "exit 1" in content, "Missing 'exit 1' for gh check failure"
 
     # Verify the check is at the start of the script (before milestone fetching)
-    # The check should appear within the first 50 lines
     lines = content.split("\n")
     gh_check_line = None
     milestone_fetch_line = None

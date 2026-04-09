@@ -1,35 +1,38 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92481
-  base_commit: "e513488d0d3bc19ae9b16b08ef43add7e4faab7c"
-  merge_commit: "dfa1201ab8a229bcbdaadc9cf29d5a291024621c"
-
+  base_commit: e513488d0d3bc19ae9b16b08ef43add7e4faab7c
+  merge_commit: dfa1201ab8a229bcbdaadc9cf29d5a291024621c
 checks:
-  - id: source_file_valid
-    type: pass_to_pass
-    origin: static
-    description: "Source file exists with TurboPersistence struct and core structure"
-
-  - id: struct_has_atomic_bool
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TurboPersistence struct contains an AtomicBool field for is_empty state"
-
-  - id: isempty_lock_free
-    type: fail_to_pass
-    origin: pr_diff
-    description: "is_empty() uses atomic load instead of acquiring RwLock read lock"
-
-  - id: atomic_synced_on_mutation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AtomicBool is updated at both meta_files mutation points (load_directory and commit)"
-
+- id: source_file_valid
+  type: pass_to_pass
+  origin: static
+  description: Source file exists with TurboPersistence struct and core structure
+- id: struct_has_atomic_bool
+  type: fail_to_pass
+  origin: pr_diff
+  description: TurboPersistence struct contains an AtomicBool field for is_empty state
+- id: isempty_lock_free
+  type: fail_to_pass
+  origin: pr_diff
+  description: is_empty() uses atomic load instead of acquiring RwLock read lock
+- id: atomic_synced_on_mutation
+  type: fail_to_pass
+  origin: pr_diff
+  description: AtomicBool is updated at both meta_files mutation points (load_directory
+    and commit)
+- id: test_repo_module_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: All declared Rust module files exist in turbo-persistence crate
+- id: test_repo_source_integrity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source files are not truncated/corrupted (line count check)
 rubric:
-  - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run cargo fmt"
-    source:
-      path: "CLAUDE.md"
-      lines: "422"
-      commit: "e513488d0d3bc19ae9b16b08ef43add7e4faab7c"
+- rule: cargo fmt uses ASCII order (uppercase before lowercase) - just run cargo fmt
+  source:
+    path: CLAUDE.md
+    lines: '422'
+    commit: e513488d0d3bc19ae9b16b08ef43add7e4faab7c

@@ -1,63 +1,86 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T23:46:02.222990",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.4,
-      "verdict": "pass",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T10:30:31.791759",
+  "total_time": 4718.73,
+  "sandbox_id": "io84umyplasodz2zneh7z",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 266.0,
       "notes": ""
     },
-    {
-      "timestamp": "2026-03-30T23:47:11.710879",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.4,
-      "verdict": "pass",
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 632.47,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build succeeded, NOP test correctly yields reward=0 (4 fail-to-pass tests fail as expected on buggy base), Gold test yields reward=1 (all 11 tests pass after patch). Rubric ICR=0.5 is a false positive (references AGENTS.md which gold solution does not modify - it is a pure code fix). Core validation is correct.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 167.9
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.76,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-29T14:30:05.194377",
-      "runner": "rubric (rebuild-rubrics_20260329_143005)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 3390
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:04:46.239154"
     },
     {
-      "timestamp": "2026-03-29T16:44:41.808225",
-      "runner": "rubric (rebuild-rubrics_20260329_164441)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 1963
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1649.04,
+      "at": "2026-04-09T02:04:46.400689"
     },
     {
-      "timestamp": "2026-04-01T20:15:41.674038",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4718.47,
+      "at": "2026-04-09T10:30:31.625495"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.945930",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.540710",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4718.73,
+      "at": "2026-04-09T10:30:31.791759"
     }
   ]
 }

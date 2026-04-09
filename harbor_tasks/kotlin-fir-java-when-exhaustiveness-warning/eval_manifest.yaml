@@ -1,0 +1,152 @@
+version: 1.0
+task:
+  name: kotlin-fir-java-when-exhaustiveness-warning
+  source_pr:
+    repo: JetBrains/kotlin
+    number: 5783
+    title: "[FIR] Implement warning for unexhaustive when over enhanced for warning subject KT-84106"
+    merge_commit: 44ab8f5fc9b73a5a9ad7d49b8d455a9dc0dee720
+    base_commit: 8d783d308126447f065a2c6310e96ee90bdc832b
+
+  checks:
+    # Fail-to-pass tests (these fail on base, pass on fix)
+    - id: test_checker_file_exists
+      type: fail_to_pass
+      origin: behavior
+      description: FirJavaWhenExhaustivenessWarningChecker.kt exists with correct implementation
+
+    - id: test_checker_registered
+      type: fail_to_pass
+      origin: behavior
+      description: Checker is registered in JvmExpressionCheckers
+
+    - id: test_diagnostic_defined
+      type: fail_to_pass
+      origin: behavior
+      description: UNEXHAUSTIVE_WHEN_BASED_ON_JAVA_ANNOTATIONS diagnostic is defined in FirJvmErrors
+
+    - id: test_error_message_defined
+      type: fail_to_pass
+      origin: behavior
+      description: Error message for new diagnostic is registered
+
+    - id: test_analysis_api_diagnostic_impl
+      type: fail_to_pass
+      origin: behavior
+      description: Analysis API diagnostic implementation exists (KaFirDiagnosticsImpl)
+
+    - id: test_analysis_api_diagnostic_interface
+      type: fail_to_pass
+      origin: behavior
+      description: Analysis API diagnostic interface exists (KaFirDiagnostics)
+
+    - id: test_test_data_files_exist
+      type: fail_to_pass
+      origin: behavior
+      description: New test data files exist for strict and warn modes
+
+    - id: test_updated_test_file
+      type: fail_to_pass
+      origin: behavior
+      description: WhenWarn.fir.kt updated with new diagnostic markers
+
+    - id: test_diagnostic_generator_updated
+      type: fail_to_pass
+      origin: behavior
+      description: Diagnostic generator (FirJvmDiagnosticsList.kt) updated
+
+    - id: test_converter_updated
+      type: fail_to_pass
+      origin: behavior
+      description: KaFirDataClassConverters updated with new diagnostic conversion
+
+    # Pass-to-pass tests (these pass on both base and fix)
+    - id: test_fir_exhaustive_when_checker_compiles
+      type: pass_to_pass
+      origin: repo_tests
+      description: FirExhaustiveWhenChecker.kt compiles after refactoring
+
+    - id: test_gradlew_exists
+      type: pass_to_pass
+      origin: repo_tests
+      description: Build system is intact
+
+    - id: test_gradle_wrapper_properties
+      type: pass_to_pass
+      origin: repo_tests
+      description: Gradle wrapper properties are valid
+
+    - id: test_gradle_settings
+      type: pass_to_pass
+      origin: repo_tests
+      description: Gradle settings file includes expected FIR projects
+
+    - id: test_fir_checkers_module_structure
+      type: pass_to_pass
+      origin: repo_tests
+      description: FIR checkers module structure is valid
+
+    - id: test_test_data_jspecify_structure
+      type: pass_to_pass
+      origin: repo_tests
+      description: JSpecify test data directory structure is valid
+
+    - id: test_kotlin_compiler_cli_module
+      type: pass_to_pass
+      origin: repo_tests
+      description: Kotlin compiler CLI module structure exists
+
+    - id: test_kotlin_compiler_common_module
+      type: pass_to_pass
+      origin: repo_tests
+      description: Kotlin compiler common module exists (core infrastructure)
+
+    - id: test_diagnostic_generator_runnable
+      type: pass_to_pass
+      origin: repo_tests
+      description: Diagnostic generator source structure is valid
+
+    - id: test_fir_analysis_api_structure
+      type: pass_to_pass
+      origin: repo_tests
+      description: FIR Analysis API structure is valid
+
+  # Agent configuration rules from repo CLAUDE.md and AGENTS.md
+  agent_config:
+    - rule: "FIR prefix: When changes are mostly related to FIR (compiler/fir/), use FIR: prefix in the commit subject line."
+      source: compiler/AGENTS.md
+      file: compiler/AGENTS.md
+      lines: "Commit Guidelines"
+
+    - rule: "Test-before-fix: When fixing an issue and adding a test, commit the test data as a separate commit BEFORE the fix."
+      source: compiler/AGENTS.md
+      file: compiler/AGENTS.md
+      lines: "Commit Guidelines"
+
+    - rule: "For FIR analysis test data format, see analysis-tests/AGENTS.md for directives and diagnostic markers."
+      source: compiler/AGENTS.md
+      file: compiler/AGENTS.md
+      lines: "Testing"
+
+    - rule: "Use // ISSUE: KT-XXXXX directive in test files to reference YouTrack issues."
+      source: compiler/fir/analysis-tests/AGENTS.md
+      file: compiler/fir/analysis-tests/AGENTS.md
+      lines: "Test File Format"
+
+    - rule: "Use // JSPECIFY_STATE: strict or // JSPECIFY_STATE: warn for JSpecify annotation tests."
+      source: compiler/fir/analysis-tests/AGENTS.md
+      file: compiler/fir/analysis-tests/AGENTS.md
+      lines: "Test File Format"
+
+    - rule: "Use <!DIAGNOSTIC_NAME!>code<!> for inline diagnostic assertions."
+      source: compiler/fir/analysis-tests/AGENTS.md
+      file: compiler/fir/analysis-tests/AGENTS.md
+      lines: "Inline Diagnostic Markers"
+
+    - rule: "Use // FILE: Name.java and // FILE: test.kt for multi-file tests."
+      source: compiler/fir/analysis-tests/AGENTS.md
+      file: compiler/fir/analysis-tests/AGENTS.md
+      lines: "Test File Format"
+
+  # Rubric for soft/subjective criteria (LLM-judged)
+  rubric: []

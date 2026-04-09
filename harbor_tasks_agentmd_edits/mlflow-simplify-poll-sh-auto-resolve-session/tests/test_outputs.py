@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/mlflow"
@@ -26,6 +27,47 @@ def test_poll_sh_syntax():
         capture_output=True, text=True, timeout=10,
     )
     assert r.returncode == 0, f"Syntax error in poll.sh:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass gates — repo CI/CD tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_copilot_skill_ruff():
+    """Copilot skill passes ruff linting (pass_to_pass)."""
+    # Install ruff if not available
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "ruff==0.15.5"],
+        capture_output=True, timeout=60,
+    )
+    skill_dir = Path(REPO) / ".claude/skills/copilot"
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "--output-format=concise", str(skill_dir)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_copilot_files_exist():
+    """Copilot skill required files exist and are non-empty (pass_to_pass)."""
+    poll_sh = Path(REPO) / ".claude/skills/copilot/poll.sh"
+    skill_md = Path(REPO) / ".claude/skills/copilot/SKILL.md"
+
+    assert poll_sh.exists(), "poll.sh does not exist"
+    assert skill_md.exists(), "SKILL.md does not exist"
+
+    poll_content = poll_sh.read_text()
+    skill_content = skill_md.read_text()
+
+    assert len(poll_content) > 0, "poll.sh is empty"
+    assert len(skill_content) > 0, "SKILL.md is empty"
+
+    # Basic structure checks
+    assert "#!/usr/bin/env bash" in poll_content, "poll.sh missing shebang"
+    assert "set -euo pipefail" in poll_content, "poll.sh missing set options"
+    assert "name: copilot" in skill_content, "SKILL.md missing name"
 
 
 # [static] pass_to_pass

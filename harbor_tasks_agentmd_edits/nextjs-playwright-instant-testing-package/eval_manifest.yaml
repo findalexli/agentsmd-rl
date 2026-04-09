@@ -7,11 +7,42 @@ source:
   merge_commit: "574ac9f0f81379acbdac0054e76876c726af1c73"
 
 checks:
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static/repo_tests) — regression checks on base commit
+  # ---------------------------------------------------------------------------
   - id: tsconfig_valid_json
     type: pass_to_pass
     origin: static
     description: "Root tsconfig.json remains valid JSON"
 
+  - id: package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Root package.json is valid JSON with workspaces defined"
+
+  - id: prettier_formatting_configs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Key config files follow Prettier formatting"
+
+  - id: tsconfig_paths_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Root tsconfig.json path aliases resolve to existing files"
+
+  - id: packages_directory_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Packages directory structure is intact with core packages"
+
+  - id: test_lib_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test library infrastructure is intact"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests for the fix
+  # ---------------------------------------------------------------------------
   - id: package_typescript_compiles
     type: fail_to_pass
     origin: pr_diff
@@ -22,7 +53,7 @@ checks:
     origin: pr_diff
     description: "Package exports instant() function with cookie-based protocol"
 
-  - id: package_json_valid
+  - id: playwright_package_json_valid
     type: fail_to_pass
     origin: pr_diff
     description: "package.json defines @next/playwright with correct configuration"
@@ -63,3 +94,33 @@ rubric:
       path: "CLAUDE.md"
       lines: "44-53"
       commit: "0f851c5ecd1872a209595770c5fe8b2b24274715"
+
+  - id: instant_navigation_test_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Instant navigation test file exists at base commit"
+
+  - id: next_package_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core next package structure is intact"
+
+  - id: root_config_files_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Root configuration files are valid and parseable"
+
+  - id: prettier_formatting_workflows
+    type: pass_to_pass
+    origin: repo_tests
+    description: "GitHub workflow files follow Prettier formatting"
+
+  - id: cargo_toml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Cargo.toml is valid and parseable"
+
+  - id: e2e_directory_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "E2E test directory structure is intact"

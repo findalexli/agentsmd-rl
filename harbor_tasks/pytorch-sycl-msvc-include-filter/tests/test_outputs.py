@@ -245,3 +245,28 @@ def test_not_stub():
         assert sym in source, f"Expected symbol missing: {sym}"
     line_count = len(source.splitlines())
     assert line_count >= 2000, f"File has only {line_count} lines — looks like a stub"
+
+
+# [repo_tests] pass_to_pass - CI/CD gate
+def test_repo_pyflakes():
+    """Target file passes pyflakes static analysis (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pip", "install", "pyflakes", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "pyflakes", str(TARGET)],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"pyflakes failed:\n{r.stdout}\n{r.stderr}"
+    assert r.stdout == "", f"pyflakes found issues:\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass - CI/CD gate
+def test_repo_py_compile():
+    """Target file compiles to bytecode without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", str(TARGET)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"

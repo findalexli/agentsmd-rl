@@ -73,6 +73,40 @@ def test_syntax_check():
         assert r.returncode == 0, f"deploy.sh bash syntax error: {r.stderr}"
 
 
+# [repo_tests] pass_to_pass — CI/CD gate: all Terraform files valid HCL
+def test_repo_terraform_hcl_valid():
+    """All Terraform files in the module parse as valid HCL (pass_to_pass)."""
+    tf_files = [f for f in os.listdir(TF_DIR) if f.endswith(".tf")]
+    assert tf_files, "No .tf files found in terraform directory"
+    for name in tf_files:
+        ast = _parse_hcl(name)
+        assert isinstance(ast, dict), f"{name} parsed to non-dict: {type(ast)}"
+
+
+# [repo_tests] pass_to_pass — CI/CD gate: all shell scripts valid bash
+def test_repo_shell_scripts_valid():
+    """All shell scripts pass bash syntax validation (pass_to_pass)."""
+    scripts = [f for f in os.listdir(TF_DIR) if f.endswith(".sh")]
+    for script in scripts:
+        script_path = os.path.join(TF_DIR, script)
+        r = subprocess.run(
+            ["bash", "-n", script_path],
+            capture_output=True, text=True, timeout=10,
+        )
+        assert r.returncode == 0, f"{script} has bash syntax errors: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass — CI/CD gate: README.md exists and has content
+def test_repo_readme_exists():
+    """README.md exists and has substantial documentation (pass_to_pass)."""
+    readme_path = os.path.join(TF_DIR, "README.md")
+    assert os.path.isfile(readme_path), "README.md should exist"
+    content = Path(readme_path).read_text()
+    assert len(content) > 1000, "README.md should have substantial content (at least 1000 chars)"
+    # Verify key sections are documented
+    assert "#" in content, "README.md should have markdown headers"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core code behaviour
 # ---------------------------------------------------------------------------

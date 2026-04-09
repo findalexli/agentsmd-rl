@@ -207,3 +207,70 @@ def test_not_stub():
     """Target file must not be stubbed out or emptied."""
     size = TARGET.stat().st_size
     assert size > 5000, f"File suspiciously small ({size} bytes)"
+
+
+# [repo_ci] pass_to_pass
+def test_qwen3_next_module_structure():
+    """Qwen3Next module has expected classes and methods (AST check)."""
+    source = TARGET.read_text()
+    tree = ast.parse(source)
+
+    # Find class definitions
+    classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+    assert "Qwen3GatedDeltaNet" in classes, "Qwen3GatedDeltaNet class not found"
+    assert "Qwen3NextForCausalLM" in classes, "Qwen3NextForCausalLM class not found"
+    # Note: The class is actually Qwen3HybridLinearDecoderLayer, not Qwen3NextDecoderLayer
+    assert "Qwen3HybridLinearDecoderLayer" in classes, "Qwen3HybridLinearDecoderLayer class not found"
+    assert "Qwen3HybridAttentionDecoderLayer" in classes, "Qwen3HybridAttentionDecoderLayer class not found"
+    assert "Qwen3NextModel" in classes, "Qwen3NextModel class not found"
+
+    # Find function definitions
+    funcs = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
+    assert "_make_packed_weight_loader" in funcs, "_make_packed_weight_loader not found"
+
+
+# [repo_ci] pass_to_pass
+def test_qwen3_next_imports_valid():
+    """All imports in qwen3_next.py are syntactically valid."""
+    source = TARGET.read_text()
+    tree = ast.parse(source)
+
+    # Check all Import and ImportFrom nodes are well-formed
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            # Just verify the AST nodes are valid
+            if isinstance(node, ast.ImportFrom):
+                # module can be None for relative imports
+                assert node.level >= 0, "Invalid import level"
+
+
+# [repo_ci] pass_to_pass
+def test_qwen3_next_no_merge_conflict_markers():
+    """Ensure no git merge conflict markers in target file."""
+    source = TARGET.read_text()
+    assert "<<<<<<< HEAD" not in source, "Found merge conflict marker <<<<<<< HEAD"
+    assert "=======" not in source, "Found merge conflict marker ======="
+    assert ">>>>>>>" not in source, "Found merge conflict marker >>>>>>>"
+
+
+# [repo_ci] pass_to_pass
+def test_qwen3_next_no_debug_code():
+    """Ensure no obvious debug statements (breakpoint, pdb) in target file."""
+    source = TARGET.read_text()
+    tree = ast.parse(source)
+
+    # Check for breakpoint() calls or pdb imports
+    debug_found = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and node.func.id == "breakpoint":
+                debug_found.append("breakpoint()")
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name == "pdb":
+                    debug_found.append("import pdb")
+        if isinstance(node, ast.ImportFrom):
+            if node.module == "pdb":
+                debug_found.append("from pdb import ...")
+
+    assert len(debug_found) == 0, f"Found debug code: {debug_found}"

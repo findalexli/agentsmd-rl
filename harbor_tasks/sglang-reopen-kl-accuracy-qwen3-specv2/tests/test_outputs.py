@@ -11,6 +11,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/sglang"
@@ -55,7 +56,7 @@ def _get_class_body_elements(class_node):
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) - syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -66,7 +67,51 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Repo CI/CD checks (pass_to_pass) - ensure base commit passes CI
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linting passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821", TARGET_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black_check():
+    """Repo's black formatting check passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["black", "--check", TARGET_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort_check():
+    """Repo's isort import ordering check passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["isort", "--check-only", TARGET_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell_check():
+    """Repo's codespell spelling check passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["codespell", "--config", ".codespellrc", TARGET_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Codespell check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) - core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -98,14 +143,12 @@ def test_todo_comment_removed():
     src = Path(TARGET_FILE).read_text()
 
     # Check that the TODO comment is NOT present
-    assert "TODO(hzh): After merging the PR that fixes specv2" not in src, \
-        "TODO comment about re-adding KLDivergenceMixin should be removed"
-    assert "add KLDivergenceMixin back" not in src, \
-        "Reference to adding KLDivergenceMixin back should be removed"
+    assert "TODO(hzh): After merging the PR that fixes specv2" not in src,         "TODO comment about re-adding KLDivergenceMixin should be removed"
+    assert "add KLDivergenceMixin back" not in src,         "Reference to adding KLDivergenceMixin back should be removed"
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub
+# Pass-to-pass (static) - anti-stub
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass

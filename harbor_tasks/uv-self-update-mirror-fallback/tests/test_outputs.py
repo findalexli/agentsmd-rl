@@ -555,3 +555,84 @@ def test_uv_arm_not_stub():
     assert data["non_blank_lines"] >= 4, (
         f"Uv arm has {data['non_blank_lines']} non-blank lines, need >= 4 (stub?)"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and gold
+# ---------------------------------------------------------------------------
+
+
+def test_repo_ruff_check():
+    """Repo's Python code passes ruff linting (pass_to_pass).
+
+    Runs: ruff check .
+    Origin: .github/workflows/check-lint.yml
+    """
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "check", "."],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_ruff_format():
+    """Repo's Python code passes ruff format check (pass_to_pass).
+
+    Runs: ruff format --check .
+    Origin: .github/workflows/check-fmt.yml
+    """
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", "."],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_typos():
+    """Repo passes typos spell check (pass_to_pass).
+
+    Runs: typos
+    Origin: .github/workflows/check-lint.yml
+    """
+    r = subprocess.run(
+        ["pip", "install", "-q", "typos"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install typos: {r.stderr}"
+
+    r = subprocess.run(
+        ["/usr/local/bin/typos"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typos check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_validate_pyproject():
+    """Repo's pyproject.toml passes validation (pass_to_pass).
+
+    Runs: validate-pyproject pyproject.toml
+    Origin: .github/workflows/check-lint.yml
+    """
+    r = subprocess.run(
+        ["pip", "install", "-q", "validate-pyproject"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install validate-pyproject: {r.stderr}"
+
+    r = subprocess.run(
+        ["validate-pyproject", f"{REPO}/pyproject.toml"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"pyproject.toml validation failed:\n{r.stdout}\n{r.stderr}"

@@ -2,47 +2,37 @@
 Task: ruff-ty-dataclass-field-default
 Repo: astral-sh/ruff @ ee9084695ec4d70bc66083ac2b3cf598cc45101a
 PR:   24397
-
-All checks must pass for reward = 1. Any failure = reward 0.
-Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import subprocess
 import textwrap
 from pathlib import Path
 
-import pytest
-
 REPO = "/workspace/ruff"
 TY_BIN = f"{REPO}/target/debug/ty"
 
 
-def ty_check(source: str) -> subprocess.CompletedProcess:
-    """Write source to a temp file, run `ty check`, return the result."""
+def ty_check(source: str, timeout: int = 60) -> subprocess.CompletedProcess:
+    """Run ty check on a Python source string."""
     tmp = Path("/tmp/_ty_test_input.py")
     tmp.write_text(textwrap.dedent(source))
-    return subprocess.run(
-        [TY_BIN, "check", str(tmp)],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
+    try:
+        return subprocess.run(
+            [TY_BIN, "check", str(tmp)],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=REPO,
+        )
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
-
-
-# [pr_diff] fail_to_pass
 def test_field_default_without_specifiers():
-    """dataclass_transform without field_specifiers: field(init=False) is a default value.
-
-    When a class uses @dataclass_transform() without specifying field_specifiers,
-    dataclasses.field() should NOT be treated as a special field specifier.
-    The expression `field(init=False)` should be treated as an ordinary default value,
-    so calling A() without arguments should NOT produce a type error.
+    """
+    dataclass_transform without field_specifiers treats field() as a default.
+    Before fix: A() fails because field(init=False) is wrongly treated as special.
+    After fix: A() passes because field(init=False) is treated as a default value.
     """
     result = ty_check(
         """\
@@ -63,21 +53,17 @@ def test_field_default_without_specifiers():
         a2 = A(name="hello")
         """
     )
-    # On the base commit, A() errors because name is (wrongly) required.
-    # On the fix, A() is fine because name has a default.
     combined = result.stdout + result.stderr
     assert result.returncode == 0, (
         f"ty check reported errors (should pass after fix):\n{combined}"
     )
 
 
-# [pr_diff] fail_to_pass
 def test_field_default_with_other_specifiers():
-    """dataclass_transform with different field_specifiers: field() is still a default.
-
-    When a class uses @dataclass_transform(field_specifiers=(other_field,)) where
-    dataclasses.field is NOT listed, field(init=False) should be treated as a regular
-    default value, not a special field specifier.
+    """
+    dataclass_transform with other field_specifiers still treats field() as default.
+    Before fix: C() fails because field(init=False) is wrongly treated as special.
+    After fix: C() passes because field(init=False) is treated as a default value.
     """
     result = ty_check(
         """\
@@ -111,18 +97,10 @@ def test_field_default_with_other_specifiers():
     )
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression checks
-# ---------------------------------------------------------------------------
-
-
-# [repo_tests] pass_to_pass
 def test_stdlib_dataclass_field_init_false_still_respected():
-    """stdlib @dataclass still respects field(init=False) as a field specifier.
-
-    The fix should NOT change behavior for the stdlib @dataclass decorator,
-    which has dataclasses.field in its field_specifiers. B(name="foo") should
-    still produce an error since field(init=False) removes name from __init__.
+    """
+    stdlib @dataclass should still respect field(init=False) after the fix.
+    This test should PASS on both base and fix (B(name=\"foo\") should error).
     """
     result = ty_check(
         """\
@@ -136,18 +114,16 @@ def test_stdlib_dataclass_field_init_false_still_respected():
         """
     )
     combined = result.stdout + result.stderr
-    # Should error: name is not an __init__ parameter (init=False)
     assert result.returncode != 0, (
-        f"ty check should have errored for B(name='foo') but passed:\n{combined}"
+        f"ty check should have errored for B(name=\"foo\") but passed:\n{combined}"
     )
 
 
-# [repo_tests] pass_to_pass
 def test_named_args_without_specifiers():
-    """Calling A(name=value) should work on both base and fix.
-
-    With @dataclass_transform() (no field_specifiers), passing name as a
-    keyword argument should always work regardless of the fix.
+    """
+    A(name=\"hello\") should work on both base and fix.
+    Before fix: A(name=\"hello\") passes (field wrongly treated as special).
+    After fix: A(name=\"hello\") passes (field treated as default, name has value).
     """
     result = ty_check(
         """\
@@ -169,13 +145,12 @@ def test_named_args_without_specifiers():
     )
     combined = result.stdout + result.stderr
     assert result.returncode == 0, (
-        f"ty check should pass for A(name='hello'):\n{combined}"
+        f"ty check should pass for A(name=\"hello\"):\n{combined}"
     )
 
 
-# [static] pass_to_pass
 def test_cargo_check():
-    """ty_python_semantic crate compiles without errors after the fix."""
+    """ty_python_semantic crate compiles without errors."""
     r = subprocess.run(
         ["cargo", "check", "-p", "ty_python_semantic"],
         capture_output=True,
@@ -186,14 +161,70 @@ def test_cargo_check():
     assert r.returncode == 0, f"cargo check failed:\n{r.stderr}"
 
 
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from AGENTS.md
-# ---------------------------------------------------------------------------
+def test_cargo_fmt():
+    """Repo code is formatted correctly."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt --check failed:\n{r.stderr}"
 
 
-# [agent_config] pass_to_pass — AGENTS.md:79 @ ee9084695ec4d70bc66083ac2b3cf598cc45101a
+def test_cargo_clippy_ty_python_semantic():
+    """ty_python_semantic passes clippy lints."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty_python_semantic", "--all-targets", "--all-features", "--", "-D", "warnings"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-500:]}"
+
+
+def test_cargo_doc_ty_python_semantic():
+    """ty_python_semantic docs build without warnings."""
+    env = {**subprocess.os.environ, "RUSTDOCFLAGS": "-D warnings"}
+    r = subprocess.run(
+        ["cargo", "doc", "-p", "ty_python_semantic", "--no-deps"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"cargo doc failed:\n{r.stderr[-500:]}"
+
+
+def test_ty_mdtest():
+    """ty_python_semantic markdown tests pass."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ty_python_semantic mdtest failed:\n{r.stderr[-500:]}"
+
+
+def test_ty_mdtest_dataclasses():
+    """ty_python_semantic dataclasses-specific markdown tests pass."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest", "--", "dataclasses"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ty_python_semantic dataclasses mdtest failed:\n{r.stderr[-500:]}"
+
+
 def test_no_unsafe_unwrap_in_changes():
-    """Avoid panic!/unreachable!/unwrap() in new code (AGENTS.md:79)."""
+    """No panic!/unreachable!/unwrap() in added code."""
     result = subprocess.run(
         ["git", "diff", "HEAD"],
         capture_output=True,
@@ -210,14 +241,14 @@ def test_no_unsafe_unwrap_in_changes():
         )
         diff = result.stdout
     if not diff:
-        return  # No changes = no violations possible
+        return
 
     added_lines = [
         l[1:]
         for l in diff.split("\n")
         if l.startswith("+") and not l.startswith("+++")
     ]
-    forbidden = [".unwrap()", "panic!(", "unreachable!("]
+    forbidden = [".unwrap()", "panic!(", "unreachable!(",]
     for line in added_lines:
         for f in forbidden:
             assert f not in line, f"Prohibited {f} in added code: {line.strip()}"

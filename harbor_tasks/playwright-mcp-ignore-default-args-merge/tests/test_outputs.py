@@ -177,6 +177,30 @@ console.log('PASS');
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint():
+    """Repo's ESLint passes on the modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install --legacy-peer-deps 2>&1 >/dev/null && npx eslint packages/playwright-core/src/tools/mcp/browserFactory.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_packages():
+    """Repo's workspace lint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install --legacy-peer-deps 2>&1 >/dev/null && npm run lint-packages"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint packages failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------
 

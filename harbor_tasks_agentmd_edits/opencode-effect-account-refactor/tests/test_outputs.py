@@ -39,6 +39,30 @@ def _run_repo_tests():
     return result
 
 
+def _run_typecheck():
+    """Run repo's typecheck command (tsgo --noEmit)."""
+    result = subprocess.run(
+        ["bun", "typecheck"],
+        cwd=PKG,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    return result
+
+
+def _run_account_tests():
+    """Run account-specific tests only."""
+    result = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/account/repo.test.ts", "test/account/service.test.ts"],
+        cwd=PKG,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -58,6 +82,20 @@ def test_syntax_check():
         if account_errors:
             raise AssertionError(f"TypeScript errors in account files:\n{chr(10).join(account_errors)}")
     assert True
+
+
+# [repo_tests] pass_to_pass - repo's typecheck
+def test_repo_typecheck():
+    """Repo's typecheck passes (pass_to_pass)."""
+    r = _run_typecheck()
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - account tests
+def test_repo_account_tests():
+    """Account tests pass on base commit (pass_to_pass)."""
+    r = _run_account_tests()
+    assert r.returncode == 0, f"Account tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

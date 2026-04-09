@@ -57,6 +57,19 @@ checks:
     description: "README.md must document the --bench flag for benchmarking"
 
   # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests) — CI/CD tests that must pass on base and gold
+  # ---------------------------------------------------------------------------
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests for config loading pass"
+
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linting passes"
+
+  # ---------------------------------------------------------------------------
   # Pass-to-pass (static) — anti-stub
   # ---------------------------------------------------------------------------
   - id: not_stub

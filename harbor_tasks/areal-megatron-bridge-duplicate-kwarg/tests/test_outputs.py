@@ -7,27 +7,30 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import ast
+import py_compile
 import re
 import subprocess
 from pathlib import Path
 
-FILE = Path("/workspace/AReaL/areal/engine/megatron_engine.py")
+REPO = Path("/workspace/AReaL")
+FILE = REPO / "areal/engine/megatron_engine.py"
 
 
 def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute Python code via subprocess (isolated from this process)."""
-    preamble = f"FILE = {str(FILE)!r}\n"
+    preamble = f"FILE = Path({str(FILE)!r})\nREPO = Path({str(REPO)!r})\n"
     return subprocess.run(
-        ["python3", "-c", preamble + code],
+        ["python3", "-c", "from pathlib import Path\n" + preamble + code],
         capture_output=True,
         text=True,
         timeout=timeout,
     )
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Fail-to-pass — subprocess-based behavioral tests
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
@@ -94,9 +97,9 @@ assert found, 'from_hf_pretrained call not found'
     assert r.returncode == 0, f"Check failed: {r.stderr}"
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Pass-to-pass (pr_diff / static) — text-based, works on both base and fix
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 # [pr_diff] pass_to_pass
@@ -161,9 +164,9 @@ def test_file_not_gutted():
     assert line_count > 300, f"File has only {line_count} lines — suspiciously small"
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Config-derived (agent_config)
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 # [agent_config] pass_to_pass — AGENTS.md:30 @ 722e235
@@ -200,3 +203,115 @@ def test_no_bare_print_in_method():
                 assert False, (
                     f"Bare print() at line {i} — use self.logger instead (AGENTS.md:90)"
                 )
+
+
+# -----------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass gates (ensure fix doesn't break existing functionality)
+# -----------------------------------------------------------------------------
+
+
+# [repo_ci] pass_to_pass — pyproject.toml syntax validation
+def test_repo_pyproject_toml_valid():
+    """pyproject.toml is valid TOML syntax (pass_to_pass)."""
+    r = _run_python(
+        """\
+import tomllib
+with open(REPO / 'pyproject.toml', 'rb') as f:
+    tomllib.load(f)
+print('pyproject.toml is valid TOML')
+"""
+    )
+    assert r.returncode == 0, f"pyproject.toml TOML validation failed:\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass — ruff linter check (when syntax is valid)
+def test_repo_ruff_lint():
+    """Ruff linter passes on megatron_engine.py (pass_to_pass)."""
+    # First ensure file compiles (syntax is valid) - this will be tested by test_file_parses
+    r = _run_python("import py_compile; py_compile.compile(FILE, doraise=True)")
+    if r.returncode != 0:
+        pytest.skip("File has syntax errors - skipping ruff lint")
+    # Try to install ruff
+    subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", "--output-format=concise", str(FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — ruff format check (when syntax is valid)
+def test_repo_ruff_format():
+    """Ruff format check passes on megatron_engine.py (pass_to_pass)."""
+    # First ensure file compiles (syntax is valid)
+    r = _run_python("import py_compile; py_compile.compile(FILE, doraise=True)")
+    if r.returncode != 0:
+        pytest.skip("File has syntax errors - skipping ruff format check")
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "format", "--check", str(FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — Python syntax validation for all areal/engine files
+def test_repo_engine_syntax_valid():
+    """All Python files in areal/engine have valid syntax (pass_to_pass)."""
+    r = _run_python(
+        """\
+import py_compile
+import os
+engine_dir = REPO / 'areal/engine'
+errors = []
+for root, dirs, files in os.walk(engine_dir):
+    for file in files:
+        if file.endswith('.py'):
+            filepath = os.path.join(root, file)
+            try:
+                py_compile.compile(filepath, doraise=True)
+            except py_compile.PyCompileError as e:
+                errors.append(f'{filepath}: {e}')
+if errors:
+    print('Syntax errors found:')
+    for e in errors:
+        print(e)
+    exit(1)
+print('All engine files have valid syntax')
+"""
+    )
+    assert r.returncode == 0, f"Engine syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — check no trailing whitespace
+def test_repo_no_trailing_whitespace():
+    """megatron_engine.py has no trailing whitespace (pass_to_pass)."""
+    source = FILE.read_text()
+    for i, line in enumerate(source.splitlines(), 1):
+        if line != line.rstrip():
+            assert False, f"Trailing whitespace found at line {i}"
+
+
+# [repo_ci] pass_to_pass — check file ends with newline
+def test_repo_file_ends_with_newline():
+    """megatron_engine.py ends with a single newline (pass_to_pass)."""
+    content = FILE.read_bytes()
+    if not content:
+        assert False, "File is empty"
+    if not content.endswith(b'\n'):
+        assert False, "File does not end with newline"
+    # Check for multiple trailing newlines (more than 1)
+    if content.endswith(b'\n\n'):
+        assert False, "File has multiple trailing newlines"
+
+
+import pytest

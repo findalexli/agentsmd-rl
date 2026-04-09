@@ -1,0 +1,64 @@
+source_pr:
+  owner: JetBrains
+  repo: kotlin
+  number: 5833
+  title: "Fix callableInferenceNodeOf in ComposableTargetChecker.kt"
+  base_commit: a304b4b5c79aa22c62ab5410caccaeb3a05c276a
+  merge_commit: 167a139ee7e66f69f847c6d0ab2957ab162df1f3
+
+# Agent config sources (classify rules)
+agent_config:
+  - source: CLAUDE.md (root)
+    applies: true
+    notes: General Kotlin development guidelines
+  - source: AGENTS.md (root)
+    applies: true
+    notes: General project guidelines
+  - source: compiler/AGENTS.md
+    applies: true
+    notes: Compiler-specific architecture and commit guidelines
+  - source: .ai/guidelines.md
+    applies: true
+    notes: Critical guidelines for Kotlin development
+  - source: compiler/fir/analysis-tests/AGENTS.md
+    applies: true
+    notes: FIR analysis tests format for test updates
+
+# Pass-to-pass checks (tests that should pass after fix)
+checks:
+  - id: test_syntax_valid
+    description: "Kotlin code compiles without syntax errors"
+    weight: 0.1
+    type: behavioral
+
+  - id: test_callable_node_kind_returns_function
+    description: "FirCallableElementInferenceNode.kind returns NodeKind.Function"
+    weight: 0.25
+    type: behavioral
+    source: Agent config (compiler/AGENTS.md - FIR architecture knowledge)
+
+  - id: test_callable_inference_node_of_structure
+    description: "callableInferenceNodeOf has explicit return type and control flow"
+    weight: 0.15
+    type: behavioral
+    source: Agent config (general code quality from .ai/guidelines.md)
+
+  - id: test_function_call_handling
+    description: "FirFunctionCall handled with callable.fir as element"
+    weight: 0.25
+    type: behavioral
+    source: Agent config (compiler/AGENTS.md - understanding FIR elements)
+
+  - id: test_fallback_returns_expression
+    description: "Fallback returns expression for scheme safety"
+    weight: 0.15
+    type: behavioral
+    source: Agent config (code documentation practices)
+
+  - id: test_no_elvis_operator_chain
+    description: "Old Elvis operator chain pattern removed"
+    weight: 0.1
+    type: structural
+
+# Rubric for soft/subjective rules (LLM judge)
+rubric: []

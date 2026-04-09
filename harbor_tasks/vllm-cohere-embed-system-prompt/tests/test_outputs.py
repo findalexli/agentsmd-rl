@@ -302,3 +302,78 @@ def test_not_stub():
         assert meaningful >= min_stmts, (
             f"{name} looks like a stub ({meaningful} statements, need >={min_stmts})"
         )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD validation
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_spdx_header():
+    """Target file must have SPDX license header (pass_to_pass)."""
+    source = Path(TARGET).read_text()
+    assert "SPDX-License-Identifier" in source, "Missing SPDX-License-Identifier header"
+    assert "SPDX-FileCopyrightText" in source, "Missing SPDX-FileCopyrightText header"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports_structure():
+    """Target file has expected import structure (pass_to_pass)."""
+    source = Path(TARGET).read_text()
+    tree = ast.parse(source)
+
+    imports = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                imports.append(alias.name)
+        elif isinstance(node, ast.ImportFrom):
+            imports.append(node.module)
+
+    # Check for expected key imports
+    assert any("typing" in (i or "") for i in imports), "Missing typing imports"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_test_file_structure():
+    """Repo's embed test files exist with expected structure (pass_to_pass)."""
+    test_dir = Path(REPO) / "tests" / "entrypoints" / "pooling" / "embed"
+    assert test_dir.exists(), f"Test directory not found: {test_dir}"
+
+    # Check for expected test files
+    expected_files = ["test_io_processor.py", "test_protocol.py"]
+    for fname in expected_files:
+        fpath = test_dir / fname
+        assert fpath.exists(), f"Expected test file not found: {fname}"
+        # Verify it has pytest imports
+        source = fpath.read_text()
+        assert "import pytest" in source or "from pytest" in source, f"{fname} missing pytest import"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_io_processor_methods_exist():
+    """EmbedIOProcessor has expected method signatures (pass_to_pass)."""
+    source = Path(TARGET).read_text()
+    tree = ast.parse(source)
+
+    expected_methods = [
+        "__init__",
+        "pre_process_online",
+        "post_process_online",
+        "_mixed_input_to_messages",
+        "_pre_process_cohere_online",
+        "_resolve_cohere_truncation",
+    ]
+
+    found_methods = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "EmbedIOProcessor":
+            for item in node.body:
+                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    found_methods.add(item.name)
+            break
+    else:
+        raise AssertionError("EmbedIOProcessor class not found")
+
+    for method in expected_methods:
+        assert method in found_methods, f"Missing expected method: {method}"

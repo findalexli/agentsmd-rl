@@ -1,56 +1,79 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.981344",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
-    },
-    {
-      "timestamp": "2026-03-30T11:48:15.959582",
-      "runner": "audit (audit-tests_20260330_114815)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 26638
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.711826",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-01T22:09:28-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.0,
-      "verdict": "pass",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T11:30:38.881289",
+  "total_time": 8326.07,
+  "sandbox_id": "ipji05uvad594qh58jmiw",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 302.14,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build OK, NOP test reward=0 (correctly fails on base), Gold test reward=1 (all 12 tests pass after fix). Rubric judge requires API key; gold solution follows rules (no unnecessary comments).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 90.65
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.69,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T14:28:08.955077",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 6143.41,
+      "at": "2026-04-09T06:19:46.713780"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.578637",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "validation",
+      "time": 300,
+      "at": "2026-04-09T18:30:27.477134"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8325.81,
+      "at": "2026-04-09T11:30:38.712509"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8326.07,
+      "at": "2026-04-09T11:30:38.881289"
     }
   ]
 }

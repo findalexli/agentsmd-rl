@@ -58,6 +58,25 @@ def test_database_typescript_compiles():
     assert r.returncode == 0 or "error TS" not in r.stderr, f"Compile failed: {r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_lint_ts():
+    """Repo's TypeScript linting passes with no errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "run", "lint:ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # ESLint exits with 0 if only warnings, 1 if errors
+    # We check for actual errors - lines with 'error:' that are not warnings
+    output = r.stdout + r.stderr
+    # Look for pattern like "X errors" in the output summary
+    import re
+    error_match = re.search(r'(\d+)\s*error', output, re.IGNORECASE)
+    if error_match:
+        error_count = int(error_match.group(1))
+        assert error_count == 0, f"ESLint found {error_count} errors:\n{output[-1000:]}"
+    assert r.returncode == 0, f"ESLint failed with exit code {r.returncode}:\n{output[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

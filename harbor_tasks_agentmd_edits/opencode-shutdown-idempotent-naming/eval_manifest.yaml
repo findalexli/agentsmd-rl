@@ -21,6 +21,19 @@ checks:
     description: "worker.ts TypeScript compiles without errors"
 
   # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests) — CI/CD checks from repo's actual CI pipeline
+  # ---------------------------------------------------------------------------
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's bun turbo typecheck passes (CI gate)"
+
+  - id: test_repo_opencode_package_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Opencode package unit tests pass (bun test --timeout 30000)"
+
+  # ---------------------------------------------------------------------------
   # Fail-to-pass (pr_diff) — core shutdown fix behavioral tests
   # ---------------------------------------------------------------------------
   - id: stop_function_is_idempotent

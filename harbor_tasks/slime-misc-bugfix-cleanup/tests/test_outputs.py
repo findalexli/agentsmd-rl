@@ -74,6 +74,20 @@ def test_syntax_check():
         ast.parse(src)
 
 
+def test_repo_ruff():
+    """Repo's ruff linting passes on modified files (pass_to_pass)."""
+    # Install ruff if not available (CI tool dependency)
+    subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", CHECKPOINT, DATA, PROCESSING],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------

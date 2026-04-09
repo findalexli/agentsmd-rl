@@ -174,10 +174,11 @@ process.stdout.write('PASS');
 # [agent_config] pass_to_pass
 def test_prettier_formatting():
     """Changed TypeScript file must be formatted with prettier (AGENTS.md line 44)."""
+    # Check only the target file (not the whole repo which has pre-existing issues)
     result = subprocess.run(
-        ["npx", "prettier", "--check", TARGET],
+        ["bash", "-c", f"cd /repo && corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && npx prettier --ignore-path .config/.prettierignore --check --config .config/.prettierrc.json --plugin prettier-plugin-svelte {TARGET}"],
         capture_output=True,
-        timeout=60,
+        timeout=120,
         cwd=REPO,
     )
     assert result.returncode == 0, (
@@ -197,3 +198,23 @@ if (typeof mod.serveDocMarkdown === 'function' && typeof mod.serveGuideMarkdown 
 }
 """)
     assert out == "PASS", f"Exports check failed: {out}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass tests — verify repo's own checks pass on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_syntax():
+    """Target TypeScript file must compile without errors (pass_to_pass)."""
+    script = f"""
+const mod = await import('{REPO}/{TARGET}');
+if (typeof mod.serveDocMarkdown === 'function' && typeof mod.serveGuideMarkdown === 'function') {{
+    process.stdout.write('PASS');
+}} else {{
+    process.stdout.write('FAIL: exports not found');
+    process.exit(1);
+}}
+"""
+    out = _run_tsx(script)
+    assert out == "PASS", f"TypeScript syntax check failed: {out}"

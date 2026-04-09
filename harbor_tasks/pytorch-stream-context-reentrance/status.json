@@ -1,95 +1,78 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T23:46:02.225480",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": null,
-      "nop_score": 0.15,
-      "verdict": "error",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T11:44:58.449324",
+  "total_time": 9185.69,
+  "sandbox_id": "ilrcq0pqh2u4g6wj7t3ix",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 222.15,
       "notes": ""
     },
-    {
-      "timestamp": "2026-03-30T23:47:11.714269",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": null,
-      "nop_score": 0.15,
-      "verdict": "error",
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 271.36,
       "notes": ""
     },
-    {
-      "timestamp": "2026-03-29T14:30:05.196285",
-      "runner": "rubric (rebuild-rubrics_20260329_143005)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 3539
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
-    {
-      "timestamp": "2026-03-29T16:44:41.810778",
-      "runner": "rubric (rebuild-rubrics_20260329_164441)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 3011
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_python_h_included_first to check for Python header presence rather than requiring it to be first include (torch/csrc/Device.h is first in actual codebase). All 4 checks pass: Docker build OK, NOP=0 (6 f2p tests fail as expected), Gold=1 (all 15 pass), Rubric judge N/A (no agent work to evaluate)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 387.55
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.69,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-31T09:10:27.424966",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 10766
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.725725",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "fail",
-      "nop": "0",
-      "gold": "missing",
-      "format": "pytest_binary"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6139.94,
+      "at": "2026-04-09T06:23:44.727961"
     },
     {
-      "timestamp": "2026-04-01T23:01:40-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": null,
-      "nop_score": 0.0,
-      "verdict": "error",
-      "notes": ""
-    },
-    {
-      "timestamp": "2026-04-02T12:58:21.155660",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "solve.sh exit=128: error: corrupt patch at line 79\n"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.957102",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "solve.sh exit=128: error: corrupt patch at line 79\n"
-    },
-    {
-      "timestamp": "2026-04-02T15:41:19.347417",
-      "phase": "e2b_patch_regen",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9185.44,
+      "at": "2026-04-09T11:44:58.289421"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.588907",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9185.69,
+      "at": "2026-04-09T11:44:58.449324"
     }
   ]
 }

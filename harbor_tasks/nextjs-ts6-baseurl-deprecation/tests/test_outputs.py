@@ -258,3 +258,59 @@ def test_not_stub():
     lines = [l for l in src.split("\n") if l.strip() and not l.strip().startswith("//")]
     assert len(lines) >= 80, f"Only {len(lines)} meaningful lines"
     assert "semver" in src, "Missing semver reference"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI/CD tests (p2p_enrichment)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_lib_parses():
+    """Repo TypeScript files in lib/typescript parse as valid TypeScript (pass_to_pass)."""
+    script = r"""
+const fs = require('fs');
+const ts = require('/opt/ts-deps/node_modules/typescript');
+
+const files = [
+    '/workspace/next.js/packages/next/src/lib/typescript/getTypeScriptConfiguration.ts',
+    '/workspace/next.js/packages/next/src/lib/typescript/writeConfigurationDefaults.ts',
+];
+
+for (const file of files) {
+    const src = fs.readFileSync(file, 'utf-8');
+    // Check file has substantial content
+    const lines = src.split('\n').filter(l => l.trim() && !l.trim().startsWith('//'));
+    if (lines.length < 10) {
+        console.error('File too small: ' + file + ' (' + lines.length + ' lines)');
+        process.exit(1);
+    }
+    // Must parse as valid TypeScript
+    try {
+        ts.createSourceFile('test.ts', src, ts.ScriptTarget.Latest, true);
+    } catch (e) {
+        console.error('Parse failed for ' + file + ': ' + e.message);
+        process.exit(1);
+    }
+}
+console.log('PASS');
+"""
+    r = _node(script)
+    assert r.returncode == 0, f"TypeScript lib files parse failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_getTypeScriptConfiguration_exports():
+    """Target file exports required functions and types (pass_to_pass)."""
+    src = Path(TARGET).read_text()
+
+    # Required exports must exist
+    assert "export async function getTypeScriptConfiguration" in src, \
+        "Missing getTypeScriptConfiguration export"
+
+    # Check for helper functions (they're used in the fix)
+    required_patterns = [
+        "resolvePathAliasTarget",
+        "semver",
+    ]
+    for pattern in required_patterns:
+        assert pattern in src, f"Missing required pattern: {pattern}"

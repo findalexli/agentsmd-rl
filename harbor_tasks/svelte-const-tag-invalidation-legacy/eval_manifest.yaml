@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "sveltejs/svelte"
+  pr: 18041
+  base_commit: "ff3495dc05bbdd81a225ba43446d82171b4413e3"
+  merge_commit: "edcbb0e6403e5b90e72c3ef1f46a938a52cc2d53"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified function.js must parse without errors"
+
+  - id: const_tag_arrow_invalidation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "@const depending on another @const via arrow function IIFE must update reactively"
+
+  - id: const_tag_uppercase_invalidation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "@const chain with string transform via arrow IIFE must update reactively"
+
+  - id: existing_const_tag_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing const-tag-dependencies upstream test still passes"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "visit_function has real scope-comparison logic, not a stub"
+
+rubric: []

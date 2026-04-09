@@ -389,3 +389,65 @@ def test_no_print_statements():
         f"print() calls found at {', '.join(prints_found)}. "
         "Use areal.utils.logging.getLogger() instead."
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from repo
+# ---------------------------------------------------------------------------
+
+def test_repo_ruff_lint():
+    """Ruff linter passes on data_proxy module (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "check", "areal/experimental/inference_service/data_proxy/app.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_ruff_format():
+    """Ruff format check passes on data_proxy module (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", "areal/experimental/inference_service/data_proxy/app.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_precommit_trailing_whitespace():
+    """No trailing whitespace in app.py (pass_to_pass)."""
+    source = APP_FILE.read_text()
+    lines_with_ws = []
+    for i, line in enumerate(source.splitlines(), 1):
+        if line != line.rstrip():
+            lines_with_ws.append(i)
+    assert not lines_with_ws, (
+        f"Trailing whitespace found on lines: {lines_with_ws}"
+    )
+
+
+def test_repo_precommit_end_of_file():
+    """app.py ends with exactly one newline (pass_to_pass)."""
+    source = APP_FILE.read_text()
+    # File should not be empty and should end with exactly one newline
+    if not source:
+        assert False, "app.py is empty"
+    # Remove trailing newlines and check original ended with exactly one
+    stripped = source.rstrip('\n')
+    if source != stripped + '\n':
+        # Check if missing newline or has multiple
+        if not source.endswith('\n'):
+            assert False, "app.py does not end with a newline"
+        elif source.endswith('\n\n'):
+            assert False, "app.py ends with multiple newlines"

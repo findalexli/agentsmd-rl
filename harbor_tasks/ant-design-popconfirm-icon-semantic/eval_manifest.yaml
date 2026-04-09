@@ -1,0 +1,98 @@
+source_pr:
+  owner: ant-design
+  repo: ant-design
+  pr_number: 57528
+  title: "feat(Popconfirm): add icon semantic support"
+  base_commit: 611be598bdba1665aebd09bfedebb7001926a5c1
+  merge_commit: 7174900c22aa12f2e3853dc4d6c480268ddbb48b
+
+repository:
+  language: typescript
+  framework: react
+  test_framework: jest
+
+scaffold:
+  task_name: ant-design-popconfirm-icon-semantic
+  source: PR_57528
+
+# Test checks - one per test_* function in test_outputs.py
+checks:
+  - id: test_icon_classnames_applied
+    type: fail_to_pass
+    origin: gold_patch
+    description: classNames?.icon is applied to the icon span element using clsx
+    points: 1
+
+  - id: test_icon_styles_applied
+    type: fail_to_pass
+    origin: gold_patch
+    description: styles?.icon is applied to the icon span element
+    points: 1
+
+  - id: test_type_definition_includes_icon
+    type: fail_to_pass
+    origin: gold_patch
+    description: PopconfirmSemanticType type definition includes icon field in both classNames and styles
+    points: 1
+
+  - id: test_overlay_props_use_correct_type
+    type: fail_to_pass
+    origin: gold_patch
+    description: OverlayProps uses PopconfirmSemanticAllType instead of PopoverSemanticAllType
+    points: 1
+
+  - id: test_semantic_demo_updated
+    type: fail_to_pass
+    origin: gold_patch
+    description: demo/_semantic.tsx includes icon in the semantics documentation list
+    points: 1
+
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript compilation passes without errors
+    points: 1
+
+  - id: test_repo_lint_biome
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo Biome linting passes
+    points: 1
+
+  - id: test_repo_lint_eslint_popconfirm
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes on popconfirm component
+    points: 1
+
+  - id: test_semantic_test_file_updated
+    type: fail_to_pass
+    origin: gold_patch
+    description: semantic.test.tsx includes icon assertions in tests
+    points: 1
+
+# Rubric for soft/subjective rules from agent config files
+rubric:
+  - id: use_typescript_strict
+    description: TypeScript is used with proper type definitions (from .github/copilot-instructions.md)
+    criterion: Type definitions are precise and don't use 'any' type
+    points: 1
+
+  - id: interface_naming
+    description: Component props interfaces follow naming convention (from .github/copilot-instructions.md)
+    criterion: Props interfaces are properly named and exported
+    points: 1
+
+  - id: test_coverage
+    description: Tests cover the new functionality (from .github/copilot-instructions.md)
+    criterion: Unit tests verify icon semantic styling works correctly
+    points: 1
+
+  - id: import_organization
+    description: Import statements follow project conventions (from CLAUDE.md)
+    criterion: Demo imports use absolute paths, test imports use relative paths
+    points: 1
+
+totals:
+  maximum_points: 12
+  minimum_pass_threshold: 6

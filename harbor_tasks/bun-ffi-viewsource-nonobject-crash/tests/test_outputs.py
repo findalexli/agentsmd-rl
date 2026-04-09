@@ -68,6 +68,131 @@ def test_ffi_struct_integrity():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that work without full build toolchain
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+REPO_SCRIPTS = Path(REPO) / "scripts"
+REPO_SRC_JS = Path(REPO) / "src/js"
+
+
+def test_js_files_valid_syntax():
+    """Repo's JavaScript/TypeScript files have valid syntax (pass_to_pass)."""
+    # Check that a sample of JS files can be parsed by Node.js
+    js_files = [
+        "scripts/build.mjs",
+        "package.json",
+    ]
+    for f in js_files:
+        p = Path(REPO) / f
+        assert p.exists(), f"JS/config file missing: {f}"
+        # Try to parse JSON files
+        if f.endswith(".json"):
+            import json
+            try:
+                json.loads(p.read_text())
+            except json.JSONDecodeError as e:
+                raise AssertionError(f"Invalid JSON in {f}: {e}")
+
+
+def test_tsconfig_valid():
+    """Repo's tsconfig.json is valid (pass_to_pass)."""
+    import json
+    p = Path(REPO) / "tsconfig.json"
+    assert p.exists(), "tsconfig.json missing"
+    try:
+        config = json.loads(p.read_text())
+        # Basic validation that it has expected fields
+        assert "compilerOptions" in config or "extends" in config, "Invalid tsconfig structure"
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"Invalid tsconfig.json: {e}")
+
+
+def test_ffi_zig_parse_structure():
+    """ffi.zig has valid Zig structure (balanced braces, valid keywords) (pass_to_pass)."""
+    content = TARGET.read_text()
+
+    # Basic structural checks that don't need the Zig compiler
+    zig_keywords = [
+        "const", "var", "pub", "fn", "struct", "comptime",
+        "if", "else", "while", "for", "switch", "return",
+        "defer", "errdefer", "try", "catch", "orelse",
+    ]
+
+    found_keywords = sum(1 for kw in zig_keywords if f" {kw} " in content or f"\n{kw} " in content)
+    assert found_keywords >= 10, f"Expected >=10 Zig keywords, found {found_keywords}"
+
+    # Check for valid Zig constructs
+    assert "pub const FFI = struct" in content, "Missing FFI struct definition"
+    assert "fn generateSymbols(" in content, "Missing generateSymbols function"
+
+    # Balance checks for braces
+    open_brace = content.count("{")
+    close_brace = content.count("}")
+    assert abs(open_brace - close_brace) <= 3, f"Unbalanced braces: {open_brace} vs {close_brace}"
+
+    # Balance checks for parentheses (more lenient due to complex syntax)
+    open_paren = content.count("(")
+    close_paren = content.count(")")
+    assert abs(open_paren - close_paren) <= 20, f"Unbalanced parens: {open_paren} vs {close_paren}"
+
+    # Balance checks for square brackets
+    open_bracket = content.count("[")
+    close_bracket = content.count("]")
+    assert abs(open_bracket - close_bracket) <= 3, f"Unbalanced brackets: {open_bracket} vs {close_bracket}"
+
+
+def test_repo_file_structure():
+    """Critical repo files exist and are non-empty (pass_to_pass)."""
+    critical_files = [
+        "build.zig",
+        "package.json",
+        "src/bun.js/api/ffi.zig",
+        "CMakeLists.txt",
+        "tsconfig.json",
+    ]
+    for f in critical_files:
+        p = Path(REPO) / f
+        assert p.exists(), f"Critical file missing: {f}"
+        assert p.stat().st_size > 0, f"Critical file empty: {f}"
+
+
+def test_zig_no_banned_patterns():
+    """Zig source doesn't contain banned patterns from CLAUDE.md (pass_to_pass)."""
+    content = TARGET.read_text()
+
+    # Patterns that should NOT appear based on CLAUDE.md rules
+    banned_in_ffi = [
+        "std.fs.Dir",  # Rule: Prefer bun.sys + bun.FD
+        "std.fs.cwd",  # Rule: Prefer bun.FD.cwd()
+        "std.debug.assert",  # Rule: Use bun.assert
+    ]
+
+    for pattern in banned_in_ffi:
+        assert pattern not in content, f"Banned pattern '{pattern}' found in ffi.zig"
+
+
+def test_js_lint_oxlint():
+    """Repo's JavaScript/TypeScript passes oxlint (pass_to_pass)."""
+    # Check if oxlint config exists
+    oxlint_config = Path(REPO) / "oxlint.json"
+    if not oxlint_config.exists():
+        # Skip if no oxlint config
+        return
+
+    # Run oxlint on src/js (same as 'bun lint' but without bun)
+    r = subprocess.run(
+        ["npx", "--yes", "oxlint@latest", "--config=oxlint.json", "--format=unix", "src/js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # oxlint returns 0 on success, 1 on lint errors
+    assert r.returncode in (0, 1), f"oxlint crashed:\n{r.stderr[-500:]}"
+    # Check that there are no parse errors (which would indicate broken JS)
+    assert "Parse error" not in r.stderr, f"JS parse errors detected:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

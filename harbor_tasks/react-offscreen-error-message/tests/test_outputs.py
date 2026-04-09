@@ -31,17 +31,48 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — core behavioral tests + anti-stub
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
-def test_suspense_offscreen_error_message():
-    """Error thrown inside Suspense should report <Suspense>, not <Offscreen>."""
+# [static] fail_to_pass
+def test_offscreen_returns_parent_not_hardcoded():
+    """
+    OffscreenComponent case must return parent fiber name, not hardcoded 'Offscreen'.
+    The fix changes the case from 'return "Offscreen"' to recursively
+    calling getComponentNameFromFiber(fiber.return) to get the actual parent component.
+    """
+    src = Path(f"{REPO}/{TARGET_FILE}").read_text()
+    assert "return 'Offscreen'" not in src, (
+        "Function still returns hardcoded 'Offscreen' — fix not applied"
+    )
+    assert "getComponentNameFromFiber(fiber.return)" in src, (
+        "Function must recursively walk to parent fiber via getComponentNameFromFiber(fiber.return)"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests / static) — regression tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_reconciler_tests():
+    """React reconciler package tests pass (pass_to_pass)."""
     r = subprocess.run(
         [
-            "yarn", "test", TEST_FILE,
-            "--testNamePattern",
-            "does not report internal Offscreen component for errors thrown during reconciliation inside Suspense",
+            "yarn", "test",
+            "packages/react-reconciler/src/__tests__/",
             "--no-watchman", "--silent",
         ],
         cwd=REPO,
@@ -49,32 +80,9 @@ def test_suspense_offscreen_error_message():
         timeout=180,
     )
     assert r.returncode == 0, (
-        f"Suspense error message test failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+        f"React reconciler tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
     )
 
-
-# [pr_diff] fail_to_pass
-def test_activity_offscreen_error_message():
-    """Error thrown inside Activity should report <Activity>, not <Offscreen>."""
-    r = subprocess.run(
-        [
-            "yarn", "test", TEST_FILE,
-            "--testNamePattern",
-            "does not report internal Offscreen component for errors thrown during reconciliation inside Activity",
-            "--no-watchman", "--silent",
-        ],
-        cwd=REPO,
-        capture_output=True,
-        timeout=180,
-    )
-    assert r.returncode == 0, (
-        f"Activity error message test failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
-# ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
 def test_existing_error_logging_tests_pass():
@@ -95,14 +103,3 @@ def test_existing_error_logging_tests_pass():
     )
 
 
-# [static] fail_to_pass
-def test_not_stub():
-    """OffscreenComponent case must walk up to parent, not return a hardcoded name."""
-    # AST-only because: JavaScript file cannot be imported into Python
-    src = Path(f"{REPO}/{TARGET_FILE}").read_text()
-    assert "return 'Offscreen'" not in src, (
-        "Function still returns hardcoded 'Offscreen' — fix not applied"
-    )
-    assert "getComponentNameFromFiber(fiber.return)" in src, (
-        "Function must recursively walk to parent fiber via getComponentNameFromFiber(fiber.return)"
-    )

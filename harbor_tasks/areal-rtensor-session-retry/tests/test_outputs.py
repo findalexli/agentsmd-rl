@@ -10,10 +10,13 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import asyncio
 import importlib
 import logging
+import subprocess
 import sys
 import time
 import types
 from pathlib import Path
+
+REPO = "/repo"
 
 # ---------------------------------------------------------------------------
 # Mock heavy dependencies to avoid importing the full areal package tree
@@ -79,6 +82,26 @@ def test_syntax_check():
 
     for f in ["/repo/areal/infra/rpc/rtensor.py", "/repo/areal/utils/logging.py"]:
         py_compile.compile(f, doraise=True)
+
+
+# [repo_tests] pass_to_pass
+def test_ruff_lint_check():
+    """Modified files must pass ruff linting (repo CI standard)."""
+    r = subprocess.run(
+        ["ruff", "check", "areal/infra/rpc/rtensor.py", "areal/utils/logging.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_ruff_format_check():
+    """Modified files must be formatted according to ruff (repo CI standard)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "areal/infra/rpc/rtensor.py", "areal/utils/logging.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

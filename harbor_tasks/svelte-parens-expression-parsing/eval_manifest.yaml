@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "sveltejs/svelte"
+  pr: 18075
+  base_commit: "0395ef0df7ff12c4b633b650c5f2db512d382836"
+  merge_commit: "8966601dcd14582cd46d4fbb7c5cf1b444292255"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified compiler JS files can be loaded as ES modules"
+
+  - id: parens_before_block_comment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Template expression {(/**/ 42)} parses to Literal(42)"
+
+  - id: parens_before_named_comment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Template expression {(/* comment */ \"hello\")} parses to Literal"
+
+  - id: parens_identifier_after_comment
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Template expression {(/**/ x)} parses to Identifier"
+
+  - id: simple_expressions_parse
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Basic template expressions without problematic parens still parse"
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript typecheck passes (pnpm check)"
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's lint (eslint + prettier) passes after build"
+
+  - id: test_repo_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's test suite passes excluding browser tests (~87s)"
+
+rubric:
+  - rule: "Use snake_case for internal variable names and methods."
+    source:
+      path: CONTRIBUTING.md
+      lines: "131"
+      commit: "0395ef0df7ff12c4b633b650c5f2db512d382836"

@@ -1,0 +1,39 @@
+name = "formatdatetime-w-variable-length"
+description = "Fix formatDateTime to treat %W (weekday name) unconditionally as variable-length formatter"
+category = "bug_fix"
+difficulty = "medium"
+time_estimate_minutes = 45
+
+[repository]
+owner = "ClickHouse"
+name = "ClickHouse"
+base_commit = "0ac8d1fb82e45ca6c903f5549d564e867fb422dd"
+merge_commit = "16684b0f40c6d834872b9fa5d2fd68c6326a339b"
+pr_number = 102100
+
+[environment]
+base_image = "ubuntu:22.04"
+timeout_seconds = 3600
+
+[evaluation]
+timeout_seconds = 300
+
+[[evaluation.checks]]
+id = "test_variable_width_formatter_m_is_month_name_array"
+name = "variable_width_formatter_M_is_month_name should only contain 'M'"
+weight = 0.25
+
+[[evaluation.checks]]
+id = "test_w_check_moved_outside_conditional"
+name = "%W check must be outside mysql_M_is_month_name conditional"
+weight = 0.35
+
+[[evaluation.checks]]
+id = "test_no_w_check_in_else_branch"
+name = "No variable_width_formatter check in else branch"
+weight = 0.25
+
+[[evaluation.checks]]
+id = "test_compilation_succeeds"
+name = "Modified code compiles successfully"
+weight = 0.15

@@ -223,3 +223,27 @@ def test_no_any_type():
                 continue
             if re.search(r":\s*any\b|<any\b|\bas\s+any\b", stripped):
                 assert False, f"{f}:{i} uses `any` type: {stripped}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's CI/CD tests that should pass on base
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check():
+    """Modified files pass Prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "prettier", "--check", "script/changelog.ts", "script/version.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

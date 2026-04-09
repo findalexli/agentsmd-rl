@@ -224,3 +224,63 @@ def test_no_ts_nocheck():
     assert not violations, (
         "Found @ts-nocheck/@ts-ignore:\n" + "\n".join(violations)
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass gates
+# ---------------------------------------------------------------------------
+
+
+def _setup_env():
+    """Install pnpm and dependencies if needed."""
+    # Check if already set up
+    if (Path(REPO) / "node_modules").exists():
+        return
+    # Install pnpm globally
+    subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, timeout=60, cwd=REPO,
+    )
+    # Install dependencies
+    subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, timeout=300, cwd=REPO,
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's oxlint passes on the codebase (pass_to_pass)."""
+    _setup_env()
+    r = subprocess.run(
+        ["npx", "oxlint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format():
+    """Repo's oxfmt format check passes on CLI files (pass_to_pass)."""
+    _setup_env()
+    # Install oxfmt if not available
+    subprocess.run(
+        ["npm", "install", "-g", "oxfmt"],
+        capture_output=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["oxfmt", "--check", "src/cli/completion-cli.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cli_unit_tests():
+    """Repo's unit tests for CLI module pass (pass_to_pass)."""
+    _setup_env()
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--config", "vitest.unit.config.ts", "src/cli/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CLI unit tests failed:\n{r.stderr[-500:]}"

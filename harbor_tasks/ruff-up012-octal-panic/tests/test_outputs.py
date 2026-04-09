@@ -59,7 +59,7 @@ def test_cargo_check():
 
 # [pr_diff] fail_to_pass
 def test_no_panic_on_null_terminated_encode(ruff_bin, tmp_path):
-    """ruff check --select UP012 must not panic on strings ending with \\0.
+    r"""ruff check --select UP012 must not panic on strings ending with \\0.
 
     On the base commit, "$IMURAW\\0".encode("ascii") causes a thread panic
     due to an off-by-one error in cursor.skip_bytes for octal escapes.
@@ -72,7 +72,7 @@ def test_no_panic_on_null_terminated_encode(ruff_bin, tmp_path):
 
 # [pr_diff] fail_to_pass
 def test_octal_named_escape_no_false_positive(ruff_bin, tmp_path):
-    """UP012 must not trigger on strings with \\000 followed by \\N{name}.
+    r"""UP012 must not trigger on strings with \\000 followed by \\N{name}.
 
     The off-by-one causes the cursor to skip past \\N{DIGIT ONE},
     making the function miss this string-only escape and incorrectly
@@ -80,9 +80,8 @@ def test_octal_named_escape_no_false_positive(ruff_bin, tmp_path):
     """
     code = '"\\000\\N{DIGIT ONE}".encode()\n'
     r = _run_ruff_check(ruff_bin, code, tmp_path)
-    assert "UP012" not in r.stdout and "UP012" not in r.stderr, (
-        f"UP012 false positive on '\\000\\N{{DIGIT ONE}}':\n{r.stdout}"
-    )
+    msg = r"UP012 false positive on '\000\N{DIGIT ONE}':"
+    assert "UP012" not in r.stdout and "UP012" not in r.stderr, f"{msg}\n{r.stdout}"
 
 
 # [pr_diff] fail_to_pass
@@ -125,6 +124,33 @@ def test_up012_snapshot_tests():
     )
     assert r.returncode == 0, (
         f"UP012 snapshot tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_clippy():
+    """Repo's cargo clippy passes on ruff_linter package (pass_to_pass)."""
+    # Install clippy component if needed
+    subprocess.run(
+        ["rustup", "component", "add", "clippy"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["cargo", "clippy", "--package", "ruff_linter", "--all-targets", "--", "-D", "warnings"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-2000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyupgrade_tests():
+    """Repo's pyupgrade rule tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "ruff_linter", "pyupgrade"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"pyupgrade tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
     )
 
 

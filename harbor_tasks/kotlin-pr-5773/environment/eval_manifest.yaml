@@ -1,0 +1,88 @@
+source:
+  pr_url: "https://github.com/JetBrains/kotlin/pull/5773"
+  title: "Fix typo in package name"
+  description: "Rename 'relfection' to 'reflection' in package name"
+  base_commit: "363c7068258ef79a8e174bd7ca48209be4c0e29c"
+  merge_commit: "ff1ea74e2d4c120495571a5b32d7075a9e8dba07"
+
+# Programmatic checks - one per test function in test_outputs.py
+checks:
+  - id: test_directory_renamed
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      file: "AGENTS.md"
+      lines: "Key Conventions"
+      rule: "Follow project conventions for file organization and naming"
+    description: "The directory 'relfection' has been renamed to 'reflection'"
+
+  - id: test_package_declaration_updated
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      file: "AGENTS.md"
+      lines: "Key Conventions"
+      rule: "Package names should be correct and follow conventions"
+    description: "Package declaration in toStringDataClassLike.kt uses 'reflection'"
+
+  - id: test_import_statement_updated
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      file: "analysis/AGENTS.md"
+      lines: "Key Conventions"
+      rule: "Ka prefix for Analysis API types, imports should be valid"
+    description: "Import in KaSymbolPointer.kt uses correct 'reflection' package"
+
+  - id: test_no_other_occurrences
+    type: fail_to_pass
+    origin: solution_verification
+    description: "No other files contain the typo 'relfection'"
+
+  - id: test_copyright_year_updated
+    type: fail_to_pass
+    origin: solution_verification
+    description: "Copyright year is updated to 2026 in the renamed file"
+
+  - id: test_git_tracked_properly
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git tracks the file rename properly"
+
+  - id: test_analysis_internal_utils_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Analysis internal utils module exists"
+
+  - id: test_analysis_api_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Analysis API module exists"
+
+  - id: test_build_files_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Build files for analysis modules exist"
+
+  - id: test_tostringdataclasslike_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "toStringDataClassLike.kt file exists"
+
+  - id: test_kasymbolpointer_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "KaSymbolPointer.kt file exists"
+
+  - id: test_no_syntax_errors_in_kt_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Kotlin source files have no obvious syntax errors"
+
+  - id: test_package_name_consistency
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Package declaration matches directory path"
+
+# Rubric for soft/subjective rules (LLM-judge only)
+rubric: []

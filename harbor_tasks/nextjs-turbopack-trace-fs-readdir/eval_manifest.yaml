@@ -52,6 +52,42 @@ checks:
     origin: static
     description: "references/mod.rs has substantial code in tracing handler section"
 
+  # Pass-to-pass repo_tests — CI/CD quality gates discovered from repo
+  - id: rustfmt_indentation_compliant
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Rust files use 4-space indentation per .rustfmt.toml hard_tabs=false, tab_spaces=4"
+
+  - id: rust_line_length_compliant
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Rust files respect 100-character line limit per .rustfmt.toml max_width=100"
+
+  - id: no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source files have no trailing whitespace - standard CI lint check"
+
+  - id: unit_rs_valid_rstest_cases
+    type: pass_to_pass
+    origin: repo_tests
+    description: "unit.rs has valid rstest case syntax with balanced parentheses - cargo test compilation"
+
+  - id: fixture_files_valid_js_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "NFT fixture input.js files have valid JavaScript syntax balanced braces/parens"
+
+  - id: well_known_rs_match_arm_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "well_known.rs match arms have valid structure with => operator - cargo check"
+
+  - id: cargo_toml_valid_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Cargo.toml files have valid TOML syntax with proper sections - cargo check"
+
 rubric:
   - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run cargo fmt"
     source:

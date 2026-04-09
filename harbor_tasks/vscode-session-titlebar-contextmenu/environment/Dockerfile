@@ -19,10 +19,10 @@ RUN git clone --depth=1 "$REPO_URL" vscode && \
     git checkout "$BASE_COMMIT" && \
     rm -rf .git && \
     git init && \
-    git add -A && \
-    git commit -m "snapshot" && \
     git config user.email "test@test.com" && \
-    git config user.name "Test"
+    git config user.name "Test" && \
+    git add -A && \
+    git commit -m "snapshot"
 
 # Install minimal dependencies (only what's needed for TypeScript compilation)
 WORKDIR /workspace/vscode

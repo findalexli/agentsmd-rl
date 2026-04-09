@@ -1,75 +1,114 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.965042",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T09:29:21.405931",
+  "total_time": 1048.09,
+  "sandbox_id": "izp19qhy36g2tqkra228a",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "CI commands discovered from .github/workflows/:\n1. format.yml - clang-format (WebKit style), prettier (JS), zig fmt, ban-words\n2. lint.yml - oxlint for src/js\n3. package.json scripts: typecheck, build\n\nP2P tests added/verified:\n- test_cpp_file_clang_format: Updated to install clang-format via apt-get\n- test_cpp_file_basic_structure: Validates C++ structure (no double semicolons)\n- test_repo_configs_exist: Validates config files (oxlint.json, .prettierrc, .clang-tidy)\n\nNotes:\n- bun and zig not available in container (installation requires additional setup)\n- clang-format-19 works and passes on ErrorStackTrace.cpp\n- Full build requires WebKit + Zig toolchain (not available)",
+      "ci_commands_found": [
+        "clang-format --dry-run --Werror (from format.yml)",
+        "bun run prettier (from format.yml - bun not available)",
+        "zig fmt src (from format.yml - zig not available)",
+        "bun lint / oxlint (from lint.yml - bun not available)",
+        "tsc --noEmit (from package.json - needs node modules)"
+      ],
+      "p2p_tests_final": [
+        "test_source_file_exists (static)",
+        "test_cpp_file_clang_format (repo_tests)",
+        "test_cpp_file_basic_structure (repo_tests)",
+        "test_repo_configs_exist (repo_tests)",
+        "test_post_filter_implementation_visibility (pr_diff)",
+        "test_function_signature_preserved (pr_diff)",
+        "test_sibling_functions_preserved (pr_diff)",
+        "test_caller_dual_matching (pr_diff)",
+        "test_not_stub (static)",
+        "test_no_tabs_in_function (agent_config)",
+        "test_config_h_included (agent_config)"
+      ]
     },
-    {
-      "timestamp": "2026-03-30T11:48:11.528296",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 12158
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
-    {
-      "timestamp": "2026-03-31T09:40:56-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "All 4 validation checks passed:\n1. Docker build: successful (task-env: 1.04GB)\n2. NOP test: reward=0 (5 fail_to_pass tests correctly failing on base commit)\n3. Gold test: reward=1 (15/15 tests passing after gold fix applied)\n4. Rubric judge: ICR=1.00 (empty rubric - gold solution is pure code fix with no config/docs changes needed)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 163.74
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.69,
+      "notes": "ICR=1.00"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 234.96,
       "notes": ""
-    },
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-31T13:28:03-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": ""
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.646443",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T12:58:21.144983",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0",
-      "notes": "function\nFAILED ../../tests/test_outputs.py::test_sibling_functions_preserved - Assert...\nFAILED ../../tests/test_outputs.py::test_root_h_included - AssertionError: Mu...\n2 failed, 10 passed in 0.06s\n"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.937987",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.515258",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:21:23.926103"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 517.51,
+      "at": "2026-04-09T01:21:24.088266"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6664.61,
+      "at": "2026-04-09T06:18:37.315519"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1047.78,
+      "at": "2026-04-09T09:29:21.196453"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1048.09,
+      "at": "2026-04-09T09:29:21.405931"
     }
   ]
 }

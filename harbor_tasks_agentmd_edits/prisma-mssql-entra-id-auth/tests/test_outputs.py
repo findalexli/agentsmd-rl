@@ -246,10 +246,55 @@ console.log(JSON.stringify(result))
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo itself
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_formatting():
+    """Repo's TypeScript files follow Prettier formatting (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "src/*.ts"],
+        capture_output=True, text=True, timeout=60, cwd=str(ADAPTER_DIR),
+    )
+    assert r.returncode == 0, f"Prettier formatting check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_syntax():
+    """Repo's TypeScript source files have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "tsx", "-e", "import './src/connection-string.ts'"],
+        capture_output=True, text=True, timeout=30, cwd=str(ADAPTER_DIR),
+    )
+    assert r.returncode == 0, f"TypeScript syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_test_file_structure():
+    """Repo's test files have valid structure and imports (pass_to_pass)."""
+    test_file = ADAPTER_DIR / "src" / "connection-string.test.ts"
+    content = test_file.read_text()
+
+    # Basic structure checks
+    assert "describe(" in content, "Test file should have describe() blocks"
+    assert "it(" in content, "Test file should have it() tests"
+    assert "expect(" in content, "Test file should use expect() assertions"
+    assert "parseConnectionString" in content, "Test file should test parseConnectionString"
+
+    # Check balanced braces (basic syntax check)
+    open_count = content.count("{")
+    close_count = content.count("}")
+    assert open_count == close_count, "Test file has unbalanced braces"
+
+
+# ---------------------------------------------------------------------------
 # Config edit (config_edit) — README.md documentation updates
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
+def test_readme_entra_id_docs():
+    """README.md must document Entra ID authentication options."""
+    content = README_FILE.read_text()
 
     has_entra = "entra" in content.lower() or "azure active directory" in content.lower()
     assert has_entra, \
@@ -264,6 +309,9 @@ console.log(JSON.stringify(result))
 
 
 # [config_edit] fail_to_pass
+def test_readme_connection_string_docs():
+    """README.md must document connection string instantiation."""
+    content = README_FILE.read_text()
 
     assert "connection string" in content.lower(), \
         "README.md should mention connection string usage"

@@ -1,0 +1,77 @@
+name = "openhands-display-llm-model"
+description = "Display LLM model name on conversation cards and in the conversation header"
+
+[task_metadata]
+difficulty = "medium"
+tags = ["frontend", "backend", "typescript", "python", "ui", "api"]
+time_estimate = "30m"
+
+[repository]
+owner = "All-Hands-AI"
+name = "OpenHands"
+base_commit = "0a9570eea22ca0f42dbd055d03d146375853c56c"
+merge_commit = "0731e8c68a8f80c0157c13ff4c35e79ed655e39a"
+pr_number = 13616
+
+[environment]
+dockerfile = "environment/Dockerfile"
+
+[solution]
+script = "solution/solve.sh"
+
+[test]
+script = "tests/test.sh"
+
+[[checks]]
+id = "f2p-1"
+name = "Backend ConversationInfo has llm_model field"
+type = "pytest"
+
+[[checks]]
+id = "f2p-2"
+name = "Backend API populates llm_model field"
+type = "pytest"
+
+[[checks]]
+id = "f2p-3"
+name = "Frontend TypeScript types include llm_model"
+type = "pytest"
+
+[[checks]]
+id = "f2p-4"
+name = "ConversationCard component accepts llmModel prop"
+type = "pytest"
+
+[[checks]]
+id = "f2p-5"
+name = "ConversationCardFooter displays llm_model with CircuitIcon"
+type = "pytest"
+
+[[checks]]
+id = "f2p-6"
+name = "ConversationPanel passes llm_model to ConversationCard"
+type = "pytest"
+
+[[checks]]
+id = "f2p-7"
+name = "ConversationName component displays llm_model"
+type = "pytest"
+
+[[checks]]
+id = "f2p-8"
+name = "RecentConversation component displays llm_model"
+type = "pytest"
+
+[[checks]]
+id = "p2p-1"
+name = "Frontend TypeScript compiles"
+type = "pytest"
+
+[[checks]]
+id = "p2p-2"
+name = "Frontend lint passes"
+type = "pytest"
+
+[timeouts]
+agent = 1800
+verifier = 120

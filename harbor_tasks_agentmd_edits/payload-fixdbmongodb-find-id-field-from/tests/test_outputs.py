@@ -232,6 +232,22 @@ def test_fielddepth_tracked_in_afterread():
 # Pass-to-pass (repo_tests / static) — regression + anti-stub
 # -----------------------------------------------------------------------------
 
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    _install_deps()
+
+    result = subprocess.run(
+        ["pnpm", "test:unit"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+        env={**subprocess.os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"},
+    )
+    assert result.returncode == 0, f"Unit tests failed:\n{result.stderr[-500:] if result.stderr else result.stdout[-500:]}"
+
+
 # [static] pass_to_pass
 def test_claude_md_updated():
     """CLAUDE.md has been updated with testing best practices."""

@@ -12,6 +12,16 @@ checks:
     origin: static
     description: "Modified files must parse without errors"
 
+  - id: test_repo_syntax_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python syntax is valid (byte-compile check)"
+
+  - id: test_repo_ruff_checks
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff lint checks pass (F401, F821)"
+
   - id: update_weights_from_ipc_uses_pause_check
     type: fail_to_pass
     origin: pr_diff

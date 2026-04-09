@@ -17,6 +17,20 @@ checks:
     description: "Modified TypeScript files must compile without errors"
 
   # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests) — CI/CD checks that must pass on base commit
+  # ---------------------------------------------------------------------------
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's typecheck (tsgo --noEmit) passes on base commit"
+
+  - id: test_repo_account_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Account tests pass on base commit"
+
+  # ---------------------------------------------------------------------------
   # Fail-to-pass (pr_diff) — core behavioral tests
   # ---------------------------------------------------------------------------
 

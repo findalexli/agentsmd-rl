@@ -157,6 +157,38 @@ def test_not_stub():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — ruff linting
+def test_repo_ruff_check():
+    """Repo's ruff linting passes on the target file (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "ruff"],
+        capture_output=True, timeout=30,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — ruff formatting
+def test_repo_ruff_format():
+    """Repo's ruff formatting passes on the target file (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "ruff"],
+        capture_output=True, timeout=30,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "format", "--check", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — CLAUDE.md rules
 # ---------------------------------------------------------------------------
 

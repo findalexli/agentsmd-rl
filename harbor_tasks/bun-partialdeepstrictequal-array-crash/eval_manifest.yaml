@@ -74,4 +74,25 @@ checks:
       lines: "103"
       commit: "e59a147d615a0b95d446c75ba836717cf0dbc513"
 
+  # Repo CI/CD pass_to_pass gates (from .github/workflows/)
+  - id: test_repo_no_strict_equality_undefined
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo convention: No '== undefined' or '!= undefined' comparisons (from ban-words.test.ts)"
+
+  - id: test_repo_basic_prettier_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo convention: No trailing whitespace, consistent indentation (from format.yml)"
+
+  - id: test_repo_ts_no_bare_intrinsics
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript sanity: Bun $-intrinsics follow conventions (from typecheck)"
+
+  - id: test_repo_no_debug_log_statements
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Lint convention: No debug log statements in production code (from oxlint config)"
+
 rubric: []

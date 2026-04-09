@@ -8,11 +8,76 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import os
 import subprocess
 import sys
 from pathlib import Path
 
+import yaml
+
 REPO = "/workspace/AReaL"
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) — repository CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Repo Python files have no syntax errors
+def test_repo_python_syntax():
+    """All Python files in areal/ must parse without syntax errors (pass_to_pass)."""
+    errors = []
+    for root, dirs, files in os.walk(Path(REPO) / "areal"):
+        for file in files:
+            if file.endswith(".py"):
+                filepath = Path(root) / file
+                try:
+                    with open(filepath, "r") as f:
+                        ast.parse(f.read())
+                except SyntaxError as e:
+                    errors.append(f"{filepath}: {e}")
+    assert not errors, f"Syntax errors found:\n" + "\n".join(errors[:10])
+
+
+# [repo_tests] pass_to_pass — Repo YAML configs are valid
+def test_repo_yaml_valid():
+    """All YAML files in repo must parse without errors (pass_to_pass)."""
+    errors = []
+    yaml_dirs = ["areal/tests", "examples", "benchmark"]
+    for yaml_dir in yaml_dirs:
+        dirpath = Path(REPO) / yaml_dir
+        if not dirpath.exists():
+            continue
+        for filepath in dirpath.rglob("*.yaml"):
+            if filepath.is_file():
+                try:
+                    with open(filepath, "r") as f:
+                        yaml.safe_load(f)
+                except yaml.YAMLError as e:
+                    errors.append(f"{filepath}: {e}")
+    assert not errors, f"YAML parsing errors found:\n" + "\n".join(str(e) for e in errors[:10])
+
+
+# [repo_tests] pass_to_pass — No wildcard imports in main code
+def test_repo_no_wildcard_imports():
+    """areal/ directory must not use wildcard imports (pass_to_pass)."""
+    wildcard_files = []
+    for root, dirs, files in os.walk(Path(REPO) / "areal"):
+        if "__pycache__" in root or root.endswith("tests"):
+            continue
+        for file in files:
+            if file.endswith(".py"):
+                filepath = Path(root) / file
+                try:
+                    with open(filepath, "r") as f:
+                        tree = ast.parse(f.read())
+                    for node in ast.walk(tree):
+                        if isinstance(node, ast.ImportFrom) and any(
+                            alias.name == "*" for alias in node.names
+                        ):
+                            wildcard_files.append(f"{filepath}: from {node.module} import *")
+                except:
+                    pass
+    assert not wildcard_files, f"Wildcard imports found:\n" + "\n".join(wildcard_files[:10])
 
 
 # ---------------------------------------------------------------------------

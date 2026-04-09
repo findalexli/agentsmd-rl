@@ -1,0 +1,68 @@
+source_pr:
+  owner: appwrite
+  repo: appwrite
+  pr_number: 11589
+  base_commit: 1aa2c7ff2b5216803cb50c0faea58ce2ae380b3f
+  merge_commit: c537d09b5c4184ac9ababcdc61f870233af6bcc8
+
+checks:
+  - id: test_php_syntax_valid
+    type: pytest
+    weight: 0.5
+    description: "Modified PHP files have valid syntax"
+
+  - id: test_tauri_localhost_valid
+    type: pytest
+    weight: 1.0
+    description: "tauri://localhost should be valid when localhost is in allowed hostnames"
+
+  - id: test_tauri_unregistered_host_invalid
+    type: pytest
+    weight: 1.0
+    description: "tauri://example.com should be invalid with proper error message referencing Web (Tauri)"
+
+  - id: test_tauri_different_hosts
+    type: pytest
+    weight: 1.0
+    description: "tauri:// scheme works with various registered and unregistered hostnames"
+
+  - id: test_tauri_constant_exists
+    type: pytest
+    weight: 0.5
+    description: "SCHEME_TAURI constant is defined in Platform class"
+
+  - id: test_tauri_platform_name
+    type: pytest
+    weight: 0.5
+    description: "Tauri platform name mapping exists as 'Web (Tauri)'"
+
+  - id: test_other_web_platforms_still_work
+    type: pytest
+    weight: 1.0
+    description: "Existing web platform validations (http, https, extensions) still work"
+
+  - id: test_unit_tests_pass
+    type: pytest
+    weight: 1.0
+    description: "Repository's own OriginTest.php unit tests pass"
+
+  - id: test_composer_validate_p2p
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's composer.json is valid"
+
+  - id: test_unit_tests_network_p2p
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Network unit tests pass"
+
+agent_config:
+  - rule: "Code should follow PSR-12 coding standard"
+    check: test_unit_tests_pass  # PHPUnit includes style checks indirectly
+    source: AGENTS.md
+
+  - rule: "Add/update tests for your changes"
+    check: test_tauri_localhost_valid
+    source: AGENTS.md
+
+rubric: []

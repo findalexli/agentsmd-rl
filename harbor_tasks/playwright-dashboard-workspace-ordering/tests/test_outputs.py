@@ -160,3 +160,72 @@ def test_deps_declares_cli_client_import():
     assert "../cli-client/registry.ts" in content, (
         "DEPS.list must declare the ../cli-client/registry.ts import"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression checks
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's npm run build passes (pass_to_pass). Verifies the TypeScript
+    compilation and vite dashboard build work on both base and after fix."""
+    # First install dependencies
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+
+    # Then run build
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_packages():
+    """Repo's npm run lint-packages passes (pass_to_pass). Verifies workspace
+    package consistency on both base and after fix."""
+    # First install dependencies
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+
+    # Then run lint-packages
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_deps():
+    """Repo's npm run check-deps passes (pass_to_pass). Verifies DEPS.list
+    constraints are satisfied on both base and after fix."""
+    # First install dependencies
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+
+    # Build first (required for check-deps to work correctly)
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-1000:]}"
+
+    # Then run check-deps
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Check deps failed:\n{r.stderr[-500:]}"

@@ -16,8 +16,8 @@ REPO = "/workspace/react"
 TARGET = f"{REPO}/packages/react-reconciler/src/ReactFiberWorkLoop.js"
 
 # Jest test that exercises the warn-instead-of-throw behavioral change.
-# On base code: throwIfInfiniteUpdateLoopDetected() always throws → Jest test fails.
-# On fixed code: it warns via console.error for phase-spawn/render-context paths → Jest test passes.
+# On base code: throwIfInfiniteUpdateLoopDetected() always throws -> Jest test fails.
+# On fixed code: it warns via console.error for phase-spawn/render-context paths -> Jest test passes.
 _JEST_TEST = """\
 'use strict';
 
@@ -111,3 +111,34 @@ def test_nested_update_kind_tracking():
 def test_file_exists():
     """Target file must exist."""
     assert Path(TARGET).exists()
+
+
+# ============================================================================
+# Pass-to-Pass Tests (repo CI/CD checks that should pass on both base and fix)
+# ============================================================================
+
+def test_repo_lint():
+    """Repo's ESLint checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_flow():
+    """Repo's Flow typecheck passes for dom-browser (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-browser"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_reconciler_hooks():
+    """Repo's ReactHooksWithNoopRenderer tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ReactHooksWithNoopRenderer"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Reconciler hooks tests failed:\n{r.stdout[-1500:]}\n{r.stderr[-500:]}"

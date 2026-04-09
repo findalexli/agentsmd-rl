@@ -88,6 +88,36 @@ def test_syntax_check():
     py_compile.compile(TARGET, doraise=True)
 
 
+# [repo_tests] pass_to_pass -- Repo CI: ruff lint
+def test_repo_ruff_lint():
+    """Repo's ruff lint check passes on experimental module (pass_to_pass)."""
+    # Install ruff if not present (matches pre-commit config version)
+    subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "areal/experimental/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass -- Repo CI: ruff format
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on experimental module (pass_to_pass)."""
+    # Install ruff if not present (matches pre-commit config version)
+    subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", "areal/experimental/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) -- core behavioral tests via subprocess
 # ---------------------------------------------------------------------------

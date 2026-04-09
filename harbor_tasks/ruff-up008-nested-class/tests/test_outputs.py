@@ -156,6 +156,30 @@ def test_up008_snapshot_tests_pass():
     )
 
 
+# [repo_tests] pass_to_pass — CI/CD: cargo check
+def test_cargo_check_ruff_linter():
+    """Repo's cargo check passes on ruff_linter package (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--package", "ruff_linter"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"cargo check failed:\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI/CD: cargo test
+def test_cargo_test_ruff_linter():
+    """Repo's cargo test passes on ruff_linter package (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "ruff_linter"],
+        cwd=REPO, capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"cargo test failed:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

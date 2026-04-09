@@ -1,0 +1,151 @@
+source_pr:
+  owner: gohugoio
+  repo: hugo
+  number: 14717
+  merge_commit: 4e91e14cb0152f6e6bd216c0cd2f0913e6e17325
+  base_commit: dc9b51d2e2fa1bfc2b7c68c01417bb7ae2c9c6a2
+title: Fix Position Reporting in Hugo RenderString and Render Hooks
+
+checks:
+  - id: "render_hook_position_test"
+    name: "Test Render Hooks Position with RenderString"
+    type: "test"
+    description: "Verifies that render hooks report correct positions for RenderString content"
+    file: "tests/test_outputs.py"
+    test_func: "test_render_hook_position_with_render_string"
+    category: "fail_to_pass"
+    points: 30
+
+  - id: "pos_from_input_bounds"
+    name: "Test posFromInput Bounds Check"
+    type: "test"
+    description: "Verifies that posFromInput validates offset bounds (offset > len(input))"
+    file: "tests/test_outputs.py"
+    test_func: "test_pos_from_input_bounds_check"
+    category: "fail_to_pass"
+    points: 15
+
+  - id: "element_position_resolver"
+    name: "Test ElementPositionResolver Interface"
+    type: "test"
+    description: "Verifies the updated ElementPositionResolver interface signature"
+    file: "tests/test_outputs.py"
+    test_func: "test_element_position_resolver_interface"
+    category: "pass_to_pass"
+    points: 10
+
+  - id: "source_info_propagation"
+    name: "Test SourceInfo Propagation"
+    type: "test"
+    description: "Verifies that SourceInfo is properly propagated through render pipeline"
+    file: "tests/test_outputs.py"
+    test_func: "test_source_info_propagation"
+    category: "fail_to_pass"
+    points: 15
+
+  - id: "render_hook_integration"
+    name: "Test Render Hook Integration"
+    type: "test"
+    description: "Verifies all render hook tests pass"
+    file: "tests/test_outputs.py"
+    test_func: "test_render_hook_integration"
+    category: "pass_to_pass"
+    points: 15
+
+  - id: "hugolib_tests"
+    name: "Test Full Hugolib Suite"
+    type: "test"
+    description: "Verifies no regressions in hugolib tests"
+    file: "tests/test_outputs.py"
+    test_func: "test_all_hugolib"
+    category: "pass_to_pass"
+    points: 15
+
+  # Repo CI/CD Pass-to-Pass Tests
+  - id: "repo_build"
+    name: "Repo Build"
+    type: "test"
+    description: "Verifies the repo builds successfully with go build ./..."
+    file: "tests/test_outputs.py"
+    test_func: "test_repo_build"
+    category: "pass_to_pass"
+    origin: "repo_tests"
+    points: 10
+
+  - id: "repo_vet"
+    name: "Repo Go Vet"
+    type: "test"
+    description: "Verifies go vet ./... passes on the repo"
+    file: "tests/test_outputs.py"
+    test_func: "test_repo_vet"
+    category: "pass_to_pass"
+    origin: "repo_tests"
+    points: 10
+
+  - id: "repo_gofmt"
+    name: "Repo Go Format"
+    type: "test"
+    description: "Verifies all Go files are properly formatted with gofmt"
+    file: "tests/test_outputs.py"
+    test_func: "test_repo_gofmt"
+    category: "pass_to_pass"
+    origin: "repo_tests"
+    points: 5
+
+  - id: "repo_module_verify"
+    name: "Repo Module Verify"
+    type: "test"
+    description: "Verifies go.mod and go.sum are valid with go mod verify"
+    file: "tests/test_outputs.py"
+    test_func: "test_repo_module_verify"
+    category: "pass_to_pass"
+    origin: "repo_tests"
+    points: 5
+
+  - id: "repo_core_tests"
+    name: "Repo Core Package Tests"
+    type: "test"
+    description: "Verifies core package tests pass (markup/converter/hooks, etc.)"
+    file: "tests/test_outputs.py"
+    test_func: "test_repo_tests_core_packages"
+    category: "pass_to_pass"
+    origin: "repo_tests"
+    points: 10
+
+agent_config:
+  - id: "brevity"
+    name: "Brevity in Code"
+    description: "Changes should be concise; avoid unnecessary comments or verbosity"
+    source:
+      file: "AGENTS.md"
+      lines: "1-2"
+
+  - id: "expert_audience"
+    name: "Expert Audience Assumption"
+    description: "Assume Go expertise; don't explain obvious code with comments"
+    source:
+      file: "AGENTS.md"
+      lines: "3-5"
+
+  - id: "no_globals"
+    name: "No Global State"
+    description: "Avoid global state at almost all cost"
+    source:
+      file: "AGENTS.md"
+      lines: "8"
+
+  - id: "test_conventions"
+    name: "Test Conventions"
+    description: "Use qt matchers in tests; use latest Hugo spec for layouts"
+    source:
+      file: "AGENTS.md"
+      lines: "10-11"
+
+  - id: "helper_functions"
+    name: "Re-use Helper Functions"
+    description: "Look for existing helper functions before creating new ones"
+    source:
+      file: "AGENTS.md"
+      lines: "9"
+
+rubric: []

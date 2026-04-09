@@ -207,16 +207,15 @@ def check_wider(wide: WiderSource) -> None:
 
 # [repo_tests] pass_to_pass
 def test_typed_dict_mdtest():
-    """Upstream typed_dict mdtest suite passes."""
+    """Upstream typed_dict mdtest suite passes (pass_to_pass)."""
     env = os.environ.copy()
     env["CARGO_PROFILE_DEV_OPT_LEVEL"] = "1"
     env["INSTA_FORCE_PASS"] = "1"
     env["INSTA_UPDATE"] = "always"
     r = subprocess.run(
         [
-            "cargo", "nextest", "run",
-            "-p", "ty_python_semantic",
-            "--", "mdtest::typed_dict",
+            "cargo", "test", "-p", "ty_python_semantic",
+            "--test", "mdtest", "--", "typed_dict",
         ],
         cwd=REPO,
         capture_output=True,
@@ -226,6 +225,54 @@ def test_typed_dict_mdtest():
     )
     assert r.returncode == 0, (
         f"typed_dict mdtest failed:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_fmt():
+    """Repo code passes cargo fmt --check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"cargo fmt check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_clippy():
+    """Repo passes cargo clippy without warnings (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "cargo", "clippy", "--workspace", "--all-targets",
+            "--all-features", "--locked",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"cargo clippy failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_ty_python_semantic_lib():
+    """ty_python_semantic library tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--lib"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"ty_python_semantic lib tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
     )
 
 

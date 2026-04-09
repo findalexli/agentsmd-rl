@@ -1,65 +1,49 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.965452",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T04:35:14.507184",
+  "total_time": 9260.9,
+  "sandbox_id": "i40on3hoblyrk8i97lsvk",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validations passed. Docker build OK. NOP test correctly fails with reward=0 (NameError not handled). Gold test passes with reward=1 (patch applies cleanly, all 10 tests pass). Rubric judge requires LLM auth (environment limitation, not a task issue).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 74.87
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.68,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-30T11:48:11.528488",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 10559
-    },
-    {
-      "timestamp": "2026-03-31T13:37:44-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
-    },
-    {
-      "timestamp": "2026-04-01T12:00:00-07:00",
-      "runner": "manual v2 remake",
-      "docker_build": true,
-      "gold_score": 1,
-      "nop_score": 0,
       "verdict": "pass",
-      "notes": "Remade to v2 format. Removed dead TypeError test (skipped on Py3.12). Fixed anti-stub threshold (2 stmts, not 3). 7 tests: 1 f2p, 5 p2p, 1 static."
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T04:35:14.347822"
     },
     {
-      "timestamp": "2026-04-01T20:15:41.677244",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.946602",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.543473",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9260.9,
+      "at": "2026-04-09T04:35:14.507184"
     }
   ]
 }

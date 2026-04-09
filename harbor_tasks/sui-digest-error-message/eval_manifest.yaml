@@ -1,0 +1,42 @@
+task_name: sui-digest-error-message
+source_pr: https://github.com/MystenLabs/sui/pull/26017
+
+# Fail-to-pass checks - these MUST fail on base commit and pass on fix
+checks:
+  - id: test_digest_from_base58_exists
+    type: fail_to_pass
+    origin: functional
+    description: digest_from_base58 helper function must exist and centralize parsing logic
+
+  - id: test_digest_from_base58_eq_32
+    type: fail_to_pass
+    origin: functional
+    description: Valid 32-byte base58 strings must parse successfully with new helper
+
+  - id: test_digest_from_base58_lt_32
+    type: fail_to_pass
+    origin: functional
+    description: Short base58 strings must produce improved error with actual decoded length
+
+  - id: test_digest_from_base58_gt_32
+    type: fail_to_pass
+    origin: functional
+    description: Long base58 strings must produce improved error with actual decoded length and truncation notice
+
+  # Pass-to-pass checks from repo CI/CD
+  - id: test_cargo_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code must pass cargo check compilation
+
+  - id: test_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: All sui-types unit tests must pass
+
+# Soft rules from CLAUDE.md - for LLM judge only (not programmatically checked)
+rubric:
+  - "All new functions should have clear doc comments explaining their purpose"
+  - "Code should follow Rust best practices for error handling with anyhow"
+  - "Refactoring should reduce code duplication across digest types"
+  - "Error messages should be helpful for debugging malformed digests"

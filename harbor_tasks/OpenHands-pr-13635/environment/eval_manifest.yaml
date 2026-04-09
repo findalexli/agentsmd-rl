@@ -1,0 +1,66 @@
+version: "1.0"
+
+evaluation:
+  # Fail-to-pass tests: These tests should FAIL on base commit and PASS on the fix
+  fail_to_pass:
+    - id: test_use_should_show_user_features_hook_removed
+      type: fail_to_pass
+      description: "useShouldShowUserFeatures hook is removed from imports and usage"
+      origin: code_change
+
+    - id: test_context_menu_always_rendered
+      type: fail_to_pass
+      description: "UserContextMenu is rendered unconditionally (not wrapped in auth check)"
+      origin: code_change
+
+    - id: test_context_menu_div_always_present
+      type: fail_to_pass
+      description: "Context menu wrapper div with opacity classes is always present in DOM"
+      origin: code_change
+
+  # Pass-to-pass tests: These tests should PASS on both base commit and fix
+  pass_to_pass:
+    - id: test_typescript_user_actions_no_errors
+      type: pass_to_pass
+      description: "user-actions.tsx has no TypeScript errors specific to the file"
+      origin: repo_tests
+
+    - id: test_frontend_lint_user_actions_clean
+      type: pass_to_pass
+      description: "user-actions.tsx passes lint"
+      origin: repo_tests
+
+    - id: test_user_actions_file_exists
+      type: pass_to_pass
+      description: "User actions component file exists"
+      origin: sanity
+
+    - id: test_component_imports_clean
+      type: pass_to_pass
+      description: "Component imports are clean (no broken imports)"
+      origin: sanity
+
+  # Agent config checks: These check compliance with repo-specific configuration
+  agent_config:
+    - id: lint_check
+      type: programmatic
+      description: "Code passes npm run lint"
+      source:
+        file: "AGENTS.md"
+        lines: "33-35"
+        excerpt: "If you've made changes to the frontend, you should run cd frontend && npm run lint:fix && npm run build"
+
+  # Rubric for soft/subjective requirements (LLM-judged)
+  rubric:
+    - id: minimal_change
+      description: "The fix should be minimal and focused on removing the auth check for menu display"
+      criteria: "Only removes the useShouldShowUserFeatures hook usage and conditional rendering, without unnecessary refactoring"
+
+source:
+  pr:
+    owner: "All-Hands-AI"
+    repo: "OpenHands"
+    number: 13635
+    title: "APP-1153 Fix for issue where popup menu does not display"
+    merge_commit: "c7190ddb308de5a8c00b790049c5027d122159f7"
+    base_commit: "df64ce9668ebd0116d0b6864a410adfedc615e96"

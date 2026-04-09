@@ -1,0 +1,45 @@
+name = "sui-analytics-indexer-rpc-resolver"
+title = "Migrate analytics indexer from custom PackageCache to sui-rpc-resolver"
+pr_number = 26041
+owner = "MystenLabs"
+repo = "sui"
+base_commit = "591ac7c96a2877709479724edeea7038d01f064b"
+merge_commit = "8a866b804e6b1008de776e12df7a5f629e0fdf41"
+
+[difficulty]
+level = "medium"
+estimated_time = "30-45 min"
+
+[tags]
+categories = ["rust", "refactoring", "cache", "indexer"]
+frameworks = ["cargo", "tokio"]
+themes = ["package-resolution", "epoch-handling", "system-packages"]
+
+[requirements]
+cpu = 4
+memory = "8G"
+disk = "20G"
+gpu = false
+
+[timeouts]
+agent = 1800
+verifier = 300
+
+[paths]
+repo_short = "sui"
+target_files = [
+    "crates/sui-analytics-indexer/src/handlers/system_package_eviction.rs",
+    "crates/sui-analytics-indexer/src/handlers/tables/df.rs",
+    "crates/sui-analytics-indexer/src/handlers/tables/event.rs",
+    "crates/sui-analytics-indexer/src/handlers/tables/object.rs",
+    "crates/sui-analytics-indexer/src/handlers/tables/wrapped_object.rs",
+    "crates/sui-analytics-indexer/src/indexer.rs",
+    "crates/sui-analytics-indexer/src/lib.rs",
+    "crates/sui-analytics-indexer/src/pipeline.rs",
+    "crates/sui-analytics-indexer/src/store/mod.rs",
+    "crates/sui-analytics-indexer/Cargo.toml",
+    "Cargo.lock",
+]
+deleted_files = [
+    "crates/sui-analytics-indexer/src/package_store/mod.rs"
+]

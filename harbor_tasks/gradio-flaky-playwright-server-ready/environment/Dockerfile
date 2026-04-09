@@ -17,6 +17,9 @@ RUN git clone --filter=blob:none https://github.com/gradio-app/gradio.git /works
 
 WORKDIR /workspace/gradio
 
+# Install all gradio dependencies
+RUN pip install -e . 2>/dev/null || true
+
 # Tests import from gradio.node_server
 ENV PYTHONPATH="/workspace/gradio"
 

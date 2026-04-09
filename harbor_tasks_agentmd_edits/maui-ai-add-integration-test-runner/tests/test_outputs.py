@@ -9,6 +9,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import subprocess
 import re
+import json
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 REPO = "/workspace/maui"
@@ -35,6 +37,114 @@ def test_not_stub():
     file_ops = re.findall(r'File\.(Copy|WriteAllText|ReadAllText|Exists|Delete)\(', src)
     assert len(file_ops) >= 3, \
         f"SetUpNuGetPackages must have real file I/O operations, found {len(file_ops)}"
+
+
+# [repo_tests] pass_to_pass
+def test_global_json_valid():
+    """global.json is valid JSON with required SDK configuration (pass_to_pass)."""
+    global_json_path = Path(REPO) / "global.json"
+    assert global_json_path.exists(), "global.json must exist"
+    content = global_json_path.read_text()
+    data = json.loads(content)
+    assert "tools" in data, "global.json must have 'tools' section"
+    assert "dotnet" in data["tools"], "global.json must specify dotnet SDK version"
+    assert "msbuild-sdks" in data, "global.json must have 'msbuild-sdks' section"
+
+
+# [repo_tests] pass_to_pass
+def test_csproj_files_valid_xml():
+    """All .csproj files are valid XML (pass_to_pass)."""
+    csproj_files = list(Path(REPO).rglob("*.csproj"))
+    assert len(csproj_files) > 0, "Must have at least one .csproj file"
+    errors = []
+    for fpath in csproj_files[:20]:  # Check first 20 for performance
+        try:
+            ET.parse(fpath)
+        except ET.ParseError as e:
+            errors.append(f"{fpath}: {e}")
+    assert not errors, f"Invalid XML in .csproj files: {errors[:5]}"
+
+
+# [repo_tests] pass_to_pass
+def test_directory_build_props_valid():
+    """Directory.Build.props is valid XML if it exists (pass_to_pass)."""
+    props_path = Path(REPO) / "Directory.Build.props"
+    if props_path.exists():
+        try:
+            ET.parse(props_path)
+        except ET.ParseError as e:
+            assert False, f"Directory.Build.props is invalid XML: {e}"
+
+
+# [repo_tests] pass_to_pass
+def test_directory_build_targets_valid():
+    """Directory.Build.targets is valid XML if it exists (pass_to_pass)."""
+    targets_path = Path(REPO) / "Directory.Build.targets"
+    if targets_path.exists():
+        try:
+            ET.parse(targets_path)
+        except ET.ParseError as e:
+            assert False, f"Directory.Build.targets is invalid XML: {e}"
+
+
+# [repo_tests] pass_to_pass
+def test_github_workflows_valid_yaml():
+    """GitHub workflow files have valid YAML syntax (pass_to_pass)."""
+    workflows_dir = Path(REPO) / ".github/workflows"
+    if not workflows_dir.exists():
+        return
+    yaml_files = list(workflows_dir.glob("*.yml")) + list(workflows_dir.glob("*.yaml"))
+    assert len(yaml_files) > 0, "Must have at least one workflow file"
+    errors = []
+    for fpath in yaml_files:
+        content = fpath.read_text()
+        # Basic YAML validation - check for balanced braces and indentation
+        try:
+            # Python's json module can parse YAML-like structures for basic validation
+            # Or just check basic structure
+            lines = content.split('\n')
+            indent_stack = [0]
+            for i, line in enumerate(lines, 1):
+                if not line.strip() or line.strip().startswith('#'):
+                    continue
+                indent = len(line) - len(line.lstrip())
+                if indent > indent_stack[-1]:
+                    indent_stack.append(indent)
+                elif indent < indent_stack[-1]:
+                    while indent_stack and indent < indent_stack[-1]:
+                        indent_stack.pop()
+                    if indent != indent_stack[-1]:
+                        errors.append(f"{fpath.name}:{i}: inconsistent indentation")
+                        break
+        except Exception as e:
+            errors.append(f"{fpath.name}: {e}")
+    assert not errors, f"YAML syntax errors: {errors[:5]}"
+
+
+# [repo_tests] pass_to_pass
+def test_build_scripts_executable():
+    """Build scripts exist and have correct structure (pass_to_pass)."""
+    build_sh = Path(REPO) / "build.sh"
+    build_ps1 = Path(REPO) / "build.ps1"
+    assert build_sh.exists(), "build.sh must exist"
+    assert build_ps1.exists(), "build.ps1 must exist"
+    # Check shebang in build.sh
+    sh_content = build_sh.read_text()
+    assert sh_content.startswith('#!/') or '#!/bin/bash' in sh_content[:100], \
+        "build.sh must have shebang"
+
+
+# [repo_tests] pass_to_pass
+def test_nuget_config_valid():
+    """NuGet.config is valid XML with required package sources (pass_to_pass)."""
+    nuget_config = Path(REPO) / "NuGet.config"
+    assert nuget_config.exists(), "NuGet.config must exist"
+    try:
+        tree = ET.parse(nuget_config)
+        root = tree.getroot()
+        assert root.tag == 'configuration', f"Root tag must be 'configuration', got '{root.tag}'"
+    except ET.ParseError as e:
+        assert False, f"NuGet.config is invalid XML: {e}"
 
 
 # ---------------------------------------------------------------------------
@@ -156,7 +266,7 @@ for cat in ['Build', 'WindowsTemplates', 'macOSTemplates', 'Blazor', 'RunOniOS',
         print(f"FAIL: ValidateSet must include '{cat}'")
         sys.exit(1)
 
-for param in ['$SkipBuild', '$SkipInstall', '$AutoProvision']:
+for param in ['\$SkipBuild', '\$SkipInstall', '\$AutoProvision']:
     if param not in content:
         print(f"FAIL: Script must have {param} parameter")
         sys.exit(1)
@@ -165,7 +275,7 @@ if 'MAUI_PACKAGE_VERSION' not in content:
     print("FAIL: Script must handle MAUI_PACKAGE_VERSION")
     sys.exit(1)
 
-if '$ErrorActionPreference' not in content:
+if '\$ErrorActionPreference' not in content:
     print("FAIL: Script must set ErrorActionPreference")
     sys.exit(1)
 

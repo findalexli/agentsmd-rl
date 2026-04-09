@@ -377,6 +377,23 @@ print("PASS")
 
 
 # [repo_tests] pass_to_pass
+def test_chat_template_utils_unit_tests():
+    """Repo's chat_template_utils unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pytest", "pytest-xdist", "-q"],
+        capture_output=True,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "tests/utils/test_chat_template_utils.py", "-x", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"chat_template_utils tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_render_jinja_template_backward_compat():
     """render_jinja_template still works after changes (subprocess execution)."""
     code = """
@@ -385,7 +402,7 @@ sys.path.insert(0, "/workspace/transformers/src")
 
 from transformers.utils.chat_template_utils import render_jinja_template
 
-template = '{% for msg in messages %}{{ msg["role"] }}: {{ msg["content"] }}\\n{% endfor %}'
+template = '{% for msg in messages %}{{ msg["role"] }}: {{ msg["content"] }}\n{% endfor %}'
 conversations = [[{"role": "user", "content": "Hello"}]]
 prompt, indices = render_jinja_template(
     conversations=conversations,

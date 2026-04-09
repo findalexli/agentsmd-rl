@@ -135,6 +135,43 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI tests (gates)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_plugin_generate_contracts():
+    """Plugin generate contracts pass (pass_to_pass)."""
+    deps = "pytest numpy packaging pyyaml omegaconf tqdm httpx pybase64 pylatexenc sympy aiohttp pillow"
+    r = subprocess.run(
+        f"pip install {deps} -q 2>/dev/null && pip install -e . --no-deps -q 2>/dev/null && python tests/plugin_contracts/test_plugin_generate_contracts.py",
+        cwd=REPO, capture_output=True, text=True, timeout=120, shell=True,
+    )
+    assert r.returncode == 0, f"Plugin generate contracts failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_plugin_path_loading_contracts():
+    """Plugin path loading contracts pass (pass_to_pass)."""
+    deps = "pytest numpy packaging pyyaml omegaconf tqdm httpx pybase64 pylatexenc sympy aiohttp pillow"
+    r = subprocess.run(
+        f"pip install {deps} -q 2>/dev/null && pip install -e . --no-deps -q 2>/dev/null && python tests/plugin_contracts/test_plugin_path_loading_contracts.py",
+        cwd=REPO, capture_output=True, text=True, timeout=120, shell=True,
+    )
+    assert r.returncode == 0, f"Plugin path loading contracts failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_plugin_rollout_contracts():
+    """Plugin rollout contracts pass (pass_to_pass)."""
+    deps = "pytest numpy packaging pyyaml omegaconf tqdm httpx pybase64 pylatexenc sympy aiohttp pillow"
+    r = subprocess.run(
+        f"pip install {deps} -q 2>/dev/null && pip install -e . --no-deps -q 2>/dev/null && python tests/plugin_contracts/test_plugin_rollout_contracts.py",
+        cwd=REPO, capture_output=True, text=True, timeout=120, shell=True,
+    )
+    assert r.returncode == 0, f"Plugin rollout contracts failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

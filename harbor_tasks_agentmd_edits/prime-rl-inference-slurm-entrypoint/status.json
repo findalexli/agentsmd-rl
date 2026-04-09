@@ -1,12 +1,59 @@
 {
+  "schema_version": 2,
   "verdict": "fail",
-  "nop_reward": 0.0,
-  "gold_reward": -1,
-  "validated_at": "2026-04-08T22:15:49.435470",
-  "sandbox_id": "ixb3kg9h5xhkb9lbpiucp",
-  "backend": "fireworks",
-  "improve_status": "error",
-  "repair_attempted": false,
-  "total_time": 2564.27,
-  "error": "solve.sh failed: error: corrupt patch at line 217\n"
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:35:05.932078",
+  "total_time": 5890.32,
+  "sandbox_id": "imytqotew3z4gpnrh1u2h",
+  "backend": "glm",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "timestamp": "2026-04-09T11:10:00",
+      "ci_commands_discovered": [
+        "ruff check --config=pyproject.toml src/ (from .github/workflows/style.yaml)",
+        "ruff format --check --config=pyproject.toml src/ (from .github/workflows/style.yaml)",
+        "pytest tests/unit -m 'not gpu' (from .github/workflows/cpu_tests.yaml - NOT ADDED due to complex dependencies)"
+      ],
+      "p2p_tests_added": [
+        "test_repo_ruff_check - runs ruff linter on src/ directory",
+        "test_repo_ruff_format - runs ruff format check on src/ directory",
+        "test_repo_syntax_pyproject - validates pyproject.toml is valid TOML",
+        "test_repo_configs_syntax - validates all config files in configs/ are valid TOML"
+      ],
+      "notes": [
+        "Repo has heavy dependencies (torch, vllm, pydantic-config) that require full uv sync",
+        "Unit tests require 'pkill' command not available in container",
+        "Selected lightweight CI checks that don't require heavy deps or network",
+        "All 4 new p2p tests pass on base commit"
+      ]
+    },
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 373.51,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 5890.32,
+      "at": "2026-04-09T07:35:05.932078"
+    }
+  ]
 }

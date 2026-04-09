@@ -217,6 +217,51 @@ def test_process_weights_uses_generic_accessors():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from repo
+# ---------------------------------------------------------------------------
+
+def _ensure_tool(name: str, pkg: str | None = None) -> None:
+    """Ensure a CLI tool is available, installing if needed."""
+    import shutil
+    import subprocess
+    import sys
+    if shutil.which(name):
+        return
+    pkg = pkg or name
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", pkg])
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Target file must pass ruff linting (pass_to_pass)."""
+    import subprocess
+    _ensure_tool("ruff")
+    r = subprocess.run(
+        ["ruff", "check", "--output-format", "github", str(TARGET)],
+        capture_output=True, text=True, timeout=60, cwd="/repo",
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mypy_check():
+    """Target file must pass mypy type checking (pass_to_pass)."""
+    import subprocess
+    import shutil
+    import sys
+    _ensure_tool("mypy")
+    # Install pydantic to avoid plugin import error in pyproject.toml
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "pydantic"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # Use --no-incremental to avoid cache issues and explicitly set config file
+    r = subprocess.run(
+        ["mypy", "--ignore-missing-imports", "--follow-imports=silent", "--no-incremental", str(TARGET)],
+        capture_output=True, text=True, timeout=120, cwd="/repo",
+        env={**dict(subprocess.os.environ), "MYPY_FORCE_COLOR": "0"}
+    )
+    assert r.returncode == 0, f"MyPy check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 

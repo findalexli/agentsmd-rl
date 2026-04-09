@@ -9,6 +9,30 @@ checks:
   type: pass_to_pass
   origin: static
   description: Makefile parses correctly and build script has valid bash syntax
+- id: repo_pubspec_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pubspec.yaml is valid YAML
+- id: repo_analysis_options_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo analysis_options.yaml is valid YAML
+- id: repo_ci_workflows_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo GitHub workflow files are valid YAML
+- id: repo_makefile_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Makefile exists with required targets
+- id: repo_flutter_analyze_workflow_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo flutter analyze workflow is valid
+- id: repo_flutter_test_workflow_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo flutter test workflow is valid
 - id: build_script_structure
   type: fail_to_pass
   origin: pr_diff
@@ -19,6 +43,26 @@ checks:
   origin: pr_diff
   description: Makefile has widgetbook_macos_build, upload, and publish targets invoking
     the build script
+- id: widgetbook_workflow_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Widgetbook CI workflow exists triggering on main with build and release steps
+- id: gh_cli_release_support
+  type: fail_to_pass
+  origin: pr_diff
+  description: Build script uses gh CLI for creating/editing releases and uploading artifacts
+- id: fvm_support
+  type: fail_to_pass
+  origin: agent_config
+  description: Build script uses fvm for flutter commands when available
+- id: readme_widgetbook_documentation
+  type: fail_to_pass
+  origin: config_edit
+  description: Design system README documents widgetbook export workflow with make commands
+- id: readme_artifact_documentation
+  type: fail_to_pass
+  origin: config_edit
+  description: Design system README documents build artifact locations
 rubric:
 - rule: Update the feature README files we touch such that they match reality in the
     codebase, not only for what we touch but in their entirety.

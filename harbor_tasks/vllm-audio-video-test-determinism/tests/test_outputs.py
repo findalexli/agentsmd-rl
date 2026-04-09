@@ -147,7 +147,7 @@ def test_turn_variable_used():
     for name, node in funcs.items():
         found_turn_loop = False
         for child in ast.walk(node):
-            if isinstance(child, ast.AsyncFor):
+            if isinstance(child, (ast.For, ast.AsyncFor)):
                 # Check if the target is 'turn' (not '_')
                 if isinstance(child.target, ast.Name) and child.target.id == "turn":
                     found_turn_loop = True
@@ -238,3 +238,78 @@ def test_mm_processor_kwargs_preserved():
         src = ast.dump(node)
         assert "mm_processor_kwargs" in src, f"{name} must pass mm_processor_kwargs"
         assert "use_audio_in_video" in src, f"{name} must set use_audio_in_video"
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's ruff linting passes on target test file (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        timeout=60,
+    )
+    # Ignore pip install output; if ruff install fails, the next command will fail
+
+    r = subprocess.run(
+        ["ruff", "check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff formatting passes on target test file (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        timeout=60,
+    )
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_spdx_header():
+    """Repo's SPDX header check passes on target test file (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", f"{REPO}/tools/pre_commit/check_spdx_header.py", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"SPDX header check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_boolean_context_manager():
+    """Repo's boolean context manager check passes on target test file (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", f"{REPO}/tools/pre_commit/check_boolean_context_manager.py", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Boolean context manager check failed:\n{r.stdout}\n{r.stderr}"

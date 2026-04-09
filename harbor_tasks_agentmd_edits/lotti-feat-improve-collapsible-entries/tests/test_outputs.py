@@ -35,6 +35,24 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # ---------------------------------------------------------------------------
 
 
+def test_repo_flutter_analyze():
+    """Repo's Flutter analyze passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["flutter", "analyze", "--no-pub"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flutter analyze failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_dart_format():
+    """Repo's Dart code is properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["dart", "format", "--output=none", "--set-exit-if-changed", "lib", "test"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dart format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 def test_syntax_check():
     """Modified Dart files parse without errors (balanced braces/parens)."""
     for path in [DETAILS_WIDGET, HEADER, COLLAPSIBLE_SECTION]:

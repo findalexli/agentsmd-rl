@@ -32,4 +32,30 @@ checks:
     origin: static
     description: "The test file must have valid Python structure with correct classes"
 
+  # Repo CI/CD checks (pass_to_pass) - ensure fix doesn't break existing functionality
+  - id: test_p2p_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linting passes on the test file"
+
+  - id: test_p2p_black_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's black formatting check passes on the test file"
+
+  - id: test_p2p_isort_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's isort import ordering passes on the test file"
+
+  - id: test_p2p_codespell_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's codespell check passes on the test file"
+
+  - id: test_p2p_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified test file compiles without syntax errors"
+
 rubric: []

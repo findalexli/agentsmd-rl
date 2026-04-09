@@ -106,9 +106,44 @@ def test_existing_tests_pass():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Additional CI/CD checks
+# ---------------------------------------------------------------------------
+
+def test_repo_clippy():
+    """Repo's clippy lints pass for turbo-persistence (pass_to_pass)."""
+    result = subprocess.run(
+        ["cargo", "clippy", "-p", "turbo-persistence"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    assert result.returncode == 0, f"clippy failed:\n{result.stderr[-2000:]}"
+
+
+def test_repo_doc():
+    """Repo's rustdoc builds for turbo-persistence (pass_to_pass)."""
+    result = subprocess.run(
+        ["cargo", "doc", "-p", "turbo-persistence", "--no-deps"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    assert result.returncode == 0, f"doc failed:\n{result.stderr[-2000:]}"
+
+
+def test_repo_fmt():
+    """Repo's rustfmt check passes for turbo-persistence (pass_to_pass)."""
+    result = subprocess.run(
+        ["cargo", "fmt", "--check", "-p", "turbo-persistence"],
+        capture_output=True, text=True, cwd=REPO, timeout=60,
+    )
+    assert result.returncode == 0, f"fmt check failed:\n{result.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Config-edit (config_edit) — README documentation updates
 # ---------------------------------------------------------------------------
 
+def test_readme_checksum_documentation():
+    """README documents CRC32 checksums in the SST block format."""
+    readme = Path(f"{CRATE}/README.md").read_text()
+    readme_lower = readme.lower()
 
     assert "checksum" in readme_lower or "crc32" in readme_lower, \
         "README must document the CRC32 checksum feature"
@@ -119,6 +154,10 @@ def test_existing_tests_pass():
         "README should document the 4-byte checksum field in block headers"
 
 
+def test_readme_blob_checksum():
+    """README documents the updated blob file header with checksum."""
+    readme = Path(f"{CRATE}/README.md").read_text()
+    readme_lower = readme.lower()
 
     blob_idx = readme_lower.find("blob file")
     assert blob_idx != -1, "README must have a blob file section"

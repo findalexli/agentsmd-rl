@@ -35,6 +35,40 @@ def test_header_svelte_structure():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that should pass on base and after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.17.0"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install pnpm: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -57,10 +91,10 @@ def test_nav_links_data_driven():
         [
             "node",
             "-e",
-            """
-const fs = require('fs');
-const src = fs.readFileSync(process.argv[1], 'utf8');
-const script = (src.match(/<script[^>]*>([\\s\\S]*?)<\\/script>/) || [])[1] || '';
+            '''
+const fs = require("fs");
+const src = fs.readFileSync(process.argv[1], "utf8");
+const script = (src.match(/<script[^>]*>([\\s\\S]*?)<\\/script>/) || [])[1] || "";
 
 // Check for array literal with link objects containing label+href in script
 const hasLinkArray = /\\[\\s*\\{[^\\]]*label[^\\]]*href[^\\]]*\\/docs[^\\]]*\\}/.test(script);
@@ -72,7 +106,7 @@ const hasEachNav = /\\{#each\\s+\\w+\\s+as\\s+\\{\\s*label/.test(src);
 const eachCount = (src.match(/\\{#each/g) || []).length;
 
 console.log(JSON.stringify({ hasLinkArray, hasEachNav, eachCount }));
-""",
+''',
             HEADER,
         ],
         capture_output=True,
@@ -94,9 +128,9 @@ def test_desktop_nav_decoupled():
         [
             "node",
             "-e",
-            """
-const fs = require('fs');
-const src = fs.readFileSync(process.argv[1], 'utf8');
+            '''
+const fs = require("fs");
+const src = fs.readFileSync(process.argv[1], "utf8");
 
 // Old code coupled desktop/mobile nav via class:hidden={!show_nav}
 const hasCoupledToggle = /class:hidden=\\{!show_nav\\}/.test(src);
@@ -104,11 +138,11 @@ const hasCoupledToggle = /class:hidden=\\{!show_nav\\}/.test(src);
 // Old code had $: show_nav = click_nav || ... reactive statement
 const hasShowNavReactive = /\\$:\\s*show_nav\\s*=/.test(src);
 
-// Fixed code uses 'hidden lg:flex' on <nav> (desktop always visible, mobile hidden)
+// Fixed code uses "hidden lg:flex" on <nav> (desktop always visible, mobile hidden)
 const hasHiddenLgFlex = /<nav[\\s\\S]{0,400}hidden[\\s\\S]{0,20}lg:flex/.test(src);
 
 console.log(JSON.stringify({ hasCoupledToggle, hasShowNavReactive, hasHiddenLgFlex }));
-""",
+''',
             HEADER,
         ],
         capture_output=True,

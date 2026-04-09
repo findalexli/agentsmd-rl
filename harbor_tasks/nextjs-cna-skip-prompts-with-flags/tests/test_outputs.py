@@ -104,6 +104,35 @@ def test_different_flag_combo_no_prompts(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_cna_version():
+    """create-next-app --version works (pass_to_pass)."""
+    r = subprocess.run(
+        ["tsx", ENTRY, "--version"],
+        capture_output=True, text=True, timeout=30, cwd=CNA,
+    )
+    assert r.returncode == 0, f"--version failed:\n{r.stderr}"
+    assert "16." in r.stdout or "15." in r.stdout or "17." in r.stdout, (
+        f"Unexpected version output: {r.stdout}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cna_help():
+    """create-next-app --help works (pass_to_pass)."""
+    r = subprocess.run(
+        ["tsx", ENTRY, "--help"],
+        capture_output=True, text=True, timeout=30, cwd=CNA,
+    )
+    assert r.returncode == 0, f"--help failed:\n{r.stderr}"
+    assert "Usage:" in r.stdout, f"Missing usage info in help:\n{r.stdout[:500]}"
+    assert "--ts" in r.stdout, f"Missing --ts flag in help:\n{r.stdout[:500]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) — regression checks
 # ---------------------------------------------------------------------------
 

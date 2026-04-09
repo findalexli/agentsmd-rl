@@ -183,3 +183,35 @@ if (!pkg.exports) { console.error('exports field missing'); process.exit(1); }
 console.log('PASS');
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's own CI/CD tests
+# ---------------------------------------------------------------------------
+
+
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes for route-pattern (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/route-pattern", "run", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\\n{r.stderr[-500:]}"
+
+
+def test_repo_tests():
+    """Repo's unit tests pass for route-pattern (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/route-pattern", "run", "test"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Tests failed:\\n{r.stderr[-500:]}"
+
+
+def test_repo_bench():
+    """Repo's benchmark tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "route-pattern-bench", "run", "bench"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Bench tests failed:\\n{r.stderr[-500:]}"

@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import subprocess
 from pathlib import Path
+import stat
 
 REPO = "/workspace/vscode"
 
@@ -28,6 +29,51 @@ def test_syntax_check():
         assert r.returncode == 0, (
             f"{script} has syntax errors:\n{r.stderr.decode()}"
         )
+
+
+# [static] pass_to_pass
+def test_all_shell_scripts_syntax():
+    """All repo shell scripts must parse without syntax errors."""
+    scripts = [
+        "scripts/test.sh",
+        "scripts/test-integration.sh",
+        "scripts/test-remote-integration.sh",
+        "scripts/test-web-integration.sh",
+        "scripts/test-documentation.sh",
+        "scripts/code.sh",
+        "scripts/code-cli.sh",
+        "scripts/code-server.sh",
+        "scripts/code-web.sh",
+        "scripts/code-agent-host.sh",
+        "scripts/code-sessions-web.sh",
+        "scripts/node-electron.sh",
+        "scripts/generate-definitelytyped.sh",
+        ".github/workflows/check-clean-git-state.sh",
+    ]
+    for script in scripts:
+        r = subprocess.run(
+            ["bash", "-n", script],
+            cwd=REPO, capture_output=True, timeout=10,
+        )
+        assert r.returncode == 0, (
+            f"{script} has syntax errors:\n{r.stderr.decode()}"
+        )
+
+
+# [static] pass_to_pass
+def test_shell_script_executability():
+    """Shell scripts referenced in CI are executable."""
+    scripts = [
+        "scripts/test.sh",
+        "scripts/test-integration.sh",
+        "scripts/test-remote-integration.sh",
+        "scripts/test-web-integration.sh",
+    ]
+    for script in scripts:
+        path = Path(REPO, script)
+        if path.exists():
+            mode = path.stat().st_mode
+            assert mode & stat.S_IXUSR, f"{script} should be executable"
 
 
 # ---------------------------------------------------------------------------
@@ -57,7 +103,7 @@ def test_help_lists_available_suites():
     out = r.stdout.decode()
     # Check for a representative sample of suite names
     for suite in ["api-folder", "git", "typescript", "emmet", "css", "html"]:
-        assert suite in out, f"--help should list suite '{suite}'"
+        assert suite in out, f"--help should list suite \047{suite}\047"
 
 
 # [pr_diff] fail_to_pass
@@ -82,7 +128,7 @@ def test_invalid_suite_exits_error():
         "Should exit non-zero for invalid suite filter"
     )
     assert "no suites match" in combined.lower(), (
-        f"Should report 'no suites match' for invalid filter. Got:\n{combined}"
+        f"Should report \047no suites match\047 for invalid filter. Got:\n{combined}"
     )
 
 

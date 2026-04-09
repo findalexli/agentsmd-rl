@@ -235,3 +235,57 @@ console.log('PASS');
 def test_file_exists():
     """Target changesView.ts file must exist."""
     assert Path(TARGET).exists()
+
+
+def test_build_typecheck():
+    """Build scripts typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "typecheck"],
+        capture_output=True, text=True, timeout=600, cwd=f"{REPO}/build",
+    )
+    assert r.returncode == 0, f"Build typecheck failed:\\n{r.stderr[-500:]}"
+
+
+def test_repo_eslint():
+    """ESLint check passes on the codebase (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\\n{r.stderr[-500:]}"
+
+
+def test_valid_layers_check():
+    """Valid layers check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "valid-layers-check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Valid layers check failed:\\n{r.stderr[-500:]}"
+
+
+def test_vscode_dts_compile_check():
+    """VS Code dts compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "vscode-dts-compile-check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"VS Code dts compile check failed:\\n{r.stderr[-500:]}"
+
+
+def test_cli_cargo_clippy():
+    """CLI Rust clippy linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=600, cwd=f"{REPO}/cli",
+    )
+    assert r.returncode == 0, f"CLI clippy failed:\\n{r.stderr[-500:]}"
+
+
+def test_cli_cargo_test():
+    """CLI Rust unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test"],
+        capture_output=True, text=True, timeout=600, cwd=f"{REPO}/cli",
+    )
+    assert r.returncode == 0, f"CLI cargo test failed:\\n{r.stderr[-500:]}"

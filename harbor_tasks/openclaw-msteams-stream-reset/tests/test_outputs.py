@@ -403,7 +403,7 @@ def test_no_escaped_package_imports():
             with open(filepath) as f:
                 for i, line in enumerate(f, 1):
                     # Extract the import specifier (relative paths only)
-                    m = re.search(r"""from\s+['"](\./|\.\./)(.*?)['"]""", line)
+                    m = re.search(r"""from\s+['\"](\.\/|\..\/)(.*?)['\"]""", line)
                     if not m:
                         continue
                     specifier = m.group(1) + m.group(2)
@@ -446,3 +446,71 @@ def test_no_sdk_self_import():
     assert not violations, (
         "SDK self-import found in msteams extension:\n" + "\n".join(violations[:5])
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that work without node_modules
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_file_structure():
+    """Repo's extension files follow expected structure (pass_to_pass)."""
+    expected_files = [
+        "extensions/msteams/src/index.ts",
+        "extensions/msteams/src/reply-stream-controller.ts",
+        "extensions/msteams/src/streaming-message.ts",
+        "extensions/msteams/package.json",
+    ]
+    for f in expected_files:
+        path = os.path.join(REPO, f)
+        assert Path(path).exists(), f"Expected file missing: {f}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_debug_code():
+    """No console.log or debugger statements left in production code (pass_to_pass)."""
+    ext_dir = os.path.join(REPO, "extensions/msteams/src")
+    violations = []
+
+    for root, _dirs, files in os.walk(ext_dir):
+        for fname in files:
+            if not fname.endswith(".ts") or fname.endswith((".test.ts", ".d.ts")):
+                continue
+            filepath = os.path.join(root, fname)
+            with open(filepath) as f:
+                content = f.read()
+                # Check for console.log or debugger
+                if re.search(r"console\.(log|debug|warn|error)\(", content):
+                    violations.append(f"{filepath}: found console.* statement")
+                if "debugger;" in content:
+                    violations.append(f"{filepath}: found debugger statement")
+
+    assert not violations, "Debug statements found:\n" + "\n".join(violations[:5])
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_validity():
+    """Import paths in msteams extension are well-formed (pass_to_pass)."""
+    ext_dir = os.path.join(REPO, "extensions/msteams/src")
+    violations = []
+
+    for root, _dirs, files in os.walk(ext_dir):
+        for fname in files:
+            if not fname.endswith(".ts") or fname.endswith((".test.ts", ".d.ts")):
+                continue
+            filepath = os.path.join(root, fname)
+            file_dir = os.path.dirname(filepath)
+            with open(filepath) as f:
+                content = f.read()
+                # Check for unresolved relative imports that go too far up
+                # Extensions should not reach outside their package
+                for match in re.finditer(
+                    r'''from\s+['"](\.\./[^'"]+)['"]''', content
+                ):
+                    specifier = match.group(1)
+                    resolved = os.path.normpath(os.path.join(file_dir, specifier))
+                    # Should not escape extensions/msteams
+                    if not resolved.startswith(os.path.join(REPO, "extensions/msteams")):
+                        violations.append(f"{filepath}: import escapes package: {specifier}")
+
+    assert not violations, "Invalid imports found:\n" + "\n".join(violations[:5])

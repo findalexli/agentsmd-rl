@@ -1,0 +1,46 @@
+source_pr: "https://github.com/continuedev/continue/pull/11869"
+title: "Remove inline backtick fences from tool instruction prose"
+base_commit: "b09c4ba1f3438bd29b5556a52d81fa5463134fd3"
+merge_commit: "7463037f4a1dc4d993848604d605ad5b0a249959"
+
+# The agent_config check is removed since there's no root-level AGENTS.md or CLAUDE.md
+# that applies to the core/tools/ directory
+
+checks:
+  - id: "typescript_compilation"
+    description: "TypeScript file compiles without errors"
+    origin: "test"
+    test_function: "test_typescript_compilation"
+
+  - id: "prefix_no_inline_backticks"
+    description: "systemMessagePrefix does not contain inline triple backticks"
+    origin: "test"
+    test_function: "test_system_message_prefix_no_inline_backticks"
+
+  - id: "suffix_no_inline_backticks"
+    description: "systemMessageSuffix does not contain inline triple backticks in rules"
+    origin: "test"
+    test_function: "test_system_message_suffix_no_inline_backticks"
+
+  - id: "suffix_has_expected_content"
+    description: "systemMessageSuffix contains the corrected rule text"
+    origin: "test"
+    test_function: "test_system_message_suffix_has_expected_content"
+
+  - id: "class_properties_are_strings"
+    description: "The class properties are defined as template literal strings"
+    origin: "test"
+    test_function: "test_class_properties_are_strings"
+
+  - id: "example_fences_remain_unchanged"
+    description: "Example code fences in tool definitions remain intact"
+    origin: "test"
+    test_function: "test_example_fences_remain_unchanged"
+
+  - id: "accepted_tool_call_starts_unaffected"
+    description: "Tool call start patterns are not affected"
+    origin: "test"
+    test_function: "test_accepted_tool_call_starts_unaffected"
+
+# No rubric rules - this is a straightforward string fix
+rubric: []

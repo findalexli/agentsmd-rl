@@ -231,3 +231,37 @@ def test_no_duplicate_implementation():
             f"Full duplicate formatDurationCompact ({len(body_lines)} body lines) — "
             "prefer re-export from infra/format-time"
         )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI/CD checks (ensures fix doesn't break existing tests)
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass
+def test_repo_lint():
+    """Repo's oxlint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "oxlint", "--type-aware"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_format_time_tests():
+    """Repo's format-time unit tests pass (pass_to_pass) — related to fix module."""
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "src/infra/format-time/format-time.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"format-time tests failed:\\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_no_conflict_markers():
+    """Repo has no conflict markers (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "check:no-conflict-markers"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Conflict markers check failed:\\n{r.stderr[-500:]}"

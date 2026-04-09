@@ -126,6 +126,40 @@ def test_docker_stop_removed():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "test:unit"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_type_tests():
+    """Repo's TypeScript type tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "test:types", "--target", ">=5.7"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Type tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_docker_compose_config():
+    """Docker compose configuration is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["docker", "compose", "-f", "test/docker-compose.yml", "config"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Docker compose config failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------
 

@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 import sys
 import types
 import torch
@@ -230,3 +231,27 @@ def test_not_stub():
                     assert len(returns) >= 2, "forward_cuda must have multiple return paths"
                     return
     raise AssertionError("Conv3dLayer.forward_cuda not found")
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass tests (p2p_enrichment)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_conv():
+    """Repo's ruff linting passes on conv.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "vllm/model_executor/layers/conv.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_conv():
+    """Repo's ruff format check passes on conv.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "vllm/model_executor/layers/conv.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"

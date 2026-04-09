@@ -1,13 +1,83 @@
 {
-  "validations": [
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T03:21:40.306954",
+  "total_time": 6263.29,
+  "sandbox_id": "i2zngiev24ol2cugjiz6i",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T10:08:00Z",
+      "ci_commands_discovered": [
+        "npm run compile - requires 'ternary-stream' package (missing in build/)",
+        "npm run eslint - requires gulp build system (missing dependencies)",
+        "npm run hygiene - requires gulp build system (missing dependencies)",
+        "npm run valid-layers-check - OOM on heap limit (>8GB needed)",
+        "npm run check-cyclic-dependencies - requires 'out/' directory (doesn't exist)",
+        "npx tsc --noEmit -p src/tsconfig.json - OOM on heap limit (>8GB needed)"
+      ],
+      "ci_commands_working": [],
+      "ci_status": "Docker image has incomplete build dependencies. Full CI commands fail due to missing 'ternary-stream' package or require >8GB RAM for typecheck.",
+      "p2p_tests_added": [
+        "test_repo_changesView_file_integrity - Validates changesView.ts loads and has valid structure",
+        "test_repo_codeReview_file_integrity - Validates codeReview.contributions.ts loads and has valid structure",
+        "test_repo_package_json_valid - Validates package.json is valid JSON with expected scripts",
+        "test_repo_sessions_module_structure - Validates sessions module directory structure exists"
+      ],
+      "notes": "Added lightweight file integrity checks as pass_to_pass gates. These verify the repo files are intact and parseable on both base commit and after gold patch application."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 723.3,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed syntax errors in test_outputs.py - changed src.split('\\n') to src.split(/\\r?\\n/) to avoid shell escaping issues with newlines in Node.js code. All 4 validation checks passed: Docker build succeeded, NOP test returns reward=0 (tests correctly fail on base commit), Gold test returns reward=1 (all 12 tests pass after fix applied).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 146.18
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.73,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T23:07:01.688924",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T03:21:40.137787"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 6263.29,
+      "at": "2026-04-09T03:21:40.306954"
     }
   ]
 }

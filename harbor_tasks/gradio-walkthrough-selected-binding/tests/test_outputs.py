@@ -200,3 +200,35 @@ def test_effect_gradio_tab_select():
     )
     assert "gradio_tab_select" in clean, "gradio_tab_select dispatch missing"
     assert "gradio.props.selected" in clean, "gradio.props.selected reference missing"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates - verify existing functionality not broken
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit test suite passes (pass_to_pass)."""
+    # First build the client (required for tests)
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
+
+    # Run the unit tests
+    r = subprocess.run(
+        ["pnpm", "test:run"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-1000:]}"

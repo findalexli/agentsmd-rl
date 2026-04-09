@@ -21,7 +21,7 @@ UTILS_PATH = Path(f"{REPO}/gradio/utils.py")
 
 # Shared extraction snippet used by subprocess-based tests.
 # Extracts safe_join via AST (avoids importing heavy gradio deps)
-# and leaves `safe_join` in scope for the caller to use.
+# and leaves "safe_join" in scope for the caller to use.
 _EXTRACT_AND_TEST_PREFIX = """
 import ast, os, posixpath
 from unittest.mock import patch
@@ -102,6 +102,47 @@ def test_syntax_check():
     """gradio/utils.py must parse without errors."""
     src = UTILS_PATH.read_text()
     ast.parse(src)
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff():
+    """Ruff lint check passes on gradio/utils.py (repo CI)."""
+    # Install ruff first
+    subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, check=False,
+    )
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "gradio/utils.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_utils_no_syntax_errors():
+    """gradio/utils.py can be compiled and has no syntax errors (repo CI)."""
+    # Compile the file to check for syntax errors
+    r = subprocess.run(
+        ["python", "-m", "py_compile", "gradio/utils.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax error in gradio/utils.py:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_safe_join_extractable():
+    """safe_join function can be extracted and executed from utils.py (repo CI)."""
+    # This tests that the function structure is intact and executable
+    safe_join = _extract_safe_join()
+    
+    # Test that it works for normal relative paths
+    result = safe_join("/tmp/uploads", "image.png")
+    assert "image.png" in result
+    
+    # Test that it rejects traversal attempts
+    with pytest.raises(InvalidPathError):
+        safe_join("/tmp/uploads", "../etc/passwd")
 
 
 # ---------------------------------------------------------------------------

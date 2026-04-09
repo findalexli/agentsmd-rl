@@ -64,4 +64,31 @@ checks:
       lines: "16"
       commit: "8f0fd0cf1da17fff23df7133e414cdd1f5ed917e"
 
+  # Repo CI/CD tests — p2p enrichment (verified 2026-04-09)
+  # CI commands discovered from .github/workflows/lint.yml, .github/workflows/format.yml, package.json
+  # - bun lint -> adapted to: npx oxlint src/js (config incompatible, works without)
+  # - bun run typecheck -> skipped (requires bun runtime)
+  # - bun run zig:check -> skipped (requires zig toolchain)
+  # - bun ./test/internal/ban-words.test.ts -> skipped (requires bun runtime)
+  - id: repo_oxlint
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo's JavaScript linting passes (oxlint on src/js)"
+    source:
+      ci_workflow: ".github/workflows/lint.yml"
+      package_script: "bun lint"
+      adapted_command: "npx oxlint src/js"
+      original_command: "bunx oxlint --config=oxlint.json --format=github src/js"
+
+  - id: zig_syntax_valid
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Zig source files have valid syntax and structure"
+    source:
+      ci_workflow: ".github/workflows/format.yml"
+      package_script: "bun run zig:check"
+      adapted_validation: "Python-based structural validation (zig fmt requires zig toolchain)"
+      path: "src/fd.zig"
+      validation: "brace_balance,syntax_elements,function_integrity"
+
 rubric: []

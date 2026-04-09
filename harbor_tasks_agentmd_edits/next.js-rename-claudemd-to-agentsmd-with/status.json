@@ -1,11 +1,82 @@
 {
+  "schema_version": 2,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-08T22:00:45.806450",
-  "sandbox_id": "ih6icgbqu467u21pjkw30",
+  "validated_at": "2026-04-09T04:13:17.924737",
+  "total_time": 9361.15,
+  "sandbox_id": "i5jwef3noq5kgsjdzy5s8",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 1660.58
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All four validation checks passed. Docker build successful. NOP test correctly fails (reward=0) on base commit where AGENTS.md doesn't exist and CLAUDE.md is not a symlink. Gold test passes (reward=1) after applying solve.sh. Rubric judge ICR=1.0 (no rubric rules to check). Task is valid.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 50.69
+    },
+    "p2p_enrichment": {
+      "status": "completed",
+      "timestamp": "2026-04-09T11:15:00",
+      "ci_commands_discovered": [
+        "pnpm test-types (tsc)",
+        "pnpm prettier-check",
+        "pnpm lint-language (alex)",
+        "pnpm lint-eslint",
+        "pnpm lint-ast-grep"
+      ],
+      "p2p_tests_added": [
+        "test_repo_git_status_clean - Verify clean git status",
+        "test_repo_claude_md_readable - Verify CLAUDE.md is readable",
+        "test_repo_alexignore_exists - Verify .alexignore exists",
+        "test_repo_claude_md_valid - Verify CLAUDE.md is valid (file or working symlink)",
+        "test_repo_readme_symlink_valid - Verify readme.md symlink works"
+      ],
+      "notes": "Next.js repo requires full node_modules for most CI commands (lint, typecheck, build). Added structural P2P tests that verify repo health without requiring heavy dependencies. All 5 P2P tests pass at base commit AND after gold fix."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2305.76,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.68,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T04:13:17.762986"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9361.15,
+      "at": "2026-04-09T04:13:17.924737"
+    }
+  ]
 }

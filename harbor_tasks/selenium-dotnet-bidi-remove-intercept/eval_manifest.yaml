@@ -1,0 +1,105 @@
+source:
+  pr:
+    owner: SeleniumHQ
+    repo: selenium
+    number: 17288
+    title: "[dotnet] [bidi] Remove high-level network interception"
+    merge_commit: 4a4c5939467b98db4c16f40f6d3c26626964c91b
+    base_commit: f455679160058286ff6a6926923110c32a3b283d
+  task:
+    name: selenium-dotnet-bidi-remove-intercept
+    description: Remove high-level BiDi network interception API from Selenium .NET bindings
+
+# Evaluation checks - each maps to a test in test_outputs.py
+checks:
+  # Fail-to-pass tests (behavior that should change)
+  - id: test_highlevel_file_removed
+    type: fail_to_pass
+    origin: pr_description
+    description: NetworkModule.HighLevel.cs file should be deleted
+
+  - id: test_intercept_methods_removed_from_network_module
+    type: fail_to_pass
+    origin: pr_description
+    description: InterceptRequestAsync/InterceptResponseAsync/InterceptAuthAsync removed from NetworkModule
+
+  - id: test_intercept_methods_removed_from_interface
+    type: fail_to_pass
+    origin: pr_description
+    description: Intercept methods removed from INetworkModule interface
+
+  - id: test_intercept_methods_removed_from_browsing_context
+    type: fail_to_pass
+    origin: pr_description
+    description: Intercept methods removed from BrowsingContextNetworkModule
+
+  - id: test_intercept_methods_removed_from_browsing_context_interface
+    type: fail_to_pass
+    origin: pr_description
+    description: Intercept methods removed from IBrowsingContextNetworkModule interface
+
+  - id: test_intercepted_types_removed
+    type: fail_to_pass
+    origin: pr_description
+    description: InterceptedRequest/InterceptedResponse/InterceptedAuth/Interception types removed
+
+  - id: test_intercept_options_removed
+    type: fail_to_pass
+    origin: pr_description
+    description: InterceptRequestOptions/InterceptResponseOptions/InterceptAuthOptions removed
+
+  - id: test_tests_updated
+    type: fail_to_pass
+    origin: pr_description
+    description: Tests updated to use AddInterceptAsync instead of removed methods
+
+  # Pass-to-pass tests (behavior that should remain)
+  - id: test_addintercept_api_still_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: AddInterceptAsync method still available as replacement API
+
+  - id: test_csharp_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: C# syntax validation passes
+
+  - id: test_dotnet_project_structure_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: .NET project structure is valid (no references to deleted files)
+
+  - id: test_dotnet_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: .NET code formatting passes (dotnet format --verify-no-changes --severity error)
+
+  - id: test_dotnet_test_project_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: .NET test project formatting passes
+
+  - id: test_dotnet_support_project_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: .NET support project formatting passes
+
+# Rubric for soft/subjective checks (evaluated by LLM judge)
+rubric:
+  - criterion: Proper async patterns maintained
+    description: Any new async code follows the conventions from AGENTS.md
+    source:
+      file: dotnet/AGENTS.md
+      lines: "Async patterns"
+
+  - criterion: Deprecation policy followed
+    description: If any deprecation warnings added, they follow the standard format
+    source:
+      file: dotnet/AGENTS.md
+      lines: "Deprecation"
+
+  - criterion: XML documentation maintained
+    description: Public APIs have XML documentation comments
+    source:
+      file: dotnet/AGENTS.md
+      lines: "Documentation"

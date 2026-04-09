@@ -1,0 +1,52 @@
+task_id: appwrite-vectordb-race-condition
+source_pr: appwrite/appwrite#11757
+description: Fix race condition in VectorDB metadata initialization during parallel collection creation
+base_commit: a5b0378138a6097e256a8d9553a18b892b6ba9ea
+merge_commit: 8e02a5a227afdf270b386b3054382f6eaaa81f4e
+
+checks:
+  # F2P tests - these fail on base commit, pass on fixed version
+  - id: nested_try_catch_for_create
+    name: Nested try-catch for metadata creation
+    description: Verify nested try-catch structure exists around dbForDatabases->create()
+    type: pytest
+    test_type: fail_to_pass
+    weight: 2
+
+  - id: catch_block_is_empty_or_has_comment
+    name: DuplicateException catch block handles race condition
+    description: Verify the catch block for DuplicateException is properly structured
+    type: pytest
+    test_type: fail_to_pass
+    weight: 1
+
+  - id: comment_removed
+    name: Old comment removed
+    description: Verify the outdated comment about 'passing null' is removed
+    type: pytest
+    test_type: fail_to_pass
+    weight: 0.5
+
+  # P2P tests - these pass on both base and fixed version
+  - id: duplicate_exception_imported
+    name: DuplicateException is available
+    description: Verify DuplicateException is imported or referenced in the file (already present in base)
+    type: pytest
+    test_type: pass_to_pass
+    weight: 1
+
+  - id: php_syntax_valid
+    name: PHP syntax is valid
+    description: Verify the modified PHP file has valid syntax
+    type: pytest
+    test_type: pass_to_pass
+    weight: 1
+
+  - id: outer_try_block_preserved
+    name: Outer try block preserved
+    description: Verify the outer try block wrapping createCollection is preserved
+    type: pytest
+    test_type: pass_to_pass
+    weight: 1
+
+rubric: []

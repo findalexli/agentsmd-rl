@@ -76,10 +76,49 @@ def test_cargo_check():
 
 # [repo_tests] pass_to_pass
 def test_cargo_clippy():
-    """No clippy warnings on the affected files after removal."""
+    """No clippy warnings on the affected package after removal."""
     r = subprocess.run(
-        ["cargo", "clippy", "-p", "ty_python_semantic", "--",
-         "-W", "clippy::all", "-D", "warnings"],
+        ["cargo", "clippy", "-p", "ty_python_semantic", "--", "-D", "warnings"],
         cwd=REPO, capture_output=True, text=True, timeout=300,
     )
     assert r.returncode == 0, f"clippy reported warnings:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_ty():
+    """ty crate compiles cleanly (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"cargo check -p ty failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_fmt_check():
+    """All code is properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_ty_python_semantic_unit():
+    """ty_python_semantic unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--lib"],
+        cwd=REPO, capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"unit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_ty_python_semantic_infer():
+    """ty_python_semantic type inference tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--lib", "--", "types::infer"],
+        cwd=REPO, capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"infer tests failed:\n{r.stderr[-500:]}"

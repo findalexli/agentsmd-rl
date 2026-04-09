@@ -19,5 +19,8 @@ RUN git init /workspace/backstage && \
 
 WORKDIR /workspace/backstage
 
+# Install dependencies
+RUN yarn install --immutable
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

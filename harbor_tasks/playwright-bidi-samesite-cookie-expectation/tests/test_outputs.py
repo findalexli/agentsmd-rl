@@ -138,7 +138,78 @@ def test_bidi_expectation_removed():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
+# Pass-to-pass (repo_tests) — CI/CD gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's build step completes successfully (pass_to_pass)."""
+    # npm install + build (build required before other checks)
+    r = subprocess.run(
+        ["npm", "install"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "tsc"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint():
+    """Repo's ESLint linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "eslint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_deps():
+    """Repo's dependency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Build is required before check-deps can pass
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Check-deps failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -152,12 +223,13 @@ def test_condition_is_not_narrowed():
     content = Path(SPEC_FILE).read_text()
     lines = content.split("\n")
 
-    # Find the section around the SameSite test
+    # Find the specific test function for SameSite without Secure attribute over HTTP
     in_test = False
     found_chromium_or_bidi = False
     found_webkit = False
     for line in lines:
-        if "SameSite" in line and "Secure attribute" in line:
+        # Look for the specific test function signature, not comments
+        if line.startswith("it(") and "should support set-cookie with SameSite" in line and "without Secure attribute" in line:
             in_test = True
             continue
         if in_test:

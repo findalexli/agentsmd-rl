@@ -187,6 +187,50 @@ def test_module_loads():
 
 
 # [static] pass_to_pass
+def test_install_package_signature():
+    """install_package must have correct function signature.
+
+    Verifies the function accepts uv, package, and version parameters
+    as required by the codebase.
+    """
+    source = Path(TARGET).read_text()
+    tree = ast.parse(source)
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "install_package":
+            # Check it has keyword-only arguments with proper defaults
+            args = node.args
+            # Should have keyword-only args: uv, package, version
+            assert args.kwonlyargs, "install_package should have keyword-only args"
+            arg_names = [a.arg for a in args.kwonlyargs]
+            assert "uv" in arg_names, "install_package missing 'uv' parameter"
+            assert "package" in arg_names, "install_package missing 'package' parameter"
+            assert "version" in arg_names, "install_package missing 'version' parameter"
+            return
+    assert False, "install_package function not found"
+
+
+# [static] pass_to_pass
+def test_script_has_main_guard():
+    """Script must have if __name__ == '__main__' guard for testability."""
+    source = Path(TARGET).read_text()
+    tree = ast.parse(source)
+
+    found_main_guard = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.If):
+            # Check for if __name__ == "__main__": pattern
+            if isinstance(node.test, ast.Compare):
+                test = node.test
+                if (isinstance(test.left, ast.Name) and test.left.id == "__name__"
+                        and isinstance(test.comparators[0], ast.Constant)
+                        and test.comparators[0].value == "__main__"):
+                    found_main_guard = True
+                    break
+    assert found_main_guard, "Script missing if __name__ == '__main__' guard"
+
+
+# [static] pass_to_pass
 def test_not_stub():
     """install_package must have real implementation, not a stub.
     # AST-only because: install_package requires uv binary + network access
@@ -215,7 +259,7 @@ def test_not_stub():
 # Config-derived (agent_config) — rules from CLAUDE.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — CLAUDE.md:16 @ cedae1aa
+# [agent_config] pass_to_pass — CLAUDE.md:16 @ cedae1aa42c0f1ff59b4e4f988659c52d467d585
 def test_top_level_shutil_import():
     """shutil must be imported at the top level, not locally.
 

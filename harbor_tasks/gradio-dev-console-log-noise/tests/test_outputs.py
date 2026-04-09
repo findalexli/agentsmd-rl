@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import subprocess
+import shutil
 from pathlib import Path
 
 REPO = Path("/workspace")
@@ -27,6 +28,24 @@ def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         )
     finally:
         script.unlink(missing_ok=True)
+
+
+def _run_in_repo(cmd: list[str], timeout: int = 120, cwd: Path = REPO) -> subprocess.CompletedProcess:
+    """Run a command in the repo directory."""
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=str(cwd),
+    )
+
+
+def _install_pnpm() -> str:
+    """Install pnpm globally and return the path."""
+    npm = shutil.which("npm") or "/usr/local/bin/npm"
+    result = _run_in_repo([npm, "install", "-g", "pnpm"], timeout=60)
+    return shutil.which("pnpm") or "/usr/local/bin/pnpm"
 
 
 # ---------------------------------------------------------------------------
@@ -162,3 +181,65 @@ def test_main_core_intact():
     ]
     for marker in markers:
         assert marker in content, f"Missing core marker: {marker}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that should pass on base and gold
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    pnpm = _install_pnpm()
+    # Install dependencies
+    r = _run_in_repo([pnpm, "install"], timeout=120)
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    # Run format check
+    r = _run_in_repo([pnpm, "format:check"], timeout=120)
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_client_build():
+    """Repo's client package builds successfully (pass_to_pass)."""
+    pnpm = _install_pnpm()
+    # Install dependencies
+    r = _run_in_repo([pnpm, "install"], timeout=120)
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    # Build client package
+    r = _run_in_repo([pnpm, "--filter", "@gradio/client", "build"], timeout=120)
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_client_tests():
+    """Repo's client package tests pass (pass_to_pass)."""
+    pnpm = _install_pnpm()
+    # Install dependencies
+    r = _run_in_repo([pnpm, "install"], timeout=120)
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    # Build client first (required for tests)
+    r = _run_in_repo([pnpm, "--filter", "@gradio/client", "build"], timeout=120)
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
+    # Run client tests
+    r = _run_in_repo([pnpm, "--filter", "@gradio/client", "test"], timeout=120)
+    assert r.returncode == 0, f"Client tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_core_tests():
+    """Repo's core JS module tests pass (pass_to_pass)."""
+    pnpm = _install_pnpm()
+    # Install dependencies
+    r = _run_in_repo([pnpm, "install"], timeout=120)
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    # Build client first (required for tests)
+    r = _run_in_repo([pnpm, "--filter", "@gradio/client", "build"], timeout=120)
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
+    # Run vitest on js/core (relevant to the modified module)
+    r = _run_in_repo(
+        [pnpm, "vitest", "run", "--config", ".config/vitest.config.ts", "js/core"],
+        timeout=120
+    )
+    assert r.returncode == 0, f"Core tests failed:\n{r.stderr[-500:]}"

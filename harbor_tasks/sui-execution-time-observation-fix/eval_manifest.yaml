@@ -1,0 +1,47 @@
+source_pr:
+  owner: MystenLabs
+  repo: sui
+  number: 26123
+  title: "test for coin res with shared object"
+  merge_commit: a9773b63b34983935554286a637dc8a62b2233c8
+  base_commit: bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2
+
+agent_config: []
+
+rubric: []
+
+checks:
+  - id: test_rust_syntax_valid
+    type: pass_to_pass
+    origin: implementation
+    description: Target Rust file has valid syntax and structure
+
+  - id: test_no_panic_assert_in_code
+    type: fail_to_pass
+    origin: implementation
+    description: Old panic-inducing assert! removed from execution_time_estimator
+
+  - id: test_defensive_timing_handling_exists
+    type: fail_to_pass
+    origin: implementation
+    description: Defensive logic added to handle excess timings by slicing trailing entries
+
+  - id: test_warning_log_for_excess_timings
+    type: fail_to_pass
+    origin: implementation
+    description: Warning log added when execution produces more timings than original commands
+
+  - id: test_epoch_store_check_preserved
+    type: pass_to_pass
+    origin: implementation
+    description: Epoch store upgrade check preserved and positioned correctly
+
+  - id: test_function_signature_unchanged
+    type: pass_to_pass
+    origin: implementation
+    description: Function signature remains compatible with existing callers
+
+  - id: test_cargo_fmt_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's Rust code passes cargo fmt --check

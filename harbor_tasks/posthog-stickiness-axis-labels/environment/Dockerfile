@@ -8,8 +8,8 @@ RUN apt-get update && \
         git curl ca-certificates build-essential python3 tmux && \
     rm -rf /var/lib/apt/lists/*
 
-# Install typescript globally (for TS compiler API in tests)
-RUN npm install -g typescript
+# Install typescript and oxlint globally (for tests)
+RUN npm install -g typescript oxlint
 ENV NODE_PATH=/usr/local/lib/node_modules
 
 # Clone repo at base commit (shallow fetch — PostHog is large)

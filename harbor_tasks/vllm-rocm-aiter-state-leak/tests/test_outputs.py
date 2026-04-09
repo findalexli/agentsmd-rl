@@ -203,10 +203,10 @@ assert shared_dict["VLLM_MOE_ROUTING_SIMULATION_STRATEGY"] == "hashcvt"
 # In real pytest, monkeypatch.setitem restores the original at teardown.
 # Simulate by saving/restoring:
 original = shared_dict.copy()
-shared_dict["VLLM_MOE_ROUTING_SIMULATION_STRATEGY"] = "hashcvt"
+shared_dict["VLLM_MOE_ROUTING_SIMULATION_STRATEGY"] = "topk"
 # teardown restores:
 shared_dict.update(original)
-assert shared_dict["VLLM_MOE_ROUTING_SIMULATION_STRATEGY"] == "default"
+assert shared_dict["VLLM_MOE_ROUTING_SIMULATION_STRATEGY"] == "hashcvt"
 
 # --- Structural verification ---
 tree = ast.parse(open("tests/kernels/moe/test_routing_simulator.py").read())
@@ -281,6 +281,212 @@ print("PASS")
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on both base and gold
+# ---------------------------------------------------------------------------
+
+
+def test_repo_ruff_lint():
+    """Modified files pass ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            """
+import subprocess
+import sys
+
+# Install ruff if not available
+subprocess.run([sys.executable, "-m", "pip", "install", "ruff", "--quiet"], check=False)
+
+# Run ruff on the modified files
+files = [
+    "vllm/distributed/parallel_state.py",
+    "tests/kernels/moe/test_routing_simulator.py",
+    "tests/kernels/moe/test_shared_fused_moe_routed_transform.py",
+]
+result = subprocess.run(
+    ["ruff", "check"] + files,
+    capture_output=True, text=True
+)
+if result.returncode != 0:
+    print(f"ruff lint failed: {result.stdout}{result.stderr}", file=sys.stderr)
+    sys.exit(1)
+print("PASS")
+"""
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout, f"Expected PASS in stdout, got: {r.stdout}"
+
+
+def test_repo_python_syntax():
+    """Modified Python files have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            """
+import ast
+import sys
+
+files = [
+    "vllm/distributed/parallel_state.py",
+    "tests/kernels/moe/test_routing_simulator.py",
+    "tests/kernels/moe/test_shared_fused_moe_routed_transform.py",
+]
+
+for f in files:
+    try:
+        with open(f) as fp:
+            ast.parse(fp.read())
+    except SyntaxError as e:
+        print(f"Syntax error in {f}: {e}", file=sys.stderr)
+        sys.exit(1)
+
+print("PASS")
+"""
+        ],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout, f"Expected PASS in stdout, got: {r.stdout}"
+
+
+def test_repo_ruff_format():
+    """Modified files pass ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            """
+import subprocess
+import sys
+
+# Install ruff if not available
+subprocess.run([sys.executable, "-m", "pip", "install", "ruff", "--quiet"], check=False)
+
+# Run ruff format check on the modified files
+files = [
+    "vllm/distributed/parallel_state.py",
+    "tests/kernels/moe/test_routing_simulator.py",
+    "tests/kernels/moe/test_shared_fused_moe_routed_transform.py",
+]
+result = subprocess.run(
+    ["ruff", "format", "--check"] + files,
+    capture_output=True, text=True
+)
+if result.returncode != 0:
+    print(f"ruff format check failed: {result.stdout}{result.stderr}", file=sys.stderr)
+    sys.exit(1)
+print("PASS")
+"""
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout, f"Expected PASS in stdout, got: {r.stdout}"
+
+
+def test_repo_spdx_headers():
+    """Modified Python files have SPDX headers (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            """
+import subprocess
+import sys
+
+# Install pre-commit if not available
+subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit", "--quiet"], check=False)
+
+# Run check-spdx-header on the modified files
+files = [
+    "vllm/distributed/parallel_state.py",
+    "tests/kernels/moe/test_routing_simulator.py",
+    "tests/kernels/moe/test_shared_fused_moe_routed_transform.py",
+]
+result = subprocess.run(
+    ["pre-commit", "run", "check-spdx-header", "--files"] + files,
+    capture_output=True, text=True
+)
+# pre-commit returns 0 on pass, 1 on fail
+if "Passed" not in result.stdout and result.returncode != 0:
+    print(f"SPDX header check failed: {result.stdout}{result.stderr}", file=sys.stderr)
+    sys.exit(1)
+print("PASS")
+"""
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SPDX header check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout, f"Expected PASS in stdout, got: {r.stdout}"
+
+
+def test_repo_no_forbidden_imports():
+    """Modified files have no forbidden imports (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            """
+import subprocess
+import sys
+
+# Install pre-commit and regex if not available
+subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit", "regex", "--quiet"], check=False)
+
+# Run check-forbidden-imports on the modified files
+files = [
+    "vllm/distributed/parallel_state.py",
+    "tests/kernels/moe/test_routing_simulator.py",
+    "tests/kernels/moe/test_shared_fused_moe_routed_transform.py",
+]
+result = subprocess.run(
+    ["pre-commit", "run", "check-forbidden-imports", "--files"] + files,
+    capture_output=True, text=True
+)
+if "Passed" not in result.stdout and result.returncode != 0:
+    print(f"Forbidden imports check failed: {result.stdout}{result.stderr}", file=sys.stderr)
+    sys.exit(1)
+print("PASS")
+"""
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Forbidden imports check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout, f"Expected PASS in stdout, got: {r.stdout}"
+
+
+def test_repo_no_torch_cuda_calls():
+    """Modified files don't use forbidden torch.cuda APIs (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            """
+import subprocess
+import sys
+
+# Install pre-commit and regex if not available
+subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit", "regex", "--quiet"], check=False)
+
+# Run check-torch-cuda-call on the modified files
+files = [
+    "vllm/distributed/parallel_state.py",
+]
+result = subprocess.run(
+    ["pre-commit", "run", "check-torch-cuda-call", "--files"] + files,
+    capture_output=True, text=True
+)
+if "Passed" not in result.stdout and result.returncode != 0:
+    print(f"torch.cuda check failed: {result.stdout}{result.stderr}", file=sys.stderr)
+    sys.exit(1)
+print("PASS")
+"""
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"torch.cuda check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout, f"Expected PASS in stdout, got: {r.stdout}"
 
 
 # ---------------------------------------------------------------------------

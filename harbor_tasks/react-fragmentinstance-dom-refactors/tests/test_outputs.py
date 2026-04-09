@@ -295,3 +295,70 @@ console.log('PASS');
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo CI/CD) - Ensure repo's own checks pass on base and gold
+# ---------------------------------------------------------------------------
+
+def test_repo_lint():
+    """Repo's ESLint checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_version_check():
+    """Repo's version check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/version-check.js"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_license_check():
+    """Repo's license check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/check_license.sh"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"License check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_tests_react_dom():
+    """ReactDOM tests pass (pass_to_pass) - relevant to ReactFiberConfigDOM changes."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern=ReactDOM-test", "--maxWorkers=1"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactDOM tests failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_print_warnings():
+    """Repo's print warnings check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/test_print_warnings.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Print warnings check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_flow():
+    """Repo's Flow typecheck passes for dom-node renderer (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-node"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_react_dom_fragment_refs():
+    """ReactDOMFragmentRefs tests pass (pass_to_pass) - highly relevant to FragmentInstance changes."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern=ReactDOMFragmentRefs", "--maxWorkers=1"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactDOMFragmentRefs tests failed:\n{r.stderr[-1000:]}"

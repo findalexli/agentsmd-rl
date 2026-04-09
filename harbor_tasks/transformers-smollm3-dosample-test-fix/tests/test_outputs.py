@@ -259,3 +259,47 @@ def test_code_style():
         cwd=REPO, capture_output=True, text=True,
     )
     assert r.returncode == 0, f"ruff lint failures:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates (enforces repo standards on base + fix)
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass — repo's formatting standards
+def test_repo_formatting():
+    """Target test file must satisfy ruff formatting (pass_to_pass).
+
+    Repo CI enforces code formatting via ruff. This ensures the fix doesn't
+    introduce formatting regressions.
+    """
+    r = subprocess.run(
+        ["ruff", "format", "--check", str(TARGET)],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — Python syntax validation
+def test_repo_python_syntax():
+    """Target test file must have valid Python syntax (pass_to_pass).
+
+    Uses py_compile to verify the file parses without errors.
+    """
+    r = subprocess.run(
+        ["python", "-m", "py_compile", str(TARGET)],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Python syntax error in {TARGET}:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — repo Makefile style check on target file
+def test_repo_style_check():
+    """Target file should pass repo's ruff check (pass_to_pass).
+
+    Uses the repo's utils/checkers.py to run ruff_check, matching CI behavior.
+    """
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "ruff_check"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Repo style check failed:\n{r.stderr[-500:]}"

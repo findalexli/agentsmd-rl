@@ -1,0 +1,74 @@
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T06:10:17.343606",
+  "total_time": 0.0,
+  "sandbox_id": "i9cnsguu5jhz144v17onk",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "ci_commands_discovered": [
+        "yarn test:typecheck - TypeScript type checking (tsc)",
+        "yarn test:code - ESLint linting",
+        "yarn test:other - Prettier formatting check",
+        "yarn test:app --watch=false - Unit tests with vitest"
+      ],
+      "ci_commands_added": [
+        "test_repo_typecheck - TypeScript typecheck pass_to_pass gate",
+        "test_repo_lint - ESLint pass_to_pass gate",
+        "test_repo_prettier - Prettier formatting pass_to_pass gate",
+        "test_repo_unit_tests - Unit tests pass_to_pass gate"
+      ],
+      "docker_build_status": "failed_due_to_shallow_clone",
+      "docker_build_error": "fatal: reference is not a tree - base commit not in shallow clone (--depth=50)",
+      "notes": "CI commands discovered from GitHub workflows and package.json. P2P tests added to test_outputs.py and eval_manifest.yaml. Dockerfile build issue noted for validate agent to fix."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 547.09,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile: removed --depth=50 from git clone to enable checking out the base commit. Fixed test.sh: updated to use --break-system-packages for pip3 install pytest. Fixed solve.sh: the original patch had context issues for useTextGeneration.ts, so rewrote it to apply most changes via patch command and useTextGeneration.ts changes via Python script. All 17 tests pass after gold fix.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 870.9
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.46,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T06:10:17.343606"
+    }
+  ]
+}

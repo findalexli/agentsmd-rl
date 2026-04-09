@@ -1,0 +1,81 @@
+task:
+  name: sel-dotnet-assemblyfixture
+  source_pr:
+    owner: SeleniumHQ
+    repo: selenium
+    number: 17275
+    merge_commit: 1cf03a9976a0b192066ba8f2fa7d6423e9371fd5
+    base_commit: d8fe629eec05f31dd498ac49c2ddde02be2b9f10
+  description: |
+    Refactor NUnit test setup by introducing a global [SetUpFixture] AssemblyFixture
+    class to handle web server startup/teardown at the assembly level, removing
+    duplicated OneTimeSetUp/OneTimeTearDown code from individual test classes.
+
+  checks:
+    - id: test_assembly_fixture_created
+      name: AssemblyFixture.cs file created
+      type: fail_to_pass
+      description: Verify AssemblyFixture.cs exists with proper namespace, usings, and [SetUpFixture] attribute
+
+    - id: test_assembly_fixture_setup_method
+      name: OneTimeSetUp method exists
+      type: fail_to_pass
+      description: Verify RunBeforeAnyTestAsync method with [OneTimeSetUp] starts WebServer
+
+    - id: test_assembly_fixture_teardown_method
+      name: OneTimeTearDown method exists
+      type: fail_to_pass
+      description: Verify RunAfterAnyTestsAsync method with [OneTimeTearDown] stops WebServer and closes driver
+
+    - id: test_assembly_fixture_remote_server_support
+      name: Remote server conditional support
+      type: fail_to_pass
+      description: Verify AssemblyFixture conditionally starts/stops RemoteServer for Browser.Remote
+
+    - id: test_popup_window_finder_cleanup
+      name: PopupWindowFinderTests cleanup
+      type: fail_to_pass
+      description: Verify PopupWindowFinderTests no longer has OneTimeSetUp/OneTimeTearDown and removed unneeded usings
+
+    - id: test_select_browser_tests_cleanup
+      name: SelectBrowserTests cleanup
+      type: fail_to_pass
+      description: Verify SelectBrowserTests no longer has OneTimeSetUp/OneTimeTearDown and removed unneeded usings
+
+    - id: test_csharp_syntax_valid
+      name: C# syntax validation
+      type: pass_to_pass
+      description: Verify AssemblyFixture.cs has valid C# syntax
+
+    - id: test_no_duplicate_setup_methods
+      name: TODO comment removed
+      type: fail_to_pass
+      description: Verify the TODO comment about moving setup is removed from PopupWindowFinderTests
+
+    - id: test_assembly_fixture_has_constructor
+      name: AssemblyFixture has constructor
+      type: pass_to_pass
+      description: Verify AssemblyFixture class has a public constructor
+
+    - id: test_logging_configuration
+      name: Logging configuration
+      type: pass_to_pass
+      description: Verify AssemblyFixture configures Internal.Logging.Log.SetLevel to Trace
+
+  agent_config:
+    # From dotnet/AGENTS.md - XML documentation, async patterns, logging conventions
+    - source: "dotnet/AGENTS.md"
+      rules:
+        - "Use XML documentation comments for public APIs (/// <summary>, /// <param>, etc.)"
+        - "Use async patterns for I/O operations (async/await)"
+        - "Use OpenQA.Selenium.Internal.Logging for logging with Log.GetLogger<T>()"
+        - "Mark deprecated methods with [Obsolete(\"Use NewMethod instead\")] attribute"
+
+    # From root AGENTS.md - testing approach
+    - source: "AGENTS.md"
+      rules:
+        - "Prefer small (unit) tests over browser tests for speed/reliability"
+        - "Avoid mocks—they can misrepresent API contracts"
+        - "Comments should explain *why*, not *what* - prefer well-named methods over comments"
+
+  rubric: []

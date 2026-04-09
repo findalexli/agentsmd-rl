@@ -1,0 +1,99 @@
+source_pr:
+  owner: apache
+  repo: airflow
+  number: 64859
+  merge_commit: cacc2eb8dcac7e0343f26685e00f3d5700899a69
+  base_commit: fc315f3d77f4029c469ebc7d8be35983edcbfc27
+
+task_name: "airflow-exclude-newer-package-workspace"
+
+# Verification checks
+checks:
+  - id: test_pyproject_has_exclude_newer_package_section
+    type: fail_to_pass
+    origin: task_spec
+    description: "pyproject.toml must have [tool.uv.exclude-newer-package] section"
+
+  - id: test_pyproject_has_exclude_newer_package_pip_section
+    type: fail_to_pass
+    origin: task_spec
+    description: "pyproject.toml must have [tool.uv.pip.exclude-newer-package] section"
+
+  - id: test_exclude_newer_package_entries_exist
+    type: fail_to_pass
+    origin: task_spec
+    description: "Workspace components must have exclude-newer-package = false entries"
+
+  - id: test_exclude_newer_package_pip_entries_exist
+    type: fail_to_pass
+    origin: task_spec
+    description: "Workspace components must have exclude-newer-package = false in pip section"
+
+  - id: test_update_script_has_get_workspace_components
+    type: fail_to_pass
+    origin: task_spec
+    description: "update_airflow_pyproject_toml.py must have get_all_workspace_component_names function"
+
+  - id: test_update_script_generates_exclude_newer_entries
+    type: fail_to_pass
+    origin: task_spec
+    description: "update script must generate exclude-newer-package entries for workspace components"
+
+  - id: test_install_script_no_exclude_newer_datetime
+    type: fail_to_pass
+    origin: task_spec
+    description: "install_airflow_and_providers.py must not use datetime.now().isoformat() with --exclude-newer"
+
+  - id: test_docker_compose_has_pyproject_mount
+    type: fail_to_pass
+    origin: task_spec
+    description: "docker-compose must mount pyproject.toml for uv config access"
+
+  - id: test_ruff_format_check
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      config_file: "CLAUDE.md"
+      lines: "Always format and check Python files with ruff immediately after writing or editing them"
+    description: "Python files should pass ruff format check"
+
+  - id: test_script_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python scripts should have valid syntax"
+
+  - id: test_pyproject_toml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pyproject.toml must be valid TOML"
+
+  - id: test_ruff_check_critical
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python files should pass ruff critical checks (E9, F63)"
+
+# Rubric from agent configs
+rubric:
+  - rule: "Always format and check Python files with ruff immediately after writing or editing them"
+    weight: 1
+    source:
+      config_file: "CLAUDE.md"
+      section: "Coding Standards"
+
+  - rule: "No assert in production code"
+    weight: 0
+    source:
+      config_file: "CLAUDE.md"
+      section: "Coding Standards"
+
+  - rule: "Imports at top of file (valid exceptions: circular imports, lazy loading, TYPE_CHECKING blocks)"
+    weight: 0
+    source:
+      config_file: "CLAUDE.md"
+      section: "Coding Standards"
+
+  - rule: "Scripts must be Python (not bash) in scripts/ci/prek/"
+    weight: 0
+    source:
+      config_file: "scripts/ci/prek/AGENTS.md"
+      section: "Adding new hooks"

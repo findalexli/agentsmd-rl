@@ -200,3 +200,32 @@ assert result2 == {'height': 224, 'width': 224}, f'Wrong: {result2}'
         cwd=REPO, capture_output=True, text=True,
     )
     assert r.returncode == 0, f"Failed:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo's Makefile
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Repo unittest for image_processing_utils
+def test_repo_unittest_image_processing_utils():
+    """Repo's unittest for image_processing_utils passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "unittest", "tests.utils.test_image_processing_utils.ImageProcessingUtilsTester.test_get_size_dict", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Repo unittest failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Makefile style check: ruff
+def test_repo_ruff_check():
+    """Repo ruff linter check passes on image_processing_utils.py (pass_to_pass)."""
+    # Install ruff if not already present
+    subprocess.run(
+        ["pip", "install", "--quiet", "ruff"],
+        cwd=REPO, capture_output=True,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", "src/transformers/image_processing_utils.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"

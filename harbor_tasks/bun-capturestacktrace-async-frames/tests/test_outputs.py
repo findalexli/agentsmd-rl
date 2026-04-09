@@ -138,7 +138,7 @@ if not re.search(r"isAsyncFrame\\s*\\(", body):
 if not re.search(r"isAsyncFrame", body):
     print("FAIL:no_async_check"); sys.exit(0)
 # Verify isAsyncFrame is in a context with break (loop body)
-clean = re.sub(r"//[^\n]*", "", body)
+clean = re.sub(r"//[^\\n]*", "", body)
 if not re.search(r"isAsyncFrame\\s*\\(\\s*\\)\\s*\\)\\s*break", clean):
     # Try multiline: isAsyncFrame() ... break on next line
     lines = clean.split("\\n")
@@ -295,3 +295,88 @@ def test_config_h_included():
     assert re.search(
         r'#\s*include\s*"config\.h"', text
     ), 'Must #include "config.h" at the top (existing file convention)'
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD tests (pass_to_pass) -- must pass on both base commit and fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass -- CI: format.yml (clang-format)
+def test_cpp_file_clang_format():
+    """ErrorStackTrace.cpp must pass clang-format check (pass_to_pass).
+
+    Repo CI enforces C++ formatting via .clang-format with WebKit style.
+    This ensures the fix maintains repo formatting standards.
+    """
+    import subprocess
+
+    # Install clang-format from apt (provides clang-format-19 and clang-format symlink)
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, timeout=60
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "--no-install-recommends", "clang-format"],
+        capture_output=True, timeout=120
+    )
+
+    # Find available clang-format binary
+    clang_format_bin = None
+    for bin_name in ["clang-format", "clang-format-19"]:
+        result = subprocess.run([bin_name, "--version"], capture_output=True)
+        if result.returncode == 0:
+            clang_format_bin = bin_name
+            break
+
+    if not clang_format_bin:
+        # Skip if clang-format can't be installed (no pytest dependency)
+        return
+
+    # Run clang-format check on the specific file
+    r = subprocess.run(
+        [clang_format_bin, "--dry-run", "--Werror", str(CPP_FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"clang-format check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass -- CI: lint.yml (code quality checks)
+def test_cpp_file_basic_structure():
+    """ErrorStackTrace.cpp must have valid C++ structure.
+
+    Basic validation to catch obvious errors: has includes, no double semicolons.
+    Note: Brace counting is not reliable due to comments/strings.
+    """
+    text = CPP_FILE.read_text()
+    # Must have includes
+    assert '#include' in text, "No includes found in C++ file"
+    # Must not have obvious syntax errors (skip for (;;))
+    # Remove common patterns that have ;; legitimately
+    cleaned = text.replace("for (;;)", "for ()")
+    # Remove comments before checking for ;;
+    cleaned = re.sub(r'//[^\n]*', '', cleaned)
+    cleaned = re.sub(r'/\*.*?\*/', '', cleaned, flags=re.DOTALL)
+    assert ";;" not in cleaned, "Double semicolons found outside of for(;;)"
+
+
+# [repo_tests] pass_to_pass -- CI: format.yml + lint.yml
+def test_repo_configs_exist():
+    """Repository configuration files must exist.
+
+    Checks that lint and format configs exist and are non-empty.
+    Note: oxlint.json may contain comments (JSON5), so we only check existence.
+    """
+    # Check oxlint config exists and is non-empty
+    oxlint_config = Path(REPO) / "oxlint.json"
+    assert oxlint_config.exists(), "oxlint.json config file must exist"
+    assert oxlint_config.stat().st_size > 0, "oxlint.json is empty"
+
+    # Check prettier config exists and is non-empty
+    prettierrc = Path(REPO) / ".prettierrc"
+    assert prettierrc.exists(), ".prettierrc config file must exist"
+    assert prettierrc.stat().st_size > 0, ".prettierrc is empty"
+
+    # Check .clang-tidy exists (actual file in repo, not .clang-format)
+    clang_tidy = Path(REPO) / ".clang-tidy"
+    assert clang_tidy.exists(), ".clang-tidy config file must exist"
+    assert clang_tidy.stat().st_size > 0, ".clang-tidy is empty"

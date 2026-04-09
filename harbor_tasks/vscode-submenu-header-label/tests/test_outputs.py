@@ -218,3 +218,61 @@ def test_indentation_uses_tabs():
     space_lines = sum(1 for l in indented if l.startswith('    '))
     assert tab_lines > space_lines * 5, \
         f"File uses spaces instead of tabs: {tab_lines} tab-indented vs {space_lines} space-indented lines"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — VS Code CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - TypeScript typecheck
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "compile-check-ts-native"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Monaco compile check
+def test_repo_monaco_compile_check():
+    """Repo's Monaco compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "monaco-compile-check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Monaco compile check failed:\\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - VS Code dts compile check
+def test_repo_vscode_dts_compile_check():
+    """Repo's VS Code dts compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "vscode-dts-compile-check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"VS Code dts compile check failed:\\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Precommit hygiene checks
+def test_repo_precommit_hygiene():
+    """Repo's precommit hygiene checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "precommit"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Precommit hygiene checks failed:\\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - ESLint on modified files
+def test_repo_eslint_modified_files():
+    """ESLint passes on modified files (pass_to_pass)."""
+    modified_files = [
+        "src/vs/platform/actionWidget/browser/actionList.ts",
+        "src/vs/sessions/contrib/chat/browser/sessionWorkspacePicker.ts",
+    ]
+    r = subprocess.run(
+        ["node", "--max-old-space-size=4096", "node_modules/eslint/bin/eslint.js"] + modified_files,
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on modified files:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"

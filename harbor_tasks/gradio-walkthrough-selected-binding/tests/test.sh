@@ -13,6 +13,16 @@ if ! python3 -c "import pytest" 2>/dev/null; then
         pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
 fi
 
+# Install pnpm if not available (needed for repo_tests)
+if ! command -v pnpm &>/dev/null; then
+    npm install -g pnpm 2>/dev/null
+fi
+
+# Install dependencies if node_modules is missing (needed for repo_tests)
+if [ ! -d "/repo/node_modules" ]; then
+    cd /repo && pnpm install --frozen-lockfile 2>/dev/null
+fi
+
 python3 -m pytest --ctrf /logs/verifier/ctrf.json /tests/test_outputs.py -rA --tb=short -q
 
 if [ $? -eq 0 ]; then

@@ -1,0 +1,24 @@
+name = "clickhouse-large-file-check"
+description = "Add a CI style check to ClickHouse that flags any git-tracked file larger than 5 MB unless whitelisted."
+
+# Difficulty: 2/10 - shell scripting, straightforward logic
+difficulty = 2
+tags = ["shell", "ci", "style-check", "git"]
+
+# Time estimates (seconds)
+estimated_agent_time = 600
+estimated_verifier_time = 60
+
+# Timeouts (seconds)
+agent_timeout = 1800
+verifier_timeout = 120
+
+[repository]
+owner = "ClickHouse"
+repo = "ClickHouse"
+base_commit = "cf5fb461472203d56bb0c169a61d194dd97fc2f2"
+merge_commit = "d037e27f19e1ac3bc99d027a328d646853bc6b8e"
+pr_number = 102080
+
+[files]
+target = ["ci/jobs/scripts/check_style/various_checks.sh"]

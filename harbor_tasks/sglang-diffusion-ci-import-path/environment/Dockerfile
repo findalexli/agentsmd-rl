@@ -18,4 +18,7 @@ WORKDIR /repo
 # Configure git for potential patches
 RUN git config user.email "test@test.com" && git config user.name "Test"
 
+# Install linting tools for pass-to-pass repo CI/CD checks
+RUN pip install --no-cache-dir pre-commit ruff isort codespell black
+
 ENV PYTHONPATH="/repo"

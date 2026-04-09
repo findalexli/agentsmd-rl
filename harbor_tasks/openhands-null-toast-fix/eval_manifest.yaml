@@ -1,0 +1,61 @@
+source_pr:
+  repo: "All-Hands-AI/OpenHands"
+  pr_number: 13592
+  base_commit: "679460396315ee10ad7384c5a97d441b2844db1b"
+  merge_commit: "8a61fc824b7a18935f3b10c1a96c0156dc362494"
+
+checks:
+  # Fail-to-pass tests (behavioral changes)
+  - id: test_calculateToastDuration_null_handling
+    type: fail_to_pass
+    origin: code_behavior
+    description: calculateToastDuration must have null/undefined guard returning minDuration
+    source: frontend/src/utils/toast-duration.ts
+
+  - id: test_calculateToastDuration_various_inputs
+    type: fail_to_pass
+    origin: code_behavior
+    description: calculateToastDuration handles various null/undefined/empty inputs
+    source: frontend/src/utils/toast-duration.ts
+
+  - id: test_displayErrorToast_accepts_null
+    type: fail_to_pass
+    origin: code_behavior
+    description: displayErrorToast accepts null/undefined and provides fallback message
+    source: frontend/src/utils/custom-toast-handlers.tsx
+
+  # Pass-to-pass tests (repo quality gates)
+  - id: test_frontend_lint_passes
+    type: pass_to_pass
+    origin: agent_config
+    description: Frontend linting passes (AGENTS.md requirement)
+    source: AGENTS.md frontend lint rules
+
+  - id: test_frontend_typecheck_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend TypeScript type checking passes
+
+  - id: test_frontend_build_passes
+    type: pass_to_pass
+    origin: agent_config
+    description: Frontend build succeeds (AGENTS.md requirement)
+    source: AGENTS.md frontend build rules
+
+  - id: test_specific_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Unit tests for modified files (use-handle-plan-click, use-sandbox-recovery) pass
+
+  - id: test_translation_completeness_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Translation completeness check passes (from .github/workflows/lint.yml)
+
+  - id: test_make_i18n_builds
+    type: pass_to_pass
+    origin: repo_tests
+    description: i18n translation generation succeeds (from frontend build pipeline)
+
+# Agent configuration compliance (rubric for soft rules)
+rubric: []

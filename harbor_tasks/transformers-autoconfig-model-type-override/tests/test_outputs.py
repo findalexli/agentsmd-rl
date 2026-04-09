@@ -153,6 +153,96 @@ def test_not_stub():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_import_configuration_utils():
+    """Repo's configuration_utils module imports without errors (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "-c", "from transformers.configuration_utils import PretrainedConfig; print('OK')"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert result.returncode == 0, f"Import failed: {result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pycompile_configuration_utils():
+    """Repo's configuration_utils.py compiles without syntax errors (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "-m", "py_compile", "src/transformers/configuration_utils.py"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert result.returncode == 0, f"Py_compile failed: {result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_config_docstrings():
+    """Repo's config docstrings check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_config_docstrings.py"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    err = result.stderr[-500:] if result.stderr else ""
+    assert result.returncode == 0, f"check_config_docstrings failed: {err}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_config_attributes():
+    """Repo's config attributes check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_config_attributes.py"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    err = result.stderr[-500:] if result.stderr else ""
+    assert result.returncode == 0, f"check_config_attributes failed: {err}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_inits():
+    """Repo's init files check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    err = result.stderr[-500:] if result.stderr else ""
+    assert result.returncode == 0, f"check_inits failed: {err}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_dummies():
+    """Repo's dummy objects check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    err = result.stderr[-500:] if result.stderr else ""
+    assert result.returncode == 0, f"check_dummies failed: {err}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_modeling_structure():
+    """Repo's modeling file structure check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_modeling_structure.py"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    err = result.stderr[-500:] if result.stderr else ""
+    assert result.returncode == 0, f"check_modeling_structure failed: {err}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_pipeline_typing():
+    """Repo's pipeline type hints check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_pipeline_typing.py"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    err = result.stderr[-500:] if result.stderr else ""
+    assert result.returncode == 0, f"check_pipeline_typing failed: {err}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------
 
@@ -168,7 +258,7 @@ def test_ruff_style_check():
         capture_output=True, text=True, cwd=REPO,
     )
     assert result.returncode == 0, (
-        f"ruff check failed:\n{result.stdout}\n{result.stderr}"
+        f"ruff check failed: {result.stdout} {result.stderr}"
     )
 
 

@@ -1,0 +1,102 @@
+source:
+  pr:
+    owner: excalidraw
+    repo: excalidraw
+    number: 10679
+    title: "fix: keep input focus during generation"
+    merge_commit: 3c8e893cab216eb1f748ec1245aeb059a1349639
+    base_commit: 9ba0f5dbc9d551aad9277341a82449e04043c5ae
+
+  files:
+    primary:
+      - packages/excalidraw/components/TTDDialog/Chat/ChatInterface.tsx
+    secondary:
+      - packages/excalidraw/locales/en.json
+
+  behavior:
+    description: |
+      When the AI is generating a diagram in the chat interface, pressing Enter
+      would cause the input to lose focus because: (1) the input was disabled,
+      and (2) handleSubmit was called again. The fix keeps the input enabled
+      during generation, blocks Enter key from submitting, and shows a
+      "Generating..." placeholder with a visual border indicator.
+
+  agent_config:
+    - source: CLAUDE.md
+      rules:
+        - "Use TypeScript for all new code"
+        - "Use functional components with hooks"
+        - "Follow the React hooks rules (no conditional hooks)"
+        - "Use CSS modules for component styling"
+        - "Prefer immutable data (const, readonly)"
+    - source: .github/copilot-instructions.md
+      rules:
+        - "Use TypeScript for all new code"
+        - "Use functional components with hooks"
+        - "Follow the React hooks rules (no conditional hooks)"
+        - "Keep components small and focused"
+        - "Use CSS modules for component styling"
+        - "Use PascalCase for component names, interfaces, and type aliases"
+        - "Use camelCase for variables, functions, and methods"
+
+checks:
+  # F2P checks - must fail on base, pass on fix
+  - id: "submit_blocked_during_generation"
+    description: "handleSubmit must NOT be called when isGenerating is true"
+    type: "pytest"
+    test: "test_submit_blocked_during_generation"
+    weight: 3
+    origin: "behavior"
+
+  - id: "input_not_disabled_during_generation"
+    description: "Input must remain enabled during generation to preserve focus"
+    type: "pytest"
+    test: "test_input_not_disabled_during_generation"
+    weight: 3
+    origin: "behavior"
+
+  - id: "placeholder_shows_generating_state"
+    description: "Placeholder must show 'Generating...' when isGenerating is true"
+    type: "pytest"
+    test: "test_placeholder_shows_generating_state"
+    weight: 2
+    origin: "behavior"
+
+  # P2P checks - pass on both base and fix
+  - id: "localization_string_exists"
+    description: "The 'chat.generating' localization key must exist in en.json"
+    type: "pytest"
+    test: "test_localization_string_exists"
+    weight: 1
+    origin: "regression"
+
+  - id: "visual_indicator_for_generating_state"
+    description: "Visual border color indicator exists for generating state"
+    type: "pytest"
+    test: "test_visual_indicator_for_generating_state"
+    weight: 1
+    origin: "regression"
+
+  # Repo CI/CD Pass-to-Pass checks
+  - id: "repo_typecheck"
+    description: "Repo TypeScript typecheck passes (yarn test:typecheck)"
+    type: "pytest"
+    test: "test_repo_typecheck"
+    weight: 1
+    origin: "pass_to_pass"
+
+  - id: "repo_lint"
+    description: "Repo ESLint passes (yarn test:code)"
+    type: "pytest"
+    test: "test_repo_lint"
+    weight: 1
+    origin: "pass_to_pass"
+
+  - id: "repo_formatting"
+    description: "Repo Prettier formatting passes (yarn test:other)"
+    type: "pytest"
+    test: "test_repo_formatting"
+    weight: 1
+    origin: "pass_to_pass"
+
+rubric: []

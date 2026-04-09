@@ -10,27 +10,52 @@ checks:
   - id: field_default_without_specifiers
     type: fail_to_pass
     origin: pr_diff
-    description: "dataclass_transform without field_specifiers treats field() as a default, so A() doesn't error"
+    description: "dataclass_transform without field_specifiers treats field() as a default, so A() does not error"
 
   - id: field_default_with_other_specifiers
     type: fail_to_pass
     origin: pr_diff
-    description: "dataclass_transform with non-field specifiers treats field() as a default, so C() doesn't error"
+    description: "dataclass_transform with non-field specifiers treats field() as a default, so C() does not error"
 
   - id: stdlib_dataclass_field_init_false_still_respected
     type: pass_to_pass
     origin: repo_tests
-    description: "stdlib @dataclass still errors on B(name='foo') with field(init=False)"
+    description: "stdlib @dataclass still errors on B(name=\"foo\") with field(init=False)"
 
   - id: named_args_without_specifiers
     type: pass_to_pass
     origin: repo_tests
-    description: "A(name='hello') works on both base and fix"
+    description: "A(name=\"hello\") works on both base and fix"
 
   - id: cargo_check
     type: pass_to_pass
     origin: static
     description: "ty_python_semantic crate compiles without errors"
+
+  - id: cargo_fmt
+    type: pass_to_pass
+    origin: static
+    description: "Repo code is formatted correctly"
+
+  - id: cargo_clippy_ty_python_semantic
+    type: pass_to_pass
+    origin: static
+    description: "ty_python_semantic passes clippy lints"
+
+  - id: cargo_doc_ty_python_semantic
+    type: pass_to_pass
+    origin: static
+    description: "ty_python_semantic docs build without warnings"
+
+  - id: ty_mdtest
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ty_python_semantic markdown tests pass"
+
+  - id: ty_mdtest_dataclasses
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ty_python_semantic dataclasses-specific markdown tests pass"
 
   - id: no_unsafe_unwrap_in_changes
     type: pass_to_pass
@@ -47,7 +72,7 @@ rubric:
       path: "AGENTS.md"
       lines: "75"
       commit: "ee9084695ec4d70bc66083ac2b3cf598cc45101a"
-  - rule: "Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism that could help solve the problem. Look for existing utilities first."
+  - rule: "Avoid writing significant amounts of new code. This is often a sign that we are missing an existing method or mechanism that could help solve the problem. Look for existing utilities first."
     source:
       path: "AGENTS.md"
       lines: "78"

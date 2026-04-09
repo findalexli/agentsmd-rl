@@ -1,0 +1,77 @@
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T10:35:04.617335",
+  "total_time": 4991.57,
+  "sandbox_id": "igi8lbwlviljfb9ofrc5u",
+  "backend": "glm",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "ci_commands_found": [
+        "pytest python_modules/dagster/dagster_tests/core_tests/asset_graph_view_tests/test_serializable_entity_subset.py (7 tests, 2s)",
+        "pytest python_modules/dagster/dagster_tests/core_tests/partition_tests/ (21 tests, 9s)",
+        "pytest python_modules/dagster/dagster_tests/asset_defs_tests/test_partitions_subset.py (18 tests, 4s)"
+      ],
+      "p2p_tests_added": [
+        "test_repo_serializable_entity_subset",
+        "test_repo_partition_tests",
+        "test_repo_partitions_subset_tests"
+      ],
+      "notes": "Added 3 p2p tests covering repo's own test suites for serializable_entity_subset, partitions, and partitions_subset. All pass on base commit. Focused on modules directly related to the modified file (serializable_entity_subset.py)."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 1371.69,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed: (1) Dockerfile missing /workspace/task dir + symlink to /tests for test.sh, (2) created conftest.py with pytest_sessionfinish hook to write reward.txt, (3) fixed weekly partition test key from 2024-01-01 (Mon, invalid) to 2024-01-07 (Sun, valid). NOP: 5f2p fail, 5p2p pass, reward=0. Gold: 10/10 pass, reward=1. Rubric: empty, score=1.0.",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 1413.58
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.73,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 4991.27,
+      "at": "2026-04-09T10:35:04.404372"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 4991.57,
+      "at": "2026-04-09T10:35:04.617335"
+    }
+  ]
+}

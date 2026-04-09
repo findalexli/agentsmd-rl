@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import os
 import subprocess
 from pathlib import Path
 
@@ -47,6 +48,104 @@ def test_modified_files_syntax():
             ast.parse(src)
         except SyntaxError as e:
             assert False, f"Syntax error in {path.name}: {e}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI pass_to_pass checks — ensure repo's own CI passes on base and gold
+# ---------------------------------------------------------------------------
+
+def _run_precommit_hook(hook_id: str) -> subprocess.CompletedProcess:
+    """Helper to run a pre-commit hook with proper env setup."""
+    env = os.environ.copy()
+    env["SKIP"] = "no-commit-to-branch,lychee,clang-format,mirrors-clang-format,nbstripout"
+    return subprocess.run(
+        ["pre-commit", "run", hook_id, "--all-files"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+
+
+def test_repo_precommit_check_ast():
+    """Repo's Python AST check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("check-ast")
+    assert r.returncode == 0, f"check-ast failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_precommit_check_yaml():
+    """Repo's YAML check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("check-yaml")
+    assert r.returncode == 0, f"check-yaml failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_precommit_check_toml():
+    """Repo's TOML check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("check-toml")
+    assert r.returncode == 0, f"check-toml failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_precommit_ruff():
+    """Repo's ruff linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("ruff")
+    assert r.returncode == 0, f"ruff failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_precommit_isort():
+    """Repo's isort check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("isort")
+    assert r.returncode == 0, f"isort failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_precommit_codespell():
+    """Repo's codespell check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("codespell")
+    assert r.returncode == 0, f"codespell failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_precommit_black_jupyter():
+    """Repo's black-jupyter formatting check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("black-jupyter")
+    assert r.returncode == 0, f"black-jupyter failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

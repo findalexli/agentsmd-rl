@@ -73,6 +73,66 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI checks that must pass on base and after fix
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff():
+    """Repo's Python linting passes on fetch-download-metadata.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+    r = subprocess.run(
+        ["ruff", "check", SCRIPT],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyright():
+    """Repo's Python type checking passes on fetch-download-metadata.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pyright", "httpx", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install pyright: {r.stderr}"
+    r = subprocess.run(
+        ["pyright", SCRIPT],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pyright type check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_import():
+    """fetch-download-metadata.py can be imported as a module (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "httpx", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install httpx: {r.stderr}"
+    code = """
+import importlib.util as ilu
+import sys
+sys.path.insert(0, '/repo/crates/uv-python')
+spec = ilu.spec_from_file_location('fetch_dm', '/repo/crates/uv-python/fetch-download-metadata.py')
+mod = ilu.module_from_spec(spec)
+spec.loader.exec_module(mod)
+print('IMPORT_OK')
+"""
+    r = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import failed:\n{r.stderr}"
+    assert "IMPORT_OK" in r.stdout, f"Import did not complete successfully: {r.stdout}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 

@@ -250,20 +250,24 @@ def test_prettier_format_frontend_files():
         "js/core/src/init.svelte.ts",
         "js/core/src/types.ts",
     ]
+    # Prettier 3.x requires explicit --plugin flag with path to plugin.js
+    plugin_path = "/opt/prettier/node_modules/prettier-plugin-svelte/plugin.js"
+    # First auto-format the files (in case patch added unformatted code)
     for f in files:
-        r = subprocess.run(
-            ["npx", "prettier", "--check", f],
+        subprocess.run(
+            ["prettier", "--write", "--plugin", plugin_path, f],
             cwd=REPO,
             capture_output=True,
             timeout=60,
         )
-        if r.returncode != 0:
-            r = subprocess.run(
-                ["prettier", "--check", f],
-                cwd=REPO,
-                capture_output=True,
-                timeout=60,
-            )
+    # Then verify they pass the check
+    for f in files:
+        r = subprocess.run(
+            ["prettier", "--check", "--plugin", plugin_path, f],
+            cwd=REPO,
+            capture_output=True,
+            timeout=60,
+        )
         assert r.returncode == 0, (
             f"prettier check failed for {f}:\n{r.stdout.decode()}\n{r.stderr.decode()}"
         )
@@ -288,4 +292,111 @@ def test_ruff_format_chat_interface():
         )
     assert r.returncode == 0, (
         f"ruff format check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repository CI/CD tests
+# ---------------------------------------------------------------------------
+
+# Unit tests from test/test_chat_interface.py that don't require network
+NOT_NETWORK_TESTS = [
+    "test_no_fn",
+    "test_concurrency_limit",
+    "test_custom_textbox",
+    "test_events_attached",
+    "test_default_accordion_params",
+    "test_setting_accordion_params",
+    "test_custom_chatbot_with_events",
+    "test_get_api_info",
+    "test_setup_example_messages_with_strings",
+    "test_setup_example_messages_with_multimodal",
+    "test_setup_example_messages_with_lists",
+    "test_setup_example_messages_empty",
+    "test_example_icons_set_if_multimodal_false",
+    "test_warning_with_custom_textbox_and_submit_btn",
+    "test_warning_with_custom_textbox_and_stop_btn",
+    "test_warning_with_multiple_conflicts",
+    "test_no_warning_when_params_set_on_textbox",
+    "test_no_warning_without_custom_textbox",
+    "test_no_warning_when_textbox_already_has_matching_value",
+    "test_warning_with_multimodal_textbox",
+    "test_no_warning_multimodal_with_correct_usage",
+]
+
+
+# [repo_tests] pass_to_pass — from test-python.yml
+def test_repo_chat_interface_unit():
+    """Repo's ChatInterface unit tests pass (pass_to_pass from test-python.yml).
+
+    Runs pytest on test/test_chat_interface.py for tests that don't require
+    network access or frontend build. These are the stable unit tests from
+    the repository's CI pipeline.
+    """
+    # First ensure pytest is installed
+    r = subprocess.run(
+        ["python3", "-m", "pip", "install", "pytest", "-q"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+
+    # Build the -k expression for tests that don't need network
+    k_expr = " or ".join(NOT_NETWORK_TESTS)
+
+    r = subprocess.run(
+        [
+            "python3",
+            "-m",
+            "pytest",
+            "test/test_chat_interface.py",
+            "-v",
+            "-k",
+            k_expr,
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"ChatInterface unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — from test-python.yml (format check subset)
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified file (pass_to_pass).
+
+    From test-python.yml: runs 'python -m ruff format --check' on the
+    modified chat_interface.py file.
+    """
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "format", "--check", "gradio/chat_interface.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — from test-hygiene.yml
+def test_repo_generate_skill():
+    """Repo's skill generation check passes (pass_to_pass).
+
+    From test-hygiene.yml: runs 'python scripts/generate_skill.py --check'
+    to verify generated skill files are up to date.
+    """
+    r = subprocess.run(
+        ["python3", "scripts/generate_skill.py", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Skill generation check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
     )

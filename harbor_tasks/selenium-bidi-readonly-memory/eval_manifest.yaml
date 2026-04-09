@@ -1,0 +1,98 @@
+source_pr:
+  repo: SeleniumHQ/selenium
+  number: 17205
+  merge_commit: 2feac4e4feb3f58c8b5ef8f9eed04f9e0fc9ab5f
+  base_commit: c9cfcf888c0bf1021bd71da029301fedda71f6a9
+
+checks:
+  # Fail-to-pass tests (behavioral changes)
+  - id: test_transport_interface_uses_readonly_memory
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      - file: dotnet/AGENTS.md
+        lines: "Async patterns: The codebase is migrating to async"
+    description: "ITransport.SendAsync uses ReadOnlyMemory<byte> instead of byte[]"
+
+  - id: test_transport_returns_value_task
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      - file: dotnet/AGENTS.md
+        lines: "Async patterns: The codebase is migrating to async"
+    description: "ITransport.SendAsync returns ValueTask instead of Task"
+
+  - id: test_websocket_transport_implements_interface
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      - file: dotnet/AGENTS.md
+        lines: "Async patterns: The codebase is migrating to async"
+    description: "WebSocketTransport.SendAsync implements the updated interface"
+
+  - id: test_websocket_has_conditional_compilation_for_net8
+    type: fail_to_pass
+    origin: behavioral
+    description: "WebSocketTransport uses #if NET8_0_OR_GREATER for optimized path"
+
+  - id: test_broker_uses_try_set_result
+    type: fail_to_pass
+    origin: behavioral
+    description: "Broker uses TrySetResult for thread-safe task completion"
+
+  - id: test_broker_uses_try_set_exception
+    type: fail_to_pass
+    origin: behavioral
+    description: "Broker uses TrySetException for thread-safe exception handling"
+
+  # Pass-to-pass tests (regression tests / repo CI)
+  - id: test_dotnet_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "dotnet build compiles successfully (requires Bazel)"
+    skip_if: "bazel_unavailable"
+
+  - id: test_no_compile_errors_in_bidi
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No compilation errors in BiDi code (requires Bazel)"
+    skip_if: "bazel_unavailable"
+
+  # New pass-to-pass tests from CI discovery (dotnet format, works without Bazel)
+  - id: test_dotnet_bidi_formatting
+    type: pass_to_pass
+    origin: repo_tests
+    description: "BiDi code follows dotnet format style rules"
+
+  - id: test_dotnet_project_files_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: ".csproj files are valid XML and parseable"
+
+  - id: test_bidi_files_have_valid_cs_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "BiDi C# files pass dotnet format syntax validation"
+
+# Rubric for soft/subjective rules (from agent configs)
+rubric:
+  - rule: "Use XML documentation comments for public APIs"
+    source:
+      - file: dotnet/AGENTS.md
+        lines: "Documentation: Use XML documentation comments for public APIs"
+    weight: minor
+    description: "Public API changes should include XML documentation"
+
+  - rule: "Follow logging conventions with LogEventLevel"
+    source:
+      - file: dotnet/AGENTS.md
+        lines: "Logging: _logger.Trace(), _logger.Debug(), etc."
+    weight: minor
+    description: "Logging calls should use proper log levels"
+
+  - rule: "Avoid mocks in tests (follow testing guidelines)"
+    source:
+      - file: AGENTS.md
+        lines: "Testing: Avoid mocks—they can misrepresent API contracts"
+    weight: minor
+    description: "Tests should not rely on mocks"

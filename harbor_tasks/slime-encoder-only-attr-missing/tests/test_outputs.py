@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 import sys
 import types
 from pathlib import Path
@@ -190,3 +191,34 @@ def test_not_stub():
     launch_server_process(Args())
     assert _TrackingProcess.last_target is not None, "Function is a stub — no process created"
     assert callable(_TrackingProcess.last_target), "Process target must be callable"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that should pass on base commit
+# ---------------------------------------------------------------------------
+
+
+def _ensure_ruff():
+    """Install ruff if not already available."""
+    try:
+        import ruff  # noqa: F401
+    except ImportError:
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+            capture_output=True,
+            timeout=60,
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff():
+    """Repo's ruff linting passes (pass_to_pass)."""
+    _ensure_ruff()
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "slime", "slime_plugins"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

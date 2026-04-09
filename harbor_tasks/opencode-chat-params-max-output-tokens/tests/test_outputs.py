@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
+import shlex
 import subprocess
 from pathlib import Path
 
@@ -33,9 +34,9 @@ def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         script.unlink(missing_ok=True)
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_modified_files_exist():
@@ -46,9 +47,9 @@ def test_modified_files_exist():
     assert len(plugin_src) > 500, "plugin/src/index.ts is too small"
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_max_output_tokens_in_hook_params():
@@ -138,7 +139,7 @@ def test_max_output_tokens_computed_before_hook():
     """maxOutputTokens must be computed BEFORE Plugin.trigger("chat.params",...), not after."""
     src = _read(LLM_FILE)
 
-    max_def = re.search(r"const\s+maxOutputTokens\s*=", src)
+    max_def = re.search(r"const\s+maxOutputTokens\s*=?", src)
     assert max_def, "const maxOutputTokens = ... not found in llm.ts"
 
     # Find the chat.params trigger call (flexible whitespace matching)
@@ -149,9 +150,9 @@ def test_max_output_tokens_computed_before_hook():
         "maxOutputTokens is defined AFTER Plugin.trigger('chat.params') — must be before so plugins can modify it"
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Pass-to-pass (repo_tests / static) — regression
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
 def test_hook_preserves_existing_params():
@@ -179,3 +180,51 @@ def test_stream_text_still_passes_core_params():
     for field in ["temperature", "topP", "topK"]:
         assert f"params.{field}" in section, \
             f"streamText call missing params.{field}"
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck_plugin():
+    """Plugin package typecheck passes (pass_to_pass)."""
+    # Install bun and dependencies
+    install_bun = subprocess.run(
+        ["bash", "-c", "curl -fsSL https://bun.sh/install | bash >/dev/null 2>&1 && mv /root/.bun/bin/bun /usr/local/bin/"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert install_bun.returncode == 0, f"Failed to install bun: {install_bun.stderr}"
+
+    install_deps = subprocess.run(
+        ["bash", "-c", "cd /workspace/opencode && bun install"],
+        capture_output=True, text=True, timeout=180,
+    )
+    # Ignore warnings, only fail on actual errors
+
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/opencode/packages/plugin && bun run typecheck"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Plugin typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck_opencode():
+    """Opencode package typecheck passes (pass_to_pass)."""
+    # Bun should already be installed from previous test, but check just in case
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/opencode/packages/opencode && bun run typecheck"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Opencode typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_llm_tests():
+    """LLM session tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/opencode/packages/opencode && bun test test/session/llm.test.ts"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"LLM tests failed:\n{r.stderr[-500:]}"

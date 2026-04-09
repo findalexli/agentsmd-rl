@@ -56,7 +56,7 @@ def test_filters_outside_radio_group():
         """
 const fs = require('fs');
 const content = fs.readFileSync('%s', 'utf8');
-const lines = content.split('\\n');
+const lines = content.split(/\\r?\\n/);
 
 let radioGroupCloseLine = -1;
 let workspaceLine = -1;
@@ -153,6 +153,35 @@ def test_claude_md_documents_package_json():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_biome_lint():
+    """Repo's Biome linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "biome", "lint", "--no-errors-on-unmatched",
+         "--files-ignore-unknown=true", "--diagnostic-level=error",
+         "src/", "webview-ui/src/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Biome lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_biome_format():
+    """Repo's Biome format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "biome", "format", "--no-errors-on-unmatched",
+         "--files-ignore-unknown=true", "--diagnostic-level=error",
+         "src/", "webview-ui/src/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Biome format check failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff / static) — regression checks
 # ---------------------------------------------------------------------------
 
@@ -164,7 +193,7 @@ def test_sort_options_in_radio_group():
         """
 const fs = require('fs');
 const content = fs.readFileSync('%s', 'utf8');
-const lines = content.split('\\n');
+const lines = content.split(/\\r?\\n/);
 
 let radioGroupOpenLine = -1;
 let radioGroupCloseLine = -1;

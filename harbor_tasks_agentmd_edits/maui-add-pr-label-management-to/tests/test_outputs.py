@@ -100,8 +100,8 @@ def test_label_names_and_constants():
         "import re, sys\n"
         "content = open('" + PS1_STR + "').read()\n"
         "\n"
-        "confirmed = re.search(r'\\$LabelConfirmed\\s*=\\s*[\"\\']([^\"\\']+)[\"\\']', content)\n"
-        "failed = re.search(r'\\$LabelFailed\\s*=\\s*[\"\\']([^\"\\']+)[\"\\']', content)\n"
+        "confirmed = re.search(r'\\$LabelConfirmed\\s*=\\s*\"([^\"]+)\"', content)\n"
+        "failed = re.search(r'\\$LabelFailed\\s*=\\s*\"([^\"]+)\"', content)\n"
         "if not confirmed:\n"
         "    print('FAIL: $LabelConfirmed not defined'); sys.exit(1)\n"
         "if not failed:\n"
@@ -208,3 +208,109 @@ def test_existing_verify_failure_mode_preserved():
         "Success output must be preserved"
     assert "RequireFullVerification" in content, \
         "RequireFullVerification parameter must be preserved"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD validation
+# ---------------------------------------------------------------------------
+
+
+def test_powershell_script_basic_structure():
+    """PowerShell script has basic valid structure.
+
+    This is a pass_to_pass gate that validates the PowerShell script structure
+    without requiring PowerShell to be installed.
+    """
+    content = PS1.read_text()
+
+    # Basic structure checks
+    assert content.startswith("#!/usr/bin/env pwsh"), \
+        "Script should have PowerShell shebang"
+    assert "<#" in content and "#>" in content, \
+        "Script should have help comment block"
+    assert "param(" in content, \
+        "Script should have parameter block"
+    assert "$ErrorActionPreference" in content, \
+        "Script should set error handling preference"
+
+    # Count braces (simple check - not perfect but catches major issues)
+    open_braces = content.count('{')
+    close_braces = content.count('}')
+    assert open_braces == close_braces, \
+        f"Unbalanced braces: {open_braces} open, {close_braces} close"
+
+    # Count parentheses
+    open_parens = content.count('(')
+    close_parens = content.count(')')
+    assert open_parens == close_parens, \
+        f"Unbalanced parentheses: {open_parens} open, {close_parens} close"
+
+
+def test_shared_baseline_script_imports():
+    """Verify-tests-fail.ps1 imports from EstablishBrokenBaseline.ps1.
+
+    This validates the dependency chain with the shared baseline script
+    that provides common test detection utilities.
+    """
+    content = PS1.read_text()
+
+    # Script should import from the baseline script
+    assert "EstablishBrokenBaseline.ps1" in content, \
+        "Script must reference EstablishBrokenBaseline.ps1"
+    assert "Test-IsTestFile" in content or "Find-MergeBase" in content, \
+        "Script should import shared utilities from baseline script"
+
+
+def test_skill_md_documentation_structure():
+    """SKILL.md has required documentation sections.
+
+    Validates that the documentation includes all required sections
+    for the skill to be usable by AI agents.
+    """
+    content = SKILL_MD.read_text()
+
+    # For base commit, check that the file has the basic structure
+    # The ## Description section is in the YAML frontmatter, not a heading
+    required_patterns = [
+        ("name:", "name field in frontmatter"),
+        ("description:", "description field in frontmatter"),
+        ("## Mode 1:", "Mode 1 section"),
+        ("## Mode 2:", "Mode 2 section"),
+        ("## Requirements", "Requirements section"),
+        ("## Output Files", "Output Files section"),
+    ]
+
+    for pattern, desc in required_patterns:
+        assert pattern in content, f"SKILL.md missing {desc}"
+
+    # Verify it has code examples
+    assert "```" in content, "SKILL.md should have code examples"
+
+
+def test_git_repository_integrity():
+    """Git repository is in expected state for verification.
+
+    Validates that the git repo is properly initialized and at the
+    expected base commit.
+    """
+    import subprocess
+
+    # Check git status works
+    result = subprocess.run(
+        ["git", "status", "--short"],
+        capture_output=True, text=True, cwd=REPO
+    )
+    assert result.returncode == 0, "Git status failed"
+
+    # Verify we're at the expected base commit
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        capture_output=True, text=True, cwd=REPO
+    )
+    assert result.returncode == 0, "Git rev-parse failed"
+    head_commit = result.stdout.strip()
+
+    # Should be at the expected base commit
+    expected_commit = "d7d5e048c6941e80aa56982adff9aa48de260ed7"
+    assert head_commit == expected_commit, \
+        f"Expected commit {expected_commit}, got {head_commit}"

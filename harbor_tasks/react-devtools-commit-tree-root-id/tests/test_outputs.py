@@ -19,6 +19,7 @@ RENDERER = f"{REPO}/packages/react-devtools-shared/src/backend/fiber/renderer.js
 CONSTANTS = f"{REPO}/packages/react-devtools-shared/src/constants.js"
 STORE = f"{REPO}/packages/react-devtools-shared/src/devtools/store.js"
 COMMIT_TREE = f"{REPO}/packages/react-devtools-shared/src/devtools/views/Profiler/CommitTreeBuilder.js"
+UTILS = f"{REPO}/packages/react-devtools-shared/src/utils.js"
 
 
 # ---------------------------------------------------------------------------
@@ -34,6 +35,46 @@ def test_syntax_valid():
         capture_output=True, timeout=30,
     )
     assert r.returncode == 0, f"Syntax error in renderer.js:\n{r.stderr.decode()}"
+
+
+# [static] pass_to_pass
+def test_syntax_valid_constants():
+    """constants.js must pass Node.js syntax check (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", CONSTANTS],
+        capture_output=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax error in constants.js:\n{r.stderr.decode()}"
+
+
+# [static] pass_to_pass
+def test_syntax_valid_store():
+    """store.js must pass Node.js syntax check (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", STORE],
+        capture_output=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax error in store.js:\n{r.stderr.decode()}"
+
+
+# [static] pass_to_pass
+def test_syntax_valid_commit_tree():
+    """CommitTreeBuilder.js must pass Node.js syntax check (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", COMMIT_TREE],
+        capture_output=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax error in CommitTreeBuilder.js:\n{r.stderr.decode()}"
+
+
+# [static] pass_to_pass
+def test_syntax_valid_utils():
+    """utils.js must pass Node.js syntax check (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", UTILS],
+        capture_output=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax error in utils.js:\n{r.stderr.decode()}"
 
 
 # ---------------------------------------------------------------------------
@@ -163,3 +204,53 @@ def test_flush_pending_events_null_safe():
     null_calls = src.count("flushPendingEvents(null)")
     assert null_calls >= 2, \
         f"Expected at least 2 flushPendingEvents(null) call sites, got {null_calls}"
+
+
+# [repo_tests] pass_to_pass - ESLint on DevTools fiber backend files
+def test_eslint_devtools_fiber():
+    """DevTools fiber backend files must pass ESLint (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js", RENDERER],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on renderer.js:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - ESLint on DevTools constants
+def test_eslint_devtools_constants():
+    """DevTools constants.js must pass ESLint (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js", CONSTANTS],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on constants.js:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - ESLint on DevTools store
+def test_eslint_devtools_store():
+    """DevTools store.js must pass ESLint (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js", STORE],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on store.js:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - ESLint on DevTools CommitTreeBuilder
+def test_eslint_devtools_commit_tree():
+    """DevTools CommitTreeBuilder.js must pass ESLint (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js", COMMIT_TREE],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on CommitTreeBuilder.js:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - ESLint on DevTools utils
+def test_eslint_devtools_utils():
+    """DevTools utils.js must pass ESLint (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js", UTILS],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on utils.js:\n{r.stderr[-500:]}"

@@ -8,6 +8,9 @@ RUN apt-get update && \
         git curl ca-certificates build-essential tmux python3 && \
     rm -rf /var/lib/apt/lists/*
 
+# Install pnpm for running repo tests
+RUN npm install -g pnpm
+
 # Clone repo at base commit
 RUN git clone --filter=blob:none https://github.com/vercel/next.js.git /workspace/next.js && \
     cd /workspace/next.js && \
@@ -16,6 +19,10 @@ RUN git clone --filter=blob:none https://github.com/vercel/next.js.git /workspac
     git config user.name "Agent"
 
 WORKDIR /workspace/next.js
+
+# Install dependencies for repo tests (ESLint, TypeScript, etc.)
+# Skip scripts to avoid native builds - we only need JS tooling
+RUN pnpm install --ignore-scripts
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

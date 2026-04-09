@@ -1,13 +1,25 @@
-# {{TASK_TITLE}}
+# Add type generation for AI Search bindings
 
 ## Problem
 
-TODO: Describe the symptom a developer would observe. What breaks? What error or wrong behavior does the user see?
+Running `wrangler types` does not generate TypeScript types for AI Search bindings. When a project's `wrangler.json` config includes `ai_search_namespaces` or `ai_search` binding arrays, the generated `Env` interface omits those bindings entirely. Developers who use AI Search must manually add the type declarations, which defeats the purpose of automatic type generation.
+
+The config parser and validator already support these binding types — they work for deployment, local dev, and CLI commands. Only the type generation step is missing.
 
 ## Expected Behavior
 
-TODO: What should happen instead?
+`wrangler types` should produce entries like:
+
+```typescript
+interface Env {
+  AI_SEARCH_NS: AiSearchNamespace;   // from ai_search_namespaces config
+  BLOG_SEARCH: AiSearchInstance;      // from ai_search config
+}
+```
+
+Both the simple (top-level) config mode and per-environment config mode must be handled.
 
 ## Files to Look At
 
-- `{{TARGET_FILE}}` — TODO: what this file does and why it's relevant
+- `packages/wrangler/src/type-generation/index.ts` — The type generation logic. Look at how existing bindings (e.g., `vpc_services`, `vectorize`) are handled in `collectCoreBindings` and `collectCoreBindingsPerEnvironment` for the pattern to follow.
+- `packages/wrangler/src/__tests__/type-generation.test.ts` — The test file already has mock data for `ai_search_namespaces` and `ai_search` bindings but the expected output doesn't include them.

@@ -13,6 +13,17 @@ checks:
     origin: static
     description: "Modified TypeScript files parse without errors"
 
+  # Repo CI/CD checks (pass_to_pass gates)
+  - id: test_changes_validate
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's changes:validate passes - validates change files and prerelease.json format"
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on modified scripts (changes.ts, publish.ts)"
+
   # Code behavior: prerelease config renamed tag→channel
   - id: prerelease_json_uses_channel
     type: fail_to_pass

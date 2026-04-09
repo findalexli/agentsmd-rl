@@ -3,8 +3,8 @@ set -euo pipefail
 
 cd /workspace/playwright
 
-# Idempotent: skip if already applied
-if grep -q "|| 'Global'" packages/dashboard/src/grid.tsx 2>/dev/null; then
+# Idempotent: skip if already applied (check for the specific variable assignment)
+if grep -q "const currentWorkspace = clientInfo?.workspaceDir || 'Global'" packages/dashboard/src/grid.tsx 2>/dev/null; then
     echo "Patch already applied."
     exit 0
 fi

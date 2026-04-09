@@ -8,9 +8,20 @@ returned by __getitem__ to ensure identity stability.
 """
 
 import ast
+import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/sglang"
+PYTHON_DIR = f"{REPO}/python"
+
+
+def _ensure_tool(name):
+    """Ensure a Python tool is installed."""
+    try:
+        subprocess.run([name, "--version"], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q", name], check=True)
 
 
 def _get_io_struct_path():
@@ -55,6 +66,112 @@ def test_syntax_check():
     # Check tokenizer_manager.py parses
     src2 = tokenizer_manager_path.read_text()
     ast.parse(src2)
+
+
+def test_ruff_check():
+    """Modified files must pass ruff syntax/error checks (pass_to_pass)."""
+    _ensure_tool("ruff")
+    io_struct_path = _get_io_struct_path()
+    tokenizer_manager_path = _get_tokenizer_manager_path()
+
+    # Run ruff with syntax/error-only rules
+    r = subprocess.run(
+        [
+            "ruff", "check",
+            str(io_struct_path), str(tokenizer_manager_path),
+            "--select=E9,F63,F7,F82"
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=PYTHON_DIR,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_ruff_import_check():
+    """Modified files must pass ruff import checks (pass_to_pass)."""
+    _ensure_tool("ruff")
+    io_struct_path = _get_io_struct_path()
+    tokenizer_manager_path = _get_tokenizer_manager_path()
+
+    # Run ruff with import/unused check rules (matching pre-commit config)
+    r = subprocess.run(
+        [
+            "ruff", "check",
+            str(io_struct_path), str(tokenizer_manager_path),
+            "--select=F401,F821"
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=PYTHON_DIR,
+    )
+    assert r.returncode == 0, f"Ruff import check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_black_format_check():
+    """Modified files must be formatted with black (pass_to_pass)."""
+    _ensure_tool("black")
+    io_struct_path = _get_io_struct_path()
+    tokenizer_manager_path = _get_tokenizer_manager_path()
+
+    r = subprocess.run(
+        ["black", "--check", str(io_struct_path), str(tokenizer_manager_path)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=PYTHON_DIR,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_isort_check():
+    """Modified files must have sorted imports (pass_to_pass)."""
+    _ensure_tool("isort")
+    io_struct_path = _get_io_struct_path()
+    tokenizer_manager_path = _get_tokenizer_manager_path()
+
+    r = subprocess.run(
+        ["isort", "--check-only", str(io_struct_path), str(tokenizer_manager_path)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_pyflakes_check():
+    """Modified files must pass pyflakes static analysis (pass_to_pass)."""
+    _ensure_tool("pyflakes")
+    io_struct_path = _get_io_struct_path()
+    tokenizer_manager_path = _get_tokenizer_manager_path()
+
+    r = subprocess.run(
+        ["pyflakes", str(io_struct_path), str(tokenizer_manager_path)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyflakes check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_codespell_check():
+    """Modified files must pass codespell spelling check (pass_to_pass)."""
+    _ensure_tool("codespell")
+    io_struct_path = _get_io_struct_path()
+    tokenizer_manager_path = _get_tokenizer_manager_path()
+
+    r = subprocess.run(
+        ["codespell", str(io_struct_path), str(tokenizer_manager_path)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"codespell check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

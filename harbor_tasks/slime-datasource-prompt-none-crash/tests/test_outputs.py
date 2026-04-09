@@ -8,6 +8,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import os
+import py_compile
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -96,6 +98,23 @@ def test_syntax_check():
     import py_compile
     py_compile.compile(f"{REPO}/slime/rollout/data_source.py", doraise=True)
     py_compile.compile(f"{REPO}/slime/ray/rollout.py", doraise=True)
+
+
+# [repo_ci] pass_to_pass — ruff lint check
+def test_repo_ruff():
+    """Repo's ruff lint check passes on modified files (pass_to_pass)."""
+    # Install ruff if not available
+    try:
+        subprocess.run(["pip", "install", "ruff", "-q"], check=True, capture_output=True)
+    except Exception:
+        pass  # May already be installed
+
+    for file in ["slime/rollout/data_source.py", "slime/ray/rollout.py"]:
+        r = subprocess.run(
+            ["ruff", "check", f"{REPO}/{file}", "--select", "E,F,B,UP"],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Ruff check failed for {file}:\n{r.stdout}{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

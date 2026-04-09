@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/AReaL"
@@ -129,9 +130,9 @@ def test_enum_classes_str_compatible():
 
     # str-compatible means == comparison with raw strings works
     for member in ApiType:
-        assert member == member.value, f"ApiType.{member.name} != '{member.value}'"
+        assert member == member.value, f'ApiType.{member.name} != "{member.value}"'
     for member in InputName:
-        assert member == member.value, f"InputName.{member.name} != '{member.value}'"
+        assert member == member.value, f'InputName.{member.name} != "{member.value}"'
 
 
 # [pr_diff] fail_to_pass
@@ -275,7 +276,7 @@ def test_no_wildcard_imports():
                 for alias in node.names:
                     if alias.name == "*":
                         raise AssertionError(
-                            f"wildcard import 'from {node.module} import *' in {Path(path).name}"
+                            f'wildcard import "from {node.module} import *" in {Path(path).name}'
                         )
 
 
@@ -386,3 +387,70 @@ def test_logger_pascalcase_name():
                 break
 
     assert found, "no getLogger call with string argument found in clevr_count_70k.py"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass tests (added during p2p_enrichment)
+# These verify the repo's own CI checks pass on base commit and after fix.
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass
+def test_repo_py_compile():
+    """Modified Python files compile without syntax errors (pass_to_pass).
+
+    Mirrors the repo's pre-commit check for Python file validity.
+    """
+    for path in [TYPES_PY, CLEVR_PY]:
+        r = subprocess.run(
+            ["python", "-m", "py_compile", path],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, f"py_compile failed for {path}:\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_check():
+    """Modified Python files pass ruff linting (pass_to_pass).
+
+    Mirrors the repo's ruff pre-commit hook check.
+    """
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Install might fail if already installed or network issues; ignore
+
+    r = subprocess.run(
+        ["ruff", "check", TYPES_PY, CLEVR_PY],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_format():
+    """Modified Python files are properly formatted (pass_to_pass).
+
+    Mirrors the repo's ruff format pre-commit hook check.
+    """
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Install might fail if already installed; ignore
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", TYPES_PY, CLEVR_PY],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"ruff format check failed (files need formatting):\n{r.stdout}\n{r.stderr}"

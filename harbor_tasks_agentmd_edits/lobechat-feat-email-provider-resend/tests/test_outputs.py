@@ -46,6 +46,51 @@ def test_resend_sdk_importable():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI Tests (pass_to_pass) — verify repo's own tests/lints pass
+# These require full npm/pnpm install to work (validated in later stage)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_code_style():
+    """Repo's ESLint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint:ts"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_types_valid():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "type-check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_circular_deps():
+    """Repo's circular dependency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint:circular:main"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Circular dependency check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "test-app"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

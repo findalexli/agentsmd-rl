@@ -78,6 +78,22 @@ checks:
     origin: static
     description: "Modified files must have substantial implementation"
 
+  # Repo CI/CD pass_to_pass checks
+  - id: repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript typecheck passes (bun turbo typecheck)"
+
+  - id: repo_tool_registry_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Tool registry tests pass (bun test test/tool/registry.test.ts)"
+
+  - id: repo_opencode_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Opencode package typecheck passes (bun turbo typecheck --filter opencode)"
+
 rubric:
   - rule: "Avoid `try`/`catch` where possible"
     source:

@@ -1,75 +1,78 @@
 {
-  "task": "openclaw-openresponses-http-owner-escalation",
-  "validations": [
-    {
-      "timestamp": "2026-04-01T20:15:41.691954",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "format": "pytest_binary"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T11:26:34.337452",
+  "total_time": 8081.51,
+  "sandbox_id": "indopdx1i6nba8pk6u8ln",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 206.91,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-04-02T10:48:33.885133",
-      "phase": "e2b_validate_phase9",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "notes": "Sandbox create: 404: template 'sm3tbnlt93vf2sxsnifl' not found"
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1108.78,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-04-02T10:53:30.534396",
-      "phase": "e2b_validate_phase9_retry",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox create: 404: template 'sm3tbnlt93vf2sxsnifl' not found"
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
-    {
-      "timestamp": "2026-04-02T14:06:36.420865",
-      "phase": "e2b_sandbox404_retry",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'pnpm install --frozen-lockfile 2>/dev/null || pnpm install': signal: killed"
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: Docker build OK, NOP reward=0 (4 tests correctly failed on base), Gold reward=1 (all 12 tests passed after solve.sh), rubric rules satisfied (strict boolean typing, no sentinel defaults, additive change)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 204.57
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T14:28:08.951840",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'pnpm install --frozen-lockfile 2>/dev/null || pnpm install': signal: killed"
-    },
-    {
-      "timestamp": "2026-04-02T17:47:54.324382",
-      "phase": "local_docker_validate",
-      "runner": "local_docker_82",
-      "format": "pytest_binary",
       "verdict": "fail",
-      "notes": "nop=missing, gold=missing"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6264.08,
+      "at": "2026-04-09T06:23:29.914560"
     },
     {
-      "timestamp": "2026-04-02T21:00:00.000000",
-      "phase": "local_docker_validate",
-      "runner": "local_docker_remake",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "notes": "Fixed Dockerfile OOM (npm install typescript instead of pnpm install), fixed test_not_stub AST node count threshold"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8081.23,
+      "at": "2026-04-09T11:26:34.173371"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.559690",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8081.51,
+      "at": "2026-04-09T11:26:34.337452"
     }
   ]
 }

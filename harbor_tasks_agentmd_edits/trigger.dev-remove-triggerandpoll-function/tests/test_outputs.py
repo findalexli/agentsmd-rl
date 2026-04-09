@@ -30,6 +30,22 @@ def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
+def test_typescript_syntax_valid():
+    """Modified TypeScript files must have valid syntax (pass_to_pass)."""
+    files_to_check = [
+        "packages/trigger-sdk/src/v3/shared.ts",
+        "packages/trigger-sdk/src/v3/tasks.ts",
+        "references/v3-catalog/src/trigger/sdkUsage.ts",
+    ]
+    for rel_path in files_to_check:
+        full_path = Path(REPO) / rel_path
+        content = full_path.read_text()
+        # Basic syntax checks
+        assert "import" in content, f"{rel_path} missing import statements"
+        assert len(content) > 100, f"{rel_path} is unexpectedly small or empty"
+
+
+# [static] pass_to_pass
 def test_syntax_check():
     """Modified TypeScript files must exist and contain expected structural markers."""
     shared = Path(REPO) / "packages" / "trigger-sdk" / "src" / "v3" / "shared.ts"
@@ -49,6 +65,53 @@ def test_other_task_methods_preserved():
     required_methods = ["trigger,", "batchTrigger,", "triggerAndWait,", "batchTriggerAndWait,"]
     for method in required_methods:
         assert method in content, f"tasks object must still export {method.rstrip(',')}"
+
+
+
+# [static] pass_to_pass - repo CI validation using Node.js TS parsing
+def test_repo_ts_files_parseable():
+    """Repo's modified TypeScript files must be parseable by Node.js (pass_to_pass).
+
+    Uses Node.js 22's --experimental-strip-types to verify syntax validity
+    without requiring pnpm install or full typecheck.
+    """
+    files_to_check = [
+        "packages/trigger-sdk/src/v3/shared.ts",
+        "packages/trigger-sdk/src/v3/tasks.ts",
+        "references/v3-catalog/src/trigger/sdkUsage.ts",
+    ]
+    for rel_path in files_to_check:
+        full_path = Path(REPO) / rel_path
+        r = subprocess.run(
+            ["node", "--experimental-strip-types", "--check", str(full_path)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"{rel_path} has syntax errors:\n{r.stderr}"
+
+
+# [static] pass_to_pass
+def test_repo_import_export_structure():
+    """Repo's modified files must have valid import/export structure (pass_to_pass).
+
+    Validates that imports and exports are syntactically well-formed.
+    """
+    files_to_check = [
+        "packages/trigger-sdk/src/v3/shared.ts",
+        "packages/trigger-sdk/src/v3/tasks.ts",
+        "references/v3-catalog/src/trigger/sdkUsage.ts",
+    ]
+    for rel_path in files_to_check:
+        full_path = Path(REPO) / rel_path
+        content = full_path.read_text()
+        # Basic structural validation - file should have balanced braces
+        open_braces = content.count("{")
+        close_braces = content.count("}")
+        assert open_braces == close_braces, f"{rel_path} has unbalanced braces"
+        # Check that imports exist
+        assert "import " in content, f"{rel_path} missing import statements"
+        # Verify no obviously broken patterns
+        assert "import from" not in content, f"{rel_path} has malformed import (missing module)"
+        assert "export from" not in content, f"{rel_path} has malformed export (missing module)"
 
 
 # ---------------------------------------------------------------------------

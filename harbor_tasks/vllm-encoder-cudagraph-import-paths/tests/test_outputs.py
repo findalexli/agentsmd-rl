@@ -14,6 +14,8 @@ import paths via AST parsing.
 
 import ast
 import os
+import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/vllm"
@@ -127,6 +129,55 @@ def test_no_stale_import_paths():
         f"Files still reference stale import path "
         f"'{STALE_PREFIX}': {hits}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's Python linting passes on modified files (pass_to_pass)."""
+    # Install ruff if not available
+    try:
+        subprocess.run(["ruff", "--version"], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+            capture_output=True, check=True,
+        )
+
+    files = [
+        f"{REPO}/vllm/v1/worker/encoder_cudagraph.py",
+        f"{REPO}/vllm/v1/worker/encoder_cudagraph_defs.py",
+        f"{REPO}/vllm/v1/worker/gpu_model_runner.py",
+        f"{REPO}/vllm/model_executor/models/interfaces.py",
+        f"{REPO}/vllm/model_executor/models/qwen3_vl.py",
+        f"{REPO}/tests/v1/cudagraph/test_encoder_cudagraph.py",
+    ]
+    r = subprocess.run(
+        ["ruff", "check", "--output-format=github"] + files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax():
+    """Python syntax is valid for all modified files (pass_to_pass)."""
+    files = [
+        f"{REPO}/vllm/v1/worker/encoder_cudagraph.py",
+        f"{REPO}/vllm/v1/worker/encoder_cudagraph_defs.py",
+        f"{REPO}/vllm/v1/worker/gpu_model_runner.py",
+        f"{REPO}/vllm/model_executor/models/interfaces.py",
+        f"{REPO}/vllm/model_executor/models/qwen3_vl.py",
+        f"{REPO}/tests/v1/cudagraph/test_encoder_cudagraph.py",
+    ]
+    r = subprocess.run(
+        ["python", "-m", "py_compile"] + files,
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

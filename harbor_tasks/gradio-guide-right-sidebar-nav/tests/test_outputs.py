@@ -74,6 +74,107 @@ def _run_node_stdin(js_code: str, stdin_data: str, timeout: int = 15) -> subproc
 
 
 # [static] pass_to_pass
+def test_repo_svelte_file_structure():
+    """Target Svelte file has valid structure: script block, template, proper syntax.
+
+    Pass-to-pass check that verifies the file is syntactically valid Svelte
+    with both script and template sections present. This ensures the base
+    commit has a working foundation before any modifications.
+    """
+    assert TARGET.exists(), f"{TARGET} does not exist"
+    content = TARGET.read_text()
+
+    # Must have script block with TypeScript
+    script_match = re.search(r"<script[^>]*lang=[\"']ts[\"'][^>]*>", content)
+    assert script_match, "Missing TypeScript script block"
+
+    # Must have closing script tag
+    assert "</script>" in content, "Missing closing script tag"
+
+    # Must have template content after script
+    template = re.sub(r"<script[^>]*>.*?</script>", "", content, flags=re.DOTALL)
+    assert len(template.strip()) > 200, "Template section too short or missing"
+
+    # Basic Svelte syntax validation - check for common structural issues
+    open_braces = content.count("{")
+    close_braces = content.count("}")
+    assert open_braces > 0 and close_braces > 0, "No template expressions found"
+
+    # Check for unmatched braces in script section (basic check)
+    script_content = re.search(r"<script[^>]*>(.*?)</script>", content, re.DOTALL)
+    if script_content:
+        script = script_content.group(1)
+        # Remove comments and strings for brace counting
+        script_clean = re.sub(r"//.*?$", "", script, flags=re.MULTILINE)
+        script_clean = re.sub(r"\"[^\"]*\"", '""', script_clean)
+        script_clean = re.sub(r"'[^']*'", "''", script_clean)
+        script_clean = re.sub(r"`[^`]*`", "``", script_clean)
+        # Basic brace balance check for script
+        open_script = script_clean.count("{")
+        close_script = script_clean.count("}")
+        # Allow for object shorthand and other JS features - just ensure reasonable
+        assert abs(open_script - close_script) <= 5, "Script braces severely unbalanced"
+
+
+# [static] pass_to_pass
+def test_repo_svelte_types_valid():
+    """TypeScript type declarations in Svelte file are syntactically valid.
+
+    Verifies that guide_slug and guide_names type declarations exist and have
+    reasonable structure. Ensures base commit has valid types before changes.
+    """
+    assert TARGET.exists(), f"{TARGET} does not exist"
+    _, script, _ = _read()
+
+    # Check for guide_slug type declaration
+    slug_type_match = re.search(r"guide_slug\s*:\s*\{([^}]+)\}\[\]", script)
+    assert slug_type_match, "guide_slug type declaration not found"
+
+    # Check type has expected fields
+    slug_type_body = slug_type_match.group(1)
+    assert "text:" in slug_type_body, "guide_slug type missing 'text' field"
+    assert "href:" in slug_type_body, "guide_slug type missing 'href' field"
+
+    # Check for guide_names type
+    names_type_match = re.search(r"guide_names\s*:\s*\{([^}]+)\}\[\]", script)
+    assert names_type_match, "guide_names type declaration not found"
+
+    # Check guide_names has category field
+    names_type_body = names_type_match.group(1)
+    assert "category:" in names_type_body, "guide_names type missing 'category' field"
+
+
+# [static] pass_to_pass
+def test_repo_svelte_template_valid():
+    """Svelte template section has valid syntax and required elements.
+
+    Verifies the template contains expected Svelte constructs like {#each} blocks,
+    proper HTML structure, and reactive statements in script. Ensures base 
+    template is valid before any modifications.
+    """
+    assert TARGET.exists(), f"{TARGET} does not exist"
+    _, script, template = _read()
+
+    # Must have {#each} blocks for iteration in template
+    each_blocks = re.findall(r"\{#each\s+\w+", template)
+    assert len(each_blocks) >= 1, "No Svelte {#each} blocks found in template"
+
+    # Reactive statements ($:) are in script section
+    reactive_stmts = re.findall(r"\$:\s*if", script) or re.findall(r"\$:\s*\w+", script)
+    assert len(reactive_stmts) >= 1, "No Svelte reactive statements ($:) found in script"
+
+    # Check for event bindings in template
+    bindings = re.findall(r"bind:\w+", template)
+    assert len(bindings) >= 1, "No Svelte bind directives found in template"
+
+    # Must have proper HTML element structure (balanced common tags)
+    div_open = len(re.findall(r"<div[>\s]", template))
+    div_close = len(re.findall(r"</div>", template))
+    assert div_open > 0 and div_close > 0, "No div elements found"
+    assert abs(div_open - div_close) <= 2, "Div elements severely unbalanced"
+
+
+# [static] pass_to_pass
 def test_file_exists_and_parses():
     """Target file exists with substantial script + template sections.
 

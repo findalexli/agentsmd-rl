@@ -54,6 +54,45 @@ def test_cargo_check():
     assert r.returncode == 0, f"cargo check failed:\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_cargo_fmt():
+    """Rust code formatting follows style guidelines (repo pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_clippy_ty_ide():
+    """ty_ide crate passes clippy lints (repo pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty_ide", "--all-targets", "--all-features", "--", "-D", "warnings"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_doc_ty_ide():
+    """ty_ide crate documentation builds without errors (repo pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "doc", "-p", "ty_ide", "--no-deps"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"cargo doc failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # F2P: pr_diff — core behavioral tests (upstream Rust tests added by the PR)
 # ---------------------------------------------------------------------------

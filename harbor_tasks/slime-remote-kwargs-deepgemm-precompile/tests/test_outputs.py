@@ -28,6 +28,42 @@ def test_syntax_check():
         ast.parse(src)
 
 
+# [static] pass_to_pass
+def test_ruff_check():
+    """Ruff linting must pass on modified files (repo CI check)."""
+    # Install ruff if not available
+    subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "check", DIST_FILE, ROLLOUT_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [static] pass_to_pass
+def test_no_syntax_errors_all_py():
+    """All Python files in modified directories must have valid syntax."""
+    import os
+
+    dirs_to_check = [
+        f"{REPO}/slime/ray",
+        f"{REPO}/slime/backends/megatron_utils/update_weight",
+    ]
+    for dirpath in dirs_to_check:
+        for root, _dirs, files in os.walk(dirpath):
+            for filename in files:
+                if filename.endswith(".py"):
+                    filepath = os.path.join(root, filename)
+                    src = Path(filepath).read_text()
+                    try:
+                        ast.parse(src)
+                    except SyntaxError as e:
+                        raise AssertionError(f"Syntax error in {filepath}: {e}")
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------

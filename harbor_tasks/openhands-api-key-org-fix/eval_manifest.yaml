@@ -1,0 +1,71 @@
+version: "1.0"
+task_id: "openhands-api-key-org-fix"
+source_pr:
+  owner: "All-Hands-AI"
+  repo: "OpenHands"
+  number: 13568
+  title: "fix: use API key's org_id when creating conversations via API key auth"
+  merge_commit: "889754abfd214fa74138db496e06955edb323022"
+  base_commit: "06cd53d752b022a7ae3676ab17c029f1f810c892"
+
+checks:
+  # Fail-to-pass tests (the actual bug fix)
+  - id: "test_api_key_org_id_used_when_available"
+    name: "API key's org_id is used when available"
+    type: "pytest"
+    origin: "regression"
+    file: "test_outputs.py"
+    description: "When API key has org_id binding, conversation should be saved under that org, not user's current org"
+
+  - id: "test_legacy_api_key_falls_back_to_user_org"
+    name: "Legacy API key without org_id falls back to user current_org_id"
+    type: "pytest"
+    origin: "regression"
+    file: "test_outputs.py"
+    description: "Legacy API keys without org binding should use user's current org as fallback"
+
+  - id: "test_cookie_auth_uses_user_current_org"
+    name: "Cookie auth without API key uses user current org"
+    type: "pytest"
+    origin: "regression"
+    file: "test_outputs.py"
+    description: "Browser/cookie authentication should continue to use user's current_org_id"
+
+  # Pass-to-pass tests (existing functionality still works)
+  - id: "test_code_imports_and_syntax"
+    name: "Modified code can be imported without errors"
+    type: "pytest"
+    origin: "regression"
+    file: "test_outputs.py"
+    description: "Verify the modified module has valid Python syntax and imports correctly"
+
+  # Pass-to-pass tests (repo CI/CD checks)
+  - id: "test_repo_syntax_check"
+    name: "Repo Python syntax check passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    file: "test_outputs.py"
+    description: "Modified Python file has valid syntax and can be compiled"
+
+  - id: "test_repo_ast_parse"
+    name: "Repo AST parsing passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    file: "test_outputs.py"
+    description: "Modified Python file can be parsed into AST without errors"
+
+  - id: "test_repo_enterprise_syntax"
+    name: "Enterprise module syntax check passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    file: "test_outputs.py"
+    description: "Key enterprise module Python files have valid syntax"
+
+  - id: "test_repo_class_structure"
+    name: "Repo class structure check passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    file: "test_outputs.py"
+    description: "Modified file has expected classes and methods"
+
+rubric: []

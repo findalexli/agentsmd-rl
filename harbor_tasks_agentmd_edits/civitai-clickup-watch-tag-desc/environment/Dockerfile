@@ -17,5 +17,8 @@ RUN git clone --filter=blob:none https://github.com/civitai/civitai.git /workspa
 
 WORKDIR /workspace/civitai
 
+# Install npm dependencies (required for clickup skill to work)
+RUN npm ci --legacy-peer-deps 2>&1 || npm install --legacy-peer-deps 2>&1 || true
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

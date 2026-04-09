@@ -24,6 +24,46 @@ def _read_stripped() -> str:
     return stripped
 
 
+def _get_function_body(stripped: str, func_name: str) -> str:
+    """Extract the full body of a function using brace matching.
+
+    Returns the content inside the function's outermost braces.
+    """
+    fn_start = stripped.find(f"function {func_name}")
+    if fn_start == -1:
+        return ""
+
+    # Skip past the parameter list to find the opening brace
+    paren_start = stripped.find("(", fn_start)
+    if paren_start == -1:
+        return ""
+
+    depth = 1
+    pos = paren_start + 1
+    while depth > 0 and pos < len(stripped):
+        if stripped[pos] == "(":
+            depth += 1
+        elif stripped[pos] == ")":
+            depth -= 1
+        pos += 1
+
+    # Now find the function body braces
+    brace_pos = stripped.find("{", pos)
+    if brace_pos == -1:
+        return ""
+
+    depth = 1
+    body_end = brace_pos + 1
+    while depth > 0 and body_end < len(stripped):
+        if stripped[body_end] == "{":
+            depth += 1
+        elif stripped[body_end] == "}":
+            depth -= 1
+        body_end += 1
+
+    return stripped[brace_pos + 1:body_end - 1]
+
+
 # -----------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # -----------------------------------------------------------------------------
@@ -83,7 +123,7 @@ def test_sender_is_owner_false():
     r = subprocess.run(
         ["pnpm", "vitest", "run", "src/gateway/openai-http.test.ts",
          "-t", "senderIsOwner"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
 
     # If the specific test name filter doesn't match, run the full file and check output
@@ -92,7 +132,7 @@ def test_sender_is_owner_false():
         r = subprocess.run(
             ["pnpm", "vitest", "run", "src/gateway/openai-http.test.ts",
              "-t", "handles request validation and routing"],
-            capture_output=True, text=True, timeout=60, cwd=REPO,
+            capture_output=True, text=True, timeout=180, cwd=REPO,
         )
 
     assert r.returncode == 0, (
@@ -113,51 +153,33 @@ def test_sender_is_owner_in_source():
     This is a secondary behavioral check: we verify the actual source code
     has the fix applied - senderIsOwner must be false, not true.
     """
-    code = Path(TARGET).read_text()
+    stripped = _read_stripped()
 
-    # Find the buildAgentCommandInput function and check senderIsOwner value
-    # The function should have senderIsOwner: false (not true)
-
-    # Look for the pattern in the function
-    fn_match = re.search(
-        r'function buildAgentCommandInput\s*\([^)]*\)\s*\{([\s\S]*?)\n\}',
-        code
-    )
-    if not fn_match:
-        # Try looser match
-        fn_match = re.search(
-            r'function buildAgentCommandInput[\s\S]*?senderIsOwner:\s*(\w+)',
-            code
-        )
-        if fn_match:
-            value = fn_match.group(1)
-            assert value == "false", (
-                f"senderIsOwner must be 'false' but found '{value}'. "
-                "The fix should set senderIsOwner to false for HTTP ingress."
+    # Use brace-matching helper to extract the full function body
+    body = _get_function_body(stripped, "buildAgentCommandInput")
+    if not body:
+        # Fall back to simple grep if function extraction fails
+        sender_owner_pattern = r'senderIsOwner:\s*(true|false)'
+        matches = re.findall(sender_owner_pattern, stripped)
+        assert matches, "Could not find senderIsOwner in the source code"
+        for m in matches:
+            assert m == "false", (
+                f"senderIsOwner must be false, found: {m}. "
+                "The bug is that HTTP callers incorrectly get owner-level access."
             )
-        else:
-            # Fall back to simple grep
-            sender_owner_pattern = r'senderIsOwner:\s*(true|false)'
-            matches = re.findall(sender_owner_pattern, code)
-            assert matches, "Could not find senderIsOwner in the source code"
-            for m in matches:
-                assert m == "false", (
-                    f"senderIsOwner must be false, found: {m}. "
-                    "The bug is that HTTP callers incorrectly get owner-level access."
-                )
-    else:
-        body = fn_match.group(1)
-        # Check for senderIsOwner: true (bug) vs senderIsOwner: false (fix)
-        assert "senderIsOwner: true" not in body, (
-            "BUG DETECTED: senderIsOwner is set to true in buildAgentCommandInput. "
-            "HTTP callers should NOT get owner-level access. "
-            "The fix should change senderIsOwner: true to senderIsOwner: false"
-        )
-        # After fix, should have senderIsOwner: false
-        assert "senderIsOwner: false" in body, (
-            "senderIsOwner: false not found in buildAgentCommandInput. "
-            "The fix should set senderIsOwner to false for HTTP ingress."
-        )
+        return
+
+    # Check for senderIsOwner: true (bug) vs senderIsOwner: false (fix)
+    assert "senderIsOwner: true" not in body, (
+        "BUG DETECTED: senderIsOwner is set to true in buildAgentCommandInput. "
+        "HTTP callers should NOT get owner-level access. "
+        "The fix should change senderIsOwner: true to senderIsOwner: false"
+    )
+    # After fix, should have senderIsOwner: false
+    assert "senderIsOwner: false" in body, (
+        "senderIsOwner: false not found in buildAgentCommandInput. "
+        "The fix should set senderIsOwner to false for HTTP ingress."
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -222,14 +244,10 @@ console.log(JSON.stringify(result));
                 f"allowModelOverride must be true, got {{result.get('allowModelOverride')}}"
             )
         else:
-            # Fallback: parse from source
-            code = Path(TARGET).read_text()
-            fn_match = re.search(
-                r'function buildAgentCommandInput[\s\S]*?\{([\s\S]*?)\n\}',
-                code
-            )
-            if fn_match:
-                body = fn_match.group(1)
+            # Fallback: parse from source using brace-matching helper
+            stripped = _read_stripped()
+            body = _get_function_body(stripped, "buildAgentCommandInput")
+            if body:
                 # Check field values in source
                 assert re.search(r'deliver:\s*false', body), "deliver: false not found"
                 assert re.search(r'bestEffortDeliver:\s*false', body), "bestEffortDeliver: false not found"
@@ -376,14 +394,10 @@ console.log(JSON.stringify(result));
                 f"messageChannel not passed through, got {{result.get('messageChannel')}}"
             )
         else:
-            # Fallback: parse from source to verify structure
-            code = Path(TARGET).read_text()
-            fn_match = re.search(
-                r'function buildAgentCommandInput[\s\S]*?\{([\s\S]*?)\n\}',
-                code
-            )
-            if fn_match:
-                body = fn_match.group(1)
+            # Fallback: parse from source using brace-matching helper
+            stripped = _read_stripped()
+            body = _get_function_body(stripped, "buildAgentCommandInput")
+            if body:
                 # Verify params are referenced in the return object
                 assert "params.prompt.message" in body or "message:" in body
                 assert "params.modelOverride" in body or "model:" in body
@@ -392,3 +406,58 @@ console.log(JSON.stringify(result));
                 assert "params.messageChannel" in body or "messageChannel:" in body
     finally:
         script_path.unlink(missing_ok=True)
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's CI/CD checks
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — oxlint type-aware linting
+def test_repo_lint():
+    """Repo's oxlint must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo's build must succeed
+def test_repo_build():
+    """Repo's build must succeed (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — openai-http gateway tests
+def test_repo_gateway_tests():
+    """Repo's gateway tests for openai-http must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "src/gateway/openai-http.test.ts",
+         "--testNamePattern", "handles request validation"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"Gateway tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    )

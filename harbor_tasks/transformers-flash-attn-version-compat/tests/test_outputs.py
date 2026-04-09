@@ -172,6 +172,82 @@ def test_utils_core_exports():
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# CI/CD pass_to_pass — repo tests that should pass on both base and fix
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass — Makefile: check-repo commands
+# These tests verify core repository structure and consistency checks pass
+
+
+def test_repo_inits_check():
+    """Repository init files check passes (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "inits", "--keep-going"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Init files check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_imports_check():
+    """Repository public imports check passes (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "imports", "--keep-going"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Imports check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_init_isort_check():
+    """Repository init import ordering check passes (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "init_isort", "--keep-going"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Init isort check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_auto_mappings_check():
+    """Repository auto mappings check passes (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "auto_mappings", "--keep-going"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Auto mappings check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_modeling_structure_check():
+    """Repository modeling file structure check passes (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "modeling_structure", "--keep-going"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Modeling structure check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_dummies_check():
+    """Repository dummy objects check passes (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "dummies", "--keep-going"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dummies check failed:\n{r.stdout}\n{r.stderr}"
+
+
+
 # [agent_config] pass_to_pass — AGENTS.md:2 @ b0bba2d832f3cfd94b339a407f2b3e5b90ce3499
 def test_ruff_style_clean():
     """Modified files pass ruff style check (make style runs ruff, necessary to pass code style checks)."""

@@ -62,6 +62,54 @@ try {{
         assert r.returncode == 0, f"Syntax check failed for {{f}}: {{r.stderr}}"
 
 
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that pass on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's npm run build passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_packages():
+    """Repo's lint-packages check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_deps():
+    """Repo's check-deps passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Check deps failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_modified():
+    """Repo's ESLint on modified files passes (pass_to_pass)."""
+    files = [
+        "packages/playwright-core/src/tools/backend/video.ts",
+        "packages/playwright-core/src/tools/cli-daemon/commands.ts",
+    ]
+    r = subprocess.run(
+        ["npx", "eslint", "--cache"] + files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests (CODE EXECUTION)
 # ---------------------------------------------------------------------------

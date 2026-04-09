@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/beam"
@@ -41,9 +42,93 @@ def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         script.unlink(missing_ok=True)
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - CI/CD checks that should pass on base commit
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_yamllint_non_jinja():
+    """Non-Jinja YAML files pass yamllint (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "yamllint"],
+        capture_output=True, timeout=60,
+    )
+    # Check aggregation examples which are pure YAML (no Jinja syntax)
+    r = subprocess.run(
+        ["yamllint", "-c", ".yamllint.yml", "sdks/python/apache_beam/yaml/examples/transforms/aggregation/combine_sum.yaml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"yamllint failed:\\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax_input_data():
+    """Python syntax check passes for input_data.py (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "py_compile", "sdks/python/apache_beam/yaml/examples/testing/input_data.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed for input_data.py:\\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax_examples_test():
+    """Python syntax check passes for examples_test.py (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "py_compile", "sdks/python/apache_beam/yaml/examples/testing/examples_test.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed for examples_test.py:\\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_jinja_template_syntax_base():
+    """Jinja2 template syntax is valid for base_pipeline.yaml (pass_to_pass)."""
+    r = _run_python("""
+from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError
+import sys
+
+base_dir = '/workspace/beam/sdks/python/apache_beam/yaml/examples/transforms/jinja/inheritance/base'
+try:
+    env = Environment(loader=FileSystemLoader(base_dir))
+    template = env.get_template('base_pipeline.yaml')
+    # Parse without rendering to validate syntax
+    env.parse(template.source)
+    print("PASS")
+except TemplateSyntaxError as e:
+    print(f"Jinja syntax error: {e}")
+    sys.exit(1)
+""")
+    assert r.returncode == 0, f"Jinja template syntax check failed for base_pipeline.yaml:\\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_jinja_template_syntax_child():
+    """Jinja2 template syntax is valid for wordCountInheritance.yaml (pass_to_pass)."""
+    r = _run_python("""
+from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError
+import sys
+
+sdk_python = '/workspace/beam/sdks/python'
+try:
+    env = Environment(loader=FileSystemLoader(sdk_python))
+    child_path = 'apache_beam/yaml/examples/transforms/jinja/inheritance/wordCountInheritance.yaml'
+    template = env.get_template(child_path)
+    # Parse without rendering to validate syntax
+    env.parse(template.source)
+    print("PASS")
+except TemplateSyntaxError as e:
+    print(f"Jinja syntax error: {e}")
+    sys.exit(1)
+""")
+    assert r.returncode == 0, f"Jinja template syntax check failed for wordCountInheritance.yaml:\\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — Jinja2 template rendering
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_base_pipeline_renders_valid_yaml():
@@ -84,7 +169,7 @@ def test_child_pipeline_renders_with_inheritance():
 import yaml
 from jinja2 import Environment, FileSystemLoader
 
-# Child uses {% extends "apache_beam/.../base_pipeline.yaml" %}
+# Child uses {% extends \"apache_beam/.../base_pipeline.yaml\" %}
 # so the loader must be rooted at sdks/python to resolve the path
 sdk_python = '/workspace/beam/sdks/python'
 env = Environment(loader=FileSystemLoader(sdk_python))
@@ -121,9 +206,9 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — test framework integration
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_preprocessor_registers_inheritance():

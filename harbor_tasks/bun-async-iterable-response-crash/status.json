@@ -1,65 +1,97 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.965012",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T04:25:24.254099",
+  "total_time": 9549.59,
+  "sandbox_id": "iq4ky4wb885iz3kgvupd7",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "All four validation checks passed: 1) Docker build succeeded, 2) NOP test reward=0 (5 fail-to-pass tests correctly failed on base commit), 3) Gold test reward=1 (all 13 tests passed after gold patch), 4) Rubric judge: Gold solution follows 'Use JSC intrinsics for performance' rule (uses $putByIdDirectPrivate, $isPromise, $readableStreamCloseIfPossible, etc.)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 71.91
     },
-    {
-      "timestamp": "2026-03-30T11:48:11.528242",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 12541
+    "p2p_enrichment": {
+      "status": "completed",
+      "timestamp": "2026-04-09",
+      "notes": "Added 4 pass_to_pass CI/CD gates from repo's ban-words.test.ts and syntax validation (VERIFIED - all 13 tests pass after gold patch)",
+      "ci_commands_discovered": [
+        "bun lint (requires bun - not available in container)",
+        "bun run typecheck (requires bun - not available in container)",
+        "bun test test/internal/ban-words.test.ts (requires bun - not available in container)",
+        "oxlint --config=oxlint.json (requires bun/npx - not available in container)"
+      ],
+      "tests_added": [
+        "test_no_undefined_equality_comparison - Bans == undefined, != undefined patterns per ban-words.test.ts",
+        "test_no_bare_jsboolean - Bans .jsBoolean(true/false), requires .true/.false per ban-words.test.ts",
+        "test_no_std_debug_in_builtins - Bans std.debug.*, std.log per ban-words.test.ts",
+        "test_typescript_braces_balance - Validates balanced braces/parentheses in TypeScript files"
+      ],
+      "docker_notes": "Bun is not installed in the container (base image is python:3.12-slim). CI commands that require bun (lint, typecheck, test) cannot be run. Added Python-based static analysis tests that verify the same coding standards enforced by the repo's CI. Docker build succeeded. All 4 p2p tests pass on base commit. All 13 tests pass after gold patch."
     },
-    {
-      "timestamp": "2026-03-31T09:37:05-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 96.11,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.68,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-31T13:27:46-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.55,
       "verdict": "pass",
-      "notes": ""
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:17:52.998686"
     },
     {
-      "timestamp": "2026-04-01T20:15:41.645461",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 306.58,
+      "at": "2026-04-09T01:17:53.168541"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.937677",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T04:25:24.084756"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.513504",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9549.59,
+      "at": "2026-04-09T04:25:24.254099"
     }
   ]
 }

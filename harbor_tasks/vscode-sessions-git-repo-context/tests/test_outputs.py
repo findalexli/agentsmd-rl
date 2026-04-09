@@ -48,7 +48,7 @@ if (!src.includes('sessions.hasGitRepository')) {
 }
 
 // Must be a RawContextKey instantiation
-const lines = src.split('\\n');
+const lines = src.split(/\\r?\\n/);
 let found = false;
 for (const line of lines) {
     if (line.includes('hasGitRepositoryContextKey') && line.includes('RawContextKey')) {
@@ -73,7 +73,7 @@ def test_context_key_is_raw_context_key_boolean():
     r = _run_node("""
 const fs = require('fs');
 const src = fs.readFileSync('src/vs/sessions/contrib/changes/browser/changesView.ts', 'utf8');
-const lines = src.split('\\n');
+const lines = src.split(/\\r?\\n/);
 
 let found = false;
 for (const line of lines) {
@@ -246,3 +246,146 @@ def test_code_review_sessions_window_context_intact():
     assert "IsSessionsWindowContext" in content, (
         "IsSessionsWindowContext was removed from codeReview.contributions.ts"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that pass on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_changesView_file_integrity():
+    """changesView.ts loads and has valid TypeScript structure (pass_to_pass)."""
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('src/vs/sessions/contrib/changes/browser/changesView.ts', 'utf8');
+
+// Check file is not empty
+if (src.length < 1000) {
+    console.error('File too small, may be corrupted');
+    process.exit(1);
+}
+
+// Check required imports exist
+const required = ['RawContextKey', 'bindContextKey', 'isolationModeContextKey', 'viewModel'];
+for (const r of required) {
+    if (!src.includes(r)) {
+        console.error('Missing: ' + r);
+        process.exit(1);
+    }
+}
+
+// Check bracket balance
+const open = (src.match(/{/g) || []).length;
+const close = (src.match(/}/g) || []).length;
+if (Math.abs(open - close) > 5) {
+    console.error('Bracket mismatch: ' + open + ' vs ' + close);
+    process.exit(1);
+}
+
+console.log('OK');
+""")
+    assert r.returncode == 0, f"changesView.ts integrity check failed: {r.stderr}"
+    assert "OK" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codeReview_file_integrity():
+    """codeReview.contributions.ts loads and has valid TypeScript structure (pass_to_pass)."""
+    r = _run_node("""
+const fs = require('fs');
+const src = fs.readFileSync('src/vs/sessions/contrib/codeReview/browser/codeReview.contributions.ts', 'utf8');
+
+// Check file is not empty
+if (src.length < 1000) {
+    console.error('File too small, may be corrupted');
+    process.exit(1);
+}
+
+// Check required patterns exist
+const required = ['IsSessionsWindowContext', 'ContextKeyExpr', 'MenuId', 'RawContextKey'];
+for (const r of required) {
+    if (!src.includes(r)) {
+        console.error('Missing: ' + r);
+        process.exit(1);
+    }
+}
+
+// Check bracket balance
+const open = (src.match(/{/g) || []).length;
+const close = (src.match(/}/g) || []).length;
+if (Math.abs(open - close) > 5) {
+    console.error('Bracket mismatch: ' + open + ' vs ' + close);
+    process.exit(1);
+}
+
+console.log('OK');
+""")
+    assert r.returncode == 0, f"codeReview.contributions.ts integrity check failed: {r.stderr}"
+    assert "OK" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """package.json is valid JSON (pass_to_pass)."""
+    r = _run_node("""
+const fs = require('fs');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+
+// Check required fields
+if (!pkg.name || !pkg.scripts) {
+    console.error('Invalid package.json structure');
+    process.exit(1);
+}
+
+// Check expected scripts exist
+const requiredScripts = ['compile', 'eslint', 'hygiene'];
+for (const s of requiredScripts) {
+    if (!pkg.scripts[s]) {
+        console.error('Missing script: ' + s);
+        process.exit(1);
+    }
+}
+
+console.log('OK');
+""")
+    assert r.returncode == 0, f"package.json validation failed: {r.stderr}"
+    assert "OK" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_sessions_module_structure():
+    """Sessions module has expected directory structure (pass_to_pass)."""
+    r = _run_node("""
+const fs = require('fs');
+const path = require('path');
+
+const dirs = [
+    'src/vs/sessions/contrib/changes/browser',
+    'src/vs/sessions/contrib/codeReview/browser',
+];
+
+const requiredFiles = [
+    'src/vs/sessions/contrib/changes/browser/changesView.ts',
+    'src/vs/sessions/contrib/codeReview/browser/codeReview.contributions.ts',
+];
+
+// Check directories exist
+for (const d of dirs) {
+    if (!fs.existsSync(d)) {
+        console.error('Missing dir: ' + d);
+        process.exit(1);
+    }
+}
+
+// Check files exist
+for (const f of requiredFiles) {
+    if (!fs.existsSync(f)) {
+        console.error('Missing file: ' + f);
+        process.exit(1);
+    }
+}
+
+console.log('OK');
+""")
+    assert r.returncode == 0, f"Sessions module structure check failed: {r.stderr}"
+    assert "OK" in r.stdout

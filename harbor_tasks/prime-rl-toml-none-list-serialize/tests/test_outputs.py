@@ -219,3 +219,40 @@ def test_no_work_process_comments():
     for pat in bad_patterns:
         m = re.search(pat, content, re.IGNORECASE)
         assert m is None, f"Found work-process comment: {m.group()}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD verification (p2p_enrichment)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_all():
+    """All Python files in the repo must have valid syntax (pass_to_pass)."""
+    import py_compile
+    import os
+
+    src_dir = Path(f"{REPO}/src")
+    errors = []
+
+    for root, _, files in os.walk(src_dir):
+        for file in files:
+            if file.endswith(".py"):
+                path = Path(root) / file
+                try:
+                    py_compile.compile(str(path), doraise=True)
+                except py_compile.PyCompileError as e:
+                    errors.append(f"{path.relative_to(src_dir)}: {e}")
+
+    assert len(errors) == 0, f"Syntax errors found:\n" + "\n".join(errors[:10])
+
+
+# [repo_tests] pass_to_pass
+def test_config_module_loads():
+    """Config module can be imported and executed without errors (pass_to_pass)."""
+    src = CONFIG_PY.read_text()
+    tree = ast.parse(src)
+    compile(tree, str(CONFIG_PY), "exec")
+
+    # Verify the expected functions are defined
+    func_names = {node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)}
+    assert "none_to_none_str" in func_names, "none_to_none_str function not found in config.py"

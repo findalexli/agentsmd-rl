@@ -132,3 +132,49 @@ def test_child_stdio_struct_fields():
     for field in ["stdin", "stdout", "stderr"]:
         assert re.search(rf"\b{field}\s*:\s*StdioOr", content), \
             f"ChildStdio must have a {field} field of type StdioOr*"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression checks
+# These verify the repo's own CI commands pass on the base commit.
+#
+# CI commands discovered from .github/workflows/ci.generated.yml:
+# - cargo check -p deno_io
+# - cargo check -p deno_process
+# - cargo clippy -p deno_process -p deno_io -- -D warnings
+#
+# Skipped commands (not suitable for p2p):
+# - cargo fmt --check: requires rustfmt component, rustup sync issues
+# - cargo check --all-targets: requires cmake, not installed
+# - cargo test: takes too long (>120s), runs full test suite
+# - cargo build: too slow for p2p gating
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_deno_io():
+    """Cargo check deno_io package compiles (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "deno_io"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check -p deno_io failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_deno_process():
+    """Cargo check deno_process package compiles (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "deno_process"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check -p deno_process failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_clippy_process_io():
+    """Cargo clippy passes for process and io packages (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "deno_process", "-p", "deno_io", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-500:]}"

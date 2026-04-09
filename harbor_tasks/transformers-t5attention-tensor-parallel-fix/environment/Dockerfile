@@ -18,7 +18,7 @@ RUN git clone --filter=blob:none https://github.com/huggingface/transformers.git
 WORKDIR /workspace/transformers
 
 # Install minimal dependencies for testing (no torch needed for our shape tests)
-RUN pip install --no-cache-dir numpy pytest
+RUN pip install --no-cache-dir numpy pytest pytest-json-ctrf
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

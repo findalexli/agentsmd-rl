@@ -1,37 +1,70 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-04-02T13:47:53.983141",
-      "phase": "e2b_wave2",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "solve.sh exit=128: error: corrupt patch at line 13\n"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T12:18:41.959629",
+  "total_time": 11209.34,
+  "sandbox_id": "itvs5czkhtkh8nu6c2rri",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 600.0,
+      "notes": "Added 3 pass_to_pass CI tests: test_repo_lint (yarn lint - 21s), test_repo_flow (yarn flow dom-browser - 27s), test_repo_tests_relevant (yarn test ReactPerformanceTrack - 8s). Dockerfile has git identity issue - git config --global needs to be before git commit. Used workaround with task-env-fixed image."
     },
-    {
-      "timestamp": "2026-04-02T14:28:08.959432",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "solve.sh exit=128: error: corrupt patch at line 13\n"
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 790.59,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-04-02T15:41:19.347743",
-      "phase": "e2b_patch_regen",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "solve.sh exit=1: error: patch failed: packages/react-reconciler/src/__tests__/ReactPerformanceTrack-test.js:231\nerror: packages/react-reconciler/src/__tests__/ReactPerformanceTrack-test.js: patch does"
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile git config order (moved before git commit). All 4 checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 559.71
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.76,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T23:07:01.607595",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 11209.07,
+      "at": "2026-04-09T12:18:41.790631"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 11209.34,
+      "at": "2026-04-09T12:18:41.959629"
     }
   ]
 }

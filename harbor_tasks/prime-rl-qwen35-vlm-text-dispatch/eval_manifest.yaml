@@ -70,6 +70,32 @@ checks:
       lines: "5,23"
       commit: "ecd080928014e20d1927a4f8b0b01d399151fdba"
 
+  # Repo CI/CD pass_to_pass gates
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo's ruff lint check passes on modified files"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo's ruff format check passes on modified files"
+
+  - id: test_repo_imports
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Modified files can be imported without errors"
+
+  - id: test_repo_configs_parse
+    type: pass_to_pass
+    origin: repo_ci
+    description: "All repo config files are valid TOML"
+
+  - id: test_repo_readme_exists
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo README exists and is readable"
+
 rubric:
   - rule: "Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code."
     source:

@@ -60,6 +60,17 @@ checks:
     origin: pr_diff
     description: "Router imports and delegates to InstanceRoutes via routes().fetch()"
 
+  # Repo CI/CD tests — ensure repo's own tests pass on base and after fix
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's bun turbo typecheck passes"
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests for opencode package pass"
+
   # Config-derived — AGENTS.md rules
   - id: no_any_type_in_router
     type: fail_to_pass

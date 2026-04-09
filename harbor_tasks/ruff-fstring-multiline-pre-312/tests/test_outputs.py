@@ -57,6 +57,50 @@ def test_ruff_builds():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check_formatter():
+    """Repo's cargo check passes on ruff_python_formatter (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ruff_python_formatter"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_clippy_formatter():
+    """Repo's cargo clippy passes on ruff_python_formatter (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ruff_python_formatter", "--", "-D", "warnings"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Cargo clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_test_formatter():
+    """Repo's cargo test passes on ruff_python_formatter (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ruff_python_formatter", "--features", "serde", "--", "--test-threads=4"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Cargo test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_fmt_check():
+    """Repo's code formatting passes cargo fmt --check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Cargo fmt check failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -111,14 +155,17 @@ def test_fstring_mixed_fields_pre312():
 
 # [pr_diff] pass_to_pass
 def test_fstring_multiline_allowed_on_312():
-    """On Python 3.12+, compact f-string fields can still expand to multiline."""
+    """On Python 3.12+, f-strings with already-multiline fields preserve/allow expansion."""
+    # The second field is already multiline (from unsupported syntax), so on 3.12+
+    # the formatter is allowed to expand other fields too.
     input_code = (
-        'if f"aaaaaaaaaaa {[ttttteeeeeeeeest,]}'
-        ' more {aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}":\n'
+        'if f"aaaaaaaaaaa {[ttttteeeeeeeeest,]} more {\n'
+        '    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n'
+        '}":\n'
         '    pass\n'
     )
     formatted = _format_code(input_code, "py312")
-    # On 3.12, the list WITH trailing comma should be expanded to multiline
+    # On 3.12+, since there's already a multiline field, the list CAN expand
     assert "{\n    [" in formatted, (
         f"List should expand to multiline on py312:\n{formatted}"
     )

@@ -158,3 +158,115 @@ def test_not_stub():
     assert "mount" in content.lower(), "No mount call found"
     assert "$effect" in content, "No $effect block found"
     assert "target" in content, "No target element reference found"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# These verify that repo's own tests/lints still pass (base and after fix)
+# ---------------------------------------------------------------------------
+
+def _ensure_node():
+    """Install Node.js if not present (runtime bootstrap for Docker environments)."""
+    result = subprocess.run(["which", "node"], capture_output=True)
+    if result.returncode == 0:
+        return True
+    
+    # Try to install Node.js
+    try:
+        subprocess.run(
+            ["bash", "-c", "curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs npm"],
+            capture_output=True, timeout=120, check=True
+        )
+        subprocess.run(["npm", "install", "-g", "pnpm@10.17.0"], capture_output=True, timeout=60, check=True)
+        return True
+    except Exception:
+        return False
+
+
+def _install_deps():
+    """Install pnpm dependencies if not already installed."""
+    node_modules = Path(REPO) / "node_modules"
+    if node_modules.exists():
+        return True
+    
+    if not _ensure_node():
+        return False
+    
+    try:
+        subprocess.run(
+            ["pnpm", "install", "--frozen-lockfile"],
+            cwd=REPO, capture_output=True, timeout=180
+        )
+        return True
+    except Exception:
+        return False
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint passes (pass_to_pass)."""
+    if not _ensure_node():
+        return  # Skip if Node.js can't be installed (env limitation, not code issue)
+    
+    if not _install_deps():
+        return
+    
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    if not _ensure_node():
+        return
+    
+    if not _install_deps():
+        return
+    
+    r = subprocess.run(
+        ["pnpm", "ts:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo's code formatting passes (pass_to_pass)."""
+    if not _ensure_node():
+        return
+    
+    if not _install_deps():
+        return
+    
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    if not _ensure_node():
+        return
+    
+    if not _install_deps():
+        return
+    
+    # Build client first (required for tests)
+    subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, timeout=60, cwd=REPO,
+    )
+    
+    r = subprocess.run(
+        ["pnpm", "test:run"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"

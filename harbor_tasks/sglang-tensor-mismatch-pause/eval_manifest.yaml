@@ -11,6 +11,21 @@ checks:
     origin: static
     description: "scheduler.py must parse without syntax errors"
 
+  - id: test_repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python files must compile without syntax errors"
+
+  - id: test_repo_ruff_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's scheduler.py must pass ruff syntax checks"
+
+  - id: test_repo_no_debug_statements
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's scheduler.py must not contain debug statements like pdb"
+
   - id: empty_batch_not_merged
     type: fail_to_pass
     origin: pr_diff

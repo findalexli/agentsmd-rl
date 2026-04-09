@@ -330,7 +330,7 @@ const content = fs.readFileSync('packages/playwright-core/src/tools/cli-daemon/h
 if (!content.includes('--raw')) throw new Error('Help must document --raw option');
 
 // Must call formatWithGap with --raw and a description
-const rawLineMatch = content.match(/formatWithGap\s*\(\s*['"]--raw['"]\s*,\s*['"]([^'"]+)['"]\s*\)/);
+const rawLineMatch = content.match(/formatWithGap\s*\(\s*['"]\s*--raw['"]\s*,\s*['"]([^'"]+)['"]\s*\)/);
 if (!rawLineMatch) throw new Error('Must call formatWithGap("--raw", "description")');
 
 const description = rawLineMatch[1];

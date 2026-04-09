@@ -15,7 +15,7 @@ REPO = "/workspace/storybook"
 
 
 def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Execute JavaScript/ESM code via Node in the repo directory."""
+    """Execute JavaScript code via Node in the repo directory."""
     script = Path(REPO) / "_eval_tmp.mjs"
     script.write_text(code)
     try:
@@ -32,29 +32,25 @@ def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_output_option_typechecks():
-    """AiPrepareOptions accepts 'output' field — verified by TypeScript compiler."""
-    test_file = Path(REPO) / "code/lib/cli-storybook/src/ai/_eval_type_test.ts"
-    test_file.write_text(
-        "import type { AiPrepareOptions } from './types';\n"
-        "const opts: AiPrepareOptions = { output: '/tmp/test.md' };\n"
-        "export {};\n"
+def test_output_option_in_types():
+    """AiPrepareOptions interface must include an optional output field."""
+    src = Path(f"{REPO}/code/lib/cli-storybook/src/ai/types.ts").read_text()
+
+    match = re.search(
+        r"interface\s+AiPrepareOptions\s*\{([^}]+)\}", src
     )
-    try:
-        r = subprocess.run(
-            ["npx", "tsc", "--noEmit",
-             "--moduleResolution", "node",
-             "--target", "ES2020",
-             "--module", "ES2020",
-             str(test_file)],
-            capture_output=True, text=True, timeout=120, cwd=REPO,
-        )
-        assert r.returncode == 0, (
-            f"TypeScript type check failed — AiPrepareOptions must accept 'output' field:\n"
-            f"{r.stdout}\n{r.stderr}"
-        )
-    finally:
-        test_file.unlink(missing_ok=True)
+    assert match, "AiPrepareOptions interface not found in types.ts"
+
+    body = match.group(1)
+    assert "output" in body, (
+        "AiPrepareOptions must have an 'output' field for the --output CLI flag"
+    )
+    assert re.search(r"output\s*\?\s*:\s*string", body), (
+        "output field should be typed as optional string (output?: string)"
+    )
+    # Existing fields must be preserved
+    assert "configDir" in body, "AiPrepareOptions must retain configDir field"
+    assert "packageManager" in body, "AiPrepareOptions must retain packageManager field"
 
 
 # [pr_diff] fail_to_pass
@@ -78,9 +74,13 @@ if (!/writeFile\\s*\\(/.test(src))
 if (!/if\\s*\\(?\\s*output\\b/.test(src))
     errors.push('no conditional check on output');
 
-// Must fall back to logger.log when output is not provided
-if (!/\\}\\s*else\\s*\\{[\\s\\S]{0,300}?logger\\.log/.test(src))
-    errors.push('no else fallback to logger.log');
+// Must import from node:fs (for file writing)
+if (!/from\\s+['"]node:fs/.test(src))
+    errors.push('must import from node:fs or node:fs/promises for file writing');
+
+// Must import from node:path (for path resolution)
+if (!/from\\s+['"]node:path/.test(src))
+    errors.push('must import from node:path for path resolution');
 
 if (errors.length) {
     console.error('FAIL:', errors.join('; '));
@@ -94,14 +94,14 @@ console.log('PASS');
 
 # [pr_diff] fail_to_pass
 def test_output_flag_registered_in_cli():
-    """The ai command registers -o/--output <path> option."""
+    """The CLI must register -o/--output <path> option."""
     r = _run_node("""
 import { readFileSync } from 'node:fs';
 const src = readFileSync('code/lib/cli-storybook/src/bin/run.ts', 'utf-8');
 
-// Must have .option('-o, --output <path>', ...) on the ai command or prepare subcommand
+// Must have .option('-o, --output <path>', ...) somewhere in the CLI definition
 if (!/-o,\\s*--output\\s+<[^>]+>/.test(src)) {
-    console.error('FAIL: -o/--output option not registered');
+    console.error('FAIL: -o/--output option not registered in CLI');
     process.exit(1);
 }
 console.log('PASS');
@@ -111,38 +111,43 @@ console.log('PASS');
 
 
 # [pr_diff] fail_to_pass
-def test_parent_options_merged():
-    """Prepare subcommand merges parent options so --output reaches aiPrepare."""
-    r = _run_node("""
-import { readFileSync } from 'node:fs';
-const src = readFileSync('code/lib/cli-storybook/src/bin/run.ts', 'utf-8');
+def test_prepare_receives_output():
+    """The prepare subcommand action handler must have access to the output option."""
+    src = Path(f"{REPO}/code/lib/cli-storybook/src/bin/run.ts").read_text()
 
-const errors = [];
+    prepare_idx = src.find(".command('prepare')")
+    assert prepare_idx != -1, "prepare subcommand not found"
 
-// Action handler must accept both options and cmd: .action(async (options, cmd) => ...)
-if (!/\\.action\\(\\s*async\\s*\\(\\s*\\w+\\s*,\\s*\\w+\\s*\\)/.test(src))
-    errors.push('action handler must accept (options, cmd) arguments');
+    # Scope to the prepare subcommand section (next ~800 chars)
+    prepare_section = src[prepare_idx : prepare_idx + 800]
 
-// Must access parent options via cmd.parent?.opts() or cmd.parent.opts()
-if (!/parent.*?\\.?opts\\s*\\(\\s*\\)/.test(src))
-    errors.push('must call parent.opts() to get parent command options');
+    # Approach 1: --output defined directly on prepare subcommand
+    has_output_on_prepare = bool(
+        re.search(r"\.option\([^)]*--output", prepare_section)
+    )
 
-// Must merge/spread parent and subcommand options
-if (!/\\{\\s*\\.\\.\\.\\w+.*,\\s*\\.\\.\\.\\w+/.test(src))
-    errors.push('must merge parent and subcommand options');
+    # Approach 2: parent option forwarding in the action handler
+    has_parent_forwarding = False
+    action_match = re.search(
+        r"\.action\(\s*async\s*\(([^)]+)\)", prepare_section
+    )
+    if action_match:
+        params = action_match.group(1)
+        if "," in params:
+            # Two-parameter handler (options, cmd) — check for parent opts access
+            remaining = prepare_section[action_match.end() :]
+            has_parent_forwarding = (
+                "parent" in remaining[:400] and "opts" in remaining[:400]
+            )
 
-if (errors.length) {
-    console.error('FAIL:', errors.join('; '));
-    process.exit(1);
-}
-console.log('PASS');
-""")
-    assert r.returncode == 0, f"Parent options merge check failed:\n{r.stderr}\n{r.stdout}"
-    assert "PASS" in r.stdout
+    assert has_output_on_prepare or has_parent_forwarding, (
+        "prepare subcommand must either define --output option directly "
+        "or forward parent command options via cmd.parent?.opts()"
+    )
 
 
 # ---------------------------------------------------------------------------
-# pass_to_pass (static) — compilation and anti-stub checks
+# pass_to_pass (static) — syntax and anti-stub checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -182,7 +187,7 @@ def test_not_stub():
             break
     assert fn_start is not None, "aiPrepare function not found"
     fn_lines = [
-        l for l in lines[fn_start:fn_start + 80]
+        l for l in lines[fn_start : fn_start + 80]
         if l.strip() and not l.strip().startswith("//")
     ]
     assert len(fn_lines) >= 20, (

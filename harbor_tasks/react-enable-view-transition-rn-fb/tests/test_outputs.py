@@ -127,6 +127,40 @@ def test_no_unintended_flag_changes():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that should pass on base and after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Repo ESLint check
+def test_repo_eslint():
+    """Repo's ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Shared package tests
+def test_repo_shared_package_tests():
+    """Shared package tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=packages/shared", "--timeout=60"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shared package tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Feature flags validation
+def test_repo_flags_validation():
+    """Feature flags validation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flags"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flags validation failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Agent-config derived (agent_config) — .claude/skills/feature-flags/SKILL.md
 # ---------------------------------------------------------------------------
 

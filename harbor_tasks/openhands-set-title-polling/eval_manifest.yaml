@@ -1,0 +1,63 @@
+source:
+  repo: All-Hands-AI/OpenHands
+  pr_number: 13577
+  base_commit: eb189144f2dfbbf0dad964cf7bdbd44e7910cb29
+  merge_commit: 06cd53d752b022a7ae3676ab17c029f1f810c892
+
+checks:
+  - id: test_polling_constants_exist
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md - constants should be clearly defined for maintainability
+    description: _POLL_DELAY_S = 3 and _NUM_POLL_ATTEMPTS = 4 constants exist
+
+  - id: test_total_polling_time
+    type: fail_to_pass
+    origin: behavior
+    description: Total polling time is ~12 seconds (4 attempts x 3 seconds delay)
+
+  - id: test_poll_for_title_function_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md - extract reusable logic to separate functions
+    description: _poll_for_title async function is extracted with correct parameters
+
+  - id: test_old_polling_tuple_removed
+    type: fail_to_pass
+    origin: behavior
+    description: Old _TITLE_POLL_DELAYS_S tuple is removed and replaced
+
+  - id: test_logging_level_changed_to_warning
+    type: fail_to_pass
+    origin: behavior
+    description: Log level changed from debug to warning for failed title polls
+
+  - id: test_poll_for_title_used_in_processor
+    type: fail_to_pass
+    origin: behavior
+    description: Main processor calls _poll_for_title instead of inline polling logic
+
+  - id: test_repo_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Existing unit tests for SetTitleCallbackProcessor pass
+
+  - id: test_imports_work
+    type: pass_to_pass
+    origin: repo_tests
+    description: Module imports work correctly
+
+  - id: test_repo_precommit_hooks
+    type: pass_to_pass
+    origin: repo_ci
+    description: Repo's pre-commit hooks (ruff, mypy, format) pass
+
+  - id: test_repo_ruff_linting
+    type: pass_to_pass
+    origin: repo_ci
+    description: Repo's ruff linting passes on openhands/ directory
+
+  - id: test_repo_app_server_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's app_server unit tests pass

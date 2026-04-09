@@ -12,6 +12,16 @@ checks:
     origin: static
     description: "Modified test file must parse without errors"
 
+  - id: assertion_logic_at_threshold
+    type: fail_to_pass
+    origin: pr_diff
+    description: "assertGreaterEqual with 0.69 threshold passes when score == 0.69 (BEHAVIORAL)"
+
+  - id: old_behavior_fails_at_exact_threshold
+    type: fail_to_pass
+    origin: pr_diff
+    description: "assertGreater with 0.7 threshold FAILS when score == 0.7 - proves the bug (BEHAVIORAL)"
+
   - id: accuracy_threshold_v1
     type: fail_to_pass
     origin: pr_diff
@@ -45,5 +55,30 @@ checks:
       path: ".claude/skills/write-sglang-test/SKILL.md"
       lines: "12"
       commit: 1ad6839659085732a6fe308f97141841d67f6323
+
+  # Repo CI/CD pass_to_pass checks (enrichment)
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified test file must have valid Python syntax"
+    command: "python3 -m py_compile test/registered/spec/test_standalone_speculative_decoding.py"
+
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified test file must pass ruff lint checks (F401, F821)"
+    command: "ruff check --select=F401,F821 test/registered/spec/test_standalone_speculative_decoding.py"
+
+  - id: test_repo_black_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified test file must be Black-formatted"
+    command: "black --check --diff test/registered/spec/test_standalone_speculative_decoding.py"
+
+  - id: test_repo_codespell
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified test file must have no common typos"
+    command: "codespell --config .codespellrc test/registered/spec/test_standalone_speculative_decoding.py"
 
 rubric: []

@@ -1,12 +1,63 @@
 {
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-08T21:53:04.385593",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 1199.12,
-  "error": "No backend available within 600s. Pool: glm(25ok/0\u00d7429/ok) | fireworks(70ok/0\u00d7429/ok)"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T13:00:32.203880",
+  "total_time": 13719.77,
+  "sandbox_id": "i2nenq26pig39p7kvw0x4",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 236.73,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All four validation checks passed: 1) Docker build successful, 2) NOP test returns reward=0 (fail-to-pass tests correctly fail on buggy base code), 3) Gold test returns reward=1 (all tests pass after gold fix applied), 4) Rubric judge returns ICR=1.0. The fix correctly removes nullcontext import and fixes TOCTOU race by holding is_pause_cond lock during weight update when paused.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 61.57
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.76,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 13719.49,
+      "at": "2026-04-09T13:00:32.025551"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 13719.77,
+      "at": "2026-04-09T13:00:32.203880"
+    }
+  ]
 }

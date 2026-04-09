@@ -1,0 +1,193 @@
+# Evaluation manifest for Hugo PR #14631
+# This PR updates the theme skeleton to use css.Build for CSS processing
+
+source:
+  pr:
+    owner: "gohugoio"
+    repo: "hugo"
+    number: 14631
+    title: "create/skeletons: Use css.Build in theme skeleton"
+    base_commit: "06fcb724219eecdc20367e86e1a8134d3d7e0e5b"
+    merge_commit: "404ac00001de49c0ccbff4131be40fa2651e4a06"
+  agent_config:
+    - file: "AGENTS.md"
+      rules:
+        - "Brevity is good"
+        - "Assume maintainers are Go experts - don't explain the obvious"
+        - "Look for helper functions before creating new ones"
+    - file: "CLAUDE.md"
+      rules:
+        - "Reference AGENTS.md"
+
+# Checks define what the agent needs to accomplish
+checks:
+  # CSS Component Files (fail-to-pass)
+  - id: "css.header_exists"
+    description: "Header CSS component file exists"
+    type: "pytest"
+    test: "test_header_css_exists"
+    required: true
+
+  - id: "css.footer_exists"
+    description: "Footer CSS component file exists"
+    type: "pytest"
+    test: "test_footer_css_exists"
+    required: true
+
+  - id: "css.header_content"
+    description: "Header CSS has correct border-bottom and margin-bottom rules"
+    type: "pytest"
+    test: "test_header_css_content"
+    required: true
+
+  - id: "css.footer_content"
+    description: "Footer CSS has correct border-top and margin-top rules"
+    type: "pytest"
+    test: "test_footer_css_content"
+    required: true
+
+  # Main CSS imports (fail-to-pass)
+  - id: "css.imports_header"
+    description: "main.css @imports header.css component"
+    type: "pytest"
+    test: "test_main_css_imports_header"
+    required: true
+
+  - id: "css.imports_footer"
+    description: "main.css @imports footer.css component"
+    type: "pytest"
+    test: "test_main_css_imports_footer"
+    required: true
+
+  - id: "css.no_inline_rules"
+    description: "main.css does not have inline header/footer rules"
+    type: "pytest"
+    test: "test_main_css_no_inline_header_footer"
+    required: true
+
+  - id: "css.keeps_body_anchor"
+    description: "main.css retains body and anchor styles"
+    type: "pytest"
+    test: "test_main_css_keeps_other_rules"
+    required: false
+
+  # CSS Template (fail-to-pass)
+  - id: "template.css_uses_build"
+    description: "css.html template uses css.Build function"
+    type: "pytest"
+    test: "test_css_template_uses_css_build"
+    required: true
+
+  - id: "template.css_has_opts"
+    description: "css.html defines $opts dict with minify and sourceMap"
+    type: "pytest"
+    test: "test_css_template_has_opts_dict"
+    required: true
+
+  - id: "template.css_conditional"
+    description: "css.html uses cond hugo.IsDevelopment for conditional options"
+    type: "pytest"
+    test: "test_css_template_conditional_options"
+    required: true
+
+  - id: "template.css_fingerprint"
+    description: "css.html still fingerprints in production"
+    type: "pytest"
+    test: "test_css_template_development_behavior"
+    required: true
+
+  # JS Template (pass-to-pass and behavioral)
+  - id: "template.js_cond_minify"
+    description: "js.html uses cond for minify option"
+    type: "pytest"
+    test: "test_js_template_uses_cond_for_minify"
+    required: true
+
+  - id: "template.js_cond_sourcemap"
+    description: "js.html uses cond for sourceMap option"
+    type: "pytest"
+    test: "test_js_template_uses_cond_for_sourcemap"
+    required: true
+
+  - id: "template.js_no_targetpath"
+    description: "js.html removes targetPath option"
+    type: "pytest"
+    test: "test_js_template_no_targetpath"
+    required: true
+
+  # Integration tests (pass-to-pass)
+  - id: "integration.new_theme"
+    description: "Hugo can create new theme using skeleton"
+    type: "pytest"
+    test: "test_hugo_new_theme_succeeds"
+    required: true
+
+  - id: "integration.files_copied"
+    description: "Theme skeleton files are copied correctly"
+    type: "pytest"
+    test: "test_theme_files_copied_correctly"
+    required: true
+
+  # Repo CI/CD checks (pass-to-pass)
+  - id: "p2p.gofmt"
+    description: "Repo's Go code passes gofmt check"
+    type: "pass_to_pass"
+    test: "test_repo_gofmt"
+    required: true
+
+  - id: "p2p.go_vet"
+    description: "Repo's Go code passes go vet"
+    type: "pass_to_pass"
+    test: "test_repo_go_vet"
+    required: true
+
+  - id: "p2p.build"
+    description: "Repo compiles successfully"
+    type: "pass_to_pass"
+    test: "test_repo_build"
+    required: true
+
+  - id: "p2p.unit_tests_create"
+    description: "Repo's create package tests pass"
+    type: "pass_to_pass"
+    test: "test_repo_unit_tests_create"
+    required: true
+
+  - id: "p2p.go_mod_verify"
+    description: "Repo's go.mod and go.sum are valid"
+    type: "pass_to_pass"
+    test: "test_repo_go_mod_verify"
+    required: true
+
+  - id: "p2p.skeleton_css_template"
+    description: "Theme skeleton css.html template exists"
+    type: "pass_to_pass"
+    test: "test_skeleton_css_template_exists"
+    required: true
+
+  - id: "p2p.skeleton_js_template"
+    description: "Theme skeleton js.html template exists"
+    type: "pass_to_pass"
+    test: "test_skeleton_js_template_exists"
+    required: true
+
+  - id: "p2p.skeleton_main_css"
+    description: "Theme skeleton main.css exists"
+    type: "pass_to_pass"
+    test: "test_skeleton_main_css_exists"
+    required: true
+
+  - id: "p2p.skeleton_main_js"
+    description: "Theme skeleton main.js exists"
+    type: "pass_to_pass"
+    test: "test_skeleton_main_js_exists"
+    required: true
+
+  - id: "p2p.skeleton_layouts"
+    description: "Theme skeleton layout files exist"
+    type: "pass_to_pass"
+    test: "test_skeleton_layouts_exist"
+    required: true
+
+# Rubric for LLM judge evaluation (soft/subjective criteria)
+rubric: []

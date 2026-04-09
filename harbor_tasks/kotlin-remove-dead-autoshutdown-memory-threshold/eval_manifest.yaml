@@ -1,0 +1,94 @@
+version: "1.0"
+
+source:
+  pr:
+    owner: JetBrains
+    repo: kotlin
+    number: 5818
+    title: "Remove dead autoShutdownMemoryThreshold"
+    merge_commit: a75b250150d2415d78b470345ba866aa419164a5
+    base_commit: 4dacdd37f64ec8643eea5b22f12a8256e7b5ced9
+
+# Fail-to-pass tests: these fail at base_commit, pass at merge_commit
+tests:
+  fail_to_pass:
+    - id: "constant_removed"
+      name: "COMPILE_DAEMON_MEMORY_THRESHOLD_INFINITE constant removed"
+      description: "Verify the unused memory threshold constant is removed"
+      test_function: "test_constant_removed"
+      file: "tests/test_outputs.py"
+
+    - id: "field_removed"
+      name: "autoshutdownMemoryThreshold field removed"
+      description: "Verify the autoshutdownMemoryThreshold field is removed from DaemonOptions"
+      test_function: "test_field_removed_from_daemon_options"
+      file: "tests/test_outputs.py"
+
+    - id: "prop_mapper_removed"
+      name: "PropMapper for memory threshold removed"
+      description: "Verify the PropMapper for autoshutdownMemoryThreshold is removed"
+      test_function: "test_prop_mapper_removed"
+      file: "tests/test_outputs.py"
+
+    - id: "no_references_remaining"
+      name: "No references to removed memory threshold"
+      description: "Verify no remaining references to the removed memory threshold functionality"
+      test_function: "test_no_references_to_removed_memory_threshold"
+      file: "tests/test_outputs.py"
+
+  # Pass-to-pass tests: these pass at both commits (regression tests)
+  pass_to_pass:
+    - id: "daemon_options_structure"
+      name: "DaemonOptions structure valid"
+      description: "Verify DaemonOptions class has correct remaining fields"
+      test_function: "test_daemon_options_data_class_structure"
+      file: "tests/test_outputs.py"
+
+    - id: "mappers_list_valid"
+      name: "Mappers list structure valid"
+      description: "Verify the mappers list has correct remaining PropMappers"
+      test_function: "test_mappers_list_structure"
+      file: "tests/test_outputs.py"
+
+    - id: "file_compiles"
+      name: "Kotlin file compiles"
+      description: "Verify the modified Kotlin file is syntactically valid"
+      test_function: "test_kotlin_file_compiles"
+      file: "tests/test_outputs.py"
+
+    - id: "valid_prop_mappers"
+      name: "Remaining PropMappers are valid"
+      description: "Verify remaining PropMapper instances are properly formed"
+      test_function: "test_file_has_valid_prop_mappers"
+      file: "tests/test_outputs.py"
+
+# Agent configuration compliance (from CLAUDE.md, AGENTS.md, .ai/guidelines.md)
+agent_config:
+  checks:
+    - id: "follow_compiler_guidelines"
+      name: "Follow compiler/AGENTS.md guidelines"
+      description: "Changes should follow compiler area guidelines: FIR prefix for FIR changes, test-before-fix approach"
+      source:
+        file: "compiler/AGENTS.md"
+        lines: "17-20"
+        commit: "4dacdd37f64ec8643eea5b22f12a8256e7b5ced9"
+
+    - id: "no_ide_tools_used"
+      name: "Use proper tools for repository"
+      description: "For this repo, JetBrains IDE MCP tools should be preferred over standard file tools"
+      source:
+        file: ".ai/guidelines.md"
+        lines: "67-95"
+        commit: "4dacdd37f64ec8643eea5b22f12a8256e7b5ced9"
+
+# Rubric for soft/subjective rules (LLM-judge only)
+rubric:
+  rules: []
+
+scoring:
+  # Each fail_to_pass test is worth 25 points (4 tests = 100 points)
+  fail_to_pass_weight: 25
+  # Pass-to_pass tests are worth 0 points (regression checks only)
+  pass_to_pass_weight: 0
+  # Agent config checks don't affect score (informational)
+  agent_config_weight: 0

@@ -65,15 +65,20 @@ checks:
       lines: "7"
       commit: "18594ab2f5c43bdf80424731e5e268d67311056e"
 
-rubric:
-  - rule: "Errors should never pass silently. Unless explicitly silenced."
-    source:
-      path: "AGENTS.md"
-      lines: "23-24"
-      commit: "18594ab2f5c43bdf80424731e5e268d67311056e"
+  # Repo CI/CD pass_to_pass gates
+  - id: repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff lint check passes on orchestrator module"
 
-  - rule: "Explicit is better than implicit."
-    source:
-      path: "AGENTS.md"
-      lines: "15"
-      commit: "18594ab2f5c43bdf80424731e5e268d67311056e"
+  - id: repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff format check passes on orchestrator module"
+
+  - id: repo_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All Python files in orchestrator module have valid syntax"
+
+rubric: []

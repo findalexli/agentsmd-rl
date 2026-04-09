@@ -1,0 +1,136 @@
+source:
+  pr: SeleniumHQ/selenium#17218
+  title: "[java] Fix saving docker logs to a file"
+  merge_commit: f822b35e5293b52165498af1dc240e1b1f008c42
+  base_commit: 491207a87b89b2824d8ca976fa7cb46cce9325ea
+
+# Fail-to-pass checks (behavioral tests that should fail before fix, pass after)
+checks:
+  # Multiplexed stream parsing
+  - id: test_multiplexed_stream_parsing
+    description: "DockerSession has parseMultiplexedStream method with correct logic"
+    type: f2p
+    file: test_outputs.py
+
+  - id: test_multiplexed_stream_frame_format
+    description: "Multiplexed stream frame parsing extracts payload correctly"
+    type: f2p
+    file: test_outputs.py
+
+  # Binary stream detection
+  - id: test_isBinaryStream_method_exists
+    description: "JdkHttpMessages has isBinaryStream method for Docker content types"
+    type: f2p
+    file: test_outputs.py
+
+  - id: test_isBinaryStream_recognizes_docker_streams
+    description: "isBinaryStream correctly identifies Docker multiplexed/raw streams"
+    type: f2p
+    file: test_outputs.py
+
+  # ContainerLogs changes
+  - id: test_container_logs_uses_contents_supplier
+    description: "ContainerLogs uses Contents.Supplier instead of List<String>"
+    type: f2p
+    file: test_outputs.py
+
+  - id: test_container_logs_getLogs_method_exists
+    description: "ContainerLogs has getLogs() method returning InputStream"
+    type: f2p
+    file: test_outputs.py
+
+  - id: test_container_logs_deprecated_annotation
+    description: "getLogLines method is marked as @Deprecated"
+    type: f2p
+    file: test_outputs.py
+
+  # GetContainerLogs changes
+  - id: test_get_container_logs_no_content_type_header
+    description: "GetContainerLogs no longer adds Content-Type header to GET request"
+    type: f2p
+    file: test_outputs.py
+
+  - id: test_get_container_logs_passes_raw_content
+    description: "GetContainerLogs passes raw response content without string conversion"
+    type: f2p
+    file: test_outputs.py
+
+  - id: test_get_container_logs_lambda_logging
+    description: "GetContainerLogs uses lambda for lazy log evaluation"
+    type: p2p
+    file: test_outputs.py
+
+  # Container isRunning
+  - id: test_container_is_running_method
+    description: "Container has isRunning() method exposing running state"
+    type: f2p
+    file: test_outputs.py
+
+  - id: test_container_empty_contents_for_stopped
+    description: "Container returns Contents.empty() when not running"
+    type: p2p
+    file: test_outputs.py
+
+  # DockerSession improvements
+  - id: test_docker_session_checks_running_before_save
+    description: "DockerSession.saveLogs() checks container.isRunning() first"
+    type: f2p
+    file: test_outputs.py
+
+  - id: test_docker_session_uses_multiplexed_parser
+    description: "DockerSession uses parseMultiplexedStream for processing logs"
+    type: f2p
+    file: test_outputs.py
+
+  - id: test_docker_session_buffering_used
+    description: "DockerSession uses Buffered streams and DataInputStream"
+    type: p2p
+    file: test_outputs.py
+
+  # DockerSessionFactory null check
+  - id: test_docker_session_factory_null_check
+    description: "DockerSessionFactory has null check for TZ environment variable"
+    type: f2p
+    file: test_outputs.py
+
+  # Compilation check
+  - id: test_java_files_compile
+    description: "Java files compile without syntax errors"
+    type: p2p
+    file: test_outputs.py
+
+  # Agent config rules
+  - id: agent_config_bazel_usage
+    description: "Code follows Bazel build conventions from AGENTS.md"
+    type: agent_config
+    source:
+      file: AGENTS.md
+      lines: "Toolchain section"
+      rule: "The project uses Bazelisk with a hermetic Bazel toolset"
+
+  - id: agent_config_logging
+    description: "Code follows logging conventions from java/AGENTS.md"
+    type: agent_config
+    source:
+      file: java/AGENTS.md
+      lines: "Logging section"
+      rule: "Use LOG.fine for diagnostic details, LOG.warning for actionable issues"
+
+  - id: agent_config_deprecation
+    description: "Deprecated annotation follows java/AGENTS.md convention"
+    type: agent_config
+    source:
+      file: java/AGENTS.md
+      lines: "Deprecation section"
+      rule: "Mark deprecated methods with @Deprecated"
+
+  - id: agent_config_javadoc
+    description: "Public APIs have Javadoc as per java/AGENTS.md"
+    type: agent_config
+    source:
+      file: java/AGENTS.md
+      lines: "Documentation section"
+      rule: "Use Javadoc for public APIs"
+
+# Rubric for subjective rules (LLM-judged)
+rubric: []

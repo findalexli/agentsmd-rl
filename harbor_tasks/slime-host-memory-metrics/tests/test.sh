@@ -13,6 +13,21 @@ if ! python3 -c "import pytest" 2>/dev/null; then
         pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
 fi
 
+# Install CI tools needed for pass_to_pass tests
+python3 -m pip install -q ruff isort black 2>/dev/null || \
+    pip3 install -q --break-system-packages ruff isort black 2>/dev/null
+
+# Install pytest dependencies for repo tests
+python3 -m pip install -q torch numpy packaging pyyaml omegaconf 2>/dev/null || \
+    pip3 install -q --break-system-packages torch numpy packaging pyyaml omegaconf 2>/dev/null
+
+python3 -m pip install -q tqdm httpx pybase64 pylatexenc sympy aiohttp pillow 2>/dev/null || \
+    pip3 install -q --break-system-packages tqdm httpx pybase64 pylatexenc sympy aiohttp pillow 2>/dev/null
+
+# Install slime package
+pip install -e /workspace/slime --no-deps --quiet 2>/dev/null || \
+    pip3 install -e /workspace/slime --no-deps --quiet --break-system-packages 2>/dev/null
+
 python3 -m pytest --ctrf /logs/verifier/ctrf.json /tests/test_outputs.py -rA --tb=short -q
 
 if [ $? -eq 0 ]; then

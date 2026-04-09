@@ -50,4 +50,29 @@ checks:
       lines: "11"
       commit: "7fb789749edc96504fda8043e82a88eb88592d4e"
 
+  # New CI/CD-derived pass_to_pass tests
+  - id: zig_fmt_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "dns.zig has valid syntax (balanced braces, no unclosed blocks) for zig fmt compatibility"
+    source:
+      path: ".github/workflows/format.yml"
+      workflow: "Format"
+
+  - id: no_banned_words_in_dns_zig
+    type: pass_to_pass
+    origin: repo_tests
+    description: "dns.zig does not contain banned words/patterns (CI ban-words check)"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      workflow: "Format"
+
+  - id: dns_js_no_oxlint_violations
+    type: pass_to_pass
+    origin: repo_tests
+    description: "JS/TS files in dns-related paths pass basic linting rules (from oxlint.json)"
+    source:
+      path: "oxlint.json"
+      config: "correctness"
+
 rubric: []

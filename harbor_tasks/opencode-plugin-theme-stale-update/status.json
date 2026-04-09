@@ -1,89 +1,50 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.981190",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:21:32.179629",
+  "total_time": 2654.9,
+  "sandbox_id": "icfzgugwf2z7gsjlc34cp",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All four validation checks passed: Docker build succeeded, NOP test returned reward=0 (correctly detects missing functions), Gold test returned reward=1 (all 11 tests pass after fix), Rubric judge returned ICR=1.0 (gold solution follows all rubric rules).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 182.14
     },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=0.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-30T11:48:15.959533",
-      "runner": "audit (audit-tests_20260330_114815)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 15111
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.709519",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-01T21:29:42-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 0.0,
-      "nop_score": 0.0,
-      "verdict": "fail_gold",
-      "notes": ""
-    },
-    {
-      "timestamp": "2026-04-02T12:58:21.150257",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Template build: failed to run command 'bun install --frozen-lockfile || bun install': signal: killed"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.953476",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: 429: Rate limit exceeded, please try again later. - you have reached the maximum number of concurrent template builds (20). Please wait for existing builds to complete or conta"
-    },
-    {
-      "timestamp": "2026-04-02T17:47:54.329787",
-      "phase": "local_docker_validate",
-      "runner": "local_docker_82",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Command '['docker', 'build', '-q', '-t', 'harbor-opencode-plugin-theme-stale-update:latest', 'harbor"
-    },
-    {
-      "timestamp": "2026-04-03T01:19:08.899600+00:00",
-      "phase": "local_docker_retry",
-      "runner": "local_600s",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1",
-      "notes": ""
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:21:32.021361"
     },
     {
-      "timestamp": "2026-04-02T18:27:57.338985",
-      "phase": "e2b_highres",
-      "runner": "e2b_4cpu_4gb",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.572017",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2654.9,
+      "at": "2026-04-09T02:21:32.179629"
     }
   ]
 }

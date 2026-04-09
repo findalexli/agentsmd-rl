@@ -1,0 +1,84 @@
+source_pr:
+  owner: TanStack
+  repo: router
+  number: 6895
+  merge_commit: "986776cd27dbab6d032d764933242936f68103f5"
+  base_commit: "ab46b5ec42296c60dc46d97481f038b8df68ed84"
+
+# Agent config rules from AGENTS.md and CONTRIBUTING.md
+# These are soft/subjective rules - included in rubric for LLM judge
+rubric:
+  - id: "code_quality"
+    description: "Code should follow the project's style and include helpful comments"
+    criteria:
+      - "Changes include explanatory comments"
+      - "Code is clean and readable"
+      - "Variable names are descriptive (releaseLogs, currentRelease, previousRelease)"
+
+# Programmatic checks (1:1 mapping with test_outputs.py)
+checks:
+  - id: "release_logs_uses_array_parsing"
+    description: "releaseLogs parsed as array with split and filter"
+    type: "pytest"
+    origin: "agent_config"
+    source: "AGENTS.md - Code style: clean and readable code"
+
+  - id: "range_from_logic"
+    description: "rangeFrom uses currentRelease/previousRelease variables"
+    type: "pytest"
+    origin: "auto"
+
+  - id: "commit_range_uses_current_release"
+    description: "Git log range uses currentRelease instead of HEAD~1"
+    type: "pytest"
+    origin: "auto"
+
+  - id: "non_conventional_commit_uses_split"
+    description: "Non-conventional commits use split() not indexOf()"
+    type: "pytest"
+    origin: "auto"
+
+  - id: "latest_flag_conditional"
+    description: "--latest flag is conditional on isPrerelease"
+    type: "pytest"
+    origin: "auto"
+
+  - id: "prerelease_flag_unchanged"
+    description: "prereleaseFlag logic is preserved"
+    type: "pytest"
+    origin: "auto"
+
+  - id: "script_syntax_valid"
+    description: "Script has valid JavaScript syntax"
+    type: "pytest"
+    origin: "agent_config"
+    source: "AGENTS.md - Testing instructions: verify code works"
+
+  - id: "comments_explain_changes"
+    description: "Comments explain git range and commit parsing logic"
+    type: "pytest"
+    origin: "agent_config"
+    source: "AGENTS.md - Code style: include helpful comments"
+
+  - id: "conventional_commit_regex_comment"
+    description: "Comment explains conventional commit format pattern"
+    type: "pytest"
+    origin: "agent_config"
+    source: "AGENTS.md - Code style: clear documentation"
+
+  # Pass-to-Pass checks: Repo CI/CD tests
+  - id: "test_repo_script_syntax"
+    description: "Repo's release script has valid JavaScript syntax"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source: "node --check scripts/create-github-release.mjs"
+
+  - id: "test_repo_script_formatting"
+    description: "Repo's release script follows Prettier formatting"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source: "npx prettier --check scripts/create-github-release.mjs"
+
+scoring:
+  max_points: 9
+  points_per_check: 1

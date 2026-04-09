@@ -9,6 +9,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: iconfont.svg must be valid XML
+- id: webfont_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Required webfont files must exist (iconfont.svg, iconfont.woff2, README.md)
+- id: woff2_file_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: The woff2 font file must be valid and readable
+- id: svg_has_expected_glyphs
+  type: pass_to_pass
+  origin: repo_tests
+  description: SVG must contain expected plus and minus glyphs
 - id: generate_font_script_runs
   type: fail_to_pass
   origin: pr_diff
@@ -25,6 +37,10 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: route.spec.tsx must not reference old font body.length of 2656
+- id: readme_documentation
+  type: fail_to_pass
+  origin: config_edit
+  description: README.md must document the new font generation approach and dependencies
 rubric:
 - rule: Documentation update should be consistent with the style of existing project
     documentation

@@ -34,6 +34,34 @@ def test_next_swc_package_json_valid():
     assert "scripts" in pkg, "next-swc package.json missing 'scripts'"
 
 
+# [repo_tests] pass_to_pass — Repo CI/CD config validation
+def test_lerna_json_valid():
+    """lerna.json is valid JSON with required fields (pass_to_pass)."""
+    lerna = json.loads(Path(f"{REPO}/lerna.json").read_text())
+    assert "version" in lerna, "lerna.json missing 'version'"
+    assert "packages" in lerna, "lerna.json missing 'packages'"
+    # lerna uses glob patterns like "packages/*" not literal paths
+    assert any("packages/" in p for p in lerna["packages"]), "lerna.json missing packages/* pattern"
+
+
+# [repo_tests] pass_to_pass — Repo CI/CD config validation
+def test_turbo_json_valid():
+    """Root turbo.json is valid JSON with tasks defined (pass_to_pass)."""
+    turbo = json.loads(Path(f"{REPO}/turbo.json").read_text())
+    assert "$schema" in turbo, "turbo.json missing '$schema'"
+    assert "tasks" in turbo, "turbo.json missing 'tasks'"
+    assert "build" in turbo["tasks"], "turbo.json missing 'build' task"
+
+
+# [repo_tests] pass_to_pass — Repo CI/CD config validation
+def test_next_package_json_valid():
+    """packages/next/package.json is valid JSON with required fields (pass_to_pass)."""
+    pkg = json.loads(Path(f"{REPO}/packages/next/package.json").read_text())
+    assert "name" in pkg and pkg["name"] == "next", "next package name must be 'next'"
+    assert "scripts" in pkg, "next package.json missing 'scripts'"
+    assert "build" in pkg["scripts"], "next package.json missing 'build' script"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — code behavior tests
 # ---------------------------------------------------------------------------

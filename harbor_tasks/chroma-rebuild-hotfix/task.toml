@@ -1,0 +1,44 @@
+name = "chroma-rebuild-hotfix"
+title = "Chroma Hotfix: SourceRecordSegmentV2Operator for Rebuild Operations"
+owner = "chroma-core"
+repo = "chroma"
+base_commit = "ab4a15df0055b65b8c2fa6e3ce1115d55ecfad22"
+merge_commit = "597bb5c1f0d75fad19038515841bc417665f616c"
+pr_number = 6739
+difficulty = "hard"
+tags = ["rust", "async", "streaming", "rebuild"]
+estimated_time = "45 min"
+
+[timeouts]
+agent = 1800
+verifier = 300
+
+[[files]]
+path = "rust/segment/src/types.rs"
+action = "modify"
+description = "Add materialize_logs_for_rebuild function and UnsupportedOperationForRebuild error"
+
+[[files]]
+path = "rust/worker/src/execution/operators/mod.rs"
+action = "modify"
+description = "Add source_record_segment_v2 module"
+
+[[files]]
+path = "rust/worker/src/execution/operators/source_record_segment.rs"
+action = "modify"
+description = "Add constructor and change Upsert to Add operation"
+
+[[files]]
+path = "rust/worker/src/execution/operators/source_record_segment_v2.rs"
+action = "create"
+description = "New SourceRecordSegmentV2Operator for partitioned rebuilds"
+
+[[files]]
+path = "rust/worker/src/execution/orchestration/compact.rs"
+action = "modify"
+description = "Add test_metadata_rebuild_fts test"
+
+[[files]]
+path = "rust/worker/src/execution/orchestration/log_fetch_orchestrator.rs"
+action = "modify"
+description = "Integrate SourceRecordSegmentV2Operator for rebuild flow"

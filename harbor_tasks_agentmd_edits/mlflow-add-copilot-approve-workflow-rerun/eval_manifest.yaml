@@ -42,6 +42,22 @@ checks:
     origin: pr_diff
     description: "SKILL.md must document how to use the approve workflow script"
 
+  # Pass-to-pass tests - repo CI checks
+  - id: test_repo_bash_syntax_copilot
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All shell scripts in .claude/skills/copilot have valid bash syntax"
+
+  - id: test_repo_ruff_claude
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linting passes on .claude directory"
+
+  - id: test_repo_bash_syntax_all_claude
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All shell scripts in .claude have valid bash syntax"
+
 rubric:
   - rule: "The approve.sh script should follow the same patterns as the existing poll.sh script (set -euo pipefail, gh CLI usage, error handling style)"
     source:

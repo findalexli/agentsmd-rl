@@ -1,0 +1,66 @@
+source_pr:
+  owner: MystenLabs
+  repo: sui
+  pr_number: 26139
+  merge_commit: 5d6853d6a2e9978f1f11157c0f16ee2a584f5000
+  base_commit: 8810914bd8a82363390cbd30eb12188b34592c87
+
+task:
+  name: sui-move-unit-test-linkage
+  title: Fix Move unit test runner to provide full package linkage
+  description: |
+    The Move unit test runner was not providing full linkage context for packages,
+    causing issues with cross-package test execution. The fix adds proper
+    linkage context creation using identity mapping (addr -> addr) and passes
+    it to StoredPackage creation via from_module_for_testing_with_linkage.
+
+checks:
+  # Fail-to-pass tests
+  - id: test_linkage_context_import_exists
+    type: fail_to_pass
+    origin: behavior
+    description: Verify linkage_context is imported in test_runner.rs
+
+  - id: test_linkage_table_creation_exists
+    type: fail_to_pass
+    origin: behavior
+    description: Verify linkage_table is created mapping addresses
+
+  - id: test_stored_package_with_linkage_exists
+    type: fail_to_pass
+    origin: behavior
+    description: Verify from_module_for_testing_with_linkage is used
+
+  - id: test_linkage_context_passed_to_package
+    type: fail_to_pass
+    origin: behavior
+    description: Verify linkage_context is cloned and passed to package creation
+
+  # Pass-to-pass tests (repo CI)
+  - id: test_cargo_check_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: cargo check passes on move-unit-test crate
+
+  - id: test_move_unit_test_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: move-unit-test crate builds successfully
+
+  - id: test_move_unit_test_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: move-unit-test passes clippy lints
+
+  - id: test_move_vm_runtime_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: move-vm-runtime dependency builds successfully
+
+  - id: test_external_crates_move_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: external-crates/move workspace cargo check passes
+
+# No agent config rules relevant to this specific fix
+rubric: []

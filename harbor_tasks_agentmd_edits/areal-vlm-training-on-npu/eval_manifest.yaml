@@ -7,11 +7,35 @@ source:
   merge_commit: "524d1d90f506f25436754e82d31f2703a61ee8d2"
 
 checks:
+  # ---------------------------------------------------------------------------
+  # pass_to_pass: repo_tests — repository CI/CD gates
+  # ---------------------------------------------------------------------------
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All Python files in areal/ parse without syntax errors"
+
+  - id: test_repo_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All YAML config files in areal/tests/, examples/, benchmark/ parse without errors"
+
+  - id: test_repo_no_wildcard_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No wildcard imports in areal/ directory per project conventions"
+
+  # ---------------------------------------------------------------------------
+  # pass_to_pass: static — syntax / compilation checks
+  # ---------------------------------------------------------------------------
   - id: python_syntax
     type: pass_to_pass
     origin: static
     description: "Training script parses without syntax errors"
 
+  # ---------------------------------------------------------------------------
+  # fail_to_pass: pr_diff — core behavioral tests
+  # ---------------------------------------------------------------------------
   - id: format_reward_function
     type: fail_to_pass
     origin: pr_diff
@@ -32,6 +56,9 @@ checks:
     origin: pr_diff
     description: "README documents NPU hardware requirements and training results"
 
+  # ---------------------------------------------------------------------------
+  # fail_to_pass: agent_config — rules from AGENTS.md
+  # ---------------------------------------------------------------------------
   - id: no_wildcard_imports
     type: fail_to_pass
     origin: agent_config

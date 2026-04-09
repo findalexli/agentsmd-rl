@@ -117,3 +117,27 @@ def test_existing_session_commands_preserved():
     for cmd in ["session-list", "session-stop", "session-restart",
                 "session-stop-all", "session-delete"]:
         assert cmd in content, f"Existing command '{cmd}' should still be in SKILL.md"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — npm run build
+def test_repo_build():
+    """Repo's build command passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — eslint on playwright-core
+def test_repo_eslint_playwright_core():
+    """Repo's ESLint on playwright-core passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "packages/playwright-core/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"

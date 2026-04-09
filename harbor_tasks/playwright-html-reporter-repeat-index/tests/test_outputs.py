@@ -1,6 +1,6 @@
 """
 Task: playwright-html-reporter-repeat-index
-Repo: microsoft/playwright @ 1bebb2d1759a9df0c676eb0708451abf90973fcc
+Repo: microsoft/playwright @ 1bebb2d175a9df0c676eb0708451abf90973fcc
 PR:   40002
 
 All checks must pass for reward = 1. Any failure = reward 0.
@@ -11,6 +11,31 @@ import subprocess
 from pathlib import Path
 
 REPO = "/workspace/playwright"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression tests
+# Verified working on base commit 1bebb2d175a9df0c676eb0708451abf90973fcc
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's build passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_packages():
+    """Repo's package consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint-packages failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

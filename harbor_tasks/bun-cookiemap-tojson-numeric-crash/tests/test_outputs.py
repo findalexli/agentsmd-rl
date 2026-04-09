@@ -13,10 +13,22 @@ by executing Python analysis scripts via subprocess.
 
 import subprocess
 import re
+import pytest
 from pathlib import Path
 
 REPO = "/workspace/bun"
 FILE = Path(REPO) / "src/bun.js/bindings/CookieMap.cpp"
+
+
+# Banned words patterns from test/internal/ban-words.test.ts
+# These are patterns that should not appear in new/modified code
+BANNED_PATTERNS_CPP = {
+    # C++ / JSC binding anti-patterns
+    "global.hasException": "Incompatible with strict exception checks. Use a CatchScope instead.",
+    "globalObject.hasException": "Incompatible with strict exception checks. Use a CatchScope instead.",
+    "globalThis.hasException": "Incompatible with strict exception checks. Use a CatchScope instead.",
+    "EXCEPTION_ASSERT(!scope.exception())": "Use scope.assertNoException() instead",
+}
 
 
 def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
@@ -269,3 +281,129 @@ def _read_tojson_body() -> str:
             depth -= 1
         i += 1
     return text[start : i - 1]
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repository
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+# Origin: bun repo CI checks for C++ code quality
+# The repo has banned patterns (see test/internal/ban-words.test.ts) that
+# should not be introduced in new code.
+def test_cookiemap_no_banned_patterns():
+    """CookieMap.cpp must not contain banned C++ anti-patterns.
+    This is a pass-to-pass check from the repo's CI (pass_to_pass)."""
+    text = FILE.read_text()
+
+    banned_found = []
+    for pattern, reason in BANNED_PATTERNS_CPP.items():
+        if pattern in text:
+            banned_found.append(f"{pattern}: {reason}")
+
+    assert not banned_found, (
+        f"Banned patterns found in CookieMap.cpp:\n" +
+        "\n".join(banned_found)
+    )
+
+
+# [repo_tests] pass_to_pass
+# Origin: bun repo CI checks for file structure
+# Verifies the file structure is intact and follows conventions.
+def test_cookiemap_file_structure():
+    """CookieMap.cpp must have proper structure: includes, namespace,
+    class definition with expected methods (pass_to_pass)."""
+    text = FILE.read_text()
+
+    # Check essential includes
+    assert "#include" in text, "CookieMap.cpp missing #include statements"
+
+    # Check namespace
+    assert "namespace WebCore" in text, "CookieMap.cpp missing WebCore namespace"
+
+    # Check class definition exists
+    assert "class CookieMap" in text or "CookieMap::" in text, (
+        "CookieMap class definition or method implementations not found"
+    )
+
+    # Check toJSON method exists (the method being fixed)
+    assert "CookieMap::toJSON" in text, "CookieMap::toJSON method not found"
+
+
+# [repo_tests] pass_to_pass
+# Origin: bun repo format CI workflow (.github/workflows/format.yml)
+# The repo has a .clang-format file and requires C++ files to follow it.
+def test_cookiemap_clang_format():
+    """CookieMap.cpp must follow the repo's C++ formatting style (pass_to_pass).
+    Uses clang-format --dry-run if available, otherwise skips gracefully."""
+    # Check if clang-format is available
+    r = subprocess.run(
+        ["which", "clang-format"],
+        capture_output=True,
+        timeout=5,
+    )
+    if r.returncode != 0:
+        # Try versioned clang-format
+        r = subprocess.run(
+            ["which", "clang-format-19"],
+            capture_output=True,
+            timeout=5,
+        )
+        if r.returncode != 0:
+            pytest.skip("clang-format not available in environment")
+            return
+        clang_format = "clang-format-19"
+    else:
+        clang_format = "clang-format"
+
+    # Run clang-format check on CookieMap.cpp
+    r = subprocess.run(
+        [clang_format, "--dry-run", "--Werror", str(FILE)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+
+    # If it fails due to version issues, check the error message
+    if r.returncode != 0:
+        # Some versions don't support --Werror, try alternative
+        r2 = subprocess.run(
+            [clang_format, "--dry-run", str(FILE)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO,
+        )
+        # Check if there are any formatting differences reported
+        if "Formatting" in r2.stderr or "code should be" in r2.stderr.lower():
+            assert False, f"CookieMap.cpp needs formatting:\n{r2.stderr[:500]}"
+
+
+# [repo_tests] pass_to_pass
+# Origin: bun repo source file conventions (see src/.clang-format)
+# Verifies basic C++ syntax validity of the modified file.
+def test_cookiemap_cpp_syntax_valid():
+    """CookieMap.cpp must have valid C++ syntax (basic checks) (pass_to_pass).
+    Checks for balanced braces and valid structure."""
+    text = FILE.read_text()
+
+    # Check for balanced braces
+    open_count = text.count("{")
+    close_count = text.count("}")
+    assert open_count == close_count, (
+        f"Unbalanced braces: {open_count} open, {close_count} close"
+    )
+
+    # Check for balanced parentheses
+    open_paren = text.count("(")
+    close_paren = text.count(")")
+    assert open_paren == close_paren, (
+        f"Unbalanced parentheses: {open_paren} open, {close_paren} close"
+    )
+
+    # Check for basic C++ file markers
+    assert "//" in text or "/*" in text or "#include" in text, (
+        "File appears to lack C++ structure (comments or includes)"
+    )

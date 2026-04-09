@@ -130,3 +130,49 @@ if (depth !== 0) { process.exit(1); }
 console.log('OK');
 """)
     assert r.returncode == 0, "commands.ts has unbalanced braces"
+
+
+# [repo_tests] pass_to_pass — CI/CD checks
+# These tests verify the repo's own lint/build passes on both base and fixed commits
+
+def test_repo_lint_packages():
+    """Repo's workspace package consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-packages failed:\\n{r.stderr[-500:]}"
+
+
+def test_repo_build():
+    """Repo's build completes successfully (pass_to_pass)."""
+    # First install dependencies (needed in fresh containers)
+    install = subprocess.run(
+        ["npm", "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert install.returncode == 0, f"npm install failed: {install.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"build failed:\\n{r.stderr[-500:]}"
+
+
+def test_repo_commands_syntax():
+    """commands.ts has valid Node.js syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", "packages/playwright/src/mcp/terminal/commands.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"commands.ts syntax error: {r.stderr}"
+
+
+def test_repo_program_syntax():
+    """program.ts has valid Node.js syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", "packages/playwright/src/mcp/terminal/program.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"program.ts syntax error: {r.stderr}"

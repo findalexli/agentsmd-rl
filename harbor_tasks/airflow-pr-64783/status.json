@@ -1,0 +1,76 @@
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T08:03:42.363710",
+  "total_time": 0.0,
+  "sandbox_id": "i41r8r23f2z1hk23wapd9",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "ci_commands_discovered": [
+        "python -m py_compile scripts/in_container/install_airflow_and_providers.py",
+        "python -c 'import ast; ast.parse(...)'",
+        "ruff check --select E9,F scripts/in_container/install_airflow_and_providers.py"
+      ],
+      "tests_added": [
+        "test_repo_python_syntax - validates Python syntax using py_compile",
+        "test_repo_ast_parsing - validates AST parsing succeeds",
+        "test_repo_ruff_critical - validates ruff critical checks (E9,F) pass"
+      ],
+      "notes": [
+        "Apache Airflow repo - Python project with ruff linting configured in pyproject.toml",
+        "Target file: scripts/in_container/install_airflow_and_providers.py",
+        "Full ruff check fails on base commit due to E501 line-too-long (pre-existing)",
+        "Restricted ruff to E9,F (syntax errors, undefined names) which passes",
+        "Tests verified to pass on base commit 9e2bf8110b"
+      ]
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 149.64,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "Fixed: (1) test.sh runs pytest from /tmp to avoid airflow's pyproject.toml with --asyncio-mode=strict, (2) Added missing InstallationSpec fields compile_ui_assets and mount_ui_dist, (3) Fixed reward.txt filename in test.sh, (4) Fixed MockConsole.print() to accept default argument",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 118.31
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.72,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T08:03:42.363710"
+    }
+  ]
+}

@@ -165,3 +165,46 @@ def test_no_work_process_comments():
                         raise AssertionError(
                             f"Work-process comment in {fpath}:{i}: {stripped}"
                         )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD checks (pass_to_pass) — repo_tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff lint check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff", "pytest"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "--config=pyproject.toml", "src/prime_rl/trainer/models/nemotron_h/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff", "pytest"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--config=pyproject.toml", "src/prime_rl/trainer/models/nemotron_h/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_broken_syntax():
+    """All modified Python files parse without syntax errors (pass_to_pass)."""
+    for fpath in [CONFIG_PY, MODELING_PY]:
+        source = Path(fpath).read_text()
+        try:
+            ast.parse(source)
+        except SyntaxError as e:
+            raise AssertionError(f"Syntax error in {fpath}: {e}")

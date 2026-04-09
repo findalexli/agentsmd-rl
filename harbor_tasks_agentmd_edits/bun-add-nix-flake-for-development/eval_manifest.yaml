@@ -52,4 +52,40 @@ checks:
     origin: static
     description: "CONTRIBUTING.md still has the package manager install instructions"
 
+  # Repo CI/CD pass-to-pass checks
+  - id: test_repo_cmakelists_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CMakeLists.txt exists at repo root"
+
+  - id: test_repo_cmake_directory_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cmake/ directory exists with expected files"
+
+  - id: test_repo_contributing_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CONTRIBUTING.md has expected structure with install sections"
+
+  - id: test_repo_prettier_config_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: ".prettierrc exists and is valid JSON"
+
+  - id: test_repo_oxlint_config_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "oxlint.json exists and has valid structure"
+
+  - id: test_repo_git_directory_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: ".git directory exists and is valid"
+
+  - id: test_repo_nix_files_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Nix files have valid syntax after applying patch"
+
 rubric: []

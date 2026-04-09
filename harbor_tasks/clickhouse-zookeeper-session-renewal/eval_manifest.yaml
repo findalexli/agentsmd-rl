@@ -1,0 +1,49 @@
+source_pr:
+  owner: ClickHouse
+  repo: ClickHouse
+  number: 102171
+  title: "Cherry pick #102059 to 26.2: Fix crash caused by stale ZooKeeper session in UDF retry loop"
+  merge_commit: 23c8e6b613f72896b0f092f6df38188c9b9852ee
+  base_commit: a3c77899d3f826cfdc879ce9c276dd5f019cb46d
+
+checks:
+  # Fail-to-pass tests (behavioral fixes)
+  - id: test_session_renewal_logic_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: Session renewal logic exists in retry loop
+    source: ".claude/CLAUDE.md - 'Never use sleep in C++ code to fix race conditions'"
+
+  - id: test_object_names_moved_into_retry_loop
+    type: fail_to_pass
+    origin: code_analysis
+    description: object_names declaration moved inside retryLoop for re-fetch on retry
+
+  - id: test_current_zookeeper_variable_exists
+    type: fail_to_pass
+    origin: code_analysis
+    description: current_zookeeper variable exists to track live session
+
+  - id: test_tryLoadObject_uses_current_zookeeper
+    type: fail_to_pass
+    origin: code_analysis
+    description: tryLoadObject uses current_zookeeper instead of stale zookeeper parameter
+
+  - id: test_cpp_syntax_valid
+    type: fail_to_pass
+    origin: code_analysis
+    description: C++ code compiles without syntax errors
+
+  - id: test_comment_explains_session_refresh
+    type: fail_to_pass
+    origin: code_analysis
+    description: Comments explain the session refresh behavior
+
+  # Pass-to-pass tests (regression prevention)
+  - id: test_no_sleep_for_race_conditions
+    type: pass_to_pass
+    origin: agent_config
+    description: No sleep calls used for race conditions (per .claude/CLAUDE.md)
+    source: ".claude/CLAUDE.md line: 'Never use sleep in C++ code to fix race conditions - this is stupid and not acceptable!'"
+
+rubric: []

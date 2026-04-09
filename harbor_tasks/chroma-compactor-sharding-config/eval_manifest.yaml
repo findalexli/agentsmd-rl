@@ -1,0 +1,70 @@
+source:
+  pr:
+    owner: "chroma-core"
+    repo: "chroma"
+    number: 6847
+    base_commit: "6ee8c7542eb90d1544f7f1c3e8a35a6dbd042e04"
+    merge_commit: "3676846e8244a002dcab762e442e08095538f655"
+  task_name: "chroma-compactor-sharding-config"
+
+checks:
+  # Behavioral checks (fail-to-pass)
+  - id: "test_tenant_matches_patterns_star_wildcard"
+    description: "tenant_matches_patterns handles '*' wildcard"
+    origin: "f2p"
+    points: 1
+
+  - id: "test_tenant_matches_patterns_exact_match"
+    description: "tenant_matches_patterns handles exact tenant match"
+    origin: "f2p"
+    points: 1
+
+  - id: "test_tenant_matches_patterns_empty"
+    description: "tenant_matches_patterns returns false for empty patterns"
+    origin: "f2p"
+    points: 1
+
+  - id: "test_cargo_check_compiles"
+    description: "Code compiles with cargo check"
+    origin: "f2p"
+    points: 2
+
+  # Structural checks (pass-to-pass, but verify implementation)
+  - id: "test_compaction_job_has_tenant_id"
+    description: "CompactionJob struct has tenant_id field"
+    origin: "p2p"
+    points: 1
+
+  - id: "test_compactor_config_has_patterns"
+    description: "CompactorConfig has sharding_enabled_tenant_patterns field"
+    origin: "p2p"
+    points: 1
+
+  - id: "test_scheduler_job_includes_tenant"
+    description: "Scheduler sets tenant_id in CompactionJob"
+    origin: "p2p"
+    points: 1
+
+  - id: "test_scheduler_policy_includes_tenant"
+    description: "SchedulerPolicy sets tenant_id in CompactionJob"
+    origin: "p2p"
+    points: 1
+
+  - id: "test_context_has_sharding_patterns"
+    description: "CompactionManagerContext has sharding_enabled_tenant_patterns"
+    origin: "p2p"
+    points: 1
+
+  # Repo CI/CD pass-to-pass tests
+  - id: "test_cargo_clippy_worker"
+    description: "Rust worker crate passes clippy lints"
+    origin: "p2p"
+    points: 1
+
+  - id: "test_cargo_test_worker_unit"
+    description: "Rust worker crate unit tests pass"
+    origin: "p2p"
+    points: 1
+
+# No agent config rules applied (docs configs don't apply to Rust code)
+rubric: []

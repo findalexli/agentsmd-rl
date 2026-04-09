@@ -1,0 +1,27 @@
+name = "superset-mcp-dashboard-draft"
+title = "Fix MCP dashboard creation to use draft state by default"
+description = "Change the default value of the 'published' field in GenerateDashboardRequest from True to False, so dashboards created via MCP start as drafts by default."
+owner = "apache"
+repo = "superset"
+pr_number = 39011
+base_commit = "25eea295f6c9e8060619beccb267dd9c7628f882"
+merge_commit = "135e0f809968f14ca4e0ddda3abae7ed1d0eef8c"
+
+# Task difficulty and tags
+difficulty = "easy"
+estimated_time = "15 minutes"
+tags = ["python", "pydantic", "schema", "mcp", "dashboard"]
+
+# Timeouts (in seconds)
+agent_timeout = 1800  # 30 minutes for agent
+verifier_timeout = 120  # 2 minutes for tests
+
+# Target files that the agent should modify
+target_files = [
+    "superset/mcp_service/dashboard/schemas.py"
+]
+
+# Files that provide context but shouldn't be modified
+context_files = [
+    "tests/unit_tests/mcp_service/dashboard/tool/test_dashboard_generation.py"
+]

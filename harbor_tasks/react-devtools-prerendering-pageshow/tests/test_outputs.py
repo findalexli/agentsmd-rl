@@ -200,3 +200,44 @@ def test_flow_prerendering_type_declared():
     assert re.search(r"\bprerendering\s*:\s*boolean\b", content), (
         "prerendering: boolean not found in flow-typed/environments/dom.js"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - CI/CD checks that should pass on base commit
+# ---------------------------------------------------------------------------
+
+
+def test_repo_lint():
+    """Repo's ESLint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_flow():
+    """Repo's Flow typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_license_check():
+    """Repo's license check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/check_license.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"License check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_version_check():
+    """Repo's version check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "version-check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

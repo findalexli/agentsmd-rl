@@ -1,0 +1,77 @@
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0,
+  "gold_reward": 1,
+  "validated_at": "2026-04-09T05:19:54.102181",
+  "total_time": 0.0,
+  "sandbox_id": "ilykht3qp302d703sasr1",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "date": "2026-04-09",
+      "ci_commands_found": [
+        "cargo check -p consensus-config (from rust.yml workflow)",
+        "cargo check -p consensus-core (from rust.yml workflow)",
+        "cargo check -p sui-core (from rust.yml workflow)",
+        "cargo clippy (skipped - takes too long)",
+        "cargo nextest run (skipped - requires nextest tool not in Docker)",
+        "cargo xlint (skipped - requires cargo xlint tool not in Docker)"
+      ],
+      "p2p_tests_added": [
+        "test_p2p_cargo_check_consensus_config - verifies consensus-config compiles",
+        "test_p2p_cargo_check_consensus_core - verifies consensus-core compiles",
+        "test_p2p_cargo_check_sui_core - verifies sui-core compiles"
+      ],
+      "notes": [
+        "Dockerfile missing libclang-dev - needed for rocksdb compilation",
+        "Tests install libclang-dev at runtime to work around missing Dockerfile dependency",
+        "consensus-config check takes ~60s, consensus-core ~6min, sui-core ~12min"
+      ]
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1967.08,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0,
+      "gold_reward": 1,
+      "attempts": 2,
+      "notes": "Fixed test.sh path issue (/workspace/task/tests -> /tests). Fixed solve.sh to use downloaded PR diff instead of malformed embedded patch. All 10 tests pass (4 p2p + 6 f2p). Rubric is empty so no ICR check needed.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2048.98
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.88,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T05:19:54.102181"
+    }
+  ]
+}

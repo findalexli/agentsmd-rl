@@ -1,0 +1,70 @@
+source:
+  pr:
+    number: 26086
+    url: https://github.com/MystenLabs/sui/pull/26086
+    title: "cleanup: remove now unused fields and no-op flag"
+  repo:
+    owner: MystenLabs
+    name: sui
+    base_commit: 5ce3eba9d21aea6f051be3c3306078d2bc572c41
+    merge_commit: 192a628cc56fcd901af4330d91c123fe8f493187
+
+checks:
+  # Pass-to-pass tests (quality gates)
+  - id: test_rust_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Rust source files are syntactically valid
+
+  - id: test_committed_subdag_new_signature
+    type: pass_to_pass
+    origin: gold_patch
+    description: CommittedSubDag::new() signature is correct
+
+  # Fail-to-pass tests (verifying the fix)
+  - id: test_consensus_config_field_removed
+    type: fail_to_pass
+    origin: gold_patch
+    description: always_accept_system_transactions field removed from ConsensusProtocolConfig struct
+
+  - id: test_consensus_config_method_removed
+    type: fail_to_pass
+    origin: gold_patch
+    description: always_accept_system_transactions() getter method removed
+
+  - id: test_committed_subdag_field_removed
+    type: fail_to_pass
+    origin: gold_patch
+    description: always_accept_system_transactions field removed from CommittedSubDag struct
+
+  - id: test_load_committed_subdag_signature
+    type: fail_to_pass
+    origin: gold_patch
+    description: load_committed_subdag_from_store() doesn't take context parameter
+
+  - id: test_authority_tables_events_removed
+    type: fail_to_pass
+    origin: gold_patch
+    description: Deprecated events column family removed from AuthorityPerpetualTables
+
+  - id: test_unused_event_import_removed
+    type: fail_to_pass
+    origin: gold_patch
+    description: Unused Event import removed from authority.rs
+
+  - id: test_parse_block_transactions_signature
+    type: fail_to_pass
+    origin: gold_patch
+    description: parse_block_transactions() doesn't take always_accept_system_transactions parameter
+
+  - id: test_parse_block_transactions_logic
+    type: fail_to_pass
+    origin: gold_patch
+    description: parse_block_transactions logic simplified to always accept system transactions
+
+  - id: test_consensus_manager_no_flag
+    type: fail_to_pass
+    origin: gold_patch
+    description: consensus_manager doesn't pass the flag to protocol config builder
+
+rubric: []

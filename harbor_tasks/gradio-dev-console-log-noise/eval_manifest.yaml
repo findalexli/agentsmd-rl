@@ -37,6 +37,26 @@ checks:
     origin: pr_diff
     description: "main.ts custom element registration and lifecycle preserved (6 markers)"
 
+  - id: test_repo_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Prettier format check passes (CI: pnpm format:check)"
+
+  - id: test_repo_client_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's client package builds successfully (CI: pnpm --filter @gradio/client build)"
+
+  - id: test_repo_client_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's client package tests pass (CI: pnpm --filter @gradio/client test)"
+
+  - id: test_repo_core_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's core JS module tests pass (CI: pnpm vitest run js/core)"
+
 rubric:
   - rule: "Be consistent with the style of the surrounding code."
     source:

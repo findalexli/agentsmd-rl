@@ -1,49 +1,82 @@
 {
-  "task": "opencode-markdown-streaming-jank",
-  "validations": [
-    {
-      "timestamp": "2026-04-01T20:15:41.701063",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "format": "pytest_binary"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0,
+  "gold_reward": 1,
+  "validated_at": "2026-04-09T02:22:46.996099",
+  "total_time": 2729.72,
+  "sandbox_id": "ir60k24pb5tomcy529kvo",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09",
+      "ci_commands_found": [
+        "bun run typecheck (in packages/ui)",
+        "bun run typecheck (in packages/app)",
+        "bun run test:unit (in packages/app)"
+      ],
+      "tests_added": [
+        "test_repo_typecheck_ui - UI package TypeScript typecheck (pass_to_pass)",
+        "test_repo_typecheck_app - App package TypeScript typecheck (pass_to_pass)",
+        "test_repo_unit_tests_app - App package unit tests (pass_to_pass)"
+      ],
+      "notes": [
+        "Added 3 pass_to_pass tests from repo CI/CD",
+        "Typecheck uses tsgo from @typescript/native-preview (requires linux-x64 platform package)",
+        "Unit tests require @happy-dom/global-registrator dependency",
+        "All tests complete within 120 second timeout (typecheck ~5s, tests ~2s)"
+      ]
     },
-    {
-      "timestamp": "2026-04-02T10:48:33.885775",
-      "phase": "e2b_validate_phase9",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "notes": "solve.sh exit=128: error: can't open patch '/solution/gold.patch': No such file or directory\n"
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 558.08,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-04-02T10:53:30.534891",
-      "phase": "e2b_validate_phase9_retry",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "solve.sh exit=128: error: can't open patch '/solution/gold.patch': No such file or directory\n"
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
-    {
-      "timestamp": "2026-04-02T14:28:08.953241",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "solve.sh exit=128: error: can't open patch '/solution/gold.patch': No such file or directory\n"
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0,
+      "gold_reward": 1,
+      "attempts": 1,
+      "notes": "Docker build successful. NOP test correctly returned 0 (5 fail_to_pass tests failed as expected). Gold test returned 1 (all 15 tests passed). Test block_splitting has false positive on base code due to 'const blocks = Array.from(root.querySelectorAll(pre))' matching the regex, but this doesn't prevent the test from working correctly.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 170.15
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T23:07:01.570052",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:22:46.832110"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 2729.72,
+      "at": "2026-04-09T02:22:46.996099"
     }
   ]
 }

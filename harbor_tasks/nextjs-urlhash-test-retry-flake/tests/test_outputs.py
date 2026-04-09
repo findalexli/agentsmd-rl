@@ -80,9 +80,9 @@ def test_syntax_check():
     src = TEST_FILE.read_text()
     depth = 0
     for c in src:
-        if c in "{(":
+        if c == "{" or c == "(":
             depth += 1
-        elif c in "})":
+        elif c == "}" or c == ")":
             depth -= 1
         assert depth >= 0, "Unbalanced braces/parens (depth went negative)"
     assert depth == 0, f"Unbalanced braces/parens (final depth={depth})"
@@ -280,3 +280,93 @@ def test_no_settimeout_waiting():
     assert not re.search(
         r"await\s+new\s+Promise\s*\(\s*(?:resolve|r)\s*=>\s*setTimeout", src, re.DOTALL
     ), "File uses setTimeout-based sleep — should use retry()"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass tests — verify repo infrastructure is intact
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_fixture_directory_exists():
+    """Repo's test fixture directory exists and has required files (pass_to_pass)."""
+    fixture_dir = Path(REPO) / "test/development/pages-dir/client-navigation/fixture"
+    assert fixture_dir.exists(), f"Fixture directory {fixture_dir} missing"
+
+    required = ["pages", "components", "next.config.js"]
+    for item in required:
+        assert (fixture_dir / item).exists(), f"Required fixture item '{item}' missing"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_next_test_utils_retry_exists():
+    """Repo's next-test-utils has retry function available (pass_to_pass)."""
+    utils_file = Path(REPO) / "test/lib/next-test-utils.ts"
+    assert utils_file.exists(), "next-test-utils.ts not found"
+
+    src = utils_file.read_text()
+    # Check for retry function export
+    assert re.search(r"export\s+(?:async\s+)?function\s+retry\s*<", src), (
+        "retry<T> function not exported from next-test-utils"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_test_file_imports_valid():
+    """Repo test file uses valid import paths (pass_to_pass)."""
+    src = TEST_FILE.read_text()
+
+    # Check for valid import patterns
+    imports = [
+        r"import\s+path\s+from\s+['\"]path['\"]",
+        r"import\s+\{\s*nextTestSetup\s*\}\s+from\s+['\"]e2e-utils['\"]",
+    ]
+    for pattern in imports:
+        assert re.search(pattern, src), f"Required import pattern not found: {pattern}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_syntax_valid():
+    """Repo test file has valid TypeScript syntax (pass_to_pass)."""
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync(
+  'test/development/pages-dir/client-navigation/url-hash.test.ts', 'utf8'
+);
+
+// Check for basic TypeScript syntax issues
+const issues = [];
+
+// Count braces/parens for basic balance check
+let depth = 0;
+for (let i = 0; i < src.length; i++) {
+  const c = src[i];
+  if (c === '{' || c === '(') depth++;
+  if (c === '}' || c === ')') depth--;
+  if (depth < 0) issues.push('Unbalanced braces at position ' + i);
+}
+if (depth !== 0) issues.push('Unbalanced braces (final depth=' + depth + ')');
+
+// Check for valid describe/it structure
+const describeMatches = src.match(/\bdescribe\s*\(/g) || [];
+const itMatches = src.match(/\bit\s*\(/g) || [];
+if (describeMatches.length === 0) issues.push('No describe blocks found');
+if (itMatches.length === 0) issues.push('No it() blocks found');
+
+// Check for valid imports
+if (!src.includes('from \'path\'')) issues.push('Missing path import');
+
+if (issues.length > 0) {
+  console.error('TypeScript validation issues:');
+  issues.forEach(i => console.error(' - ' + i));
+  process.exit(1);
+}
+console.log('PASS: TypeScript syntax appears valid');
+""")
+    assert r.returncode == 0, f"TypeScript syntax validation failed:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+
+
+if __name__ == "__main__":
+    pass

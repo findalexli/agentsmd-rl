@@ -73,6 +73,37 @@ checks:
       lines: "234"
       commit: "6034bd82b1a0d9b3635560405354e931b7e0e192"
 
+  # Repo CI/CD derived pass_to_pass tests — static analysis
+  - id: test_repo_zig_syntax_basic
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Zig source file has valid basic structure (balanced braces, imports)"
+
+  - id: test_repo_zig_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Zig source has no trailing whitespace (matches repo CI linting)"
+
+  - id: test_repo_zig_naming_conventions
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Zig code follows standard naming conventions (camelCase, PascalCase)"
+
+  - id: test_repo_expect_file_structure
+    type: pass_to_pass
+    origin: repo_ci
+    description: "expect.zig follows expected module structure with proper imports and struct"
+
+  - id: test_repo_zig_import_organization
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Zig imports are organized with std imports before project imports"
+
+  - id: test_repo_zig_ban_words
+    type: pass_to_pass
+    origin: repo_ci
+    description: "expect.zig does not contain banned patterns from ban-words.test.ts"
+
 rubric:
   - rule: "Decl literals in Zig are recommended."
     source:

@@ -112,3 +112,53 @@ def test_pdf_viewers_still_use_document():
         "PDF viewer must still render <Document>"
     assert "<Document" in pdf_preview, \
         "PDF preview must still render <Document>"
+
+
+# =============================================================================
+# Pass-to-Pass Tests: Repo CI/CD Checks
+# These verify that the repo's standard CI checks pass on both base and fixed.
+# =============================================================================
+
+
+def test_repo_eslint_passes():
+    """Repo's ESLint check passes (pass_to_pass).
+    Ensures code style and quality standards are maintained.
+    """
+    r = subprocess.run(
+        ["npm", "run", "lint:ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_stylelint_passes():
+    """Repo's Stylelint check passes (pass_to_pass).
+    Ensures CSS/styling standards are maintained.
+    """
+    r = subprocess.run(
+        ["npm", "run", "lint:style"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Stylelint failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_no_circular_deps():
+    """Repo has no circular dependencies in main src (pass_to_pass).
+    Ensures the module dependency graph remains healthy.
+    """
+    r = subprocess.run(
+        ["npm", "run", "lint:circular:main"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Circular dependency check failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_component_tests_pass():
+    """Component unit tests pass (pass_to_pass).
+    Runs a focused subset of tests to verify core functionality.
+    """
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--reporter=verbose", "src/components"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Component tests failed:\n{r.stderr[-1000:]}"

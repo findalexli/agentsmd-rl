@@ -106,6 +106,51 @@ def test_compiles():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's own CI checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_check():
+    """Repo's cargo check on ty_project passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty_project"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env={**os.environ, "CARGO_PROFILE_DEV_OPT_LEVEL": "1"},
+    )
+    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_clippy():
+    """Repo's cargo clippy on ty_project passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty_project", "--", "-D", "warnings"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env={**os.environ, "CARGO_PROFILE_DEV_OPT_LEVEL": "1"},
+    )
+    assert r.returncode == 0, f"Clippy failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_fmt():
+    """Repo's rustfmt on ty_project passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "-p", "ty_project", "--", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Rustfmt check failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

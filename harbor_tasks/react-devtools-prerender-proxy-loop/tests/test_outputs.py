@@ -117,6 +117,30 @@ def _run_node_test(script):
 
 
 # ---------------------------------------------------------------------------
+# Helper for installing dependencies once
+# ---------------------------------------------------------------------------
+
+_NODE_MODULES_INSTALLED = False
+
+def _ensure_node_modules():
+    """Install node_modules if not already installed."""
+    global _NODE_MODULES_INSTALLED
+    if _NODE_MODULES_INSTALLED:
+        return True
+    if os.path.exists(os.path.join(REPO, "node_modules")):
+        _NODE_MODULES_INSTALLED = True
+        return True
+    r = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile"],
+        cwd=REPO, capture_output=True, timeout=180,
+    )
+    if r.returncode == 0:
+        _NODE_MODULES_INSTALLED = True
+        return True
+    return False
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
@@ -138,6 +162,42 @@ def test_proxy_js_valid_syntax():
     assert r.returncode == 0, (
         f"proxy.js has syntax errors:\n{r.stderr.decode()}"
     )
+
+
+# [static] pass_to_pass - repo CI check
+def test_repo_eslint_proxy_js():
+    """ESLint passes on proxy.js and related files (repo CI check - pass_to_pass)."""
+    assert _ensure_node_modules(), "Failed to install node_modules"
+    # Run ESLint only on the modified file
+    r = subprocess.run(
+        ["npx", "eslint", "--no-error-on-unmatched-pattern", "packages/react-devtools-extensions/src/contentScripts/proxy.js"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [static] pass_to_pass - repo CI check
+def test_repo_flow_check():
+    """Flow typecheck passes (repo CI check - pass_to_pass)."""
+    assert _ensure_node_modules(), "Failed to install node_modules"
+    # Run flow on the minimal set that includes our changes
+    r = subprocess.run(
+        ["npx", "flow", "check", "--max-workers", "1", "flow-typed/environments/dom.js"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    # Flow returns 0 if no errors, 2 if errors found
+    assert r.returncode != 2, f"Flow typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [static] pass_to_pass - repo CI check
+def test_repo_version_check():
+    """Version check passes (repo CI check - pass_to_pass)."""
+    assert _ensure_node_modules(), "Failed to install node_modules"
+    r = subprocess.run(
+        ["node", "./scripts/tasks/version-check.js"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

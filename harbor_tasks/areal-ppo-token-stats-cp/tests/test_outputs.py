@@ -261,3 +261,67 @@ def test_type_hints_on_helper():
                     f"Parameter '{arg.arg}' missing type annotation"
             return
     raise AssertionError("infer_token_denominator not found in stats.py")
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repository
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — ruff lint check on modified PPO files
+def test_repo_ruff_lint_ppo():
+    """Ruff linting passes on PPO files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Install may emit warnings; ignore them
+    r = subprocess.run(
+        ["ruff", "check", "areal/trainer/ppo/", "--ignore", "E501"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — ruff format check on modified PPO files
+def test_repo_ruff_format_ppo():
+    """Ruff format check passes on PPO files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", "areal/trainer/ppo/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — syntax check on areal package
+def test_repo_syntax_areal():
+    """All areal Python files parse without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "compileall", "-q", "areal/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — syntax check on tests directory
+def test_repo_syntax_tests():
+    """All test files parse without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "compileall", "-q", "tests/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — actor.py and critic.py compile
+def test_repo_actor_critic_compile():
+    """actor.py and critic.py compile without errors (pass_to_pass)."""
+    for name in ("areal/trainer/ppo/actor.py", "areal/trainer/ppo/critic.py"):
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", f"{REPO}/{name}"],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"{name} failed to compile:\n{r.stderr}"

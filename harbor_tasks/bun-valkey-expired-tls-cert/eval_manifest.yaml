@@ -7,6 +7,7 @@ source:
   merge_commit: "7e142ca82492a23c1e9bb2e0422ceccf69dbf7c4"
 
 checks:
+  # Fail-to-pass tests (PR diff - core behavior)
   - id: cert_not_expired
     type: fail_to_pass
     origin: pr_diff
@@ -17,6 +18,7 @@ checks:
     origin: pr_diff
     description: "Certificate must be valid for at least 5 years (not just 1 year)"
 
+  # Original pass-to-pass tests (static checks)
   - id: cert_cn_localhost
     type: pass_to_pass
     origin: static
@@ -36,5 +38,62 @@ checks:
     type: pass_to_pass
     origin: static
     description: "Certificate must be self-signed (issuer == subject)"
+
+  # Pass-to-pass tests (repo_tests - file validity checks)
+  - id: test_cert_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TLS certificate file must exist in expected location"
+
+  - id: test_key_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TLS private key file must exist in expected location"
+
+  - id: test_cert_valid_pem_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Certificate must be a valid PEM format file"
+
+  - id: test_key_valid_pem_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Private key must be a valid PEM format file"
+
+  - id: test_cert_has_rsa_2048
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Certificate must use RSA 2048-bit key"
+
+  - id: test_cert_sig_sha256
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Certificate must use sha256WithRSAEncryption signature algorithm"
+
+  - id: test_repo_files_unchanged
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Other repo files (Dockerfile, redis.conf) remain unchanged"
+
+  - id: test_cert_not_empty
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Certificate file must not be empty"
+
+  - id: test_key_not_empty
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Private key file must not be empty"
+
+  # New pass-to-pass tests (repo_tests - config validation)
+  - id: test_redis_conf_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Redis configuration file must exist and reference TLS files"
+
+  - id: test_valkey_dockerfile_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Valkey Dockerfile must exist and reference certificate files"
 
 rubric: []

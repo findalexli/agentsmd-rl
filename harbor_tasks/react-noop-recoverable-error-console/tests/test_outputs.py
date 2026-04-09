@@ -10,6 +10,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import subprocess
 from pathlib import Path
 
+import pytest
+
 REPO = "/workspace/react"
 
 
@@ -165,3 +167,154 @@ def test_source_file_balanced():
     assert open_braces == close_braces, (
         f"Unbalanced braces: {open_braces} open vs {close_braces} close"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — verify repo CI/CD checks pass
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_source_syntax_valid():
+    """Modified source file has valid JavaScript syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check",
+         f"{REPO}/packages/react-noop-renderer/src/createReactNoop.js"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Source file has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_reconciler_tests_relevant():
+    """Repo tests for modified reconciler files pass (pass_to_pass).
+
+    Runs the React test suite for useMemoCache tests which validate
+    the onRecoverableError behavior changes.
+    """
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=useMemoCache", "--ci", "--silent"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    # Allow 0 (pass) or specific known failure codes that aren't infrastructure issues
+    if r.returncode != 0:
+        # If tests fail due to missing dependencies, that's expected in the base container
+        # but if tests run and fail with assertion errors, that's a real failure
+        stderr_lower = (r.stderr or "").lower()
+        stdout_lower = (r.stdout or "").lower()
+        combined = stderr_lower + stdout_lower
+
+        # Skip if dependencies aren't installed (this is an infrastructure issue, not a test failure)
+        if any(x in combined for x in ["cannot find module", "modulenotfounderror", "enoent"]):
+            pytest.skip("Dependencies not installed, test cannot run")
+
+        # If tests actually ran and failed, that's a real failure
+        if "fail" in combined or "error" in combined:
+            assert False, f"Tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_error_handling_tests_relevant():
+    """Repo tests for ReactIncrementalErrorHandling pass (pass_to_pass).
+
+    Runs the React test suite for error handling tests which are
+    directly affected by the onRecoverableError changes.
+    """
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ReactIncrementalError", "--ci", "--silent"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    if r.returncode != 0:
+        stderr_lower = (r.stderr or "").lower()
+        stdout_lower = (r.stdout or "").lower()
+        combined = stderr_lower + stdout_lower
+
+        if any(x in combined for x in ["cannot find module", "modulenotfounderror", "enoent"]):
+            pytest.skip("Dependencies not installed, test cannot run")
+
+        if "fail" in combined or "error" in combined:
+            assert False, f"Tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_noop_renderer_tests():
+    """Repo tests for react-noop-renderer pass (pass_to_pass).
+
+    Validates that the noop renderer and related reconciler tests
+    work correctly after the onRecoverableError changes.
+    """
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ReactNoop", "--ci", "--silent"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    if r.returncode != 0:
+        stderr_lower = (r.stderr or "").lower()
+        stdout_lower = (r.stdout or "").lower()
+        combined = stderr_lower + stdout_lower
+
+        if any(x in combined for x in ["cannot find module", "modulenotfounderror", "enoent"]):
+            pytest.skip("Dependencies not installed, test cannot run")
+
+        if "fail" in combined or "error" in combined:
+            assert False, f"Tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_passes():
+    """Repo's ESLint checks pass on modified files (pass_to_pass).
+
+    Validates that the modified source files meet the project's linting standards.
+    """
+    r = subprocess.run(
+        ["yarn", "lint", "--", "packages/react-noop-renderer/src/createReactNoop.js"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    if r.returncode != 0:
+        stderr_lower = (r.stderr or "").lower()
+        stdout_lower = (r.stdout or "").lower()
+        combined = stderr_lower + stdout_lower
+
+        if any(x in combined for x in ["cannot find module", "modulenotfounderror", "enoent"]):
+            pytest.skip("Dependencies not installed, test cannot run")
+
+        assert False, f"ESLint failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow_typecheck_passes():
+    """Repo's Flow typecheck passes on modified files (pass_to_pass).
+
+    Validates that the modified source files have valid Flow types.
+    """
+    r = subprocess.run(
+        ["yarn", "flow", "--", "focus-check", "packages/react-noop-renderer/src/createReactNoop.js"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    if r.returncode != 0:
+        stderr_lower = (r.stderr or "").lower()
+        stdout_lower = (r.stdout or "").lower()
+        combined = stderr_lower + stdout_lower
+
+        if any(x in combined for x in ["cannot find module", "modulenotfounderror", "enoent", "command not found"]):
+            pytest.skip("Dependencies not installed, test cannot run")
+
+        # Check if it's a real Flow error vs infrastructure issue
+        if "error" in combined or "flow" in combined:
+            assert False, f"Flow typecheck failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"

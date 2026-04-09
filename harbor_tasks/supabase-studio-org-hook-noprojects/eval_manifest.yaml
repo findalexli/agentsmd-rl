@@ -32,16 +32,20 @@ checks:
     origin: static
     description: "Component imports required dependencies correctly"
 
-rubric:
-  # Soft rules for LLM judge based on agent config
-  - rule: "Data fetching should use TanStack Query hooks with the queryOptions pattern"
-    source:
-      path: ".claude/skills/studio-queries/SKILL.md"
-      lines: "1-20"
-      commit: "e7bec24021de77053a9b9b05c06ab17789f1269b"
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ESLint passes on studio app"
 
-  - rule: "Component should not receive data via props when a query hook is available"
-    source:
-      path: ".claude/skills/studio-best-practices/SKILL.md"
-      lines: "60-70"
-      commit: "e7bec24021de77053a9b9b05c06ab17789f1269b"
+  - id: test_repo_tests_billing
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Billing component tests pass"
+
+rubric:
+  # Rules for this specific refactor task
+  - rule: "Component should use the useSelectedOrganizationQuery hook instead of receiving organization via props"
+    reference: "import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'"
+
+  - rule: "Component should have no parameters (no props interface)"
+    reference: "export const NoProjectsOnPaidOrgInfo = () => {

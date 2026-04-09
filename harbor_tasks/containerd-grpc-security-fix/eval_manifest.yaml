@@ -1,0 +1,89 @@
+# Evaluation manifest for containerd-grpc-security-fix
+# Source: containerd/containerd PR #13098
+
+source_pr:
+  owner: containerd
+  repo: containerd
+  number: 13098
+  title: "build(deps): bump google.golang.org/grpc from 1.79.2 to 1.79.3"
+  merge_commit: eceb03e0381202dc687a9b734e1dd754c40731e0
+  base_commit: 3a2c003f946e1dbe3e11888465624ff3c231af84
+
+# Checks that must pass for the task to be considered complete
+checks:
+  - id: "envconfig_has_disable_strict_path_checking"
+    description: "DisableStrictPathChecking envconfig option is added"
+    test: "test_envconfig_has_disable_strict_path_checking"
+    type: "fail_to_pass"
+
+  - id: "server_has_handle_malformed_method_name"
+    description: "handleMalformedMethodName helper function is added"
+    test: "test_server_has_handle_malformed_method_name"
+    type: "fail_to_pass"
+
+  - id: "server_has_strict_path_checking_logic"
+    description: "Strict path checking logic in handleStream is implemented"
+    test: "test_server_has_strict_path_checking_logic"
+    type: "fail_to_pass"
+
+  - id: "server_imports_envconfig"
+    description: "server.go imports envconfig package"
+    test: "test_server_imports_envconfig"
+    type: "fail_to_pass"
+
+  - id: "grpc_version_updated"
+    description: "gRPC version is updated to 1.79.3"
+    test: "test_grpc_version_updated"
+    type: "pass_to_pass"
+
+  - id: "go_build_compiles"
+    description: "Code compiles successfully"
+    test: "test_go_build_compiles"
+    type: "fail_to_pass"
+
+  - id: "handleStream_empty_method_check"
+    description: "handleStream properly checks for empty method names"
+    test: "test_handleStream_calls_handleMalformed_for_empty_method"
+    type: "fail_to_pass"
+
+  - id: "handleStream_slash_check"
+    description: "handleStream rejects paths without leading slash"
+    test: "test_handleStream_calls_handleMalformed_for_missing_slash"
+    type: "fail_to_pass"
+
+  - id: "envconfig_documentation"
+    description: "DisableStrictPathChecking has security documentation"
+    test: "test_envconfig_has_documentation"
+    type: "pass_to_pass"
+
+  # Repo CI/CD Pass-to-Pass Tests (p2p_enrichment)
+  - id: "repo_go_build"
+    description: "Repo code compiles with go build ./..."
+    test: "test_repo_go_build"
+    type: "pass_to_pass"
+
+  - id: "repo_go_vet"
+    description: "gRPC vendor packages pass go vet checks"
+    test: "test_repo_go_vet"
+    type: "pass_to_pass"
+
+  - id: "repo_vendor_modules"
+    description: "Vendor directory has consistent modules (go mod verify)"
+    test: "test_repo_vendor_modules"
+    type: "pass_to_pass"
+
+  - id: "repo_unit_tests_non_root"
+    description: "Core containerd unit tests pass (runtime, remotes, snapshots, transfer)"
+    test: "test_repo_unit_tests_non_root"
+    type: "pass_to_pass"
+
+  - id: "repo_go_mod_tidy"
+    description: "go.mod and go.sum are consistent"
+    test: "test_repo_go_mod_tidy"
+    type: "pass_to_pass"
+
+# No agent config files in this repository
+agent_config: []
+
+# No soft/subjective rubric rules needed for this security fix
+rubric: []

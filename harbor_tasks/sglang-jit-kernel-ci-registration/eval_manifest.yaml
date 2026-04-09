@@ -73,5 +73,26 @@ checks:
       lines: "8"
       commit: "6047d2c690483224b2bb7d70288ea60b0b8e0c7d"
 
+  # Repo CI checks (pass_to_pass) — ensure repo's own CI pipeline passes
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target files pass ruff linting for F401 (unused imports) and F821 (undefined names)"
+
+  - id: test_repo_isort_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target files have correctly sorted imports"
+
+  - id: test_repo_black_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target files are correctly formatted with black"
+
+  - id: test_repo_codespell
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target files have no spelling errors"
+
 rubric:
   []

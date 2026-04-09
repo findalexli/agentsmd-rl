@@ -8,12 +8,32 @@ source:
 
 checks:
   # ---------------------------------------------------------------------------
-  # Gates (pass_to_pass, static) - TypeScript compilation
+  # Gates (pass_to_pass) - Repo CI/CD checks
   # ---------------------------------------------------------------------------
-  - id: typescript_compiles
+  - id: test_repo_typescript_compiles
     type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files must compile without errors"
+    origin: repo_tests
+    description: "Repo's TypeScript typecheck passes"
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ESLint lint check passes"
+
+  - id: test_repo_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Prettier formatting check passes"
+
+  - id: test_repo_i18n
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's i18n extraction check passes"
+
+  - id: test_repo_genai_traces_table_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's genai-traces-table tests pass"
 
   # ---------------------------------------------------------------------------
   # Fail-to-pass (pr_diff) - Core behavioral tests

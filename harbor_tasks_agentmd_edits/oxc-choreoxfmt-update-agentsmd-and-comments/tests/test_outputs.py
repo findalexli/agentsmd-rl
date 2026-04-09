@@ -144,6 +144,40 @@ def test_no_stub_content():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check():
+    """Cargo check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "ck"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_test():
+    """Cargo test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--all-features"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_lint():
+    """Cargo clippy lint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "lint", "--", "--deny", "warnings"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo lint failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md / AGENTS.md
 # ---------------------------------------------------------------------------
 

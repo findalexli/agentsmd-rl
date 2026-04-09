@@ -313,3 +313,74 @@ def test_no_catch_out_of_memory_pattern():
         assert "catch bun.outOfMemory()" not in region and "catch bun.oom()" not in region, (
             f"{fn_name} uses catch bun.outOfMemory() — should use bun.handleOom() instead"
         )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — static analysis (no build tools required)
+# These simulate the repo's CI checks that can run without Bun/Zig compilers.
+# ---------------------------------------------------------------------------
+
+
+# [repo_ci] pass_to_pass — verify Zig file has balanced braces
+def test_zig_file_balanced_braces():
+    """JSGlobalObject.zig has balanced braces (basic syntax check)."""
+    raw = TARGET.read_text()
+    # Count braces excluding those in comments and strings
+    clean = _strip_comments_and_strings(raw)
+    open_count = clean.count("{")
+    close_count = clean.count("}")
+    assert open_count == close_count, (
+        f"Zig file has unbalanced braces: {open_count} open, {close_count} close"
+    )
+
+
+# [repo_ci] pass_to_pass — verify Zig file has balanced parentheses
+def test_zig_file_balanced_parens():
+    """JSGlobalObject.zig has balanced parentheses (basic syntax check)."""
+    raw = TARGET.read_text()
+    clean = _strip_comments_and_strings(raw)
+    open_count = clean.count("(")
+    close_count = clean.count(")")
+    assert open_count == close_count, (
+        f"Zig file has unbalanced parentheses: {open_count} open, {close_count} close"
+    )
+
+
+# [repo_ci] pass_to_pass — verify no obvious Zig syntax errors
+def test_zig_file_no_double_semicolons():
+    """JSGlobalObject.zig has no double semicolons (common syntax error)."""
+    raw = TARGET.read_text()
+    clean = _strip_comments_and_strings(raw)
+    # Double semicolons are usually a syntax error in Zig
+    assert ";;" not in clean, "Zig file contains double semicolons (;;) - likely syntax error"
+
+
+# [repo_ci] pass_to_pass — verify pub fn syntax is intact
+def test_zig_file_pub_fn_syntax():
+    """JSGlobalObject.zig pub fn declarations have valid syntax."""
+    raw = TARGET.read_text()
+    # Check for pub fn lines that end with semicolon (wrong syntax for non-extern)
+    lines = raw.split("\n")
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        # Skip comments
+        if stripped.startswith("//"):
+            continue
+        # Look for pub fn that ends with semicolon but isn't extern
+        if re.match(r"^pub\s+fn\s+\w+", stripped) and stripped.endswith(";"):
+            # Check if this line or previous lines have 'extern'
+            context = " ".join(lines[max(0, i-2):i+1])
+            if "extern" not in context:
+                assert False, f"Line {i+1}: pub fn with semicolon (not extern): {stripped[:60]}"
+
+
+# [repo_ci] pass_to_pass — verify no trailing whitespace in modified file
+def test_zig_file_no_trailing_whitespace():
+    """JSGlobalObject.zig has no lines with trailing whitespace (code style)."""
+    raw = TARGET.read_text()
+    lines = raw.split("\n")
+    for i, line in enumerate(lines, 1):
+        if line.endswith(" ") or line.endswith("\t"):
+            # Only flag if it's not an empty line
+            if line.strip():
+                assert False, f"Line {i} has trailing whitespace: {line[:40]!r}"

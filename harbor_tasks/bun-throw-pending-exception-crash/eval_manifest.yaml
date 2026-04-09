@@ -52,15 +52,6 @@ checks:
     origin: pr_diff
     description: "throwDOMException() must still exist with non-trivial body"
 
-  - id: no_inline_import_in_functions
-    type: pass_to_pass
-    origin: agent_config
-    description: "No @import() inline inside function bodies"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "11"
-      commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
-
   - id: uses_bun_assert_not_std
     type: pass_to_pass
     origin: agent_config
@@ -79,14 +70,54 @@ checks:
       lines: "16"
       commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
 
+  # Repo CI/CD pass_to_pass gates — EditorConfig compliance
+  - id: test_repo_editorconfig
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file must comply with .editorconfig (utf-8, lf, trailing whitespace)"
+
+  # Repo CI/CD pass_to_pass gates — Git repository integrity
+  - id: test_repo_git_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository must be in clean state with no uncommitted changes"
+
+  # Repo CI/CD pass_to_pass gates — Zig file syntax basics
+  - id: test_repo_zig_basic_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Zig file must have balanced braces/parentheses and valid structure"
+
+  # Repo CI/CD pass_to_pass gates — No tabs for indentation
+  - id: test_repo_no_tabs_indentation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Zig file must use spaces for indentation, not tabs"
+
+  # Repo CI/CD pass_to_pass gates — No std.debug.print or std.log
+  - id: test_repo_no_std_debug_print_log
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Must not use std.debug.print or std.log (debugging code should not be committed)"
+
+  # Repo CI/CD pass_to_pass gates — No usingnamespace
+  - id: test_repo_no_usingnamespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Must not use usingnamespace (deprecated, will be removed in Zig 0.15)"
+
+  # Repo CI/CD pass_to_pass gates — No allocator.ptr comparisons
+  - id: test_repo_no_allocator_undefined_comparison
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Must not compare allocator.ptr with == or != (UB due to possible undefined context pointer)"
+
 rubric:
-  - rule: "Always use `bun.*` APIs instead of `std.*`."
+  # Note: Removed the @import rule since the file already has @import inside
+  # the ERR function at base commit - checking it would penalize the gold
+  # solution for pre-existing code patterns.
+  - rule: "Always use 'bun.*' APIs instead of 'std.*'."
     source:
       path: "src/CLAUDE.md"
       lines: "16"
-      commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
-  - rule: "Never use `@import()` inline inside of functions. Always put them at the bottom of the file or containing struct."
-    source:
-      path: "src/CLAUDE.md"
-      lines: "11"
       commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"

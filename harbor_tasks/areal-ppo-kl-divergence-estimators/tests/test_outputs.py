@@ -20,8 +20,7 @@ TARGET = f"{REPO}/areal/trainer/ppo/actor.py"
 # Shared eval helpers — prepended to every subprocess test via _run_py()
 # ---------------------------------------------------------------------------
 
-_EVAL_HELPERS = """\
-import ast, textwrap
+_EVAL_HELPERS = """import ast, textwrap
 from pathlib import Path
 import torch
 
@@ -327,3 +326,82 @@ def test_no_print_in_function():
                     assert child.func.id != "print", \
                         "print() found in _log_proximal_approximation_stats -- use stats_tracker instead"
             break
+
+
+# ---------------------------------------------------------------------------
+# pass_to_pass (repo_tests) — CI/CD checks from repo
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_syntax():
+    """Repo's Python syntax and critical errors check passes (pass_to_pass)."""
+    # First try to install ruff
+    subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=60
+    )
+    # Try via python module
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", "--select=E9,F63,F7,F82", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    if r.returncode == 0:
+        return
+    # Fallback: try ruff directly
+    r = subprocess.run(
+        ["ruff", "check", "--select=E9,F63,F7,F82", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"Ruff syntax check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile():
+    """actor.py compiles without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", TARGET],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_actor_module_parse():
+    """actor.py parses as valid Python AST (pass_to_pass)."""
+    source = Path(TARGET).read_text()
+    try:
+        ast.parse(source)
+    except SyntaxError as e:
+        raise AssertionError(f"actor.py has syntax error: {e}")
+
+
+# [repo_tests] pass_to_pass - JSON validity check
+def test_repo_json_valid():
+    """Repo JSON files are valid (pass_to_pass)."""
+    import json
+    json_files = [
+        f"{REPO}/skills-lock.json",
+    ]
+    for path in json_files:
+        try:
+            with open(path) as f:
+                json.load(f)
+        except Exception as e:
+            raise AssertionError(f"JSON validation failed for {path}: {e}")
+
+
+# [repo_tests] pass_to_pass - YAML validity check
+def test_repo_yaml_valid():
+    """Repo YAML workflow files are valid (pass_to_pass)."""
+    import yaml
+    yaml_files = [
+        f"{REPO}/.github/workflows/pre-commit.yml",
+        f"{REPO}/.pre-commit-config.yaml",
+    ]
+    for path in yaml_files:
+        try:
+            with open(path) as f:
+                yaml.safe_load(f)
+        except Exception as e:
+            raise AssertionError(f"YAML validation failed for {path}: {e}")

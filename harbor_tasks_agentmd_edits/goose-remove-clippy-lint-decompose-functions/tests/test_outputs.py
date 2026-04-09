@@ -202,6 +202,29 @@ print("PASS")
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base commit
+# ---------------------------------------------------------------------------
+
+
+def test_repo_cargo_fmt():
+    """Repo's Rust code must be properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt --check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_check_goose_cli():
+    """Repo's goose-cli crate must compile (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "goose-cli"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check -p goose-cli failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression + syntax checks
 # ---------------------------------------------------------------------------
 

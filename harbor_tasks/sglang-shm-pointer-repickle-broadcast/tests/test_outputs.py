@@ -9,6 +9,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import pickle
+import subprocess
+import sys
 import textwrap
 from multiprocessing import shared_memory
 from pathlib import Path
@@ -22,18 +24,8 @@ MM_UTILS = f"{REPO}/python/sglang/srt/managers/mm_utils.py"
 SCHEDULER = f"{REPO}/python/sglang/srt/managers/scheduler.py"
 
 
-# ---------------------------------------------------------------------------
-# AST extraction — mm_utils.py can't be imported (heavy sglang runtime deps)
-# ---------------------------------------------------------------------------
-
-
 def _load_shm_code():
-    """Extract ShmPointerMMData + wrap/unwrap via AST, exec with mocks.
-
-    AST-only because: mm_utils.py imports sglang.srt.environ, schedule_batch,
-    layers.multimodal, mem_cache, model_executor, etc. — none available without
-    full sglang runtime.
-    """
+    """Extract ShmPointerMMData + wrap/unwrap via AST, exec with mocks."""
     source = Path(MM_UTILS).read_text()
     tree = ast.parse(source)
 
@@ -69,14 +61,8 @@ ShmPointerMMData = _ns["ShmPointerMMData"]
 wrap_shm_features = _ns["wrap_shm_features"]
 unwrap_shm_features = _ns["unwrap_shm_features"]
 
-# Make ShmPointerMMData picklable — pickle needs to find it via __module__
 ShmPointerMMData.__module__ = __name__
 ShmPointerMMData.__qualname__ = "ShmPointerMMData"
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 
 class MockMMItem:
@@ -113,9 +99,15 @@ def _get_tensor(obj):
     raise RuntimeError("Cannot retrieve tensor from ShmPointerMMData")
 
 
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
+def _ensure_tool(tool_name):
+    """Ensure a CLI tool is available, installing if necessary."""
+    result = subprocess.run(["which", tool_name], capture_output=True)
+    if result.returncode != 0:
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-q", tool_name],
+            capture_output=True,
+            check=False,
+        )
 
 
 # [static] pass_to_pass
@@ -127,9 +119,43 @@ def test_syntax_check():
         py_compile.compile(path, doraise=True)
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
+# [repo_tests] pass_to_pass
+def test_repo_ruff():
+    """Repo's ruff linting passes on modified files (pass_to_pass)."""
+    _ensure_tool("ruff")
+    r = subprocess.run(
+        ["ruff", "check", "--select=E9,F63,F7,F82", MM_UTILS, SCHEDULER],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort():
+    """Repo's import sorting passes on modified files (pass_to_pass)."""
+    _ensure_tool("isort")
+    r = subprocess.run(
+        ["isort", "--check-only", MM_UTILS, SCHEDULER],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black():
+    """Repo's code formatting passes on modified files (pass_to_pass)."""
+    _ensure_tool("black")
+    r = subprocess.run(
+        ["black", "--check", MM_UTILS, SCHEDULER],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"black check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
 # [pr_diff] fail_to_pass
@@ -196,13 +222,7 @@ def test_batch_unwrap():
         )
 
 
-# ---------------------------------------------------------------------------
-# Structural — scheduler.py can't be imported (full sglang runtime)
-# ---------------------------------------------------------------------------
-
-
 # [pr_diff] fail_to_pass
-# AST-only because: scheduler.py requires full sglang runtime (ZMQ, CUDA, distributed)
 def test_unwrap_after_broadcast():
     """unwrap_shm_features must be called near end of recv_requests, after broadcasts."""
     source = Path(SCHEDULER).read_text()
@@ -237,7 +257,6 @@ def test_unwrap_after_broadcast():
 
 
 # [pr_diff] fail_to_pass
-# AST-only because: scheduler.py requires full sglang runtime (ZMQ, CUDA, distributed)
 def test_unwrap_not_in_recv_loop():
     """unwrap_shm_features must NOT be called inside the ZMQ recv try/except block."""
     source = Path(SCHEDULER).read_text()
@@ -274,11 +293,6 @@ def test_unwrap_not_in_recv_loop():
     raise AssertionError("recv_requests function not found")
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression tests
-# ---------------------------------------------------------------------------
-
-
 # [pr_diff] pass_to_pass
 def test_materialize_correct_data():
     """Tensor data survives double pickle (ZMQ + broadcast) and retrieval."""
@@ -307,9 +321,7 @@ def test_materialize_cleans_shm():
     obj2 = pickle.loads(pickle.dumps(obj))
     shm_name = obj2.shm_name
 
-    # Retrieve tensor (triggers cleanup in correct implementation)
     _get_tensor(obj2)
-    # Also try manual cleanup for implementations that use _shm_handle
     for attr in ("_shm_handle", "shm", "_shm"):
         handle = getattr(obj2, attr, None)
         if handle is not None:
@@ -328,7 +340,7 @@ def test_materialize_cleans_shm():
         check.close()
         raise AssertionError("shm segment still accessible after materialization")
     except FileNotFoundError:
-        pass  # Expected — segment was cleaned up
+        pass
 
 
 # [pr_diff] pass_to_pass

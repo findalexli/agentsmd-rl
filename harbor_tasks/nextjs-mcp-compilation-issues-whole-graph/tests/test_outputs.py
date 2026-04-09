@@ -21,7 +21,7 @@ def _read(path: str) -> str:
 
 
 def _extract_function_body(src: str, fn_name: str) -> str:
-    """Extract a Rust function body by matching from 'fn <name>' to its closing brace."""
+    """Extract a Rust function body by matching from fn <name> to its closing brace."""
     pattern = rf"(?:pub\s+)?(?:async\s+)?fn\s+{fn_name}\s*[\(<]"
     m = re.search(pattern, src)
     assert m, f"Function {fn_name} not found"
@@ -264,3 +264,250 @@ def test_project_impl_structure_preserved():
     assert re.search(
         r"fn\s+get_all_compilation_issues_inner_operation", src_bindings
     ), "get_all_compilation_issues_inner_operation must exist"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression checks
+# These tests verify the repo structure is intact for CI commands.
+# Note: Full cargo check/clippy/test require Rust toolchain not in image.
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_toml_valid():
+    """Cargo.toml exists and has valid workspace structure (pass_to_pass)."""
+    cargo_toml = f"{REPO}/Cargo.toml"
+    content = _read(cargo_toml)
+
+    # Check workspace configuration exists
+    assert "[workspace]" in content, "Cargo.toml must have [workspace] section"
+    assert "members" in content, "Cargo.toml must have workspace members"
+    assert "next-api" in content, "Cargo.toml must include next-api crate"
+    assert "next-napi-bindings" in content, "Cargo.toml must include next-napi-bindings crate"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_rust_files_valid_structure():
+    """Modified Rust files have valid structure for compilation (pass_to_pass)."""
+    # Check files are valid UTF-8 and non-empty
+    for path in [PROJECT_RS, BINDINGS_RS]:
+        content = _read(path)
+        assert len(content) > 1000, f"{path} must have substantial content"
+        # Check for common Rust file structure markers
+        assert "use " in content or "mod " in content or "fn " in content, (
+            f"{path} must contain Rust code (use/mod/fn)"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_crate_structure_preserved():
+    """Crate structure is preserved for cargo build (pass_to_pass)."""
+    # Check next-api crate structure
+    next_api_cargo = f"{REPO}/crates/next-api/Cargo.toml"
+    next_api_lib = f"{REPO}/crates/next-api/src/lib.rs"
+
+    assert Path(next_api_cargo).exists(), "next-api/Cargo.toml must exist"
+    assert Path(next_api_lib).exists(), "next-api/src/lib.rs must exist"
+
+    next_api_cargo_content = _read(next_api_cargo)
+    assert "[package]" in next_api_cargo_content, "next-api Cargo.toml must have [package]"
+
+    # Check next-napi-bindings crate structure
+    next_bindings_cargo = f"{REPO}/crates/next-napi-bindings/Cargo.toml"
+    assert Path(next_bindings_cargo).exists(), "next-napi-bindings/Cargo.toml must exist"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_rustfmt_config_preserved():
+    """Rustfmt configuration exists for cargo fmt (pass_to_pass)."""
+    rustfmt_toml = f"{REPO}/.rustfmt.toml"
+    assert Path(rustfmt_toml).exists(), ".rustfmt.toml must exist"
+
+    content = _read(rustfmt_toml)
+    assert len(content) > 0, ".rustfmt.toml must not be empty"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_commit_correct():
+    """Repository is at expected base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=REPO, capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"Failed to get git HEAD: {r.stderr}"
+    head_commit = r.stdout.strip()
+    # The base commit from the task
+    expected_commit = "cf328d3afe3660e71496fed499376921c75eb3e3"
+    assert head_commit == expected_commit, (
+        f"Git HEAD {head_commit[:8]} does not match expected {expected_commit[:8]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_toml_dependencies():
+    """Cargo.toml has required dependencies for modified crates (pass_to_pass)."""
+    cargo_toml = f"{REPO}/Cargo.toml"
+    content = _read(cargo_toml)
+
+    # Check workspace has the required crates as members
+    assert "crates/next-api" in content, "Workspace must include next-api crate"
+    assert "crates/next-napi-bindings" in content, "Workspace must include next-napi-bindings crate"
+    assert "turbopack/crates/*" in content, "Workspace must include turbopack crates"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_next_api_cargo_toml_valid():
+    """next-api Cargo.toml has valid structure (pass_to_pass)."""
+    next_api_cargo = f"{REPO}/crates/next-api/Cargo.toml"
+    content = _read(next_api_cargo)
+
+    # Check required fields
+    assert "[package]" in content, "next-api/Cargo.toml must have [package]"
+    assert "name = \"next-api\"" in content, "Package name must be next-api"
+
+    # Check for key dependencies mentioned in the PR
+    assert "[dependencies]" in content, "next-api/Cargo.toml must have [dependencies]"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_next_napi_bindings_cargo_toml_valid():
+    """next-napi-bindings Cargo.toml has valid structure (pass_to_pass)."""
+    bindings_cargo = f"{REPO}/crates/next-napi-bindings/Cargo.toml"
+    content = _read(bindings_cargo)
+
+    # Check required fields
+    assert "[package]" in content, "next-napi-bindings/Cargo.toml must have [package]"
+    assert "name = \"next-napi-bindings\"" in content, "Package name must be next-napi-bindings"
+
+    # Check for napi dependencies
+    assert "[dependencies]" in content, "next-napi-bindings/Cargo.toml must have [dependencies]"
+    assert "napi" in content, "Must have napi dependencies"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_rust_code_has_turbo_tasks_attributes():
+    """Modified Rust files have turbo_tasks::function attributes (pass_to_pass)."""
+    # Check project.rs for turbo_tasks attributes
+    project_src = _read(PROJECT_RS)
+    assert r"#[turbo_tasks::function" in project_src, (
+        "project.rs must contain turbo_tasks::function attributes"
+    )
+
+    # Check bindings for turbo_tasks attributes
+    bindings_src = _read(BINDINGS_RS)
+    assert r"#[turbo_tasks::function" in bindings_src, (
+        "project.rs in bindings must contain turbo_tasks::function attributes"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_rust_code_has_required_traits():
+    """Modified Rust files have required trait implementations (pass_to_pass)."""
+    project_src = _read(PROJECT_RS)
+
+    # Check for common traits used in the module graph code
+    assert "impl Project" in project_src, "project.rs must have impl Project block"
+
+    # Check for key types used in the PR
+    assert "Vc<" in project_src, "project.rs must use Vc type (Turbopack primitive)"
+    assert "ResolvedVc<" in project_src, "project.rs must use ResolvedVc type"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_project_rs_has_module_graph_methods():
+    """Project.rs has whole_app_module_graph related methods (pass_to_pass)."""
+    project_src = _read(PROJECT_RS)
+
+    # Check for the method that the PR modifies/uses
+    assert "whole_app_module_graph" in project_src, (
+        "project.rs must have whole_app_module_graph methods"
+    )
+
+    # Check for scale_down/scale_zero which are part of the fix
+    assert "scale_down" in project_src, "project.rs must have scale_down logic"
+    assert "scale_zero" in project_src, "project.rs must have scale_zero logic"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_bindings_has_compilation_issues():
+    """Bindings have get_all_compilation_issues methods (pass_to_pass)."""
+    bindings_src = _read(BINDINGS_RS)
+
+    # Check for the method that the PR modifies
+    assert "get_all_compilation_issues" in bindings_src, (
+        "bindings project.rs must have get_all_compilation_issues methods"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_rustfmt_config_valid():
+    """Rustfmt configuration is valid TOML (pass_to_pass)."""
+    rustfmt_toml = f"{REPO}/.rustfmt.toml"
+    content = _read(rustfmt_toml)
+
+    # Basic TOML validation - check for key-value pairs
+    assert len(content) > 0, ".rustfmt.toml must not be empty"
+
+    # Common rustfmt options
+    assert "edition" in content or "imports_granularity" in content or "group_imports" in content, (
+        ".rustfmt.toml must contain valid rustfmt options"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lockfile_exists():
+    """Cargo.lock exists and is valid (pass_to_pass)."""
+    lockfile = f"{REPO}/Cargo.lock"
+
+    r = subprocess.run(
+        ["head", "-50", lockfile],
+        cwd=REPO, capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"Cannot read Cargo.lock: {r.stderr}"
+
+    content = r.stdout
+    assert "version = 3" in content or "version = 4" in content, (
+        "Cargo.lock must be a valid version 3 or 4 lockfile"
+    )
+    assert "[[package]]" in content, "Cargo.lock must contain package entries"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_syntax_errors_in_modified_files():
+    """Modified Rust files have no obvious syntax errors (pass_to_pass)."""
+    # Check for common syntax issues
+    for path in [PROJECT_RS, BINDINGS_RS]:
+        content = _read(path)
+
+        # Check braces are balanced (basic check)
+        open_braces = content.count("{")
+        close_braces = content.count("}")
+        assert open_braces == close_braces, f"{path}: Unbalanced braces"
+
+        # Check parentheses are balanced (rough check)
+        open_parens = content.count("(")
+        close_parens = content.count(")")
+        assert open_parens == close_parens, f"{path}: Unbalanced parentheses"
+
+        # Check for incomplete turbo_tasks attributes
+        assert not re.search(r'#\[turbo_tasks::function\s*\Z', content, re.MULTILINE), (
+            f"{path}: Incomplete turbo_tasks::function attribute"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lib_rs_exports_present():
+    """Crate lib.rs files export the expected modules (pass_to_pass)."""
+    next_api_lib = f"{REPO}/crates/next-api/src/lib.rs"
+    lib_content = _read(next_api_lib)
+
+    # Check for common exports
+    assert "mod project" in lib_content or "pub mod project" in lib_content, (
+        "next-api lib.rs must export project module"
+    )
+
+    # Check bindings lib.rs
+    bindings_lib = f"{REPO}/crates/next-napi-bindings/src/lib.rs"
+    bindings_lib_content = _read(bindings_lib)
+    assert "mod next_api" in bindings_lib_content or "pub mod next_api" in bindings_lib_content, (
+        "next-napi-bindings lib.rs must export next_api module"
+    )

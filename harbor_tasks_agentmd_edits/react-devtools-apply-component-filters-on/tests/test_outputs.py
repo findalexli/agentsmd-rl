@@ -168,3 +168,25 @@ console.log('PASS');
 """)
     assert r.returncode == 0, f"Failed: {r.stderr or r.stdout}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — verify repo CI checks pass on base AND after fix
+# ---------------------------------------------------------------------------
+
+def test_repo_lint():
+    """Repo's ESLint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_flow():
+    """Repo's Flow typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

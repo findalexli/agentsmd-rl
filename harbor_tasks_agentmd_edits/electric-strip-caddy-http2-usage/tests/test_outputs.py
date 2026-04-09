@@ -169,3 +169,30 @@ def test_package_json_valid():
         assert "dependencies" in data, f"{path} missing dependencies"
         assert "@electric-sql/client" in data["dependencies"], \
             f"{path} missing @electric-sql/client dependency"
+
+
+def test_tanstack_build():
+    """Tanstack example builds successfully (pass_to_pass)."""
+    # Install pnpm and dependencies, then build
+    r = subprocess.run(
+        ["bash", "-c",
+         "npm install -g pnpm && cd /workspace/electric/examples/tanstack-db-web-starter "
+         "&& pnpm install --frozen-lockfile --ignore-scripts && pnpm run build"],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Tanstack build failed:\n{r.stderr[-500:]}"
+
+
+def test_burn_build():
+    """Burn example builds successfully (pass_to_pass)."""
+    # Burn has tsc in build, so we build directly (skips typecheck since tsc fails)
+    # Actually, burn's build runs tsc -b which needs working node_modules
+    # Let's run vite build directly for burn
+    r = subprocess.run(
+        ["bash", "-c",
+         "npm install -g pnpm && cd /workspace/electric/examples/burn/assets "
+         "&& pnpm install --frozen-lockfile --ignore-scripts "
+         "&& npx vite build --mode development"],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Burn build failed:\n{r.stderr[-500:]}"

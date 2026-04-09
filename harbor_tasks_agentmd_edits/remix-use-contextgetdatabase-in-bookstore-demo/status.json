@@ -1,13 +1,71 @@
 {
-  "validations": [
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T04:25:32.849106",
+  "total_time": 10096.13,
+  "sandbox_id": "iv1ngjhdr1c5om75dazem",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T11:15:00Z",
+      "status": "completed",
+      "ci_commands_discovered": [
+        "pnpm lint - ESLint check (from package.json scripts and .github/workflows/check.yaml)",
+        "pnpm typecheck - TypeScript type checking (from package.json scripts and .github/workflows/check.yaml)",
+        "pnpm format:check - Prettier format check (from package.json scripts)",
+        "pnpm test - Runs tests across packages (from package.json and .github/workflows/test.yaml) - SKIPPED due to >120s runtime"
+      ],
+      "docker_environment_issue": "Node.js and pnpm are not installed in the Dockerfile. The validate agent needs to add: 1) Node.js >=24.3.0 (from package.json engines), 2) pnpm 10.32.1 (via corepack enable), 3) Run 'pnpm install --frozen-lockfile' during image build",
+      "tests_added": [
+        "test_repo_lint() - runs 'pnpm lint' (ESLint --max-warnings=0)",
+        "test_repo_typecheck() - runs 'pnpm typecheck' (runs 'tsc -p tsconfig.json --noEmit' in each package)",
+        "test_repo_format_check() - runs 'pnpm format:check' (prettier --check .)"
+      ],
+      "files_updated": [
+        "tests/test_outputs.py - added _pnpm_cmd() helper and 3 new pass_to_pass tests",
+        "eval_manifest.yaml - added 3 new pass_to_pass checks for repo lint/typecheck/format"
+      ],
+      "notes": "The remix repo is a pnpm monorepo. CI runs: pnpm lint (eslint), pnpm typecheck (tsc --noEmit in each package), pnpm format:check (prettier --check .), and pnpm test (full test suite). Added pass_to_pass tests for lint, typecheck, and format_check. The full test suite (pnpm test) is too heavy (>120s with Playwright browser installs) and was skipped for p2p gates. The _pnpm_cmd() helper handles the case where pnpm is not in PATH by using corepack enable."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 262.65,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 493.69
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-03T07:38:12.351276",
-      "phase": "e2b_agentmd_initial",
-      "runner": "e2b_validate (agentmd)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T04:25:32.625449"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 10096.13,
+      "at": "2026-04-09T04:25:32.849106"
     }
   ]
 }

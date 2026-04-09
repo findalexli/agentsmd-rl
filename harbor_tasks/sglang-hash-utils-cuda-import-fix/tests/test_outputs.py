@@ -10,9 +10,13 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import hashlib
 import inspect
+import subprocess
+import sys
 import textwrap
 from pathlib import Path
 from typing import List, Optional
+
+import pytest
 
 REPO = "/workspace/sglang"
 
@@ -233,3 +237,109 @@ def test_not_stub():
 
     assert found_get_hash_str, "get_hash_str function not found in utils.py"
     assert found_hash_str_to_int64, "hash_str_to_int64 function not found in utils.py"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_modified_files_syntax():
+    """Modified Python files must have valid syntax (repo CI check)."""
+    files_to_check = [
+        "python/sglang/srt/managers/cache_controller.py",
+        "python/sglang/srt/mem_cache/hicache_storage.py",
+        "python/sglang/srt/mem_cache/radix_cache.py",
+        "python/sglang/srt/mem_cache/utils.py",
+    ]
+
+    for file_path in files_to_check:
+        full_path = Path(REPO) / file_path
+        if full_path.exists():
+            # Use py_compile for syntax checking
+            r = subprocess.run(
+                ["python3", "-m", "py_compile", str(full_path)],
+                capture_output=True, text=True, timeout=30, cwd=REPO,
+            )
+            assert r.returncode == 0, f"Syntax error in {file_path}:\\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_modified_files_lint():
+    """Modified Python files must pass ruff syntax/import checks (repo CI check)."""
+    files_to_check = [
+        "python/sglang/srt/managers/cache_controller.py",
+        "python/sglang/srt/mem_cache/hicache_storage.py",
+        "python/sglang/srt/mem_cache/radix_cache.py",
+        "python/sglang/srt/mem_cache/utils.py",
+    ]
+
+    # Check ruff is available, skip if not
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "--version"],
+        capture_output=True, text=True, timeout=30,
+    )
+    if r.returncode != 0:
+        pytest.skip("ruff not available, skipping lint check")
+
+    # Run ruff with syntax and import error checks only
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "--select=E9,F821"] +
+        files_to_check,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint errors:\\n{r.stdout}\\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_hash_functions_work_on_base():
+    """Hash functions produce correct output on base commit (repo CI regression)."""
+    import hashlib
+
+    # Read the function source from hicache_storage.py (base commit location)
+    hicache_path = Path(REPO) / "python/sglang/srt/mem_cache/hicache_storage.py"
+    content = hicache_path.read_text()
+
+    # Check functions exist and can be executed via AST extraction
+    get_hash_str = _extract_and_compile_function(hicache_path, "get_hash_str")
+    hash_str_to_int64 = _extract_and_compile_function(hicache_path, "hash_str_to_int64")
+
+    if get_hash_str is None or hash_str_to_int64 is None:
+        # Functions might already be moved to utils.py (after fix)
+        utils_path = Path(REPO) / "python/sglang/srt/mem_cache/utils.py"
+        get_hash_str = _extract_and_compile_function(utils_path, "get_hash_str")
+        hash_str_to_int64 = _extract_and_compile_function(utils_path, "hash_str_to_int64")
+
+    assert get_hash_str is not None, "get_hash_str not found in expected locations"
+    assert hash_str_to_int64 is not None, "hash_str_to_int64 not found in expected locations"
+
+    # Test get_hash_str with single tokens
+    tokens = [1, 2, 3]
+    result = get_hash_str(tokens)
+
+    # Verify against manual computation
+    hasher = hashlib.sha256()
+    for t in tokens:
+        hasher.update(t.to_bytes(4, byteorder="little", signed=False))
+    expected = hasher.hexdigest()
+    assert result == expected, f"get_hash_str failed: expected {expected}, got {result}"
+
+    # Test hash_str_to_int64
+    test_hash = "aabbccdd11223344000000000000000000000000000000000000000000000000"
+    int_result = hash_str_to_int64(test_hash)
+    uint64_val = int("aabbccdd11223344", 16)
+    expected_int = uint64_val - 2**64 if uint64_val >= 2**63 else uint64_val
+    assert int_result == expected_int, f"hash_str_to_int64 failed: expected {expected_int}, got {int_result}"
+
+    # Test bigram mode
+    tokens_bigram = [(1, 2), (3, 4)]
+    result_bigram = get_hash_str(tokens_bigram)
+    hasher2 = hashlib.sha256()
+    for t in tokens_bigram:
+        if isinstance(t, tuple):
+            for elem in t:
+                hasher2.update(elem.to_bytes(4, byteorder="little", signed=False))
+        else:
+            hasher2.update(t.to_bytes(4, byteorder="little", signed=False))
+    expected_bigram = hasher2.hexdigest()
+    assert result_bigram == expected_bigram, f"get_hash_str bigram failed: expected {expected_bigram}, got {result_bigram}"

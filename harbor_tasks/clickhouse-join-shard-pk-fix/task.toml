@@ -1,0 +1,25 @@
+name = "clickhouse-join-shard-pk-fix"
+version = "1.0.0"
+description = "Fix wrong results in JOIN with shard-by-PK optimization and query condition cache"
+repository = "https://github.com/ClickHouse/ClickHouse"
+pr_number = 101960
+base_commit = "f4eb1501802bc9f274870d147ae82979956939e6"
+merge_commit = "5f35e27d1a1192a54aabe56b74664bc8452f71ec"
+owner = "ClickHouse"
+repo = "ClickHouse"
+
+difficulty = "hard"
+tags = ["c++", "database", "distributed-query", "join-optimization", "bug-fix"]
+
+# Timeouts (in seconds)
+# Note: ClickHouse compilation takes significant time
+agent_timeout = 3600
+verifier_timeout = 600
+
+[evaluation]
+type = "pytest"
+test_file = "tests/test_outputs.py"
+
+[environment]
+dockerfile = "environment/Dockerfile"
+context = "."

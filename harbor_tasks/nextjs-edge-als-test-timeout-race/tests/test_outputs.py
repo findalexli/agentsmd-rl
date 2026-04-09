@@ -265,6 +265,96 @@ def test_no_settimeout_waiting():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass tests (p2p_enrichment)
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass
+def test_test_file_valid_syntax():
+    """Repo test file has valid TypeScript syntax (pass_to_pass)."""
+    code = TEST_FILE.read_text()
+    # Use Node.js to parse TypeScript (swc/acorn can handle it)
+    script = f"""
+const fs = require('fs');
+const code = fs.readFileSync('{TEST_FILE}', 'utf8');
+// Basic syntax validation: balanced braces and parentheses
+let depth = 0;
+let inString = false;
+let stringChar = '';
+for (let i = 0; i < code.length; i++) {{
+    const ch = code[i];
+    const prev = code[i-1];
+    if (inString) {{
+        if (ch === stringChar && prev !== '\\\\') inString = false;
+    }} else if (ch === '"' || ch === "'" || ch === '`') {{
+        inString = true;
+        stringChar = ch;
+    }} else if (ch === '{{' || ch === '(' || ch === '[') depth++;
+    else if (ch === '}}' || ch === ')' || ch === ']') depth--;
+}}
+if (depth !== 0) {{
+    console.error('Unbalanced braces/parens');
+    process.exit(1);
+}}
+// Try parsing as module - this will catch most syntax errors
+try {{
+    new Function('return ' + code.replace(/export /g, '').replace(/import /g, '/*import*/ '));
+}} catch(e) {{
+    // Expected for module code, but not for basic syntax errors
+    if (e.message.includes('Unexpected') && e.message.includes('token')) {{
+        console.error('Syntax error:', e.message);
+        process.exit(1);
+    }}
+}}
+console.log('PASS');
+"""
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0 and "PASS" in r.stdout, f"Test file syntax validation failed: {r.stderr or r.stdout}"
+
+
+# [repo_ci] pass_to_pass
+def test_fixture_files_valid_syntax():
+    """Repo fixture files have valid JavaScript syntax (pass_to_pass)."""
+    for name in ["single", "multiple"]:
+        fixture = _find_fixture(name)
+        if fixture is None:
+            continue  # May not exist on base commit
+
+        # Validate syntax with node --check
+        r = subprocess.run(
+            ["node", "--check", fixture],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"Fixture {name} has syntax errors: {r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_no_broken_imports():
+    """Repo test file imports are resolvable (pass_to_pass)."""
+    code = TEST_FILE.read_text()
+    # Check that imports reference existing paths
+    import_pattern = r"import\s+.*?\s+from\s+['\"]([^'\"]+)['\"]"
+    for match in re.finditer(import_pattern, code):
+        import_path = match.group(1)
+        # Skip external packages (no slash or starts with non-relative)
+        if not import_path.startswith('.') and not import_path.startswith('/'):
+            continue
+        # Resolve relative to test file
+        base = TEST_FILE.parent
+        if import_path.startswith('.'):
+            resolved = base / (import_path + '.ts')
+            if not resolved.exists():
+                resolved = base / import_path / 'index.ts'
+            # Check if it's in test/lib or similar
+            if not resolved.exists():
+                # These are likely provided by the test harness
+                if 'e2e-utils' not in import_path and 'next-test-utils' not in import_path:
+                    assert False, f"Import not resolvable: {import_path}"
+
+
+# ---------------------------------------------------------------------------
 # Anti-stub (static)
 # ---------------------------------------------------------------------------
 

@@ -1,12 +1,85 @@
 {
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-08T21:53:04.384617",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 1199.12,
-  "error": "No backend available within 600s. Pool: glm(25ok/0\u00d7429/ok) | fireworks(70ok/0\u00d7429/ok)"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0,
+  "gold_reward": 1,
+  "validated_at": "2026-04-09T02:56:31.714518",
+  "total_time": 4754.58,
+  "sandbox_id": "ip786fkp1fq5bcfxt115i",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0,
+      "gold_reward": 1,
+      "attempts": 1,
+      "notes": "All validation checks passed. Docker build succeeded, NOP test correctly failed on base commit (4 fail-to-pass tests failed as expected), Gold test passed with all 13 tests passing after solve.sh applied, Rubric judge ICR=1.0.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 91.64
+    },
+    "p2p_enrichment": {
+      "status": "completed",
+      "timestamp": "2026-04-09T09:50:00Z",
+      "ci_commands_found": [
+        "ruff check --select=F401,F821 (from .pre-commit-config.yaml)",
+        "black --check --diff (from .pre-commit-config.yaml)",
+        "codespell --config .codespellrc (from .pre-commit-config.yaml)",
+        "python3 -m py_compile (Python syntax check)"
+      ],
+      "tests_added": [
+        "test_repo_python_syntax - validates Python syntax/AST parsing",
+        "test_repo_ruff_lint - runs ruff lint check on modified file",
+        "test_repo_black_format - verifies Black formatting",
+        "test_repo_codespell - checks for common typos"
+      ],
+      "notes": [
+        "Docker build succeeded",
+        "Repo uses pre-commit hooks for linting: ruff, black, codespell",
+        "Actual test execution requires GPUs which are not available in this environment",
+        "Added static/code quality checks that work without GPU"
+      ]
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 394.99,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.72,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:56:31.554583"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 4754.58,
+      "at": "2026-04-09T02:56:31.714518"
+    }
+  ]
 }

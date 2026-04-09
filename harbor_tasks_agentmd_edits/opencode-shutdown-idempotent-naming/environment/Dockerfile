@@ -6,7 +6,7 @@ ENV LANG=C.UTF-8
 # Install system dependencies + python3 for test runner
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential python3 python3-pip python3-venv && \
+        git curl ca-certificates build-essential unzip python3 python3-pip python3-venv && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Bun

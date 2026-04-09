@@ -105,6 +105,51 @@ def test_target_files_exist():
         assert p.exists() and p.stat().st_size > 0, f"{f} missing or empty"
 
 
+# [repo_tests] pass_to_pass -- CI: validate header structure
+def test_repo_header_structure_valid():
+    """Header files have valid structure (pragma once or include guards) -- pass_to_pass."""
+    header_files = [ALGO_H, SIGNAL_H]
+    for f in header_files:
+        p = Path(f"{REPO}/{f}")
+        content = p.read_text()
+        # Check for pragma once or include guards
+        has_pragma = "#pragma once" in content
+        has_guard = "#ifndef" in content and "#define" in content
+        assert has_pragma or has_guard, f"{f} missing pragma once or include guards"
+
+
+# [repo_tests] pass_to_pass -- CI: validate C++ syntax basic
+def test_repo_cpp_syntax_basic():
+    """C++ source files have balanced braces and valid includes -- pass_to_pass."""
+    cpp_files = [ALGO_CPP, SIGNAL_CPP, CUSTOM_CPP]
+    for f in cpp_files:
+        p = Path(f"{REPO}/{f}")
+        content = p.read_text()
+        # Basic syntax checks
+        open_braces = content.count("{")
+        close_braces = content.count("}")
+        open_parens = content.count("(")
+        close_parens = content.count(")")
+        assert open_braces == close_braces, f"{f} has unbalanced braces"
+        assert open_parens == close_parens, f"{f} has unbalanced parentheses"
+        # Check for valid include syntax
+        for line in content.split("\n"):
+            if line.strip().startswith("#include"):
+                assert "<" in line or '"' in line, f"{f} has invalid include: {line}"
+
+
+# [repo_tests] pass_to_pass -- CI: validate code style patterns
+def test_repo_code_patterns_consistent():
+    """C++ files follow repo code style (consistent indentation, no excessive tabs)."""
+    for f in TARGET_FILES:
+        p = Path(f"{REPO}/{f}")
+        content = p.read_text()
+        lines = content.split("\n")
+        # Check that files don't have excessive tabs (allow up to 5 lines)
+        tab_lines = [i for i, line in enumerate(lines, 1) if "\t" in line]
+        assert len(tab_lines) <= 5, f"{f} has {len(tab_lines)} lines with tabs (inconsistent indentation)"
+
+
 # ---------------------------------------------------------------------------
 # Behavioral (fail_to_pass, pr_diff) -- compile and run C++ pattern validation
 # ---------------------------------------------------------------------------

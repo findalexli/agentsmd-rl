@@ -151,14 +151,14 @@ print(json.dumps({
 }))
 """)
     assert result["found"], "No $effect block found"
-    assert result["handles_nullish"], "$effect doesn't handle null/undefined value"
-    assert result["handles_in_choices"], "$effect doesn't handle value-in-choices case"
-    assert result["handles_custom"], "$effect doesn't handle allow_custom_value case"
+    assert result["handles_nullish"], "$effect does not handle null/undefined value"
+    assert result["handles_in_choices"], "$effect does not handle value-in-choices case"
+    assert result["handles_custom"], "$effect does not handle allow_custom_value case"
     assert result["assigns_input_count"] >= 3, (
-        f"$effect assigns input_text only {result['assigns_input_count']} times (need >= 3 branches)"
+        f"$effect assigns input_text only {result[assigns_input_count]} times (need >= 3 branches)"
     )
     assert result["assigns_selected_count"] >= 3, (
-        f"$effect assigns selected_index only {result['assigns_selected_count']} times (need >= 3 branches)"
+        f"$effect assigns selected_index only {result[assigns_selected_count]} times (need >= 3 branches)"
     )
 
 
@@ -221,7 +221,7 @@ uses_prop = bool(re.search(r"selected_indices\s*=\s*\{", template))
 print(json.dumps({"uses_variable": uses_shorthand or uses_prop}))
 """)
     assert result["uses_variable"], (
-        "Template doesn't reference the selected_indices variable"
+        "Template does not reference the selected_indices variable"
     )
 
 
@@ -245,3 +245,85 @@ def test_not_stub():
 
     reactive_refs = len(re.findall(r"\$(state|derived|effect|props)", content))
     assert reactive_refs >= 3, f"Too few reactive declarations ({reactive_refs})"
+
+
+# [repo_tests] pass_to_pass
+def test_component_exports_intact():
+    """Dropdown component must maintain its public API exports (Index.svelte
+    and Example.svelte) — pass_to_pass to ensure fix does not break exports."""
+    index_path = Path("/workspace/gradio/js/dropdown/Index.svelte")
+    example_path = Path("/workspace/gradio/js/dropdown/Example.svelte")
+
+    assert index_path.exists(), "Index.svelte export file missing"
+    assert example_path.exists(), "Example.svelte export file missing"
+
+    index_content = index_path.read_text()
+    assert "Dropdown" in index_content or "dropdown" in index_content.lower(), (
+        "Index.svelte does not reference Dropdown component"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_dropdown_utils_intact():
+    """Dropdown utility functions must be present — pass_to_pass to ensure
+    the fix does not remove shared utility code."""
+    utils_path = Path("/workspace/gradio/js/dropdown/shared/utils.ts")
+    assert utils_path.exists(), "utils.ts file missing"
+
+    utils_content = utils_path.read_text()
+
+    # Key functions expected in utils.ts
+    assert "handle_filter" in utils_content, "Missing handle_filter function in utils.ts"
+    assert "handle_shared_keys" in utils_content, "Missing handle_shared_keys function in utils.ts"
+
+
+# [repo_tests] pass_to_pass
+def test_dropdown_options_component_intact():
+    """DropdownOptions component must be present — pass_to_pass to ensure
+    the fix does not remove the options sub-component."""
+    options_path = Path("/workspace/gradio/js/dropdown/shared/DropdownOptions.svelte")
+    assert options_path.exists(), "DropdownOptions.svelte file missing"
+
+    options_content = options_path.read_text()
+    assert len(options_content) > 500, "DropdownOptions.svelte seems too small/truncated"
+
+
+# [repo_tests] pass_to_pass
+def test_unit_tests_file_intact():
+    """The unit test file (dropdown.test.ts) must exist and have tests —
+    pass_to_pass to ensure the fix does not remove or break tests."""
+    test_path = Path("/workspace/gradio/js/dropdown/dropdown.test.ts")
+    assert test_path.exists(), "dropdown.test.ts test file missing"
+
+    test_content = test_path.read_text()
+
+    # Should have test imports
+    assert "vitest" in test_content or "test" in test_content, (
+        "Test file missing vitest imports"
+    )
+
+    # Should have actual test cases
+    test_count = len(re.findall(r"\btest\s*\(", test_content))
+    assert test_count >= 3, f"Too few test cases found ({test_count}, expected at least 3)"
+
+    # Should test the Dropdown component
+    assert "Dropdown" in test_content, "Test file does not reference Dropdown component"
+
+
+# [repo_tests] pass_to_pass
+def test_multiselect_intact():
+    """Multiselect component (related dropdown variant) must be present —
+    pass_to_pass to ensure the fix does not affect the multiselect variant."""
+    multiselect_path = Path("/workspace/gradio/js/dropdown/shared/Multiselect.svelte")
+    assert multiselect_path.exists(), "Multiselect.svelte file missing"
+
+    multiselect_content = multiselect_path.read_text()
+
+    # Should have reactive declarations
+    reactive_count = len(re.findall(r"\$(state|derived|effect)", multiselect_content))
+    assert reactive_count >= 3, f"Multiselect missing reactive declarations ({reactive_count} found)"
+
+    # Should reference multiselect-specific concepts
+    assert "multiselect" in multiselect_content.lower() or "selected" in multiselect_content.lower(), (
+        "Multiselect content does not reference expected functionality"
+    )

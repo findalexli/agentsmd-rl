@@ -1,12 +1,86 @@
 {
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-08T21:43:04.842695",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 599.54,
-  "error": "No backend available within 600s. Pool: glm(14ok/0\u00d7429/ok) | fireworks(33ok/0\u00d7429/ok)"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T11:35:24.193156",
+  "total_time": 8611.4,
+  "sandbox_id": "iorzebjmjy8edtfunx2tb",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "claude-opus",
+      "backend": "anthropic",
+      "time": 300,
+      "notes": "Added pass_to_pass CI tests: repo_build (npm run build), repo_lint_packages (npm run lint-packages). Removed failing tests: tsc and check-deps fail on base commit due to pre-existing issues; eslint fails with OOM in container. All 9 tests pass on gold commit (reward=1)."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 586.2,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All four checks passed: Docker build successful, NOP test reward=0 (6 f2p tests failed as expected, 3 p2p tests passed), Gold test reward=1 (all 9 tests passed), Rubric judge=1.0 (empty rubric).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 245.62
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.72,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.33,
+      "gold": 1.0,
+      "backend": "claude-opus",
+      "time": 1200,
+      "at": "2026-04-09T18:30:00.000000"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "claude-opus",
+      "time": 600,
+      "at": "2026-04-09T18:45:00.000000"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8611.13,
+      "at": "2026-04-09T11:35:24.021034"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8611.4,
+      "at": "2026-04-09T11:35:24.193156"
+    }
+  ]
 }

@@ -17,6 +17,7 @@ WATCHER_ZIG = Path(REPO) / "src" / "Watcher.zig"
 HOT_RELOADER_ZIG = Path(REPO) / "src" / "bun.js" / "hot_reloader.zig"
 VM_ZIG = Path(REPO) / "src" / "bun.js" / "VirtualMachine.zig"
 FS_ZIG = Path(REPO) / "src" / "fs.zig"
+SYS_ZIG = Path(REPO) / "src" / "sys.zig"
 SRC_CLAUDE_MD = Path(REPO) / "src" / "CLAUDE.md"
 
 
@@ -33,15 +34,70 @@ def test_zig_syntax_balanced():
         assert text.count("{") > 0, f"{filepath.name} appears empty"
         brace_depth = 0
         paren_depth = 0
-        for ch in text:
-            if ch == "{":
-                brace_depth += 1
-            elif ch == "}":
-                brace_depth -= 1
-            elif ch == "(":
-                paren_depth += 1
-            elif ch == ")":
-                paren_depth -= 1
+        in_string = False
+        string_char = None
+        in_line_comment = False
+        in_block_comment = False
+        i = 0
+        while i < len(text):
+            ch = text[i]
+            next_ch = text[i + 1] if i + 1 < len(text) else None
+
+            # Handle line comments //
+            if not in_string and not in_block_comment and ch == "/" and next_ch == "/":
+                in_line_comment = True
+                i += 2
+                continue
+
+            # Handle block comments /* */
+            if not in_string and not in_line_comment and ch == "/" and next_ch == "*":
+                in_block_comment = True
+                i += 2
+                continue
+            if in_block_comment and ch == "*" and next_ch == "/":
+                in_block_comment = False
+                i += 2
+                continue
+
+            # End of line comment
+            if in_line_comment and ch == "\n":
+                in_line_comment = False
+                i += 1
+                continue
+
+            # Handle strings (both " and ')
+            if not in_line_comment and not in_block_comment:
+                if ch == '"' and not in_string:
+                    in_string = True
+                    string_char = '"'
+                elif ch == "'" and not in_string:
+                    in_string = True
+                    string_char = "'"
+                elif in_string and ch == string_char:
+                    # Check for escape - count consecutive backslashes
+                    backslash_count = 0
+                    j = i - 1
+                    while j >= 0 and text[j] == "\\":
+                        backslash_count += 1
+                        j -= 1
+                    # If even number of backslashes, the quote is not escaped
+                    if backslash_count % 2 == 0:
+                        in_string = False
+                        string_char = None
+
+            # Only count braces/parens outside strings and comments
+            if not in_string and not in_line_comment and not in_block_comment:
+                if ch == "{":
+                    brace_depth += 1
+                elif ch == "}":
+                    brace_depth -= 1
+                elif ch == "(":
+                    paren_depth += 1
+                elif ch == ")":
+                    paren_depth -= 1
+
+            i += 1
+
         assert brace_depth == 0, (
             f"{filepath.name} has unbalanced braces (depth={brace_depth})"
         )
@@ -58,6 +114,16 @@ def test_import_bun_not_root_bun():
         assert '@import("root").bun' not in text, (
             f'{filepath.name} uses @import("root").bun — '
             f'convention requires @import("bun") (src/CLAUDE.md)'
+        )
+
+
+# [repo_ci] pass_to_pass — validate no std.debug.assert in modified files
+def test_no_std_debug_assert():
+    """Modified Zig files must not use std.debug.assert (use bun.assert instead)."""
+    for filepath in [WATCHER_ZIG, HOT_RELOADER_ZIG, VM_ZIG, FS_ZIG]:
+        text = filepath.read_text()
+        assert "std.debug.assert" not in text, (
+            f"{filepath.name} must not use std.debug.assert - use bun.assert instead"
         )
 
 
@@ -113,9 +179,11 @@ def test_hot_reloader_entrypoint_rename_defer():
     )
 
     # Find the MainFile struct and verify it has dir tracking
-    mf_start = text.find("MainFile")
-    assert mf_start != -1
-    mf_region = text[mf_start:mf_start + 1500]
+    mf_start = text.find("const MainFile = struct")
+    if mf_start == -1:
+        mf_start = text.find("MainFile = struct")
+    assert mf_start != -1, "Could not find MainFile struct definition"
+    mf_region = text[mf_start:mf_start + 2500]
     assert "dir_hash" in mf_region, (
         "MainFile must track parent directory hash for detecting dir write events"
     )

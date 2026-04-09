@@ -55,6 +55,17 @@ checks:
     origin: static
     description: "Event types include queued_message_interrupt finish reason"
 
+  # --- Repo CI/CD pass-to-pass checks ---
+  - id: repo_utils_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests for chat utils pass"
+
+  - id: repo_eslint_operation_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ESLint passes on operation slice types.ts"
+
 rubric:
   - rule: "New store slice code follows class-based action pattern with #private fields and flattenActions composition"
     source:

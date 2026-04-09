@@ -80,6 +80,29 @@ checks:
       lines: "188-189"
       commit: "882ffdbbd6b8ad50feaa860d702e70950cfc95d0"
 
+  # Repo CI/CD tests (p2p enrichment)
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linting passes on check_bad_commit.py per AGENTS.md style requirements"
+    command: "ruff check utils/check_bad_commit.py"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff formatting passes on check_bad_commit.py per AGENTS.md style requirements"
+    command: "ruff format --check utils/check_bad_commit.py"
+
+  - id: test_workflow_schema_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "check_failed_tests.yml has valid GitHub Actions workflow structure"
+
+  - id: test_script_has_expected_functions
+    type: pass_to_pass
+    origin: repo_tests
+    description: "check_bad_commit.py defines expected public API functions (find_bad_commit, get_commit_info)"
+
 rubric:
   - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
     source:

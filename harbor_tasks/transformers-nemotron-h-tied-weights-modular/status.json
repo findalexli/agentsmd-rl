@@ -1,61 +1,38 @@
 {
-  "task": "transformers-nemotron-h-tied-weights-modular",
-  "validations": [
-    {
-      "timestamp": "2026-04-01T20:15:41.769201",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T04:19:08-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 0.0,
-      "nop_score": 0.0,
-      "verdict": "fail_gold",
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:04:12.872888",
+  "total_time": 6492.52,
+  "sandbox_id": "ih4xlo1942iqy2n4e071o",
+  "backend": "glm",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 611.46,
       "notes": ""
     },
+    "p2p_enrichment": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 206.25,
+      "notes": ""
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T12:58:21.159747",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0",
-      "notes": "tputs.py::test_modular_not_stub\nPASSED ../tests/test_outputs.py::test_no_bare_type_ignore\nFAILED ../tests/test_outputs.py::test_ruff_clean - AssertionError: ruff check...\n1 failed, 10 passed in 0.13s\n"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.972290",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
-    },
-    {
-      "timestamp": "2026-04-02T18:00:00.000000",
-      "phase": "docker_remake",
-      "runner": "manual",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0.0",
-      "gold": "1.0",
-      "notes": "Fixed test_ruff_clean: removed --select E,F,W override, use repo pyproject.toml config with cwd=REPO"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.660313",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6492.52,
+      "at": "2026-04-09T07:04:12.872888"
     }
   ]
 }

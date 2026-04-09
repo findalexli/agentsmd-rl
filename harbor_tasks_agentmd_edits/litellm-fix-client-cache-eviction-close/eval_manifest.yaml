@@ -13,6 +13,22 @@ checks:
     origin: static
     description: "Modified Python files parse without errors"
 
+  # Repo CI/CD pass_to_pass tests
+  - id: test_repo_ruff_caching
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linting passes on litellm/caching/ directory"
+
+  - id: test_repo_caching_handler_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's caching handler unit tests pass"
+
+  - id: test_repo_import_caching
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Caching module imports work correctly"
+
   # Core behavioral tests (code fix)
   - id: remove_key_does_not_close_async_client
     type: fail_to_pass

@@ -13,6 +13,17 @@ checks:
     origin: static
     description: "AGENTS.md must exist and be readable"
 
+  # Pass-to-pass: repo CI checks
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python linting passes"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python formatting passes"
+
   # Fail-to-pass: skills directory structure
   - id: skills_directory_exists
     type: fail_to_pass

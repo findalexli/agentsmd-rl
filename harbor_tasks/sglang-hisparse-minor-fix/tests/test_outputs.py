@@ -252,3 +252,58 @@ def test_not_stub_hisparse_cuh():
     assert "for" in function_src, "transfer_item_warp should have a for loop"
     assert "asm volatile" in function_src, "transfer_item_warp should use inline assembly"
     assert function_src.count("asm volatile") >= 2, "Should have multiple asm statements"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from repo
+# ---------------------------------------------------------------------------
+
+def test_repo_ruff_check():
+    """Repo's Python files pass ruff linting (F401, F821) (pass_to_pass)."""
+    modified_files = [
+        "python/sglang/srt/managers/schedule_batch.py",
+        "python/sglang/srt/managers/scheduler.py",
+    ]
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821"] + modified_files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_black_format():
+    """Repo's Python files pass black format check (pass_to_pass)."""
+    modified_files = [
+        "python/sglang/srt/managers/schedule_batch.py",
+        "python/sglang/srt/managers/scheduler.py",
+    ]
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["black", "--check"] + modified_files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_isort_check():
+    """Repo's Python files pass isort check (pass_to_pass)."""
+    modified_files = [
+        "python/sglang/srt/managers/schedule_batch.py",
+        "python/sglang/srt/managers/scheduler.py",
+    ]
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["isort", "--check"] + modified_files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

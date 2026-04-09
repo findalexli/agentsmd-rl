@@ -11,6 +11,7 @@ NOTE: Gradio's JS/Svelte source cannot be executed in the test container
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = Path("/workspace/gradio")
@@ -250,6 +251,34 @@ def test_custom_button_prop_wired():
     src = (REPO / "js/textbox/shared/Textbox.svelte").read_text()
     assert re.search(r"on_custom_button_click\s*=", src), \
         "on_custom_button_click not wired as prop to IconButtonWrapper"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/gradio && corepack enable && pnpm install >/dev/null 2>&1 && pnpm run format:check"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_client_node_tests():
+    """Repo's @gradio/client node tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/gradio && corepack enable && pnpm install >/dev/null 2>&1 && NODE_NO_WARNINGS=1 TEST_MODE=node pnpm --filter @gradio/client test:node"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Client node tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

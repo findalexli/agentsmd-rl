@@ -7,8 +7,11 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import shutil
 import subprocess
 from pathlib import Path
+
+import pytest
 
 REPO = "/workspace/transformers"
 
@@ -72,7 +75,7 @@ def test_makefile_delegates_to_checkers():
     assert "utils/checkers.py" in makefile or "checkers.py" in makefile, \
         "Makefile should delegate to the unified checkers module"
     # Old scattered pattern should be removed
-    assert "ruff check $(check_dirs)" not in makefile, \
+    assert r"ruff check $(check_dirs)" not in makefile, \
         "Makefile should not directly call ruff with $(check_dirs) anymore"
 
 
@@ -136,3 +139,114 @@ def test_agents_md_has_make_commands():
     agents = (Path(REPO) / ".ai" / "AGENTS.md").read_text()
     for cmd in ["make style", "make typing", "make fix-repo", "make check-repo"]:
         assert cmd in agents, f".ai/AGENTS.md should document '{cmd}'"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD checks: pass_to_pass - must pass on both base and after fix
+# ---------------------------------------------------------------------------
+
+
+def test_repo_ruff_format():
+    """Repo's ruff format check passes (pass_to_pass)."""
+    if not shutil.which("ruff"):
+        pytest.skip("ruff not installed")
+    r = subprocess.run(
+        ["ruff", "format", "--check", "utils/check_types.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr}{r.stdout}"
+
+
+def test_repo_ruff_lint():
+    """Repo's ruff lint check passes (pass_to_pass)."""
+    if not shutil.which("ruff"):
+        pytest.skip("ruff not installed")
+    r = subprocess.run(
+        ["ruff", "check", "utils/check_types.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint check failed:\n{r.stderr}{r.stdout}"
+
+
+def test_repo_check_types():
+    """Repo's type checker passes (pass_to_pass)."""
+    try:
+        import ty as _  # noqa: F401
+    except ImportError:
+        pytest.skip("ty not installed")
+    r = subprocess.run(
+        ["python", "utils/check_types.py", "src/transformers/utils"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Type check failed:\n{r.stderr}{r.stdout}"
+
+
+def test_repo_custom_init_isort():
+    """Repo's init isort check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/custom_init_isort.py", "--check_only"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Custom init isort check failed:\n{r.stderr}{r.stdout}"
+
+
+def test_repo_sort_auto_mappings():
+    """Repo's auto mappings sort check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/sort_auto_mappings.py", "--check_only"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Sort auto mappings check failed:\n{r.stderr}{r.stdout}"
+
+
+def test_repo_check_doc_toc():
+    """Repo's documentation TOC check passes (pass_to_pass)."""
+    try:
+        import yaml as _  # noqa: F401
+    except ImportError:
+        pytest.skip("pyyaml not installed")
+    r = subprocess.run(
+        ["python", "utils/check_doc_toc.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Documentation TOC check failed:\n{r.stderr}{r.stdout}"
+
+
+def test_repo_check_copies():
+    """Repo's copies check passes (pass_to_pass)."""
+    try:
+        import regex as _  # noqa: F401
+    except ImportError:
+        pytest.skip("regex not installed")
+    r = subprocess.run(
+        ["python", "utils/check_copies.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Copies check failed:\n{r.stderr}{r.stdout}"
+
+
+def test_repo_check_dummies():
+    """Repo's dummies check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dummies check failed:\n{r.stderr}{r.stdout}"
+
+
+def test_repo_check_doctest_list():
+    """Repo's doctest list check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doctest_list.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Doctest list check failed:\n{r.stderr}{r.stdout}"
+
+
+def test_repo_check_inits():
+    """Repo's inits check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Inits check failed:\n{r.stderr}{r.stdout}"

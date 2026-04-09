@@ -1,0 +1,83 @@
+source_pr:
+  owner: TanStack
+  repo: router
+  number: 7030
+  merge_commit: ed9c43df7ab8c679f6e6833d94651a0a091b9880
+  base_commit: 7640f6e3f5d946ca1fd32729050d12642cf38502
+
+task:
+  name: tanstack-start-manifest-css-dedupe
+  title: Fix CSS asset deduplication in TanStack Start manifest
+  primary_file: packages/start-plugin-core/src/start-manifest-plugin/manifestBuilder.ts
+
+checks:
+  - id: test_dedupe_css_from_shared_imported_chunks
+    type: behavioral
+    description: CSS from shared imported chunks is deduplicated
+    origin: fail_to_pass
+    source: PR regression test
+
+  - id: test_dedupe_route_css_overlapping_chunk_imports
+    type: behavioral
+    description: Route CSS gathered through overlapping chunk imports is deduplicated
+    origin: fail_to_pass
+    source: PR regression test
+
+  - id: test_dedupe_route_css_ancestor_routes
+    type: behavioral
+    description: Route CSS already owned by ancestor routes is deduplicated
+    origin: fail_to_pass
+    source: PR regression test
+
+  - id: test_dedupe_assets_and_preloads_active_ancestor_path
+    type: behavioral
+    description: Assets and preloads are deduplicated only along the active ancestor path
+    origin: pass_to_pass
+    source: Existing test verifying full deduplication logic
+
+  - id: test_backtracking_preserves_reused_assets
+    type: behavioral
+    description: Backtracking preserves reused assets and preloads for cousin routes
+    origin: pass_to_pass
+    source: Existing test verifying proper backtracking behavior
+
+  - id: test_manifest_builder_all_tests
+    type: behavioral
+    description: All manifest builder tests pass without regressions
+    origin: pass_to_pass
+    source: Comprehensive test suite
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's unit tests for start-plugin-core pass
+
+  - id: test_repo_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's ESLint check for start-plugin-core passes
+
+  - id: test_repo_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's TypeScript type check for start-plugin-core passes
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's build validation for start-plugin-core passes
+
+agent_config:
+  - source_file: AGENTS.md
+    source_commit: 7640f6e3f5d946ca1fd32729050d12642cf38502
+    relevant_rules:
+      - "Run tests: pnpm test"
+      - "Build packages: pnpm build (affected) or pnpm build:all (force all)"
+      - "Always prefer pnpm nx ... over npx nx ..."
+      - "Run only one Nx command at a time"
+      - "Use pnpm nx run @tanstack/start-plugin-core:test:unit for specific package tests"
+      - "Add or update tests for any code changes"
+      - "Use workspace protocol for internal dependencies (workspace:*)"
+      - "TypeScript strict mode with extensive type safety"
+
+rubric: []

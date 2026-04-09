@@ -1,13 +1,17 @@
-# {{TASK_TITLE}}
+# Fix Calculator Add Function
 
 ## Problem
 
-TODO: Describe the symptom a developer would observe. What breaks? What error or wrong behavior does the user see?
+The `add` function in `calculator.py` has a bug - it subtracts instead of adding.
 
 ## Expected Behavior
 
-TODO: What should happen instead?
+The `add(a, b)` function should return the sum of a and b, not the difference.
 
 ## Files to Look At
 
-- `{{TARGET_FILE}}` — TODO: what this file does and why it's relevant
+- `calculator.py` — Contains the buggy `add` function
+
+## Fix Required
+
+Change `return a - b` to `return a + b` in the `add` function.

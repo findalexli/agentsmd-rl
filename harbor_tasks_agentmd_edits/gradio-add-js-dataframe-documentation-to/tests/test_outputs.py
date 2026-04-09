@@ -258,3 +258,49 @@ console.log('PASS');
 """)
     assert r.returncode == 0, f"Changelog missing prism-svelte: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_lint():
+    """Repo's ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_typecheck():
+    """Repo's TypeScript/svelte-check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "ts:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_dataframe_tests():
+    """Repo's dataframe unit tests pass (pass_to_pass)."""
+    # Build client first (needed for tests)
+    subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "--config", ".config/vitest.config.ts", "js/dataframe"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dataframe tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

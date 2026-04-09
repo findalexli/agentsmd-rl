@@ -1,0 +1,79 @@
+version: "2.0"
+
+source:
+  repo: "astral-sh/ruff"
+  pr: 24410
+  base_commit: "62bb07772806a0ca578766531f1ffcba1f2c9c90"
+  merge_commit: "0abbde57426286e10ebd2ade06e8596db2e94775"
+
+checks:
+  - id: ruff_builds
+    type: pass_to_pass
+    origin: static
+    description: "Ruff compiles successfully after changes"
+
+  - id: test_repo_cargo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo code passes cargo fmt --all --check"
+
+  - id: test_repo_cargo_clippy_indexer
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo ruff_python_index crate passes clippy"
+
+  - id: test_repo_cargo_test_indexer
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo ruff_python_index crate tests pass"
+
+  - id: test_repo_cargo_test_pycodestyle
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo pycodestyle tests pass"
+
+  - id: fstring_backslash_e502_detection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "E502 detects both redundant backslashes around a multiline f-string"
+
+  - id: fstring_backslash_fix_complete
+    type: fail_to_pass
+    origin: pr_diff
+    description: "E502 fix removes ALL redundant backslashes including those after multiline f-strings"
+
+  - id: varied_fstring_e502_detection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "E502 detects violation after a multiline f-string with single-quoted triple"
+
+  - id: regular_string_e502_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: "E502 still correctly detects redundant backslash with regular strings"
+
+  - id: no_unwrap_panic_in_indexer_production
+    type: pass_to_pass
+    origin: agent_config
+    description: "No .unwrap()/panic!/unreachable! in indexer production code"
+    source:
+      path: "AGENTS.md"
+      lines: "79"
+      commit: "62bb07772806a0ca578766531f1ffcba1f2c9c90"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "62bb07772806a0ca578766531f1ffcba1f2c9c90"
+  - rule: "Prefer let chains (if let combined with &&) over nested if let statements to reduce indentation and improve readability."
+    source:
+      path: "AGENTS.md"
+      lines: "80"
+      commit: "62bb07772806a0ca578766531f1ffcba1f2c9c90"
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "62bb07772806a0ca578766531f1ffcba1f2c9c90"

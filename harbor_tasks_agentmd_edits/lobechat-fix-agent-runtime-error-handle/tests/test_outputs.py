@@ -250,7 +250,7 @@ def test_filestore_completed_snapshot_takes_priority():
                 totalCost: 0.01,
                 totalSteps: 1,
             };
-            const filename = `2026-01-01T00-00-00.000Z_trace-prior.json`;
+            const filename = `2026-01-01T00-00-00.000Z_trace-priori.json`;
             await fs.writeFile(
                 path.join(tracingDir, filename),
                 JSON.stringify(completedSnapshot)

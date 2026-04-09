@@ -114,3 +114,55 @@ def test_existing_snapshot_tests():
         f"Snapshot tests failed:\nstdout:\n{r.stdout[-2000:]}\n"
         f"stderr:\n{r.stderr[-2000:]}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_deno_npm_lib_tests():
+    """All deno_npm library unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "deno_npm", "--lib"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Library tests failed:\nstdout:\n{r.stdout[-1500:]}\n"
+        f"stderr:\n{r.stderr[-1500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_deno_npm_clippy():
+    """deno_npm passes clippy linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "deno_npm", "--lib"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Clippy failed:\nstdout:\n{r.stdout[-1500:]}\n"
+        f"stderr:\n{r.stderr[-1500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_deno_npm_fmt():
+    """deno_npm code is properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "-p", "deno_npm", "--", "--check"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Format check failed:\nstdout:\n{r.stdout[-500:]}\n"
+        f"stderr:\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_deno_npm_check():
+    """deno_npm passes cargo check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "deno_npm"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Cargo check failed:\nstdout:\n{r.stdout[-1500:]}\n"
+        f"stderr:\n{r.stderr[-1500:]}"
+    )

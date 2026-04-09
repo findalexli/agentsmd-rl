@@ -155,7 +155,7 @@ const results = [
         { kind: 'markdownContent', content: { value: 'See ' } },
         { kind: 'inlineReference', inlineReference: 'https://example.com/' },
         { kind: 'markdownContent', content: { value: ' for details.' } },
-    ], r => r.includes('See ') && r.includes('for details')),
+    ], r => r.includes('See ') && r.includes('for details.')),
 ];
 
 console.log(JSON.stringify(results));
@@ -279,6 +279,130 @@ def test_original_interface_preserved():
     iface_body = iface_match.group(1)
     assert "getMarkdown()" in iface_body, "IResponse.getMarkdown() was removed"
     assert "toString()" in iface_body, "IResponse.toString() was removed"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint():
+    """Repo's ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_hygiene():
+    """Repo's hygiene check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "hygiene"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Hygiene check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_valid_layers():
+    """Repo's valid-layers-check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "valid-layers-check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Valid layers check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_define_class_fields():
+    """Repo's define-class-fields-check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "define-class-fields-check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Define class fields check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_monaco_compile():
+    """Repo's Monaco editor compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "monaco-compile-check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Monaco compile check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_vscode_dts_compile():
+    """Repo's VS Code dts compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "vscode-dts-compile-check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"VS Code dts compile check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tsec_compile():
+    """Repo's tsec compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "tsec-compile-check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Tsec compile check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_cyclic_deps():
+    """Repo's cyclic dependencies check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "check-cyclic-dependencies"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cyclic dependencies check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_scripts():
+    """Repo's build scripts tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "test-build-scripts"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build scripts tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_stylelint():
+    """Repo's Stylelint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "stylelint"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Stylelint failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_compile():
+    """Repo compiles successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "compile"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Compile failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_core_ci():
+    """Repo's core CI passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "core-ci"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Core CI failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
 
 
 # ---------------------------------------------------------------------------

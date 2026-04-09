@@ -8,6 +8,9 @@ RUN apt-get update && \
         git curl ca-certificates build-essential tmux && \
     rm -rf /var/lib/apt/lists/*
 
+# Install python-hcl2 for HCL parsing in tests
+RUN pip install --no-cache-dir python-hcl2
+
 # apache/beam is huge — use git init + sparse checkout to fetch only the ratelimiter dir
 RUN git init /workspace/beam && \
     cd /workspace/beam && \

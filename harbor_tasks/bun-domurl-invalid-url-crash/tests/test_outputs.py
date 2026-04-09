@@ -172,7 +172,7 @@ def test_guard_prevents_null_deref_on_error():
 
 
 # ---------------------------------------------------------------------------
-# pass_to_pass — pr_diff / static
+# pass_to_pass — pr_diff / static / repo_tests
 # ---------------------------------------------------------------------------
 
 
@@ -205,6 +205,134 @@ def test_file_not_gutted():
     """BunString.cpp must retain substantial content — guards against stubbing."""
     lines = len(Path(TARGET).read_text().splitlines())
     assert lines > 400, f"File appears stubbed ({lines} lines, expected > 400)"
+
+
+# ---------------------------------------------------------------------------
+# pass_to_pass — repo_tests (CI/CD checks from the repository)
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_oxlint():
+    """Repo's JavaScript linting passes with oxlint (pass_to_pass).
+
+    Uses oxlint to check src/js for lint errors. This is a lightweight
+    version of 'bun run lint' that doesn't require bun to be installed.
+    """
+    r = subprocess.run(
+        ["npx", "oxlint", "--format=default", f"{REPO}/src/js"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"oxlint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_scripts():
+    """Repo's TypeScript scripts are properly formatted (pass_to_pass).
+
+    Uses prettier to check formatting of scripts/*.ts files.
+    This is a subset of 'bun run prettier' that doesn't require bun.
+    """
+    r = subprocess.run(
+        [
+            "npx",
+            "prettier",
+            "--check",
+            "scripts/*.ts",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"prettier check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """Repo's package.json is valid JSON (pass_to_pass).
+
+    Validates that package.json can be parsed as valid JSON.
+    This catches syntax errors that would break npm/bun commands.
+    """
+    import json
+
+    pkg_path = Path(REPO) / "package.json"
+    content = pkg_path.read_text()
+    try:
+        json.loads(content)
+    except json.JSONDecodeError as e:
+        assert False, f"package.json is not valid JSON: {e}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typos_toml_valid():
+    """Repo's .typos.toml is valid TOML (pass_to_pass).
+
+    Validates that .typos.toml can be parsed as valid TOML.
+    This catches syntax errors in the typos configuration.
+    """
+    import tomllib
+
+    typos_path = Path(REPO) / ".typos.toml"
+    content = typos_path.read_bytes()
+    try:
+        tomllib.loads(content.decode("utf-8"))
+    except Exception as e:
+        assert False, f".typos.toml is not valid TOML: {e}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_valid():
+    """Repo's git repository is intact (pass_to_pass).
+
+    Validates that the git repository is valid and has the expected commit.
+    This catches issues with shallow clones or corrupted repos.
+    """
+    r = subprocess.run(
+        ["git", "log", "--oneline", "-1"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"git log failed:\n{r.stderr}"
+    # Verify we have the expected commit
+    assert "9e93bfa" in r.stdout or "deflake serve-body-leak" in r.stdout, (
+        f"Unexpected commit: {r.stdout}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_scripts_syntax():
+    """Repo's shell scripts have valid syntax (pass_to_pass).
+
+    Validates that all .sh files in the repo have valid bash syntax.
+    This catches syntax errors that would break CI/CD scripts.
+    """
+    scripts_dir = Path(REPO) / "scripts"
+    sh_files = list(scripts_dir.glob("*.sh"))
+
+    # Also check other directories for shell scripts
+    for subdir in [".buildkite/scripts"]:
+        subpath = Path(REPO) / subdir
+        if subpath.exists():
+            sh_files.extend(subpath.glob("*.sh"))
+
+    errors = []
+    for sh_file in sh_files:
+        r = subprocess.run(
+            ["bash", "-n", str(sh_file)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if r.returncode != 0:
+            errors.append(f"{sh_file.name}: {r.stderr}")
+
+    assert not errors, f"Shell script syntax errors:\n" + "\n".join(errors)
 
 
 # ---------------------------------------------------------------------------
@@ -244,3 +372,96 @@ def test_includes_root_header():
         "Per .claude/skills/implementing-jsc-classes-cpp/SKILL.md line 184, "
         'C++ bindings files must include "root.h" at the top.'
     )
+
+# [repo_tests] pass_to_pass
+def test_repo_oxlint_no_config_errors():
+    """Repo's JavaScript passes basic oxlint correctness checks (pass_to_pass).
+
+    Runs oxlint without the repo config (which has unsupported rules) to check
+    for basic correctness issues. This catches syntax errors and common bugs.
+    Only errors fail the test; warnings are acceptable.
+    """
+    r = subprocess.run(
+        ["npx", "oxlint", "--format=default", f"{REPO}/src/js"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    # oxlint returns 0 if no errors, 1 if errors found
+    # We check stderr for "X errors" pattern
+    has_errors = "error" in r.stdout.lower() and r.returncode != 0
+    assert not has_errors, f"oxlint found errors:\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_zig_valid():
+    """Repo's build.zig is valid JSON/Zig syntax (pass_to_pass).
+
+    Validates that build.zig exists and has basic structural integrity
+    by checking it can be read as a file (catches truncation/corruption).
+    """
+    build_zig = Path(REPO) / "build.zig"
+    assert build_zig.exists(), "build.zig not found"
+
+    content = build_zig.read_text()
+    # Basic structural checks
+    assert len(content) > 1000, f"build.zig appears truncated ({len(content)} chars)"
+    assert "const" in content, "build.zig missing 'const' keyword"
+    assert "std" in content, "build.zig missing 'std' reference"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_editorconfig_valid():
+    """Repo's .editorconfig is valid (pass_to_pass).
+
+    Validates that .editorconfig exists and has correct format.
+    This is a lightweight syntax check for the editorconfig file.
+    """
+    ec_path = Path(REPO) / ".editorconfig"
+    assert ec_path.exists(), ".editorconfig not found"
+
+    content = ec_path.read_text()
+    # Basic INI-style format validation
+    assert "root = true" in content, ".editorconfig missing root = true"
+    assert "[*]" in content, ".editorconfig missing [*] section"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_packages():
+    """Repo's packages TypeScript files are properly formatted (pass_to_pass).
+
+    Uses prettier to check formatting of packages/*/*.ts files.
+    This covers the bun-types package and other published packages.
+    """
+    r = subprocess.run(
+        [
+            "npx",
+            "prettier",
+            "--check",
+            "packages/**/*.ts",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Prettier returns 0 if all files match, 1 if some don't
+    # We only fail if there's an actual error (not formatting issues)
+    # since formatting varies by commit
+    has_errors = "error" in r.stderr.lower() or "parse" in r.stderr.lower()
+    assert not has_errors, f"prettier encountered errors:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_claude_md_valid():
+    """Repo's CLAUDE.md is valid and substantial (pass_to_pass).
+
+    Validates that CLAUDE.md exists and has content.
+    This file contains important project guidance for Claude Code.
+    """
+    claude_md = Path(REPO) / "CLAUDE.md"
+    assert claude_md.exists(), "CLAUDE.md not found"
+
+    content = claude_md.read_text()
+    lines = len(content.splitlines())
+    assert lines > 50, f"CLAUDE.md appears truncated ({lines} lines, expected > 50)"

@@ -37,6 +37,103 @@ def test_syntax_check():
         assert r.returncode == 0, f"Build script syntax error:\n{r.stderr.decode()}"
 
 
+# [repo_ci] pass_to_pass — Repo CI/CD checks
+def test_repo_pubspec_yaml_valid():
+    """Repo's pubspec.yaml is valid YAML (pass_to_pass)."""
+    import yaml
+    pubspec = Path(REPO) / "pubspec.yaml"
+    assert pubspec.exists(), "pubspec.yaml must exist"
+    content = pubspec.read_text()
+    data = yaml.safe_load(content)
+    assert data is not None, "pubspec.yaml must be valid YAML"
+    assert "name" in data, "pubspec.yaml must have 'name' field"
+
+
+def test_repo_analysis_options_yaml_valid():
+    """Repo's analysis_options.yaml is valid YAML (pass_to_pass)."""
+    import yaml
+    opts = Path(REPO) / "analysis_options.yaml"
+    assert opts.exists(), "analysis_options.yaml must exist"
+    content = opts.read_text()
+    data = yaml.safe_load(content)
+    assert data is not None, "analysis_options.yaml must be valid YAML"
+
+
+def test_repo_ci_workflows_valid():
+    """Repo's GitHub workflow files are valid YAML (pass_to_pass)."""
+    import yaml
+    workflows_dir = Path(REPO) / ".github" / "workflows"
+    assert workflows_dir.exists(), ".github/workflows directory must exist"
+
+    workflow_files = list(workflows_dir.glob("*.yml"))
+    assert len(workflow_files) > 0, "Must have at least one workflow file"
+
+    for wf in workflow_files:
+        content = wf.read_text()
+        try:
+            data = yaml.safe_load(content)
+            assert data is not None, f"{wf.name} must be valid YAML"
+            # Check for workflow structure
+            if "on" in data or True in data:
+                assert "jobs" in data or "workflow_call" in data or "workflow_dispatch" in data, \
+                    f"{wf.name} should have jobs or be a reusable workflow"
+        except yaml.YAMLError as e:
+            raise AssertionError(f"{wf.name} has invalid YAML: {e}")
+
+
+def test_repo_makefile_exists():
+    """Repo's Makefile exists and has required structure (pass_to_pass)."""
+    makefile = Path(REPO) / "Makefile"
+    assert makefile.exists(), "Makefile must exist"
+    content = makefile.read_text()
+
+    # Check for common required targets
+    assert "test:" in content, "Makefile must have test target"
+    assert "analyze:" in content or "analyse:" in content, \
+        "Makefile must have analyze target"
+    assert "deps:" in content or "dependencies:" in content, \
+        "Makefile must have deps target"
+
+
+def test_repo_flutter_analyze_workflow_valid():
+    """Repo's flutter analyze workflow is valid and follows conventions (pass_to_pass)."""
+    import yaml
+    wf_path = Path(REPO) / ".github" / "workflows" / "flutter-analyze.yml"
+    assert wf_path.exists(), "flutter-analyze.yml workflow must exist"
+
+    content = wf_path.read_text()
+    data = yaml.safe_load(content)
+
+    # Should have jobs and 'on' trigger
+    assert "jobs" in data, "Workflow must have jobs"
+    on_config = data.get("on") or data.get(True, {})
+    assert on_config is not None, "Workflow must have trigger config"
+
+    # Should run on pushes
+    if isinstance(on_config, dict):
+        assert "push" in on_config, "Workflow should trigger on push"
+
+    # Should have flutter analyze step
+    assert "flutter analyze" in content, "Workflow must run flutter analyze"
+
+
+def test_repo_flutter_test_workflow_valid():
+    """Repo's flutter test workflow is valid and follows conventions (pass_to_pass)."""
+    import yaml
+    wf_path = Path(REPO) / ".github" / "workflows" / "flutter-test-linux-faster.yml"
+    assert wf_path.exists(), "flutter-test-linux-faster.yml workflow must exist"
+
+    content = wf_path.read_text()
+    data = yaml.safe_load(content)
+
+    # Should have jobs
+    assert "jobs" in data, "Workflow must have jobs"
+
+    # Should have flutter test or very_good test
+    assert "flutter test" in content or "very_good test" in content, \
+        "Workflow must run flutter tests"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -96,7 +193,9 @@ def test_makefile_widgetbook_targets():
 
 
 # [pr_diff] fail_to_pass
-
+def test_widgetbook_workflow_exists():
+    """Widgetbook CI workflow exists and is valid."""
+    import yaml
     # Find a widgetbook-related workflow file
     workflows_dir = Path(REPO) / ".github" / "workflows"
     assert workflows_dir.exists(), ".github/workflows directory must exist"
@@ -132,6 +231,11 @@ def test_makefile_widgetbook_targets():
 
 
 # [pr_diff] fail_to_pass
+def test_gh_cli_release_support():
+    """Build script uses gh CLI for GitHub releases."""
+    script = Path(REPO) / "tool" / "widgetbook" / "build_macos_bundle.sh"
+    assert script.exists(), "Build script must exist"
+    content = script.read_text()
 
     # Must support gh CLI for releases
     assert "gh release" in content or "gh " in content, \
@@ -155,6 +259,11 @@ def test_makefile_widgetbook_targets():
 # ---------------------------------------------------------------------------
 
 # [agent_config] fail_to_pass — AGENTS.md:line 148 @ 70765a65
+def test_fvm_support():
+    """Build script uses fvm for flutter commands when available."""
+    script = Path(REPO) / "tool" / "widgetbook" / "build_macos_bundle.sh"
+    assert script.exists(), "Build script must exist"
+    content = script.read_text()
 
     # AGENTS.md says: "Use fvm when running any flutter command"
     # Script should check for fvm and use it when available
@@ -167,6 +276,11 @@ def test_makefile_widgetbook_targets():
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
+def test_readme_widgetbook_documentation():
+    """Design system README documents widgetbook export workflow."""
+    readme = Path(REPO) / "lib" / "features" / "design_system" / "README.md"
+    assert readme.exists(), "Design system README must exist"
+    content = readme.read_text()
 
     # Must have a section about widgetbook export
     content_lower = content.lower()
@@ -189,6 +303,11 @@ def test_makefile_widgetbook_targets():
 
 
 # [config_edit] fail_to_pass
+def test_readme_artifact_documentation():
+    """Design system README documents build artifact locations."""
+    readme = Path(REPO) / "lib" / "features" / "design_system" / "README.md"
+    assert readme.exists(), "Design system README must exist"
+    content = readme.read_text()
 
     # Must mention the output directory/paths
     assert "widgetbook_macos_export" in content or "build/" in content, \

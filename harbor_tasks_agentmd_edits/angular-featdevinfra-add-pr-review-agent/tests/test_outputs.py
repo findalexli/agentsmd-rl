@@ -11,6 +11,8 @@ import os
 import subprocess
 from pathlib import Path
 
+import pytest
+
 REPO = "/workspace/angular"
 SKILL_DIR = Path(REPO) / ".agent" / "skills" / "pr_review"
 SCRIPTS_DIR = SKILL_DIR / "scripts"
@@ -133,3 +135,104 @@ def test_existing_skills_preserved():
         assert skill_md.exists(), (
             f"Existing skill '{skill_name}' should have a SKILL.md file"
         )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_bash_scripts_syntax():
+    """All bash scripts in the repo have valid syntax (pass_to_pass)."""
+    # Find all .sh files in the repo
+    sh_files = list(Path(REPO).rglob("*.sh"))
+    assert len(sh_files) > 0, "Should find shell scripts in the repo"
+
+    for script in sh_files:
+        # Run bash -n to check syntax
+        result = subprocess.run(
+            ["bash", "-n", str(script)],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        assert result.returncode == 0, (
+            f"Script {script} has invalid bash syntax:\n{result.stderr}"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_pr_review_scripts_executable():
+    """PR review scripts are executable and have valid syntax (pass_to_pass)."""
+    scripts_dir = SCRIPTS_DIR
+    if not scripts_dir.exists():
+        pytest.skip("PR review scripts not yet created")
+
+    expected_scripts = [
+        "determine_review_type.sh",
+        "get_pr_comments.sh",
+        "post_inline_comment.sh",
+        "reply_pr_comment.sh",
+        "submit_pr_review.sh",
+    ]
+
+    for script_name in expected_scripts:
+        script_path = scripts_dir / script_name
+        assert script_path.exists(), f"Script {script_name} should exist"
+        assert os.access(str(script_path), os.X_OK), (
+            f"Script {script_name} should be executable"
+        )
+        # Validate syntax
+        result = subprocess.run(
+            ["bash", "-n", str(script_path)],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        assert result.returncode == 0, (
+            f"Script {script_name} has invalid syntax:\n{result.stderr}"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_git_repo_valid():
+    """Git repository is valid and has expected structure (pass_to_pass)."""
+    # Check git status works
+    result = subprocess.run(
+        ["git", "-C", REPO, "status", "--short"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert result.returncode == 0, f"Git status failed:\n{result.stderr}"
+
+    # Check expected directories exist
+    expected_dirs = [".agent", "packages", "scripts", ".github"]
+    for dir_name in expected_dirs:
+        dir_path = Path(REPO) / dir_name
+        assert dir_path.exists(), f"Expected directory {dir_name} should exist"
+
+
+# [repo_tests] pass_to_pass
+def test_jq_syntax_in_scripts():
+    """Scripts using jq have valid jq syntax (pass_to_pass)."""
+    # Check that jq is available
+    result = subprocess.run(
+        ["jq", "--version"],
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    assert result.returncode == 0, "jq should be available"
+
+    # Test basic jq functionality that scripts rely on
+    test_json = '{"path": "test", "line": 42, "body": "comment"}'
+    result = subprocess.run(
+        ["jq", ".path", "-"],
+        capture_output=True,
+        text=True,
+        input=test_json,
+        timeout=5,
+    )
+    assert result.returncode == 0, f"jq should work:\n{result.stderr}"
+    assert '"test"' in result.stdout, "jq should extract the path field"

@@ -17,11 +17,11 @@ REPO = "/workspace/prime-rl"
 
 
 # ---------------------------------------------------------------------------
-# Gate (pass_to_pass, static) — syntax check
+# Pass-to-pass gates — repo CI/CD checks that must pass on both base and fixed
 # ---------------------------------------------------------------------------
 
 def test_syntax_check():
-    """Modified Python files must parse without errors."""
+    """Modified Python files must parse without errors (pass_to_pass)."""
     files_to_check = [
         "src/prime_rl/rl.py",
         "src/prime_rl/utils/utils.py",
@@ -36,6 +36,29 @@ def test_syntax_check():
             ast.parse(full.read_text())
         except SyntaxError as e:
             raise AssertionError(f"Syntax error in {f}: {e}")
+
+
+def test_ruff_lint():
+    """Repo's ruff lint check passes on modified files (pass_to_pass)."""
+    files_to_check = [
+        "src/prime_rl/rl.py",
+        "src/prime_rl/utils/utils.py",
+        "src/prime_rl/orchestrator/config.py",
+        "src/prime_rl/orchestrator/client.py",
+        "src/prime_rl/orchestrator/orchestrator.py",
+        "src/prime_rl/eval/eval.py",
+    ]
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # ruff install may fail if already installed, that's ok
+
+    r = subprocess.run(
+        ["ruff", "check", "--output-format=concise"] + [Path(REPO) / f for f in files_to_check],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

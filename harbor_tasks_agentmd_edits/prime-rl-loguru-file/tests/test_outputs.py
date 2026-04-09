@@ -191,6 +191,47 @@ print("PASS")
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's ruff lint passes on all source files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "check", "src/", "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    files = [
+        "src/prime_rl/rl.py",
+        "src/prime_rl/trainer/logger.py",
+        "src/prime_rl/orchestrator/logger.py",
+    ]
+    r = subprocess.run(
+        ["ruff", "format", "--check"] + files + ["--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 

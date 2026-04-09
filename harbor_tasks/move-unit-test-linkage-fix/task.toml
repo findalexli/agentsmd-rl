@@ -1,0 +1,26 @@
+name = "move-unit-test-linkage-fix"
+title = "Fix linkage for Move unit test runner"
+description = "Fix the package linkage context in the Move unit test runner to properly handle cross-package dependencies"
+owner = "MystenLabs"
+repo = "sui"
+base_commit = "89286c8e52b8b358b3bd895e40ec4ee2f991c742"
+merge_commit = "404f123f44711212ac69f27762a49a57eb3454f0"
+pr_number = 26137
+
+# Task metadata
+difficulty = "medium"
+tags = ["rust", "move", "unit-test", "linkage", "vm"]
+estimated_time = "30 min"
+
+# Timeouts (in seconds)
+agent_timeout = 1800  # 30 minutes for agent to solve
+verifier_timeout = 120  # 2 minutes for verification
+
+[files]
+# Primary file that needs to be modified
+target = "external-crates/move/crates/move-unit-test/src/test_runner.rs"
+
+[env]
+# Environment variables for testing
+RUST_BACKTRACE = "1"
+CARGO_NET_RETRY = "10"

@@ -1,0 +1,86 @@
+source:
+  repo: MystenLabs/sui
+  pr_number: 26106
+  base_commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+  merge_commit: 6a391733c6a07cda5d3c9939ef3ee306490d16bd
+  test_file: crates/sui-framework/tests/build-system-packages.rs
+
+# Programmatic checks (from test_outputs.py)
+checks:
+  - id: build_order
+    description: "Build happens before file operations when UPDATE is set"
+    type: programmatic
+    origin: behavioral
+
+  - id: update_deletion_timing
+    description: "File deletion happens after build, not before"
+    type: programmatic
+    origin: behavioral
+
+  - id: temp_dir_copy
+    description: "UPDATE copies files from temp dir to crate root"
+    type: programmatic
+    origin: behavioral
+
+  - id: existence_checks
+    description: "File deletion checks path existence first"
+    type: programmatic
+    origin: behavioral
+
+  - id: compilation
+    description: "Modified test file compiles without errors"
+    type: programmatic
+    origin: behavioral
+
+  - id: async_test_attr
+    description: "Async tests use #[tokio::test], not #[test]"
+    type: programmatic
+    origin: agent_config
+    source:
+      file: CLAUDE.md
+      lines: "56-57"
+      commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+
+  - id: license_header
+    description: "File has required license header (for new files)"
+    type: programmatic
+    origin: agent_config
+    source:
+      file: CLAUDE.md
+      lines: "11-14"
+      commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+
+  - id: cargo_clippy
+    description: "Code passes cargo xclippy linting"
+    type: programmatic
+    origin: agent_config
+    source:
+      file: CLAUDE.md
+      lines: "49-50"
+      commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+
+  # Pass-to-pass tests (repo CI/CD checks)
+  - id: test_repo_cargo_check_sui_framework
+    description: "sui-framework crate passes cargo check"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_rustfmt_check
+    description: "Code passes rustfmt formatting check"
+    type: pass_to_pass
+    origin: repo_tests
+
+# Rubric for LLM-judged soft criteria
+rubric:
+  - criterion: "Appropriate comments for non-obvious logic"
+    description: "Comments explain WHY file operations are ordered this way, not just what they do"
+    reference:
+      file: CLAUDE.md
+      section: "Comment Writing Guidelines"
+
+  - criterion: "Clean code without lint suppressions"
+    description: "No #[allow(...)] attributes or clippy suppressions added"
+    reference:
+      file: CLAUDE.md
+      lines: "51-52"
+      commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd

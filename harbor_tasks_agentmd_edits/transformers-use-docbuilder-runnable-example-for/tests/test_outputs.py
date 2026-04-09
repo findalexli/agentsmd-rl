@@ -33,6 +33,43 @@ def test_syntax_check():
         assert r.returncode == 0, f"{rel} has syntax errors:\n{r.stderr.decode()}"
 
 
+# [repo_tests] pass_to_pass
+def test_ruff_check():
+    """Repo's ruff linting passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "ruff",
+            "check",
+            "setup.py",
+            "src/transformers/dependency_versions_table.py",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr or r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_ruff_format():
+    """Repo's ruff formatting passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "ruff",
+            "format",
+            "--check",
+            "setup.py",
+            "src/transformers/dependency_versions_table.py",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr or r.stdout}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests: setup.py / dependency
 # ---------------------------------------------------------------------------
@@ -51,15 +88,14 @@ def test_docs_extra_in_testing():
     """The testing extras must include the docs extra."""
     setup_src = (Path(REPO) / "setup.py").read_text()
     # Find the extras["testing"] definition block and check it references docs
+    # The block may span multiple lines with concatenation operators
     testing_match = re.search(
-        r'extras\["testing"\]\s*=\s*\((.*?)\)',
+        r'extras\["testing"\]\s*=\s*\((.*?)\)\s*\+\s*extras\["docs"\]',
         setup_src,
         re.DOTALL,
     )
-    assert testing_match is not None, 'Could not find extras["testing"] in setup.py'
-    testing_block = testing_match.group(1)
-    assert 'extras["docs"]' in testing_block, (
-        'extras["testing"] should include extras["docs"]'
+    assert testing_match is not None, (
+        'extras["testing"] should include + extras["docs"]'
     )
 
 

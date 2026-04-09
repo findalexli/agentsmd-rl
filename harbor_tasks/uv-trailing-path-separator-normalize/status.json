@@ -1,12 +1,70 @@
 {
+  "schema_version": 2,
   "verdict": "fail",
-  "nop_reward": -1,
-  "gold_reward": -1,
-  "validated_at": "2026-04-08T21:47:50.552222",
-  "sandbox_id": "iromxtpdcotmujlgxav1w",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T13:28:52.935999",
+  "total_time": 15420.62,
+  "sandbox_id": "iz1ivddujtufqlp654s4i",
   "backend": "fireworks",
-  "improve_status": "ok",
-  "repair_attempted": false,
-  "total_time": 885.27,
-  "error": "docker build failed: T}} && \\\n  17 | >>>     git config user.email \"agent@test\" && \\\n  18 | >>>     git config user.name \"Agent\"\n  19 |     \n--------------------\nERROR: failed to build: failed to solve: process \"/bin/sh -c git clone --filter=blob:none https://github.com/{{OWNER}}/{{REPO}}.git /workspace/{{REPO_SHORT}} &&     cd /workspace/{{REPO_SHORT}} &&     git checkout {{BASE_COMMIT}} &&     git config user.email \\\"agent@test\\\" &&     git config user.name \\\"Agent\\\"\" did not complete successf"
+  "pipeline": "agents",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 556.32,
+      "notes": ""
+    },
+    "improve": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 194.16,
+      "notes": "contains NotImplementedError stubs"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 74.31,
+      "notes": ""
+    },
+    "validate": {
+      "status": "fail",
+      "nop_reward": -1.0,
+      "gold_reward": -1.0,
+      "attempts": 1,
+      "notes": "Task files contain unsubstituted template placeholders ({{OWNER}}, {{REPO}}, {{BASE_COMMIT}}, etc.). The p2p_enrich step failed due to rate limiting, leaving the task as an unfilled template. Cannot validate - no actual repo/PR data exists in the task files.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 56.65
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6423.51,
+      "at": "2026-04-09T07:03:19.476794"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 15420.36,
+      "at": "2026-04-09T13:28:52.767951"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 15420.62,
+      "at": "2026-04-09T13:28:52.935999"
+    }
+  ]
 }

@@ -1,12 +1,61 @@
 {
+  "schema_version": 2,
   "verdict": "fail",
   "nop_reward": -1.0,
   "gold_reward": -1.0,
-  "validated_at": "2026-04-08T22:13:03.363682",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 2398.19,
-  "error": "No backend available within 600s. Pool: glm(47ok/0\u00d7429/ok) | fireworks(170ok/0\u00d7429/ok)"
+  "validated_at": "2026-04-09T07:29:29.589111",
+  "total_time": 5718.78,
+  "sandbox_id": "iyater2fndxde408zpbg0",
+  "backend": "glm",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "docker_build_failed",
+      "error": "Docker build failed - unzip is required to install bun",
+      "dockerfile_error": "Line 22 'RUN curl -fsSL https://bun.sh/install | bash' fails because unzip is not installed. The Dockerfile needs 'unzip' added to the apt-get install on line 8-11.",
+      "repo": "anomalyco/opencode",
+      "base_commit": "31f893f8cb7cbec11ae743b4ead806c201a396b7",
+      "expected_ci_commands": [
+        "bun install - expected to install dependencies",
+        "bun run build - expected build command for Bun-based repo",
+        "bun run test - expected test command for Bun-based repo",
+        "bun run lint - expected lint command if available",
+        "bun run typecheck - expected typecheck if available"
+      ],
+      "found_commands": [],
+      "added_tests": [],
+      "existing_p2p_tests_in_manifest": [
+        "workflow_syntax_valid - validates YAML workflow files",
+        "vouched_td_syntax_valid - validates VOUCHED.td file format",
+        "vouch_workflows_not_empty - anti-stub check",
+        "contributing_section_not_stub - anti-stub check"
+      ],
+      "notes": "Dockerfile needs fix: add 'unzip' to apt-get install. Once fixed, the repo's CI commands (bun-based) should be added as pass_to_pass tests. The current test_outputs.py has static file checks; it needs repo CI tests like 'bun install && bun run build' to verify the code compiles on base commit."
+    },
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 206.76,
+      "notes": ""
+    },
+    "improve": {
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 22.91,
+      "notes": "no subprocess.run (grep-only tests)"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 5718.78,
+      "at": "2026-04-09T07:29:29.589111"
+    }
+  ]
 }

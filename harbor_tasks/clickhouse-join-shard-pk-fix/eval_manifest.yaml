@@ -1,0 +1,130 @@
+source_pr:
+  owner: ClickHouse
+  repo: ClickHouse
+  number: 101960
+  merge_commit: 5f35e27d1a1192a54aabe56b74664bc8452f71ec
+  base_commit: f4eb1501802bc9f274870d147ae82979956939e6
+
+task:
+  name: clickhouse-join-shard-pk-fix
+  title: "Fix wrong results in JOIN with shard-by-PK and query condition cache"
+  description: |
+    Fixes a bug where JOIN queries with shard-by-primary-key optimization
+    returned wrong results (0 rows) when combined with query condition cache.
+    The issue was in optimizeJoinByShards::apply() which assumed contiguous
+    part_index_in_query values, but filterPartsByQueryConditionCache can
+    drop parts leaving gaps.
+
+  primary_language: c++
+  target_files:
+    - src/Processors/QueryPlan/Optimizations/optimizeJoinByShards.cpp
+
+# Evaluation checks - each maps to a test_* function in test_outputs.py
+checks:
+  - id: source_file_exists
+    description: "Source file exists in expected location"
+    type: structural
+    test_function: test_source_file_exists
+
+  - id: has_apply_function
+    description: "File contains the apply() function that was fixed"
+    type: structural
+    test_function: test_file_has_apply_function
+
+  - id: renumber_comment
+    description: "Fix includes explanatory comment about renumbering"
+    type: agent_config
+    test_function: test_renumber_comment_present
+    source:
+      file: .claude/CLAUDE.md
+      lines: "1-20"
+      rule: "When writing text such as documentation, comments, or commit messages, wrap literal names from ClickHouse SQL language, classes and functions, or literal excerpts from log messages inside inline code blocks"
+
+  - id: query_cache_comment
+    description: "Comment explains filterPartsByQueryConditionCache interaction"
+    type: agent_config
+    test_function: test_query_condition_cache_comment
+    source:
+      file: .github/copilot-instructions.md
+      lines: "1-50"
+      rule: "Correctness & safety: Logic errors, data corruption, missing checks"
+
+  - id: uses_index_loop
+    description: "Uses index-based loop (size_t local_idx) instead of range-based for"
+    type: fail_to_pass
+    test_function: test_uses_index_based_loop
+
+  - id: contiguous_assignment
+    description: "Assigns contiguous part_index_in_query = added_parts + local_idx"
+    type: fail_to_pass
+    test_function: test_assigns_contiguous_index
+
+  - id: no_buggy_increment
+    description: "Does NOT use buggy += added_parts pattern"
+    type: fail_to_pass
+    test_function: test_not_using_range_based_increment
+
+  - id: array_indexing
+    description: "Indexes parts_with_ranges[local_idx] explicitly"
+    type: structural
+    test_function: test_loop_uses_parts_with_ranges_indexing
+
+  - id: distinctive_line
+    description: "Contains distinctive fix comment line"
+    type: structural
+    test_function: test_distinctive_line_pattern
+
+  - id: syntax_valid
+    description: "C++ code passes syntax-only check with clang"
+    type: structural
+    test_function: test_syntax_compiles
+
+  - id: builds
+    description: "Code compiles with ninja build system"
+    type: integration
+    test_function: test_builds_with_ninja
+
+  # === Pass-to-Pass Tests (Repo CI/CD checks) ===
+  - id: repo_clang_format
+    description: "ClickHouse source passes clang-format check"
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_clang_format
+
+  - id: repo_clang_tidy
+    description: "ClickHouse source passes basic clang-tidy checks"
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_clang_tidy
+
+  - id: repo_ninja_build
+    description: "ClickHouse QueryPlan optimizations module builds with ninja"
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_ninja_build_optimizations
+
+  - id: repo_code_style
+    description: "ClickHouse code follows Allman brace style"
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_code_style_braces
+
+# Rubric for soft/subjective rules from agent configs
+rubric:
+  - source:
+      file: .claude/CLAUDE.md
+      rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
+    description: "Code follows Allman brace style convention"
+    type: style
+
+  - source:
+      file: .github/copilot-instructions.md
+      rule: "Memory & lifetime: Raw pointers where ownership is unclear or inconsistent with surrounding code"
+    description: "No unsafe raw pointer usage introduced"
+    type: safety
+
+  - source:
+      file: .github/copilot-instructions.md
+      rule: "Error handling & observability: Ignored return values of functions that can fail"
+    description: "Error handling is appropriate for the change"
+    type: correctness

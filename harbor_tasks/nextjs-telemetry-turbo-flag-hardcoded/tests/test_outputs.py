@@ -51,6 +51,7 @@ console.log('OK: ' + found + ' turboFlag assignment(s), none hardcoded false');
     assert r.returncode == 0, f"turboFlag hardcoded to false in build/index.ts: {r.stderr}"
 
 
+
 # [pr_diff] fail_to_pass
 def test_export_turbo_flag_not_hardcoded():
     """turboFlag in export/index.ts telemetry must not be hardcoded to false."""
@@ -143,3 +144,96 @@ def test_telemetry_record_preserved():
             f"turboFlag telemetry field missing from {label}/index.ts"
         assert 'isSrcDir' in content or 'pagesDir' in content, \
             f"Telemetry record structure seems damaged in {label}/index.ts"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates from repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_build_file_exists():
+    """Build index.ts must exist and be readable."""
+    assert BUILD_FILE.exists(), "Build index.ts must exist"
+    content = BUILD_FILE.read_text()
+    assert len(content) > 0, "Build index.ts must not be empty"
+    # Basic check for TypeScript file structure
+    assert 'import' in content or 'export' in content, "Build index.ts must be a valid module"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_export_file_exists():
+    """Export index.ts must exist and be readable."""
+    assert EXPORT_FILE.exists(), "Export index.ts must exist"
+    content = EXPORT_FILE.read_text()
+    assert len(content) > 0, "Export index.ts must not be empty"
+    assert 'import' in content or 'export' in content, "Export index.ts must be a valid module"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_types_file_exists():
+    """Export types.ts must exist and be readable."""
+    assert TYPES_FILE.exists(), "Export types.ts must exist"
+    content = TYPES_FILE.read_text()
+    assert len(content) > 0, "Export types.ts must not be empty"
+    # Check for type definitions
+    assert 'interface' in content or 'type' in content, "Export types.ts must contain type definitions"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_bundler_file_exists():
+    """Bundler enum file must exist and be valid."""
+    bundler_file = Path(REPO) / "packages/next/src/lib/bundler.ts"
+    assert bundler_file.exists(), "bundler.ts file must exist"
+    content = bundler_file.read_text()
+    assert len(content) > 0, "bundler.ts must not be empty"
+    assert 'enum Bundler' in content, "bundler.ts must contain Bundler enum"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_imports_resolvable():
+    """Build index.ts relative imports must be resolvable."""
+    content = BUILD_FILE.read_text()
+    # Check for import statements that are relative and verify file existence
+    import_pattern = re.compile(r"import\s+.*?\s+from\s+['\"](\.[^'\"]+)['\"]|import\s+['\"](\.[^'\"]+)['\"]")
+    for match in import_pattern.finditer(content):
+        import_path = match.group(1) or match.group(2)
+        if import_path:
+            # Resolve relative to the file location
+            base_dir = BUILD_FILE.parent
+            resolved = base_dir / import_path
+            # Check with various extensions
+            exists = (
+                resolved.exists() or
+                (resolved.with_suffix('.ts')).exists() or
+                (resolved.with_suffix('.tsx')).exists() or
+                (resolved.with_suffix('.js')).exists() or
+                (resolved / 'index.ts').exists() or
+                (resolved / 'index.js').exists()
+            )
+            # Only check relative imports, not node_modules
+            if not exists and not import_path.startswith('/'):
+                # Some imports may be to packages, skip those
+                if import_path.startswith('.'):
+                    assert False, f"Import '{import_path}' in build/index.ts cannot be resolved"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_export_imports_resolvable():
+    """Export index.ts relative imports must be resolvable."""
+    content = EXPORT_FILE.read_text()
+    import_pattern = re.compile(r"import\s+.*?\s+from\s+['\"](\.[^'\"]+)['\"]|import\s+['\"](\.[^'\"]+)['\"]")
+    for match in import_pattern.finditer(content):
+        import_path = match.group(1) or match.group(2)
+        if import_path:
+            base_dir = EXPORT_FILE.parent
+            resolved = base_dir / import_path
+            exists = (
+                resolved.exists() or
+                (resolved.with_suffix('.ts')).exists() or
+                (resolved.with_suffix('.tsx')).exists() or
+                (resolved.with_suffix('.js')).exists() or
+                (resolved / 'index.ts').exists() or
+                (resolved / 'index.js').exists()
+            )
+            if not exists and import_path.startswith('.'):
+                assert False, f"Import '{import_path}' in export/index.ts cannot be resolved"

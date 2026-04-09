@@ -1,0 +1,62 @@
+source_pr:
+  repository: electron/electron
+  number: 50665
+  title: "fix: validate dock_state_ against allowlist before JS execution"
+  merge_commit: efc4d3c6b6f1c04f658ca0d9d2512dcfe78eb7ba
+  base_commit: abed1204e6f3ac5606538b5909bb0416ea1b2e14
+
+target_file: shell/browser/ui/inspectable_web_contents.cc
+
+# Each check corresponds to a test_* function in test_outputs.py
+checks:
+  - id: test_clang_syntax_check
+    name: "C++ Syntax Validity"
+    origin: behavioral
+    description: "The modified C++ code must be syntactically valid according to clang"
+
+  - id: test_valid_dock_states_constant_exists
+    name: "Allowlist Constant Exists"
+    origin: behavioral
+    description: "The kValidDockStates security allowlist must be defined using MakeFixedFlatSet"
+
+  - id: test_is_valid_dock_state_function_exists
+    name: "Validation Function Exists"
+    origin: behavioral
+    description: "The IsValidDockState validation helper function must exist"
+
+  - id: test_set_dock_state_uses_validation
+    name: "SetDockState Uses Validation"
+    origin: behavioral
+    description: "SetDockState must validate input through IsValidDockState with fallback to 'right'"
+
+  - id: test_load_completed_uses_validation
+    name: "LoadCompleted Uses Validation"
+    origin: behavioral
+    description: "LoadCompleted must validate persisted dock_state and check for null"
+
+  - id: test_dock_states_allowlist_contents
+    name: "Allowlist Contents Correct"
+    origin: behavioral
+    description: "The allowlist must contain exactly 'bottom', 'left', 'right', 'undocked'"
+
+  - id: test_fixed_flat_set_header_included
+    name: "Required Header Included"
+    origin: behavioral
+    description: "The base/containers/fixed_flat_set.h header must be included"
+
+  - id: test_no_direct_state_assignment
+    name: "No Vulnerable Direct Assignment"
+    origin: behavioral
+    description: "The vulnerable direct assignment pattern must be replaced with validation"
+
+# Soft/subjective rules for LLM judge (if any)
+rubric: []
+
+# Agent config rules that were identified
+copilot_instructions:
+  file: ".github/copilot-instructions.md"
+  relevant_rules:
+    - "Follows Chromium coding style, enforced by clang-format and clang-tidy"
+    - "Uses Chromium abstractions (base::, content::, etc.)"
+    - "Header guards: #ifndef ELECTRON_SHELL_BROWSER_API_ELECTRON_API_{NAME}_H_"
+    - "Platform-specific files: _mac.mm, _win.cc, _linux.cc"

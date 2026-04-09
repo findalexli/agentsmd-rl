@@ -56,6 +56,24 @@ checks:
     origin: static
     description: "ReflectHas is imported from primordials (needed for the fix)"
 
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests) — CI/CD checks discovered from the repo
+  # ---------------------------------------------------------------------------
+  - id: cargo_check_web
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Cargo check passes for deno_web crate"
+
+  - id: cargo_clippy_web
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Cargo clippy passes for deno_web crate"
+
+  - id: cargo_test_web_lib
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Cargo test --lib passes for deno_web crate"
+
 rubric:
   # No soft rules from CLAUDE.md that need LLM judge for this task
   []

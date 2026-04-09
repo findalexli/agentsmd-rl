@@ -1,0 +1,65 @@
+source:
+  pr: appwrite/appwrite#11614
+  title: "feat: add Rust SDK support"
+  base_commit: "1ab05acc93a9f3c9b1e4dfb55dded2597f06a838"
+  merge_commit: "9353fbfb7426863140eca023967b2bf923d7066d"
+  description: |
+    Adds Rust SDK support by:
+    1. Adding Rust SDK configuration to app/config/sdks.php
+    2. Wiring up Rust language class in src/Appwrite/Platform/Tasks/SDKs.php
+    3. Creating documentation files (CHANGELOG.md, GETTING_STARTED.md)
+
+checks:
+  # Fail-to-pass tests (behavioral changes)
+  - id: test_rust_sdk_config_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: "Rust SDK configuration exists in sdks.php with key, name, platform, and prism"
+
+  - id: test_rust_sdk_config_values
+    type: fail_to_pass
+    origin: behavioral
+    description: "Rust SDK has correct version (0.1.0), enabled/beta/dev flags, and URLs"
+
+  - id: test_rust_language_import
+    type: fail_to_pass
+    origin: behavioral
+    description: "Rust language class is imported in SDKs.php task"
+
+  - id: test_rust_switch_case
+    type: fail_to_pass
+    origin: behavioral
+    description: "Rust case exists in SDK generation switch statement with config instantiation"
+
+  - id: test_rust_sdk_array_structure
+    type: fail_to_pass
+    origin: behavioral
+    description: "Rust SDK array has all required configuration fields"
+
+  - id: test_switch_case_order
+    type: fail_to_pass
+    origin: behavioral
+    description: "Rust case is positioned correctly between Kotlin and GraphQL"
+
+  # Pass-to-pass tests (regression prevention)
+  - id: test_php_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "PHP syntax check passes for modified files"
+
+  - id: test_composer_autoload_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Composer autoload works correctly"
+
+  # Agent config checks
+  - id: test_code_style_psr12
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      file: "AGENTS.md"
+      lines: "25-30"
+      rule: "Follow PSR-12 coding standard, use PSR-4 autoloading, strict type declarations, comprehensive PHPDoc"
+    description: "Code follows PSR-12 standard and PSR-4 autoloading"
+
+rubric: []

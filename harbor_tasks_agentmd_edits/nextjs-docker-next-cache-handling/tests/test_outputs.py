@@ -167,3 +167,109 @@ def test_dockerfile_build_command_present():
     assert "npm run build" in content or "yarn build" in content, (
         "Dockerfile must have a build command"
     )
+
+
+# ---------------------------------------------------------------------------
+# P2P — Repo CI/CD tests (pass_to_pass gates)
+# These tests verify the repo's own CI checks pass on base commit and after fix
+# ---------------------------------------------------------------------------
+
+
+def test_repo_dockerfile_has_required_stages():
+    """Repo CI: Dockerfile must have required stages (dependencies, builder, runner)."""
+    content = _read_file("examples/with-docker/Dockerfile")
+    stages = [m.group(1) for m in re.finditer(r"FROM\s+\S+\s+AS\s+(\w+)", content, re.I)]
+
+    required = ["dependencies", "builder", "runner"]
+    missing = [s for s in required if s not in stages]
+    assert not missing, f"Missing required stages: {missing}, found: {stages}"
+
+
+def test_repo_dockerfile_bun_has_required_stages():
+    """Repo CI: Dockerfile.bun must have required stages (dependencies, builder, runner)."""
+    content = _read_file("examples/with-docker/Dockerfile.bun")
+    stages = [m.group(1) for m in re.finditer(r"FROM\s+\S+\s+AS\s+(\w+)", content, re.I)]
+
+    required = ["dependencies", "builder", "runner"]
+    missing = [s for s in required if s not in stages]
+    assert not missing, f"Missing required stages: {missing}, found: {stages}"
+
+
+def test_repo_with_docker_example_files_exist():
+    """Repo CI: with-docker example must have all required files."""
+    required_files = [
+        "examples/with-docker/README.md",
+        "examples/with-docker/Dockerfile",
+        "examples/with-docker/Dockerfile.bun",
+        "examples/with-docker/package.json",
+        "examples/with-docker/tsconfig.json",
+        "examples/with-docker/next.config.ts",
+        "examples/with-docker/compose.yml",
+    ]
+
+    missing = []
+    for rel_path in required_files:
+        if not (REPO / rel_path).exists():
+            missing.append(rel_path)
+
+    assert not missing, f"Missing required files: {missing}"
+
+
+def test_repo_with_docker_package_json_valid():
+    """Repo CI: with-docker package.json must be private with required scripts."""
+    import json
+
+    pkg = json.loads(_read_file("examples/with-docker/package.json"))
+
+    assert pkg.get("private") is True, "with-docker package.json must be private"
+
+    required_scripts = ["dev", "build", "start"]
+    scripts = pkg.get("scripts", {})
+    missing = [s for s in required_scripts if s not in scripts]
+    assert not missing, f"Missing required scripts: {missing}"
+
+
+def test_repo_with_docker_readme_has_required_sections():
+    """Repo CI: with-docker README must have required documentation sections."""
+    readme = _read_file("examples/with-docker/README.md")
+    lower = readme.lower()
+
+    required_sections = [
+        "features",
+        "prerequisites",
+        "docker compose",
+        "docker build",
+        "standalone mode",
+        "deployment",
+    ]
+
+    missing = []
+    for section in required_sections:
+        if section not in lower:
+            missing.append(section)
+
+    assert not missing, f"Missing required README sections: {missing}"
+
+
+def test_repo_dockerfile_has_multi_stage_build():
+    """Repo CI: Dockerfile must use multi-stage build pattern."""
+    content = _read_file("examples/with-docker/Dockerfile")
+
+    # Check for FROM statements
+    from_count = content.lower().count("from ")
+    assert from_count >= 3, f"Expected at least 3 FROM statements for multi-stage build, found {from_count}"
+
+    # Check for COPY --from=builder pattern
+    assert "--from=builder" in content, "Dockerfile must copy files from builder stage"
+
+
+def test_repo_dockerfile_bun_has_multi_stage_build():
+    """Repo CI: Dockerfile.bun must use multi-stage build pattern."""
+    content = _read_file("examples/with-docker/Dockerfile.bun")
+
+    # Check for FROM statements
+    from_count = content.lower().count("from ")
+    assert from_count >= 3, f"Expected at least 3 FROM statements for multi-stage build, found {from_count}"
+
+    # Check for COPY --from=builder pattern
+    assert "--from=builder" in content, "Dockerfile.bun must copy files from builder stage"

@@ -33,6 +33,70 @@ def _run_tsx(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 
+# [repo_tests] pass_to_pass — existing repo test for tags module
+def test_repo_tags_module():
+    """Repo's tags module functionality works (pass_to_pass)."""
+    script = textwrap.dedent("""\
+        import { parseTagsParam, serializeTagsParam } from './code/core/src/manager-api/modules/tags.ts';
+
+        // Test parseTagsParam
+        const r1 = parseTagsParam(undefined);
+        if (JSON.stringify(r1) !== JSON.stringify({ included: [], excluded: [] })) {
+          throw new Error('parseTagsParam(undefined) failed: ' + JSON.stringify(r1));
+        }
+
+        const r2 = parseTagsParam('');
+        if (JSON.stringify(r2) !== JSON.stringify({ included: [], excluded: [] })) {
+          throw new Error("parseTagsParam('') failed: " + JSON.stringify(r2));
+        }
+
+        const r3 = parseTagsParam('a;!b');
+        if (JSON.stringify(r3) !== JSON.stringify({ included: ['a'], excluded: ['b'] })) {
+          throw new Error("parseTagsParam('a;!b') failed: " + JSON.stringify(r3));
+        }
+
+        const r4 = parseTagsParam('a;;!b;;;');
+        if (JSON.stringify(r4) !== JSON.stringify({ included: ['a'], excluded: ['b'] })) {
+          throw new Error("parseTagsParam('a;;!b;;;') failed: " + JSON.stringify(r4));
+        }
+
+        // Test serializeTagsParam
+        const s1 = serializeTagsParam([], []);
+        if (s1 !== '') {
+          throw new Error('serializeTagsParam([], []) failed: ' + s1);
+        }
+
+        console.log('All tags tests passed');
+    """)
+    r = _run_tsx(script, timeout=30)
+    assert r.returncode == 0, f"Repo tags test failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass — TypeScript files are syntactically valid
+def test_repo_typescript_syntax():
+    """Modified TypeScript files parse without errors (pass_to_pass)."""
+    import re
+
+    files = [
+        "code/core/src/manager-api/modules/tags.ts",
+        "code/core/src/manager-api/modules/statuses.ts",
+    ]
+
+    for f in files:
+        fp = Path(REPO) / f
+        content = fp.read_text()
+        # Basic syntax checks: balanced braces and valid import statements
+        opens = content.count("{")
+        closes = content.count("}")
+        assert abs(opens - closes) <= 2, f"{f} has unbalanced braces"
+        # Check for valid TypeScript structure (no unmatched parentheses)
+        open_parens = content.count("(")
+        close_parens = content.count(")")
+        assert abs(open_parens - close_parens) <= 2, f"{f} has unbalanced parentheses"
+        # Check for import statements
+        assert re.search(r"import\s+.*\s+from\s+['\"]", content), f"{f} missing import statements"
+
+
 # [static] pass_to_pass
 def test_syntax_check():
     """Modified files must exist and have valid TypeScript structure."""

@@ -14,6 +14,19 @@ from pathlib import Path
 REPO = "/workspace/remix"
 
 
+def _run_pnpm_cmd(cmd, timeout=120):
+    """Run a pnpm command with corepack enabled."""
+    # Enable corepack first so pnpm is available
+    subprocess.run(
+        ["corepack", "enable"],
+        capture_output=True, cwd=REPO, timeout=30
+    )
+    return subprocess.run(
+        ["pnpm", cmd],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static / regression) — unchanged behavior must still work
 # ---------------------------------------------------------------------------
@@ -38,6 +51,41 @@ def test_getrootdir_still_works():
     )
     assert result.returncode == 0, f"getRootDir failed: {result.stderr}"
     assert result.stdout.strip() == REPO, f"Expected {REPO}, got: {result.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint check passes (pass_to_pass)."""
+    r = _run_pnpm_cmd("lint", timeout=120)
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = _run_pnpm_cmd("typecheck", timeout=120)
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_changes_validate():
+    """Repo's changes file validation passes (pass_to_pass)."""
+    r = _run_pnpm_cmd("changes:validate", timeout=60)
+    assert r.returncode == 0, f"Changes validate failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    r = _run_pnpm_cmd("format:check", timeout=60)
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's build passes (pass_to_pass)."""
+    r = _run_pnpm_cmd("build", timeout=120)
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

@@ -134,9 +134,12 @@ function checkDecls(node) {
     if (ts.isVariableDeclaration(node) && node.initializer) {
         const initText = node.initializer.getText(sf);
         const varName = node.name.getText(sf);
-        // Match the header name extraction pattern
-        if (initText.includes('header') && initText.includes('name') &&
-            initText.includes('parsedPromptFile')) {
+        // Match the header name extraction pattern - specifically header?.name or header.name
+        // Must access the 'name' property specifically, not any property containing 'name'
+        const isHeaderName = initText.includes('header') &&
+            (initText.includes('?.name') || initText.includes('.name ')) &&
+            initText.includes('parsedPromptFile');
+        if (isHeaderName) {
             if (varName === 'name') {
                 directNameAssignment = true;
             } else {
@@ -288,6 +291,78 @@ console.log('PASS');
 """)
     assert r.returncode == 0, f"AST check failed: {r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repository CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - npm run test-build-scripts
+def test_repo_build_scripts():
+    """Repo's build scripts tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "test-build-scripts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build scripts tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - build directory typecheck
+def test_repo_build_typecheck():
+    """Repo's build directory TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/build",
+    )
+    assert r.returncode == 0, f"Build typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - compile-check-ts-native
+def test_repo_compile_check():
+    """Repo's TypeScript native compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "compile-check-ts-native"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Compile check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - TypeScript files are syntactically valid
+def test_repo_ts_syntax_valid():
+    """Modified TypeScript files have valid syntax (pass_to_pass)."""
+    script = r"""
+const ts = require('typescript');
+const fs = require('fs');
+
+const files = [
+    'src/vs/workbench/contrib/chat/common/promptSyntax/service/promptsServiceImpl.ts',
+    'src/vs/workbench/contrib/chat/common/plugins/agentPluginService.ts'
+];
+
+for (const file of files) {
+    try {
+        const src = fs.readFileSync(file, 'utf8');
+        // Parse only - don't type check (which would require full dependency graph)
+        const sourceFile = ts.createSourceFile(file, src, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+        // Check for parser errors (recoverable syntax errors)
+        if (sourceFile.parseDiagnostics && sourceFile.parseDiagnostics.length > 0) {
+            const realErrors = sourceFile.parseDiagnostics.filter(d => d.category === 1);
+            if (realErrors.length > 0) {
+                console.error('PARSE ERROR in ' + file);
+                process.exit(1);
+            }
+        }
+        console.log('OK: ' + file + ' (' + sourceFile.statements.length + ' statements)');
+    } catch (e) {
+        console.error('ERROR: ' + e.message);
+        process.exit(1);
+    }
+}
+console.log('PASS');
+"""
+    r = _run_node(script, timeout=30)
+    assert r.returncode == 0, f"TypeScript syntax check failed:\n{r.stderr}"
+    assert "PASS" in r.stdout, f"Expected PASS in output:\n{r.stdout}"
 
 
 # ---------------------------------------------------------------------------

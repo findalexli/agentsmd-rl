@@ -112,6 +112,20 @@ def test_syntax_check():
     ast.parse(source)
 
 
+# [static] pass_to_pass - repo CI/CD check
+def test_py_compile():
+    """Repo CI: processing_auto.py must compile without syntax errors (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "-m", "py_compile", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioural tests
 # ---------------------------------------------------------------------------

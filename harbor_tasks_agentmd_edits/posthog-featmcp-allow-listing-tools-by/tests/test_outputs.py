@@ -131,17 +131,21 @@ def test_nonexistent_tool_returns_empty():
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
-
+def test_readme_documents_tools_param():
+    """README documents the tools query parameter and union behavior."""
+    readme = Path(f"{MCP_DIR}/README.md").read_text()
+    content = readme.lower()
+    
     # Must mention the tools query parameter
-    assert "tools" in content_lower and "query parameter" in content_lower, \
+    assert "tools" in content and "query parameter" in content, \
         "README should document the 'tools' query parameter"
 
     # Must explain the union/OR composition with features
-    assert "union" in content_lower or (" or " in content_lower and "feature" in content_lower), \
+    assert "union" in content or (" or " in content and "feature" in content), \
         "README should explain that features and tools compose as a union (OR)"
 
     # Must include a usage example with the tools param
-    assert "?tools=" in content or "&tools=" in content, \
+    assert "?tools=" in readme or "&tools=" in readme, \
         "README should include a URL example with ?tools= parameter"
 
 
@@ -160,5 +164,62 @@ def test_existing_feature_filtering():
     stderr = r.stderr.decode(errors="replace")
     assert r.returncode == 0, (
         f"Existing feature filtering tests failed (rc={r.returncode}):\n"
+        f"{stdout[-2000:]}\n{stderr[-2000:]}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from ci-mcp.yml
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """All MCP unit tests pass (from ci-mcp.yml)."""
+    # Exclude _custom_tools_filter.test.ts as it's a fail_to_pass test file
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "tests/unit", "--reporter=verbose",
+         "--exclude", "tests/unit/_custom_tools_filter.test.ts"],
+        capture_output=True,
+        timeout=120,
+        cwd=MCP_DIR,
+    )
+    stdout = r.stdout.decode(errors="replace")
+    stderr = r.stderr.decode(errors="replace")
+    assert r.returncode == 0, (
+        f"MCP unit tests failed (rc={r.returncode}):\n"
+        f"{stdout[-2000:]}\n{stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """MCP build passes (from ci-mcp.yml)."""
+    r = subprocess.run(
+        ["pnpm", "build"],
+        capture_output=True,
+        timeout=120,
+        cwd=MCP_DIR,
+    )
+    stdout = r.stdout.decode(errors="replace")
+    stderr = r.stderr.decode(errors="replace")
+    assert r.returncode == 0, (
+        f"MCP build failed (rc={r.returncode}):\n"
+        f"{stdout[-2000:]}\n{stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """MCP lint-tool-names passes (from ci-mcp.yml)."""
+    r = subprocess.run(
+        ["pnpm", "lint-tool-names"],
+        capture_output=True,
+        timeout=60,
+        cwd=MCP_DIR,
+    )
+    stdout = r.stdout.decode(errors="replace")
+    stderr = r.stderr.decode(errors="replace")
+    assert r.returncode == 0, (
+        f"MCP lint-tool-names failed (rc={r.returncode}):\n"
         f"{stdout[-2000:]}\n{stderr[-2000:]}"
     )

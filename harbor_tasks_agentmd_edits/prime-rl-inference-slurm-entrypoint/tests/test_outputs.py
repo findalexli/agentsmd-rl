@@ -13,7 +13,20 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO = "/workspace/prime-rl"
+
+
+def _run_in_repo(cmd: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
+    """Run a command in the repo directory."""
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=REPO,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -192,3 +205,69 @@ def test_config_classes_not_stub():
         "BaseInferenceDeploymentConfig must have at least 1 field"
     assert found_classes.get("MultiNodeInferenceDeploymentConfig", 0) >= 2, \
         "MultiNodeInferenceDeploymentConfig must have at least 2 fields (type, num_nodes)"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff lint check passes (pass_to_pass)."""
+    # Install ruff if needed
+    install_result = _run_in_repo(["pip", "install", "ruff", "-q"], timeout=60)
+    if install_result.returncode != 0:
+        pytest.skip("Could not install ruff")
+
+    r = _run_in_repo(
+        ["ruff", "check", "--config=pyproject.toml", "src/"],
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes (pass_to_pass)."""
+    # Install ruff if needed
+    install_result = _run_in_repo(["pip", "install", "ruff", "-q"], timeout=60)
+    if install_result.returncode != 0:
+        pytest.skip("Could not install ruff")
+
+    r = _run_in_repo(
+        ["ruff", "format", "--check", "--config=pyproject.toml", "src/"],
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_pyproject():
+    """pyproject.toml is valid TOML (pass_to_pass)."""
+    import tomllib
+
+    pyproject_path = Path(f"{REPO}/pyproject.toml")
+    content = pyproject_path.read_bytes()
+    try:
+        tomllib.loads(content.decode("utf-8"))
+    except Exception as e:
+        raise AssertionError(f"pyproject.toml is not valid TOML: {e}")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_configs_syntax():
+    """All config files in configs/ directory have valid TOML syntax (pass_to_pass)."""
+    import tomllib
+
+    configs_dir = Path(f"{REPO}/configs")
+    invalid_configs = []
+
+    for config_file in configs_dir.rglob("*.toml"):
+        try:
+            content = config_file.read_bytes()
+            tomllib.loads(content.decode("utf-8"))
+        except Exception as e:
+            invalid_configs.append(f"{config_file}: {e}")
+
+    if invalid_configs:
+        raise AssertionError(f"Invalid config files found:\n" + "\n".join(invalid_configs))

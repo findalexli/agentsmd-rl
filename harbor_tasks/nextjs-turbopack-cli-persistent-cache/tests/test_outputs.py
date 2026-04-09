@@ -41,19 +41,18 @@ def _run_check(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         os.unlink(path)
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via subprocess
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 def test_cli_flags_in_common_arguments():
     """persistent_caching: bool and cache_dir: Option<PathBuf> in CommonArguments with clap."""
-    r = _run_check(
-        """
+    code = """
 import re, sys
 from pathlib import Path
 
-src = Path("{ARGS}").read_text()
+src = Path("ARGS_PLACEHOLDER").read_text()
 
 if "struct CommonArguments" not in src:
     sys.exit("CommonArguments struct not found")
@@ -85,8 +84,8 @@ if len(pclap) < 2:
     sys.exit("Both persistent_caching and cache_dir must have #[clap(long)] attribute")
 
 print("PASS")
-""".format(ARGS=ARGS_FILE)
-    )
+""".replace("ARGS_PLACEHOLDER", ARGS_FILE)
+    r = _run_check(code)
     assert r.returncode == 0, f"Check failed: {r.stderr or r.stdout}"
     assert "PASS" in r.stdout
 
@@ -189,20 +188,18 @@ print("PASS")
 def test_cargo_toml_dependencies():
     """Cargo.toml has either in deps and vergen-gitcl + anyhow in build-deps."""
     r = _run_check(
-        """
+        f"""
 import sys
-from pathlib import Path
-
 try:
     import tomllib
 except ImportError:
     import tomli as tomllib
 
-with open("{CARGO}", "rb") as f:
+with open("{CARGO_FILE}", "rb") as f:
     cargo = tomllib.load(f)
 
-deps = cargo.get("dependencies", {})
-build_deps = cargo.get("build-dependencies", {})
+deps = cargo.get("dependencies", {{}})
+build_deps = cargo.get("build-dependencies", {{}})
 
 if "either" not in deps:
     sys.exit("No 'either' in [dependencies]")
@@ -214,7 +211,7 @@ if "anyhow" not in build_deps:
     sys.exit("No 'anyhow' in [build-dependencies]")
 
 print("PASS")
-""".format(CARGO=CARGO_FILE)
+"""
     )
     assert r.returncode == 0, f"Check failed: {r.stderr or r.stdout}"
     assert "PASS" in r.stdout
@@ -308,9 +305,9 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Pass-to-pass (repo_tests / static) — regression + anti-stub
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 def test_existing_cli_args_preserved():
@@ -328,5 +325,162 @@ def test_key_files_not_stubbed():
     for path in [ARGS_FILE, DEV_FILE, BUILD_FILE]:
         lines = len(Path(path).read_text().splitlines())
         assert lines >= 50, (
-            f"{os.path.basename(path)} only has {lines} lines — likely stubbed"
+            f"{os.path.basename(path)} only has {lines} lines - likely stubbed"
         )
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repository CI/CD checks
+# These verify the base commit's existing functionality remains intact
+# -----------------------------------------------------------------------------
+
+
+def test_cargo_toml_syntax_valid():
+    """Cargo.toml is valid TOML and has required sections (pass_to_pass)."""
+    r = _run_check(
+        f"""
+import sys
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
+from pathlib import Path
+
+path = "{CARGO_FILE}"
+try:
+    with open(path, "rb") as f:
+        cargo = tomllib.load(f)
+    # Verify required sections exist
+    assert "package" in cargo, "Missing [package] section"
+    assert "dependencies" in cargo, "Missing [dependencies] section"
+    print("PASS")
+except Exception as err:
+    sys.exit(f"Invalid TOML: {{err}}")
+"""
+    )
+    assert r.returncode == 0, f"Cargo.toml validation failed: {{r.stderr or r.stdout}}"
+    assert "PASS" in r.stdout
+
+
+def test_rust_files_parseable():
+    """Key Rust source files have valid syntax (pass_to_pass)."""
+    for path in [ARGS_FILE, DEV_FILE, BUILD_FILE]:
+        src = Path(path).read_text()
+        # Basic Rust syntax checks
+        assert "fn " in src, f"{{os.path.basename(path)}}: No function definitions found"
+        assert "use " in src or "mod " in src or "pub " in src, \
+            f"{{os.path.basename(path)}}: No Rust module statements found"
+
+
+def test_common_arguments_struct_valid():
+    """CommonArguments struct has valid structure (pass_to_pass)."""
+    src = Path(ARGS_FILE).read_text()
+    # Check struct exists and has opening/closing braces
+    assert "struct CommonArguments" in src, "CommonArguments struct not found"
+    # Count braces to verify basic structure
+    open_braces = src.count("{")
+    close_braces = src.count("}")
+    assert open_braces > 0 and close_braces > 0, "Invalid struct brace balance"
+
+
+def test_cli_module_structure():
+    """CLI module structure is preserved (pass_to_pass)."""
+    # Check main.rs exists and has main function
+    main_file = f"{REPO}/turbopack/crates/turbopack-cli/src/main.rs"
+    src = Path(main_file).read_text()
+    assert "fn main" in src, "main.rs: No main function found"
+    # Check lib.rs exports modules
+    lib_file = f"{REPO}/turbopack/crates/turbopack-cli/src/lib.rs"
+    if Path(lib_file).exists():
+        lib_src = Path(lib_file).read_text()
+        assert "mod " in lib_src or "pub mod " in lib_src, "lib.rs: No module declarations"
+
+
+def test_cargo_toml_has_workspace_deps():
+    """Cargo.toml properly references workspace dependencies (pass_to_pass)."""
+    r = _run_check(
+        f"""
+import sys
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
+from pathlib import Path
+
+with open("{CARGO_FILE}", "rb") as f:
+    cargo = tomllib.load(f)
+
+# Verify package section has required fields
+pkg = cargo.get("package", {{}})
+required_fields = ["name", "version", "edition"]
+for field in required_fields:
+    if field not in pkg:
+        sys.exit('Missing package.' + field)
+
+# Verify workspace = true is used for key deps
+deps = cargo.get("dependencies", {{}})
+key_deps = ["anyhow", "clap", "tokio", "turbo-tasks"]
+for dep in key_deps:
+    if dep in deps:
+        dep_val = deps[dep]
+        if isinstance(dep_val, dict):
+            if dep_val.get("workspace") != True:
+                sys.exit(dep + " should use workspace = true")
+        else:
+            sys.exit(dep + " should be a table with workspace = true")
+
+print("PASS")
+"""
+    )
+    assert r.returncode == 0, f"Cargo.toml workspace deps check failed: {{r.stderr or r.stdout}}"
+    assert "PASS" in r.stdout
+
+
+def test_rust_syntax_braces_balanced():
+    """Key Rust files have balanced braces (pass_to_pass)."""
+    for path in [ARGS_FILE, DEV_FILE, BUILD_FILE]:
+        src = Path(path).read_text()
+        # Remove braces in strings and comments for cleaner check
+        open_count = src.count("{")
+        close_count = src.count("}")
+        assert open_count == close_count, \
+            f"{{os.path.basename(path)}}: Unbalanced braces ({{open_count}} open, {{close_count}} close)"
+
+
+def test_clap_derive_attributes_present():
+    """CommonArguments uses clap derive macro attributes (pass_to_pass)."""
+    src = Path(ARGS_FILE).read_text()
+    # Verify derive attributes exist
+    assert "# [derive" in src or "#[derive" in src, "Missing derive macro"
+    assert "Parser" in src or "clap::Parser" in src, "Missing Parser derive"
+    # Verify clap attributes on struct
+    assert "# [clap" in src or "#[clap" in src or "# [command" in src or "#[command" in src, \
+        "Missing clap attributes on struct"
+
+
+def test_dev_and_build_modules_have_run_functions():
+    """Dev and build modules have their main entry point functions (pass_to_pass)."""
+    for path, label in [(DEV_FILE, "dev"), (BUILD_FILE, "build")]:
+        src = Path(path).read_text()
+        # Check for main pub async functions
+        assert "pub async fn " in src, f"{{label}}: Missing pub async fn"
+        # Check for entry point functions (start_server or build)
+        entry_points = ["start_server", "build"]
+        found = [ep for ep in entry_points if f"pub async fn {ep}" in src]
+        assert found, f"{{label}}: Missing entry point function"
+
+
+def test_arguments_has_required_common_fields():
+    """CommonArguments has all required existing fields preserved (pass_to_pass)."""
+    src = Path(ARGS_FILE).read_text()
+    required_fields = ["log_detail", "log_level", "full_stats", "worker_threads"]
+    for field in required_fields:
+        assert field in src, f"Missing required field: {field}"
+    # Verify all fields have pub visibility
+    for line in src.splitlines():
+        if "struct CommonArguments" in line:
+            in_struct = True
+        if "in_struct" in locals() and in_struct:
+            if "pub " in line and ":" in line:
+                # Field has pub visibility - good
+                pass

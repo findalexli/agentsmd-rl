@@ -12,6 +12,16 @@ checks:
     origin: static
     description: Root tsconfig.json must remain valid JSON
 
+  - id: repo_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo root package.json must be valid and define workspaces
+
+  - id: existing_packages_have_valid_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: Existing packages in monorepo must have valid structure
+
   - id: package_json_structure
     type: fail_to_pass
     origin: pr_diff

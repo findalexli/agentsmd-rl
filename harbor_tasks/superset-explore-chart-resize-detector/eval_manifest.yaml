@@ -1,0 +1,87 @@
+source:
+  pr:
+    number: 39160
+    title: "fix(explore): Unnecessary scroll bars appearing on charts in Explore"
+    author: ""
+    url: "https://github.com/apache/superset/pull/39160"
+  repo:
+    owner: apache
+    name: superset
+    base_commit: 4f695e1b4d23beb67473b39d2f0ab71df56378b3
+    merge_commit: 3a3a6536b7ed9044ffaead2fbe0d8a944431925d
+
+checks:
+  # Agent config checks
+  - id: "agent_config_1"
+    type: "agent_config"
+    description: "Hook must use targetRef to observe measured element"
+    file_pattern: "useResizeDetectorByObserver.ts"
+    pattern: "targetRef: ref,"
+    origin: "agent_config"
+    source:
+      file: "CLAUDE.md"
+      lines: "Frontend Modernization - Use proper React patterns"
+
+  # Functional tests
+  - id: "test_hook_uses_target_ref"
+    type: "functional"
+    description: "Hook uses targetRef option instead of separate observerRef"
+    test_function: "test_hook_uses_target_ref"
+    category: "fail_to_pass"
+
+  - id: "test_hook_returns_correct_interface"
+    type: "functional"
+    description: "Hook returns correct interface {ref, width, height}"
+    test_function: "test_hook_returns_correct_interface"
+    category: "pass_to_pass"
+
+  - id: "test_index_does_not_use_resize_observer_ref"
+    type: "functional"
+    description: "ExploreChartPanel does not use resizeObserverRef"
+    test_function: "test_index_does_not_use_resize_observer_ref"
+    category: "fail_to_pass"
+
+  - id: "test_hook_has_proper_resize_handler"
+    type: "functional"
+    description: "Hook has proper onResize callback with setChartPanelSize"
+    test_function: "test_hook_has_proper_resize_handler"
+    category: "pass_to_pass"
+
+  - id: "test_hook_uses_debounce_mode"
+    type: "functional"
+    description: "Hook uses debounce mode with 300ms refresh rate"
+    test_function: "test_hook_uses_debounce_mode"
+    category: "pass_to_pass"
+
+  - id: "test_typescript_compiles"
+    type: "functional"
+    description: "TypeScript compiles without errors"
+    test_function: "test_typescript_compiles"
+    category: "pass_to_pass"
+
+  - id: "test_no_regressions_in_return_values"
+    type: "functional"
+    description: "Hook maintains correct return value structure"
+    test_function: "test_no_regressions_in_return_values"
+    category: "pass_to_pass"
+
+  - id: "test_hook_imports_correctly"
+    type: "functional"
+    description: "Hook correctly imports and uses useResizeDetector"
+    test_function: "test_hook_imports_correctly"
+    category: "pass_to_pass"
+
+  # Repo CI/CD pass-to-pass tests
+  - id: "test_repo_lint"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's oxlint check passes on frontend code"
+    test_function: "test_repo_lint"
+
+  - id: "test_repo_tests_explore_chart_panel"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's Jest tests for ExploreChartPanel pass"
+    test_function: "test_repo_tests_explore_chart_panel"
+
+rubric: []

@@ -1,0 +1,55 @@
+source:
+  pr:
+    owner: continuedev
+    repo: continue
+    number: 11806
+    title: "fix(moonshot): add reasoning_content field support for Kimi models"
+    merge_commit: "3fdf35e0c1b87b5f56bfa7ec78dd915babe83ada"
+    base_commit: "f7437593fdeb85fceb81d069835c6a3a90276c3a"
+
+files:
+  target: core/llm/llms/Moonshot.ts
+
+# Agent config checks (programmatic rules from AGENTS.md)
+agent_config:
+  - origin: agent_config
+    source:
+      file: extensions/cli/AGENTS.md
+      lines: "43-45"
+    check: "Tests use npm/jest/vitest appropriately for TypeScript testing"
+
+# Rubric for soft/subjective checks (LLM-judge only)
+rubric: []
+
+# Checks that map 1:1 to test_outputs.py functions
+checks:
+  - id: test_kimi_model_sets_reasoning_content_flag
+    description: "Kimi models (kimi-*) correctly set supportsReasoningContentField to true"
+    points: 25
+
+  - id: test_non_kimi_model_unsets_reasoning_content_flag
+    description: "Non-kimi models (moonshot-v1-*) have supportsReasoningContentField set to false"
+    points: 25
+
+  - id: test_moonshot_class_compiles
+    description: "Moonshot.ts compiles without TypeScript errors"
+    points: 20
+
+  - id: test_constructor_preserves_other_properties
+    description: "Constructor preserves other Moonshot properties like apiBase"
+    points: 15
+
+  - id: test_model_prefix_matching
+    description: "Only models starting with 'kimi' get reasoning_content support"
+    points: 15
+
+  # Pass-to-pass tests (repo CI/CD checks - should pass on both base and fix)
+  - id: test_repo_tsc_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript typecheck passes in core/ directory"
+
+  - id: test_repo_vitest
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's vitest tests pass in core/ directory"

@@ -180,3 +180,95 @@ def test_remaining_registered_files_have_registration():
         # Should have at least one registration
         registrations = _parse_file_for_registrations(str(filepath))
         assert len(registrations) > 0, f"Remaining file {filepath.name} should have CI registration"
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression prevention
+# -----------------------------------------------------------------------------
+
+def test_repo_precommit():
+    """Repo's pre-commit checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    # pre-commit run may need network to download hooks; skip if network fails
+    r = subprocess.run(
+        ["bash", "-c", "SKIP=no-commit-to-branch pre-commit run --all-files --show-diff-on-failure"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit checks failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_ci_register_module():
+    """ci_register module parses without errors (pass_to_pass)."""
+    ci_register_path = f"{REPO}/python/sglang/test/ci/ci_register.py"
+    with open(ci_register_path, "r") as f:
+        source = f.read()
+    # Should parse without syntax errors
+    try:
+        ast.parse(source, filename=ci_register_path)
+    except SyntaxError as e:
+        raise AssertionError(f"ci_register.py has syntax error: {e}")
+
+
+def test_registered_files_syntax():
+    """All registered test files have valid Python syntax (pass_to_pass)."""
+    script_dir = f"{REPO}/test"
+    registered_files = glob.glob(
+        os.path.join(script_dir, "registered", "**", "*.py"), recursive=True
+    )
+    # Filter out non-test files
+    test_files = [f for f in registered_files if not f.endswith(("/conftest.py", "/__init__.py"))]
+
+    errors = []
+    for filepath in test_files:
+        result = subprocess.run(
+            [sys.executable, "-m", "py_compile", filepath],
+            capture_output=True,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            errors.append(f"{filepath}: {result.stderr.decode()}")
+
+    assert len(errors) == 0, f"Syntax errors found:\n" + "\n".join(errors[:10])
+
+
+def test_ci_register_ruff():
+    """ci_register module passes ruff linting checks (pass_to_pass)."""
+    # Install ruff
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    # Run ruff with same config as pre-commit
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821", f"{REPO}/python/sglang/test/ci/ci_register.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff checks failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_ci_register_black():
+    """ci_register module passes black formatting check (pass_to_pass)."""
+    # Install black
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    # Run black check
+    r = subprocess.run(
+        ["black", "--check", "--diff", f"{REPO}/python/sglang/test/ci/ci_register.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Black formatting check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

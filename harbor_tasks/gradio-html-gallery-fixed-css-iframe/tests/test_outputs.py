@@ -254,6 +254,30 @@ catch(e) { console.log('FAIL: ' + (e as Error).message); }
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and gold
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    # Install pnpm if not available
+    env = os.environ.copy()
+    try:
+        subprocess.run(["pnpm", "--version"], capture_output=True, check=True, env=env)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # pnpm not available, install it
+        subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, check=True)
+
+    r = subprocess.run(
+        ["pnpm", "exec", "prettier", "--ignore-path", ".config/.prettierignore",
+         "--check", "--config", ".config/.prettierrc.json",
+         "--plugin", "prettier-plugin-svelte", "."],
+        capture_output=True, text=True, timeout=120, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — Svelte component integration
 # ---------------------------------------------------------------------------
 

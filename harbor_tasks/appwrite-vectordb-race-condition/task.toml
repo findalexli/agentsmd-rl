@@ -1,0 +1,24 @@
+name = "appwrite-vectordb-race-condition"
+version = "1.0.0"
+description = "Fix race condition in VectorDB metadata initialization during parallel collection creation"
+
+difficulty = "medium"
+tags = ["php", "concurrency", "race-condition", "exception-handling", "databases"]
+
+[agent]
+timeout = 1800  # 30 minutes
+
+[verifier]
+timeout = 120   # 2 minutes
+
+[repository]
+owner = "appwrite"
+name = "appwrite"
+base_commit = "a5b0378138a6097e256a8d9553a18b892b6ba9ea"
+merge_commit = "8e02a5a227afdf270b386b3054382f6eaaa81f4e"
+pr_number = 11757
+
+[target]
+files = [
+    "src/Appwrite/Platform/Modules/Databases/Http/VectorsDB/Collections/Create.php"
+]

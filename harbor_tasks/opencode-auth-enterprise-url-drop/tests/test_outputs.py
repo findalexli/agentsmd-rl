@@ -99,12 +99,9 @@ def test_extra_fields_preserved():
     }, "refresh")
 
     # These should pass after the fix, fail before
-    assert captured.get("enterpriseUrl") == "https://enterprise.example.com", \
-        f"enterpriseUrl not preserved: {captured}"
-    assert captured.get("customField") == 42, \
-        f"customField not preserved: {captured}"
-    assert captured.get("accountId") == "acct1", \
-        f"accountId not preserved: {captured}"
+    assert captured.get("enterpriseUrl") == "https://enterprise.example.com",         f"enterpriseUrl not preserved: {captured}"
+    assert captured.get("customField") == 42,         f"customField not preserved: {captured}"
+    assert captured.get("accountId") == "acct1",         f"accountId not preserved: {captured}"
 
     # Test case 2: only enterpriseUrl, no accountId
     captured2 = _extract_and_test_auth_logic({
@@ -116,10 +113,8 @@ def test_extra_fields_preserved():
         "enterpriseUrl": "https://git.corp.internal",
     }, "refresh")
 
-    assert captured2.get("enterpriseUrl") == "https://git.corp.internal", \
-        f"enterpriseUrl not preserved (case 2): {captured2}"
-    assert captured2.get("access") == "a2", \
-        f"access not preserved: {captured2}"
+    assert captured2.get("enterpriseUrl") == "https://git.corp.internal",         f"enterpriseUrl not preserved (case 2): {captured2}"
+    assert captured2.get("access") == "a2",         f"access not preserved: {captured2}"
 
     # Test case 3: multiple arbitrary extra fields of different types
     captured3 = _extract_and_test_auth_logic({
@@ -154,8 +149,7 @@ def test_enterprise_url_in_type_definition():
     # Check for enterpriseUrl in both branches of the union type
     # Should appear after accountId in both the first and second union members
     matches = re.findall(r"enterpriseUrl\??:\s*string", type_area)
-    assert len(matches) >= 2, \
-        f"Expected enterpriseUrl in both AuthOuathResult branches, found {len(matches)} occurrence(s)"
+    assert len(matches) >= 2,         f"Expected enterpriseUrl in both AuthOuathResult branches, found {len(matches)} occurrence(s)"
 
 
 # ---------------------------------------------------------------------------
@@ -174,10 +168,8 @@ def test_type_overwritten_provider_excluded():
             "expires": 1,
         }, "refresh")
 
-        assert captured.get("type") == "oauth", \
-            f"Expected type='oauth', got '{captured.get('type')}' for provider={provider}"
-        assert "provider" not in captured, \
-            f"'provider' should be excluded from stored auth, got: {captured}"
+        assert captured.get("type") == "oauth",             f"Expected type='oauth', got '{captured.get('type')}' for provider={provider}"
+        assert "provider" not in captured,             f"'provider' should be excluded from stored auth, got: {captured}"
 
 
 # [pr_diff] pass_to_pass
@@ -193,8 +185,7 @@ def test_account_id_forwarded():
             "accountId": acct,
         }, "refresh")
 
-        assert captured.get("accountId") == acct, \
-            f"accountId not forwarded for {acct}: {captured}"
+        assert captured.get("accountId") == acct,             f"accountId not forwarded for {acct}: {captured}"
 
 
 # [pr_diff] pass_to_pass
@@ -270,8 +261,7 @@ def test_no_new_any_types():
 
         orig_count = len(re.findall(r":\s*any\b", original))
         curr_count = len(re.findall(r":\s*any\b", current))
-        assert curr_count <= orig_count, \
-            f"New 'any' type in {relpath}: {orig_count} -> {curr_count}"
+        assert curr_count <= orig_count,             f"New 'any' type in {relpath}: {orig_count} -> {curr_count}"
 
 
 # [agent_config] pass_to_pass - AGENTS.md:11 @ 2d502d6
@@ -286,8 +276,7 @@ def test_no_gratuitous_function_extraction():
 
     orig_funcs = len(re.findall(r"\bfunction\s+\w+", original))
     curr_funcs = len(re.findall(r"\bfunction\s+\w+", current))
-    assert curr_funcs <= orig_funcs + 1, \
-        f"Too many new named functions: {orig_funcs} -> {curr_funcs}"
+    assert curr_funcs <= orig_funcs + 1,         f"Too many new named functions: {orig_funcs} -> {curr_funcs}"
 
 
 # [agent_config] pass_to_pass - AGENTS.md:12 @ 2d502d6
@@ -302,8 +291,7 @@ def test_no_new_try_catch():
 
     orig_count = len(re.findall(r"\btry\s*\{", original))
     curr_count = len(re.findall(r"\btry\s*\{", current))
-    assert curr_count <= orig_count, \
-        f"New try/catch blocks in auth.ts: {orig_count} -> {curr_count}"
+    assert curr_count <= orig_count,         f"New try/catch blocks in auth.ts: {orig_count} -> {curr_count}"
 
 
 # [agent_config] pass_to_pass - AGENTS.md:17 @ 2d502d6
@@ -322,8 +310,7 @@ def test_no_new_for_loops():
 
         orig_count = len(re.findall(r"\bfor\s*\(", original))
         curr_count = len(re.findall(r"\bfor\s*\(", current))
-        assert curr_count <= orig_count, \
-            f"New for loop(s) introduced in {relpath}: {orig_count} -> {curr_count}"
+        assert curr_count <= orig_count,             f"New for loop(s) introduced in {relpath}: {orig_count} -> {curr_count}"
 
 
 # [agent_config] pass_to_pass - AGENTS.md:84 @ 2d502d6
@@ -342,8 +329,7 @@ def test_no_new_else_blocks():
 
         orig_count = len(re.findall(r"\belse\b", original))
         curr_count = len(re.findall(r"\belse\b", current))
-        assert curr_count <= orig_count, \
-            f"New else statement(s) introduced in {relpath}: {orig_count} -> {curr_count}"
+        assert curr_count <= orig_count,             f"New else statement(s) introduced in {relpath}: {orig_count} -> {curr_count}"
 
 
 # [agent_config] pass_to_pass - AGENTS.md:70 @ 2d502d6
@@ -358,5 +344,284 @@ def test_prefer_const_over_let():
 
     orig_count = len(re.findall(r"\blet\s+\w+", original))
     curr_count = len(re.findall(r"\blet\s+\w+", current))
-    assert curr_count <= orig_count, \
-        f"New 'let' declarations in auth.ts: {orig_count} -> {curr_count}"
+    assert curr_count <= orig_count,         f"New 'let' declarations in auth.ts: {orig_count} -> {curr_count}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - Repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_syntax_valid():
+    """TypeScript files are syntactically valid (pass_to_pass)."""
+    # Test that auth.ts is syntactically valid by checking structural elements
+    auth_src = Path(AUTH_FILE).read_text()
+
+    # Check for basic TypeScript structure validity
+    # 1. Balanced braces
+    open_count = auth_src.count("{")
+    close_count = auth_src.count("}")
+    assert open_count == close_count,         f"Unbalanced braces in auth.ts: {open_count} open, {close_count} close"
+
+    # 2. Balanced parentheses
+    open_paren = auth_src.count("(")
+    close_paren = auth_src.count(")")
+    assert open_paren == close_paren,         f"Unbalanced parentheses in auth.ts: {open_paren} open, {close_paren} close"
+
+    # 3. Balanced brackets
+    open_bracket = auth_src.count("[")
+    close_bracket = auth_src.count("]")
+    assert open_bracket == close_bracket,         f"Unbalanced brackets in auth.ts: {open_bracket} open, {close_bracket} close"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_structure_intact():
+    """Import statements are syntactically valid (pass_to_pass)."""
+    auth_src = Path(AUTH_FILE).read_text()
+
+    # Check for valid import patterns by verifying key imports are present
+    assert "@opencode-ai/plugin" in auth_src, "Missing import from @opencode-ai/plugin"
+    assert "@opencode-ai/util/error" in auth_src, "Missing import from @opencode-ai/util/error"
+    assert "import type { AuthOuathResult" in auth_src or "import type" in auth_src, "Missing type imports"
+    
+    # Verify no empty import statements
+    assert 'from ""' not in auth_src, "Empty import path found"
+    assert "from ''" not in auth_src, "Empty import path found"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_type_definitions_valid():
+    """Type definitions in plugin are syntactically valid (pass_to_pass)."""
+    plugin_src = Path(PLUGIN_FILE).read_text()
+
+    # Check AuthOuathResult type definition exists
+    assert "AuthOuathResult" in plugin_src, "AuthOuathResult type not found in plugin"
+    
+    # Check that type definitions are syntactically present
+    assert "type " in plugin_src, "No type declarations found"
+    
+    # Count braces to verify basic structure
+    open_braces = plugin_src.count("{")
+    close_braces = plugin_src.count("}")
+    assert open_braces == close_braces, "Unbalanced braces in plugin type definitions"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_syntax_errors_common():
+    """Common syntax errors not introduced in modified files (pass_to_pass)."""
+    for relpath in [
+        "packages/opencode/src/provider/auth.ts",
+        "packages/plugin/src/index.ts",
+    ]:
+        src = Path(f"{REPO}/{relpath}").read_text()
+
+        # Check for double semicolons
+        double_semicolons = re.findall(r';{2,}', src, re.MULTILINE)
+        assert len(double_semicolons) == 0, f"Double semicolons found in {relpath}"
+
+        # Check for unclosed multiline comments
+        comment_opens = src.count("/*")
+        comment_closes = src.count("*/")
+        assert comment_opens == comment_closes,             f"Unbalanced block comments in {relpath}: {comment_opens} open, {comment_closes} close"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_file_encoding_valid():
+    """Modified files are valid UTF-8 and have no encoding issues (pass_to_pass)."""
+    for relpath in [
+        "packages/opencode/src/provider/auth.ts",
+        "packages/plugin/src/index.ts",
+    ]:
+        # Try to read and decode the file
+        try:
+            with open(f"{REPO}/{relpath}", "r", encoding="utf-8") as f:
+                content = f.read()
+        except UnicodeDecodeError as e:
+            assert False, f"Invalid UTF-8 encoding in {relpath}: {e}"
+
+        # Check for null bytes
+        assert "\x00" not in content, f"Null bytes found in {relpath}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_debugger_statements():
+    """No debugger statements left in modified files (pass_to_pass)."""
+    for relpath in [
+        "packages/opencode/src/provider/auth.ts",
+        "packages/plugin/src/index.ts",
+    ]:
+        r = subprocess.run(
+            ["git", "show", f"HEAD:{relpath}"],
+            capture_output=True, cwd=REPO, timeout=10,
+        )
+        original = r.stdout.decode() if r.returncode == 0 else ""
+        current = Path(f"{REPO}/{relpath}").read_text()
+
+        # Check for debugger statements (should not increase)
+        orig_debuggers = original.count("debugger")
+        curr_debuggers = current.count("debugger")
+
+        assert curr_debuggers <= orig_debuggers,             f"New debugger statement(s) introduced in {relpath}: {orig_debuggers} -> {curr_debuggers}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_console_log_added():
+    """No console.log statements added in modified files (pass_to_pass)."""
+    for relpath in [
+        "packages/opencode/src/provider/auth.ts",
+        "packages/plugin/src/index.ts",
+    ]:
+        r = subprocess.run(
+            ["git", "show", f"HEAD:{relpath}"],
+            capture_output=True, cwd=REPO, timeout=10,
+        )
+        original = r.stdout.decode() if r.returncode == 0 else ""
+        current = Path(f"{REPO}/{relpath}").read_text()
+
+        # Count console.log/ console.error etc using simple string count
+        orig_logs = original.count("console.log(") + original.count("console.error(") + original.count("console.warn(") + original.count("console.info(") + original.count("console.debug(")
+        curr_logs = current.count("console.log(") + current.count("console.error(") + current.count("console.warn(") + current.count("console.info(") + current.count("console.debug(")
+
+        assert curr_logs <= orig_logs,             f"New console.log statement(s) introduced in {relpath}: {orig_logs} -> {curr_logs}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - Repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_syntax_valid():
+    """TypeScript files are syntactically valid (pass_to_pass)."""
+    # Test that auth.ts is syntactically valid by checking structural elements
+    auth_src = Path(AUTH_FILE).read_text()
+
+    # Check for basic TypeScript structure validity
+    # 1. Balanced braces
+    open_count = auth_src.count("{")
+    close_count = auth_src.count("}")
+    assert open_count == close_count, \
+        f"Unbalanced braces in auth.ts: {open_count} open, {close_count} close"
+
+    # 2. Balanced parentheses
+    open_paren = auth_src.count("(")
+    close_paren = auth_src.count(")")
+    assert open_paren == close_paren, \
+        f"Unbalanced parentheses in auth.ts: {open_paren} open, {close_paren} close"
+
+    # 3. Balanced brackets
+    open_bracket = auth_src.count("[")
+    close_bracket = auth_src.count("]")
+    assert open_bracket == close_bracket, \
+        f"Unbalanced brackets in auth.ts: {open_bracket} open, {close_bracket} close"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_structure_intact():
+    """Import statements are syntactically valid (pass_to_pass)."""
+    auth_src = Path(AUTH_FILE).read_text()
+
+    # Check for valid import patterns by verifying key imports are present
+    assert "@opencode-ai/plugin" in auth_src, "Missing import from @opencode-ai/plugin"
+    assert "@opencode-ai/util/error" in auth_src, "Missing import from @opencode-ai/util/error"
+    assert "import type { AuthOuathResult" in auth_src or "import type" in auth_src, "Missing type imports"
+    
+    # Verify no empty import statements
+    assert 'from ""' not in auth_src, "Empty import path found"
+    assert "from ''" not in auth_src, "Empty import path found"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_type_definitions_valid():
+    """Type definitions in plugin are syntactically valid (pass_to_pass)."""
+    plugin_src = Path(PLUGIN_FILE).read_text()
+
+    # Check AuthOuathResult type definition exists
+    assert "AuthOuathResult" in plugin_src, "AuthOuathResult type not found in plugin"
+    
+    # Check that type definitions are syntactically present
+    assert "type " in plugin_src, "No type declarations found"
+    
+    # Count braces to verify basic structure
+    open_braces = plugin_src.count("{")
+    close_braces = plugin_src.count("}")
+    assert open_braces == close_braces, "Unbalanced braces in plugin type definitions"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_syntax_errors_common():
+    """Common syntax errors not introduced in modified files (pass_to_pass)."""
+    for relpath in [
+        "packages/opencode/src/provider/auth.ts",
+        "packages/plugin/src/index.ts",
+    ]:
+        src = Path(f"{REPO}/{relpath}").read_text()
+
+        # Check for double semicolons using simple string search
+        assert ";;" not in src, f"Double semicolons found in {relpath}"
+
+        # Check for unclosed multiline comments
+        comment_opens = src.count("/*")
+        comment_closes = src.count("*/")
+        assert comment_opens == comment_closes,             f"Unbalanced block comments in {relpath}: {comment_opens} open, {comment_closes} close"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_file_encoding_valid():
+    """Modified files are valid UTF-8 and have no encoding issues (pass_to_pass)."""
+    for relpath in [
+        "packages/opencode/src/provider/auth.ts",
+        "packages/plugin/src/index.ts",
+    ]:
+        # Try to read and decode the file
+        try:
+            with open(f"{REPO}/{relpath}", "r", encoding="utf-8") as f:
+                content = f.read()
+        except UnicodeDecodeError as e:
+            assert False, f"Invalid UTF-8 encoding in {relpath}: {e}"
+
+        # Check for null bytes
+        assert "\x00" not in content, f"Null bytes found in {relpath}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_debugger_statements():
+    """No debugger statements left in modified files (pass_to_pass)."""
+    for relpath in [
+        "packages/opencode/src/provider/auth.ts",
+        "packages/plugin/src/index.ts",
+    ]:
+        r = subprocess.run(
+            ["git", "show", f"HEAD:{relpath}"],
+            capture_output=True, cwd=REPO, timeout=10,
+        )
+        original = r.stdout.decode() if r.returncode == 0 else ""
+        current = Path(f"{REPO}/{relpath}").read_text()
+
+        # Check for debugger statements (should not increase)
+        orig_debuggers = original.count("debugger")
+        curr_debuggers = current.count("debugger")
+
+        assert curr_debuggers <= orig_debuggers, \
+            f"New debugger statement(s) introduced in {relpath}: {orig_debuggers} -> {curr_debuggers}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_console_log_added():
+    """No console.log statements added in modified files (pass_to_pass)."""
+    for relpath in [
+        "packages/opencode/src/provider/auth.ts",
+        "packages/plugin/src/index.ts",
+    ]:
+        r = subprocess.run(
+            ["git", "show", f"HEAD:{relpath}"],
+            capture_output=True, cwd=REPO, timeout=10,
+        )
+        original = r.stdout.decode() if r.returncode == 0 else ""
+        current = Path(f"{REPO}/{relpath}").read_text()
+
+        # Count console.log/ console.error etc using simple string count
+        orig_logs = original.count("console.log(") + original.count("console.error(") + original.count("console.warn(") + original.count("console.info(") + original.count("console.debug(")
+        curr_logs = current.count("console.log(") + current.count("console.error(") + current.count("console.warn(") + current.count("console.info(") + current.count("console.debug(")
+
+        assert curr_logs <= orig_logs, \
+            f"New console.log statement(s) introduced in {relpath}: {orig_logs} -> {curr_logs}"

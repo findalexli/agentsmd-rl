@@ -19,21 +19,20 @@ REPO = "/workspace/next.js"
 
 
 def _parse_jsonc(text: str) -> dict:
-    """Strip // comments and trailing commas from JSONC, then parse as JSON."""
-    lines = text.split("\n")
-    cleaned = []
-    for line in lines:
-        # Remove single-line // comments (not inside strings — works for turbo config)
-        stripped = re.sub(r"//.*$", "", line)
-        cleaned.append(stripped)
-    text = "\n".join(cleaned)
+    """Strip // comments and trailing commas from JSONC, then parse as JSON.
+    
+    Only removes // comments that are preceded by whitespace (to avoid
+    matching URLs like https://...).
+    """
+    # Remove // comments only when preceded by whitespace or start of line
+    text = re.sub(r"(^|\s)//.*$", "", text, flags=re.MULTILINE)
     # Remove trailing commas before } or ]
     text = re.sub(r",(\s*[}\]])", r"\1", text)
     return json.loads(text)
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) - syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -45,8 +44,43 @@ def test_turbo_json_valid_syntax():
     assert "tasks" in data, "turbo.json missing 'tasks' key"
 
 
+# [static] pass_to_pass
+def test_turbo_jsonc_valid_syntax():
+    """packages/next-swc/turbo.jsonc must parse as valid JSONC."""
+    turbo_path = Path(f"{REPO}/packages/next-swc/turbo.jsonc")
+    content = turbo_path.read_text()
+    data = _parse_jsonc(content)
+    assert "tasks" in data, "turbo.jsonc missing 'tasks' key"
+
+
+# [static] pass_to_pass
+def test_next_swc_package_json_valid():
+    """packages/next-swc/package.json must be valid JSON with required scripts."""
+    pkg_path = Path(f"{REPO}/packages/next-swc/package.json")
+    data = json.loads(pkg_path.read_text())
+    scripts = data.get("scripts", {})
+    # Verify key native build scripts exist (pass_to_pass check)
+    assert "build-native" in scripts, "Missing build-native script"
+    assert "rust-check-fmt" in scripts, "Missing rust-check-fmt script"
+
+
+# [static] pass_to_pass
+def test_repo_structure():
+    """Repo must have required directories and files."""
+    required_paths = [
+        f"{REPO}/turbo.json",
+        f"{REPO}/package.json",
+        f"{REPO}/packages/next-swc",
+        f"{REPO}/packages/next-swc/package.json",
+        f"{REPO}/packages/next-swc/turbo.jsonc",
+    ]
+    for path in required_paths:
+        p = Path(path)
+        assert p.exists(), f"Required path does not exist: {path}"
+
+
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) - core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass

@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "apache/beam"
+  pr: 38083
+  base_commit: "28a0cb14ebd018e3550637ded153569d49e66f66"
+  merge_commit: "9fe425ffb56172a511c8cea24bcc0f3fb6749480"
+
+checks:
+  - id: java_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Target Java file has valid structure (balanced braces, class declaration)"
+
+  - id: java_imports_valid
+    type: pass_to_pass
+    origin: static
+    description: "Target Java file has valid import statements"
+
+  - id: java_class_structure_valid
+    type: pass_to_pass
+    origin: static
+    description: "Target Java file has valid class structure with proper nesting"
+
+  - id: java_no_syntax_errors
+    type: pass_to_pass
+    origin: static
+    description: "Target Java file has no obvious syntax errors"
+
+  - id: handle_split_request_blocks_on_uninitialized
+    type: fail_to_pass
+    origin: pr_diff
+    description: "handleSplitRequest must block/wait until async splits initialization completes"
+
+  - id: splits_initialized_thread_safe
+    type: fail_to_pass
+    origin: pr_diff
+    description: "splitsInitialized field must be volatile, AtomicBoolean, or synchronized for thread safety"
+
+  - id: initialization_signals_in_finally
+    type: fail_to_pass
+    origin: pr_diff
+    description: "initializeSplits must signal completion in a finally block to prevent deadlock on error"
+
+  - id: synchronization_fix_java_validation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Standalone Java program validates concurrency fix pattern (concurrent import, volatile, blocking wait, interrupt handling)"
+
+rubric: []

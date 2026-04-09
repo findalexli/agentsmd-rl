@@ -1,0 +1,55 @@
+source_pr:
+  owner: All-Hands-AI
+  repo: OpenHands
+  number: 13599
+  title: "feat: add /new to slash command menu for V1 conversations"
+  merge_commit: c210d5294fa82459443e6163b9b1c9c9f55073fc
+  base_commit: c7190ddb308de5a8c00b790049c5027d122159f7
+
+# No agent config rules found that are programmatically testable for this frontend feature
+agent_config: []
+
+rubric: []
+
+checks:
+  # Fail-to-pass tests
+  - id: test_test_file_exists
+    type: fail_to_pass
+    origin: task_tests
+    description: "Test file use-slash-command.test.ts exists"
+
+  - id: test_v1_conversation_has_new_command
+    type: fail_to_pass
+    origin: task_tests
+    description: "/new command appears for V1 conversations"
+
+  - id: test_v0_conversation_no_new_command
+    type: fail_to_pass
+    origin: task_tests
+    description: "/new command does NOT appear for V0 conversations"
+
+  - id: test_empty_items_while_loading
+    type: fail_to_pass
+    origin: task_tests
+    description: "Returns empty items while skills are loading (prevents staggered menu bug)"
+
+  # Pass-to-pass tests (repo CI/CD)
+  - id: test_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript type checking passes"
+
+  - id: test_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Linting passes (npm run lint)"
+
+  - id: test_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Production build compiles successfully"
+
+  - id: test_translation_completeness
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All translation keys have complete language coverage"

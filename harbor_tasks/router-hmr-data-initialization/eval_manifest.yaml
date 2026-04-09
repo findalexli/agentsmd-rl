@@ -1,0 +1,65 @@
+source_pr:
+  owner: TanStack
+  repo: router
+  number: 7074
+  merge_commit: f8351a8d7aa9f5a341377f96966451892acb39f1
+  base_commit: 30835cb8e935b740c92fa95909a073e644dde530
+
+checks:
+  # Fail-to-pass tests (verify the fix works)
+  - id: test_source_code_initializes_hot_data
+    type: fail_to_pass
+    origin: task_tests
+    description: Source code must initialize import.meta.hot.data before storing to it
+    file: test_outputs.py
+
+  - id: test_source_has_correct_template_structure
+    type: fail_to_pass
+    origin: task_tests
+    description: Template must have correct structure for HMR handling
+    file: test_outputs.py
+
+  # Pass-to-pass tests (repo CI/CD)
+  - id: test_hmr_test_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: HMR test file should exist
+    file: test_outputs.py
+
+  - id: test_router_plugin_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router plugin package builds successfully
+    file: test_outputs.py
+
+  - id: test_router_plugin_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router plugin unit tests pass
+    file: test_outputs.py
+
+  - id: test_router_plugin_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router plugin ESLint checks pass
+    file: test_outputs.py
+
+  - id: test_router_plugin_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router plugin TypeScript type checking passes
+    file: test_outputs.py
+
+  - id: test_router_plugin_build_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router plugin package build validation passes
+    file: test_outputs.py
+
+# No agent_config checks - the AGENTS.md and SKILL.md don't have specific
+# programmatic rules that apply to this fix
+agent_config:
+  files: []
+  rules: []
+
+rubric: []

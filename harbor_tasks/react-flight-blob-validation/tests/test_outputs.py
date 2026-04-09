@@ -158,3 +158,42 @@ def test_existing_reply_tests():
         f"Upstream ReactFlightDOMReply tests failed (rc={r.returncode}):\n"
         f"{stdout[-2000:]}\n{stderr[-2000:]}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_flight_tests():
+    """Repo's ReactFlight tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--silent", "--no-watchman", "ReactFlight"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=90,
+    )
+    assert r.returncode == 0, f"ReactFlight tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_server_tests():
+    """Repo's react-server package tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--silent", "--no-watchman", "react-server"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=90,
+    )
+    assert r.returncode == 0, f"react-server tests failed:\n{r.stderr[-500:]}"

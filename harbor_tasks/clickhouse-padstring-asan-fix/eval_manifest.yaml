@@ -1,0 +1,131 @@
+source_pr:
+  owner: ClickHouse
+  repo: ClickHouse
+  pr_number: 101951
+  title: "Fix heap-buffer-overflow in `leftPad/rightPad` functions"
+  merge_commit: "cd0e0a0326b0fa36221db111546ed8498f3888fa"
+  base_commit: "6958fcb996ad34fe65d3d26d08de9cefd4788351"
+
+# What the agent needs to do to complete the task
+task_type: code_fix
+primary_language: cpp
+
+# Functional correctness checks (fail-to-pass style)
+checks:
+  - id: "uses_padded_pod_array"
+    name: "PaddingChars uses PaddedPODArray for memory safety"
+    test: "test_padding_chars_uses_padded_pod_array"
+    type: functional
+    description: "The core fix: pad_string field must be PaddedPODArray<UInt8> instead of String"
+    source: pr_description
+
+  - id: "no_string_concat"
+    name: "Uses insertFromItself instead of String concatenation"
+    test: "test_no_string_concatenation_in_pad_init"
+    type: functional
+    description: "PaddedPODArray::insertFromItself must be used for string expansion"
+    source: code_review
+
+  - id: "no_reinterpret_cast"
+    name: "No unsafe reinterpret_cast for pad_string data"
+    test: "test_uses_memcpy_safe_data_method"
+    type: functional
+    description: "Should not use reinterpret_cast<const UInt8*>(pad_string.data())"
+    source: code_review
+
+  - id: "empty_pad_handled"
+    name: "Empty pad string handling moved to executeImpl"
+    test: "test_padding_chars_constructor_handles_empty_pad"
+    type: functional
+    description: "Empty pad string check should be in executeImpl, not PaddingChars::init"
+    source: code_review
+
+  - id: "explicit_comparison"
+    name: "Uses explicit == 0 comparison"
+    test: "test_explicit_num_chars_comparison"
+    type: style
+    description: "Uses if (num_chars == 0) instead of if (!num_chars)"
+    source: code_review
+
+  - id: "digit_separator"
+    name: "Modern C++ digit separator used"
+    test: "test_max_new_length_digit_separator"
+    type: style
+    description: "MAX_NEW_LENGTH should use C++14 digit separator 1'000'000"
+    source: code_review
+
+  - id: "validate_arguments"
+    name: "Uses validateFunctionArguments helper"
+    test: "test_validate_function_arguments_used"
+    type: functional
+    description: "Should use modern validateFunctionArguments for argument validation"
+    source: code_review
+
+  - id: "syntax_valid"
+    name: "Code has valid syntax"
+    test: "test_code_compiles_syntax"
+    type: structural
+    description: "C++ code should have balanced braces and parentheses"
+    source: agent_config
+
+  - id: "structure_intact"
+    name: "Core function structure preserved"
+    test: "test_namespace_and_structure_intact"
+    type: structural
+    description: "FunctionPadString, PaddingChars, and key methods should still exist"
+    source: agent_config
+
+  - id: "utf8_preserved"
+    name: "UTF-8 handling preserved"
+    test: "test_utf8_handling_preserved"
+    type: functional
+    description: "utf8_offsets and is_utf8 template parameter should still exist"
+    source: agent_config
+
+  - id: "error_codes_clean"
+    name: "Unused error codes removed"
+    test: "test_error_codes_cleanup"
+    type: cleanup
+    description: "ILLEGAL_TYPE_OF_ARGUMENT and NUMBER_OF_ARGUMENTS_DOESNT_MATCH should be removed"
+    source: code_review
+
+# Agent configuration compliance checks (from ClickHouse's CLAUDE.md / AGENTS.md)
+agent_config:
+  - id: "allman_braces"
+    check: "Opening braces on new line (Allman style)"
+    origin: agent_config
+    source: ".claude/CLAUDE.md - line: 'always use Allman-style braces'"
+
+  - id: "no_sleep_race_fixes"
+    check: "No sleep used for race conditions"
+    origin: agent_config
+    source: ".claude/CLAUDE.md - line: 'Never use sleep in C++ code to fix race conditions'"
+
+  - id: "exception_not_crash"
+    check: "Uses 'exception' not 'crash' for logical errors"
+    origin: agent_config
+    source: ".claude/CLAUDE.md - line: 'When mentioning logical errors, say exception instead of crash'"
+
+  - id: "as_an_capitalization"
+    check: "Uses 'ASan' not 'ASAN' for Address Sanitizer"
+    origin: agent_config
+    source: ".claude/CLAUDE.md - line: 'say ASan, not ASAN'"
+
+rubric:
+  - rule: "Memory safety fix completeness"
+    description: "The fix should comprehensively address the heap-buffer-overflow by using PaddedPODArray"
+    required: true
+
+  - rule: "Code style compliance"
+    description: "Should follow ClickHouse coding conventions from AGENTS.md/CLAUDE.md"
+    required: false
+
+  - rule: "Error handling correctness"
+    description: "Properly handles edge cases like empty pad strings"
+    required: true
+
+# Scoring weights
+scoring:
+  functional: 0.7
+  structural: 0.2
+  style: 0.1

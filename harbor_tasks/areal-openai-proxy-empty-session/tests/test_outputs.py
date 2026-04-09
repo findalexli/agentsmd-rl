@@ -127,6 +127,42 @@ def _run_tail_subprocess(interactions_code: str, test_id: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD Tests (pass_to_pass)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - from .github/workflows/format-check.yml
+def test_repo_ruff_lint():
+    """Repo's Python linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "check", "areal/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - from .github/workflows/format-check.yml
+def test_repo_ruff_format():
+    """Repo's Python code formatting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", "areal/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 

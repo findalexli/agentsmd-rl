@@ -21,6 +21,46 @@ FOOTER = f"{REPO}/packages/opencode/src/cli/cmd/tui/routes/session/subagent-foot
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
+# [repo_tests] pass_to_pass - CI typecheck
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+export PATH=/root/.bun/bin:$PATH
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq && apt-get install -y -qq unzip
+curl -fsSL https://bun.sh/install | bash
+export PATH=/root/.bun/bin:$PATH
+cd /workspace/opencode
+bun install
+cd packages/opencode
+bun run typecheck
+"""],
+        capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - TUI unit tests
+def test_repo_tui_prompt_part_tests():
+    """TUI prompt-part unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+export PATH=/root/.bun/bin:$PATH
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq && apt-get install -y -qq unzip
+curl -fsSL https://bun.sh/install | bash
+export PATH=/root/.bun/bin:$PATH
+cd /workspace/opencode
+bun install
+cd packages/opencode
+bun test test/cli/cmd/tui/prompt-part.test.ts
+"""],
+        capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"TUI prompt-part tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # [static] pass_to_pass
 def test_files_exist_and_not_truncated():
     """Modified files must exist and have meaningful content."""

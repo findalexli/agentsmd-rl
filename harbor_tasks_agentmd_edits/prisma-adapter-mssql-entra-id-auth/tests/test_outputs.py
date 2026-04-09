@@ -200,6 +200,141 @@ console.log(JSON.stringify({
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — verify repo CI/CD still works
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_compiles():
+    """Repo's TypeScript files compile and load (pass_to_pass)."""
+    r = _run_ts("""
+import { parseConnectionString } from './src/connection-string.ts'
+import { extractSchemaFromConnectionString } from './src/connection-string.ts'
+
+// Test that imports work and basic parsing functions
+const config = parseConnectionString('sqlserver://localhost:1433;database=testdb;user=sa;password=test')
+if (config.server !== 'localhost') throw new Error('Server mismatch')
+if (config.database !== 'testdb') throw new Error('Database mismatch')
+if (config.user !== 'sa') throw new Error('User mismatch')
+
+// Test schema extraction
+const schema = extractSchemaFromConnectionString('sqlserver://localhost;database=testdb;schema=custom')
+if (schema !== 'custom') throw new Error('Schema extraction failed')
+
+console.log('TypeScript compilation and basic parsing: OK')
+""")
+    assert r.returncode == 0, f"TypeScript compilation failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_connection_string_parsing():
+    """Connection string parsing works for all parameter variations (pass_to_pass)."""
+    r = _run_ts("""
+import { parseConnectionString } from './src/connection-string.ts'
+
+const testCases = [
+    // Basic parsing
+    { input: 'sqlserver://localhost:1433;database=testdb;user=sa;password=mypassword', expected: { server: 'localhost', port: 1433, database: 'testdb', user: 'sa', password: 'mypassword' } },
+    // Alternative user parameter names
+    { input: 'sqlserver://localhost;database=testdb;username=sa;password=pw', expected: { user: 'sa' } },
+    { input: 'sqlserver://localhost;database=testdb;uid=sa;password=pw', expected: { user: 'sa' } },
+    // Alternative password parameter names
+    { input: 'sqlserver://localhost;database=testdb;user=sa;pwd=mypassword', expected: { password: 'mypassword' } },
+    // Alternative database parameter names
+    { input: 'sqlserver://localhost;initial catalog=testdb;user=sa;password=pw', expected: { database: 'testdb' } },
+    // Boolean options
+    { input: 'sqlserver://localhost;database=testdb;encrypt=true', expected: { encrypt: true } },
+    { input: 'sqlserver://localhost;database=testdb;trustServerCertificate=false', expected: { trustServerCertificate: false } },
+]
+
+for (const tc of testCases) {
+    const config = parseConnectionString(tc.input)
+    for (const [key, value] of Object.entries(tc.expected)) {
+        let actual
+        if (key === 'encrypt' || key === 'trustServerCertificate') {
+            actual = config.options?.[key]
+        } else {
+            actual = config[key as keyof typeof config]
+        }
+        if (actual !== value) {
+            throw new Error(`Test failed for "${tc.input}": expected ${key}=${value}, got ${actual}`)
+        }
+    }
+}
+
+console.log('All connection string parsing tests passed: OK')
+""")
+    assert r.returncode == 0, f"Connection string parsing test failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_error_handling():
+    """Connection string error handling works correctly (pass_to_pass)."""
+    r = _run_ts("""
+import { parseConnectionString } from './src/connection-string.ts'
+
+// Test invalid port
+let threw = false
+try {
+    parseConnectionString('sqlserver://localhost:invalid;database=testdb')
+} catch (e: any) {
+    threw = true
+    if (!e.message.includes('Invalid port number')) throw new Error('Wrong error for invalid port')
+}
+if (!threw) throw new Error('Should have thrown for invalid port')
+
+// Test missing server
+threw = false
+try {
+    parseConnectionString('sqlserver://;database=testdb')
+} catch (e: any) {
+    threw = true
+    if (!e.message.includes('Server host is required')) throw new Error('Wrong error for missing server')
+}
+if (!threw) throw new Error('Should have thrown for missing server')
+
+// Test invalid isolation level
+threw = false
+try {
+    parseConnectionString('sqlserver://localhost;database=testdb;isolationLevel=INVALID')
+} catch (e: any) {
+    threw = true
+    if (!e.message.includes('Invalid isolation level')) throw new Error('Wrong error for invalid isolation level')
+}
+if (!threw) throw new Error('Should have thrown for invalid isolation level')
+
+console.log('Error handling tests passed: OK')
+""")
+    assert r.returncode == 0, f"Error handling test failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_timeout_and_pool_params():
+    """Timeout and pool parameters are parsed correctly (pass_to_pass)."""
+    r = _run_ts("""
+import { parseConnectionString } from './src/connection-string.ts'
+
+// Test connection timeout
+const config1 = parseConnectionString('sqlserver://localhost;database=testdb;connectTimeout=30')
+if (config1.connectionTimeout !== 30) throw new Error('connectTimeout not parsed')
+
+// Test connectionLimit (pool max)
+const config2 = parseConnectionString('sqlserver://localhost;database=testdb;connectionLimit=10')
+if (config2.pool?.max !== 10) throw new Error('connectionLimit not parsed')
+
+// Test poolTimeout (acquire timeout in ms)
+const config3 = parseConnectionString('sqlserver://localhost;database=testdb;poolTimeout=15')
+if (config3.pool?.acquireTimeoutMillis !== 15000) throw new Error('poolTimeout not parsed')
+
+// Test socketTimeout (request timeout)
+const config4 = parseConnectionString('sqlserver://localhost;database=testdb;socketTimeout=60')
+if (config4.requestTimeout !== 60) throw new Error('socketTimeout not parsed')
+
+console.log('Timeout and pool parameter tests passed: OK')
+""")
+    assert r.returncode == 0, f"Timeout/pool params test failed:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Config/documentation update tests (agentmd-edit)
 # ---------------------------------------------------------------------------
 

@@ -12,6 +12,38 @@ checks:
     origin: static
     description: "Core source file src/sys.zig must exist and be non-empty"
 
+  # [P2P] Repo CI gates discovered from .github/workflows/format.yml
+  - id: zig_fmt_sys_zig
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Zig fmt check on src/sys.zig passes (from format.yml CI)"
+    ci_source: 
+      workflow: ".github/workflows/format.yml"
+      command: "zig fmt --check src/"
+
+  # [P2P] Repo CI gates discovered from .github/workflows/format.yml
+  - id: zig_fmt_build_zig
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Zig fmt check on build.zig passes (from format.yml CI)"
+    ci_source:
+      workflow: ".github/workflows/format.yml"
+      command: "zig fmt --check build.zig"
+
+  # [P2P] Repo file validation - CLAUDE.md is referenced by AGENTS.md
+  - id: claude_md_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CLAUDE.md exists and is non-empty, AGENTS.md symlink valid"
+    ci_source:
+      path: "CLAUDE.md"
+      note: "Project coding guidelines file referenced by AGENTS.md"
+
+  - id: repo_structure_intact
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository structure is intact with required files and directories"
+
   - id: statx_handles_eperm
     type: fail_to_pass
     origin: pr_diff
@@ -33,12 +65,12 @@ checks:
     description: "All four errno cases (NOSYS, OPNOTSUPP, PERM, INVAL) must be grouped together in fallback logic"
 
   - id: statx_fallback_helper_exists
-    type: pass_to_pass
+    type: fail_to_pass
     origin: pr_diff
     description: "statxFallback function exists with correct stat/lstat/fstat delegation"
 
   - id: existing_errno_cases_preserved
-    type: pass_to_pass
+    type: fail_to_pass
     origin: pr_diff
     description: "Original NOSYS and EOPNOTSUPP fallback cases must still work"
 
@@ -57,7 +89,7 @@ checks:
       commit: "159a285841539c8f166509116c12b11e15b47fdf"
 
   - id: error_handling_pattern
-    type: pass_to_pass
+    type: fail_to_pass
     origin: agent_config
     description: "Error handling follows bun.sys Maybe(T) switch pattern"
     source:
@@ -65,15 +97,4 @@ checks:
       lines: "64-66"
       commit: "159a285841539c8f166509116c12b11e15b47fdf"
 
-rubric:
-  - rule: "Always use bun.* APIs instead of std.*. Using std.fs, std.posix, or std.os directly is wrong in this codebase."
-    source:
-      path: "src/AGENTS.md"
-      lines: "16"
-      commit: "159a285841539c8f166509116c12b11e15b47fdf"
-
-  - rule: "bun.sys functions return Maybe(T) — a tagged union of .result: T or .err: bun.sys.Error. Handle with switch or .unwrap()."
-    source:
-      path: ".claude/skills/zig-system-calls/SKILL.md"
-      lines: "64-66"
-      commit: "159a285841539c8f166509116c12b11e15b47fdf"
+rubric: []

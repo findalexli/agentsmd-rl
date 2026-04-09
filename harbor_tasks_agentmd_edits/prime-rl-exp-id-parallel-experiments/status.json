@@ -1,11 +1,49 @@
 {
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-08T22:15:00.071508",
-  "sandbox_id": "iz0vdlyyjt997wa6p8n0d",
-  "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 2514.9
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:48:14.611415",
+  "total_time": 5991.92,
+  "sandbox_id": "ifho1dalx032txx2skibf",
+  "backend": "glm",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "ci_commands_found": [
+        "ruff check (from .github/workflows/style.yaml)",
+        "pytest tests -m 'not gpu' (from .github/workflows/cpu_tests.yaml)"
+      ],
+      "tests_added": [
+        "test_syntax_check (pass_to_pass) - verifies modified Python files parse",
+        "test_ruff_lint (pass_to_pass) - runs repo's ruff lint on modified files"
+      ],
+      "notes": "Added lightweight p2p tests that work without full dependency install. Full pytest suite requires vllm/torch which exceeds disk space during Docker build."
+    },
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 398.64,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 5991.92,
+      "at": "2026-04-09T07:48:14.611415"
+    }
+  ]
 }

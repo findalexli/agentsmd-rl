@@ -240,6 +240,31 @@ console.log(sim.toFixed(4))
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repository CI/CD tests
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "turbo", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_session_tests():
+    """Repo's session tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/session/"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Session tests failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 

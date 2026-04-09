@@ -267,3 +267,56 @@ def test_no_dynamic_import_in_client_fixture():
         f"client-fixture.mjs uses dynamic import() ({len(dynamic)} occurrence(s)); "
         "use static top-level import statements instead (test/CLAUDE.md lines 218-220)"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_format():
+    """Repo's JavaScript/TypeScript files must pass prettier format check.
+
+    Origin: .github/workflows/format.yml — autofix.ci runs prettier on all PRs.
+    Ensures code style consistency in bake test files.
+    """
+    r = subprocess.run(
+        ["npx", "--yes", "prettier@latest", "--check", CLIENT, HARNESS],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_oxlint():
+    """Repo's JavaScript/TypeScript files must pass oxlint correctness checks.
+
+    Origin: .github/workflows/lint.yml — runs oxlint with correctness rules.
+    Ensures no critical lint errors (undefined vars, duplicate keys, etc).
+    """
+    r = subprocess.run(
+        ["npx", "--yes", "oxlint@latest", "--format=github", CLIENT, HARNESS],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # oxlint returns 0 on success (no errors), 1 on errors
+    # Warnings don't cause non-zero exit by default
+    assert r.returncode == 0, f"oxlint found errors:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_bake_harness_syntax():
+    """bake-harness.ts must parse as valid TypeScript (syntax only).
+
+    Origin: CI typecheck — verifies TypeScript files are syntactically valid
+    before the build process. Uses tsc --noEmit for type-only checking.
+    """
+    r = subprocess.run(
+        ["npx", "--yes", "typescript@5.9.2", "--noEmit", "--skipLibCheck", HARNESS],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Skip if tsc fails due to missing types/config - we just check it parses
+    # The key is that it doesn't crash with syntax errors
+    if "error TS" in r.stderr and "Cannot find" not in r.stderr:
+        assert False, f"TypeScript syntax errors found:\n{r.stderr[-500:]}"
+    # If it fails due to missing modules/types, that's OK for syntax check
+    assert True

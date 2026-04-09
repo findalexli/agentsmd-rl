@@ -13,6 +13,22 @@ checks:
     origin: static
     description: "Root package.json must be valid JSON after modifications"
 
+  # Repo CI/CD tests (pass_to_pass) — verify base functionality intact
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's npm run build passes (compilation and bundling)"
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript typecheck passes (npm run tsc)"
+
+  - id: test_repo_lint_packages
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's workspace package lint passes (npm run lint-packages)"
+
   # Code: stub JS file exists and is syntactically valid
   - id: stub_js_syntax
     type: fail_to_pass

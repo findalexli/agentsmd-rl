@@ -1,0 +1,63 @@
+source_pr:
+  owner: appwrite
+  repo: appwrite
+  number: 11809
+  merge_commit: d200b07466ae8db6ce9b100f8c41b3569f46cf28
+  base_commit: 951a96ae01bceaabe6e2fb936686b7953209ce19
+
+title: "Appwrite: Handle null routes in API middleware"
+description: "Fix null pointer exception when requests reach API middleware without a matched route. Add guards that throw GENERAL_ROUTE_NOT_FOUND instead of fatalling on null $route."
+
+# Programmatic checks - these run via test_outputs.py
+checks:
+  - id: "null_route_guard_in_init_action"
+    type: "pass_to_pass"
+    description: "Verify the Http::init action has a null guard after $route = $utopia->getRoute() that throws GENERAL_ROUTE_NOT_FOUND"
+    points: 2
+
+  - id: "null_route_guard_in_shutdown_action"
+    type: "fail_to_pass"
+    description: "Verify the shutdown action has a null guard after $route = $utopia->getRoute() that throws GENERAL_ROUTE_NOT_FOUND"
+    points: 2
+
+  - id: "no_direct_route_dereference_without_check"
+    type: "pass_to_pass"
+    description: "Verify that $route is not directly dereferenced without a preceding null guard"
+    points: 1
+
+  - id: "php_syntax_valid"
+    type: "pass_to_pass"
+    description: "Verify the PHP file has valid syntax after modifications"
+    points: 1
+
+  - id: "correct_exception_constant_used"
+    type: "pass_to_pass"
+    description: "Verify that GENERAL_ROUTE_NOT_FOUND is used consistently in both guards"
+    points: 1
+
+  - id: "repo_composer_valid"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's composer.json passes validation (composer validate)"
+    points: 1
+
+  - id: "repo_php_syntax_all"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's PHP files have valid syntax (php -l)"
+    points: 1
+
+agent_config:
+  - source: "AGENTS.md"
+    applies: true
+    description: "PHP PSR-12 formatting, sparse Document updates, no hardcoded credentials"
+
+  - source: "CLAUDE.md"
+    applies: true
+    description: "@AGENTS.md - references main project conventions"
+
+  - source: "src/Appwrite/Platform/AGENTS.md"
+    applies: false
+    description: "Module structure rules - not relevant for shared controller fix"
+
+rubric: []

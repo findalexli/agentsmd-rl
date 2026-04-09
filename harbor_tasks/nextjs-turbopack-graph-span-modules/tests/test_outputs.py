@@ -14,6 +14,8 @@ the structural changes required by the PR.
 import subprocess
 from pathlib import Path
 
+import pytest
+
 REPO = "/workspace/next.js"
 APP_FILE = f"{REPO}/crates/next-api/src/app.rs"
 PROJECT_FILE = f"{REPO}/crates/next-api/src/project.rs"
@@ -52,6 +54,56 @@ def test_antistub_files_have_substantial_content():
 
 
 # ---------------------------------------------------------------------------
+# pass_to_pass — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+
+def test_repo_rustfmt_check():
+    """Repo Rust code passes rustfmt check (pass_to_pass). CI: cargo fmt --all -- --check"""
+    cargo_check = subprocess.run(
+        ["which", "cargo"], capture_output=True, text=True, timeout=5
+    )
+    if cargo_check.returncode != 0:
+        pytest.skip("cargo not available - requires Dockerfile fix")
+
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--", "--check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"rustfmt check failed: {r.stderr[-500:]}"
+
+
+def test_repo_cargo_check_turbopack_core():
+    """Repo turbopack-core crate passes cargo check (pass_to_pass). CI: cargo check --package turbopack-core"""
+    cargo_check = subprocess.run(
+        ["which", "cargo"], capture_output=True, text=True, timeout=5
+    )
+    if cargo_check.returncode != 0:
+        pytest.skip("cargo not available - requires Dockerfile fix")
+
+    r = subprocess.run(
+        ["cargo", "check", "--package", "turbopack-core"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check failed: {r.stderr[-500:]}"
+
+
+def test_repo_cargo_check_next_api():
+    """Repo next-api crate passes cargo check (pass_to_pass). CI: cargo check --package next-api"""
+    cargo_check = subprocess.run(
+        ["which", "cargo"], capture_output=True, text=True, timeout=5
+    )
+    if cargo_check.returncode != 0:
+        pytest.skip("cargo not available - requires Dockerfile fix")
+
+    r = subprocess.run(
+        ["cargo", "check", "--package", "next-api"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check failed: {r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # fail_to_pass — subprocess-executed validation
 # ---------------------------------------------------------------------------
 
@@ -63,8 +115,7 @@ def test_module_count_method_in_single_module_graph():
     assert "PASS" in r.stdout
 
 
-_MOD_COUNT_VALIDATOR = '''
-import sys
+_MOD_COUNT_VALIDATOR = """import sys
 from pathlib import Path
 
 lines = Path("/workspace/next.js/turbopack/crates/turbopack-core/src/module_graph/mod.rs").read_text().splitlines()
@@ -82,7 +133,6 @@ for i, line in enumerate(lines):
     if fn_name is None:
         continue
 
-    # Must be inside impl SingleModuleGraph (scan upward for impl header)
     depth = 0
     in_impl = False
     for j in range(i, -1, -1):
@@ -93,22 +143,18 @@ for i, line in enumerate(lines):
     if not in_impl:
         continue
 
-    # Must have #[turbo_tasks::function] annotation in preceding lines
     preceding = lines[max(0, i - 5) : i + 1]
     if not any("turbo_tasks" in l and "function" in l for l in preceding):
         sys.exit(fn_name + " missing #[turbo_tasks::function] annotation")
 
-    # Body must reference self (accessing internal data)
     body = lines[i : i + 15]
     if not any("self" in l for l in body):
         sys.exit(fn_name + " body does not reference self")
 
-    # Must involve a numeric type (return type or cast)
     body_text = " ".join(body)
     if not any(t in body_text for t in ["u64", "usize", "i64", "u32"]):
         sys.exit(fn_name + " body does not involve numeric type (u64/usize/etc.)")
 
-    # Anti-stub: body must have meaningful content beyond signature
     meaningful = [l.strip() for l in lines[i + 1 : i + 15]
                   if l.strip() and l.strip() not in ("{", "}")]
     if len(meaningful) < 1:
@@ -120,23 +166,21 @@ for i, line in enumerate(lines):
 if not found:
     sys.exit("No module count method found in SingleModuleGraph impl")
 print("PASS")
-'''
+"""
 
 
 def test_app_rs_records_module_count_in_span():
-    """app.rs has a tracing span with 'modules' field and records module count."""
+    """app.rs has a tracing span with modules field and records module count."""
     r = _run_validator("app_span", _APP_SPAN_VALIDATOR)
     assert r.returncode == 0, f"Validation failed: {r.stderr}"
     assert "PASS" in r.stdout
 
 
-_APP_SPAN_VALIDATOR = '''
-import sys
+_APP_SPAN_VALIDATOR = """import sys
 from pathlib import Path
 
 lines = Path("/workspace/next.js/crates/next-api/src/app.rs").read_text().splitlines()
 
-# 1. Find a tracing span with "modules" field declared
 span_keywords = ["info_span!", "span!", "debug_span!", "trace_span!"]
 has_span_with_modules = False
 for i, line in enumerate(lines):
@@ -147,18 +191,16 @@ for i, line in enumerate(lines):
         break
 
 if not has_span_with_modules:
-    sys.exit("No tracing span with 'modules' field found in app.rs")
+    sys.exit("No tracing span with modules field found in app.rs")
 
-# 2. Must record module count into the span
 has_record = False
 for line in lines:
     if ".record(" in line and "modules" in line:
         has_record = True
         break
 if not has_record:
-    sys.exit("No span.record('modules', ...) found in app.rs")
+    sys.exit("No span.record(modules, ...) found in app.rs")
 
-# 3. Must call module_count (or equivalent) somewhere
 count_fn_names = ["module_count", "get_module_count", "num_modules",
                   "modules_count", "count_modules", "module_len"]
 has_count_call = False
@@ -173,23 +215,21 @@ if not has_count_call:
     sys.exit("No module count call found in app.rs")
 
 print("PASS")
-'''
+"""
 
 
 def test_project_rs_records_module_count_in_span():
-    """project.rs has a tracing span with 'modules' for whole-app graph path."""
+    """project.rs has a tracing span with modules for whole-app graph path."""
     r = _run_validator("project_span", _PROJECT_SPAN_VALIDATOR)
     assert r.returncode == 0, f"Validation failed: {r.stderr}"
     assert "PASS" in r.stdout
 
 
-_PROJECT_SPAN_VALIDATOR = '''
-import sys
+_PROJECT_SPAN_VALIDATOR = """import sys
 from pathlib import Path
 
 lines = Path("/workspace/next.js/crates/next-api/src/project.rs").read_text().splitlines()
 
-# 1. Find a tracing span with "modules" field
 span_keywords = ["info_span!", "span!", "debug_span!", "trace_span!"]
 has_span_with_modules = False
 for i, line in enumerate(lines):
@@ -200,17 +240,15 @@ for i, line in enumerate(lines):
         break
 
 if not has_span_with_modules:
-    sys.exit("No tracing span with 'modules' field found in project.rs")
+    sys.exit("No tracing span with modules field found in project.rs")
 
-# 2. Must record module count into the span
 record_lines = []
 for i, line in enumerate(lines):
     if ".record(" in line and "modules" in line:
         record_lines.append(i)
 if not record_lines:
-    sys.exit("No span.record('modules', ...) found in project.rs")
+    sys.exit("No span.record(modules, ...) found in project.rs")
 
-# 3. Must call module_count (or equivalent)
 count_fn_names = ["module_count", "get_module_count", "num_modules",
                   "modules_count", "count_modules", "module_len"]
 count_lines = []
@@ -222,7 +260,6 @@ for i, line in enumerate(lines):
 if not count_lines:
     sys.exit("No module count call found in project.rs")
 
-# 4. Span/record must be near a whole-app graph function
 whole_app_lines = [i for i, line in enumerate(lines)
                    if "whole_app" in line or "module_graph_operation" in line]
 
@@ -233,7 +270,7 @@ if not near(record_lines + count_lines, whole_app_lines, 80):
     sys.exit("modules span/record not scoped to whole-app graph code in project.rs")
 
 print("PASS")
-'''
+"""
 
 
 def test_performance_guard_before_module_count():
@@ -243,8 +280,7 @@ def test_performance_guard_before_module_count():
     assert "PASS" in r.stdout
 
 
-_PERF_GUARD_VALIDATOR = '''
-import sys
+_PERF_GUARD_VALIDATOR = """import sys
 from pathlib import Path
 
 count_fn_names = ["module_count", "get_module_count", "num_modules",
@@ -256,7 +292,6 @@ for filepath, name in [
 ]:
     lines = Path(filepath).read_text().splitlines()
 
-    # Find guard lines (is_disabled, is_enabled, has_field)
     guard_lines = []
     for i, line in enumerate(lines):
         if ("is_disabled" in line or "is_enabled" in line or
@@ -265,7 +300,6 @@ for filepath, name in [
     if not guard_lines:
         sys.exit(name + " missing performance guard")
 
-    # Find module count call lines and record lines
     relevant_lines = []
     for i, line in enumerate(lines):
         for fn_name in count_fn_names:
@@ -277,13 +311,12 @@ for filepath, name in [
     if not relevant_lines:
         sys.exit(name + " count call lines not found")
 
-    # Guard must be within 40 lines of a relevant line
     near = any(abs(g - r) <= 40 for g in guard_lines for r in relevant_lines)
     if not near:
         sys.exit(name + " guard not near module count computation")
 
 print("PASS")
-'''
+"""
 
 
 # ---------------------------------------------------------------------------

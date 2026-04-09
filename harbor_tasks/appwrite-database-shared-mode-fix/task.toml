@@ -1,0 +1,28 @@
+name = "appwrite-database-shared-mode-fix"
+version = "1.0.0"
+description = "Fix shared-mode CI failures by properly handling database tenant types and shared tables configuration"
+category = "bugfix"
+difficulty = "medium"
+tags = ["php", "database", "shared-tables", "tenant", "ci"]
+pr_url = "https://github.com/appwrite/appwrite/pull/11750"
+
+[agent]
+timeout_seconds = 1800
+
+[verifier]
+timeout_seconds = 120
+type = "pytest"
+
+[repository]
+owner = "appwrite"
+name = "appwrite"
+base_commit = "6e1f0d57af305affe7dbebf9d71f19ec4d6f68e5"
+merge_commit = "7d9cf48ca3a5b647232fc712081dc43fa7e71637"
+pr_number = 11750
+
+[files]
+primary = [
+    "app/init/resources/request.php",
+    "app/init/worker/message.php",
+    "src/Appwrite/Platform/Modules/Databases/Http/Databases/Create.php"
+]

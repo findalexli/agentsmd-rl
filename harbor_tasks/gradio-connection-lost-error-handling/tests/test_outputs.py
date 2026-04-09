@@ -35,6 +35,21 @@ def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         script.unlink(missing_ok=True)
 
 
+def _install_deps():
+    """Ensure pnpm is available and dependencies are installed."""
+    # Check if pnpm is available
+    result = subprocess.run(["which", "pnpm"], capture_output=True)
+    if result.returncode != 0:
+        subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, check=True)
+    
+    # Check if node_modules exists
+    if not Path(f"{REPO}/node_modules").exists():
+        subprocess.run(
+            ["pnpm", "install", "--frozen-lockfile"],
+            capture_output=True, cwd=REPO, timeout=300
+        )
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via Node.js subprocess
 # ---------------------------------------------------------------------------
@@ -45,15 +60,49 @@ def test_submit_broken_flag_logic():
     r = _run_node(r"""
 import { readFileSync } from 'fs';
 
-const content = readFileSync('client/js/src/utils/submit.ts', 'utf8');
+let content = readFileSync('client/js/src/utils/submit.ts', 'utf8');
 
 // Extract the BROKEN_CONNECTION_MSG constant value
-const brokenMsgMatch = content.match(/BROKEN_CONNECTION_MSG\s*=\s*["']([^"']+)["']/);
+// It may be defined locally or imported from constants.ts
+let brokenMsgMatch = content.match(/BROKEN_CONNECTION_MSG\s*=\s*["']([^"']+)["']/);
+let BROKEN;
 if (!brokenMsgMatch) {
-    console.error("FAIL: BROKEN_CONNECTION_MSG constant not found");
-    process.exit(1);
+    // Check if it's imported from constants (multi-line import format)
+    const importMatch = content.match(/from\s*["'](\.\.\/constants)["']/);
+    if (importMatch) {
+        // Resolve the constants file path
+        const constantsPath = importMatch[1].replace(/^\.\.\//, 'client/js/src/') + '.ts';
+        try {
+            const constantsContent = readFileSync(constantsPath, 'utf8');
+            const constMatch = constantsContent.match(/BROKEN_CONNECTION_MSG\s*=\s*["']([^"']+)["']/);
+            if (constMatch) {
+                BROKEN = constMatch[1];
+            }
+        } catch (e) {
+            // ignore
+        }
+    }
+    // Fallback: try direct path to constants
+    if (!BROKEN) {
+        try {
+            const constContent = readFileSync('client/js/src/constants.ts', 'utf8');
+            const constMatch = constContent.match(/BROKEN_CONNECTION_MSG\s*=\s*["']([^"']+)["']/);
+            if (constMatch) {
+                BROKEN = constMatch[1];
+            }
+        } catch (e) {
+            // ignore
+        }
+    }
 }
-const BROKEN = brokenMsgMatch[1];
+if (!BROKEN) {
+    if (brokenMsgMatch) {
+        BROKEN = brokenMsgMatch[1];
+    } else {
+        console.error("FAIL: BROKEN_CONNECTION_MSG constant not found locally or in constants");
+        process.exit(1);
+    }
+}
 
 // Verify the dynamic comparison pattern: is_connection_error = x === BROKEN_CONNECTION_MSG
 const hasDynamicCheck = /(?:const|let|var)\s+is_connection_error\s*=/.test(content)
@@ -292,3 +341,52 @@ def test_files_not_stub():
         assert len(lines) >= 50, (
             f"{Path(path).name} has only {len(lines)} non-empty non-comment lines — likely a stub"
         )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_client_tests():
+    """Repo's client package tests pass (pass_to_pass)."""
+    _install_deps()
+    # Build client first, then run tests
+    build_r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert build_r.returncode == 0, f"Client build failed:\n{build_r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "test"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    _install_deps()
+    # Build client first (required for tests)
+    build_r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert build_r.returncode == 0, f"Client build failed:\n{build_r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "test:run"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-500:]}"

@@ -47,6 +47,11 @@ checks:
     origin: repo_tests
     description: "Existing Python scripts in scripts/ remain valid Python"
 
+  - id: repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python scripts pass ruff linting"
+
   - id: top_level_imports_only
     type: fail_to_pass
     origin: agent_config
@@ -56,9 +61,6 @@ checks:
       lines: "16"
       commit: "d0f2f3babc7c892958e93419ad6065df0deb2112"
 
-rubric:
-  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
-    source:
-      path: "CLAUDE.md"
-      lines: "17-18"
-      commit: "d0f2f3babc7c892958e93419ad6065df0deb2112"
+# No rubric rules - this task is about creating a new Python script, not editing config files.
+# The style guidelines from CLAUDE.md are enforced via the test_top_level_imports_only test.
+rubric: []

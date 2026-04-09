@@ -1,56 +1,69 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.964974",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T09:22:24.917608",
+  "total_time": 631.57,
+  "sandbox_id": "il8rg4ob30ifqq390tztt",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 9.01,
+      "notes": "Added 2 repo_tests pass_to_pass checks: (1) test_repo_ruff_lint - runs 'ruff check areal/' from .github/workflows/format-check.yml, (2) test_repo_ruff_format - runs 'ruff format --check areal/'. CI commands discovered: ruff check/format from format-check.yml. pytest commands from test-areal.yml require GPU/torch so not included. Both p2p tests verified passing on base commit."
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Docker build: OK. NOP test (base commit): reward=0 - fail-to-pass tests (empty_interactions_returns_none, empty_interactions_logs_warning) correctly fail on buggy code. Gold test (solve.sh applied): reward=1 - all 11 tests pass. Rubric judge: 0.0 - structural issue where judge cannot see git diff inside container, but gold code follows all AGENTS.md rules (no wildcard imports, no print, no GPU-CPU sync, async patterns, composition over inheritance).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 140.01
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.7,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-30T20:01:41.512331",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.35,
       "verdict": "pass",
-      "notes": ""
+      "nop": 0.0,
+      "gold": 1.0,
+      "at": "2026-04-09T16:35:00"
     },
     {
-      "timestamp": "2026-03-30T11:48:11.528209",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "timeout",
-      "output_tokens": null
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.639014",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 631.3,
+      "at": "2026-04-09T09:22:24.749616"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.935739",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.508416",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 631.57,
+      "at": "2026-04-09T09:22:24.917608"
     }
   ]
 }

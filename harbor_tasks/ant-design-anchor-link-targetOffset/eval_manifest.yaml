@@ -1,0 +1,129 @@
+source:
+  pr: https://github.com/ant-design/ant-design/pull/57521
+  title: "feat(Anchor): add targetOffset prop for each Anchor.Link"
+  base_commit: b836ec3cc69a6ed64eb8d9e469790b424e5100cf
+  merge_commit: 611be598bdba1665aebd09bfedebb7001926a5c1
+
+# Fail-to-pass tests (verify the fix works)
+checks:
+  - id: test_anchor_link_interface_has_targetOffset
+    type: fail_to_pass
+    origin: programmatic
+    description: AnchorLinkBaseProps interface has targetOffset property
+
+  - id: test_registerLink_signature_updated
+    type: fail_to_pass
+    origin: programmatic
+    description: AntAnchor.registerLink accepts optional targetOffset parameter
+
+  - id: test_scrollTo_signature_updated
+    type: fail_to_pass
+    origin: programmatic
+    description: AntAnchor.scrollTo accepts optional targetOffset parameter
+
+  - id: test_linkTargetOffsetRef_exists
+    type: fail_to_pass
+    origin: programmatic
+    description: Anchor component uses linkTargetOffsetRef to store per-link offsets
+
+  - id: test_registerLink_stores_targetOffset
+    type: fail_to_pass
+    origin: programmatic
+    description: registerLink stores targetOffset in linkTargetOffsetRef when provided
+
+  - id: test_unregisterLink_cleans_targetOffset
+    type: fail_to_pass
+    origin: programmatic
+    description: unregisterLink cleans up targetOffset when unregistering
+
+  - id: test_getInternalCurrentAnchor_uses_link_offset
+    type: fail_to_pass
+    origin: programmatic
+    description: getInternalCurrentAnchor accepts and uses _linkTargetOffset parameter
+
+  - id: test_handleScrollTo_uses_link_targetOffset
+    type: fail_to_pass
+    origin: programmatic
+    description: handleScrollTo uses link-level targetOffset with proper precedence
+
+  - id: test_anchorLink_passes_targetOffset_to_registerLink
+    type: fail_to_pass
+    origin: programmatic
+    description: AnchorLink passes targetOffset to registerLink in useEffect
+
+  - id: test_anchorLink_passes_targetOffset_to_scrollTo
+    type: fail_to_pass
+    origin: programmatic
+    description: AnchorLink passes targetOffset to scrollTo on click
+
+  - id: test_anchorLink_useEffect_depends_on_targetOffset
+    type: fail_to_pass
+    origin: programmatic
+    description: AnchorLink useEffect has targetOffset in dependency array
+
+  - id: test_getInternalCurrentAnchor_called_with_linkTargetOffset
+    type: fail_to_pass
+    origin: programmatic
+    description: getInternalCurrentAnchor called with linkTargetOffsetRef.current
+
+  # Pass-to-pass tests (verify no regression)
+  - id: test_anchor_component_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: Anchor component TypeScript compiles without errors
+
+  - id: test_anchor_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Anchor component tests pass
+
+  - id: test_repo_lint_biome_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome lint check passes (repo CI)
+
+  - id: test_repo_lint_eslint_anchor_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint check on anchor files passes (repo CI)
+
+rubric:
+  - rule: "New props must be added to the interface with proper TypeScript types"
+    source: ".github/copilot-instructions.md - TypeScript Requirements"
+    weight: 10
+
+  - rule: "Component props interfaces should be named ComponentNameProps and use precise types, never any"
+    source: ".github/copilot-instructions.md - TypeScript Requirements"
+    weight: 10
+
+  - rule: "Use functional components with hooks exclusively (no class components)"
+    source: ".github/copilot-instructions.md - React Component Guidelines"
+    weight: 5
+
+  - rule: "API documentation for new properties must include version number (6.4.0)"
+    source: ".github/copilot-instructions.md - API Documentation Format"
+    weight: 5
+
+  - rule: "Use early returns to improve readability"
+    source: ".github/copilot-instructions.md - React Component Guidelines"
+    weight: 3
+
+  - rule: "Prefer union types over enums, use as const for constants"
+    source: ".github/copilot-instructions.md - TypeScript Requirements"
+    weight: 3
+
+  - rule: "Test files must use relative path imports for internal modules"
+    source: "CLAUDE.md/AGENTS.md - Test Import规范"
+    weight: 5
+
+  - rule: "Demo files must use absolute path imports (antd, antd/es/*, etc.)"
+    source: "CLAUDE.md/AGENTS.md - Demo Import规范"
+    weight: 5
+
+  - rule: "New feature requires comprehensive test coverage"
+    source: ".github/copilot-instructions.md - Testing Requirements"
+    weight: 10
+
+  - rule: "Link-level targetOffset must take precedence over global targetOffset"
+    source: "PR description - requirement"
+    weight: 15

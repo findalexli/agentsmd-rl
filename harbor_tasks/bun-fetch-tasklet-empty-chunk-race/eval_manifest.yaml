@@ -37,6 +37,26 @@ checks:
     origin: repo_tests
     description: "Basic streaming must still work after the fix (no regression)"
 
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's JavaScript lint passes (bun x oxlint src/js)"
+
+  - id: test_repo_banned_words
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's banned words check passes"
+
+  - id: test_repo_zig_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Zig fmt check passes on FetchTasklet.zig"
+
+  - id: test_repo_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript prettier check passes on scripts/"
+
 rubric:
   # From src/CLAUDE.md and src/AGENTS.md - Zig conventions
   - rule: "Always use bun.* APIs instead of std.*. The bun namespace provides cross-platform wrappers that preserve OS error info and never use unreachable."

@@ -146,9 +146,9 @@ def test_backslash_normalization():
     # AST-only because: running on Linux, Bun.Glob never produces backslash paths
     func = _extract_function_body()
     patterns = [
-        r'replaceAll\s*\(\s*["\']\\\\["\']',
-        r'\.replace\s*\(\s*/[^/]*\\\\[^/]*/[gim]*\s*,',
-        r'split\s*\(\s*["\']\\\\["\']\s*\).*?join',
+        r'replaceAll\s*\(\s*["\']\\\\["\']',  # Matches replaceAll("\\", ...) - two backslashes in source
+        r'\.replace\s*\(\s*/[^/]*\\\\[^/]*/[gim]*\s*,',  # Matches .replace(/.../, ...)
+        r'split\s*\(\s*["\']\\\\["\']\s*\).*?join',  # Matches split("\\").join(...)
         r'path\.posix\.',
         r'(toForwardSlash|normalizePath|normalizeSlash)\s*\(',
         r'\.replaceAll\s*\(\s*path\.sep',
@@ -253,4 +253,43 @@ def test_uses_bun_glob_api():
     func = _extract_function_body()
     assert re.search(r"\bBun\.Glob\b", func), (
         "Function does not use Bun.Glob — prefer Bun APIs when possible (AGENTS.md:15)"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI-derived pass_to_pass (repo_tests) — CI/CD gates that must pass
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — validates TypeScript can be parsed/bundled
+def test_repo_typescript_syntax_valid():
+    """Repo's TypeScript files must have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "build", "--target=bun", "--external=*", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript syntax error in {TARGET}:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — validates bun lockfile integrity
+def test_repo_bun_lockfile_valid():
+    """Repo's bun.lock must be valid and dependencies resolvable (pass_to_pass)."""
+    # Check bun.lock exists and is valid JSON
+    lock_path = os.path.join(REPO, "bun.lock")
+    assert os.path.exists(lock_path), "bun.lock not found"
+
+    # Verify bun can parse the lockfile by querying it
+    r = subprocess.run(
+        ["bun", "pm", "ls"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    # Command may fail due to missing workspace deps, but should not crash
+    # A crash would indicate an invalid lockfile
+    assert "error:" not in r.stderr.lower() or "cannot find module" in r.stderr.lower() or r.returncode == 0, (
+        f"bun.lock appears invalid or corrupted: {r.stderr[-300:]}"
     )

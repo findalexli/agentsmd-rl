@@ -15,7 +15,7 @@ checks:
   - id: sync_throw_normalized
     type: fail_to_pass
     origin: pr_diff
-    description: "normalizeUnhandledStopReasonMessage converts 'Unhandled stop reason: sensitive' into user-friendly message"
+    description: "normalizeUnhandledStopReasonMessage converts \047Unhandled stop reason: sensitive\047 into user-friendly message"
 
   - id: varied_stop_reasons
     type: fail_to_pass
@@ -101,14 +101,29 @@ checks:
       lines: "106"
       commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"
 
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo\047s oxlint check passes with no errors"
+
+  - id: test_repo_build_strict_smoke
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo\047s strict TypeScript build smoke test passes"
+
+  - id: test_repo_attempt_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo\047s unit tests for attempt module pass"
+
 rubric:
-  - rule: "Language: TypeScript (ESM). Prefer strict typing; avoid `any`."
+  - rule: "Language: TypeScript (ESM). Prefer strict typing; avoid \047any\047."
     source:
       path: "CLAUDE.md"
       lines: "102"
       commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"
 
-  - rule: "Do not disable `no-explicit-any`; prefer real types, `unknown`, or a narrow adapter/helper instead."
+  - rule: "Do not disable \047no-explicit-any\047; prefer real types, \047unknown\047, or a narrow adapter/helper instead."
     source:
       path: "CLAUDE.md"
       lines: "105"
@@ -126,7 +141,7 @@ rubric:
       lines: "114"
       commit: "664680318eea98172c7d25405c20f5e3eadfd0e2"
 
-  - rule: "Keep files concise; extract helpers instead of 'V2' copies."
+  - rule: "Keep files concise; extract helpers instead of \047V2\047 copies."
     source:
       path: "CLAUDE.md"
       lines: "115"

@@ -224,3 +224,50 @@ def test_ruff_format_compliance():
     assert r.returncode == 0, (
         f"ruff format check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — discovered from .github/workflows/
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — from .github/workflows/test-python.yml
+def test_repo_ruff_check():
+    """Repo's ruff lint check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "gradio/routes.py"],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"ruff check failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — from .github/workflows/test-python.yml
+def test_repo_pytest_cancel_tests():
+    """Repo's cancel-related tests pass (pass_to_pass)."""
+    # Install test dependencies if needed
+    import sys
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "requests", "websockets", "httpx", "pytest-asyncio"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_blocks.py::TestCancel::test_cancel_function", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Cancel tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — from .github/workflows/test-python.yml
+def test_repo_pytest_cancel_multiple_blocks():
+    """Repo's cancel multiple blocks test passes (pass_to_pass)."""
+    import sys
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "requests", "websockets", "httpx", "pytest-asyncio"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_blocks.py::TestCancel::test_cancel_function_with_multiple_blocks", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Cancel multiple blocks test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

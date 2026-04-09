@@ -13,6 +13,27 @@ checks:
     origin: static
     description: "Modified Python file parses without errors"
 
+  # Repo CI/CD pass-to-pass checks
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff lint check passes on products/tasks/backend/models.py"
+
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All Python files in products/tasks/backend parse without syntax errors"
+
+  - id: test_repo_ast_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Python file has valid AST structure"
+
+  - id: test_repo_no_obvious_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file doesn't contain obvious error patterns (FIXME, NotImplementedError, etc.)"
+
   # Core behavioral tests (code changes)
   - id: create_and_run_accepts_sandbox_env_id
     type: fail_to_pass

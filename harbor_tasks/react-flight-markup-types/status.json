@@ -1,22 +1,78 @@
 {
-  "validations": [
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T12:00:53.315125",
+  "total_time": 10140.62,
+  "sandbox_id": "i39g82sqj448bihh6c5v8",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "docker_build_failed",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 224.57,
+      "notes": "Dockerfile build failed at step 7/10: git config commands are in wrong order. The 'git config user.email' and 'git config user.name' must be set BEFORE 'git commit', not after. Error: 'fatal: unable to auto-detect email address'. The validate agent needs to fix the Dockerfile."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 215.84,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile git config order - moved git config --global commands before git commit. All four checks pass: Docker build OK, NOP test reward=0 (3 f2p tests fail as expected), Gold test reward=1 (all 5 tests pass), Rubric ICR=1.0",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 290.6
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T15:39:51.306952",
-      "phase": "e2b_kimi_wave2",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6389.38,
+      "at": "2026-04-09T06:32:02.324787"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.605035",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 10140.33,
+      "at": "2026-04-09T12:00:53.120680"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 10140.62,
+      "at": "2026-04-09T12:00:53.315125"
     }
   ]
 }

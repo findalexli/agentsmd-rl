@@ -17,5 +17,9 @@ RUN git clone --filter=blob:none https://github.com/facebook/react.git /workspac
 
 WORKDIR /workspace/react
 
+# Install dependencies for repo_tests (ESLint and Flow)
+# Use --frozen-lockfile if yarn.lock exists, otherwise regular install
+RUN yarn install --frozen-lockfile 2>/dev/null || yarn install
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

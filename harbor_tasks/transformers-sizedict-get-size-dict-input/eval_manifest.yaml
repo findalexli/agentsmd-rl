@@ -56,6 +56,17 @@ checks:
       lines: "2"
       commit: "a8683756653094e3fc3016df8abcdeaaec758f9a"
 
+  # CI/CD pass_to_pass gates - repo's own tests
+  - id: test_repo_unittest_image_processing_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unittest for image_processing_utils passes"
+
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo ruff linter check passes on image_processing_utils.py"
+
 rubric:
   - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
     source:

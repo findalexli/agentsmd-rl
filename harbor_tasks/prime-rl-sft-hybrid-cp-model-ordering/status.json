@@ -1,61 +1,38 @@
 {
-  "task": "prime-rl-sft-hybrid-cp-model-ordering",
-  "validations": [
-    {
-      "timestamp": "2026-04-01T20:15:41.715862",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-01T22:29:55-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 0.0,
-      "nop_score": 0.0,
-      "verdict": "fail_gold",
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T06:33:22.835379",
+  "total_time": 6070.18,
+  "sandbox_id": "iapxqmjo9r9pvhe41hvk3",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 16.27,
       "notes": ""
     },
+    "p2p_enrichment": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 210.96,
+      "notes": ""
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T12:58:21.153432",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0",
-      "notes": "guarded_by_cp_enabled\nPASSED ../tests/test_outputs.py::test_no_try_except_around_hybrid_cp\nFAILED ../tests/test_outputs.py::test_no_nameerror_on_model - AssertionError:...\n1 failed, 9 passed in 0.12s\n"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.956004",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
-    },
-    {
-      "timestamp": "2026-04-02T19:05:31.934724",
-      "phase": "docker_validate_v2",
-      "runner": "manual",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1",
-      "notes": "nop=0 (2 f2p fail), gold=1 (10/10 pass). Replaced broken mock-exec test with AST model-assignment check."
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.582518",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 6070.18,
+      "at": "2026-04-09T06:33:22.835379"
     }
   ]
 }

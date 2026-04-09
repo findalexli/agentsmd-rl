@@ -26,6 +26,30 @@ def _read_format_ts() -> str:
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates from repository
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_tests():
+    """Repo's format test suite passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/format/format.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Format tests failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff / static) — regression + compilation gates
 # ---------------------------------------------------------------------------
 

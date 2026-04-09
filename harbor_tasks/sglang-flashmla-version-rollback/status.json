@@ -1,65 +1,78 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.981719",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T12:44:49.727375",
+  "total_time": 12777.21,
+  "sandbox_id": "ixazip3qu4wqzjgbh13z1",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "kimi-k2.5-turbo",
+      "backend": "fireworks",
+      "time": 839.35,
+      "notes": "Added 4 repo CI/CD pass_to_pass tests: test_repo_python_syntax (validates all Python files parse without errors), test_repo_cmake_structure (validates cmake block structure is valid), test_repo_flashmla_py_imports (validates torch imports and dispatch), test_repo_cmake_git_tag_valid (validates GIT_TAG format is a valid 40-char hex commit hash). Docker environment is minimal (no torch/cmake/pre-commit), so tests focus on static analysis. All 15 tests pass after gold fix (9 original + 4 new p2p)."
     },
-    {
-      "timestamp": "2026-03-30T20:01:41.507240",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.3,
-      "verdict": "pass",
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 408.69,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build OK, NOP test reward=0 (6 f2p tests correctly failing on broken base), Gold test reward=1 (all 15 tests pass after fix), Rubric judge ICR=1.0 (rubric is empty, no rules to check)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 57.44
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.72,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-30T11:48:20.105687",
-      "runner": "audit (audit-tests_20260330_114820)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 16043
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6730.8,
+      "at": "2026-04-09T06:51:52.268264"
     },
     {
-      "timestamp": "2026-04-01T20:15:41.738062",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T10:48:33.893205",
-      "phase": "e2b_validate_phase9",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 12776.93,
+      "at": "2026-04-09T12:44:49.549789"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.962980",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.630565",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 12777.21,
+      "at": "2026-04-09T12:44:49.727375"
     }
   ]
 }

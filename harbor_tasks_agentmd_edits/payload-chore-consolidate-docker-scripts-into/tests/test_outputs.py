@@ -68,7 +68,87 @@ def test_ci_action_syntax():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — code / infrastructure changes
+# Pass-to-pass (repo_tests) - CI/CD gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - CI/CD gate
+def test_docker_compose_schema():
+    """test/docker-compose.yml has valid schema with name and volumes (pass_to_pass)."""
+    import yaml
+
+    compose_path = Path(REPO) / "test" / "docker-compose.yml"
+    content = compose_path.read_text()
+    data = yaml.safe_load(content)
+
+    # Must have a name field (compose project name)
+    assert "name" in data, "docker-compose.yml must have a name field for the project"
+    assert data["name"], "docker-compose.yml name must not be empty"
+
+    # Must have volumes section for persistent data
+    assert "volumes" in data, "docker-compose.yml must have volumes section"
+    volumes = data["volumes"]
+    required_volumes = ["postgres_data", "mongodb_data", "mongodb_configdb"]
+    for vol in required_volumes:
+        assert vol in volumes, f"Required volume '{vol}' not defined in docker-compose.yml"
+
+    # Check that healthcheck is configured for databases
+    for svc in ["postgres", "mongodb"]:
+        service = data["services"].get(svc, {})
+        assert "healthcheck" in service, f"Service '{svc}' must have healthcheck configured"
+
+
+# [repo_tests] pass_to_pass - CI/CD gate
+def test_package_scripts_consistent():
+    """package.json docker scripts are consistent and reference valid compose file (pass_to_pass)."""
+    pkg = json.loads(Path(f"{REPO}/package.json").read_text())
+    scripts = pkg.get("scripts", {})
+
+    # docker:start should reference test/docker-compose.yml
+    docker_start = scripts.get("docker:start", "")
+    if docker_start:
+        assert "test/docker-compose.yml" in docker_start, (
+            "docker:start must reference test/docker-compose.yml"
+        )
+
+    # docker:stop should reference test/docker-compose.yml
+    docker_stop = scripts.get("docker:stop", "")
+    if docker_stop:
+        assert "test/docker-compose.yml" in docker_stop, (
+            "docker:stop must reference test/docker-compose.yml"
+        )
+
+
+# [repo_tests] pass_to_pass - CI/CD gate
+def test_ci_action_valid():
+    """.github/actions/start-database/action.yml references valid profiles and compose file (pass_to_pass)."""
+    import yaml
+
+    action_path = Path(REPO) / ".github" / "actions" / "start-database" / "action.yml"
+    content = action_path.read_text()
+    data = yaml.safe_load(content)
+
+    # Convert steps to string for validation
+    steps_str = json.dumps(data.get("runs", {}).get("steps", []))
+
+    # Must reference the unified compose file (not old per-db paths)
+    assert "test/docker-compose.yml" in steps_str, (
+        "CI action must reference unified test/docker-compose.yml"
+    )
+
+    # Must use valid profile values
+    valid_profiles = ["postgres", "mongodb", "mongodb-atlas", "all"]
+    found_profile = False
+    for profile in valid_profiles:
+        if f"--profile {profile}" in steps_str:
+            found_profile = True
+            break
+    assert found_profile, (
+        "CI action must use a valid --profile flag (postgres, mongodb, mongodb-atlas, or all)"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) - code / infrastructure changes
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -197,7 +277,7 @@ def test_ci_action_uses_unified_compose():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (agent_config) — documentation/config consistency
+# Pass-to-pass (agent_config) - documentation/config consistency
 # ---------------------------------------------------------------------------
 
 # [agent_config] pass_to_pass

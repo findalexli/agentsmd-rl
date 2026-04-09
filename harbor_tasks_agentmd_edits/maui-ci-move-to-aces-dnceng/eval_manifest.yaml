@@ -15,27 +15,32 @@ checks:
   - id: ci_uitests_pools_split
     type: fail_to_pass
     origin: pr_diff
-    description: "ci-uitests.yml has separate internal/public pool parameters"
+    description: "ci-uitests.yml has separate internal/public pool parameters with correct pool values"
 
   - id: ci_uitests_conditional_pool_selection
     type: fail_to_pass
     origin: pr_diff
-    description: "ci-uitests.yml uses System.TeamProject conditional for pool selection"
+    description: "ci-uitests.yml uses System.TeamProject conditional for pool selection with all pool mappings"
 
   - id: no_hardcoded_netcore_public
     type: fail_to_pass
     origin: pr_diff
-    description: "Pool defaults no longer reference non-existent NetCore-Public pool"
+    description: "Internal pool parameters do not use NetCore-Public pool which doesn't exist in dnceng/internal"
 
   - id: ci_device_tests_conditional_windows
     type: fail_to_pass
     origin: pr_diff
-    description: "ci-device-tests.yml uses conditional pool selection for Windows"
+    description: "ci-device-tests.yml uses conditional pool selection for Windows Device Tests"
 
-  - id: aces_shared_pool_present
+  - id: aces_shared_pool_for_public_android_ios
     type: fail_to_pass
     origin: pr_diff
-    description: "AcesShared pool is used for public Android/iOS tests"
+    description: "AcesShared pool with ACES_VM_SharedPool_Tahoe image is used for public Android/iOS tests"
+
+  - id: netcore1espool_internal_for_internal_windows
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Internal Windows pools use NetCore1ESPool-Internal with correct image demands"
 
   - id: not_stub
     type: pass_to_pass
@@ -46,5 +51,85 @@ checks:
     type: pass_to_pass
     origin: static
     description: "YAML structure is valid and contains expected sections"
+
+  - id: internal_public_pool_counts_match
+    type: pass_to_pass
+    origin: static
+    description: "Number of internal and public pool parameters are equal and complete"
+
+  - id: test_repo_template_files_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All referenced template files exist in the repository"
+
+  - id: test_repo_device_tests_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ci-device-tests.yml is valid YAML with required sections"
+
+  - id: test_repo_device_tests_windows_pool_params_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ci-device-tests.yml has Windows pool parameters defined"
+
+  - id: test_repo_common_templates_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Common template YAML files are syntactically valid"
+
+  - id: test_repo_no_duplicate_parameter_names
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All parameter names in ci-uitests.yml are unique"
+
+  - id: test_repo_eng_common_templates_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All eng/common template files referenced in variables exist"
+
+  - id: test_repo_arcade_templates_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All arcade template files exist in the repository"
+
+  - id: test_repo_all_pipeline_templates_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All YAML template files in eng/pipelines are syntactically valid"
+
+  - id: test_repo_ci_uitests_has_stages
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ci-uitests.yml has a valid stages section with at least one stage"
+
+  - id: test_repo_ci_device_tests_has_stages
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ci-device-tests.yml has a valid stages section with at least one stage"
+
+  - id: test_repo_trigger_and_pr_sections_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Both pipeline files have trigger and pr sections defined"
+
+  - id: test_repo_common_ui_tests_template_has_parameters
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Common UI tests template has required parameter definitions"
+
+  - id: test_repo_common_device_tests_template_has_parameters
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Common device tests template has required parameter definitions"
+
+  - id: test_repo_device_tests_has_target_framework_versions
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ci-device-tests.yml has targetFrameworkVersions parameter with valid structure"
+
+  - id: test_repo_no_duplicate_parameter_names_device_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All parameter names in ci-device-tests.yml are unique"
 
 rubric: []

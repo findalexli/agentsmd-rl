@@ -198,3 +198,166 @@ def test_tab_indentation_in_modified_file():
         f"Tab indentation must dominate: {len(tab_lines)} tab lines vs "
         f"{len(space_only_lines)} space-only lines"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repository CI/CD health checks
+# These verify the repository's own tests/quality checks still pass
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_actionList():
+    """Repo: actionList.ts is valid TypeScript with essential structure (pass_to_pass)."""
+    r = _run_node(r"""
+const fs = require('fs');
+const content = fs.readFileSync('src/vs/platform/actionWidget/browser/actionList.ts', 'utf8');
+
+// Basic sanity checks
+if (content.length < 1000) {
+    console.error('FAIL: File too short');
+    process.exit(1);
+}
+
+// Check file starts with copyright header
+if (!content.includes('Microsoft Corporation')) {
+    console.error('FAIL: Missing copyright header');
+    process.exit(1);
+}
+
+// Check essential imports present
+if (!content.includes('import * as dom from')) {
+    console.error('FAIL: Missing dom import');
+    process.exit(1);
+}
+if (!content.includes('ActionListItemKind')) {
+    console.error('FAIL: Missing ActionListItemKind reference');
+    process.exit(1);
+}
+
+// Check for class exports (basic structure check)
+if (!content.includes('export class')) {
+    console.error('FAIL: Missing exported classes');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"actionList.ts syntax check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_sessionWorkspacePicker():
+    """Repo: sessionWorkspacePicker.ts is valid TypeScript with essential structure (pass_to_pass)."""
+    r = _run_node(r"""
+const fs = require('fs');
+const content = fs.readFileSync('src/vs/sessions/contrib/chat/browser/sessionWorkspacePicker.ts', 'utf8');
+
+// Basic sanity checks
+if (content.length < 1000) {
+    console.error('FAIL: File too short');
+    process.exit(1);
+}
+
+// Check file starts with copyright header
+if (!content.includes('Microsoft Corporation')) {
+    console.error('FAIL: Missing copyright header');
+    process.exit(1);
+}
+
+// Check essential imports present
+if (!content.includes('SubmenuAction')) {
+    console.error('FAIL: Missing SubmenuAction import');
+    process.exit(1);
+}
+if (!content.includes('workspacePicker.browse')) {
+    console.error('FAIL: Missing workspacePicker.browse reference');
+    process.exit(1);
+}
+
+// Check for class exports (basic structure check)
+if (!content.includes('export class')) {
+    console.error('FAIL: Missing exported classes');
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"sessionWorkspacePicker.ts syntax check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_structure_actionWidget():
+    """Repo: actionWidget directory structure is intact (pass_to_pass)."""
+    r = _run_node(r"""
+const fs = require('fs');
+const path = require('path');
+
+const browserDir = 'src/vs/platform/actionWidget/browser';
+const commonDir = 'src/vs/platform/actionWidget/common';
+
+// Check directories exist
+if (!fs.existsSync(browserDir)) {
+    console.error('FAIL: browser directory missing');
+    process.exit(1);
+}
+if (!fs.existsSync(commonDir)) {
+    console.error('FAIL: common directory missing');
+    process.exit(1);
+}
+
+// Check expected files exist
+const expectedFiles = [
+    path.join(browserDir, 'actionList.ts'),
+    path.join(browserDir, 'actionWidget.ts'),
+    path.join(browserDir, 'actionWidgetDropdown.ts'),
+    path.join(commonDir, 'actionWidget.ts')
+];
+
+for (const f of expectedFiles) {
+    if (!fs.existsSync(f)) {
+        console.error('FAIL: Expected file missing: ' + f);
+        process.exit(1);
+    }
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"actionWidget structure check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports_resolve():
+    """Repo: Key imports in modified files use valid relative paths (pass_to_pass)."""
+    r = _run_node(r"""
+const fs = require('fs');
+
+// Check actionList.ts imports
+const actionList = fs.readFileSync('src/vs/platform/actionWidget/browser/actionList.ts', 'utf8');
+const importMatches = actionList.match(/import\s+.*?\s+from\s+['"]([^'"]+)['"];?/g) || [];
+
+// Verify imports use proper relative paths or well-known aliases
+const badImports = [];
+for (const imp of importMatches) {
+    const fromMatch = imp.match(/from\s+['"]([^'"]+)['"]/);
+    if (fromMatch) {
+        const path = fromMatch[1];
+        // Should start with ./, ../, or be a known alias
+        if (!path.startsWith('.') && !path.startsWith('../../../base/') &&
+            !path.startsWith('../../../nls') && !path.startsWith('../../../platform/')) {
+            badImports.push(path);
+        }
+    }
+}
+
+if (badImports.length > 0) {
+    console.error('FAIL: Suspicious imports found: ' + badImports.join(', '));
+    process.exit(1);
+}
+
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Import resolution check failed: {r.stderr}"
+    assert "PASS" in r.stdout

@@ -1,36 +1,94 @@
 {
-  "task": "areal-socket-bind-failure-cleanup",
-  "phase": "validate",
+  "schema_version": 2,
   "verdict": "pass",
-  "note": "nop=0 (4 F2P fail: socket close + exit reraise), gold=1 (11/11 pass). v2 format.",
-  "timestamp": "2026-04-01T12:00:00.000000",
-  "validations": [
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T09:24:40.871062",
+  "total_time": 767.53,
+  "sandbox_id": "icykrrw1fuzqrxi2dlxq4",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 134.31,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_outputs.py: the AST search for __exit__ had a for/else bug - the else clause only triggered if the outer for loop did not break, but it should check if exit_func was actually found. Changed the logic to break from outer loop when __exit__ is found and explicitly check if exit_func is None after the loop.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 245.59
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 293.42,
+      "notes": ""
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.85,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-01T20:15:41.640108",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 0.0,
+      "at": "2026-04-09T01:20:04.436613"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.937287",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 438.02,
+      "at": "2026-04-09T01:20:04.592555"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.512026",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 6822.88,
+      "at": "2026-04-09T06:14:19.393592"
+    },
+    {
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 767.26,
+      "at": "2026-04-09T09:24:40.704895"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 767.53,
+      "at": "2026-04-09T09:24:40.871062"
     }
   ]
 }

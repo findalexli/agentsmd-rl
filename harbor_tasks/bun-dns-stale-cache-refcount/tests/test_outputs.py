@@ -15,8 +15,8 @@ because it parses control flow, not just string presence.
 import json
 import re
 import subprocess
-import sys
 from pathlib import Path
+import sys
 
 REPO = "/workspace/bun"
 DNS_FILE = Path(f"{REPO}/src/bun.js/api/bun/dns.zig")
@@ -114,7 +114,7 @@ def test_isexpired_no_refcount_gate():
     is checked regardless of active connections.
     """
     r = _run_analyzer("""
-import re, sys
+import json, re, sys
 from pathlib import Path
 
 src = Path("/workspace/bun/src/bun.js/api/bun/dns.zig").read_text()
@@ -168,7 +168,7 @@ def test_get_refcount_guard():
     refcount > 0 (use-after-free). Fix: only deinit when refcount == 0.
     """
     r = _run_analyzer("""
-import re, sys, json
+import json, re, sys
 from pathlib import Path
 
 src = Path("/workspace/bun/src/bun.js/api/bun/dns.zig").read_text()
@@ -246,7 +246,7 @@ def test_freeaddrinfo_conditional_valid():
     success callback. Fix: only set valid = false on error.
     """
     r = _run_analyzer("""
-import re, sys, json
+import json, re, sys
 from pathlib import Path
 
 src = Path("/workspace/bun/src/bun.js/api/bun/dns.zig").read_text()
@@ -377,3 +377,61 @@ def test_no_inline_imports():
                        ("freeaddrinfo", freeaddrinfo)]:
         matches = re.findall(r"@import\s*\(", body)
         assert not matches, f"{name} has inline @import()"
+
+
+# ---------------------------------------------------------------------------
+# CI-derived (repo_tests) — pass_to_pass gates from bun repo CI checks
+# ---------------------------------------------------------------------------
+
+# CI check: ban-words.test.ts bans std.debug.print and std.log
+def test_zig_no_debug_prints():
+    """Modified Zig functions must not use debug printing (std.debug.print/std.log)."""
+    _, isexpired, get_fn, freeaddrinfo = _load_functions()
+    for name, body in [("isExpired", isexpired), ("get", get_fn),
+                       ("freeaddrinfo", freeaddrinfo)]:
+        # These are banned by bun's CI (test/internal/ban-words.test.ts)
+        matches = re.findall(r"std\.debug\.(print|dumpStackTrace|assert)", body)
+        assert not matches, f"{name} uses std.debug.*: {matches}"
+        matches = re.findall(r"std\.log\b", body)
+        assert not matches, f"{name} uses std.log: {matches}"
+
+
+# CI check: ban-words.test.ts bans undefined comparisons
+def test_zig_no_undefined_comparisons():
+    """Modified Zig functions must not compare values to undefined (UB)."""
+    _, isexpired, get_fn, freeaddrinfo = _load_functions()
+    for name, body in [("isExpired", isexpired), ("get", get_fn),
+                       ("freeaddrinfo", freeaddrinfo)]:
+        # Direct undefined comparisons are banned in bun's CI
+        # Pattern: " != undefined", " == undefined", "undefined != ", "undefined == "
+        matches = re.findall(r"(?:==|!=)\s*undefined\b|\bundefined\s*(?:==|!=)", body)
+        assert not matches, f"{name} has undefined comparison (UB): {matches}"
+
+
+# CI check: ban-words.test.ts bans .arguments_old
+def test_zig_no_arguments_old():
+    """Modified Zig functions must not use deprecated .arguments_old() API."""
+    _, isexpired, get_fn, freeaddrinfo = _load_functions()
+    for name, body in [("isExpired", isexpired), ("get", get_fn),
+                       ("freeaddrinfo", freeaddrinfo)]:
+        matches = re.findall(r"\.arguments_old\s*\(", body)
+        assert not matches, f"{name} uses deprecated .arguments_old() API"
+
+
+# CI check: ban-words.test.ts bans usingnamespace
+def test_zig_no_usingnamespace():
+    """Modified code must not use usingnamespace (removed in Zig 0.15)."""
+    src, _, _, _ = _load_functions()
+    # Check in the full dns.zig module, not just individual functions
+    matches = re.findall(r"\busingnamespace\b", src)
+    assert not matches, f"dns.zig uses 'usingnamespace' (removed in Zig 0.15)"
+
+
+# CI check: ban-words.test.ts bans std.Thread.Mutex
+def test_zig_no_std_mutex():
+    """Modified Zig functions must use bun.Mutex instead of std.Thread.Mutex."""
+    _, isexpired, get_fn, freeaddrinfo = _load_functions()
+    for name, body in [("isExpired", isexpired), ("get", get_fn),
+                       ("freeaddrinfo", freeaddrinfo)]:
+        matches = re.findall(r"std\.Thread\.Mutex", body)
+        assert not matches, f"{name} uses std.Thread.Mutex (use bun.Mutex instead)"

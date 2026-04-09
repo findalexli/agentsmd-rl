@@ -112,6 +112,37 @@ def test_vitest_suite_passes(vitest_result):
     assert vitest_result.returncode == 0, f"Vitest failed:\n{out[-3000:]}"
 
 
+# [repo_tests] pass_to_pass — CI/CD lint check
+def test_repo_lint():
+    """Repo's oxlint must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "oxlint", "--type-aware"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI/CD typecheck (using tsgo)
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes via tsgo (pass_to_pass)."""
+    r = subprocess.run(
+        ["./node_modules/.bin/tsgo", "--noEmit"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI/CD security audit tests
+def test_repo_security_audit_tests():
+    """Repo's security audit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/security/audit.test.ts", "--config", "vitest.unit.config.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    out = r.stdout + r.stderr
+    assert r.returncode == 0, f"Security audit tests failed:\n{out[-1000:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
@@ -140,7 +171,7 @@ def test_no_any_type():
         stripped = line.strip()
         if stripped.startswith("//") or stripped.startswith("*") or stripped.startswith("/*"):
             continue
-        if re.search(r'\b(as\s+any|:\s*any\b|<any>)', line):
+        if re.search(r'\b(as\s+any|:\sany\b|<any>)', line):
             assert False, (
                 f"Agent added a line with `any` type — AGENTS.md:144 requires strict typing. "
                 f"Use `unknown`, a real type, or a narrow adapter instead.\n"

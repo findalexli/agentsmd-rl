@@ -34,6 +34,9 @@ UNCONDITIONAL_INIT_CHECK = r'''
 Parses the deepseek_v2.py hunks from the patch and traces control flow
 scope to ensure the assignment is NOT nested inside `if self.use_nsa:`
 or `if is_nextn:` conditional blocks.
+
+The fix requires the initialization to be at method-body level (indent <= 8),
+which means it's outside the `if self.use_nsa:` block entirely.
 """
 import sys
 from pathlib import Path
@@ -71,7 +74,7 @@ for line in dsv2.split("\n"):
 if current:
     hunks.append(current)
 
-# Search each hunk for self.ATTR = ... in added lines, then trace scope
+# Search each hunk for self.ATTR = ... in added lines at method-body level
 for hunk in hunks:
     for idx, (tag, line) in enumerate(hunk):
         stripped = line.strip()
@@ -84,29 +87,14 @@ for hunk in hunks:
             indent = len(line) - len(line.lstrip())
 
             # At method-body level (indent <= 8), guaranteed unconditional
+            # This means outside the `if self.use_nsa:` block entirely
             if indent <= 8:
-                print(f"PASS: self.{ATTR} at indent {indent} — method-body level")
+                print(f"PASS: self.{ATTR} at indent {indent} — method-body level (unconditional)")
                 sys.exit(0)
 
-            # Trace backward within this hunk to find nearest enclosing scope
-            in_nsa_or_nextn = False
-            for j in range(idx - 1, -1, -1):
-                _, prev_line = hunk[j]
-                if not prev_line.strip():
-                    continue
-                prev_indent = len(prev_line) - len(prev_line.lstrip())
-                if prev_indent < indent:
-                    ps = prev_line.strip()
-                    if ps.startswith(("if ", "elif ", "else")):
-                        if "use_nsa" in ps or "is_nextn" in ps:
-                            in_nsa_or_nextn = True
-                    break
-
-            if not in_nsa_or_nextn:
-                print(f"PASS: self.{ATTR} at indent {indent} — not inside use_nsa/is_nextn")
-                sys.exit(0)
-
-print(f"FAIL: self.{ATTR} only found inside use_nsa/is_nextn conditionals")
+# If we didn't find any method-body level initialization, FAIL
+print(f"FAIL: self.{ATTR} not initialized at method-body level (indent <= 8)")
+print(f"       It may be inside `if self.use_nsa:` or `if is_nextn:` conditionals.")
 sys.exit(1)
 '''
 
@@ -282,3 +270,77 @@ def test_decoder_layer_threads_topk():
     assert has_unpack, (
         "DeepseekV2Model does not unpack topk_indices from layer call"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — verify repo CI/CD checks pass on base AND fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax_valid():
+    """All Python files have valid syntax (pass_to_pass)."""
+    import py_compile
+    import os
+
+    errors = []
+    for root, dirs, files in os.walk(REPO):
+        # Skip hidden directories and common non-source directories
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in ("__pycache__", "build", "dist")]
+        for file in files:
+            if file.endswith(".py"):
+                filepath = os.path.join(root, file)
+                try:
+                    py_compile.compile(filepath, doraise=True)
+                except py_compile.PyCompileError as e:
+                    errors.append(f"{filepath}: {e}")
+
+    assert not errors, f"Python syntax errors found:\n" + "\n".join(errors[:10])
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_importable():
+    """The slime package is importable after installation (pass_to_pass)."""
+    # This verifies basic package structure is intact
+    r = subprocess.run(
+        ["python3", "-c", "import slime; print('slime imported successfully')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to import slime package:\n{r.stderr}"
+    assert "slime imported successfully" in r.stdout, "slime package import did not succeed"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_patch_file_valid():
+    """The sglang.patch file exists and is valid (pass_to_pass)."""
+    assert PATCH_FILE.exists(), f"Patch file {PATCH_FILE} does not exist"
+
+    # Check that the patch file can be parsed as a unified diff
+    content = PATCH_FILE.read_text()
+
+    # Verify basic patch structure
+    assert "diff --git" in content, "Patch file missing diff headers"
+    assert "---" in content, "Patch file missing --- markers"
+    assert "+++" in content, "Patch file missing +++ markers"
+
+    # Check that deepseek_v2.py is mentioned (the target of this fix)
+    assert "deepseek_v2.py" in content, "Patch file does not mention deepseek_v2.py"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyproject_toml_valid():
+    """pyproject.toml is valid TOML (pass_to_pass)."""
+    import tomllib
+
+    pyproject_path = Path(REPO) / "pyproject.toml"
+    assert pyproject_path.exists(), "pyproject.toml does not exist"
+
+    content = pyproject_path.read_text()
+    try:
+        config = tomllib.loads(content)
+    except Exception as e:
+        assert False, f"Invalid TOML in pyproject.toml: {e}"
+
+    # Basic structure checks
+    assert "build-system" in config, "Missing build-system section"
+    assert "tool" in config, "Missing tool section"
+    assert "pytest" in config.get("tool", {}), "Missing pytest configuration"

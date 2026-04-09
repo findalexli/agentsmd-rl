@@ -390,3 +390,90 @@ def test_no_es_module_imports():
         f"Found {len(non_type_imports)} non-type import statements — "
         "src/js/ modules must use require(), not import (src/js/CLAUDE.md:15)"
     )
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — verified working on base commit
+# These ensure the fix doesn't break existing repo conventions
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass — from .github/workflows/lint.yml (adapted)
+def test_repo_no_strict_equality_undefined():
+    """Repo JS convention: Prefer strict equality (===/!==) over loose (==/!=) for undefined.
+
+    Adapted from ban-words.test.ts which targets Zig code. For JS/TS, we only
+    check that strict equality is used, not loose equality.
+    # AST-only because: Bun cannot be compiled/run in Docker.
+    """
+    src, _ = _read_source()
+    # Only check for loose equality with undefined (bad practice in JS)
+    # Allow: === undefined, !== undefined
+    # Avoid: == undefined, != undefined
+    loose_patterns = [
+        r"(?<![=!])==\s*undefined",  # == undefined but not === undefined
+        r"undefined\s*==(?!=)",        # undefined == but not undefined ===
+        r"(?<![=!])!=\s*undefined",  # != undefined but not !== undefined
+        r"undefined\s*!=(?!=)",        # undefined != but not undefined !==
+    ]
+    for pattern in loose_patterns:
+        matches = re.findall(pattern, src)
+        assert len(matches) == 0, (
+            f"Found loose equality with undefined in assert.ts — "
+            "use === or !== instead (repo JS convention)"
+        )
+
+
+# [repo_ci] pass_to_pass — from .github/workflows/format.yml (prettier check)
+def test_repo_basic_prettier_format():
+    """Repo convention: No trailing whitespace, consistent indentation.
+
+    Basic formatting check that doesn't require prettier CLI.
+    Full prettier check requires 'bun' binary which isn't in container.
+    # AST-only because: Bun/prettier CLI not available in Docker.
+    """
+    src_lines = ASSERT_FILE.read_text().splitlines()
+    for i, line in enumerate(src_lines, 1):
+        # No trailing whitespace
+        if line != line.rstrip():
+            assert False, f"Line {i} has trailing whitespace — violates repo formatting convention"
+
+
+# [repo_ci] pass_to_pass — from package.json typecheck (partial)
+def test_repo_ts_no_bare_intrinsics():
+    """TypeScript sanity: Bun $-intrinsics should not appear in final output.
+
+    The fix uses .$call which is a Bun intrinsic. We verify the file
+    structure is compatible with Bun's TypeScript processing.
+    # AST-only because: Full tsc requires Bun build environment.
+    """
+    src, stripped = _read_source()
+    # Check that $-prefixed identifiers follow Bun conventions
+    # They should only be property accesses (.$call, .$set, etc.), not standalone vars
+    bare_intrinsics = re.findall(r"\b\$[a-zA-Z_][a-zA-Z0-9_]*\b(?![\(\.])", stripped)
+    # Filter out property access contexts we already checked
+    invalid = [m for m in bare_intrinsics if not re.search(rf"\.{re.escape(m)}\b", stripped)]
+    assert len(invalid) == 0, (
+        f"Found {len(invalid)} bare $-intrinsics that may cause TypeScript issues"
+    )
+
+
+# [repo_ci] pass_to_pass — from .github/workflows/lint.yml (oxlint)
+def test_repo_no_debug_log_statements():
+    """Lint convention: No debug log statements left in production code.
+
+    Checks for common debug patterns that shouldn't be in committed code.
+    # AST-only because: oxlint CLI requires Bun/npm environment.
+    """
+    src, _ = _read_source()
+    debug_patterns = [
+        r"console\.log\s*\(",
+        r"console\.debug\s*\(",
+        r"console\.warn\s*\(",
+    ]
+    for pattern in debug_patterns:
+        matches = re.findall(pattern, src)
+        # Allow console.error (used for actual errors) but not log/debug/warn
+        if "console.log" in pattern or "console.debug" in pattern or "console.warn" in pattern:
+            assert len(matches) == 0, (
+                f"Found {len(matches)} {pattern} statements — "
+                "remove debug logging before committing (repo lint convention)"
+            )

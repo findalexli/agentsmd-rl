@@ -1,11 +1,97 @@
 {
-  "verdict": "fail",
+  "schema_version": 2,
+  "verdict": "pass",
   "nop_reward": 0.0,
-  "gold_reward": 0.0,
-  "validated_at": "2026-04-08T21:35:20.117990",
-  "sandbox_id": "isx0oiq9w8wx69zf7mhvm",
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:00:32.418703",
+  "total_time": 1395.04,
+  "sandbox_id": "i3ifm2hx05eig5xfyqasq",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 134.78
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "completed_at": "2026-04-09T08:55:00Z",
+      "ci_commands_discovered": [
+        "ruff check gradio --select=E,W,F --ignore=E501 --no-fix",
+        "python -m py_compile gradio/queueing.py",
+        "ruff format --check gradio/queueing.py (would pass on modified file)"
+      ],
+      "ci_commands_added": [
+        {
+          "test_id": "test_repo_ruff_check_gradio",
+          "command": "ruff check gradio --select=E,W,F --ignore=E501 --no-fix",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "status": "existing - verified working on both base commit and gold patch"
+        },
+        {
+          "test_id": "test_repo_py_compile_gradio",
+          "command": "python -m py_compile gradio/queueing.py",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "status": "existing - verified working on both base commit and gold patch"
+        }
+      ],
+      "notes": [
+        "Repo is gradio-app/gradio (Python library)",
+        "CI/CD found in .github/workflows/test-python.yml and test-hygiene.yml",
+        "Full test suite requires complex dependencies (gradio imports many packages)",
+        "Only added fast, reliable checks: ruff lint and py_compile syntax check",
+        "All 9 tests pass on both base commit (0cbbbce8) and with gold patch applied",
+        "Docker build succeeded on first attempt"
+      ]
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 147.53,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "icr": 0.5,
+      "icr_note": "Judge API key not configured - 0.5 is neutral default",
+      "attempts": 2,
+      "notes": "Fixed test_outputs.py to use AST extraction to get actual repo function instead of embedded copy. Original test had fixed function which caused tests to always pass even on buggy code.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 213.11
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.76,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:00:32.254527"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1395.04,
+      "at": "2026-04-09T02:00:32.418703"
+    }
+  ]
 }

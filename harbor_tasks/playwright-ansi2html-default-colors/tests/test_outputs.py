@@ -18,8 +18,10 @@ ANSI2HTML = f"{REPO}/packages/web/src/ansi2html.ts"
 
 def _ansi2html(text: str, fg: str, bg: str) -> str:
     """Run ansi2html via tsx and return the HTML output."""
+    # tsx exports module with default property containing the function
     script = (
-        f'import {{ ansi2html }} from "{ANSI2HTML}";\n'
+        f'import mod from "{ANSI2HTML}";\n'
+        f'const ansi2html = mod.ansi2html || mod;\n'
         f'console.log(ansi2html({json.dumps(text)}, '
         f'{{ fg: {json.dumps(fg)}, bg: {json.dumps(bg)} }}));\n'
     )
@@ -99,7 +101,7 @@ def test_ansi_fg_overrides_default():
 
 def test_typescript_imports():
     """The ansi2html.ts module imports and executes without errors."""
-    script = f'import {{ ansi2html }} from "{ANSI2HTML}"; console.log("ok");'
+    script = f'import mod from "{ANSI2HTML}"; console.log("ok");'
     fd, tmp = tempfile.mkstemp(suffix=".mts")
     try:
         with os.fdopen(fd, "w") as f:
@@ -112,3 +114,36 @@ def test_typescript_imports():
         assert "ok" in r.stdout
     finally:
         os.unlink(tmp)
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repository CI/CD checks
+# ---------------------------------------------------------------------------
+
+
+def _run_with_npm_ci(cmd, timeout=120, cwd=REPO):
+    """Helper to run commands after npm ci in a single shell session."""
+    full_cmd = f"npm ci && {cmd}"
+    r = subprocess.run(
+        ["bash", "-c", full_cmd],
+        capture_output=True, text=True, timeout=timeout, cwd=cwd,
+    )
+    return r
+
+
+def test_repo_eslint_modified():
+    """ESLint passes on modified packages (pass_to_pass)."""
+    r = _run_with_npm_ci("./node_modules/.bin/eslint packages/web/src/ packages/trace-viewer/src/", timeout=180)
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_build():
+    """Repository builds successfully (pass_to_pass)."""
+    r = _run_with_npm_ci("npm run build", timeout=300)
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lint_packages():
+    """Package consistency check passes (pass_to_pass)."""
+    r = _run_with_npm_ci("npm run lint-packages", timeout=120)
+    assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:]}"

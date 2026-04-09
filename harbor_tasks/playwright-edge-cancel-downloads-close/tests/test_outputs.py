@@ -22,6 +22,46 @@ CR_BROWSER_TS = f"{REPO}/packages/playwright-core/src/server/chromium/crBrowser.
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm ci 2>&1 >/dev/null && npm run build 2>&1 >/dev/null && npm run tsc"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [static] pass_to_pass
+def test_repo_check_deps():
+    """Repo's dependency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm ci 2>&1 >/dev/null && npm run build 2>&1 >/dev/null && npm run check-deps"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Check deps failed:\n{r.stderr[-500:]}"
+
+
+# [static] pass_to_pass
+def test_repo_lint_tests():
+    """Repo's test linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm ci 2>&1 >/dev/null && npm run build 2>&1 >/dev/null && npm run lint-tests"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint tests failed:\n{r.stderr[-500:]}"
+
+
+# [static] pass_to_pass
+def test_repo_build():
+    """Repo's build passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm ci 2>&1 >/dev/null && npm run build 2>&1 >/dev/null"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# [static] pass_to_pass
 def test_syntax_check():
     """Modified TypeScript files have valid syntax (balanced braces)."""
     for fpath in [DOWNLOAD_TS, CR_BROWSER_TS]:
@@ -68,13 +108,21 @@ for (let i = 0; i < lines.length; i++) {
     // Track brace depth for constructor
     if (/^\s{2}constructor\s*\(/.test(line)) inConstructor = true;
 
+    // Save current depth BEFORE counting braces on this line
+    const currentDepth = braceDepth;
+
     for (const ch of line) {
         if (ch === '{') braceDepth++;
         if (ch === '}') braceDepth--;
     }
 
-    // At class body level (depth 1), look for cancel method
-    if (braceDepth === 1 && /^\s{2}cancel\s*\(/.test(line)) {
+    // Exit constructor when we return to class body level
+    if (inConstructor && braceDepth === 1) {
+        inConstructor = false;
+    }
+
+    // At class body level (depth 1, not in constructor), look for cancel method
+    if (!inConstructor && currentDepth === 1 && /^\s{2}cancel\s*\(/.test(line)) {
         foundCancelMethod = true;
     }
 
@@ -114,8 +162,9 @@ def test_context_close_cancels_downloads():
     """CRBrowserContext cancels all downloads before disposing the browser context."""
     src = Path(CR_BROWSER_TS).read_text()
 
-    # Find the disposeBrowserContext call
-    dispose_idx = src.find("disposeBrowserContext")
+    # Find the actual disposeBrowserContext call (not the comment)
+    # Look for the pattern with the await and send call
+    dispose_idx = src.find("send('Target.disposeBrowserContext'")
     assert dispose_idx != -1, "disposeBrowserContext call not found in crBrowser.ts"
 
     # The 50 lines before disposeBrowserContext must reference download cancellation

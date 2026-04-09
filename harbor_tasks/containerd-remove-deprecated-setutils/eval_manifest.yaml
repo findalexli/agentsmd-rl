@@ -1,0 +1,89 @@
+task_id: "containerd-remove-deprecated-setutils"
+source_pr: "containerd/containerd#13031"
+title: "Remove deprecated Int and String set types from internal/cri/setutils"
+
+# Every check maps 1:1 to a test function in test_outputs.py
+checks:
+  - id: "int_type_removed"
+    description: "Deprecated Int type file (int.go) should be removed from setutils package"
+    type: "fail_to_pass"
+    test: "test_int_type_removed"
+    file: "internal/cri/setutils/int.go"
+    expected_state: "deleted"
+
+  - id: "string_type_removed"
+    description: "Deprecated String type file (string.go) should be removed from setutils package"
+    type: "fail_to_pass"
+    test: "test_string_type_removed"
+    file: "internal/cri/setutils/string.go"
+    expected_state: "deleted"
+
+  - id: "cast_function_removed"
+    description: "Internal cast helper function should be removed from set.go"
+    type: "fail_to_pass"
+    test: "test_cast_function_removed"
+    file: "internal/cri/setutils/set.go"
+
+  - id: "generic_set_compiles"
+    description: "Generic Set type should continue to compile without deprecated types"
+    type: "pass_to_pass"
+    test: "test_generic_set_still_compiles"
+
+  - id: "merge_string_slices_works"
+    description: "MergeStringSlices should work correctly using generic Set instead of deprecated String type"
+    type: "fail_to_pass"
+    test: "test_merge_string_slices_behavior"
+    file: "internal/cri/util/strings.go"
+
+  - id: "util_package_compiles"
+    description: "util package should compile after removing deprecated dependencies"
+    type: "pass_to_pass"
+    test: "test_util_package_compiles"
+
+  - id: "newstring_newint_removed"
+    description: "NewString and NewInt functions should be removed from the package"
+    type: "fail_to_pass"
+    test: "test_deprecated_newstring_not_used"
+
+  # Pass-to-pass tests: repo CI/CD checks
+  - id: "repo_build_setutils"
+    description: "Repo's setutils package builds successfully"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    test: "test_repo_build_setutils"
+
+  - id: "repo_build_util"
+    description: "Repo's util package builds successfully"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    test: "test_repo_build_util"
+
+  - id: "repo_test_util"
+    description: "Repo's util package tests pass"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    test: "test_repo_test_util"
+
+  - id: "repo_vet_cri"
+    description: "Repo's CRI packages pass go vet"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    test: "test_repo_vet_cri"
+
+  - id: "repo_build_cri_all"
+    description: "All CRI packages build together — catches downstream import breakage"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    test: "test_repo_build_cri_all"
+
+  - id: "repo_vet_cri_all"
+    description: "All CRI packages pass go vet"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    test: "test_repo_vet_cri_all"
+
+# No agent config files exist in this repo at base commit, so no agent_config checks
+agent_config: []
+
+# No rubric rules (this is a straightforward cleanup with clear programmatic checks)
+rubric: []

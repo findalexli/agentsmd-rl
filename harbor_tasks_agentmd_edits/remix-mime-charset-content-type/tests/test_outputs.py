@@ -40,6 +40,61 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD tests (pass_to_pass, repo_tests)
+# These ensure the repo's own CI/CD checks pass on both base commit and after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_mime_package_tests():
+    """Repo's @remix-run/mime package tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/mime", "test"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Mime package tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_mime_package_typecheck():
+    """Repo's @remix-run/mime package typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/mime", "typecheck"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Mime package typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_response_package_tests():
+    """Repo's @remix-run/response package tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/response", "test"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Response package tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_response_package_typecheck():
+    """Repo's @remix-run/response package typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/response", "typecheck"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Response package typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_changes_validate():
+    """Repo's changes file validation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "changes:validate"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Changes validate failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

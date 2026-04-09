@@ -58,7 +58,7 @@ def test_advance_has_underflow_guard():
 # ---------------------------------------------------------------------------
 
 def test_braces_zig_compiles():
-    """src/shell/braces.zig must have valid Zig syntax."""
+    """src/shell/braces.zig must have valid Zig syntax (pass_to_pass)."""
     braces_file = Path(f"{REPO}/src/shell/braces.zig")
 
     # Basic Zig syntax check using zig fmt
@@ -69,6 +69,38 @@ def test_braces_zig_compiles():
         timeout=30,
     )
     assert r.returncode == 0, f"braces.zig has syntax errors:\n{r.stderr.decode()}"
+
+
+def test_braces_zig_ast_check():
+    """src/shell/braces.zig must pass Zig AST check (pass_to_pass)."""
+    braces_file = Path(f"{REPO}/src/shell/braces.zig")
+
+    # Zig AST check validates semantic correctness (types, imports, etc.)
+    r = subprocess.run(
+        ["zig", "ast-check", str(braces_file)],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"braces.zig failed AST check:\n{r.stderr.decode()[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo CI) — repo's CI/CD checks
+# ---------------------------------------------------------------------------
+
+def test_repo_zig_ast_check_braces():
+    """Repo CI: zig ast-check on braces.zig (pass_to_pass)."""
+    # This is a repo CI check - validates AST correctness
+    # Mirrors the repo's format.yml which runs zig fmt/ast-check
+    r = subprocess.run(
+        ["zig", "ast-check", "src/shell/braces.zig"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"zig ast-check on braces.zig failed:\n{r.stderr[-500:]}"
 
 
 def test_no_regression_in_brace_parsing():

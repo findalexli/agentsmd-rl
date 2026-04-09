@@ -73,6 +73,22 @@ checks:
       lines: "109"
       commit: "4752aca926624efdeb62f2f43b606f5090be8903"
 
+  # [repo_tests] pass_to_pass - CI/CD quality checks
+  - id: test_repo_file_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's extension files follow expected structure"
+
+  - id: test_repo_no_debug_code
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No console.log or debugger statements left in production code"
+
+  - id: test_repo_import_validity
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Import paths in msteams extension are well-formed and don't escape package"
+
 rubric:
   - rule: "Language: TypeScript (ESM). Prefer strict typing; avoid `any`."
     source:

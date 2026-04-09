@@ -5,6 +5,11 @@ PR:   21471
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
+
+P2P tests enriched from repo CI/CD:
+- ruff, black, isort (existing)
+- codespell (from pre-commit)
+- AST check (from pre-commit check-ast)
 """
 
 import ast
@@ -233,6 +238,71 @@ print("PASS")
 ''')
     assert r.returncode == 0, f"Logging check failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+def test_repo_ruff_check():
+    """Repo's ruff lint (F401, F821) passes on srt/managers (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821", f"{REPO}/python/sglang/srt/managers/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_black_check():
+    """Repo's black formatting passes on srt/managers (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "black", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["black", "--check", f"{REPO}/python/sglang/srt/managers/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black check failed:\n{r.stderr}"
+
+
+def test_repo_isort_check():
+    """Repo's isort import ordering passes on srt/managers (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "isort", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["isort", "--check", f"{REPO}/python/sglang/srt/managers/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Isort check failed:\n{r.stderr}"
+
+
+def test_repo_codespell_check():
+    """Repo's codespell passes on srt/managers (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "codespell", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["codespell", f"{REPO}/python/sglang/srt/managers/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Codespell check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_precommit_ast_check():
+    """Target file AST check (pass_to_pass) - from pre-commit check-ast."""
+    r = subprocess.run(
+        ["python3", "-c", f"import ast; ast.parse(open('{TARGET}').read())"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST check failed:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

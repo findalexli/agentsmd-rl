@@ -1,49 +1,52 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-04-01T20:15:41.793292",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:13:43.188683",
+  "total_time": 6012.56,
+  "sandbox_id": "iool2t5u2o45s1am6rq86",
+  "backend": "glm",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 218.63,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-04-02T04:34:55-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 219.74,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-04-02T10:48:33.901397",
-      "phase": "e2b_validate_phase9",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build succeeds, NOP test reward=0 (fail-to-pass tests correctly fail on buggy base code), Gold test reward=1 (all 9 tests pass after gold fix applied), rubric is empty so no judge needed."
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T14:28:08.979434",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.681714",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6012.56,
+      "at": "2026-04-09T07:13:43.188683"
     }
   ]
 }

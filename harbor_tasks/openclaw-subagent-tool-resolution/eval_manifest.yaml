@@ -90,6 +90,42 @@ checks:
       lines: "28-31"
       commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
 
+  # Repo CI/CD pass_to_pass gates (p2p enrichment)
+  - id: test_repo_oxlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's oxlint passes on the codebase"
+
+  - id: test_repo_plugins_unit
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's plugin unit tests pass (81 test files, ~711 tests)"
+
+  - id: test_repo_contracts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's contracts tests pass (13 test files, ~124 tests)"
+
+  - id: test_repo_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's formatting check passes on tools.ts"
+
+  - id: test_repo_bundled_plugin_metadata
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's bundled plugin metadata check passes"
+
+  - id: test_repo_bundled_provider_auth
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's bundled provider auth env vars check passes"
+
+  - id: test_repo_no_conflict_markers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's no-conflict-markers check passes"
+
 rubric:
   - rule: "Keep loader behavior aligned with the documented Plugin SDK and manifest contracts. Do not create private backdoors that bundled plugins can use but external plugins cannot."
     source:

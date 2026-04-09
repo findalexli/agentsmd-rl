@@ -56,6 +56,26 @@ checks:
     origin: repo_tests
     description: "Cargo.lock is consistent with Cargo.toml workspace changes"
 
+  - id: repo_cargo_metadata
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Cargo metadata is valid and parseable on base commit"
+
+  - id: repo_cargo_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Cargo check passes on deno_bench_util at base commit"
+
+  - id: repo_rustfmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo code follows rustfmt formatting"
+
+  - id: repo_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: "deno_bench_util passes clippy lints"
+
 rubric:
   # Soft rules from CLAUDE.md - only if LLM_JUDGE=1
   - rule: "Keep the root of the repository clean. When adding anything to top-level, it must be discussed."

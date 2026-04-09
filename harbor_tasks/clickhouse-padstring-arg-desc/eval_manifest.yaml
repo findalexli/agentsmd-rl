@@ -1,0 +1,95 @@
+source_pr:
+  repo: ClickHouse/ClickHouse
+  number: 102106
+  title: "`left/rightPad`: Fix argument description (follow-up to #101951)"
+  merge_commit: dea580e0abc03ab181a4d2bc2bc8a65e599216ae
+  base_commit: a77cd4c5a6ede8a2d5da637a75348a4cc055c007
+
+task:
+  name: clickhouse-padstring-arg-desc
+  title: "Fix argument descriptions in leftPad/rightPad functions"
+  description: |
+    The leftPad and rightPad functions in src/Functions/padString.cpp have
+    incorrect argument descriptions that confuse users. The descriptions
+    currently say "Array" when they should say "String" or "FixedString",
+    and "const UInt*" when it should be "UInt*".
+
+  target_files:
+    - src/Functions/padString.cpp
+
+checks:
+  # ==========================================================================
+  # FAIL-TO-PASS TESTS (must fail on base commit, pass after gold patch)
+  # ==========================================================================
+
+  - id: test_padstring_syntax_valid
+    type: fail_to_pass
+    origin: pr_diff
+    description: "C++ source compiles syntactically (clang -fsyntax-only)"
+    notes: |
+      Behavioral test that invokes the compiler to verify the source code
+      is syntactically valid. This catches syntax errors from bad edits.
+
+  - id: test_string_argument_description
+    type: fail_to_pass
+    origin: pr_diff
+    description: "'string' argument description is 'String or FixedString' not 'Array'"
+    notes: |
+      Static analysis check that verifies the correct description string
+      is present in the FunctionArgumentDescriptors for the string argument.
+
+  - id: test_length_argument_description
+    type: fail_to_pass
+    origin: pr_diff
+    description: "'length' argument description is 'UInt*' not 'const UInt*'"
+    notes: |
+      Static analysis check that verifies the correct description string
+      is present for the length argument.
+
+  - id: test_pad_string_argument_description
+    type: fail_to_pass
+    origin: pr_diff
+    description: "'pad_string' argument description is 'String' not 'Array'"
+    notes: |
+      Static analysis check that verifies the correct description string
+      is present for the optional pad_string argument.
+
+  # ==========================================================================
+  # PASS-TO-PASS TESTS (must pass on both base and fix commits)
+  # ==========================================================================
+
+  - id: test_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No trailing whitespace in modified files"
+
+  - id: test_file_not_empty_and_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified C++ file is valid and non-empty"
+
+  - id: test_no_tabs_for_indentation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Uses spaces for indentation, not tabs"
+
+  - id: test_include_directives_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Include directives follow project format conventions"
+
+  - id: test_validate_function_arguments_usage
+    type: pass_to_pass
+    origin: repo_tests
+    description: "validateFunctionArguments API is used correctly"
+
+  - id: test_allman_brace_style
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: .claude/CLAUDE.md
+      rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
+    description: "Code follows Allman brace style conventions"
+
+# Rubric for LLM evaluation (soft/subjective rules)
+rubric: []

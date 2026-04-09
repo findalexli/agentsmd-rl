@@ -58,24 +58,23 @@ def test_context_propagates_to_fallback_simple():
     # normal rendering, not fiber propagation. A memo barrier ensures the ONLY
     # path for context to reach FallbackConsumer is fiber-level propagation —
     # which is exactly what the fix corrects.
-    jest_code = """\
-'use strict';
+    jest_code = """\'use strict\';
 
 let React;
 let ReactNoop;
 let act;
 
-describe('_tmp_ctx_fallback_simple', () => {
+describe(\'_tmp_ctx_fallback_simple\', () => {
     beforeEach(() => {
         jest.resetModules();
-        React = require('react');
-        ReactNoop = require('react-noop-renderer');
-        act = require('internal-test-utils').act;
+        React = require(\'react\');
+        ReactNoop = require(\'react-noop-renderer\');
+        act = require(\'internal-test-utils\').act;
     });
 
-    it('context change updates fallback consumer while suspended (memo barrier)', async () => {
+    it(\'context change updates fallback consumer while suspended (memo barrier)\', async () => {
         const {useState, useContext, Suspense, memo} = React;
-        const Context = React.createContext('A');
+        const Context = React.createContext(\'A\');
         let setContext;
         let renderedValue = null;
         const pendingPromise = new Promise(() => {}); // never resolves
@@ -91,7 +90,7 @@ describe('_tmp_ctx_fallback_simple', () => {
         });
 
         function App() {
-            const [value, setValue] = useState('A');
+            const [value, setValue] = useState(\'A\');
             setContext = setValue;
             return React.createElement(
                 Context.Provider, {value},
@@ -112,19 +111,19 @@ describe('_tmp_ctx_fallback_simple', () => {
         await act(() => { root.render(React.createElement(App)); });
 
         // Fallback is showing — initial context value
-        expect(renderedValue).toBe('A');
+        expect(renderedValue).toBe(\'A\');
 
         // Update context while still suspended
-        await act(() => { setContext('B'); });
+        await act(() => { setContext(\'B\'); });
 
-        // Without fix: renderedValue stays 'A' (fallback skipped during propagation)
-        // With fix:    renderedValue updates to 'B'
-        expect(renderedValue).toBe('B');
+        // Without fix: renderedValue stays \'A\' (fallback skipped during propagation)
+        // With fix:    renderedValue updates to \'B\'
+        expect(renderedValue).toBe(\'B\');
     });
 
-    it('multiple context updates all reach fallback via fiber propagation', async () => {
+    it(\'multiple context updates all reach fallback via fiber propagation\', async () => {
         const {useState, useContext, Suspense, memo} = React;
-        const Context = React.createContext('v0');
+        const Context = React.createContext(\'v0\');
         let setContext;
         const renderLog = [];
         const pendingPromise = new Promise(() => {});
@@ -137,7 +136,7 @@ describe('_tmp_ctx_fallback_simple', () => {
         });
 
         function App() {
-            const [value, setValue] = useState('v0');
+            const [value, setValue] = useState(\'v0\');
             setContext = setValue;
             return React.createElement(
                 Context.Provider, {value},
@@ -156,12 +155,12 @@ describe('_tmp_ctx_fallback_simple', () => {
 
         const root = ReactNoop.createRoot();
         await act(() => { root.render(React.createElement(App)); });
-        await act(() => { setContext('v1'); });
-        await act(() => { setContext('v2'); });
+        await act(() => { setContext(\'v1\'); });
+        await act(() => { setContext(\'v2\'); });
 
         // Each context update must trigger a re-render of the fallback consumer
         const lastValue = renderLog[renderLog.length - 1];
-        expect(lastValue).toBe('v2');
+        expect(lastValue).toBe(\'v2\');
         // At minimum initial + 2 updates = 3 renders
         expect(renderLog.length).toBeGreaterThanOrEqual(3);
     });
@@ -177,24 +176,23 @@ describe('_tmp_ctx_fallback_simple', () => {
 # [pr_diff] fail_to_pass
 def test_context_propagates_to_fallback_memo_boundary():
     """Context reaches fallback consumer even when React.memo prevents Suspense wrapper re-render."""
-    jest_code = """\
-'use strict';
+    jest_code = """\'use strict\';
 
 let React;
 let ReactNoop;
 let act;
 
-describe('_tmp_ctx_fallback_memo', () => {
+describe(\'_tmp_ctx_fallback_memo\', () => {
     beforeEach(() => {
         jest.resetModules();
-        React = require('react');
-        ReactNoop = require('react-noop-renderer');
-        act = require('internal-test-utils').act;
+        React = require(\'react\');
+        ReactNoop = require(\'react-noop-renderer\');
+        act = require(\'internal-test-utils\').act;
     });
 
-    it('context change reaches fallback through memo boundary', async () => {
+    it(\'context change reaches fallback through memo boundary\', async () => {
         const {useState, useContext, Suspense, memo} = React;
-        const Context = React.createContext('X');
+        const Context = React.createContext(\'X\');
         let setContext;
         let renderedValue = null;
         const pendingPromise = new Promise(() => {});
@@ -207,7 +205,7 @@ describe('_tmp_ctx_fallback_memo', () => {
         });
 
         function App() {
-            const [value, setValue] = useState('X');
+            const [value, setValue] = useState(\'X\');
             setContext = setValue;
             return React.createElement(
                 Context.Provider, {value},
@@ -226,15 +224,15 @@ describe('_tmp_ctx_fallback_memo', () => {
 
         const root = ReactNoop.createRoot();
         await act(() => { root.render(React.createElement(App)); });
-        expect(renderedValue).toBe('X');
+        expect(renderedValue).toBe(\'X\');
 
-        await act(() => { setContext('Y'); });
-        expect(renderedValue).toBe('Y');
+        await act(() => { setContext(\'Y\'); });
+        expect(renderedValue).toBe(\'Y\');
     });
 
-    it('context change with multiple memo layers still reaches fallback', async () => {
+    it(\'context change with multiple memo layers still reaches fallback\', async () => {
         const {useState, useContext, Suspense, memo} = React;
-        const Context = React.createContext('p');
+        const Context = React.createContext(\'p\');
         let setContext;
         let renderedValue = null;
         const pendingPromise = new Promise(() => {});
@@ -251,7 +249,7 @@ describe('_tmp_ctx_fallback_memo', () => {
         });
 
         function App() {
-            const [value, setValue] = useState('p');
+            const [value, setValue] = useState(\'p\');
             setContext = setValue;
             return React.createElement(
                 Context.Provider, {value},
@@ -270,10 +268,10 @@ describe('_tmp_ctx_fallback_memo', () => {
 
         const root = ReactNoop.createRoot();
         await act(() => { root.render(React.createElement(App)); });
-        expect(renderedValue).toBe('p');
+        expect(renderedValue).toBe(\'p\');
 
-        await act(() => { setContext('q'); });
-        expect(renderedValue).toBe('q');
+        await act(() => { setContext(\'q\'); });
+        expect(renderedValue).toBe(\'q\');
     });
 });
 """
@@ -298,5 +296,31 @@ def test_existing_context_propagation_tests():
     )
     assert r.returncode == 0, (
         f"Regression in ReactContextPropagation suite:\n"
+        f"{r.stdout.decode()[-3000:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """ESLint must pass on ReactFiberNewContext.js (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint", TARGET],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"ESLint failed on ReactFiberNewContext.js:\n"
+        f"{r.stdout.decode()[-1000:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_reconciler_tests():
+    """React reconciler test suite must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--silent", "--no-watchman", "--testPathPattern", "react-reconciler"],
+        cwd=REPO, capture_output=True, timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"React reconciler tests failed:\n"
         f"{r.stdout.decode()[-3000:]}\n{r.stderr.decode()[-500:]}"
     )

@@ -32,6 +32,24 @@ def test_ts_files_readable():
         assert len(content) > 100, f"{f.name} must have substantial content"
 
 
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes via bun turbo (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+def test_repo_app_typecheck():
+    """packages/app TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "run", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=REPO / "packages/app",
+    )
+    assert r.returncode == 0, f"App typecheck failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
 # ── Fail-to-pass: Code behavior ───────────────────────────────────────
 
 

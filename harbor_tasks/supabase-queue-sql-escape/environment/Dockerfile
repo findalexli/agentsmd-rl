@@ -11,6 +11,9 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 # tsx for running TypeScript directly in tests
 RUN npm install -g tsx
 
+# pnpm for running repo CI/CD tests (typecheck, lint)
+RUN npm install -g pnpm@10.24.0
+
 # Clone repo at base commit (partial clone for large monorepo)
 RUN git init /workspace/supabase && \
     cd /workspace/supabase && \

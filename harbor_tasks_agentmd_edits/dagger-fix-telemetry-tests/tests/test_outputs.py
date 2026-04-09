@@ -67,6 +67,47 @@ def test_syntax_check():
         )
 
 
+# [repo_tests] pass_to_pass - Repo CI/CD: go build on dagql/idtui
+def test_repo_build_idtui():
+    """Repo's go build ./dagql/idtui passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "build", "./dagql/idtui"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"go build ./dagql/idtui failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Repo CI/CD: go vet on dagql/idtui
+def test_repo_vet_idtui():
+    """Repo's go vet ./dagql/idtui passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "vet", "./dagql/idtui"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"go vet ./dagql/idtui failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Repo CI/CD: gofmt check on dagql/idtui
+def test_repo_gofmt_idtui():
+    """Repo's gofmt check on dagql/idtui passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "gofmt -d dagql/idtui/*.go"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    # gofmt -d returns empty output if files are properly formatted
+    assert r.stdout == "", f"gofmt found formatting issues:\n{r.stdout[:500]}"
+    assert r.returncode == 0, f"gofmt command failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

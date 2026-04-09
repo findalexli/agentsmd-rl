@@ -202,3 +202,93 @@ def test_json5_parses_valid_configs():
         assert r.returncode == 0, f"JSON5 failed to parse valid config: {config_str}"
         result = json.loads(r.stdout.decode().strip())
         assert result == expected, f"JSON5 parsed {config_str} as {result}, expected {expected}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """Repo's playground package.json is valid JSON (pass_to_pass)."""
+    pkg = json.loads(Path(PACKAGE_JSON).read_text())
+    assert "dependencies" in pkg, "package.json must have dependencies"
+    assert "playground" in pkg.get("name", ""), "package name should be playground"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_compilation_ts_parsable():
+    """Repo's compilation.ts is syntactically valid JavaScript (pass_to_pass)."""
+    # Use Node.js to verify the file parses without errors
+    r = subprocess.run(
+        ["node", "--check", COMPILATION_TS],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"compilation.ts has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_config_editor_tsx_valid():
+    """Repo's ConfigEditor.tsx has valid TSX structure (pass_to_pass)."""
+    src = Path(CONFIG_EDITOR_TSX).read_text()
+    assert len(src) > 0, "ConfigEditor.tsx must not be empty"
+    # TSX files should have JSX syntax - check for basic patterns
+    assert "<" in src and ">" in src, "ConfigEditor.tsx should contain JSX tags"
+    # Check for balanced braces (basic syntax check)
+    open_braces = src.count("{")
+    close_braces = src.count("}")
+    assert open_braces == close_braces, \
+        f"ConfigEditor.tsx: Unbalanced braces ({open_braces} open, {close_braces} close)"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_default_store_ts_parsable():
+    """Repo's defaultStore.ts is syntactically valid JavaScript (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", DEFAULT_STORE_TS],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"defaultStore.ts has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_syntax_errors_in_modified_files():
+    """Modified files have no obvious syntax errors (pass_to_pass)."""
+    # Check that all modified files have balanced braces and valid structure
+    files_to_check = [
+        COMPILATION_TS,
+        DEFAULT_STORE_TS,
+        CONFIG_EDITOR_TSX,
+    ]
+    for filepath in files_to_check:
+        src = Path(filepath).read_text()
+        # Basic brace balance check
+        open_braces = src.count("{")
+        close_braces = src.count("}")
+        assert open_braces == close_braces, \
+            f"{filepath}: Unbalanced braces ({open_braces} open, {close_braces} close)"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_status_clean():
+    """Repo has no uncommitted changes at base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git status failed: {r.stderr}"
+    # Should be empty at base commit
+    assert r.stdout.strip() == "", \
+        f"Repo has uncommitted changes at base commit:\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_modules_json5_available():
+    """json5 dependency is available for repo tests (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "const JSON5 = require('/opt/test-deps/node_modules/json5'); console.log(JSON5.parse('{a: 1}').a);"],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"json5 not available: {r.stderr}"
+    assert "1" in r.stdout, "json5 should parse and return correct value"

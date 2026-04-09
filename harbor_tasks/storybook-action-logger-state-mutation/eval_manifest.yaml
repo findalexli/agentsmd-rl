@@ -1,0 +1,49 @@
+version: "2.0"
+
+source:
+  repo: "storybookjs/storybook"
+  pr: 34286
+  base_commit: "ce8c743b04264c5e8010df1181c828171a04c33a"
+  merge_commit: "181be22be7e9025375db9d050ee801d3592cdab4"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript file has valid structure"
+
+  - id: limit_retains_newest
+    type: fail_to_pass
+    origin: pr_diff
+    description: "When actions exceed the limit, the newest actions are kept (not oldest)"
+
+  - id: no_state_mutation_on_duplicate
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Adding a duplicate action does not mutate the previous state objects"
+
+  - id: new_action_immutable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Adding a new action does not mutate the input action object"
+
+  - id: explicit_ts_extensions
+    type: pass_to_pass
+    origin: agent_config
+    description: "Relative imports use explicit .ts/.tsx extensions"
+    source:
+      path: "AGENTS.md"
+      lines: "246"
+      commit: "ce8c743b04264c5e8010df1181c828171a04c33a"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "The addAction handler contains real state-update logic"
+
+rubric:
+  - rule: "Use Storybook loggers instead of raw console.* in normal code paths."
+    source:
+      path: "AGENTS.md"
+      lines: "241-245"
+      commit: "ce8c743b04264c5e8010df1181c828171a04c33a"

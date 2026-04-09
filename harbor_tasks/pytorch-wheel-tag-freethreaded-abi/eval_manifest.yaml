@@ -67,6 +67,26 @@ checks:
     origin: static
     description: "Core functions have real implementations, not stubs"
 
+  - id: repo_file_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source file compiles without errors via py_compile"
+
+  - id: repo_smoke_test_dir_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All Python files in smoke_test directory compile"
+
+  - id: repo_imports_are_standard_lib
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source file only uses standard library imports"
+
+  - id: repo_shell_scripts_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shell scripts in .ci/pytorch have valid syntax"
+
 rubric:
   - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
     source:

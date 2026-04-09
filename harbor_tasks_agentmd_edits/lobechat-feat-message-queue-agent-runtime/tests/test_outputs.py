@@ -207,6 +207,44 @@ def test_skill_documents_zustand_store_access():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+def test_repo_utils_unit_tests():
+    """Repo's unit tests for chat utils pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+set -e
+export PATH="/root/.bun/bin:$PATH"
+apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null
+curl -fsSL https://bun.sh/install | bash 2>&1 | tail -3
+cd /workspace/lobe-chat
+timeout 180 bun install --frozen-lockfile 2>&1 | tail -3
+timeout 60 bunx vitest run src/store/chat/utils/ --reporter=basic 2>&1
+"""],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Utils unit tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_eslint_operation_types():
+    """Repo's ESLint passes on operation slice files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+set -e
+export PATH="/root/.bun/bin:$PATH"
+apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null
+curl -fsSL https://bun.sh/install | bash 2>&1 | tail -3
+cd /workspace/lobe-chat
+timeout 180 bun install --frozen-lockfile 2>&1 | tail -3
+timeout 30 bunx eslint src/store/chat/slices/operation/types.ts --quiet 2>&1
+"""],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — structural checks
 # ---------------------------------------------------------------------------
 

@@ -1,0 +1,103 @@
+source:
+  pr: gohugoio/hugo#14734
+  title: "Fix RenderShortcodes leaking context markers when indented"
+  base_commit: 45e4596630b1372ab02634e4536d2b5a89452e0b
+  merge_commit: 161d0d475773c5251ec00cc8848f1a174393155c
+
+# Checks that will be evaluated
+checks:
+  - id: dedent_markers_function_exists
+    description: "DedentMarkers function exists and is exported"
+    origin: functional
+
+  - id: dedent_markers_strips_leading_spaces
+    description: "DedentMarkers strips leading spaces from context markers"
+    origin: functional
+
+  - id: dedent_markers_strips_leading_tabs
+    description: "DedentMarkers strips leading tabs from context markers"
+    origin: functional
+
+  - id: dedent_markers_preserves_non_markers
+    description: "DedentMarkers preserves content without context markers"
+    origin: functional
+
+  - id: dedent_markers_handles_multiple_markers
+    description: "DedentMarkers handles multiple markers in same content"
+    origin: functional
+
+  - id: hugolib_rendershortcodes_test
+    description: "TestRenderShortcodesCodeBlock upstream test passes"
+    origin: functional
+
+  - id: assert_no_render_shortcodes_artifacts_exists
+    description: "AssertNoRenderShortcodesArtifacts helper exists (baseline)"
+    origin: structural
+
+  - id: dedent_called_in_content_toC
+    description: "DedentMarkers is called in contentToC function"
+    origin: structural
+
+  # Pass-to-pass tests (repo's own CI checks)
+  - id: repo_hugocontext_package
+    description: "Hugo's hugocontext package tests pass"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: repo_hugolib_rendershortcodes
+    description: "Hugo's RenderShortcodes related tests pass"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: repo_go_build
+    description: "Hugo repo builds successfully"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: repo_go_vet
+    description: "Hugo repo passes go vet"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_go_fmt
+    description: "Hugo's hugocontext package passes gofmt check"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_goldmark_package
+    description: "Hugo's goldmark package tests pass"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_hugolib_package_build
+    description: "Hugo's hugolib package builds successfully"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_go_mod_verify
+    description: "Hugo's go.mod dependencies are consistent"
+    type: pass_to_pass
+    origin: repo_tests
+
+# Agent config rules (programmatic)
+agent_config:
+  - rule: "Never export symbols that's not needed outside of the package"
+    source:
+      file: AGENTS.md
+      ref: 45e4596630b1372ab02634e4536d2b5a89452e0b
+    check_id: dedent_markers_function_exists
+
+  - rule: "In tests, use qt matchers"
+    source:
+      file: AGENTS.md
+      ref: 45e4596630b1372ab02634e4536d2b5a89452e0b
+    check_id: hugolib_rendershortcodes_test
+
+  - rule: "In tests, always use the latest Hugo specification"
+    source:
+      file: AGENTS.md
+      ref: 45e4596630b1372ab02634e4536d2b5a89452e0b
+    check_id: hugolib_rendershortcodes_test
+
+# Soft/subjective rules (LLM-judged)
+rubric: []

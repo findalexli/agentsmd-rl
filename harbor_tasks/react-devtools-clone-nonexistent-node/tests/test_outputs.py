@@ -84,6 +84,24 @@ def test_existing_fiber_collision_error_preserved():
     )
 
 
+def test_repo_lint():
+    """Repo's ESLint checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_flow():
+    """Repo's Flow typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow typecheck failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # fail_to_pass — behavioral checks via subprocess (Node.js)
 # ---------------------------------------------------------------------------

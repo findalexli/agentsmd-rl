@@ -37,7 +37,7 @@ index 160838522fb4..bdd5d2a16eab 100644
 +                "inputs_embeds": inputs_embeds,
                  "attention_mask": attention_mask,
                  "cache_position": cache_position,
-                 "past_key_values=past_key_values,
+                 "past_key_values": past_key_values,
 diff --git a/python/sglang/multimodal_gen/runtime/utils/logging_utils.py b/python/sglang/multimodal_gen/runtime/utils/logging_utils.py
 index 1b13c05c6d70..6c55c8d187fb 100644
 --- a/python/sglang/multimodal_gen/runtime/utils/logging_utils.py

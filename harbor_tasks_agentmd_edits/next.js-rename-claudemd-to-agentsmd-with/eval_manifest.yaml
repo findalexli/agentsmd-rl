@@ -7,6 +7,33 @@ source:
   merge_commit: "8fd79ff42e8b1ac82db104fca7a38dfa9cfa902e"
 
 checks:
+  # Pass-to-pass checks (repo_tests) — verify repo CI still passes
+  - id: test_repo_git_status_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository should have clean git status (no uncommitted changes before fix)"
+
+  - id: test_repo_claude_md_readable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CLAUDE.md should be readable at base commit"
+
+  - id: test_repo_alexignore_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: ".alexignore should exist at base commit"
+
+  - id: test_repo_files_no_symlink_loops
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No symlink loops should exist in repo"
+
+  - id: test_repo_no_broken_links
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository should have no broken symlinks at base"
+
+  # Fail-to-pass checks (pr_diff) — core behavioral tests
   - id: agents_md_exists
     type: fail_to_pass
     origin: pr_diff

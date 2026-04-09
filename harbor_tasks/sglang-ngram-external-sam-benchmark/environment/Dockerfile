@@ -21,5 +21,8 @@ WORKDIR /workspace/sglang
 # Install minimal deps needed for test analysis (requests, pytest)
 RUN pip install --no-cache-dir pytest requests
 
+# Install linting/formatting tools required by the repo's CI checks
+RUN pip install --no-cache-dir ruff isort black codespell
+
 # Verifier output directory
 RUN mkdir -p /logs/verifier

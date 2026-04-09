@@ -1,0 +1,87 @@
+manifest_version: 1.0
+
+task:
+  name: "sui-remove-simple-deserialize"
+  title: "Remove unused simple_deserialize methods from Move core types"
+  description: |
+    Remove unused simple_deserialize methods from move-core-types crate.
+    The event.rs file already uses BoundedVisitor::deserialize_value (fixed in previous PR).
+    This PR completes the cleanup by removing the now-unused methods.
+  source_pr:
+    url: "https://github.com/MystenLabs/sui/pull/26160"
+    number: 26160
+    merge_commit: "3a3ac018177cf71cef28be3f21957b74c6bc45be"
+    base_commit: "53de0108098a9c041edc28ce4083f8dc9436a4d3"
+
+files:
+  target:
+    - "external-crates/move/crates/move-core-types/src/annotated_value.rs"
+    - "external-crates/move/crates/move-core-types/src/runtime_value.rs"
+  test:
+    - "external-crates/move/crates/move-core-types/src/unit_tests/value_test.rs"
+
+checks:
+  # Fail-to-pass tests (behavioral changes)
+  - id: test_move_value_simple_deserialize_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: "MoveValue::simple_deserialize method should be removed from annotated_value.rs"
+
+  - id: test_move_struct_simple_deserialize_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: "MoveStruct::simple_deserialize method should be removed from annotated_value.rs"
+
+  - id: test_move_variant_simple_deserialize_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: "MoveVariant::simple_deserialize method should be removed from annotated_value.rs"
+
+  - id: test_runtime_struct_simple_deserialize_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: "MoveStruct::simple_deserialize method should be removed from runtime_value.rs"
+
+  - id: test_runtime_variant_simple_deserialize_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: "MoveVariant::simple_deserialize method should be removed from runtime_value.rs"
+
+  - id: test_anyhow_result_not_imported
+    type: fail_to_pass
+    origin: behavioral
+    description: "anyhow::Result as AResult import should be removed from annotated_value.rs"
+
+  # Pass-to-pass tests (regression tests)
+  - id: test_event_rs_uses_bounded_visitor
+    type: pass_to_pass
+    origin: repo_tests
+    description: "event.rs should use BoundedVisitor::deserialize_value (already fixed at base)"
+
+  - id: test_cargo_check_move_core_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cargo check should pass on move-core-types crate after changes"
+
+  - id: test_value_tests_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cargo check --tests should pass on move-core-types after changes"
+
+  - id: test_move_core_types_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cargo clippy should pass on move-core-types (repo CI check)"
+
+  - id: test_move_core_types_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cargo test --lib should pass on move-core-types (repo CI check)"
+
+  - id: test_move_core_types_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cargo build --all-targets should pass on move-core-types (repo CI check)"
+
+# No rubric rules - this is a straightforward cleanup task
+rubric: []

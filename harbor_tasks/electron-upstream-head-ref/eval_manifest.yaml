@@ -1,0 +1,119 @@
+source:
+  owner: electron
+  repo: electron
+  pr_number: 50740
+  title: "build: derive patches upstream-head ref from script path (42-x-y)"
+  base_commit: 0d74dce4ee212c60fb2d16e8c757ae270306b234
+  merge_commit: b5f2375eb60f3e4ce75e153799d9e1f24dec5a67
+  task_name: electron-upstream-head-ref
+
+behavioral_checks:
+  - id: upstream_head_format
+    name: UPSTREAM_HEAD has hash suffix
+    test: test_upstream_head_has_hash_suffix
+    type: fail_to_pass
+    description: UPSTREAM_HEAD constant should include an 8-character hex hash suffix
+
+  - id: upstream_head_hash_correct
+    name: Hash matches SCRIPT_DIR
+    test: test_upstream_head_hash_matches_script_dir
+    type: fail_to_pass
+    description: The hash suffix must be the first 8 chars of md5(SCRIPT_DIR.encode())
+
+  - id: legacy_ref_constant
+    name: Legacy ref unchanged
+    test: test_legacy_ref_constant
+    type: fail_to_pass
+    description: The legacy _LEGACY_UPSTREAM_HEAD constant should remain 'refs/patches/upstream-head'
+
+  - id: import_patches_dual_update
+    name: import_patches updates both refs
+    test: test_import_patches_updates_both_refs
+    type: fail_to_pass
+    description: import_patches should update both the new hashed ref and the legacy ref for compatibility
+
+  - id: guess_base_commit_new_ref
+    name: guess_base_commit prefers new ref
+    test: test_guess_base_commit_prefers_new_ref
+    type: fail_to_pass
+    description: guess_base_commit should try the new hashed ref first
+
+  - id: guess_base_commit_fallback
+    name: guess_base_commit fallback to legacy
+    test: test_guess_base_commit_fallback_to_legacy
+    type: fail_to_pass
+    description: guess_base_commit should fall back to legacy ref when new ref doesn't exist
+
+agent_config:
+  - id: import_hashlib
+    name: Import hashlib
+    test: test_upstream_head_hash_matches_script_dir
+    type: fail_to_pass
+    origin: agent_config
+    source: "CLAUDE.md - Python coding standards"
+
+  - id: script_dir_usage
+    name: Use SCRIPT_DIR for hash
+    test: test_upstream_head_hash_matches_script_dir
+    type: fail_to_pass
+    origin: agent_config
+    source: "CLAUDE.md - Follow existing patterns in script/lib/"
+
+  # Pass-to-pass tests - verify repo integrity
+  - id: repo_python_syntax_git_py
+    name: git.py syntax valid
+    test: test_repo_python_syntax_git_py
+    type: pass_to_pass
+    origin: repo_tests
+    description: script/lib/git.py has valid Python syntax
+
+  - id: repo_python_syntax_patches_py
+    name: patches.py syntax valid
+    test: test_repo_python_syntax_patches_py
+    type: pass_to_pass
+    origin: repo_tests
+    description: script/lib/patches.py has valid Python syntax
+
+  - id: repo_python_syntax_util_py
+    name: util.py syntax valid
+    test: test_repo_python_syntax_util_py
+    type: pass_to_pass
+    origin: repo_tests
+    description: script/lib/util.py has valid Python syntax
+
+  - id: repo_python_syntax_config_py
+    name: config.py syntax valid
+    test: test_repo_python_syntax_config_py
+    type: pass_to_pass
+    origin: repo_tests
+    description: script/lib/config.py has valid Python syntax
+
+  - id: repo_git_module_imports
+    name: git.py imports successfully
+    test: test_repo_git_module_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: script/lib/git.py module imports without errors
+
+  - id: repo_patches_module_imports
+    name: patches.py imports successfully
+    test: test_repo_patches_module_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: script/lib/patches.py module imports without errors
+
+  - id: repo_git_script_runnable
+    name: git-import-patches script runnable
+    test: test_repo_git_script_runnable
+    type: pass_to_pass
+    origin: repo_tests
+    description: git-import-patches script runs without internal errors
+
+  - id: repo_python_scripts_compile
+    name: Python scripts compile
+    test: test_repo_python_scripts_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: All Python scripts in script/ directory compile successfully
+
+rubric: []

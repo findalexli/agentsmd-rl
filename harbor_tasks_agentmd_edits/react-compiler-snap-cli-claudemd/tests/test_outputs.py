@@ -26,6 +26,24 @@ def _node(script: str, timeout: int = 15) -> subprocess.CompletedProcess:
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
+def test_snap_typescript_compiles():
+    """Snap package TypeScript compiles without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=60, cwd=REPO + "/compiler/packages/snap",
+    )
+    assert r.returncode == 0, f"TypeScript compilation failed:\n{r.stderr[-500:]}"
+
+
+def test_snap_builds():
+    """Snap package builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "snap", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO + "/compiler",
+    )
+    assert r.returncode == 0, f"Snap build failed:\n{r.stderr[-500:]}"
+
+
 def test_typescript_files_parseable():
     """Modified TypeScript files have balanced braces (basic structural validity)."""
     files = [

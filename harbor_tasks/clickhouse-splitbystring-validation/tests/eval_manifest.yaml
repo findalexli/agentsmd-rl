@@ -1,0 +1,83 @@
+source:
+  pr:
+    owner: ClickHouse
+    repo: ClickHouse
+    number: 102093
+    merge_commit: ab0bc159aa3820ebe906a2acacf1838d39f13481
+    base_commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
+  task:
+    name: clickhouse-splitbystring-validation
+    title: Extend argument validation in splitByString tokenizer
+
+# List of all checks (one per test function in test_outputs.py)
+checks:
+  - id: test_empty_string_separator_validation_present
+    name: Empty string separator validation is present
+    type: fail_to_pass
+    description: Verifies the validation code that checks for empty string separators exists
+
+  - id: test_exception_thrown_for_empty_separator
+    name: Exception thrown for empty separator
+    type: fail_to_pass
+    description: Verifies the exception-throwing logic for empty separator is properly implemented
+
+  - id: test_error_message_improved_for_empty_separators
+    name: Error message improved for empty separators
+    type: pass_to_pass
+    description: Verifies the improved error message "the separators argument cannot be empty"
+
+  - id: test_validation_inside_loop_structure
+    name: Validation inside loop structure
+    type: pass_to_pass
+    description: Verifies the validation is properly structured inside the loop with value_as_string variable
+
+  - id: test_code_compiles
+    name: Code compiles without errors
+    type: pass_to_pass
+    description: Verifies the C++ code compiles without syntax errors
+
+  - id: test_repo_clang_syntax_check
+    name: Repo clang syntax check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's C++ syntax check passes using clang-18 - standard ClickHouse CI validation
+
+  - id: test_repo_code_style_basic
+    name: Repo code style basic check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Basic Allman brace style compliance - ClickHouse coding standards
+
+  - id: test_allman_brace_style
+    name: Allman brace style compliance
+    type: agent_config
+    source:
+      config_file: .claude/CLAUDE.md
+      lines: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
+    description: Verifies the code uses Allman-style braces (opening brace on new line)
+
+  - id: test_exception_not_crash_terminology
+    name: Exception terminology compliance
+    type: agent_config
+    source:
+      config_file: .claude/CLAUDE.md
+      lines: "When mentioning logical errors, say 'exception' instead of 'crash'"
+    description: Verifies proper terminology using 'exception' not 'crash' for logical errors
+
+  - id: test_function_naming_without_parens
+    name: Function naming convention compliance
+    type: agent_config
+    source:
+      config_file: .claude/CLAUDE.md
+      lines: "write names of functions and methods as `f` instead of `f()`"
+    description: Verifies function names in comments use `f` not `f()`
+
+# Rubric for soft/subjective rules that need LLM judge
+rubric:
+  - id: function_naming_in_comments
+    description: Function names in documentation/comments should not use parentheses
+    guidance: Function names should be written as `functionName` not `functionName()` per .claude/CLAUDE.md
+
+  - id: backtick_usage
+    description: Code elements should be wrapped in backticks
+    guidance: Wrap literal names from ClickHouse SQL language, classes and functions in inline code blocks

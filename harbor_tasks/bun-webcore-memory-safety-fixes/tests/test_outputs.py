@@ -383,3 +383,152 @@ def test_broadcast_channel_locker_style():
     text = read_stripped(f"{WEBCORE}/BroadcastChannel.cpp")
     assert re.search(r'Locker\s+\w+\s*\{\s*allBroadcastChannelsLock', text), \
         "BroadcastChannel.cpp must use 'Locker name { allBroadcastChannelsLock }' pattern"
+
+
+# ============================================================================
+# Pass-to-Pass Tests — Repo CI/CD validation (additional static analysis)
+# ============================================================================
+
+# [pass_to_pass] repo_tests — Source files are not empty and have valid structure
+def test_repo_source_structure():
+    """All source files have valid structure (non-empty, proper includes)."""
+    files = [
+        f"{WEBCORE}/MessagePortChannel.cpp",
+        f"{WEBCORE}/JSAbortController.cpp",
+        f"{WEBCORE}/BroadcastChannel.cpp",
+        f"{WEBCORE}/EventListenerMap.cpp",
+        f"{WEBCORE}/EventListenerMap.h",
+    ]
+
+    for filepath in files:
+        p = Path(filepath)
+        assert p.exists() and p.stat().st_size > 100, f"{filepath} missing or too small"
+        content = p.read_text()
+        # Verify basic structure
+        assert "#include" in content, f"{filepath} missing includes"
+        assert "namespace WebCore" in content, f"{filepath} missing WebCore namespace"
+
+
+# [pass_to_pass] repo_tests — C++ headers have valid include guards
+def test_repo_headers_valid():
+    """Modified C++ header files have valid include guards and structure."""
+    headers = [
+        f"{WEBCORE}/EventListenerMap.h",
+        f"{WEBCORE}/BroadcastChannel.h",
+    ]
+
+    for filepath in headers:
+        p = Path(filepath)
+        content = p.read_text()
+
+        # Check for include guard or pragma once
+        has_guard = ("#pragma once" in content or
+                    ("#ifndef" in content and "#define" in content))
+        assert has_guard, f"{filepath} missing include guard or #pragma once"
+
+        # Check for expected WebKit/WTF includes
+        assert any(inc in content for inc in ["<wtf/", '"wtf/', "<WebKit/", "config.h"]), \
+            f"{filepath} missing expected WTF/WebKit includes"
+
+
+# [pass_to_pass] repo_tests — Git repository is valid and at correct commit
+def test_repo_git_valid():
+    """Git repository is valid and at expected base commit."""
+    r = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git repository check failed: {r.stderr}"
+    head_commit = r.stdout.strip()
+
+    # Verify this is the expected commit
+    assert head_commit == BASE_COMMIT, \
+        f"HEAD ({head_commit}) != expected base ({BASE_COMMIT})"
+
+
+# [pass_to_pass] repo_tests — Source files have LF line endings
+def test_repo_line_endings():
+    """Source files use LF line endings (not CRLF)."""
+    files = [
+        f"{WEBCORE}/MessagePortChannel.cpp",
+        f"{WEBCORE}/JSAbortController.cpp",
+        f"{WEBCORE}/BroadcastChannel.cpp",
+        f"{WEBCORE}/EventListenerMap.cpp",
+        f"{WEBCORE}/EventListenerMap.h",
+    ]
+
+    for filepath in files:
+        p = Path(filepath)
+        content = p.read_bytes()
+        # Check for CRLF
+        assert b'\r\n' not in content, f"{filepath} has CRLF line endings (should be LF)"
+
+
+# [pass_to_pass] repo_tests — C++ compiler toolchain works for concept tests
+def test_repo_cpp_toolchain():
+    """C++ compiler toolchain works and supports C++17."""
+    # Simple C++17 test to verify toolchain works
+    code = """
+#include <vector>
+#include <memory>
+#include <cstdio>
+
+int main() {
+    // Test weak_ptr (used in BroadcastChannel fix)
+    std::weak_ptr<int> wp;
+    {
+        auto sp = std::make_shared<int>(42);
+        wp = sp;
+        if (wp.expired()) return 1;
+    }
+    if (!wp.expired()) return 2;
+
+    // Test vector (used in EventListenerMap)
+    std::vector<int> vec;
+    vec.push_back(1);
+    if (vec.size() != 1) return 3;
+
+    std::printf("PASS\\n");
+    return 0;
+}
+"""
+    r = subprocess.run(
+        ["g++", "-std=c++17", "-o", "/tmp/concept_test", "-xc++", "-"],
+        input=code, capture_output=True, text=True, timeout=30
+    )
+    assert r.returncode == 0, f"C++ toolchain test compilation failed: {r.stderr}"
+
+    # Run the test
+    r = subprocess.run(["/tmp/concept_test"], capture_output=True, text=True, timeout=10)
+    assert r.returncode == 0, f"C++ toolchain test execution failed: {r.stderr}"
+    assert "PASS" in r.stdout, "C++ toolchain test did not pass"
+
+
+# [pass_to_pass] repo_tests — Modified files have proper C++ syntax (basic checks)
+def test_repo_cpp_syntax_basic():
+    """Modified C++ files have basic syntactic validity (no unmatched braces)."""
+    files = [
+        f"{WEBCORE}/MessagePortChannel.cpp",
+        f"{WEBCORE}/JSAbortController.cpp",
+        f"{WEBCORE}/BroadcastChannel.cpp",
+        f"{WEBCORE}/EventListenerMap.cpp",
+    ]
+
+    for filepath in files:
+        content = Path(filepath).read_text()
+
+        # Check basic brace matching (simplified)
+        open_braces = content.count('{')
+        close_braces = content.count('}')
+        assert open_braces == close_braces, \
+            f"{filepath} has mismatched braces ({open_braces} open, {close_braces} close)"
+
+        # Check parentheses in function signatures are balanced
+        open_parens = content.count('(')
+        close_parens = content.count(')')
+        assert open_parens == close_parens, \
+            f"{filepath} has mismatched parentheses ({open_parens} open, {close_parens} close)"
+
+        # Check for unclosed string literals (basic check)
+        double_quotes = content.count('"') - content.count('\\"')
+        assert double_quotes % 2 == 0, f"{filepath} may have unclosed string literals"

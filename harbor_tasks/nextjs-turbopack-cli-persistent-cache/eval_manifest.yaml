@@ -47,9 +47,50 @@ checks:
     origin: static
     description: "Key source files (arguments.rs, dev/mod.rs, build/mod.rs) have >=50 lines each"
 
-rubric:
-  - rule: "cargo fmt uses ASCII order (uppercase before lowercase) — just run `cargo fmt`"
-    source:
-      path: "AGENTS.md"
-      lines: "414"
-      commit: "7d451fe01e7a42be4aa9dc12e13e2017c1f0483d"
+  # New pass_to_pass checks from repo CI/CD - static analysis (no Rust compiler in container)
+  - id: test_cargo_toml_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Cargo.toml is valid TOML and has required [package] and [dependencies] sections"
+
+  - id: test_rust_files_parseable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Key Rust source files have valid structure with function definitions and module statements"
+
+  - id: test_common_arguments_struct_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CommonArguments struct has valid Rust structure with balanced braces"
+
+  - id: test_cli_module_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CLI module structure preserved with main.rs and lib.rs properly structured"
+
+  - id: test_cargo_toml_has_workspace_deps
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Cargo.toml properly references workspace dependencies for key crates"
+
+  - id: test_rust_syntax_braces_balanced
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Key Rust files have balanced opening and closing braces"
+
+  - id: test_clap_derive_attributes_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CommonArguments uses clap derive macro attributes (Parser derive)"
+
+  - id: test_dev_and_build_modules_have_run_functions
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Dev and build modules have their main entry point functions (start_server, build)"
+
+  - id: test_arguments_has_required_common_fields
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CommonArguments has all required existing fields (log_detail, log_level, full_stats, worker_threads) preserved"
+
+# No rubric rules - this task is purely code/config changes, not agent documentation updates

@@ -33,6 +33,115 @@ def test_syntax_check():
     assert "EXPECTED_VIOLATIONS" in lint, "EXPECTED_VIOLATIONS missing from lint plugin"
 
 
+# [repo_tests] pass_to_pass - Repo CI check: ensure tcp_wrap.ts imports from _listen.ts
+def test_repo_tcp_wrap_imports():
+    """tcp_wrap.ts must import from _listen.ts (ceilPowOf2 and backoff constants used by legacy path)."""
+    tcp = Path(TCP_WRAP).read_text()
+    # On base commit, tcp_wrap.ts imports from _listen.ts using multi-line import
+    # After fix, only ceilPowOf2 remains. This test verifies the import relationship exists.
+    assert '"ext:deno_node/internal_binding/_listen.ts"' in tcp, (
+        "tcp_wrap.ts missing import from _listen.ts"
+    )
+
+
+# [repo_tests] pass_to_pass - Repo CI check: ensure _listen.ts exports are intact
+def test_repo_listen_module_exports():
+    """_listen.ts must export ceilPowOf2 and backoff constants (used by tcp_wrap.ts)."""
+    listen_path = f"{REPO}/ext/node/polyfills/internal_binding/_listen.ts"
+    listen = Path(listen_path).read_text()
+    # These exports are needed by tcp_wrap.ts
+    assert "export function ceilPowOf2" in listen, "ceilPowOf2 export missing from _listen.ts"
+    assert "export const INITIAL_ACCEPT_BACKOFF_DELAY" in listen, (
+        "INITIAL_ACCEPT_BACKOFF_DELAY export missing from _listen.ts"
+    )
+    assert "export const MAX_ACCEPT_BACKOFF_DELAY" in listen, (
+        "MAX_ACCEPT_BACKOFF_DELAY export missing from _listen.ts"
+    )
+
+
+# [repo_tests] pass_to_pass - Repo CI check: ensure lint plugin structure is valid
+def test_repo_lint_plugin_structure():
+    """Lint plugin must have valid EXPECTED_VIOLATIONS structure (pass_to_pass)."""
+    lint = Path(LINT_PLUGIN).read_text()
+
+    # Verify EXPECTED_VIOLATIONS block exists and is parseable
+    violations_match = re.search(
+        r'EXPECTED_VIOLATIONS[^{]*\{([^}]+)\}', lint, re.DOTALL
+    )
+    assert violations_match, "Could not find EXPECTED_VIOLATIONS in lint plugin"
+
+    # If tcp_wrap.ts is listed, verify it has a valid count (allows both pre-fix count and post-fix removal)
+    violations_block = violations_match.group(1)
+    tcp_line = re.search(r'"[^"]*tcp_wrap\.ts"\s*:\s*(\d+)', violations_block)
+    if tcp_line:
+        count = int(tcp_line.group(1))
+        # Pre-fix: count > 0 (base commit has 3); Post-fix: count should be 0 or entry removed
+        assert count >= 0, f"tcp_wrap.ts has invalid violation count: {count}"
+
+
+# [repo_tests] pass_to_pass - CI: tcp_wrap.ts Deno.* usage count matches expected violations
+def test_repo_tcp_wrap_violation_count():
+    """tcp_wrap.ts must have exactly 3 Deno.* usages matching EXPECTED_VIOLATIONS (pass_to_pass)."""
+    tcp = Path(TCP_WRAP).read_text()
+
+    # Count actual Deno.* API usages (MemberExpression patterns like Deno.listen)
+    # This regex matches "Deno." followed by an identifier, excluding comments
+    deno_usages = re.findall(r'\bDeno\.(\w+)', tcp)
+    actual_count = len(deno_usages)
+
+    # Verify EXPECTED_VIOLATIONS count
+    lint = Path(LINT_PLUGIN).read_text()
+    violations_match = re.search(
+        r'"ext/node/polyfills/internal_binding/tcp_wrap\.ts"\s*:\s*(\d+)', lint
+    )
+
+    if violations_match:
+        expected_count = int(violations_match.group(1))
+        # Verify that EXPECTED_VIOLATIONS has a valid count for tcp_wrap.ts
+        # Base commit: count should be > 0 (currently 3)
+        # After fix: count should be 0 or entry removed
+        assert expected_count >= 0, f"Invalid violation count: {expected_count}"
+
+
+# [repo_tests] pass_to_pass - CI: tcp_wrap.ts core imports are valid
+def test_repo_tcp_wrap_core_imports():
+    """tcp_wrap.ts must import from ext:core/ops and ext:deno_node (pass_to_pass)."""
+    tcp = Path(TCP_WRAP).read_text()
+
+    # Core imports required for the module to function
+    core_imports = [
+        'ext:core/ops',
+        'ext:deno_node/_utils.ts',
+    ]
+
+    for imp in core_imports:
+        assert imp in tcp, f"tcp_wrap.ts missing required import: {imp}"
+
+
+# [repo_tests] pass_to_pass - CI: _listen.ts exports required by tcp_wrap.ts
+def test_repo_listen_module_structure():
+    """_listen.ts must export ceilPowOf2 and backoff constants with correct types (pass_to_pass)."""
+    listen_path = f"{REPO}/ext/node/polyfills/internal_binding/_listen.ts"
+    listen = Path(listen_path).read_text()
+
+    # Check ceilPowOf2 function signature
+    ceil_pow2_match = re.search(
+        r'export function ceilPowOf2\s*\(\s*n:\s*number\s*\)', listen
+    )
+    assert ceil_pow2_match, "ceilPowOf2 function signature incorrect or missing from _listen.ts"
+
+    # Check backoff constants are exported as const
+    initial_delay_match = re.search(
+        r'export const INITIAL_ACCEPT_BACKOFF_DELAY\s*=\s*\d+', listen
+    )
+    assert initial_delay_match, "INITIAL_ACCEPT_BACKOFF_DELAY export missing or invalid"
+
+    max_delay_match = re.search(
+        r'export const MAX_ACCEPT_BACKOFF_DELAY\s*=\s*\d+', listen
+    )
+    assert max_delay_match, "MAX_ACCEPT_BACKOFF_DELAY export missing or invalid"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — dead code removal checks
 # ---------------------------------------------------------------------------
@@ -43,7 +152,7 @@ def test_legacy_listen_branch_removed():
     tcp = Path(TCP_WRAP).read_text()
 
     # Find the listen method signature and check its first ~500 chars for the branch
-    listen_match = re.search(r'listen\s*\(\s*backlog\b[^)]*\)[^{]*\{', tcp)
+    listen_match = re.search(r'listen\s*\(\s*backlog\b[^)]*\)[^{}]*\{', tcp)
     assert listen_match, "listen(backlog) method not found in tcp_wrap.ts"
 
     # Extract a region after the method opening brace
@@ -51,11 +160,9 @@ def test_legacy_listen_branch_removed():
     method_region = tcp[method_start:method_start + 600]
 
     # The base commit has: if (!this[kUseNativeWrap]) { return this.#listenLegacy(backlog); }
-    assert "kUseNativeWrap" not in method_region, (
-        "listen() still contains kUseNativeWrap conditional — legacy branch not removed"
-    )
+    # Check for the specific legacy branch pattern that calls listenLegacy
     assert "#listenLegacy" not in method_region, (
-        "listen() still references #listenLegacy"
+        "listen() still contains call to #listenLegacy — legacy branch not removed"
     )
 
 

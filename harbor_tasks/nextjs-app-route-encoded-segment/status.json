@@ -1,66 +1,107 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.965466",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:01:31.830036",
+  "total_time": 1454.46,
+  "sandbox_id": "iunaukuso8uhjzjv6sg6e",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T08:58:00Z",
+      "status": "completed",
+      "docker_build": "success",
+      "ci_commands_discovered": [
+        "tsx (global) - TypeScript execution via esbuild",
+        "npx tsx --eval - TypeScript syntax validation"
+      ],
+      "ci_commands_tested": [
+        "npx tsx --eval 'import <file>; console.log(\"OK\")' - SUCCESS",
+        "npx tsx <script.ts> - SUCCESS"
+      ],
+      "ci_commands_skipped": [
+        "npm test - requires node_modules (not installed in Dockerfile)",
+        "npx tsc --noEmit - requires typescript package (not installed)",
+        "pnpm lint - requires pnpm install",
+        "jest - requires npm dependencies",
+        "turbo run - requires npm dependencies"
+      ],
+      "p2p_tests_added": [
+        {
+          "id": "test_repo_typescript_syntax_app_router",
+          "type": "pass_to_pass",
+          "description": "Repo's router TypeScript files parse without errors",
+          "files_checked": [
+            "packages/next/src/shared/lib/router/routes/app.ts",
+            "packages/next/src/shared/lib/router/utils/get-segment-param.tsx",
+            "packages/next/src/shared/lib/router/utils/interception-routes.ts"
+          ],
+          "tool": "npx tsx (esbuild-based TypeScript execution)"
+        },
+        {
+          "id": "test_repo_imports_resolvable",
+          "type": "pass_to_pass",
+          "description": "Router module imports are resolvable without runtime errors",
+          "tool": "npx tsx"
+        }
+      ],
+      "notes": "The Dockerfile only installs tsx globally and clones the repo. It does not install npm dependencies (node_modules is missing). Therefore, standard CI commands like 'npm test', 'tsc', 'eslint', 'jest' cannot be used. The pass_to_pass gates use tsx which is available and can parse/validate TypeScript syntax without node_modules."
     },
-    {
-      "timestamp": "2026-03-30T11:48:11.528498",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 4696
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 296.54,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-03-31T13:37:46-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
-    {
-      "timestamp": "2026-04-01T20:15:41.680580",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
+    "validate": {
+      "timestamp": "2026-04-09T09:00:00Z",
+      "status": "pass",
+      "docker_build": true,
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.5,
+      "rubric_note": "ICR=0.5 due to missing ANTHROPIC_API_KEY for LLM judge (returns default 0.5). Gold solution follows rubric: no require() calls, uses ES imports only.",
+      "attempts": 1,
+      "notes": "All validations passed: Docker build successful, NOP test correctly fails on buggy base (reward=0), Gold test correctly passes after fix (reward=1). 13/13 tests pass after gold fix. Rubric rule about require() is followed by gold solution (verified via grep).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 126.82
     },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.73,
+      "notes": "ICR=0.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T12:58:21.146677",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0",
-      "notes": "rtionE...\nFAILED ../../tests/test_outputs.py::test_static_segments - AssertionError: ts...\nFAILED ../../tests/test_outputs.py::test_malformed_encoding_no_crash - Assert...\n8 failed, 2 passed in 3.21s\n"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.947455",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.545073",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:01:31.661995"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1454.46,
+      "at": "2026-04-09T02:01:31.830036"
     }
   ]
 }

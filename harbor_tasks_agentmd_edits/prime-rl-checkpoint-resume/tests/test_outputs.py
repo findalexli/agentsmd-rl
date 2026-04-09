@@ -32,7 +32,7 @@ def _run_python(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 def test_syntax_check():
-    """Modified Python files must parse without errors."""
+    """Modified Python files must parse without errors (pass_to_pass)."""
     files = [
         "src/zeroband/training/ckpt.py",
         "src/zeroband/training/config.py",
@@ -56,6 +56,83 @@ def test_syntax_check():
             )
             assert result.returncode == 0, f"Syntax error in {f}: {result.stderr}"
 
+
+
+
+def test_all_python_syntax():
+    """All Python files in the repo must parse without errors (pass_to_pass)."""
+    py_files = list(REPO.rglob("*.py"))
+    failed = []
+    for f in py_files:
+        # Skip __pycache__ and hidden directories
+        if "__pycache__" in str(f) or "/." in str(f):
+            continue
+        result = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(f)],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            failed.append(f"{f}: {result.stderr}")
+    assert not failed, f"Syntax errors found:\n" + "\n".join(failed[:10])
+
+
+def test_pyproject_toml_valid():
+    """pyproject.toml must be valid and parseable (pass_to_pass)."""
+    import tomllib
+    pyproject = REPO / "pyproject.toml"
+    assert pyproject.exists(), "pyproject.toml must exist"
+    content = pyproject.read_bytes()
+    try:
+        config = tomllib.loads(content.decode("utf-8"))
+    except Exception as e:
+        assert False, f"pyproject.toml is not valid TOML: {e}"
+    # Check required sections exist
+    assert "project" in config, "pyproject.toml must have [project] section"
+    assert "dependencies" in config["project"], "pyproject.toml must have dependencies"
+
+
+def test_config_files_valid():
+    """All TOML config files must be valid (pass_to_pass)."""
+    import tomllib
+    config_dirs = [REPO / "configs"]
+    failed = []
+    for config_dir in config_dirs:
+        if not config_dir.exists():
+            continue
+        for toml_file in config_dir.rglob("*.toml"):
+            try:
+                content = toml_file.read_bytes()
+                tomllib.loads(content.decode("utf-8"))
+            except Exception as e:
+                failed.append(f"{toml_file}: {e}")
+    assert not failed, f"Invalid TOML files:\n" + "\n".join(failed)
+
+
+def test_repo_structure():
+    """Repo must have expected directory structure (pass_to_pass)."""
+    required_dirs = [
+        "src/zeroband",
+        "src/zeroband/training",
+        "src/zeroband/training/orchestrator",
+        "tests",
+        "configs",
+    ]
+    for d in required_dirs:
+        assert (REPO / d).is_dir(), f"Required directory {d} must exist"
+
+
+def test_scripts_valid_syntax():
+    """Shell scripts must have valid syntax (pass_to_pass)."""
+    scripts = [REPO / "install.sh"]
+    for script in scripts:
+        if script.exists():
+            result = subprocess.run(
+                ["bash", "-n", str(script)],
+                capture_output=True,
+                text=True,
+            )
+            assert result.returncode == 0, f"Invalid shell syntax in {script}: {result.stderr}"
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests

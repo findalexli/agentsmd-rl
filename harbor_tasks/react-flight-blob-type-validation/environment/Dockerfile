@@ -23,10 +23,10 @@ RUN git clone --depth=1 https://github.com/facebook/react.git /workspace/react &
 RUN cd /workspace/react && \
     rm -rf .git && \
     git init && \
-    git add -A && \
-    git commit -m "snapshot" && \
     git config user.email "test@example.com" && \
-    git config user.name "Test User"
+    git config user.name "Test User" && \
+    git add -A && \
+    git commit -m "snapshot"
 
 # Install minimal dependencies needed for tests
 WORKDIR /workspace/react

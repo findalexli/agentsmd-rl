@@ -278,11 +278,30 @@ def test_not_stub():
 # [agent_config] pass_to_pass — AGENTS.md:44, js/README.md:65 @ 7760161258abe6329b754dd6d2511fc3b61fed95
 def test_prettier_formatting():
     """Frontend code is formatted with prettier (AGENTS.md line 44)."""
-    # prettier + prettier-plugin-svelte are pre-installed in /svelte-tools (Dockerfile)
+    # Use the project's pnpm format:check for consistency with CI
     r = subprocess.run(
-        ["npx", "prettier", "--check", "--plugin", "prettier-plugin-svelte",
-         HEADER],
-        capture_output=True, text=True, timeout=30,
-        cwd=SVELTE_TOOLS, env=_NODE_ENV,
+        ["bash", "-c",
+         f"corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm prettier --check --plugin prettier-plugin-svelte --config .config/.prettierrc.json --ignore-path .config/.prettierignore {HEADER}"],
+        capture_output=True, text=True, timeout=60,
+        cwd=REPO, env={**os.environ, "NODE_PATH": f"{SVELTE_TOOLS}/node_modules"},
     )
     assert r.returncode == 0, f"File does not pass prettier:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — CI workflow: .github/workflows/tests-js.yml
+# AGENTS.md requires "pnpm format:check" to pass
+# This test ensures the gold patch doesn't break repo-wide formatting rules.
+def test_repo_format_check():
+    """Repo-wide frontend formatting check (pnpm format:check) passes."""
+    # Install dependencies and run format check
+    r = subprocess.run(
+        ["bash", "-c",
+         "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm format:check"],
+        capture_output=True, text=True, timeout=120,
+        cwd=REPO, env={**os.environ, "NODE_PATH": f"{SVELTE_TOOLS}/node_modules"},
+    )
+    assert r.returncode == 0, f"pnpm format:check failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

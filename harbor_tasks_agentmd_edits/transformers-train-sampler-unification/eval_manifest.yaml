@@ -46,6 +46,31 @@ checks:
       lines: "8"
       commit: "8efd81513f51cd343d086e0e8f69190caa49dbcf"
 
+  # New pass_to_pass checks from repo CI/CD tests
+  - id: repo_training_args_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TrainingArguments tests pass"
+    source:
+      command: "pytest tests/trainer/test_training_args.py"
+      timeout: 120
+
+  - id: repo_trainer_utils_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's trainer utility tests pass (includes sampler tests)"
+    source:
+      command: "pytest tests/trainer/test_trainer_utils.py"
+      timeout: 120
+
+  - id: repo_ruff_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files pass ruff format check"
+    source:
+      command: "ruff format --check src/transformers/training_args.py src/transformers/trainer.py"
+      timeout: 30
+
 rubric:
   - rule: "Prefer the smallest change that fixes the issue."
     source:

@@ -1,65 +1,78 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.948142",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T09:32:50.166556",
+  "total_time": 1256.86,
+  "sandbox_id": "ieajhci8mbu3ikkcm1nte",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 210.51,
+      "notes": "Added 2 repo CI pass_to_pass tests: test_repo_ruff_lint and test_repo_ruff_format. CI commands discovered: ruff check, ruff format --check (from .github/workflows/pre-commit.yml and .pre-commit-config.yaml). Full test suite requires many dependencies not available in minimal env."
     },
-    {
-      "timestamp": "2026-03-30T20:01:41.508689",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.15,
-      "verdict": "pass",
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 674.03,
       "notes": ""
     },
-    {
-      "timestamp": "2026-03-30T11:48:11.525741",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 17194
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed test_step_uses_platform mock to properly handle stream methods (wait_event, record_event, synchronize). The _MockSelf was missing required attributes that caused step() to fail before reaching empty_cache(). Created unified _Stream class with all necessary methods. All 4 checks pass: Docker build OK, NOP test reward=0, Gold test reward=1.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 358.93
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.74,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-01T20:15:41.631728",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6568.74,
+      "at": "2026-04-09T06:18:19.171570"
     },
     {
-      "timestamp": "2026-04-02T12:58:21.144087",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1256.59,
+      "at": "2026-04-09T09:32:49.988982"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.935390",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.506072",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1256.86,
+      "at": "2026-04-09T09:32:50.166556"
     }
   ]
 }

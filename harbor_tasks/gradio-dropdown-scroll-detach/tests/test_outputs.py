@@ -275,3 +275,26 @@ def test_not_stubbed():
     funcs = len(re.findall(r"function\s+\w+", script))
     assert lines > 50, f"Only {lines} lines — file appears stubbed"
     assert funcs >= 2, f"Only {funcs} functions — file appears stubbed"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI pass_to_pass gates — ensure fix doesn't break existing functionality
+# ---------------------------------------------------------------------------
+
+
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm format:check"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_dropdown_tests():
+    """Dropdown component unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm exec vitest run --config .config/vitest.config.ts js/dropdown"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dropdown tests failed:\n{r.stderr[-500:]}"

@@ -282,6 +282,36 @@ def test_existing_functions_present():
         assert required in func_names, f"Function {required} missing from patches.py"
 
 
+def test_repo_ruff_check():
+    """Repo's ruff linting passes on patches.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "check", "--config=/workspace/prime-rl/pyproject.toml", PATCHES],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on patches.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--config=/workspace/prime-rl/pyproject.toml", PATCHES],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — AGENTS.md rules
 # ---------------------------------------------------------------------------

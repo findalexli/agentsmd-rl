@@ -132,6 +132,69 @@ def _get_capture_kwargs() -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff lint check passes on modified file area (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "check", "src/transformers/generation/continuous_batching/", "setup.py", "conftest.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_check():
+    """Repo's ruff format check passes on modified file area (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", "src/transformers/generation/continuous_batching/", "setup.py", "conftest.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ty_type_check():
+    """Repo's ty type check passes on modified file area (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "ty", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ty: {r.stderr}"
+
+    r = subprocess.run(
+        ["python", "utils/check_types.py", "src/transformers/generation/continuous_batching/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Type check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_modeling_structure():
+    """Repo's modeling structure check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_modeling_structure.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Modeling structure check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 

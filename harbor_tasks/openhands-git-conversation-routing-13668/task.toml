@@ -1,0 +1,28 @@
+name = "openhands-git-conversation-routing-13668"
+title = "Add Git Conversation Routing feature to organization management"
+description = "Implement a Git Conversation Routing section for the organization management page that allows admins and owners to claim and disconnect GitHub/GitLab organizations."
+
+[metadata]
+difficulty = "medium"
+tags = ["frontend", "react", "typescript", "i18n", "organization-management"]
+estimated_time = "45min"
+created_at = "2026-04-09"
+source = "github_pr"
+source_url = "https://github.com/All-Hands-AI/OpenHands/pull/13668"
+
+[environment]
+dockerfile = "environment/Dockerfile"
+base_commit = "df4fea6aca28d3050189a1b19d91ad3d129a95cb"
+repo = "All-Hands-AI/OpenHands"
+
+[timeouts]
+agent = 1800  # 30 minutes
+verifier = 180  # 3 minutes
+
+[solution]
+patch = "solution/solve.sh"
+idempotent_check = "ORG$GIT_CONVERSATION_ROUTING"
+
+[evaluation]
+manifest = "eval_manifest.yaml"
+test_script = "tests/test_outputs.py"

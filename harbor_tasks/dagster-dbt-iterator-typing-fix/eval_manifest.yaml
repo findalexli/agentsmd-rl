@@ -1,0 +1,56 @@
+source_pr:
+  owner: dagster-io
+  repo: dagster
+  number: 33615
+  title: "Fix return type on DbtProjectComponent._get_dbt_event_iterator"
+  merge_commit: ca3d311541c8fc8e12a0fbd1e79ad956bba4a752
+  base_commit: f44352a8a384296e999c33df60bb785bd69953c4
+
+files:
+  - path: python_modules/libraries/dagster-dbt/dagster_dbt/components/dbt_project/component.py
+    description: DbtProjectComponent class with _get_dbt_event_iterator method
+  - path: python_modules/libraries/dagster-dbt/dagster_dbt/core/dbt_event_iterator.py
+    description: DbtEventIterator class with fetch_row_counts, fetch_column_metadata, and with_insights methods
+
+# There are no agent config rules that are programmatically testable
+# The root CLAUDE.md contains general development guidance (run make ruff, etc.)
+# but no specific rules relevant to this typing fix
+agent_config: []
+
+rubric: []
+
+checks:
+  - id: component_iterator_return_type
+    description: _get_dbt_event_iterator returns DbtEventIterator[DbtDagsterEventType]
+    weight: 2
+    function: test_component_iterator_return_type
+
+  - id: iterator_fetch_row_counts_return_type
+    description: fetch_row_counts returns DbtEventIterator[DbtDagsterEventType]
+    weight: 1
+    function: test_iterator_fetch_row_counts_return_type
+
+  - id: iterator_fetch_column_metadata_return_type
+    description: fetch_column_metadata returns DbtEventIterator[DbtDagsterEventType]
+    weight: 1
+    function: test_iterator_fetch_column_metadata_return_type
+
+  - id: iterator_with_insights_return_type
+    description: with_insights returns DbtEventIterator[DbtDagsterEventType]
+    weight: 1
+    function: test_iterator_with_insights_return_type
+
+  - id: component_imports_event_types
+    description: component.py imports DbtEventIterator and DbtDagsterEventType
+    weight: 1
+    function: test_component_imports_event_types
+
+  - id: imports_are_callable
+    description: The imports work at runtime
+    weight: 1
+    function: test_imports_are_callable
+
+  - id: dbt_dagster_event_type_is_type_alias
+    description: DbtDagsterEventType is properly defined as TypeAlias
+    weight: 1
+    function: test_dbt_dagster_event_type_is_type_alias

@@ -83,6 +83,22 @@ checks:
       lines: "79"
       commit: "b8fad8312fde560943653811ae3e16e22b99dfc7"
 
+  # Repo CI/CD tests (pass_to_pass) — added by p2p_enrichment
+  - id: repo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo code formatting passes cargo fmt check"
+
+  - id: repo_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo lints pass cargo clippy check on ruff_linter crate"
+
+  - id: repo_pyflakes_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo pyflakes tests pass - relevant to F507 changes"
+
 rubric:
   - rule: "Follow existing code style. Check neighboring files for patterns."
     source:

@@ -14,12 +14,6 @@ REPO = "/workspace/slime"
 BRIDGE_PATH = f"{REPO}/slime_plugins/mbridge/glm4moe_lite.py"
 PROVIDER_PATH = f"{REPO}/slime/backends/megatron_utils/model_provider.py"
 
-# ---------------------------------------------------------------------------
-# Mock preamble: written into subprocess scripts so that torch/mbridge are
-# stubbed and the actual bridge source file is exec'd against them.
-# The parent MockDeepseekV3Bridge intentionally hardcodes layer 61 — that's
-# the bug the real fix must override.
-# ---------------------------------------------------------------------------
 _MOCK_PREAMBLE = """
 import sys, types
 from pathlib import Path
@@ -132,23 +126,13 @@ def _run_bridge_test(test_code: str, timeout: int = 30) -> subprocess.CompletedP
         script.unlink(missing_ok=True)
 
 
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
 def test_syntax_check():
     """Modified files must parse without errors."""
     for path in [BRIDGE_PATH, PROVIDER_PATH]:
         source = Path(path).read_text()
-        ast.parse(source)  # raises SyntaxError on failure
+        ast.parse(source)
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral subprocess tests
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
 def test_rope_theta_from_rope_parameters():
     """Bridge __init__ must extract rope_theta from rope_parameters dict."""
     r = _run_bridge_test("""
@@ -163,7 +147,6 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_rope_theta_default_when_missing():
     """Bridge must handle missing rope_parameters gracefully."""
     r = _run_bridge_test("""
@@ -176,7 +159,6 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_shared_mapping_dynamic_layer():
     """_SHARED_STATE_DICT_MAPPING must use num_hidden_layers, not hardcoded 61."""
     r = _run_bridge_test("""
@@ -196,7 +178,6 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_convert_mtp_param_dynamic():
     """_convert_mtp_param must produce layer names matching num_hidden_layers."""
     r = _run_bridge_test("""
@@ -214,7 +195,6 @@ for n in [47, 32]:
         joined = " ".join(result)
         assert f".{n}." in joined, f"Expected layer {n} for {name}, got: {result}"
         assert ".61." not in joined, f"Hardcoded 61 for {name}: {result}"
-    # Transformer-layer proxy (self_attention path)
     proxy = bridge._convert_mtp_param(
         "mtp.layers.0.transformer_layer.self_attention.proj.weight"
     )
@@ -225,7 +205,6 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_safetensor_io_standard_loader():
     """Bridge must use SafeTensorIO (bf16), not parent's FP8 dequant loader."""
     r = _run_bridge_test("""
@@ -240,20 +219,17 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_weight_to_hf_format_shared():
     """_weight_to_hf_format returns dynamic layer mappings for shared weights."""
     r = _run_bridge_test("""
 for n in [47, 32, 60]:
     bridge = make_bridge(num_hidden_layers=n)
-    # Embedding weight -> should map to both base and MTP layer
     names, tensors = bridge._weight_to_hf_format("embedding.word_embeddings.weight", "TENSOR")
     assert len(names) >= 2, f"Expected >=2 HF names, got {names}"
     assert len(tensors) == len(names), "Name/tensor count mismatch"
     joined = " ".join(names)
     assert f".{n}." in joined, f"Missing layer {n} in: {names}"
     assert ".61." not in joined, f"Hardcoded 61 in: {names}"
-    # Output layer weight
     names2, tensors2 = bridge._weight_to_hf_format("output_layer.weight", "TENSOR")
     assert len(names2) >= 2, f"Expected >=2 HF names for output, got {names2}"
     joined2 = " ".join(names2)
@@ -265,7 +241,6 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_critic_wrapper_in_bridge_path():
     """Bridge path in get_model_provider_func must handle critic role."""
     r = subprocess.run(
@@ -304,10 +279,78 @@ raise AssertionError("No critic wrapper pattern in bridge path")
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression + anti-stub
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and after fix
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+PIP_DEPS = ["pytest", "numpy", "packaging", "pyyaml", "omegaconf", "tqdm", "httpx", "pybase64", "pylatexenc", "sympy", "aiohttp"]
+
+
+def _install_deps():
+    """Install test dependencies."""
+    subprocess.run(["pip", "install", "-q"] + PIP_DEPS, capture_output=True, cwd=REPO)
+    subprocess.run(["pip", "install", "-e", ".", "--no-deps", "-q"], capture_output=True, cwd=REPO)
+
+
+def test_repo_ruff_check():
+    """Ruff lint check passes on slime and slime_plugins (pass_to_pass)."""
+    subprocess.run(["pip", "install", "-q", "ruff"], capture_output=True, cwd=REPO)
+    r = subprocess.run(
+        ["ruff", "check", "slime", "slime_plugins", "--output-format=concise"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\\n{r.stdout[-500:]}\\n{r.stderr[-500:]}"
+
+
+def test_repo_test_chunked_gae():
+    """Core GAE test passes (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/test_chunked_gae.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"test_chunked_gae failed:\\n{r.stdout[-500:]}\\n{r.stderr[-500:]}"
+
+
+def test_repo_plugin_contracts_generate():
+    """Plugin contracts - generate tests pass (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/plugin_contracts/test_plugin_generate_contracts.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin generate contracts failed:\\n{r.stdout[-500:]}\\n{r.stderr[-500:]}"
+
+
+def test_repo_plugin_contracts_path_loading():
+    """Plugin contracts - path loading tests pass (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/plugin_contracts/test_plugin_path_loading_contracts.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin path loading contracts failed:\\n{r.stdout[-500:]}\\n{r.stderr[-500:]}"
+
+
+def test_repo_plugin_contracts_runtime_hook():
+    """Plugin contracts - runtime hook tests pass (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/plugin_contracts/test_plugin_runtime_hook_contracts.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin runtime hook contracts failed:\\n{r.stdout[-500:]}\\n{r.stderr[-500:]}"
+
+
+def test_repo_plugin_contracts_rollout():
+    """Plugin contracts - rollout tests pass (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/plugin_contracts/test_plugin_rollout_contracts.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin rollout contracts failed:\\n{r.stdout[-500:]}\\n{r.stderr[-500:]}"
+
+
 def test_inherits_deepseek_v3_bridge():
     """GLM4MoELiteBridge must inherit DeepseekV3Bridge and be registered."""
     r = _run_bridge_test("""
@@ -321,7 +364,6 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# [static] fail_to_pass
 def test_not_stub():
     """GLM4MoELiteBridge must have >=4 meaningful class members (not just pass)."""
     source = Path(BRIDGE_PATH).read_text()
@@ -335,10 +377,10 @@ def test_not_stub():
                 if isinstance(item, ast.Expr) and isinstance(
                     item.value, ast.Constant
                 ) and isinstance(item.value.value, str):
-                    continue  # docstring
+                    continue
                 meaningful += 1
             assert meaningful >= 4, (
                 f"Class too small ({meaningful} members) - likely a stub"
             )
-            return  # PASS
+            return
     raise AssertionError("GLM4MoELiteBridge not found")

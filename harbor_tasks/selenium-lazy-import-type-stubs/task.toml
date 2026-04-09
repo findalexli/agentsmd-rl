@@ -1,0 +1,31 @@
+name = "selenium-lazy-import-type-stubs"
+title = "Add type stubs for lazy imported classes and modules"
+difficulty = "medium"
+estimated_time = "25 min"
+tags = ["python", "type-stubs", "mypy", "selenium"]
+
+[description]
+brief = "Add __init__.pyi stub files so type checkers can resolve lazy-imported modules and classes"
+details = """
+The selenium package uses lazy imports in __init__.py files to improve startup performance.
+However, this causes type checkers (mypy) and IDEs to not see the available exports.
+
+This task requires creating .pyi stub files for each webdriver package to expose
+the lazy-imported classes and submodules to type checkers, while keeping the
+runtime lazy import behavior.
+
+Additionally, the pyproject.toml needs to include *.pyi files in package-data,
+and there's a small import fix needed in chrome/edge remote_connection.py files
+to use direct imports instead of package-level imports.
+"""
+
+[repository]
+owner = "SeleniumHQ"
+name = "selenium"
+base_commit = "39436b0c1eabbed5489148b98a36302d77feed9e"
+merge_commit = "168378778de52a6a4d8a8bee8b85e494ce34a7ff"
+pr_number = 17165
+
+[environment]
+base_image = "python:3.12-slim"
+setup_time = "120s"

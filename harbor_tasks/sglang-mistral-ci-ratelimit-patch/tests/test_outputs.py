@@ -21,6 +21,65 @@ TARGET = f"{REPO}/python/sglang/srt/utils/hf_transformers_utils.py"
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass gates (repo_tests) — CI/CD checks that must pass on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_file_structure():
+    """Repo file structure is valid (pass_to_pass)."""
+    # Check that key directories exist
+    python_dir = Path(REPO) / "python" / "sglang"
+    assert python_dir.exists(), f"Python sglang directory not found: {python_dir}"
+    assert python_dir.is_dir(), f"Python sglang path is not a directory: {python_dir}"
+
+    # Check the target file exists
+    target_path = Path(TARGET)
+    assert target_path.exists(), f"Target file not found: {TARGET}"
+    assert target_path.is_file(), f"Target path is not a file: {TARGET}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyproject_toml_valid():
+    """Repo's pyproject.toml is valid TOML (pass_to_pass)."""
+    try:
+        import tomllib
+    except ImportError:
+        import tomli as tomllib
+    pyproject_path = Path(REPO) / "python" / "pyproject.toml"
+    if pyproject_path.exists():
+        content = pyproject_path.read_text()
+        parsed = tomllib.loads(content)
+        assert "project" in parsed, "pyproject.toml missing [project] section"
+        assert "name" in parsed["project"], "pyproject.toml missing project.name"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ast_valid():
+    """All Python files in sglang/srt/utils parse without syntax errors (pass_to_pass)."""
+    utils_dir = Path(REPO) / "python" / "sglang" / "srt" / "utils"
+    if not utils_dir.exists():
+        return  # Skip if directory doesn't exist
+
+    for py_file in utils_dir.glob("*.py"):
+        source = py_file.read_text()
+        try:
+            ast.parse(source)
+        except SyntaxError as e:
+            raise AssertionError(f"Syntax error in {py_file}: {e}")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_config_valid():
+    """Repo's pre-commit config is valid YAML (pass_to_pass)."""
+    import yaml
+    precommit_path = Path(REPO) / ".pre-commit-config.yaml"
+    if precommit_path.exists():
+        content = precommit_path.read_text()
+        parsed = yaml.safe_load(content)
+        assert "repos" in parsed, "pre-commit config missing repos"
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 

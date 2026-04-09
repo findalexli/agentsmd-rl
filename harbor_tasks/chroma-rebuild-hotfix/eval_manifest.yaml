@@ -1,0 +1,163 @@
+source_pr:
+  owner: chroma-core
+  repo: chroma
+  number: 6739
+  title: "[HOTFIX] applying PR #6714 to rc/2026-03-20"
+  merge_commit: 597bb5c1f0d75fad19038515841bc417665f616c
+  base_commit: ab4a15df0055b65b8c2fa6e3ce1115d55ecfad22
+
+task:
+  name: chroma-rebuild-hotfix
+  description: |
+    Add SourceRecordSegmentV2Operator and materialize_logs_for_rebuild function
+    to properly handle rebuild operations in Chroma's compaction pipeline.
+    This fixes the rebuild flow to use Add operations instead of Upsert,
+    and adds proper partitioning for large record segments.
+
+agent_config:
+  # No agent config files apply to this Rust code PR
+  # The docs/mintlify/CLAUDE.md and AGENTS.md are for documentation only
+  files: []
+  rules: []
+
+checks:
+  - id: compilation
+    name: Rust compilation check
+    description: The Rust code compiles without errors
+    test: test_compilation
+    type: fail_to_pass
+    weight: 1.0
+
+  - id: source_v2_basic
+    name: SourceRecordSegmentV2Operator basic test
+    description: V2 operator properly partitions records into chunks
+    test: test_source_v2_basic
+    type: fail_to_pass
+    weight: 1.0
+
+  - id: source_v2_empty
+    name: SourceRecordSegmentV2Operator empty test
+    description: V2 operator handles empty record segment reader correctly
+    test: test_source_v2_empty
+    type: fail_to_pass
+    weight: 1.0
+
+  - id: source_v2_offset_ids
+    name: SourceRecordSegmentV2Operator offset ID preservation
+    description: V2 operator preserves offset IDs correctly during materialization
+    test: test_source_v2_preserves_offset_ids
+    type: fail_to_pass
+    weight: 1.0
+
+  - id: source_uses_add
+    name: SourceRecordSegmentOperator uses Add operation
+    description: Original SourceRecordSegmentOperator uses Operation::Add not Upsert
+    test: test_source_record_segment_uses_add_operation
+    type: fail_to_pass
+    weight: 1.0
+
+  - id: materialize_exists
+    name: materialize_logs_for_rebuild function exists
+    description: New materialize_logs_for_rebuild function is added to segment types
+    test: test_materialize_logs_for_rebuild_exists
+    type: fail_to_pass
+    weight: 1.0
+
+  - id: constructor_exists
+    name: SourceRecordSegmentOperator has constructor
+    description: SourceRecordSegmentOperator has new() and Default implementation
+    test: test_source_record_segment_has_constructor
+    type: fail_to_pass
+    weight: 0.5
+
+  - id: v2_module_exported
+    name: source_record_segment_v2 module exported
+    description: The v2 module is properly exported in operators/mod.rs
+    test: test_v2_operator_module_exported
+    type: fail_to_pass
+    weight: 0.5
+
+  - id: v2_file_exists
+    name: source_record_segment_v2.rs file exists
+    description: The source_record_segment_v2.rs source file is created
+    test: test_v2_operator_source_file_exists
+    type: fail_to_pass
+    weight: 0.5
+
+  - id: orchestrator_uses_v2
+    name: LogFetchOrchestrator uses V2 operator
+    description: LogFetchOrchestrator properly integrates SourceRecordSegmentV2Operator
+    test: test_log_fetch_orchestrator_uses_v2
+    type: fail_to_pass
+    weight: 1.0
+
+  # ============================================================================
+  # PASS-TO-PASS TESTS - Repo CI/CD checks that must pass on both base and fix
+  # ============================================================================
+
+  - id: repo_fmt
+    name: Rust fmt check
+    description: Repo's Rust code formatting passes (cargo fmt --check)
+    test: test_repo_fmt
+    type: pass_to_pass
+    weight: 0.5
+    origin: repo_tests
+
+  - id: repo_clippy
+    name: Rust clippy check
+    description: Repo's Rust code passes clippy lints
+    test: test_repo_clippy
+    type: pass_to_pass
+    weight: 0.5
+    origin: repo_tests
+
+  - id: repo_check
+    name: Rust compilation check
+    description: Repo's Rust code compiles with cargo check
+    test: test_repo_check_compiles
+    type: pass_to_pass
+    weight: 0.5
+    origin: repo_tests
+
+  - id: repo_doc_tests
+    name: Rust doc tests check
+    description: Repo's Rust doc tests pass (cargo test --doc)
+    test: test_repo_doc_tests
+    type: pass_to_pass
+    weight: 0.5
+    origin: repo_tests
+
+  - id: repo_toml_valid
+    name: Cargo.toml validation
+    description: Repo's Cargo.toml files are valid (cargo metadata)
+    test: test_repo_toml_valid
+    type: pass_to_pass
+    weight: 0.5
+    origin: repo_tests
+
+  - id: repo_build_cli
+    name: CLI binary build check
+    description: Repo's CLI binary compiles successfully
+    test: test_repo_build_cli
+    type: pass_to_pass
+    weight: 0.5
+    origin: repo_tests
+
+  - id: repo_worker_compile
+    name: Worker package compilation
+    description: Worker package (chroma-worker) compiles independently
+    test: test_worker_package_compiles
+    type: pass_to_pass
+    weight: 0.5
+    origin: repo_tests
+
+  - id: repo_segment_compile
+    name: Segment package compilation
+    description: Segment package (chroma-segment) compiles independently
+    test: test_segment_package_compiles
+    type: pass_to_pass
+    weight: 0.5
+    origin: repo_tests
+
+rubric: []
+# No soft/subjective rules - all checks are programmatic

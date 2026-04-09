@@ -1,0 +1,92 @@
+source:
+  repo: All-Hands-AI/OpenHands
+  pr_number: 13628
+  base_commit: b0d8244ad528a85d3b223478855b2a6cf8391d30
+  merge_commit: 9ad47bf43fe2dc7cdd68c5e61268c3c56937951f
+  task_name: openhands-v1-race-condition-fix
+  description: Fix race condition where clicking 'New Conversation' before settings loaded caused V0 API to be used instead of V1
+
+checks:
+  # Pass-to-pass tests (verify repo CI/CD passes on base and after fix)
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's TypeScript typecheck passes
+    points: 1
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's lint check (ESLint + Prettier) passes
+    points: 1
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's production build passes
+    points: 1
+
+  - id: test_repo_tests_relevant
+    type: pass_to_pass
+    origin: repo_tests
+    description: Tests for use-create-conversation pass
+    points: 1
+
+  # Fail-to-pass tests (verify the fix)
+  - id: test_default_settings_v1_enabled
+    type: fail_to_pass
+    origin: inferred
+    description: DEFAULT_SETTINGS.v1_enabled must be true to align with backend default
+    points: 1
+
+  - id: test_getSettingsQueryFn_exported
+    type: fail_to_pass
+    origin: inferred
+    description: getSettingsQueryFn must be exported from use-settings.ts for mutation hook
+    points: 1
+
+  - id: test_use_create_conversation_uses_ensureQueryData
+    type: fail_to_pass
+    origin: inferred
+    description: useCreateConversation must use ensureQueryData to wait for settings before deciding V0 vs V1
+    points: 1
+
+  - id: test_use_create_conversation_has_fallback
+    type: fail_to_pass
+    origin: inferred
+    description: useCreateConversation must have try/catch fallback to DEFAULT_SETTINGS when settings fetch fails
+    points: 1
+
+  - id: test_use_create_conversation_uses_organizationId
+    type: fail_to_pass
+    origin: inferred
+    description: useCreateConversation must use organizationId from useSelectedOrganizationId for proper queryKey
+    points: 1
+
+  - id: test_use_create_conversation_imports
+    type: fail_to_pass
+    origin: inferred
+    description: useCreateConversation must import all required dependencies (Settings, getSettingsQueryFn, DEFAULT_SETTINGS, useSelectedOrganizationId)
+    points: 1
+
+  - id: test_typescript_no_new_errors
+    type: fail_to_pass
+    origin: repo_tests
+    description: The fix must not introduce new syntax errors in modified files
+    points: 1
+
+  - id: test_use_create_conversation_structure
+    type: fail_to_pass
+    origin: inferred
+    description: useCreateConversation must have correct structure (no useSettings, proper useV1 logic, fallback handling)
+    points: 1
+
+rubric:
+  # Soft/subjective checks for LLM judge evaluation
+  - id: proper_error_handling
+    description: The fix properly handles the race condition with appropriate error handling
+    points: 1
+
+  - id: maintains_backwards_compatibility
+    description: The fix maintains backwards compatibility for organizations with v1_enabled explicitly false
+    points: 1

@@ -12,6 +12,26 @@ checks:
     origin: static
     description: "turbo-persistence crate compiles without errors"
 
+  - id: repo_check_all_features
+    type: pass_to_pass
+    origin: repo_tests
+    description: "turbo-persistence compiles with all features enabled"
+
+  - id: repo_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: "turbo-persistence passes clippy lints"
+
+  - id: repo_rustfmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "turbo-persistence code is properly formatted"
+
+  - id: repo_tests_subset
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Subset of cargo tests for turbo-persistence (excluding slow tests >60s)"
+
   - id: block_type_no_hash_defined
     type: fail_to_pass
     origin: pr_diff
@@ -51,11 +71,6 @@ checks:
     type: fail_to_pass
     origin: pr_diff
     description: "README no longer has TODO about inefficient hashes for small keys"
-
-  - id: existing_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All existing cargo tests for turbo-persistence still pass"
 
 rubric:
   - rule: "README documentation updates are consistent with the style and formatting of the existing on-disk format specification"

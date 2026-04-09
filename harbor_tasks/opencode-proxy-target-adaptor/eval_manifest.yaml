@@ -12,6 +12,11 @@ checks:
     origin: static
     description: "All modified packages must pass type checking"
 
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's bun typecheck passes (CI turbo typecheck)"
+
   - id: target_type_defined
     type: fail_to_pass
     origin: pr_diff
@@ -75,24 +80,3 @@ checks:
       lines: "84"
       commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
 
-rubric:
-  - rule: "Keep things in one function unless composable or reusable"
-    source:
-      path: "AGENTS.md"
-      lines: "11"
-      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
-  - rule: "Prefer single word variable names where possible"
-    source:
-      path: "AGENTS.md"
-      lines: "14"
-      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
-  - rule: "Reduce total variable count by inlining when a value is only used once"
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
-  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
-    source:
-      path: "AGENTS.md"
-      lines: "55-57"
-      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"

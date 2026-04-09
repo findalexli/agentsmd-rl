@@ -51,8 +51,11 @@ def test_comparison_path_function():
     ), "comparison_path must call to_ascii_lowercase() for Windows paths"
 
     # Must have the non-Windows fallback (to_path_buf)
+    # Match function body: from opening { to closing } with proper nesting handling
     fn_match = re.search(
-        r"fn\s+comparison_path.*?\n((?:.*\n)*?)\s*\}", src
+        r"fn\s+comparison_path[^\{]*\{(.*?)\n\s*\}\n(?:impl|#\[derive\]|#\[allow\]|fn |pub |struct |use |mod |// |$)",
+        src,
+        re.DOTALL,
     )
     assert fn_match, "Could not extract comparison_path body"
     body = fn_match.group(1)
@@ -221,3 +224,98 @@ def test_not_stub_comparison_path():
     assert any("cfg!" in l or "if " in l for l in lines), (
         "comparison_path must contain a platform conditional"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check_permissions():
+    """Repo's cargo check passes for deno_permissions package (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "deno_permissions"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_clippy_permissions():
+    """Repo's cargo clippy passes for deno_permissions package (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "deno_permissions", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_fmt_permissions():
+    """Repo's cargo fmt check passes for deno_permissions package (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--check", "-p", "deno_permissions"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_test_permissions_lib():
+    """Repo's cargo test --lib passes for deno_permissions package (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--lib", "-p", "deno_permissions"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo test --lib failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_rustfmt_permissions():
+    """Repo's rustfmt check passes for permissions lib.rs (pass_to_pass)."""
+    r = subprocess.run(
+        ["rustfmt", "--check", LIB_RS],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"rustfmt check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check_locked_permissions():
+    """Repo's cargo check --locked passes for deno_permissions package (pass_to_pass).
+
+    This ensures the Cargo.lock is up to date and dependencies are properly resolved.
+    """
+    r = subprocess.run(
+        ["cargo", "check", "--locked", "-p", "deno_permissions"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check --locked failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_doc_permissions():
+    """Repo's cargo doc builds for deno_permissions package (pass_to_pass).
+
+    This catches documentation errors and broken doc links.
+    """
+    r = subprocess.run(
+        ["cargo", "doc", "-p", "deno_permissions", "--no-deps"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo doc failed:\n{r.stderr[-500:]}"
+
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_test_locked_permissions():
+    """Repo's cargo test --locked --lib passes for deno_permissions package (pass_to_pass).
+
+    This matches the actual CI command: cargo test --locked --lib -p deno_permissions
+    and ensures tests pass with locked dependencies.
+    """
+    r = subprocess.run(
+        ["cargo", "test", "--locked", "--lib", "-p", "deno_permissions"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo test --locked failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

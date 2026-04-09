@@ -1,0 +1,85 @@
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T10:39:16.671358",
+  "total_time": 5243.64,
+  "sandbox_id": "i54wddfx79p6xvklz2g05",
+  "backend": "glm",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "notes": "Added 8 pass_to_pass tests covering repo CI/CD gates. The container is minimal (Python 3.12 + git only, no Node.js), so CI commands are Python-focused. Discovered CI commands: electron repo uses 'node script/yarn.js lint' (pylint via depot_tools for Python, eslint for JS), 'node script/yarn.js tsc -p tsconfig.script.json' (TypeScript check), and 'apply-patches.yml' workflow. Container lacks Node.js so these cannot run directly. P2P tests added: (1) Python syntax checks: py_compile on git.py, patches.py, all script/lib/*.py; (2) Module import: git module imports successfully, exports UPSTREAM_HEAD; (3) Helper function tests: split_patches, munge_subject_to_filename, filter_patches all work correctly. All 8 p2p tests pass on base commit AND after gold fix. All 10 existing f2p tests still pass after gold fix (18/18 total).",
+      "ci_commands_found": [
+        "node script/yarn.js lint (needs Node.js + depot_tools - not available in container)",
+        "node script/yarn.js tsc -p tsconfig.script.json (needs Node.js - not available in container)",
+        "python3 -m py_compile script/lib/git.py (works, added as p2p)",
+        "python3 -m py_compile script/lib/patches.py (works, added as p2p)",
+        "python3 -m py_compile script/lib/*.py (works, added as p2p)",
+        "ruff check script/lib/ (works but requires pip install, not added)"
+      ],
+      "p2p_tests_added": [
+        "test_git_py_syntax_valid",
+        "test_patches_py_syntax_valid",
+        "test_all_script_lib_syntax_valid",
+        "test_git_module_imports_successfully",
+        "test_git_module_exports_upstream_head",
+        "test_split_patches",
+        "test_munge_subject_to_filename",
+        "test_filter_patches"
+      ]
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 1905.57,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All four checks pass. Fixed Dockerfile to add /workspace/task directory with symlink to /tests (test.sh expects /workspace/task/tests). NOP test: 10 f2p tests fail on buggy base (correct), 8 p2p tests pass. Gold test: all 18 tests pass after solve.sh patch. Rubric judge: 1.0 (empty rubric). Docker build succeeded.",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 1049.47
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.71,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 5243.21,
+      "at": "2026-04-09T10:39:16.341122"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 5243.64,
+      "at": "2026-04-09T10:39:16.671358"
+    }
+  ]
+}

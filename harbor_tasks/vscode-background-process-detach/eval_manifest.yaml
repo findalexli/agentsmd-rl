@@ -35,27 +35,27 @@ checks:
   - id: foreground_returns_undefined
     type: fail_to_pass
     origin: pr_diff
-    description: "Rewriter returns undefined for foreground commands (isBackground falsy guard)"
+    description: "Rewriter returns undefined for foreground commands (isBackground falsy guard) - includes behavioral subprocess test"
 
   - id: posix_nohup_wrapping
     type: fail_to_pass
     origin: pr_diff
-    description: "POSIX background commands are wrapped with 'nohup <cmd> &'"
+    description: "POSIX background commands are wrapped with 'nohup <cmd> &' - includes behavioral subprocess test for wrapping logic"
 
   - id: windows_powershell_wrapping
     type: fail_to_pass
     origin: pr_diff
-    description: "Windows PowerShell commands wrapped with Start-Process; non-PowerShell returns undefined; double-quotes escaped"
+    description: "Windows PowerShell commands wrapped with Start-Process; non-PowerShell returns undefined; double-quotes escaped - includes behavioral subprocess test"
 
   - id: is_background_passed_in_run_tool
     type: fail_to_pass
     origin: pr_diff
-    description: "runInTerminalTool.ts passes isBackground: args.isBackground to rewriter options and imports the new rewriter"
+    description: "runInTerminalTool.ts passes isBackground: args.isBackground to rewriter options and imports the new rewriter - includes behavioral subprocess test"
 
   - id: rewriter_registered_after_sandbox
     type: fail_to_pass
     origin: pr_diff
-    description: "BackgroundDetachRewriter registered after SandboxRewriter"
+    description: "BackgroundDetachRewriter registered after SandboxRewriter - includes behavioral subprocess test for registration order"
 
   - id: upstream_test_file_exists
     type: fail_to_pass
@@ -93,6 +93,21 @@ checks:
     type: pass_to_pass
     origin: repo_tests
     description: "Existing rewriter imports (CdPrefix, PreventHistory, Sandbox) still present in runInTerminalTool.ts"
+
+  - id: package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's package.json is valid JSON"
+
+  - id: source_files_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's source directory contains TypeScript files"
+
+  - id: terminal_contrib_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Terminal contrib directory structure is preserved"
 
 rubric:
   - rule: "Use JSDoc style comments for functions, interfaces, enums, and classes"

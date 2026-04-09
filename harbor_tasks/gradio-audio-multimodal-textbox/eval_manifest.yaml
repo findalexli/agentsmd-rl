@@ -47,9 +47,74 @@ checks:
     origin: static
     description: "MinimalAudioPlayer.svelte must have substantial implementation"
 
-rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "7874d0411c81dcde9c4b08e7e064ca0dbef94e2e"
+  # Repo CI/CD pass_to_pass gates
+  - id: audio_ts_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript files in js/audio must have valid syntax structure (balanced braces/parens/brackets)"
+
+  - id: audio_test_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Audio component test file (audio.test.ts) must be valid with imports, test functions, and assertions"
+
+  - id: audio_svelte_structure_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Svelte files in js/audio must have valid structure (<script> tags present and balanced braces)"
+
+  - id: audio_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Audio package.json must be valid JSON with required fields (name, version)"
+
+  # Additional CI/CD pass_to_pass gates (enriched)
+  - id: audio_shared_index_exports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Audio shared/index.ts must export required components with valid structure"
+
+  - id: audio_svelte5_runes_base
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Audio components must use Svelte 5 runes ($props, $bindable, $derived) at base commit"
+
+  - id: audio_imports_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript files in audio package must have valid import paths"
+
+  - id: audio_test_imports_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Audio test file must have valid imports from vitest and @self/tootils"
+
+  - id: audio_package_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Audio package must have required subdirectories (shared, interactive, player, recorder, static)"
+
+  - id: audio_types_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Audio types.ts must have valid TypeScript type definitions with balanced braces"
+
+  - id: audio_buffer_util_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Audio buffer utility (audioBufferToWav.ts) must have valid structure with exports and functions"
+
+  - id: audio_exports_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Audio package main exports (index.ts) must be valid with balanced braces"
+
+  - id: audio_index_svelte_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Audio Index.svelte main component must have valid TypeScript script tag structure"
+
+  - id: audio_recorder_player_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Audio recorder and player Svelte files must exist with valid structure"

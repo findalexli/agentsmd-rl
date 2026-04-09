@@ -19,6 +19,35 @@ REPO = "/workspace/bun"
 # ---------------------------------------------------------------------------
 
 
+# [repo_tests] pass_to_pass - repo's banned words test
+def test_repo_banned_words():
+    """Repo's banned words test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "apt-get update -qq >/dev/null 2>&1 && apt-get install -y -qq --no-install-recommends unzip >/dev/null 2>&1 && " +
+         "curl -fsSL https://bun.sh/install 2>/dev/null | bash >/dev/null 2>&1 && " +
+         'export PATH="/root/.bun/bin:$PATH" && cd /workspace/bun && ' +
+         "bun install >/dev/null 2>&1 && bun run banned"],
+        capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"Banned words test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - repo's prettier formatting check (scripts only)
+def test_repo_prettier_check():
+    """Repo's Prettier formatting check passes on scripts directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "apt-get update -qq >/dev/null 2>&1 && apt-get install -y -qq --no-install-recommends unzip >/dev/null 2>&1 && " +
+         "curl -fsSL https://bun.sh/install 2>/dev/null | bash >/dev/null 2>&1 && " +
+         'export PATH="/root/.bun/bin:$PATH" && cd /workspace/bun && ' +
+         "bun install >/dev/null 2>&1 && " +
+         "bunx --bun prettier@latest --plugin=prettier-plugin-organize-imports --config .prettierrc --check 'scripts/**/*.ts' 'scripts/**/*.mjs' 2>&1"],
+        capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
 # [static] pass_to_pass
 def test_cmake_structure_valid():
     """CMakeLists.txt has balanced include directives and valid structure."""

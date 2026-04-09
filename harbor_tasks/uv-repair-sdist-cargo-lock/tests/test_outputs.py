@@ -169,3 +169,53 @@ def test_top_level_imports():
                         f"Import found inside function '{node.name}' — "
                         "AGENTS.md requires top-level imports"
                     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base AND fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — cargo check on uv-build crate
+def test_repo_cargo_check_uv_build():
+    """uv-build crate compiles cleanly (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv-build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check -p uv-build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — cargo fmt check
+def test_repo_cargo_fmt():
+    """Rust code formatting is correct (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt --check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — cargo clippy on uv-build crate
+def test_repo_cargo_clippy_uv_build():
+    """uv-build crate passes clippy linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "uv-build", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy -p uv-build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Python syntax check on scripts
+def test_repo_python_syntax():
+    """Python scripts in scripts/ have valid syntax (pass_to_pass)."""
+    scripts_dir = Path(REPO) / "scripts"
+    py_files = list(scripts_dir.glob("*.py"))
+
+    for py_file in py_files:
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", str(py_file)],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, (
+            f"Python syntax error in {py_file.name}:\n{r.stderr[-500:]}"
+        )

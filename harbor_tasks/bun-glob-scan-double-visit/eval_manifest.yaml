@@ -13,6 +13,17 @@ checks:
     origin: static
     description: "Modified Zig files must have balanced braces"
 
+  # Repo CI/CD tests (pass_to_pass)
+  - id: repo_ban_words
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ban-words check passes (validates no banned patterns like std.debug.assert, usingnamespace)"
+
+  - id: repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript typecheck passes (tsc --noEmit)"
+
   # Core behavioral (fail-to-pass)
   - id: workitem_tracks_multiple_indices
     type: fail_to_pass

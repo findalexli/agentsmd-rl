@@ -51,10 +51,10 @@ def test_todowrite_is_effect():
         r = subprocess.run(
             ["bun", "run", str(check)],
             cwd=str(PKG_DIR),
-            capture_output=True, timeout=30,
+            capture_output=True, text=True, timeout=30,
         )
         assert r.returncode == 0, (
-            f"TodoWriteTool is not an Effect:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+            f"TodoWriteTool is not an Effect:\n{r.stdout}\n{r.stderr}"
         )
     finally:
         check.unlink(missing_ok=True)
@@ -101,10 +101,10 @@ def test_typecheck():
     r = subprocess.run(
         ["bun", "typecheck"],
         cwd=str(PKG_DIR),
-        capture_output=True, timeout=120,
+        capture_output=True, text=True, timeout=120,
     )
     assert r.returncode == 0, (
-        f"Typecheck failed:\n{r.stdout.decode()[-2000:]}\n{r.stderr.decode()[-2000:]}"
+        f"Typecheck failed:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
     )
 
 

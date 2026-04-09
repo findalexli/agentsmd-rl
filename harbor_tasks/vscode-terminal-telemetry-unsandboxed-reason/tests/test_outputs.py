@@ -204,3 +204,36 @@ def test_property_indented_with_tabs():
             continue
         assert line[0] == '\t', \
             f"Line uses space indentation instead of tabs: {line!r}"
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from .github/workflows/*.yml
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes using tsgo native compiler (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "tsgo", "--project", "src/tsconfig.json", "--noEmit", "--skipLibCheck"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck (tsgo) failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_monaco_compile_check():
+    """Repo's Monaco editor compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "monaco-compile-check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Monaco compile check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tsec_compile_check():
+    """Repo's tsec security compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "tsec-compile-check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"tsec compile check failed:\n{r.stderr[-500:]}"

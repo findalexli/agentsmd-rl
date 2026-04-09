@@ -1,11 +1,103 @@
 {
+  "schema_version": 2,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-08T21:49:14.479918",
-  "sandbox_id": "iksecd6kex02icei3m9je",
+  "validated_at": "2026-04-09T03:15:55.901968",
+  "total_time": 5918.86,
+  "sandbox_id": "ibc6tsod264fhjtxex16z",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 969.2
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build succeeds, NOP test returns reward=0 (tests correctly fail on buggy base), Gold test returns reward=1 (all 10 tests pass after fix), Rubric ICR=1.0 (empty rubric)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 73.09
+    },
+    "p2p_enrichment": {
+      "completed_at": "2026-04-09T10:20:00",
+      "ci_commands_discovered": [
+        "pytest -m 'not slow or ci' (from .github/workflows/test-areal.yml \u2014 requires GPU, not runnable)",
+        "ruff check areal/ (from .github/workflows/format-check.yml \u2014 ruff not installed)",
+        "ruff check examples/ (from .github/workflows/format-check.yml \u2014 ruff not installed)",
+        "ruff format --check areal/ (from .github/workflows/format-check.yml \u2014 ruff not installed)",
+        "ruff format --check examples/ (from .github/workflows/format-check.yml \u2014 ruff not installed)",
+        "clang-format --dry-run (from .github/workflows/format-check.yml \u2014 C++ files only)"
+      ],
+      "ci_commands_adapted": [
+        "test_repo_python_syntax: AST-based Python syntax check for all .py files in areal/",
+        "test_repo_yaml_valid: YAML parsing check for .yaml files in areal/tests/, examples/, benchmark/",
+        "test_repo_no_wildcard_imports: AST-based wildcard import check for areal/ directory"
+      ],
+      "tests_added": [
+        {
+          "id": "test_repo_python_syntax",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "All Python files in areal/ parse without syntax errors",
+          "passes_on_base": true
+        },
+        {
+          "id": "test_repo_yaml_valid",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "All YAML config files parse without errors",
+          "passes_on_base": true
+        },
+        {
+          "id": "test_repo_no_wildcard_imports",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "No wildcard imports in areal/ directory per project conventions",
+          "passes_on_base": true
+        }
+      ],
+      "notes": "Docker environment is minimal (only python3.12 + pyyaml). Full test dependencies (pytest, ruff, torch, transformers, etc.) are not installed. Adapted CI checks to use Python stdlib (ast, yaml) for static validation. All 3 P2P tests pass on base commit."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 262.86,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.76,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T03:15:55.735707"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 5918.86,
+      "at": "2026-04-09T03:15:55.901968"
+    }
+  ]
 }

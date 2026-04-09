@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "biomejs/biome"
+  pr: 9780
+  base_commit: "aafca2d086eb24226a9cf1a69179561f70d02773"
+  merge_commit: "e0e4aac053b34e3c26d0f3ea7b40295f965479eb"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must compile without errors"
+
+  - id: reject_trailing_text
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Parser rejects '[label]: /url invalid' as a link reference definition"
+
+  - id: reject_varied_trailing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Multiple trailing non-title text patterns after destination are all rejected"
+
+  - id: valid_defs_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Valid link reference definitions with proper titles still parse correctly"
+
+  - id: existing_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream markdown parser test suite still passes"
+
+  - id: repo_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's clippy linting passes on biome_markdown_parser"
+
+  - id: repo_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's code formatting passes"
+
+rubric:
+  - rule: "Explain code that is hard to read, or document exceptions and edge cases. Provide context when names alone are not descriptive enough."
+    source:
+      path: ".claude/skills/biome-developer/SKILL.md"
+      lines: "146-148"
+      commit: "aafca2d086eb24226a9cf1a69179561f70d02773"
+  - rule: "All code changes MUST include tests. Parser: Test files covering valid and error cases."
+    source:
+      path: "AGENTS.md"
+      lines: "181-186"
+      commit: "aafca2d086eb24226a9cf1a69179561f70d02773"

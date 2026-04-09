@@ -31,8 +31,8 @@ PLUGINS_DIR = Path(REPO) / "src" / "plugins"
 #   4. Asserts the tools come from the active registry (not the mock loader)
 #   5. Asserts the mock loader was NOT called
 #
-# On base: loader IS called (returns undefined) → empty tools → FAIL
-# On fix:  active registry IS used → tools returned → PASS
+# On base: loader IS called (returns undefined) -> empty tools -> FAIL
+# On fix:  active registry IS used -> tools returned -> PASS
 # ---------------------------------------------------------------------------
 _VITEST_SUBAGENT_TEST = '''\
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -246,6 +246,80 @@ def test_resolve_tools_delegates_registry():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — verify repo's own checks pass on base AND gold
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — oxlint
+def test_repo_oxlint():
+    """Repo's oxlint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "oxlint", "--type-aware"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"oxlint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — plugin unit tests
+def test_repo_plugins_unit():
+    """Repo's plugin unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts", "src/plugins/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — contracts tests
+def test_repo_contracts():
+    """Repo's contracts tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "--config", "vitest.contracts.config.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Contracts tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — format check
+def test_repo_format_check():
+    """Repo's formatting check passes on tools.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "oxfmt", "--check", "src/plugins/tools.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — bundled plugin metadata check
+def test_repo_bundled_plugin_metadata():
+    """Repo's bundled plugin metadata check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/generate-bundled-plugin-metadata.mjs", "--check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Bundled plugin metadata check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — bundled provider auth env vars check
+def test_repo_bundled_provider_auth():
+    """Repo's bundled provider auth env vars check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/generate-bundled-provider-auth-env-vars.mjs", "--check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Bundled provider auth check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — no conflict markers check
+def test_repo_no_conflict_markers():
+    """Repo's no-conflict-markers check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/check-no-conflict-markers.mjs"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"No conflict markers check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md / src/plugins/CLAUDE.md
 # ---------------------------------------------------------------------------
 
@@ -310,8 +384,8 @@ def test_no_mixed_static_dynamic_imports():
     in production code paths is forbidden.
     """
     content = TARGET.read_text()
-    static_imports = set(re.findall(r'import\s+.*?from\s+["\']([^"\']+)["\']', content))
-    dynamic_imports = set(re.findall(r'await\s+import\s*\(\s*["\']([^"\']+)["\']\s*\)', content))
+    static_imports = set(re.findall(r'import\s+.*?from\s+["\'`]([^"\'`]+)["\'`]', content))
+    dynamic_imports = set(re.findall(r'await\s+import\s*\(\s*["\'`]([^"\'`]+)["\'`]\s*\)', content))
     overlap = static_imports & dynamic_imports
     assert not overlap, (
         f"Module(s) both statically and dynamically imported in tools.ts: {overlap} — "
@@ -326,7 +400,7 @@ def test_no_deep_plugin_internal_imports():
     Core code must not import from extensions/<id>/src/** directly.
     """
     content = TARGET.read_text()
-    deep_imports = re.findall(r'from\s+["\'].*extensions/[^"\']+/src/[^"\']+["\']', content)
+    deep_imports = re.findall(r'from\s+["\'`].*extensions/[^"\'`]+/src/[^"\'`]+["\'`]', content)
     assert not deep_imports, (
         f"Deep plugin internal imports found: {deep_imports} — "
         "use public SDK exports instead (CLAUDE.md:42)"

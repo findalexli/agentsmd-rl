@@ -275,6 +275,70 @@ def test_aggregated_summary_after_loop():
 
 
 # [repo_tests] pass_to_pass
+def test_repo_ruff():
+    """Repo's ruff lint (F401, F821) passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black():
+    """Repo's black formatting check passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install black: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["black", "--check", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell():
+    """Repo's codespell check passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "codespell", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install codespell: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["codespell", "--config", f"{REPO}/.codespellrc", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Codespell check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort():
+    """Repo's isort import ordering check passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install isort: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["isort", "--check-only", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Isort check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_function_signatures_preserved():
     """Core function signatures must remain unchanged."""
     tree, _ = _parse_tree()

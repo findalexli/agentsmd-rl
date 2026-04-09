@@ -54,7 +54,7 @@ print('PASS')
 """],
         capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -107,7 +107,7 @@ print('PASS')
 """],
         capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -133,7 +133,7 @@ print('PASS')
 """],
         capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -163,7 +163,7 @@ print('PASS')
 """],
         capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -194,7 +194,7 @@ print('PASS')
 """],
         capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -224,7 +224,7 @@ print('PASS')
 """],
         capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -299,7 +299,7 @@ def test_python_function_signatures_and_dispatch():
             assert not missing, f"{node.name} missing parameters: {missing}"
 
             func_lines = source.splitlines()[node.lineno - 1 : node.end_lineno]
-            func_src = "\n".join(func_lines)
+            func_src = "\\n".join(func_lines)
             op_name = expected_ops[node.name]
             assert op_name in func_src, f"{node.name} does not dispatch to *{op_name}*"
 
@@ -318,3 +318,128 @@ def test_not_stub():
     assert cmake_lines >= 80, f"cmake file too few lines ({cmake_lines})"
     assert py_size >= 2000, f"Python file too small ({py_size} bytes)"
     assert py_lines >= 80, f"Python file too few lines ({py_lines})"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass gates
+# ---------------------------------------------------------------------------
+
+# [repo] pass_to_pass
+def test_repo_python_syntax():
+    """All Python files in sgl-kernel/python/sgl_kernel parse without errors (pass_to_pass)."""
+    import ast
+
+    py_dir = Path(REPO) / "sgl-kernel/python/sgl_kernel"
+    py_files = list(py_dir.glob("*.py"))
+
+    errors = []
+    for py_file in py_files:
+        try:
+            source = py_file.read_text()
+            ast.parse(source)
+        except SyntaxError as e:
+            errors.append(f"{py_file.name}: {e}")
+
+    assert not errors, f"Python syntax errors found:\\n" + "\\n".join(errors)
+
+
+# [repo] pass_to_pass
+def test_repo_cmake_structure():
+    """CMake flashmla.cmake has valid structure with balanced blocks (pass_to_pass)."""
+    content = CMAKE_FILE.read_text()
+
+    # Check for balanced parentheses in key cmake blocks
+    blocks = [
+        "FetchContent_Declare",
+        "FetchContent_Populate",
+        "set(FlashMLA_SOURCES",
+        "target_compile_options",
+        "target_include_directories",
+        "target_link_libraries",
+    ]
+
+    errors = []
+    for block in blocks:
+        if block not in content:
+            errors.append(f"Missing block: {block}")
+            continue
+
+        start = content.find(block)
+        # Find the opening paren after the block name
+        paren_start = content.find("(", start)
+        if paren_start == -1:
+            errors.append(f"Block {block} has no opening parenthesis")
+            continue
+
+        # Count nested parentheses to find the matching close
+        depth = 1
+        end = -1
+        for i, ch in enumerate(content[paren_start + 1:], start=paren_start + 1):
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0:
+                    end = i
+                    break
+
+        if end == -1:
+            errors.append(f"Block {block} has unclosed parenthesis")
+
+    assert not errors, f"CMake structure errors:\\n" + "\\n".join(errors)
+
+
+# [repo] pass_to_pass
+def test_repo_flashmla_py_imports():
+    """flash_mla.py has valid imports and no undefined references (pass_to_pass)."""
+    import ast
+
+    source = PY_FILE.read_text()
+    tree = ast.parse(source)
+
+    # Check for required imports
+    imports = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                imports.add(alias.name)
+        elif isinstance(node, ast.ImportFrom):
+            if node.module:
+                imports.add(node.module)
+
+    # The file should import torch
+    has_torch = "torch" in imports or any("torch" in imp for imp in imports)
+    assert has_torch, "flash_mla.py should import torch"
+
+    # Check for torch.ops usage (the file dispatches to torch.ops)
+    source_str = source
+    has_torch_ops = "torch.ops" in source_str
+    assert has_torch_ops, "flash_mla.py should use torch.ops for dispatch"
+
+
+# [repo] pass_to_pass
+def test_repo_cmake_git_tag_valid():
+    """CMake has a valid GIT_TAG format for FetchContent (pass_to_pass)."""
+    content = CMAKE_FILE.read_text()
+
+    # Find GIT_TAG directive
+    git_tag_found = False
+    for line in content.splitlines():
+        if "GIT_TAG" in line:
+            git_tag_found = True
+            # Check it's a valid 40-char hex commit hash
+            parts = line.strip().split()
+            if len(parts) >= 2:
+                tag = parts[-1]
+                # Should be a git commit hash (40 hex chars)
+                is_valid_hash = len(tag) == 40 and all(c in "0123456789abcdef" for c in tag)
+                assert is_valid_hash, f"GIT_TAG {tag} is not a valid 40-char hex commit hash"
+            break
+
+    assert git_tag_found, "GIT_TAG directive not found in cmake"
+
+
+# [repo] pass_to_pass
+
+# Note: Skipping undefined variable check - it produces false positives
+# for legitimate Python scoping patterns (exception vars, local returns)

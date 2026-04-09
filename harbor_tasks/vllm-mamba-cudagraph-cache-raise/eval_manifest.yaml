@@ -12,6 +12,31 @@ checks:
     origin: static
     description: "Modified files (gpu_model_runner.py, compilation.py) must parse without errors"
 
+  - id: repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files must pass ruff linting (E,F,UP,B,ISC,SIM,I,G rules per pyproject.toml)"
+
+  - id: repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files must be formatted (ruff format check)"
+
+  - id: repo_spdx_headers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files must have SPDX license headers"
+
+  - id: repo_typos
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files must have no typos"
+
+  - id: repo_no_regressions_compilation_config
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CompilationConfig class structure preserved"
+
   - id: silent_capping_method_removed
     type: fail_to_pass
     origin: pr_diff

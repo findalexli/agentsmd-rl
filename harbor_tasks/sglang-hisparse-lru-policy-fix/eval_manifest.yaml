@@ -36,6 +36,24 @@ checks:
     description: "The LRU write-back block must exist with proper comments"
 
   # ---------------------------------------------------------------------------
+  # Repo CI/CD checks (pass_to_pass) — must pass on base AND fix
+  # ---------------------------------------------------------------------------
+  - id: test_repo_hisparse_cuh_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "hisparse.cuh has substantial structure with kernel declaration and CUDA elements"
+
+  - id: test_repo_ruff_syntax_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python files in jit_kernel pass ruff syntax checks (E9,F63,F7,F82)"
+
+  - id: test_repo_black_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "hisparse.py is properly formatted according to black"
+
+  # ---------------------------------------------------------------------------
   # Fail-to-pass checks (pr_diff) — core behavioral tests
   # ---------------------------------------------------------------------------
   - id: lru_writeback_after_miss_calculation

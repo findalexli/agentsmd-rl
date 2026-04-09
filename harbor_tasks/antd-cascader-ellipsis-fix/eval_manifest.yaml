@@ -1,0 +1,109 @@
+version: "1.0"
+
+source:
+  repo: "ant-design/ant-design"
+  pr: 57540
+  title: "fix: correct Cascader menu item ellipsis styles"
+  base_commit: "1ed0c62c7cbdd3ed02db8255d742c1b90dbb4299"
+  merge_commit: "ffe7ccf17f689af990c4757c8197c8727c8f4184"
+  author: "ant-design"
+  description: |
+    Fixes Cascader menu item ellipsis styles for long option labels in flex layout.
+    The ellipsis styles were incorrectly applied on the parent node instead of
+    the content node, causing long text labels not to display ellipsis correctly.
+
+target:
+  primary_file: "components/cascader/style/columns.ts"
+  distinct_line: "minWidth: 0"
+
+agent_configs:
+  - file: "CLAUDE.md"
+    rules:
+      - "Demo import convention: use absolute paths like 'antd', 'antd/es/*', never relative paths like '../xxx'"
+      - "Test import convention: use relative paths like '..', '../index', never absolute paths like 'antd'"
+      - "API table format: use backticks for string defaults, booleans as literals, no colons after component names"
+      - "Changelog: use emoji at start, no colons after component names, include both English and Chinese versions"
+      - "PR title: use English format like 'type: description'"
+  - file: "AGENTS.md"
+    rules:
+      - "Demo import convention: use absolute paths like 'antd', 'antd/es/*', never relative paths"
+      - "Test import convention: use relative paths like '..', '../index', never absolute paths"
+  - file: ".github/copilot-instructions.md"
+    rules:
+      - "Use CSS-in-JS with @ant-design/cssinjs, never hardcode colors/sizes"
+      - "Support both light and dark themes using design tokens"
+      - "Use CSS logical properties for RTL support (margin-inline-start vs margin-left)"
+      - "Respect prefers-reduced-motion for animations"
+      - "Component props interfaces named ComponentNameProps"
+      - "Never use 'any' type - define precise types"
+
+checks:
+  # Fail-to-pass tests - these verify the actual fix
+  - id: test_text_ellipsis_moved_to_content
+    type: fail_to_pass
+    origin: task_tests
+    description: "textEllipsis should be in &-content block, not directly in &-item"
+
+  - id: test_content_has_minWidth_zero
+    type: fail_to_pass
+    origin: task_tests
+    description: "&-content should have minWidth: 0 for proper flex ellipsis behavior"
+
+  - id: test_content_has_text_ellipsis
+    type: fail_to_pass
+    origin: task_tests
+    description: "&-content should have textEllipsis spread for ellipsis styling"
+
+  - id: test_item_has_maxWidth
+    type: fail_to_pass
+    origin: task_tests
+    description: "&-item should have maxWidth: 400 to constrain the flex item"
+
+  # Pass-to-pass tests - these verify the code structure and quality
+  - id: test_file_exists
+    type: pass_to_pass
+    origin: task_tests
+    description: "The columns.ts file exists"
+
+  - id: test_item_has_flex_display
+    type: pass_to_pass
+    origin: task_tests
+    description: "&-item uses display: 'flex' for proper layout"
+
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: task_tests
+    description: "TypeScript compiles without syntax errors"
+
+  - id: test_style_exports_correctly
+    type: pass_to_pass
+    origin: task_tests
+    description: "The style module exports getColumnsStyle correctly"
+
+  - id: test_imports_are_valid
+    type: pass_to_pass
+    origin: task_tests
+    description: "Required imports are present"
+
+rubric:
+  - rule: "Use CSS-in-JS with @ant-design/cssinjs, never hardcode colors/sizes"
+    source: ".github/copilot-instructions.md"
+    category: "code_quality"
+
+  - rule: "Support both light and dark themes using design tokens (no hardcoded values)"
+    source: ".github/copilot-instructions.md"
+    category: "code_quality"
+
+  - rule: "Use CSS logical properties for RTL support (e.g., margin-inline-start)"
+    source: ".github/copilot-instructions.md"
+    category: "code_quality"
+
+  - rule: "Demo imports use absolute paths (antd, antd/es/*), never relative paths"
+    source: "CLAUDE.md, AGENTS.md"
+    category: "conventions"
+    notes: "If adding a demo file"
+
+  - rule: "Test imports use relative paths (.., ../index), never absolute paths"
+    source: "CLAUDE.md, AGENTS.md"
+    category: "conventions"
+    notes: "If adding a test file"

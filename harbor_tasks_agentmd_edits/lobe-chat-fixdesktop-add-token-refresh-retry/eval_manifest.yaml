@@ -41,7 +41,7 @@ checks:
   - id: is_non_retryable_error_method_exists
     type: fail_to_pass
     origin: pr_diff
-    description: "RemoteServerConfigCtr exposes isNonRetryableError method used by AuthCtr to decide token clearing"
+    description: "RemoteServerConfigConfigCtr exposes isNonRetryableError method used by AuthCtr to decide token clearing"
 
   # --- f2p: config/documentation update test (REQUIRED) ---
   - id: claude_md_in_review_workflow
@@ -55,7 +55,18 @@ checks:
     origin: pr_diff
     description: "async-retry and @types/async-retry added to desktop package.json"
 
-  # --- p2p: regression checks ---
+  # --- p2p: repo CI/CD regression checks ---
+  - id: repo_lint_ts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript linting passes (pnpm run lint:ts)"
+
+  - id: repo_desktop_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's desktop tests pass (pnpm test -- --run in apps/desktop)"
+
+  # --- p2p: task-specific regression checks ---
   - id: typescript_compiles
     type: pass_to_pass
     origin: static

@@ -30,6 +30,14 @@ checks:
     description: "Modified functions have real logic, not just pass/return"
 
   # ---------------------------------------------------------------------------
+  # Repo CI/CD checks (pass_to_pass) — regression tests
+  # ---------------------------------------------------------------------------
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests pass (pnpm test:unit)"
+
+  # ---------------------------------------------------------------------------
   # Fail-to-pass checks (pr_diff) — core behavioral changes
   # ---------------------------------------------------------------------------
   - id: test_buildschema_finds_nested_id_field

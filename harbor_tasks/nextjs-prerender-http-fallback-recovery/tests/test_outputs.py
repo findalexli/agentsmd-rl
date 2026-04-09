@@ -12,6 +12,7 @@ pipeline. All checks use source analysis.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/next.js"
@@ -51,6 +52,26 @@ def test_syntax_check():
                 depth -= 1
             assert depth >= 0, f"Unbalanced braces in {fpath} (depth went negative)"
         assert depth == 0, f"Unbalanced braces in {fpath} (final depth={depth})"
+
+
+# [static] pass_to_pass
+def test_prettier_formatting():
+    """Modified TypeScript files must pass Prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", APP_RENDER, COMPONENT_TREE],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [static] pass_to_pass
+def test_error_codes_check():
+    """Error codes must be valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "packages/next/check-error-codes.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Error codes check failed:\\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

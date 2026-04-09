@@ -188,6 +188,42 @@ def test_socket_test_file_preserved():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD (pass_to_pass) — repo's own tests, lints, typechecks
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass — from .github/workflows/lint.yml
+def test_repo_lint():
+    """Repo's JS linting passes (oxlint on src/js)."""
+    r = subprocess.run(
+        ["bunx", "oxlint", "--format=github", "src/js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Exit code 0 = success, warnings are OK (non-zero only on errors)
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — from .github/workflows/format.yml
+def test_repo_prettier_socket_test():
+    """Repo's prettier formatting passes on socket.test.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["bunx", "prettier", "--check", "test/js/bun/net/socket.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — from .github/workflows/format.yml
+def test_repo_ban_words():
+    """Repo's banned words check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "./test/internal/ban-words.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ban words check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md / CLAUDE.md
 # ---------------------------------------------------------------------------
 

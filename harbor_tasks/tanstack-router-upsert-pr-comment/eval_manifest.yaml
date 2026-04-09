@@ -1,0 +1,53 @@
+source_pr:
+  owner: TanStack
+  repo: router
+  number: 6948
+  title: "ci: add back upsert-pr-comment"
+  merge_commit: 97dc9f66f3a0e48719f9a167d7e707e432371506
+  base_commit: 13ef4c2e7c92e276185c112d486248b7447535de
+
+target_files:
+  - scripts/benchmarks/common/upsert-pr-comment.mjs
+
+checks:
+  # F2P (Fail-to-Pass) checks - verify the fix works
+  - id: file_exists
+    type: f2p
+    description: "upsert-pr-comment.mjs file is created"
+  - id: node_syntax_valid
+    type: f2p
+    description: "Script has valid Node.js syntax and can be parsed"
+  - id: parseArgs_function_works
+    type: f2p
+    description: "parseArgs function correctly parses CLI arguments"
+  - id: required_args_validated
+    type: f2p
+    description: "Required arguments (--pr, --body-file) are validated"
+  - id: env_fallback_works
+    type: f2p
+    description: "Environment variables are used as fallback for repo, token, apiUrl"
+  - id: githubRequest_structure
+    type: f2p
+    description: "githubRequest function makes proper API calls with correct headers"
+  - id: marker_logic_works
+    type: f2p
+    description: "Marker is added to body content when not present"
+  - id: listIssueComments_pagination
+    type: f2p
+    description: "listIssueComments handles pagination correctly"
+
+  # P2P (Pass-to-Pass) checks - verify existing CI/CD still works
+  - id: repo_benchmarks_node_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's benchmark scripts have valid Node.js syntax"
+  - id: repo_scripts_node_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's utility scripts have valid Node.js syntax"
+  - id: repo_prettier_formatting
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's scripts follow Prettier formatting rules"
+
+rubric: []

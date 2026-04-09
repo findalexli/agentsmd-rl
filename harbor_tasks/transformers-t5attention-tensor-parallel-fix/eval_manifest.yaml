@@ -7,32 +7,37 @@ source:
   merge_commit: "d55f0350a25333406daeafb7c250bb4ba3bf43a1"
 
 checks:
-  - id: syntax_check
+  - id: test_syntax_check
     type: pass_to_pass
     origin: static
     description: "Modified files must parse without errors"
 
-  - id: t5attention_tp_compatible
+  - id: test_t5attention_tp_compatible
     type: fail_to_pass
     origin: pr_diff
     description: "T5Attention correctly infers n_heads from tensor shape when inner_dim is sharded"
 
-  - id: kv_attention_shape_correct
+  - id: test_kv_attention_shape_correct
     type: fail_to_pass
     origin: pr_diff
     description: "Key/value attention uses dynamic shape from current_states instead of config n_heads"
 
-  - id: position_bias_dynamic
+  - id: test_position_bias_dynamic
     type: fail_to_pass
     origin: pr_diff
     description: "position_bias shape uses query_states.shape[1] instead of config n_heads"
 
-  - id: attn_output_reshape
+  - id: test_attn_output_reshape
     type: fail_to_pass
     origin: pr_diff
     description: "attn_output.view uses seq_length as fixed dim and -1 for heads dimension"
 
-  - id: copied_files_updated
+  - id: test_view_operations_runtime_semantics
+    type: fail_to_pass
+    origin: pr_diff
+    description: "View operations produce correct shapes under TP-like conditions"
+
+  - id: test_copied_files_updated
     type: fail_to_pass
     origin: agent_config
     description: "T5-family model copies (mt5, longt5, etc.) have been updated with the same fix"
@@ -41,13 +46,32 @@ checks:
       lines: "45-55"
       commit: "38593c2e83964079576eb646fe9b68cce16114dc"
 
-  - id: not_stub
+  - id: test_not_stub
     type: pass_to_pass
     origin: static
     description: "T5Attention.forward has real logic, not just pass/return"
 
+  - id: test_repo_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All modified Python files must parse without syntax errors"
+
+  - id: test_repo_imports_resolvable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files have no unresolvable import dependencies"
+
+  - id: test_repo_t5_classes_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "T5-family model files contain required Attention classes"
+
+  - id: test_repo_no_undefined_names
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files have no obvious undefined name errors (py_compile check)"
+
 rubric:
-  # Soft rule for copy sync verification
   - rule: "When fixing code that is copied across model files, ensure all copies are updated or the copy link is properly broken."
     source:
       path: "CLAUDE.md"

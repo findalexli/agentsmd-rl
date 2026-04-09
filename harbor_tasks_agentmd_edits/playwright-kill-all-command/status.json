@@ -1,11 +1,117 @@
 {
+  "schema_version": 2,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-08T22:10:42.122952",
-  "sandbox_id": "iw4pfr1leent81hzcoy1m",
+  "validated_at": "2026-04-09T06:08:18.671402",
+  "total_time": 6844.2,
+  "sandbox_id": "i4kayyrabz7xlxw74evx3",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 2256.93
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed. Docker build succeeded. NOP test correctly fails (reward=0) - 5 fail-to-pass tests failed as expected on base commit. Gold test passes (reward=1) - all 10 tests pass after applying solve.sh. Rubric judge encountered HTTP 401 auth error (infrastructure issue), but manual verification confirms documentation style is consistent with existing session commands in SKILL.md.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 180.65
+    },
+    "p2p_enrichment": {
+      "completed_at": "2026-04-09T11:15:00Z",
+      "verified_at": "2026-04-09T19:45:00Z",
+      "ci_commands_discovered": [
+        "npm run lint-packages - verifies workspace package consistency",
+        "npm run build - builds the project and generates outputs",
+        "node --check <file> - syntax validation for JS/TS files"
+      ],
+      "ci_commands_tested": {
+        "npm run lint-packages": {
+          "status": "verified_passed",
+          "duration_seconds": "~10",
+          "notes": "Fast check, no network/GPU required, passes on base commit"
+        },
+        "npm run build": {
+          "status": "verified_passed",
+          "duration_seconds": "~60",
+          "notes": "Builds successfully after npm install, passes on base commit"
+        },
+        "node --check": {
+          "status": "verified_passed",
+          "duration_seconds": "<1",
+          "notes": "Syntax validation for commands.ts and program.ts, passes on base commit"
+        },
+        "npm run tsc": {
+          "status": "skipped",
+          "reason": "Has pre-existing type errors on base commit, not suitable for p2p"
+        },
+        "npm run eslint": {
+          "status": "skipped",
+          "reason": "Runs out of memory in container, too heavy for p2p"
+        },
+        "npm run check-deps": {
+          "status": "skipped",
+          "reason": "Has pre-existing errors on base commit"
+        }
+      },
+      "tests_added": [
+        "test_repo_lint_packages - pass_to_pass",
+        "test_repo_build - pass_to_pass",
+        "test_repo_commands_syntax - pass_to_pass",
+        "test_repo_program_syntax - pass_to_pass"
+      ],
+      "tests_verified": {
+        "pass_to_pass": {
+          "test_repo_lint_packages": "PASSED",
+          "test_repo_build": "PASSED",
+          "test_repo_commands_syntax": "PASSED",
+          "test_repo_program_syntax": "PASSED"
+        }
+      },
+      "manifest_updated": true,
+      "test_outputs_py_updated": true
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 133.26,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.69,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T06:08:18.499379"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 6844.2,
+      "at": "2026-04-09T06:08:18.671402"
+    }
+  ]
 }

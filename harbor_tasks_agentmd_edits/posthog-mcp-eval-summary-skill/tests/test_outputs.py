@@ -196,8 +196,8 @@ def test_generated_tools_record_has_entry():
         ["node", "-e", f"""
 const fs = require('fs');
 const content = fs.readFileSync('{HANDLER_TS}', 'utf8');
-// Extract the GENERATED_TOOLS object
-const match = content.match(/GENERATED_TOOLS[^=]*=\\s*\\{{([^}}]+)}}/s);
+// Extract the GENERATED_TOOLS object - use non-greedy match for content between braces
+const match = content.match(/GENERATED_TOOLS[\\s\\S]*?=\\s*\\{{([\\s\\S]*?)\\}}/);
 if (!match) throw new Error('Could not find GENERATED_TOOLS');
 if (!match[1].includes('llm-analytics-evaluation-summary-create')) throw new Error('Tool not in GENERATED_TOOLS');
 console.log('TOOLS_RECORD_OK');
@@ -483,3 +483,49 @@ print('IMPORTS_OK')
     )
     assert result.returncode == 0, f"Wildcard import check failed: {result.stderr}"
     assert "IMPORTS_OK" in result.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI/CD checks (p2p enrichment)
+# ---------------------------------------------------------------------------
+
+MCP_DIR = REPO / "services/mcp"
+
+
+def test_mcp_tools_yaml_syntax():
+    """Repo: MCP tools.yaml must be valid YAML syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"import yaml; yaml.safe_load(open('{TOOLS_YAML}').read()); print('VALID')"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"MCP tools.yaml syntax check failed: {r.stderr}"
+    assert "VALID" in r.stdout
+
+
+def test_mcp_schema_json_valid():
+    """Repo: MCP generated-tool-definitions.json must be valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"import json; json.load(open('{TOOL_DEFS_JSON}')); print('VALID')"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"MCP schema JSON validation failed: {r.stderr}"
+    assert "VALID" in r.stdout
+
+
+def test_mcp_typescript_syntax():
+    """Repo: MCP generated TypeScript files must have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+const fs = require('fs');
+const api = fs.readFileSync('{API_TS}', 'utf8');
+const handler = fs.readFileSync('{HANDLER_TS}', 'utf8');
+// Check for basic syntax markers
+if (!api.includes('export const')) throw new Error('api.ts: No exports found');
+if (!api.includes('zod.object')) throw new Error('api.ts: No Zod schemas found');
+if (!handler.includes('export const')) throw new Error('handler.ts: No exports found');
+console.log('SYNTAX_OK');
+"""],
+        capture_output=True, text=True, timeout=30, cwd=str(MCP_DIR),
+    )
+    assert r.returncode == 0, f"MCP TypeScript syntax check failed: {r.stderr}"
+    assert "SYNTAX_OK" in r.stdout

@@ -156,3 +156,25 @@ def test_existing_gen_query_tests():
         assert r.returncode == 0, f"Existing tests failed:\n{r.stdout}\n{r.stderr}"
     finally:
         GEN_QUERY_FILE.write_text(content)
+
+
+# [repo_tests] pass_to_pass
+def test_prqlc_clippy():
+    """Repo's clippy lints pass on prqlc crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "prqlc", "--all-targets", "--", "-D", "warnings"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_prqlc_tests_pass():
+    """Repo's prqlc library test suite passes (pass_to_pass)."""
+    # Run only library tests (binary tests require external resources)
+    # Exclude the injected harbor tests since they test the bug that exists on base commit
+    r = subprocess.run(
+        ["cargo", "test", "-p", "prqlc", "--lib", "--no-fail-fast", "--", "--skip", "_harbor_join_scope_tests"],
+        cwd=REPO, capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"Tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

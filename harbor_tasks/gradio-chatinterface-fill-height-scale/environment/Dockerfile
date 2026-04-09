@@ -1,8 +1,17 @@
 FROM python:3.12-slim
 
 RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-install-recommends \
-    git curl ca-certificates build-essential tmux \
+    git curl ca-certificates build-essential tmux nodejs npm \
     && rm -rf /var/lib/apt/lists/*
+
+# Setup prettier with Svelte plugin in /opt/prettier
+RUN mkdir -p /opt/prettier && cd /opt/prettier && \
+    npm init -y && \
+    npm install prettier prettier-plugin-svelte
+
+# Add prettier to PATH and set plugin search dir
+ENV PATH="/opt/prettier/node_modules/.bin:${PATH}"
+ENV PRETTIER_PLUGIN_SEARCH_DIR="/opt/prettier/node_modules"
 
 # Clone gradio at the base commit (before the fix)
 RUN git init /workspace/gradio && \

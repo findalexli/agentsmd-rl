@@ -1,0 +1,28 @@
+# Task manifest for ant-design/ant-design#57540
+# Cascader menu item ellipsis styles fix
+
+name = "cascader-ellipsis-fix"
+description = "Fix Cascader menu item ellipsis styles for long option labels"
+owner = "ant-design"
+repo = "ant-design"
+pr_number = 57540
+base_commit = "1ed0c62c7cbdd3ed02db8255d742c1b90dbb4299"
+merge_commit = "ffe7ccf17f689af990c4757c8197c8727c8f4184"
+
+timeout_minutes = 30
+difficulty = "easy"
+tags = ["css", "flexbox", "ellipsis", "cascader", "antd", "typescript"]
+
+[environment]
+image = "node:22-slim"
+setup_commands = [
+    "apt-get update && apt-get install -y git python3 python3-pip",
+    "pip3 install pytest --break-system-packages",
+    "git clone --filter=blob:none https://github.com/ant-design/ant-design.git /workspace/ant-design",
+    "cd /workspace/ant-design && git checkout 1ed0c62c7cbdd3ed02db8255d742c1b90dbb4299",
+    "cd /workspace/ant-design && npm install --legacy-peer-deps 2>&1 | tail -20 || npm install --force 2>&1 | tail -20",
+    "mkdir -p /logs/verifier"
+]
+
+[evaluation]
+test_command = "cd /workspace/task && bash /workspace/task/tests/test.sh"

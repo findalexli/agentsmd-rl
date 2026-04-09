@@ -5,7 +5,13 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates && \
+        git curl ca-certificates gnupg2 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Node.js (LTS) and yarn
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g yarn && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone react repo at base commit (shallow clone for large monorepo)

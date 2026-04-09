@@ -1,0 +1,166 @@
+source_pr:
+  owner: ant-design
+  repo: ant-design
+  number: 57545
+  title: "feat: support column for Table"
+  merge_commit: 1b5323ef1771c54441d386b6dbe14240e7ae7ca3
+  base_commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
+
+behavioral_requirements:
+  description: |
+    Add a `column` prop to the Table component that provides shared default
+    column configuration. Individual columns should inherit from this default
+    when they don't explicitly declare a property, and should be able to
+    override the default when they do.
+
+    The implementation must:
+    1. Add column prop type to TableProps interface
+    2. Create useFilledColumns hook that merges column defaults with individual columns
+    3. Handle special columns (SELECTION_COLUMN, EXPAND_COLUMN) without modification
+    4. Support nested column groups with recursive merging
+    5. Omit children property when merging to avoid duplication
+    6. Import and use the hook in InternalTable.tsx
+    7. Omit column from tableProps passed to rc-table
+    8. Add demo and tests following project conventions
+
+checks:
+  # Fail-to-pass tests (behavioral - test the actual bug/feature)
+  - id: test_useFilledColumns_hook_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: "useFilledColumns hook is implemented with proper logic"
+
+  - id: test_useFilledColumns_imported
+    type: fail_to_pass
+    origin: behavioral
+    description: "useFilledColumns is imported and used in InternalTable"
+
+  - id: test_column_prop_types_exist
+    type: fail_to_pass
+    origin: behavioral
+    description: "TableProps interface includes column prop type definition"
+
+  - id: test_column_prop_passed_to_hook
+    type: fail_to_pass
+    origin: behavioral
+    description: "column prop is destructured and passed to useFilledColumns"
+
+  - id: test_column_omitted_from_table_props
+    type: fail_to_pass
+    origin: behavioral
+    description: "column prop is omitted from rc-table props"
+
+  - id: test_column_default_inheritance_logic
+    type: fail_to_pass
+    origin: behavioral
+    description: "Columns inherit defaults from column prop when not explicitly set"
+
+  - id: test_special_columns_preserved
+    type: fail_to_pass
+    origin: behavioral
+    description: "SELECTION_COLUMN and EXPAND_COLUMN are preserved"
+
+  - id: test_nested_column_groups
+    type: fail_to_pass
+    origin: behavioral
+    description: "Nested column groups properly merge recursively"
+
+  - id: test_children_omitted_from_merge
+    type: fail_to_pass
+    origin: behavioral
+    description: "children property is omitted when merging"
+
+  - id: test_internal_test_file_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: "Test file has column prop tests"
+
+  # Pass-to-pass tests (repo standards)
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript compilation passes"
+
+  - id: test_demo_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Demo file for column defaults exists"
+
+  - id: test_demo_uses_absolute_imports
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      lines: "Demo 导入规范"
+      commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
+    description: "Demo file uses absolute imports per project convention"
+
+  - id: test_internal_tests_use_relative_imports
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      lines: "Test 导入规范"
+      commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
+    description: "Test file uses relative imports per project convention"
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's own unit tests for column feature pass"
+
+  - id: test_repo_lint_biome
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Biome linting passes"
+
+  - id: test_repo_table_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Table component tests pass"
+
+rubric:
+  - criterion: "Demo files use absolute imports"
+    weight: 1
+    source:
+      file: AGENTS.md
+      section: "Demo 导入规范"
+      commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
+    description: |
+      Demo files must use absolute paths (antd, antd/es/*, etc.) for importing
+      Ant Design components, not relative paths (../, ./).
+
+  - criterion: "Test files use relative imports"
+    weight: 1
+    source:
+      file: AGENTS.md
+      section: "Test 导入规范"
+      commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
+    description: |
+      Test files must use relative paths (.., ../index, etc.) for importing
+      Ant Design components, not absolute paths (antd, antd/es/*, etc.).
+
+  - criterion: "Hook properly uses mergeProps from rc-component/util"
+    weight: 2
+    description: |
+      The useFilledColumns hook should use mergeProps from @rc-component/util
+      to properly merge column defaults with individual column props, with
+      individual column props taking precedence.
+
+  - criterion: "Special columns are handled correctly"
+    weight: 1
+    description: |
+      SELECTION_COLUMN and EXPAND_COLUMN should be detected and returned
+      unchanged without attempting to merge props on them.
+
+  - criterion: "Recursive handling of column groups"
+    weight: 1
+    description: |
+      The hook should recursively process nested column groups, applying
+      defaults to children columns while preserving the group structure.
+
+  - criterion: "TypeScript types are correct"
+    weight: 1
+    description: |
+      The column prop should be typed as Partial<ColumnType<RecordType>>
+      in the TableProps interface.

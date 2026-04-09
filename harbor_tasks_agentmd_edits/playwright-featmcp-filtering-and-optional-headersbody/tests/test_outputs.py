@@ -5,7 +5,7 @@ PR:   39672
 
 Enhance browser_network_requests tool with URL filtering (regexp),
 optional request headers / request body display, and rename
-includeStatic → static. Also create .github/copilot-instructions.md.
+includeStatic -> static. Also create .github/copilot-instructions.md.
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
@@ -47,6 +47,28 @@ def test_syntax_check():
             f"Unbalanced braces in {fpath.name}"
         )
         assert len(content) > 100, f"{fpath.name} appears truncated or empty"
+
+
+# ---------------------------------------------------------------------------
+# pass_to_pass — repo CI/CD gates
+# ---------------------------------------------------------------------------
+
+def test_repo_build():
+    """Repo's build command passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_tsc():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "tsc"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -137,15 +159,15 @@ const src = fs.readFileSync(
 
 // Verify filter param is referenced and RegExp is constructed from it
 if (!/params\.filter/.test(src)) {
-  console.error('No params.filter reference — filter param not wired up');
+  console.error('No params.filter reference -- filter param not wired up');
   process.exit(1);
 }
 if (!/new\s+RegExp\s*\(/.test(src)) {
-  console.error('No RegExp construction — URL filtering not implemented');
+  console.error('No RegExp construction -- URL filtering not implemented');
   process.exit(1);
 }
 if (!/\.test\s*\(/.test(src)) {
-  console.error('No .test() call — filter not applied to URLs');
+  console.error('No .test() call -- filter not applied to URLs');
   process.exit(1);
 }
 

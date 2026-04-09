@@ -1,0 +1,28 @@
+name = "clickhouse-s3-report-bucket-rename"
+description = "Rename HTML_S3_PATH to S3_REPORT_BUCKET and add upstream catalog merge functionality"
+type = "code_change"
+
+[repository]
+owner = "ClickHouse"
+name = "ClickHouse"
+base_commit = "d0432097aed783bd35054dce2edcefe0c4e5122c"
+merge_commit = "47a1d36eb5723869b8a32c2dcf441aa5386f280c"
+pr_number = 102032
+
+[source]
+pr_label = "CI Fix or Improvement"
+
+[expectations]
+# Estimated difficulty for an agent to complete this task
+difficulty = "medium"  # Requires understanding of settings structure, renaming across multiple files, and adding new merge logic
+time_estimate = "30m"  # Should take 30-45 minutes for an experienced developer
+
+[tags]
+categories = ["refactoring", "feature_addition", "ci"]
+languages = ["python"]
+frameworks = []
+# Test isolation properties:
+# - self-contained: does not require external services (S3 is mocked in tests)
+# - deterministic: behavior is deterministic with mocked S3
+# - hermetic: no network calls made in tests
+properties = ["self-contained", "deterministic", "hermetic"]

@@ -121,9 +121,15 @@ def test_abc_enforces_log_eval_samples():
     r = subprocess.run(
         ["python3", "-c", textwrap.dedent("""\
             import sys
+            import importlib.util
             from unittest.mock import MagicMock
+            # Mock verifiers only, then import base.py directly
             sys.modules['verifiers'] = MagicMock()
-            from prime_rl.utils.monitor.base import Monitor
+            sys.modules['verifiers'].RolloutOutput = dict
+            spec = importlib.util.spec_from_file_location("base", "/workspace/prime-rl/src/prime_rl/utils/monitor/base.py")
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            Monitor = mod.Monitor
 
             class Incomplete(Monitor):
                 def log(self, metrics, step): pass
@@ -153,9 +159,15 @@ def test_noop_monitor_accepts_log_eval_samples():
     r = subprocess.run(
         ["python3", "-c", textwrap.dedent("""\
             import sys
+            import importlib.util
             from unittest.mock import MagicMock
+            # Mock verifiers only, then import base.py directly
             sys.modules['verifiers'] = MagicMock()
-            from prime_rl.utils.monitor.base import NoOpMonitor
+            sys.modules['verifiers'].RolloutOutput = dict
+            spec = importlib.util.spec_from_file_location("base", "/workspace/prime-rl/src/prime_rl/utils/monitor/base.py")
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            NoOpMonitor = mod.NoOpMonitor
 
             noop = object.__new__(NoOpMonitor)
             noop.log_eval_samples(
@@ -310,6 +322,35 @@ def test_existing_abstract_methods_preserved():
             assert False, f"Instantiated without {missing}"
         except TypeError:
             pass
+
+
+# [repo_tests] pass_to_pass — CI/CD: ruff lint check
+def test_repo_ruff_check():
+    """Repo's ruff lint check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Ignore pip warnings, just check ruff gets installed
+    r = subprocess.run(
+        ["ruff", "check", "src/prime_rl/utils/monitor", "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — CI/CD: ruff format check
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", "src/prime_rl/utils/monitor", "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

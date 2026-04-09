@@ -175,3 +175,114 @@ def test_not_stub():
     assert script_m, "No <script> section found"
     assert len(script_m.group(1).strip()) >= 50, "Script section too small"
     assert "gradio" in content, "No gradio reference — file was likely replaced"
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) — Repo CI/CD checks that should pass on
+# both base commit AND after the fix. These use Python subprocess to validate
+# Svelte structure. Note: Node.js/pnpm not available in this environment, so
+# we use Python static analysis as lightweight P2P gates.
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_svelte_syntax():
+    """Svelte file has valid structure: script tag, imports, and component (pass_to_pass)."""
+    script = r'''
+import re
+from pathlib import Path
+
+content = Path("/workspace/gradio/js/button/Index.svelte").read_text()
+
+# Basic Svelte structure checks
+assert "<script" in content, "Missing <script> tag"
+assert "</script>" in content, "Missing </script> tag"
+
+# Check for imports (TypeScript interfaces)
+assert "interface" in content or "type " in content, "Missing type/interface definitions"
+
+# Check for component usage
+assert "<Button" in content, "Missing <Button> component usage"
+
+# Check for proper binding syntax pattern
+binding_pattern = re.search(r"\w+\s*=\s*\{[^}]+\}", content)
+assert binding_pattern, "No prop bindings found in Svelte style"
+
+print("Svelte syntax checks passed")
+'''
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=15, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Svelte syntax check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_button_props_structure():
+    """Button component has valid type/prop declarations (pass_to_pass)."""
+    script = r'''
+import re
+from pathlib import Path
+
+content = Path("/workspace/gradio/js/button/Index.svelte").read_text()
+content_clean = re.sub(r"//.*?$", "", content, flags=re.MULTILINE)
+content_clean = re.sub(r"/\*.*?\*/", "", content_clean, flags=re.DOTALL)
+
+# Check that the file has type declarations - can be interface or type alias
+# The Button component uses: interface ButtonProps { ... }
+has_type_declaration = False
+
+# Look for interface or type definition (e.g., "interface ButtonProps {")
+if re.search(r"(?:interface|type)\s+\w+Props\s*\{", content_clean, re.DOTALL):
+    has_type_declaration = True
+
+# The file should have some form of type declaration
+assert has_type_declaration, "No type declarations found (expected interface or type Props)"
+print("Button props structure is valid")
+'''
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=15, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Button props structure check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_gradio_bindings_valid():
+    """Component uses valid gradio bindings where required (pass_to_pass)."""
+    script = r'''
+import re
+from pathlib import Path
+
+content = Path("/workspace/gradio/js/button/Index.svelte").read_text()
+content_clean = re.sub(r"//.*?$", "", content, flags=re.MULTILINE)
+content_clean = re.sub(r"/\*.*?\*/", "", content_clean, flags=re.DOTALL)
+
+# Find all <Button ...> usages and their bindings
+button_tags = re.findall(r"<Button\s+([^>]*)/?>", content_clean, re.DOTALL)
+assert button_tags, "No <Button> tags found"
+
+bindings = []
+for tag in button_tags:
+    # Extract prop={value} bindings
+    for m in re.finditer(r"(\w+)\s*=\s*\{([^}]+)\}", tag):
+        prop_name = m.group(1)
+        prop_value = m.group(2).strip()
+        bindings.append((prop_name, prop_value))
+
+print(f"Found bindings: {bindings}")
+
+# Core visual props should reference gradio (either props or shared)
+# These are the props that affect the component's appearance/behavior
+core_props = ["value", "variant", "size", "scale", "link", "icon", "visible", "disabled"]
+for prop, value in bindings:
+    if prop in core_props:
+        # These should reference gradio (either props or shared namespace)
+        assert "gradio." in value, f"Core prop {prop}={value} should reference gradio"
+
+print("Core gradio bindings are valid")
+'''
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=15, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Gradio bindings validation failed:\n{r.stderr}\n{r.stdout}"

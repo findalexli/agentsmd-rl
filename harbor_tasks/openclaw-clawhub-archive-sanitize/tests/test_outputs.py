@@ -115,6 +115,30 @@ def test_skill_archive_flat_filename():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_clawhub():
+    """Repo's oxlint passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "oxlint", "src/infra/clawhub.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_clawhub():
+    """Repo's oxfmt format check passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "oxfmt", "--check", "src/infra/clawhub.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------
 

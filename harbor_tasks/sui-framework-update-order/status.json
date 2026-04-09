@@ -1,0 +1,58 @@
+{
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "ci_commands_discovered": [
+        "cargo check -p sui-framework",
+        "cargo fmt -- --check",
+        "cargo xclippy (full workspace - too slow for p2p)",
+        "cargo nextest run (requires nextest + too slow for full suite)"
+      ],
+      "ci_commands_added": [
+        {
+          "test_id": "test_repo_cargo_check_sui_framework",
+          "command": "cargo check -p sui-framework",
+          "timeout": 120,
+          "type": "pass_to_pass",
+          "notes": "Verifies sui-framework crate compiles without errors"
+        },
+        {
+          "test_id": "test_repo_rustfmt_check",
+          "command": "cargo fmt -- --check",
+          "timeout": 60,
+          "type": "pass_to_pass",
+          "notes": "Verifies code formatting standards"
+        }
+      ],
+      "ci_commands_skipped": [
+        {
+          "command": "cargo xclippy",
+          "reason": "Full workspace clippy takes >120 seconds"
+        },
+        {
+          "command": "cargo nextest run",
+          "reason": "Requires cargo-nextest install, full test suite too slow"
+        },
+        {
+          "command": "cargo xlint",
+          "reason": "Requires cargo x binary from workspace"
+        }
+      ],
+      "timestamp": "2026-04-09T09:30:00Z"
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1441.21,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  }
+}

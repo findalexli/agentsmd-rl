@@ -1,0 +1,150 @@
+source_pr:
+  owner: JetBrains
+  repo: kotlin
+  number: 5800
+  merge_commit: 6620f081c43775f6ec6930e315b67030ba50378e
+  base_commit: f94fe0faca67ca5a57db9421948cab80af1686b7
+
+task_metadata:
+  name: kotlin-compose-deprecation-flags
+  description: Update deprecated Compose feature flags and deprecate obsolete ones
+  estimated_time: 20m
+  difficulty: medium
+
+checks:
+  # ========== Fail-to-pass tests: Deprecation annotation changes ==========
+  - id: test_generate_function_key_meta_classes_deprecation_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: generateFunctionKeyMetaClasses property has DeprecationLevel.ERROR with message mentioning Kotlin 2.5.0 removal
+
+  - id: test_enable_intrinsic_remember_deprecation_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: enableIntrinsicRemember property has DeprecationLevel.ERROR with Kotlin 2.5.0 removal message
+
+  - id: test_enable_strong_skipping_mode_deprecation_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: enableStrongSkippingMode property has DeprecationLevel.ERROR with Kotlin 2.5.0 removal message
+
+  - id: test_enable_non_skipping_group_optimization_deprecation_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: enableNonSkippingGroupOptimization property has DeprecationLevel.ERROR with Kotlin 2.5.0 removal message
+
+  - id: test_stability_configuration_file_deprecation_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: stabilityConfigurationFile property has DeprecationLevel.ERROR with Kotlin 2.5.0 removal message
+
+  - id: test_strong_skipping_feature_flag_deprecation_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: StrongSkipping feature flag has DeprecationLevel.ERROR with Kotlin 2.5.0 removal message
+
+  - id: test_intrinsic_remember_feature_flag_deprecation_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: IntrinsicRemember feature flag has DeprecationLevel.ERROR with Kotlin 2.5.0 removal message
+
+  - id: test_optimize_non_skipping_groups_deprecation_warning
+    type: fail_to_pass
+    origin: pr_diff
+    description: OptimizeNonSkippingGroups feature flag has DeprecationLevel.WARNING (new deprecation annotation)
+
+  - id: test_pausable_composition_deprecation_warning
+    type: fail_to_pass
+    origin: pr_diff
+    description: PausableComposition feature flag has DeprecationLevel.WARNING (new deprecation annotation)
+
+  # ========== Fail-to-pass tests: @Suppress annotation changes ==========
+  - id: test_feature_flags_suppress_includes_deprecation_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: featureFlags property suppresses both DEPRECATION_ERROR and DEPRECATION
+
+  - id: test_subplugin_generate_function_key_meta_classes_suppress
+    type: fail_to_pass
+    origin: pr_diff
+    description: Subplugin uses @Suppress("DEPRECATION_ERROR") for generateFunctionKeyMetaClasses
+
+  - id: test_subplugin_stability_configuration_file_suppress
+    type: fail_to_pass
+    origin: pr_diff
+    description: Subplugin uses @Suppress("DEPRECATION_ERROR") for stabilityConfigurationFile
+
+  - id: test_subplugin_feature_flags_suppress
+    type: fail_to_pass
+    origin: pr_diff
+    description: Subplugin uses @Suppress with both DEPRECATION_ERROR and DEPRECATION for featureFlags
+
+  # ========== Fail-to-pass tests: Test code migration ==========
+  - id: test_compose_it_uses_stability_configuration_files
+    type: fail_to_pass
+    origin: pr_diff
+    description: ComposeIT.kt uses stabilityConfigurationFiles (plural) instead of deprecated stabilityConfigurationFile (singular)
+
+  - id: test_extension_test_suppress_annotations_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: ExtensionConfigurationTest has correct @Suppress annotations for ERROR and WARNING level deprecations
+
+  # ========== Code execution tests ==========
+  - id: test_compose_compiler_compiles
+    type: fail_to_pass
+    origin: repo_tests
+    description: Compose compiler module compiles successfully after deprecation annotation changes
+
+  - id: test_compose_compiler_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Compose compiler source files have valid Kotlin syntax (kotlinc -parse-only)
+
+  # ========== Pass-to-pass tests: Repo structure ==========
+  - id: test_compose_compiler_module_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Compose compiler module source files exist and are accessible
+
+  - id: test_compose_compiler_functional_test_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Compose compiler functional test file exists
+
+  - id: test_compose_compiler_build_config_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Compose compiler module build.gradle.kts has required configuration
+
+  - id: test_compose_compiler_source_files_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: All Compose compiler source files have valid structure
+
+  - id: test_compose_compiler_test_structure_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Compose compiler test files have valid structure with @Test annotations
+
+  - id: test_compose_compiler_extension_test_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: ExtensionConfigurationTest has expected test methods
+
+  - id: test_compose_it_structure_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: ComposeIT.kt integration test has valid structure
+
+  - id: test_repo_gradle_wrapper_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo Gradle wrapper exists and has valid configuration
+
+  - id: test_compose_compiler_module_gradle_builds
+    type: pass_to_pass
+    origin: repo_tests
+    description: Compose compiler module can be included in gradle build
+
+rubric: []

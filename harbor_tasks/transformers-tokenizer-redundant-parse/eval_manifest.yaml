@@ -61,6 +61,26 @@ checks:
       lines: "2"
       commit: "9dc8d8aa3090ab3f39e6086d02b712f9274bc795"
 
+  - id: ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file passes ruff formatting check (CI: make style)"
+
+  - id: check_inits
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository init files are consistent (CI: check_inits.py)"
+
+  - id: check_dummies
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository dummy files are consistent (CI: check_dummies.py)"
+
+  - id: module_import
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified module can be imported without errors"
+
 rubric:
   - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
     source:
@@ -68,13 +88,13 @@ rubric:
       lines: "15"
       commit: "9dc8d8aa3090ab3f39e6086d02b712f9274bc795"
 
-  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`. Ideally you should edit the code it's copying from and propagate the change, but you can break the `# Copied from` link if needed."
+  - rule: "Do not edit a # Copied from block, as it will be reverted by make fix-repo. Ideally you should edit the code it's copying from and propagate the change, but you can break the # Copied from link if needed."
     source:
       path: "CLAUDE.md"
       lines: "66"
       commit: "9dc8d8aa3090ab3f39e6086d02b712f9274bc795"
 
-  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file."
+  - rule: "When a modular file is present, generated files should not be edited, as changes will be overwritten by make fix-repo! Instead, edit the modular file."
     source:
       path: "CLAUDE.md"
       lines: "67"

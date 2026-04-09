@@ -1,0 +1,28 @@
+name = "consensus-probe-before-fetch"
+owner = "benchmark"
+description = "Add probe-before-fetch functionality to consensus commit sync to reduce delays when peers are unavailable"
+type = "git"
+version = "1.0.0"
+
+[repository]
+url = "https://github.com/MystenLabs/sui.git"
+base_commit = "192a628cc56fcd901af4330d91c123fe8f493187"
+merge_commit = "52203ecc02e7a3fd810ed88c1fd24a3a99ba98db"
+pr_number = 26056
+
+[task]
+# Medium difficulty - requires understanding networking and timeout patterns
+difficulty = "medium"
+# Timeouts in seconds
+agent_timeout = 1800
+verifier_timeout = 300
+tags = ["rust", "consensus", "networking", "timeout", "mysticeti"]
+
+[build]
+commands = [
+    "cd /workspace/sui && cargo check -p consensus-core -p consensus-config 2>&1"
+]
+
+[evaluation]
+# Tests are defined in test_outputs.py
+manifest_path = "eval_manifest.yaml"

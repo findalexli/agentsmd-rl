@@ -1,0 +1,64 @@
+source:
+  pr: "https://github.com/chroma-core/chroma/pull/6699"
+  title: "[BUG]: Rebuilds should still refer to pre-existing record offset ids"
+  description: |
+    Before this change, all segment rebuilds did not hold a reference to the existing
+    record segment reader. It would be unable to refer to preexisting offsets in this
+    reader for that reason. This change fixes that by holding a reference to the record
+    segment reader in segment rebuild cases.
+
+  base_commit: "b5362de1b7412b96545776a843f977f3c10ba4ff"
+  merge_commit: "9a2f4b0625f393ed275f73cc20db238300177465"
+  files_changed:
+    - rust/segment/src/distributed_hnsw.rs
+    - rust/worker/src/execution/operators/source_record_segment.rs
+    - rust/worker/src/execution/orchestration/apply_logs_orchestrator.rs
+    - rust/worker/src/execution/orchestration/compact.rs
+    - rust/worker/src/execution/orchestration/log_fetch_orchestrator.rs
+
+agent_config:
+  - file: "README.md"
+    lines: null
+    description: "General Chroma project structure and contribution guidelines"
+    rules:
+      - "Chroma is a vector database with Rust worker implementation"
+      - "Follow existing code patterns and conventions"
+
+rubric: []
+
+checks:
+  - id: "test_is_full_rebuild_method"
+    description: "CompactionContext has is_full_rebuild() method that checks both is_rebuild and RECORD scope"
+    type: "fail_to_pass"
+    points: 25
+
+  - id: "test_source_record_operation_upsert"
+    description: "SourceRecordSegmentProvider yields Upserts instead of Adds"
+    type: "fail_to_pass"
+    points: 25
+
+  - id: "test_record_reader_retained_in_rebuild"
+    description: "Record reader is retained during vector-only rebuilds (not filtered out)"
+    type: "fail_to_pass"
+    points: 25
+
+  - id: "test_apply_segment_scopes_passed"
+    description: "apply_segment_scopes is passed through LogFetchOrchestrator"
+    type: "fail_to_pass"
+    points: 25
+
+  # Pass-to-pass tests (repo CI/CD checks)
+  - id: "test_repo_cargo_check"
+    description: "Repo's cargo check passes on worker and chroma-segment packages"
+    type: "pass_to_pass"
+    points: 0
+
+  - id: "test_repo_cargo_clippy"
+    description: "Repo's cargo clippy passes on worker and chroma-segment packages"
+    type: "pass_to_pass"
+    points: 0
+
+  - id: "test_repo_cargo_fmt"
+    description: "Repo's Rust code formatting passes"
+    type: "pass_to_pass"
+    points: 0

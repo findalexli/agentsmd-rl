@@ -1,1 +1,60 @@
-{"verdict": "pass", "nop": 0, "gold": 1}
+{
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:37:12.113175",
+  "total_time": 5580.51,
+  "sandbox_id": "iskj3tju6m71kiggia9oa",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "ci_commands_found": [
+        "ruff check . (from ci-python.yml)",
+        "ruff format --check --diff . (from ci-python.yml)",
+        "mypy . | mypy-baseline filter (from ci-python.yml - requires full deps)",
+        "python -m py_compile (Python built-in compilation check)",
+        "ty check (ty - fast Python type checker)"
+      ],
+      "commands_added_as_p2p": [
+        "test_repo_ruff_check - runs 'python -m ruff check posthog/hogql/database/schema/system.py'",
+        "test_repo_ruff_format - runs 'python -m ruff format --check posthog/hogql/database/schema/system.py'",
+        "test_repo_python_compile - runs 'python -m py_compile posthog/hogql/database/schema/system.py'"
+      ],
+      "commands_skipped": [
+        "mypy - requires full project dependencies (django-stubs, mypy_drf_plugin, mypy-baseline)",
+        "pytest - requires database and full Django setup",
+        "ty - works on base commit but may need import deps for full checking",
+        "Full test suite - takes >120s and requires external services (postgres, clickhouse, redis)"
+      ],
+      "notes": "Added 3 repo_tests pass_to_pass gates that verify the modified Python file passes ruff lint/format checks and compiles without errors. These are fast (<5s) and don't require network/external services. All 3 pass_to_pass tests pass on base commit; 5 fail_to_pass tests correctly fail (patch not applied)."
+    },
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 4.54,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 5580.51,
+      "at": "2026-04-09T07:37:12.113175"
+    }
+  ]
+}

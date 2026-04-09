@@ -1,0 +1,79 @@
+source:
+  pr: "ClickHouse/ClickHouse#101962"
+  base_commit: "63f473f503c91e0694389620a168e40c4ccc6483"
+  merge_commit: "9893080d285656b1f90153260f95a675e002326b"
+  description: |
+    Fix wrong results in JOIN with shard-by-PK optimization and query condition cache.
+    The bug was in optimizeJoinByShards::apply() which assumed contiguous part_index_in_query
+    values, but filterPartsByQueryConditionCache can drop parts leaving gaps in the indices.
+    This caused the layer distribution to assign parts to the wrong source, producing 0 rows.
+
+checks:
+  # Fail-to-pass tests (behavioral - must fail before fix)
+  - id: test_patch_applied
+    type: fail_to_pass
+    origin: agent_config
+    source: "AGENTS.md: C++ code review guidelines"
+    description: "Fix is applied - contiguous renumbering comment and local_idx variable present"
+
+  - id: test_contiguous_index_assignment
+    type: fail_to_pass
+    origin: agent_config
+    source: "AGENTS.md: C++ code review guidelines"
+    description: "part_index_in_query is assigned contiguously using added_parts + local_idx"
+
+  - id: test_for_loop_indexing_logic
+    type: fail_to_pass
+    origin: agent_config
+    source: "AGENTS.md: C++ code review guidelines"
+    description: "For loop uses local_idx for both indexing and assignment"
+
+  # Pass-to-pass tests (structural - must pass before and after)
+  - id: test_code_compiles_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "C++ syntax validation passes"
+
+  - id: test_comment_explains_fix
+    type: pass_to_pass
+    origin: agent_config
+    source: "AGENTS.md: Documentation guidelines"
+    description: "Fix has explanatory comments about filterPartsByQueryConditionCache"
+
+  - id: test_file_structure_intact
+    type: pass_to_pass
+    origin: repo_tests
+    description: "File structure and function signatures intact"
+
+  # Repo CI/CD pass-to-pass tests (ensure existing functionality not broken)
+  - id: test_repo_clang_format
+    type: pass_to_pass
+    origin: repo_tests
+    source: "ClickHouse/.clang-format: WebKit style with 140 column limit"
+    description: "Repo's C++ code follows style guidelines (clang-format compatible)"
+
+  - id: test_repo_cmake_includes
+    type: pass_to_pass
+    origin: repo_tests
+    source: "ClickHouse/CMakeLists.txt: Build system validation"
+    description: "Repo's CMake build system includes the modified directory"
+
+  - id: test_repo_git_tracking
+    type: pass_to_pass
+    origin: repo_tests
+    source: "ClickHouse git repository validation"
+    description: "Modified file is properly tracked in git"
+
+  - id: test_repo_header_includes_valid
+    type: pass_to_pass
+    origin: repo_tests
+    source: "ClickHouse/src: Header include validation"
+    description: "Modified file's header includes are valid and non-duplicative"
+
+  - id: test_repo_cpp_standard_compliance
+    type: pass_to_pass
+    origin: repo_tests
+    source: "ClickHouse C++20 standard compliance"
+    description: "Modified file uses valid C++20 constructs"
+
+rubric: []

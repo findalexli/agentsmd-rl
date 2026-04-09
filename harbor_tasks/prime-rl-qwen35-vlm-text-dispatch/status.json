@@ -1,56 +1,80 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.981379",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T04:51:42.169849",
+  "total_time": 8414.16,
+  "sandbox_id": "ipyc7z1ai1ibiz4smht2n",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build OK, NOP test=0 (4 fail-to-pass tests correctly fail on buggy base), Gold test=1 (16/16 pass), rubric compliant.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 174.08
     },
-    {
-      "timestamp": "2026-03-30T11:48:15.959624",
-      "runner": "audit (audit-tests_20260330_114815)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 24729
+    "p2p_enrichment": {
+      "status": "completed",
+      "timestamp": "2026-04-09",
+      "ci_commands_discovered": [
+        "ruff check --config=pyproject.toml (from .github/workflows/style.yaml)",
+        "ruff format --check --config=pyproject.toml (from .github/workflows/style.yaml)",
+        "pytest tests/unit -m 'not gpu' (from .github/workflows/cpu_tests.yaml - skipped: requires full deps)"
+      ],
+      "tests_added": [
+        "test_repo_ruff_check - ruff lint check on modified files (vlm.py, model.py)",
+        "test_repo_ruff_format - ruff format check on modified files",
+        "test_repo_imports - vlm.py imports work, model.py parses",
+        "test_repo_configs_parse - all TOML config files are valid",
+        "test_repo_readme_exists - README.md exists and has content"
+      ],
+      "notes": "Added 5 repo CI pass_to_pass gates. Skipped pytest unit tests due to missing dependencies (pydantic_config, conftest.py issues). Tests verified passing on base commit."
     },
-    {
-      "timestamp": "2026-04-01T20:15:41.718012",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-01T22:28:05-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.0,
-      "verdict": "pass",
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 478.21,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T14:28:08.955883",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T04:51:42.009691"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.581740",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8414.16,
+      "at": "2026-04-09T04:51:42.169849"
     }
   ]
 }

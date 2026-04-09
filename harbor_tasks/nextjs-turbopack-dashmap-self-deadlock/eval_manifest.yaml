@@ -12,6 +12,26 @@ checks:
     origin: static
     description: "mod.rs exists and is not stubbed"
 
+  - id: repo_rust_file_parses
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Rust file is valid and parseable"
+
+  - id: repo_dashmap_usage_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: "DashMap task_cache is used in both target functions"
+
+  - id: repo_taskid_type_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TaskId type and ConnectChildOperation are present"
+
+  - id: repo_git_history_intact
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git history is intact for blame/annotation"
+
   - id: persistent_task_ref_released
     type: fail_to_pass
     origin: pr_diff

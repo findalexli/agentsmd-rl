@@ -156,10 +156,11 @@ for child in ast.walk(target):
                 "No profiling keyword argument found"
             )
             print("PASS")
-            return
-raise AssertionError(
-    "No call to initialize_kv_cache found in _init_minimal_kv_cache_for_profiling"
-)
+            break
+else:
+    raise AssertionError(
+        "No call to initialize_kv_cache found in _init_minimal_kv_cache_for_profiling"
+    )
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
@@ -245,13 +246,99 @@ for child in ast.walk(target):
                 "No profiling keyword forwarded to initialize_attn_backend"
             )
             print("PASS")
-            return
-raise AssertionError(
-    "No call to initialize_attn_backend found in initialize_kv_cache"
-)
+            break
+else:
+    raise AssertionError(
+        "No call to initialize_attn_backend found in initialize_kv_cache"
+    )
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Modified files must pass ruff linting per pyproject.toml config (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Full lint rules from pyproject.toml tool.ruff.lint
+    # select: E, F, UP, B, ISC, SIM, I, G
+    # ignore: F405, F403, E731, B905, B007, UP032
+    r = subprocess.run(
+        [
+            "ruff", "check", RUNNER, CONFIG,
+            "--select=E,F,UP,B,ISC,SIM,I,G",
+            "--ignore=F405,F403,E731,B905,B007,UP032",
+            "--output-format=concise",
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Modified files must be formatted (ruff format check) (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", RUNNER, CONFIG],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_spdx_headers():
+    """Modified files must have SPDX license headers (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "tools/pre_commit/check_spdx_header.py", RUNNER, CONFIG],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SPDX header check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typos():
+    """Modified files must have no typos (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "typos", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["typos", RUNNER, CONFIG],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typos check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_regressions_compilation_config():
+    """CompilationConfig class structure preserved (pass_to_pass)."""
+    source = Path(CONFIG).read_text()
+    tree = ast.parse(source)
+
+    found_class = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "CompilationConfig":
+            found_class = True
+            # Count methods
+            methods = [
+                item.name
+                for item in node.body
+                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
+            ]
+            assert len(methods) >= 5, f"CompilationConfig has only {len(methods)} methods, expected >= 5"
+            break
+    assert found_class, "CompilationConfig class not found"
 
 
 # ---------------------------------------------------------------------------

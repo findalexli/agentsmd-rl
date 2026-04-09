@@ -40,7 +40,10 @@ def test_try_block_around_collect():
         f"const c=fs.readFileSync('{TARGET_FILE}','utf8');"
         "const s=c.indexOf('async _autoAttachInstructions');"
         "if(s===-1){process.stderr.write('method not found');process.exit(1);}"
-        "let ob=c.indexOf('{',s),d=0,e=ob;"
+        # Find the method body's opening { (after the signature's closing ))
+        "let sigEnd=c.indexOf(')',s);"
+        "if(sigEnd===-1){process.stderr.write('signature end not found');process.exit(1);}"
+        "let ob=c.indexOf('{',sigEnd),d=0,e=ob;"
         "for(let i=ob;i<c.length;i++){if(c[i]==='{')d++;else if(c[i]==='}')d--;if(d===0){e=i+1;break;}}"
         "const body=c.substring(s,e);"
         "const ti=body.indexOf('try {');"
@@ -70,7 +73,10 @@ def test_catch_block_logs_error():
         f"const c=fs.readFileSync('{TARGET_FILE}','utf8');"
         "const s=c.indexOf('async _autoAttachInstructions');"
         "if(s===-1){process.stderr.write('method not found');process.exit(1);}"
-        "let ob=c.indexOf('{',s),d=0,e=ob;"
+        # Find the method body's opening { (after the signature's closing ))
+        "let sigEnd=c.indexOf(')',s);"
+        "if(sigEnd===-1){process.stderr.write('signature end not found');process.exit(1);}"
+        "let ob=c.indexOf('{',sigEnd),d=0,e=ob;"
         "for(let i=ob;i<c.length;i++){if(c[i]==='{')d++;else if(c[i]==='}')d--;if(d===0){e=i+1;break;}}"
         "const body=c.substring(s,e);"
         "const ci=body.indexOf('catch (err)');"

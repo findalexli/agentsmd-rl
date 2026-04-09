@@ -1,0 +1,118 @@
+source:
+  pr: All-Hands-AI/OpenHands#13579
+  title: "APP-1115 Fix for AWS config (Minio) for feature branches"
+  merge_commit: eb189144f2dfbbf0dad964cf7bdbd44e7910cb29
+  base_commit: c9b2ce2fb9c61313d80643a489f81728bb9f5b09
+
+checks:
+  # Fail-to-pass tests (verify the fix works)
+  - id: "test_endpoint_no_env_returns_none"
+    type: "pytest"
+    file: "tests/test_outputs.py"
+    test: "TestGetDefaultAwsEndpointUrl::test_no_env_vars_returns_none"
+    category: "f2p"
+    description: "_get_default_aws_endpoint_url returns None when no env vars set"
+
+  - id: "test_endpoint_https_prefix_secure"
+    type: "pytest"
+    file: "tests/test_outputs.py"
+    test: "TestGetDefaultAwsEndpointUrl::test_endpoint_with_https_prefix_secure"
+    category: "f2p"
+    description: "Endpoint URL with https:// prefix when secure=true"
+
+  - id: "test_endpoint_adds_https_when_secure"
+    type: "pytest"
+    file: "tests/test_outputs.py"
+    test: "TestGetDefaultAwsEndpointUrl::test_endpoint_without_prefix_secure_adds_https"
+    category: "f2p"
+    description: "Adds https:// prefix when secure=true and no protocol"
+
+  - id: "test_endpoint_http_prefix_insecure"
+    type: "pytest"
+    file: "tests/test_outputs.py"
+    test: "TestGetDefaultAwsEndpointUrl::test_endpoint_with_http_prefix_insecure"
+    category: "f2p"
+    description: "Endpoint URL with http:// prefix when secure=false"
+
+  - id: "test_endpoint_adds_http_when_insecure"
+    type: "pytest"
+    file: "tests/test_outputs.py"
+    test: "TestGetDefaultAwsEndpointUrl::test_endpoint_without_prefix_insecure_adds_http"
+    category: "f2p"
+    description: "Adds http:// prefix when secure=false and no protocol"
+
+  - id: "test_endpoint_http_to_https_conversion"
+    type: "pytest"
+    file: "tests/test_outputs.py"
+    test: "TestGetDefaultAwsEndpointUrl::test_endpoint_http_converted_to_https_when_secure"
+    category: "f2p"
+    description: "Converts http:// to https:// when secure=true"
+
+  - id: "test_endpoint_https_to_http_conversion"
+    type: "pytest"
+    file: "tests/test_outputs.py"
+    test: "TestGetDefaultAwsEndpointUrl::test_endpoint_https_converted_to_http_when_insecure"
+    category: "f2p"
+    description: "Converts https:// to http:// when secure=false"
+
+  - id: "test_secure_defaults_true"
+    type: "pytest"
+    file: "tests/test_outputs.py"
+    test: "TestGetDefaultAwsEndpointUrl::test_secure_defaults_to_true"
+    category: "f2p"
+    description: "AWS_S3_SECURE defaults to true when not set"
+
+  - id: "test_injector_endpoint_from_env"
+    type: "pytest"
+    file: "tests/test_outputs.py"
+    test: "TestAwsEventServiceInjectorEndpointUrl::test_injector_endpoint_url_populated_from_env"
+    category: "f2p"
+    description: "AwsEventServiceInjector.endpoint_url populated from env via Field default_factory"
+
+  - id: "test_injector_accepts_custom_endpoint"
+    type: "pytest"
+    file: "tests/test_outputs.py"
+    test: "TestAwsEventServiceInjectorEndpointUrl::test_injector_accepts_custom_endpoint_url"
+    category: "f2p"
+    description: "AwsEventServiceInjector accepts custom endpoint_url parameter"
+
+  - id: "test_injector_endpoint_none_no_env"
+    type: "pytest"
+    file: "tests/test_outputs.py"
+    test: "TestAwsEventServiceInjectorEndpointUrl::test_injector_endpoint_url_none_when_no_env"
+    category: "f2p"
+    description: "AwsEventServiceInjector.endpoint_url is None when no env vars set"
+
+  - id: "test_injector_has_endpoint_attribute"
+    type: "pytest"
+    file: "tests/test_outputs.py"
+    test: "TestEndpointUrlUsedInS3Client::test_injector_has_endpoint_url_attribute"
+    category: "f2p"
+    description: "AwsEventServiceInjector has endpoint_url as a class field"
+
+  # Pass-to-pass tests (verify CI checks pass on base and with fix)
+  - id: "test_repo_python_syntax"
+    type: "pass_to_pass"
+    file: "tests/test_outputs.py"
+    test: "test_repo_python_syntax"
+    category: "p2p"
+    origin: "repo_tests"
+    description: "Python syntax validation for modified file"
+
+  - id: "test_repo_mypy_typecheck"
+    type: "pass_to_pass"
+    file: "tests/test_outputs.py"
+    test: "test_repo_mypy_typecheck"
+    category: "p2p"
+    origin: "repo_tests"
+    description: "Repo's mypy typecheck passes for modified file"
+
+  - id: "test_repo_modified_file_exists"
+    type: "pass_to_pass"
+    file: "tests/test_outputs.py"
+    test: "test_repo_modified_file_exists"
+    category: "p2p"
+    origin: "repo_tests"
+    description: "Primary modified file exists and is readable"
+
+rubric: []

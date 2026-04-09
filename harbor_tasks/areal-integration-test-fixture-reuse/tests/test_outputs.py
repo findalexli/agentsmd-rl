@@ -429,3 +429,133 @@ def test_no_wildcard_imports():
                     assert alias.name != "*", (
                         f"Wildcard import in {fpath}: from {node.module} import *"
                     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI/CD checks via AST analysis
+# These verify static code quality matching the repo's pre-commit/CI standards
+# ---------------------------------------------------------------------------
+
+
+def test_repo_test_classes_follow_naming():
+    """All test classes must follow Test* naming convention (pass_to_pass).
+
+    Matches ruff/pre-commit check: test classes should be named Test*.
+    """
+    for fpath in ALL_FILES:
+        tree = ast.parse(Path(fpath).read_text())
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                # Check if it's a test class (contains test methods)
+                has_test_methods = any(
+                    isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    and n.name.startswith("test_")
+                    for n in ast.walk(node)
+                )
+                if has_test_methods:
+                    assert node.name.startswith("Test"), (
+                        f"{fpath}: Test class {node.name} should start with 'Test'"
+                    )
+
+
+def test_repo_no_bare_excepts():
+    """No bare 'except:' clauses in test files (pass_to_pass).
+
+    Matches ruff E722: do not use bare except.
+    """
+    for fpath in ALL_FILES:
+        tree = ast.parse(Path(fpath).read_text())
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Try):
+                for handler in node.handlers:
+                    if handler.type is None:
+                        assert False, (
+                            f"{fpath}: Bare 'except:' found at line {handler.lineno}, "
+                            f"use 'except Exception:' instead"
+                        )
+
+
+def test_repo_no_unused_imports():
+    """No obviously unused standard library imports in test files (pass_to_pass).
+
+    Checks that imported names are referenced somewhere in the module.
+    Only checks standard library imports (not pytest, torch, etc.).
+    """
+    stdlib_modules = {
+        "os", "sys", "time", "json", "subprocess", "socket", "threading",
+        "pathlib", "typing", "collections", "itertools", "functools",
+        "datetime", "random", "string", "re", "hashlib", "base64",
+        "contextlib", "dataclasses", "enum", "inspect", "types",
+        "warnings", "traceback", "tempfile", "shutil", "glob",
+    }
+
+    for fpath in ALL_FILES:
+        source = Path(fpath).read_text()
+        tree = ast.parse(source)
+
+        # Collect all imports
+        imports = {}  # name -> (module, node)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    imports[alias.asname or alias.name] = (alias.name, node)
+            elif isinstance(node, ast.ImportFrom):
+                if node.module in stdlib_modules:
+                    for alias in node.names:
+                        imports[alias.asname or alias.name] = (node.module, node)
+
+        # Collect all name references (simple heuristic)
+        referenced = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Name):
+                referenced.add(node.id)
+            elif isinstance(node, ast.Attribute):
+                # For attribute access like os.path, reference 'os'
+                if isinstance(node.value, ast.Name):
+                    referenced.add(node.value.id)
+
+        # Check for unused imports (with some exclusions)
+        for name, (module, node) in imports.items():
+            if name not in referenced and not name.startswith("_"):
+                # Only flag stdlib imports that are clearly unused
+                assert False, (
+                    f"{fpath}: Unused import '{name}' from {module} at line {node.lineno}"
+                )
+
+
+def test_repo_yaml_files_valid():
+    """All YAML files in the repo must be valid (pass_to_pass).
+
+    Matches pre-commit check-yaml hook.
+    """
+    import yaml
+
+    repo_yaml_files = [
+        f"{REPO}/.pre-commit-config.yaml",
+    ]
+
+    # Find all YAML files in examples directory
+    examples_yaml = list(Path(f"{REPO}/examples").rglob("*.yaml")) + list(Path(f"{REPO}/examples").rglob("*.yml"))
+
+    for fpath in repo_yaml_files + [str(p) for p in examples_yaml]:
+        path = Path(fpath)
+        if path.exists():
+            try:
+                yaml.safe_load(path.read_text())
+            except yaml.YAMLError as e:
+                assert False, f"{fpath}: Invalid YAML - {e}"
+
+
+def test_repo_pyproject_toml_valid():
+    """pyproject.toml must be valid TOML (pass_to_pass).
+
+    Basic syntax check for the repo's main config file.
+    """
+    import tomllib
+
+    pyproject_path = Path(f"{REPO}/pyproject.toml")
+    if pyproject_path.exists():
+        try:
+            tomllib.loads(pyproject_path.read_text())
+        except Exception as e:
+            assert False, f"pyproject.toml: Invalid TOML - {e}"

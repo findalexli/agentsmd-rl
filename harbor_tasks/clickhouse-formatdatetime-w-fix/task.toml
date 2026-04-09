@@ -1,0 +1,46 @@
+name = "clickhouse-formatdatetime-w-fix"
+title = "ClickHouse formatDateTime: Treat %W as variable-length formatter unconditionally"
+description = "Fix a bug where %W (weekday name) was inconsistently treated as variable-width depending on other formatting settings."
+owner = "ClickHouse"
+repo = "ClickHouse"
+pr_number = 102100
+base_commit = "0ac8d1fb82e45ca6c903f5549d564e867fb422dd"
+merge_commit = "16684b0f40c6d834872b9fa5d2fd68c6326a339b"
+
+# Task metadata
+difficulty = "medium"
+tags = ["c++", "bug-fix", "clickhouse", "date-formatting"]
+estimated_time_minutes = 60
+category = "database"
+
+# Timeouts (seconds)
+agent_timeout = 3600
+verifier_timeout = 600
+
+# Task paths
+[paths]
+task_dir = "/workspace/task"
+solution_dir = "/workspace/task/solution"
+test_dir = "/workspace/task/tests"
+repo_dir = "/workspace/ClickHouse"
+
+# Environment
+[environment]
+dockerfile = "/workspace/task/environment/Dockerfile"
+base_image = "ubuntu:22.04"
+
+# Language-specific settings
+[language]
+name = "cpp"
+compiler = "clang-18"
+build_system = "cmake+ninja"
+
+# PR context
+[pr_context]
+target_file = "src/Functions/formatDateTime.cpp"
+distinctive_line = "variable_width_formatter_M_is_month_name = {'M'}"
+
+# Points distribution
+[scoring]
+total_points = 10
+pass_threshold = 8

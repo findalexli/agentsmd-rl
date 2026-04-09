@@ -9,6 +9,14 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files parse without syntax errors
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's code formatting passes prettier-check
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build passes
 - id: noargs_error_thrown
   type: fail_to_pass
   origin: pr_diff
@@ -18,6 +26,22 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Error message guides users on correct PrismaClient construction
+- id: test_validate_unconditional
+  type: fail_to_pass
+  origin: pr_diff
+  description: validatePrismaClientOptions called unconditionally, not inside if(optionsArg)
+- id: test_optional_chaining_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: optionsArg?.adapter becomes optionsArg.adapter after null guard
+- id: test_readme_urls_updated
+  type: fail_to_pass
+  origin: config_edit
+  description: README.md URLs updated from /docs/concepts/components/ to /docs/orm/
+- id: test_readme_prisma7_note
+  type: fail_to_pass
+  origin: config_edit
+  description: README.md mentions Prisma 7 driver adapter requirement
 - id: not_stub
   type: pass_to_pass
   origin: static

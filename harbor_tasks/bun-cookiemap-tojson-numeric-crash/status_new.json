@@ -1,0 +1,95 @@
+{
+  "task": "bun-cookiemap-tojson-numeric-crash",
+  "validations": [
+    {
+      "timestamp": "2026-04-01T20:15:41.647470",
+      "phase": "docker_validate_v2",
+      "runner": "scripts/docker_validate_all.sh",
+      "verdict": "fail",
+      "nop": "0",
+      "gold": "0",
+      "format": "pytest_binary"
+    },
+    {
+      "timestamp": "2026-04-02T13:47:53.978605",
+      "phase": "e2b_wave2",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail",
+      "nop": "0.0",
+      "gold": "0.0"
+    },
+    {
+      "timestamp": "2026-04-02T14:28:08.938258",
+      "phase": "e2b_full_validation",
+      "runner": "scripts/e2b_validate_batch.py",
+      "format": "pytest_binary",
+      "verdict": "fail",
+      "nop": "0.0",
+      "gold": "0.0"
+    },
+    {
+      "timestamp": "2026-04-02T23:07:01.516214",
+      "phase": "e2b_full_post_migration",
+      "runner": "e2b_validate_batch.py (shallow git)",
+      "format": "pytest_binary",
+      "verdict": "pass",
+      "nop": "0",
+      "gold": "1"
+    }
+  ],
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T08:15:00Z",
+      "enrichment_applied": true,
+      "ci_commands_found": [
+        "bun lint (oxlint) - JS/TS linting via package.json",
+        "bun run clang-format - C++ formatting check",
+        "bun run zig-format - Zig formatting check",
+        "bun run prettier - JS/TS formatting",
+        "test/internal/ban-words.test.ts - Banned patterns check"
+      ],
+      "p2p_tests_added": [
+        {
+          "id": "cookiemap_no_banned_patterns",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "CookieMap.cpp must not contain banned C++ anti-patterns from repo CI",
+          "source_ref": "test/internal/ban-words.test.ts"
+        },
+        {
+          "id": "cookiemap_file_structure",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "CookieMap.cpp must have proper structure: includes, namespace, class definition",
+          "source_ref": "src/bun.js/bindings/CookieMap.cpp"
+        },
+        {
+          "id": "cookiemap_clang_format",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "CookieMap.cpp must follow the repo's C++ formatting style (clang-format)",
+          "source_ref": ".github/workflows/format.yml",
+          "note": "Skipped if clang-format not available in environment"
+        },
+        {
+          "id": "cookiemap_cpp_syntax_valid",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "CookieMap.cpp must have valid C++ syntax (balanced braces/parens)",
+          "source_ref": "src/.clang-format"
+        }
+      ],
+      "tests_excluded": [
+        "Full bun test suite (requires bun binary build)",
+        "Zig build checks (requires Zig compiler)",
+        "oxlint (requires npm/npx - may add if available)",
+        "Full clang-format of all C++ files (would take too long)"
+      ],
+      "verification": {
+        "base_commit_tests": "8 passed, 1 skipped, 3 fail_to_pass failed (expected)",
+        "merge_commit_tests": "11 passed, 1 skipped (all p2p tests pass on both commits)"
+      }
+    }
+  }
+}

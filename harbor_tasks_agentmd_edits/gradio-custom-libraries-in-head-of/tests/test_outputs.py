@@ -169,6 +169,27 @@ def test_existing_html_tests_pass():
     assert r.returncode == 0, f"Existing tests failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_html_tests_fast():
+    """HTML component tests pass without warnings (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "test/components/test_html.py", "-x", "--tb=short", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"HTML tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_gradio_imports_cleanly():
+    """gradio module imports without errors (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c", "import gradio; print('gradio imported successfully')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"gradio import failed: {r.stderr}"
+    assert "gradio imported successfully" in r.stdout
+
+
 # [static] pass_to_pass
 def test_not_stub():
     """HTML.get_config has real logic, not just pass/return."""

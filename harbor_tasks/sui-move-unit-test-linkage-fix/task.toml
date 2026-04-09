@@ -1,0 +1,34 @@
+name = "sui-move-unit-test-linkage-fix"
+description = "Fix package linkage in Move unit test runner by using from_module_for_testing_with_linkage with proper LinkageContext"
+version = "1.0.0"
+
+# PR information
+pr_owner = "MystenLabs"
+pr_repo = "sui"
+pr_number = 26137
+base_commit = "89286c8e52b8b358b3bd895e40ec4ee2f991c742"
+merge_commit = "404f123f44711212ac69f27762a49a57eb3454f0"
+
+# Difficulty and categorization
+difficulty = "medium"
+tags = ["rust", "move-language", "unit-testing", "linkage", "blockchain"]
+category = "functional_fix"
+
+# Estimated time for an agent to complete (in minutes)
+estimated_time = 15
+
+# Main file being modified
+target_file = "external-crates/move/crates/move-unit-test/src/test_runner.rs"
+
+# Distinctive line from the patch for idempotency check
+distinctive_line = "from_module_for_testing_with_linkage"
+
+# Language
+language = "rust"
+
+[metadata]
+# Original PR title
+title = "[move-unit-test] Fix linkage for unit test runner"
+
+# Brief summary of what needs to be fixed
+problem = "The Move unit test runner was not providing full linkage for packages, which could cause issues when running tests with multiple packages. The fix adds proper LinkageContext when creating StoredPackage instances."

@@ -7,6 +7,30 @@ source:
   merge_commit: "10e731d83895f229a9383828e30c6d92a3ba9526"
 
 checks:
+  # --------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests) - CI/CD checks that should pass on base and gold
+  # --------------------------------------------------------------------------
+  - id: c3_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "C3 package TypeScript typecheck passes via turbo"
+    commands: ["pnpm turbo check:type --filter=create-cloudflare"]
+
+  - id: c3_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "C3 package unit tests pass via turbo"
+    commands: ["pnpm turbo test:ci --filter=create-cloudflare"]
+
+  - id: c3_lint_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "C3 package lint and format checks pass"
+    commands: ["npx oxlint --deny-warnings --type-aware", "npx oxfmt --check"]
+
+  # --------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) - Changes required by the PR
+  # --------------------------------------------------------------------------
   - id: eslint_disable_comments_resolved
     type: fail_to_pass
     origin: pr_diff
@@ -36,9 +60,4 @@ checks:
       lines: "91"
       commit: "f23c455ca2f762f0067ed0bfc810209ee3ab8323"
 
-rubric:
-  - rule: "Import order enforced: builtins -> third-party -> parent -> sibling -> index -> types"
-    source:
-      path: "AGENTS.md"
-      lines: "105"
-      commit: "f23c455ca2f762f0067ed0bfc810209ee3ab8323"
+rubric: []

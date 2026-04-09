@@ -1,0 +1,75 @@
+source:
+  pr:
+    owner: MystenLabs
+    repo: sui
+    number: 26050
+    title: "sui-indexer-alt-framework: CheckpointStream peekable, timeout"
+    base_commit: 21a5ae30270cc67b3e331d7beb342be2d19c7e97
+    merge_commit: d28a20f2894543c0fff424e090d4bc8c5b3400d5
+
+  files:
+    - crates/sui-indexer-alt-framework/src/ingestion/broadcaster.rs
+    - crates/sui-indexer-alt-framework/src/ingestion/mod.rs
+    - crates/sui-indexer-alt-framework/src/ingestion/streaming_client.rs
+
+  agent_config:
+    - file: CLAUDE.md
+      lines: "1-150"
+      applies: true
+
+  # Rubric for subjective/soft rules from agent configs (e.g., "write clear comments")
+  # This PR doesn't have specific soft rules to check
+  rubric: []
+
+checks:
+  # Pass-to-pass tests (repo tests that should always pass)
+  - id: test_cargo_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Crate compiles successfully with cargo check"
+
+  - id: test_rustfmt_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Crate's Rust files are properly formatted"
+
+  - id: test_crate_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Crate has the expected module structure with all required files"
+
+  - id: test_ingestion_module_exports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ingestion module exports key types for public API"
+
+  # Fail-to-pass tests (behavioral changes that verify the fix)
+  - id: test_checkpoint_stream_peekable_type
+    type: fail_to_pass
+    origin: code_review
+    description: "CheckpointStream.stream uses Peekable<BoxStream> type instead of Pin<Box<dyn Stream>>"
+
+  - id: test_grpc_streaming_client_has_statement_timeout
+    type: fail_to_pass
+    origin: code_review
+    description: "GrpcStreamingClient has statement_timeout field and new() accepts it"
+
+  - id: test_wrap_stream_function_exists
+    type: fail_to_pass
+    origin: code_review
+    description: "wrap_stream function exists with correct signature and behavior"
+
+  - id: test_broadcaster_uses_peekable_stream
+    type: fail_to_pass
+    origin: code_review
+    description: "Broadcaster uses peekable stream from client instead of wrapping locally"
+
+  - id: test_mod_rs_passes_statement_timeout
+    type: fail_to_pass
+    origin: code_review
+    description: "mod.rs passes statement_timeout to GrpcStreamingClient::new()"
+
+  - id: test_mock_streaming_client_uses_wrap_stream
+    type: fail_to_pass
+    origin: code_review
+    description: "MockStreamingClient uses wrap_stream for consistent timeout behavior"

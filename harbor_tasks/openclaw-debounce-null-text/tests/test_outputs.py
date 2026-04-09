@@ -10,6 +10,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import subprocess
 import textwrap
 from pathlib import Path
+import os
 
 REPO = "/workspace/openclaw"
 TARGET = "extensions/bluebubbles/src/monitor-debounce.ts"
@@ -60,10 +61,21 @@ def _build_extraction_preamble() -> str:
         const normalizeFn = extractFn('normalizeDebounceMessageText');
         const sanitizeFn = extractFn('sanitizeDebounceEntry');
 
-        const tsCode = [normalizeFn, sanitizeFn, combineFn].join('\\n\\n');
+        const tsCode = [normalizeFn, sanitizeFn, combineFn].join('\\\\n\\\\n');
         const jsCode = stripTypeScriptTypes(tsCode, { mode: 'strip', sourceUrl: 'extracted.ts' });
         eval(jsCode);
     """) % (REPO, TARGET)
+
+
+def _ensure_deps_installed() -> None:
+    """Ensure pnpm dependencies are installed."""
+    node_modules = Path(REPO) / "node_modules"
+    if not node_modules.exists():
+        # Install dependencies
+        subprocess.run(
+            ["bash", "-c", "cd /workspace/openclaw && corepack enable && corepack prepare pnpm@latest --activate && pnpm install --frozen-lockfile"],
+            capture_output=True, text=True, timeout=180, check=True
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -434,3 +446,46 @@ def test_no_self_import_via_plugin_sdk():
     assert not violations, (
         "Self-import via plugin-sdk found:\n" + "\n".join(violations)
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — discovered from .github/workflows/ci.yml
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass
+def test_repo_typescript_check():
+    """Repo's TypeScript typecheck passes on target file (pass_to_pass).
+
+    Uses pnpm tsgo (from oxlint-tsgolint package) for fast type checking.
+    This ensures the fix doesn't introduce type errors.
+    """
+    _ensure_deps_installed()
+    r = subprocess.run(
+        ["./node_modules/.bin/tsgo", f"{REPO}/{TARGET}"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # tsgo returns 0 on success, but may return 2 if tsconfig.json is present
+    # with files on command line (TS5112). We accept both 0 and 2 as success
+    # as long as there are no actual type errors.
+    if r.returncode not in (0, 2):
+        assert False, f"TypeScript check failed with exit code {r.returncode}:\n{r.stderr}\n{r.stdout}"
+    # Also verify no actual type errors in stderr (TS5xxx other than TS5112)
+    for line in r.stderr.splitlines():
+        if "error TS" in line and "TS5112" not in line:
+            assert False, f"TypeScript error found: {line}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_bluebubbles_tests():
+    """BlueBubbles extension tests pass (pass_to_pass).
+
+    Runs vitest on the bluebubbles extension tests to ensure the fix
+    doesn't break existing functionality.
+    """
+    _ensure_deps_installed()
+    r = subprocess.run(
+        ["./node_modules/.bin/vitest", "run", "--config", "vitest.extensions.config.ts",
+         "--reporter=verbose", "extensions/bluebubbles/src/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"BlueBubbles extension tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-500:]}"

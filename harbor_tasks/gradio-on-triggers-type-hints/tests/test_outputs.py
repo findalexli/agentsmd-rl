@@ -252,3 +252,35 @@ def test_ruff_format():
         )
         assert r.returncode == 0, \
             f"ruff format check failed for {rel}:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — CI/CD lint check
+def test_ruff_check():
+    """Modified Python files pass ruff lint check (repo CI)."""
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "ruff"],
+        capture_output=True, timeout=120,
+    )
+    for rel in ["gradio/events.py", "gradio/renderable.py"]:
+        r = subprocess.run(
+            [sys.executable, "-m", "ruff", "check", rel],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, \
+            f"ruff check failed for {rel}:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — CI/CD type check
+def test_ty_check():
+    """Modified Python files pass ty type check (repo CI)."""
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "ty"],
+        capture_output=True, timeout=120,
+    )
+    for rel in ["gradio/events.py", "gradio/renderable.py"]:
+        r = subprocess.run(
+            [sys.executable, "-m", "ty", "check", rel],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, \
+            f"ty check failed for {rel}:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

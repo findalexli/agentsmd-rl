@@ -13,6 +13,10 @@ if ! python3 -c "import pytest" 2>/dev/null; then
         pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
 fi
 
+# Install lint tools required for repo CI tests
+python3 -m pip install -q ruff mypy regex pydantic 2>/dev/null || \
+    pip3 install -q --break-system-packages ruff mypy regex pydantic 2>/dev/null
+
 python3 -m pytest --ctrf /logs/verifier/ctrf.json /tests/test_outputs.py -rA --tb=short -q
 
 if [ $? -eq 0 ]; then

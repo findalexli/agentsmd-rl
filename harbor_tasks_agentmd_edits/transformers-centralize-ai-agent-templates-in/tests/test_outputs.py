@@ -28,6 +28,70 @@ def test_makefile_syntax():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI checks that should pass on base commit
+# ---------------------------------------------------------------------------
+
+def test_repo_doc_toc():
+    """Documentation TOC check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doc_toc.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": "src"},
+    )
+    assert r.returncode == 0, f"Doc TOC check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_dummies():
+    """Dummy objects check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": "src"},
+    )
+    assert r.returncode == 0, f"Dummies check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_inits():
+    """Init files check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": "src"},
+    )
+    assert r.returncode == 0, f"Inits check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_custom_init_isort():
+    """Custom init isort check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/custom_init_isort.py", "--check_only"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": "src"},
+    )
+    assert r.returncode == 0, f"Custom init isort check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_sort_auto_mappings():
+    """Auto mappings sort check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/sort_auto_mappings.py", "--check_only"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": "src"},
+    )
+    assert r.returncode == 0, f"Sort auto mappings check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_doctest_list():
+    """Doctest list check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doctest_list.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": "src"},
+    )
+    assert r.returncode == 0, f"Doctest list check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — Makefile behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -60,7 +124,8 @@ def test_make_codex_creates_skills_symlink():
     assert ".ai/skills" in target, f".agents/skills should link to .ai/skills, got {target}"
 
 
-
+def test_make_clean_ai_removes_symlinks():
+    """'make clean-ai' removes generated skill symlinks."""
     r = subprocess.run(["make", "clean-ai"], capture_output=True, cwd=REPO, timeout=30)
     assert r.returncode == 0, f"make clean-ai failed: {r.stderr.decode()[:500]}"
 
@@ -74,6 +139,12 @@ def test_make_codex_creates_skills_symlink():
 # Fail-to-pass (config_edit) — config/doc file update tests
 # ---------------------------------------------------------------------------
 
+def test_ai_agents_md_content():
+    """.ai/AGENTS.md contains required sections."""
+    agents_md = Path(REPO) / ".ai" / "AGENTS.md"
+    assert agents_md.exists(), ".ai/AGENTS.md must exist"
+
+    content = agents_md.read_text()
 
     # Must preserve original policy content
     assert "Mandatory Agentic contribution policy" in content, \
@@ -86,6 +157,10 @@ def test_make_codex_creates_skills_symlink():
         ".ai/AGENTS.md should document the make codex/claude setup commands"
 
 
+def test_ai_skills_type_checking_content():
+    """.ai/skills/add-or-fix-type-checking/SKILL.md has required content."""
+    skill_md = Path(REPO) / ".ai" / "skills" / "add-or-fix-type-checking" / "SKILL.md"
+    assert skill_md.exists(), "SKILL.md must exist"
 
     content = skill_md.read_text()
     assert "ty check" in content, "SKILL.md should reference the 'ty check' command"
@@ -96,6 +171,10 @@ def test_make_codex_creates_skills_symlink():
         "SKILL.md should have proper frontmatter with name field"
 
 
+def test_root_agents_md_symlink():
+    """Root AGENTS.md is a symlink to .ai/AGENTS.md."""
+    agents_md = Path(REPO) / "AGENTS.md"
+    assert agents_md.is_symlink(), "AGENTS.md should be a symlink"
 
     target = os.readlink(str(agents_md))
     assert ".ai/AGENTS.md" in target, \
@@ -107,6 +186,10 @@ def test_make_codex_creates_skills_symlink():
         "AGENTS.md symlink does not resolve to valid content"
 
 
+def test_root_claude_md_symlink():
+    """Root CLAUDE.md is a symlink to .ai/AGENTS.md."""
+    claude_md = Path(REPO) / "CLAUDE.md"
+    assert claude_md.is_symlink(), "CLAUDE.md should be a symlink"
 
     target = os.readlink(str(claude_md))
     assert ".ai/AGENTS.md" in target, \
@@ -118,14 +201,24 @@ def test_make_codex_creates_skills_symlink():
         "CLAUDE.md symlink does not resolve to valid content"
 
 
+def test_contributing_ai_section():
+    """CONTRIBUTING.md documents AI agent setup."""
+    contributing_md = Path(REPO) / "CONTRIBUTING.md"
+    assert contributing_md.exists(), "CONTRIBUTING.md must exist"
 
+    content = contributing_md.read_text()
     assert "ai agent" in content.lower(), \
         "CONTRIBUTING.md should have a section about AI agents"
     assert "make codex" in content or "make claude" in content, \
         "CONTRIBUTING.md should reference the make targets for agent setup"
 
 
+def test_gitignore_excludes():
+    """.gitignore excludes agent artifact directories."""
+    gitignore = Path(REPO) / ".gitignore"
+    assert gitignore.exists(), ".gitignore must exist"
 
+    content = gitignore.read_text()
     assert ".agents/skills" in content, \
         ".gitignore should exclude .agents/skills"
     assert ".claude/skills" in content, \

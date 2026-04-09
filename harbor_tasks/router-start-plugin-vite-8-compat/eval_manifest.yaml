@@ -1,0 +1,121 @@
+source_pr:
+  owner: TanStack
+  repo: router
+  number: 6955
+  title: "feat(vite-plugin-core): Spport both Vite 7 (`rollupOptions`) and Vite 8 (`rolldownOptions`)"
+  merge_commit: "6651473d028a55c70f3f54af37a12b4379b46813"
+  base_commit: "3bc18d4623459a56ae972de8ff969ebf7a994ca7"
+
+target_files:
+  - packages/start-plugin-core/src/utils.ts
+  - packages/start-plugin-core/src/plugin.ts
+  - packages/start-plugin-core/src/preview-server-plugin/plugin.ts
+
+distinctive_lines:
+  - "isRolldown = 'rolldownVersion' in vite"
+  - "bundlerOptionsKey = isRolldown"
+  - "getBundlerOptions(build: any)"
+
+checks:
+  # Fail-to-pass tests (behavioral changes)
+  - id: test_utils_exports_bundler_detection
+    type: fail_to_pass
+    origin: code_structure
+    description: "utils.ts exports bundler detection utilities (isRolldown, bundlerOptionsKey, getBundlerOptions)"
+
+  - id: test_utils_imports_vite
+    type: fail_to_pass
+    origin: code_structure
+    description: "utils.ts imports vite module to detect rolldownVersion"
+
+  - id: test_getBundlerOptions_uses_rolldownOptions_fallback
+    type: fail_to_pass
+    origin: code_structure
+    description: "getBundlerOptions checks rolldownOptions first, then rollupOptions"
+
+  - id: test_bundlerOptionsKey_returns_correct_key
+    type: fail_to_pass
+    origin: code_structure
+    description: "bundlerOptionsKey returns 'rolldownOptions' or 'rollupOptions' based on isRolldown"
+
+  - id: test_plugin_imports_bundler_utils
+    type: fail_to_pass
+    origin: code_structure
+    description: "plugin.ts imports bundlerOptionsKey and getBundlerOptions from utils"
+
+  - id: test_plugin_uses_bundlerOptionsKey_for_client
+    type: fail_to_pass
+    origin: code_structure
+    description: "plugin.ts uses [bundlerOptionsKey] for client environment build config"
+
+  - id: test_plugin_uses_getBundlerOptions_for_server
+    type: fail_to_pass
+    origin: code_structure
+    description: "plugin.ts uses getBundlerOptions() to read server bundler config input"
+
+  - id: test_plugin_uses_bundlerOptionsKey_for_server
+    type: fail_to_pass
+    origin: code_structure
+    description: "plugin.ts uses [bundlerOptionsKey] for server environment build config"
+
+  - id: test_preview_server_imports_getBundlerOptions
+    type: fail_to_pass
+    origin: code_structure
+    description: "preview-server-plugin imports getBundlerOptions from utils"
+
+  - id: test_preview_server_uses_getBundlerOptions
+    type: fail_to_pass
+    origin: code_structure
+    description: "preview-server-plugin uses getBundlerOptions to read server input"
+
+  - id: test_no_hardcoded_rollupOptions_in_plugin
+    type: fail_to_pass
+    origin: code_structure
+    description: "plugin.ts uses computed bundlerOptionsKey instead of hardcoded 'rollupOptions'"
+
+  # Pass-to-pass tests (repo CI/CD quality checks)
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript compilation passes"
+
+  - id: test_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on the package"
+
+  - id: test_build_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Package builds successfully"
+
+  - id: test_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Unit tests pass"
+
+# Rubric from AGENTS.md - code style and quality guidelines
+rubric:
+  - id: agent_code_style_typescript_strict
+    description: "TypeScript strict mode with extensive type safety"
+    source: "AGENTS.md:18-20"
+
+  - id: agent_workspace_protocol
+    description: "Use workspace protocol for internal dependencies (workspace:*)"
+    source: "AGENTS.md:23"
+
+  - id: agent_prefer_pnpm_nx
+    description: "Always prefer pnpm nx over npx nx for running commands"
+    source: "AGENTS.md:44"
+
+  - id: agent_run_tests_before_commit
+    description: "Run test:eslint, test:types, and test:unit before committing"
+    source: "AGENTS.md:71"
+
+  - id: agent_framework_agnostic_core
+    description: "Framework-agnostic core logic separated from framework bindings"
+    source: "AGENTS.md:21"
+
+  - id: agent_targeted_testing
+    description: "Prefer Nx targets over direct test runners for task dependencies"
+    source: "AGENTS.md:45"

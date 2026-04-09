@@ -1,0 +1,26 @@
+id = "chroma-bloom-filter-fixes"
+name = "Chroma Bloom Filter Improvements and Bug Fixes"
+description = "Fix several bugs in the bloom filter implementation including proper error propagation, cache key consistency, and introducing deep_clone for proper isolation between cached and writer instances."
+category = "bugfix"
+difficulty = "medium"
+tags = ["rust", "bloom-filter", "caching", "bugfix", "concurrency"]
+
+[estimates]
+agent = 1800
+verifier = 120
+
+[repository]
+owner = "chroma-core"
+name = "chroma"
+base_commit = "f206bbf894bd8a9f3bcf4db7d7a01425c70640d7"
+merge_commit = "a9dbc624ecdeb94256e5a42ecddefe89e746e7e8"
+pr_number = 6721
+
+[files]
+target = [
+    "rust/segment/src/bloom_filter.rs",
+    "rust/segment/src/blockfile_record.rs",
+]
+
+[solution]
+distinctive_line = "Create an independent copy that does not share"

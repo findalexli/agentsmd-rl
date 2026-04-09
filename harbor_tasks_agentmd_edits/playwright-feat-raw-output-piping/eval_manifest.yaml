@@ -37,6 +37,27 @@ checks:
     origin: static
     description: "Response serialize has real conditional logic, not a stub"
 
+  # Repo CI checks (pass_to_pass) - verify base commit passes before and after fix
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript typecheck passes (npm run tsc)"
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ESLint passes (npm run eslint)"
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo builds successfully (npm run build)"
+
+  - id: test_repo_mcp_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's MCP tests pass (npm run test-mcp) - most relevant to PR #40010"
+
 rubric:
   - rule: "Config update is consistent with the style of existing SKILL.md sections"
     source:

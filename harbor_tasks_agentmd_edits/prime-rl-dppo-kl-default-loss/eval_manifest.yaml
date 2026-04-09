@@ -21,6 +21,29 @@ checks:
     description: "Key modules can be imported without syntax errors"
 
   # ---------------------------------------------------------------------------
+  # Gates (pass_to_pass, repo_tests)
+  # ---------------------------------------------------------------------------
+  - id: repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Python files compile without errors"
+
+  - id: repo_ast_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Python files parse as valid AST"
+
+  - id: repo_configs_ast
+    type: pass_to_pass
+    origin: repo_tests
+    description: "DefaultLossConfig class exists in trainer.py"
+
+  - id: repo_loss_ast
+    type: pass_to_pass
+    origin: repo_tests
+    description: "default_loss_fn function exists in loss.py"
+
+  # ---------------------------------------------------------------------------
   # Core behavioral changes (fail_to_pass, pr_diff)
   # ---------------------------------------------------------------------------
   - id: config_fields_renamed

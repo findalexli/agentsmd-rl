@@ -202,3 +202,55 @@ def test_no_cross_model_inheritance():
                             f"{node.name} in {rel} inherits from {base_name}, "
                             f"not PreTrainedConfig (violates no cross-model inheritance)"
                         )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI checks (pass_to_pass) — ensure fix doesn't break existing repo checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — ruff check on changed files
+def test_repo_ruff_changed_files():
+    """Repo's ruff linter passes on all changed files (pass_to_pass)."""
+    changed_files = [
+        "src/transformers/configuration_utils.py",
+        "src/transformers/models/mt5/configuration_mt5.py",
+        "src/transformers/models/umt5/configuration_umt5.py",
+    ]
+    for f in changed_files:
+        r = subprocess.run(
+            ["python3", "-m", "ruff", "check", f],
+            cwd=REPO,
+            capture_output=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, (
+            f"ruff check failed on {f}:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+        )
+
+
+# [repo_tests] pass_to_pass — check_inits ensures __init__ structure is valid
+def test_repo_check_inits():
+    """Repo's check_inits passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "utils/check_inits.py"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"check_inits failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — check_copies ensures # Copied from blocks are valid
+def test_repo_check_copies():
+    """Repo's check_copies passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "utils/check_copies.py"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"check_copies failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+    )

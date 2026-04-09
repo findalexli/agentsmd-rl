@@ -143,25 +143,48 @@ def test_sim102_snapshot_tests():
     )
 
 
+# [repo_tests] pass_to_pass — CI/CD check for the modified package
+def test_cargo_check_ruff_linter():
+    """The ruff_linter package (modified) must compile without errors."""
+    r = subprocess.run(
+        ["cargo", "check", "--package", "ruff_linter"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"cargo check --package ruff_linter failed:\n{r.stderr[-3000:]}"
+
+
+# [repo_tests] pass_to_pass — CI/CD check for the modified module
+def test_cargo_test_flake8_simplify():
+    """flake8_simplify module tests must pass (includes SIM102)."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "ruff_linter", "flake8_simplify"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"flake8_simplify tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
 # [agent_config] pass_to_pass — AGENTS.md:79 @ de6d6be794a1b649ba5d60af6fe956c194dc9b2a
 def test_no_unwrap_or_panic():
-    """Modified rule file must not introduce panic!(), unreachable!(), or .unwrap()."""
-    for filepath in [COLLAPSIBLE_IF, PREVIEW_RS]:
-        content = Path(filepath).read_text()
-        for pattern, label in [
-            (r'\bunwrap\(\)', '.unwrap()'),
-            (r'\bpanic!\s*\(', 'panic!()'),
-            (r'\bunreachable!\s*\(', 'unreachable!()'),
-        ]:
-            matches = re.findall(pattern, content)
-            assert not matches, (
-                f"Found {label} in {Path(filepath).name} — "
-                f"AGENTS.md line 79 says to avoid these patterns"
-            )
+    """Preview.rs must not introduce panic!(), unreachable!(), or .unwrap() in the new function."""
+    # Only check preview.rs for the new function, not the entire collapsible_if.rs
+    # The collapsible_if.rs has existing .unwrap() calls from the base commit
+    content = Path(PREVIEW_RS).read_text()
+    for pattern, label in [
+        (r'\bunwrap\(\)', '.unwrap()'),
+        (r'\bpanic!\s*\(', 'panic!()'),
+        (r'\bunreachable!\s*\(', 'unreachable!()'),
+    ]:
+        matches = re.findall(pattern, content)
+        assert not matches, (
+            f"Found {label} in preview.rs — "
+            f"AGENTS.md line 79 says to avoid these patterns in new code"
+        )
 
 
 # [agent_config] pass_to_pass — AGENTS.md:76 @ de6d6be794a1b649ba5d60af6fe956c194dc9b2a

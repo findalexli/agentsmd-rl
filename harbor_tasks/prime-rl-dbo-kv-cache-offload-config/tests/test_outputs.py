@@ -174,6 +174,109 @@ def test_kv_cache_offload_forbids_extra_fields():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_ruff_check_modified_files():
+    """Repo's ruff linting passes on modified files (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    # Ensure ruff is installed
+    subprocess.run([sys.executable, "-m", "pip", "install", "ruff", "-q"], check=True, capture_output=True)
+
+    files = [
+        f"{REPO}/src/prime_rl/configs/inference.py",
+        f"{REPO}/src/prime_rl/entrypoints/inference.py",
+        f"{REPO}/src/prime_rl/entrypoints/rl.py",
+    ]
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "--config", f"{REPO}/pyproject.toml"] + files,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_ruff_check_configs():
+    """Repo's ruff linting passes on configs directory (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    # Ensure ruff is installed
+    subprocess.run([sys.executable, "-m", "pip", "install", "ruff", "-q"], check=True, capture_output=True)
+
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "--config", f"{REPO}/pyproject.toml", f"{REPO}/src/prime_rl/configs/"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_configs_import():
+    """Configs module imports work (pass_to_pass)."""
+    from prime_rl.configs.inference import InferenceConfig, DisaggregatedInferenceDeploymentConfig
+
+    # Verify basic instantiation works
+    cfg = InferenceConfig()
+    assert cfg is not None
+
+    disagg_cfg = DisaggregatedInferenceDeploymentConfig()
+    assert disagg_cfg is not None
+
+
+# [repo_tests] pass_to_pass
+def test_ruff_format_modified_files():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    # Ensure ruff is installed
+    subprocess.run([sys.executable, "-m", "pip", "install", "ruff", "-q"], check=True, capture_output=True)
+
+    files = [
+        f"{REPO}/src/prime_rl/configs/inference.py",
+        f"{REPO}/src/prime_rl/entrypoints/inference.py",
+        f"{REPO}/src/prime_rl/entrypoints/rl.py",
+    ]
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "format", "--check", "--config", f"{REPO}/pyproject.toml"] + files,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_ruff_format_configs():
+    """Repo's ruff format check passes on configs directory (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    # Ensure ruff is installed
+    subprocess.run([sys.executable, "-m", "pip", "install", "ruff", "-q"], check=True, capture_output=True)
+
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "format", "--check", "--config", f"{REPO}/pyproject.toml", f"{REPO}/src/prime_rl/configs/"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression
 # ---------------------------------------------------------------------------
 

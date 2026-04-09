@@ -1,83 +1,96 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28617
-  base_commit: "44f5b6a1dc8f0c03fe81c6f133f9565c9457a4e7"
-  merge_commit: "1cc837687b1d1f8d558a40110fbe3e61cc41fbcd"
-
+  base_commit: 44f5b6a1dc8f0c03fe81c6f133f9565c9457a4e7
+  merge_commit: 1cc837687b1d1f8d558a40110fbe3e61cc41fbcd
 checks:
-  - id: source_file_exists
-    type: pass_to_pass
-    origin: static
-    description: "FormatStackTraceForJS.cpp must exist and be non-empty"
-
-  - id: materialized_branch_with_else
-    type: fail_to_pass
-    origin: pr_diff
-    description: "hasMaterializedErrorInfo used as branching condition (if+else), not a negated guard"
-
-  - id: setStackFrames_not_in_materialized_path
-    type: fail_to_pass
-    origin: pr_diff
-    description: "setStackFrames must not be called in the materialized-info branch"
-
-  - id: materialized_path_eagerly_sets_stack
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Materialized path eagerly writes .stack via putDirect (not lazy accessor)"
-
-  - id: function_signature_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "errorConstructorFuncCaptureStackTrace declared with JSC_DEFINE_HOST_FUNCTION"
-
-  - id: lazy_accessor_in_non_materialized_path
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Non-materialized path installs lazy custom accessor via putDirectCustomAccessor"
-
-  - id: delete_property_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Non-materialized path deletes .stack before installing custom accessor"
-
-  - id: exception_safety
-    type: pass_to_pass
-    origin: pr_diff
-    description: "RETURN_IF_EXCEPTION present for JSC exception safety"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Function has at least 35 non-blank non-comment lines (anti-stub)"
-
-  - id: jsc_api_diversity
-    type: pass_to_pass
-    origin: static
-    description: "At least 4 distinct JSC API calls used (anti-stub)"
-
-  - id: no_tabs_in_function
-    type: pass_to_pass
-    origin: agent_config
-    description: "No tabs in function body — Bun C++ uses spaces"
-    source:
-      path: "AGENTS.md"
-      lines: "228"
-      commit: "44f5b6a1dc8f0c03fe81c6f133f9565c9457a4e7"
-
-  - id: root_h_include
-    type: pass_to_pass
-    origin: agent_config
-    description: "C++ bindings files must #include root.h"
-    source:
-      path: ".claude/skills/implementing-jsc-classes-cpp/SKILL.md"
-      lines: "184"
-      commit: "44f5b6a1dc8f0c03fe81c6f133f9565c9457a4e7"
-
+- id: source_file_exists
+  type: pass_to_pass
+  origin: static
+  description: FormatStackTraceForJS.cpp must exist and be non-empty
+- id: materialized_branch_with_else
+  type: fail_to_pass
+  origin: pr_diff
+  description: hasMaterializedErrorInfo used as branching condition (if+else), not
+    a negated guard
+- id: setStackFrames_not_in_materialized_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: setStackFrames must not be called in the materialized-info branch
+- id: materialized_path_eagerly_sets_stack
+  type: fail_to_pass
+  origin: pr_diff
+  description: Materialized path eagerly writes .stack via putDirect (not lazy accessor)
+- id: function_signature_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: errorConstructorFuncCaptureStackTrace declared with JSC_DEFINE_HOST_FUNCTION
+- id: lazy_accessor_in_non_materialized_path
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-materialized path installs lazy custom accessor via putDirectCustomAccessor
+- id: delete_property_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-materialized path deletes .stack before installing custom accessor
+- id: exception_safety
+  type: pass_to_pass
+  origin: pr_diff
+  description: RETURN_IF_EXCEPTION present for JSC exception safety
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Function has at least 35 non-blank non-comment lines (anti-stub)
+- id: jsc_api_diversity
+  type: pass_to_pass
+  origin: static
+  description: At least 4 distinct JSC API calls used (anti-stub)
+- id: no_tabs_in_function
+  type: pass_to_pass
+  origin: agent_config
+  description: "No tabs in function body \u2014 Bun C++ uses spaces"
+  source:
+    path: AGENTS.md
+    lines: '228'
+    commit: 44f5b6a1dc8f0c03fe81c6f133f9565c9457a4e7
+- id: root_h_include
+  type: pass_to_pass
+  origin: agent_config
+  description: 'C++ bindings files must #include root.h'
+  source:
+    path: .claude/skills/implementing-jsc-classes-cpp/SKILL.md
+    lines: '184'
+    commit: 44f5b6a1dc8f0c03fe81c6f133f9565c9457a4e7
+- id: test_cpp_file_trailing_newline
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'C++ files must end with a newline (repo CI style check from .clang-tidy
+    FormatStyle: webkit)'
+- id: test_cpp_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ files must not have trailing whitespace (repo CI style check)
+- id: test_cpp_no_banned_patterns
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ files must not contain banned patterns (from test/internal/ban-words.test.ts)
+- id: test_cpp_include_order
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ files should have root.h first in includes (repo style from SKILL.md)
+- id: test_repo_cpp_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ file must have valid syntax indicators (repo structure check)
+- id: test_repo_error_function_present
+  type: pass_to_pass
+  origin: repo_tests
+  description: errorConstructorFuncCaptureStackTrace must be present (repo gate)
 rubric:
-  - rule: "Follow existing code style — check neighboring files for patterns (indentation, naming, bracing)."
-    source:
-      path: "AGENTS.md"
-      lines: "228"
-      commit: "44f5b6a1dc8f0c03fe81c6f133f9565c9457a4e7"
+- rule: "Follow existing code style \u2014 check neighboring files for patterns (indentation,\
+    \ naming, bracing)."
+  source:
+    path: AGENTS.md
+    lines: '228'
+    commit: 44f5b6a1dc8f0c03fe81c6f133f9565c9457a4e7

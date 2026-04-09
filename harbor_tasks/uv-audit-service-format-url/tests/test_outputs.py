@@ -198,6 +198,59 @@ def test_uv_cli_depends_on_uv_audit():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass — ensure existing tests still pass after changes
+# ---------------------------------------------------------------------------
+
+
+def test_repo_cargo_check_uv_audit():
+    """uv-audit crate compiles (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv-audit"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"cargo check -p uv-audit failed:\n{r.stderr}"
+
+
+def test_repo_cargo_check_uv_cli():
+    """uv-cli crate compiles (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv-cli"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"cargo check -p uv-cli failed:\n{r.stderr}"
+
+
+def test_repo_cargo_check_uv():
+    """Main uv crate compiles (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"cargo check -p uv failed:\n{r.stderr}"
+
+
+def test_repo_cargo_test_uv_audit():
+    """uv-audit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "uv-audit"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"cargo test -p uv-audit failed:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md
 # ---------------------------------------------------------------------------
 

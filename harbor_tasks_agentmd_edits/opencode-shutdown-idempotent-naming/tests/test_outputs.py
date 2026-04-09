@@ -16,13 +16,13 @@ WORKER_TS = Path(REPO) / "packages/opencode/src/cli/cmd/tui/worker.ts"
 AGENTS_MD = Path(REPO) / "AGENTS.md"
 
 
-def _run_tsc_check(file: Path, timeout: int = 60) -> subprocess.CompletedProcess:
-    """Run TypeScript compiler check on a single file."""
-    config = Path(REPO) / "tsconfig.json"
+def _run_in_repo(cmd: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
+    """Run a command in the repo directory."""
     return subprocess.run(
-        ["bun", "tsc", "--noEmit", "--skipLibCheck", str(file)],
+        cmd,
         cwd=REPO,
         capture_output=True,
+        text=True,
         timeout=timeout,
     )
 
@@ -37,23 +37,69 @@ def _parse_ts_imports(content: str) -> list:
 
 
 # -----------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) - syntax / compilation checks
 # -----------------------------------------------------------------------------
 
 def test_typescript_compiles():
-    """Modified TypeScript files must compile without errors."""
-    result = _run_tsc_check(THREAD_TS)
-    assert result.returncode == 0, f"thread.ts failed to compile:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    """Modified TypeScript files must compile without errors.
+    
+    Uses bun turbo typecheck which is the actual CI check. The single-file tsc
+    approach doesn't work with this project's tsconfig paths and moduleResolution.
+    """
+    result = _run_in_repo(["bun", "turbo", "typecheck"], timeout=60)
+    assert result.returncode == 0, f"TypeScript compilation failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
 
 
 def test_worker_typescript_compiles():
-    """worker.ts must compile without errors."""
-    result = _run_tsc_check(WORKER_TS)
-    assert result.returncode == 0, f"worker.ts failed to compile:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    """worker.ts must compile without errors.
+    
+    Uses bun turbo typecheck which is the actual CI check. The single-file tsc
+    approach doesn't work with this project's tsconfig paths and moduleResolution.
+    """
+    result = _run_in_repo(["bun", "turbo", "typecheck"], timeout=60)
+    assert result.returncode == 0, f"TypeScript compilation failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
 
 
 # -----------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests for shutdown fix
+# Pass-to-pass (repo_tests) - CI/CD checks that must pass on base and after fix
+# -----------------------------------------------------------------------------
+
+def test_repo_typecheck():
+    """Repo's bun typecheck passes (pass_to_pass).
+    
+    Runs 'bun turbo typecheck' which is the same as 'bun typecheck' per package.json.
+    This is a repo CI gate that must pass both before and after the fix.
+    """
+    r = _run_in_repo(["bun", "turbo", "typecheck"], timeout=120)
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_opencode_package_tests():
+    """Opencode package unit tests pass (pass_to_pass).
+    
+    Runs tests for the opencode package where the modified files reside.
+    Targets tests relevant to the CLI/TUI modules being modified.
+    """
+    # First try running from the package directory
+    r = _run_in_repo(
+        ["bun", "test", "--timeout", "30000"],
+        timeout=120
+    )
+    # The repo has a guard that prevents tests from running at root
+    # If root test fails, try package-specific tests
+    if r.returncode != 0 and "do-not-run-tests-from-root" in r.stderr:
+        r = subprocess.run(
+            ["bun", "test", "--timeout", "30000"],
+            cwd=Path(REPO) / "packages/opencode",
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+    assert r.returncode == 0, f"Opencode package tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# -----------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) - core behavioral tests for shutdown fix
 # -----------------------------------------------------------------------------
 
 def test_stop_function_is_idempotent():
@@ -131,7 +177,7 @@ def test_short_variable_names():
 
 
 # -----------------------------------------------------------------------------
-# Fail-to-pass (pr_diff / agent_config) — AGENTS.md update tests
+# Fail-to-pass (pr_diff / agent_config) - AGENTS.md update tests
 # -----------------------------------------------------------------------------
 
 def test_agents_md_has_naming_enforcement():
@@ -168,7 +214,7 @@ def test_agents_md_naming_rules_bullet_points():
 
 
 # -----------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub and validation
+# Pass-to-pass (static) - anti-stub and validation
 # -----------------------------------------------------------------------------
 
 def test_import_with_timeout():
@@ -179,7 +225,7 @@ def test_import_with_timeout():
     assert 'import { withTimeout } from "@/util/timeout"' in content, "Missing withTimeout import"
 
     # Should use withTimeout in stop() function
-    assert "withTimeout(client.call(\"shutdown\"" in content, "Missing withTimeout around shutdown call"
+    assert 'withTimeout(client.call("shutdown"' in content, "Missing withTimeout around shutdown call"
 
 
 def test_no_iife_import():

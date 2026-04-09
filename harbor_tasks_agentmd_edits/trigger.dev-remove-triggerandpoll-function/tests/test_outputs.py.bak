@@ -1,0 +1,166 @@
+"""
+Task: trigger.dev-remove-triggerandpoll-function
+Repo: triggerdotdev/trigger.dev @ 21c2c136beec90c28ec46c895561f5b3c258ec06
+PR:   2379
+
+All checks must pass for reward = 1. Any failure = reward 0.
+Each test function maps 1:1 to a check in eval_manifest.yaml.
+"""
+
+import re
+import subprocess
+from pathlib import Path
+
+REPO = "/workspace/trigger.dev"
+
+
+# ---------------------------------------------------------------------------
+# Helper: run a Node.js script and return the result
+# ---------------------------------------------------------------------------
+
+def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["node", "-e", script],
+        cwd=REPO, capture_output=True, text=True, timeout=timeout,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, static)
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_typescript_syntax_valid():
+    """Modified TypeScript files must have valid syntax (pass_to_pass)."""
+    files_to_check = [
+        "packages/trigger-sdk/src/v3/shared.ts",
+        "packages/trigger-sdk/src/v3/tasks.ts",
+        "references/v3-catalog/src/trigger/sdkUsage.ts",
+    ]
+    for rel_path in files_to_check:
+        full_path = Path(REPO) / rel_path
+        content = full_path.read_text()
+        # Basic syntax checks
+        assert "import" in content, f"{rel_path} missing import statements"
+        assert len(content) > 100, f"{rel_path} is unexpectedly small or empty"
+
+
+# [static] pass_to_pass
+def test_syntax_check():
+    """Modified TypeScript files must exist and contain expected structural markers."""
+    shared = Path(REPO) / "packages" / "trigger-sdk" / "src" / "v3" / "shared.ts"
+    tasks_ts = Path(REPO) / "packages" / "trigger-sdk" / "src" / "v3" / "tasks.ts"
+    sdk_usage = Path(REPO) / "references" / "v3-catalog" / "src" / "trigger" / "sdkUsage.ts"
+    for f in [shared, tasks_ts, sdk_usage]:
+        content = f.read_text()
+        assert len(content) > 100, f"{f.name} is unexpectedly small or empty"
+        assert "import" in content, f"{f.name} missing import statements"
+
+
+# [static] pass_to_pass
+def test_other_task_methods_preserved():
+    """tasks object must still export trigger, batchTrigger, triggerAndWait, batchTriggerAndWait."""
+    tasks_ts = Path(REPO) / "packages" / "trigger-sdk" / "src" / "v3" / "tasks.ts"
+    content = tasks_ts.read_text()
+    required_methods = ["trigger,", "batchTrigger,", "triggerAndWait,", "batchTriggerAndWait,"]
+    for method in required_methods:
+        assert method in content, f"tasks object must still export {method.rstrip(',')}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core code removal
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_triggerandpoll_function_removed():
+    """triggerAndPoll function definition must be removed from shared.ts."""
+    r = _run_node("""
+const fs = require('fs');
+const content = fs.readFileSync('packages/trigger-sdk/src/v3/shared.ts', 'utf8');
+const hasFunc = /export\\s+async\\s+function\\s+triggerAndPoll/.test(content);
+if (hasFunc) {
+    console.error('triggerAndPoll function definition still exists in shared.ts');
+    process.exit(1);
+}
+console.log('OK: triggerAndPoll function removed from shared.ts');
+""")
+    assert r.returncode == 0, f"triggerAndPoll still defined in shared.ts: {r.stderr}"
+
+
+# [pr_diff] fail_to_pass
+def test_triggerandpoll_not_exported():
+    """triggerAndPoll must not appear in the tasks export object in tasks.ts."""
+    tasks_ts = Path(REPO) / "packages" / "trigger-sdk" / "src" / "v3" / "tasks.ts"
+    content = tasks_ts.read_text()
+    # Find the tasks = { ... } block and check triggerAndPoll is not in it
+    match = re.search(r"export const tasks\s*=\s*\{([^}]+)\}", content, re.DOTALL)
+    assert match, "Could not find 'export const tasks = { ... }' in tasks.ts"
+    tasks_block = match.group(1)
+    assert "triggerAndPoll" not in tasks_block, \
+        "triggerAndPoll is still listed in the tasks export object"
+
+
+# [pr_diff] fail_to_pass
+def test_triggerandpoll_not_imported():
+    """triggerAndPoll must not be imported from shared.js in tasks.ts."""
+    tasks_ts = Path(REPO) / "packages" / "trigger-sdk" / "src" / "v3" / "tasks.ts"
+    content = tasks_ts.read_text()
+    # Check the import block from ./shared.js
+    import_match = re.search(
+        r'import\s*\{([^}]+)\}\s*from\s*["\']\.\/shared\.js["\']',
+        content, re.DOTALL,
+    )
+    assert import_match, "Could not find import from './shared.js' in tasks.ts"
+    imports = import_match.group(1)
+    assert "triggerAndPoll" not in imports, \
+        "triggerAndPoll is still imported from shared.js in tasks.ts"
+
+
+# [pr_diff] fail_to_pass
+def test_sdk_usage_no_triggerandpoll():
+    """Reference catalog sdkUsage.ts must not call tasks.triggerAndPoll."""
+    r = _run_node("""
+const fs = require('fs');
+const content = fs.readFileSync('references/v3-catalog/src/trigger/sdkUsage.ts', 'utf8');
+if (content.includes('triggerAndPoll')) {
+    console.error('sdkUsage.ts still references triggerAndPoll');
+    process.exit(1);
+}
+console.log('OK: sdkUsage.ts does not reference triggerAndPoll');
+""")
+    assert r.returncode == 0, f"sdkUsage.ts still uses triggerAndPoll: {r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — config/doc update tests
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_cursor_rules_no_triggerandpoll():
+    """Cursor rules writing-tasks.mdc must not document triggerAndPoll."""
+    mdc = Path(REPO) / ".cursor" / "rules" / "writing-tasks.mdc"
+    content = mdc.read_text()
+    assert "triggerAndPoll" not in content, \
+        ".cursor/rules/writing-tasks.mdc still documents triggerAndPoll"
+
+
+# [pr_diff] fail_to_pass
+def test_docs_triggering_no_triggerandpoll():
+    """docs/triggering.mdx must not document triggerAndPoll."""
+    doc = Path(REPO) / "docs" / "triggering.mdx"
+    content = doc.read_text()
+    assert "triggerAndPoll" not in content, \
+        "docs/triggering.mdx still references triggerAndPoll"
+
+
+# [pr_diff] fail_to_pass
+def test_docs_triggering_table_updated():
+    """The function summary table in docs/triggering.mdx must not list triggerAndPoll."""
+    doc = Path(REPO) / "docs" / "triggering.mdx"
+    content = doc.read_text()
+    # The table should have tasks.trigger, tasks.batchTrigger, batch.trigger but NOT triggerAndPoll
+    assert "tasks.trigger()" in content, "Table should still list tasks.trigger()"
+    assert "batch.trigger()" in content, "Table should still list batch.trigger()"
+    # Ensure the specific triggerAndPoll row/section heading is gone
+    assert "tasks.triggerAndPoll()" not in content, \
+        "docs/triggering.mdx table still lists tasks.triggerAndPoll()"

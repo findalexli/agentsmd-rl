@@ -12,6 +12,21 @@ checks:
     origin: static
     description: "All three modified files have substantial Rust code (not replaced with stubs)"
 
+  - id: test_repo_rustfmt_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Rust code passes rustfmt check (cargo fmt --all -- --check)"
+
+  - id: test_repo_cargo_check_turbopack_core
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's turbopack-core crate passes cargo check"
+
+  - id: test_repo_cargo_check_next_api
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's next-api crate passes cargo check"
+
   - id: module_count_method_in_single_module_graph
     type: fail_to_pass
     origin: pr_diff

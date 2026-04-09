@@ -12,35 +12,35 @@ checks:
     origin: static
     description: "Key TypeScript files have balanced braces and parentheses"
 
-  - id: access_token_field_in_plugin
+  - id: access_token_field_behavior
     type: fail_to_pass
     origin: pr_diff
-    description: "Plugin config adds accessToken field to orders collection with UUID generation hook"
+    description: "Plugin config adds accessToken field with UUID generation hook that produces valid UUIDs"
 
-  - id: access_token_in_confirm_order_response
+  - id: access_token_in_response_behavior
     type: fail_to_pass
     origin: pr_diff
-    description: "Stripe confirmOrder includes accessToken in success response"
+    description: "Stripe confirmOrder conditionally spreads accessToken into success response"
 
-  - id: order_page_requires_access_token
+  - id: order_page_access_control_behavior
     type: fail_to_pass
     origin: pr_diff
-    description: "Order detail page requires accessToken for guest access"
+    description: "Order page enforces accessToken requirement for guest order access"
 
-  - id: send_order_access_email_exists
+  - id: send_order_access_email_behavior
     type: fail_to_pass
     origin: pr_diff
-    description: "Server action sendOrderAccessEmail exists and sends email with access link"
+    description: "Server action sendOrderAccessEmail constructs secure URLs and sends email with access link"
 
-  - id: find_order_form_uses_email_flow
+  - id: find_order_form_behavior
     type: fail_to_pass
     origin: pr_diff
-    description: "FindOrderForm sends email instead of navigating directly to order page"
+    description: "FindOrderForm uses email verification flow instead of direct navigation"
 
-  - id: checkout_redirects_include_access_token
+  - id: checkout_redirects_behavior
     type: fail_to_pass
     origin: pr_diff
-    description: "Checkout components pass accessToken in redirect URLs"
+    description: "Checkout components build URLs with accessToken in query params"
 
   - id: existing_plugin_config_intact
     type: pass_to_pass
@@ -56,6 +56,32 @@ checks:
     type: pass_to_pass
     origin: static
     description: "Modified functions have real logic, not just pass/return"
+
+  # CI/CD pass_to_pass checks (repo_tests) - added during p2p enrichment
+  - id: tsconfig_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript configuration files are valid JSON"
+
+  - id: package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Package.json files are valid and parseable"
+
+  - id: eslint_config_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint configuration files exist and are valid"
+
+  - id: modified_files_typescript_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified TypeScript files have valid syntax"
+
+  - id: ecommerce_build_config
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ecommerce template build configuration is valid"
 
 rubric:
   - rule: "Documentation updates in README.md should be consistent with the existing style and structure of the file"

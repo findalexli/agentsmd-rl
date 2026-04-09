@@ -59,8 +59,8 @@ def _wordpiece_tokenizer_json():
         "version": "1.0",
         "model": {
             "type": "WordPiece",
-            "vocab": {"[UNK]": 0, "hello": 1, "world": 2},
-            "unk_token": "[UNK]",
+            "vocab": {"<unk>": 0, "hello": 1, "world": 2},
+            "unk_token": "<unk>",
             "continuing_subword_prefix": "##",
             "max_input_chars_per_word": 100,
         },
@@ -94,8 +94,8 @@ def _wordlevel_tokenizer_json():
         "version": "1.0",
         "model": {
             "type": "WordLevel",
-            "vocab": {"[UNK]": 0, "hello": 1, "world": 2, "foo": 3},
-            "unk_token": "[UNK]",
+            "vocab": {"<unk>": 0, "hello": 1, "world": 2, "foo": 3},
+            "unk_token": "<unk>",
         },
         "added_tokens": [],
         "normalizer": None,
@@ -325,6 +325,81 @@ def test_ruff_clean():
     )
     assert result.returncode == 0, (
         f"ruff found style errors in {TARGET}:\n{result.stdout}{result.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI: make style check (ruff format)
+def test_ruff_format():
+    """Modified file passes ruff formatting check (pass_to_pass)."""
+    import shutil
+    import subprocess
+
+    if not shutil.which("ruff"):
+        import pytest
+        pytest.skip("ruff not available in this environment")
+
+    result = subprocess.run(
+        ["ruff", "format", "--check", TARGET],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, (
+        f"ruff found formatting issues in {TARGET}:\n{result.stdout}{result.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI: repo consistency check (check_inits.py)
+def test_check_inits():
+    """Repository init files are consistent (pass_to_pass)."""
+    import subprocess
+
+    result = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"check_inits failed:\n{result.stdout}{result.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI: repo consistency check (check_dummies.py)
+def test_check_dummies():
+    """Repository dummy files are consistent (pass_to_pass)."""
+    import subprocess
+
+    result = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"check_dummies failed:\n{result.stdout}{result.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI: module import test
+def test_module_import():
+    """Modified module can be imported without errors (pass_to_pass)."""
+    import subprocess
+
+    result = subprocess.run(
+        [
+            "python",
+            "-c",
+            "from transformers.tokenization_utils_tokenizers import TokenizersBackend; print('OK')",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+        timeout=30,
+    )
+    assert result.returncode == 0, (
+        f"Module import failed:\n{result.stderr}"
     )
 
 

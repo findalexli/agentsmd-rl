@@ -35,6 +35,36 @@ def test_codes_json_valid():
     assert "485" in data, "Error code 485 must exist in codes.json"
 
 
+# [repo_tests] pass_to_pass — repo CI lint check
+def test_repo_lint():
+    """Repo's ESLint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo error codes extraction check
+def test_repo_extract_errors():
+    """Repo's error codes extraction passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "extract-errors"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Extract errors failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo tests for ReactDOMForm (modified module)
+def test_repo_tests_reactdomform():
+    """ReactDOMForm tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ReactDOMForm", "--testNamePattern=action"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactDOMForm tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

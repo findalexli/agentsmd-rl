@@ -468,3 +468,65 @@ def test_not_stub():
 
     assert line_count > 200, f"File only has {line_count} lines — likely a stub"
     assert func_count > 5, f"File only has {func_count} functions — likely a stub"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and fix
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "check", FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typos():
+    """Repo's typos check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "typos", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["typos", FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typos check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

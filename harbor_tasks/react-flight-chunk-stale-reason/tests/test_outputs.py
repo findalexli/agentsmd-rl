@@ -229,3 +229,37 @@ def test_existing_flight_error_recovery():
         f"Existing error-recovery test failed (exit {r.returncode}):\n"
         f"{err[-3000:]}\n{out[-3000:]}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — Repo CI/CD checks (verified working on base commit)
+# ---------------------------------------------------------------------------
+
+def test_repo_lint():
+    """Repo's ESLint checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint check failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_flow():
+    """Repo's Flow typecheck passes for dom-node renderer (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow typecheck failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_flight_dom_tests():
+    """ReactFlightDOM tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "yarn", "test", "--silent", "--no-watchman",
+            "packages/react-server-dom-webpack/src/__tests__/ReactFlightDOM-test.js",
+        ],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactFlightDOM tests failed:\n{r.stderr[-2000:]}"

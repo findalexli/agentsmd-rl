@@ -98,6 +98,58 @@ def test_ruff_formatting():
     )
 
 
+# [repo_tests] pass_to_pass — repo CI/CD: ruff format check
+def test_ruff_format():
+    """Repo's ruff format check passes on browser_state.py (pass_to_pass)."""
+    result = subprocess.run(
+        ["ruff", "format", "--check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, (
+        f"ruff format check failed on browser_state.py:\n{result.stdout}\n{result.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass — repo CI/CD: ty type check
+def test_repo_typecheck():
+    """Repo's ty type check passes on browser_state.py (pass_to_pass).
+
+    The gradio repo uses ty (not mypy) for type checking.
+    See scripts/type_check_backend.sh in the repo.
+    """
+    # Ensure ty is installed (not in base Docker image)
+    subprocess.run(["pip", "install", "ty", "-q"], check=True, timeout=60)
+    result = subprocess.run(
+        ["ty", "check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"ty type check failed on browser_state.py:\n{result.stdout}\n{result.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass — repo CI/CD: ruff format check on gradio components
+def test_ruff_format_gradio_components():
+    """Repo's ruff format check passes on gradio/components (pass_to_pass).
+
+    Mirrors scripts/lint_backend.sh format check, scoped to components directory.
+    Ensures the modified file and related components maintain repo style standards.
+    """
+    result = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/gradio/components"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, (
+        f"ruff format check failed on gradio/components:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax check
 # ---------------------------------------------------------------------------

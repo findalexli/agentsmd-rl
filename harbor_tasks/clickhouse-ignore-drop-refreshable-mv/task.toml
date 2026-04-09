@@ -1,0 +1,26 @@
+name = "clickhouse-ignore-drop-refreshable-mv"
+description = "Fix DROP query handling to not ignore DROP for refreshable materialized views in stress tests"
+difficulty = "medium"
+tags = ["c++", "clickhouse", "sql-interpreter", "materialized-views", "bug-fix"]
+
+[time_estimates]
+analysis = 300
+implementation = 600
+verification = 300
+
+[source]
+pr_number = 102008
+owner = "ClickHouse"
+repo = "ClickHouse"
+base_commit = "32310ea30010c92c101d7e93c535c6bd17057dcf"
+merge_commit = "a77cd4c5a6ede8a2d5da637a75348a4cc055c007"
+
+[environment]
+image = "task-env"
+workdir = "/workspace/ClickHouse"
+
+[files]
+solution = "solution/solve.sh"
+tests = "tests/test_outputs.py"
+instruction = "instruction.md"
+manifest = "eval_manifest.yaml"

@@ -1,0 +1,54 @@
+name = "openhands-migrate-customer-session"
+description = "Fix foreign key violation by reusing database session in migrate_customer call"
+category = "bug_fix"
+difficulty = "medium"
+
+[time]
+estimated_minutes = 30
+
+[tags]
+primary = ["python", "async", "sqlalchemy", "database", "session-management"]
+secondary = ["stripe", "enterprise", "foreign-key"]
+
+[source]
+repo = "All-Hands-AI/OpenHands"
+pr_number = 13558
+base_commit = "ff240c968bb938e414cacaa1b31be4f2948c4619"
+merge_commit = "1f275a7cfe91bf8ca090430b49dcae3c5392fe7d"
+
+[changes]
+files_modified = [
+    "enterprise/integrations/stripe_service.py",
+    "enterprise/storage/user_store.py",
+]
+
+total_lines_changed = 44
+
+[agents.prompts]
+instruction = """
+The `migrate_customer` function in `enterprise/integrations/stripe_service.py` is causing
+foreign key violations during user migration.
+
+**The Problem:**
+- `migrate_customer()` creates its own database session using `a_session_maker()`
+- It tries to update `stripe_customers.org_id` with a new org ID
+- But the org was just created in the caller's session and hasn't been committed yet
+- This causes `sqlalchemy.exc.IntegrityError: FK violation on stripe_customers table`
+
+**The Fix:**
+- Modify `migrate_customer()` to accept the session as a parameter
+- Remove the `async with a_session_maker() as session:` wrapper
+- Update the call site in `enterprise/storage/user_store.py` to pass the session
+
+**Files to Modify:**
+1. `enterprise/integrations/stripe_service.py` - Change function signature and remove session creation
+2. `enterprise/storage/user_store.py` - Update the call to pass session as first argument
+
+**Testing:**
+Run `pytest test_outputs.py -v` to verify the fix works.
+
+**Agent Config Rules:**
+- Follow the enterprise code style (relative imports, no `enterprise.` prefix)
+- The typo "temprorary" in the comment should be fixed to "temporary"
+- Use proper async/await patterns with SQLAlchemy
+"""

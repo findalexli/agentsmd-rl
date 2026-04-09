@@ -196,3 +196,68 @@ def test_add_transfer_request_not_stub():
             return
 
     raise AssertionError("add_transfer_request function not found")
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+REPO_CONN_FILE = f"{REPO}/python/sglang/srt/disaggregation/nixl/conn.py"
+
+
+def test_repo_conn_py_syntax():
+    """Repo's conn.py must have valid Python syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", REPO_CONN_FILE],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
+
+
+def test_repo_conn_py_ast_parse():
+    """Repo's conn.py must parse into valid AST (pass_to_pass)."""
+    src = Path(REPO_CONN_FILE).read_text()
+    try:
+        ast.parse(src)
+    except SyntaxError as e:
+        raise AssertionError(f"AST parse failed: {e}")
+
+
+def test_repo_conn_py_no_undefined_names():
+    """Repo's conn.py must not have undefined names (F821-like check) (pass_to_pass)."""
+    # This is a simplified check - we verify the code compiles and key symbols are defined
+    src = Path(REPO_CONN_FILE).read_text()
+    tree = ast.parse(src)
+
+    # Key symbols that should be defined in the conn.py file
+    required_symbols = {
+        "NixlKVManager": "class",
+        "TransferStatus": "class",
+        "TransferInfo": "class",
+        "send_kvcache_slice": "function",
+        "add_transfer_request": "function",
+    }
+
+    found = {"classes": set(), "functions": set()}
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            found["classes"].add(node.name)
+        elif isinstance(node, ast.FunctionDef):
+            found["functions"].add(node.name)
+
+    for symbol, typ in required_symbols.items():
+        if typ == "class":
+            assert symbol in found["classes"], f"Required class {symbol} not found"
+        elif typ == "function":
+            assert symbol in found["functions"], f"Required function {symbol} not found"
+
+
+def test_repo_conn_py_classes_exist():
+    """Repo's conn.py must have required classes (pass_to_pass)."""
+    src = Path(REPO_CONN_FILE).read_text()
+    tree = ast.parse(src)
+
+    classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+    assert "NixlKVManager" in classes, "NixlKVManager class must exist"
+    assert "TransferStatus" in classes, "TransferStatus class must exist"

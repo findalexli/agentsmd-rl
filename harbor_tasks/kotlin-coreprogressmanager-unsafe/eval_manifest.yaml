@@ -1,0 +1,65 @@
+source:
+  pr:
+    owner: JetBrains
+    repo: kotlin
+    number: 5736
+    title: "IJ SDK: adjust CoreProgressManager to avoid using sun.misc.Unsafe"
+    base_commit: 65fee3c3cad8012a6aad5df7554a1dd20dfb8d22
+    merge_commit: 078e58a774eb0921aa7554d41e60d011db46754d
+  files:
+    - compiler/cli/src/com/intellij/openapi/progress/impl/CoreProgressManager.java
+
+# Checks map 1:1 to test_outputs.py functions
+checks:
+  - id: "no_concurrent_long_object_map_import"
+    name: "ConcurrentLongObjectMap import removed"
+    description: "The import for ConcurrentLongObjectMap should be removed"
+    type: "f2p"  # Fail-to-pass: base commit has this import
+
+  - id: "no_java11shim_import"
+    name: "Java11Shim import removed"
+    description: "The import for Java11Shim should be removed"
+    type: "f2p"  # Fail-to-pass: base commit has this import
+
+  - id: "concurrent_map_field_type"
+    name: "currentIndicators uses ConcurrentMap type"
+    description: "The currentIndicators field should be declared as ConcurrentMap<Long, ProgressIndicator>"
+    type: "f2p"  # Fail-to-pass: base commit uses ConcurrentLongObjectMap
+
+  - id: "concurrent_hashmap_instantiation"
+    name: "currentIndicators uses ConcurrentHashMap"
+    description: "The currentIndicators field should be instantiated with new ConcurrentHashMap<>()"
+    type: "f2p"  # Fail-to-pass: base commit uses Java11Shim factory
+
+  - id: "thread_top_level_indicators_field_type"
+    name: "threadTopLevelIndicators uses ConcurrentMap type"
+    description: "The threadTopLevelIndicators field should be declared as ConcurrentMap<Long, ProgressIndicator>"
+    type: "f2p"  # Fail-to-pass: base commit uses ConcurrentLongObjectMap
+
+  - id: "both_fields_use_concurrent_hashmap"
+    name: "Both indicator fields use ConcurrentHashMap"
+    description: "Both currentIndicators and threadTopLevelIndicators should use ConcurrentHashMap"
+    type: "f2p"
+
+  - id: "java_compiles"
+    name: "Java file compiles"
+    description: "The modified Java file should have no syntax errors"
+    type: "p2p"  # Pass-to-pass: base commit also compiles
+
+  - id: "javadoc_updated"
+    name: "JavaDoc updated"
+    description: "The class JavaDoc should mention the sun.misc.Unsafe workaround"
+    type: "f2p"  # Fail-to-pass: base commit doesn't have this documentation
+
+  - id: "no_java11shim_create_call"
+    name: "No Java11Shim factory calls remain"
+    description: "All createConcurrentLongObjectMap() calls should be removed"
+    type: "f2p"  # Fail-to-pass: base commit has these calls
+
+  - id: "concurrent_map_import_present"
+    name: "ConcurrentMap import present"
+    description: "The file should import from java.util.concurrent package"
+    type: "p2p"  # Pass-to-pass: already present in base commit (for other types)
+
+# No rubric rules - this is a straightforward refactoring task
+rubric: []

@@ -1,11 +1,95 @@
 {
-  "verdict": "fail",
+  "schema_version": 2,
+  "verdict": "pass",
   "nop_reward": 0.0,
-  "gold_reward": 0.0,
-  "validated_at": "2026-04-08T21:59:19.651914",
-  "sandbox_id": "iewmq8smqko1an52ngb9f",
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T03:40:12.558083",
+  "total_time": 7375.62,
+  "sandbox_id": "izj45ye4u096iawvb506j",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 1574.42
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "completed_at": "2026-04-09T10:35:00Z",
+      "ci_commands_discovered": [
+        "package.json scripts: test-types (tsc), typescript (tsc --noEmit)",
+        "package.json scripts: lint, lint-typescript (turbo run typescript)",
+        "package.json scripts: prettier-check, lint-eslint",
+        "Note: Cannot run CI commands because node_modules not installed in Docker image"
+      ],
+      "tests_added": [
+        {
+          "id": "repo_package_json_valid",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Repo root package.json must be valid and define workspaces"
+        },
+        {
+          "id": "existing_packages_have_valid_structure",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Existing packages in monorepo must have valid structure"
+        }
+      ],
+      "notes": [
+        "Docker image uses shallow clone without node_modules, so runtime CI commands (tsc, eslint, prettier) cannot be executed",
+        "Added static structure-validation tests instead:",
+        "  - test_repo_package_json_valid: Validates root package.json has workspaces and required scripts",
+        "  - test_existing_packages_have_valid_structure: Validates core next package structure",
+        "Both new p2p tests pass on base commit (verified)",
+        "Existing test_root_tsconfig_valid_json continues to pass",
+        "Total p2p tests: 3 (1 original + 2 new)"
+      ]
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 237.02,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile to install TypeScript globally for test_package_compiles test. All 4 validation checks pass.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 202.73
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.76,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T03:40:12.390045"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 7375.62,
+      "at": "2026-04-09T03:40:12.558083"
+    }
+  ]
 }

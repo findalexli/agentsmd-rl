@@ -62,6 +62,52 @@ def test_js_syntax_valid():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — React CI/CD regression checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — CI: shared_lint.yml / runtime_build_and_test.yml
+def test_repo_eslint():
+    """ESLint passes on modified feature flag files (pass_to_pass).
+
+    From React CI shared_lint.yml: eslint job runs 'node ./scripts/tasks/eslint'.
+    This verifies no lint errors are introduced by the changes.
+    """
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI: shared_lint.yml / runtime_build_and_test.yml
+def test_repo_prettier():
+    """Prettier formatting check passes (pass_to_pass).
+
+    From React CI shared_lint.yml: prettier job runs 'yarn prettier-check'.
+    Verifies code style compliance.
+    """
+    r = subprocess.run(
+        ["yarn", "prettier-check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI: shared_lint.yml
+def test_repo_license_check():
+    """License check passes - no PATENTS references introduced (pass_to_pass).
+
+    From React CI shared_lint.yml: check_license job runs './scripts/ci/check_license.sh'.
+    Ensures no accidental PATENTS file references are added.
+    """
+    r = subprocess.run(
+        ["./scripts/ci/check_license.sh"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"License check failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -93,7 +139,7 @@ def test_test_renderer_www_view_transition_enabled():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
+# Pass-to-pass (static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass

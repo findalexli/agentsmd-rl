@@ -73,6 +73,29 @@ checks:
     origin: static
     description: "Deployment config classes have real fields, not empty"
 
+  # ---------------------------------------------------------------------------
+  # Repo CI/CD checks (repo_tests)
+  # ---------------------------------------------------------------------------
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff lint check passes on src/ directory"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on src/ directory"
+
+  - id: test_repo_syntax_pyproject
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pyproject.toml has valid TOML syntax"
+
+  - id: test_repo_configs_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All config files in configs/ directory have valid TOML syntax"
+
 rubric:
   # Soft rule from AGENTS.md
   - rule: "Skills live in skills/ and are symlinked to .claude/skills/. They teach agents how to handle specific workflows. When you make changes to the codebase, check if any skills need to be updated to stay accurate."

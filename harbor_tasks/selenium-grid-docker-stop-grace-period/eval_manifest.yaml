@@ -1,0 +1,119 @@
+task_name: selenium-grid-docker-stop-grace-period
+source_pr:
+  owner: SeleniumHQ
+  repo: selenium
+  pr_number: 17222
+  merge_commit: 1303596bccafc9f39708d8ac61b52424c7d00394
+  base_commit: fbe388118cff80484638b724aaec3ee86c6eb0cd
+
+# Agent configuration rules from java/AGENTS.md
+agent_config:
+  - file: "java/AGENTS.md"
+    rules:
+      - id: "logging"
+        description: "Use java.util.logging.Logger with LOG.info/warning/fine pattern"
+        relevant: true
+      - id: "deprecation"
+        description: "Use @Deprecated(forRemoval = true) for deprecated methods"
+        relevant: true
+      - id: "javadoc"
+        description: "Use Javadoc for public APIs with @param, @return, @throws tags"
+        relevant: true
+
+# Functional checks
+checks:
+  # Fail-to-pass: Core fix - try-finally protection
+  - id: test_docker_session_has_try_finally
+    type: fail_to_pass
+    origin: code_structure
+    description: DockerSession.stop() uses try-finally for guaranteed cleanup
+
+  - id: test_docker_session_has_duration_fields
+    type: fail_to_pass
+    origin: code_structure
+    description: DockerSession has containerStopTimeout and videoContainerStopTimeout Duration fields
+
+  - id: test_docker_session_constructor_accepts_durations
+    type: fail_to_pass
+    origin: code_structure
+    description: DockerSession constructor accepts Duration timeout parameters
+
+  - id: test_docker_session_no_hardcoded_timeouts
+    type: fail_to_pass
+    origin: code_structure
+    description: DockerSession.stop() no longer uses hardcoded Duration values
+
+  - id: test_docker_options_has_get_stop_grace_period
+    type: fail_to_pass
+    origin: code_structure
+    description: DockerOptions has getStopGracePeriod() method with validation
+
+  - id: test_docker_options_passes_grace_period_to_factory
+    type: fail_to_pass
+    origin: code_structure
+    description: DockerOptions passes stopGracePeriod to DockerSessionFactory
+
+  - id: test_docker_flags_has_stop_grace_period_parameter
+    type: fail_to_pass
+    origin: code_structure
+    description: DockerFlags has --docker-stop-grace-period parameter
+
+  - id: test_docker_session_factory_accepts_stop_grace_period
+    type: fail_to_pass
+    origin: code_structure
+    description: DockerSessionFactory accepts and stores stopGracePeriod Duration
+
+  - id: test_docker_session_factory_passes_timeout_to_session
+    type: fail_to_pass
+    origin: code_structure
+    description: DockerSessionFactory passes stopGracePeriod to DockerSession
+
+  - id: test_debug_uses_static_logger
+    type: fail_to_pass
+    origin: code_structure
+    description: Debug.configureLogger() uses static SELENIUM_LOGGER for thread safety
+
+  - id: test_parse_multiplexed_stream_uses_read_fully
+    type: fail_to_pass
+    origin: code_structure
+    description: parseMultiplexedStream uses readFully() instead of skipBytes()
+
+  # Pass-to-pass: Repo tests
+  - id: test_docker_session_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: DockerSession and related classes compile successfully
+
+  - id: test_docker_session_unit_tests_exist
+    type: pass_to_pass
+    origin: code_structure
+    description: DockerSessionTest.java exists with comprehensive tests
+
+  - id: test_bazel_build_targets_include_new_deps
+    type: pass_to_pass
+    origin: code_structure
+    description: BUILD.bazel files include new dependencies
+
+  - id: test_docker_library_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: Docker library compiles with all changes
+
+  # Additional pass-to-pass: Repo CI/CD tests
+  - id: test_repo_bazel_build_docker_targets
+    type: pass_to_pass
+    origin: repo_tests
+    description: Bazel docker targets build successfully
+
+  - id: test_repo_docker_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Docker unit tests pass
+
+  - id: test_repo_docker_options_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: DockerOptionsTest passes
+
+# LLM-judge rubric for soft/subjective checks
+rubric: []

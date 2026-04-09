@@ -1,0 +1,104 @@
+version: "1.0"
+
+source:
+  repo: All-Hands-AI/OpenHands
+  pr_number: 13649
+  base_commit: 5528b01c186958bf2c92d9adaaa7f7ea0c487185
+  merge_commit: b75c83d92abfcbbb63b7b82e0fdd0e981f69a66f
+  title: "fix(frontend): prevent duplicate payment successful toast after Stripe checkout"
+  description: |
+    Extract search params as primitive strings outside the useEffect to stabilize the
+    dependency array. The searchParams object and trackCreditsPurchased function created
+    new references on every render, causing the effect to re-fire and display the toast
+    multiple times.
+
+scoring:
+  total_checks: 7
+  threshold: 7
+
+checks:
+  # Fail-to-pass tests (behavioral verification)
+  - id: test_useeffect_has_primitive_dependencies
+    type: fail_to_pass
+    origin: code_analysis
+    description: useEffect dependency array uses primitive string values, not searchParams object
+    source: |
+      AGENTS.md:
+        "Frontend: Located in the `frontend` directory"
+        "Testing: Run tests: `npm run test`"
+        "Our test framework is vitest"
+
+  - id: test_searchparams_extracted_outside_effect
+    type: fail_to_pass
+    origin: code_analysis
+    description: amount and sessionId extracted outside useEffect as primitive values
+    source: |
+      AGENTS.md:
+        "Frontend: Located in the `frontend` directory"
+
+  - id: test_no_searchparams_get_inside_effect
+    type: fail_to_pass
+    origin: code_analysis
+    description: searchParams.get() calls should not be inside the useEffect callback
+    source: |
+      AGENTS.md:
+        "Frontend: Located in the `frontend` directory"
+
+  - id: test_checkout_status_extraction
+    type: fail_to_pass
+    origin: code_analysis
+    description: checkoutStatus extracted as primitive outside useEffect
+    source: |
+      AGENTS.md:
+        "Frontend: Located in the `frontend` directory"
+
+  # Pass-to-pass tests (repo CI/CD)
+  - id: test_vitest_billing_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's billing tests pass with vitest
+    source: |
+      AGENTS.md:
+        "Testing: Run tests: `npm run test`"
+        "To run specific tests: `npm run test -- -t \"TestName\"`"
+        "Our test framework is vitest"
+      frontend/README.md:
+        "Test Runner: Vitest"
+
+  - id: test_frontend_lint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend lint check passes
+    source: |
+      AGENTS.md:
+        "If you've made changes to the frontend, you should run `cd frontend && npm run lint:fix && npm run build`"
+        "The pre-commit hooks MUST pass successfully before pushing any changes"
+
+  - id: test_frontend_typecheck_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend TypeScript type check passes
+    source: |
+      AGENTS.md:
+        "Common issues include: Mypy type errors, Ruff formatting issues"
+      frontend/README.md:
+        "Type checking with TypeScript"
+
+  - id: test_frontend_build_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend production build passes
+    source: |
+      .github/workflows/fe-unit-tests.yml:
+        "Run TypeScript compilation"
+        "npm run build"
+
+  - id: test_frontend_translation_completeness
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend translation completeness check passes
+    source: |
+      .github/workflows/lint.yml:
+        "npm run check-translation-completeness"
+
+rubric: []

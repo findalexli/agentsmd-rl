@@ -18,6 +18,22 @@ checks:
     origin: static
     description: "next-swc package.json is valid JSON with scripts"
 
+  # p2p gates - repo CI/CD config validation
+  - id: lerna_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "lerna.json is valid JSON with required fields"
+
+  - id: turbo_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Root turbo.json is valid JSON with tasks defined"
+
+  - id: next_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "packages/next/package.json is valid JSON with required fields"
+
   # f2p code behavior
   - id: build_all_script_via_node
     type: fail_to_pass

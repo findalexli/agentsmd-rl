@@ -263,3 +263,67 @@ def test_root_h_include():
     assert include_lines, "No #include directives found in file"
     root_h = [line for _, line in include_lines if "root.h" in line]
     assert root_h, '#include "root.h" missing from FormatStackTraceForJS.cpp'
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates (p2p_enrichment)
+# These verify the repo's own CI checks pass on base commit AND after fix
+# ---------------------------------------------------------------------------
+
+def test_cpp_file_trailing_newline():
+    """C++ files must end with a newline (repo CI style check - pass_to_pass)."""
+    text = CPP_FILE.read_text()
+    assert text.endswith("\n"), "File must end with a newline"
+
+
+def test_cpp_no_trailing_whitespace():
+    """C++ files must not have trailing whitespace (repo CI style check - pass_to_pass)."""
+    text = CPP_FILE.read_text()
+    lines = text.split("\n")
+    for i, line in enumerate(lines, 1):
+        if line != line.rstrip():
+            assert False, f"Trailing whitespace on line {i}"
+
+
+def test_cpp_no_banned_patterns():
+    """C++ files must not contain banned patterns (repo CI: test/internal/ban-words.test.ts - pass_to_pass)."""
+    text = CPP_FILE.read_text()
+    banned_patterns = [
+        "std.debug.assert",
+        "std.debug.print",
+        "std.log",
+    ]
+    for pattern in banned_patterns:
+        assert pattern not in text, f"Banned pattern '{pattern}' found in C++ file"
+
+
+def test_cpp_include_order():
+    """C++ files should have root.h first in includes (repo style - pass_to_pass)."""
+    text = CPP_FILE.read_text()
+    lines = text.split("\n")
+    local_includes = []
+    for i, line in enumerate(lines):
+        if m := re.match(r'\s*#\s*include\s+"([^"]+)"', line):
+            local_includes.append((i, m.group(1)))
+    if local_includes:
+        first_local = local_includes[0]
+        assert "root.h" in first_local[1], f'Expected "root.h" to be first include, found "{first_local[1]}"'
+
+
+def test_repo_cpp_syntax_valid():
+    """C++ file must have valid syntax indicators (pass_to_pass repo gate)."""
+    text = CPP_FILE.read_text()
+    required_patterns = [
+        r"#include\s+",
+        r"JSC_DEFINE_HOST_FUNCTION",
+        r"return\s+",
+        r"\{\s*\n",
+    ]
+    for pattern in required_patterns:
+        assert re.search(pattern, text), f"Missing required C++ pattern: {pattern}"
+
+
+def test_repo_error_function_present():
+    """errorConstructorFuncCaptureStackTrace must be present (pass_to_pass repo gate)."""
+    text = CPP_FILE.read_text()
+    assert "errorConstructorFuncCaptureStackTrace" in text, "Required function not found"

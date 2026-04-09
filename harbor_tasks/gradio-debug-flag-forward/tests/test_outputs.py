@@ -28,6 +28,20 @@ def test_syntax_check():
         py_compile.compile(f"{REPO}/{f}", doraise=True)
 
 
+# [static] pass_to_pass
+def test_ruff_check():
+    """Modified files must pass ruff linting (repo's CI standard)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "gradio/routes.py", "gradio/blocks.py"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -119,3 +133,52 @@ def test_app_class_preserved():
     assert "auth_dependency" in sig.parameters, (
         "App.__init__ missing auth_dependency param"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates from the repo's own tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_analytics():
+    """Repo's analytics tests pass (pass_to_pass - no external deps)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_analytics.py", "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Analytics tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_http_server():
+    """Repo's HTTP server tests pass (pass_to_pass - no heavy deps)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_http_server.py", "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"HTTP server tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_gradio_import():
+    """Gradio imports correctly (pass_to_pass - basic smoke test)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "-c", "import gradio; from gradio import Interface; from gradio.routes import App; print('OK')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Gradio import failed:\n{r.stderr[-500:]}"

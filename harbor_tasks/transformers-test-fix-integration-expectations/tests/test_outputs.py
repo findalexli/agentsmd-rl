@@ -36,6 +36,82 @@ def test_t5_test_file_parses():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repository
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check_qwen2():
+    """Repo's ruff linter passes on qwen2 test file (pass_to_pass)."""
+    import shutil
+    if not shutil.which("ruff"):
+        subprocess.run(["pip", "install", "ruff", "-q"], check=True, timeout=60)
+    r = subprocess.run(
+        ["ruff", "check", QWEN2_TEST_FILE, "--ignore", "E501"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check_t5():
+    """Repo's ruff linter passes on t5 test file (pass_to_pass)."""
+    import shutil
+    if not shutil.which("ruff"):
+        subprocess.run(["pip", "install", "ruff", "-q"], check=True, timeout=60)
+    r = subprocess.run(
+        ["ruff", "check", T5_TEST_FILE, "--ignore", "E501"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_check():
+    """Repo's ruff format check passes on test files (pass_to_pass)."""
+    import shutil
+    if not shutil.which("ruff"):
+        subprocess.run(["pip", "install", "ruff", "-q"], check=True, timeout=60)
+    r = subprocess.run(
+        ["ruff", "format", "--check", QWEN2_TEST_FILE, T5_TEST_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check_model_dirs():
+    """Repo's ruff linter passes on qwen2 and t5 model test directories (pass_to_pass)."""
+    import shutil
+    if not shutil.which("ruff"):
+        subprocess.run(["pip", "install", "ruff", "-q"], check=True, timeout=60)
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/tests/models/qwen2/", f"{REPO}/tests/models/t5/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check on model dirs failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_qwen2_test_file_compiles():
+    """Qwen2 test file must compile without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", QWEN2_TEST_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Qwen2 test file compilation failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_t5_test_file_compiles():
+    """T5 test file must compile without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", T5_TEST_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"T5 test file compilation failed:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

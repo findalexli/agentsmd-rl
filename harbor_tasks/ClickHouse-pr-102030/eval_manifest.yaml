@@ -1,0 +1,85 @@
+eval_id: clickhouse-udf-keeper-retry
+version: "1.0"
+description: ClickHouse UDF Keeper retry fix benchmark
+
+checks:
+  # ==========================================================================
+  # Fail-to-Pass Tests (verify the fix works)
+  # ==========================================================================
+  - id: test_zookeeper_retries_header_included
+    type: fail_to_pass
+    origin: agent_written
+    description: ZooKeeperRetries.h header is included
+
+  - id: test_keeper_exception_catch_block
+    type: fail_to_pass
+    origin: agent_written
+    description: KeeperException catch block with hardware error handling exists
+
+  - id: test_retry_control_instantiated
+    type: fail_to_pass
+    origin: agent_written
+    description: ZooKeeperRetriesControl is instantiated in refreshObjects
+
+  - id: test_retry_constants_defined
+    type: fail_to_pass
+    origin: agent_written
+    description: Retry constants (max_retries=5, initial_backoff_ms=200, max_backoff_ms=5000) are defined
+
+  - id: test_retry_loop_used
+    type: fail_to_pass
+    origin: agent_written
+    description: retryLoop is called with lambda
+
+  - id: test_function_names_and_asts_cleared
+    type: fail_to_pass
+    origin: agent_written
+    description: vector is cleared at retry loop start
+
+  - id: test_keeper_error_warning_logged
+    type: fail_to_pass
+    origin: agent_written
+    description: Hardware error warning is logged
+
+  - id: test_refresh_objects_function_structure
+    type: fail_to_pass
+    origin: agent_written
+    description: refreshObjects function has the retry structure
+
+  - id: test_code_follows_allman_braces
+    type: pass_to_pass
+    origin: agent_config
+    description: Allman-style braces are used
+
+  # ==========================================================================
+  # Pass-to-Pass Tests (Repo CI/CD - ensure base commit is functional)
+  # ==========================================================================
+  - id: test_repo_file_exists_and_readable
+    type: pass_to_pass
+    origin: repo_tests
+    description: Target source file exists and is readable
+
+  - id: test_repo_cpp_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Basic C++ syntax validation - balanced braces/parens
+
+  - id: test_repo_includes_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Include statements are valid and properly formatted
+
+  - id: test_repo_git_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository is in clean state with no uncommitted changes
+
+  - id: test_repo_directory_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo directory structure is intact
+
+  - id: test_repo_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: Source files have no trailing whitespace

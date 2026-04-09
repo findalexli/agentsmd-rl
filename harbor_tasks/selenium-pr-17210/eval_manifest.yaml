@@ -1,0 +1,80 @@
+task_name: selenium-dotnet-bidi-threadsafe-events
+source_pr: SeleniumHQ/selenium#17210
+description: Thread-safe events registration in .NET BiDi EventDispatcher
+
+# F2P = Fail-to-Pass (tests that should fail before fix, pass after)
+# P2P = Pass-to-Pass (tests that should pass both before and after)
+checks:
+  # Fail-to-Pass: Thread safety implementation
+  - id: test_event_dispatcher_uses_copy_on_write_array
+    type: fail_to_pass
+    description: EventRegistration uses volatile EventHandler[] array instead of List<EventHandler>
+    origin: behavior
+    weight: 1.0
+
+  - id: test_event_dispatcher_has_thread_safe_add_handler
+    type: fail_to_pass
+    description: EventRegistration.AddHandler uses lock for thread-safe addition
+    origin: behavior
+    weight: 1.0
+
+  - id: test_event_dispatcher_has_thread_safe_remove_handler
+    type: fail_to_pass
+    description: EventRegistration.RemoveHandler uses lock for thread-safe removal
+    origin: behavior
+    weight: 1.0
+
+  - id: test_event_dispatcher_has_lock_object
+    type: fail_to_pass
+    description: EventRegistration has private lock object for synchronization
+    origin: behavior
+    weight: 0.5
+
+  - id: test_event_dispatcher_uses_get_handlers_in_process_events
+    type: fail_to_pass
+    description: ProcessEventsAwaiterAsync uses GetHandlers() instead of Handlers.ToArray()
+    origin: behavior
+    weight: 1.0
+
+  # Pass-to-Pass: Repo integrity checks
+  - id: test_dotnet_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: EventDispatcher.cs has valid C# syntax
+    weight: 1.0
+
+  - id: test_event_dispatcher_class_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: EventDispatcher class has proper structure with required members
+    weight: 1.0
+
+  - id: test_event_dispatcher_file_parses_correctly
+    type: pass_to_pass
+    origin: repo_tests
+    description: EventDispatcher.cs exists and has valid content
+    weight: 0.5
+
+  # Pass-to-Pass: Actual repo CI/CD checks
+  - id: test_repo_dotnet_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo dotnet format check passes (actual CI lint step)
+    weight: 1.0
+
+  - id: test_repo_dotnet_restore
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo dotnet restore passes (actual CI dependency restore)
+    weight: 0.5
+
+  # Agent config adherence checks (verified via structure tests above)
+
+# Rubric for subjective evaluation (empty - this is a functional fix)
+rubric: []
+
+scoring:
+  max_score: 8.5
+  passing_threshold: 7.0
+  fail_to_pass_weight: 0.6
+  pass_to_pass_weight: 0.4

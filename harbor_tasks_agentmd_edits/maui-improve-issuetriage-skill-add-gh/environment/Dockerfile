@@ -4,20 +4,18 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
 RUN apt-get update && \
-    apt-get install -y --no-install-wget curl git ca-certificates build-essential tmux \
-        libicu-dev libssl3 && \
+    apt-get install -y --no-install-recommends curl git ca-certificates build-essential tmux \
+        libicu-dev wget && \
     rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell for running/validating PowerShell scripts
-# Install from Microsoft repository
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends wget apt-transport-https software-properties-common && \
-    wget -q "https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb" -O packages-microsoft-prod.deb && \
-    dpkg -i packages-microsoft-prod.deb && \
-    rm packages-microsoft-prod.deb && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends powershell && \
-    rm -rf /var/lib/apt/lists/*
+# Download directly since the Microsoft repo method does not work on Trixie
+RUN curl -L -o /tmp/powershell.tar.gz "https://github.com/PowerShell/PowerShell/releases/download/v7.4.2/powershell-7.4.2-linux-x64.tar.gz" && \
+    mkdir -p /opt/microsoft/powershell/7 && \
+    tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 && \
+    rm /tmp/powershell.tar.gz && \
+    chmod +x /opt/microsoft/powershell/7/pwsh && \
+    ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh
 
 # dotnet/maui is very large — use shallow snapshot
 RUN git init /workspace/maui && \

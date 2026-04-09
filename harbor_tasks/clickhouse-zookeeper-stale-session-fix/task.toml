@@ -1,0 +1,21 @@
+name = "clickhouse-zookeeper-stale-session-fix"
+title = "Fix crash caused by stale ZooKeeper session in UDF retry loop"
+owner = "ClickHouse"
+repo = "ClickHouse"
+pr_number = 102170
+base_commit = "6f01023e78a9e84c588068560fda778a7c11a665"
+merge_commit = "863e3d33498f075a84659eb2c8948de69b8bc88e"
+difficulty = "medium"
+estimated_time = "45m"
+
+tags = ["cpp", "concurrency", "distributed-systems", "zookeeper", "retry-logic"]
+
+description = """
+Fix a bug in UserDefinedSQLObjectsZooKeeperStorage where the refreshObjects() method
+captures the ZooKeeper session handle and object list BEFORE the retry loop. When a
+retry occurs due to session expiration, the stale handle and object list cause crashes
+or inconsistent state.
+
+The fix moves getObjectNamesAndSetWatch() inside the retry loop and obtains a fresh
+ZooKeeper session on each retry via zookeeper_getter.
+"""

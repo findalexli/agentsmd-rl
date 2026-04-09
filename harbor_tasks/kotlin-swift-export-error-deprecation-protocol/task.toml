@@ -1,0 +1,26 @@
+name = "kotlin-swift-export-error-deprecation-protocol"
+title = "Swift Export: Don't export protocol members with DeprecationLevel.ERROR"
+description = """
+The Swift Export feature incorrectly exports protocol/interface members marked with
+@Deprecated(level = DeprecationLevel.ERROR) to Swift. These members should be marked
+as unavailable in the generated Swift code since they represent declarations that
+are errors to use in Kotlin.
+
+Additionally, the SirAttribute.Available class needs to be simplified by removing
+the obsoleted parameter which was causing incorrect Swift availability attribute
+generation.
+"""
+
+difficulty = "medium"
+tags = ["kotlin", "swift-export", "compiler", "native", "visibility"]
+
+# Time limits (in seconds)
+time_limit_setup = 600
+time_limit_solve = 1800
+time_limit_test = 600
+
+# Expected file locations for agent
+[file_locations]
+main_logic = "native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/impl/SirVisibilityCheckerImpl.kt"
+model_file = "native/swift/sir/src/org/jetbrains/kotlin/sir/SirAttribute.kt"
+test_file = "native/swift/sir-printer/tests/org/jetbrains/kotlin/sir/printer/SirAsSwiftSourcesPrinterTests.kt"

@@ -144,9 +144,9 @@ console.log("PASS: migrations() correctly skips directories without migration.sq
 
 # [repo_tests] pass_to_pass
 def test_storage_tests_pass():
-    """Upstream storage tests still pass after the migration."""
+    """Upstream storage json-migration tests still pass after the migration."""
     r = subprocess.run(
-        ["bun", "test", "src/storage/"],
+        ["bun", "test", "test/storage/json-migration.test.ts"],
         cwd=PACKAGE,
         capture_output=True,
         text=True,
@@ -154,6 +154,32 @@ def test_storage_tests_pass():
     )
     # Bun test returns 0 on success, 1 if tests fail
     assert r.returncode == 0, f"Storage tests failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_bun_proc_tests_pass():
+    """BunProc registry tests pass (repo CI/CD)."""
+    r = subprocess.run(
+        ["bun", "test", "test/bun.test.ts"],
+        cwd=PACKAGE,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"BunProc tests failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_keybind_tests_pass():
+    """Keybind tests pass (repo CI/CD)."""
+    r = subprocess.run(
+        ["bun", "test", "test/keybind.test.ts"],
+        cwd=PACKAGE,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Keybind tests failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [static] pass_to_pass

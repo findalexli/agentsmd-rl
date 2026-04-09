@@ -176,3 +176,87 @@ def test_streaming_still_outlines_for_css():
         assert '"result":true' in output, (
             f"Expected true for stylesheets.size={size} during streaming, got: {output}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint():
+    """Repo's ESLint checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow():
+    """Repo's Flow typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_version_check():
+    """Repo's version check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/version-check.js"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_license_check():
+    """Repo's license check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/check_license.sh"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"License check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_fizz_server():
+    """Repo's ReactDOMFizzServer tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern=ReactDOMFizzServer-test"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fizz server tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_fizz_shell_hydration():
+    """Repo's ReactDOMFizzShellHydration tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern=ReactDOMFizzShellHydration"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fizz shell hydration tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_fizz_static():
+    """Repo's ReactDOMFizzStatic tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern=ReactDOMFizzStatic-test"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fizz static tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_fizz_server_node():
+    """Repo's ReactDOMFizzServerNode tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern=ReactDOMFizzServerNode"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fizz server node tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

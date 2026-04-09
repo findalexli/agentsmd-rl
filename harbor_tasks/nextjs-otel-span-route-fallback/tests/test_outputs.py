@@ -247,3 +247,72 @@ def test_span_logic_not_stubbed():
         name = Path(filepath).name
         assert "setAttributes" in src, f"{name}: missing setAttributes (stubbed?)"
         assert "updateName" in src, f"{name}: missing updateName (stubbed?)"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gate tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_parse():
+    """Repo's TypeScript files parse without syntax errors (pass_to_pass)."""
+    # Verifies the modified files are valid TypeScript before the fix
+    ts_parse_script = textwrap.dedent("""
+        const ts = require('typescript');
+        const fs = require('fs');
+
+        const files = [
+            'packages/next/src/build/templates/app-page.ts',
+            'packages/next/src/build/templates/app-route.ts',
+            'packages/next/src/build/templates/pages-api.ts',
+            'packages/next/src/server/route-modules/pages/pages-handler.ts'
+        ];
+
+        let hasErrors = false;
+        for (const file of files) {
+          try {
+            const content = fs.readFileSync(file, 'utf8');
+            ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true);
+            console.log('OK: ' + file);
+          } catch (e) {
+            console.error('FAIL: ' + file + ' - ' + e.message);
+            hasErrors = true;
+          }
+        }
+        process.exit(hasErrors ? 1 : 0);
+    """)
+    Path("/tmp/_ts_parse.js").write_text(ts_parse_script)
+    r = subprocess.run(
+        ["node", "/tmp/_ts_parse.js"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript parse failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_otel_parent_span_structure():
+    """Repo's OTel handler files have expected parentSpan structure (pass_to_pass)."""
+    # Verifies the parentSpan.setAttribute pattern exists in all 4 files
+    for filepath in ALL_FILES:
+        src = Path(filepath).read_text()
+        name = Path(filepath).name
+        # Check for parentSpan propagation pattern
+        assert "parentSpan" in src, f"{name}: missing parentSpan variable"
+        assert "setAttribute" in src, f"{name}: missing setAttribute method"
+        # Check for rootSpanAttributes.get pattern
+        assert "rootSpanAttributes.get('next.route')" in src, (
+            f"{name}: missing rootSpanAttributes.get('next.route') pattern"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pages_handler_structure():
+    """Pages handler has expected isWrappedByNextServer pattern (pass_to_pass)."""
+    # Verifies pages-handler.ts has the expected structure before the fix
+    src = Path(PAGES_HANDLER).read_text()
+    # Check for activeSpan usage
+    assert "activeSpan" in src, "pages-handler.ts: missing activeSpan variable"
+    # Check for getTracer usage
+    assert "getTracer" in src, "pages-handler.ts: missing getTracer call"
+    # Check for handleResponse function
+    assert "handleResponse" in src, "pages-handler.ts: missing handleResponse function"

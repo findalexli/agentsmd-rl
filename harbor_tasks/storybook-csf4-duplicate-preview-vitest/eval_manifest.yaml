@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "storybookjs/storybook"
+  pr: 34361
+  base_commit: "6d4fcb5417be0013e4c2d6e2e166a15a81637268"
+  merge_commit: "69c8442c114a753762c3052efac38eb489509751"
+
+checks:
+  - id: typescript_files_parse
+    type: pass_to_pass
+    origin: static
+    description: "Both modified TypeScript files must parse without syntax errors"
+
+  - id: no_csf4_param_in_requires_project_annotations
+    type: fail_to_pass
+    origin: pr_diff
+    description: "requiresProjectAnnotations must not accept an isCSF4 parameter"
+
+  - id: no_csf4_conditional_return_in_utils
+    type: fail_to_pass
+    origin: pr_diff
+    description: "requiresProjectAnnotations must not short-circuit to false for CSF4"
+
+  - id: no_preview_file_loading_for_csf4_detection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The plugin must not load/parse preview config to detect CSF4 status"
+
+  - id: setup_files_no_preview_injection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Internal setup files must not conditionally include the preview file"
+
+  - id: project_annotations_conditional_still_exists
+    type: pass_to_pass
+    origin: static
+    description: "The project annotations setup file must still be conditionally included"
+
+  - id: requires_project_annotations_still_exported
+    type: pass_to_pass
+    origin: static
+    description: "requiresProjectAnnotations must still be exported from utils.ts"
+
+  - id: requires_project_annotations_returns_true_by_default
+    type: pass_to_pass
+    origin: static
+    description: "requiresProjectAnnotations must return true when no setup file has setProjectAnnotations"
+
+rubric:
+  - rule: "Use Storybook loggers instead of raw console.* in normal code paths"
+    source:
+      path: "AGENTS.md"
+      lines: "241-248"
+      commit: "6d4fcb5417be0013e4c2d6e2e166a15a81637268"

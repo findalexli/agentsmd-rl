@@ -1,85 +1,65 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.981440",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T11:38:31.423702",
+  "total_time": 8798.64,
+  "sandbox_id": "il8brceq0zzm8ihd449p4",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 382.67,
+      "notes": "Added 5 new pass_to_pass tests: test_py_compile, test_ast_parseable, test_functions_compile, test_metal_overrides_exists, test_required_methods_exist. CI commands: python -m py_compile (PyTorch basic syntax check), AST.parse static analysis. All 8 p2p tests pass on base commit; 3 f2p tests fail as expected before fix."
     },
-    {
-      "timestamp": "2026-03-30T11:48:15.959696",
-      "runner": "audit (audit-tests_20260330_114815)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 21880
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.720765",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-01T22:58:58-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 0.0,
-      "nop_score": 0.0,
-      "verdict": "fail_gold",
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 282.0,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 78.84
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T12:58:21.155267",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0",
-      "notes": "ror: n...\nFAILED ../tests/test_outputs.py::test_where_casts_special_values - NameError:...\nFAILED ../tests/test_outputs.py::test_value_to_metal_special_values - NameErr...\n3 failed, 3 passed in 0.12s\n"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6409.28,
+      "at": "2026-04-09T06:47:13.925302"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.956870",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 8798.36,
+      "at": "2026-04-09T11:38:31.252495"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.587892",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
-    },
-    {
-      "timestamp": "2026-04-03T09:40:48.240870",
-      "phase": "docker_validate_v2",
-      "runner": "manual docker validate",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1",
-      "notes": "Fixed NameError from TYPE_CHECKING imports by prepending future annotations to exec source."
-    },
-    {
-      "timestamp": "2026-04-03T18:17:47.091475",
-      "phase": "e2b_salvage_remake",
-      "runner": "e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 8798.64,
+      "at": "2026-04-09T11:38:31.423702"
     }
   ]
 }

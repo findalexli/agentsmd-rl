@@ -45,7 +45,7 @@ checks:
   - id: no_any_in_function
     type: pass_to_pass
     origin: agent_config
-    description: "buildAgentCommandInput must not use 'any' type annotation"
+    description: "buildAgentCommandInput must not use any type annotation"
     source:
       path: "CLAUDE.md"
       lines: "144"
@@ -64,6 +64,21 @@ checks:
     type: pass_to_pass
     origin: pr_diff
     description: "buildAgentCommandInput must correctly pass through prompt, model, session, and run fields"
+
+  - id: repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI - oxlint type-aware linting passes"
+
+  - id: repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI - build succeeds"
+
+  - id: repo_gateway_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI - openai-http gateway tests pass"
 
 rubric:
   - rule: "Treat schema changes as protocol changes, not local refactors."

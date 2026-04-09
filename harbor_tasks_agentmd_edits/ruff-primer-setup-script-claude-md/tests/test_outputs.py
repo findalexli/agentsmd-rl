@@ -168,3 +168,53 @@ def test_script_not_stub():
     assert main_func is not None, "Script must have a main() function"
     body_stmts = [s for s in main_func.body if not isinstance(s, (ast.Pass, ast.Expr))]
     assert len(body_stmts) >= 3, "main() should have substantive logic, not a stub"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI/CD checks (p2p enrichment)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_ruff_check_scripts():
+    """Repo's ruff linter passes on scripts directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+    r = subprocess.run(
+        ["ruff", "check", str(Path(REPO) / "scripts"), "--select", "E,W,F", "--ignore", "E501"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_python_syntax_scripts():
+    """All Python files in scripts directory have valid syntax (pass_to_pass)."""
+    scripts_dir = Path(REPO) / "scripts"
+    py_files = list(scripts_dir.glob("*.py"))
+    assert len(py_files) > 0, "No Python files found in scripts directory"
+    for py_file in py_files:
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", str(py_file)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Syntax error in {py_file.name}: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_scripts_pyproject_valid():
+    """scripts/pyproject.toml is valid TOML (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "tomli", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install tomli: {r.stderr}"
+    pyproject_path = Path(REPO) / "scripts" / "pyproject.toml"
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import tomli; tomli.loads(open('{pyproject_path}').read()); print('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Invalid TOML in scripts/pyproject.toml: {r.stderr}"

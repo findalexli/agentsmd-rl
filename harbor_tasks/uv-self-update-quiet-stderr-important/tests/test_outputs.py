@@ -190,6 +190,28 @@ def test_stderr_quiet_still_disabled():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD verification
+# ---------------------------------------------------------------------------
+
+def test_repo_formatting():
+    """Repo code passes Rust formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Formatting check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_clippy():
+    """Repo code passes Clippy lints (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "--package", "uv", "--all-targets", "--all-features", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Clippy check failed:\n{r.stderr[-1000:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — wiring
 # ---------------------------------------------------------------------------
 

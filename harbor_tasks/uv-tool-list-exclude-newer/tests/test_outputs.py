@@ -192,3 +192,36 @@ def test_options_combined_in_list():
         "ResolverInstallerSettings is built solely from tool.options() "
         "without incorporating --exclude-newer"
     )
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD tests (pass_to_pass) — ensure PR doesn't break existing tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check_uv_cli():
+    """uv-cli crate compiles successfully with cargo check (repo p2p)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv-cli"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"uv-cli cargo check failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check_uv():
+    """uv main crate compiles successfully with cargo check (repo p2p)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"uv cargo check failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_test_uv_cli_compile():
+    """uv-cli tests compile successfully (repo p2p, --no-run)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "uv-cli", "--no-run"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"uv-cli test compilation failed:\n{r.stderr[-1000:]}"

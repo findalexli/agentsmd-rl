@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import subprocess
 
 REPO = "/repo"
@@ -24,6 +25,48 @@ def test_syntax_check():
         cwd=REPO, capture_output=True, timeout=30,
     )
     assert r.returncode == 0, f"Syntax error in image_utils.py:\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass — repo CI syntax validation
+def test_repo_import_check():
+    """Transformers module can be imported without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "from transformers.image_utils import SizeDict; print('Import OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO, env={**os.environ, "PYTHONPATH": f"{REPO}/src"},
+    )
+    assert r.returncode == 0, f"Import failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — basic SizeDict functionality
+def test_repo_sizedict_basic():
+    """SizeDict basic operations work (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+sys.path.insert(0, 'src')
+from transformers.image_utils import SizeDict
+
+# Test basic instantiation
+sd = SizeDict(height=10, width=20)
+assert sd.height == 10 and sd.width == 20
+
+# Test dict conversion
+d = dict(sd)
+assert d == {'height': 10, 'width': 20}
+
+# Test equality with dict
+assert sd == {'height': 10, 'width': 20}
+
+# Test __getitem__ and __contains__
+assert sd['height'] == 10
+assert 'height' in sd
+assert 'longest_edge' not in sd
+
+print('SizeDict basic operations OK')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SizeDict basic test failed:\n{r.stderr}\n{r.stdout}"
 
 
 # ---------------------------------------------------------------------------

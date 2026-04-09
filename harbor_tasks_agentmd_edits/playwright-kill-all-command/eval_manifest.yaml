@@ -42,11 +42,32 @@ checks:
       lines: "29-30"
       commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
 
-  # Regression check (pass-to-pass)
+  # Regression checks (pass-to-pass)
   - id: commands_file_valid
     type: pass_to_pass
     origin: static
     description: "commands.ts is syntactically balanced"
+
+  # Repo CI/CD checks (pass-to-pass) — verified on base commit
+  - id: repo_lint_packages
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's workspace package consistency check passes (npm run lint-packages)"
+
+  - id: repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's build completes successfully (npm run build)"
+
+  - id: repo_commands_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "commands.ts has valid Node.js syntax (node --check)"
+
+  - id: repo_program_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "program.ts has valid Node.js syntax (node --check)"
 
 rubric:
   - rule: "Documentation style should be consistent with existing session commands in SKILL.md"

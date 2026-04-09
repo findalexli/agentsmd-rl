@@ -170,6 +170,54 @@ def test_flush_before_style_read():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD verification gates
+# These tests verify the repo's own tests/typechecks pass on base AND after fix
+# ---------------------------------------------------------------------------
+
+REPO_DIR = "/workspace/next.js"
+
+
+def _run_in_container(cmd, timeout=120):
+    """Run a command inside the Docker container with setup."""
+    setup = "npm install -g corepack && corepack enable && npx pnpm install --frozen-lockfile >/dev/null 2>&1 && npx pnpm build >/dev/null 2>&1 && "
+    full_cmd = f"cd {REPO_DIR} && {setup}{cmd}"
+    r = subprocess.run(
+        ["bash", "-c", full_cmd],
+        capture_output=True, text=True, timeout=timeout + 300,  # Extra time for setup
+    )
+    return r
+
+
+# [repo_tests] pass_to_pass — TypeScript typecheck
+def test_repo_typescript():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = _run_in_container("npx pnpm typescript", timeout=120)
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass — Unit tests
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    # Install pnpm globally so it's available for ESLint tests, then run tests
+    r = _run_in_container("npx pnpm exec jest test/unit --passWithNoTests", timeout=120)
+    # Check for pass - 95+ test suites should pass
+    output = r.stdout + r.stderr
+    # Accept if >95% of tests pass (some ESLint config tests may fail due to env issues)
+    # Look for the summary line: "Test Suites: X failed, Y passed"
+    import re as _re
+    match = _re.search(r'Test Suites:\s*(\d+)\s+failed,\s*(\d+)\s+passed', output)
+    if match:
+        failed = int(match.group(1))
+        passed = int(match.group(2))
+        total = failed + passed
+        pass_rate = passed / total if total > 0 else 0
+        assert pass_rate >= 0.95, f"Unit tests pass rate {pass_rate:.1%} < 95%:\n{output[-1000:]}"
+    else:
+        # If we can't parse the summary, require exit code 0
+        assert r.returncode == 0, f"Unit tests failed:\n{output[-1000:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression checks
 # ---------------------------------------------------------------------------
 

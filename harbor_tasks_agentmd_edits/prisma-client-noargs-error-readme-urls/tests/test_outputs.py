@@ -16,6 +16,21 @@ CLIENT_FILE = Path(REPO) / "packages" / "client" / "src" / "runtime" / "getPrism
 README_FILE = Path(REPO) / "README.md"
 
 
+def _setup_node_env():
+    """Install pnpm and dependencies if not present."""
+    # Install pnpm if missing
+    r = subprocess.run(["which", "pnpm"], capture_output=True, text=True)
+    if r.returncode != 0:
+        subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, check=True)
+    
+    # Check if node_modules exists, if not install dependencies
+    if not Path(REPO + "/node_modules").exists():
+        subprocess.run(
+            ["pnpm", "install", "--frozen-lockfile"],
+            capture_output=True, cwd=REPO, timeout=300
+        )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -115,6 +130,9 @@ def test_error_message_content():
 
 
 # [pr_diff] fail_to_pass
+def test_validate_unconditional():
+    """validatePrismaClientOptions should be called unconditionally, not inside if(optionsArg)."""
+    content = CLIENT_FILE.read_text()
 
     # On the base commit, validatePrismaClientOptions is inside: if (optionsArg) { validate... }
     # After fix, it's called unconditionally (the guard throws before reaching it)
@@ -133,6 +151,9 @@ def test_error_message_content():
 
 
 # [pr_diff] fail_to_pass
+def test_optional_chaining_removed():
+    """optionsArg?.adapter should become optionsArg.adapter after null guard."""
+    content = CLIENT_FILE.read_text()
 
     # After the null guard, optionsArg is guaranteed to be truthy,
     # so optional chaining on it is unnecessary
@@ -152,10 +173,39 @@ def test_error_message_content():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on both base and gold
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check():
+    """Repo's code formatting passes prettier-check (pass_to_pass)."""
+    _setup_node_env()
+    r = subprocess.run(
+        ["pnpm", "run", "prettier-check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's build passes (pass_to_pass)."""
+    _setup_node_env()
+    r = subprocess.run(
+        ["pnpm", "run", "build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Config edit (config_edit) — README.md URL and content updates
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
+def test_readme_urls_updated():
+    """README.md URLs updated from /docs/concepts/components/ to /docs/orm/."""
+    content = README_FILE.read_text()
 
     # The old URLs used /docs/concepts/components/ which are broken
     old_url_count = content.count("/docs/concepts/components/")
@@ -175,6 +225,9 @@ def test_error_message_content():
 
 
 # [config_edit] fail_to_pass
+def test_readme_prisma7_note():
+    """README.md mentions Prisma 7 driver adapter requirement."""
+    content = README_FILE.read_text()
 
     # The PR updates the note from "Depending on your database, you may need..."
     # to "As of Prisma 7, you will need to use a driver adapter"

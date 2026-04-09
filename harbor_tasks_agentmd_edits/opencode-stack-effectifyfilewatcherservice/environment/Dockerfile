@@ -3,10 +3,10 @@ FROM oven/bun:1.2-slim
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
-# Install git, python3, and other build dependencies
+# Install git, python3, nodejs, npm and other build dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential python3 python3-pip python3-venv && \
+        git curl ca-certificates build-essential python3 python3-pip python3-venv nodejs npm && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit

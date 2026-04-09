@@ -35,6 +35,17 @@ checks:
     origin: static
     description: "Probe methods are safe no-ops when window is undefined"
 
+  # Repo CI/CD pass-to-pass checks
+  - id: test_repo_typecheck_app
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's packages/app typecheck passes (bun run typecheck)"
+
+  - id: test_repo_typecheck_turbo
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's turbo typecheck passes across monorepo"
+
   # Config/documentation update checks
   - id: agents_md_documents_helpers
     type: fail_to_pass

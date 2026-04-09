@@ -106,7 +106,7 @@ def test_error_printing_centralized():
     const errors = ['InvalidPackageID', 'PartialInstallFailed', 'NoPackagesInstalled', 'SecurityScannerInWorkspace'];
     const violations = [];
     for (const err of errors) {
-        const pat = new RegExp('Output\\.(?:errGeneric|pretty)\\([^)]*\\)[\\s\\S]*?return error\\.' + err);
+        const pat = new RegExp('Output\\\\.(?:errGeneric|pretty)\\\\([^)]*\\\\)[\\\\s\\\\S]*?return error\\\\.' + err);
         if (pat.test(text)) violations.push(err);
     }
     if (violations.length > 0) {
@@ -254,3 +254,35 @@ def test_exit_code_assertion_last():
     assert content_lines, "No content assertions found"
     for ec in exit_lines:
         assert any(ca < ec for ca in content_lines), "exit code before content assertion"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_banned_words():
+    """Repo banned words check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/internal/ban-words.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Banned words check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_source_files_valid():
+    """Modified source files are present and valid (pass_to_pass)."""
+    # Verify install_with_manager.zig exists and has substantial content
+    iwm_file = Path(IWM)
+    assert iwm_file.exists(), "install_with_manager.zig not found"
+    iwm_lines = len(iwm_file.read_text().splitlines())
+    assert iwm_lines > 200, f"install_with_manager.zig has only {iwm_lines} lines (expected > 200)"
+
+    # Verify security_scanner.zig exists and has substantial content
+    ss_file = Path(SS)
+    assert ss_file.exists(), "security_scanner.zig not found"
+    ss_lines = len(ss_file.read_text().splitlines())
+    assert ss_lines > 50, f"security_scanner.zig has only {ss_lines} lines (expected > 50)"
+

@@ -17,20 +17,18 @@ RUN git clone https://github.com/facebook/react.git react && \
 
 WORKDIR /workspace/react
 
-# Install dependencies (only what's needed for Flow)
+# Install dependencies (only what is needed for Flow)
 RUN yarn install --frozen-lockfile 2>/dev/null || yarn install
+
+# Configure git user first (required for commits)
+RUN git config --global user.email "agent@example.com" && \
+    git config --global user.name "Agent"
 
 # Sanitize git history for snapshot
 RUN rm -rf .git && \
     git init && \
     git add -A && \
-    git commit -m "snapshot" && \
-    git config user.email "agent@example.com" && \
-    git config user.name "Agent"
-
-# Configure git user for potential patch operations
-RUN git config --global user.email "agent@example.com" && \
-    git config --global user.name "Agent"
+    git commit -m "snapshot"
 
 # Create logs directory
 RUN mkdir -p /logs/verifier

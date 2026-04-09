@@ -50,4 +50,40 @@ checks:
     origin: static
     description: "Dockerfile builder stage has a build command"
 
+  # P2P — Repo CI/CD checks (pass_to_pass gates)
+  - id: test_repo_dockerfile_has_required_stages
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Dockerfile has required stages (dependencies, builder, runner)"
+
+  - id: test_repo_dockerfile_bun_has_required_stages
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Dockerfile.bun has required stages (dependencies, builder, runner)"
+
+  - id: test_repo_with_docker_example_files_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "with-docker example has all required files"
+
+  - id: test_repo_with_docker_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "with-docker package.json is private with required scripts"
+
+  - id: test_repo_with_docker_readme_has_required_sections
+    type: pass_to_pass
+    origin: repo_tests
+    description: "with-docker README has required documentation sections"
+
+  - id: test_repo_dockerfile_has_multi_stage_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Dockerfile uses multi-stage build pattern with COPY --from=builder"
+
+  - id: test_repo_dockerfile_bun_has_multi_stage_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Dockerfile.bun uses multi-stage build pattern with COPY --from=builder"
+
 rubric: []

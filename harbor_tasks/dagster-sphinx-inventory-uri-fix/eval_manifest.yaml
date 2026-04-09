@@ -1,0 +1,65 @@
+source_pr:
+  owner: dagster-io
+  repo: dagster
+  number: 33638
+  title: "Revert \"chore: fix docs inventory uris for dagster_pipes\""
+  merge_commit: "11a9446efd01e0139b269f12429b9b75118e7337"
+  base_commit: "b079ffcc0a70907d75cae2c276a1bed4d0b90139"
+
+files:
+  - path: docs/sphinx/_ext/dagster-sphinx/dagster_sphinx/__init__.py
+    description: "Main file containing the transform_inventory_uri function that needs fixing"
+
+# No agent config rules apply to this simple string transformation task
+agent_config: []
+
+rubric: []
+
+checks:
+  - id: test_transform_api_apidocs_prefix
+    description: "Verify that sections/api/apidocs/ is transformed to api/"
+    type: behavioral
+    category: fail_to_pass
+
+  - id: test_transform_api_apidocs_no_trailing_slash
+    description: "Verify transformation of paths without trailing slash"
+    type: behavioral
+    category: fail_to_pass
+
+  - id: test_transform_api_apidocs_root
+    description: "Verify transformation of root apidocs path"
+    type: behavioral
+    category: fail_to_pass
+
+  - id: test_no_transform_other_paths
+    description: "Verify that other paths are not modified"
+    type: behavioral
+    category: pass_to_pass
+
+  - id: test_ruff_formatting
+    description: "Verify code passes ruff lint checks (from CLAUDE.md)"
+    type: behavioral
+    category: pass_to_pass
+
+  - id: test_ruff_format
+    description: "Verify code is properly formatted with ruff (from CLAUDE.md)"
+    type: behavioral
+    category: pass_to_pass
+
+  - id: test_dagster_sphinx_imports
+    description: "Verify dagster_sphinx module and key exports can be imported"
+    type: behavioral
+    category: pass_to_pass
+    origin: repo_tests
+
+  - id: test_python_syntax
+    description: "Verify target file has valid Python syntax"
+    type: behavioral
+    category: pass_to_pass
+    origin: repo_tests
+
+metadata:
+  task_type: code_fix
+  domain: python
+  difficulty: easy
+  estimated_time: 15 min

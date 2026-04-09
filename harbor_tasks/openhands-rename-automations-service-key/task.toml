@@ -1,0 +1,22 @@
+name = "openhands-rename-automations-service-key"
+description = "Rename environment variable from AUTOMATIONS_SERVICE_API_KEY to AUTOMATIONS_SERVICE_KEY in enterprise service routes"
+type = "git"
+difficulty = "easy"
+estimated_time = "5 minutes"
+
+[repository]
+owner = "All-Hands-AI"
+name = "OpenHands"
+base_commit = "3516c3cdbe4e3713e7e1bb9b3b5041c281f29f0a"
+merge_commit = "f1b65d9534f73e3ff34998b55d6e303f2f82bdd6"
+pr_number = 13570
+
+[environment]
+base_image = "python:3.12-slim"
+setup_commands = [
+    "pip install fastapi pydantic pytest pytest-asyncio httpx"
+]
+
+[task]
+primary_file = "enterprise/server/routes/service.py"
+tags = ["refactor", "environment-variable", "enterprise"]

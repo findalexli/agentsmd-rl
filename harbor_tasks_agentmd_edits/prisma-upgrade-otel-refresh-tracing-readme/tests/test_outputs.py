@@ -85,10 +85,8 @@ def test_tracing_tests_use_resource_from_attributes():
     """All tracing test files must use resourceFromAttributes (not new Resource)."""
     for ts_file in TRACING_TEST_FILES:
         content = (Path(REPO) / ts_file).read_text()
-        assert "resourceFromAttributes" in content, \
-            f"{ts_file}: must use resourceFromAttributes instead of new Resource"
-        assert "new Resource(" not in content, \
-            f"{ts_file}: still contains deprecated 'new Resource(' constructor"
+        assert "resourceFromAttributes" in content,             f"{ts_file}: must use resourceFromAttributes instead of new Resource"
+        assert "new Resource(" not in content,             f"{ts_file}: still contains deprecated 'new Resource(' constructor"
 
 
 # [pr_diff] fail_to_pass
@@ -96,20 +94,16 @@ def test_tracing_tests_use_set_global_tracer():
     """All tracing test files must use trace.setGlobalTracerProvider (not .register())."""
     for ts_file in TRACING_TEST_FILES:
         content = (Path(REPO) / ts_file).read_text()
-        assert "setGlobalTracerProvider" in content, \
-            f"{ts_file}: must use trace.setGlobalTracerProvider()"
-        assert ".register()" not in content, \
-            f"{ts_file}: still contains deprecated .register() call"
+        assert "setGlobalTracerProvider" in content,             f"{ts_file}: must use trace.setGlobalTracerProvider()"
+        assert ".register()" not in content,             f"{ts_file}: still contains deprecated .register() call"
 
 
 # [pr_diff] fail_to_pass
 def test_tracing_uses_parent_span_context():
     """tracing/tests.ts must use parentSpanContext?.spanId (not parentSpanId)."""
     content = (Path(REPO) / "packages/client/tests/functional/tracing/tests.ts").read_text()
-    assert "parentSpanContext?.spanId" in content, \
-        "tracing/tests.ts: must use parentSpanContext?.spanId (v2 API)"
-    assert "span.parentSpanId" not in content, \
-        "tracing/tests.ts: still contains deprecated span.parentSpanId"
+    assert "parentSpanContext?.spanId" in content,         "tracing/tests.ts: must use parentSpanContext?.spanId (v2 API)"
+    assert "span.parentSpanId" not in content,         "tracing/tests.ts: still contains deprecated span.parentSpanId"
 
 
 # [pr_diff] fail_to_pass
@@ -117,10 +111,8 @@ def test_tracing_tests_use_span_processors_option():
     """Tracing test files must pass spanProcessors in the constructor (not addSpanProcessor)."""
     for ts_file in TRACING_TEST_FILES:
         content = (Path(REPO) / ts_file).read_text()
-        assert "spanProcessors" in content, \
-            f"{ts_file}: must use spanProcessors option in BasicTracerProvider constructor"
-        assert "addSpanProcessor" not in content, \
-            f"{ts_file}: still contains deprecated addSpanProcessor() call"
+        assert "spanProcessors" in content,             f"{ts_file}: must use spanProcessors option in BasicTracerProvider constructor"
+        assert "addSpanProcessor" not in content,             f"{ts_file}: still contains deprecated addSpanProcessor() call"
 
 
 # ---------------------------------------------------------------------------
@@ -131,29 +123,22 @@ def test_tracing_tests_use_span_processors_option():
 def test_readme_uses_resource_from_attributes():
     """README.md Jaeger example must use resourceFromAttributes (not new Resource)."""
     content = (Path(REPO) / README_PATH).read_text()
-    assert "resourceFromAttributes" in content, \
-        "README.md: Jaeger example must use resourceFromAttributes"
-    assert "new Resource(" not in content, \
-        "README.md: still contains deprecated 'new Resource(' constructor"
+    assert "resourceFromAttributes" in content,         "README.md: Jaeger example must use resourceFromAttributes"
+    assert "new Resource(" not in content,         "README.md: still contains deprecated 'new Resource(' constructor"
 
 
 # [pr_diff] fail_to_pass
 def test_readme_uses_new_semantic_conventions():
     """README.md must use ATTR_SERVICE_NAME/VERSION (not deprecated SEMRESATTRS_)."""
     content = (Path(REPO) / README_PATH).read_text()
-    assert "ATTR_SERVICE_NAME" in content, \
-        "README.md: must use ATTR_SERVICE_NAME"
-    assert "ATTR_SERVICE_VERSION" in content, \
-        "README.md: must use ATTR_SERVICE_VERSION"
-    assert "SEMRESATTRS_" not in content, \
-        "README.md: still contains deprecated SEMRESATTRS_ constants"
+    assert "ATTR_SERVICE_NAME" in content,         "README.md: must use ATTR_SERVICE_NAME"
+    assert "ATTR_SERVICE_VERSION" in content,         "README.md: must use ATTR_SERVICE_VERSION"
+    assert "SEMRESATTRS_" not in content,         "README.md: still contains deprecated SEMRESATTRS_ constants"
 
 
 # [pr_diff] fail_to_pass
 def test_readme_uses_set_global_tracer():
     """README.md Jaeger example must use trace.setGlobalTracerProvider (not .register())."""
     content = (Path(REPO) / README_PATH).read_text()
-    assert "setGlobalTracerProvider" in content, \
-        "README.md: must use trace.setGlobalTracerProvider()"
-    assert "provider.register()" not in content, \
-        "README.md: still contains deprecated provider.register() call"
+    assert "setGlobalTracerProvider" in content,         "README.md: must use trace.setGlobalTracerProvider()"
+    assert "provider.register()" not in content,         "README.md: still contains deprecated provider.register() call"

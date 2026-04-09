@@ -132,6 +132,54 @@ def test_tokenization_aliases_still_work():
     )
 
 
+# [repo_tests] pass_to_pass — CI-derived checks
+# These tests verify that the repo's CI checks pass on both base and gold commits
+
+def test_repo_ruff_check_modified_files():
+    """Repo's ruff check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "ruff", "check",
+            "src/transformers/__init__.py",
+            "src/transformers/image_processing_backends.py",
+            "--quiet",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stderr}"
+
+
+def test_repo_ruff_format_check_modified_files():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "ruff", "format", "--check",
+            "src/transformers/__init__.py",
+            "src/transformers/image_processing_backends.py",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stderr}"
+
+
+def test_repo_import_transformers():
+    """Repo's main package imports without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "import transformers; print(transformers.__version__)"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"transformers import failed:\n{r.stderr}"
+
+
 # [pr_diff] pass_to_pass
 def test_direct_import_image_processing_backends():
     """Direct import from image_processing_backends still works."""

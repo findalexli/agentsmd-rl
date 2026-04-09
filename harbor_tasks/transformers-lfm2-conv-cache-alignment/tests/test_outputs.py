@@ -306,7 +306,7 @@ def test_modular_file_consistency():
 
 # [agent_config] pass_to_pass — CLAUDE.md:2 @ f5e573080ae
 def test_ruff_lint():
-    """Changed files pass ruff linting."""
+    """Changed files pass ruff linting (pass_to_pass)."""
     result = subprocess.run(
         [
             "ruff", "check",
@@ -320,4 +320,55 @@ def test_ruff_lint():
     )
     assert result.returncode == 0, (
         f"ruff lint failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI checks (repo_tests) — pass_to_pass gates for base commit validation
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_ruff_format():
+    """Changed files pass ruff format check (pass_to_pass)."""
+    result = subprocess.run(
+        [
+            "ruff", "format", "--check",
+            "src/transformers/models/lfm2/modeling_lfm2.py",
+            "src/transformers/models/lfm2/modular_lfm2.py",
+            "src/transformers/models/lfm2_moe/modeling_lfm2_moe.py",
+        ],
+        cwd="/repo",
+        capture_output=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, (
+        f"ruff format check failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_check_modular_conversion():
+    """Modular files are correctly converted to modeling files (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_modular_conversion.py"],
+        cwd="/repo",
+        capture_output=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"check_modular_conversion failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_check_copies():
+    """Copied code sections are consistent across files (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_copies.py"],
+        cwd="/repo",
+        capture_output=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"check_copies failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
     )

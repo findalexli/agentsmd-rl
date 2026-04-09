@@ -1,0 +1,61 @@
+version: "2.0"
+
+source:
+  repo: "biomejs/biome"
+  pr: 9728
+  base_commit: "467fd87daec3d8c1fe64850a82480364480b313e"
+  merge_commit: "5085424db427c7874eef7ca732f237febb49fdb1"
+
+checks:
+  - id: compilation
+    type: pass_to_pass
+    origin: static
+    description: "biome_html_parser crate compiles without errors"
+
+  - id: astro_regex_escape_frontmatter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Astro frontmatter with escaped regex patterns (/\\d{4}/, /\\w{2,3}/) parses without diagnostics"
+
+  - id: escape_handler_order
+    type: fail_to_pass
+    origin: pr_diff
+    description: "General escape handler in QuotesSeen::check_byte comes after deferred slash resolution (slash_starts_regex)"
+
+  - id: existing_quotes_seen_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing QuotesSeen unit tests pass without regressions"
+
+  - id: test_repo_cargo_check_html_parser
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo check -p biome_html_parser passes"
+
+  - id: test_repo_cargo_clippy_html_parser
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo clippy -p biome_html_parser passes with no warnings"
+
+  - id: test_repo_cargo_test_lib_html_parser
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo test -p biome_html_parser --lib passes"
+
+  - id: test_repo_cargo_test_spec_tests_html_parser
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo test -p biome_html_parser --test spec_tests passes"
+
+rubric:
+  - rule: "Do NOT embed the context of the current work into comments. A comment like `// As per issue #1234, we skip this case` ties the code to a transient artifact. Instead, explain *why* the case is skipped in terms any future reader would understand."
+    source:
+      path: ".claude/skills/biome-developer/SKILL.md"
+      lines: "152"
+      commit: "467fd87daec3d8c1fe64850a82480364480b313e"
+
+  - rule: "Do NOT scope comments to the specific trigger that prompted the change. For example, if a bug was reported for Astro but the fix applies broadly, do NOT write `// Fix for Astro embedding`. Write a comment that describes the general condition being handled."
+    source:
+      path: ".claude/skills/biome-developer/SKILL.md"
+      lines: "153"
+      commit: "467fd87daec3d8c1fe64850a82480364480b313e"

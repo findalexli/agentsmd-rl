@@ -8,7 +8,7 @@ RUN apt-get update && \
         git python3 python3-pip ca-certificates build-essential tmux && \
     rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g yarn@1
+RUN npm install -g yarn@1 --force
 
 RUN git clone --filter=blob:none https://github.com/facebook/react.git /workspace/react && \
     cd /workspace/react && \

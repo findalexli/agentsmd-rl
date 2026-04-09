@@ -141,3 +141,45 @@ def test_skill_md_documents_approve_workflow():
     assert has_repo_param and has_pr_param, (
         "SKILL.md should document both repo and PR number parameters for approve.sh"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI checks that must pass on base and gold
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_bash_syntax_copilot():
+    """All shell scripts in .claude/skills/copilot have valid bash syntax (pass_to_pass)."""
+    skill_dir = Path(REPO) / ".claude" / "skills" / "copilot"
+    for script in skill_dir.glob("*.sh"):
+        r = subprocess.run(
+            ["bash", "-n", str(script)],
+            capture_output=True, text=True, timeout=10,
+        )
+        assert r.returncode == 0, f"Syntax error in {script}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_claude():
+    """Ruff linting passes on .claude directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pip", "install", "ruff==0.15.5", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "check", ".claude/", "--output-format=concise"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_bash_syntax_all_claude():
+    """All shell scripts in .claude have valid bash syntax (pass_to_pass)."""
+    claude_dir = Path(REPO) / ".claude"
+    for script in claude_dir.rglob("*.sh"):
+        r = subprocess.run(
+            ["bash", "-n", str(script)],
+            capture_output=True, text=True, timeout=10,
+        )
+        assert r.returncode == 0, f"Syntax error in {script}:\n{r.stderr}"

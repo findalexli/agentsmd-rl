@@ -1,1 +1,78 @@
-{"verdict": "pass", "nop_reward": 0, "gold_reward": 1, "validated_at": "2026-04-08"}
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T13:00:11.220087",
+  "total_time": 13698.78,
+  "sandbox_id": "iyplbm27wiyj5igzljp8r",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 7.25,
+      "notes": "Added 2 pass_to_pass tests from repo CI/CD: (1) test_repo_ruff - runs 'ruff check slime_plugins/megatron_bridge/' (auto-installs ruff if missing), (2) test_repo_module_syntax - validates full AST parsing of target file. Docker image builds successfully. Repo uses pytest, ruff, black, isort per pyproject.toml and .pre-commit-config.yaml. CI workflows include pre-commit, pr-test (GPU-heavy e2e tests skipped), and conda-ci. Full test suite requires GPU, torch, and megatron dependencies - not suitable for p2p gates."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 230.58,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build successful, NOP test returns reward=0 (4 fail-to-pass tests correctly fail on buggy base code), Gold test returns reward=1 (all 8 tests pass after patch applied), rubric judge ICR=1.0.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 49.38
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.67,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 5969.74,
+      "at": "2026-04-09T06:42:44.611510"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 13698.48,
+      "at": "2026-04-09T13:00:11.025938"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 13698.78,
+      "at": "2026-04-09T13:00:11.220087"
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+id: appwrite-vectorsdb-metadata-race
+name: Fix flaky VectorsDB metadata bootstrap race condition
+source_pr: https://github.com/appwrite/appwrite/pull/11772
+base_commit: 4e10cabec0bf504daffb1bc53ad86bdf6f2cc727
+merge_commit: e3f373b8d244223a94a05c24a8151f5e3c9ac1df
+target_file: src/Appwrite/Platform/Modules/Databases/Http/VectorsDB/Collections/Create.php
+
+# This PR fixes a race condition where concurrent requests to create the first
+collection in a VectorsDB database could fail due to non-atomic existence checks
+# followed by create() calls. The fix implements a retry loop with proper exception
+# handling for DuplicateException and other Throwable errors.
+
+# All checks are programmatic - no LLM judge needed
+llm_judge: false
+
+checks:
+  # Fail-to-pass checks (verify the fix is implemented correctly)
+  - id: file_exists
+    type: programmatic
+    description: "Target file exists"
+    function: test_target_file_exists
+    source: base_commit
+
+  - id: php_syntax
+    type: programmatic
+    description: "PHP syntax is valid"
+    function: test_php_syntax_valid
+    source: base_commit
+
+  - id: bootstrap_comment
+    type: programmatic
+    description: "Explanatory comment about race condition fix is present"
+    function: test_bootstrap_comment_present
+    source: agent_config
+    agent_config_ref: "AGENTS.md - Code changes should include appropriate comments"
+
+  - id: retry_loop
+    type: programmatic
+    description: "Retry loop with 5 attempts is implemented"
+    function: test_retry_loop_structure
+    source: merge_commit
+
+  - id: duplicate_exception
+    type: programmatic
+    description: "DuplicateException is caught and handled with break"
+    function: test_duplicate_exception_handling
+    source: merge_commit
+
+  - id: throwable_catch
+    type: programmatic
+    description: "Throwable is caught with metadata exists check"
+    function: test_throwable_catch_with_exists_check
+    source: merge_commit
+
+  - id: max_attempts
+    type: programmatic
+    description: "Max attempts check before throwing"
+    function: test_max_attempts_check
+    source: merge_commit
+
+  - id: usleep_delay
+    type: programmatic
+    description: "100ms usleep between retry attempts"
+    function: test_usleep_retry_delay
+    source: merge_commit
+
+  - id: no_pre_check
+    type: programmatic
+    description: "Old exists() pre-check pattern is removed"
+    function: test_no_pre_check_exists
+    source: merge_commit
+
+  - id: create_in_loop
+    type: programmatic
+    description: "create() is called inside retry loop"
+    function: test_create_called_in_loop
+    source: merge_commit
+
+  - id: retry_comprehensive
+    type: programmatic
+    description: "All retry logic components in correct order"
+    function: test_retry_logic_comprehensive
+    source: merge_commit
+
+# No rubric rules - all checks are programmatic
+rubric: []

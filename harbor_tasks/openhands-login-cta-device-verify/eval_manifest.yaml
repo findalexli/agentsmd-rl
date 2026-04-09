@@ -1,0 +1,71 @@
+source_pr:
+  owner: All-Hands-AI
+  repo: OpenHands
+  pr_number: 13606
+  base_commit: eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be
+  merge_commit: 05a3916c98105f47953e3481c73df09dac1ad925
+
+agent_configs:
+  - file: AGENTS.md
+    lines: "Frontend: Located in the frontend directory"
+    description: Follow frontend dev patterns (npm run lint:fix, npm run build)
+
+rubric: []
+
+checks:
+  # Fail-to-pass tests - structural and behavioral changes
+  - id: test_login_cta_has_source_prop
+    type: fail_to_pass
+    origin: code_structure
+    description: LoginCTA component has LoginCTAProps type with source prop
+
+  - id: test_login_cta_renders_external_link_for_device_verify
+    type: fail_to_pass
+    origin: code_behavior
+    description: LoginCTA renders external <a> tag with enterprise URL for device_verify source
+
+  - id: test_device_verify_uses_login_cta
+    type: fail_to_pass
+    origin: code_structure
+    description: Device verify page imports and uses LoginCTA instead of EnterpriseBanner
+
+  - id: test_device_verify_passes_correct_props
+    type: fail_to_pass
+    origin: code_behavior
+    description: Device verify page passes source='device_verify' to LoginCTA
+
+  - id: test_layout_classes_updated
+    type: fail_to_pass
+    origin: code_structure
+    description: Layout classes updated for stretch behavior and consistent styling
+
+  # Pass-to-pass tests - repo CI/CD
+  - id: test_repo_frontend_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend unit tests pass (vitest)
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend linter passes (npm run lint)
+
+  - id: test_repo_typescript_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript typecheck passes (npm run typecheck)
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend production build succeeds (npm run build)
+
+  - id: test_repo_translation_completeness
+    type: pass_to_pass
+    origin: repo_tests
+    description: Translation completeness check passes
+
+  - id: test_repo_tests_login_cta
+    type: pass_to_pass
+    origin: repo_tests
+    description: LoginCTA and device-verify specific tests pass

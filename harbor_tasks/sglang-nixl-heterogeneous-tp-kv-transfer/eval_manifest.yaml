@@ -42,4 +42,24 @@ checks:
     origin: static
     description: "add_transfer_request must have real implementation calling send_kvcache and maybe_send_extra"
 
+  - id: test_repo_conn_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's conn.py must have valid Python syntax (py_compile)"
+
+  - id: test_repo_conn_py_ast_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's conn.py must parse into valid AST"
+
+  - id: test_repo_conn_py_no_undefined_names
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's conn.py must have required symbols defined (classes and functions)"
+
+  - id: test_repo_conn_py_classes_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's conn.py must have required classes (NixlKVManager, TransferStatus)"
+
 rubric: []

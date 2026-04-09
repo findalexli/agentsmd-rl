@@ -1,53 +1,65 @@
 version: "2.0"
 
 source:
-  repo: "{{OWNER}}/{{REPO}}"
-  pr: 0  # {{PR_NUMBER}}
-  base_commit: "{{BASE_COMMIT}}"
-  merge_commit: "{{MERGE_COMMIT}}"
+  repo: "cloudflare/workers-sdk"
+  pr: 13151
+  base_commit: "4dc94fd5209d17663fac32ac99f7f20d17f1f07f"
+  merge_commit: "9c4035b6e48418d9bccf9791354f54a083af5108"
 
 checks:
-  - id: syntax_check
+  - id: typescript_syntax
     type: pass_to_pass
     origin: static
-    description: "Modified files must parse without errors"
+    description: "Type generation file must be valid and contain expected function signatures"
 
-  - id: core_bug_fixed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TODO: describe the core behavioral change"
-
-  - id: edge_case
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TODO: describe a second input or edge case"
-
-  - id: existing_tests_pass
+  - id: test_repo_wrangler_typecheck
     type: pass_to_pass
     origin: repo_tests
-    description: "Upstream test suite still passes"
+    description: "Repo's TypeScript typecheck for wrangler package passes"
 
-  - id: not_stub
+  - id: test_repo_wrangler_type_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript type tests for wrangler pass"
+
+  - id: test_repo_wrangler_type_generation_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's type-generation tests for wrangler pass"
+
+  - id: test_core_bindings_ai_search_namespace
+    type: fail_to_pass
+    origin: pr_diff
+    description: "collectCoreBindings generates AiSearchNamespace type for ai_search_namespaces bindings"
+
+  - id: test_core_bindings_ai_search_instance
+    type: fail_to_pass
+    origin: pr_diff
+    description: "collectCoreBindings generates AiSearchInstance type for ai_search bindings"
+
+  - id: test_per_env_ai_search_namespace
+    type: fail_to_pass
+    origin: pr_diff
+    description: "collectCoreBindingsPerEnvironment generates AiSearchNamespace for ai_search_namespaces"
+
+  - id: test_per_env_ai_search_instance
+    type: fail_to_pass
+    origin: pr_diff
+    description: "collectCoreBindingsPerEnvironment generates AiSearchInstance for ai_search bindings"
+
+  - id: test_existing_bindings_preserved
     type: pass_to_pass
     origin: static
-    description: "Modified function has real logic, not just pass/return"
-
-  # Uncomment and fill if agent config rules exist:
-  # - id: config_rule
-  #   type: fail_to_pass
-  #   origin: agent_config
-  #   description: "TODO: rule from agent config"
-  #   source:
-  #     path: "AGENTS.md"
-  #     lines: "30"
-  #     commit: "{{BASE_COMMIT}}"
+    description: "Existing binding type mappings (vpc_services -> Fetcher, etc.) remain intact"
 
 rubric:
-  # Soft rules for LLM judge. Only rules genuinely needing subjective evaluation.
-  # Remove this section if no applicable soft rules exist.
-  []
-  # - rule: "TODO: verbatim text from config file"
-  #   source:
-  #     path: "AGENTS.md"
-  #     lines: "45"
-  #     commit: "{{BASE_COMMIT}}"
+  - rule: "No \"any\" type used for new AI Search binding type definitions — use specific type names like AiSearchNamespace and AiSearchInstance"
+    source:
+      path: "AGENTS.md"
+      lines: "92"
+      commit: "4dc94fd5209d17663fac32ac99f7f20d17f1f07f"
+  - rule: "Always use curly braces for control flow in new if/for statements"
+    source:
+      path: "AGENTS.md"
+      lines: "95"
+      commit: "4dc94fd5209d17663fac32ac99f7f20d17f1f07f"

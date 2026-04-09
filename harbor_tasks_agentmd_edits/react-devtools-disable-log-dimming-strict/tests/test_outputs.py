@@ -13,6 +13,17 @@ from pathlib import Path
 REPO = "/workspace/react"
 
 
+def _run_shell(cmd: list, cwd: str = REPO, timeout: int = 120) -> subprocess.CompletedProcess:
+    """Run a shell command and return the result."""
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=cwd,
+    )
+
+
 def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute JavaScript code via Node in the repo directory."""
     script = Path(REPO) / "_eval_tmp.mjs"
@@ -24,6 +35,29 @@ def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         )
     finally:
         script.unlink(missing_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base AND after fix
+# ---------------------------------------------------------------------------
+
+def test_repo_eslint_hook_files():
+    """ESLint passes on modified DevTools hook files (pass_to_pass)."""
+    files = [
+        "packages/react-devtools-shared/src/backend/types.js",
+        "packages/react-devtools-shared/src/hook.js",
+        "packages/react-devtools-shared/src/devtools/views/Settings/DebuggingSettings.js",
+        "packages/react-devtools-extensions/src/contentScripts/hookSettingsInjector.js",
+        "packages/react-devtools-inline/src/backend.js",
+    ]
+    r = _run_shell(["node", "./scripts/tasks/eslint.js"] + files)
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_flow_dom_node():
+    """Flow typecheck passes for dom-node renderer (pass_to_pass)."""
+    r = _run_shell(["yarn", "flow", "dom-node"])
+    assert r.returncode == 0, f"Flow check failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

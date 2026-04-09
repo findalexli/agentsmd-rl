@@ -65,33 +65,33 @@ def test_handler_next_no_direct_param_as_index():
     r = subprocess.run(
         ["python3", "-c", (
             "import re, sys\n"
-            "text = open('/workspace/bun/src/bundler/linker_context/computeChunks.zig').read()\n"
+            "text = open(\'/workspace/bun/src/bundler/linker_context/computeChunks.zig\').read()\n"
             "# Extract Handler struct\n"
-            "m = re.search(r'const Handler\\s*=\\s*struct\\s*\\{(.*?)\\n\\s{8}\\};', text, re.DOTALL)\n"
+            "m = re.search(r\'const Handler\\s*=\\s*struct\\s*\\{(.*?)\\n\\s{8}\\};\', text, re.DOTALL)\n"
             "if not m:\n"
-            "    m = re.search(r'Handler.*=.*struct\\s*\\{(.*?)\\n\\s{8}\\};', text, re.DOTALL)\n"
+            "    m = re.search(r\'Handler.*=.*struct\\s*\\{(.*?)\\n\\s{8}\\};\', text, re.DOTALL)\n"
             "if not m:\n"
-            "    print('FAIL: Handler struct not found'); sys.exit(1)\n"
+            "    print(\'FAIL: Handler struct not found\'); sys.exit(1)\n"
             "handler = m.group(1)\n"
             "# Get the parameter name of next()\n"
-            "sig = re.search(r'pub fn next\\s*\\(\\s*c\\s*:\\s*\\*@This\\(\\)\\s*,\\s*(\\w+)\\s*:', handler)\n"
+            "sig = re.search(r\'pub fn next\\s*\\(\\s*c\\s*:\\s*\\*@This\\(\\)\\s*,\\s*(\\w+)\\s*:\', handler)\n"
             "if not sig:\n"
-            "    print('FAIL: Handler.next signature not found'); sys.exit(1)\n"
+            "    print(\'FAIL: Handler.next signature not found\'); sys.exit(1)\n"
             "param = sig.group(1)\n"
             "# Extract next body\n"
-            "nm = re.search(r'pub fn next[^{]*\\{(.*)\\n\\s{8,16}\\}', handler, re.DOTALL)\n"
+            "nm = re.search(r\'pub fn next[^{]*\\{(.*)\\n\\s{8,16}\\}\', handler, re.DOTALL)\n"
             "if not nm:\n"
-            "    print('FAIL: Handler.next body not found'); sys.exit(1)\n"
+            "    print(\'FAIL: Handler.next body not found\'); sys.exit(1)\n"
             "body = nm.group(1)\n"
             "# The raw parameter must NOT be used directly as chunks[param]\n"
-            "if re.search(r'c\\.chunks\\[' + re.escape(param) + r'\\]', body):\n"
-            "    print(f'FAIL: parameter {param!r} used directly as chunks[] index'); sys.exit(1)\n"
-            "# Verify chunks IS still accessed (fix didn't delete core logic)\n"
-            "has_chunks = bool(re.search(r'c\\.chunks\\[', body))\n"
-            "has_core = 'getOrPut' in body or 'files_with_parts_in_chunk' in body\n"
+            "if re.search(r\'c\\.chunks\\[\' + re.escape(param) + r\'\\]\', body):\n"
+            "    print(f\'FAIL: parameter {param!r} used directly as chunks[] index\'); sys.exit(1)\n"
+            "# Verify chunks IS still accessed (fix didn\'t delete core logic)\n"
+            "has_chunks = bool(re.search(r\'c\\.chunks\\[\', body))\n"
+            "has_core = \'getOrPut\' in body or \'files_with_parts_in_chunk\' in body\n"
             "if not (has_chunks or has_core):\n"
-            "    print('FAIL: chunks access and core logic removed entirely'); sys.exit(1)\n"
-            "print('PASS')\n"
+            "    print(\'FAIL: chunks access and core logic removed entirely\'); sys.exit(1)\n"
+            "print(\'PASS\')\n"
         )],
         capture_output=True, text=True, timeout=30,
     )
@@ -110,27 +110,27 @@ def test_css_entry_point_guard():
     r = subprocess.run(
         ["python3", "-c", (
             "import re, sys\n"
-            "text = open('/workspace/bun/src/bundler/linker_context/computeChunks.zig').read()\n"
-            "m = re.search(r'const Handler\\s*=\\s*struct\\s*\\{(.*?)\\n\\s{8}\\};', text, re.DOTALL)\n"
+            "text = open(\'/workspace/bun/src/bundler/linker_context/computeChunks.zig\').read()\n"
+            "m = re.search(r\'const Handler\\s*=\\s*struct\\s*\\{(.*?)\\n\\s{8}\\};\', text, re.DOTALL)\n"
             "if not m:\n"
-            "    m = re.search(r'Handler.*=.*struct\\s*\\{(.*?)\\n\\s{8}\\};', text, re.DOTALL)\n"
+            "    m = re.search(r\'Handler.*=.*struct\\s*\\{(.*?)\\n\\s{8}\\};\', text, re.DOTALL)\n"
             "if not m:\n"
-            "    print('FAIL: Handler struct not found'); sys.exit(1)\n"
+            "    print(\'FAIL: Handler struct not found\'); sys.exit(1)\n"
             "handler = m.group(1)\n"
-            "nm = re.search(r'pub fn next[^{]*\\{(.*)\\n\\s{8,16}\\}', handler, re.DOTALL)\n"
+            "nm = re.search(r\'pub fn next[^{]*\\{(.*)\\n\\s{8,16}\\}\', handler, re.DOTALL)\n"
             "if not nm:\n"
-            "    print('FAIL: Handler.next body not found'); sys.exit(1)\n"
+            "    print(\'FAIL: Handler.next body not found\'); sys.exit(1)\n"
             "body = nm.group(1)\n"
             "has_guard = (\n"
-            "    bool(re.search(r'maxInt|max_int|sentinel', body))\n"
-            "    or bool(re.search(r'orelse\\s+return', body))\n"
-            "    or bool(re.search(r'==\\s*null|!=\\s*null', body))\n"
-            "    or bool(re.search(r'>=\\s*c\\.chunks\\.len|<\\s*c\\.chunks\\.len', body))\n"
-            "    or bool(re.search(r'if\\s*\\(.*\\)\\s*return', body))\n"
+            "    bool(re.search(r\'maxInt|max_int|sentinel\', body))\n"
+            "    or bool(re.search(r\'orelse\\s+return\', body))\n"
+            "    or bool(re.search(r\'==\\s*null|!=\\s*null\', body))\n"
+            "    or bool(re.search(r\'>=\\s*c\\.chunks\\.len|<\\s*c\\.chunks\\.len\', body))\n"
+            "    or bool(re.search(r\'if\\s*\\(.*\\)\\s*return\', body))\n"
             ")\n"
             "if not has_guard:\n"
-            "    print('FAIL: no guard for CSS-only entry points'); sys.exit(1)\n"
-            "print('PASS')\n"
+            "    print(\'FAIL: no guard for CSS-only entry points\'); sys.exit(1)\n"
+            "print(\'PASS\')\n"
         )],
         capture_output=True, text=True, timeout=30,
     )
@@ -149,22 +149,22 @@ def test_entry_point_to_chunk_mapping():
     r = subprocess.run(
         ["python3", "-c", (
             "import re, sys\n"
-            "text = open('/workspace/bun/src/bundler/linker_context/computeChunks.zig').read()\n"
+            "text = open(\'/workspace/bun/src/bundler/linker_context/computeChunks.zig\').read()\n"
             "has_mapping = (\n"
             "    # Array allocated with entry_points.len\n"
-            "    bool(re.search(r'alloc\\(\\s*(?:u32|\\?u32)\\s*,\\s*(?:this\\.graph\\.)?entry_points\\.len\\)', text))\n"
+            "    bool(re.search(r\'alloc\\(\\s*(?:u32|\\?u32)\\s*,\\s*(?:this\\.graph\\.)?entry_points\\.len\\)\', text))\n"
             "    # HashMap keyed on entry point IDs\n"
-            "    or bool(re.search(r'HashMap\\(.*entry.*chunk|AutoHashMap.*u32.*u32', text))\n"
+            "    or bool(re.search(r\'HashMap\\(.*entry.*chunk|AutoHashMap.*u32.*u32\', text))\n"
             "    # ArrayList for mapping\n"
-            "    or bool(re.search(r'ArrayList\\((?:u32|\\?u32)\\).*entry_point', text))\n"
+            "    or bool(re.search(r\'ArrayList\\((?:u32|\\?u32)\\).*entry_point\', text))\n"
             "    # Variable allocated with entry_points.len\n"
-            "    or bool(re.search(r'\\w+\\s*=\\s*(?:try\\s+)?(?:temp_allocator|this\\.allocator|allocator)\\w*\\.alloc\\([^)]*entry_points\\.len\\)', text))\n"
+            "    or bool(re.search(r\'\\w+\\s*=\\s*(?:try\\s+)?(?:temp_allocator|this\\.allocator|allocator)\\w*\\.alloc\\([^)]*entry_points\\.len\\)\', text))\n"
             "    # Slice field in Handler\n"
-            "    or bool(re.search(r'Handler.*struct.*\\[\\](?:const\\s+)?(?:u32|\\?u32)', text, re.DOTALL))\n"
+            "    or bool(re.search(r\'Handler.*struct.*\\[\\](?:const\\s+)?(?:u32|\\?u32)\', text, re.DOTALL))\n"
             ")\n"
             "if not has_mapping:\n"
-            "    print('FAIL: no mapping from entry point IDs to chunk indices'); sys.exit(1)\n"
-            "print('PASS')\n"
+            "    print(\'FAIL: no mapping from entry point IDs to chunk indices\'); sys.exit(1)\n"
+            "print(\'PASS\')\n"
         )],
         capture_output=True, text=True, timeout=30,
     )
@@ -183,20 +183,20 @@ def test_mapping_populated_during_chunk_creation():
     r = subprocess.run(
         ["python3", "-c", (
             "import re, sys\n"
-            "text = open('/workspace/bun/src/bundler/linker_context/computeChunks.zig').read()\n"
+            "text = open(\'/workspace/bun/src/bundler/linker_context/computeChunks.zig\').read()\n"
             "# Find the section where js_chunks.getOrPut is called\n"
             "getorput_section = re.search(\n"
-            "    r'js_chunks\\.getOrPut\\(js_chunk_key\\)(.*?)\\n\\s{8}\\}',\n"
+            "    r\'js_chunks\\.getOrPut\\(js_chunk_key\\)(.*?)\\n\\s{8}\\}\',\n"
             "    text, re.DOTALL,\n"
             ")\n"
             "if not getorput_section:\n"
-            "    print('FAIL: js_chunks.getOrPut(js_chunk_key) not found'); sys.exit(1)\n"
+            "    print(\'FAIL: js_chunks.getOrPut(js_chunk_key) not found\'); sys.exit(1)\n"
             "section = getorput_section.group(1)\n"
             "# The mapping must be written in this section (any variable indexed by entry_id)\n"
-            "has_mapping_write = bool(re.search(r'\\w+\\[entry_id\\w*\\]\\s*=', section))\n"
+            "has_mapping_write = bool(re.search(r\'\\w+\\[entry_id\\w*\\]\\s*=\', section))\n"
             "if not has_mapping_write:\n"
-            "    print('FAIL: no mapping write near js_chunks.getOrPut'); sys.exit(1)\n"
-            "print('PASS')\n"
+            "    print(\'FAIL: no mapping write near js_chunks.getOrPut\'); sys.exit(1)\n"
+            "print(\'PASS\')\n"
         )],
         capture_output=True, text=True, timeout=30,
     )
@@ -280,3 +280,135 @@ def test_no_catch_out_of_memory_pattern():
         f"Found {len(bad)} uses of 'catch bun.outOfMemory()' — "
         "use bun.handleOom() or 'try' instead"
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Repo CI: Prettier formatting
+def test_repo_prettier_config_files():
+    """Config files must be formatted according to Prettier (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "package.json", "tsconfig.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Prettier check on oxlint.json
+def test_repo_prettier_oxlint_json():
+    """oxlint.json must be formatted according to Prettier (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "oxlint.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed for oxlint.json:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Prettier check on .clang-tidy
+def test_repo_prettier_clang_tidy():
+    """.clang-tidy must be formatted according to Prettier (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", ".clang-tidy"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed for .clang-tidy:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Prettier check on additional config files
+def test_repo_prettier_misc_configs():
+    """Additional config files must be formatted according to Prettier (pass_to_pass)."""
+    config_files = [".prettierrc", ".clang-tidy"]
+    existing = [f for f in config_files if (Path(REPO) / f).exists()]
+    if existing:
+        r = subprocess.run(
+            ["npx", "prettier", "--check"] + existing,
+            capture_output=True, text=True, timeout=120, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Basic Zig structure validation
+def test_zig_file_basic_structure():
+    """Zig file must have valid basic structure (balanced braces, key constructs)."""
+    r = subprocess.run(
+        ["python3", "-c", (
+            "import sys\n"
+            "text = open(\'/workspace/bun/src/bundler/linker_context/computeChunks.zig\').read()\n"
+            "# Check balanced braces\n"
+            "if text.count(\'{\') != text.count(\'}\'):\n"
+            "    print(\'FAIL: Unbalanced braces\'); sys.exit(1)\n"
+            "# Check balanced parentheses\n"
+            "if text.count(\'(\') != text.count(\')\'):\n"
+            "    print(\'FAIL: Unbalanced parentheses\'); sys.exit(1)\n"
+            "# Check balanced brackets\n"
+            "if text.count(\'[\') != text.count(\']\'):\n"
+            "    print(\'FAIL: Unbalanced brackets\'); sys.exit(1)\n"
+            "# Check key constructs exist\n"
+            "if \'pub noinline fn computeChunks\' not in text:\n"
+            "    print(\'FAIL: computeChunks function not found\'); sys.exit(1)\n"
+            "if \'const Handler\' not in text:\n"
+            "    print(\'FAIL: Handler struct not found\'); sys.exit(1)\n"
+            "print(\'PASS\')\n"
+        )],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Zig structure check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+
+
+# [repo_tests] pass_to_pass — Python JSON validation for repo config files
+def test_repo_json_valid():
+    """package.json and tsconfig.json must be valid JSON (pass_to_pass)."""
+    import json
+
+    for filename in ["package.json", "tsconfig.json"]:
+        filepath = Path(REPO) / filename
+        if filepath.exists():
+            try:
+                with open(filepath) as f:
+                    json.load(f)
+            except json.JSONDecodeError as e:
+                assert False, f"{filename} is not valid JSON: {e}"
+
+
+# [repo_tests] pass_to_pass — Zig function signature validation
+def test_zig_function_signatures():
+    """Key Zig functions must have valid signatures (pass_to_pass)."""
+    text = _read_zig()
+
+    # computeChunks must be a pub function
+    assert re.search(r'pub\s+(?:noinline\s+)?fn\s+computeChunks', text), \
+        "computeChunks must be a pub function"
+
+    # Handler.next must be a pub fn
+    handler_body = _extract_handler_body(text)
+    assert re.search(r'pub\s+fn\s+next', handler_body), \
+        "Handler.next must be a pub fn"
+
+
+# [repo_tests] pass_to_pass — Check for repo file existence
+def test_repo_critical_files_exist():
+    """Critical repo files must exist (pass_to_pass)."""
+    critical_files = [
+        "CLAUDE.md",
+        "build.zig",
+        "package.json",
+        "tsconfig.json",
+        "CONTRIBUTING.md",
+    ]
+    for filename in critical_files:
+        filepath = Path(REPO) / filename
+        assert filepath.exists(), f"Critical file {filename} is missing"
+        assert filepath.stat().st_size > 0, f"Critical file {filename} is empty"
+
+
+# [repo_tests] pass_to_pass — Zig syntax: no double semicolons
+def test_zig_no_double_semicolons():
+    """Zig file must not contain double semicolons (pass_to_pass)."""
+    text = _read_zig()
+    double_semicolons = text.count(";;")
+    assert double_semicolons == 0, f"Found {double_semicolons} double semicolons"

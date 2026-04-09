@@ -17,6 +17,39 @@ INSTALL = f"{REPO}/crates/uv-python/src/installation.rs"
 
 
 # ---------------------------------------------------------------------------
+# Rust toolchain setup
+# ---------------------------------------------------------------------------
+
+def _ensure_rust_installed():
+    """Ensure rustup and cargo are available for CI-style checks."""
+    cargo_bin = Path.home() / ".cargo" / "bin"
+    cargo_path = cargo_bin / "cargo"
+
+    if cargo_path.exists():
+        return str(cargo_bin)
+
+    # Install rustup
+    install_script = """
+set -e
+export RUSTUP_HOME="$HOME/.rustup"
+export CARGO_HOME="$HOME/.cargo"
+if ! command -v rustup &>/dev/null; then
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+fi
+"""
+    result = subprocess.run(
+        ["bash", "-c", install_script],
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"Rust installation failed: {result.stderr}")
+
+    return str(cargo_bin)
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -52,12 +85,15 @@ def _extract_fn_body(src: str, fn_name: str) -> str | None:
 
 def _cargo_check_uv_python() -> subprocess.CompletedProcess:
     """Run cargo check on the uv-python crate to verify it compiles."""
+    cargo_bin = _ensure_rust_installed()
+    env = {**subprocess.os.environ, "PATH": f"{cargo_bin}:{subprocess.os.environ.get('PATH', '')}"}
     return subprocess.run(
-        ["cargo", "check", "--package", "uv-python", "--offline"],
+        ["cargo", "check", "--package", "uv-python"],
         capture_output=True,
         text=True,
         timeout=300,
         cwd=REPO,
+        env=env,
     )
 
 
@@ -196,6 +232,58 @@ def test_closures_use_field_access_not_tuple_destructuring():
     assert len(tuple_destr) == 0, (
         f"{len(tuple_destr)} tuple destructuring patterns remain"
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass tests — verify repo standards aren't broken
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — cargo fmt
+def test_repo_cargo_fmt():
+    """Repo code passes cargo fmt check (pass_to_pass)."""
+    cargo_bin = _ensure_rust_installed()
+    env = {**subprocess.os.environ, "PATH": f"{cargo_bin}:{subprocess.os.environ.get('PATH', '')}"}
+    r = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — cargo check on uv-python crate
+def test_repo_cargo_check_uv_python():
+    """uv-python crate compiles without errors (pass_to_pass)."""
+    cargo_bin = _ensure_rust_installed()
+    env = {**subprocess.os.environ, "PATH": f"{cargo_bin}:{subprocess.os.environ.get('PATH', '')}"}
+    r = subprocess.run(
+        ["cargo", "check", "--package", "uv-python"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — cargo clippy on uv-python crate
+def test_repo_cargo_clippy_uv_python():
+    """uv-python crate passes clippy linting (pass_to_pass)."""
+    cargo_bin = _ensure_rust_installed()
+    env = {**subprocess.os.environ, "PATH": f"{cargo_bin}:{subprocess.os.environ.get('PATH', '')}"}
+    r = subprocess.run(
+        ["cargo", "clippy", "--package", "uv-python", "--", "-D", "warnings"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

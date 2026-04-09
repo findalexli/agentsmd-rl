@@ -139,6 +139,70 @@ def test_soft_watchdog_timeout_added():
 # Pass-to-pass (repo_tests / static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
+# [repo_tests] pass_to_pass
+def test_repo_isort():
+    """Repo's isort check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "isort"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install isort: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["isort", "--check-only", TEST_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff():
+    """Repo's ruff lint check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821", TEST_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black():
+    """Repo's black format check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "black"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install black: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["black", "--check", TEST_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"black check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell():
+    """Repo's codespell check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "codespell"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install codespell: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["codespell", "--config", ".codespellrc", TEST_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"codespell check failed:\n{r.stderr[-500:]}"
+
+
 # [static] pass_to_pass
 def test_no_old_stage_c_registration():
     """Test must not be registered in stage-c-test-8-gpu-h200 suite."""

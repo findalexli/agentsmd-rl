@@ -1,0 +1,37 @@
+source:
+  pr:
+    owner: continuedev
+    repo: continue
+    number: 11874
+    title: "fix: hide thinking indicator for empty thinking content"
+    merge_commit: af4563b7b1b61aff0e84be50f36ed4b174998a75
+    base_commit: e8c88f416fe0be8f9fc9e92c2f2adab82fb023d4
+
+checks:
+  - id: "step-container-trim-check"
+    name: "StepContainer uses trim() for reasoning text"
+    type: "fail_to_pass"
+    test: "test_step_container_has_trim_check"
+    description: "StepContainer.tsx must check `props.item.reasoning?.text?.trim()` before rendering ThinkingBlockPeek"
+
+  - id: "chat-empty-content-check"
+    name: "Chat.tsx checks empty thinking content"
+    type: "fail_to_pass"
+    test: "test_chat_has_empty_content_check"
+    description: "Chat.tsx must extract thinkingContent and check `!thinkingContent?.trim()` before rendering thinking role messages"
+
+  - id: "chat-uses-variable"
+    name: "Chat.tsx uses thinkingContent variable"
+    type: "pass_to_pass"
+    test: "test_chat_thinking_content_passed_to_component"
+    description: "Chat.tsx should pass thinkingContent variable (not renderChatMessage call) to ThinkingBlockPeek"
+
+  - id: "typescript-valid"
+    name: "TypeScript compiles without errors"
+    type: "pass_to_pass"
+    test: "test_typescript_compiles"
+    description: "The fix should be valid TypeScript and compile successfully"
+
+rubric: []
+# No agent config rules apply - the config files found are for docs, CLI, and cn-check
+# which don't apply to this UI component fix

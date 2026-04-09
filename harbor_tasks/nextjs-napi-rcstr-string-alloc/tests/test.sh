@@ -13,6 +13,18 @@ if ! python3 -c "import pytest" 2>/dev/null; then
         pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
 fi
 
+# Ensure Rust/cargo is available for tests that need it
+if ! command -v cargo &>/dev/null; then
+    export HOME=${HOME:-/root}
+    if [ -f "$HOME/.cargo/env" ]; then
+        . "$HOME/.cargo/env"
+    else
+        # Install Rust if not present
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable 2>&1 | tail -5
+        . "$HOME/.cargo/env"
+    fi
+fi
+
 python3 -m pytest --ctrf /logs/verifier/ctrf.json /tests/test_outputs.py -rA --tb=short -q
 
 if [ $? -eq 0 ]; then

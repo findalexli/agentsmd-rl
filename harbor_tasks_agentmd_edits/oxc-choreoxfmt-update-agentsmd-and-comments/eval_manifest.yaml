@@ -54,5 +54,24 @@ checks:
     origin: static
     description: "The added content is not a stub — has meaningful documentation with code blocks"
 
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests) — CI/CD regression tests
+  # ---------------------------------------------------------------------------
+
+  - id: test_repo_cargo_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo check passes (all features, all targets)"
+
+  - id: test_repo_cargo_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo test passes (all features)"
+
+  - id: test_repo_cargo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo clippy lint passes (no warnings)"
+
 rubric: []
 # No soft rules requiring LLM judge for this documentation task

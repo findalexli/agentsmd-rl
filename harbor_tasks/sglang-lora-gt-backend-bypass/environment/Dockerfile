@@ -20,7 +20,7 @@ WORKDIR /workspace/sglang
 ENV PYTHONPATH="/workspace/sglang"
 
 # Install minimal deps needed by test_outputs.py
-RUN pip install --no-cache-dir pytest
+RUN pip install --no-cache-dir pytest pytest-json-ctrf
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

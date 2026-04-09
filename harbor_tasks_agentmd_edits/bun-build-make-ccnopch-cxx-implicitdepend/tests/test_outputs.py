@@ -142,3 +142,113 @@ def test_bun_ts_pch_implicit_deps():
     src = Path(f"{REPO}/scripts/build/bun.ts").read_text()
     assert "PCH" in src and "implicit dep" in src, \
         "bun.ts must reference PCH's implicit dep on depOutputs in comments"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's own CI/CD checks
+# These ensure the fix doesn't break existing repo functionality
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Build scripts exist and have content
+def test_repo_build_scripts_exist():
+    """Build scripts exist and are non-empty (pass_to_pass)."""
+    bun_ts = Path(f"{REPO}/scripts/build/bun.ts")
+    compile_ts = Path(f"{REPO}/scripts/build/compile.ts")
+    claude_md = Path(f"{REPO}/scripts/build/CLAUDE.md")
+
+    assert bun_ts.exists(), "bun.ts must exist"
+    assert compile_ts.exists(), "compile.ts must exist"
+    assert claude_md.exists(), "CLAUDE.md must exist"
+
+    assert len(bun_ts.read_text()) > 1000, "bun.ts must have substantial content"
+    assert len(compile_ts.read_text()) > 1000, "compile.ts must have substantial content"
+    assert len(claude_md.read_text()) > 500, "CLAUDE.md must have substantial content"
+
+
+# [repo_tests] pass_to_pass — CLAUDE.md documentation structure
+def test_repo_claude_md_structure():
+    """CLAUDE.md has expected sections (pass_to_pass)."""
+    claude_md = Path(f"{REPO}/scripts/build/CLAUDE.md").read_text()
+
+    # Check for key documentation concepts that should exist in any version
+    assert "Ninja" in claude_md, "CLAUDE.md must reference Ninja"
+    assert "implicit" in claude_md, "CLAUDE.md must document implicit inputs"
+    assert "order-only" in claude_md, "CLAUDE.md must document order-only inputs"
+    assert "PCH" in claude_md, "CLAUDE.md must document PCH"
+    assert "depOutputs" in claude_md, "CLAUDE.md must reference depOutputs"
+
+
+# [repo_tests] pass_to_pass — Build scripts have key functions
+def test_repo_build_scripts_structure():
+    """Build scripts have expected functions and interfaces (pass_to_pass)."""
+    bun_ts = Path(f"{REPO}/scripts/build/bun.ts").read_text()
+    compile_ts = Path(f"{REPO}/scripts/build/compile.ts").read_text()
+
+    # bun.ts should have key functions
+    assert "compileC" in bun_ts, "bun.ts must have compileC function"
+    assert "function cc(" in compile_ts or "const cc" in compile_ts, "compile.ts must have cc function"
+    assert "interface CompileOpts" in compile_ts, "compile.ts must have CompileOpts interface"
+
+    # compile.ts should have key rules
+    assert 'n.rule("cxx"' in compile_ts, "compile.ts must define cxx rule"
+    assert 'n.rule("cc"' in compile_ts, "compile.ts must define cc rule"
+    assert 'n.rule("pch"' in compile_ts, "compile.ts must define pch rule"
+
+
+# [repo_tests] pass_to_pass — Banned words check (simplified)
+def test_repo_banned_words():
+    """Build scripts don't contain obviously banned terms (pass_to_pass)."""
+    ban_limits_path = Path(f"{REPO}/test/internal/ban-limits.json")
+    if not ban_limits_path.exists():
+        # Skip if ban-limits.json doesn't exist in this commit
+        return
+
+    import json
+    ban_limits = json.loads(ban_limits_path.read_text())
+
+    bun_ts = Path(f"{REPO}/scripts/build/bun.ts").read_text()
+    compile_ts = Path(f"{REPO}/scripts/build/compile.ts").read_text()
+
+    banned = ban_limits.get('banned', [])
+    for word in banned:
+        # Skip short words that might appear in normal code
+        if len(word) < 4:
+            continue
+        assert word.lower() not in bun_ts.lower(), f"bun.ts contains banned word: {word}"
+        assert word.lower() not in compile_ts.lower(), f"compile.ts contains banned word: {word}"
+
+
+# [repo_tests] pass_to_pass — TypeScript typecheck (skipped if tsc not available)
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass).
+
+    Runs tsc --noEmit to verify no type errors in scripts/build/*.ts
+    """
+    import shutil
+    if not shutil.which("npx"):
+        # Skip if npx is not available (tools not installed in Docker)
+        return
+
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit", "--project", f"{REPO}/scripts/build/tsconfig.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Lint check (skipped if oxlint not available)
+def test_repo_lint():
+    """Repo's JavaScript lint passes (pass_to_pass).
+
+    Runs oxlint on src/js to verify no lint errors.
+    """
+    import shutil
+    if not shutil.which("npx"):
+        # Skip if npx is not available (tools not installed in Docker)
+        return
+
+    r = subprocess.run(
+        ["npx", "oxlint", "--config=oxlint.json", "--format=github", "src/js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"

@@ -160,6 +160,37 @@ def test_locking_pattern_fixed_in_ipc():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo's own pipeline
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — ruff lint (F401 unused imports, F821 undefined names)
+def test_repo_ruff_lint_managers():
+    """Repo's ruff lint checks pass on managers module (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "--select=F401,F821",
+         f"{REPO}/python/sglang/srt/managers/"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — black format check
+def test_repo_black_format():
+    """Target file passes black format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "black", "--check", TARGET_FILE],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 

@@ -1,123 +1,65 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.981171",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
-    },
-    {
-      "timestamp": "2026-03-30T11:48:15.959523",
-      "runner": "audit (audit-tests_20260330_114815)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 25357
-    },
-    {
-      "timestamp": "2026-03-31T13:44:53-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
-    },
-    {
-      "timestamp": "2026-03-31T09:10:27.424919",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 17415
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.701676",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T10:48:33.885817",
-      "phase": "e2b_validate_phase9",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "notes": "Sandbox create: 404: template 'x59nyubk6gdm1mbl2maw' not found"
-    },
-    {
-      "timestamp": "2026-04-02T10:53:30.535028",
-      "phase": "e2b_validate_phase9_retry",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox create: 404: template 'x59nyubk6gdm1mbl2maw' not found"
-    },
-    {
-      "timestamp": "2026-04-02T14:06:36.421757",
-      "phase": "e2b_sandbox404_retry",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'cd /workspace/opencode && bun install --frozen-lockfile ||     cd /workspace/opencode && bun install': signal: killed"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.953284",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'cd /workspace/opencode && bun install --frozen-lockfile ||     cd /workspace/opencode && bun install': signal: killed"
-    },
-    {
-      "timestamp": "2026-04-02T17:47:54.329034",
-      "phase": "local_docker_validate",
-      "runner": "local_docker_82",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Command '['docker', 'build', '-q', '-t', 'harbor-opencode-mockmodule-test-pollution:latest', 'harbor"
-    },
-    {
-      "timestamp": "2026-04-03T01:13:04.086880+00:00",
-      "phase": "local_docker_retry",
-      "runner": "local_600s",
-      "verdict": "fail_gold",
-      "nop": "0",
-      "gold": "0",
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T11:17:32.485351",
+  "total_time": 7539.62,
+  "sandbox_id": "iilot8xfruk6js55hhj1m",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "error",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 334.82,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "p2p_enrichment": {
+      "status": "error",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 292.27,
+      "notes": ""
+    },
+    "validate": {
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 112.47
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T18:27:57.338687",
-      "phase": "e2b_highres",
-      "runner": "e2b_4cpu_4gb",
-      "format": "pytest_binary",
       "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 6740.69,
+      "at": "2026-04-09T06:28:28.827479"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.570427",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 7539.34,
+      "at": "2026-04-09T11:17:32.305120"
     },
     {
-      "timestamp": "2026-04-03T18:17:47.088277",
-      "phase": "e2b_salvage_remake",
-      "runner": "e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 7539.62,
+      "at": "2026-04-09T11:17:32.485351"
     }
   ]
 }

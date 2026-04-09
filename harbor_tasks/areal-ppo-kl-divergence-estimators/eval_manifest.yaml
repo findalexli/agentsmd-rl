@@ -69,21 +69,27 @@ checks:
       lines: "84"
       commit: "a0d122930f7de028404235688c7dba3f01854954"
 
-rubric:
-  - rule: "Follow existing code patterns in the same module."
-    source:
-      path: "AGENTS.md"
-      lines: "35"
-      commit: "a0d122930f7de028404235688c7dba3f01854954"
+  - id: test_repo_ruff_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python syntax and critical errors check passes (ruff --select=E9,F63,F7,F82)"
 
-  - rule: "Batch ops over Python loops on tensor elements."
-    source:
-      path: "AGENTS.md"
-      lines: "91"
-      commit: "a0d122930f7de028404235688c7dba3f01854954"
+  - id: test_repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "actor.py compiles without syntax errors (python3 -m py_compile)"
 
-  - rule: "Explicit dtype/device; torch.Size assertions for shape validation."
-    source:
-      path: "AGENTS.md"
-      lines: "92"
-      commit: "a0d122930f7de028404235688c7dba3f01854954"
+  - id: test_repo_actor_module_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: "actor.py parses as valid Python AST"
+
+  - id: test_repo_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo JSON files are valid (skills-lock.json)"
+
+  - id: test_repo_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo YAML workflow files are valid (pre-commit.yml, .pre-commit-config.yaml)"

@@ -200,6 +200,71 @@ def test_existing_stream_setup():
     assert "_isStdio" in source, "_isStdio missing from ProcessObjectInternals.ts"
     assert "destroySoon" in source, "destroySoon missing from ProcessObjectInternals.ts"
 
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_ci) — actual CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass — oxlint on target file (from package.json "lint")
+def test_repo_oxlint():
+    """Repo's oxlint passes on ProcessObjectInternals.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "oxlint", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Allow warnings (0 warnings is ideal, but codebase has existing warnings)
+    # Only fail if there are errors (errors would indicate new issues introduced)
+    assert "0 errors" in r.stdout or r.returncode == 0, \
+        f"oxlint found errors:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — prettier format check (from package.json "fmt")
+def test_repo_prettier():
+    """Repo's prettier format check passes on ProcessObjectInternals.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, \
+        f"prettier format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_ci) — structural CI checks
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass — structural check for kWriteStreamFastPath import
+def test_kwritestreamfastpath_import():
+    """kWriteStreamFastPath import must exist (required for _final implementation)."""
+    source = Path(TARGET).read_text()
+    assert "kWriteStreamFastPath" in source, \
+        "kWriteStreamFastPath not found in ProcessObjectInternals.ts (required for stream fast path)"
+
+
+# [repo_ci] pass_to_pass — require("internal/fs/streams") usage
+def test_internal_fs_streams_require():
+    """ProcessObjectInternals must require internal/fs/streams module."""
+    source = Path(TARGET).read_text()
+    assert 'require("internal/fs/streams")' in source or "require('internal/fs/streams')" in source, \
+        "internal/fs/streams require not found in ProcessObjectInternals.ts"
+
+
+# [repo_ci] pass_to_pass — getStdioWriteStream function exists
+def test_getstdiowritestream_function():
+    """getStdioWriteStream function must exist in ProcessObjectInternals."""
+    source = Path(TARGET).read_text()
+    assert "export function getStdioWriteStream(" in source, \
+        "getStdioWriteStream export not found in ProcessObjectInternals.ts"
+
+
+# [repo_ci] pass_to_pass — stream setup with fd and _type properties
+def test_stream_properties():
+    """Stream setup must include required properties (fd, _type, _isStdio)."""
+    source = Path(TARGET).read_text()
+    # These are existing properties that should be set on the stream
+    assert "stream._isStdio = true" in source, "stream._isStdio assignment missing"
+    assert "stream.fd = fd" in source, "stream.fd assignment missing"
+    assert "stream._type" in source, "stream._type assignment missing"
+
 
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from src/js/CLAUDE.md

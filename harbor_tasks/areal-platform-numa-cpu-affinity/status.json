@@ -1,56 +1,94 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.964988",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T09:26:06.222590",
+  "total_time": 852.89,
+  "sandbox_id": "i3yl54o95gme77gdy5apa",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 200.96,
+      "notes": "CI commands discovered: ruff check, ruff format --check. Added 2 new p2p tests: test_repo_ruff_lint, test_repo_ruff_format. Dockerfile updated to include ruff, pytest, pytest-json-ctrf. All 11 p2p tests pass on base commit."
     },
-    {
-      "timestamp": "2026-03-30T11:48:11.528221",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 26868
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
-    {
-      "timestamp": "2026-03-31T09:35:30-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.15,
-      "verdict": "pass",
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build successful, NOP test returned reward=0 (9 f2p tests correctly failed on base), Gold test returned reward=1 (all 20 tests passed on patched code). Rubric judge returned 0.5 due to HTTP 401 API auth error (infrastructure issue, not code issue).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 96.3
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 516.36,
       "notes": ""
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.75,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-01T20:15:41.641937",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 0.0,
+      "at": "2026-04-09T01:24:08.097319"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.936566",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 681.7,
+      "at": "2026-04-09T01:24:08.249622"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.509341",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 6583.43,
+      "at": "2026-04-09T06:12:41.292915"
+    },
+    {
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 852.64,
+      "at": "2026-04-09T09:26:06.058357"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 852.89,
+      "at": "2026-04-09T09:26:06.222590"
     }
   ]
 }

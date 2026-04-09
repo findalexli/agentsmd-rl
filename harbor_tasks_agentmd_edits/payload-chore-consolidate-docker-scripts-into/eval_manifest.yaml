@@ -8,7 +8,7 @@ source:
 
 checks:
   # ---------------------------------------------------------------------------
-  # Gates (pass_to_pass, static) — syntax / validation checks
+  # Gates (pass_to_pass, static) - syntax / validation checks
   # ---------------------------------------------------------------------------
   - id: syntax_check
     type: pass_to_pass
@@ -26,7 +26,25 @@ checks:
     description: .github/actions/start-database/action.yml is valid YAML with runs.steps structure
 
   # ---------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core behavioral tests
+  # Pass-to-pass (repo_tests) - CI/CD gates verifying repo CI commands work
+  # ---------------------------------------------------------------------------
+  - id: docker_compose_schema
+    type: pass_to_pass
+    origin: repo_tests
+    description: test/docker-compose.yml has valid schema with name, volumes, and healthchecks
+
+  - id: package_scripts_consistent
+    type: pass_to_pass
+    origin: repo_tests
+    description: package.json docker scripts reference unified test/docker-compose.yml
+
+  - id: ci_action_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI start-database action references valid profiles and unified compose file
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) - core behavioral tests
   # ---------------------------------------------------------------------------
   - id: docker_start_uses_profiles
     type: fail_to_pass
@@ -59,7 +77,7 @@ checks:
     description: CI start-database action uses unified test/docker-compose.yml with --profile
 
   # ---------------------------------------------------------------------------
-  # Pass-to-pass (agent_config) — documentation consistency
+  # Pass-to-pass (agent_config) - documentation consistency
   # ---------------------------------------------------------------------------
   - id: contributing_docs_reference_unified_commands
     type: pass_to_pass

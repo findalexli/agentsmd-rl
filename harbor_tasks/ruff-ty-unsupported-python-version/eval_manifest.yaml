@@ -50,6 +50,22 @@ checks:
       lines: "76"
       commit: "62a863cf518086135dfd2321c92fbc3823f95de8"
 
+  # Repo CI checks (pass_to_pass gates)
+  - id: test_repo_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo check on ty_project passes"
+
+  - id: test_repo_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo clippy on ty_project passes (no warnings)"
+
+  - id: test_repo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's rustfmt on ty_project passes (correct formatting)"
+
 rubric:
   - rule: "Follow existing code style. Check neighboring files for patterns."
     source:

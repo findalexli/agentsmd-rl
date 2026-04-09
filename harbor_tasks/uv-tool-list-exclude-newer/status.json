@@ -1,11 +1,49 @@
 {
-  "verdict": "fail",
+  "schema_version": 2,
+  "verdict": "pass",
   "nop_reward": 0.0,
-  "gold_reward": 0.0,
-  "validated_at": "2026-04-08T21:52:10.647603",
-  "sandbox_id": "i6yyyh07v0wlurnxscsvi",
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T07:50:27.805464",
+  "total_time": 7941.1,
+  "sandbox_id": "iohnzp1x0103d3nox438b",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 1145.38
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed solve.sh idempotency check. The original check 'grep -q 'pub exclude_newer: Option<ExcludeNewerValue>' was too broad - it matched exclude_newer fields in OTHER structs in the codebase. Changed to 'grep -A50 'pub struct ToolListArgs' | grep -q 'pub exclude_newer:'' which specifically checks for the field in the ToolListArgs struct. With this fix, the patch now applies correctly and all 10 tests pass (reward=1). NOP test correctly fails with 3 failures (reward=0) as expected for fail-to-pass tests.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1832.98
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.09,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T07:50:27.613328"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 7941.1,
+      "at": "2026-04-09T07:50:27.805464"
+    }
+  ]
 }

@@ -56,6 +56,22 @@ checks:
       lines: "51"
       commit: "8401fdeb9abd665b36465c52b7aefd591cc3dbcb"
 
+  # Repo CI/CD pass_to_pass gates
+  - id: repo_fake_pg_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "FakeProcessGroup test file must have valid Python syntax"
+
+  - id: repo_clang_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "FakeProcessGroup.hpp must pass clang-format check per PyTorch CI"
+
+  - id: repo_header_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "FakeProcessGroup.hpp must exist and be readable"
+
 rubric:
   - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
     source:

@@ -1,0 +1,71 @@
+task:
+  name: router-semver-breaking-changes
+  source_pr:
+    owner: TanStack
+    repo: router
+    number: 6963
+    title: "ci: support semver breaking changes"
+    merge_commit: 1340197f636911b6ba4224704a6f3bd8b86a1db6
+    base_commit: cd7116b53b7ba3152129b6c656dfcaeb0d62c5b8
+
+  checks:
+    # Fail-to-pass tests (verify the fix works)
+    - id: test_breaking_change_regex_parsing
+      type: fail_to_pass
+      origin: task_specific
+      description: "Regex captures ! breaking change marker with correct groups"
+
+    - id: test_breaking_in_type_order
+      type: fail_to_pass
+      origin: task_specific
+      description: "'breaking' is in typeOrder array before 'feat'"
+
+    - id: test_breaking_in_type_labels
+      type: fail_to_pass
+      origin: task_specific
+      description: "'breaking' has proper label in typeLabels object"
+
+    - id: test_bucket_assignment_for_breaking_changes
+      type: fail_to_pass
+      origin: task_specific
+      description: "Breaking changes assigned to 'breaking' bucket instead of type bucket"
+
+    - id: test_is_breaking_variable_exists
+      type: fail_to_pass
+      origin: task_specific
+      description: "isBreaking variable extracted from conventionalMatch[3]"
+
+    - id: test_message_group_index_updated
+      type: fail_to_pass
+      origin: task_specific
+      description: "Message extracted from group 4 after adding ! capture group"
+
+    # Pass-to-pass tests (regression prevention)
+    - id: test_script_syntax_valid
+      type: pass_to_pass
+      origin: repo_tests
+      description: "Script has valid JavaScript syntax"
+
+    - id: test_repo_eslint
+      type: pass_to_pass
+      origin: agent_config
+      source:
+        file: AGENTS.md
+        lines: "Always run `pnpm test:eslint`, `pnpm test:types`, and `pnpm test:unit` before committing"
+      description: "Repository ESLint passes on modified script"
+
+  # Rubric for soft/subjective rules from agent configs
+  rubric:
+    - id: use_pnpm_nx
+      description: "Use pnpm nx instead of npx nx for commands"
+      source:
+        file: AGENTS.md
+        lines: "Always prefer `pnpm nx ...` over `npx nx ...`."
+      weight: minor
+
+    - id: use_workspace_protocol
+      description: "Use workspace protocol for internal dependencies"
+      source:
+        file: AGENTS.md
+        lines: "Use workspace protocol for internal dependencies (`workspace:*`)"
+      weight: minor

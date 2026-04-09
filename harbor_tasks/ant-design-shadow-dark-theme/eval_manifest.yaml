@@ -1,0 +1,117 @@
+source_pr:
+  owner: ant-design
+  repo: ant-design
+  number: 57511
+  title: "fix: adapt shadow tokens for dark theme"
+  base_commit: "9702dbb57d3cb8ce4346b96c895e6fd6f43e56d3"
+  merge_commit: "c046f6e502de0ca1197c71b770a3bdf2e35c2a88"
+
+checks:
+  # Fail-to-pass tests - verify the bug fix works
+  - id: test_colorShadow_token_exists_in_interface
+    type: fail_to_pass
+    origin: behavior
+    description: "ColorNeutralMapToken interface should have colorShadow property"
+
+  - id: test_colorShadow_in_dark_colors
+    type: fail_to_pass
+    origin: behavior
+    description: "Dark theme colors.ts should define colorShadow with white default"
+
+  - id: test_colorShadow_in_default_colors
+    type: fail_to_pass
+    origin: behavior
+    description: "Default (light) theme colors.ts should define colorShadow with black default"
+
+  - id: test_generateNeutralColorMap_signature
+    type: fail_to_pass
+    origin: behavior
+    description: "GenerateNeutralColorMap type should accept shadowColor parameter"
+
+  - id: test_alias_uses_colorShadow
+    type: fail_to_pass
+    origin: behavior
+    description: "alias.ts should use colorShadow with FastColor to derive shadow colors"
+
+  - id: test_shadow_tokens_use_dynamic_color
+    type: fail_to_pass
+    origin: behavior
+    description: "Shadow tokens should use dynamic getShadowColor helper, not hardcoded rgba"
+
+  # Pass-to-pass tests - verify existing functionality still works
+  - id: test_repo_theme_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository's theme token unit tests continue to pass"
+
+  - id: test_repo_theme_all_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All theme-related Jest tests pass (53 tests)"
+
+  - id: test_repo_typescript_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript typecheck passes without errors"
+
+  - id: test_npm_lint_theme
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint on theme files passes without errors"
+
+# Agent config rules relevant to this task
+rubric:
+  # From CLAUDE.md/AGENTS.md - code style rules
+  - rule: "Use TypeScript with strict type checking"
+    type: programmatic
+    origin: agent_config
+    source: "CLAUDE.md"
+    description: "All code must be TypeScript with proper types"
+
+  - rule: "Never use `any` type - define precise types instead"
+    type: programmatic
+    origin: agent_config
+    source: "CLAUDE.md"
+    description: "Types must be precise, no any types"
+
+  - rule: "Use interfaces (not type aliases) for object structures"
+    type: programmatic
+    origin: agent_config
+    source: "CLAUDE.md"
+    description: "Interface ColorNeutralMapToken should use interface not type"
+
+  - rule: "Support both light and dark themes"
+    type: programmatic
+    origin: agent_config
+    source: "CLAUDE.md"
+    description: "Theme code must properly support light and dark themes"
+
+  - rule: "Never hardcode colors, sizes, or spacing values"
+    type: programmatic
+    origin: agent_config
+    source: "CLAUDE.md"
+    description: "Use design tokens instead of hardcoded values"
+
+  - rule: "Test files should use relative path imports"
+    type: soft
+    origin: agent_config
+    source: "CLAUDE.md"
+    description: "Tests in __tests__ directory should import from relative paths like `../index`"
+
+  - rule: "Component props interfaces should be named ComponentNameProps"
+    type: soft
+    origin: agent_config
+    source: ".github/copilot-instructions.md"
+    description: "Follow naming conventions for props interfaces"
+
+  - rule: "Prefer union types over enums"
+    type: soft
+    origin: agent_config
+    source: ".github/copilot-instructions.md"
+    description: "Use union types or `as const` instead of enums"
+
+  - rule: "Use CSS logical properties for RTL support"
+    type: soft
+    origin: agent_config
+    source: ".github/copilot-instructions.md"
+    description: "Use margin-inline-start instead of margin-left, etc."

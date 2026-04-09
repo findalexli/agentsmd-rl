@@ -193,3 +193,41 @@ def test_ruff_lint():
         capture_output=True, timeout=30,
     )
     assert r.returncode == 0, f"ruff violations:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates (p2p_enrichment)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_mxfp4_config_unittest():
+    """Repo's MXFP4 config tests pass via unittest (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "unittest", "tests.quantization.mxfp4.test_mxfp4.Mxfp4ConfigTest", "-v"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MXFP4 config unittest failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Modified file passes ruff check with repo's lint rules (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "--select=E,W,F,I", "--ignore=E501", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports():
+    """Key module imports work without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         "import sys; sys.path.insert(0, '/workspace/transformers/src'); "
+         "from transformers.quantizers.quantizer_mxfp4 import Mxfp4HfQuantizer, is_triton_available, is_kernels_available; "
+         "print('OK')"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Import test failed:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, f"Import test did not complete successfully: {r.stdout}"

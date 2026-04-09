@@ -1,0 +1,133 @@
+source_pr:
+  owner: ClickHouse
+  repo: ClickHouse
+  number: 102088
+  title: "Backport #101951 to 26.3: Fix heap-buffer-overflow in leftPad/rightPad functions"
+  merge_commit: 31deb8bb10fb7083a3c76f1112607b40cb26700b
+  base_commit: 73ad233a01a81190b2a45b820878e54c36a9a22c
+
+checks:
+  # ============================================================================
+  # FAIL-TO-PASS TESTS (Behavioral changes that fail on base commit)
+  # ============================================================================
+
+  - id: test_padded_pod_array_storage
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Critical fix: pad_string uses PaddedPODArray<UInt8> instead of String for safe memory access with memcpySmallAllowReadWriteOverflow15"
+
+  - id: test_insert_from_itself_usage
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Critical fix: Padding expansion uses insertFromItself instead of += to avoid heap-buffer-overflow"
+
+  - id: test_empty_pad_string_handling
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Refactoring: Empty pad_string is handled in executeImpl, not in removed init() method"
+
+  - id: test_chassert_used_after_validation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Refactoring: Uses chassert after validateFunctionArguments instead of throwing exception"
+
+  - id: test_validate_function_arguments
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Refactoring: Uses validateFunctionArguments helper with FunctionArgumentDescriptors instead of manual validation"
+
+  - id: test_error_codes_cleaned
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Cleanup: Removes unused ILLEGAL_TYPE_OF_ARGUMENT and NUMBER_OF_ARGUMENTS_DOESNT_MATCH error codes"
+
+  - id: test_num_chars_comparison_explicit
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Style: Uses explicit if (num_chars == 0) instead of if (!num_chars)"
+
+  - id: test_digit_separator_used
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Style: Uses C++14 digit separator 1'000'000 instead of 1000000"
+
+  - id: test_function_signature_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "API: getReturnTypeImpl uses ColumnsWithTypeAndName instead of DataTypes"
+
+  - id: test_includes_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dependencies: Adds <memory> and <DataTypes/IDataType.h> includes required by fix"
+
+  - id: test_utf8_size_not_length
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Compatibility: UTF8 code uses size() not length() for PaddedPODArray compatibility"
+
+  - id: test_allman_brace_style
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Style: Uses Allman brace style (opening brace on new line) as required by ClickHouse CI"
+
+  - id: test_write_slice_no_cast
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Fix: writeSlice uses pad_string.data() directly without cast since PaddedPODArray<UInt8>::data() returns UInt8*"
+
+  # ============================================================================
+  # PASS-TO-PASS TESTS (Repo CI/CD compliance - must pass on both commits)
+  # ============================================================================
+
+  - id: test_regression_sql_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Regression test SQL file (04070_pad_string_asan_overflow.sql) exists and contains valid queries"
+
+  - id: test_regression_reference_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Regression test reference file exists and contains expected results"
+
+  - id: test_regression_test_paired
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Regression test SQL and reference files are properly paired with matching structure"
+
+  - id: test_cpp_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source code has valid C++ structure (balanced braces, includes, namespace)"
+
+  - id: test_source_file_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source file has no trailing whitespace (style check)"
+
+  - id: test_source_file_ends_with_newline
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source file ends with newline (POSIX standard)"
+
+  # ============================================================================
+  # AGENT_CONFIG TESTS (Compliance with project conventions from CLAUDE.md)
+  # ============================================================================
+
+  - id: test_agent_config_memory_safety
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: .claude/CLAUDE.md
+      rule: "C++ memory safety: Use appropriate container types for memory-safe access"
+    description: "Uses PaddedPODArray when memcpySmallAllowReadWriteOverflow15 requires 15-byte padding"
+
+  - id: test_agent_config_allman_braces
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: .claude/CLAUDE.md
+      rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
+    description: "Follows Allman brace style convention from project config"
+
+rubric: []

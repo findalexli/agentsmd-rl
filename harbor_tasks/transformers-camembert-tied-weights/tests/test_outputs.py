@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/transformers"
@@ -27,6 +28,86 @@ def test_syntax_valid():
     for f in [MODELING, MODULAR]:
         if f.exists():
             ast.parse(f.read_text())
+
+
+# [repo_tests] pass_to_pass
+def test_ruff_check():
+    """Camembert module passes ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", str(MODELING.parent)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_ruff_format():
+    """Camembert module passes ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", str(MODELING.parent)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_check_copies():
+    """Camembert modeling file passes check_copies validation (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_copies.py", "--file", str(MODELING)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Check copies failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_init_isort():
+    """Init files have correct import ordering (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "init_isort"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Init isort check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_modeling_structure():
+    """Modeling files have correct structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "modeling_structure"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Modeling structure check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_inits():
+    """Init files are correctly structured (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "inits"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Inits check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_dummies():
+    """Dummy objects are correctly generated (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "dummies"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dummies check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_pipeline_typing():
+    """Pipeline type hints are correct (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "pipeline_typing"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pipeline typing check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------
@@ -88,16 +169,16 @@ def test_weight_mutation_propagates():
     model = CamembertForCausalLM(config)
 
     with torch.no_grad():
-        # Forward direction: lm_head → embedding
+        # Forward direction: lm_head -> embedding
         model.lm_head.decoder.weight[0, 0] = 12345.0
         assert model.roberta.embeddings.word_embeddings.weight[0, 0].item() == 12345.0, (
-            "Weight mutation did not propagate lm_head → embedding"
+            "Weight mutation did not propagate lm_head -> embedding"
         )
 
-        # Reverse direction: embedding → lm_head
+        # Reverse direction: embedding -> lm_head
         model.roberta.embeddings.word_embeddings.weight[1, 0] = 99999.0
         assert model.lm_head.decoder.weight[1, 0].item() == 99999.0, (
-            "Weight mutation did not propagate embedding → lm_head"
+            "Weight mutation did not propagate embedding -> lm_head"
         )
 
         # Third value to prevent single-value hardcoding
@@ -172,5 +253,5 @@ def test_modular_has_roberta_tied_key():
     )
     assert re.search(pattern, source, re.DOTALL), (
         "CamembertForCausalLM in modular_camembert.py must define "
-        "_tied_weights_keys with 'roberta.embeddings.word_embeddings.weight'"
+        "_tied_weights_keys with roberta.embeddings.word_embeddings.weight"
     )

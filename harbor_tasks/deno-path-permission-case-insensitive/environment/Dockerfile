@@ -5,8 +5,12 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential tmux && \
+        git curl ca-certificates build-essential tmux pkg-config libssl-dev && \
     rm -rf /var/lib/apt/lists/*
+
+# Install Rust (required for deno repo)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Clone repo at base commit (large monorepo — use blob filter)
 RUN git clone --filter=blob:none https://github.com/denoland/deno.git /workspace/deno && \

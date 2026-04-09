@@ -1,0 +1,68 @@
+source:
+  repo: MystenLabs/sui
+  pr_number: 26033
+  base_commit: 47cc0bb95fba0d3dcdd38632a7f8d6e748f4b5ea
+  merge_commit: 3d600228564453e92a28369aa4b472528153d3f1
+  title: "[move-compiler] Fix temporary variable panic"
+
+target_files:
+  - external-crates/move/crates/move-compiler/src/cfgir/borrows/state.rs
+
+checks:
+  # Fail-to-pass tests
+  - id: test_borrow_edge_overflow_no_panic
+    type: fail_to_pass
+    origin: behavior
+    description: Compiler should not panic on borrow_edge_overflow_tmp test case
+
+  - id: test_temporary_variable_error_messages
+    type: fail_to_pass
+    origin: behavior
+    description: Should produce proper error messages for temporary variables
+
+  - id: test_no_ice_panic_in_error_handling
+    type: fail_to_pass
+    origin: behavior
+    description: ICE panic messages should be removed from state.rs
+
+  - id: test_code_check_no_panic_in_borrow_state
+    type: fail_to_pass
+    origin: behavior
+    description: Fix should include the matches! check for DisplayVar::Orig
+
+  # Pass-to-pass tests
+  - id: test_compiler_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Existing borrow-related compiler unit tests should pass
+
+  - id: test_move_compiler_builds
+    type: pass_to_pass
+    origin: repo_tests
+    description: move-compiler crate should build successfully
+
+  - id: test_move_compiler_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: move-compiler should pass clippy lints
+
+  - id: test_move_compiler_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: move-compiler code should be properly formatted
+
+  - id: test_move_compiler_borrow_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Borrow-related compiler tests should pass
+
+  - id: test_move_compiler_tests_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: move-compiler test code should compile
+
+# No agent config rules apply - this is a general Rust bug fix
+agent_config: []
+
+# No soft/subjective rules needed for this fix
+rubric: []

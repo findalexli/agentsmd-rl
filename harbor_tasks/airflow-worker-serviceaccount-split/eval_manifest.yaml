@@ -1,0 +1,132 @@
+source:
+  pr:
+    url: "https://github.com/apache/airflow/pull/64730"
+    title: "Add workers.celery.serviceAccount & workers.kubernetes.serviceAccount"
+    merge_commit: "59ddf5698ab7ada2edce24f284c827db5242b170"
+    base_commit: "a02fbaa00cc51bce42c4375ca65febbe5589d6b2"
+
+repository:
+  owner: apache
+  name: airflow
+  type: github
+  language: helm/yaml
+
+checks:
+  # Fail-to-pass checks
+  - id: test_worker_kubernetes_serviceaccount_template_exists
+    type: fail_to_pass
+    origin: code_structure
+    description: worker-kubernetes-serviceaccount.yaml template must exist
+
+  - id: test_worker_kubernetes_serviceaccount_helper_exists
+    type: fail_to_pass
+    origin: code_structure
+    description: worker.kubernetes.serviceAccountName helper must exist
+
+  - id: test_serviceaccountnamegen_helper_exists
+    type: fail_to_pass
+    origin: code_structure
+    description: _serviceAccountNameGen helper must exist for refactored logic
+
+  - id: test_helpers_supports_subkey
+    type: fail_to_pass
+    origin: code_structure
+    description: _serviceAccountName helper must support subKey parameter
+
+  - id: test_pod_template_uses_conditional_serviceaccount
+    type: fail_to_pass
+    origin: code_behavior
+    description: pod-template-file must conditionally use kubernetes service account
+
+  - id: test_notes_deprecation_warnings_exist
+    type: fail_to_pass
+    origin: code_behavior
+    description: NOTES.txt must include deprecation warnings for old serviceAccount fields
+
+  - id: test_values_has_celery_serviceaccount_section
+    type: fail_to_pass
+    origin: code_structure
+    description: values.yaml must have workers.celery.serviceAccount section
+
+  - id: test_values_has_kubernetes_serviceaccount_section
+    type: fail_to_pass
+    origin: code_structure
+    description: values.yaml must have workers.kubernetes.serviceAccount section
+
+  - id: test_schema_has_celery_serviceaccount
+    type: fail_to_pass
+    origin: code_structure
+    description: values.schema.json must have workers.celery.serviceAccount schema
+
+  - id: test_schema_has_kubernetes_serviceaccount
+    type: fail_to_pass
+    origin: code_structure
+    description: values.schema.json must have workers.kubernetes.serviceAccount schema
+
+  - id: test_newsfragment_exists
+    type: fail_to_pass
+    origin: code_behavior
+    description: Newsfragment must exist documenting the deprecation
+
+  # Pass-to-pass checks (repo CI/CD)
+  - id: test_helm_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Helm chart must pass linting
+
+  - id: test_helm_template_basic
+    type: pass_to_pass
+    origin: repo_tests
+    description: Helm chart must render templates successfully
+
+  - id: test_values_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: values.yaml must be valid YAML
+
+  - id: test_schema_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: values.schema.json must be valid JSON
+
+  - id: test_helpers_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: _helpers.yaml must exist and have required helpers
+
+  # Functional behavior tests
+  - id: test_helm_render_with_kubernetes_executor_and_sa
+    type: pass_to_pass
+    origin: code_behavior
+    description: KubernetesExecutor with custom service account renders correctly
+
+  - id: test_helm_render_with_celery_executor
+    type: pass_to_pass
+    origin: code_behavior
+    description: CeleryExecutor with custom service account renders correctly
+
+  - id: test_deprecated_serviceaccount_fallback
+    type: pass_to_pass
+    origin: code_behavior
+    description: Deprecated workers.serviceAccount still works as fallback
+
+rubric:
+  - rule: "Add tests for new behavior"
+    source: "CLAUDE.md:Testing Standards"
+    weight: 1.0
+    description: "The PR includes new tests in helm-tests/ for the serviceAccount feature. Ensure tests cover both celery and kubernetes worker service accounts."
+
+  - rule: "Apache License header on all new files"
+    source: "CLAUDE.md:Coding Standards"
+    weight: 1.0
+    description: "New template files like worker-kubernetes-serviceaccount.yaml must include the Apache License header comment block."
+
+  - rule: "Follow Helm templating conventions for helper functions"
+    source: "CLAUDE.md:Repository Structure"
+    weight: 0.5
+    description: "Helm helpers should use consistent naming (define \"name\") and support fallback values using default/dict patterns."
+
+  - rule: "Maintain backward compatibility with deprecated fields"
+    source: "PR description"
+    weight: 1.0
+    description: "The new workers.celery.serviceAccount and workers.kubernetes.serviceAccount sections must fall back to workers.serviceAccount values when not specified, maintaining backward compatibility."

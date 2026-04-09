@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import subprocess
 import re
+import shutil
 from pathlib import Path
 
 REPO = "/workspace/gradio"
@@ -205,3 +206,43 @@ def test_tab_indentation():
                 assert line[0] == "\t", (
                     f"Line {i+1} should use tab indentation: {line!r}"
                 )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — verify existing tests/lint still pass
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — repo's Prettier format check
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    pnpm = shutil.which("pnpm")
+    if not pnpm:
+        # Skip if pnpm is not available (e.g., minimal Docker environment)
+        return
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — markdown component unit tests
+def test_repo_markdown_unit_tests():
+    """Markdown component unit tests pass (pass_to_pass)."""
+    pnpm = shutil.which("pnpm")
+    if not pnpm:
+        # Skip if pnpm is not available (e.g., minimal Docker environment)
+        return
+    # First build the client dependency
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
+
+    # Run markdown-specific tests
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "--config", ".config/vitest.config.ts", "js/markdown/Markdown.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Markdown unit tests failed:\n{r.stderr[-500:]}"

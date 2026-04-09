@@ -1,75 +1,78 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.981726",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T13:17:36.386181",
+  "total_time": 14744.02,
+  "sandbox_id": "i7g41vcxka9isz66dw5re",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "docker_disk_space+permissions",
+      "model": "kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 450.0,
+      "notes": "BLOCKERS: 1) Docker build failed - insufficient disk space for sglang package (torch 2.9.1, nvidia-cublas/cudnn/nccl/flashinfer too large). 2) Permission denied writing to /workspace/task/tests/ (owned by user, worker has no write access, sudo unavailable). P2P TESTS DISCOVERED: test_repo_syntax (python -m compileall), unit tests: test/registered/unit/server_args/test_server_args.py, test/registered/core/test_srt_engine.py. CI COMMANDS: pre-commit run --all-files (ruff,isort,black,codespell), ruff check --select=F401,F821 python/sglang/, isort --check python/sglang/, black --check python/sglang/, python -m compileall. VALIDATE AGENT NEEDS: fix Dockerfile (reduce deps or increase storage) and fix permissions on tests/ directory."
     },
-    {
-      "timestamp": "2026-03-30T20:01:41.507790",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 874.69,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-03-30T11:48:20.105697",
-      "runner": "audit (audit-tests_20260330_114820)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 19388
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile by removing pip install -e python/ which pulled in 4GB+ of torch/CUDA deps. The tests only need AST parsing of source files, not the full package. All 8 tests pass on gold fix (reward=1), all fail-to-pass tests correctly fail on base (reward=0). Rubric judge returned 0.5 (no API key available, fallback acceptable).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1423.77
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.39,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-01T20:15:41.762564",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6136.01,
+      "at": "2026-04-09T06:41:18.831026"
     },
     {
-      "timestamp": "2026-04-02T02:16:38-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
-    },
-    {
-      "timestamp": "2026-04-02T02:45:00-07:00",
-      "phase": "docker_validate_v2",
-      "runner": "manual (claude-code)",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1",
-      "format": "pytest_binary",
-      "notes": "Fixed paren-depth bug in test_cli_parser_accepts_gc_threshold, added ServerArgs placeholder to exec_ns, rewrote validation block extraction"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 14743.87,
+      "at": "2026-04-09T13:17:36.271938"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.963126",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.631637",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 14744.02,
+      "at": "2026-04-09T13:17:36.386181"
     }
   ]
 }

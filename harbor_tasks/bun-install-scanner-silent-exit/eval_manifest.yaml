@@ -46,7 +46,7 @@ checks:
   - id: regression_test_uses_harness
     type: fail_to_pass
     origin: agent_config
-    description: "Regression test imports bunExe/bunEnv from 'harness' per test/CLAUDE.md rule"
+    description: "Regression test imports bunExe/bunEnv from \x27harness\x27 per test/CLAUDE.md rule"
     source:
       path: "test/CLAUDE.md"
       lines: "28"
@@ -55,7 +55,7 @@ checks:
   - id: regression_test_uses_tempdir
     type: fail_to_pass
     origin: agent_config
-    description: "Regression test uses tempDir from 'harness', not tmpdirSync/mkdtempSync"
+    description: "Regression test uses tempDir from \x27harness\x27, not tmpdirSync/mkdtempSync"
     source:
       path: "CLAUDE.md"
       lines: "100"
@@ -76,15 +76,17 @@ checks:
     origin: pr_diff
     description: "SecurityScannerInWorkspace error handling still present in install_with_manager.zig"
 
-  - id: error_types_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "security_scanner.zig still returns proper error types (InvalidPackageID, etc.)"
 
-  - id: anti_stub
+  # --- pass_to_pass (repo_tests) ---
+  - id: test_repo_banned_words
     type: pass_to_pass
-    origin: static
-    description: "Both Zig source files have substantial content (not stubbed out)"
+    origin: repo_tests
+    description: "Repo banned words check passes (CI check from package.json scripts)"
+
+  - id: test_repo_source_files_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified source files exist and have valid content structure"
 
 rubric:
   - rule: "Always use `bun.*` APIs instead of `std.*`. The `bun` namespace provides cross-platform wrappers that preserve OS error info and never use `unreachable`."

@@ -243,3 +243,46 @@ assert trace.preprocess_ms == 15.0, f"Expected 15.0, got {trace.preprocess_ms}"
 """, profiling_enabled=False)
     assert r.returncode == 0, f"Script failed:\n{r.stderr}"
     assert "OK" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax():
+    """Modified Python files have valid syntax (pass_to_pass)."""
+    import ast
+    for relpath in ["gradio/profiling.py"]:
+        fpath = Path(REPO) / relpath
+        src = fpath.read_text()
+        ast.parse(src)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Ruff lint check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "gradio/profiling.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", "gradio/profiling.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_benchmark_readme_exists():
+    """Benchmark README exists and is readable (pass_to_pass)."""
+    readme = Path(REPO) / "scripts" / "benchmark" / "README.md"
+    assert readme.exists(), "Benchmark README not found"
+    content = readme.read_text()
+    assert "Profiling" in content or "Benchmark" in content, "README missing expected content"

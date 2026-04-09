@@ -258,6 +258,20 @@ def test_existing_scripts_parse():
         ast.parse(src, filename=str(py_file))
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's Python scripts pass ruff linting (pass_to_pass)."""
+    # Install ruff if not available
+    subprocess.run(["pip", "install", "ruff", "-q"], check=True, capture_output=True)
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/scripts/"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------

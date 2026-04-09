@@ -58,8 +58,38 @@ def test_syntax_check():
     assert r.returncode == 0, f"Syntax error: {r.stderr}"
 
 
+# [repo_tests] pass_to_pass - repo CI/CD validation
+def test_p2p_repo_ast_valid():
+    """Repo test file must have valid AST (pass_to_pass)."""
+    r = _run_py(f'''
+import ast
+try:
+    with open("{TARGET}") as f:
+        ast.parse(f.read())
+    print("OK")
+except SyntaxError as e:
+    print(f"SyntaxError: {{e}}")
+''')
+    assert r.returncode == 0 and "OK" in r.stdout, f"AST validation failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass - repo CI/CD validation
+def test_p2p_repo_imports_parse():
+    """Repo test file imports must be syntactically valid (pass_to_pass)."""
+    r = _run_py(f'''
+import ast
+with open("{TARGET}") as f:
+    tree = ast.parse(f.read())
+
+imports = [node for node in ast.walk(tree) if isinstance(node, (ast.Import, ast.ImportFrom))]
+print(f"Found {{len(imports)}} import statements")
+print("OK")
+''')
+    assert r.returncode == 0 and "OK" in r.stdout, f"Import parsing failed: {r.stderr}"
+
+
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) - core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -83,7 +113,7 @@ print(json.dumps(methods))
     assert r.returncode == 0, f"Analysis failed: {r.stderr}"
     methods = json.loads(r.stdout.strip())
     assert len(methods) >= 1, (
-        "No test methods found that reference ignore_raw_node — "
+        "No test methods found that reference ignore_raw_node - "
         "add tests for GraphPickler.Options(ignore_raw_node=...)"
     )
 
@@ -151,14 +181,14 @@ print(json.dumps(found))
     assert r.returncode == 0, f"Analysis failed: {r.stderr}"
     found = json.loads(r.stdout.strip())
     assert found, (
-        "No assignment into node.meta found in agent's test code — "
+        "No assignment into node.meta found in agent's test code - "
         "tests must inject a raw Node (e.g. call_node.meta['key'] = call_node) "
         "to exercise the ignore_raw_node code path"
     )
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub + structural
+# Pass-to-pass (static) - anti-stub + structural
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -185,16 +215,16 @@ def test_not_stub():
     any_pickler = any(
         "dumps" in ast.dump(m) or "loads" in ast.dump(m) for m in methods
     )
-    assert any_pickler, "No test method calls dumps or loads — not testing pickling"
+    assert any_pickler, "No test method calls dumps or loads - not testing pickling"
 
 
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass — CLAUDE.md:17-27 @ e931ab4802816cec55aa5a25b51f27cb941c924e
+# [agent_config] fail_to_pass - CLAUDE.md:17-27 @ e931ab4802816cec55aa5a25b51f27cb941c924e
 def test_uses_pytorch_test_class():
-    """Tests must use PyTorch's TestCase (not unittest.TestCase) — CLAUDE.md:17-27."""
+    """Tests must use PyTorch's TestCase (not unittest.TestCase) - CLAUDE.md:17-27."""
     agent_classes = [
         n for n in ast.walk(_tree())
         if isinstance(n, ast.ClassDef) and "ignore_raw_node" in ast.dump(n)
@@ -208,33 +238,33 @@ def test_uses_pytorch_test_class():
                     and base.value.id == "unittest"):
                 assert False, (
                     f"{cls.name} uses unittest.TestCase; "
-                    "use TestCase from torch.testing._internal.common_utils — CLAUDE.md:17-27"
+                    "use TestCase from torch.testing._internal.common_utils - CLAUDE.md:17-27"
                 )
         good = any(isinstance(b, ast.Name) and b.id == "TestCase" for b in cls.bases)
         assert good, (
             f"{cls.name} must inherit from TestCase "
-            "(from torch.testing._internal.common_utils) — CLAUDE.md:17-27"
+            "(from torch.testing._internal.common_utils) - CLAUDE.md:17-27"
         )
 
 
-# [agent_config] pass_to_pass — .claude/skills/pr-review/review-checklist.md:57 @ e931ab4802816cec55aa5a25b51f27cb941c924e
+# [agent_config] pass_to_pass - .claude/skills/pr-review/review-checklist.md:57 @ e931ab4802816cec55aa5a25b51f27cb941c924e
 def test_has_owner_label():
     """Test file must have a valid # Owner(s): label, not 'module: unknown'."""
     import re
     src = _source()
     match = re.search(r"#\s*Owner\(s\):\s*\[([^\]]*)\]", src)
     assert match, (
-        "Test file is missing a '# Owner(s): [...]' label — "
+        "Test file is missing a '# Owner(s): [...]' label - "
         "see review-checklist.md:57"
     )
     owners = match.group(1)
     assert "module: unknown" not in owners, (
-        "# Owner(s) label must not be 'module: unknown' — "
+        "# Owner(s) label must not be 'module: unknown' - "
         "see review-checklist.md:57"
     )
 
 
-# [agent_config] pass_to_pass — .claude/skills/pr-review/review-checklist.md:60 @ e931ab4802816cec55aa5a25b51f27cb941c924e
+# [agent_config] pass_to_pass - .claude/skills/pr-review/review-checklist.md:60 @ e931ab4802816cec55aa5a25b51f27cb941c924e
 def test_has_run_tests():
     """Test file must end with 'if __name__ == \"__main__\": run_tests()'."""
     tree = _tree()
@@ -254,14 +284,14 @@ def test_has_run_tests():
                         and stmt.func.id == "run_tests"):
                     return
     assert False, (
-        "Test file must end with 'if __name__ == \"__main__\": run_tests()' — "
+        "Test file must end with 'if __name__ == \"__main__\": run_tests()' - "
         "see review-checklist.md:60"
     )
 
 
-# [agent_config] fail_to_pass — .claude/skills/pr-review/review-checklist.md:68 @ e931ab4802816cec55aa5a25b51f27cb941c924e
+# [agent_config] fail_to_pass - .claude/skills/pr-review/review-checklist.md:68 @ e931ab4802816cec55aa5a25b51f27cb941c924e
 def test_uses_assert_raises_for_errors():
-    """Error tests must use assertRaises/assertRaisesRegex, not bare try/except — review-checklist.md:68."""
+    """Error tests must use assertRaises/assertRaisesRegex, not bare try/except - review-checklist.md:68."""
     methods = _find_agent_test_methods()
     assert len(methods) >= 1, "No test methods found"
 
@@ -270,6 +300,6 @@ def test_uses_assert_raises_for_errors():
         for m in methods
     )
     assert found, (
-        "No test method uses assertRaises/assertRaisesRegex for the error path — "
+        "No test method uses assertRaises/assertRaisesRegex for the error path - "
         "see review-checklist.md:68"
     )

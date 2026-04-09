@@ -1,0 +1,90 @@
+source:
+  pr:
+    owner: MystenLabs
+    repo: sui
+    number: 26167
+    base_commit: f6a774c2b71765b0bad451efe9b5ca171438eb72
+    merge_commit: 675a96058d86e7598c21de44d966080f28365a15
+  description: |
+    Fix flaky benchmark smoke test by:
+    1. Changing TPS calculation from integer division to floating-point with 2 decimal precision
+    2. Lowering --min-tps threshold from 1 to 0.01 in CI workflow
+
+  agent_configs:
+    - file: CLAUDE.md
+      lines: "57-59"
+      content: |
+        CRITICAL - Final Development Steps:
+        - ALWAYS run `cargo xclippy` after finishing development
+        - NEVER disable or ignore tests
+        - NEVER use `#[allow(dead_code)]`, `#[allow(unused)]`, or linting suppressions
+
+    - file: CLAUDE.md
+      lines: "48-49"
+      content: |
+        Testing Requirements:
+        - Always run tests before submitting changes
+        - Framework changes require snapshot updates
+
+    - file: CLAUDE.md
+      lines: "21-25"
+      content: |
+        Linting and Formatting:
+        - Formats & lints all Rust & Move, run before commit: ./scripts/lint.sh
+        - Alternatively: cargo fmt --all -- --check, cargo xclippy
+
+rubric: []
+
+checks:
+  # Fail-to-pass checks
+  - id: test_tps_calculation_uses_float_division
+    type: fail_to_pass
+    origin: functional
+    description: |
+      TPS calculation in drivers/mod.rs uses as_secs_f64() for floating-point
+      division and formats output to 2 decimal places. Tests that the precision
+      bug (integer division truncating fractional TPS) is fixed.
+
+  - id: test_min_tps_threshold_lowered
+    type: fail_to_pass
+    origin: functional
+    description: |
+      CI workflow uses --min-tps 0.01 instead of 1 for benchmark smoke test.
+      Tests that the threshold is lowered to prevent false negatives on slow CI runners.
+
+  - id: test_no_integer_division_in_tps
+    type: fail_to_pass
+    origin: functional
+    description: |
+      The old integer division pattern (num_txes / duration.as_secs()) is removed
+      and replaced with floating-point calculation.
+
+  # Pass-to-pass checks (basic validation)
+  - id: test_rust_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Rust code has valid syntax: balanced braces/parentheses, proper variable
+      declarations, and correct use of format! macro and .max(1.0).
+
+  - id: test_yaml_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Workflow YAML has valid structure and proper --min-tps 0.01 setting.
+
+  # Pass-to-pass checks (repo CI/CD)
+  - id: test_repo_cargo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Repo CI formatting check passes (cargo fmt -- --check).
+      Verifies code formatting standards are maintained.
+
+  - id: test_repo_git_checks
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Repo git checks pass (scripts/git-checks.sh).
+      Validates no submodules, no case-insensitive filename conflicts,
+      and no trailing whitespace in commits.

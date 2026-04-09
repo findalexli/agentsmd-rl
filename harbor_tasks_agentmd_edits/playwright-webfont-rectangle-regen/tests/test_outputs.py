@@ -34,6 +34,36 @@ def test_svg_valid_xml():
         f"Root element should be <svg>, got {tree.tag}"
 
 
+# [repo] pass_to_pass - Repo file structure check
+def test_webfont_files_exist():
+    """Required webfont files must exist (pass_to_pass)."""
+    assert (WEBFONT_DIR / "iconfont.svg").exists(), "iconfont.svg not found"
+    assert (WEBFONT_DIR / "iconfont.woff2").exists(), "iconfont.woff2 not found"
+    assert (WEBFONT_DIR / "README.md").exists(), "README.md not found"
+
+
+# [repo] pass_to_pass - Font file validity check
+def test_woff2_file_valid():
+    """The woff2 font file must be valid and readable (pass_to_pass)."""
+    woff2_path = WEBFONT_DIR / "iconfont.woff2"
+    assert woff2_path.exists(), "iconfont.woff2 not found"
+    content = woff2_path.read_bytes()
+    # WOFF2 files start with 'wOF2' magic bytes
+    assert content[:4] == b'wOF2', "Invalid woff2 file (missing magic bytes)"
+    assert len(content) > 0, "woff2 file is empty"
+
+
+# [repo] pass_to_pass - SVG glyph structure check
+def test_svg_has_expected_glyphs():
+    """SVG must contain expected plus and minus glyphs (pass_to_pass)."""
+    svg_path = WEBFONT_DIR / "iconfont.svg"
+    assert svg_path.exists(), "iconfont.svg not found"
+    content = svg_path.read_text()
+    # Check for expected glyph names
+    assert 'glyph-name="plus"' in content or 'glyph-name="hyphen"' in content, \
+        "SVG missing expected plus/hyphen glyphs"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -118,6 +148,11 @@ def test_route_spec_font_size_updated():
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
+def test_readme_documentation():
+    """README.md must document the new font generation approach."""
+    readme_path = WEBFONT_DIR / "README.md"
+    assert readme_path.exists(), "README.md not found"
+    content = readme_path.read_text()
 
     # Must mention the generation script
     assert "generate_font" in content, \

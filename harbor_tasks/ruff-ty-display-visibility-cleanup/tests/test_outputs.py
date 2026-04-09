@@ -113,6 +113,58 @@ def test_cargo_check():
     )
 
 
+def test_cargo_clippy():
+    """Crate must pass clippy lints (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty_python_semantic", "--", "-D", "warnings"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"cargo clippy failed:\n{r.stderr.decode()[-500:]}\n{r.stdout.decode()[-500:]}"
+    )
+
+
+def test_cargo_test_lib():
+    """Crate library unit tests must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--lib"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"cargo test --lib failed:\n{r.stderr.decode()[-500:]}\n{r.stdout.decode()[-500:]}"
+    )
+
+
+def test_cargo_fmt():
+    """Crate must be formatted according to rustfmt (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "-p", "ty_python_semantic", "--", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"cargo fmt check failed:\n{r.stderr.decode()[-500:]}\n{r.stdout.decode()[-500:]}"
+    )
+
+
+def test_cargo_doc():
+    """Crate documentation must build without warnings (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "doc", "--no-deps", "-p", "ty_python_semantic"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"cargo doc failed:\n{r.stderr.decode()[-500:]}\n{r.stdout.decode()[-500:]}"
+    )
+
+
 def test_qualified_fields_not_pub():
     """DisplaySettings.qualified and qualified_type_aliases fields must be private."""
     src = _read_display_rs()

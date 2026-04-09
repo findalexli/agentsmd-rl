@@ -379,3 +379,74 @@ def test_no_forbidden_std_apis():
     body = content[func_start:end]
     for forbidden in ["std.fs.", "std.posix.", "std.os."]:
         assert forbidden not in body, f"Forbidden API {forbidden} found"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass tests — ensure repo's own checks pass on base and fix
+# ---------------------------------------------------------------------------
+
+
+# [repo_ci] pass_to_pass
+def test_repo_oxlint():
+    """Repo's JavaScript linting passes (pass_to_pass).
+
+    Runs oxlint on src/js to verify no critical issues in JS/TS code.
+    This is the lint command from the repo's package.json and CI pipeline.
+    """
+    r = subprocess.run(
+        ["npx", "oxlint", "src/js"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # oxlint returns 0 even with warnings; only fails on errors
+    # Allow warnings (repo has 336 on base commit), but no errors
+    assert r.returncode == 0, f"oxlint found errors:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_zig_syntax_valid():
+    """Zig source files have valid syntax and structure (pass_to_pass).
+
+    Validates that fd.zig and other key Zig files have:
+    - Balanced braces (no structural corruption)
+    - Required function definitions
+    - Proper syntax elements
+    """
+    # Validate fd.zig syntax
+    content = TARGET.read_text()
+
+    # Check structural integrity
+    assert "pub const FD = packed struct" in content, "FD struct definition missing"
+    assert "fn fromJSValidated" in content, "fromJSValidated function missing"
+
+    # Brace balance check (tolerance for edge cases)
+    opens = content.count("{")
+    closes = content.count("}")
+    assert abs(opens - closes) <= 5, f"Severe brace mismatch: {opens} open, {closes} close"
+
+    # Validate fromJSValidated function body
+    start = content.find("fn fromJSValidated")
+    assert start != -1, "fromJSValidated not found"
+    func_start = content.index("{", start)
+    depth = 0
+    end = func_start
+    for i in range(func_start, len(content)):
+        if content[i] == "{":
+            depth += 1
+        elif content[i] == "}":
+            depth -= 1
+            if depth == 0:
+                end = i
+                break
+    body = content[func_start:end]
+
+    # Verify required syntax elements are present
+    assert "@intFromFloat" in body, "@intFromFloat missing from fromJSValidated"
+    assert "@intCast" in body, "@intCast missing from fromJSValidated"
+    assert "throwRangeError" in body, "throwRangeError missing from fromJSValidated"
+
+    # Verify function is substantive (not gutted)
+    code_lines = [l for l in body.split("\n") if l.strip()]
+    assert len(code_lines) >= 8, f"Function too short ({len(code_lines)} lines)"

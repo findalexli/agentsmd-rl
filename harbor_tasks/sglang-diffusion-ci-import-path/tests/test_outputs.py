@@ -148,3 +148,74 @@ def test_files_not_stubbed():
             f"{path} missing argparse — file may have been gutted"
         )
         assert len(content) >= 500, f"{path} is suspiciously short ({len(content)} chars)"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass gates — ensure repo's own checks pass on base + gold
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_on_modified_files():
+    """Repo's pre-commit checks pass on the modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "SKIP=no-commit-to-branch,clang-format,lychee,nbstripout pre-commit run "
+         "--files scripts/ci/utils/diffusion/publish_comparison_results.py "
+         "scripts/ci/utils/diffusion/publish_diffusion_gt.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_linting():
+    """Repo's ruff linting passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821",
+         "scripts/ci/utils/diffusion/publish_comparison_results.py",
+         "scripts/ci/utils/diffusion/publish_diffusion_gt.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort_check():
+    """Repo's isort check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["isort", "--check-only",
+         "scripts/ci/utils/diffusion/publish_comparison_results.py",
+         "scripts/ci/utils/diffusion/publish_diffusion_gt.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black_format():
+    """Repo's black formatting check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["black", "--check",
+         "scripts/ci/utils/diffusion/publish_comparison_results.py",
+         "scripts/ci/utils/diffusion/publish_diffusion_gt.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell():
+    """Repo's codespell check passes on modified files (pass_to_pass)."""
+    # Check if .codespellrc exists, if so use it
+    codespellrc = Path(REPO) / ".codespellrc"
+    args = ["codespell"]
+    if codespellrc.exists():
+        args.extend(["--config", ".codespellrc"])
+    args.extend([
+        "scripts/ci/utils/diffusion/publish_comparison_results.py",
+        "scripts/ci/utils/diffusion/publish_diffusion_gt.py"
+    ])
+    r = subprocess.run(
+        args, capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Codespell check failed:\n{r.stderr[-500:]}"

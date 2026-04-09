@@ -61,6 +61,27 @@ checks:
     origin: static
     description: "RequestTrace.set_phase accumulates values across multiple calls"
 
+  # CI/CD regression checks — repo's own tests
+  - id: repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Python files have valid syntax"
+
+  - id: repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff lint check passes on modified files"
+
+  - id: repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff format check passes on modified files"
+
+  - id: repo_benchmark_readme_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Benchmark README exists and is readable"
+
 rubric:
   - rule: "Be consistent with the style of the surrounding code."
     source:

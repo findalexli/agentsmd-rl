@@ -1,63 +1,49 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.965091",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T01:47:10.095648",
+  "total_time": 592.66,
+  "sandbox_id": "itemat4zlz0f5r2kc4t33",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Docker build successful. NOP test returns reward=0 (3 expected failures: test_value_guard_rejects_non_objects, test_no_std_apis_in_diff, test_no_inline_import_in_diff). Gold test returns reward=1 (all 12 tests pass after applying solve.sh patch). Rubric judge requires ANTHROPIC_API_KEY (not available in this env), returns 0.5 as default fallback.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 77.18
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.3,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-30T11:48:11.528335",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 8518
-    },
-    {
-      "timestamp": "2026-03-31T13:32:55-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 0.6,
-      "nop_score": 0.6,
-      "verdict": "fail_gold",
-      "notes": ""
-    },
-    {
-      "timestamp": "2026-03-31T09:10:27.424752",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 9111
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.650806",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:47:09.931760"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.938685",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.518902",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 592.66,
+      "at": "2026-04-09T01:47:10.095648"
     }
   ]
 }

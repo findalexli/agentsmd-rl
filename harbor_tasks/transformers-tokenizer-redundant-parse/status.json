@@ -1,72 +1,101 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.978039",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T03:08:10.917103",
+  "total_time": 5453.84,
+  "sandbox_id": "i182n0kvo2iksh6yvftz6",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09",
+      "status": "completed",
+      "ci_commands_found": [
+        "ruff check",
+        "ruff format --check",
+        "python utils/check_inits.py",
+        "python utils/check_dummies.py",
+        "python -c 'from transformers.tokenization_utils_tokenizers import TokenizersBackend'"
+      ],
+      "tests_added": [
+        {
+          "id": "ruff_format",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Modified file passes ruff formatting check (CI: make style)"
+        },
+        {
+          "id": "check_inits",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Repository init files are consistent (CI: check_inits.py)"
+        },
+        {
+          "id": "check_dummies",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Repository dummy files are consistent (CI: check_dummies.py)"
+        },
+        {
+          "id": "module_import",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Modified module can be imported without errors"
+        }
+      ],
+      "notes": "Docker build successful. Added 4 p2p tests from repo CI/CD: ruff format check, check_inits.py, check_dummies.py, and module import test. All p2p tests pass on base commit. Fail-to-pass tests fail as expected before gold patch."
     },
-    {
-      "timestamp": "2026-03-30T11:48:20.105971",
-      "runner": "audit (audit-tests_20260330_114820)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 4679
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 443.92,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-03-31T09:10:27.425113",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "timeout",
-      "output_tokens": null
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
-    {
-      "timestamp": "2026-04-01T20:15:41.772705",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All four validation checks passed: (1) Docker build successful, (2) NOP test reward=0 - tests correctly fail on buggy base code, (3) Gold test reward=1 - all 12 tests pass after gold fix, (4) Rubric check: eval_manifest.yaml has reasonable rubric rules that the gold solution follows.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 68.72
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.84,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T04:34:25-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
-    },
-    {
-      "timestamp": "2026-04-02T10:48:33.894973",
-      "phase": "e2b_validate_phase9",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T03:08:07.228204"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.973252",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.664625",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 5453.84,
+      "at": "2026-04-09T03:08:10.917103"
     }
   ]
 }

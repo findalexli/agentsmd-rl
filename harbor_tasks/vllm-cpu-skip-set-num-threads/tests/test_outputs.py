@@ -233,3 +233,34 @@ def test_replacement_has_body():
         assert has_call, (
             f"Function '{func.name}' has no function calls — appears to be a stub"
         )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_cpu_worker():
+    """Repo's Python syntax check on cpu_worker.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_cpu_worker():
+    """Repo's ruff lint check on cpu_worker.py passes (pass_to_pass)."""
+    # Install ruff if not present
+    install_ruff = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Ruff may already be installed, ignore errors
+
+    r = subprocess.run(
+        ["ruff", "check", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint check failed:\n{r.stdout}\n{r.stderr}"

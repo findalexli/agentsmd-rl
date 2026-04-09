@@ -173,18 +173,33 @@ def test_prevfiber_guard_inspect_update():
 const fs = require('fs');
 const content = fs.readFileSync('/workspace/react/packages/react-devtools-shared/src/backend/fiber/renderer.js', 'utf8');
 
-// Find hasElementUpdatedSinceLastInspected = true
-const inspectIdx = content.indexOf('hasElementUpdatedSinceLastInspected = true');
-if (inspectIdx === -1) {
-    throw new Error('hasElementUpdatedSinceLastInspected assignment not found');
+// There are two occurrences of hasElementUpdatedSinceLastInspected = true:
+// 1. In onPostCommitInspection (not guarded - different context)
+// 2. In fiber reconciliation (guarded by prevFiber !== nextFiber - this is what we need)
+// We need to find the one in the reconciliation context (near didFiberRender check)
+
+// Find the specific occurrence that's in the context of didFiberRender
+const targetPattern = 'didFiberRender(prevFiber, nextFiber)';
+const targetIdx = content.indexOf(targetPattern);
+if (targetIdx === -1) {
+    throw new Error('didFiberRender(prevFiber, nextFiber) call not found');
 }
 
-// The guard must appear in the ~500 chars before the assignment
-const before = content.substring(Math.max(0, inspectIdx - 500), inspectIdx);
+// Now search for hasElementUpdatedSinceLastInspected after this point
+// It should appear within ~500 chars after the didFiberRender call
+const sectionAfter = content.substring(targetIdx, Math.min(content.length, targetIdx + 500));
+if (!sectionAfter.includes('hasElementUpdatedSinceLastInspected = true')) {
+    throw new Error('hasElementUpdatedSinceLastInspected not found near didFiberRender');
+}
+
+// Check that prevFiber !== nextFiber guard is in the ~1000 chars before the assignment
+// (the guard is about 10-15 lines earlier in the nested if structure)
+const inspectIdx = content.indexOf('hasElementUpdatedSinceLastInspected = true', targetIdx);
+const before = content.substring(Math.max(0, inspectIdx - 1000), inspectIdx);
 if (!before.includes('prevFiber !== nextFiber')) {
     throw new Error(
         'hasElementUpdatedSinceLastInspected is not guarded by ' +
-        'prevFiber !== nextFiber'
+        'prevFiber !== nextFiber (checked 1000 chars before)'
     );
 }
 
@@ -278,3 +293,17 @@ def test_didfiber_render_uses_prevfiber_param():
         "didFiberRender does not compare prevFiber.memoizedProps/State — "
         "the function may have been stubbed to always return false"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — verify repo CI/CD passes on base AND after fix
+# ---------------------------------------------------------------------------
+
+
+def test_repo_lint():
+    """Repo's ESLint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

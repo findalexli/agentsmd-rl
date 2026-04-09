@@ -1,0 +1,68 @@
+source_pr:
+  owner: ant-design
+  repo: ant-design
+  number: 57547
+  title: "fix(Table):V5 prevent rowSelection crash when selectedRowKeys becomes undefined"
+  merge_commit: "393c5137522116575940179201785c7840ca7f44"
+  base_commit: "aa0594058b3735533a59c83feb5c309e88b544bd"
+
+checks:
+  - id: "file_syntax"
+    name: "TypeScript Syntax Valid"
+    type: "programmatic"
+    description: "useSelection.tsx must have valid TypeScript syntax"
+
+  - id: "merged_selected_keys_coalescing"
+    name: "Coalescing Fix Applied"
+    type: "programmatic"
+    description: "mergedSelectedKeys must be coalesced to EMPTY_LIST with ?? operator"
+    source:
+      origin: agent_config
+      ref: "AGENTS.md"
+      rule: "TypeScript Requirements - Use strict type checking, avoid any type"
+
+  - id: "derived_keys_use_coalesced_list"
+    name: "Derived Keys Use Coalesced List"
+    type: "programmatic"
+    description: "Derived selected keys calculation must use the coalesced list"
+    source:
+      origin: agent_config
+      ref: "AGENTS.md"
+      rule: "TypeScript Requirements - Ensure type safety in all operations"
+
+  - id: "upstream_unit_tests_pass"
+    name: "Upstream Regression Tests Pass"
+    type: "programmatic"
+    description: "The upstream unit test for this bug must pass"
+
+  - id: "no_crash_on_undefined_selected_row_keys"
+    name: "No Crash on Undefined selectedRowKeys"
+    type: "programmatic"
+    description: "Table must not crash when selectedRowKeys becomes undefined with preserveSelectedRowKeys"
+
+  - id: "effect_dependencies_updated"
+    name: "Effect Dependencies Updated"
+    type: "programmatic"
+    description: "useEffect dependency array must include updatePreserveRecordsCache"
+
+  - id: test_repo_lint_script
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo ESLint check passes"
+
+  - id: test_repo_biome_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo Biome lint check passes"
+
+  - id: test_repo_rowselection_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Table rowSelection unit tests pass"
+
+  - id: test_repo_test_node
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Node.js compatibility test suite passes"
+
+rubric: []

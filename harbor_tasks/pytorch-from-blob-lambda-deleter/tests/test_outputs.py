@@ -191,9 +191,10 @@ def test_shim_cpp_context_forwarded():
     assert found_func, "No torch_from_blob implementation found in shim_common.cpp"
 
     # Must have a two-arg deleter callback parameter: void (*xxx)(void*, void*)
+    # Pattern allows for optional parameter names (e.g., void* data, void* ctx)
     has_two_arg_cb = bool(
         re.search(
-            r'void\s*\(\s*\*\s*\w+\s*\)\s*\(\s*void\s*\*\s*,\s*void\s*\*\s*\)',
+            r'void\s*\(\s*\*\s*\w+\s*\)\s*\(\s*void\s*\*\s*\w*\s*,\s*void\s*\*\s*\w*\s*\)',
             found_func,
         )
     )
@@ -227,6 +228,50 @@ def test_shim_cpp_context_forwarded():
 # ---------------------------------------------------------------------------
 # Pass-to-pass — backward compatibility + anti-stub
 # ---------------------------------------------------------------------------
+
+def test_repo_git_clean():
+    """Repo is at expected base commit with no uncommitted changes (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git status failed: {r.stderr}"
+    # Allow changes in:
+    # - test files (_eval_test)
+    # - the specific source files modified by the fix (shim.h, ops.h, shim_common.cpp)
+    allowed_patterns = ["_eval_test", "torch/csrc/stable/c/shim.h",
+                        "torch/csrc/stable/ops.h", "torch/csrc/shim_common.cpp"]
+    lines = [l for l in r.stdout.strip().split("\n") if l.strip()]
+    unexpected = [l for l in lines if not any(p in l for p in allowed_patterns)]
+    assert len(unexpected) == 0, (
+        f"Repo has unexpected uncommitted changes: {unexpected}\n"
+        f"This indicates the base commit state is not clean."
+    )
+
+
+def test_repo_files_exist():
+    """Modified source files exist and are non-empty (pass_to_pass)."""
+    for path in [SHIM_H, SHIM_CPP, OPS_H]:
+        assert path.exists(), f"{path} does not exist"
+        content = path.read_text()
+        assert len(content) > 0, f"{path} is empty"
+        # Basic sanity check: files should have expected markers
+        assert "#include" in content or "#pragma" in content or "//" in content, (
+            f"{path} appears to be corrupted (no expected C++ markers)"
+        )
+
+
+def test_repo_header_structure():
+    """C++ headers have valid include guards/pragma once (pass_to_pass)."""
+    for path in [SHIM_H, OPS_H]:
+        content = path.read_text()
+        # Check for include guards or pragma once
+        has_guard = re.search(r'#ifndef\s+\w+', content) is not None
+        has_pragma = "#pragma once" in content
+        assert has_guard or has_pragma, (
+            f"{path.name} missing include guards or #pragma once"
+        )
+
 
 def test_no_deleter_overload_preserved():
     """The no-deleter from_blob overload still exists for backward compatibility."""

@@ -119,3 +119,53 @@ def test_all_fork_files_consistent():
     assert all(v == "true" for v in values), (
         f"enableViewTransition not consistently enabled across fork files: {values}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and after fix
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flags_check():
+    """Repo's feature flags check passes (pass_to_pass)."""
+    # Install deps first (needed because Dockerfile doesn't include node_modules)
+    install = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile", "--silent"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert install.returncode == 0, f"yarn install failed: {install.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["yarn", "flags"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"yarn flags failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_flag_files():
+    """ESLint passes on all modified flag files (pass_to_pass)."""
+    # Install deps first (needed because Dockerfile doesn't include node_modules)
+    install = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile", "--silent"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert install.returncode == 0, f"yarn install failed: {install.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["yarn", "lint"] + FLAG_FILES,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"yarn lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_flag_files():
+    """All modified flag files have valid JavaScript syntax (pass_to_pass)."""
+    for fp in FLAG_FILES:
+        r = subprocess.run(
+            ["node", "--check", f"{REPO}/{fp}"],
+            capture_output=True, text=True, timeout=10,
+        )
+        assert r.returncode == 0, f"Syntax error in {fp}:\n{r.stderr}"

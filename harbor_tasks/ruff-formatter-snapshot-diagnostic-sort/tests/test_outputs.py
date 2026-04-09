@@ -128,6 +128,55 @@ def test_hashmap_iteration_order_addressed():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — cargo test on formatter
+def test_repo_formatter_tests():
+    """Repo's formatter tests pass (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ruff_python_formatter", "--test", "fixtures"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Formatter tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — cargo check on formatter
+def test_repo_cargo_check():
+    """Repo's cargo check passes on formatter crate (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ruff_python_formatter"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — cargo clippy on formatter
+def test_repo_cargo_clippy():
+    """Repo's cargo clippy passes on formatter crate (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ruff_python_formatter", "--", "-D", "warnings"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo clippy failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 

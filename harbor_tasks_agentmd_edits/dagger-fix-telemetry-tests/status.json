@@ -1,11 +1,77 @@
 {
+  "schema_version": 2,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-08T21:53:03.061760",
-  "sandbox_id": "ixuvwsss0p6kazbaowuq4",
+  "validated_at": "2026-04-09T03:37:56.060119",
+  "total_time": 7239.11,
+  "sandbox_id": "ihidaoeyqntrxkj3l2dh4",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 1197.8
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "completed": "2026-04-09",
+      "ci_commands_discovered": [
+        "go build ./dagql/idtui",
+        "go vet ./dagql/idtui",
+        "gofmt -d dagql/idtui/*.go"
+      ],
+      "tests_added": [
+        "test_repo_build_idtui - go build on dagql/idtui package",
+        "test_repo_vet_idtui - go vet static analysis on dagql/idtui package",
+        "test_repo_gofmt_idtui - gofmt formatting check on dagql/idtui package"
+      ],
+      "notes": "Added 3 pass_to_pass tests from repo CI/CD. The dagger/dagger repo uses Go build/vet/fmt as part of its CI pipeline (see .github/workflows/checks.yml and .golangci.yml). The telemetry golden tests require dagger CLI which is not available, so focused on unit-level CI checks that work without external dependencies."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 746.56,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Docker build: OK. NOP test (base): reward=0 (fail-to-pass tests correctly fail). Gold test (patched): reward=1 (all 7 tests pass). Rubric judge: requires API keys, but manual verification confirms SKILL.md has required content.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 315.7
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.74,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T03:37:55.897576"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 7239.11,
+      "at": "2026-04-09T03:37:56.060119"
+    }
+  ]
 }

@@ -110,3 +110,34 @@ def test_not_stub():
     # Check that resolveAndInstall has meaningful body
     assert "browserRegistry.install(executables)" in src, \
         "resolveAndInstall should call browserRegistry.install"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI checks that must pass before and after fix
+# ---------------------------------------------------------------------------
+
+def test_repo_build():
+    """Repo builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_eslint():
+    """ESLint passes on modified cli-daemon directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "--max-warnings=0", "packages/playwright-core/src/tools/cli-daemon/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lint_packages():
+    """Workspace packages are consistent (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:]}"

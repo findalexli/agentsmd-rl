@@ -1,0 +1,72 @@
+{
+  "abandoned": false,
+  "p2p_enrichment": {
+    "ci_commands_discovered": [
+      {
+        "command": "npx tsc --noEmit",
+        "location": "gui/package.json scripts.tsc:check",
+        "workflow": ".github/workflows/pr-checks.yaml gui-checks job",
+        "status": "working",
+        "test_added": "test_repo_typecheck"
+      },
+      {
+        "command": "npm run lint (eslint --ext ts)",
+        "location": "gui/package.json scripts.lint",
+        "workflow": ".github/workflows/pr-checks.yaml gui-checks job",
+        "status": "working",
+        "test_added": "test_repo_lint"
+      },
+      {
+        "command": "npm test (vitest run)",
+        "location": "gui/package.json scripts.test",
+        "workflow": ".github/workflows/pr-checks.yaml gui-checks job",
+        "status": "partial - UnifiedTerminal tests work, some other tests have dependency issues",
+        "test_added": "test_repo_unified_terminal_tests"
+      },
+      {
+        "command": "npm run build",
+        "location": "gui/package.json scripts.build",
+        "status": "skipped - runs out of memory in container (too resource intensive)"
+      }
+    ],
+    "notes": [
+      "GUI package is a monorepo component that depends on ../core and packages/*",
+      "Tests require building packages first with 'node ./scripts/build-packages.js'",
+      "Core dependencies must be installed before running tests",
+      "Full npm test has some test files that fail due to missing transitive deps in fresh install"
+    ],
+    "tests_added": [
+      {
+        "name": "test_repo_typecheck",
+        "type": "pass_to_pass",
+        "description": "GUI package TypeScript typecheck (tsc --noEmit) passes"
+      },
+      {
+        "name": "test_repo_lint",
+        "type": "pass_to_pass",
+        "description": "GUI package ESLint passes"
+      },
+      {
+        "name": "test_repo_unified_terminal_tests",
+        "type": "pass_to_pass",
+        "description": "GUI UnifiedTerminal vitest tests pass"
+      }
+    ]
+  },
+  "nodes": {
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2623.62,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  }
+}

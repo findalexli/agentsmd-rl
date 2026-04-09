@@ -40,7 +40,7 @@ def test_cargo_toml_valid():
 
     # Check deno_bench_util path points to new location
     workspace_deps = config.get("workspace", {}).get("dependencies", {})
-    # It's defined as a workspace library, not in dependencies
+    # It is defined as a workspace library, not in dependencies
     # Look for it in the [workspace] section as a path dependency pattern
     deno_bench_util_line = None
     for line in content.split("\n"):
@@ -109,30 +109,27 @@ def test_cargo_check_passes():
 # [pr_diff] fail_to_pass
 def test_lint_js_detects_top_level_directories():
     """lint.js correctly identifies top-level directories as entries."""
-    # Run the lint.js script with a dry-run approach to check the logic
-    # We'll create a simple test to verify the listTopLevelEntries function behavior
 
     test_script = """
-const { execSync } = require('child_process');
+const { execSync } = require(\"child_process\");
 
 const ROOT_PATH = process.cwd();
-const SEPARATOR = require('path').sep;
+const SEPARATOR = require(\"path\").sep;
 
 async function gitLsFiles(cwd, args) {
-  const cmd = ['git', 'ls-files', ...args];
-  const output = execSync(cmd.join(' '), { cwd, encoding: 'utf8' });
-  return output.split('\\n').filter(Boolean);
+  const cmd = [\"git\", \"ls-files\", ...args];
+  const output = execSync(cmd.join(\" \"), { cwd, encoding: \"utf8\" });
+  return output.split(\"\\n\").filter(Boolean);
 }
 
 async function listTopLevelEntries() {
   const files = await gitLsFiles(ROOT_PATH, []);
-  const rootPrefix = ROOT_PATH.replace(new RegExp(SEPARATOR + '$'), '') + SEPARATOR;
+  const rootPrefix = ROOT_PATH.replace(new RegExp(SEPARATOR + \"$\"), \"\") + SEPARATOR;
   return [
     ...new Set(
-      files.map((f) => f.replace(rootPrefix, ''))
+      files.map((f) => f.replace(rootPrefix, \"\"))
         .map((file) => {
           const sepIndex = file.indexOf(SEPARATOR);
-          // top-level file or first path component (directory)
           return sepIndex === -1 ? file : file.substring(0, sepIndex);
         }),
     ),
@@ -141,19 +138,17 @@ async function listTopLevelEntries() {
 
 async function main() {
   const entries = await listTopLevelEntries();
-
-  // Check that directories are detected (not just files)
-  const dirs = entries.filter(e => !e.includes('.'));
-  const expectedDirs = ['cli', 'ext', 'libs', 'runtime', 'tests', 'tools'];
+  const dirs = entries.filter(e => !e.includes(\".\"));
+  const expectedDirs = [\"cli\", \"ext\", \"libs\", \"runtime\", \"tests\", \"tools\"];
 
   const foundExpected = expectedDirs.filter(d => entries.includes(d));
   console.log(JSON.stringify({
     totalEntries: entries.length,
     directories: dirs.slice(0, 10),
     foundExpectedDirs: foundExpected,
-    hasCli: entries.includes('cli'),
-    hasTests: entries.includes('tests'),
-    hasTools: entries.includes('tools')
+    hasCli: entries.includes(\"cli\"),
+    hasTests: entries.includes(\"tests\"),
+    hasTools: entries.includes(\"tools\")
   }));
 }
 
@@ -175,12 +170,10 @@ main().catch(console.error);
 
         result = json.loads(r.stdout.strip())
 
-        # The key behavioral change: directories are now detected as entries
         assert result.get("hasCli") == True, "cli directory not detected as top-level entry"
         assert result.get("hasTests") == True, "tests directory not detected as top-level entry"
         assert result.get("hasTools") == True, "tools directory not detected as top-level entry"
 
-        # Should have found expected directories
         found_expected = result.get("foundExpectedDirs", [])
         assert len(found_expected) >= 3, \
             f"Expected to find at least 3 of [cli, ext, libs, runtime, tests, tools], found: {found_expected}"
@@ -192,28 +185,26 @@ main().catch(console.error);
 # [pr_diff] fail_to_pass
 def test_lint_js_blocks_unauthorized_top_level():
     """lint.js ensureNoNewTopLevelEntries blocks unauthorized entries."""
-    # This test verifies the new function correctly rejects entries not in the allowed set
 
     test_script = """
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+const { execSync } = require(\"child_process\");
+const path = require(\"path\");
 
 const ROOT_PATH = process.cwd();
 const SEPARATOR = path.sep;
 
 async function gitLsFiles(cwd, args) {
-  const cmd = ['git', 'ls-files', ...args];
-  const output = execSync(cmd.join(' '), { cwd, encoding: 'utf8' });
-  return output.split('\\n').filter(Boolean);
+  const cmd = [\"git\", \"ls-files\", ...args];
+  const output = execSync(cmd.join(\" \"), { cwd, encoding: \"utf8\" });
+  return output.split(\"\\n\").filter(Boolean);
 }
 
 async function listTopLevelEntries() {
   const files = await gitLsFiles(ROOT_PATH, []);
-  const rootPrefix = ROOT_PATH.replace(new RegExp(SEPARATOR + '$'), '') + SEPARATOR;
+  const rootPrefix = ROOT_PATH.replace(new RegExp(SEPARATOR + \"$\"), \"\") + SEPARATOR;
   return [
     ...new Set(
-      files.map((f) => f.replace(rootPrefix, ''))
+      files.map((f) => f.replace(rootPrefix, \"\"))
         .map((file) => {
           const sepIndex = file.indexOf(SEPARATOR);
           return sepIndex === -1 ? file : file.substring(0, sepIndex);
@@ -226,19 +217,19 @@ async function ensureNoNewTopLevelEntries() {
   const currentEntries = await listTopLevelEntries();
 
   const allowed = new Set([
-    '.cargo', '.devcontainer', '.github', 'cli', 'ext', 'libs',
-    'runtime', 'tests', 'tools', '.dlint.json', '.dprint.json',
-    '.editorconfig', '.gitattributes', '.gitignore', '.gitmodules',
-    '.rustfmt.toml', 'CLAUDE.md', 'Cargo.lock', 'Cargo.toml',
-    'LICENSE.md', 'README.md', 'Releases.md', 'import_map.json',
-    'rust-toolchain.toml', 'flake.nix', 'flake.lock',
+    \".cargo\", \".devcontainer\", \".github\", \"cli\", \"ext\", \"libs\",
+    \"runtime\", \"tests\", \"tools\", \".dlint.json\", \".dprint.json\",
+    \".editorconfig\", \".gitattributes\", \".gitignore\", \".gitmodules\",
+    \".rustfmt.toml\", \"CLAUDE.md\", \"Cargo.lock\", \"Cargo.toml\",
+    \"LICENSE.md\", \"README.md\", \"Releases.md\", \"import_map.json\",
+    \"rust-toolchain.toml\", \"flake.nix\", \"flake.lock\",
   ]);
 
   const newEntries = currentEntries.filter((e) => !allowed.has(e));
   if (newEntries.length > 0) {
     throw new Error(
-      `New top-level entries detected: ${newEntries.join(', ')}. ` +
-      `Only the following top-level entries are allowed: ${[...allowed].join(', ')}`
+      `New top-level entries detected: ${newEntries.join(\", \")}. ` +
+      `Only the following top-level entries are allowed: ${[...allowed].join(\", \")}`
     );
   }
 
@@ -270,14 +261,14 @@ main().catch(console.error);
             timeout=30,
         )
 
-        # This should pass - the repo should have no unauthorized top-level entries
         assert r.returncode == 0, \
             f"ensureNoNewTopLevelEntries failed unexpectedly: {r.stderr or r.stdout}"
 
         result = json.loads(r.stdout.strip())
         assert result.get("passed") == True, "Lint check did not pass"
-        assert result.get("entryCount", 0) > 5, \
-            f"Expected multiple top-level entries, found: {result.get('entryCount')}"
+        entry_count = result.get("entryCount", 0)
+        assert entry_count > 5, \
+            f"Expected multiple top-level entries, found: {entry_count}"
 
     finally:
         script_path.unlink(missing_ok=True)
@@ -298,6 +289,74 @@ def test_bench_util_compiles():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_metadata():
+    """Cargo metadata is valid and parseable (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "metadata", "--format-version", "1"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"cargo metadata failed: {r.stderr}"
+
+    metadata = json.loads(r.stdout.strip())
+    packages = metadata.get("packages", [])
+    assert len(packages) > 0, "No packages found in workspace"
+
+    bench_util_pkg = None
+    for pkg in packages:
+        if pkg.get("name") == "deno_bench_util":
+            bench_util_pkg = pkg
+            break
+
+    assert bench_util_pkg is not None, "deno_bench_util not found in workspace packages"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check():
+    """Cargo workspace checks pass on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "deno_bench_util"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_rustfmt():
+    """Repo code follows rustfmt formatting (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"rustfmt check failed:\n{r.stderr or r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_clippy():
+    """deno_bench_util passes clippy lints (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "deno_bench_util", "--", "-D", "warnings"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"clippy failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests / static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
@@ -313,7 +372,6 @@ def test_cargo_lock_updated():
     )
     assert r.returncode == 0, f"cargo metadata failed: {r.stderr}"
 
-    # Verify the metadata can be parsed and includes deno_bench_util
     metadata = json.loads(r.stdout.strip())
     packages = metadata.get("packages", [])
 
@@ -325,7 +383,6 @@ def test_cargo_lock_updated():
 
     assert bench_util_pkg is not None, "deno_bench_util not found in workspace packages"
 
-    # Check the manifest path is at the new location
     manifest_path = bench_util_pkg.get("manifest_path", "")
     assert "tests/bench_util" in manifest_path, \
         f"deno_bench_util manifest_path not at tests/bench_util: {manifest_path}"

@@ -1,12 +1,80 @@
 {
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-08T21:43:04.839955",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 599.54,
-  "error": "No backend available within 600s. Pool: glm(14ok/0\u00d7429/ok) | fireworks(33ok/0\u00d7429/ok)"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:21:36.874254",
+  "total_time": 2659.59,
+  "sandbox_id": "i356wmvhrcv8h8a3ulkc1",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "timestamp": "2026-04-09T09:18:00Z",
+      "ci_commands_found": [
+        "bun run --cwd packages/app typecheck (tsgo -b)",
+        "bun test --preload ./happydom.ts ./src/components/prompt-input",
+        "bun test --preload ./happydom.ts ./src/context/permission-auto-respond.test.ts"
+      ],
+      "tests_added": [
+        "test_repo_typecheck - Repo TypeScript typecheck via bun",
+        "test_repo_prompt_input_tests - prompt-input component unit tests",
+        "test_repo_permission_tests - permission context unit tests"
+      ],
+      "source": ".github/workflows/typecheck.yml, .github/workflows/test.yml, packages/app/package.json",
+      "notes": "Added 3 pass_to_pass gates based on repo's CI/CD pipeline. Typecheck uses tsgo (Go-based TypeScript checker). Tests use bun test with happydom. All 3 tests verified to pass on base commit c2d2ca352252a922354c89bfbdb135cf1abfe1b6."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 622.19,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "icr": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build successful, NOP test reward=0 (5 fail-to-pass tests correctly fail on buggy base), Gold test reward=1 (all 13 tests pass after gold fix), Rubric judge ICR=1.0 (all 4 AGENTS.md rules satisfied by gold solution).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 157.66
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.7,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:21:36.682276"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2659.59,
+      "at": "2026-04-09T02:21:36.874254"
+    }
+  ]
 }

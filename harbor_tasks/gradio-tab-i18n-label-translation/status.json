@@ -1,65 +1,87 @@
 {
-  "validations": [
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:06:01.130695",
+  "total_time": 1723.78,
+  "sandbox_id": "i3silbfvw4kg0ozxmks5o",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "timestamp": "2026-04-09",
+      "ci_commands_discovered": [
+        "pnpm format:check - Prettier format check, passes in ~5s",
+        "pnpm vitest run js/core - 57 unit tests for js/core module, passes in ~3s"
+      ],
+      "tests_added": [
+        "test_repo_format_check() in test_outputs.py - Runs pnpm format:check (pass_to_pass)",
+        "test_repo_core_tests() in test_outputs.py - Runs js/core vitest tests (pass_to_pass)",
+        "test_repo_format_check in eval_manifest.yaml - origin: repo_tests, type: pass_to_pass",
+        "test_repo_core_tests in eval_manifest.yaml - origin: repo_tests, type: pass_to_pass"
+      ],
+      "ci_commands_skipped": [
+        "pnpm lint - Missing @eslint/js dependency",
+        "pnpm ts:check - 416 pre-existing type errors in repo",
+        "pnpm test:run (full suite) - Would exceed 120s timeout"
+      ],
+      "verification": {
+        "base_commit": "8 passed (6 p2p + 3 f2p fail as expected)",
+        "gold_commit": "11 passed (all p2p + all f2p pass)",
+        "test_sh_updated": "Added automatic pnpm install for repo dependencies"
+      }
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 619.85,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: Docker build successful, NOP test reward=0 (3 f2p fail as expected), Gold test reward=1 (all 11 tests pass), Rubric judge ICR=1.0",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 160.78
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-01T00:00:00-07:00",
-      "runner": "manual (v2 remake)",
-      "docker_build": true,
-      "gold_score": 1,
-      "nop_score": 0,
       "verdict": "pass",
-      "notes": "Fixed TS type stripping regex to handle gold patch as-cast pattern"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:06:00.960737"
     },
     {
-      "timestamp": "2026-03-30T13:02:43.965443",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
-    },
-    {
-      "timestamp": "2026-03-30T11:48:11.528480",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 9556
-    },
-    {
-      "timestamp": "2026-03-31T13:37:43-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.676876",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.946411",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.542516",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1723.78,
+      "at": "2026-04-09T02:06:01.130695"
     }
   ]
 }

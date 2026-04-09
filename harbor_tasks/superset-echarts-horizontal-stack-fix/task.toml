@@ -1,0 +1,37 @@
+name = "superset-echarts-horizontal-stack-fix"
+version = "1.0.0"
+description = "Fix stacked horizontal bar chart clipping and duplicate x-axis labels"
+type = "code_fix"
+
+[repository]
+owner = "apache"
+name = "superset"
+base_commit = "38f0dc74f7c48e8f957995566fd427f1087541e3"
+merge_commit = "022342839aaeb666a29dd533c420b93197edd36d"
+pr_number = 39012
+
+[source]
+target_files = [
+    "superset-frontend/plugins/plugin-chart-echarts/src/Timeseries/transformProps.ts"
+]
+test_files = [
+    "superset-frontend/plugins/plugin-chart-echarts/test/Timeseries/Bar/transformProps.test.ts"
+]
+
+[metadata]
+difficulty = "medium"
+estimated_time = "30m"
+tags = ["typescript", "echarts", "data-visualization", "bug-fix"]
+language = "typescript"
+framework = "jest"
+
+[env]
+dockerfile = "environment/Dockerfile"
+
+[scripts]
+solve = "solution/solve.sh"
+test = "tests/test.sh"
+
+[timeouts]
+agent = 1800
+verifier = 120

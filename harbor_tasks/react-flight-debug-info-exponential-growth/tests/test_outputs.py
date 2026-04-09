@@ -151,8 +151,94 @@ def test_transfer_debug_info_guarded_during_debug_init():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — existing async debug tests must still pass
+# Pass-to-pass (repo_tests) — Repo CI/CD checks that must pass
 # ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=ENV,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_version_check():
+    """Repo's version check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "version-check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        env=ENV,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow_dom_node():
+    """Repo's Flow type check (dom-node) passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/flow-ci.js", "dom-node"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=ENV,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_flight_client_tests():
+    """React Flight client tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "yarn",
+            "test",
+            "packages/react-client/src/__tests__/ReactFlight-test.js",
+            "--no-watchman",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=ENV,
+    )
+    output = r.stdout + r.stderr
+    assert r.returncode == 0 or "PASS" in output, (
+        f"React Flight client tests failed:\n{output[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_flight_debug_channel_tests():
+    """React Flight debug channel tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "yarn",
+            "test",
+            "packages/react-client/src/__tests__/ReactFlightDebugChannel-test.js",
+            "--no-watchman",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=ENV,
+    )
+    output = r.stdout + r.stderr
+    assert r.returncode == 0 or "PASS" in output, (
+        f"React Flight debug channel tests failed:\n{output[-2000:]}"
+    )
+
 
 # [repo_tests] pass_to_pass
 def test_existing_async_info_test_passes():

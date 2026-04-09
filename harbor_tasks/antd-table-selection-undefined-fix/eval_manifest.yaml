@@ -1,0 +1,109 @@
+source_pr:
+  owner: ant-design
+  repo: ant-design
+  number: 57547
+  merge_commit: 393c5137522116575940179201785c7840ca7f44
+  base_commit: aa0594058b3735533a59c83feb5c309e88b544bd
+
+task:
+  name: antd-table-selection-undefined-fix
+  title: "Fix Table rowSelection crash when selectedRowKeys becomes undefined with preserveSelectedRowKeys"
+  description: |
+    The Table component crashes with a runtime error when rowSelection.selectedRowKeys
+    changes from [] to undefined while preserveSelectedRowKeys is enabled.
+    The fix ensures mergedSelectedKeys is always treated as an array by using
+    `mergedSelectedKeys ?? EMPTY_LIST` fallback.
+
+checks:
+  # Pass-to-pass checks (repo quality)
+  - id: test_tsc_no_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript compiles without errors
+
+  - id: test_eslint_no_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes without errors on the modified file
+
+  - id: test_biome_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome lint passes without errors on the codebase
+
+  - id: test_lint_md
+    type: pass_to_pass
+    origin: repo_tests
+    description: Markdown lint passes without errors
+
+  - id: test_node_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Node.js specific tests pass (demo file rendering)
+
+  - id: test_useSelection_file_exists
+    type: pass_to_pass
+    origin: structural
+    description: The useSelection hook file exists at expected path
+
+  # Fail-to-pass checks (the bug fix)
+  # Note: The structural check is the primary f2p test since it directly
+  # verifies the fix pattern was applied
+  - id: test_mergedSelectedKeys_uses_empty_list_fallback
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      lines: "TypeScript Requirements: Never use `any` type"
+    description: |
+      Verifies the specific code pattern that fixes the bug:
+      `mergedSelectedKeys ?? EMPTY_LIST` fallback pattern. This is the core fix.
+
+  # Upstream tests - these may pass on base but should continue to pass after fix
+  - id: test_rowSelection_regression_preserveSelectedRowKeys
+    type: pass_to_pass
+    origin: upstream_test
+    description: |
+      Regression test for the crash when selectedRowKeys becomes undefined
+      with preserveSelectedRowKeys enabled. Upstream test that validates behavior.
+
+  - id: test_rowSelection_radio_undefined_keys
+    type: pass_to_pass
+    origin: upstream_test
+    description: |
+      Related test for radio selection type with undefined selectedRowKeys.
+      Validates the fix works for radio selection type.
+
+rubric:
+  - criterion: TypeScript type safety
+    description: |
+      The fix should properly handle undefined values with type-safe patterns.
+      Using `?? EMPTY_LIST` provides a clean fallback that maintains type safety.
+    source:
+      file: AGENTS.md
+      section: "TypeScript Requirements"
+
+  - criterion: React hooks dependencies
+    description: |
+      The fix updates useEffect and useMemo dependencies correctly.
+      useEffect should include updatePreserveRecordsCache in deps array.
+    source:
+      file: AGENTS.md
+      section: "React Component Guidelines"
+
+  - criterion: Naming conventions
+    description: |
+      Variable naming follows antd conventions: use camelCase, complete names.
+      The new variable `mergedSelectedKeyList` follows the pattern of existing
+      variables like `mergedSelectedKeys`.
+    source:
+      file: AGENTS.md
+      section: "Naming Conventions"
+
+  - criterion: Testing coverage
+    description: |
+      Regression tests should be added to cover the bug scenario.
+      Tests must verify the fix works with preserveSelectedRowKeys transition.
+    source:
+      file: AGENTS.md
+      section: "Testing Requirements"

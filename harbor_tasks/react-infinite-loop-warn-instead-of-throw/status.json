@@ -1,13 +1,78 @@
 {
-  "validations": [
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T12:13:03.956126",
+  "total_time": 10871.31,
+  "sandbox_id": "i56wowi73do7xbr1kpxwz",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 1353.32,
+      "notes": "Added 3 pass_to_pass tests: test_repo_lint (yarn lint), test_repo_flow (yarn flow dom-browser), test_repo_reconciler_hooks (yarn test --testPathPattern=ReactHooksWithNoopRenderer). CI commands discovered from package.json scripts section. All commands verified to pass on base commit."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 607.75,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed Dockerfile sed pattern for enableInfiniteRenderLoopDetection feature flag. Original pattern 'enableInfiniteRenderLoopDetection = false' didn't match the actual file format 'enableInfiniteRenderLoopDetection: boolean = false'. Updated to 'enableInfiniteRenderLoopDetection: boolean = false'. All 4 checks now pass: Docker build, NOP test (reward=0), Gold test (reward=1), no rubric to judge.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 482.35
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.74,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T23:07:01.605964",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 7267.71,
+      "at": "2026-04-09T07:05:23.077915"
+    },
+    {
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 10871.04,
+      "at": "2026-04-09T12:13:03.784094"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 10871.31,
+      "at": "2026-04-09T12:13:03.956126"
     }
   ]
 }

@@ -1,0 +1,73 @@
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T08:25:56.119898",
+  "total_time": 0.0,
+  "sandbox_id": "i9i4iqf1kkmjzvat1tyz1",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "docker_build_error": "npm ci failed - package-lock.json not present due to --filter:blob:none clone (needs validate agent fix)",
+      "ci_commands_discovered": [
+        "npx tsc --noEmit (with NODE_OPTIONS='--max-old-space-size=4096') - TypeScript typecheck",
+        "npx eslint components/layout/demo/ --cache - ESLint on layout demos",
+        "npx biome lint components/layout/demo/ - Biome lint on layout demos",
+        "npm run version && npx jest --config .jest.js components/layout/__tests__/demo.test.ts --no-cache --maxWorkers=1 - Layout demo tests (~39s)"
+      ],
+      "tests_added": [
+        "test_repo_tsc - TypeScript typecheck (pass_to_pass)",
+        "test_repo_eslint_layout - ESLint on layout demo files (pass_to_pass)",
+        "test_repo_biome_lint_layout - Biome lint on layout demo files (pass_to_pass)",
+        "test_repo_layout_demo_tests - Jest tests for layout component (pass_to_pass)"
+      ],
+      "tests_location": "test_outputs.py",
+      "manifest_updated": true
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 603.12,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile to handle missing package-lock.json with --filter:blob:none clone (uses npm install fallback). Fixed test.sh to use --break-system-packages for pip. Fixed test_outputs.py to inherit PATH in subprocess calls so npx can be found. All 4 checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1232.42
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.75,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T08:25:56.119898"
+    }
+  ]
+}

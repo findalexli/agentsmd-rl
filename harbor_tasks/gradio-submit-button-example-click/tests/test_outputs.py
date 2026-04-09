@@ -179,3 +179,55 @@ def test_ruff_formatting():
     assert r.returncode == 0, (
         f"ruff format check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff check passes on gradio module (pass_to_pass)."""
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "-q", "ruff"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", "gradio/chat_interface.py"],
+        cwd=REPO, capture_output=True, timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"ruff check failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_chat_interface_unit_tests():
+    """Chat interface unit tests pass (pass_to_pass)."""
+    # Install gradio and test deps
+    subprocess.run(
+        ["pip", "install", "-q", "-e", "."],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    subprocess.run(
+        ["pip", "install", "-q", "pytest", "pytest-asyncio"],
+        capture_output=True, timeout=60,
+    )
+    # Run specific tests that don't require frontend build or network
+    tests_to_run = [
+        "test/test_chat_interface.py::TestInit::test_no_fn",
+        "test/test_chat_interface.py::TestInit::test_concurrency_limit",
+        "test/test_chat_interface.py::TestInit::test_custom_textbox",
+        "test/test_chat_interface.py::TestInit::test_events_attached",
+        "test/test_chat_interface.py::TestInit::test_default_accordion_params",
+        "test/test_chat_interface.py::TestInit::test_setting_accordion_params",
+        "test/test_chat_interface.py::TestInit::test_custom_chatbot_with_events",
+        "test/test_chat_interface.py::TestTextboxParameterConflicts",
+    ]
+    r = subprocess.run(
+        ["python", "-m", "pytest"] + tests_to_run + ["-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Chat interface unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    )

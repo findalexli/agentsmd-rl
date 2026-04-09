@@ -255,6 +255,26 @@ def test_helper_functions_intact():
         "Accordion handling removed from make_visible_if_not_rendered"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/gradio && corepack enable && corepack prepare pnpm@10.17.0 --activate && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && pnpm format:check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/gradio && corepack enable && corepack prepare pnpm@10.17.0 --activate && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && pnpm css >/dev/null 2>&1 && pnpm --filter @gradio/client build >/dev/null 2>&1 && pnpm test:run"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

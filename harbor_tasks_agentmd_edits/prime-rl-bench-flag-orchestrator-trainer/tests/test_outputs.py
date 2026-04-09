@@ -156,6 +156,63 @@ def test_readme_documents_bench_flag():
 
 
 # -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD tests that must pass on both base and gold
+# -----------------------------------------------------------------------------
+
+def test_repo_unit_tests():
+    """Repo's unit tests for config loading pass (pass_to_pass)."""
+    # Install required dependencies first
+    subprocess.run(
+        ["pip", "install", "-q", "huggingface_hub", "transformers", "datasets", "loguru", 
+         "pydantic", "pydantic-settings", "beartype", "jaxtyping", "openai", "torch", 
+         "numpy", "pandas", "rich", "tomli", "tomli-w", "pynvml", "cydifflib", 
+         "pylatexenc", "uvloop", "lovely-tensors", "liger-kernel", "wandb", "shardcast"],
+        capture_output=True,
+        cwd=REPO,
+    )
+    # Install the package itself
+    subprocess.run(
+        ["pip", "install", "-q", "-e", ".", "--no-deps"],
+        capture_output=True,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/unit/training/test_config.py",
+            "tests/unit/training/test_env.py",
+            "tests/unit/training/test_logger.py",
+            "tests/unit/orchestrator/test_config.py",
+            "tests/unit/inference/test_config.py",
+            "-v",
+            "-m", "not gpu",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_ruff_check():
+    """Repo's ruff linting passes (pass_to_pass)."""
+    # Install ruff first
+    subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "src/prime_rl"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# -----------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
 # -----------------------------------------------------------------------------
 

@@ -1,12 +1,90 @@
 {
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-08T21:46:10.005627",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 784.72,
-  "error": "No backend available within 600s. Pool: glm(16ok/0\u00d7429/ok) | fireworks(40ok/0\u00d7429/ok)"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T06:49:59.108069",
+  "total_time": 6605.76,
+  "sandbox_id": "il8bemzr7u46540fgix0j",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed. Docker builds successfully. NOP test correctly fails on buggy base commit (2 f2p tests fail). Gold test passes all 7 tests after fix applied. Rubric judge ICR=1.0 (no rubric rules).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 203.37
+    },
+    "p2p_enrichment": {
+      "completed": "2026-04-09",
+      "verified": true,
+      "ci_commands_discovered": [
+        "yarn lint - ESLint checks on all files",
+        "yarn flow dom-node - Flow typecheck for dom-node renderer",
+        "node ./scripts/jest/jest-cli.js --forceExit <path> - Run specific Jest test files"
+      ],
+      "tests_added": [
+        "test_repo_lint - Runs yarn lint",
+        "test_repo_flow - Runs yarn flow dom-node",
+        "test_repo_reconciler_suspense_tests - Runs ReactSuspenseCallback-test.js",
+        "test_repo_reconciler_cpu_suspense_tests - Runs ReactCPUSuspense-test.js"
+      ],
+      "eval_manifest_checks_added": [
+        "repo_lint - pass_to_pass",
+        "repo_flow - pass_to_pass",
+        "repo_reconciler_suspense_tests - pass_to_pass",
+        "repo_reconciler_cpu_suspense_tests - pass_to_pass"
+      ],
+      "commands_skipped": [
+        "yarn build - Too slow, not needed for verification",
+        "yarn flow-ci - Runs all flow configs, too slow for p2p",
+        "yarn test (full suite) - Takes too long, >120s"
+      ],
+      "notes": "All 4 p2p tests verified passing on base commit. Docker image builds successfully."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 442.42,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.69,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T06:49:58.946723"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 6605.76,
+      "at": "2026-04-09T06:49:59.108069"
+    }
+  ]
 }

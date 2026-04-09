@@ -36,19 +36,12 @@ def _run_ts(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # [static] pass_to_pass
 def test_typescript_syntax():
     """Modified TypeScript files must parse without errors."""
-    # Check flag.ts
-    r1 = subprocess.run(
-        ["bun", "tsc", "--noEmit", "--skipLibCheck", "src/flag/flag.ts"],
-        cwd=PKG, capture_output=True, timeout=60,
+    # Run tsc on the entire package to properly resolve path aliases
+    r = subprocess.run(
+        ["bun", "tsc", "--noEmit"],
+        cwd=PKG, capture_output=True, timeout=120,
     )
-    assert r1.returncode == 0, f"flag.ts syntax error: {r1.stderr}"
-
-    # Check registry.ts
-    r2 = subprocess.run(
-        ["bun", "tsc", "--noEmit", "--skipLibCheck", "src/tool/registry.ts"],
-        cwd=PKG, capture_output=True, timeout=60,
-    )
-    assert r2.returncode == 0, f"registry.ts syntax error: {r2.stderr}"
+    assert r.returncode == 0, f"TypeScript syntax error: {r.stderr or r.stdout}"
 
 
 # ---------------------------------------------------------------------------

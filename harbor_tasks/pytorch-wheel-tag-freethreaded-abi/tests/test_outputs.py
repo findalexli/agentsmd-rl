@@ -340,3 +340,74 @@ def test_not_stub():
     assert not missing, f"Missing functions: {missing}"
     stubs = {k: v for k, v in found.items() if v < 3}
     assert not stubs, f"Stubbed functions (< 3 real statements): {stubs}"
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and gold
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_file_compiles():
+    """Source file must compile without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", SRC],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"File failed to compile:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_smoke_test_dir_compiles():
+    """All Python files in smoke_test directory must compile (pass_to_pass)."""
+    smoke_dir = Path("/workspace/.ci/pytorch/smoke_test")
+    py_files = list(smoke_dir.glob("*.py"))
+    assert py_files, "No Python files found in smoke_test directory"
+
+    for py_file in py_files:
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", str(py_file)],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"{py_file.name} failed to compile:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports_are_standard_lib():
+    """Source file must only use standard library imports (pass_to_pass)."""
+    tree = ast.parse(Path(SRC).read_text())
+
+    # Standard library modules that check_wheel_tags.py should use
+    stdlib_modules = {
+        "os", "platform", "re", "subprocess", "sys", "zipfile",
+        "pathlib", "importlib", "importlib.metadata", "tempfile",
+        "ast", "io", "contextlib", "unittest", "unittest.mock",
+        "sysconfig", "torch"
+    }
+
+    non_stdlib = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                mod = alias.name.split(".")[0]
+                if mod not in stdlib_modules:
+                    non_stdlib.append(alias.name)
+        elif isinstance(node, ast.ImportFrom):
+            if node.module:
+                mod = node.module.split(".")[0]
+                if mod not in stdlib_modules:
+                    non_stdlib.append(node.module)
+
+    assert not non_stdlib, f"Non-stdlib imports found: {non_stdlib}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_scripts_syntax():
+    """Shell scripts in .ci/pytorch must have valid syntax (pass_to_pass)."""
+    ci_dir = Path("/workspace/.ci/pytorch")
+    sh_files = list(ci_dir.glob("*.sh"))
+    assert sh_files, "No shell scripts found in .ci/pytorch"
+
+    for sh_file in sh_files[:5]:  # Limit to first 5 to avoid timeout
+        r = subprocess.run(
+            ["bash", "-n", str(sh_file)],
+            capture_output=True, text=True, timeout=10,
+        )
+        assert r.returncode == 0, f"{sh_file.name} has shell syntax errors:\n{r.stderr}"

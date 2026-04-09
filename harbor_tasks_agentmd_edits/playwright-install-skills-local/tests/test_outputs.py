@@ -12,6 +12,25 @@ import subprocess
 from pathlib import Path
 
 REPO = "/workspace/playwright"
+REPO_DIR = Path(REPO)
+
+
+def _npm_install():
+    """Ensure npm dependencies are installed."""
+    if not (REPO_DIR / "node_modules").exists():
+        subprocess.run(
+            ["npm", "install"],
+            cwd=REPO, capture_output=True, text=True, timeout=180,
+        )
+
+
+def _npm_build():
+    """Ensure the project is built."""
+    if not (REPO_DIR / "packages/playwright-core/lib/bundles/utils/utilsBundle.js").exists():
+        subprocess.run(
+            ["npm", "run", "build"],
+            cwd=REPO, capture_output=True, text=True, timeout=120,
+        )
 
 
 def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
@@ -40,6 +59,63 @@ def test_syntax_check():
         assert p.exists(), f"File not found: {f}"
         content = p.read_text()
         assert len(content) > 100, f"File suspiciously small: {f}"
+
+
+# [repo_tests] pass_to_pass - TypeScript compilation
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    _npm_install()
+    _npm_build()
+    r = subprocess.run(
+        ["npm", "run", "tsc"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Dependency check
+def test_repo_check_deps():
+    """Repo's dependency check passes (pass_to_pass)."""
+    _npm_install()
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dependency check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Package consistency
+def test_repo_lint_packages():
+    """Repo's package consistency check passes (pass_to_pass)."""
+    _npm_install()
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Test linting
+def test_repo_lint_tests():
+    """Repo's test linting passes (pass_to_pass)."""
+    _npm_install()
+    r = subprocess.run(
+        ["npm", "run", "lint-tests"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Type tests
+def test_repo_test_types():
+    """Repo's type tests pass (pass_to_pass)."""
+    _npm_install()
+    _npm_build()
+    r = subprocess.run(
+        ["npm", "run", "test-types"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Type tests failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

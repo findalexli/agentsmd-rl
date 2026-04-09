@@ -51,4 +51,41 @@ checks:
     origin: static
     description: "JSON5 correctly parses valid JSON5 config patterns"
 
+  # Pass-to-pass (repo_tests) — CI/CD checks from the repo
+
+  - id: test_repo_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's playground package.json is valid JSON"
+
+  - id: test_repo_compilation_ts_parsable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's compilation.ts is syntactically valid JavaScript"
+
+  - id: test_repo_config_editor_tsx_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ConfigEditor.tsx has valid TSX structure"
+
+  - id: test_repo_default_store_ts_parsable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's defaultStore.ts is syntactically valid JavaScript"
+
+  - id: test_repo_no_syntax_errors_in_modified_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files have no obvious syntax errors (balanced braces, valid structure)"
+
+  - id: test_repo_git_status_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo has no uncommitted changes at base commit"
+
+  - id: test_repo_node_modules_json5_available
+    type: pass_to_pass
+    origin: repo_tests
+    description: "json5 dependency is available for repo tests"
+
 rubric: []

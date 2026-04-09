@@ -178,3 +178,47 @@ def test_gitignore_has_cache_file():
     gitignore = Path(f"{REPO}/.gitignore").read_text()
     assert ".check_modeling_structure_cache.json" in gitignore, \
         ".gitignore must exclude the cache file"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base AND after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_check_modeling_structure_runs():
+    """Repo's check_modeling_structure.py runs without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_modeling_structure.py", "--no-progress"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_modeling_structure.py failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_modeling_structure_help():
+    """Repo's check_modeling_structure.py --help works (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_modeling_structure.py", "--help"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_modeling_structure.py --help failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_makefile_has_style_target():
+    """Repo's Makefile must have a 'style' target (pass_to_pass)."""
+    makefile = Path(f"{REPO}/Makefile").read_text()
+    assert re.search(r'^style:', makefile, re.MULTILINE), \
+        "Makefile must have a 'style:' target rule"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_makefile_style_runs_ruff():
+    """Repo's style target must run ruff check and ruff format (pass_to_pass)."""
+    makefile = Path(f"{REPO}/Makefile").read_text()
+    # Extract the style target block
+    style_match = re.search(r'^style:.*?(?=^\S|\Z)', makefile, re.MULTILINE | re.DOTALL)
+    assert style_match, "Makefile must have a 'style:' target"
+    style_block = style_match.group()
+    assert "ruff check" in style_block, "style target must run ruff check"
+    assert "ruff format" in style_block, "style target must run ruff format"

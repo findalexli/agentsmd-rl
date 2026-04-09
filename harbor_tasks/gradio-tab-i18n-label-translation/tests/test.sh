@@ -9,8 +9,17 @@ if ! python3 -c "import pytest" 2>/dev/null; then
     if ! command -v pip3 &>/dev/null; then
         apt-get update -qq && apt-get install -y -qq python3-pip python3-venv >/dev/null 2>&1 || true
     fi
-    python3 -m pip install -q pytest pytest-json-ctrf 2>/dev/null || \
-        pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
+    python3 -m pip install -q pytest pytest-json-ctrf 2>/dev/null ||         pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
+fi
+
+# Install node dependencies for p2p tests that need repo CI commands
+if [ -f /repo/package.json ] && [ -f /repo/pnpm-lock.yaml ]; then
+    if ! command -v pnpm &>/dev/null; then
+        npm install -g pnpm 2>/dev/null || true
+    fi
+    if [ ! -d /repo/node_modules ]; then
+        cd /repo && pnpm install --frozen-lockfile 2>&1 | tail -5 || true
+    fi
 fi
 
 python3 -m pytest --ctrf /logs/verifier/ctrf.json /tests/test_outputs.py -rA --tb=short -q

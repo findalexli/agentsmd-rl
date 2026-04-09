@@ -3,7 +3,7 @@ FROM oven/bun:1-slim
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git curl ca-certificates python3 && \
+    git curl ca-certificates python3 make g++ && \
     rm -rf /var/lib/apt/lists/*
 
 ARG BASE_COMMIT=3a0e00dd7f9192730f6d0eeee37ae0a5fb023927

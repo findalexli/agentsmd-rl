@@ -134,6 +134,75 @@ def test_stream_ops_web_no_uint8array_function():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Repo CI: ESLint check on relevant files
+def test_repo_eslint():
+    """ESLint passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "pnpm",
+            "lint-eslint",
+            "packages/next/src/server/app-render/stream-ops.ts",
+            "packages/next/src/server/app-render/stream-ops.node.ts",
+            "packages/next/src/server/app-render/stream-ops.web.ts",
+            "packages/next/src/server/stream-utils/node-web-streams-helper.ts",
+            "packages/next/src/server/dev/serialized-errors.ts",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Repo CI: Prettier check on relevant files
+def test_repo_prettier():
+    """Prettier formatting passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "npx",
+            "prettier",
+            "--check",
+            "packages/next/src/server/app-render/stream-ops.ts",
+            "packages/next/src/server/app-render/stream-ops.node.ts",
+            "packages/next/src/server/app-render/stream-ops.web.ts",
+            "packages/next/src/server/stream-utils/node-web-streams-helper.ts",
+            "packages/next/src/server/dev/serialized-errors.ts",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Repo CI: TypeScript type check
+def test_repo_typescript():
+    """TypeScript type check passes for packages/next (pass_to_pass)."""
+    # Build font package first (required for type check to pass)
+    subprocess.run(
+        ["pnpm", "turbo", "run", "build", "--filter=@next/font"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Run TypeScript check
+    r = subprocess.run(
+        ["pnpm", "turbo", "run", "typescript", "--filter=next"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 

@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/nextjs"
@@ -125,3 +126,38 @@ def test_new_returns_cell():
     assert "Self::cell(SingleModuleReference" in block, (
         "new() doesn't construct SingleModuleReference via Self::cell"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+
+def test_repo_cargo_check_turbopack_core():
+    """Repo's cargo check passes on turbopack-core crate (pass_to_pass).
+
+    This verifies that the modified crate compiles without errors.
+    """
+    r = subprocess.run(
+        ["cargo", "check", "-p", "turbopack-core"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_cargo_test_turbopack_core():
+    """Repo's cargo test passes on turbopack-core crate (pass_to_pass).
+
+    This verifies that all tests in the modified crate pass.
+    """
+    r = subprocess.run(
+        ["cargo", "test", "-p", "turbopack-core", "--", "--test-threads=2"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo test failed:\n{r.stderr[-1000:]}"

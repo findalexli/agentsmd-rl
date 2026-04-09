@@ -1,0 +1,33 @@
+name = "sui-move-vm-argument-count-check"
+difficulty = "medium"
+timeout = 600
+
+[tags]
+language = "rust"
+category = "blockchain"
+subcategory = "vm"
+
+[description]
+brief = "Add VM-level argument count check to Move VM"
+detailed = """
+This task involves adding argument count validation directly in the Move VM's
+execute_function method. Currently, the argument length checking is only done
+at the adapter layer (ValueFrame::serialized_call). The fix adds a check in
+the VM itself to reject calls with mismatched argument counts before entering
+the interpreter.
+
+Key changes:
+1. Add args.len() check against function signature parameters
+2. Add type_arguments.len() check against function type parameters
+3. Update unit tests to call execute_function_bypass_visibility directly
+
+The fix is in:
+- external-crates/move/crates/move-vm-runtime/src/execution/vm.rs
+- external-crates/move/crates/move-vm-runtime/src/unit_tests/function_arg_tests.rs
+"""
+
+[source]
+repo = "https://github.com/MystenLabs/sui"
+pr_number = 26049
+base_commit = "44e12d2c78cf6724a80fc06828bfa89b98c8de8f"
+merge_commit = "43bb8b615ce645c611a63f0ebd4f2729c3ee1ba4"

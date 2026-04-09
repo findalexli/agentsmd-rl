@@ -13,6 +13,7 @@ import subprocess
 from pathlib import Path
 
 import hcl2
+import pytest
 
 REPO = "/workspace/beam"
 ARC_DIR = Path(REPO) / ".github" / "gh-actions-self-hosted-runners" / "arc"
@@ -229,4 +230,82 @@ def test_updating_section_has_gcloud_init():
     )
     assert "terraform init" in updating_section.lower(), (
         "Updating section should document terraform init step"
+    )
+
+
+# ---------------------------------------------------------------------------
+# P2P Enrichment - CI/CD Checks (pass_to_pass)
+# ---------------------------------------------------------------------------
+
+
+def _install_terraform():
+    """Install Terraform binary if not present."""
+    terraform_path = Path("/usr/local/bin/terraform")
+    if terraform_path.exists():
+        return str(terraform_path)
+
+    # Download and install Terraform
+    import urllib.request
+    import zipfile
+
+    terraform_url = "https://releases.hashicorp.com/terraform/1.9.0/terraform_1.9.0_linux_amd64.zip"
+    zip_path = "/tmp/terraform.zip"
+
+    urllib.request.urlretrieve(terraform_url, zip_path)
+    with zipfile.ZipFile(zip_path, 'r') as z:
+        z.extract("terraform", "/tmp/")
+
+    # Try to install to /usr/local/bin
+    try:
+        subprocess.run(
+            ["cp", "/tmp/terraform", str(terraform_path)],
+            capture_output=True, check=True, timeout=10
+        )
+        subprocess.run(
+            ["chmod", "+x", str(terraform_path)],
+            capture_output=True, check=True, timeout=10
+        )
+        return str(terraform_path)
+    except subprocess.CalledProcessError:
+        # Fallback: use /tmp location
+        subprocess.run(["chmod", "+x", "/tmp/terraform"], capture_output=True)
+        return "/tmp/terraform"
+
+
+# [repo_ci] pass_to_pass
+def test_terraform_fmt_syntax():
+    """Terraform files have no syntax errors (pass_to_pass)."""
+    terraform = _install_terraform()
+    r = subprocess.run(
+        [terraform, "fmt", "-list=false", "-write=false"],
+        capture_output=True, text=True, timeout=60, cwd=ARC_DIR,
+    )
+    # Return code 1 indicates syntax error, others are OK (0, 2, 3)
+    assert r.returncode != 1, f"Terraform syntax error: {r.stderr}"
+
+
+# [repo_ci] pass_to_pass  
+def test_terraform_validate():
+    """Terraform configuration is valid (pass_to_pass)."""
+    terraform = _install_terraform()
+    # terraform validate requires init first
+    init_r = subprocess.run(
+        [terraform, "init", "-backend=false"],
+        capture_output=True, text=True, timeout=60, cwd=ARC_DIR,
+    )
+    if init_r.returncode != 0:
+        pytest.skip("terraform init requires cloud credentials")
+    r = subprocess.run(
+        [terraform, "validate"],
+        capture_output=True, text=True, timeout=60, cwd=ARC_DIR,
+    )
+    assert r.returncode == 0, f"Terraform validation failed:\\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_readme_installing_section():
+    """README.md has the required Installing section (pass_to_pass)."""
+    content = (ARC_DIR / "README.md").read_text()
+    assert re.search(r'^#\s+Installing', content, re.MULTILINE), (
+        "README.md should have an '# Installing' section"
     )

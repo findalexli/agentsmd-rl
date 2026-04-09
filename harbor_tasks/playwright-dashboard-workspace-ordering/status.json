@@ -1,12 +1,78 @@
 {
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-08T21:43:04.841475",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 599.54,
-  "error": "No backend available within 600s. Pool: glm(14ok/0\u00d7429/ok) | fireworks(33ok/0\u00d7429/ok)"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T11:49:40.192966",
+  "total_time": 9467.45,
+  "sandbox_id": "ihtnxlb2kn6ex8jdey4pm",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 44.76,
+      "notes": "Added 1 new pass_to_pass test from repo CI/CD: test_repo_check_deps (npm run check-deps after build). Discovered CI commands via package.json: build, eslint, tsc, check-deps, lint-packages, lint-tests. Tested commands in container - eslint OOM'd, tsc requires build first, check-deps works after build. Total p2p repo_tests: 3 (test_repo_build, test_repo_lint_packages, test_repo_check_deps)"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1107.8,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed solve.sh idempotency check - the grep pattern '|| 'Global'' was matching existing code in the file, causing false positive 'Patch already applied' detection. Changed to check for the specific pattern 'const currentWorkspace = clientInfo?.workspaceDir || 'Global'' which only exists after the patch. All 4 validation checks now pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 608.18
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.68,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 6169.69,
+      "at": "2026-04-09T06:27:13.009654"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9467.19,
+      "at": "2026-04-09T11:49:40.020932"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9467.45,
+      "at": "2026-04-09T11:49:40.192966"
+    }
+  ]
 }

@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/lotti"
@@ -48,6 +49,40 @@ def test_syntax_check():
         assert src.count("(") == src.count(")"), (
             f"{rel}: unbalanced parens ({src.count('(')} open vs {src.count(')')} close)"
         )
+
+
+def _ensure_yaml():
+    """Ensure pyyaml is installed."""
+    try:
+        import yaml  # noqa: F401
+    except ImportError:
+        subprocess.run([sys.executable, "-m", "pip", "install", "pyyaml", "-q"], check=True)
+
+
+def test_pubspec_yaml_valid():
+    """Repo's pubspec.yaml is valid YAML (pass_to_pass)."""
+    _ensure_yaml()
+    import yaml
+    pubspec_path = Path(f"{REPO}/pubspec.yaml")
+    assert pubspec_path.exists(), "pubspec.yaml not found"
+    content = pubspec_path.read_text()
+    # Should parse without error
+    data = yaml.safe_load(content)
+    assert data is not None, "pubspec.yaml is empty or invalid"
+    assert "name" in data, "pubspec.yaml missing 'name' field"
+    assert data["name"] == "lotti", f"Expected name 'lotti', got '{data.get('name')}'"
+
+
+def test_analysis_options_yaml_valid():
+    """Repo's analysis_options.yaml is valid YAML (pass_to_pass)."""
+    _ensure_yaml()
+    import yaml
+    opts_path = Path(f"{REPO}/analysis_options.yaml")
+    assert opts_path.exists(), "analysis_options.yaml not found"
+    content = opts_path.read_text()
+    # Should parse without error
+    data = yaml.safe_load(content)
+    assert data is not None, "analysis_options.yaml is empty or invalid"
 
 
 # ---------------------------------------------------------------------------

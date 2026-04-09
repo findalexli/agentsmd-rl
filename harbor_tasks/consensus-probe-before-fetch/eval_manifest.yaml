@@ -1,0 +1,102 @@
+source_pr:
+  repo: "MystenLabs/sui"
+  number: 26056
+  title: "[consensus] probe before fetching commits and blocks from a peer"
+  merge_commit: "52203ecc02e7a3fd810ed88c1fd24a3a99ba98db"
+  base_commit: "192a628cc56fcd901af4330d91c123fe8f493187"
+
+behavioral_checks:
+  # Fail-to-pass tests - these fail on base commit, pass on fix
+  - id: "f2p_1"
+    name: "test_parameters_has_timeout_fields"
+    type: "functional"
+    description: "Parameters struct has new timeout fields with correct defaults"
+
+  - id: "f2p_2"
+    name: "test_probe_connectivity_method_exists"
+    type: "functional"
+    description: "NetworkClient has the probe_connectivity method"
+
+  - id: "f2p_3"
+    name: "test_commit_syncer_uses_configurable_timeout"
+    type: "functional"
+    description: "commit_syncer uses configurable timeout instead of hardcoded constant"
+
+  - id: "f2p_4"
+    name: "test_authority_service_implements_observer_trait"
+    type: "functional"
+    description: "AuthorityService implements ObserverNetworkService trait methods"
+
+  - id: "f2p_5"
+    name: "test_probe_call_in_fetch_commits_once"
+    type: "functional"
+    description: "fetch_commits_once calls probe_connectivity before fetching"
+
+  # Pass-to-pass tests - these should pass on both base and fix (regression tests)
+  - id: "p2p_1"
+    name: "test_config_compiles_with_new_defaults"
+    type: "functional"
+    description: "Config compiles and snapshot test passes with new fields"
+
+  - id: "p2p_2"
+    name: "test_network_client_has_probe_method"
+    type: "functional"
+    description: "NetworkClient has probe_connectivity with correct signature"
+
+  # Repo CI/CD pass-to-pass tests - verify standard checks pass on both base and fix
+  - id: "p2p_repo_check_config"
+    name: "test_repo_cargo_check_consensus_config"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's cargo check passes for consensus-config"
+
+  - id: "p2p_repo_check_types"
+    name: "test_repo_cargo_check_consensus_types"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's cargo check passes for consensus-types"
+
+  - id: "p2p_repo_clippy_config"
+    name: "test_repo_cargo_clippy_consensus_config"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's cargo clippy passes for consensus-config"
+
+  - id: "p2p_repo_test_config"
+    name: "test_repo_cargo_test_consensus_config"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's cargo test passes for consensus-config --lib"
+
+agent_config:
+  # Agent config rules that should be followed
+  - id: "ac_1"
+    name: "license_header"
+    type: "structural"
+    origin: "agent_config"
+    source: "CLAUDE.md"
+    description: "All new files must have the license header"
+
+  - id: "ac_2"
+    name: "cargo_check"
+    type: "structural"
+    origin: "agent_config"
+    source: "CLAUDE.md"
+    description: "Code must pass cargo check"
+
+  - id: "ac_3"
+    name: "no_lint_suppression"
+    type: "structural"
+    origin: "agent_config"
+    source: "CLAUDE.md"
+    description: "No #[allow(dead_code)] or similar lint suppressions"
+
+rubric: []
+  # No soft/subjective rules for this task
+
+scoring:
+  total_checks: 10  # 7 behavioral + 3 agent_config
+  f2p_weight: 0.50  # 5 out of 7 behavioral tests are f2p
+  p2p_weight: 0.20  # 2 out of 7 behavioral tests are p2p
+  agent_config_weight: 0.30  # 3 agent_config checks
+  passing_threshold: 0.75

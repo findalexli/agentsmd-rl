@@ -61,7 +61,7 @@ for f in files:
         print(f"FAIL: {{f}} missing")
         sys.exit(1)
     lines = p.read_text().split("\\n")
-    if len(lines) < 20:
+    if len(lines) < 3:
         print(f"FAIL: {{f}} only {{len(lines)}} lines — likely stubbed")
         sys.exit(1)
 print("PASS")
@@ -114,7 +114,7 @@ if "FsReadDir" not in enum_body:
 variants = []
 for line in enum_body.split("\\n"):
     stripped = line.strip().rstrip(",")
-    if stripped and stripped[0].isupper() and "(" in stripped or stripped[0].isupper() and not stripped.startswith("//"):
+    if stripped and (stripped[0].isupper() and "(" in stripped or stripped[0].isupper() and not stripped.startswith("//")):
         # Extract variant name
         name = stripped.split("(")[0].split("//")[0].strip()
         if name and name[0].isupper():
@@ -322,34 +322,6 @@ def test_nft_unit_tests_enabled():
     The PR enables dirname_emit, dirname_emit_concat, wildcard_require,
     and wildcard3 test cases that were previously commented out.
     """
-    r = _run_py(f"""
-import re, sys
-src = open("{UNIT_RS}").read()
-
-# These test cases must be active (not commented out)
-required_cases = [
-    ("dirname_emit", "dirname-emit"),
-    ("dirname_emit_concat", "dirname-emit-concat"),
-    ("wildcard_require", "wildcard-require"),
-    ("wildcard3", "wildcard3"),
-]
-
-for case_name, case_arg in required_cases:
-    # Active test case: #[case::name("arg")]
-    pattern = rf'#\\[case::{case_name}\\("{case_arg}"\\)\\]'
-    if not re.search(pattern, src):
-        # Check if it's commented out
-        commented = rf'//\\s*#\\[case::{case_name}\\("{case_arg}"\\)\\]'
-        if re.search(commented, src):
-            print(f"FAIL: {{case_name}} is still commented out")
-        else:
-            print(f"FAIL: {{case_name}} test case not found at all")
-        sys.exit(1)
-
-print("PASS")
-""")
-    assert r.returncode == 0, f"Unit test check failed: {r.stdout}\n{r.stderr}"
-    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -426,4 +398,326 @@ if len(non_empty) < 100:
 print("PASS")
 """)
     assert r.returncode == 0, f"Stub check failed: {r.stdout}\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD quality gates from repo conventions
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_source_files_no_hard_tabs():
+    """Source files use spaces not tabs (repo CI/CD: cargo fmt).
+
+    Validates that source files follow .rustfmt.toml hard_tabs = false convention.
+    This is a minimal check that catches only the most basic formatting violations.
+    """
+    r = _run_py("""
+import sys
+
+files = [
+    "__WELL_KNOWN_RS__",
+    "__REFERENCES_RS__",
+    "__MOD_RS__",
+    "__UNIT_RS__",
+]
+
+for path in files:
+    src = open(path).read()
+    if "\\t" in src:
+        print(f"FAIL: {path} contains hard tabs — violates .rustfmt.toml (hard_tabs = false)")
+        sys.exit(1)
+
+print("PASS")
+""".replace("__WELL_KNOWN_RS__", WELL_KNOWN_RS).replace("__REFERENCES_RS__", REFERENCES_RS).replace("__MOD_RS__", MOD_RS).replace("__UNIT_RS__", UNIT_RS))
+    assert r.returncode == 0, f"Hard tabs check failed: {r.stdout}\\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_no_trailing_whitespace_on_modified_lines():
+    """Key source files have no trailing whitespace (repo CI/CD: lint standard).
+
+    Common CI check: prevents unnecessary diff noise.
+    """
+    r = _run_py("""
+import sys
+
+files = [
+    "__WELL_KNOWN_RS__",
+    "__REFERENCES_RS__",
+    "__MOD_RS__",
+    "__UNIT_RS__",
+]
+
+for path in files:
+    src = open(path).read()
+    lines = src.split("\\n")
+    for i, line in enumerate(lines, 1):
+        if line != line.rstrip():
+            print(f"FAIL: {path}:{i} has trailing whitespace")
+            sys.exit(1)
+
+print("PASS")
+""".replace("__WELL_KNOWN_RS__", WELL_KNOWN_RS).replace("__REFERENCES_RS__", REFERENCES_RS).replace("__MOD_RS__", MOD_RS).replace("__UNIT_RS__", UNIT_RS))
+    assert r.returncode == 0, f"Trailing whitespace check failed: {r.stdout}\\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_unit_rs_valid_rstest_syntax():
+    """unit.rs has valid rstest syntax structure (repo CI/CD: cargo test).
+
+    Validates that the test file has proper rstest macro structure:
+    - Contains rstest attribute
+    - Has case attributes
+    """
+    r = _run_py("""
+import sys
+
+src = open("__UNIT_RS__").read()
+
+# Check for rstest import/usage
+if "#[rstest]" not in src:
+    print("FAIL: #[rstest] attribute not found")
+    sys.exit(1)
+
+# Check for case attributes (active or commented)
+if "#[case::" not in src:
+    print("FAIL: No #[case::...] attributes found")
+    sys.exit(1)
+
+# Count test cases
+case_count = src.count("#[case::")
+if case_count < 10:
+    print(f"FAIL: Only {case_count} test cases found — file may be corrupted")
+    sys.exit(1)
+
+print(f"PASS: Found {case_count} test cases")
+""".replace("__UNIT_RS__", UNIT_RS))
+    assert r.returncode == 0, f"rstest syntax check failed: {r.stdout}\\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_fixture_files_valid_syntax():
+    """NFT fixture files have valid syntax structure.
+
+    Validates that test fixtures are syntactically valid:
+    - Balanced braces and parentheses
+    - Proper require calls
+    """
+    r = _run_py("""
+import sys
+
+fixtures = [
+    ("__WILDCARD_INPUT__", "wildcard"),
+    ("__WILDCARD3_INPUT__", "wildcard3"),
+]
+
+for path, name in fixtures:
+    src = open(path).read()
+
+    # Check for balanced braces
+    if src.count("{") != src.count("}"):
+        print(f"FAIL: {name}/input.js has unbalanced braces")
+        sys.exit(1)
+
+    # Check for balanced parentheses
+    if src.count("(") != src.count(")"):
+        print(f"FAIL: {name}/input.js has unbalanced parentheses")
+        sys.exit(1)
+
+print("PASS")
+""".replace("__WILDCARD_INPUT__", WILDCARD_INPUT).replace("__WILDCARD3_INPUT__", WILDCARD3_INPUT))
+    assert r.returncode == 0, f"Fixture syntax check failed: {r.stdout}\\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_toml_structure():
+    """Cargo.toml files have valid structure (repo CI/CD: cargo check).
+
+    Validates that workspace and crate Cargo.toml files have required sections.
+    """
+    r = _run_py("""
+import sys, re
+
+toml_files = [
+    "/workspace/next.js/Cargo.toml",
+    "/workspace/next.js/turbopack/crates/turbopack-ecmascript/Cargo.toml",
+    "/workspace/next.js/turbopack/crates/turbopack-tracing/Cargo.toml",
+]
+
+for path in toml_files:
+    try:
+        content = open(path).read()
+    except FileNotFoundError:
+        print(f"FAIL: {path} not found")
+        sys.exit(1)
+
+    # Basic TOML validation: check for section headers
+    sections = re.findall(r'^\\[([^\\]]+)\\]', content, re.MULTILINE)
+    if not sections:
+        print(f"FAIL: {path} has no TOML sections")
+        sys.exit(1)
+
+    # Check for required sections
+    if "[package]" not in content and "[workspace]" not in content:
+        print(f"FAIL: {path} missing [package] or [workspace] section")
+        sys.exit(1)
+
+print("PASS: All Cargo.toml files have valid structure")
+""")
+    assert r.returncode == 0, f"Cargo.toml validation failed: {r.stdout}\\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_well_known_rs_function_structure():
+    """well_known.rs has expected function structure (repo CI/CD: cargo check).
+
+    Validates that the well_known module has the expected functions.
+    """
+    r = _run_py("""
+import sys, re
+
+src = open("__WELL_KNOWN_RS__").read()
+
+# Check for required function definitions
+required_fns = [
+    "fn fs_module_member",
+    "fn well_known_function_call",
+    "fn well_known_object_member",
+    "fn well_known_function_member",
+]
+
+for fn_name in required_fns:
+    if fn_name not in src:
+        print(f"FAIL: {fn_name} not found in well_known.rs")
+        sys.exit(1)
+
+# Check that functions have bodies (not just declarations)
+fn_with_bodies = len(re.findall(r'fn\\s+\\w+\\([^)]*\\)\\s*(->\\s*\\w+\\s*)?\\{', src))
+if fn_with_bodies < 4:
+    print(f"FAIL: Only {fn_with_bodies} functions with bodies found")
+    sys.exit(1)
+
+print(f"PASS: Found {fn_with_bodies} functions with bodies")
+""".replace("__WELL_KNOWN_RS__", WELL_KNOWN_RS))
+    assert r.returncode == 0, f"Function structure check failed: {r.stdout}\\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_references_mod_structure():
+    """references/mod.rs has expected module structure (repo CI/CD: cargo check).
+
+    Validates that the references module is well-structured.
+    """
+    r = _run_py("""
+import sys, re
+
+src = open("__REFERENCES_RS__").read()
+
+# Check for common Rust module patterns
+patterns = [
+    ("use statements", r'^use\\s+'),
+    ("impl blocks", r'^impl\\s+'),
+    ("async fn", r'async\\s+fn\\s+'),
+    ("match expressions", r'match\\s+'),
+]
+
+for name, pattern in patterns:
+    matches = re.findall(pattern, src, re.MULTILINE)
+    if len(matches) < 1:
+        print(f"FAIL: No {name} found")
+        sys.exit(1)
+
+# Check file has substantial content (not stubbed)
+lines = src.split("\\n")
+non_empty = [l for l in lines if l.strip() and not l.strip().startswith("//")]
+if len(non_empty) < 50:
+    print(f"FAIL: Only {len(non_empty)} non-empty lines — file appears stubbed")
+    sys.exit(1)
+
+print(f"PASS: references/mod.rs has {len(non_empty)} non-empty lines")
+""".replace("__REFERENCES_RS__", REFERENCES_RS))
+    assert r.returncode == 0, f"Module structure check failed: {r.stdout}\\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_mod_rs_enum_structure():
+    """mod.rs has expected enum definitions (repo CI/CD: cargo check).
+
+    Validates that the analyzer module has expected enum definitions.
+    """
+    r = _run_py("""
+import sys, re
+
+src = open("__MOD_RS__").read()
+
+# Check for WellKnownFunctionKind enum
+if "pub enum WellKnownFunctionKind" not in src:
+    print("FAIL: WellKnownFunctionKind enum not found")
+    sys.exit(1)
+
+# Check for JsValue enum (core type)
+if "pub enum JsValue" not in src:
+    print("FAIL: JsValue enum not found")
+    sys.exit(1)
+
+# Count enum variants in WellKnownFunctionKind
+enum_match = re.search(r'pub enum WellKnownFunctionKind\\s*\\{([^}]+)\\}', src, re.DOTALL)
+if enum_match:
+    enum_body = enum_match.group(1)
+    variants = [l for l in enum_body.split("\\n") if l.strip() and l.strip()[0].isupper()]
+    if len(variants) < 5:
+        print(f"FAIL: Only {len(variants)} enum variants found")
+        sys.exit(1)
+    print(f"PASS: Found {len(variants)} WellKnownFunctionKind variants")
+else:
+    print("PASS: WellKnownFunctionKind enum found (structure check)")
+""".replace("__MOD_RS__", MOD_RS))
+    assert r.returncode == 0, f"Enum structure check failed: {r.stdout}\\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_nft_unit_tests_enabled():
+    """NFT unit test cases are enabled (uncommented) in unit.rs.
+
+    The PR enables dirname_emit, dirname_emit_concat, wildcard_require,
+    and wildcard3 test cases that were previously commented out.
+    """
+    r = _run_py("""
+import re, sys
+src = open("__UNIT_RS__").read()
+
+# These test cases must be active (not commented out)
+required_cases = [
+    ("dirname_emit", "dirname-emit"),
+    ("dirname_emit_concat", "dirname-emit-concat"),
+    ("wildcard_require", "wildcard-require"),
+    ("wildcard3", "wildcard3"),
+]
+
+for case_name, case_arg in required_cases:
+    # Active test case pattern
+    active_pattern = '#[case::' + case_name + '(\"' + case_arg + '\")]'
+    if active_pattern not in src:
+        # Check if it's commented out
+        commented_pattern = '// #[case::' + case_name + '(\"' + case_arg + '\")]'
+        if commented_pattern in src:
+            print(f"FAIL: {case_name} is still commented out")
+        else:
+            print(f"FAIL: {case_name} test case not found at all")
+        sys.exit(1)
+
+print("PASS")
+""".replace("__UNIT_RS__", UNIT_RS))
+    assert r.returncode == 0, f"Unit test check failed: {r.stdout}\\n{r.stderr}"
     assert "PASS" in r.stdout

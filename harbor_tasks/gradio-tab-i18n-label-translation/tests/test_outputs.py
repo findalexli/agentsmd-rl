@@ -15,6 +15,37 @@ from pathlib import Path
 REPO = "/repo"
 FILE = "js/core/src/init.svelte.ts"
 
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass: Repo CI checks (must pass on both base and gold)
+# ---------------------------------------------------------------------------
+
+
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\\n{r.stderr[-500:]}"
+
+
+def test_repo_core_tests():
+    """Repo's js/core unit tests pass (pass_to_pass)."""
+    # Build client dependency first
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\\n{r.stderr[-500:]}"
+
+    # Run core module tests
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "--config", ".config/vitest.config.ts", "js/core"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Core tests failed:\\n{r.stderr[-500:]}\\n{r.stdout[-1000:]}"
+
 # ---------------------------------------------------------------------------
 # Helper: extract _gather_initial_tabs from source, strip TS types, run in Node
 # ---------------------------------------------------------------------------

@@ -65,16 +65,36 @@ def _find_if_branch(node, test_pattern):
 
 # [static] pass_to_pass
 def test_syntax_valid():
-    """mcp.py must be syntactically valid Python."""
+    """mcp.py must be syntactically valid Python (pass_to_pass)."""
     source = Path(TARGET).read_text()
     ast.parse(source)
 
 
+# [repo_tests] pass_to_pass
+def test_mcp_py_compiles():
+    """mcp.py must compile without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", TARGET],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"mcp.py failed to compile:\n{r.stderr}"
+
+
 # [static] pass_to_pass
 def test_module_imports():
-    """gradio.mcp module must import without errors."""
+    """gradio.mcp module must import without errors (pass_to_pass)."""
     sys.path.insert(0, REPO)
     from gradio import mcp  # noqa: F401
+
+
+# [repo_tests] pass_to_pass
+def test_mcp_module_importable():
+    """gradio.mcp module can be imported in subprocess (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "from gradio import mcp; print('mcp imported successfully')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to import gradio.mcp:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------
@@ -92,10 +112,10 @@ def test_nonqueued_calls_process_api():
     call_tool = _get_call_tool_node()
     assert call_tool is not None, "call_tool function not found in mcp.py"
 
-    # Find `if not block_fn.queue:` branch
+    # Find "if not block_fn.queue:" branch
     nonqueued_body, queued_body = _find_if_branch(call_tool, "block_fn")
     assert nonqueued_body is not None, (
-        "No `if ... block_fn.queue ...` branch found in call_tool — "
+        "No \"if ... block_fn.queue ...\" branch found in call_tool — "
         "must branch on block_fn.queue to separate queued/non-queued paths"
     )
 

@@ -1,0 +1,36 @@
+name = "clickhouse-zookeeper-session-renewal"
+title = "Fix stale ZooKeeper session crash in ClickHouse UDF retry loop"
+description = """
+The refreshObjects function in UserDefinedSQLObjectsZooKeeperStorage has a bug where
+it uses a stale ZooKeeper session handle during retries. When a retry is triggered
+after a Keeper error, the code was still using the original (potentially expired)
+zookeeper session handle instead of obtaining a fresh one.
+
+The fix moves the object_names fetching inside the retry loop and adds logic to
+renew the ZooKeeper session on each retry, ensuring watches are set on a live session.
+"""
+
+# Estimates
+difficulty = "medium"  # Requires understanding ZooKeeper session management and retry logic
+est_seconds = 1800   # 30 minutes
+est_tokens = 2000
+
+# Tags for categorization
+tags = ["c++", "clickhouse", "zookeeper", "session-management", "retry-logic", "concurrency"]
+
+# Repository info
+[repo]
+owner = "ClickHouse"
+name = "ClickHouse"
+base_commit = "a3c77899d3f826cfdc879ce9c276dd5f019cb46d"
+merge_commit = "23c8e6b613f72896b0f092f6df38188c9b9852ee"
+
+# Target file
+[target]
+path = "src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp"
+language = "cpp"
+
+# Task metadata
+[meta]
+created_at = "2026-04-09"
+source_pr = 102171

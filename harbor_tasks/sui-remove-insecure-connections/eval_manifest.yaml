@@ -1,0 +1,102 @@
+source_pr:
+  owner: MystenLabs
+  repo: sui
+  pr_number: 26069
+  base_commit: 137b12f337d790dcae827caa3dbbd56d22732716
+  merge_commit: c310c100db71c4d4f55fce2145ef90e206424716
+  title: "Remove backwards compat support for non-TLS connections to validator server"
+
+checks:
+  # Fail-to-pass checks (behavior changes)
+  - id: test_no_allow_insecure_in_config
+    type: fail_to_pass
+    origin: pr
+    description: Config struct should not have allow_insecure field, should have new TLS fields
+
+  - id: test_tls_handshake_timeout_default
+    type: fail_to_pass
+    origin: pr
+    description: Default TLS handshake timeout should be 5 seconds
+
+  - id: test_max_pending_connections_default
+    type: fail_to_pass
+    origin: pr
+    description: Default max pending connections should be 4096
+
+  - id: test_max_pending_connections_check
+    type: fail_to_pass
+    origin: pr
+    description: Server should check max_pending_connections before spawning TLS handshake
+
+  - id: test_tls_handshake_with_timeout
+    type: fail_to_pass
+    origin: pr
+    description: TLS handshake should use tokio::time::timeout with proper error handling
+
+  - id: test_no_insecure_connection_logic
+    type: fail_to_pass
+    origin: pr
+    description: Server should not have insecure connection handling logic (0x16 peek, downcast_ref)
+
+  - id: test_accept_error_sleep_reduced
+    type: fail_to_pass
+    origin: pr
+    description: Accept error sleep should be reduced from 1 second to 5 milliseconds
+
+  - id: test_no_allow_insecure_in_validator
+    type: fail_to_pass
+    origin: pr
+    description: Validator server should not call allow_insecure
+
+  - id: test_config_builder_methods
+    type: fail_to_pass
+    origin: pr
+    description: Config should have builder methods for new fields
+
+  - id: test_default_impl_uses_new_fields
+    type: fail_to_pass
+    origin: pr
+    description: Default implementation should use new timeout and max pending fields
+
+  # Pass-to-pass checks (repo CI/CD)
+  - id: test_sui_http_code_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: sui-http code is valid Rust syntax
+
+  - id: test_cargo_check_sui_network
+    type: pass_to_pass
+    origin: repo_tests
+    description: sui-network crate should compile
+
+  - id: test_repo_rustfmt
+    type: pass_to_pass
+    origin: repo_ci
+    description: Repo Rust code should be properly formatted (cargo fmt --check)
+
+  - id: test_repo_clippy_sui_http
+    type: pass_to_pass
+    origin: repo_ci
+    description: sui-http crate should pass clippy lints (cargo xclippy)
+
+  - id: test_repo_cargo_check_mysten_network
+    type: pass_to_pass
+    origin: repo_ci
+    description: mysten-network crate should compile
+
+  - id: test_repo_cargo_xlint
+    type: pass_to_pass
+    origin: repo_ci
+    description: Repo should pass license and basic checks (cargo xlint)
+
+# Agent config rules
+agent_config:
+  - file: CLAUDE.md
+    rules:
+      - "All new files must start with the license comment"
+      - "Use cargo check for quick validation"
+      - "ALWAYS run cargo xclippy after finishing development"
+      - "NEVER disable or ignore tests"
+      - "Do NOT comment the obvious"
+
+rubric: []

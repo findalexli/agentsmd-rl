@@ -140,6 +140,141 @@ def test_existing_widget_open_on_github_preserved():
     assert "ci.openOnGitHub" in src, "ci.openOnGitHub action must remain in widget"
 
 
+# [repo_tests] pass_to_pass - Repo CI: TypeScript files have valid syntax
+def test_repo_typescript_syntax_valid():
+    """Modified TypeScript files must have valid syntax - no unclosed strings/comments (pass_to_pass)."""
+    # Use Node.js to validate TypeScript files have no unclosed strings or comments
+    # Note: TypeScript modules don't require balanced braces at file level
+    script = """
+const fs = require('fs');
+const files = [
+    '/workspace/vscode/src/vs/sessions/contrib/github/browser/fetchers/githubPRCIFetcher.ts',
+    '/workspace/vscode/src/vs/sessions/contrib/github/browser/models/githubPullRequestCIModel.ts',
+    '/workspace/vscode/src/vs/sessions/contrib/changes/browser/ciStatusWidget.ts'
+];
+
+function checkNoUnclosedStringsOrComments(src, filename) {
+    let inString = false;
+    let stringChar = null;
+    let inTemplate = false;
+    let inComment = false;
+
+    for (let i = 0; i < src.length; i++) {
+        const char = src[i];
+        const nextChar = src[i + 1] || '';
+
+        // Handle template literals
+        if (!inString && !inComment && char === '`') {
+            inTemplate = !inTemplate;
+            continue;
+        }
+
+        // Handle strings (but not in template literals)
+        if (!inTemplate) {
+            if (!inString && !inComment && (char === '"' || char === "'")) {
+                inString = true;
+                stringChar = char;
+                continue;
+            }
+            if (inString && char === stringChar && src[i-1] !== '\\\\') {
+                inString = false;
+                stringChar = null;
+                continue;
+            }
+        }
+
+        // Handle comments
+        if (!inString && !inTemplate) {
+            if (!inComment && char === '/' && nextChar === '/') {
+                // Line comment - skip to end of line
+                while (i < src.length && src[i] !== '\\n') i++;
+                continue;
+            }
+            if (!inComment && char === '/' && nextChar === '*') {
+                inComment = true;
+                i++;
+                continue;
+            }
+            if (inComment && char === '*' && nextChar === '/') {
+                inComment = false;
+                i++;
+                continue;
+            }
+        }
+    }
+
+    if (inString) throw new Error(`Unclosed string in ${filename}`);
+    if (inTemplate) throw new Error(`Unclosed template literal in ${filename}`);
+    if (inComment) throw new Error(`Unclosed block comment in ${filename}`);
+}
+
+let ok = true;
+for (const file of files) {
+    try {
+        const src = fs.readFileSync(file, 'utf8');
+        checkNoUnclosedStringsOrComments(src, file);
+    } catch (err) {
+        console.error(`FAIL: ${file} - ${err.message}`);
+        ok = false;
+    }
+}
+process.exit(ok ? 0 : 1);
+"""
+    r = subprocess.run(["node", "-e", script], capture_output=True, text=True, timeout=30)
+    assert r.returncode == 0, f"TypeScript syntax validation failed:\n{r.stderr}{r.stdout}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: Node.js can parse the files
+def test_repo_nodejs_can_read_files():
+    """Repo TypeScript files must be readable by Node.js (pass_to_pass)."""
+    script = """
+const fs = require('fs');
+const files = [
+    '/workspace/vscode/src/vs/sessions/contrib/github/browser/fetchers/githubPRCIFetcher.ts',
+    '/workspace/vscode/src/vs/sessions/contrib/github/browser/models/githubPullRequestCIModel.ts',
+    '/workspace/vscode/src/vs/sessions/contrib/changes/browser/ciStatusWidget.ts'
+];
+
+let ok = true;
+for (const file of files) {
+    try {
+        const src = fs.readFileSync(file, 'utf8');
+        // Basic sanity: file is non-empty string
+        if (!src || typeof src !== 'string' || src.length === 0) {
+            console.error(`FAIL: ${file} - empty or not readable`);
+            ok = false;
+        }
+        // Check for valid UTF-8 encoding (no replacement chars)
+        if (src.includes('\uFFFD')) {
+            console.error(`FAIL: ${file} - contains invalid UTF-8`);
+            ok = false;
+        }
+    } catch (err) {
+        console.error(`FAIL: ${file} - ${err.message}`);
+        ok = false;
+    }
+}
+process.exit(ok ? 0 : 1);
+"""
+    r = subprocess.run(["node", "-e", script], capture_output=True, text=True, timeout=30)
+    assert r.returncode == 0, f"Node.js file read validation failed:\n{r.stderr}{r.stdout}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: Existing fetcher methods have valid signatures
+def test_repo_fetcher_methods_valid():
+    """GitHubPRCIFetcher methods must have valid signatures (pass_to_pass)."""
+    fetcher_src = Path(FETCHER).read_text()
+
+    # Check getCheckRuns method exists and has valid signature
+    assert "getCheckRuns" in fetcher_src, "getCheckRuns must exist in fetcher"
+
+    # Check for valid class structure
+    assert "export class GitHubPRCIFetcher" in fetcher_src, "Fetcher must be exported class"
+
+    # Verify constructor exists
+    assert "constructor(" in fetcher_src, "Fetcher must have constructor"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from .github/copilot-instructions.md
 # ---------------------------------------------------------------------------

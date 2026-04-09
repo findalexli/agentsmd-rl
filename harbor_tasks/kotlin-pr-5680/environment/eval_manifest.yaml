@@ -1,0 +1,58 @@
+manifest_version: "1.0"
+
+task:
+  name: "kotlin-compose-stability-cache"
+  source_pr: "JetBrains/kotlin#5680"
+  base_commit: "3657c00274a9252a8b71e6434cd6c63cf3770803"
+  merge_commit: "cf362e271197cd1b477e57faac01caeb7b694122"
+
+instructions: |
+  The Compose compiler's stability inference has an exponential analysis problem
+  that causes long compilation times for certain code patterns.
+
+  The StabilityInferencer class in
+  plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt
+  re-analyzes the same types repeatedly, leading to exponential explosion in analyzed types.
+
+  Add a cache to store stability inference results during the session to prevent
+  redundant analysis. The cache should:
+  1. Store results keyed by SymbolForAnalysis
+  2. Be checked at the start of stabilityOf(IrClass)
+  3. Store results after computation for reuse
+  4. Require refactoring the recursive stabilityOf method to separate the
+     symbol-based analysis logic
+
+checks:
+  # Fail-to-pass checks (these fail before the fix, pass after)
+  - id: test_cache_field_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: Cache field exists and is properly used for lookups and stores
+    source: "CLAUDE.md (compiler guidelines) and AGENTS.md (compiler architecture)"
+
+  - id: test_refactored_stability_method_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: New private stabilityOf method with SymbolForAnalysis parameter exists
+    source: "CLAUDE.md (compiler guidelines)"
+
+  # Pass-to-pass checks (these pass both before and after)
+  - id: test_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Kotlin file has valid syntax (balanced braces, valid structure)
+
+  - id: test_cache_prevents_redundant_computation
+    type: behavioral
+    origin: agent_config
+    description: Cache structure prevents redundant computation by checking before analysis
+    source: "PR fix logic"
+
+# Rubric for soft/subjective checks (LLM-judge only)
+rubric:
+  - criterion: "Follows Kotlin coding conventions"
+    description: "Code follows Kotlin naming conventions and style"
+    weight: "minor"
+  - criterion: "Proper null-safety"
+    description: "Uses !! operator appropriately on cache lookup with prior contains check"
+    weight: "minor"

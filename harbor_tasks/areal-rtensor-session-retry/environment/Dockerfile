@@ -18,7 +18,7 @@ WORKDIR /repo
 # Install minimal deps for testing (torch CPU-only, aiohttp, orjson)
 RUN pip install --no-cache-dir \
     torch --index-url https://download.pytorch.org/whl/cpu && \
-    pip install --no-cache-dir aiohttp orjson httpx colorlog numpy
+    pip install --no-cache-dir aiohttp orjson httpx colorlog numpy ruff
 
 ENV PYTHONPATH=/repo
 RUN git config user.email "test@test.com" && git config user.name "Test"

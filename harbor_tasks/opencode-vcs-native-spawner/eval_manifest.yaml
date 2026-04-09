@@ -110,6 +110,35 @@ checks:
       lines: "48"
       commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
 
+  # ---------------------------------------------------------------------------
+  # Repo CI/CD pass_to_pass gates — verify repo quality checks pass on base commit
+  # ---------------------------------------------------------------------------
+
+  - id: repo_vcs_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "vcs.ts must be syntactically valid TypeScript (balanced braces, parens, brackets)"
+
+  - id: repo_vcs_imports_resolve
+    type: pass_to_pass
+    origin: repo_tests
+    description: "vcs.ts workspace imports (@/...) must resolve to existing files"
+
+  - id: repo_no_duplicate_exports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "vcs.ts must not have duplicate export declarations"
+
+  - id: repo_effect_imports_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Effect library imports must use valid module paths"
+
+  - id: repo_layer_signature_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Layer exports must have valid Layer.Layer type signatures"
+
 rubric:
   - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
     source:

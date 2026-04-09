@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import os
 import subprocess
 
 REPO = "/workspace/gradio"
@@ -214,3 +215,60 @@ def test_not_stub():
     assert "class BaseReloader" in src, "BaseReloader class missing"
     assert "def safe_join" in src, "safe_join function missing"
     assert len(src.splitlines()) > 400, "File suspiciously short — likely stubbed"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD tests from the repo that should pass
+# on both base commit and after the fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_reload_tests():
+    """Repo's reload tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-e", ".", "-e", "client/python", "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install gradio: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_reload.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Reload tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_type_hints_tests():
+    """Repo's type hints tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-e", ".", "-e", "client/python", "hypothesis", "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install gradio: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::TestGetTypeHints", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Type hints tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports_cleanly():
+    """Repo's main module imports without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-e", ".", "-e", "client/python", "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install gradio: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-c", "import gradio; print('OK')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Failed to import gradio: {r.stderr[-500:]}"
+    assert "OK" in r.stdout, "Import test did not complete successfully"

@@ -1,110 +1,81 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.977917",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0,
+  "gold_reward": 1,
+  "validated_at": "2026-04-09T03:23:56.023077",
+  "total_time": 6399.01,
+  "sandbox_id": "icwglz0j1qxqh0kfadydx",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09",
+      "status": "completed",
+      "ci_commands_discovered": [
+        "ruff check (already present)",
+        "ruff format --check (new)",
+        "pytest tests/models/granite/test_modeling_granite.py::GraniteModelTest::test_config (new)",
+        "pytest tests/models/granitemoe/test_modeling_granitemoe.py::GraniteMoeModelTest::test_config (new)",
+        "pytest tests/models/granitemoeshared/test_modeling_granitemoeshared.py::GraniteMoeSharedModelTest::test_config (new)"
+      ],
+      "tests_added": [
+        "test_repo_granite_config - runs GraniteModelTest::test_config from repo",
+        "test_repo_granitemoe_config - runs GraniteMoeModelTest::test_config from repo",
+        "test_repo_granitemoeshared_config - runs GraniteMoeSharedModelTest::test_config from repo",
+        "test_repo_ruff_format - runs ruff format --check on modified files"
+      ],
+      "notes": "Discovered from Makefile (style, typing, check-repo targets) and GitHub workflows. Selected subset of tests that pass on base commit (<120s, no network/GPU required)."
     },
-    {
-      "timestamp": "2026-03-30T11:48:20.105907",
-      "runner": "audit (audit-tests_20260330_114820)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 9718
-    },
-    {
-      "timestamp": "2026-03-31T09:10:27.425097",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 2540
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.764773",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T03:54:30-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 0.0,
-      "nop_score": 0.0,
-      "verdict": "fail_gold",
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 615.24,
       "notes": ""
     },
-    {
-      "timestamp": "2026-04-02T12:58:21.159172",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Template build: failed to run command 'pip install --no-cache-dir -e \".[testing]\"     && pip install --no-cache-dir ruff': exit status 1"
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
-    {
-      "timestamp": "2026-04-02T14:28:08.971543",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'pip install --no-cache-dir -e \".[testing]\"     && pip install --no-cache-dir ruff': exit status 1"
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0,
+      "gold_reward": 1,
+      "dockerfile_fix_required": "Add pytest-json-ctrf to pip install in Dockerfile",
+      "notes": "All 4 checks passed: Docker build OK, NOP reward=0 (tests correctly fail on buggy base), Gold reward=1 (all 28 tests pass after fix). Judge HTTP 401 is expected (no API key). Fix: Dockerfile needs 'pytest-json-ctrf' added to pip install line alongside ruff.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1024.7
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T17:47:54.344975",
-      "phase": "local_docker_validate",
-      "runner": "local_docker_82",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Command '['docker', 'build', '-q', '-t', 'harbor-transformers-granite-config-int-multiplier:latest',"
-    },
-    {
-      "timestamp": "2026-04-02T18:27:57.363661",
-      "phase": "e2b_highres",
-      "runner": "e2b_4cpu_4gb",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'pip install --no-cache-dir -e \".[testing]\"     && pip install --no-cache-dir ruff': exit status 1"
-    },
-    {
-      "timestamp": "2026-04-03T02:53:02.860094+00:00",
-      "phase": "local_docker_retry",
-      "runner": "local_600s",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "notes": "build failed: TIMEOUT"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.656880",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Template build: failed to run command 'pip install --no-cache-dir -e \".[testing]\"     && pip install --no-cache-dir ruff': exit status 1"
-    },
-    {
-      "timestamp": "2026-04-03T09:20:33.890357",
-      "phase": "dockerfile_fix",
-      "runner": "manual",
-      "verdict": "pending_rebuild",
-      "notes": "Added tokenizers pre-install, made pip install resilient with fallback"
-    },
-    {
-      "timestamp": "2026-04-03T09:43:39.972727",
-      "phase": "e2b_post_dockerfile_fix",
-      "runner": "e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T03:23:55.861989"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 6399.01,
+      "at": "2026-04-09T03:23:56.023077"
     }
   ]
 }

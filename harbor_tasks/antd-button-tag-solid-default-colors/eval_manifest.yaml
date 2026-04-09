@@ -1,0 +1,101 @@
+source_pr: "https://github.com/ant-design/ant-design/pull/57495"
+source_repo: "ant-design/ant-design"
+base_commit: "df5547f2ade5fe0bd9906bb9a386e7865afa4835"
+merge_commit: "8e10c284f1780a5caa0e646bd0bba9875da63573"
+task_name: "antd-button-tag-solid-default-colors"
+
+# Checks - each maps to a test in test_outputs.py
+checks:
+  - id: test_button_solid_default_code
+    type: fail_to_pass
+    origin: behavior
+    description: "Button.tsx contains logic for variant='solid' default color"
+
+  - id: test_button_context_solid_default_code
+    type: fail_to_pass
+    origin: behavior
+    description: "Button.tsx contains logic for contextVariant='solid' default color"
+
+  - id: test_tag_solid_default_code
+    type: fail_to_pass
+    origin: behavior
+    description: "useColor.ts contains logic for nextVariant='solid' and nextColor=undefined"
+
+  - id: test_tag_uses_nextcolor_for_preset
+    type: fail_to_pass
+    origin: behavior
+    description: "useColor.ts uses nextColor for isPresetColor check"
+
+  - id: test_tag_uses_nextcolor_for_status
+    type: fail_to_pass
+    origin: behavior
+    description: "useColor.ts uses nextColor for isPresetStatusColor check"
+
+  - id: test_button_returns_primary_for_solid
+    type: fail_to_pass
+    origin: behavior
+    description: "Button.tsx returns 'primary' as default color for solid variant"
+
+  - id: test_tag_returns_default_for_solid
+    type: fail_to_pass
+    origin: behavior
+    description: "useColor.ts sets nextColor='default' for solid variant"
+
+  - id: test_repo_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript typecheck passes"
+
+  - id: test_button_structure_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Button component structure is preserved"
+
+  - id: test_repo_lint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ESLint checks pass"
+
+  - id: test_repo_button_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Button component tests pass"
+
+  - id: test_repo_tag_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Tag component tests pass"
+
+# Rubric - soft/subjective rules from agent configs
+rubric:
+  - rule: "Follow test import convention - use relative paths in __tests__"
+    source: "CLAUDE.md:Test import specification"
+    description: "Tests should use relative imports, not absolute paths like 'antd'"
+
+  - rule: "Follow demo import convention - use absolute paths in demo/"
+    source: "CLAUDE.md:Demo import specification"
+    description: "Demo files should use absolute imports like 'antd', not relative paths"
+
+  - rule: "Follow API documentation table format"
+    source: "CLAUDE.md:API Documentation format"
+    description: "API tables should have correct columns: Property/Description/Type/Default/Version/Global Config"
+
+  - rule: "Default values should be documented in backticks"
+    source: "CLAUDE.md:API table format"
+    description: "String defaults in backticks, boolean/number as literals"
+
+  - rule: "Maintain backward compatibility"
+    source: ".github/copilot-instructions.md:React Component Guidelines"
+    description: "Changes should not break existing behavior"
+
+  - rule: "Use TypeScript with strict typing"
+    source: ".github/copilot-instructions.md:TypeScript Requirements"
+    description: "No 'any' types, use precise types and interfaces"
+
+  - rule: "Use functional components with hooks exclusively"
+    source: ".github/copilot-instructions.md:React Component Guidelines"
+    description: "No class components"
+
+  - rule: "Support ref forwarding with ComponentRef pattern"
+    source: ".github/copilot-instructions.md:React Component Guidelines"
+    description: "Components must support ref forwarding"

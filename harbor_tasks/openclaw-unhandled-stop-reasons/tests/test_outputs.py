@@ -46,8 +46,8 @@ def _build_extraction_preamble() -> str:
                 .replace(/:\\s*[A-Za-z][\\w<>\\[\\]|&?, ]*(?=[)},;{=\\n])/g, '')
                 .replace(/<[A-Z][\\w<>\\[\\]|&?, ]*>/g, '')
                 .replace(/as\\s+const/g, '')
-                .replace(/as\\s+\\{[^}]*\\}/g, '')
-                .replace(/as\\s+unknown/g, '')
+                .replace(/as\\s*\\{[^}]*\\}/g, '')
+                .replace(/as\\s*unknown/g, '')
                 .replace(/\\btype\\b\\s+\\w+/g, '')
                 ;
         }
@@ -92,10 +92,6 @@ def test_recovery_module_exists():
         "Missing wrapStreamFnHandleSensitiveStopReason export"
     )
 
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_sync_throw_normalized():
@@ -205,10 +201,6 @@ def test_patch_mutates_assistant_message():
     assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — non-matching errors pass through
-# ---------------------------------------------------------------------------
-
 # [pr_diff] pass_to_pass
 def test_nonmatching_errors_ignored():
     """normalizeUnhandledStopReasonMessage returns undefined for non-matching strings."""
@@ -277,13 +269,7 @@ def test_patch_skips_nonmatching_message():
     assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — integration with attempt.ts
-# ---------------------------------------------------------------------------
-
 # [pr_diff] fail_to_pass
-# AST-only because: attempt.ts imports dozens of heavy deps (pi-agent-core,
-# pi-ai, etc.) that are not installed in the test container.
 def test_attempt_wires_wrapper():
     """attempt.ts imports the recovery module and applies the wrapper to streamFn."""
     p = Path(REPO) / ATTEMPT_MODULE
@@ -302,13 +288,7 @@ def test_attempt_wires_wrapper():
     )
 
 
-# ---------------------------------------------------------------------------
-# Anti-stub (static, pass_to_pass)
-# ---------------------------------------------------------------------------
-
 # [static] pass_to_pass
-# AST-only because: module imports @mariozechner/pi-agent-core, pi-ai which
-# are not installed in the test container.
 def test_not_stub():
     """Recovery module has real logic (regex, try/catch, re-throw, stream handling)."""
     src = (Path(REPO) / RECOVERY_MODULE).read_text()
@@ -322,11 +302,7 @@ def test_not_stub():
     assert "normalizeUnhandledStopReasonMessage" in src, "Missing normalize function"
 
 
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from CLAUDE.md
-# ---------------------------------------------------------------------------
-
-# [agent_config] pass_to_pass — CLAUDE.md:104 @ 664680318eea98172c7d25405c20f5e3eadfd0e2
+# [agent_config] pass_to_pass
 def test_no_ts_nocheck():
     """Modified files must not contain @ts-nocheck or @ts-ignore (CLAUDE.md:104)."""
     targets = [RECOVERY_MODULE, ATTEMPT_MODULE]
@@ -342,7 +318,7 @@ def test_no_ts_nocheck():
     assert not violations, "Found @ts-nocheck/@ts-ignore:\n" + "\n".join(violations)
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:104 @ 664680318eea98172c7d25405c20f5e3eadfd0e2
+# [agent_config] pass_to_pass
 def test_no_lint_suppressions():
     """Modified files must not contain inline lint suppression comments (CLAUDE.md:104)."""
     suppression_patterns = [
@@ -364,7 +340,7 @@ def test_no_lint_suppressions():
     assert not violations, "Found lint suppressions:\n" + "\n".join(violations)
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:111 @ 664680318eea98172c7d25405c20f5e3eadfd0e2
+# [agent_config] pass_to_pass
 def test_no_prototype_mutation():
     """Modified files must not share behavior via prototype mutation (CLAUDE.md:111)."""
     mutation_patterns = [
@@ -386,7 +362,7 @@ def test_no_prototype_mutation():
     assert not violations, "Found prototype mutation:\n" + "\n".join(violations)
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:102 @ 664680318eea98172c7d25405c20f5e3eadfd0e2
+# [agent_config] pass_to_pass
 def test_esm_imports_only():
     """Recovery module must use ESM imports, not CommonJS require() (CLAUDE.md:102)."""
     p = Path(REPO) / RECOVERY_MODULE
@@ -410,7 +386,7 @@ def test_esm_imports_only():
     assert not violations, "Found CommonJS patterns (must use ESM):\n" + "\n".join(violations)
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:116 @ 664680318eea98172c7d25405c20f5e3eadfd0e2
+# [agent_config] pass_to_pass
 def test_file_size_limit():
     """Recovery module must stay under ~700 LOC (CLAUDE.md:116)."""
     p = Path(REPO) / RECOVERY_MODULE
@@ -419,7 +395,7 @@ def test_file_size_limit():
     assert loc <= 700, f"{RECOVERY_MODULE} is {loc} lines (limit ~700)"
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:106 @ 664680318eea98172c7d25405c20f5e3eadfd0e2
+# [agent_config] pass_to_pass
 def test_no_dynamic_import_mixing():
     """Modified files must not use dynamic await import() alongside static imports
     for the same module (CLAUDE.md:106 dynamic import guardrail)."""
@@ -441,3 +417,70 @@ def test_no_dynamic_import_mixing():
         "Found dynamic await import() in production files that use static imports "
         "(violates CLAUDE.md:106 dynamic import guardrail):\n" + "\n".join(violations)
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's lint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Install deps
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    # Run lint
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_strict_smoke():
+    """Repo's strict TypeScript build passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Install deps
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    # Run strict build
+    r = subprocess.run(
+        ["pnpm", "build:strict-smoke"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_attempt_unit_tests():
+    """Repo's unit tests for attempt module pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Install deps
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    # Run attempt tests
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "src/agents/pi-embedded-runner/run/attempt.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Attempt tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

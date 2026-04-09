@@ -1,83 +1,45 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.965476",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T06:26:29.130012",
+  "total_time": 6257.09,
+  "sandbox_id": "i2ypf10crx2x1jet4yh29",
+  "backend": "glm",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 355.57,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-03-30T11:48:11.528507",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 27307
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
+    "p2p_enrichment": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 1910.31,
+      "notes": ""
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-31T13:37:47-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.678650",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T10:48:33.884686",
-      "phase": "e2b_validate_phase9",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "notes": "solve.sh exit=1: error: patch failed: test/e2e/edge-async-local-storage/index.test.ts:1\nerror: test/e2e/edge-async-local-storage/index.test.ts: patch does not apply\n"
-    },
-    {
-      "timestamp": "2026-04-02T10:53:30.533913",
-      "phase": "e2b_validate_phase9_retry",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "solve.sh exit=1: error: patch failed: test/e2e/edge-async-local-storage/index.test.ts:1\nerror: test/e2e/edge-async-local-storage/index.test.ts: patch does not apply\n"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.947642",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "solve.sh exit=1: error: patch failed: test/e2e/edge-async-local-storage/index.test.ts:1\nerror: test/e2e/edge-async-local-storage/index.test.ts: patch does not apply\n"
-    },
-    {
-      "timestamp": "2026-04-02T18:00:00.000000",
-      "phase": "local_docker_validate",
-      "runner": "manual",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "notes": "Rewrote solve.sh to use file writes instead of fragile git-apply patch (whitespace mismatch). 11 tests: 5 f2p, 6 p2p. All pass on gold, 5 fail on nop."
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.546180",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6257.09,
+      "at": "2026-04-09T06:26:29.130012"
     }
   ]
 }

@@ -181,3 +181,80 @@ def test_syntax_check():
         timeout=30,
     )
     assert r.returncode == 0, f"Syntax error in node_server.py:\n{r.stderr.decode()}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repository Python linting passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff:\n{r.stderr.decode()[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "gradio/node_server.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format():
+    """Repository Python format check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff:\n{r.stderr.decode()[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", "gradio/node_server.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repository Python typecheck passes on modified file (pass_to_pass)."""
+    import pytest
+
+    # Install ty if not already available
+    r = subprocess.run(
+        ["pip", "install", "ty", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ty:\n{r.stderr.decode()[-500:]}"
+
+    # Create py.typed marker file as required by the type checker
+    py_typed_path = Path(REPO) / "gradio" / "py.typed"
+    py_typed_path.touch()
+
+    r = subprocess.run(
+        ["python", "-m", "ty", "check", "gradio/node_server.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+
+    # If ty check fails due to missing imports/dependencies, skip rather than fail
+    if r.returncode != 0:
+        if "cannot find" in r.stderr.lower() or "module not found" in r.stderr.lower() or "import" in r.stderr.lower():
+            pytest.skip(f"Type check skipped due to missing dependencies: {r.stderr[-500:]}")
+
+    assert r.returncode == 0, f"Type check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"

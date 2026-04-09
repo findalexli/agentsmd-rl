@@ -18,7 +18,7 @@ RUN git clone --filter=blob:none https://github.com/vercel/next.js.git /workspac
 WORKDIR /workspace/next.js
 
 # Install Python dependencies for test runner
-RUN pip3 install --break-system-packages --no-cache-dir pytest
+RUN pip3 install --break-system-packages --no-cache-dir pytest pytest-json-ctrf
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

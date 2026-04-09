@@ -15,6 +15,71 @@ REPO = "/workspace/next.js"
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — verify repo CI still passes after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_git_status_clean():
+    """Repository should have clean git status (no uncommitted changes before fix)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # Before fix is applied, repo should be clean
+    # After fix, there will be changes, so this tests the base state
+    assert r.returncode == 0, f"Git status failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_claude_md_readable():
+    """CLAUDE.md should be readable at base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["cat", f"{REPO}/CLAUDE.md"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"CLAUDE.md not readable: {r.stderr}"
+    content = r.stdout
+    # Should have substantial content
+    assert len(content) > 5000, f"CLAUDE.md too short ({len(content)} chars)"
+    assert "# Next.js Development Guide" in content, "Missing expected header"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_alexignore_exists():
+    """.alexignore should exist at base commit (pass_to_pass)."""
+    alexignore = Path(f"{REPO}/.alexignore")
+    assert alexignore.exists(), ".alexignore does not exist at base commit"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_claude_md_valid():
+    """CLAUDE.md should be valid (regular file or working symlink) (pass_to_pass)."""
+    claude_md = Path(f"{REPO}/CLAUDE.md")
+    assert claude_md.exists(), "CLAUDE.md should exist and be readable"
+    
+    # Check that content is valid regardless of file type
+    content = claude_md.read_text()
+    assert "# Next.js Development Guide" in content, "CLAUDE.md should have valid content"
+    
+    # If it's a symlink, verify it points to a valid target
+    if claude_md.is_symlink():
+        target = os.readlink(claude_md)
+        # Should point to AGENTS.md (relative path)
+        assert target == "AGENTS.md", f"CLAUDE.md symlink should point to AGENTS.md, got: {target}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_readme_symlink_valid():
+    """README symlink should be valid at base commit (pass_to_pass)."""
+    readme = Path(f"{REPO}/readme.md")
+    assert readme.exists(), "readme.md symlink should resolve"
+    assert readme.is_symlink(), "readme.md should be a symlink"
+    target = os.readlink(readme)
+    # Should point to packages/next/README.md
+    assert "packages/next/README.md" in target, f"Unexpected readme target: {target}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

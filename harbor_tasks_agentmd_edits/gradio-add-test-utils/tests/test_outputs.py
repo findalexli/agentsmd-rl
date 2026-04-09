@@ -31,6 +31,34 @@ def test_render_core_exports_intact():
         "fireEvent export missing"
 
 
+# [repo_ci] pass_to_pass - Repo CI: code formatting check
+def test_repo_formatting():
+    """Repo's code formatting passes (pass_to_pass)."""
+    # Install pnpm if not available
+    r = subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, timeout=60)
+    # Run format check using npx to ensure prettier is available
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "--ignore-path", ".config/.prettierignore", "--config", ".config/.prettierrc.json", "--plugin", "prettier-plugin-svelte", "."],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass - Repo CI: client node tests
+def test_repo_client_node_tests():
+    """Repo's client node tests pass (pass_to_pass)."""
+    # Install pnpm if not available
+    r = subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, timeout=60)
+    # Run client tests using npx vitest directly in the client/js directory
+    env = {"NODE_NO_WARNINGS": "1", "TEST_MODE": "node"}
+    r = subprocess.run(
+        ["npx", "vitest", "run", "-c", "vite.config.ts"],
+        capture_output=True, text=True, timeout=120, cwd=Path(REPO) / "client/js",
+        env=env,
+    )
+    assert r.returncode == 0, f"Client node tests failed:\\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -50,7 +78,7 @@ console.log(JSON.stringify({ found: exp['./download-command'] }));
 """],
         cwd=REPO, capture_output=True, text=True, timeout=10,
     )
-    assert r.returncode == 0, f"Missing ./download-command export:\n{r.stderr}"
+    assert r.returncode == 0, f"Missing ./download-command export:\\n{r.stderr}"
     data = json.loads(r.stdout.strip())
     assert "download-command" in data["found"], \
         f"Export path should reference download-command, got: {data['found']}"

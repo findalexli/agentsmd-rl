@@ -274,3 +274,74 @@ def test_not_stub():
     plug_lines = len(PLUGIN.read_text().splitlines())
     assert reg_lines >= 150, f"registry.ts too short ({reg_lines} lines)"
     assert plug_lines >= 150, f"plugin/index.ts too short ({plug_lines} lines)"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD (pass_to_pass) — ensures base commit functionality is preserved
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (bun turbo typecheck)."""
+    script = """export PATH="$HOME/.bun/bin:$PATH"
+if ! command -v bun &>/dev/null; then
+  apt-get update -qq && apt-get install -y -qq unzip curl 2>/dev/null
+  curl -fsSL https://bun.sh/install | bash -s 'bun-v1.3.11' 2>/dev/null
+fi
+export PATH="$HOME/.bun/bin:$PATH"
+cd /workspace/opencode && bun install 2>&1 | tail -5
+bun turbo typecheck 2>&1
+"""
+    r = subprocess.run(
+        ["bash", "-c", script],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tool_registry_tests():
+    """Tool registry tests pass (bun test test/tool/registry.test.ts)."""
+    script = """export PATH="$HOME/.bun/bin:$PATH"
+if ! command -v bun &>/dev/null; then
+  apt-get update -qq && apt-get install -y -qq unzip curl 2>/dev/null
+  curl -fsSL https://bun.sh/install | bash -s 'bun-v1.3.11' 2>/dev/null
+fi
+export PATH="$HOME/.bun/bin:$PATH"
+cd /workspace/opencode && bun install 2>&1 | tail -5
+bun --cwd packages/opencode test --timeout 30000 test/tool/registry.test.ts 2>&1
+"""
+    r = subprocess.run(
+        ["bash", "-c", script],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Tool registry tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_opencode_typecheck():
+    """Opencode package typecheck passes (bun turbo typecheck --filter opencode)."""
+    script = """export PATH="$HOME/.bun/bin:$PATH"
+if ! command -v bun &>/dev/null; then
+  apt-get update -qq && apt-get install -y -qq unzip curl 2>/dev/null
+  curl -fsSL https://bun.sh/install | bash -s 'bun-v1.3.11' 2>/dev/null
+fi
+export PATH="$HOME/.bun/bin:$PATH"
+cd /workspace/opencode && bun install 2>&1 | tail -5
+bun turbo typecheck --filter opencode 2>&1
+"""
+    r = subprocess.run(
+        ["bash", "-c", script],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Opencode typecheck failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

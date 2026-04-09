@@ -44,6 +44,37 @@ def test_interaction_setup_type_exported():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repository CI/CD checks
+# ---------------------------------------------------------------------------
+
+def test_repo_typecheck():
+    """Repo TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/remix/packages/interaction && npx tsgo --noEmit"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_build():
+    """Repo build command passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/remix/packages/interaction && npx tsgo -p tsconfig.build.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lint():
+    """Repo lint check passes on interaction package (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/remix/packages/interaction && npx eslint src --max-warnings=0"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests using subprocess
 # ---------------------------------------------------------------------------
 
@@ -52,7 +83,7 @@ def test_calling_convention_behavioral():
     passes the context as a parameter to handle-style setup functions.
 
     On the BASE commit the call site is interaction.call(interactionContext) which
-    sets 'this' but leaves the first parameter undefined — handle-style functions
+    sets this but leaves the first parameter undefined — handle-style functions
     break.  After the fix, interaction(interactionContext) passes the context as
     the first argument, which handle-style functions expect.
     """
@@ -90,7 +121,7 @@ function handleSetup(handle) {
 const mockCtx = { target: {}, on: function(){}, signal: {} };
 
 if (callLine.includes('.call(')) {
-    // OLD pattern: .call() sets 'this' but first param is undefined
+    // OLD pattern: .call() sets this but first param is undefined
     try {
         handleSetup.call(mockCtx);  // handle arg is undefined
         process.exit(1);            // should never get here
@@ -117,10 +148,10 @@ console.log('PASS');
 
 
 def test_type_signature_uses_parameter():
-    """Behavioral: InteractionSetup type must use a regular parameter, not 'this' context.
+    """Behavioral: InteractionSetup type must use a regular parameter, not this context.
 
     Runs a Node script that extracts the type definition, verifies it does NOT use
-    'this:', then creates and invokes a function matching the new signature to prove
+    this:, then creates and invokes a function matching the new signature to prove
     parameter-passing works at runtime.
     """
     r = subprocess.run(
@@ -158,10 +189,10 @@ console.log('PASS');
 
 
 def test_builtin_functions_use_handle():
-    """Behavioral: all built-in setup functions use handle parameter, not 'this'.
+    """Behavioral: all built-in setup functions use handle parameter, not this.
 
     Runs a Node script that reads each built-in setup file and verifies no
-    'this: Interaction', 'this.target', or 'this.on(' patterns remain.
+    this: Interaction, this.target, or this.on( patterns remain.
     """
     r = subprocess.run(
         ["node", "-e", r"""
@@ -213,11 +244,11 @@ def test_readme_custom_interactions_updated():
 
     for block in code_blocks:
         assert "this: Interaction" not in block, \
-            "README code example still uses 'this: Interaction'"
+            "README code example still uses this: Interaction"
         assert "this.target" not in block, \
-            "README code example still uses 'this.target'"
+            "README code example still uses this.target"
         assert "this.on(" not in block, \
-            "README code example still uses 'this.on()'"
+            "README code example still uses this.on()"
 
     has_param_pattern = any(
         re.search(r"\(\w+:\s*Interaction\)", block)
@@ -245,7 +276,7 @@ def test_changeset_documents_breaking_change():
            "interaction" in content_lower:
             found = True
             assert content.strip().startswith("BREAKING CHANGE"), \
-                f"Changeset {cf.name} should start with 'BREAKING CHANGE:' " \
+                f"Changeset {cf.name} should start with BREAKING CHANGE: " \
                 f"per AGENTS.md convention for v0.x breaking changes"
             break
 

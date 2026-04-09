@@ -71,6 +71,20 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     )
 
 
+def _ensure_ruff():
+    """Ensure ruff is installed."""
+    r = subprocess.run(
+        ["python", "-m", "ruff", "--version"],
+        capture_output=True, text=True, timeout=60,
+    )
+    if r.returncode != 0:
+        # Install ruff if not available
+        subprocess.run(
+            ["pip", "install", "ruff", "-q"],
+            capture_output=True, text=True, timeout=120,
+        )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
@@ -80,6 +94,26 @@ def test_syntax_check():
     """gradio/utils.py must parse without syntax errors."""
     source = Path(TARGET).read_text()
     ast.parse(source)
+
+
+def test_repo_ruff_check():
+    """Repo's ruff lint check passes on utils.py (pass_to_pass)."""
+    _ensure_ruff()
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "gradio/utils.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on utils.py (pass_to_pass)."""
+    _ensure_ruff()
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", "gradio/utils.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -119,13 +153,17 @@ print("PASS")
 
 
 def test_context_id_preserved_when_already_high():
-    """If Context.id already exceeds max block ID, it must not decrease."""
+    """Fix must bump Context.id when max(blocks)+1 exceeds current Context.id."""
     r = _run_py(_EXTRACT_PREAMBLE + """
+# Test the actual bumping logic: when Context.id starts low but max(blocks)+1 is higher
+# the fix should bump Context.id to max(blocks)+1
+# Before fix: Context.id would stay at its initial value (e.g., 5)
+# After fix: Context.id should be bumped to max(blocks)+1 (e.g., 101)
 cid = _run_with_mocks(
-    Context_id=200,
-    blocks={0: "x", 5: "x", 10: "x"},
+    Context_id=5,
+    blocks={0: "x", 50: "x", 100: "x"},
 )
-assert cid >= 200, f"Context.id={cid}, expected >= 200 (was already high)"
+assert cid >= 101, f"Context.id={cid}, expected >= 101 (max block was 100, should bump past it)"
 print("PASS")
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
@@ -133,19 +171,44 @@ print("PASS")
 
 
 def test_no_crash_when_demo_absent():
-    """Fix must not crash when demo is missing, None, or has empty blocks."""
+    """Fix must handle missing/None/empty demo gracefully AND bump Context.id when blocks exist."""
     r = _run_py(_EXTRACT_PREAMBLE + """
-# demo attribute not set on module
+# Test 1: demo attribute not set on module - should not crash, Context.id unchanged
 cid = _run_with_mocks(blocks=None, Context_id=5, demo_exists=False)
-assert cid == 5, f"Context.id changed to {cid} when demo absent"
+assert cid == 5, f"Context.id changed to {cid} when demo absent (expected 5)"
 
-# demo is None (not set on module, blocks=None)
-cid = _run_with_mocks(blocks=None, Context_id=7, demo_exists=True)
-assert cid == 7, f"Context.id changed to {cid} when demo is None"
+# Test 2: demo is None (not set on module, blocks=None) - should not crash
+# This tests that the hasattr check doesn't fail when demo attr exists but is None
+class Reloader2:
+    demo_name = "demo"
 
-# demo has empty blocks dict
+module2 = types.ModuleType("test_module2")
+module2.demo = None  # demo exists but is None
+
+class Context2:
+    id = 7
+
+reloader2 = Reloader2()
+ns2 = {
+    "Context": Context2, "module": module2, "reloader": reloader2,
+    "getattr": getattr, "hasattr": hasattr, "max": max, "len": len,
+    "list": list, "set": set, "dict": dict, "int": int,
+    "print": print, "type": type, "__builtins__": __builtins__,
+}
+exec(region, ns2)
+assert Context2.id == 7, f"Context.id changed to {Context2.id} when demo is None (expected 7)"
+
+# Test 3: demo has empty blocks dict - should not crash, Context.id unchanged
 cid = _run_with_mocks(blocks={}, Context_id=9, demo_exists=True)
-assert cid == 9, f"Context.id changed to {cid} when blocks empty"
+assert cid == 9, f"Context.id changed to {cid} when blocks empty (expected 9)"
+
+# Test 4: CRITICAL fail-to-pass check - fix bumps Context.id when blocks exist
+# This is the actual behavior that distinguishes buggy from fixed code
+cid = _run_with_mocks(
+    Context_id=0,
+    blocks={5: "x", 10: "x", 15: "x"},
+)
+assert cid >= 16, f"Context.id={cid}, expected >= 16 after fix (max block was 15)"
 print("PASS")
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"

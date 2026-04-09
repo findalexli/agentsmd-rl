@@ -232,3 +232,27 @@ def test_core_files_intact():
     assert "class Environment" in env, (
         "Environment.ts is missing Environment class"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo CI) — repository's own CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's build passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

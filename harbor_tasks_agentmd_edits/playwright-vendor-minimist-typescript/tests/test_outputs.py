@@ -100,8 +100,9 @@ console.log(JSON.stringify(args));
 def test_program_imports_vendored():
     """program.ts can import and use the vendored minimist (not npm package)."""
     # First verify minimist.ts exists and exports correctly
+    # Note: MinimistArgs is a type-only export, import only the runtime value minimist
     result = _run_ts("""
-import { minimist, MinimistArgs } from './minimist.ts';
+import { minimist } from './minimist.ts';
 const args = minimist(['--test'], { boolean: ['test'] });
 if (args.test !== true) {
     console.log('FAILED: minimist export not working');
@@ -176,3 +177,70 @@ def test_claude_md_commit_rules_intact():
         "CLAUDE.md should still mention Co-Authored-By rule"
     assert "fix-<issue-number>" in content, \
         "CLAUDE.md should still have branch naming convention"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_cli_client_files_exist():
+    """Repo's cli-client source files exist and are non-empty (pass_to_pass)."""
+    # Verify core cli-client files exist and have content
+    for fname in ["program.ts", "session.ts", "registry.ts", "cli.ts", "DEPS.list"]:
+        fpath = Path(f"{CLI_DIR}/{fname}")
+        assert fpath.exists(), f"{fname} should exist in cli-client directory"
+        content = fpath.read_text()
+        assert len(content) > 0, f"{fname} should not be empty"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cli_client_typescript_no_syntax_errors():
+    """Repo's cli-client TypeScript files have no obvious syntax errors (pass_to_pass)."""
+    # Check for basic syntax issues in TypeScript files
+    for fname in ["program.ts", "session.ts", "registry.ts", "cli.ts"]:
+        fpath = Path(f"{CLI_DIR}/{fname}")
+        content = fpath.read_text()
+
+        # Check for balanced braces (basic syntax check)
+        open_braces = content.count("{")
+        close_braces = content.count("}")
+        assert open_braces == close_braces, f"{fname} has unbalanced braces"
+
+        # Check for balanced parentheses
+        open_parens = content.count("(")
+        close_parens = content.count(")")
+        assert open_parens == close_parens, f"{fname} has unbalanced parentheses"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_deps_list_valid():
+    """Repo's DEPS.list file is valid and parseable (pass_to_pass)."""
+    deps_path = Path(f"{CLI_DIR}/DEPS.list")
+    content = deps_path.read_text()
+
+    # Verify DEPS.list has valid structure with sections
+    assert "[program.ts]" in content, "DEPS.list should have [program.ts] section"
+    assert "[session.ts]" in content, "DEPS.list should have [session.ts] section"
+    assert "[registry.ts]" in content, "DEPS.list should have [registry.ts] section"
+
+    # Verify strict mode is declared
+    assert '"strict"' in content, "DEPS.list should declare strict mode"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """Repo's package.json is valid JSON with expected structure (pass_to_pass)."""
+    pkg_path = Path(f"{REPO}/package.json")
+    content = pkg_path.read_text()
+
+    # Verify valid JSON
+    try:
+        pkg = json.loads(content)
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"package.json is not valid JSON: {e}")
+
+    # Verify expected structure
+    assert "name" in pkg, "package.json should have name field"
+    assert "devDependencies" in pkg, "package.json should have devDependencies"
+    assert "@types/node" in pkg.get("devDependencies", {}), "package.json should have @types/node"

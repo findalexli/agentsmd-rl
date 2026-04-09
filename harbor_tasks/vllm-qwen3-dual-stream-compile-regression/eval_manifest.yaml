@@ -12,6 +12,36 @@ checks:
     origin: static
     description: "Both model files must be valid Python"
 
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff lint check passes on modified files"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on modified files"
+
+  - id: test_repo_spdx_headers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files have valid SPDX headers"
+
+  - id: test_repo_forbidden_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files have no forbidden imports"
+
+  - id: test_repo_boolean_context_manager
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files have no boolean ops in with-statements"
+
+  - id: test_repo_torch_cuda_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files have no improper torch.cuda API calls"
+
   - id: qwen3next_forward_no_custom_op
     type: fail_to_pass
     origin: pr_diff

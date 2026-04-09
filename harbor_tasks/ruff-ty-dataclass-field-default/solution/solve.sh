@@ -4,7 +4,8 @@ set -euo pipefail
 cd /workspace/ruff
 
 # Idempotent: skip if already applied
-if grep -q 'FunctionLiteral(_)' crates/ty_python_semantic/src/types/call/bind.rs 2>/dev/null; then
+# Check for the specific line that gets removed by the patch
+if ! grep -q 'function_type.is_known(db, KnownFunction::Field)' crates/ty_python_semantic/src/types/call/bind.rs 2>/dev/null; then
     echo "Patch already applied."
     exit 0
 fi

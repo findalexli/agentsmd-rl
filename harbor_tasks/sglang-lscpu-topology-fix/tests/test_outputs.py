@@ -207,3 +207,33 @@ def test_multi_socket_topology():
     assert result[0][:3] == (0, 0, 0), f"Entry 0 wrong: {result[0]}"
     assert result[4] == (4, 2, 1, 1), f"Entry 4 wrong: {result[4]}"
     assert result[7][:2] == (7, 3), f"Entry 7 wrong: {result[7]}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) -- repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_check():
+    """Modified file must have valid Python syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", "python/sglang/srt/utils/common.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lscpu_works():
+    """lscpu command works in the container (pass_to_pass)."""
+    r = subprocess.run(
+        ["lscpu", "-p=CPU,Core,Socket,Node"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"lscpu command failed:\n{r.stderr}"
+    assert "CPU,Core,Socket,Node" in r.stdout, f"lscpu output missing expected header: {r.stdout[:200]}"

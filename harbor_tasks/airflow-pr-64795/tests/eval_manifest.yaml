@@ -1,0 +1,39 @@
+source_pr: "apache/airflow#64795"
+title: "Add missing custom command in airflowctl integration tests"
+base_commit: "8b03304883ca6237ce538f1af9408e5a6b74ca18"
+merge_commit: "063e4829323ccb630c3fba15601abf3a87ec2144"
+target_file: "airflow-ctl-tests/tests/airflowctl_tests/test_airflowctl_commands.py"
+
+checks:
+  # Fail-to-pass tests
+  - id: test_auth_list_envs_in_test_commands
+    type: fail_to_pass
+    origin: pr_patch
+    description: "'auth list-envs' command is added to TEST_COMMANDS list"
+
+  - id: test_run_command_uses_keyword_args_in_test_airflowctl_commands
+    type: fail_to_pass
+    origin: pr_patch
+    description: "run_command uses keyword arguments (command=, env_vars=, skip_login=) in test_airflowctl_commands"
+
+  - id: test_env_vars_is_dict_literal
+    type: fail_to_pass
+    origin: pr_patch
+    description: "env_vars is passed as a dict literal in test_airflowctl_commands_skip_keyring"
+
+  # Agent config tests
+  - id: test_ruff_formatting
+    type: pass_to_pass
+    origin: agent_config
+    description: "Code passes ruff formatting check (CLAUDE.md rule: Always format and check Python files with ruff)"
+    source:
+      config: "CLAUDE.md"
+      lines: "Always format and check Python files with ruff immediately after writing or editing them: uv run ruff format <file_path> and uv run ruff check --fix <file_path>."
+
+  # Pass-to-pass tests
+  - id: test_file_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test file is valid Python syntax"
+
+rubric: []

@@ -1,12 +1,90 @@
 {
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-08T22:10:45.252454",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 2260.06,
-  "error": "No backend available within 600s. Pool: glm(46ok/0\u00d7429/ok) | fireworks(157ok/0\u00d7429/ok)"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T03:43:08.216848",
+  "total_time": 7551.3,
+  "sandbox_id": "inomcmso612wiqmwo02hv",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed. Docker build succeeds. NOP test correctly fails 6 F2P tests on buggy base commit (reward=0). Gold test passes all 15 tests after solve.sh applied (reward=1). Rubric judge ICR=0.5 (no rubric rules defined). The task is valid and ready for use.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 46.13
+    },
+    "p2p_enrichment": {
+      "completed_at": "2026-04-09",
+      "ci_commands_discovered": [
+        "Dockerfile syntax validation (multi-stage check)",
+        "File existence checks for with-docker example",
+        "package.json structure validation",
+        "README documentation section checks"
+      ],
+      "ci_commands_added": [
+        "test_repo_dockerfile_has_required_stages - verifies Dockerfile has dependencies/builder/runner stages",
+        "test_repo_dockerfile_bun_has_required_stages - verifies Dockerfile.bun has required stages",
+        "test_repo_with_docker_example_files_exist - verifies all required files present",
+        "test_repo_with_docker_package_json_valid - verifies package.json is private with dev/build/start scripts",
+        "test_repo_with_docker_readme_has_required_sections - verifies README has features/prerequisites/docker sections",
+        "test_repo_dockerfile_has_multi_stage_build - verifies multi-stage pattern with COPY --from=builder",
+        "test_repo_dockerfile_bun_has_multi_stage_build - verifies Dockerfile.bun multi-stage pattern"
+      ],
+      "ci_commands_skipped": [
+        "pnpm lint (pnpm not available in container)",
+        "pnpm typescript (pnpm not available in container)",
+        "check-examples.sh (requires jq and sponge utilities)",
+        "validate-externals-doc.js (requires next/dist/compiled/json5)",
+        "cargo test (requires full Rust toolchain setup)",
+        "npm test / jest tests (requires full node_modules install, too slow)"
+      ],
+      "notes": "Added 7 new pass_to_pass tests to test_outputs.py. These tests verify the with-docker example's structural integrity - checking Dockerfiles have proper stages, required files exist, package.json is valid, and README has required sections. All 9 p2p tests pass on base commit (2 existing + 7 new). The 6 f2p tests fail on base commit as expected and will pass after gold fix is applied."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 325.41,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.78,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T03:43:08.056814"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 7551.3,
+      "at": "2026-04-09T03:43:08.216848"
+    }
+  ]
 }

@@ -28,7 +28,7 @@ def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) - core behavioral tests
 # ---------------------------------------------------------------------------
 
 
@@ -81,7 +81,7 @@ def test_single_insert_no_null_fallback():
         "\n"
         "for (let i = 0; i < lines.length; i++) {\n"
         "    const line = lines[i];\n"
-        "    if (line.includes('} else {') && i > 0 && lines[i-1].includes('query += \")\")')) {\n"
+        "    if (line.includes('} else {') && i > 0 && lines[i-1].includes('query += \")\"')) {\n"
         "        inSingleInsert = true;\n"
         "        braceDepth = 0;\n"
         "        continue;\n"
@@ -171,7 +171,7 @@ def test_build_function_checks_all_items():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — config/documentation update
+# Fail-to-pass (pr_diff) - config/documentation update
 # ---------------------------------------------------------------------------
 
 
@@ -212,7 +212,7 @@ def test_claude_md_to_equal_guidance():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub + structural
+# Pass-to-pass (static) - anti-stub + structural
 # ---------------------------------------------------------------------------
 
 
@@ -301,3 +301,47 @@ def test_all_adapters_import_function():
             missing.append(f"{name} (not from shared)")
 
     assert not missing, f"Adapters missing buildDefinedColumnsAndQuery import: {missing}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - CI/CD checks that should pass on base commit
+# ---------------------------------------------------------------------------
+
+
+def test_repo_prettier_format():
+    """SQL source files must pass Prettier formatting check (pass_to_pass)."""
+    sql_files = [
+        f"{REPO}/src/js/internal/sql/shared.ts",
+        f"{REPO}/src/js/internal/sql/sqlite.ts",
+        f"{REPO}/src/js/internal/sql/mysql.ts",
+        f"{REPO}/src/js/internal/sql/postgres.ts",
+    ]
+    for f in sql_files:
+        r = subprocess.run(
+            ["npx", "prettier", "--check", f],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Prettier check failed for {f}:\n{r.stderr[-500:]}"
+
+
+def test_repo_syntax_valid():
+    """SQL source files must have valid syntax (balanced braces) (pass_to_pass)."""
+    sql_files = [
+        ("shared.ts", SHARED_TS),
+        ("sqlite.ts", SQLITE_TS),
+        ("mysql.ts", MYSQL_TS),
+        ("postgres.ts", POSTGRES_TS),
+    ]
+    for name, path in sql_files:
+        src = Path(path).read_text()
+        # Check for balanced braces
+        depth = 0
+        for char in src:
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth < 0:
+                    assert False, f"{name}: Unbalanced braces (extra closing brace)"
+        if depth != 0:
+            assert False, f"{name}: Unbalanced braces ({depth} unclosed)"

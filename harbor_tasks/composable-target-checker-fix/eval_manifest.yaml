@@ -1,0 +1,80 @@
+source_pr:
+  owner: JetBrains
+  repo: kotlin
+  number: 5833
+  merge_commit: 167a139ee7e66f69f847c6d0ab2957ab162df1f3
+  title: "Fix callableInferenceNodeOf in ComposableTargetChecker.kt"
+
+# Repository configs referenced (for agent behavior tracking)
+agent_config:
+  - file: CLAUDE.md
+    commit: a304b4b5c79aa22c62ab5410caccaeb3a05c276a
+  - file: AGENTS.md
+    commit: a304b4b5c79aa22c62ab5410caccaeb3a05c276a
+  - file: compiler/AGENTS.md
+    commit: a304b4b5c79aa22c62ab5410caccaeb3a05c276a
+  - file: .ai/guidelines.md
+    commit: a304b4b5c79aa22c62ab5410caccaeb3a05c276a
+
+# Scoring checks (1:1 with test_outputs.py::test_* functions)
+checks:
+  - id: test_source_file_exists
+    description: "Source file exists at expected path"
+    type: structural
+    points: 1
+
+  - id: test_compilation_succeeds
+    description: "Modified module compiles successfully"
+    type: behavioral
+    points: 3
+
+  - id: test_different_wrapper_types_diagnostic
+    description: "testDifferentWrapperTypes diagnostic test passes"
+    type: behavioral
+    points: 4
+
+  - id: test_kind_returns_function
+    description: "FirCallableElementInferenceNode.kind returns NodeKind.Function"
+    type: structural
+    points: 2
+
+  - id: test_callable_inference_node_returns_early
+    description: "callableInferenceNodeOf has proper early return structure"
+    type: structural
+    points: 2
+
+  - id: test_fir_function_call_handling
+    description: "FirFunctionCall is handled specially with callable.fir"
+    type: structural
+    points: 2
+
+  - id: test_target_warnings_diagnostic_data
+    description: "Diagnostic test data reflects correct target warnings"
+    type: behavioral
+    points: 2
+
+  # Pass-to-pass tests - repo CI/CD checks that pass on both base and fix
+  - id: test_repo_compile_integration_tests
+    description: "Integration tests module compiles successfully"
+    type: pass_to_pass
+    origin: repo_tests
+    points: 2
+
+  - id: test_repo_check
+    description: "Gradle check task passes for the compose module"
+    type: pass_to_pass
+    origin: repo_tests
+    points: 2
+
+  - id: test_repo_assemble
+    description: "Gradle assemble task passes for the compose module"
+    type: pass_to_pass
+    origin: repo_tests
+    points: 2
+
+# Rubric for LLM-judge evaluation (soft/subjective rules)
+rubric: []
+
+scoring:
+  max_total: 16
+  min_pass: 9

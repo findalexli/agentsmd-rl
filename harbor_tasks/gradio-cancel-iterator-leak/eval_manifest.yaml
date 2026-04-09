@@ -56,6 +56,31 @@ checks:
       lines: "43"
       commit: "0a0378dee463fb10e5a95685d595801171cf641b"
 
+  # Repo CI/CD pass_to_pass gates
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff lint check passes on modified file"
+    source:
+      path: ".github/workflows/test-python.yml"
+      commit: "0a0378dee463fb10e5a95685d595801171cf641b"
+
+  - id: test_repo_pytest_cancel_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cancel-related tests pass"
+    source:
+      path: ".github/workflows/test-python.yml"
+      commit: "0a0378dee463fb10e5a95685d595801171cf641b"
+
+  - id: test_repo_pytest_cancel_multiple_blocks
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cancel multiple blocks test passes"
+    source:
+      path: ".github/workflows/test-python.yml"
+      commit: "0a0378dee463fb10e5a95685d595801171cf641b"
+
 rubric:
   - rule: "Be consistent with the style of the surrounding code."
     source:

@@ -1,41 +1,68 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-04-02T15:39:51.306653",
-      "phase": "e2b_kimi_wave2",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T05:01:28.685306",
+  "total_time": 8875.14,
+  "sandbox_id": "iw1fyg2v1tyb7z1m3bdov",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "timestamp": "2026-04-09",
+      "notes": "Added repo_tests P2P gate: test_repo_lint - runs 'yarn lint' ESLint check on the React repo. CI commands tested: yarn lint (passed, 20s), yarn prettier-check (OOM, skipped). Docker build successful."
     },
-    {
-      "timestamp": "2026-04-02T23:07:01.596258",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 533.22,
+      "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_prevfiber_guard_inspect_update test: increased search range from 500 to 1000 chars to correctly find the prevFiber !== nextFiber guard around hasElementUpdatedSinceLastInspected. The guard is ~12 lines (600 chars) before the assignment in the nested if structure. All 4 validation checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 432.53
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.69,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-03T17:00:45.924136",
-      "phase": "validate_remake",
-      "runner": "manual docker test",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0.0",
-      "gold": "1.0",
-      "note": "Fixed: Dockerfile (python3-pip, optimized git clone, removed broken yarn build, NODE_ENV=development), replaced unreliable upstream test suite with structural regression checks."
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T05:01:28.529139"
     },
     {
-      "timestamp": "2026-04-03T18:17:47.094094",
-      "phase": "e2b_salvage_remake",
-      "runner": "e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8875.14,
+      "at": "2026-04-09T05:01:28.685306"
     }
   ]
 }

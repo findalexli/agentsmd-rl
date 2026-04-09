@@ -1,74 +1,90 @@
 {
-  "validations": [
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:04:13.153889",
+  "total_time": 1615.8,
+  "sandbox_id": "i8obm1jt9rc80thi6o11v",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All checks passed. Task is ready for use.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 437.12
+    },
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T08:55:00Z",
+      "status": "completed",
+      "ci_commands_discovered": [
+        "pnpm format:check - Prettier format check",
+        "pnpm --filter @gradio/client build - Build client package",
+        "pnpm --filter @gradio/client test - Run client tests",
+        "pnpm vitest run --config .config/vitest.config.ts js/core - Run core JS tests"
+      ],
+      "ci_commands_skipped": [
+        "pnpm lint - ESLint has module resolution issues with @eslint/js in base commit",
+        "pnpm ts:check - svelte-check has type errors in base commit (cs.js has implicit any types)"
+      ],
+      "tests_added": [
+        "test_repo_format_check - pass_to_pass - Runs pnpm format:check",
+        "test_repo_client_build - pass_to_pass - Builds @gradio/client package",
+        "test_repo_client_tests - pass_to_pass - Runs @gradio/client test suite",
+        "test_repo_core_tests - pass_to_pass - Runs vitest on js/core module"
+      ],
+      "total_tests": 10,
+      "test_breakdown": {
+        "fail_to_pass": 3,
+        "pr_diff_pass_to_pass": 3,
+        "repo_tests_pass_to_pass": 4
+      },
+      "notes": "Verified all 4 repo_tests pass_to_pass tests pass on base commit. The CI commands that don't work (lint, ts:check) have pre-existing issues in the base commit unrelated to the PR changes."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 543.36,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.72,
+      "notes": "ICR=0.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-01T12:00:00-07:00",
-      "runner": "manual (v2 remake)",
-      "docker_build": true,
-      "gold_score": 1,
-      "nop_score": 0,
       "verdict": "pass",
-      "notes": "v2 remake: --filter=blob:none in Dockerfile, regex-based f2p tests, 6 tests (3 f2p, 3 p2p)"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:04:12.986436"
     },
     {
-      "timestamp": "2026-03-31T13:37:36-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
-    },
-    {
-      "timestamp": "2026-03-30T13:02:43.965366",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
-    },
-    {
-      "timestamp": "2026-03-30T11:48:11.528427",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 19460
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.663290",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T10:48:33.884545",
-      "phase": "e2b_validate_phase9",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.943788",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.533502",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1615.8,
+      "at": "2026-04-09T02:04:13.153889"
     }
   ]
 }

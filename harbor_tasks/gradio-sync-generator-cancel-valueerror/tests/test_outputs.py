@@ -8,6 +8,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import asyncio
+import os
+import subprocess
 import sys
 import time
 import threading
@@ -15,6 +17,13 @@ import threading
 sys.path.insert(0, "/workspace/gradio")
 
 REPO = "/workspace/gradio"
+
+
+def _install_ruff():
+    """Install ruff if not already available."""
+    r = subprocess.run(["python", "-m", "ruff", "--version"], capture_output=True)
+    if r.returncode != 0:
+        subprocess.run(["pip", "install", "ruff"], capture_output=True, check=False)
 
 
 # ---------------------------------------------------------------------------
@@ -72,6 +81,40 @@ def test_syntax_check():
     """gradio/utils.py must parse without syntax errors."""
     import py_compile
     py_compile.compile(f"{REPO}/gradio/utils.py", doraise=True)
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's Python linting passes (pass_to_pass)."""
+    _install_ruff()
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", f"{REPO}/gradio/utils.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's Python formatting passes (pass_to_pass)."""
+    _install_ruff()
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", f"{REPO}/gradio/utils.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_gradio_imports():
+    """gradio module imports successfully (pass_to_pass)."""
+    env = os.environ.copy()
+    env["PYTHONPATH"] = f"{REPO}:{env.get('PYTHONPATH', '')}"
+    r = subprocess.run(
+        ["python", "-c", "import gradio; from gradio.utils import SyncToAsyncIterator, safe_aclose_iterator"],
+        capture_output=True, text=True, timeout=60, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"gradio import failed:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

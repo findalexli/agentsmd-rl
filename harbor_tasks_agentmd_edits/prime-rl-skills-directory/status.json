@@ -1,12 +1,51 @@
 {
+  "schema_version": 2,
   "verdict": "fail",
-  "nop_reward": 0.0,
-  "gold_reward": -1,
-  "validated_at": "2026-04-08T22:14:56.686767",
-  "sandbox_id": "ic2rb68dohnj5nzgq2nnh",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:38:25.141803",
+  "total_time": 5692.8,
+  "sandbox_id": "im2gy36eoe3f5rnpy9mly",
   "backend": "fireworks",
-  "improve_status": "error",
-  "repair_attempted": false,
-  "total_time": 2511.52,
-  "error": "solve.sh failed: error: corrupt patch at line 123\n"
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "timestamp": "2026-04-09T12:58:00Z",
+      "ci_commands_found": [
+        "ruff check --config=pyproject.toml src/ tests/",
+        "ruff format --check --config=pyproject.toml src/ tests/"
+      ],
+      "ci_commands_added": [
+        "test_repo_ruff_check",
+        "test_repo_ruff_format"
+      ],
+      "notes": "Added 2 pass_to_pass tests based on repo CI. Tests use ruff (Python linter/formatter). Skipped pytest tests as they require heavy dependencies (torch, vllm, flash-attn) that need network and GPU. Verified all p2p tests pass on base commit."
+    },
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 79.08,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 5692.8,
+      "at": "2026-04-09T07:38:25.141803"
+    }
+  ]
 }

@@ -80,6 +80,47 @@ checks:
       lines: "11"
       commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
 
+  # CI-derived (repo_tests) — pass_to_pass gates from bun repo CI checks
+  - id: zig_no_debug_prints
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Zig functions must not use std.debug.print or std.log"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
+  - id: zig_no_undefined_comparisons
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Zig functions must not compare values to undefined (UB)"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
+  - id: zig_no_arguments_old
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Zig functions must not use deprecated .arguments_old() API"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
+  - id: zig_no_usingnamespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified code must not use usingnamespace (removed in Zig 0.15)"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
+  - id: zig_no_std_mutex
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Zig functions must use bun.Mutex instead of std.Thread.Mutex"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
 rubric:
   - rule: "In Zig code, be careful with allocators and use defer for cleanup."
     source:

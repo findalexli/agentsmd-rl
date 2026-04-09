@@ -51,6 +51,22 @@ checks:
       lines: "43"
       commit: "d610464e0eff5f200543c6bbc5fac616b1620b1e"
 
+  # Repo CI/CD checks (pass_to_pass gates)
+  - id: ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file passes ruff format check from repo CI"
+
+  - id: repo_html_component_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "HTML component unit tests pass (repo CI test-python.yml)"
+
+  - id: gradio_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Gradio package imports correctly (basic smoke test)"
+
 rubric:
   - rule: "Be consistent with the style of the surrounding code."
     source:

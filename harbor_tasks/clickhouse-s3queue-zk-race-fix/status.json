@@ -1,0 +1,58 @@
+{
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": 0.33,
+  "gold_reward": 0.92,
+  "validated_at": "2026-04-09T10:06:10.259683",
+  "total_time": 3257.09,
+  "sandbox_id": "ifjkow5v6l39wqtqs6wly",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1167.47,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "notes": "Fixed test file to search for function definition instead of function call. The test was finding 'cleanupPersistentProcessingNodes()' at line 1192 (a function call) instead of line 1433 (the function definition). Changed all 6 test functions to search for 'void ObjectStorageQueueMetadata::cleanupPersistentProcessingNodes()'. Now NOP test scores 0.33 (4/12) and Gold test scores 0.92 (11/12). The only failing test is test_repo_various_checks which fails due to environment issues (permission denied errors in various_checks.sh), not due to the code being tested.",
+      "nop_reward": 0.33,
+      "gold_reward": 0.92,
+      "tests_total": 12,
+      "tests_passed_nop": 4,
+      "tests_passed_gold": 11,
+      "fix_required": "tests/test_outputs.py - change content.find('cleanupPersistentProcessingNodes()') to content.find('void ObjectStorageQueueMetadata::cleanupPersistentProcessingNodes()') in 6 places",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1008.97
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": 0.33,
+      "gold": 0.92,
+      "backend": "fireworks",
+      "time": 3256.77,
+      "at": "2026-04-09T10:06:10.052511"
+    },
+    {
+      "verdict": "fail",
+      "nop": 0.33,
+      "gold": 0.92,
+      "backend": "fireworks",
+      "time": 3257.09,
+      "at": "2026-04-09T10:06:10.259683"
+    }
+  ]
+}

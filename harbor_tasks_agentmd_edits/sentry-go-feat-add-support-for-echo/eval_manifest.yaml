@@ -35,8 +35,16 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Upstream echo test suite must pass
+- id: repo_make_vet
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo 'make vet' passes including echo module
+- id: repo_make_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo 'make build' passes including echo module
 rubric:
-- rule: "Follow existing conventions \u2014 check neighboring files first"
+- rule: "Follow existing conventions — check neighboring files first"
   source:
     path: CLAUDE.md
     lines: '67'
@@ -56,25 +64,16 @@ rubric:
     path: echo/README.md
     lines: 24-28
     commit: 2cec51a0c3289fc045c8f34c34f6dff2ca361b58
-  reference: "\"github.com/labstack/echo/v5\"\n\t\"github.com/labstack/echo/v5/middleware\"\
-    \napp.GET(\"/\", func(ctx *echo.Context) error {\n\treturn func(ctx *echo.Context)\
-    \ error {\napp.GET(\"/\", func(ctx *echo.Context) error {\napp.GET(\"/foo\", func(ctx\
-    \ *echo.Context) error {"
+  reference: "\"github.com/labstack/echo/v5\"\n\t\"github.com/labstack/echo/v5/middleware\"\napp.GET(\"/\", func(ctx *echo.Context) error {\n\treturn func(ctx *echo.Context\ error {\napp.GET(\"/\", func(ctx *echo.Context) error {\napp.GET(\"/foo\", func(ctx\\n\ *echo.Context) error {"
 - rule: echo/README.md code examples must use *echo.Context handler signatures
   source:
     path: echo/README.md
     lines: 48-111
     commit: 2cec51a0c3289fc045c8f34c34f6dff2ca361b58
-  reference: "\"github.com/labstack/echo/v5\"\n\t\"github.com/labstack/echo/v5/middleware\"\
-    \napp.GET(\"/\", func(ctx *echo.Context) error {\n\treturn func(ctx *echo.Context)\
-    \ error {\napp.GET(\"/\", func(ctx *echo.Context) error {\napp.GET(\"/foo\", func(ctx\
-    \ *echo.Context) error {"
+  reference: "\"github.com/labstack/echo/v5\"\n\t\"github.com/labstack/echo/v5/middleware\"\napp.GET(\"/\", func(ctx *echo.Context) error {\n\treturn func(ctx *echo.Context\ error {\napp.GET(\"/\", func(ctx *echo.Context) error {\napp.GET(\"/foo\", func(ctx\\n\ *echo.Context) error {"
 - rule: Exported functions must have doc comments
   source:
     path: CLAUDE.md
     lines: '73'
     commit: 6ba06389e351fc94be995c2c59382575c88f1b82
-  reference: "# echo/README.md\n\"github.com/labstack/echo/v5\"\n\t\"github.com/labstack/echo/v5/middleware\"\
-    \napp.GET(\"/\", func(ctx *echo.Context) error {\n\treturn func(ctx *echo.Context)\
-    \ error {\napp.GET(\"/\", func(ctx *echo.Context) error {\napp.GET(\"/foo\", func(ctx\
-    \ *echo.Context) error {"
+  reference: "# echo/README.md\n\"github.com/labstack/echo/v5\"\n\t\"github.com/labstack/echo/v5/middleware\"\napp.GET(\"/\", func(ctx *echo.Context) error {\n\treturn func(ctx *echo.Context\ error {\napp.GET(\"/\", func(ctx *echo.Context) error {\napp.GET(\"/foo\", func(ctx\\n\ *echo.Context) error {"

@@ -1,0 +1,108 @@
+version: "1.0"
+source_pr:
+  owner: "ClickHouse"
+  repo: "ClickHouse"
+  pr_number: 102100
+  base_commit: "0ac8d1fb82e45ca6c903f5549d564e867fb422dd"
+  merge_commit: "16684b0f40c6d834872b9fa5d2fd68c6326a339b"
+  title: "Backport #101847 to 26.2: formatDateTime: Treat %W unconditionally as a variable-length formatter"
+
+task:
+  name: "clickhouse-formatdatetime-w-fix"
+  description: "Fix inconsistent behavior of %W formatter in formatDateTime function"
+  target_file: "src/Functions/formatDateTime.cpp"
+  difficulty: "medium"
+  tags: ["c++", "bug-fix", "clickhouse", "date-formatting"]
+
+# Checklist of verifiable behaviors (each maps to a test in test_outputs.py)
+checks:
+  - id: "test_variable_width_formatter_array_fixed"
+    description: "'W' is removed from variable_width_formatter_M_is_month_name array"
+    type: "structural"
+    origin: "gold_patch"
+    points: 2
+
+  - id: "test_w_check_moved_before_conditions"
+    description: "%W check happens before mysql_M_is_month_name conditional"
+    type: "structural"
+    origin: "gold_patch"
+    points: 2
+
+  - id: "test_no_else_block_for_w_check"
+    description: "Else block with %W check has been removed"
+    type: "structural"
+    origin: "gold_patch"
+    points: 2
+
+  - id: "test_formatdatetime_w_with_mysql_m_true"
+    description: "%W formatting works correctly when mysql_M_is_month_name=true"
+    type: "behavioral"
+    origin: "gold_patch"
+    points: 2
+    requires_build: true
+
+  - id: "test_formatdatetime_w_with_mysql_m_false"
+    description: "%W formatting works correctly when mysql_M_is_month_name=false"
+    type: "behavioral"
+    origin: "gold_patch"
+    points: 2
+    requires_build: true
+
+  - id: "test_formatdatetime_w_consistent_across_settings"
+    description: "%W formatting is consistent across mysql_M_is_month_name settings"
+    type: "behavioral"
+    origin: "gold_patch"
+    points: 2
+    requires_build: true
+
+  - id: "test_source_file_syntax_valid"
+    description: "Source file has valid syntax"
+    type: "compilation"
+    origin: "default"
+    points: 1
+
+# Agent configuration rules found in the repo
+agent_config:
+  - rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
+    origin: ".claude/CLAUDE.md"
+    type: "style"
+    severity: "mandatory"
+
+  - rule: "Never use sleep in C++ code to fix race conditions"
+    origin: ".claude/CLAUDE.md"
+    type: "correctness"
+    severity: "mandatory"
+
+  - rule: "When writing messages, say ASan, not ASAN"
+    origin: ".claude/CLAUDE.md"
+    type: "style"
+    severity: "minor"
+
+  - rule: "Do not use -j argument with ninja"
+    origin: ".claude/CLAUDE.md"
+    type: "build"
+    severity: "minor"
+
+  - rule: "When mentioning logical errors, say exception instead of crash"
+    origin: ".claude/CLAUDE.md"
+    type: "style"
+    severity: "minor"
+
+# Rubric for soft/subjective criteria evaluated by LLM judge
+rubric:
+  - criterion: "Code follows Allman brace style"
+    description: "Opening braces are on a new line, matching ClickHouse style"
+    weight: 1
+
+  - criterion: "No unnecessary changes"
+    description: "Fix is minimal and focused on the bug"
+    weight: 1
+
+  - criterion: "Clear and appropriate variable names"
+    description: "Uses same naming conventions as surrounding code"
+    weight: 1
+
+scoring:
+  total_points: 10
+  pass_threshold: 7
+  partial_threshold: 4

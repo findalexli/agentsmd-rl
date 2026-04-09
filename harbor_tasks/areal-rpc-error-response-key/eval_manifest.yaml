@@ -64,6 +64,23 @@ checks:
       lines: "31"
       commit: "a3e36d4af66ac6fa88e723675060cde591ca133e"
 
+  # Repo CI/CD pass_to_pass gates
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on modified files"
+    source:
+      path: ".github/workflows/pre-commit.yml"
+      commit: "a3e36d4af66ac6fa88e723675060cde591ca133e"
+
+  - id: test_repo_precommit_hooks
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pre-commit hooks pass on modified files (skips network-dependent hooks)"
+    source:
+      path: ".github/workflows/pre-commit.yml"
+      commit: "a3e36d4af66ac6fa88e723675060cde591ca133e"
+
 rubric:
   - rule: "Follow existing code patterns in the same module — error response keys should be consistent with the dominant convention in each file."
     source:

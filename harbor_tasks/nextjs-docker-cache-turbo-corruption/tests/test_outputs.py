@@ -396,3 +396,156 @@ def test_turbo_cache_not_stub():
     assert len(lines) >= 40, f"Only {len(lines)} meaningful lines — too short for a real cache client"
     has_http = any(s in src for s in ["fetch", "http", "request", "axios", "got("])
     assert has_http, "No HTTP logic found in turbo-cache.mjs"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_ci) — CI/CD regression checks from the repo's own pipeline
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass
+def test_repo_js_syntax_all_scripts():
+    """All JS files in scripts/ directory parse without syntax errors."""
+    scripts_dir = Path(f"{REPO}/scripts")
+    if not scripts_dir.exists():
+        return
+    js_files = list(scripts_dir.glob("*.js")) + list(scripts_dir.glob("*.mjs"))
+    for path in js_files:
+        if path.name.endswith(".mjs"):
+            r = subprocess.run(
+                ["node", "--input-type=module", "--check"],
+                input=path.read_text(),
+                capture_output=True, text=True, timeout=10
+            )
+        else:
+            r = subprocess.run(
+                ["node", "--check", str(path)],
+                capture_output=True, text=True, timeout=10
+            )
+        assert r.returncode == 0, f"{path.name} has syntax errors: {r.stderr[:500]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_package_json_valid():
+    """package.json is valid JSON and has required fields."""
+    pkg_path = Path(f"{REPO}/package.json")
+    assert pkg_path.exists(), "package.json not found"
+    import json
+    try:
+        pkg = json.loads(pkg_path.read_text())
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"package.json is not valid JSON: {e}")
+    # Verify required fields exist
+    assert "name" in pkg, "package.json missing 'name' field"
+    assert "version" in pkg, "package.json missing 'version' field"
+    assert "scripts" in pkg, "package.json missing 'scripts' field"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_next_swc_package_json_valid():
+    """packages/next-swc/package.json is valid JSON and has required scripts."""
+    import json
+    try:
+        pkg = json.loads(Path(PKG_JSON).read_text())
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"packages/next-swc/package.json is not valid JSON: {e}")
+    assert "name" in pkg, "package.json missing 'name' field"
+    assert pkg.get("name") == "@next/swc", f"Expected name @next/swc, got {pkg.get('name')}"
+    scripts = pkg.get("scripts", {})
+    # Verify essential Rust build scripts exist
+    assert "rust-check-clippy" in scripts, "Missing rust-check-clippy script"
+    assert "rust-check-fmt" in scripts, "Missing rust-check-fmt script"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_cargo_toml_valid():
+    """Cargo.toml is valid and workspace configuration is parseable."""
+    cargo_path = Path(f"{REPO}/Cargo.toml")
+    assert cargo_path.exists(), "Cargo.toml not found"
+    cargo_text = cargo_path.read_text()
+    # Basic TOML structure checks
+    assert "[workspace]" in cargo_text, "Cargo.toml missing [workspace] section"
+    assert "members" in cargo_text, "Cargo.toml missing workspace members"
+    assert "next-napi-bindings" in cargo_text, "next-napi-bindings not in workspace"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_github_workflows_valid_yaml():
+    """GitHub workflow files are valid YAML."""
+    workflows_dir = Path(f"{REPO}/.github/workflows")
+    if not workflows_dir.exists():
+        return
+    # Check at least one key workflow file
+    build_test = workflows_dir / "build_and_test.yml"
+    if build_test.exists():
+        try:
+            import yaml
+            yaml.safe_load(build_test.read_text())
+        except ImportError:
+            # yaml not installed, skip detailed validation
+            pass
+        except Exception as e:
+            raise AssertionError(f"build_and_test.yml is not valid YAML: {e}")
+
+
+# [repo_ci] pass_to_pass
+def test_repo_docker_native_build_js_syntax():
+    """docker-native-build.js syntax is valid and file structure is intact."""
+    assert Path(NATIVE_JS).exists(), "docker-native-build.js not found"
+    r = subprocess.run(
+        ["node", "--check", NATIVE_JS],
+        capture_output=True, text=True, timeout=10
+    )
+    assert r.returncode == 0, f"docker-native-build.js has syntax errors: {r.stderr[:500]}"
+    src = Path(NATIVE_JS).read_text()
+    # Verify essential functions exist
+    assert "ensureDockerImage" in src, "ensureDockerImage function not found"
+    assert "buildTarget" in src or "targets" in src, "Build target logic not found"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ci_scripts_exist():
+    """CI scripts referenced by build_and_deploy.yml exist and are valid."""
+    workflow = Path(f"{REPO}/.github/workflows/build_and_deploy.yml")
+    if not workflow.exists():
+        return
+    # Check for scripts referenced in the workflow
+    scripts_to_check = [
+        "scripts/docker-image-cache.js",
+        "scripts/docker-native-build.js",
+        "scripts/docker-native-build.sh",
+    ]
+    for script in scripts_to_check:
+        path = Path(f"{REPO}/{script}")
+        assert path.exists(), f"CI script {script} referenced by workflow not found"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_turbo_json_valid():
+    """turbo.json is valid JSON if it exists."""
+    turbo_path = Path(f"{REPO}/turbo.json")
+    if not turbo_path.exists():
+        return
+    import json
+    try:
+        json.loads(turbo_path.read_text())
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"turbo.json is not valid JSON: {e}")
+
+
+# [repo_ci] pass_to_pass
+def test_repo_turbo_jsonc_valid():
+    """packages/next-swc/turbo.jsonc is valid JSONC if it exists."""
+    if not Path(TURBO_JSONC).exists():
+        return
+    # turbo.jsonc may contain comments, so we just check basic structure
+    text = Path(TURBO_JSONC).read_text()
+    assert "{" in text and "}" in text, "turbo.jsonc missing JSON structure markers"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_rust_toolchain_toml_valid():
+    """rust-toolchain.toml is valid and parseable."""
+    toolchain_path = Path(f"{REPO}/rust-toolchain.toml")
+    assert toolchain_path.exists(), "rust-toolchain.toml not found"
+    text = toolchain_path.read_text()
+    assert "[toolchain]" in text, "rust-toolchain.toml missing [toolchain] section"

@@ -12,6 +12,26 @@ checks:
     origin: static
     description: "poll.sh must be valid bash syntax"
 
+  - id: copilot_skill_files_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Copilot skill files (poll.sh and SKILL.md) must exist"
+
+  - id: poll_sh_executable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "poll.sh must have bash shebang and be executable"
+
+  - id: skill_md_valid_yaml_frontmatter
+    type: pass_to_pass
+    origin: repo_tests
+    description: "SKILL.md must have valid YAML frontmatter structure"
+
+  - id: skill_md_has_required_fields
+    type: pass_to_pass
+    origin: repo_tests
+    description: "SKILL.md must have required frontmatter fields (name, description, allowed-tools)"
+
   - id: poll_session_id_polling
     type: fail_to_pass
     origin: pr_diff

@@ -204,3 +204,29 @@ def test_no_new_explicit_any():
     assert current_count <= base_count, (
         f"New 'any' type annotations added: was {base_count}, now {current_count}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — verify repo's own checks pass
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's lint check (oxlint) passes on the codebase (pass_to_pass)."""
+    # Install dependencies and run lint
+    r = subprocess.run(
+        ["bash", "-c", "pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_embeddings_tests():
+    """Repo's embeddings-http tests pass (pass_to_pass)."""
+    # Install dependencies and run embeddings-specific tests
+    r = subprocess.run(
+        ["bash", "-c", "pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm exec vitest run --config vitest.gateway.config.ts src/gateway/embeddings-http.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Embeddings tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

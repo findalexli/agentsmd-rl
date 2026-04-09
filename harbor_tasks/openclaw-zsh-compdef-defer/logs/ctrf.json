@@ -1,0 +1,148 @@
+{
+    "results": {
+        "tool": {
+            "name": "pytest",
+            "version": "9.0.3"
+        },
+        "summary": {
+            "tests": 12,
+            "passed": 7,
+            "failed": 5,
+            "skipped": 0,
+            "pending": 0,
+            "other": 0,
+            "start": 1775735001060,
+            "stop": 1775735091096
+        },
+        "environment": {
+            "buildName": "Pytest JSON CTRF Report",
+            "buildNumber": "000",
+            "buildUrl": "https://ctrf.io"
+        },
+        "tests": [
+            {
+                "name": "test_outputs.py::test_typescript_file_valid",
+                "status": "passed",
+                "duration": 1,
+                "start": 1775735001075,
+                "stop": 1775735001076,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_compdef_not_bare_at_toplevel",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 58,
+                "start": 1775735001077,
+                "stop": 1775735001135,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "/tests/test_outputs.py:87: in test_compdef_not_bare_at_toplevel\n    assert not re.match(r\"^compdef\\s+\", line), (\nE   AssertionError: Found bare top-level compdef: 'compdef _openclaw_root_completion openclaw'\nE     compdef must be inside a registration function\nE   assert not <re.Match object; span=(0, 8), match='compdef '>\nE    +  where <re.Match object; span=(0, 8), match='compdef '> = <function match at 0x7f30aea965c0>('^compdef\\\\s+', 'compdef _openclaw_root_completion openclaw')\nE    +    where <function match at 0x7f30aea965c0> = re.match",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_compdef_availability_check",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 40,
+                "start": 1775735001135,
+                "stop": 1775735001175,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "/tests/test_outputs.py:109: in test_compdef_availability_check\n    assert any(c in section for c in checks), (\nE   AssertionError: No compdef availability check found \u2014 must verify compdef exists before calling.\nE     Accepted patterns: ['$+functions[compdef]', 'whence compdef', 'whence -w compdef', 'type compdef', 'command -v compdef']\nE   assert False\nE    +  where False = any(<generator object test_compdef_availability_check.<locals>.<genexpr> at 0x7f30adde3220>)",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_precmd_hook_queues_deferred_registration",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 33,
+                "start": 1775735001176,
+                "stop": 1775735001209,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "/tests/test_outputs.py:123: in test_precmd_hook_queues_deferred_registration\n    assert \"precmd_functions\" in section, (\nE   AssertionError: precmd_functions not referenced \u2014 must queue deferred registration\nE   assert 'precmd_functions' in 'compdef _openclaw_root_completion openclaw\\n\\n'",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_cleanup_after_successful_registration",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 39,
+                "start": 1775735001210,
+                "stop": 1775735001249,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "/tests/test_outputs.py:144: in test_cleanup_after_successful_registration\n    assert any(p in section for p in cleanup_patterns), (\nE   AssertionError: No cleanup after registration \u2014 must remove hook from precmd_functions and/or undefine the registration function\nE   assert False\nE    +  where False = any(<generator object test_cleanup_after_successful_registration.<locals>.<genexpr> at 0x7f30adde2dc0>)",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_dedup_prevents_duplicate_hooks",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 38,
+                "start": 1775735001250,
+                "stop": 1775735001288,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "/tests/test_outputs.py:162: in test_dedup_prevents_duplicate_hooks\n    assert any(p in section for p in dedup_patterns), (\nE   AssertionError: No deduplication check \u2014 repeated sourcing could add duplicate precmd hooks\nE   assert False\nE    +  where False = any(<generator object test_dedup_prevents_duplicate_hooks.<locals>.<genexpr> at 0x7f30adde2180>)",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_zsh_completion_function_intact",
+                "status": "passed",
+                "duration": 1,
+                "start": 1775735001288,
+                "stop": 1775735001289,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_no_explicit_any",
+                "status": "passed",
+                "duration": 2,
+                "start": 1775735001289,
+                "stop": 1775735001291,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_no_ts_nocheck",
+                "status": "passed",
+                "duration": 5,
+                "start": 1775735001291,
+                "stop": 1775735001296,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_repo_lint",
+                "status": "passed",
+                "duration": 19915,
+                "start": 1775735001297,
+                "stop": 1775735021212,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_repo_format",
+                "status": "passed",
+                "duration": 1421,
+                "start": 1775735021213,
+                "stop": 1775735022634,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_repo_cli_unit_tests",
+                "status": "passed",
+                "duration": 68462,
+                "start": 1775735022634,
+                "stop": 1775735091096,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            }
+        ]
+    }
+}

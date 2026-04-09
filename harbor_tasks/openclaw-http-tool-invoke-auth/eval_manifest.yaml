@@ -12,6 +12,21 @@ checks:
     origin: static
     description: "Modified TS files must transpile without errors"
 
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's oxlint (pnpm lint) passes"
+
+  - id: test_repo_security_audit
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's security audit tests pass"
+
+  - id: test_repo_modified_files_formatted
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files are correctly formatted (oxfmt)"
+
   - id: test_deny_list_blocks_execution_tools
     type: fail_to_pass
     origin: pr_diff

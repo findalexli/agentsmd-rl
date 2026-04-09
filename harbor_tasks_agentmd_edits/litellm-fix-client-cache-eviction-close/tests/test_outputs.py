@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -32,6 +33,17 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     )
 
 
+def _run_shell(cmd: list, timeout: int = 60, cwd: str = REPO) -> subprocess.CompletedProcess:
+    """Execute a shell command in the repo context."""
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=cwd,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -43,6 +55,48 @@ def test_syntax_check():
     tree = ast.parse(handler.read_text())
     class_names = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
     assert "LLMClientCache" in class_names
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD tests that pass on base and after fix
+# ---------------------------------------------------------------------------
+
+
+def test_repo_ruff_caching():
+    """Ruff linting passes on litellm/caching/ directory (pass_to_pass)."""
+    # Skip if ruff is not installed
+    if shutil.which("ruff") is None:
+        pytest.skip("ruff not installed")
+
+    r = _run_shell(
+        ["ruff", "check", "litellm/caching/", "--output-format=concise"],
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_caching_handler_tests():
+    """Repo's caching handler unit tests pass (pass_to_pass)."""
+    # Skip if pytest is not available
+    if shutil.which("pytest") is None:
+        pytest.skip("pytest not installed")
+
+    r = _run_shell(
+        ["pytest", "tests/test_litellm/caching/test_llm_caching_handler.py", "-v", "--tb=short"],
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Caching handler tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_import_caching():
+    """Caching module imports work correctly (pass_to_pass)."""
+    r = _run_py("""
+from litellm.caching import llm_caching_handler
+from litellm.caching.llm_caching_handler import LLMClientCache
+print("All caching imports OK")
+""")
+    assert r.returncode == 0, f"Import failed:\n{r.stderr}"
+    assert "All caching imports OK" in r.stdout
 
 
 # ---------------------------------------------------------------------------

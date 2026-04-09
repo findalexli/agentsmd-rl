@@ -159,3 +159,37 @@ def test_script_uses_let_not_var():
             continue
         assert not stripped.startswith("var "), \
             f"Line {i} uses 'var' instead of 'let/const' per AGENTS.md: {line.strip()}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass (repo_tests) — ensure repo's own checks pass
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — .github/workflows/check.yaml
+def test_repo_lint():
+    """Repo's ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — .github/workflows/check.yaml
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — .github/workflows/format.yml (check only)
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

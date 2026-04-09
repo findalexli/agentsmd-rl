@@ -15,8 +15,40 @@ TARGET = f"{REPO}/gradio/components/custom_html_components/colored_checkbox_grou
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) - syntax / compilation checks
 # ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_repo_imports():
+    """Repo main gradio package imports successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import gradio; print('gradio imported')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"gradio import failed:\n{r.stderr}"
+
+
+# [static] pass_to_pass
+def test_repo_component_imports():
+    """ColoredCheckboxGroup component imports successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "from gradio.components.custom_html_components.colored_checkbox_group import ColoredCheckboxGroup; "
+         "print('ColoredCheckboxGroup imported')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ColoredCheckboxGroup import failed:\n{r.stderr}"
+
+
+# [static] pass_to_pass
+def test_repo_checkbox_group_tests():
+    """Repo checkbox group component tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "test/components/test_checkbox_group.py", "-v", "--tb=short", "-x"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Checkbox group tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
 
 # [static] pass_to_pass
 def test_syntax_check():
@@ -29,7 +61,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) - core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -93,7 +125,7 @@ def test_api_info_schema_structure():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff / static) — regression + anti-stub
+# Pass-to-pass (pr_diff / static) - regression + anti-stub
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass

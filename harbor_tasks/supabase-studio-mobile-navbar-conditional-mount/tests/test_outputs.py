@@ -148,3 +148,47 @@ def test_layout_header_still_renders():
     if conditional_close_line != -1:
         assert layout_header_line > conditional_close_line, \
             "LayoutHeader should render after and outside the isMobile conditional"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    # Requires pnpm install and NODE_OPTIONS for memory
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=60, cwd=f"{REPO}/apps/studio",
+    )
+    r = subprocess.run(
+        ["pnpm", "install"],
+        capture_output=True, text=True, timeout=180, cwd=f"{REPO}/apps/studio",
+    )
+    r = subprocess.run(
+        ["npm", "run", "typecheck"],
+        capture_output=True, text=True, timeout=180, cwd=f"{REPO}/apps/studio",
+        env={**subprocess.os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"},
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint passes with no errors (pass_to_pass)."""
+    # Requires pnpm install
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=60, cwd=f"{REPO}/apps/studio",
+    )
+    r = subprocess.run(
+        ["pnpm", "install"],
+        capture_output=True, text=True, timeout=180, cwd=f"{REPO}/apps/studio",
+    )
+    r = subprocess.run(
+        ["npm", "run", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/apps/studio",
+    )
+    # Lint returns exit code 0 if only warnings (no errors)
+    assert r.returncode == 0, f"Lint failed with errors:\n{r.stderr[-500:]}{r.stdout[-500:]}"

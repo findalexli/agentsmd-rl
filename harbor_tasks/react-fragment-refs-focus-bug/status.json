@@ -1,60 +1,65 @@
 {
-  "validations": [
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T12:09:21.758566",
+  "total_time": 10649.1,
+  "sandbox_id": "icw3kj95nyvudywwgs86u",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 570.83,
+      "notes": "Added 3 pass-to-pass tests based on repo's CI/CD pipeline. CI commands discovered: (1) node ./scripts/tasks/eslint.js TARGET - ESLint check on modified file; (2) node ./scripts/tasks/flow.js dom - Flow typecheck for dom config; (3) yarn test --testPathPattern=react-dom-bindings -r=stable --env=development --ci - Unit tests for modified package. Tests added to test_outputs.py: test_repo_lint, test_repo_flow, test_repo_unit_tests_relevant. Docker build failed due to Dockerfile bug (git user config after git commit step), but this is expected to be fixed by validate agent."
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 130.71,
+      "notes": ""
+    },
+    "validate": {
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 856.03
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T13:47:53.983074",
-      "phase": "e2b_wave2",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Template build: failed to run command 'npm install -g yarn': exit status 1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6513.73,
+      "at": "2026-04-09T06:38:07.392251"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.959237",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'npm install -g yarn': exit status 1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 10648.82,
+      "at": "2026-04-09T12:09:21.584327"
     },
     {
-      "timestamp": "2026-04-02T17:47:54.333250",
-      "phase": "local_docker_validate",
-      "runner": "local_docker_82",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "ch --depth=1 origin $BASE_COMMIT     && git checkout $BASE_COMMIT     && rm -rf .git     && git init     && git add -A     && git commit -m \\\"snapshot\\\"\" did not complete successfully: exit code: 128\n"
-    },
-    {
-      "timestamp": "2026-04-02T18:27:57.350511",
-      "phase": "e2b_highres",
-      "runner": "e2b_4cpu_4gb",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'npm install -g yarn': exit status 1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.605362",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'npm install -g yarn': exit status 1"
-    },
-    {
-      "timestamp": "2026-04-03T09:20:33.890357",
-      "phase": "dockerfile_fix",
-      "runner": "manual",
-      "verdict": "pending_rebuild",
-      "notes": "Replaced npm install -g yarn with corepack enable + corepack prepare yarn"
-    },
-    {
-      "timestamp": "2026-04-03T09:43:39.969876",
-      "phase": "e2b_post_dockerfile_fix",
-      "runner": "e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 10649.1,
+      "at": "2026-04-09T12:09:21.758566"
     }
   ]
 }

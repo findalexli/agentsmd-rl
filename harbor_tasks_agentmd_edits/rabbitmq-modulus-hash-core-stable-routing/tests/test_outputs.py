@@ -12,6 +12,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import subprocess
+import os
 from pathlib import Path
 
 REPO = "/workspace/rabbitmq-server"
@@ -219,3 +220,87 @@ print("PASS")
 """)
     assert r.returncode == 0, f"README stable routing check failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - existing CI/CD checks that must pass
+# on both base commit and after the gold fix
+# ---------------------------------------------------------------------------
+
+def test_repo_core_exchange_type_added():
+    """Core modulus_hash exchange type module exists after fix (pass_to_pass).
+
+    After the fix, the x-modulus-hash exchange type is moved to core.
+    This test verifies the core module structure is valid.
+    """
+    # Check core module exists (it exists after fix, not at base commit)
+    # This test passes at both commits - at base, we skip; at fix, we verify
+    core_module_path = os.path.join(REPO, "deps/rabbit/src/rabbit_exchange_type_modulus_hash.erl")
+
+    if not os.path.exists(core_module_path):
+        # At base commit, core module doesn't exist yet - that's expected
+        # Verify at least the old module exists at base
+        old_path = os.path.join(REPO, "deps/rabbitmq_sharding/src/rabbit_sharding_exchange_type_modulus_hash.erl")
+        assert os.path.exists(old_path), "Neither old nor new modulus_hash module exists"
+        return
+
+    # After fix - verify the core module structure
+    content = open(core_module_path).read()
+
+    # Must have correct module declaration
+    assert "-module(rabbit_exchange_type_modulus_hash)." in content, \
+        "Invalid core module declaration"
+
+    # Must have behaviour
+    assert "-behaviour(rabbit_exchange_type)." in content, "Missing behaviour in core module"
+
+    # Must export required functions
+    assert "route/3" in content, "Missing route export"
+    assert "description/0" in content, "Missing description export"
+
+    # Must have boot step registration
+    assert "-rabbit_boot_step(" in content, "Missing boot step registration"
+
+
+def test_repo_makefile_structure():
+    """RabbitMQ Makefile has valid structure for test targets (pass_to_pass)."""
+    makefile_path = os.path.join(REPO, "deps/rabbit/Makefile")
+    assert os.path.exists(makefile_path), "Makefile not found"
+
+    content = open(makefile_path).read()
+
+    # Must have parallel CT set definitions (CI test structure)
+    assert "PARALLEL_CT_SET_1" in content, "Missing PARALLEL_CT_SET_1"
+    assert "PARALLEL_CT_SET_5" in content, "Missing PARALLEL_CT_SET_5"
+
+    # Must have test-build target
+    assert "test-build:" in content or "ct-" in content, "Missing test targets"
+
+
+def test_repo_readme_structure():
+    """Sharding README has expected structure (pass_to_pass)."""
+    path = os.path.join(REPO, "deps/rabbitmq_sharding/README.md")
+    assert os.path.exists(path), "README not found"
+
+    content = open(path).read()
+
+    # Must have expected sections
+    assert "# " in content, "Missing header"
+
+    # Must mention exchange type (before or after change)
+    assert "x-modulus-hash" in content, "Missing x-modulus-hash mention"
+
+
+def test_repo_git_structure():
+    """Git repository is valid and has expected commit (pass_to_pass)."""
+    git_dir = os.path.join(REPO, ".git")
+    assert os.path.isdir(git_dir), "Not a git repository"
+
+    # Check we're at the expected commit
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        capture_output=True, text=True, cwd=REPO
+    )
+    assert result.returncode == 0, "Failed to get git HEAD"
+    # Allow for any commit (base or after fix)
+    assert len(result.stdout.strip()) == 40, "Invalid commit hash"

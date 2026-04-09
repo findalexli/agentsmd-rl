@@ -186,6 +186,49 @@ def test_existing_tests_pass():
     assert "export const webkit" in webkit_src, "webkit dependency missing"
 
 
+# [repo_tests] pass_to_pass
+def test_typescript_syntax_node_check():
+    """Modified TypeScript files have valid syntax (pass_to_pass)."""
+    files = [BUILD_TS, CONFIG_TS, FLAGS_TS, WEBKIT_TS]
+    for path in files:
+        r = subprocess.run(
+            ["node", "--check", str(path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"Syntax check failed for {path}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_oxlint_passes():
+    """Modified files pass oxlint linting (pass_to_pass)."""
+    files = [BUILD_TS, CONFIG_TS, FLAGS_TS, WEBKIT_TS]
+    r = subprocess.run(
+        ["npx", "oxlint", "--config=oxlint.json"] + [str(f) for f in files],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_prettier_formatting():
+    """Modified files pass prettier format check (pass_to_pass)."""
+    files = [BUILD_TS, CONFIG_TS, FLAGS_TS, WEBKIT_TS]
+    r = subprocess.run(
+        ["npx", "prettier", "--check"] + [str(f) for f in files],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
 # [static] pass_to_pass
 def test_not_stub():
     """resolveConfig has real PGO validation logic, not placeholder."""

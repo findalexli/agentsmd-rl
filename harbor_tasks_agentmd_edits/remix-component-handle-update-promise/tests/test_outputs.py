@@ -19,6 +19,47 @@ HANDLE_MD = f"{REPO}/packages/component/docs/handle.md"
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI checks that should pass on base and gold
+# ---------------------------------------------------------------------------
+
+
+def test_repo_component_typecheck():
+    """Component package TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit", "--project", "packages/component/tsconfig.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_component_tests():
+    """Component package tests pass (pass_to_pass) — relevant subset."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/component", "run", "test"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Component tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lint():
+    """Repo lint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "run", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_format_check():
+    """Repo format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "run", "format:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral type check
 # ---------------------------------------------------------------------------
 

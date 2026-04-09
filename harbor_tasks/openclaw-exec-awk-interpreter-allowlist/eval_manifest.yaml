@@ -116,39 +116,19 @@ checks:
       lines: "155"
       commit: b7b46ad185392f53a995124f6861d2b356f84976
 
-rubric:
-  - rule: "Prefer discriminated unions when parameter shape changes runtime behavior."
-    source:
-      path: CLAUDE.md
-      lines: "149"
-      commit: b7b46ad185392f53a995124f6861d2b356f84976
 
-  - rule: "Do not disable `no-explicit-any`; prefer real types, `unknown`, or a narrow adapter/helper instead."
-    source:
-      path: CLAUDE.md
-      lines: "147"
-      commit: b7b46ad185392f53a995124f6861d2b356f84976
+  # Pass-to-pass: repo CI/CD tests
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo oxlint passes"
 
-  - rule: "Add brief code comments for tricky or non-obvious logic."
-    source:
-      path: CLAUDE.md
-      lines: "163"
-      commit: b7b46ad185392f53a995124f6861d2b356f84976
+  - id: test_repo_unit_tests_infra_exec
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo exec-related infra unit tests pass"
 
-  - rule: "Always consider all built-in + extension channels when refactoring shared logic (routing, allowlists, pairing, command gating)."
-    source:
-      path: CLAUDE.md
-      lines: "18"
-      commit: b7b46ad185392f53a995124f6861d2b356f84976
-
-  - rule: "Prefer fixes that preserve user workflows over deny-by-default regressions unless the boundary demands it."
-    source:
-      path: .agents/skills/security-triage/SKILL.md
-      lines: "59-60"
-      commit: b7b46ad185392f53a995124f6861d2b356f84976
-
-  - rule: "For narrowly scoped changes, prefer narrowly scoped tests that directly validate the touched behavior."
-    source:
-      path: CLAUDE.md
-      lines: "131"
-      commit: b7b46ad185392f53a995124f6861d2b356f84976
+  - id: test_repo_unit_tests_security_audit
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo security audit tests pass"

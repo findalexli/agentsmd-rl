@@ -1,0 +1,33 @@
+name = "selenium-grid-vnc-caps-fix"
+title = "Selenium Grid: Fix VNC caps not propagated for sessions without browserName"
+description = """
+When a session request arrives without a browserName capability (e.g. proxy-only configuration),
+the Selenium Grid should still propagate VNC capabilities (se:vncEnabled, se:noVncPort)
+from the slot stereotype to the session capabilities.
+"""
+
+[source]
+owner = "SeleniumHQ"
+repo = "selenium"
+pr_number = 17235
+base_commit = "b1a7b8de7bf8c9889627914888adee44c01f925a"
+merge_commit = "458c350ca9c711184366d4cfc0dc547a26150f67"
+
+[metadata]
+difficulty = "easy"
+category = "bug_fix"
+tags = ["java", "selenium", "grid", "capabilities", "vnc"]
+estimated_time = "15 min"
+
+[environment]
+dockerfile = "environment/Dockerfile"
+
+[solution]
+script = "solution/solve.sh"
+
+[testing]
+verifier = "tests/test_outputs.py"
+
+[time]
+agent_timeout = 1800
+verifier_timeout = 300

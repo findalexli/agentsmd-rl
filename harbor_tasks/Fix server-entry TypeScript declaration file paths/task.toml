@@ -1,0 +1,24 @@
+task_id = "tanstack-router-7035"
+name = "Fix server-entry TypeScript declaration file paths"
+description = "Fix missing TypeScript declaration files for server-entry exports by adding proper tsconfig.server-entry.json files with correct rootDir configuration"
+repo = "TanStack/router"
+pr_number = 7035
+base_commit = "77ad7925d4a6ea88ecd523ca7445ca192ce7a91a"
+merge_commit = "5016e4e4c7387a1c0342e474e3e83bdf664e2f1d"
+target_files = [
+    "packages/react-start/vite.config.server-entry.ts",
+    "packages/solid-start/vite.config.server-entry.ts",
+    "packages/vue-start/vite.config.server-entry.ts"
+]
+
+difficulty = "medium"
+estimated_time = "20 min"
+tags = ["typescript", "build-configuration", "vite", "monorepo"]
+
+[timeouts]
+agent = 1800
+verifier = 300
+
+[environment]
+# Node.js 22 with pnpm
+# Requires building TypeScript packages and running publint/attw checks

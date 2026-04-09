@@ -195,3 +195,52 @@ def test_no_as_any_casts():
         assert " as any" not in src, (
             f"{Path(fpath).name}: contains forbidden 'as any' type cast"
         )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates
+# ---------------------------------------------------------------------------
+
+
+def _ensure_deps():
+    """Install pnpm and dependencies if not already present."""
+    import os
+    # Check if node_modules exists
+    if not Path(f"{REPO}/node_modules/.bin").exists():
+        # Install pnpm globally
+        subprocess.run(
+            ["npm", "install", "-g", "pnpm@10.24.0"],
+            capture_output=True, timeout=120
+        )
+        # Install dependencies
+        env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+        subprocess.run(
+            ["pnpm", "install", "--frozen-lockfile"],
+            capture_output=True, cwd=REPO, timeout=300, env=env
+        )
+
+
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    import os
+    _ensure_deps()
+    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+    r = subprocess.run(
+        ["pnpm", "run", "typecheck"],
+        capture_output=True, text=True, timeout=600, cwd=f"{REPO}/apps/studio",
+        env=env
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_lint():
+    """Repo's lint checks pass (pass_to_pass)."""
+    import os
+    _ensure_deps()
+    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+    r = subprocess.run(
+        ["pnpm", "run", "lint"],
+        capture_output=True, text=True, timeout=600, cwd=f"{REPO}/apps/studio",
+        env=env
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

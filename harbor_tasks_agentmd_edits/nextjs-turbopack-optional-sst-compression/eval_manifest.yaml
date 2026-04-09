@@ -8,13 +8,37 @@ source:
 
 checks:
   # ---------------------------------------------------------------------------
-  # Behavioral tests using subprocess.run() - core functionality
+  # Pass-to-pass tests - repo CI/CD checks (must pass on base and after fix)
   # ---------------------------------------------------------------------------
 
   - id: code_compiles
     type: pass_to_pass
-    origin: static
+    origin: repo_tests
     description: "The crate should compile successfully via cargo check"
+
+  - id: cargo_check_lib
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo check --lib passes (Rust compilation check)"
+
+  - id: cargo_check_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo check --tests passes (Rust test compilation check)"
+
+  - id: cargo_clippy_lib
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo clippy --lib passes (Rust linting check)"
+
+  - id: cargo_fmt_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo fmt --check passes (Rust code formatting check)"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass tests - PR changes (must fail on base, pass after fix)
+  # ---------------------------------------------------------------------------
 
   - id: arc_bytes_exports_correctly
     type: fail_to_pass

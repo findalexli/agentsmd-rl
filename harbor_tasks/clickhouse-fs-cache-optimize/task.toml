@@ -1,0 +1,28 @@
+name = "clickhouse-fs-cache-optimize"
+title = "Optimize filesystem cache loading on server startup"
+owner = "ClickHouse"
+repo = "ClickHouse"
+pr_number = 101949
+base_commit = "2238cb4115b7215be35fe15b22b70559ea82f14c"
+merge_commit = "5dbaecca8426566679510065e33f8efec7421f7a"
+target_files = [
+    "src/Interpreters/Cache/FileCache.cpp",
+    "src/Interpreters/Cache/IFileCachePriority.h",
+    "src/Interpreters/Cache/LRUFileCachePriority.h",
+    "src/Interpreters/Cache/SLRUFileCachePriority.cpp",
+    "src/Interpreters/Cache/SLRUFileCachePriority.h",
+    "src/Interpreters/Cache/SplitFileCachePriority.cpp",
+    "src/Interpreters/Cache/SplitFileCachePriority.h"
+]
+
+[difficulty]
+level = "medium"
+estimated_time = "60m"
+
+[tags]
+categories = ["c++", "performance", "filesystem", "cache"]
+features = ["refactoring", "locking-optimization"]
+
+[timeouts]
+agent = 3600
+verifier = 300

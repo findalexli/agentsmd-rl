@@ -1,56 +1,70 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-04-01T20:15:41.694836",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T00:00:00.000000",
-      "phase": "docker_validate_v2",
-      "runner": "manual",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:18:22.522646",
+  "total_time": 2465.23,
+  "sandbox_id": "in6w97wjzj1uzq44ksmmx",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T09:13:41.938053",
+      "phase": "p2p_enrichment",
+      "runner": "enrich_p2p_tests",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1",
-      "format": "pytest_binary"
+      "notes": "Added 3 repo CI/CD pass-to-pass tests: test_repo_lint (oxlint --type-aware), test_repo_unit_tests_infra_exec (vitest on exec-inline-eval, exec-approvals-allow-always, exec-approvals), test_repo_unit_tests_security_audit (vitest on security/audit). All verified passing on base commit b7b46ad185392f53a995124f6861d2b356f84976."
     },
-    {
-      "timestamp": "2026-04-02T14:28:08.951375",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'pnpm install --frozen-lockfile 2>/dev/null || pnpm install': signal: killed"
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 575.3,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-04-02T17:47:54.321984",
-      "phase": "local_docker_validate",
-      "runner": "local_docker_82",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": ": failed to solve: node:22-slim: failed to resolve source metadata for docker.io/library/node:22-slim: failed to do request: Head \"https://registry-1.docker.io/v2/library/node/manifests/22-slim\": EOF\n"
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed. Docker build successful. NOP test: 8 fail-to-pass tests correctly fail on base commit (reward=0). Gold test: all 19 tests pass after fix (reward=1). No rubric section in eval_manifest.yaml.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 262.54
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.04,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T18:27:57.337809",
-      "phase": "e2b_highres",
-      "runner": "e2b_4cpu_4gb",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:18:22.354435"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.556858",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2465.23,
+      "at": "2026-04-09T02:18:22.522646"
     }
   ]
 }

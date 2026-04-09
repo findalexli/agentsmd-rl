@@ -62,4 +62,25 @@ checks:
     origin: static
     description: "Modified files have substantive content (not stubs)"
 
+  # Repo CI/CD pass-to-pass gates
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All Python files in sgl-kernel/python/sgl_kernel parse without errors"
+
+  - id: test_repo_cmake_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CMake flashmla.cmake has valid structure with balanced blocks"
+
+  - id: test_repo_flashmla_py_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "flash_mla.py has valid imports and torch.ops dispatch"
+
+  - id: test_repo_cmake_git_tag_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CMake has a valid GIT_TAG format for FetchContent"
+
 rubric: []

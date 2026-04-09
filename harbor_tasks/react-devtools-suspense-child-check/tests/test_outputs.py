@@ -112,6 +112,26 @@ def test_error_message_describes_parent_child_mismatch():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow_dom_browser():
+    """Repo's Flow type checking passes for dom-browser (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-browser"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_existing_error_patterns_preserved():
     """Other existing error checks in the suspense remove block must still be present.
 

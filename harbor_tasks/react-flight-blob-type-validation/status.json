@@ -1,31 +1,78 @@
 {
-  "validations": [
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T12:07:50.788412",
+  "total_time": 10558.12,
+  "sandbox_id": "i50nw6judsigtcd5uc7ki",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 380.11,
+      "notes": "Docker build failed due to git config ordering issue (config must be set before commit). CI commands discovered from package.json: yarn lint (ESLint), yarn flow-ci (Flow type checking), yarn test (Jest tests). Added 2 pass_to_pass tests: test_repo_lint and test_repo_flow. Did NOT add yarn test as full suite because it would be too slow - the existing repo_tests test already uses targeted Jest patterns."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 299.4,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed 2 issues: (1) Dockerfile git config ordering - moved git config user.email/user.name BEFORE git commit, (2) test_outputs.py blob_validation test - added JSON parsing to detect when Jest skips all tests (test does not exist on base commit). All 4 checks now pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (1.0).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 726.73
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.73,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T13:47:53.982965",
-      "phase": "e2b_wave2",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 6441.43,
+      "at": "2026-04-09T06:37:16.596719"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.959064",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.602687",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 10557.87,
+      "at": "2026-04-09T12:07:50.628631"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 10558.12,
+      "at": "2026-04-09T12:07:50.788412"
     }
   ]
 }

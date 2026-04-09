@@ -1,0 +1,113 @@
+source:
+  pr: JetBrains/kotlin#5792
+  title: "Fix annotation repeatable checks around ALL use-site target, simplify use-site target checks nearby"
+  base_commit: "3325ebdb5efefe65d4f4e93540ffc010e3db8055"
+  merge_commit: "c1436f385a6a27fdde2f75208e241e17153983e2"
+
+checks:
+  - id: "annotation_all_repeatable_detection"
+    name: "Annotation ALL target repeatable check"
+    type: "pytest"
+    description: "FirAnnotationHelpers.kt has AnnotationUseSiteTarget.ALL check"
+    origin: "behavioral"
+
+  - id: "opt_in_checker_simplified"
+    name: "OptIn checker simplified"
+    type: "pytest"
+    description: "FirOptInMarkedDeclarationChecker uses declaration type checks"
+    origin: "behavioral"
+
+  - id: "opt_in_checker_backing_field"
+    name: "OptIn checker backing field"
+    type: "pytest"
+    description: "Backing field check uses declaration type instead of use-site target"
+    origin: "behavioral"
+
+  - id: "annotation_checker_all_target"
+    name: "Annotation checker ALL target"
+    type: "pytest"
+    description: "FirAnnotationChecker handles ALL target without crashing"
+    origin: "behavioral"
+
+  - id: "supertypes_checker_comment"
+    name: "Supertypes checker comment"
+    type: "pytest"
+    description: "Explanatory comment about type annotations present"
+    origin: "code_quality"
+
+  - id: "parcelize_checker_simplified"
+    name: "Parcelize checker simplified"
+    type: "pytest"
+    description: "FirParcelizePropertyChecker has simplified hasIgnoredOnParcel"
+    origin: "behavioral"
+
+  - id: "annotation_kdoc_added"
+    name: "Annotation KDoc added"
+    type: "pytest"
+    description: "FirAnnotation and FirAnnotationCall have comprehensive KDoc"
+    origin: "code_quality"
+
+  - id: "fir_tree_generator_kdoc"
+    name: "FirTree generator KDoc"
+    type: "pytest"
+    description: "FirTree.kt generator has KDoc for annotation elements"
+    origin: "code_quality"
+
+  # Pass-to-pass tests - verify repo CI/CD still works on base and after fix
+  - id: "test_fir_checkers_compile"
+    name: "FIR checkers compile"
+    type: "pass_to_pass"
+    description: "FIR checkers module compiles successfully"
+    origin: "repo_tests"
+
+  - id: "test_fir_analysis_tests_compile"
+    name: "FIR analysis tests compile"
+    type: "pass_to_pass"
+    description: "FIR analysis tests infrastructure compiles successfully"
+    origin: "repo_tests"
+
+  - id: "test_fir_analysis_tests_relevant"
+    name: "FIR annotation tests pass"
+    type: "pass_to_pass"
+    description: "FIR analysis tests for annotations pass on base commit"
+    origin: "repo_tests"
+
+  - id: "test_fir_tree_generator_compile"
+    name: "FIR tree generator compiles"
+    type: "pass_to_pass"
+    description: "FIR tree generator module compiles successfully"
+    origin: "repo_tests"
+
+  - id: "test_gradle_project_sanity"
+    name: "Gradle project sanity"
+    type: "pass_to_pass"
+    description: "Gradle wrapper and project structure are intact"
+    origin: "repo_tests"
+
+agent_config:
+  - source: "CLAUDE.md"
+    file: ".ai/guidelines.md"
+    rules:
+      - "Follow FIR (K2 frontend) architecture patterns for compiler changes"
+      - "Run generateTests after adding new test data files"
+      - "Commit tests before fixes (test-before-fix pattern)"
+      - "Reference YouTrack issues (KT-XXXXX) in commit messages"
+      - "Keep commit subject line under 72 characters, imperative mood"
+
+  - source: "AGENTS.md"
+    file: "compiler/AGENTS.md"
+    rules:
+      - "Use FIR prefix for changes related to compiler/fir/"
+      - "Consider reading fir-basics.md for FIR documentation"
+      - "Test-before-fix: commit test data before the fix"
+
+  - source: "AGENTS.md"
+    file: "compiler/fir/analysis-tests/AGENTS.md"
+    rules:
+      - "Use RUN_PIPELINE_TILL directive in test files"
+      - "Use inline diagnostic markers like <!DIAGNOSTIC_NAME!>"
+      - "Run generateTests Gradle task after adding new test data"
+      - "Use RENDER_DIAGNOSTIC_ARGUMENTS for diagnostic arguments"
+      - "Use FIR_DUMP directive for .fir.txt files"
+
+rubric: []

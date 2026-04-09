@@ -259,3 +259,37 @@ def test_ray_and_dist_integration():
     _, src = _parse_target()
     assert "ray.get" in src, "ray.get call missing from source"
     assert "dist.barrier" in src, "dist.barrier call missing from source"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linting passes on target directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "slime/backends/megatron_utils/update_weight/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black_format():
+    """Repo's black formatting passes on target directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["black", "--check", "slime/backends/megatron_utils/update_weight/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort_imports():
+    """Repo's isort import ordering passes on target directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["isort", "--check", "slime/backends/megatron_utils/update_weight/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}"

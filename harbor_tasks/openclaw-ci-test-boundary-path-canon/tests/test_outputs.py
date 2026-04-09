@@ -449,3 +449,53 @@ def test_no_prototype_mutation_in_tests():
             assert not re.search(r"\.prototype\.\w+\s*=", line), (
                 f"Prototype mutation found in {fp}: {line.strip()}"
             )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD tests (pass_to_pass) — ensure repo's own CI checks still pass
+# ---------------------------------------------------------------------------
+
+
+def _run_in_repo(cmd: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
+    """Run a command in the repo directory."""
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=REPO)
+
+
+def test_repo_lint():
+    """Repo's oxlint passes on modified files (pass_to_pass)."""
+    r = _run_in_repo(
+        [
+            "./node_modules/.bin/oxlint",
+            "src/media-understanding/media-understanding-misc.test.ts",
+            "src/auto-reply/reply/commands.test.ts",
+        ],
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_media_tests():
+    """Repo's media-understanding tests pass (pass_to_pass)."""
+    r = _run_in_repo(
+        [
+            "./node_modules/.bin/vitest",
+            "run",
+            "src/media-understanding/media-understanding-misc.test.ts",
+        ],
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Media tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_media_unit_tests():
+    """Repo's media-understanding unit tests pass (pass_to_pass)."""
+    test_files = [
+        "src/media-understanding/attachments.normalize.test.ts",
+        "src/media-understanding/attachments.guards.test.ts",
+        "src/media-understanding/defaults.test.ts",
+        "src/media-understanding/format.test.ts",
+        "src/media-understanding/resolve.test.ts",
+        "src/media-understanding/provider-registry.test.ts",
+    ]
+    r = _run_in_repo(["./node_modules/.bin/vitest", "run"] + test_files, timeout=120)
+    assert r.returncode == 0, f"Media unit tests failed:\n{r.stderr[-500:]}"

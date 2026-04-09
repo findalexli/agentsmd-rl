@@ -17,6 +17,19 @@ REPO = "/workspace/react"
 TARGET = "packages/react-native-renderer/src/ReactFiberConfigFabric.js"
 TARGET_FULL = os.path.join(REPO, TARGET)
 
+
+def _install_deps():
+    """Install dependencies if not already installed."""
+    node_modules = Path(REPO) / "node_modules"
+    if not node_modules.exists():
+        r = subprocess.run(
+            ["yarn", "install", "--frozen-lockfile"],
+            capture_output=True, text=True, timeout=180, cwd=REPO,
+        )
+        if r.returncode != 0:
+            raise RuntimeError(f"Failed to install dependencies: {r.stderr[-500:]}")
+
+
 # JS setup code: reads the source file, extracts the event tracking functions
 # (trackSchedulerEvent through resolveEventTimeStamp), strips Flow type annotations,
 # and wraps them in a Function constructor so they share a closure over schedulerEvent.
@@ -238,6 +251,75 @@ def test_tracked_event_excluded():
     }
     """)
     assert r.returncode == 0, f"Failed:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint check passes (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow_fabric():
+    """Repo's Flow typecheck for fabric renderer passes (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["node", "./scripts/tasks/flow-ci", "fabric"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_fabric_tests():
+    """Repo's ReactFabric tests pass (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern", "ReactFabric", "--ci"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactFabric tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_native_tests():
+    """Repo's ReactNative tests pass (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern", "ReactNative", "--ci"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactNative tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_license():
+    """Repo's license check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/check_license.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"License check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_print_warnings():
+    """Repo's print warnings check passes (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["./scripts/ci/test_print_warnings.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Print warnings check failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

@@ -545,7 +545,24 @@ function findPromise(node) {
         // Check the initializer for import().then().catch() pattern
         if (node.initializer && ts.isConditionalExpression(node.initializer)) {
             // It's a ternary - check the "else" branch for the import
-            const elseBranch = node.initializer.whenFalse;
+            const condExpr = node.initializer;
+            const elseBranch = condExpr.whenFalse;
+            // Check for @ts-expect-error in the else branch text (includes the comment before import)
+            const elseBranchText = src.substring(elseBranch.pos, elseBranch.end);
+            if (elseBranchText.includes('@ts-expect-error')) {
+                hasTsExpectError = true;
+            }
+            // Also check leading comments of the else branch expression
+            const elseLeadingRanges = ts.getLeadingCommentRanges(src, elseBranch.pos);
+            if (elseLeadingRanges) {
+                for (const range of elseLeadingRanges) {
+                    const comment = src.substring(range.pos, range.end);
+                    if (comment.includes('@ts-expect-error')) {
+                        hasTsExpectError = true;
+                        break;
+                    }
+                }
+            }
             checkImportPattern(elseBranch);
         } else if (node.initializer) {
             checkImportPattern(node.initializer);

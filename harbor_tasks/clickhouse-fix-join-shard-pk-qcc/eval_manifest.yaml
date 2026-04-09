@@ -1,0 +1,91 @@
+source:
+  pr:
+    owner: ClickHouse
+    repo: ClickHouse
+    number: 101958
+    title: "Backport #100926 to 26.1: Fix wrong results in JOIN with shard-by-PK and query condition cache"
+    merge_commit: "75168794235ed6d5fb2b21d8b02fce86344431c7"
+    base_commit: "ac01e7e5223a05f2a77ba74cdd949232d9648918"
+
+# Checks map 1:1 to test_outputs.py test functions
+checks:
+  # Fail-to-pass tests - verify the fix is correctly applied
+  - id: test_fix_comment_present
+    type: fail_to_pass
+    origin: behavioral
+    description: "Explanatory comment about contiguous part_index_in_query renumbering is present"
+
+  - id: test_contiguous_index_assignment
+    type: fail_to_pass
+    origin: behavioral
+    description: "part_index_in_query is assigned contiguously using local_idx, not += added_parts"
+
+  # Pass-to-pass tests - verify code quality and structure
+  - id: test_file_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "C++ file has valid syntax (balanced braces, parentheses, quotes)"
+
+  - id: test_analysis_results_usage
+    type: pass_to_pass
+    origin: repo_tests
+    description: "analysis_results is properly used after the processing loop"
+
+  - id: test_code_structure_intact
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Overall code structure is intact with key variables and functions present"
+
+  - id: test_file_is_valid_cpp
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file is a valid C++ source file recognized by file command"
+
+  - id: test_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No trailing whitespace in modified file (ClickHouse style check)"
+
+  - id: test_no_tabs_for_indentation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No tabs used for indentation (ClickHouse uses 4 spaces)"
+
+# Agent configuration rules (soft/subjective - LLM judged)
+agent_config:
+  # Rules from .claude/CLAUDE.md
+  - rule: "When working with a branch, do not use rebase or amend - add new commits instead."
+    category: workflow
+
+  - rule: "When writing text such as documentation, comments, or commit messages, wrap literal names from ClickHouse SQL language, classes and functions inside inline code blocks."
+    category: style
+
+  - rule: "When writing text such as documentation, comments, or commit messages, write names of functions and methods as `f` instead of `f()`."
+    category: style
+
+  - rule: "When mentioning logical errors, say 'exception' instead of 'crash'."
+    category: style
+
+  # Rules from .github/copilot-instructions.md (relevant C++ review rules)
+  - rule: "All data deletion events must be logged at an appropriate level."
+    category: correctness
+    applies_to: "src/Processors/QueryPlan/Optimizations/optimizeJoinByShards.cpp"
+
+  - rule: "Changes to query execution, storage engines, and MergeTree internals require extra scrutiny."
+    category: correctness
+    applies_to: "src/Processors/QueryPlan/Optimizations/optimizeJoinByShards.cpp"
+
+  - rule: "New behavior requires new tests - do not delete or relax existing tests."
+    category: testing
+
+  - rule: "Raw pointers where ownership is unclear or inconsistent with surrounding code should be avoided."
+    category: safety
+
+  - rule: "Use of std::string_view, spans, or references to buffers whose lifetime is not guaranteed requires care."
+    category: safety
+
+  - rule: "Avoid magic constants; represent important thresholds or alternative behaviors as settings."
+    category: maintainability
+
+# Rubric for LLM-based evaluation (soft/subjective rules)
+rubric: []

@@ -99,6 +99,46 @@ def test_useflag_import_cleaned_up():
 # Pass-to-pass (repo_tests / static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
+def _install_deps():
+    """Install dependencies using pnpm via corepack."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/supabase && corepack enable && pnpm install --frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    return r
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Studio TypeScript typecheck passes (pass_to_pass)."""
+    # Install dependencies first
+    r = _install_deps()
+    assert r.returncode == 0, f"Failed to install dependencies:\n{r.stderr[-500:]}"
+
+    # Run studio typecheck
+    r = subprocess.run(
+        ["bash", "-c", "NODE_OPTIONS='--max-old-space-size=4096' pnpm --filter studio run typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Studio typecheck failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Studio ESLint passes (pass_to_pass)."""
+    # Install dependencies first
+    r = _install_deps()
+    assert r.returncode == 0, f"Failed to install dependencies:\n{r.stderr[-500:]}"
+
+    # Run studio lint
+    r = subprocess.run(
+        ["bash", "-c", "pnpm --filter studio run lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Lint returns 0 if no errors (warnings are OK)
+    assert r.returncode == 0, f"Studio lint failed with errors:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # [repo_tests] pass_to_pass
 def test_existing_tests_pass():
     """Upstream test suite (CPU-safe subset) still passes."""

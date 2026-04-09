@@ -1,0 +1,95 @@
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T11:55:10.971274",
+  "total_time": 9798.26,
+  "sandbox_id": "i2w30b03ie5wr07csnhg9",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "docker_build": {
+      "status": "completed",
+      "note": "Docker build succeeded with golang:1.25-alpine"
+    },
+    "ci_discovery": {
+      "status": "completed",
+      "source": "check.sh and .github/workflows/test.yml",
+      "findings": {
+        "check_sh_commands": [
+          "gofmt -l <path> - Check formatting",
+          "staticcheck <packages> - Static analysis (requires install)",
+          "go test -failfast <packages> - Run tests"
+        ],
+        "github_actions_commands": [
+          "staticcheck ./... - Static analysis (requires install)",
+          "mage -v check - Full check suite (requires additional tools)",
+          "go vet ./... - Standard Go vet"
+        ],
+        "selected_for_p2p": [
+          "go build ./... - Fast build check (verified: passes, ~60s)",
+          "go vet <key_packages> - Static analysis on relevant packages (verified: passes)",
+          "gofmt -l . - Formatting check (verified: passes)"
+        ]
+      }
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2605.86,
+      "notes": ""
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 81.15,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed test_outputs.py timeouts by changing ./... to specific package paths and increasing timeout from 60s to 180s for Go tests. All 4 checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (1.0).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2445.24
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.73,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9797.99,
+      "at": "2026-04-09T11:55:10.806567"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9798.26,
+      "at": "2026-04-09T11:55:10.971274"
+    }
+  ]
+}

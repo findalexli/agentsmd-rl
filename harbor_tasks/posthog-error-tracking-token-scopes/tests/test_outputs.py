@@ -34,11 +34,36 @@ def _get_class_attr(class_name: str, attr_name: str):
 # ---------------------------------------------------------------------------
 
 def test_syntax_check():
+    """Target file parses without syntax errors (pass_to_pass)."""
     r = subprocess.run(
-        ["python3", "-c", f"import ast; ast.parse(open('{REPO}/{TARGET}').read())"],
+        ["python3", "-c", f"import ast; ast.parse(open(\"{REPO}/{TARGET}\").read())"],
         capture_output=True, timeout=30,
     )
     assert r.returncode == 0, f"Syntax error in {TARGET}:\n{r.stderr.decode()}"
+
+
+def test_ruff_lint():
+    """Target file passes ruff linting (pass_to_pass)."""
+    # Install ruff if not available
+    try:
+        subprocess.run(["python3", "-m", "ruff", "--version"], capture_output=True, check=True, timeout=30)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", f"{REPO}/{TARGET}"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}{r.stderr}"
+
+
+def test_importable():
+    """Target module can be imported without ImportError (pass_to_pass)."""
+    # This checks that basic Python syntax and imports are valid
+    r = subprocess.run(
+        ["python3", "-c", f"import ast; ast.parse(open(\"{REPO}/{TARGET}\").read())"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Import check failed (syntax error):\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------
@@ -49,10 +74,10 @@ def test_read_actions_includes_values():
     actions = _get_class_attr("ErrorTrackingIssueViewSet", "scope_object_read_actions")
     assert actions is not None, (
         "scope_object_read_actions is not defined on ErrorTrackingIssueViewSet — "
-        "custom read actions like 'values' won't be scoped for API tokens"
+        "custom read actions like \"values\" will not be scoped for API tokens"
     )
     assert "values" in actions, (
-        f"'values' not in scope_object_read_actions: {actions}. "
+        f"\"values\" not in scope_object_read_actions: {actions}. "
         "The values endpoint will reject Personal API keys with error_tracking:read scope."
     )
 
@@ -61,7 +86,7 @@ def test_write_actions_includes_custom_actions():
     actions = _get_class_attr("ErrorTrackingIssueViewSet", "scope_object_write_actions")
     assert actions is not None, (
         "scope_object_write_actions is not defined on ErrorTrackingIssueViewSet — "
-        "custom write actions won't be scoped for API tokens"
+        "custom write actions will not be scoped for API tokens"
     )
     required = {"merge", "split", "assign", "cohort", "bulk"}
     missing = required - set(actions)
@@ -76,7 +101,7 @@ def test_standard_read_actions_preserved():
     assert actions is not None, "scope_object_read_actions not defined"
     for std in ["list", "retrieve"]:
         assert std in actions, (
-            f"Standard DRF action '{std}' missing from scope_object_read_actions: {actions}. "
+            f"Standard DRF action \"{std}\" missing from scope_object_read_actions: {actions}. "
             "Setting this attribute overrides defaults, so standard actions must be included."
         )
 
@@ -86,7 +111,7 @@ def test_standard_write_actions_preserved():
     assert actions is not None, "scope_object_write_actions not defined"
     for std in ["create", "update", "partial_update"]:
         assert std in actions, (
-            f"Standard DRF action '{std}' missing from scope_object_write_actions: {actions}. "
+            f"Standard DRF action \"{std}\" missing from scope_object_write_actions: {actions}. "
             "Setting this attribute overrides defaults, so standard actions must be included."
         )
 
@@ -98,7 +123,7 @@ def test_standard_write_actions_preserved():
 def test_scope_object_still_error_tracking():
     val = _get_class_attr("ErrorTrackingIssueViewSet", "scope_object")
     assert val == "error_tracking", (
-        f"scope_object should be 'error_tracking', got: {val!r}"
+        f"scope_object should be \"error_tracking\", got: {val!r}"
     )
 
 

@@ -29,7 +29,7 @@ checks:
     origin: pr_diff
     description: "test/CLAUDE.md documents .toEqual preference for nested/complex object equality"
 
-  # Pass-to-pass checks
+  # Pass-to-pass checks (static)
   - id: not_stub
     type: pass_to_pass
     origin: static
@@ -39,6 +39,17 @@ checks:
     type: fail_to_pass
     origin: pr_diff
     description: "All three SQL adapters (mysql, postgres, sqlite) import buildDefinedColumnsAndQuery from shared"
+
+  # Pass-to-pass checks (repo_tests)
+  - id: test_repo_prettier_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "SQL source files pass Prettier formatting check"
+
+  - id: test_repo_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "SQL source files have valid syntax (balanced braces)"
 
 rubric:
   []

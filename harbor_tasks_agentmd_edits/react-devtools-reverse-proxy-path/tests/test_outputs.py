@@ -12,6 +12,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -40,6 +41,63 @@ def test_syntax_check():
             capture_output=True, text=True, timeout=30, cwd=REPO,
         )
         assert r.returncode == 0, f"{f} has syntax errors: {r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI checks that should pass on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_devtools_core_backend():
+    """Repo: react-devtools-core backend.js parses without syntax errors."""
+    r = subprocess.run(
+        ["node", "--check", "packages/react-devtools-core/src/backend.js"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"backend.js has syntax errors: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_devtools_core_standalone():
+    """Repo: react-devtools-core standalone.js parses without syntax errors."""
+    r = subprocess.run(
+        ["node", "--check", "packages/react-devtools-core/src/standalone.js"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"standalone.js has syntax errors: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_devtools_preload():
+    """Repo: react-devtools preload.js parses without syntax errors."""
+    r = subprocess.run(
+        ["node", "--check", "packages/react-devtools/preload.js"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"preload.js has syntax errors: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_devtools_app_html():
+    """Repo: react-devtools app.html inline JavaScript parses without syntax errors."""
+    # Extract inline JavaScript from app.html and validate it
+    app_html = Path(REPO) / "packages/react-devtools/app.html"
+    content = app_html.read_text()
+
+    # Find script tags and extract inline JS (excluding those with src attribute)
+    script_pattern = r'<script>(.*?)</script>'
+    scripts = re.findall(script_pattern, content, re.DOTALL)
+
+    for i, script in enumerate(scripts):
+        if script.strip():
+            # Write to temp file and check
+            temp_file = f"/tmp/app_html_script_{i}.js"
+            Path(temp_file).write_text(script)
+            r = subprocess.run(
+                ["node", "--check", temp_file],
+                capture_output=True, text=True, timeout=30,
+            )
+            assert r.returncode == 0, f"app.html inline script {i} has syntax errors: {r.stderr}"
 
 
 # ---------------------------------------------------------------------------

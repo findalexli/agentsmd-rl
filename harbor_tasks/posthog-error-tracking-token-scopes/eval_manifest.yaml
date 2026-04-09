@@ -12,10 +12,20 @@ checks:
     origin: static
     description: "Target file parses without syntax errors"
 
+  - id: ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file passes ruff linting"
+
+  - id: importable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target module can be imported without ImportError"
+
   - id: read_actions_includes_values
     type: fail_to_pass
     origin: pr_diff
-    description: "scope_object_read_actions includes 'values' so API tokens with error_tracking:read can access the values endpoint"
+    description: "scope_object_read_actions includes \"values\" so API tokens with error_tracking:read can access the values endpoint"
 
   - id: write_actions_includes_custom_actions
     type: fail_to_pass
@@ -35,7 +45,7 @@ checks:
   - id: scope_object_still_error_tracking
     type: pass_to_pass
     origin: static
-    description: "scope_object remains 'error_tracking' for correct resource type mapping"
+    description: "scope_object remains \"error_tracking\" for correct resource type mapping"
 
   - id: viewset_class_has_substance
     type: pass_to_pass

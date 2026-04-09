@@ -1,0 +1,70 @@
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T10:52:51.364912",
+  "total_time": 6058.4,
+  "sandbox_id": "icn1k5nb9rq3az77yhdj6",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 425.26,
+      "notes": "Added 6 new pass_to_pass tests and updated eval_manifest.yaml:\n\nNEW P2P TESTS ADDED (test_outputs.py):\n1. test_repo_go_mod_verify - validates go.mod and go.sum integrity\n2. test_skeleton_css_template_exists - ensures skeleton css.html exists\n3. test_skeleton_js_template_exists - ensures skeleton js.html exists\n4. test_skeleton_main_css_exists - ensures skeleton main.css exists\n5. test_skeleton_main_js_exists - ensures skeleton main.js exists\n6. test_skeleton_layouts_exist - ensures baseof.html, home.html, page.html exist\n\nEXISTING P2P TESTS PRESERVED:\n- test_repo_gofmt - Go formatting check\n- test_repo_go_vet - Go vet on ./create/...\n- test_repo_build - Hugo binary compiles\n- test_repo_unit_tests_create - Unit tests for create package\n\nCI COMMANDS DISCOVERED FROM REPO:\n- gofmt (via check_gofmt.sh) - WORKS\n- go vet ./... - WORKS\n- go build - WORKS\n- go test ./create/... - WORKS\n- go mod verify - WORKS (NEWLY ADDED)\n- staticcheck - SKIPPED (requires Go 1.25.0+, container has 1.24.13, GOTOOLCHAIN installs it but staticcheck binary incompatible)\n- mage check - SKIPPED (requires dart-sass, ruby gems, pandoc - heavy deps)\n\nFILES MODIFIED:\n- tests/test_outputs.py - Added TestThemeSkeletonIntegrity class + test_repo_go_mod_verify\n- eval_manifest.yaml - Added 10 p2p checks with type: pass_to_pass\n- status.json - This file\n\nVERIFICATION:\n- All 10 p2p tests pass on base commit (06fcb724219eecdc20367e86e1a8134d3d7e0e5b)\n- All 10 p2p tests pass after gold fix applied\n- 14 fail_to_pass tests correctly fail on base (they test the PR fix)\n"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 775.46,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed solve.sh to apply the PR #14631 patch correctly. The original patch failed due to context issues with main.css (the base file had slightly different spacing). Fixed by rewriting files directly instead of using git apply. Also added Hugo rebuild step since skeleton files are embedded at build time using Go //go:embed directive. All 27 tests now pass.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 574.43
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.7,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 6058.12,
+      "at": "2026-04-09T10:52:51.184709"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 6058.4,
+      "at": "2026-04-09T10:52:51.364912"
+    }
+  ]
+}

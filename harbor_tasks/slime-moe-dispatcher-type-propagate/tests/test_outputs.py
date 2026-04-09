@@ -111,9 +111,9 @@ def _run_bridge_test(code: str, timeout: int = 30) -> subprocess.CompletedProces
     )
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Gate (pass_to_pass, static)
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_syntax_valid():
@@ -124,9 +124,9 @@ def test_syntax_valid():
     ast.parse(source)
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests via subprocess
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_moe_dispatcher_propagated():
@@ -157,9 +157,9 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) — regression
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
 def test_moe_dispatcher_absent_no_error():
@@ -194,3 +194,47 @@ print("PASS")
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# -----------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_linting():
+    """Repo's Python linting passes (pass_to_pass).
+
+    Runs ruff with E/F/B checks (errors, pyflakes, bugbear).
+    E402/E501 ignored as they are pre-existing issues in the repo.
+    """
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=60
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "check", "slime/", "--select=E,F,B", "--ignore=E402,E501"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_chunked_gae():
+    """Repo's chunked_gae tests pass (pass_to_pass).
+
+    Runs the test_chunked_gae.py tests which are self-contained
+    and work without GPU or external services.
+    """
+    r = subprocess.run(
+        ["pip", "install", "pytest", "torch", "numpy", "packaging", "--quiet"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert r.returncode == 0, f"Failed to install test deps: {r.stderr}"
+
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "tests/test_chunked_gae.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"chunked_gae tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

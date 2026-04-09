@@ -40,7 +40,7 @@ content = p.read_text()
 assert len(content) > 500, "File too small, likely incomplete"
 
 # Validate YAML frontmatter
-match = re.match(r'^---\\n(.*?)\\n---', content, re.DOTALL)
+match = re.match(r'---\\n(.*?)\\n---', content, re.DOTALL)
 assert match, "No YAML frontmatter found"
 fm = match.group(1)
 assert 'title:' in fm, "Missing 'title' in frontmatter"
@@ -155,6 +155,46 @@ print("PASS")
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and gold
+# ---------------------------------------------------------------------------
+
+def test_documentation_npm_test():
+    """Repo's documentation npm test passes (pass_to_pass)."""
+    install_node = """
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash - 2>/dev/null
+apt-get install -y nodejs 2>/dev/null
+"""
+    r = subprocess.run(
+        ["bash", "-c", install_node],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Install npm deps and run tests
+    r = subprocess.run(
+        ["bash", "-c", f"cd {REPO}/documentation && npm ci --silent 2>&1 | tail -3 && npm test"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Documentation npm test failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_documentation_build():
+    """Repo's documentation build passes (pass_to_pass)."""
+    install_node = """
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash - 2>/dev/null
+apt-get install -y nodejs 2>/dev/null
+"""
+    r = subprocess.run(
+        ["bash", "-c", install_node],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Install npm deps and run build
+    r = subprocess.run(
+        ["bash", "-c", f"cd {REPO}/documentation && npm ci --silent 2>&1 | tail -3 && npm run build 2>&1 | tail -30"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Documentation build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression + validation
 # ---------------------------------------------------------------------------
 
@@ -181,7 +221,7 @@ for f in files:
     assert '\\x00' not in content, f"Null bytes in: {{f}}"
     # Validate frontmatter if present
     if content.startswith('---'):
-        match = re.match(r'^---\\n(.*?)\\n---', content, re.DOTALL)
+        match = re.match(r'---\\n(.*?)\\n---', content, re.DOTALL)
         assert match, f"Invalid frontmatter in: {{f}}"
 print("PASS")
 """)

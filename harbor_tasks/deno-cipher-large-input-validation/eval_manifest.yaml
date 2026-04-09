@@ -7,6 +7,10 @@ source:
   merge_commit: "5085a59aef53fa90dc58c8859e4feb887f0a742a"
 
 checks:
+  # -----------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests with code execution
+  # -----------------------------------------------------------------------------
+
   - id: cipheriv_update_rejects_large_input
     type: fail_to_pass
     origin: pr_diff
@@ -27,14 +31,127 @@ checks:
     origin: pr_diff
     description: "Size check must appear before the encrypt/decrypt op call"
 
+  - id: node_crypto_pr_diff_parsing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Uses subprocess.run() to validate repo state and PR diff application"
+
+  # -----------------------------------------------------------------------------
+  # Pass-to-pass (static) — structural integrity
+  # -----------------------------------------------------------------------------
+
   - id: cipher_file_structure
     type: pass_to_pass
     origin: static
     description: "cipher.ts must define both Cipheriv and Decipheriv with update methods"
 
-rubric:
-  - rule: "Node.js compatibility code is in ext/node/polyfills/. When reviewing these files, check behavior against Node.js docs, not just Deno conventions."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "322-325"
-      commit: "8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e"
+  # -----------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests) — repository health checks
+  # -----------------------------------------------------------------------------
+
+  - id: cipher_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cipher.ts file must exist at expected path"
+
+  - id: cipher_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cipher.ts must have balanced braces and valid TypeScript structure"
+
+  - id: git_repo_initialized
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Deno repository must be properly cloned and initialized (uses subprocess.run())"
+
+  - id: base_commit_checkout
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository must be at the expected base commit (uses subprocess.run())"
+
+  - id: cipher_imports_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cipher.ts must have required imports from ext:core and ext:deno_node"
+
+  - id: cipher_class_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Cipheriv and Decipheriv classes must have required methods"
+
+  - id: cipher_error_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cipher.ts must import error handling utilities"
+
+  - id: node_crypto_polyfills_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Node crypto polyfills directory must have expected structure"
+
+  # CI/CD health checks (pass_to_pass)
+  - id: git_working_tree_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository working tree must be clean at base commit"
+
+  - id: cipher_file_tracked_by_git
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cipher.ts must be tracked by git"
+
+  - id: cipher_license_header
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cipher.ts must have required license headers"
+
+  - id: cipher_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cipher.ts must not have trailing whitespace"
+
+  - id: cipher_unix_line_endings
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cipher.ts must use Unix line endings (LF, not CRLF)"
+
+  - id: cipher_git_history_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cipher.ts must have git history"
+
+  - id: repo_directory_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository must have expected directory structure"
+
+  # Additional p2p tests for crypto module CI/CD health
+  - id: cipher_required_ops_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cipher.ts must reference required Deno core operations"
+
+  - id: cipher_ext_node_polyfill_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cipher.ts must follow ext:node polyfill patterns"
+
+  - id: test_crypto_dir_all_files_tracked
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All crypto polyfill files must be tracked by git"
+
+  - id: test_cipher_no_debugger_statements
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cipher.ts must not contain debugger statements"
+
+  - id: test_cipher_no_console_log
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cipher.ts must not contain console.log statements"
+
+  - id: test_cipher_deno_lint_ignore_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cipher.ts should have deno-lint ignore for Node compatibility"

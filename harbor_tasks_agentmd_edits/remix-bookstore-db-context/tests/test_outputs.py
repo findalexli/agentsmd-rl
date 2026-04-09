@@ -46,6 +46,46 @@ def test_files_exist_and_nonempty():
 
 
 # ---------------------------------------------------------------------------
+# pass_to_pass / repo_tests — CI/CD gates
+# ---------------------------------------------------------------------------
+
+def test_repo_typecheck():
+    """Repo TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "typecheck"],
+        capture_output=True, text=True, timeout=180, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:] or r.stdout[-500:]}"
+
+
+def test_repo_lint():
+    """Repo ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:] or r.stdout[-500:]}"
+
+
+def test_repo_format():
+    """Repo Prettier format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=60, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:] or r.stdout[-500:]}"
+
+
+def test_repo_bookstore_tests():
+    """Bookstore demo tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "test"],
+        capture_output=True, text=True, timeout=120, cwd=str(DEMO),
+    )
+    assert r.returncode == 0, f"Bookstore tests failed:\n{r.stderr[-500:] or r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # fail_to_pass / pr_diff — behavioral tests using subprocess
 # ---------------------------------------------------------------------------
 
@@ -58,7 +98,7 @@ const content = readFileSync('demos/bookstore/app/middleware/database.ts', 'utf8
 const errors = [];
 
 // Must import Database from remix/data-table
-if (!/import\\s+.*\\bDatabase\\b.*\\s+from\\s+['\"]remix\\/data-table['\"]/.test(content)) {
+if (!/import\\s+.*\\bDatabase\\b.*\\s+from\\s+['"]remix\\/data-table['"]/.test(content)) {
   errors.push("database.ts: missing Database import from remix/data-table");
 }
 
@@ -99,7 +139,7 @@ for (const file of handlers) {
   const name = file.split('/').pop();
 
   // Must import Database from remix/data-table
-  if (!/import\\s+.*\\bDatabase\\b.*\\s+from\\s+['\"]remix\\/data-table['\"]/.test(content)) {
+  if (!/import\\s+.*\\bDatabase\\b.*\\s+from\\s+['"]remix\\/data-table['"]/.test(content)) {
     errors.push(name + ": missing Database import from remix/data-table");
   }
 
@@ -135,7 +175,7 @@ const content = readFileSync('demos/bookstore/app/middleware/auth.ts', 'utf8');
 const errors = [];
 
 // Must import Database from remix/data-table
-if (!/import\\s+.*\\bDatabase\\b.*\\s+from\\s+['\"]remix\\/data-table['\"]/.test(content)) {
+if (!/import\\s+.*\\bDatabase\\b.*\\s+from\\s+['"]remix\\/data-table['"]/.test(content)) {
   errors.push("auth.ts: missing Database import from remix/data-table");
 }
 

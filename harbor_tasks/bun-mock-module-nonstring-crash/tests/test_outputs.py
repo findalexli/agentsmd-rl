@@ -189,6 +189,53 @@ def test_existing_guards_preserved():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and gold
+# ---------------------------------------------------------------------------
+
+REPO_DIR = "/workspace/bun"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ts_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bunx", "tsc", "--noEmit"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_DIR,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ban_words():
+    """Repo's banned words check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "./test/internal/ban-words.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_DIR,
+    )
+    assert r.returncode == 0, f"Ban words check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_js_lint():
+    """Repo's JS lint (oxlint on src/js/bun) passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bunx", "oxlint", "--format=github", "src/js/bun"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_DIR,
+    )
+    # Exit code 0 means no errors (warnings are okay)
+    assert r.returncode == 0, f"JS lint failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Static — anti-stub
 # ---------------------------------------------------------------------------
 

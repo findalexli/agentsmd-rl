@@ -1,0 +1,62 @@
+version: "1.0"
+
+task:
+  name: kotlin-swift-export-flow-contravariant
+  description: Support Flow in contravariant positions for Swift Export
+  source_pr: https://github.com/JetBrains/kotlin/pull/5772
+
+verification:
+  method: pytest
+  test_file: test_outputs.py
+  timeout: 900
+
+checks:
+  # Fail-to-pass checks (behavioral)
+  - id: test_flow_handling_in_contravariant_position
+    type: fail_to_pass
+    origin: behavioral
+    description: Flow type handling should not be restricted to covariant positions
+    points: 3
+
+  - id: test_companion_object_visibility
+    type: fail_to_pass
+    origin: structural
+    description: Companion object should be internal to allow cross-file access
+    points: 1
+
+  - id: test_visibility_checker_flow_support
+    type: fail_to_pass
+    origin: behavioral
+    description: SirVisibilityCheckerImpl should recognize Flow types as supported
+    points: 3
+
+  - id: test_flow_types_not_unbound
+    type: fail_to_pass
+    origin: behavioral
+    description: Flow types should not be treated as having unbound type parameters
+    points: 2
+
+  # Pass-to-pass checks (regression prevention)
+  - id: test_gradle_module_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: The sir-providers module should exist
+    points: 1
+
+  - id: test_kotlin_file_syntax_valid
+    type: pass_to_pass
+    origin: structural
+    description: Modified Kotlin files should have valid syntax
+    points: 0
+
+# Rules derived from agent configs that are relevant to this task
+agent_config:
+  # The PR touches compiler/native code - relevant guidance from AGENTS.md:
+  # - FIR prefix for FIR-related changes (not applicable here)
+  # - Test-before-fix guideline
+  - file: "compiler/AGENTS.md"
+    lines: "1-30"
+    relevance: "Guidance on compiler architecture and commit guidelines"
+
+# Rubric for LLM-judge evaluation of solution quality
+rubric: []

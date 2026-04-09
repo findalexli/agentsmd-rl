@@ -1,0 +1,25 @@
+name = "clickhouse-fix-join-shard-pk-qcc"
+description = "Fix wrong results in JOIN with shard-by-PK and query condition cache"
+difficulty = "medium"
+tags = ["c++", "database", "clickhouse", "join", "query-optimization"]
+
+# Estimated time in minutes for an experienced developer
+time_estimate = 45
+
+# Repository info
+owner = "ClickHouse"
+repo = "ClickHouse"
+pr_number = 101958
+base_commit = "ac01e7e5223a05f2a77ba74cdd949232d9648918"
+merge_commit = "75168794235ed6d5fb2b21d8b02fce86344431c7"
+
+# Target files modified by this PR
+target_files = [
+    "src/Processors/QueryPlan/Optimizations/optimizeJoinByShards.cpp"
+]
+
+# Test files added by this PR
+test_files = [
+    "tests/queries/0_stateless/04065_join_shard_by_pk_with_qcc.sql",
+    "tests/queries/0_stateless/04065_join_shard_by_pk_with_qcc.reference"
+]

@@ -66,6 +66,57 @@ checks:
     origin: static
     description: "turbo-cache.mjs has real HTTP implementation (not a stub)"
 
+  # Repo CI pass_to_pass checks
+  - id: repo_js_syntax_all_scripts
+    type: pass_to_pass
+    origin: repo_ci
+    description: "All JS files in scripts/ directory parse without syntax errors"
+
+  - id: repo_package_json_valid
+    type: pass_to_pass
+    origin: repo_ci
+    description: "package.json is valid JSON and has required fields"
+
+  - id: repo_next_swc_package_json_valid
+    type: pass_to_pass
+    origin: repo_ci
+    description: "packages/next-swc/package.json is valid JSON and has required Rust build scripts"
+
+  - id: repo_cargo_toml_valid
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Cargo.toml is valid and workspace configuration is parseable"
+
+  - id: repo_github_workflows_valid_yaml
+    type: pass_to_pass
+    origin: repo_ci
+    description: "GitHub workflow files are valid YAML"
+
+  - id: repo_docker_native_build_js_syntax
+    type: pass_to_pass
+    origin: repo_ci
+    description: "docker-native-build.js syntax is valid and has essential functions"
+
+  - id: repo_ci_scripts_exist
+    type: pass_to_pass
+    origin: repo_ci
+    description: "CI scripts referenced by build_and_deploy.yml exist"
+
+  - id: repo_turbo_json_valid
+    type: pass_to_pass
+    origin: repo_ci
+    description: "turbo.json is valid JSON"
+
+  - id: repo_turbo_jsonc_valid
+    type: pass_to_pass
+    origin: repo_ci
+    description: "packages/next-swc/turbo.jsonc is valid JSONC"
+
+  - id: repo_rust_toolchain_toml_valid
+    type: pass_to_pass
+    origin: repo_ci
+    description: "rust-toolchain.toml is valid and parseable"
+
 rubric:
   - rule: "Always treat environment variable values as sensitive unless they are known test-mode flags."
     source:

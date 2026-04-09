@@ -124,6 +124,60 @@ checks:
     origin: pr_diff
     description: "Review-PR.ps1 examples reflect new interactive default"
 
+  # ---------------------------------------------------------------------------
+  # Repo CI pass-to-pass gates — repo CI checks
+  # ---------------------------------------------------------------------------
+
+  - id: repo_powershell_scripts_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's PowerShell scripts have valid syntax (balanced braces, parens)"
+
+  - id: repo_markdown_files_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's SKILL.md and docs markdown files are valid (no unclosed code blocks)"
+
+  - id: repo_yaml_workflows_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's GitHub workflow YAML files exist and have basic structure"
+
+  - id: repo_no_bom_in_scripts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's PowerShell scripts don't have unexpected corruption (null bytes)"
+
+  - id: repo_json_files_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's JSON config files are valid (no trailing commas, parseable)"
+
+  - id: repo_all_powershell_scripts_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All .github PowerShell scripts have valid syntax (balanced braces, parens, brackets)"
+
+  - id: repo_gitattributes_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's .gitattributes file is valid (no malformed lines)"
+
+  - id: repo_editorconfig_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's .editorconfig file is valid (balanced brackets, sections)"
+
+  - id: repo_nuget_config_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's NuGet.config has valid XML structure"
+
+  - id: repo_readme_not_empty
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's README.md exists and has meaningful content"
+
 rubric:
   # Soft rules for LLM judge — none needed for this structural refactor
   []

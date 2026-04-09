@@ -206,3 +206,39 @@ def test_ruff_lint():
         cwd=REPO, capture_output=True, timeout=30,
     )
     assert r.returncode == 0, f"ruff lint failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — from .github/workflows/test-python.yml
+def test_ruff_format():
+    """Modified file passes ruff format check (repo CI)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "gradio/components/html.py", "--quiet"],
+        cwd=REPO, capture_output=True, timeout=30,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass — from .github/workflows/test-python.yml
+def test_repo_html_component_tests():
+    """HTML component unit tests pass (repo CI test-python.yml)."""
+    # Install pytest if not already available
+    subprocess.run(["pip", "install", "pytest", "pytest-asyncio", "-q"], capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/components/test_html.py", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"HTML component tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — gradio import/initialization
+def test_gradio_imports():
+    """Gradio package imports correctly (basic smoke test from repo CI)."""
+    r = subprocess.run(
+        ["python", "-c", "import gradio; print(gradio.__version__)"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Gradio import failed:\n{r.stderr}"

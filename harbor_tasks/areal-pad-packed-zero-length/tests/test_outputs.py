@@ -25,6 +25,43 @@ def test_syntax_check():
     py_compile.compile(f"{REPO}/areal/utils/data.py", doraise=True)
 
 
+# [repo_tests] pass_to_pass — repo's ruff lint check (from .github/workflows/pre-commit.yml)
+def test_ruff_lint():
+    """Ruff linter passes on areal/utils/data.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Don't fail on pip warnings, just check ruff works
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/areal/utils/data.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — repo's ruff format check (from .github/workflows/pre-commit.yml)
+def test_ruff_format():
+    """Ruff format check passes on areal/utils/data.py (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/areal/utils/data.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

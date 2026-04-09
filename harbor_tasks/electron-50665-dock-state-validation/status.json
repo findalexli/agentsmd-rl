@@ -1,0 +1,71 @@
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T10:39:03.598572",
+  "total_time": 5230.57,
+  "sandbox_id": "ifwzm9v1qqxm1wzuy71ex",
+  "backend": "glm",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 4.15,
+      "notes": "Added 4 p2p tests from Electron repo CI. CI commands discovered: (1) clang-format --dry-run --Werror (from lint:clang-format npm script / pipeline-electron-lint.yml), (2) python3 script/run-clang-format.py (repo's own format wrapper used in CI). Node.js-based CI commands (eslint, tsc, lint.js) skipped - Node.js not in container. GN check/build/test skipped - requires full Chromium checkout. clang-tidy skipped - no compilation database. Tests added: test_repo_clang_format_target, test_repo_clang_format_script, test_repo_target_file_exists, test_repo_valid_encoding. All 4 p2p tests pass on base commit. Also fixed test.sh to handle working directory and exit code correctly."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 2610.05,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_score": 1.0,
+      "attempts": 1,
+      "notes": "All four checks passed on first attempt. Docker build: cached, succeeded. NOP test: reward=0 (7 f2p tests correctly fail on base commit, 5 p2p tests pass). Gold test: reward=1 (all 12 tests pass after applying solve.sh patch). Rubric judge: 1.0 (empty rubric). No fixes needed.",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 375.74
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.71,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 5230.3,
+      "at": "2026-04-09T10:39:03.423617"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 5230.57,
+      "at": "2026-04-09T10:39:03.598572"
+    }
+  ]
+}

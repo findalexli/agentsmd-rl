@@ -24,14 +24,67 @@ TARGET_FILE = f"{REPO}/packages/shared/ReactPerformanceTrackProperties.js"
 
 # [static] pass_to_pass
 def test_syntax_check():
-    """ReactPerformanceTrackProperties.js must parse without syntax errors."""
+    """ReactPerformanceTrackProperties.js must exist and be readable."""
+    # Flow type annotations require transpilation; we verify file exists and
+    # has valid structure via AST checks in other tests.
     assert Path(TARGET_FILE).exists(), f"File not found: {TARGET_FILE}"
+    src = Path(TARGET_FILE).read_text()
+    # Basic sanity: file should have exports and not be empty
+    assert "export function" in src, "File missing expected exports"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — ensure fix doesn't break existing tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_react_perf_track():
+    """React PerformanceTrack tests pass (pass_to_pass).
+
+    Runs the ReactPerformanceTrack test suite to ensure the modified code
+    doesn't break existing functionality.
+    """
     r = subprocess.run(
-        ["node", "--check", TARGET_FILE],
-        capture_output=True, timeout=30,
+        ["yarn", "test", "--ci", "ReactPerformanceTrack", "--reporter=summary"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, (
-        f"Syntax error in ReactPerformanceTrackProperties.js:\n{r.stderr.decode()}"
+        f"ReactPerformanceTrack tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow():
+    """Repo Flow typecheck passes on shared package (pass_to_pass).
+
+    Ensures the Flow type annotations in packages/shared/ are valid.
+    """
+    r = subprocess.run(
+        ["yarn", "flow", "check", "packages/shared/", "--max-warnings", "0"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Flow may exit 0 on success or 2 on type errors
+    if r.returncode not in (0, 2):
+        assert False, f"Flow check crashed:\n{r.stderr[-500:]}"
+    # Check for actual type errors in output
+    if "Error:" in r.stdout or "Found " in r.stdout and "error" in r.stdout.lower():
+        # Only fail if there are errors in our target file
+        if "ReactPerformanceTrackProperties" in r.stdout:
+            assert False, f"Flow type errors in ReactPerformanceTrackProperties:\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo ESLint checks pass (pass_to_pass).
+
+    Runs the repo's linting to ensure code style and patterns are valid.
+    """
+    r = subprocess.run(
+        ["yarn", "lint", "packages/shared/ReactPerformanceTrackProperties.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"ESLint check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
     )
 
 

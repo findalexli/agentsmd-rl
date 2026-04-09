@@ -1,0 +1,48 @@
+source_pr:
+  owner: appwrite
+  repo: appwrite
+  number: 11795
+  merge_commit: 597b20a6cb2eb3cc93a5a25814f2ec39b35cd3cd
+  base_commit: 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2
+
+task:
+  name: appwrite-variable-id-optional
+  title: "Make variableId optional in createProjectVariable endpoint"
+  description: |
+    Fix a bug where creating a global project variable fails with "Param 'variableId' is not optional"
+    because the endpoint incorrectly requires variableId as a mandatory parameter.
+  primary_language: php
+  difficulty: easy
+
+agent_config:
+  source_files:
+    - CLAUDE.md
+    - AGENTS.md
+    - src/Appwrite/Platform/AGENTS.md
+
+  checks:
+    - id: test_php_syntax_valid
+      description: "PHP file has valid syntax and compiles"
+      origin: code_behavior
+      file: src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php
+      points: 0.25
+
+    - id: test_variable_id_param_optional_with_unique_default
+      description: "variableId param has default 'unique()' and is marked optional"
+      origin: code_behavior
+      file: src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php
+      points: 0.25
+
+    - id: test_variable_id_matches_function_and_sites_behavior
+      description: "variableId param uses CustomId validator with unique() default"
+      origin: code_behavior
+      file: src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php
+      points: 0.25
+
+    - id: test_variable_id_param_not_required
+      description: "variableId param optional flag is explicitly set to true"
+      origin: code_behavior
+      file: src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php
+      points: 0.25
+
+rubric: []

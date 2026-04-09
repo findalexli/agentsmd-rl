@@ -1,11 +1,86 @@
 {
+  "schema_version": 2,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-08T22:12:06.288089",
-  "sandbox_id": "ie3kpfxyoyadocplx0pkb",
+  "validated_at": "2026-04-09T04:09:50.731553",
+  "total_time": 9153.95,
+  "sandbox_id": "ilfq49i1f7bvsb5lcl0vl",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 2341.11
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed. Docker build succeeded. NOP test correctly fails on base commit (7 fail-to-pass tests fail as expected). Gold test passes all 13 tests after fix applied. Rubric judge ICR=1.0 (no rubric rules to check).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 57.02
+    },
+    "p2p_enrichment": {
+      "status": "completed",
+      "timestamp": "2026-04-09T11:10:00Z",
+      "ci_commands_discovered": [
+        "package.json scripts: test (vitest run), build (tsx helpers/build.ts)",
+        "GitHub workflow: .github/workflows/test.yml calls test-template.yml",
+        "TypeScript compilation: tsx (globally installed)"
+      ],
+      "tests_added": [
+        "test_repo_typescript_compiles - Validates TypeScript files load and basic functions work",
+        "test_repo_connection_string_parsing - Tests all parameter name variations",
+        "test_repo_error_handling - Tests error handling for invalid inputs",
+        "test_repo_timeout_and_pool_params - Tests timeout and pool configuration parsing"
+      ],
+      "notes": [
+        "Docker image built successfully",
+        "Full npm/pnpm commands not available due to incomplete monorepo dependencies",
+        "Using tsx (globally installed) to run TypeScript directly for p2p tests",
+        "Tests verify existing functionality that should pass on both base and fixed commits",
+        "Each test runs TypeScript code via tsx and validates return codes and output"
+      ]
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 272.84,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.68,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T04:09:50.566862"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9153.95,
+      "at": "2026-04-09T04:09:50.731553"
+    }
+  ]
 }

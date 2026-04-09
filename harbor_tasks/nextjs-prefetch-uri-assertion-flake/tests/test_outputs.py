@@ -175,6 +175,19 @@ def test_navigation_flow_preserved():
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
+def _get_target_test_body(content: str) -> str:
+    """Extract the body of the target test case."""
+    test_start = content.find("should not unintentionally modify the requested prefetch")
+    if test_start == -1:
+        return ""
+    after_title = content[test_start:]
+    # Find the next test case or end of file
+    next_test = after_title.find("it(", 1)
+    if next_test == -1:
+        return after_title
+    return after_title[:next_test]
+
+
 # [agent_config] pass_to_pass — AGENTS.md:180 @ 138092696c355fa38ec8409e7f2c6c67c97e4f6b
 def test_no_settimeout_in_fix():
     """Fix area must not use setTimeout — use retry()/waitFor() per AGENTS.md:180."""
@@ -220,3 +233,20 @@ def test_retry_imported_from_next_test_utils():
         "retry() used but not imported from 'next-test-utils' — "
         "per AGENTS.md:180, use retry from next-test-utils"
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD checks (pass_to_pass) — repo_tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_error_codes():
+    """Repo's error code check passes (pnpm check-error-codes)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm check-error-codes"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Error codes check failed:\n{r.stderr[-500:]}"

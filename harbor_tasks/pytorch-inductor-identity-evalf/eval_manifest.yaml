@@ -51,6 +51,31 @@ checks:
       lines: "53-56"
       commit: "f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e"
 
+  - id: repo_flake8_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python flake8 syntax check passes (E9,F63,F7,F82)"
+
+  - id: repo_pydocstyle_module
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Module has docstring and valid Python structure"
+
+  - id: repo_imports_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: "File has no unresolved import errors at AST level"
+
+  - id: identity_has_comparison_methods
+    type: fail_to_pass
+    origin: repo_tests
+    description: "Identity class has comparison magic methods (__ge__, __gt__, __le__, __lt__)"
+
+  - id: identity_has_helper_compare_method
+    type: fail_to_pass
+    origin: repo_tests
+    description: "Identity class has _identity_atom_compare helper method for fast-path comparison"
+
 rubric:
   - rule: "Minimize comments; code should be self-explanatory and self-documenting."
     source:

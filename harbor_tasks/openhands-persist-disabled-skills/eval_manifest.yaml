@@ -1,0 +1,98 @@
+source_pr:
+  owner: All-Hands-AI
+  repo: OpenHands
+  number: 13658
+  merge_commit: 9c0f5d785ee71c7d16d157333994245cb242a885
+  base_commit: 73ba66faeae1520fc2671b07677db4b5e3e235d3
+
+source_commit:
+  relevant_diff_files:
+    - enterprise/storage/user.py
+    - enterprise/migrations/versions/104_add_disabled_skills_to_user.py
+
+  agent_config_files:
+    - path: AGENTS.md
+      lines_referenced: [1-100]
+
+checks:
+  - id: test_user_model_has_disabled_skills_column
+    type: fail_to_pass
+    origin: pr_diff
+    description: User model must have disabled_skills column that is accessible and typed as Column(JSON, nullable=True)
+
+  - id: test_user_model_imports_json_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: User model must successfully import and load with JSON type from sqlalchemy
+
+  - id: test_migration_file_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: Migration 104 must exist and be a valid loadable Python module
+
+  - id: test_migration_has_upgrade_downgrade
+    type: fail_to_pass
+    origin: pr_diff
+    description: Migration 104 must have callable upgrade() and downgrade() functions
+
+  - id: test_migration_upgrade_adds_column
+    type: fail_to_pass
+    origin: pr_diff
+    description: Migration upgrade function must add disabled_skills column to user table via op.add_column
+
+  - id: test_storage_user_column_order
+    type: pass_to_pass
+    origin: repo_tests
+    description: User model column ordering follows enterprise conventions (passes on both base and fix)
+
+  - id: test_repo_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: Enterprise storage directory structure is correct
+
+  - id: test_user_model_basic_columns
+    type: pass_to_pass
+    origin: repo_tests
+    description: User model has expected basic columns (id, email, current_org_id, sandbox_grouping_strategy)
+
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: All enterprise/storage Python files have valid syntax
+
+  - id: test_repo_migration_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: All Alembic migration files have valid Python syntax
+
+  - id: test_repo_alembic_latest_migration
+    type: pass_to_pass
+    origin: repo_tests
+    description: Latest Alembic migration is properly formatted with revision and down_revision
+
+  - id: test_repo_sqlalchemy_model_conventions
+    type: pass_to_pass
+    origin: repo_tests
+    description: SQLAlchemy models follow enterprise conventions (__tablename__ attribute present)
+
+  - id: test_repo_migration_conventions
+    type: pass_to_pass
+    origin: repo_tests
+    description: Migration files follow naming and structure conventions (upgrade/downgrade functions)
+
+rubric:
+  - rule: "Add disabled_skills column to User model with JSON type"
+    weight: 40
+    description: The User model must have a disabled_skills column defined as Column(JSON, nullable=True)
+
+  - rule: "Import JSON type from sqlalchemy in user.py"
+    weight: 20
+    description: The user.py file must include JSON in its sqlalchemy imports
+
+  - rule: "Create Alembic migration 104"
+    weight: 30
+    description: A migration file must be created to add the disabled_skills column to the user table
+
+  - rule: "Follow enterprise code conventions"
+    weight: 10
+    description: Code should follow the patterns in AGENTS.md for enterprise directory

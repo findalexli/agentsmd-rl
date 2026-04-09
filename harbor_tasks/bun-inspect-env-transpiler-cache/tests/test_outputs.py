@@ -228,3 +228,80 @@ def test_no_catch_out_of_memory():
             continue
         if "catch" in s and "outOfMemory" in s:
             assert False, f"Use bun.handleOom() instead of catch outOfMemory: {s}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repository CI/CD checks (lightweight, no build tools needed)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — file structure validation
+def test_claude_md_exists():
+    """CLAUDE.md coding standards file must exist (pass_to_pass)."""
+    claude_md = Path(REPO) / "CLAUDE.md"
+    assert claude_md.exists(), "CLAUDE.md coding standards file is missing"
+
+
+# [repo_tests] pass_to_pass — core source files exist
+def test_core_source_files_exist():
+    """Core source files VirtualMachine.zig and Arguments.zig must exist (pass_to_pass)."""
+    vm_file = Path(REPO) / "src/bun.js/VirtualMachine.zig"
+    args_file = Path(REPO) / "src/cli/Arguments.zig"
+    assert vm_file.exists(), "VirtualMachine.zig is missing"
+    assert args_file.exists(), "Arguments.zig is missing"
+
+
+# [repo_tests] pass_to_pass — git repo integrity
+def test_git_repo_valid():
+    """Git repository must be valid and have expected history (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "rev-parse", "--git-dir"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert r.returncode == 0, "Git repository is not valid"
+    # Check we're at expected base commit
+    r = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert r.returncode == 0, "Cannot get HEAD commit"
+    head = r.stdout.strip()
+    expected = "047cedb2b3b05fb89b7081ab753d77a2f4df0135"
+    assert head == expected, f"Unexpected base commit: {head[:8]}... (expected {expected[:8]}...)"
+
+
+# [repo_tests] pass_to_pass — configureDebugger function exists (needed for the fix)
+def test_configure_debugger_function_exists():
+    """configureDebugger function must exist in VirtualMachine.zig (pass_to_pass)."""
+    body = _get_configure_debugger()
+    assert len(body) > 100, "configureDebugger function appears too small or empty"
+    # Verify it has expected structure
+    assert "isInspectorEnabled" in body, "configureDebugger missing isInspectorEnabled check"
+
+
+# [repo_tests] pass_to_pass — inspect flags exist in Arguments.zig
+def test_inspect_flags_exist():
+    """--inspect, --inspect-wait, --inspect-brk flags must exist in Arguments.zig (pass_to_pass)."""
+    src = ARGS_FILE.read_text()
+    for flag in ["--inspect", "--inspect-wait", "--inspect-brk"]:
+        assert flag in src, f"Arguments.zig missing {flag} flag"
+
+
+# [repo_tests] pass_to_pass — no obviously banned patterns in new code
+def test_no_obvious_banned_patterns():
+    """Added code must not contain obviously banned patterns (pass_to_pass)."""
+    banned = (
+        "std.debug.print",
+        "std.log.info",
+        "std.log.err",
+        "std.log.warn",
+        "usingnamespace",
+        "allocator.ptr ==",
+        "allocator.ptr !=",
+    )
+    for line in _added_lines("src/bun.js/VirtualMachine.zig", "src/cli/Arguments.zig"):
+        s = line.strip()
+        if s.startswith("//"):
+            continue
+        for pattern in banned:
+            if pattern in s:
+                assert False, f"Banned pattern '{pattern}' found: {s}"

@@ -1,0 +1,106 @@
+source_pr:
+  owner: apache
+  repo: airflow
+  pr_number: 64739
+  title: "Add workers.celery.extraContainers & workers.kubernetes.extraContainers"
+  merge_commit: "636213e7d33d8ed2a69a6ba9e6b286c43e2008d9"
+  base_commit: "27258d567887a93f43af25a9d79d773198751bd9"
+
+checks:
+  # Fail-to-pass tests (behavioral - test the actual bug fix)
+  - id: "test_kubernetes_extra_containers_new_path"
+    name: "Kubernetes extraContainers new path works"
+    type: "pytest"
+    origin: "task"
+    file: "test_outputs.py"
+
+  - id: "test_deprecated_extra_containers_still_works"
+    name: "Deprecated extraContainers still works (backward compat)"
+    type: "pytest"
+    origin: "task"
+    file: "test_outputs.py"
+
+  - id: "test_new_path_takes_precedence_over_deprecated"
+    name: "New path takes precedence over deprecated"
+    type: "pytest"
+    origin: "task"
+    file: "test_outputs.py"
+
+  - id: "test_templating_works_with_new_path"
+    name: "Templating works with new Kubernetes path"
+    type: "pytest"
+    origin: "task"
+    file: "test_outputs.py"
+
+  - id: "test_celery_extra_containers_new_path"
+    name: "Celery extraContainers new path works"
+    type: "pytest"
+    origin: "task"
+    file: "test_outputs.py"
+
+  - id: "test_deprecated_extra_containers_celery_still_works"
+    name: "Deprecated Celery extraContainers still works"
+    type: "pytest"
+    origin: "task"
+    file: "test_outputs.py"
+
+  - id: "test_new_celery_path_takes_precedence"
+    name: "New Celery path takes precedence"
+    type: "pytest"
+    origin: "task"
+    file: "test_outputs.py"
+
+  - id: "test_templating_works_with_celery_new_path"
+    name: "Templating works with new Celery path"
+    type: "pytest"
+    origin: "task"
+    file: "test_outputs.py"
+
+  # Pass-to-pass tests (structural - ensure the changes are in place)
+  - id: "test_celery_extra_containers_in_schema"
+    name: "Celery extraContainers in JSON schema"
+    type: "pytest"
+    origin: "task"
+    file: "test_outputs.py"
+
+  - id: "test_kubernetes_extra_containers_in_schema"
+    name: "Kubernetes extraContainers in JSON schema"
+    type: "pytest"
+    origin: "task"
+    file: "test_outputs.py"
+
+  - id: "test_deprecated_description_updated"
+    name: "Deprecated description mentions new paths"
+    type: "pytest"
+    origin: "task"
+    file: "test_outputs.py"
+
+  - id: "test_celery_extra_containers_default_empty"
+    name: "Celery extraContainers defaults to empty"
+    type: "pytest"
+    origin: "task"
+    file: "test_outputs.py"
+
+  - id: "test_kubernetes_extra_containers_default_empty"
+    name: "Kubernetes extraContainers defaults to empty"
+    type: "pytest"
+    origin: "task"
+    file: "test_outputs.py"
+
+# Agent config rules that apply (from CLAUDE.md and AGENTS.md)
+agent_config:
+  - source: "CLAUDE.md"
+    lines: "88-98"
+    description: "Testing Standards - Use pytest patterns, @pytest.mark.parametrize for multiple similar inputs"
+
+  - source: "CLAUDE.md"
+    lines: "101-103"
+    description: "Coding Standards - Apache License header on all new files"
+
+# Rubric for LLM judge (soft/subjective rules)
+rubric: []
+
+metadata:
+  estimated_difficulty: "medium"
+  estimated_time: "30m"
+  tags: ["helm", "kubernetes", "yaml", "json-schema"]

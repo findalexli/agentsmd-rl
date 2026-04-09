@@ -1,0 +1,45 @@
+source:
+  repo: TanStack/router
+  pr_number: 6886
+  base_commit: d5622bb413a2d1ac99c546c5336be949dfb351d9
+  merge_commit: dd39707c6957abb390e9e2b694da6da0e054c282
+  title: "refactor(react-router): Head and Scripts use deepEqual to avoid useStore re-renders"
+
+checks:
+  # Fail-to-pass tests (verify the fix)
+  - id: test_scripts_has_deep_equal_import
+    description: "Scripts.tsx imports deepEqual from @tanstack/router-core"
+    type: fail_to_pass
+
+  - id: test_scripts_use_store_calls_have_deep_equal
+    description: "All useStore calls in Scripts.tsx have deepEqual as comparator"
+    type: fail_to_pass
+
+  - id: test_head_content_utils_has_deep_equal_import
+    description: "headContentUtils.tsx imports deepEqual from @tanstack/router-core"
+    type: fail_to_pass
+
+  - id: test_use_tags_use_store_calls_have_deep_equal
+    description: "All useStore calls in useTags hook have deepEqual as comparator"
+    type: fail_to_pass
+
+  # Pass-to-pass tests (repo CI/CD checks - must pass on both base and after fix)
+  - id: test_p2p_react_router_unit_tests
+    description: "Repo's unit tests for react-router pass"
+    type: pass_to_pass
+    origin: repo_tests
+    command: "pnpm nx run @tanstack/react-router:test:unit -- --run"
+
+  - id: test_p2p_react_router_types
+    description: "Repo's TypeScript type check for react-router passes"
+    type: pass_to_pass
+    origin: repo_tests
+    command: "pnpm nx run @tanstack/react-router:test:types"
+
+  - id: test_p2p_react_router_build
+    description: "Repo's build for react-router package passes"
+    type: pass_to_pass
+    origin: repo_tests
+    command: "pnpm nx run @tanstack/react-router:build"
+
+rubric: []

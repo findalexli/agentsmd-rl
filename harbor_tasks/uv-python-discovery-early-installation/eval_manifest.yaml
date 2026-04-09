@@ -50,6 +50,22 @@ checks:
     origin: static
     description: "Closures use .source/.interpreter field access instead of tuple destructuring"
 
+  # Repo CI/CD pass-to-pass tests: ensure repo standards aren't broken
+  - id: test_repo_cargo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo code passes cargo fmt check"
+
+  - id: test_repo_cargo_check_uv_python
+    type: pass_to_pass
+    origin: repo_tests
+    description: "uv-python crate compiles without errors via cargo check"
+
+  - id: test_repo_cargo_clippy_uv_python
+    type: pass_to_pass
+    origin: repo_tests
+    description: "uv-python crate passes clippy linting with -D warnings"
+
   # Config-derived checks from CLAUDE.md
   - id: no_unwrap_panic_unreachable
     type: pass_to_pass

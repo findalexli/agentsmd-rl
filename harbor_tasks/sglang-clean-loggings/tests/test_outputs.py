@@ -9,8 +9,30 @@ Verifies:
 
 import importlib.util
 import os
+import subprocess
+import shutil
 
 REPO = "/workspace/sglang"
+
+# Modified files in this PR (for pass_to_pass repo tests)
+MODIFIED_FILES = [
+    "python/sglang/srt/utils/json_response.py",
+    "python/sglang/multimodal_gen/runtime/utils/logging_utils.py",
+    "python/sglang/multimodal_gen/runtime/models/encoders/mistral_3.py",
+    "python/sglang/multimodal_gen/runtime/models/encoders/qwen2_5vl.py",
+]
+
+
+def _ensure_tool(tool, package=None):
+    """Ensure a CLI tool is available, installing if necessary."""
+    if package is None:
+        package = tool
+    if shutil.which(tool) is None:
+        subprocess.run(
+            ["pip", "install", "--no-cache-dir", "-q", package],
+            check=True,
+            capture_output=True,
+        )
 
 
 def _import_json_response():
@@ -141,3 +163,76 @@ def test_dumps_json_roundtrip():
         encoded = mod.dumps_json(data)
         assert isinstance(encoded, bytes)
         assert orjson.loads(encoded) == data
+
+
+# ── pass-to-pass: repo CI/CD checks ──────────────────────────────────────────
+
+
+def test_repo_ruff_linting():
+    """Repo's ruff linting passes on modified files (pass_to_pass)."""
+    _ensure_tool("ruff")
+    files = [os.path.join(REPO, f) for f in MODIFIED_FILES]
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821"] + files,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_black_formatting():
+    """Repo's black formatting check passes on modified files (pass_to_pass)."""
+    _ensure_tool("black")
+    files = [os.path.join(REPO, f) for f in MODIFIED_FILES]
+    r = subprocess.run(
+        ["black", "--check"] + files,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black formatting check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_isort_check():
+    """Repo's isort import ordering check passes on modified files (pass_to_pass)."""
+    _ensure_tool("isort")
+    files = [os.path.join(REPO, f) for f in MODIFIED_FILES]
+    r = subprocess.run(
+        ["isort", "--check-only"] + files,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Isort check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_codespell():
+    """Repo's codespell check passes on modified files (pass_to_pass)."""
+    _ensure_tool("codespell")
+    files = [os.path.join(REPO, f) for f in MODIFIED_FILES]
+    r = subprocess.run(
+        ["codespell", "--config", ".codespellrc"] + files,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Codespell check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_python_syntax():
+    """Modified Python files have valid syntax (pass_to_pass)."""
+    files = [os.path.join(REPO, f) for f in MODIFIED_FILES]
+    for f in files:
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", f],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"Python syntax error in {f}:\n{r.stderr}"

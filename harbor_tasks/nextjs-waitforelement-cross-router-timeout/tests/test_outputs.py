@@ -76,7 +76,7 @@ def test_all_waitfor_calls_have_timeout():
     r = _run_node(
         """
 const fs = require('fs');
-const src = fs.readFileSync(process.argv[0] || '""" + TEST_FILE + """', 'utf8');
+const src = fs.readFileSync(process.argv[1] || 'TESTFILE', 'utf8');
 const lines = src.split('\\n');
 
 // Collect non-comment lines with their original line numbers
@@ -109,7 +109,7 @@ for (const { idx, line } of codeLines) {
     }
 
     // Pattern 2: numeric second arg waitForElementByCss('#sel', 30000)
-    const numericMatch = context.match(/waitForElementByCss\\s*\\(\\s*['"\\`][^'"\\`]*['"\\`]\\s*,\\s*(\\d+)\\s*\\)/);
+    const numericMatch = context.match(/waitForElementByCss\\s*\\(\\s*['"`][^'"`]*['"`]\\s*,\\s*(\\d+)\\s*\\)/);
     if (numericMatch) {
         const val = parseInt(numericMatch[1]);
         if (val < 15000) { failures.push(`Line ${idx+1}: timeout=${val} < 15000`); continue; }
@@ -138,7 +138,7 @@ if (withTimeout !== callCount) {
     process.exit(1);
 }
 console.log(`All ${callCount} waitForElementByCss calls have timeout >= 15000`);
-"""
+""".replace("TESTFILE", TEST_FILE)
     )
     assert r.returncode == 0, f"Timeout check failed: {r.stderr.strip()}"
 
@@ -149,7 +149,7 @@ def test_at_least_6_calls_with_timeout():
     r = _run_node(
         """
 const fs = require('fs');
-const src = fs.readFileSync('""" + TEST_FILE + """', 'utf8');
+const src = fs.readFileSync('TESTFILE', 'utf8');
 const lines = src.split('\\n');
 const codeLines = lines.filter(l => {
     const t = l.trim();
@@ -158,7 +158,7 @@ const codeLines = lines.filter(l => {
 const codeText = codeLines.join('\\n');
 
 // Count waitForElementByCss calls with a second argument (timeout)
-const callsWithArg = codeText.match(/\\.waitForElementByCss\\(\\s*['"\\`#][^)]*,\\s*(?:\\{|[0-9])/g);
+const callsWithArg = codeText.match(/\\.waitForElementByCss\\(\\s*['"`#][^)]*,\\s*(?:\\{|[0-9])/g);
 const count = callsWithArg ? callsWithArg.length : 0;
 
 if (count < 6) {
@@ -166,7 +166,7 @@ if (count < 6) {
     process.exit(1);
 }
 console.log(`${count} calls with timeout found`);
-"""
+""".replace("TESTFILE", TEST_FILE)
     )
     assert r.returncode == 0, f"Call count check failed: {r.stderr.strip()}"
 
@@ -177,7 +177,7 @@ def test_explanatory_comment_present():
     r = _run_node(
         """
 const fs = require('fs');
-const src = fs.readFileSync('""" + TEST_FILE + """', 'utf8');
+const src = fs.readFileSync('TESTFILE', 'utf8');
 const lines = src.split('\\n');
 
 for (let i = 0; i < lines.length; i++) {
@@ -200,7 +200,7 @@ for (let i = 0; i < lines.length; i++) {
 }
 console.error('No explanatory comment found near waitForElementByCss about increased timeout');
 process.exit(1);
-"""
+""".replace("TESTFILE", TEST_FILE)
     )
     assert r.returncode == 0, f"Comment check failed: {r.stderr.strip()}"
 
@@ -230,7 +230,7 @@ def test_infrastructure_intact():
     r = _run_node(
         """
 const fs = require('fs');
-const src = fs.readFileSync('""" + TEST_FILE + """', 'utf8');
+const src = fs.readFileSync('TESTFILE', 'utf8');
 const codeLines = src.split('\\n').filter(l => {
     const t = l.trim();
     return !t.startsWith('//') && !t.startsWith('*') && !t.startsWith('/*');
@@ -241,7 +241,7 @@ if (!/describe\\s*\\(/.test(codeText)) { console.error('Missing describe() block
 if (!codeText.includes('webdriver') || !/import|require/.test(codeText)) { console.error('Missing webdriver import'); process.exit(1); }
 if (!codeText.includes('createNext')) { console.error('Missing createNext call'); process.exit(1); }
 console.log('Infrastructure intact');
-"""
+""".replace("TESTFILE", TEST_FILE)
     )
     assert r.returncode == 0, f"Infrastructure check failed: {r.stderr.strip()}"
 
@@ -252,7 +252,7 @@ def test_navigation_logic_intact():
     r = _run_node(
         """
 const fs = require('fs');
-const src = fs.readFileSync('""" + TEST_FILE + """', 'utf8');
+const src = fs.readFileSync('TESTFILE', 'utf8');
 const codeLines = src.split('\\n').filter(l => {
     const t = l.trim();
     return !t.startsWith('//') && !t.startsWith('*') && !t.startsWith('/*');
@@ -263,7 +263,7 @@ if (!/\\.click\\s*\\(/.test(codeText)) { console.error('Missing .click() calls')
 if (!/\\.back\\s*\\(/.test(codeText) && !/\\.forward\\s*\\(/.test(codeText)) { console.error('Missing .back()/.forward() calls'); process.exit(1); }
 if (!/elementByCss|waitForElementByCss/.test(codeText)) { console.error('Missing element check calls'); process.exit(1); }
 console.log('Navigation logic intact');
-"""
+""".replace("TESTFILE", TEST_FILE)
     )
     assert r.returncode == 0, f"Navigation logic check failed: {r.stderr.strip()}"
 
@@ -279,7 +279,7 @@ def test_no_settimeout_for_waiting():
     r = _run_node(
         """
 const fs = require('fs');
-const src = fs.readFileSync('""" + TEST_FILE + """', 'utf8');
+const src = fs.readFileSync('TESTFILE', 'utf8');
 const codeLines = src.split('\\n').filter(l => {
     const t = l.trim();
     return !t.startsWith('//') && !t.startsWith('*') && !t.startsWith('/*');
@@ -291,7 +291,7 @@ for (const line of codeLines) {
     }
 }
 console.log('No setTimeout/Promise delays');
-"""
+""".replace("TESTFILE", TEST_FILE)
     )
     assert r.returncode == 0, f"setTimeout check failed: {r.stderr.strip()}"
 
@@ -302,7 +302,7 @@ def test_no_deprecated_check():
     r = _run_node(
         """
 const fs = require('fs');
-const src = fs.readFileSync('""" + TEST_FILE + """', 'utf8');
+const src = fs.readFileSync('TESTFILE', 'utf8');
 const codeLines = src.split('\\n').filter(l => {
     const t = l.trim();
     return !t.startsWith('//') && !t.startsWith('*') && !t.startsWith('/*');
@@ -314,7 +314,7 @@ for (const line of codeLines) {
     }
 }
 console.log('No deprecated check() usage');
-"""
+""".replace("TESTFILE", TEST_FILE)
     )
     assert r.returncode == 0, f"Deprecated check() found: {r.stderr.strip()}"
 
@@ -328,3 +328,59 @@ def test_no_inline_fixture_files():
         src,
         re.DOTALL,
     ), "Inline files object found in createNext/nextTestSetup — use files: __dirname instead"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates
+# ---------------------------------------------------------------------------
+
+
+# [repo_ci] pass_to_pass — Repo code formatting check via prettier
+def test_repo_prettier_formatting():
+    """Repo's prettier formatting check passes on test file (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "prettier"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Install may produce warnings, but should succeed
+    r = subprocess.run(
+        ["prettier", "--check", TEST_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier formatting check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — Test file is valid TypeScript (basic syntax check)
+def test_repo_typescript_syntax():
+    """Test file is valid TypeScript syntax that Node.js can parse (pass_to_pass)."""
+    r = _run_node(
+        """
+const fs = require('fs');
+try {
+  const src = fs.readFileSync('TESTFILE', 'utf8');
+  // Check for basic structural issues: balanced braces/parens (naive check)
+  const openBrace = (src.match(/{/g) || []).length;
+  const closeBrace = (src.match(/}/g) || []).length;
+  const openParen = (src.match(/\\(/g) || []).length;
+  const closeParen = (src.match(/\\)/g) || []).length;
+  if (openBrace !== closeBrace) {
+    console.error('Unbalanced braces: ' + openBrace + ' vs ' + closeBrace);
+    process.exit(1);
+  }
+  if (openParen !== closeParen) {
+    console.error('Unbalanced parens: ' + openParen + ' vs ' + closeParen);
+    process.exit(1);
+  }
+  console.log('Basic syntax OK');
+} catch(e) {
+  console.error('Error reading file: ' + e.message);
+  process.exit(1);
+}
+""".replace("TESTFILE", TEST_FILE)
+    )
+    assert r.returncode == 0, f"TypeScript syntax check failed: {r.stderr.strip()}"

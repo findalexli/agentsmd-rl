@@ -47,6 +47,38 @@ def test_syntax_check():
     ast.parse(src)
 
 
+# [repo_ci] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff check passes on tests_fetcher.py (pass_to_pass)."""
+    # Only check for critical errors (E,W,F,I) not style issues like line length
+    r = subprocess.run(
+        ["ruff", "check", "utils/tests_fetcher.py", "--select=E,W,F,I", "--ignore=E501,E741"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    # This passes on base commit as there are no critical errors
+    # (E501 line too long and E741 ambiguous variable name are ignored)
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_syntax_all():
+    """All repo Python files must have valid syntax (pass_to_pass)."""
+    import ast
+
+    errors = []
+    for py_file in Path(REPO).rglob("*.py"):
+        # Skip hidden dirs and build artifacts
+        if any(part.startswith(".") for part in py_file.parts):
+            continue
+        if "__pycache__" in str(py_file):
+            continue
+        try:
+            ast.parse(py_file.read_text())
+        except SyntaxError as e:
+            errors.append(f"{py_file}: {e}")
+    assert not errors, f"Syntax errors found:\n{chr(10).join(errors)}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

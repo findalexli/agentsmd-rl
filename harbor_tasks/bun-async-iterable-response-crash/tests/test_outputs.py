@@ -402,3 +402,95 @@ def test_no_dynamic_require():
             assert not m, (
                 f"{Path(filepath).name}:{i} uses dynamic require() — must use string literals"
             )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD standards from ban-words.test.ts
+# ---------------------------------------------------------------------------
+
+
+def test_no_undefined_equality_comparison():
+    """No undefined equality comparisons (== undefined, != undefined) in builtins.
+    Banned by repo's ban-words.test.ts — this is Undefined Behavior."""
+    banned_patterns = [
+        " != undefined",
+        " == undefined",
+        "undefined != ",
+        "undefined == ",
+    ]
+    for filepath in [TS_FILE, INTERNALS_FILE]:
+        text = Path(filepath).read_text()
+        for i, line in enumerate(text.split("\n"), 1):
+            stripped = line.strip()
+            # Skip comments
+            if stripped.startswith("//") or stripped.startswith("*"):
+                continue
+            for pattern in banned_patterns:
+                assert pattern not in stripped, (
+                    f"{Path(filepath).name}:{i} contains banned pattern '{pattern}' — "
+                    "this is Undefined Behavior per ban-words.test.ts"
+                )
+
+
+def test_no_bare_jsboolean():
+    """No bare .jsBoolean(true/false) calls in builtins — use .true/.false.
+    Banned by repo's ban-words.test.ts."""
+    banned_patterns = [
+        ".jsBoolean(true)",
+        "JSValue.true",
+        ".jsBoolean(false)",
+        "JSValue.false",
+    ]
+    for filepath in [TS_FILE, INTERNALS_FILE]:
+        text = Path(filepath).read_text()
+        for i, line in enumerate(text.split("\n"), 1):
+            stripped = line.strip()
+            if stripped.startswith("//") or stripped.startswith("*"):
+                continue
+            for pattern in banned_patterns:
+                assert pattern not in stripped, (
+                    f"{Path(filepath).name}:{i} contains banned pattern '{pattern}' — "
+                    "use .true/.false instead per ban-words.test.ts"
+                )
+
+
+def test_no_std_debug_in_builtins():
+    """No std.debug.assert, std.debug.print in builtins.
+    Banned by repo's ban-words.test.ts."""
+    banned_patterns = [
+        "std.debug.assert",
+        "std.debug.dumpStackTrace",
+        "std.debug.print",
+        "std.log",
+    ]
+    for filepath in [TS_FILE, INTERNALS_FILE]:
+        text = Path(filepath).read_text()
+        for i, line in enumerate(text.split("\n"), 1):
+            stripped = line.strip()
+            if stripped.startswith("//") or stripped.startswith("*"):
+                continue
+            for pattern in banned_patterns:
+                assert pattern not in stripped, (
+                    f"{Path(filepath).name}:{i} contains banned pattern '{pattern}' — "
+                    "use bun.* alternatives per ban-words.test.ts"
+                )
+
+
+def test_typescript_braces_balance():
+    """TypeScript files must have balanced braces (basic syntax check)."""
+    for filepath in [TS_FILE, INTERNALS_FILE]:
+        text = Path(filepath).read_text()
+        # Simple brace counting (doesn't account for string literals, but catches major issues)
+        open_braces = text.count("{")
+        close_braces = text.count("}")
+        assert open_braces == close_braces, (
+            f"{Path(filepath).name}: unbalanced braces "
+            f"({open_braces} open, {close_braces} close)"
+        )
+        # Also check parentheses
+        open_parens = text.count("(")
+        close_parens = text.count(")")
+        assert open_parens == close_parens, (
+            f"{Path(filepath).name}: unbalanced parentheses "
+            f"({open_parens} open, {close_parens} close)"
+        )

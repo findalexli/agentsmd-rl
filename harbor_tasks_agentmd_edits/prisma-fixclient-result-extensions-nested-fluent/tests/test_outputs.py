@@ -33,6 +33,57 @@ def test_agents_md_client_architecture_intact():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD checks (pass_to_pass, repo_tests)
+# These verify that existing CI/CD checks pass on both base and gold commits.
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check():
+    """Repo's Prettier formatting check passes (pass_to_pass)."""
+    # Install pnpm first (not in base image)
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.15.1"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Install dependencies
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile", "--prefer-offline"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    # Run prettier check
+    r = subprocess.run(
+        ["pnpm", "run", "prettier-check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_client_extensions():
+    """Repo's ESLint check on client extensions passes (pass_to_pass)."""
+    # Install pnpm first (not in base image)
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.15.1"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Install dependencies
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile", "--prefer-offline"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    # Run eslint on client extensions (should have no errors, warnings OK)
+    r = subprocess.run(
+        ["pnpm", "--filter", "@prisma/client", "exec", "eslint",
+         "src/runtime/core/extensions", "--ext", ".ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Exit code 0 = no errors (warnings don't fail)
+    assert r.returncode == 0, f"ESLint failed with errors:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

@@ -11,6 +11,7 @@ import ast
 import asyncio
 import importlib
 import re
+import subprocess
 import sys
 import types
 from pathlib import Path
@@ -118,6 +119,42 @@ def _import_eval_utils():
         sys.path.insert(0, "/workspace/src")
     eval_utils = importlib.import_module("prime_rl.orchestrator.eval_utils")
     return eval_utils, mock_evaluate, mock_logger
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Ruff lint check passes on orchestrator module (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # Install may return 0 even with warnings; continue regardless
+
+    r = subprocess.run(
+        ["ruff", "check", "--config=/workspace/pyproject.toml", "/workspace/src/prime_rl/orchestrator/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Ruff format check passes on orchestrator module (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--config=/workspace/pyproject.toml", "/workspace/src/prime_rl/orchestrator/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

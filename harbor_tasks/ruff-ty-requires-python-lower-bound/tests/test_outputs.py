@@ -226,3 +226,49 @@ def test_no_local_imports_in_resolve():
         assert not stripped.startswith("use "), (
             f"Local import in resolve_requires_python at line {i}: {stripped}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates
+# ---------------------------------------------------------------------------
+
+
+# [repo_ci] pass_to_pass
+def test_repo_cargo_check_ty_project():
+    """cargo check -p ty_project passes (repo CI pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty_project"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check -p ty_project failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_cargo_check_ty():
+    """cargo check -p ty passes (repo CI pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check -p ty failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_cargo_test_ty_project():
+    """cargo test -p ty_project passes (repo CI pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_project"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo test -p ty_project failed:\n{r.stdout[-1000:]}{r.stderr[-1000:]}"
+
+
+
+# [repo_ci] pass_to_pass
+def test_repo_cargo_clippy_ty_project():
+    """cargo clippy -p ty_project passes (repo CI pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty_project", "--all-targets", "--all-features"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy -p ty_project failed:\n{r.stderr[-1000:]}"

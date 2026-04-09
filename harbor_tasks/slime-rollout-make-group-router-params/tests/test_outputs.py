@@ -267,6 +267,23 @@ print("PASS")
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+def test_repo_rollout_py_syntax():
+    """Repo's rollout.py must have valid Python syntax (pass_to_pass)."""
+    import ast
+    source = Path(FILE).read_text()
+    ast.parse(source)
+
+
+def test_repo_slime_importable():
+    """Repo's slime package must be importable (pass_to_pass)."""
+    r = _run_python("import slime; print('slime imported successfully')")
+    assert r.returncode == 0, f"Failed to import slime: {r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass — regression checks
 # ---------------------------------------------------------------------------
 

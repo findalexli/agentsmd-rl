@@ -205,3 +205,103 @@ console.log('PASS:all_conditions_present');
         script.unlink(missing_ok=True)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS:all_conditions_present" in r.stdout
+
+
+def test_repo_typescript_syntax():
+    """Repo's TypeScript syntax is valid (pass_to_pass).
+
+    Uses TypeScript compiler API to parse the target file and verify
+    it has no syntax errors. This validates the basic structural
+    integrity of the code without requiring full type checking.
+    """
+    script = Path(REPO) / "_eval_ts_syntax.mjs"
+    script.write_text(r"""
+import { readFileSync } from 'fs';
+import { createSourceFile, ScriptTarget, ScriptKind, SyntaxKind, forEachChild } from 'typescript';
+
+const filePath = 'src/vs/workbench/contrib/chat/common/promptSyntax/utils/promptFilesLocator.ts';
+const content = readFileSync(filePath, 'utf8');
+
+// Parse the file
+const sourceFile = createSourceFile(
+    filePath,
+    content,
+    ScriptTarget.Latest,
+    true,
+    ScriptKind.TS
+);
+
+// Check for syntax errors by looking for Unknown nodes (typically indicates parse errors)
+let hasErrors = false;
+function visit(node) {
+    if (node.kind === SyntaxKind.Unknown) {
+        hasErrors = true;
+        console.error(`Syntax error at position ${node.pos}`);
+    }
+    forEachChild(node, visit);
+}
+visit(sourceFile);
+
+if (hasErrors) {
+    console.error('FAIL: TypeScript syntax errors found');
+    process.exit(1);
+}
+
+// Verify key structures exist
+const src = content;
+
+// Check for class definition
+if (!/export\s+class\s+PromptFilesLocator/.test(src)) {
+    console.error('FAIL: PromptFilesLocator class not found');
+    process.exit(1);
+}
+
+// Check for the method
+if (!/findParentRepoFolders/.test(src)) {
+    console.error('FAIL: findParentRepoFolders method not found');
+    process.exit(1);
+}
+
+// Verify the while(true) structure exists
+if (!/while\s*\(\s*true\s*\)/.test(src)) {
+    console.error('FAIL: while(true) loop not found');
+    process.exit(1);
+}
+
+console.log('PASS: TypeScript syntax valid');
+""")
+    try:
+        r = subprocess.run(
+            ["node", "--experimental-strip-types", str(script)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+    assert r.returncode == 0, f"TypeScript syntax check failed:\n{r.stderr}"
+    assert "PASS" in r.stdout, f"Expected PASS in output, got:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_file_structure():
+    """Repo's chat/promptSyntax module structure is intact (pass_to_pass).
+
+    Verifies that the expected files exist in the expected locations,
+    ensuring the module structure is consistent.
+    """
+    expected_files = [
+        "src/vs/workbench/contrib/chat/common/promptSyntax/utils/promptFilesLocator.ts",
+        "src/vs/workbench/contrib/chat/test/common/promptSyntax/utils/promptFilesLocator.test.ts",
+        "src/vs/workbench/contrib/chat/common/promptSyntax/service/promptsService.ts",
+    ]
+
+    for rel_path in expected_files:
+        full_path = Path(REPO) / rel_path
+        assert full_path.exists(), f"Expected file missing: {rel_path}"
+
+    # Verify the target file has content
+    target = Path(REPO) / TARGET
+    content = target.read_text()
+    assert len(content) > 1000, "Target file seems too small/empty"
+
+    # Check that basic TypeScript constructs are present
+    assert "class PromptFilesLocator" in content, "PromptFilesLocator class not found"
+    assert "findParentRepoFolders" in content, "findParentRepoFolders method not found"

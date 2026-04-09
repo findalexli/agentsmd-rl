@@ -1,0 +1,76 @@
+source_pr:
+  owner: JetBrains
+  repo: kotlin
+  number: 5760
+  merge_commit: ff5b404654967af3cacad508051312c08e92be12
+  base_commit: e3b4d7fe1cccf74f80f8ea53d9332a2c6e657f8f
+
+checks:
+  # Fail-to-pass checks (behavioral tests)
+  - id: test_header_has_bool_parameter
+    type: fail_to_pass
+    origin: agent_config
+    source: "Header signature requires bool parameter to distinguish null value from completion"
+    description: "KotlinCoroutineSupport.h callback has (bool, void*) signature"
+
+  - id: test_kt_has_value_wrapper_class
+    type: fail_to_pass
+    origin: agent_config
+    source: "Inner Value wrapper class needed to wrap emitted values"
+    description: "KotlinCoroutineSupport.kt has inner Value class"
+
+  - id: test_kt_next_returns_value_type
+    type: fail_to_pass
+    origin: agent_config
+    source: "next() must return Value? to distinguish null from completion"
+    description: "next() function returns Value? instead of T?"
+
+  - id: test_kt_continuation_uses_value_wrapper
+    type: fail_to_pass
+    origin: agent_config
+    source: "Values must be wrapped in Value class when resuming continuation"
+    description: "continuation.resume() wraps value in Value class"
+
+  - id: test_kt_callback_has_bool_and_value
+    type: fail_to_pass
+    origin: agent_config
+    source: "Interop callback signature must include boolean flag for null handling"
+    description: "SwiftFlowIterator_next callback has (Boolean, NativePtr) parameters"
+
+  - id: test_kt_callback_passes_boolean_flag
+    type: fail_to_pass
+    origin: agent_config
+    source: "Continuation must pass true for present values, false for completion"
+    description: "Callback passes boolean flag indicating value presence"
+
+  - id: test_swift_callback_handles_bool
+    type: fail_to_pass
+    origin: agent_config
+    source: "Swift side must handle boolean flag in callback"
+    description: "Swift callback has arg0 (bool) and arg1 (value) parameters"
+
+  - id: test_swift_handles_boolean_for_optional
+    type: fail_to_pass
+    origin: agent_config
+    source: "Swift must use boolean to decide between .some(element) and .none"
+    description: "Swift uses boolean flag to determine .some vs .none"
+
+  - id: test_kt_test_file_has_nullable_flow_function
+    type: fail_to_pass
+    origin: agent_config
+    source: "Test data needs nullable Flow for validation"
+    description: "Test file has testNullable() with Flow<Elem?>"
+
+  - id: test_swift_test_has_nullable_test
+    type: fail_to_pass
+    origin: agent_config
+    source: "Swift tests must validate nullable flow behavior"
+    description: "Swift test file has testNullable() async test"
+
+  - id: test_swift_test_includes_null_in_expected
+    type: fail_to_pass
+    origin: agent_config
+    source: "Test should verify nil values are properly passed through"
+    description: "Swift test expects array with nil values"
+
+rubric: []

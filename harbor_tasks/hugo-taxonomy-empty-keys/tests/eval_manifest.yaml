@@ -1,0 +1,77 @@
+manifest_version: "1.0"
+
+task:
+  name: hugo-taxonomy-empty-keys
+  source_pr: "https://github.com/gohugoio/hugo/pull/14551"
+  base_commit: "cc338a9d4854c7e7273a5c3c8fee436c642f4dde"
+  merge_commit: "65b4287c68cfa17d4cf0f5526b2a53b960516ac0"
+
+checks:
+  # F2P: Core behavioral tests - these fail on base commit, pass on fix
+  - id: ancestors_with_problematic_config
+    name: ".Ancestors works with problematic TOML config"
+    description: "Test that reproduces issue #14550 - .Ancestors hanging with phantom taxonomy"
+    type: behavioral
+    subtype: fail_to_pass
+    points: 35
+
+  - id: taxonomy_parsing_no_panic
+    name: "Taxonomy parsing does not panic or hang with empty values"
+    description: "Verify Hugo can process config with empty taxonomy values without infinite loop"
+    type: behavioral
+    subtype: fail_to_pass
+    points: 35
+
+  # P2P: Structural and regression tests - these pass on both commits
+  - id: compilation
+    name: "Hugo compiles successfully"
+    description: "Verify the code compiles without errors"
+    type: structural
+    subtype: pass_to_pass
+    points: 10
+
+  - id: taxonomies_decoder_has_filtering
+    name: "Taxonomies decoder has empty key/value filtering"
+    description: "Verify the fix is present in the decoder code structure"
+    type: structural
+    subtype: pass_to_pass
+    points: 10
+    depends_on: [ancestors_with_problematic_config, taxonomy_parsing_no_panic]
+
+  - id: disable_kinds_tests_pass
+    name: "All TestDisableKinds tests pass"
+    description: "No regressions in existing disableKinds functionality"
+    type: behavioral
+    subtype: pass_to_pass
+    points: 10
+
+agent_config:
+  # Rules from AGENTS.md that are programmatically testable
+  - rule: "In tests, use `qt` matchers (e.g. `b.Assert(err, qt.ErrorMatches, ...)`) instead of raw `if`/`t.Fatal` checks"
+    source: "AGENTS.md:9"
+    applies_to: ["hugolib/disableKinds_test.go"]
+    check_ids: [ancestors_with_problematic_config]
+
+rubric:
+  # Soft/subjective rules from AGENTS.md - evaluated by LLM judge
+  - rule: "Brevity is good. This applies to code, comments and commit messages. Don't write a novel."
+    source: "AGENTS.md:1"
+
+  - rule: "Assume that the maintainers and readers of the code you write are Go experts: Don't use comments to explain the obvious"
+    source: "AGENTS.md:2"
+
+  - rule: "Use self-explanatory variable and function names"
+    source: "AGENTS.md:3"
+
+  - rule: "Use short variable names when the context is clear"
+    source: "AGENTS.md:4"
+
+  - rule: "Avoid global state at (almost) all cost"
+    source: "AGENTS.md:6"
+
+  - rule: "This is a project with a long history; assume that a similiar problem has been solved before, look hard for helper functions before creating new ones"
+    source: "AGENTS.md:7"
+
+scoring:
+  max_total_points: 100
+  min_pass_points: 60

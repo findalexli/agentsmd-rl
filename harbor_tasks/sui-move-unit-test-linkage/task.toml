@@ -1,0 +1,28 @@
+name = "sui-move-unit-test-linkage"
+difficulty = "medium"
+time_limit = 600
+tags = ["rust", "move", "unit-test", "linkage", "blockchain"]
+
+[description]
+short = "Fix Move unit test runner to provide full package linkage"
+detailed = """
+The Move unit test runner was not providing full linkage context for packages,
+causing issues with cross-package test execution. The fix requires adding proper
+linkage context creation using identity mapping (addr -> addr) and passing it
+to StoredPackage creation via from_module_for_testing_with_linkage instead of
+from_modules_for_testing.
+"""
+
+[repository]
+owner = "MystenLabs"
+repo = "sui"
+base_commit = "8810914bd8a82363390cbd30eb12188b34592c87"
+merge_commit = "5d6853d6a2e9978f1f11157c0f16ee2a584f5000"
+pr_number = 26139
+
+[target]
+files = [
+    "external-crates/move/crates/move-unit-test/src/test_runner.rs"
+]
+primary_file = "external-crates/move/crates/move-unit-test/src/test_runner.rs"
+distinctive_line = "from_module_for_testing_with_linkage"

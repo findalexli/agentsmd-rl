@@ -1,12 +1,92 @@
 {
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-08T22:03:03.881614",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 1798.66,
-  "error": "No backend available within 600s. Pool: glm(33ok/0\u00d7429/ok) | fireworks(118ok/0\u00d7429/ok)"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T08:16:18.976844",
+  "total_time": 5739.31,
+  "sandbox_id": "ilvt29lyvcz30camjcinw",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "icr": 1.0,
+      "attempts": 1,
+      "notes": "All four validation checks passed: Docker build succeeded, NOP test correctly returned reward=0 (6 fail_to_pass tests fail on base commit), Gold test returned reward=1 (all 11 tests pass after gold fix), Rubric judge returned ICR=1.0 (no rubric rules to enforce).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 696.59
+    },
+    "p2p_enrichment": {
+      "status": "completed",
+      "date": "2026-04-09",
+      "ci_commands_found": [
+        "cargo fmt --check - WORKS (fast, no warnings)",
+        "cargo clippy --package goose --no-default-features --features rustls-tls,code-mode - WORKS (~4m, 2 warnings)",
+        "cargo check --package goose --no-default-features --features rustls-tls,code-mode - WORKS (~3m, 2 warnings)",
+        "cargo check --package goose (syntax) - WORKS (same as above)"
+      ],
+      "ci_commands_not_working": [
+        "cargo test --package goose --lib config:: - SKIPPED (requires libclang for llama-cpp-sys-2)",
+        "cargo test --workspace - SKIPPED (requires libclang)",
+        "cargo clippy --workspace --all-targets --all-features - SKIPPED (requires libclang)",
+        "cargo-deny - NOT INSTALLED",
+        "cargo-machete - NOT INSTALLED"
+      ],
+      "new_tests_added": [
+        "test_rust_format_check - pass_to_pass using cargo fmt --check",
+        "test_rust_clippy - pass_to_pass using cargo clippy with minimal features",
+        "test_rust_check_minimal - pass_to_pass using cargo check with minimal features"
+      ],
+      "files_modified": [
+        "tests/test_outputs.py - Added 3 new p2p test functions",
+        "eval_manifest.yaml - Added 3 new p2p checks"
+      ],
+      "verification": "All 5 p2p tests pass on base commit: rust_syntax, typescript_syntax, rust_format_check, rust_clippy, rust_check_minimal",
+      "notes": "Added 3 new p2p tests based on repo's actual CI commands from .github/workflows/ci.yml. Tests use minimal features (rustls-tls,code-mode) to avoid the problematic local-inference feature that requires libclang. The 6 fail_to_pass tests correctly fail on base commit and will pass after the fix is applied."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1045.83,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.37,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T08:16:18.805202"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 5739.31,
+      "at": "2026-04-09T08:16:18.976844"
+    }
+  ]
 }

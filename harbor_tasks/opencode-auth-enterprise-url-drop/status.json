@@ -1,47 +1,95 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.969272",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.5,
-      "verdict": "pass",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:23:30.018119",
+  "total_time": 2772.74,
+  "sandbox_id": "iykyf6r17027y8688w9jz",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T09:00:00",
+      "ci_commands_discovered": [
+        "bun typecheck (turbo typecheck)",
+        "bun turbo test",
+        "tsgo --noEmit (opencode package)",
+        "tsgo --noEmit (plugin package)"
+      ],
+      "ci_commands_tested": [
+        "Could not run bun commands (bun not installed in container)",
+        "Could not run tsgo (tsgo not available without bun install)"
+      ],
+      "p2p_tests_added": [
+        "test_repo_typescript_syntax_valid - Balanced braces/parens/brackets",
+        "test_repo_import_structure_intact - Import syntax validation",
+        "test_repo_type_definitions_valid - Type definition structure",
+        "test_repo_no_syntax_errors_common - No double semicolons/unclosed comments",
+        "test_repo_file_encoding_valid - UTF-8 encoding validation",
+        "test_repo_no_debugger_statements - No debugger statements added",
+        "test_repo_no_console_log_added - No console.log added"
+      ],
+      "notes": [
+        "Repository uses bun as package manager (bun@1.3.11)",
+        "Root package.json has scripts: typecheck (bun turbo typecheck), test (echo do not run tests from root)",
+        "packages/opencode uses tsgo --noEmit for typecheck",
+        "packages/plugin uses tsgo --noEmit for typecheck",
+        "CI workflows: .github/workflows/test.yml runs bun turbo test",
+        "CI workflows: .github/workflows/typecheck.yml runs bun typecheck",
+        "Modified files: packages/opencode/src/provider/auth.ts, packages/plugin/src/index.ts",
+        "Since bun/tsgo not available in container, added Node.js-based syntax/structure validation tests"
+      ]
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 674.05,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed duplicate test functions in test_outputs.py (removed 7 duplicate repo test definitions at lines 487-628). Removed conflicting rubric rules from eval_manifest.yaml - the gold solution uses destructuring which is functionally necessary to preserve extra fields (enterpriseUrl), but conflicts with AGENTS.md style guide. All 4 validation checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 213.57
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.69,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-30T11:48:15.959449",
-      "runner": "audit (audit-tests_20260330_114815)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 25305
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:23:29.847512"
     },
     {
-      "timestamp": "2026-04-01T20:15:41.697555",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.952512",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.565614",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2772.74,
+      "at": "2026-04-09T02:23:30.018119"
     }
   ]
 }

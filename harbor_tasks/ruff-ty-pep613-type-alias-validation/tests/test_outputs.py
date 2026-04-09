@@ -59,14 +59,73 @@ def test_compiles():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_fmt():
+    """Repo code formatting passes cargo fmt check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=CARGO_ENV,
+    )
+    assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_clippy():
+    """Repo ty_python_semantic passes cargo clippy (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty_python_semantic"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+        env=CARGO_ENV,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mdtest_literal():
+    """Literal mdtests pass (pass_to_pass) - related to PR."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest", "literal"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+        env=CARGO_ENV,
+    )
+    assert r.returncode == 0, f"mdtest literal failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mdtest_pep613():
+    """PEP 613 type alias mdtests pass (pass_to_pass) - related to PR."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest", "pep613"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+        env=CARGO_ENV,
+    )
+    assert r.returncode == 0, f"mdtest pep613 failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_literal_negative_float_invalid():
     """Literal[-3.14] must be flagged as invalid-type-form."""
-    code = """\
-from typing import Literal
+    code = """from typing import Literal
 
 x: Literal[-3.14]
 y: Literal[-2.718]
@@ -74,7 +133,7 @@ y: Literal[-2.718]
     r = _run_ty_check(code)
     output = r.stdout + r.stderr
     assert "invalid-type-form" in output, (
-        f"Expected 'invalid-type-form' for Literal[-3.14] but got:\n{output[-2000:]}"
+        f"Expected invalid-type-form for Literal[-3.14] but got:\n{output[-2000:]}"
     )
     # Both lines should be flagged
     count = output.count("invalid-type-form")
@@ -86,8 +145,7 @@ y: Literal[-2.718]
 # [pr_diff] fail_to_pass
 def test_literal_negative_complex_invalid():
     """Literal[-3j] must be flagged as invalid-type-form."""
-    code = """\
-from typing import Literal
+    code = """from typing import Literal
 
 z: Literal[-3j]
 w: Literal[-1.5j]
@@ -95,15 +153,14 @@ w: Literal[-1.5j]
     r = _run_ty_check(code)
     output = r.stdout + r.stderr
     assert "invalid-type-form" in output, (
-        f"Expected 'invalid-type-form' for Literal[-3j] but got:\n{output[-2000:]}"
+        f"Expected invalid-type-form for Literal[-3j] but got:\n{output[-2000:]}"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_type_alias_variable_ref_invalid():
     """TypeAlias = var1 (where var1 is an int) must be flagged as invalid-type-form."""
-    code = """\
-from typing_extensions import TypeAlias
+    code = """from typing_extensions import TypeAlias
 
 var1 = 3
 Bad: TypeAlias = var1
@@ -111,7 +168,7 @@ Bad: TypeAlias = var1
     r = _run_ty_check(code)
     output = r.stdout + r.stderr
     assert "invalid-type-form" in output, (
-        f"Expected 'invalid-type-form' for TypeAlias = var1 but got:\n{output[-2000:]}"
+        f"Expected invalid-type-form for TypeAlias = var1 but got:\n{output[-2000:]}"
     )
 
 
@@ -122,8 +179,7 @@ Bad: TypeAlias = var1
 # [pr_diff] pass_to_pass
 def test_literal_negative_int_valid():
     """Literal[-3] (integer) must NOT be flagged — negative ints are valid in Literal."""
-    code = """\
-from typing import Literal
+    code = """from typing import Literal
 
 a: Literal[-3]
 b: Literal[-42]
@@ -139,8 +195,7 @@ c: Literal[+7]
 # [pr_diff] pass_to_pass
 def test_valid_type_alias_not_flagged():
     """Valid PEP-613 type aliases must not produce invalid-type-form errors."""
-    code = """\
-from typing_extensions import TypeAlias
+    code = """from typing_extensions import TypeAlias
 
 Good1: TypeAlias = int
 Good2: TypeAlias = int | str

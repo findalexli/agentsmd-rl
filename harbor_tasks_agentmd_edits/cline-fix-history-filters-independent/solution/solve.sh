@@ -9,53 +9,74 @@ if grep -q 'marginTop: -8' webview-ui/src/components/history/HistoryView.tsx 2>/
     exit 0
 fi
 
-git apply - <<'PATCH'
-diff --git a/CLAUDE.md b/CLAUDE.md
-index 4e941e0709f..c898cbf1ca9 100644
---- a/CLAUDE.md
-+++ b/CLAUDE.md
-@@ -14,6 +14,9 @@ This file is the secret sauce for working effectively in this codebase. It captu
+# Fix 1: Update CLAUDE.md - add Miscellaneous section after "What NOT to add" paragraph
+sed -i '/What NOT to add.*standard practices.*comprehensive./a\
+\
+## Miscellaneous\
+- This is a VS Code extension—check `package.json` for available scripts before trying to verify builds (e.g., `npm run compile`, not `npm run build`).' CLAUDE.md
 
- **What NOT to add:** Stuff you can figure out from reading a few files, obvious patterns, or standard practices. This file should be high-signal, not comprehensive.
+# Fix 2: Modify HistoryView.tsx using Python for complex multi-line edits
+cat > /tmp/fix_history_view.py << 'PYEOF'
+filepath = 'webview-ui/src/components/history/HistoryView.tsx'
+with open(filepath, 'r') as f:
+    content = f.read()
 
-+## Miscellaneous
-+- This is a VS Code extension—check `package.json` for available scripts before trying to verify builds (e.g., `npm run compile`, not `npm run build`).
-+
- ## gRPC/Protobuf Communication
- The extension and webview communicate via gRPC-like protocol over VS Code message passing.
+lines = content.split('\n')
+new_lines = []
+i = 0
+while i < len(lines):
+    line = lines[i]
 
-diff --git a/webview-ui/src/components/history/HistoryView.tsx b/webview-ui/src/components/history/HistoryView.tsx
-index 97d57186ce5..b41ef613c1e 100644
---- a/webview-ui/src/components/history/HistoryView.tsx
-+++ b/webview-ui/src/components/history/HistoryView.tsx
-@@ -334,6 +334,8 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
- 							<VSCodeRadio disabled={!searchQuery} style={{ opacity: searchQuery ? 1 : 0.5 }} value="mostRelevant">
- 								Most Relevant
- 							</VSCodeRadio>
-+						</VSCodeRadioGroup>
-+						<div className="flex flex-wrap" style={{ marginTop: -8 }}>
- 							<VSCodeRadio
- 								checked={showCurrentWorkspaceOnly}
- 								onClick={() => setShowCurrentWorkspaceOnly(!showCurrentWorkspaceOnly)}>
-@@ -342,13 +344,15 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
- 									Workspace
- 								</span>
- 							</VSCodeRadio>
--							<VSCodeRadio checked={showFavoritesOnly} onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}>
-+							<VSCodeRadio
-+								checked={showFavoritesOnly}
-+								onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}>
- 								<span className="flex items-center gap-[3px]">
- 									<span className="codicon codicon-star-full text-(--vscode-button-background)" />
- 									Favorites
- 								</span>
- 							</VSCodeRadio>
--						</VSCodeRadioGroup>
-+						</div>
- 						</div>
- 				</div>
- 				<div style={{ flexGrow: 1, overflowY: "auto", margin: 0 }}>
+    # Find "Most Relevant" line (the VSCodeRadio line containing "Most Relevant")
+    if 'Most Relevant' in line and '<VSCodeRadio' in line:
+        new_lines.append(line)
+        i += 1
+        continue
 
-PATCH
+    # Find the closing VSCodeRadio after Most Relevant
+    if line.strip() == '</VSCodeRadio>' and i > 0 and 'Most Relevant' in lines[i-1]:
+        new_lines.append(line)
+        # Add closing VSCodeRadioGroup
+        new_lines.append('\t\t\t\t\t\t</VSCodeRadioGroup>')
+        # Add new div with marginTop
+        new_lines.append('\t\t\t\t\t\t<div className="flex flex-wrap" style={{ marginTop: -8 }}>')
+        i += 1
+        continue
+
+    # Skip the original closing </VSCodeRadioGroup> (we'll replace it with </div>)
+    if line.strip() == '</VSCodeRadioGroup>':
+        # Check context - if this is after Favorites, replace with </div>
+        prev_content = '\n'.join(new_lines[-10:])
+        if 'Favorites' in prev_content:
+            new_lines.append('\t\t\t\t\t\t</div>')
+            i += 1
+            continue
+
+    # Reformat the Workspace VSCodeRadio (one-liner to multi-line)
+    if 'showCurrentWorkspaceOnly' in line and 'onClick' in line and line.strip().startswith('<VSCodeRadio'):
+        new_lines.append('\t\t\t\t\t\t\t<VSCodeRadio')
+        new_lines.append('\t\t\t\t\t\t\t\tchecked={showCurrentWorkspaceOnly}')
+        new_lines.append('\t\t\t\t\t\t\t\tonClick={() => setShowCurrentWorkspaceOnly(!showCurrentWorkspaceOnly)}>')
+        i += 1
+        continue
+
+    # Reformat the Favorites VSCodeRadio (one-liner to multi-line)
+    if 'showFavoritesOnly' in line and 'onClick' in line and line.strip().startswith('<VSCodeRadio'):
+        new_lines.append('\t\t\t\t\t\t\t<VSCodeRadio')
+        new_lines.append('\t\t\t\t\t\t\t\tchecked={showFavoritesOnly}')
+        new_lines.append('\t\t\t\t\t\t\t\tonClick={() => setShowFavoritesOnly(!showFavoritesOnly)}>')
+        i += 1
+        continue
+
+    new_lines.append(line)
+    i += 1
+
+with open(filepath, 'w') as f:
+    f.write('\n'.join(new_lines))
+
+print("HistoryView.tsx updated successfully")
+PYEOF
+
+python3 /tmp/fix_history_view.py
 
 echo "Patch applied successfully."

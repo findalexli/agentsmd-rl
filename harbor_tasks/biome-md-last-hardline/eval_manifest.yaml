@@ -1,0 +1,55 @@
+version: "2.0"
+
+source:
+  repo: "biomejs/biome"
+  pr: 9856
+  base_commit: "0bc2198735230c3bad14a831652543bd304fa0d6"
+  merge_commit: "66be88f43e97f2ee35fdb2df3b477eee2893b31d"
+
+checks:
+  - id: cargo_check
+    type: pass_to_pass
+    origin: static
+    description: "Formatter crate compiles without errors"
+
+  - id: markdown_formatter_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's markdown formatter prettier tests pass"
+
+  - id: markdown_parser_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Markdown parser crate compiles without errors"
+
+  - id: markdown_formatter_spec_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's markdown formatter spec tests pass"
+
+  - id: single_last_hardline
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Single-line paragraph ending with hard line break has trailing spaces removed"
+
+  - id: multi_last_hardline
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Multi-line paragraph: last hard line removed, middle hard lines preserved"
+
+  - id: varied_last_hardline
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Same fix works for varied paragraph content (prevents hardcoding)"
+
+rubric:
+  - rule: "Formatter should format existing code, not attempt to fix syntax errors."
+    source:
+      path: ".claude/skills/formatter-development/SKILL.md"
+      lines: "170-175"
+      commit: "0bc2198735230c3bad14a831652543bd304fa0d6"
+  - rule: "Comments should explain why and provide context for the next developer, not describe what the code does."
+    source:
+      path: ".claude/skills/biome-developer/SKILL.md"
+      lines: "105-135"
+      commit: "0bc2198735230c3bad14a831652543bd304fa0d6"

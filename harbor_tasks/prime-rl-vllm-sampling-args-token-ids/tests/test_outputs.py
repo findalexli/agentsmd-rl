@@ -10,6 +10,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import inspect
 import re
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -128,6 +129,58 @@ def test_syntax_check():
         f"{REPO}/src/prime_rl/orchestrator/scheduler.py",
     ]:
         py_compile.compile(path, doraise=True)
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linting passes on modified files (pass_to_pass)."""
+    # Ensure ruff is installed
+    subprocess.run(
+        ["python", "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    files = [
+        f"{REPO}/src/prime_rl/orchestrator/utils.py",
+        f"{REPO}/src/prime_rl/orchestrator/orchestrator.py",
+        f"{REPO}/src/prime_rl/orchestrator/scheduler.py",
+    ]
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "--config", f"{REPO}/pyproject.toml"] + files,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    # Ensure ruff is installed
+    subprocess.run(
+        ["python", "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    files = [
+        f"{REPO}/src/prime_rl/orchestrator/utils.py",
+        f"{REPO}/src/prime_rl/orchestrator/orchestrator.py",
+        f"{REPO}/src/prime_rl/orchestrator/scheduler.py",
+    ]
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", "--config", f"{REPO}/pyproject.toml"] + files,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

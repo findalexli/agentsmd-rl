@@ -7,11 +7,28 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import subprocess
 from pathlib import Path
 
 REPO = "/workspace/next.js"
 TURBO_TASKS = f"{REPO}/turbopack/crates/turbo-tasks"
+
+
+def _fix_workspace():
+    """Create missing workspace member stubs required by root Cargo.toml."""
+    # scripts/send-trace-to-jaeger was deleted in Dockerfile optimization
+    stub_dir = Path(f"{REPO}/scripts/send-trace-to-jaeger/src")
+    if not stub_dir.exists():
+        stub_dir.mkdir(parents=True, exist_ok=True)
+        cargo_toml = stub_dir.parent / "Cargo.toml"
+        cargo_toml.write_text('''[package]
+name = "send-trace-to-jaeger"
+version = "0.1.0"
+edition = "2021"
+''')
+        lib_rs = stub_dir / "lib.rs"
+        lib_rs.write_text("")
 
 
 # ---------------------------------------------------------------------------
@@ -21,26 +38,54 @@ TURBO_TASKS = f"{REPO}/turbopack/crates/turbo-tasks"
 # [static] pass_to_pass
 def test_syntax_check():
     """Modified Rust files must parse and compile without errors."""
+    _fix_workspace()
     # Check cargo check passes on turbo-tasks crate
     r = subprocess.run(
-        ["cargo", "check"],
-        cwd=TURBO_TASKS,
+        ["cargo", "check", "-p", "turbo-tasks"],
+        cwd=REPO,
         capture_output=True,
         timeout=120,
     )
-    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr.decode()}"
+    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass - cargo clippy lint check
+def test_cargo_clippy():
+    """Repo's cargo clippy passes without errors (pass_to_pass)."""
+    _fix_workspace()
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "turbo-tasks", "--", "-D", "warnings"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Clippy failed:\n{r.stderr.decode()[-500:]}"
 
 
 # [static] pass_to_pass
 def test_doc_tests_pass():
     """Rust documentation tests must pass."""
+    _fix_workspace()
     r = subprocess.run(
-        ["cargo", "test", "--doc"],
-        cwd=TURBO_TASKS,
+        ["cargo", "test", "--doc", "-p", "turbo-tasks"],
+        cwd=REPO,
         capture_output=True,
         timeout=120,
     )
-    assert r.returncode == 0, f"Doc tests failed:\n{r.stderr.decode()}"
+    assert r.returncode == 0, f"Doc tests failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass - cargo doc build check
+def test_cargo_doc_builds():
+    """Repo's documentation builds without errors (pass_to_pass)."""
+    _fix_workspace()
+    r = subprocess.run(
+        ["cargo", "doc", "-p", "turbo-tasks", "--no-deps"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Cargo doc failed:\n{r.stderr.decode()[-500:]}"
 
 
 # ---------------------------------------------------------------------------

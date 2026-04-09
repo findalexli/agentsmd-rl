@@ -270,3 +270,47 @@ def test_existing_context_propagation_tests_pass():
         f"Existing tests failed (exit {rc}):\n"
         f"STDOUT:\n{stdout[-2000:]}\nSTDERR:\n{stderr[-2000:]}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_react_new_context_tests_pass():
+    """ReactNewContext tests pass (pass_to_pass) — tests for modified module."""
+    cmd = [
+        "node", "scripts/jest/jest-cli.js",
+        "--release-channel=experimental",
+        "--no-watchman",
+        "ReactNewContext",
+    ]
+    r = subprocess.run(cmd, cwd=REPO, capture_output=True, timeout=300)
+    stdout = r.stdout.decode(errors="replace")
+    stderr = r.stderr.decode(errors="replace")
+    assert r.returncode == 0, (
+        f"ReactNewContext tests failed (exit {r.returncode}):\n"
+        f"STDOUT:\n{stdout[-2000:]}\nSTDERR:\n{stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_passes():
+    """Repo's ESLint checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/tasks/eslint.js"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow_passes():
+    """Repo's Flow typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/tasks/flow.js", "dom-node"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"

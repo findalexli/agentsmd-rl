@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/sglang"
@@ -73,9 +74,9 @@ def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         script.unlink(missing_ok=True)
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_syntax_check():
@@ -85,9 +86,75 @@ def test_syntax_check():
     py_compile.compile(TARGET, doraise=True)
 
 
-# ---------------------------------------------------------------------------
+# [static] pass_to_pass - repo CI check: ruff syntax errors
+def test_repo_ruff_syntax():
+    """Repo CI: ruff check --select=E9 catches syntax errors."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # Run ruff check on the target file
+    r = subprocess.run(
+        ["ruff", "check", "--select=E9", TARGET],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff syntax check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [static] pass_to_pass - repo CI check: ruff undefined import/name
+def test_repo_ruff_imports():
+    """Repo CI: ruff check --select=F401,F821 catches import/name issues."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821", TARGET],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff import check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [static] pass_to_pass - repo CI check: AST validation
+def test_repo_ast_valid():
+    """Repo CI: Python AST validation passes."""
+    import ast
+    with open(TARGET) as f:
+        source = f.read()
+    ast.parse(source)
+
+
+# [static] pass_to_pass - repo CI check: isort formatting
+def test_repo_isort():
+    """Repo CI: isort --check passes (import order)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "isort", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["isort", "--check", TARGET],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [static] pass_to_pass - repo CI check: black formatting
+def test_repo_black():
+    """Repo CI: black --check passes (code formatting)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "black", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["black", "--check", TARGET],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"black check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests via subprocess
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_dill_no_recursive_ref_warning():
@@ -149,9 +216,9 @@ print("PASS")
     assert "PASS" in r.stdout, f"Assertion failed in subprocess: {r.stdout}\n{r.stderr}"
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) — regression tests via subprocess
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
 def test_dill_roundtrip_preserves_state():
@@ -260,9 +327,9 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Anti-stub (static) — ensure meaningful implementation
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_init_subclass_not_stub():

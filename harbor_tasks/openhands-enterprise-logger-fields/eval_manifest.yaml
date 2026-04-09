@@ -1,0 +1,67 @@
+task_name: openhands-enterprise-logger-fields
+source_pr: All-Hands-AI/OpenHands#13612
+base_commit: 8f87ef59c72f1c7bae2b937164caf99731ac8e83
+merge_commit: 5f064fa88b683b28e00568cc637e4473c714d12d
+
+# Source agent config rule from AGENTS.md:
+# - Pre-commit hooks must pass before pushing changes
+checks:
+  - id: test_logger_includes_module_field
+    type: fail_to_pass
+    origin: behavioral
+    description: Logger output must include 'module' field with correct module name
+
+  - id: test_logger_includes_funcname_field
+    type: fail_to_pass
+    origin: behavioral
+    description: Logger output must include 'funcName' field with calling function name
+
+  - id: test_logger_includes_lineno_field
+    type: fail_to_pass
+    origin: behavioral
+    description: Logger output must include 'lineno' field with line number
+
+  - id: test_logger_all_fields_present
+    type: fail_to_pass
+    origin: behavioral
+    description: All required log fields (message, severity, module, funcName, lineno) must be present
+
+  - id: test_logger_error_level_includes_fields
+    type: fail_to_pass
+    origin: behavioral
+    description: Error level logs must also include module, funcName, lineno fields
+
+  - id: test_logger_with_extra_fields
+    type: fail_to_pass
+    origin: behavioral
+    description: Logs with extra fields must include module, funcName, lineno alongside extras
+
+  - id: test_code_syntax_valid
+    type: pass_to_pass
+    origin: structural
+    description: Modified file must have valid Python syntax
+
+  - id: test_logger_json_formatter_imports
+    type: pass_to_pass
+    origin: structural
+    description: Logger module must import JsonFormatter and setup_json_logger correctly
+
+  # Repo CI/CD Pass-to-Pass Tests
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo Ruff linting passes on enterprise/server
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo enterprise server unit tests pass
+
+  - id: test_repo_pyproject_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo pyproject.toml is valid
+
+rubric:
+  # Rubric is empty because this is a straightforward technical fix with clear behavioral tests
+  []

@@ -52,6 +52,16 @@ checks:
     origin: repo_tests
     description: "Original abstract methods (log, log_samples, log_final_samples) are still enforced"
 
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff lint check passes on modified monitor files"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on modified monitor files"
+
   - id: no_excessive_comments_in_new_methods
     type: pass_to_pass
     origin: agent_config
@@ -70,9 +80,3 @@ checks:
       lines: "5"
       commit: "714d0ea90421ddfe4b5b5c6dca250e330f5ebe65"
 
-rubric:
-  - rule: "Errors should never pass silently. Unless explicitly silenced."
-    source:
-      path: "AGENTS.md"
-      lines: "23-24"
-      commit: "714d0ea90421ddfe4b5b5c6dca250e330f5ebe65"

@@ -461,3 +461,47 @@ def test_no_process_comments():
                 raise AssertionError(
                     f"{fname}: process-explanatory comment: {matches[0]} (AGENTS.md:7)"
                 )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — ensure repo's own checks pass
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_check():
+    """Ruff lint check passes on orchestrator module (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "src/prime_rl/orchestrator/", "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_format():
+    """Ruff format check passes on orchestrator module (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", "src/prime_rl/orchestrator/", "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_py_syntax():
+    """All Python files in orchestrator module have valid syntax (pass_to_pass)."""
+    orchestrator_dir = Path(REPO) / "src" / "prime_rl" / "orchestrator"
+    for py_file in orchestrator_dir.glob("*.py"):
+        source = py_file.read_text()
+        try:
+            compile(source, str(py_file), "exec")
+        except SyntaxError as e:
+            raise AssertionError(f"Syntax error in {py_file.name}: {e}")

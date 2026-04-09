@@ -1,56 +1,90 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.977978",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
-    },
-    {
-      "timestamp": "2026-03-30T11:48:20.105935",
-      "runner": "audit (audit-tests_20260330_114820)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 19387
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.769919",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T04:22:03-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.0,
-      "verdict": "pass",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T07:04:50.231793",
+  "total_time": 6133.16,
+  "sandbox_id": "ib8sca92aum54wupkdf9m",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "error": "rate limited during validate",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 248.94,
       "notes": ""
     },
-    {
-      "timestamp": "2026-04-02T14:28:08.972401",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+    "p2p_enrichment": {
+      "status": "completed",
+      "date": "2026-04-09",
+      "ci_commands_found": [
+        "make style (ruff check/format - repo-wide, heavy)",
+        "make typing (ty type checker)",
+        "make check-code-quality (full linting)",
+        "make check-repository-consistency (imports, copies, docs)",
+        "python utils/checkers.py (modular checks)",
+        "pytest (full test suite - requires torch/GPU)"
+      ],
+      "p2p_tests_added": [
+        {
+          "id": "test_repo_syntax_check",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "All target files have valid Python syntax via py_compile",
+          "files_checked": [
+            "tests/models/phi3/test_modeling_phi3.py",
+            "tests/test_modeling_common.py"
+          ]
+        },
+        {
+          "id": "test_repo_ruff_check",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Target files pass ruff lint (E,W, ignoring E501)",
+          "files_checked": [
+            "tests/models/phi3/test_modeling_phi3.py",
+            "tests/test_modeling_common.py"
+          ]
+        },
+        {
+          "id": "test_repo_ast_parse",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Target files are valid Python (AST-parsable)",
+          "files_checked": [
+            "tests/models/phi3/test_modeling_phi3.py",
+            "tests/test_modeling_common.py"
+          ]
+        }
+      ],
+      "notes": "Skipped heavy CI commands (make style, make typing) due to pre-existing repo issues at base commit. Selected lightweight checks that verify code quality without requiring torch/GPU or full repo consistency."
     },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All four checks passed: Docker build successful, NOP test reward=0 (tests detect bugs), Gold test reward=1 (12/12 tests pass), Rubric judge neutral 0.5 (no API key available)."
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T23:07:01.661007",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 6133.16,
+      "at": "2026-04-09T07:04:50.231793"
     }
   ]
 }

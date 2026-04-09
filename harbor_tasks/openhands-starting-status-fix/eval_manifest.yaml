@@ -1,0 +1,68 @@
+source:
+  pr:
+    url: "https://github.com/All-Hands-AI/OpenHands/pull/13580"
+    number: 13580
+    title: "APP-1093 fix(frontend): display 'Starting' status when server reports STARTING on conversation resume"
+    author: "openhands"
+    merged_at: "2025-01-20"
+  repo:
+    owner: "All-Hands-AI"
+    name: "OpenHands"
+    base_commit: "0b935669f35dff09303f42daf3e39c4cbb2678ed"
+    merge_commit: "3cd85a07b78a2d9d2e28b2904e1b42096d47a802"
+    language: "typescript"
+    primary_path: "frontend/src/utils/status.ts"
+
+checks:
+  - id: "file_exists"
+    type: "f2p"
+    description: "Status utility file exists"
+    test: "test_status_file_exists"
+
+  - id: "starting_priority"
+    type: "f2p"
+    description: "STARTING status check comes before WebSocket DISCONNECTED check"
+    test: "test_starting_priority_over_disconnected"
+    source:
+      agent_config:
+        - file: "AGENTS.md"
+          lines: "Frontend linting and build requirements"
+
+  - id: "return_value_correct"
+    type: "f2p"
+    description: "STARTING status returns I18nKey.COMMON$STARTING"
+    test: "test_return_value_for_starting_status"
+
+  - id: "typescript_valid"
+    type: "p2p"
+    description: "TypeScript file has valid syntax"
+    test: "test_typescript_syntax_valid"
+
+  - id: "comment_documentation"
+    type: "f2p"
+    description: "Fix includes explanatory comment about priority"
+    test: "test_comment_explains_priority"
+
+  - id: "no_hardcoded_strings"
+    type: "p2p"
+    description: "Uses I18nKey instead of hardcoded strings for i18n"
+    test: "test_no_hardcoded_return_values"
+
+  - id: "function_signature"
+    type: "p2p"
+    description: "Function signature unchanged for compatibility"
+    test: "test_function_signature_unchanged"
+
+  - id: "repo_lint"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's lint/typecheck/prettier passes on base commit"
+    test: "test_repo_lint"
+
+  - id: "repo_status_tests"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's status utility tests pass on base commit"
+    test: "test_repo_status_tests"
+
+rubric: []

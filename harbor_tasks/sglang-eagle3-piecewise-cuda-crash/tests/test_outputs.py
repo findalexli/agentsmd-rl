@@ -104,6 +104,21 @@ def test_syntax_check():
     ast.parse(source)
 
 
+# [static] pass_to_pass — repo CI lint check
+def test_repo_ruff_check():
+    """Repo's ruff lint check passes (F401, F821) on target file (pass_to_pass)."""
+    # Install ruff if not available
+    subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", "--select=F401,F821", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------

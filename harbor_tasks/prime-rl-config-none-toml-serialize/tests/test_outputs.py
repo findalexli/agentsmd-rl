@@ -39,6 +39,49 @@ def test_syntax_check():
         ast.parse(f.read_text())
 
 
+# [repo_tests] pass_to_pass - from .github/workflows/style.yaml
+def test_repo_ruff_linting():
+    """Repo's ruff linting passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # pip install may return 0 even with warnings
+    r = subprocess.run(
+        [
+            "ruff", "check",
+            "--config=pyproject.toml",
+            "src/prime_rl/utils/config.py",
+            "src/prime_rl/entrypoints/inference.py",
+            "src/prime_rl/entrypoints/rl.py",
+            "src/prime_rl/entrypoints/sft.py",
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - from .github/workflows/style.yaml
+def test_repo_ruff_formatting():
+    """Repo's ruff formatting check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        [
+            "ruff", "format", "--check",
+            "--config=pyproject.toml",
+            "src/prime_rl/utils/config.py",
+            "src/prime_rl/entrypoints/inference.py",
+            "src/prime_rl/entrypoints/rl.py",
+            "src/prime_rl/entrypoints/sft.py",
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests using subprocess
 # ---------------------------------------------------------------------------

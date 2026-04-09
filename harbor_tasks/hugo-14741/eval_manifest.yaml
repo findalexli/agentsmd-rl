@@ -1,0 +1,114 @@
+source_pr:
+  owner: gohugoio
+  repo: hugo
+  number: 14741
+  base_commit: 161d0d475773c5251ec00cc8848f1a174393155c
+  merge_commit: c48551677c2504e3f2d7fa53ee42766e0333b957
+
+task:
+  name: hugo-14741
+  title: Fix panic on edit of legacy mapped template names that's also a valid path in the new setup
+  description: |
+    Hugo v0.146.0 introduced a panic when editing templates with legacy mapped names
+    (like tags/list.html) that are also valid paths in the new template system.
+    The root cause was a 'replace' parameter that conditionally skipped duplicate
+    name checks during template refresh.
+
+  categories:
+    - bugfix
+    - refactor
+    - go
+
+  difficulty: medium
+
+  # Check list - maps 1:1 to test_outputs.py::test_* functions
+checks:
+  - id: hugo_build_compiles
+    description: Hugo builds successfully after the fix (no syntax/type errors)
+    type: f2p  # Fail-to-pass: fails on base commit without fix
+
+  - id: template_functions_signature
+    description: Template functions compile with correct signatures
+    type: p2p
+
+  - id: templatestore_parse_template_signature
+    description: parseTemplate has correct signature without replace parameter
+    type: p2p
+
+  - id: doparse_template_signature
+    description: doParseTemplate has correct signature without replace parameter
+    type: p2p
+
+  - id: rebuild_tags_list_template
+    description: TestRebuildEditTagsListLayout regression test passes
+    type: f2p  # Fail-to-pass: this specifically tests the bug
+
+  - id: no_replace_parameter_in_parseTemplates
+    description: No remaining parseTemplates(true) or parseTemplates(false) calls
+    type: p2p
+
+  - id: no_replace_parameter_in_parseTemplate
+    description: No remaining parseTemplate calls with boolean arguments
+    type: p2p
+
+  - id: template_duplicate_name_check
+    description: Template duplicate name check logic is correct
+    type: p2p
+
+  - id: all_tplimpl_tests_pass
+    description: All tplimpl tests pass with no regressions
+    type: p2p
+
+  - id: hugolib_rebuild_tests
+    description: All hugolib rebuild tests pass
+    type: p2p
+
+  # Pass-to-Pass: Repo CI/CD Tests
+  - id: repo_gofmt
+    description: Repo's gofmt check passes
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: repo_go_mod_verify
+    description: Repo's go.mod verification passes
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: repo_go_build_all
+    description: Repo builds all packages successfully
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: repo_go_vet_tplimpl
+    description: Repo's go vet passes on tpl/tplimpl package
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: repo_go_vet_hugolib
+    description: Repo's go vet passes on hugolib package
+    type: pass_to_pass
+    origin: repo_tests
+
+  # Agent config rules that should be followed
+agent_config:
+  - rule: "Brevity is good - use self-explanatory names, avoid comments explaining the obvious"
+    origin: agent_config
+    source: AGENTS.md
+    check_ref: template_functions_signature
+
+  - rule: "Never export symbols that are not needed outside the package"
+    origin: agent_config
+    source: AGENTS.md
+    check_ref: template_functions_signature
+
+  - rule: "Avoid global state at (almost) all cost"
+    origin: agent_config
+    source: AGENTS.md
+    check_ref: template_duplicate_name_check
+
+# Rubric for LLM-judged criteria (soft/subjective rules)
+rubric: []
+
+# Timeouts
+agent_timeout: 1800
+verifier_timeout: 300

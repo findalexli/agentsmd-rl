@@ -189,3 +189,90 @@ def test_existing_abi_unit_tests():
     # Verify at least some tests actually ran
     stderr = r.stderr.decode()
     assert "0 passed" not in stderr, f"No ABI tests were found:\n{stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_wheel_filename_unit_tests():
+    """Existing wheel filename unit tests must still pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "uv-distribution-filename", "--lib",
+         "--", "wheel::tests"],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Wheel filename tests failed:\n{r.stderr.decode()[-2000:]}"
+    stderr = r.stderr.decode()
+    assert "0 passed" not in stderr, f"No wheel tests were found:\n{stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_relevant_crates():
+    """Repo's cargo check on relevant crates passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--package", "uv-platform-tags",
+         "--package", "uv-distribution-filename",
+         "--package", "uv-distribution-types"],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr.decode()[-2000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_workspace():
+    """Repo's cargo check --workspace passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--workspace"],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Cargo check workspace failed:\n{r.stderr.decode()[-2000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_uv_platform_tags_lib_tests():
+    """All uv-platform-tags lib tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "uv-platform-tags", "--lib"],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"uv-platform-tags lib tests failed:\n{r.stderr.decode()[-2000:]}"
+    stderr = r.stderr.decode()
+    assert "0 passed" not in stderr, f"No tests ran:\n{stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_uv_distribution_filename_lib_tests():
+    """All uv-distribution-filename lib tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "uv-distribution-filename", "--lib"],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"uv-distribution-filename lib tests failed:\n{r.stderr.decode()[-2000:]}"
+    stderr = r.stderr.decode()
+    assert "0 passed" not in stderr, f"No tests ran:\n{stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_uv_distribution_types_lib_tests():
+    """All uv-distribution-types lib tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "uv-distribution-types", "--lib"],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"uv-distribution-types lib tests failed:\n{r.stderr.decode()[-2000:]}"
+    stderr = r.stderr.decode()
+    assert "0 passed" not in stderr, f"No tests ran:\n{stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_all_relevant_crates_combined():
+    """Combined lib tests for all modified crates pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "uv-platform-tags",
+         "--package", "uv-distribution-filename",
+         "--package", "uv-distribution-types",
+         "--lib"],
+        cwd=REPO, capture_output=True, timeout=180,
+    )
+    assert r.returncode == 0, f"Combined lib tests failed:\n{r.stderr.decode()[-2000:]}"
+    stderr = r.stderr.decode()
+    # Should have tests from all three crates (42 + 37 + 39 = ~118 tests)
+    assert "0 passed" not in stderr, f"No tests ran:\n{stderr[-500:]}"

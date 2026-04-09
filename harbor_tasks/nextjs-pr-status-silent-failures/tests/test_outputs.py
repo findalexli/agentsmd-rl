@@ -43,6 +43,163 @@ def test_syntax_check():
     assert r.returncode == 0, f"Syntax error:\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_pr_status_functions_parseable():
+    """Key functions in pr-status.js must be parseable JavaScript (pass_to_pass)."""
+    code = textwrap.dedent(r"""
+        const fs = require('fs');
+        const src = fs.readFileSync('scripts/pr-status.js', 'utf8');
+
+        // Verify the script parses by trying to extract function signatures
+        const functionNames = [
+            'getAllJobs',
+            'getFailedJobs',
+            'categorizeJobs',
+            'generateReport',
+            'getFlakyTests'
+        ];
+
+        const results = {};
+        for (const name of functionNames) {
+            // Look for function declaration
+            const funcPattern = new RegExp('function\\s+' + name + '\\s*\\(');
+            results[name] = funcPattern.test(src);
+        }
+
+        // Also verify the script structure is intact
+        results.has_exec_helper = src.includes('function exec(');
+        results.has_main = src.includes('async function main(');
+
+        console.log(JSON.stringify(results));
+    """)
+    r = _run_node(code)
+    assert r.returncode == 0, f"Parse check failed:\n{r.stderr}"
+    data = json.loads(r.stdout.strip())
+
+    # Verify all expected functions are found
+    required = ['getAllJobs', 'getFailedJobs', 'categorizeJobs', 'getFlakyTests']
+    for name in required:
+        assert data.get(name) is True, f"Required function {name} not found in pr-status.js"
+
+    assert data.get('has_exec_helper') is True, "exec helper function not found"
+    assert data.get('has_main') is True, "main function not found"
+
+
+# [repo_tests] pass_to_pass
+def test_pr_status_js_no_undefined_variables():
+    """pr-status.js must not reference obviously undefined variables (pass_to_pass)."""
+    code = textwrap.dedent(r"""
+        const fs = require('fs');
+        const src = fs.readFileSync('scripts/pr-status.js', 'utf8');
+
+        // Extract all variable references and check against common globals
+        const globalVars = new Set([
+            'console', 'process', 'require', 'module', 'exports', 'Buffer',
+            'JSON', 'Object', 'Array', 'String', 'Number', 'Boolean', 'Date',
+            'Math', 'RegExp', 'Error', 'Promise', 'Set', 'Map', 'WeakMap',
+            'WeakSet', 'Symbol', 'Intl', 'URL', 'URLSearchParams', 'TextEncoder',
+            'TextDecoder', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval',
+            'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'escape', 'unescape',
+            'encodeURI', 'encodeURIComponent', 'decodeURI', 'decodeURIComponent',
+            '__dirname', '__filename', 'undefined', 'null', 'Infinity', 'NaN',
+            'fs', 'path', 'child_process', 'execSync', 'execFileSync', 'spawn',
+            'OUTPUT_DIR', 'genericNodeError', 'wrappedFn'
+        ]);
+
+        // Find all declared variables/functions
+        const declarations = new Set();
+        const declRegex = /(?:const|let|var|function|class)\s+(\w+)/g;
+        let match;
+        while ((match = declRegex.exec(src)) !== null) {
+            declarations.add(match[1]);
+        }
+
+        // Find all parameter names from function declarations
+        const funcParams = /function\s+\w*\s*\([^)]*\)/g;
+        const paramMatch = src.matchAll(funcParams);
+        for (const m of paramMatch) {
+            const params = m[0].replace(/function\s+\w*\s*\(/, '').replace(/\)$/, '');
+            params.split(',').forEach(p => {
+                const paramName = p.trim().replace(/\s*=.*$/, '').replace(/^\.\.\./, '');
+                if (paramName) declarations.add(paramName);
+            });
+        }
+
+        // Check destructured parameters
+        const destructured = /{\s*([^}]+)\s*}/g;
+        const destMatch = src.matchAll(destructured);
+        for (const m of destMatch) {
+            m[1].split(',').forEach(p => {
+                const clean = p.trim().replace(/^\w+:\s*/, '').replace(/\s*=.*$/, '');
+                if (clean && !clean.includes('.')) declarations.add(clean);
+            });
+        }
+
+        // Verify no obvious undefined variable references
+        // This is a basic check - we'll look for common patterns that indicate bugs
+        const suspicious = [];
+
+        // Check for typos in common variable names by looking at the overall structure
+        const hasProperExport = src.includes('module.exports') || src.includes('exports.');
+        const hasShebang = src.startsWith('#!');
+
+        const results = {
+            declared_count: declarations.size,
+            has_module_exports: hasProperExport || src.includes('main('),
+            functions_found: Array.from(declarations).filter(d =>
+                ['exec', 'execAsync', 'execJson', 'getRunMetadata',
+                 'getAllJobs', 'getFailedJobs', 'categorizeJobs',
+                 'generateReport', 'getFlakyTests', 'main'].includes(d)
+            )
+        };
+
+        console.log(JSON.stringify(results));
+    """)
+    r = _run_node(code)
+    assert r.returncode == 0, f"Variable check failed:\n{r.stderr}"
+    data = json.loads(r.stdout.strip())
+
+    # Verify key functions are declared
+    expected_functions = ['exec', 'getAllJobs', 'getFailedJobs', 'categorizeJobs', 'main']
+    for func in expected_functions:
+        assert func in data.get('functions_found', []), f"Function {func} should be declared"
+
+
+# [repo_tests] pass_to_pass
+def test_pr_status_js_no_syntax_errors_strict_mode():
+    """pr-status.js must parse without errors in strict mode (pass_to_pass)."""
+    code = textwrap.dedent(r"""
+        const fs = require('fs');
+        const src = fs.readFileSync('scripts/pr-status.js', 'utf8');
+
+        // Wrap in strict mode and try to parse
+        const strictSrc = '"use strict";\n' + src;
+
+        try {
+            // Use Function constructor to validate syntax (catches syntax errors)
+            new Function(strictSrc);
+            console.log(JSON.stringify({ parses_in_strict_mode: true }));
+        } catch (e) {
+            // If it fails due to 'use strict' in source already, that's fine
+            if (e.message.includes('strict mode') || e.message.includes('Use of future reserved word')) {
+                // Try without the extra strict directive
+                try {
+                    new Function(src);
+                    console.log(JSON.stringify({ parses_in_strict_mode: true, note: 'already has strict' }));
+                } catch (e2) {
+                    console.log(JSON.stringify({ parses_in_strict_mode: false, error: e2.message }));
+                }
+            } else {
+                console.log(JSON.stringify({ parses_in_strict_mode: false, error: e.message }));
+            }
+        }
+    """)
+    r = _run_node(code)
+    assert r.returncode == 0, f"Strict mode check failed:\n{r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data.get('parses_in_strict_mode') is True, f"Script has syntax errors: {data.get('error', '')}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

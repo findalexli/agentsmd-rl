@@ -137,3 +137,73 @@ def test_maybe_build_native_syntax():
         timeout=10,
     )
     assert result.returncode == 0, f"Syntax error:\n{result.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates that must pass on base AND after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Repo JSON validity
+def test_repo_package_json_valid():
+    """Root package.json must be valid JSON (pass_to_pass)."""
+    pkg = Path(REPO) / "package.json"
+    try:
+        json.loads(pkg.read_text())
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"package.json is not valid JSON: {e}")
+
+
+# [repo_tests] pass_to_pass — Repo turbo.json validity
+def test_repo_turbo_json_valid():
+    """Root turbo.json must be valid JSON (pass_to_pass)."""
+    turbo = Path(REPO) / "turbo.json"
+    try:
+        json.loads(turbo.read_text())
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"turbo.json is not valid JSON: {e}")
+
+
+# [repo_tests] pass_to_pass — next-swc package.json validity
+def test_repo_next_swc_package_json_valid():
+    """packages/next-swc/package.json must be valid JSON (pass_to_pass)."""
+    pkg = Path(REPO) / "packages" / "next-swc" / "package.json"
+    try:
+        json.loads(pkg.read_text())
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"packages/next-swc/package.json is not valid JSON: {e}")
+
+
+# [repo_tests] pass_to_pass — next-swc turbo.json validity
+def test_repo_next_swc_turbo_json_valid():
+    """packages/next-swc/turbo.json must be valid JSON (pass_to_pass)."""
+    turbo = Path(REPO) / "packages" / "next-swc" / "turbo.json"
+    try:
+        json.loads(turbo.read_text())
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"packages/next-swc/turbo.json is not valid JSON: {e}")
+
+
+# [repo_tests] pass_to_pass — validate-externals-doc.js syntax
+def test_repo_validate_externals_doc_syntax():
+    """scripts/validate-externals-doc.js must have valid syntax (pass_to_pass)."""
+    script = Path(REPO) / "scripts" / "validate-externals-doc.js"
+    result = subprocess.run(
+        ["node", "--check", str(script)],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert result.returncode == 0, f"Syntax error in validate-externals-doc.js:\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass — build-native.ts syntax
+def test_repo_build_native_syntax():
+    """scripts/build-native.ts must have valid syntax (pass_to_pass)."""
+    script = Path(REPO) / "scripts" / "build-native.ts"
+    result = subprocess.run(
+        ["node", "--check", str(script)],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert result.returncode == 0, f"Syntax error in build-native.ts:\n{result.stderr}"

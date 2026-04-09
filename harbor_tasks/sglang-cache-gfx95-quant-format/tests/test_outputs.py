@@ -139,6 +139,65 @@ def test_forward_uses_cached_quant_format():
 # Pass-to-pass (repo_tests / static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's ruff lint check passes on modified file (pass_to_pass)."""
+    import subprocess
+
+    # Install ruff if not available
+    try:
+        subprocess.run(["pip", "install", "-q", "ruff"], check=True, capture_output=True)
+    except Exception:
+        pass
+
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821", TARGET_FILE],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ast_validity():
+    """Repo's Python AST parsing passes on modified file (pass_to_pass)."""
+    import ast
+    src = Path(TARGET_FILE).read_text()
+    # Should parse without errors
+    tree = ast.parse(src)
+    # Should find the expected class
+    classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+    assert "DeepseekV2DecoderLayer" in classes, "DeepseekV2DecoderLayer class not found"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_file_structure():
+    """Modified file has proper Python file structure (pass_to_pass)."""
+    import ast
+    src = Path(TARGET_FILE).read_text()
+    tree = ast.parse(src)
+
+    # Check for imports section at top
+    imports = [node for node in tree.body if isinstance(node, (ast.Import, ast.ImportFrom))]
+    assert len(imports) > 0, "No imports found in file"
+
+    # Check for class definitions
+    classes = [node for node in tree.body if isinstance(node, ast.ClassDef)]
+    assert len(classes) > 0, "No class definitions found in file"
+
+    # DeepseekV2DecoderLayer should have expected methods
+    layer_class = None
+    for cls in classes:
+        if cls.name == "DeepseekV2DecoderLayer":
+            layer_class = cls
+            break
+
+    assert layer_class is not None, "DeepseekV2DecoderLayer class not found"
+
+    methods = [n.name for n in layer_class.body if isinstance(n, ast.FunctionDef)]
+    assert "__init__" in methods, "DeepseekV2DecoderLayer.__init__ not found"
+    assert "forward" in methods, "DeepseekV2DecoderLayer.forward not found"
+
+
 # [static] pass_to_pass
 def test_not_stub():
     """Modified function is not a stub (has real logic, not just pass/return)."""

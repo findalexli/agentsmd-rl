@@ -362,6 +362,50 @@ def test_not_stub(ast_checks):
 
 
 # ---------------------------------------------------------------------------
+# Repo CI-derived (pass_to_pass) — repository integrity checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — TypeScript syntax validation
+def test_repo_typescript_syntax():
+    """Repo TypeScript files must parse without syntax errors (pass_to_pass)."""
+    script = r"""
+const ts = require("typescript");
+const fs = require("fs");
+const files = ["/repo/packages/opencode/src/cli/cmd/tui/worker.ts"]
+    .filter(f => fs.existsSync(f));
+if (files.length === 0) {
+    console.log("REPO_NOT_MOUNTED");
+    process.exit(0);
+}
+let errors = [];
+for (const file of files) {
+    try {
+        const src = fs.readFileSync(file, "utf8");
+        const sf = ts.createSourceFile(file, src, ts.ScriptTarget.Latest, true);
+        if (sf.parseDiagnostics && sf.parseDiagnostics.length > 0) {
+            errors.push(file + ": " + sf.parseDiagnostics[0].messageText);
+        }
+    } catch (e) {
+        errors.push(file + ": " + e.message);
+    }
+}
+if (errors.length > 0) {
+    console.log("SYNTAX_ERRORS: " + errors.join("; "));
+    process.exit(1);
+}
+console.log("OK");
+"""
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+        env={**os.environ, "NODE_PATH": "/usr/local/lib/node_modules"},
+    )
+    if "REPO_NOT_MOUNTED" in r.stdout:
+        pytest.skip("Repo not mounted")
+    assert r.returncode == 0, f"TypeScript syntax errors:\n{r.stdout}{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
@@ -395,3 +439,169 @@ def test_no_try_catch(ast_checks):
     # AST-only because: TypeScript module requires full bun/effect runtime
     assert ast_checks["no_try_catch"], \
         "Found try/catch block in startEventStream — use .catch() instead (AGENTS.md:12)"
+
+
+# ---------------------------------------------------------------------------
+# Additional Repo CI-derived (pass_to_pass) — extended repository integrity
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Bus module files parse correctly
+def test_repo_bus_module_syntax():
+    """Bus module TypeScript files must parse without syntax errors (pass_to_pass)."""
+    script = r"""
+const ts = require("typescript");
+const fs = require("fs");
+const path = require("path");
+
+const busDir = "/repo/packages/opencode/src/bus";
+if (!fs.existsSync(busDir)) {
+    console.log("REPO_NOT_MOUNTED");
+    process.exit(0);
+}
+
+const files = [
+    path.join(busDir, "index.ts"),
+    path.join(busDir, "global.ts"),
+    path.join(busDir, "bus-event.ts")
+].filter(f => fs.existsSync(f));
+
+let errors = [];
+for (const file of files) {
+    try {
+        const src = fs.readFileSync(file, "utf8");
+        const sf = ts.createSourceFile(file, src, ts.ScriptTarget.Latest, true);
+        if (sf.parseDiagnostics && sf.parseDiagnostics.length > 0) {
+            errors.push(file + ": " + sf.parseDiagnostics[0].messageText);
+        }
+    } catch (e) {
+        errors.push(file + ": " + e.message);
+    }
+}
+if (errors.length > 0) {
+    console.log("SYNTAX_ERRORS: " + errors.join("; "));
+    process.exit(1);
+}
+console.log("OK: " + files.length + " files parsed");
+"""
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+        env={**os.environ, "NODE_PATH": "/usr/local/lib/node_modules"},
+    )
+    if "REPO_NOT_MOUNTED" in r.stdout:
+        pytest.skip("Repo not mounted")
+    assert r.returncode == 0, f"Bus module syntax errors:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Control-plane module files parse correctly
+def test_repo_control_plane_syntax():
+    """Control-plane module TypeScript files must parse without syntax errors (pass_to_pass)."""
+    script = r"""
+const ts = require("typescript");
+const fs = require("fs");
+const path = require("path");
+
+const cpDir = "/repo/packages/opencode/src/control-plane";
+if (!fs.existsSync(cpDir)) {
+    console.log("REPO_NOT_MOUNTED");
+    process.exit(0);
+}
+
+const files = [
+    path.join(cpDir, "workspace-context.ts"),
+    path.join(cpDir, "schema.ts")
+].filter(f => fs.existsSync(f));
+
+if (files.length === 0) {
+    console.log("FILES_NOT_FOUND");
+    process.exit(0);
+}
+
+let errors = [];
+for (const file of files) {
+    try {
+        const src = fs.readFileSync(file, "utf8");
+        const sf = ts.createSourceFile(file, src, ts.ScriptTarget.Latest, true);
+        if (sf.parseDiagnostics && sf.parseDiagnostics.length > 0) {
+            errors.push(file + ": " + sf.parseDiagnostics[0].messageText);
+        }
+    } catch (e) {
+        errors.push(file + ": " + e.message);
+    }
+}
+if (errors.length > 0) {
+    console.log("SYNTAX_ERRORS: " + errors.join("; "));
+    process.exit(1);
+}
+console.log("OK: " + files.length + " files parsed");
+"""
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+        env={**os.environ, "NODE_PATH": "/usr/local/lib/node_modules"},
+    )
+    if "REPO_NOT_MOUNTED" in r.stdout or "FILES_NOT_FOUND" in r.stdout:
+        pytest.skip("Repo not mounted or files not found")
+    assert r.returncode == 0, f"Control-plane module syntax errors:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Import paths resolve to existing files
+def test_repo_import_paths_resolve():
+    """Import paths in worker.ts must resolve to files that exist on disk (pass_to_pass)."""
+    script = r"""
+const ts = require("typescript");
+const fs = require("fs");
+const path = require("path");
+
+const workerPath = "/repo/packages/opencode/src/cli/cmd/tui/worker.ts";
+const srcRoot = "/repo/packages/opencode/src";
+
+if (!fs.existsSync(workerPath)) {
+    console.log("REPO_NOT_MOUNTED");
+    process.exit(0);
+}
+
+const src = fs.readFileSync(workerPath, "utf8");
+const sf = ts.createSourceFile(workerPath, src, ts.ScriptTarget.Latest, true);
+
+// Collect all @/ imports
+const imports = [];
+ts.forEachChild(sf, node => {
+    if (ts.isImportDeclaration(node)) {
+        const spec = node.moduleSpecifier;
+        if (ts.isStringLiteral(spec) && spec.text.startsWith("@/")) {
+            imports.push(spec.text);
+        }
+    }
+});
+
+let unresolved = [];
+for (const imp of imports) {
+    // Map @/path to src/path
+    const basePath = imp.replace(/^@\//, srcRoot + "/");
+    const possiblePaths = [
+        basePath + ".ts",
+        basePath + ".tsx",
+        basePath + "/index.ts",
+        basePath + "/index.tsx"
+    ];
+    const exists = possiblePaths.some(p => fs.existsSync(p));
+    if (!exists) {
+        unresolved.push(imp);
+    }
+}
+
+if (unresolved.length > 0) {
+    console.log("UNRESOLVED_IMPORTS: " + unresolved.join("; "));
+    process.exit(1);
+}
+console.log("OK: " + imports.length + " imports resolved");
+"""
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+        env={**os.environ, "NODE_PATH": "/usr/local/lib/node_modules"},
+    )
+    if "REPO_NOT_MOUNTED" in r.stdout:
+        pytest.skip("Repo not mounted")
+    assert r.returncode == 0, f"Import path resolution failed:\n{r.stdout}{r.stderr}"

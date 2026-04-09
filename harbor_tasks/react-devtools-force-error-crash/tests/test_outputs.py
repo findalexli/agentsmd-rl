@@ -191,3 +191,93 @@ def test_function_structure_intact():
     assert "setErrorHandler" in func_body, (
         "Function must reference setErrorHandler"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) -- CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+def _yarn_install():
+    """Run yarn install to ensure node_modules are available."""
+    r = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    return r.returncode == 0
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint checks pass (pass_to_pass)."""
+    assert _yarn_install(), "yarn install failed"
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_reconciler_tests():
+    """Repo's react-reconciler tests pass (pass_to_pass)."""
+    assert _yarn_install(), "yarn install failed"
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=react-reconciler", "--maxWorkers=2"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Reconciler tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_error_boundary_tests():
+    """Repo's error boundary related tests pass (pass_to_pass)."""
+    assert _yarn_install(), "yarn install failed"
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ErrorBoundaryReconciliation", "--maxWorkers=2"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Error boundary tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_fiber_refs_tests():
+    """Repo's ReactFiberRefs tests pass (pass_to_pass)."""
+    assert _yarn_install(), "yarn install failed"
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ReactFiberRefs", "--maxWorkers=2"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fiber refs tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_error_handling_tests():
+    """Repo's error handling tests pass (pass_to_pass)."""
+    assert _yarn_install(), "yarn install failed"
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ActivityErrorHandling", "--maxWorkers=2"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Error handling tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_concurrent_error_tests():
+    """Repo's concurrent error recovery tests pass (pass_to_pass)."""
+    assert _yarn_install(), "yarn install failed"
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ReactConcurrentErrorRecovery", "--maxWorkers=2"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Concurrent error tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_incremental_error_tests():
+    """Repo's incremental error handling tests pass (pass_to_pass)."""
+    assert _yarn_install(), "yarn install failed"
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ReactIncrementalErrorHandling", "--maxWorkers=2"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Incremental error tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

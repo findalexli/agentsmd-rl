@@ -7,9 +7,12 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 import sys
 
 sys.path.insert(0, "/workspace/prime-rl/src")
+
+REPO = "/workspace/prime-rl"
 
 
 # ---------------------------------------------------------------------------
@@ -29,6 +32,38 @@ def test_syntax_check():
         "/workspace/prime-rl/src/prime_rl/configs/sft.py",
         doraise=True,
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint_configs():
+    """Repo's ruff lint check passes on configs directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff==0.13.0"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "--config=pyproject.toml", "src/prime_rl/configs/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_configs():
+    """Repo's ruff format check passes on configs directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff==0.13.0"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--config=pyproject.toml", "src/prime_rl/configs/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -188,7 +223,7 @@ def test_trainerconfig_validator_not_stub():
                 "TrainerConfig must have vlms_require_bfloat16 validator"
             )
             body = methods["vlms_require_bfloat16"].body
-            # Must have more than just `return self` or `pass`
+            # Must have more than just  or 
             non_trivial = [
                 s for s in body
                 if not isinstance(s, (ast.Pass, ast.Return, ast.Expr))

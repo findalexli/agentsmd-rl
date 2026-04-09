@@ -254,3 +254,87 @@ def test_errors_not_silenced():
                     if len(body) == 1 and isinstance(body[0], ast.Pass):
                         assert False, \
                             f"{filepath}: except-pass silently swallows errors at line {handler.lineno}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff lint check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # ruff check on modified files
+    r = subprocess.run(
+        ["ruff", "check", "--config=/repo/pyproject.toml", VLM_PY, MODEL_PY],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # ruff format check on modified files
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--config=/repo/pyproject.toml", VLM_PY, MODEL_PY],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_imports():
+    """Modified files can be imported without errors (pass_to_pass)."""
+    import sys
+    python_exe = sys.executable  # Use the same python running this test
+
+    # Test vlm.py imports
+    r = subprocess.run(
+        [python_exe, "-c", "from prime_rl.utils.vlm import get_language_model, get_vision_encoder, VLM_REGISTRY, VLMModelInfo"],
+        capture_output=True, text=True, timeout=30, cwd=REPO, env={"PYTHONPATH": f"{REPO}/src"},
+    )
+    assert r.returncode == 0, f"vlm.py import failed:\n{r.stderr[-500:]}"
+
+    # Test model.py can be parsed (AST check)
+    r = subprocess.run(
+        [python_exe, "-c", f"import ast; ast.parse(open('{MODEL_PY}').read())"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"model.py parse failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_configs_parse():
+    """All repo config files are valid TOML (pass_to_pass)."""
+    import sys
+    python_exe = sys.executable
+
+    configs_dir = Path(f"{REPO}/configs")
+    examples_dir = Path(f"{REPO}/examples")
+
+    toml_files = list(configs_dir.rglob("*.toml")) + list(examples_dir.rglob("*.toml"))
+    assert len(toml_files) > 0, "No config files found"
+
+    for toml_file in toml_files:
+        r = subprocess.run(
+            [python_exe, "-c", f"import tomllib; tomllib.load(open('{toml_file}', 'rb'))"],
+            capture_output=True, text=True, timeout=10, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Failed to parse {toml_file}:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_readme_exists():
+    """Repo README exists and is readable (pass_to_pass)."""
+    readme = Path(f"{REPO}/README.md")
+    assert readme.exists(), "README.md must exist"
+    content = readme.read_text()
+    assert len(content) > 100, "README.md should have substantial content"

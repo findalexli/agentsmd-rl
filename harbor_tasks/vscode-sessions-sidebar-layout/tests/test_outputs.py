@@ -67,7 +67,7 @@ const fs = require("fs");
 const src = fs.readFileSync("%s", "utf8");
 
 // Verify the toolbar event is registered for proper disposal
-if (!src.includes("this._register(toolbar.onDidChangeMenuItems"))) {
+if (!src.includes("this._register(toolbar.onDidChangeMenuItems")) {
     console.error("FAIL: must register toolbar.onDidChangeMenuItems via this._register for disposal");
     process.exit(1);
 }
@@ -171,3 +171,118 @@ def test_sidebar_customizations_menu_preserved():
         "Widget must continue to use Menus.SidebarCustomizations as the toolbar menu; "
         "this identifier should not be removed or renamed by the fix"
     )
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — verify repo integrity on base commit
+# -----------------------------------------------------------------------------
+
+def test_repo_package_json_valid():
+    """Root package.json is valid JSON (pass_to_pass)."""
+    r = _run_node("""
+const fs = require("fs");
+try {
+    const content = fs.readFileSync("package.json", "utf8");
+    JSON.parse(content);
+    console.log("PASS");
+} catch (e) {
+    console.error("FAIL: package.json is not valid JSON:", e.message);
+    process.exit(1);
+}
+""")
+    assert r.returncode == 0, f"Node failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_modified_typescript_files_valid():
+    """Modified TypeScript files have valid syntax (pass_to_pass)."""
+    r = _run_node("""
+const fs = require("fs");
+const files = [
+    "%s",
+    "%s"
+];
+for (const file of files) {
+    try {
+        const content = fs.readFileSync(file, "utf8");
+        // Basic syntax check: look for obviously broken patterns
+        const openBraces = (content.match(/\\{/g) || []).length;
+        const closeBraces = (content.match(/\\}/g) || []).length;
+        const openParens = (content.match(/\\(/g) || []).length;
+        const closeParens = (content.match(/\\)/g) || []).length;
+        if (Math.abs(openBraces - closeBraces) > 5) {
+            console.error("FAIL: " + file + " has mismatched braces");
+            process.exit(1);
+        }
+        if (Math.abs(openParens - closeParens) > 5) {
+            console.error("FAIL: " + file + " has mismatched parentheses");
+            process.exit(1);
+        }
+    } catch (e) {
+        console.error("FAIL: Could not read " + file + ": " + e.message);
+        process.exit(1);
+    }
+}
+console.log("PASS");
+""" % (WIDGET_TS, SESSIONS_VIEW_TS))
+    assert r.returncode == 0, f"Node failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_modified_files_have_copyright():
+    """Modified source files have Microsoft copyright header (pass_to_pass)."""
+    r = _run_node("""
+const fs = require("fs");
+const files = [
+    "%s",
+    "%s",
+    "%s"
+];
+const copyrightPattern = /Copyright.*Microsoft Corporation.*All rights reserved/s;
+for (const file of files) {
+    try {
+        const content = fs.readFileSync(file, "utf8");
+        if (!copyrightPattern.test(content)) {
+            console.error("FAIL: " + file + " missing Microsoft copyright header");
+            process.exit(1);
+        }
+    } catch (e) {
+        console.error("FAIL: Could not read " + file + ": " + e.message);
+        process.exit(1);
+    }
+}
+console.log("PASS");
+""" % (WIDGET_TS, SESSIONS_VIEW_TS, CSS_FILE))
+    assert r.returncode == 0, f"Node failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_css_files_valid():
+    """CSS files have valid syntax (pass_to_pass)."""
+    r = _run_node("""
+const fs = require("fs");
+const cssFile = "%s";
+try {
+    const content = fs.readFileSync(cssFile, "utf8");
+    // Basic CSS validation: check for balanced braces
+    const openBraces = (content.match(/\\{/g) || []).length;
+    const closeBraces = (content.match(/\\}/g) || []).length;
+    if (openBraces !== closeBraces) {
+        console.error("FAIL: CSS file has mismatched braces (" + openBraces + " open, " + closeBraces + " close)");
+        process.exit(1);
+    }
+    // Check for unclosed comments
+    const openComments = (content.match(/\\/\\*/g) || []).length;
+    const closeComments = (content.match(/\\*\\//g) || []).length;
+    if (openComments !== closeComments) {
+        console.error("FAIL: CSS file has unclosed comments");
+        process.exit(1);
+    }
+    console.log("PASS");
+} catch (e) {
+    console.error("FAIL: Could not validate CSS:", e.message);
+    process.exit(1);
+}
+""" % CSS_FILE)
+    assert r.returncode == 0, f"Node failed: {r.stderr}"
+    assert "PASS" in r.stdout

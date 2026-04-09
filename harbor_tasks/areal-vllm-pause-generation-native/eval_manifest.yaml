@@ -62,6 +62,21 @@ checks:
     origin: pr_diff
     description: "Pydantic request model classes still defined"
 
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python linting passes (ruff check)"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python formatting passes (ruff format --check)"
+
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file has valid Python syntax"
+
   - id: no_wildcard_imports
     type: pass_to_pass
     origin: agent_config
@@ -81,7 +96,7 @@ checks:
       commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
 
 rubric:
-  - rule: "Use `areal.utils.logging.getLogger(name)` with PascalCase descriptive name, NOT print or stdlib logging"
+  - rule: "Use \`areal.utils.logging.getLogger(name)\` with PascalCase descriptive name, NOT print or stdlib logging"
     source:
       path: "AGENTS.md"
       lines: "90-92"

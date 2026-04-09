@@ -1,0 +1,70 @@
+source:
+  repo: All-Hands-AI/OpenHands
+  pr_number: 13610
+  title: "APP-1142 Reduced thrash on sandbox service"
+  base_commit: 024f4d3326363616f2303e1fafb93224c8bb7ddb
+  merge_commit: eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be
+
+checks:
+  # Fail-to-pass checks: verify the fix is applied correctly
+  - id: test_uses_app_conversation_info_service
+    type: fail_to_pass
+    origin: code_structure
+    description: "Code uses AppConversationInfoService instead of AppConversationService"
+
+  - id: test_has_get_v1_conversation_info_function
+    type: fail_to_pass
+    origin: code_structure
+    description: "Has new _get_v1_conversation_info function with correct return type"
+
+  - id: test_no_is_v1_conversation_function
+    type: fail_to_pass
+    origin: code_structure
+    description: "Old _is_v1_conversation function removed"
+
+  - id: test_no_get_v1_conversation_config_function
+    type: fail_to_pass
+    origin: code_structure
+    description: "Old _get_v1_conversation_config function removed"
+
+  - id: test_service_called_only_once_per_request
+    type: fail_to_pass
+    origin: code_structure
+    description: "Service is called only once per request (no thrashing)"
+
+  - id: test_endpoint_returns_json_response_directly_for_v1
+    type: fail_to_pass
+    origin: code_structure
+    description: "V1 conversations return JSONResponse directly without extra calls"
+
+  - id: test_imports_app_conversation_info_model
+    type: fail_to_pass
+    origin: code_structure
+    description: "Imports AppConversationInfo model"
+
+  # Pass-to-pass checks: verify the code is valid
+  - id: test_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax is valid"
+
+  - id: test_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing unit tests pass"
+
+  - id: test_repo_precommit_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pre-commit lint checks pass"
+
+  - id: test_repo_unit_tests_conversation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's conversation routes unit tests pass"
+
+# No agent config rules that apply to this specific refactor
+agent_config: []
+
+# No rubric items (all checks are programmatic)
+rubric: []

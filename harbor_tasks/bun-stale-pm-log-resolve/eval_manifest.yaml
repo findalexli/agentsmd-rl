@@ -82,6 +82,31 @@ checks:
       lines: "234-238"
       commit: "9ce5b052840cecea4aa1977aeb063c47d0137a22"
 
+  # --- Pass-to-pass: repo CI tests ---
+  - id: no_banned_words_in_diff
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No banned words/patterns in changed lines (CI banned words check)"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      equivalent: "bun run banned"
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript typecheck passes (tsc --noEmit)"
+    source:
+      path: "package.json"
+      equivalent: "tsc --noEmit"
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's JavaScript linting passes (oxlint src/js)"
+    source:
+      path: "package.json"
+      equivalent: "bun run lint"
+
 rubric:
   - rule: "Never use @import() inline inside of functions. Always put them at the bottom of the file or containing struct."
     source:

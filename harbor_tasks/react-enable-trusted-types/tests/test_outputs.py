@@ -138,3 +138,40 @@ def test_www_not_importing_from_dynamic():
             "ReactFeatureFlags.www.js must not import enableTrustedTypesIntegration "
             "from the dynamic module"
         )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's own CI/CD checks must pass
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flags():
+    """Repo's flags check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flags"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Flags check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tests_shared():
+    """Repo's shared package tests pass (pass_to_pass)."""
+    import os
+    env = os.environ.copy()
+    env["NODE_ENV"] = "development"
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=shared", "--maxWorkers=2", "--ci"],
+        cwd=REPO, capture_output=True, text=True, timeout=120, env=env,
+    )
+    assert r.returncode == 0, f"Shared package tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

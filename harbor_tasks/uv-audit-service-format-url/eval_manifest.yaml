@@ -49,6 +49,27 @@ checks:
     origin: pr_diff
     description: "uv-cli Cargo.toml depends on uv-audit with clap feature enabled"
 
+  # Repo CI/CD pass_to_pass tests
+  - id: test_repo_cargo_check_uv_audit
+    type: pass_to_pass
+    origin: repo_tests
+    description: "uv-audit crate compiles (repo CI)"
+
+  - id: test_repo_cargo_check_uv_cli
+    type: pass_to_pass
+    origin: repo_tests
+    description: "uv-cli crate compiles (repo CI)"
+
+  - id: test_repo_cargo_check_uv
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Main uv crate compiles (repo CI)"
+
+  - id: test_repo_cargo_test_uv_audit
+    type: pass_to_pass
+    origin: repo_tests
+    description: "uv-audit tests pass (repo CI)"
+
   # Config-derived tests
   - id: no_unwrap_in_new_service_code
     type: pass_to_pass
@@ -78,19 +99,19 @@ checks:
       commit: "685a79876028a83976acafffd94e8abe3295d72a"
 
 rubric:
-  - rule: "PREFER patterns like `if let` to handle fallibility"
+  - rule: "PREFER patterns like if let to handle fallibility"
     source:
       path: "CLAUDE.md"
       lines: "8"
       commit: "685a79876028a83976acafffd94e8abe3295d72a"
 
-  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
+  - rule: "AVOID shortening variable names, e.g., use version instead of ver, and requires_python instead of rp"
     source:
       path: "CLAUDE.md"
       lines: "17-18"
       commit: "685a79876028a83976acafffd94e8abe3295d72a"
 
-  - rule: "PREFER let chains (`if let` combined with `&&`) over nested `if let` statements"
+  - rule: "PREFER let chains (if let combined with &&) over nested if let statements"
     source:
       path: "CLAUDE.md"
       lines: "11"

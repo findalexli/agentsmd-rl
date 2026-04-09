@@ -1,63 +1,94 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T23:46:02.219598",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.5,
-      "verdict": "pass",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T09:26:40.048353",
+  "total_time": 886.72,
+  "sandbox_id": "il5pdk21kozcb6n5sjm7s",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.5,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 267.43,
+      "notes": "Added repo CI pass_to_pass gates: test_repo_ruff_check (ruff check TARGET), test_repo_ruff_format (ruff format --check TARGET). CI sources: .github/workflows/pre-commit.yml, pyproject.toml (ruff config with E501 ignored). Tests verified: 6 p2p pass, 6 f2p fail (expected on base commit)."
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed solve.sh to apply ruff formatting after patch. The gold solution needed ruff check --fix and ruff format to pass the repo_ruff_check and repo_ruff_format tests. All 12 tests now pass: 6 functional (fail-to-pass) tests and 6 static/config tests.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 408.23
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 195.32,
       "notes": ""
     },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.09,
+      "notes": "ICR=0.50"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-30T23:47:11.707413",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.5,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 0.0,
+      "at": "2026-04-09T01:26:45.205713"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 838.84,
+      "at": "2026-04-09T01:26:45.371981"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 6594.93,
+      "at": "2026-04-09T06:18:16.638268"
+    },
+    {
       "verdict": "pass",
-      "notes": ""
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 886.46,
+      "at": "2026-04-09T09:26:39.877869"
     },
     {
-      "timestamp": "2026-03-29T14:30:05.179104",
-      "runner": "rubric (rebuild-rubrics_20260329_143005)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 4219
-    },
-    {
-      "timestamp": "2026-03-29T16:44:41.791811",
-      "runner": "rubric (rebuild-rubrics_20260329_164441)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 3979
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.634172",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.935565",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.507309",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 886.72,
+      "at": "2026-04-09T09:26:40.048353"
     }
   ]
 }

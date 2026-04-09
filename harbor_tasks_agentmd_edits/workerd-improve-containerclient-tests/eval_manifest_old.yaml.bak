@@ -1,0 +1,36 @@
+version: '2.0'
+source:
+  repo: cloudflare/workerd
+  pr: 6217
+  base_commit: e5eaa43c16c57bab977e5b53f4e57ca4418d084d
+  merge_commit: 5722c9fd916552cdb2a5e7c6ab66d563d925bcaf
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified JS files parse without syntax errors
+- id: ws_timeout_mechanism
+  type: fail_to_pass
+  origin: pr_diff
+  description: WebSocket promise rejects with timeout when no message arrives instead
+    of hanging forever
+- id: retry_no_verbose_logging
+  type: fail_to_pass
+  origin: pr_diff
+  description: TCP port retry loop does not have verbose console.info logging on each
+    retry
+- id: readme_safe_docker_cleanup
+  type: fail_to_pass
+  origin: pr_diff
+  description: README uses pipe-based docker cleanup that is safe when no containers
+    match
+- id: readme_correct_target
+  type: fail_to_pass
+  origin: pr_diff
+  description: README uses correct Bazel target with container-client@ suffix
+rubric:
+- rule: Test target in README ends with @ suffix per AGENTS.md conventions
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: e5eaa43c16c57bab977e5b53f4e57ca4418d084d

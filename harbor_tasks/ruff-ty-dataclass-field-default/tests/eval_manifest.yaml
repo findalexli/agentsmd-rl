@@ -1,0 +1,84 @@
+version: \"2.0\"
+
+source:
+  repo: \"astral-sh/ruff\"
+  pr: 24397
+  base_commit: \"ee9084695ec4d70bc66083ac2b3cf598cc45101a\"
+  merge_commit: \"65b68bd554157753a81b814827496dd046387d33\"
+
+checks:
+  - id: test_field_default_without_specifiers
+    type: fail_to_pass
+    origin: pr_diff
+    description: \"dataclass_transform without field_specifiers treats field() as a default, so A() does not error\"
+
+  - id: test_field_default_with_other_specifiers
+    type: fail_to_pass
+    origin: pr_diff
+    description: \"dataclass_transform with non-field specifiers treats field() as a default, so C() does not error\"
+
+  - id: test_stdlib_dataclass_field_init_false_still_respected
+    type: pass_to_pass
+    origin: repo_tests
+    description: \"stdlib @dataclass still errors on B(name=\\\"foo\\\") with field(init=False)\"
+
+  - id: test_named_args_without_specifiers
+    type: pass_to_pass
+    origin: repo_tests
+    description: \"A(name=\\\"hello\\\") works on both base and fix\"
+
+  - id: test_cargo_check
+    type: pass_to_pass
+    origin: static
+    description: \"ty_python_semantic crate compiles without errors\"
+
+  - id: test_cargo_fmt
+    type: pass_to_pass
+    origin: static
+    description: \"Repo code is formatted correctly\"
+
+  - id: test_cargo_clippy_ty_python_semantic
+    type: pass_to_pass
+    origin: static
+    description: \"ty_python_semantic passes clippy lints\"
+
+  - id: test_cargo_doc_ty_python_semantic
+    type: pass_to_pass
+    origin: static
+    description: \"ty_python_semantic docs build without warnings\"
+
+  - id: test_ty_mdtest
+    type: pass_to_pass
+    origin: repo_tests
+    description: \"ty_python_semantic markdown tests pass\"
+
+  - id: test_ty_mdtest_dataclasses
+    type: pass_to_pass
+    origin: repo_tests
+    description: \"ty_python_semantic dataclasses-specific markdown tests pass\"
+
+  - id: test_no_unsafe_unwrap_in_changes
+    type: pass_to_pass
+    origin: agent_config
+    description: \"No panic!/unreachable!/unwrap() in added code\"
+    source:
+      path: \"AGENTS.md\"
+      lines: \"79\"
+      commit: \"ee9084695ec4d70bc66083ac2b3cf598cc45101a\"
+
+rubric:
+  - rule: \"Follow existing code style. Check neighboring files for patterns.\"
+    source:
+      path: \"AGENTS.md\"
+      lines: \"75\"
+      commit: \"ee9084695ec4d70bc66083ac2b3cf598cc45101a\"
+  - rule: \"Avoid writing significant amounts of new code. This is often a sign that we are missing an existing method or mechanism that could help solve the problem. Look for existing utilities first.\"
+    source:
+      path: \"AGENTS.md\"
+      lines: \"78\"
+      commit: \"ee9084695ec4d70bc66083ac2b3cf598cc45101a\"
+  - rule: \"Prefer let chains (if let combined with &&) over nested if let statements to reduce indentation and improve readability.\"
+    source:
+      path: \"AGENTS.md\"
+      lines: \"80\"
+      commit: \"ee9084695ec4d70bc66083ac2b3cf598cc45101a\"

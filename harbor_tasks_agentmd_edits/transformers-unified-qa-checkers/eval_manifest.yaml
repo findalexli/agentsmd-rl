@@ -54,7 +54,7 @@ checks:
     origin: pr_diff
     description: ".ai/AGENTS.md does not claim CI runs make check-repo"
 
-  # Pass-to-pass
+  # Pass-to-pass: static
   - id: makefile_core_targets_exist
     type: pass_to_pass
     origin: static
@@ -68,6 +68,57 @@ checks:
       path: ".ai/AGENTS.md"
       lines: "2-5"
       commit: "28af8184fb00a0e9bc778c3defdec39bbe7e8839"
+
+  # Pass-to-pass: repo CI/CD checks
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on utils/check_types.py"
+
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff lint check passes on utils/check_types.py"
+
+  - id: test_repo_check_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's type checker passes on src/transformers/utils"
+
+  - id: test_repo_custom_init_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's init isort check passes"
+
+  - id: test_repo_sort_auto_mappings
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's auto mappings sort check passes"
+
+  - id: test_repo_check_doc_toc
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's documentation TOC check passes"
+
+  - id: test_repo_check_copies
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's copies check passes"
+
+  - id: test_repo_check_dummies
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's dummies check passes"
+
+  - id: test_repo_check_doctest_list
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's doctest list check passes"
+
+  - id: test_repo_check_inits
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's inits check passes"
 
 rubric:
   - rule: "The unified checker module should wrap all existing check scripts without changing their individual behavior"

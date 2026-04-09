@@ -247,6 +247,88 @@ def test_not_stub():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — repo format check
+def test_repo_format():
+    """Repo's Prettier formatting check passes on the modified file (pass_to_pass)."""
+    # Install tools first since the container is stateless
+    install = subprocess.run(
+        ["npm", "install", "-g", "prettier"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "test/cli/hot/hot.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — TypeScript syntax validation
+def test_target_typescript_syntax():
+    """Target file must have valid TypeScript syntax (pass_to_pass)."""
+    code = _read_code()
+    # Basic TypeScript syntax validation - check for balanced braces and valid structure
+    open_braces = code.count("{")
+    close_braces = code.count("}")
+    open_parens = code.count("(")
+    close_parens = code.count(")")
+    open_brackets = code.count("[")
+    close_brackets = code.count("]")
+
+    assert open_braces == close_braces, f"Unbalanced braces: {open_braces} open, {close_braces} close"
+    assert open_parens == close_parens, f"Unbalanced parens: {open_parens} open, {close_parens} close"
+    assert open_brackets == close_brackets, f"Unbalanced brackets: {open_brackets} open, {close_brackets} close"
+
+    # Check for required test structure elements
+    assert "import { spawn } from \"bun\"" in code or 'import { spawn } from "bun"' in code, "Missing spawn import"
+    assert "it(" in code, "Missing test cases (it() calls)"
+    assert "expect(" in code, "Missing expect() assertions"
+
+
+# [repo_tests] pass_to_pass — oxlint check (no errors, warnings ok)
+def test_repo_oxlint():
+    """Repo's oxlint passes on the target file with 0 errors (pass_to_pass).
+
+    The bun repo uses oxlint in CI. Warnings are acceptable (existing code
+    has intentional patterns), but errors must be 0.
+    """
+    install = subprocess.run(
+        ["npm", "install", "-g", "oxlint"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["npx", "oxlint", "test/cli/hot/hot.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # oxlint returns exit code 0 for warnings only, non-zero for errors
+    # We allow warnings (existing code style) but not errors
+    assert r.returncode == 0, f"oxlint found errors:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — TypeScript project check (excluding regression fixtures)
+def test_repo_typescript_project():
+    """Repo's TypeScript project compiles without errors (pass_to_pass).
+
+    Excludes test/regression/issue/14477 which contains intentional JSX
+    syntax errors for regression testing.
+    """
+    install = subprocess.run(
+        ["npm", "install", "-g", "typescript"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit", "-p", "test", "--skipLibCheck"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Filter out known intentional errors from regression fixtures
+    errors = [line for line in r.stderr.splitlines() if "error TS" in line]
+    real_errors = [e for e in errors if "test/regression/issue/14477" not in e]
+    assert len(real_errors) == 0, f"TypeScript errors found:\n" + "\n".join(real_errors[:10])
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------
 

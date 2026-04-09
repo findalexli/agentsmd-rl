@@ -112,6 +112,27 @@ checks:
     origin: static
     description: "Modified file retains substantial logic, not a stub"
 
+  # --- Pass-to-pass: Repo CI/CD tests ---
+  - id: test_repo_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's package.json must be valid JSON with expected structure"
+
+  - id: test_repo_modified_file_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified skill/index.ts must have valid TypeScript syntax (balanced braces/parens)"
+
+  - id: test_repo_skill_module_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Skill module must preserve expected exports and namespace structure"
+
+  - id: test_repo_no_common_syntax_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file must not contain common syntax errors (unbalanced quotes)"
+
 rubric:
   - rule: "Use Effect.fn(\"Domain.method\") for named/traced effects and Effect.fnUntraced for internal helpers."
     source:

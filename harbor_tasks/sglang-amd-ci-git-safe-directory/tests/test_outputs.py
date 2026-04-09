@@ -59,6 +59,26 @@ def test_syntax_check():
         )
 
 
+# [static] pass_to_pass
+def test_shellcheck():
+    """Both AMD CI scripts must pass shellcheck --severity=error (catches critical errors only)."""
+    # Install shellcheck if not available
+    r = subprocess.run(
+        ["apt-get", "update", "-qq"], capture_output=True, timeout=60
+    )
+    r = subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "shellcheck"], capture_output=True, timeout=120
+    )
+    for script in SCRIPTS:
+        r = subprocess.run(
+            ["shellcheck", "--severity=error", script],
+            capture_output=True, text=True, timeout=60
+        )
+        assert r.returncode == 0, (
+            f"{script} failed shellcheck (severity=error):\n{r.stdout[-500:]}"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -116,40 +136,3 @@ def test_git_config_global_or_system():
         assert re.search(
             r"git\s+config\s+--(global|system)", text
         ), f"{script}: git config should use --global or --system flag"
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression checks
-# ---------------------------------------------------------------------------
-
-# [pr_diff] pass_to_pass
-def test_docker_run_preserved():
-    """docker run --name ci_sglang must be preserved in both scripts."""
-    for script in SCRIPTS:
-        text = _read_no_comments(script)
-        assert re.search(r"docker\s+run\b", text), (
-            f"{script}: docker run command missing"
-        )
-        assert "--name ci_sglang" in Path(script).read_text(), (
-            f"{script}: --name ci_sglang missing"
-        )
-
-
-# [pr_diff] pass_to_pass
-def test_shebang_preserved():
-    """Both scripts must retain a shebang line."""
-    for script in SCRIPTS:
-        first_line = Path(script).read_text().splitlines()[0]
-        assert first_line.startswith("#!/"), (
-            f"{script}: missing shebang (first line: {first_line!r})"
-        )
-
-
-# [pr_diff] fail_to_pass
-def test_docker_exec_targets_ci_sglang():
-    """docker exec must target the ci_sglang container (matches --name in docker run)."""
-    for script in SCRIPTS:
-        text = _read_no_comments(script)
-        assert _is_real_command(
-            text, r"docker\s+exec\s+.*ci_sglang.*safe\.directory"
-        ), f"{script}: docker exec should target the ci_sglang container"

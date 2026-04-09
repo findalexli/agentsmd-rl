@@ -1,0 +1,78 @@
+source_pr: "https://github.com/MystenLabs/sui/pull/26133"
+base_commit: "ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a"
+merge_commit: "92cdfc7fe041bf824567e76995a5d5ef973bc6d6"
+
+# Agent config rules from CLAUDE.md that apply programmatically
+agent_config: []
+
+checks:
+  # Pass-to-pass: compilation and existing tests
+  - id: test_cargo_check_compiles
+    type: pass_to_pass
+    description: "Crate compiles without errors"
+    origin: repo_tests
+
+  - id: test_existing_watermark_operations
+    type: pass_to_pass
+    description: "Existing watermark operations test passes"
+    origin: repo_tests
+
+  # Fail-to-pass: ConcurrentConnection trait implementation
+  - id: test_reader_watermark_exists_and_passes
+    type: fail_to_pass
+    description: "reader_watermark returns actual watermark data instead of None"
+    origin: gold_tests
+
+  - id: test_pruner_watermark_exists_and_passes
+    type: fail_to_pass
+    description: "pruner_watermark returns actual PrunerWatermark with computed wait_for_ms"
+    origin: gold_tests
+
+  - id: test_pruner_saturates_when_ready
+    type: fail_to_pass
+    description: "pruner_watermark properly uses saturating_sub for wait time calculation"
+    origin: gold_tests
+
+  - id: test_set_reader_watermark_works
+    type: fail_to_pass
+    description: "set_reader_watermark returns Ok(true) instead of bailing with error"
+    origin: gold_tests
+
+  - id: test_set_pruner_watermark_works
+    type: fail_to_pass
+    description: "set_pruner_watermark returns Ok(true) instead of bailing with error"
+    origin: gold_tests
+
+  - id: test_init_watermark_fresh
+    type: fail_to_pass
+    description: "init_watermark creates watermark with reader_lo = checkpoint + 1"
+    origin: gold_tests
+
+  - id: test_init_watermark_migrates_legacy
+    type: fail_to_pass
+    description: "init_watermark migrates legacy watermark format to new format"
+    origin: gold_tests
+
+  # Pass-to-pass: all tests
+  - id: test_all_lib_tests_pass
+    type: pass_to_pass
+    description: "All crate unit tests pass"
+    origin: repo_tests
+
+  # Pass-to-pass: lint and format checks
+  - id: test_cargo_clippy
+    type: pass_to_pass
+    description: "Cargo clippy passes with no warnings"
+    origin: repo_tests
+
+  - id: test_cargo_fmt
+    type: pass_to_pass
+    description: "Cargo fmt --check passes (code is properly formatted)"
+    origin: repo_tests
+
+  - id: test_cargo_doc
+    type: pass_to_pass
+    description: "Cargo doc builds without errors"
+    origin: repo_tests
+
+rubric: []

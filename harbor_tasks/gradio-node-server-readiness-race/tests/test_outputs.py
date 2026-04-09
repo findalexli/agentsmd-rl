@@ -216,3 +216,33 @@ def test_ts_launcher_uses_http_readiness():
     assert any(
         pat in content for pat in ["http.request", "http.get", "fetch("]
     ), "app-launcher.ts does not use HTTP for readiness polling"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates (p2p_enrichment)
+# ---------------------------------------------------------------------------
+
+# Note on repo CI commands discovered but NOT added as p2p tests:
+# - "ruff check gradio" - fails on base commit (3 pre-existing errors in gradio/)
+# - "ruff format --check gradio" - fails on base commit (1 file needs reformatting)
+# - "ty check" - ty not installed in container
+# - "pnpm lint/format/ts:check/test" - pnpm/node not installed in container
+# - "pytest" - gradio dependencies not installed, would need full venv setup
+#
+# These require Dockerfile changes which are out of scope for this task.
+# The following tests use only tools available in the container (ruff, python stdlib).
+
+
+# [repo_tests] pass_to_pass - Repo Python files must be syntactically valid
+def test_repo_python_syntax():
+    """All Python files in gradio/ must have valid syntax (pass_to_pass)."""
+    import py_compile
+
+    python_files = list(Path(f"{REPO}/gradio").rglob("*.py"))
+    failed = []
+    for f in python_files:
+        try:
+            py_compile.compile(str(f), doraise=True)
+        except Exception as e:
+            failed.append(f"{f}: {e}")
+    assert not failed, f"Syntax errors found:\n" + "\n".join(failed)

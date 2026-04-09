@@ -9,53 +9,110 @@ source:
 checks:
   # ---------------------------------------------------------------------------
   # Fail-to-pass (pr_diff) — core behavioral tests
+  # These tests should FAIL on base commit and PASS after the fix is applied.
   # ---------------------------------------------------------------------------
 
-  - id: dockerfile_no_buildkit_cache_mount
+  - id: test_dockerfile_no_buildkit_cache_mount
     type: fail_to_pass
     origin: pr_diff
     description: "Dockerfile build stage no longer uses BuildKit cache mount on .next/cache (which trapped fetch cache in unreachable volume)"
 
-  - id: dockerfile_has_mkdir_chown
+  - id: test_dockerfile_has_mkdir_chown
     type: fail_to_pass
     origin: pr_diff
     description: "Dockerfile runner stage creates writable .next directory with correct ownership (node:node)"
 
-  - id: dockerfile_has_optional_cache_copy
+  - id: test_dockerfile_has_optional_cache_copy
     type: fail_to_pass
     origin: pr_diff
     description: "Dockerfile includes commented line for optional fetch cache persistence from build stage"
 
-  - id: dockerfile_bun_has_mkdir_chown
+  - id: test_dockerfile_bun_has_mkdir_chown
     type: fail_to_pass
     origin: pr_diff
     description: "Dockerfile.bun runner stage creates writable .next directory with correct ownership (bun:bun)"
 
-  - id: readme_no_emoji_prefixes
+  - id: test_readme_no_emoji_prefixes
     type: fail_to_pass
     origin: pr_diff
     description: "README features list uses plain markdown bullets instead of emoji checkmarks"
 
+  # BEHAVIORAL TEST: Uses subprocess.run() to validate Dockerfile with docker build
+  - id: test_dockerfile_build_succeeds
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dockerfile passes docker build syntax validation (behavioral test using subprocess)"
+
+  # BEHAVIORAL TEST: Uses json.loads() to parse and validate package.json
+  - id: test_package_json_valid
+    type: fail_to_pass
+    origin: pr_diff
+    description: "package.json is valid JSON with required build/start scripts and next dependency (behavioral test using subprocess)"
+
   # ---------------------------------------------------------------------------
-  # Pass-to-pass (static) — syntax / structure checks
+  # Pass-to-pass (repo_tests) — Repo CI checks that should pass before AND after fix
+  # These tests verify the example maintains valid structure in both states.
   # ---------------------------------------------------------------------------
 
-  - id: dockerfile_syntax
+  - id: test_repo_readme_has_features_section
+    type: pass_to_pass
+    origin: repo_tests
+    description: "README has properly formatted Features section with markdown bullets"
+
+  - id: test_repo_dockerfile_multi_stage
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Dockerfile has proper 3-stage build structure (dependencies, builder, runner)"
+
+  - id: test_repo_dockerfile_bun_multi_stage
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Dockerfile.bun has proper multi-stage build structure with oven/bun base image"
+
+  - id: test_repo_dockerfile_has_cache_mounts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Dockerfile uses BuildKit cache mounts for package manager stores (npm/yarn/pnpm)"
+
+  # BEHAVIORAL TEST: Uses yaml.safe_load() to validate compose.yml
+  - id: test_repo_compose_yml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "compose.yml has valid YAML structure with nextjs-standalone service (behavioral test using yaml parser)"
+
+  # BEHAVIORAL TEST: Uses npx tsc to validate TypeScript config
+  - id: test_repo_next_config_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "next.config.ts has valid standalone output configuration (behavioral test using TypeScript compiler)"
+
+  # BEHAVIORAL TEST: Uses json.loads() to validate package.json
+  - id: test_repo_package_json_scripts_work
+    type: pass_to_pass
+    origin: repo_tests
+    description: "package.json scripts are valid JSON with required fields (behavioral test using JSON parser)"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (static) — syntax / compilation checks
+  # These are basic structural checks that should always pass.
+  # ---------------------------------------------------------------------------
+
+  - id: test_dockerfile_syntax
     type: pass_to_pass
     origin: static
     description: "Dockerfile has valid basic structure with multi-stage build"
 
-  - id: dockerfile_bun_syntax
+  - id: test_dockerfile_bun_syntax
     type: pass_to_pass
     origin: static
     description: "Dockerfile.bun has valid basic structure"
 
-  - id: dockerfile_has_build_stage
+  - id: test_dockerfile_has_build_stage
     type: pass_to_pass
     origin: static
     description: "Dockerfile has builder stage with build command"
 
-  - id: dockerfile_has_runner_stage
+  - id: test_dockerfile_has_runner_stage
     type: pass_to_pass
     origin: static
     description: "Dockerfile has runner stage with production server"

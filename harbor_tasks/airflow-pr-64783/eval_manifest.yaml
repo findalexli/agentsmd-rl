@@ -1,0 +1,71 @@
+source_pr:
+  owner: apache
+  repo: airflow
+  number: 64783
+  title: "[v3-2-test] Allow revent packages when testing RC versions (#64774)"
+  merge_commit: ab94c71d68f46d98236e9e2506ac9251d673c60e
+  base_commit: 9e2bf8110b4d273ff93c9dccc9023188cdf51af0
+
+# Checks are the automated, programmatic tests
+checks:
+  - id: "f2p_install_together_exclude_newer"
+    description: "When pre_release=True, _install_airflow_and_optionally_providers_together adds --pre and --exclude-newer with timestamp"
+    type: fail_to_pass
+    test: "test_install_together_adds_exclude_newer_with_timestamp"
+
+  - id: "f2p_install_constraints_exclude_newer"
+    description: "When pre_release=True, _install_only_airflow_airflow_core_task_sdk_with_constraints adds --pre and --exclude-newer with timestamp"
+    type: fail_to_pass
+    test: "test_install_with_constraints_adds_exclude_newer_with_timestamp"
+
+  - id: "f2p_timestamp_is_current"
+    description: "The timestamp used should be the current time when the function runs"
+    type: fail_to_pass
+    test: "test_timestamp_is_current_time"
+
+  - id: "p2p_no_prerelease_no_exclude_newer"
+    description: "When pre_release=False, command should NOT include --pre or --exclude-newer"
+    type: pass_to_pass
+    test: "test_non_prerelease_does_not_add_exclude_newer"
+
+  - id: "p2p_no_prerelease_constraints_no_exclude_newer"
+    description: "Second function also should NOT add flags when pre_release=False"
+    type: pass_to_pass
+    test: "test_non_prerelease_with_constraints_no_exclude_newer"
+
+  - id: "p2p_console_message_providers"
+    description: "Console message should mention 'providers' for first function"
+    type: pass_to_pass
+    test: "test_console_message_updated_for_providers"
+
+  - id: "p2p_repo_python_syntax"
+    description: "Python syntax check passes on install_airflow_and_providers.py"
+    type: pass_to_pass
+    test: "test_repo_python_syntax"
+
+  - id: "p2p_repo_ast_parsing"
+    description: "AST parsing succeeds on install_airflow_and_providers.py"
+    type: pass_to_pass
+    test: "test_repo_ast_parsing"
+
+  - id: "p2p_repo_ruff_critical"
+    description: "Ruff critical checks (E9,F) pass on install_airflow_and_providers.py"
+    type: pass_to_pass
+    test: "test_repo_ruff_critical"
+
+# Rubric for soft/subjective rules from agent config
+rubric: []
+
+# Agent config rules that apply to this task
+agent_config:
+  - file: "CLAUDE.md"
+    applicable: true
+    reason: "Root-level config applies to all changes"
+    rules:
+      - "Imports at top of file. Valid exceptions: circular imports, lazy loading for TYPE_CHECKING blocks."
+      - "Always format and check Python files with ruff immediately after writing or editing them."
+
+  - file: "AGENTS.md"
+    applicable: true
+    reason: "Root-level config applies to all changes"
+    rules: []

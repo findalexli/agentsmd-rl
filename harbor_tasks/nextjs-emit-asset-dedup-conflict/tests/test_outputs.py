@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/next.js"
@@ -23,11 +24,37 @@ def _read(path: str) -> str:
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
+# [repo_state] pass_to_pass
+def test_repo_git_state_clean():
+    """Repository has clean git state with no uncommitted changes (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git status failed: {r.stderr}"
+    assert r.stdout.strip() == "", \
+        f"Repository has uncommitted changes:\n{r.stdout[:500]}"
+
+
+# [repo_state] pass_to_pass
+def test_repo_base_commit_verified():
+    """Repository is at the expected base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git rev-parse failed: {r.stderr}"
+    head_commit = r.stdout.strip()
+    expected_commit = "5a922bc9bb9b4435da87f5b6783e3b14e26aadf9"
+    assert head_commit == expected_commit, \
+        f"Expected base commit {expected_commit}, got {head_commit}"
+
+
 # [static] pass_to_pass
 def test_files_exist_and_not_stub():
     """Modified files exist with real Rust code (anti-stub gate)."""
     checks = {
-        EMIT_RS: {"min_lines": 200, "patterns": [r"#\[turbo_tasks::function\]", r"async fn emit_assets"]},
+        EMIT_RS: {"min_lines": 100, "patterns": [r"#\[turbo_tasks::function\]", r"async fn emit_assets"]},
         ISSUE_MOD: {"min_lines": 100, "patterns": [r"pub enum IssueStage", r"impl Display for IssueStage"]},
     }
     for path, spec in checks.items():

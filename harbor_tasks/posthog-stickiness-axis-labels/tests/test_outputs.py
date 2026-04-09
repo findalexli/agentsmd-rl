@@ -173,3 +173,42 @@ def test_dayjs_import_convention():
     # Good: import from 'lib/dayjs'
     lib_import = re.search(r"from\s+['\"]lib/dayjs['\"]", src)
     assert lib_import is not None, "dates.ts must import from 'lib/dayjs'"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI/CD tests (pass on base commit and after fix)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_js():
+    """Repo's JavaScript/TypeScript linting passes (pass_to_pass)."""
+    # First install dependencies (oxlint is a devDependency)
+    setup = subprocess.run(
+        ["bash", "-c", "cd /workspace/posthog && corepack enable && corepack prepare pnpm@10.29.3 --activate && pnpm install --frozen-lockfile >/dev/null 2>&1"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert setup.returncode == 0, f"Setup for oxlint failed:\n{setup.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/posthog && pnpm exec oxlint --quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"JavaScript linting (oxlint) failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_jest_dates():
+    """Repo's Jest tests for dates.ts module pass (pass_to_pass)."""
+    # First install dependencies and build products
+    setup = subprocess.run(
+        ["bash", "-c", "cd /workspace/posthog && corepack enable && corepack prepare pnpm@10.29.3 --activate && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm --filter=@posthog/frontend build:products >/dev/null 2>&1"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert setup.returncode == 0, f"Setup for Jest failed:\n{setup.stderr[-500:]}"
+
+    # Run Jest tests for dates.test.ts
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/posthog/frontend && pnpm exec jest --testPathPattern='dates.test.ts' --forceExit"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Jest tests for dates.ts failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"

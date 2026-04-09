@@ -30,7 +30,6 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-
 # [static] pass_to_pass
 def test_syntax_check():
     """fsdp_engine.py must compile as valid Python."""
@@ -41,8 +40,51 @@ def test_syntax_check():
     assert r.returncode == 0, f"Compile failed: {r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linting passes on areal/engine/ (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "check", "areal/engine/fsdp_engine.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff formatting passes on areal/engine/fsdp_engine.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", "areal/engine/fsdp_engine.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ast_parse():
+    """Repo's fsdp_engine.py parses as valid AST (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import ast; ast.parse(open('areal/engine/fsdp_engine.py').read())"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST parse failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests via subprocess
+# ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
 
 
@@ -105,9 +147,10 @@ for node in ast.walk(tree):
                 assert meaningful >= 15, f"Method too simple ({meaningful} nodes) - likely stubbed"
 
                 print("PASS")
-                return
+                exit(0)
 
-assert False, "_update_weights_from_distributed not found or missing pipeline pattern"
+print("FAIL: _update_weights_from_distributed not found or missing pipeline pattern")
+exit(1)
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
@@ -164,9 +207,10 @@ for node in ast.walk(tree):
             assert meaningful >= 8, f"{item.name} too simple ({meaningful} nodes) - likely stubbed"
 
             print("PASS")
-            return
+            exit(0)
 
-assert False, "No async bucket broadcast method with distributed logic found"
+print("FAIL: No async bucket broadcast method with distributed logic found")
+exit(1)
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
@@ -210,7 +254,11 @@ for node in ast.walk(tree):
 
         # Behavioral: exec the dataclass source and instantiate a real object
         lines = source.splitlines()
-        class_src = '\\n'.join(lines[node.lineno - 1 : node.end_lineno])
+        # Include decorator lines (they come before the class definition)
+        start_line = node.lineno - 1
+        while start_line > 0 and lines[start_line - 1].strip().startswith('@'):
+            start_line -= 1
+        class_src = '\\n'.join(lines[start_line : node.end_lineno])
 
         import torch
         from concurrent.futures import Future
@@ -236,7 +284,9 @@ for node in ast.walk(tree):
         print("PASS")
         break
 
-assert found, "_PendingWeightUpdateBucket class not found in fsdp_engine.py"
+if not found:
+    print("FAIL: _PendingWeightUpdateBucket class not found in fsdp_engine.py")
+    exit(1)
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
@@ -269,9 +319,10 @@ for node in ast.walk(tree):
                         )
                         if has_drain:
                             print("PASS")
-                            return
+                            exit(0)
 
-assert False, "No error-safety drain (self._wait* in finally) in _update_weights_from_distributed"
+print("FAIL: No error-safety drain (self._wait* in finally) in _update_weights_from_distributed")
+exit(1)
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
@@ -302,9 +353,10 @@ for node in ast.walk(tree):
 
         assert found_stream, "No torch.cuda.Stream() creation in FSDPEngine methods"
         print("PASS")
-        return
+        exit(0)
 
-assert False, "FSDPEngine class not found"
+print("FAIL: FSDPEngine class not found")
+exit(1)
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
@@ -330,9 +382,10 @@ for node in ast.walk(tree):
                 body = [s for s in item.body if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant))]
                 assert len(body) >= 2, f"Only {len(body)} statements - method appears stubbed"
                 print("PASS")
-                return
+                exit(0)
 
-assert False, "_update_bucket_weights_from_distributed not found - backward compat broken"
+print("FAIL: _update_bucket_weights_from_distributed not found - backward compat broken")
+exit(1)
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
@@ -356,9 +409,10 @@ for node in ast.walk(tree):
                 )
                 assert meaningful >= 3, "Method appears stubbed"
                 print("PASS")
-                return
+                exit(0)
 
-assert False, "_init_weight_update_from_distributed not found"
+print("FAIL: _init_weight_update_from_distributed not found")
+exit(1)
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
@@ -383,7 +437,9 @@ wildcards = [
     for alias in node.names
     if alias.name == "*"
 ]
-assert not wildcards, f"Wildcard imports found: {wildcards}"
+if wildcards:
+    print(f"FAIL: Wildcard imports found: {wildcards}")
+    exit(1)
 print("PASS")
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
@@ -410,8 +466,9 @@ if not found_any:
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
             if "broadcast" in node.func.attr.lower():
                 print("PASS")
-                return
-    assert False, "No broadcast calls found"
+                exit(0)
+    print("FAIL: No broadcast calls found")
+    exit(1)
 
 print("PASS")
 """)
@@ -431,7 +488,9 @@ for node in ast.walk(tree):
     if isinstance(node, ast.Call):
         if isinstance(node.func, ast.Name) and node.func.id == "print":
             prints.append(node.lineno)
-assert not prints, f"print() calls found at lines {prints}"
+if prints:
+    print(f"FAIL: print() calls found at lines {prints}")
+    exit(1)
 print("PASS")
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
@@ -458,6 +517,7 @@ for node in tree.body:
         assert False, f"Module-level process group creation: {func.attr}() at line {node.lineno}"
 
 print("PASS")
+exit(0)
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
@@ -483,11 +543,14 @@ for node in ast.walk(tree):
                 if isinstance(child, ast.Call) and isinstance(child.func, ast.Attribute):
                     if child.func.attr in ("item", "tolist"):
                         violations.append(f"{item.name}:{child.lineno} .{child.func.attr}()")
-        assert not violations, f"GPU-CPU sync in weight update hot paths: {violations}"
+        if violations:
+            print(f"FAIL: GPU-CPU sync in weight update hot paths: {violations}")
+            exit(1)
         print("PASS")
-        return
+        exit(0)
 
-assert False, "FSDPEngine not found"
+print("FAIL: FSDPEngine not found")
+exit(1)
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout

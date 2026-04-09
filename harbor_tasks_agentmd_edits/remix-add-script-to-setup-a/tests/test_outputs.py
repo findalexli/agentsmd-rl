@@ -125,3 +125,43 @@ def test_contributing_nightly_section():
     assert "Nightly" in content, "CONTRIBUTING.md must mention nightly builds"
     assert "setup-installable-branch" in content, \
         "CONTRIBUTING.md must reference the setup-installable-branch script"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+def test_repo_lint():
+    """Repo's ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile && pnpm lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile && pnpm typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_changes_validate():
+    """Repo's change file validation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile && pnpm changes:validate"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Changes validate failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile && pnpm format:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

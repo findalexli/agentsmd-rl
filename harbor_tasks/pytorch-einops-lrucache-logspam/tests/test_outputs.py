@@ -10,6 +10,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import subprocess
 from pathlib import Path
+import os
 
 REPO = "/workspace/pytorch"
 TARGET = f"{REPO}/torch/_dynamo/decorators.py"
@@ -158,6 +159,77 @@ def test_syntax_check():
     """Target file must parse without syntax errors."""
     source = Path(TARGET).read_text()
     ast.parse(source)
+
+
+def test_repo_python_syntax():
+    """Repo's Python syntax check passes (pass_to_pass).
+
+    Uses py_compile to verify no syntax errors in the modified file.
+    """
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", TARGET],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
+def test_repo_flake8_errors():
+    """Repo's flake8 error check passes (pass_to_pass).
+
+    Runs flake8 with only error-level checks (E9, F63, F7, F82) to catch
+    syntax errors and undefined names without enforcing style rules.
+    """
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "flake8", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # pip install result is optional; flake8 might already be installed
+
+    r = subprocess.run(
+        ["flake8", "--select=E9,F63,F7,F82", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flake8 error check failed:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_tools_tests():
+    """Repo's tools tests pass (pass_to_pass).
+
+    Runs lightweight tests from tools/test/ that don't require torch build.
+    """
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "pytest", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    env = os.environ.copy()
+    env["PYTHONPATH"] = REPO
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "tools/test/test_docstring_linter.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"Tools tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_github_scripts_tests():
+    """Repo's .github/scripts tests pass (pass_to_pass).
+
+    Runs lightweight tests from .github/scripts/ that don't require torch build.
+    """
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "pytest", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    env = os.environ.copy()
+    env["PYTHONPATH"] = REPO
+    r = subprocess.run(
+        ["python3", "-m", "pytest", ".github/scripts/test_gitutils.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f".github/scripts tests failed:\n{r.stderr[-500:]}"
 
 
 def test_function_imports_einops():

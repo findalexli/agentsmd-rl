@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 
@@ -146,6 +147,90 @@ def test_native_build_direct_invocation():
     assert "docker-image-cache.js" in src, (
         "docker-native-build.js should reference docker-image-cache.js"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_cache_input_files_exist():
+    """All Docker image cache input files exist on disk (pass_to_pass)."""
+    files = [
+        "scripts/native-builder.Dockerfile",
+        "scripts/docker-image-cache.js",
+        "scripts/docker-native-build.js",
+        "scripts/docker-native-build.sh",
+        "rust-toolchain.toml",
+    ]
+    for f in files:
+        fpath = os.path.join(REPO, f)
+        assert os.path.exists(fpath), f"Required cache input file missing: {f}"
+
+
+# [repo_tests] pass_to_pass
+def test_docker_image_cache_builtin_modules():
+    """docker-image-cache.js only imports built-in Node.js modules (pass_to_pass)."""
+    src = Path(f"{REPO}/scripts/docker-image-cache.js").read_text()
+    requires = re.findall(r'require\(["\']([^"\']+)["\']\)', src)
+    builtins = {
+        "child_process", "crypto", "fs", "os", "path",
+        "node:util", "node:child_process", "stream", "node:stream",
+    }
+    for mod in requires:
+        assert mod in builtins, (
+            f"docker-image-cache.js imports non-built-in module: {mod}"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_docker_native_build_builtin_modules():
+    """docker-native-build.js only imports built-in Node.js modules (pass_to_pass)."""
+    src = Path(f"{REPO}/scripts/docker-native-build.js").read_text()
+    requires = re.findall(r'require\(["\']([^"\']+)["\']\)', src)
+    builtins = {
+        "child_process", "crypto", "fs", "os", "path",
+        "node:util", "node:child_process", "stream", "node:stream",
+    }
+    for mod in requires:
+        assert mod in builtins, (
+            f"docker-native-build.js imports non-built-in module: {mod}"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_scripts_have_shebangs():
+    """Script files have proper Node.js shebangs (pass_to_pass)."""
+    scripts = [
+        "scripts/docker-image-cache.js",
+        "scripts/docker-native-build.js",
+    ]
+    for f in scripts:
+        src = Path(os.path.join(REPO, f)).read_text()
+        assert src.startswith("#!/usr/bin/env node"), (
+            f"{f} missing proper shebang line"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_next_swc_package_json_valid():
+    """packages/next-swc/package.json is valid JSON with expected fields (pass_to_pass)."""
+    pkg = json.loads(Path(f"{REPO}/packages/next-swc/package.json").read_text())
+    assert pkg["name"] == "@next/swc", (
+        f"Expected @next/swc, got: {pkg.get('name')}"
+    )
+    assert "scripts" in pkg, "Missing scripts in packages/next-swc/package.json"
+    assert "build-native" in pkg["scripts"], (
+        "build-native script missing from packages/next-swc/package.json"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_docker_image_cache_has_parseargs():
+    """docker-image-cache.js properly imports and uses parseArgs (pass_to_pass)."""
+    src = Path(f"{REPO}/scripts/docker-image-cache.js").read_text()
+    assert "parseArgs" in src, "docker-image-cache.js missing parseArgs usage"
+    assert "force" in src, "docker-image-cache.js missing --force flag handling"
 
 
 # ---------------------------------------------------------------------------

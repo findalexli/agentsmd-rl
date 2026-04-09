@@ -352,6 +352,49 @@ def test_upstream_vitest_passes(vitest_behavioral):
     assert passed, f"Vitest failed:\n{output[-1000:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_no_conflict_markers():
+    """Repo has no Git conflict markers (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/check-no-conflict-markers.mjs"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Conflict markers check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_extension_boundary_relative_imports():
+    """Extension relative imports stay within package boundaries (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/check-extension-plugin-sdk-boundary.mjs",
+         "--mode=relative-outside-package"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Extension boundary check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_extension_no_src_outside_plugin_sdk():
+    """Extensions don't import src outside plugin-sdk (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/check-extension-plugin-sdk-boundary.mjs",
+         "--mode=src-outside-plugin-sdk"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Extension src boundary check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_extension_no_plugin_sdk_internal():
+    """Extensions don't use plugin-sdk-internal imports (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/check-extension-plugin-sdk-boundary.mjs",
+         "--mode=plugin-sdk-internal"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Plugin-sdk-internal check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Structural fail-to-pass (pr_diff) — source inspection required
 # ---------------------------------------------------------------------------

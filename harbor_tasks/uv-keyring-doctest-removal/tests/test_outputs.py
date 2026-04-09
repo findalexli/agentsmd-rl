@@ -22,6 +22,36 @@ CARGO_TOML = Path(f"{REPO}/crates/uv-keyring/Cargo.toml")
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
+# [repo_ci] pass_to_pass
+def test_uv_keyring_cargo_check():
+    """uv-keyring crate compiles with cargo check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv-keyring"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_uv_keyring_cargo_clippy():
+    """uv-keyring crate passes clippy linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "uv-keyring", "--all-targets", "--all-features", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_cargo_fmt_check():
+    """Workspace code is formatted correctly (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr[-500:]}"
+
+
 # [static] pass_to_pass
 def test_cargo_toml_valid():
     """Cargo.toml must remain valid TOML."""

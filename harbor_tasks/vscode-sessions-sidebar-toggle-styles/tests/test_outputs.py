@@ -14,6 +14,9 @@ from pathlib import Path
 REPO = "/workspace/vscode"
 CSS_FILE = Path(f"{REPO}/src/vs/sessions/browser/parts/media/sidebarPart.css")
 
+# Timeout for repo CI checks (seconds)
+REPO_CI_TIMEOUT = 300  # 5 minutes for full linting
+
 # Node.js script that parses CSS into structured rules (selector + properties).
 # More robust than Python regex: handles comments, multi-line selectors, etc.
 _CSS_PARSER_JS = r"""
@@ -172,3 +175,20 @@ def test_css_uses_tabs_not_spaces():
             raise AssertionError(
                 f"Line {i} uses space indentation (expected tab): {line!r}"
             )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD checks (pass_to_pass) — ensure fix doesn't break existing functionality
+# ---------------------------------------------------------------------------
+
+def test_repo_stylelint():
+    """Repo's CSS stylelint passes (pass_to_pass).
+
+    Validates CSS variable names and layer constraints per VS Code conventions.
+    Runs only on src/**/*.css files.
+    """
+    r = subprocess.run(
+        ["npm", "run", "stylelint"],
+        capture_output=True, text=True, timeout=REPO_CI_TIMEOUT, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Stylelint failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"

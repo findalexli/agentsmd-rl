@@ -61,6 +61,32 @@ checks:
     origin: pr_diff
     description: "Existing Default Dark/Light Modern/Plus migrations still present in migrateThemeSettingsId"
 
+  # Pass-to-pass (repo_tests) — CI/CD checks
+  - id: test_repo_build_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Build scripts TypeScript typecheck passes"
+
+  - id: test_repo_build_scripts_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Build scripts tests pass"
+
+  - id: test_repo_eslint_themes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on theme-related files"
+
+  - id: test_repo_check_cyclic_deps
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No cyclic dependencies in compiled output"
+
+  - id: test_repo_theme_tests_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Theme service test file has valid syntax and required imports"
+
 rubric:
   - rule: "All strings visible to the user need to be externalized using the vs/nls module."
     source:

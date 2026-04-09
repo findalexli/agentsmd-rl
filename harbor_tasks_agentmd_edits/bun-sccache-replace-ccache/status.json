@@ -1,1 +1,78 @@
-{"verdict": "pass", "nop": 0, "gold": 1, "validated_at": "2026-04-08"}
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T14:03:28.751817",
+  "total_time": 17496.58,
+  "sandbox_id": "igdy6dqalpvua83z3v5ve",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 168.77,
+      "notes": "Added 2 pass_to_pass tests from repo's CI/CD:\n1. test_repo_banned_words - runs bun run banned (ban-words test)\n2. test_repo_prettier_check - runs prettier --check on scripts/ directory\n\nCI commands discovered from package.json and .github/workflows/:\n- bun lint (oxlint) - FAILED due to config incompatibility with oxlint version\n- bun run typecheck (tsc --noEmit) - FAILED due to JSX parsing errors in test files\n- bun run banned (ban-words test) - PASSED\n- prettier --check scripts/ - PASSED\n\nAdded to test_outputs.py and eval_manifest.yaml with origin 'repo_tests'. Tests verified passing on base commit 995d988c736293572f0a5a2c8a49fd1a2b6ca84c."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 362.41,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build OK, NOP test correctly returns 0 (base commit has ccache), Gold test returns 1 (patch successfully migrates to sccache), Rubric ICR=1.0",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 105.72
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.39,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 5955.31,
+      "at": "2026-04-09T07:09:09.286498"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 17496.29,
+      "at": "2026-04-09T14:03:28.510272"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 17496.58,
+      "at": "2026-04-09T14:03:28.751817"
+    }
+  ]
+}

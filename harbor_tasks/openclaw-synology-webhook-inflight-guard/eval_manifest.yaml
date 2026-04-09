@@ -42,6 +42,26 @@ checks:
     origin: repo_tests
     description: "Existing upstream webhook-handler tests pass via vitest"
 
+  - id: repo_no_conflict_markers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo has no Git conflict markers"
+
+  - id: repo_extension_boundary_relative_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Extension relative imports stay within package boundaries"
+
+  - id: repo_extension_no_src_outside_plugin_sdk
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Extensions don't import src outside plugin-sdk"
+
+  - id: repo_extension_no_plugin_sdk_internal
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Extensions don't use plugin-sdk-internal imports"
+
   - id: guard_integrated_before_auth
     type: fail_to_pass
     origin: pr_diff

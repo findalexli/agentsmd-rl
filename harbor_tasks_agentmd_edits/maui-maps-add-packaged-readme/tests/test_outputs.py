@@ -46,6 +46,147 @@ def test_csproj_existing_properties_intact():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI Gates (pass_to_pass, repo_tests) — project structure validation
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass — validate project references resolve
+def test_repo_csproj_project_references_valid():
+    """All ProjectReference paths in csproj must resolve to existing files (pass_to_pass)."""
+    import os
+
+    tree = ET.parse(str(CSPROJ))
+    root = tree.getroot()
+
+    # Get all ProjectReference Include paths
+    for elem in root.iter():
+        if elem.tag.endswith("}ProjectReference") or "ProjectReference" in elem.tag:
+            include_path = elem.get("Include", "")
+            if include_path:
+                # Convert Windows backslashes to forward slashes for cross-platform compatibility
+                include_path = include_path.replace("\\", "/")
+                # Resolve relative to csproj directory
+                resolved = (CSPROJ.parent / include_path).resolve()
+                assert resolved.exists(), f"ProjectReference does not exist: {include_path} (resolved: {resolved})"
+
+
+# [repo_tests] pass_to_pass — validate project file structure matches SDK style
+def test_repo_csproj_sdk_style_structure():
+    """csproj must follow SDK-style format with proper TargetFrameworks (pass_to_pass)."""
+    tree = ET.parse(str(CSPROJ))
+    root = tree.getroot()
+
+    # Check SDK attribute on Project element
+    sdk = root.get("Sdk", "")
+    assert "Microsoft.NET.Sdk" in sdk, f"Project must use Microsoft.NET.Sdk, got: {sdk}"
+
+    # Check required PropertyGroup elements exist
+    found_tf = False
+    found_assembly = False
+    found_package = False
+
+    for prop_group in root.iter():
+        if prop_group.tag.endswith("}PropertyGroup") or "PropertyGroup" in prop_group.tag:
+            for child in prop_group:
+                tag_name = child.tag.split("}")[-1] if "}" in elem.tag else child.tag
+                if tag_name == "TargetFrameworks":
+                    found_tf = True
+                if tag_name == "AssemblyName":
+                    found_assembly = True
+                if tag_name == "PackageId":
+                    found_package = True
+
+    assert found_tf, "csproj must have TargetFrameworks defined"
+    assert found_assembly, "csproj must have AssemblyName defined"
+    assert found_package, "csproj must have PackageId defined"
+
+
+# [repo_tests] pass_to_pass — validate no duplicate item includes
+def test_repo_csproj_no_duplicate_includes():
+    """csproj must not have duplicate Include entries for the same file (pass_to_pass)."""
+    tree = ET.parse(str(CSPROJ))
+    root = tree.getroot()
+
+    includes = {}
+    for elem in root.iter():
+        include_val = elem.get("Include", "")
+        if include_val:
+            tag_name = elem.tag.split("}")[-1] if "}" in elem.tag else elem.tag
+            key = f"{tag_name}:{include_val}"
+            assert key not in includes, f"Duplicate Include found: {tag_name}='{include_val}'"
+            includes[key] = True
+
+
+# [repo_tests] pass_to_pass — validate PublicAPI files exist for all target platforms
+def test_repo_public_api_files_complete():
+    """PublicAPI.Shipped.txt and PublicAPI.Unshipped.txt must exist for all target frameworks (pass_to_pass)."""
+    public_api_dir = CSPROJ.parent / "PublicAPI"
+    assert public_api_dir.exists(), f"PublicAPI directory does not exist: {public_api_dir}"
+
+    # Expected target framework directories based on csproj TargetFrameworks
+    expected_platforms = ["net", "net-android", "net-ios", "net-maccatalyst", "net-tizen", "net-windows", "netstandard"]
+
+    for platform in expected_platforms:
+        platform_dir = public_api_dir / platform
+        assert platform_dir.exists(), f"PublicAPI platform directory missing: {platform}"
+
+        shipped = platform_dir / "PublicAPI.Shipped.txt"
+        unshipped = platform_dir / "PublicAPI.Unshipped.txt"
+
+        assert shipped.exists(), f"PublicAPI.Shipped.txt missing for {platform}"
+        assert unshipped.exists(), f"PublicAPI.Unshipped.txt missing for {platform}"
+
+        # Validate files have expected header format
+        shipped_content = shipped.read_text()
+        unshipped_content = unshipped.read_text()
+        assert shipped_content.startswith("#nullable enable"), f"PublicAPI.Shipped.txt for {platform} missing #nullable enable header"
+
+
+# [repo_tests] pass_to_pass — validate csproj package metadata for NuGet compliance
+def test_repo_csproj_package_metadata():
+    """csproj must have required NuGet package metadata (IsPackable, PackageId, PackageTags) (pass_to_pass)."""
+    tree = ET.parse(str(CSPROJ))
+    root = tree.getroot()
+
+    found_is_packable = False
+    found_package_id = False
+    found_package_tags = False
+    found_description = False
+
+    for prop_group in root.iter():
+        if prop_group.tag.endswith("}PropertyGroup") or "PropertyGroup" in prop_group.tag:
+            for child in prop_group:
+                tag_name = child.tag.split("}")[-1] if "}" in elem.tag else child.tag
+                if tag_name == "IsPackable":
+                    found_is_packable = True
+                    text = (child.text or "").strip()
+                    assert text.lower() == "true", f"IsPackable must be 'true', got: {text}"
+                if tag_name == "PackageId":
+                    found_package_id = True
+                    assert "Microsoft.Maui" in (child.text or ""), f"PackageId should be Microsoft.Maui.*, got: {child.text}"
+                if tag_name == "PackageTags":
+                    found_package_tags = True
+                    tags = child.text or ""
+                    assert "maps" in tags.lower(), f"PackageTags should include 'maps', got: {tags}"
+                if tag_name == "Description":
+                    found_description = True
+                    desc = child.text or ""
+                    assert len(desc) > 10, f"Description too short: {desc}"
+
+    assert found_is_packable, "csproj must have IsPackable set to true"
+    assert found_package_id, "csproj must have PackageId defined"
+    assert found_package_tags, "csproj must have PackageTags defined"
+    assert found_description, "csproj must have Description defined"
+
+
+# [repo_tests] pass_to_pass — validate project file naming conventions
+def test_repo_csproj_file_naming():
+    """csproj file name must match expected pattern Controls.Maps.csproj (pass_to_pass)."""
+    assert CSPROJ.name == "Controls.Maps.csproj", f"csproj file name mismatch: expected Controls.Maps.csproj, got {CSPROJ.name}"
+    assert CSPROJ.exists(), f"csproj file does not exist: {CSPROJ}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — csproj packaging tests (subprocess)
 # ---------------------------------------------------------------------------
 

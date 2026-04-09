@@ -12,6 +12,26 @@ checks:
     origin: static
     description: "utils.ts must have balanced braces (no syntax errors)"
 
+  - id: hsva_to_rgba_runs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "hsva_to_rgba function must execute without errors on base commit"
+
+  - id: colorpicker_utils_file_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "utils.ts must have proper structure: tinycolor import and exported functions"
+
+  - id: colorpicker_svelte_file_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Colorpicker.svelte must have proper imports and structure"
+
+  - id: format_color_regression
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing format_color function still produces correct output"
+
   - id: hsva_to_rgba_returns_hex
     type: fail_to_pass
     origin: pr_diff
@@ -31,11 +51,6 @@ checks:
     type: fail_to_pass
     origin: pr_diff
     description: "Colorpicker.svelte text input handler must normalize color before setting value"
-
-  - id: format_color_regression
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing format_color function still produces correct output"
 
   - id: normalize_color_has_typescript_types
     type: fail_to_pass

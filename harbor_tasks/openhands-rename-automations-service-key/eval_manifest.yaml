@@ -1,0 +1,52 @@
+source_pr:
+  owner: All-Hands-AI
+  repo: OpenHands
+  number: 13570
+  title: "Rename env name"
+  merge_commit: f1b65d9534f73e3ff34998b55d6e303f2f82bdd6
+  base_commit: 3516c3cdbe4e3713e7e1bb9b3b5041c281f29f0a
+
+checks:
+  # Fail-to-pass tests (verify the fix works)
+  - id: test_env_variable_name_in_code
+    type: fail_to_pass
+    origin: test_outputs
+    description: "Code references AUTOMATIONS_SERVICE_KEY, not old AUTOMATIONS_SERVICE_API_KEY"
+
+  - id: test_env_var_is_read_correctly
+    type: fail_to_pass
+    origin: test_outputs
+    description: "Code correctly reads AUTOMATIONS_SERVICE_KEY from environment"
+
+  - id: test_health_endpoint_uses_correct_variable
+    type: fail_to_pass
+    origin: test_outputs
+    description: "Health endpoint uses renamed AUTOMATIONS_SERVICE_KEY variable"
+
+  - id: test_validate_function_uses_correct_variable
+    type: fail_to_pass
+    origin: test_outputs
+    description: "validate_service_api_key function uses renamed variable"
+
+  - id: test_module_docstring_updated
+    type: fail_to_pass
+    origin: test_outputs
+    description: "Module docstring references the new env var name"
+
+  - id: test_logic_correctness_simulation
+    type: fail_to_pass
+    origin: test_outputs
+    description: "Logic pattern for reading env var is correct"
+
+  # Pass-to-pass tests (repo's CI/CD checks)
+  - id: test_repo_enterprise_service_routes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Enterprise service routes unit tests pass"
+
+  - id: test_repo_enterprise_service_routes_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Enterprise service routes pass ruff linting"
+
+rubric: []

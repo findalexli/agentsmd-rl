@@ -8,6 +8,9 @@ RUN apt-get update && \
         git curl ca-certificates build-essential tmux python3 python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
+# Install TypeScript globally for tests that check TypeScript compilation
+RUN npm install -g typescript@5.9.2
+
 RUN mkdir -p /workspace /logs/verifier
 
 WORKDIR /workspace

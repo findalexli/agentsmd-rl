@@ -4,18 +4,29 @@ Test suite for bun-sql-undefined-insert task.
 Tests two categories:
 1. Code behavior: SQL helper filters undefined values in INSERT statements
 2. Config update: test/CLAUDE.md documents the nested object equality testing style
+3. Pass-to-pass: Repo CI checks that should pass on both base and fixed commits
 """
 
 import subprocess
 import json
 import re
+import os
 from pathlib import Path
 
 REPO = Path("/workspace/bun")
 TESTS_DIR = REPO / "test" / "js" / "sql"
 SHARED_SQL = REPO / "src" / "js" / "internal" / "sql" / "shared.ts"
 SQLITE_SQL = REPO / "src" / "js" / "internal" / "sql" / "sqlite.ts"
+MYSQL_SQL = REPO / "src" / "js" / "internal" / "sql" / "mysql.ts"
+POSTGRES_SQL = REPO / "src" / "js" / "internal" / "sql" / "postgres.ts"
 CLAUde_MD = REPO / "test" / "CLAUDE.md"
+
+
+def _setup_bun_env():
+    """Set up environment with bun in PATH."""
+    env = os.environ.copy()
+    env["PATH"] = "/root/.bun/bin:" + env.get("PATH", "")
+    return env
 
 
 def _run_bun_script(script: str, timeout: int = 60) -> subprocess.CompletedProcess:
@@ -33,6 +44,10 @@ def _run_bun_script(script: str, timeout: int = 60) -> subprocess.CompletedProce
     finally:
         script_path.unlink(missing_ok=True)
 
+
+# =============================================================================
+# FAIL-TO-PASS TESTS (Code behavior - should fail before fix, pass after)
+# =============================================================================
 
 def test_shared_ts_has_build_defined_columns():
     """shared.ts must export the buildDefinedColumnsAndQuery helper."""
@@ -139,3 +154,77 @@ def test_import_structure_in_sqlite():
     # Check the require/import statement
     assert 'const { SQLHelper, SQLResultArray, buildDefinedColumnsAndQuery } = require("internal/sql/shared")' in content, \
         "Must import buildDefinedColumnsAndQuery from internal/sql/shared"
+
+
+# =============================================================================
+# PASS-TO-PASS TESTS (Repo CI checks - should pass on both base and fixed commits)
+# =============================================================================
+
+def test_repo_banned_words():
+    """Repo's banned words check passes (pass_to_pass)."""
+    env = _setup_bun_env()
+    r = subprocess.run(
+        ["bun", "run", "banned"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"Banned words check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_sql_shared_transpiles():
+    """SQL shared.ts transpiles without errors (pass_to_pass)."""
+    env = _setup_bun_env()
+    r = subprocess.run(
+        ["bun", "build", "--target=bun", "--outfile=/dev/null", str(SHARED_SQL)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"shared.ts transpile failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_sql_sqlite_transpiles():
+    """SQL sqlite.ts transpiles without errors (pass_to_pass)."""
+    env = _setup_bun_env()
+    r = subprocess.run(
+        ["bun", "build", "--target=bun", "--outfile=/dev/null", str(SQLITE_SQL)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"sqlite.ts transpile failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_sql_mysql_transpiles():
+    """SQL mysql.ts transpiles without errors (pass_to_pass)."""
+    env = _setup_bun_env()
+    r = subprocess.run(
+        ["bun", "build", "--target=bun", "--outfile=/dev/null", str(MYSQL_SQL)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"mysql.ts transpile failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_sql_postgres_transpiles():
+    """SQL postgres.ts transpiles without errors (pass_to_pass)."""
+    env = _setup_bun_env()
+    r = subprocess.run(
+        ["bun", "build", "--target=bun", "--outfile=/dev/null", str(POSTGRES_SQL)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"postgres.ts transpile failed:\n{r.stderr[-500:]}"

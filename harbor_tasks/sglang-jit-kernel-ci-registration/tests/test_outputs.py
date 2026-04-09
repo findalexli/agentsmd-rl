@@ -249,3 +249,67 @@ print(json.dumps(results))
         suites = [reg["suite"] for reg in results[test_file]]
         has_unit = any("kernel-unit" in s for s in suites)
         assert has_unit, f"{test_file}: test file not registered for any kernel unit suite, got {suites}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI checks (pass_to_pass) — repo's own CI pipeline must not break
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Target files pass ruff linting for F401 (unused imports) and F821 (undefined names)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821"] + TARGET_FILES,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort_check():
+    """Target files have correctly sorted imports."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install isort: {r.stderr}"
+    r = subprocess.run(
+        ["isort", "--check-only"] + TARGET_FILES,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black_format():
+    """Target files are correctly formatted with black."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install black: {r.stderr}"
+    r = subprocess.run(
+        ["black", "--check"] + TARGET_FILES,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"black format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell():
+    """Target files have no spelling errors."""
+    r = subprocess.run(
+        ["pip", "install", "codespell", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install codespell: {r.stderr}"
+    r = subprocess.run(
+        ["codespell", "--config", ".codespellrc"] + TARGET_FILES,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"codespell check failed:\n{r.stderr[-500:]}"

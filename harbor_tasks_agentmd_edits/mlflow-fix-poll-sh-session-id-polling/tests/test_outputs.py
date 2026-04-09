@@ -58,9 +58,9 @@ def _run_poll_with_mock(
         log_file.unlink(missing_ok=True)
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 # [static] pass_to_pass
@@ -76,9 +76,85 @@ def test_bash_syntax():
     assert r.returncode == 0, f"Syntax error in poll.sh: {r.stderr}"
 
 
-# ---------------------------------------------------------------------------
+# [repo_tests] pass_to_pass
+def test_copilot_skill_files_exist():
+    """Copilot skill files must exist (poll.sh and SKILL.md)."""
+    poll_sh = Path(REPO) / ".claude" / "skills" / "copilot" / "poll.sh"
+    skill_md = Path(REPO) / ".claude" / "skills" / "copilot" / "SKILL.md"
+
+    assert poll_sh.exists(), f"poll.sh not found at {poll_sh}"
+    assert skill_md.exists(), f"SKILL.md not found at {skill_md}"
+
+
+# [repo_tests] pass_to_pass
+def test_poll_sh_executable():
+    """poll.sh must be executable (has shebang and executable bit)."""
+    poll_sh = Path(REPO) / ".claude" / "skills" / "copilot" / "poll.sh"
+
+    assert poll_sh.exists(), "poll.sh not found"
+
+    # Check shebang
+    content = poll_sh.read_text()
+    assert content.startswith("#!/usr/bin/env bash"), "poll.sh missing bash shebang"
+
+    # Check executable bit (on Unix systems)
+    stat = poll_sh.stat()
+    assert stat.st_mode & 0o111, "poll.sh not executable"
+
+
+# [repo_tests] pass_to_pass
+def test_skill_md_valid_yaml_frontmatter():
+    """SKILL.md must have valid YAML frontmatter structure."""
+    skill_md = Path(REPO) / ".claude" / "skills" / "copilot" / "SKILL.md"
+
+    assert skill_md.exists(), "SKILL.md not found"
+
+    content = skill_md.read_text()
+
+    # Must start with ---
+    assert content.startswith("---"), "SKILL.md missing YAML frontmatter start"
+
+    # Must have closing ---
+    lines = content.split("\n")
+    assert lines[0] == "---", "SKILL.md frontmatter must start with --- on its own line"
+
+    # Find second ---
+    found_end = False
+    for line in lines[1:]:
+        if line == "---":
+            found_end = True
+            break
+        # Should have key-value pairs
+        if line.strip() and not line.strip().startswith("#"):
+            assert ":" in line or line.strip().startswith("-"), f"Invalid YAML line: {line}"
+
+    assert found_end, "SKILL.md missing YAML frontmatter end (---)"
+
+
+# [repo_tests] pass_to_pass
+def test_skill_md_has_required_fields():
+    """SKILL.md must have required fields (name, description, allowed-tools)."""
+    skill_md = Path(REPO) / ".claude" / "skills" / "copilot" / "SKILL.md"
+
+    assert skill_md.exists(), "SKILL.md not found"
+
+    content = skill_md.read_text()
+
+    # Extract frontmatter (between first --- and next ---)
+    parts = content.split("---")
+    if len(parts) >= 3:
+        frontmatter = parts[1]
+
+        assert "name:" in frontmatter, "SKILL.md missing 'name' field"
+        assert "description:" in frontmatter, "SKILL.md missing 'description' field"
+        assert "allowed-tools:" in frontmatter, "SKILL.md missing 'allowed-tools' field"
+    else:
+        raise AssertionError("SKILL.md has invalid frontmatter structure")
+
+
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
@@ -110,9 +186,9 @@ def test_poll_no_timeline_api():
     )
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Config/doc update tests (pr_diff) — SKILL.md changes
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass

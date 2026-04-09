@@ -1,0 +1,142 @@
+task_name: sui-indexer-alt-refactor-ingestion-helpers
+source_pr:
+  owner: MystenLabs
+  repo: sui
+  pr_number: 26042
+  base_commit: 6a391733c6a07cda5d3c9939efee306490d16bd
+  merge_commit: 9ae4df2ec0416c7b051b128a8a8d3bd23efbfe1f
+description: >
+  Refactor sui-indexer-alt-framework to use helper functions for ingestion client
+  operations. The PR extracts transient_backoff() and retry_transient_with_slow_monitor()
+  functions to reduce code duplication.
+
+# Each check maps 1:1 to a test_* function in test_outputs.py
+checks:
+  - id: cargo_check
+    name: Code compiles successfully
+    description: cargo check passes for sui-indexer-alt-framework
+    origin: f2p
+    source: test_cargo_check
+
+  - id: transient_backoff_function
+    name: transient_backoff function exists
+    description: The transient_backoff helper function is defined
+    origin: f2p
+    source: test_transient_backoff_function_exists
+
+  - id: retry_function_exists
+    name: retry_transient_with_slow_monitor exists
+    description: The retry_transient_with_slow_monitor helper function is defined
+    origin: f2p
+    source: test_retry_transient_with_slow_monitor_exists
+
+  - id: retry_signature
+    name: Retry function has correct signature
+    description: retry_transient_with_slow_monitor has proper generic parameters
+    origin: f2p
+    source: test_retry_function_signature
+
+  - id: uses_slow_monitor
+    name: Uses with_slow_future_monitor
+    description: The retry function properly uses with_slow_future_monitor
+    origin: f2p
+    source: test_uses_with_slow_future_monitor
+
+  - id: checkpoint_uses_helper
+    name: Checkpoint method uses helper
+    description: The checkpoint method calls retry_transient_with_slow_monitor
+    origin: f2p
+    source: test_checkpoint_uses_new_helper
+
+  - id: chain_id_uses_helper
+    name: Chain ID uses helper
+    description: Chain ID fetching uses retry_transient_with_slow_monitor
+    origin: f2p
+    source: test_chain_id_uses_new_helper
+
+  - id: chain_id_latency_metric
+    name: ingested_chain_id_latency metric exists
+    description: The new ingested_chain_id_latency metric is declared in metrics.rs
+    origin: f2p
+    source: test_ingested_chain_id_latency_metric_exists
+
+  - id: metric_registered
+    name: Metric is properly registered
+    description: The ingested_chain_id_latency metric is registered in the constructor
+    origin: f2p
+    source: test_metric_registered
+
+  - id: unit_tests_compile
+    name: Unit tests compile
+    description: Unit tests compile successfully
+    origin: p2p
+    source: test_unit_tests_compile
+
+  - id: p2p_cargo_check
+    name: Cargo check passes
+    description: Repo's cargo check passes for sui-indexer-alt-framework
+    origin: pass_to_pass
+    source: test_p2p_cargo_check
+
+  - id: p2p_cargo_clippy
+    name: Clippy linting passes
+    description: Repo's clippy lints pass with -D warnings
+    origin: pass_to_pass
+    source: test_p2p_cargo_clippy
+
+  - id: p2p_cargo_test_compile
+    name: Test compilation passes
+    description: Repo's test code compiles successfully
+    origin: pass_to_pass
+    source: test_p2p_cargo_test_compile
+
+  - id: p2p_cargo_fmt
+    name: Code formatting passes
+    description: Repo's code is properly formatted
+    origin: pass_to_pass
+    source: test_p2p_cargo_fmt_check
+
+  - id: imports_updated
+    name: Necessary imports added
+    description: Future trait and Histogram type are imported
+    origin: p2p
+    source: test_imports_updated
+
+  - id: error_alias
+    name: Error alias used
+    description: The IE (IngestionError) alias is used consistently
+    origin: p2p
+    source: test_error_alias_used
+
+  - id: old_method_removed
+    name: Old method removed
+    description: The old get_or_init_chain_id method is removed
+    origin: f2p
+    source: test_old_get_or_init_chain_id_removed
+
+  - id: parallel_fetching
+    name: Parallel fetching implemented
+    description: Checkpoint and chain_id are fetched concurrently with tokio::try_join!
+    origin: f2p
+    source: test_parallel_fetching
+
+# Agent config rules - based on CLAUDE.md from the repo
+agent_config:
+  - rule: License headers required
+    check: All new files have license headers
+    source: CLAUDE.md (License comments section)
+
+  - rule: Use cargo check for validation
+    check: Code compiles with cargo check
+    source: CLAUDE.md (Building and Installation)
+
+  - rule: Never use linting suppressions
+    check: No #[allow(dead_code)] or similar attributes added
+    source: CLAUDE.md (CRITICAL - Final Development Steps)
+
+  - rule: Use cargo xclippy for linting
+    check: Code passes cargo xclippy
+    source: CLAUDE.md (Linting and Formatting)
+
+# Rubric for soft/subjective checks (LLM judge only)
+rubric: []

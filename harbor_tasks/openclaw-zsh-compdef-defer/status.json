@@ -1,63 +1,88 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T23:46:02.225148",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.2,
-      "verdict": "pass",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T04:50:10.145704",
+  "total_time": 8594.94,
+  "sandbox_id": "i97e0y6y673iovws4z6tf",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T09:30:00",
+      "status": "completed_verified",
+      "ci_commands_discovered": [
+        "pnpm exec oxlint - lint check with 117 rules on 5657 files",
+        "oxfmt --check src/cli/completion-cli.ts - format check",
+        "npx vitest run --config vitest.unit.config.ts src/cli/ - unit tests for CLI module (986 tests in 113 files)"
+      ],
+      "p2p_tests_added": [
+        "test_repo_lint - Repo oxlint passes",
+        "test_repo_format - Repo oxfmt format check passes on CLI files",
+        "test_repo_cli_unit_tests - Repo unit tests for CLI module pass"
+      ],
+      "ci_commands_skipped": [
+        "tsc --noEmit - Out of memory on large codebase (requires >4GB)",
+        "pnpm run build - Complex multi-step build requiring canvas/ui build",
+        "pnpm run check - Requires full typecheck (OOM)",
+        "knip dead code check - Not installed in base image"
+      ],
+      "verification": {
+        "base_commit_passes": "7 p2p tests pass (4 original + 3 new)",
+        "gold_solution_passes": "All 12 tests pass (7 p2p + 5 f2p)",
+        "timing": "108s with dependency install, 62s for CLI tests only"
+      }
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 367.55,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed. Docker build successful. NOP test shows 5 f2p tests failing as expected (reward=0). Gold test shows all 12 tests passing (reward=1). Rubric judge returned 0.5 due to missing ANTHROPIC_API_KEY (infrastructure limitation, not task issue).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 299.8
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.68,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-30T23:47:11.713772",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.2,
       "verdict": "pass",
-      "notes": ""
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T04:50:09.965523"
     },
     {
-      "timestamp": "2026-03-29T14:30:05.195536",
-      "runner": "rubric (rebuild-rubrics_20260329_143005)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 3295
-    },
-    {
-      "timestamp": "2026-03-29T16:44:41.810446",
-      "runner": "rubric (rebuild-rubrics_20260329_164441)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 3338
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.698947",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.952377",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.565134",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8594.94,
+      "at": "2026-04-09T04:50:10.145704"
     }
   ]
 }

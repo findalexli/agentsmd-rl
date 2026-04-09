@@ -1,0 +1,29 @@
+name = "chroma-shard-fields"
+owner = "chroma-core"
+repo = "chroma"
+base_commit = "2c83ca50da86f4f71d2c8b9a8ae9f17ec0ae6c20"
+merge_commit = "8a1aaccb3bc9a2c6942d22874ad94b3c04ff7ce9"
+pr_number = 6810
+
+difficulty = "easy"
+tags = ["rust", "protobuf", "data-structures", "backward-compatibility"]
+
+[estimates]
+agent_time = "15m"
+cycle_time = "10m"
+
+[timeouts]
+agent = 1800
+verifier = 120
+
+[description]
+title = "Add shard_index, num_shards and log_upper_bound_offset fields to Scan types"
+summary = """
+This task requires adding three new fields (shard_index, num_shards, log_upper_bound_offset)
+to the Scan struct in Rust and the ScanOperator protobuf message. The fields enable future
+sharded query execution. Includes backward compatibility handling where num_shards defaults to 1.
+"""
+
+[[file_mapping]]
+task_path = "/workspace/task"
+repo_path = "/workspace/chroma"

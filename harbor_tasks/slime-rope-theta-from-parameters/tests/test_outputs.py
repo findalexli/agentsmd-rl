@@ -230,3 +230,43 @@ def test_class_members_preserved():
     assert "_DSA_ATTENTION_MAPPING" in member_names, "_DSA_ATTENTION_MAPPING removed"
     assert "_weight_to_hf_format" in member_names, "_weight_to_hf_format removed"
     assert "_weight_to_mcore_format" in member_names, "_weight_to_mcore_format removed"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repository CI/CD checks
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_valid_mbridge():
+    """Repo CI: slime_plugins/mbridge module files have valid Python syntax (pass_to_pass)."""
+    import py_compile
+
+    mbridge_dir = Path(f"{REPO}/slime_plugins/mbridge")
+    py_files = list(mbridge_dir.glob("*.py"))
+    assert py_files, f"No Python files found in {mbridge_dir}"
+
+    for f in py_files:
+        try:
+            py_compile.compile(str(f), doraise=True)
+        except py_compile.PyCompileError as e:
+            raise AssertionError(f"Syntax error in {f}: {e}")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_structure():
+    """Repo CI: slime_plugins/mbridge package structure is valid (pass_to_pass)."""
+    # Check that __init__.py files exist (package structure is valid)
+    mbridge_init = Path(f"{REPO}/slime_plugins/mbridge/__init__.py")
+    plugins_init = Path(f"{REPO}/slime_plugins/__init__.py")
+
+    assert mbridge_init.exists(), "slime_plugins/mbridge/__init__.py missing"
+    assert plugins_init.exists(), "slime_plugins/__init__.py missing"
+
+    # Verify syntax of init files
+    import py_compile
+    for f in [mbridge_init, plugins_init]:
+        try:
+            py_compile.compile(str(f), doraise=True)
+        except py_compile.PyCompileError as e:
+            raise AssertionError(f"Syntax error in {f}: {e}")

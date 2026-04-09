@@ -1,13 +1,111 @@
 {
-  "validations": [
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0,
+  "gold_reward": 1,
+  "validated_at": "2026-04-09T03:32:45.882528",
+  "total_time": 6928.91,
+  "sandbox_id": "i8nz6a3xeee4w99zsmj2b",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0,
+      "gold_reward": 1,
+      "attempts": 1,
+      "notes": "All four validation checks passed: Docker build successful, NOP test returns reward=0 (tests correctly fail on buggy base commit), Gold test returns reward=1 (all 7 tests pass after applying solve.sh patch), rubric judge previously validated.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 93.37
+    },
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T10:30:00Z",
+      "status": "completed",
+      "note": "Added pass_to_pass gates for YAML validation. Flutter/Dart tools not available in Docker environment.",
+      "ci_commands_discovered": [
+        "flutter analyze (CI workflow: flutter-analyze.yml)",
+        "flutter test --coverage (Makefile)",
+        "make analyze (runs flutter analyze)",
+        "make test (runs flutter test --coverage)",
+        "mypy . --ignore-missing-imports (type-check.yml - for Python files in flatpak/manifest_tool/)"
+      ],
+      "ci_commands_tested": [
+        {
+          "command": "YAML validation via pyyaml",
+          "result": "working - added as pass_to_pass"
+        },
+        {
+          "command": "flutter analyze",
+          "result": "NOT_AVAILABLE - Flutter SDK not installed in Docker image"
+        },
+        {
+          "command": "flutter test",
+          "result": "NOT_AVAILABLE - Flutter SDK not installed in Docker image"
+        },
+        {
+          "command": "mypy on flatpak/manifest_tool/",
+          "result": "module import issues - skipped"
+        }
+      ],
+      "tests_added": [
+        {
+          "id": "pubspec_yaml_valid",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Validates pubspec.yaml is valid YAML with correct project name"
+        },
+        {
+          "id": "analysis_options_yaml_valid",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Validates analysis_options.yaml is valid YAML"
+        }
+      ],
+      "limitations": [
+        "Docker environment lacks Flutter SDK - cannot add flutter analyze or flutter test as pass_to_pass gates",
+        "Would need to add 'RUN apt-get install -y flutter' or similar to Dockerfile to enable Flutter CI tests"
+      ]
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 287.35,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.1,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-03T07:38:12.331826",
-      "phase": "e2b_agentmd_initial",
-      "runner": "e2b_validate (agentmd)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T03:32:45.719139"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 6928.91,
+      "at": "2026-04-09T03:32:45.882528"
     }
   ]
 }

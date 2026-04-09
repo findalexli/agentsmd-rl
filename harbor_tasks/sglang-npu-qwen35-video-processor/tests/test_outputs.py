@@ -8,10 +8,9 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
-import re
+import subprocess
+import sys
 from pathlib import Path
-
-import torch
 
 REPO = "/workspace/sglang"
 TARGET_FILE = f"{REPO}/python/sglang/srt/hardware_backend/npu/modules/qwen_vl_processor.py"
@@ -46,101 +45,200 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_transform_patches_to_flatten_logic():
     """
-    transform_patches_to_flatten must exist with correct signature and logic.
+    transform_patches_to_flatten correctly reshapes and permutes patches for NPU compatibility.
 
     This function is the key to decomposing >8D permute operations
     into multiple <=8D permutes for NPU compatibility.
     """
-    tree = _get_target_ast()
+    # Execute Python code that imports and tests the function with real tensors
+    code = """
+import sys
+sys.path.insert(0, '/workspace/sglang/python')
 
-    # Find the function
-    func = None
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "transform_patches_to_flatten":
-            func = node
-            break
+import torch
 
-    assert func is not None, "transform_patches_to_flatten function not found"
+# Import the function from the target module
+from sglang.srt.hardware_backend.npu.modules.qwen_vl_processor import transform_patches_to_flatten
 
-    # Check function signature has required parameters
-    args = [arg.arg for arg in func.args.args]
-    required_args = ['patches', 'batch_size', 'grid_t', 'temporal_patch_size',
-                     'channel', 'grid_h', 'grid_w', 'patch_size', 'merge_size']
-    for arg in required_args:
-        assert arg in args, f"Required parameter '{arg}' not found in function signature"
+# Create test input: patches tensor simulating video data
+# Shape: (batch_size, grid_t * temporal_patch_size, channel, grid_h * patch_size, grid_w * patch_size)
+batch_size = 2
+grid_t = 3
+temporal_patch_size = 2
+channel = 3
+grid_h = 4
+grid_w = 4
+patch_size = 14
+merge_size = 2
 
-    # Check function body contains view/permute/reshape operations
-    src = _get_target_source()
+# Create patches tensor with appropriate shape
+patches = torch.randn(
+    batch_size,
+    grid_t * temporal_patch_size,
+    channel,
+    grid_h * patch_size,
+    grid_w * patch_size
+)
 
-    # Should have view operation
-    assert "patches.view(" in src, "Function must use patches.view()"
+# Call the function under test
+result = transform_patches_to_flatten(
+    patches,
+    batch_size,
+    grid_t,
+    temporal_patch_size,
+    channel,
+    grid_h,
+    grid_w,
+    patch_size,
+    merge_size,
+)
 
-    # Should have permute with exactly 8 dimensions (0,1,2,5,3,6,4,7)
-    assert "patches.permute(0, 1, 2, 5, 3, 6, 4, 7)" in src, \
-        "First permute must be exactly 8D: (0, 1, 2, 5, 3, 6, 4, 7)"
+# Verify output shape: (batch_size, grid_t * grid_h * grid_w, -1)
+expected_first_dim = batch_size
+expected_second_dim = grid_t * grid_h * grid_w
 
-    # Should have reshape
-    assert "patches.reshape(" in src, "Function must use patches.reshape()"
+assert result.shape[0] == expected_first_dim, f"First dim should be {expected_first_dim}, got {result.shape[0]}"
+assert result.shape[1] == expected_second_dim, f"Second dim should be {expected_second_dim}, got {result.shape[1]}"
 
-    # Should have second permute with 7 dimensions
-    assert "patches.permute(0, 1, 4, 3, 2, 5, 6)" in src, \
-        "Second permute must be exactly 7D: (0, 1, 4, 3, 2, 5, 6)"
+# Verify the transformation is mathematically equivalent to manual computation
+# Manual computation following the original pattern (but decomposed)
+manual_patches = patches.view(
+    batch_size * grid_t,
+    temporal_patch_size * channel,
+    grid_h // merge_size,
+    merge_size,
+    patch_size,
+    grid_w // merge_size,
+    merge_size,
+    patch_size,
+)
+manual_patches = manual_patches.permute(0, 1, 2, 5, 3, 6, 4, 7)
+manual_patches = manual_patches.reshape(
+    batch_size,
+    grid_t,
+    temporal_patch_size,
+    channel,
+    grid_h * grid_w,
+    patch_size,
+    patch_size,
+)
+manual_patches = manual_patches.permute(0, 1, 4, 3, 2, 5, 6)
+manual_flatten = manual_patches.reshape(batch_size, grid_t * grid_h * grid_w, -1)
 
-    # Should return flatten_patches
-    assert "return flatten_patches" in src, "Function must return flatten_patches"
+# Results should be identical
+assert torch.allclose(result, manual_flatten), "transform_patches_to_flatten output differs from manual computation"
+
+print("PASS: transform_patches_to_flatten works correctly")
+"""
+
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+
+    assert result.returncode == 0, f"Test failed: {result.stderr}"
+    assert "PASS" in result.stdout, f"Expected PASS in output, got: {result.stdout}"
 
 
 # [pr_diff] fail_to_pass
 def test_video_preprocess_wrapper_exists():
     """
-    npu_wrapper_video_preprocess must exist as a proper wrapper function.
+    npu_wrapper_video_preprocess wrapper exists for Qwen3VLVideoProcessor NPU support.
 
     This is the key fix for Qwen3VLVideoProcessor to work on NPU.
     """
-    tree = _get_target_ast()
+    code = """
+import sys
+sys.path.insert(0, '/workspace/sglang/python')
 
-    # Find the function
-    func = None
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "npu_wrapper_video_preprocess":
-            func = node
-            break
+# Import the function - this will fail if it doesn't exist
+from sglang.srt.hardware_backend.npu.modules.qwen_vl_processor import npu_wrapper_video_preprocess
 
-    assert func is not None, "npu_wrapper_video_preprocess function not found"
+# Verify it's callable
+assert callable(npu_wrapper_video_preprocess), "npu_wrapper_video_preprocess should be callable"
 
-    # Check it takes a 'func' parameter (wrapper pattern)
-    args = [arg.arg for arg in func.args.args]
-    assert "func" in args, "npu_wrapper_video_preprocess must take a 'func' parameter"
+# Check function signature by inspecting it
+import inspect
+sig = inspect.signature(npu_wrapper_video_preprocess)
+params = list(sig.parameters.keys())
+assert 'func' in params, "npu_wrapper_video_preprocess must take a 'func' parameter"
 
-    # Check function body is substantial
-    src = _get_target_source()
+# Call it with a mock function to verify it returns an inner function
+def mock_func():
+    pass
 
-    # Should define an inner _preprocess function
-    assert "def _preprocess(" in src, "Wrapper must define inner _preprocess function"
+inner = npu_wrapper_video_preprocess(mock_func)
+assert callable(inner), "npu_wrapper_video_preprocess must return a callable (_preprocess)"
 
-    # Should return _preprocess
-    assert "return _preprocess" in src, "Wrapper must return _preprocess function"
+# Check that the returned function has the right signature
+inner_sig = inspect.signature(inner)
+inner_params = list(inner_sig.parameters.keys())
+expected_params = [
+    'self', 'videos', 'do_convert_rgb', 'do_resize', 'size',
+    'interpolation', 'do_rescale', 'rescale_factor', 'do_normalize',
+    'image_mean', 'image_std', 'patch_size', 'temporal_patch_size',
+    'merge_size', 'return_tensors'
+]
+for param in expected_params:
+    assert param in inner_params, f"Inner function missing parameter: {param}"
 
-    # Should use transform_patches_to_flatten
-    assert "transform_patches_to_flatten(" in src, \
-        "npu_wrapper_video_preprocess must call transform_patches_to_flatten"
+print("PASS: npu_wrapper_video_preprocess exists and has correct structure")
+"""
+
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+
+    assert result.returncode == 0, f"Test failed: {result.stderr}"
+    assert "PASS" in result.stdout, f"Expected PASS in output, got: {result.stdout}"
 
 
 # [pr_diff] fail_to_pass
 def test_video_processor_patch_registered():
     """
-    The npu_apply_qwen_image_preprocess_patch function must register the video patch.
+    npu_apply_qwen_image_preprocess_patch registers the Qwen3VLVideoProcessor patch.
 
     This ensures the fix is actually applied to the transformers module.
     """
-    src = _get_target_source()
+    code = """
+import sys
+sys.path.insert(0, '/workspace/sglang/python')
 
-    # Check for apply_module_patch call with Qwen3VLVideoProcessor
-    assert 'apply_module_patch(' in src, "Must call apply_module_patch"
-    assert 'qwen3_vl.video_processing_qwen3_vl.Qwen3VLVideoProcessor' in src, \
-        "Must patch transformers.models.qwen3_vl.video_processing_qwen3_vl.Qwen3VLVideoProcessor"
-    assert '[npu_wrapper_video_preprocess]' in src, \
-        "Must register npu_wrapper_video_preprocess wrapper"
+# Import the patch function
+from sglang.srt.hardware_backend.npu.modules.qwen_vl_processor import npu_apply_qwen_image_preprocess_patch
+
+# Read the source file to verify the patch registration
+import inspect
+source = inspect.getsource(npu_apply_qwen_image_preprocess_patch)
+
+# Check that it contains the Qwen3VLVideoProcessor patch
+assert 'qwen3_vl.video_processing_qwen3_vl.Qwen3VLVideoProcessor' in source, \
+    "Patch must register for Qwen3VLVideoProcessor"
+assert 'npu_wrapper_video_preprocess' in source, \
+    "Patch must use npu_wrapper_video_preprocess wrapper"
+assert 'apply_module_patch' in source, \
+    "Patch function must call apply_module_patch"
+
+print("PASS: Video processor patch is properly registered")
+"""
+
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+
+    assert result.returncode == 0, f"Test failed: {result.stderr}"
+    assert "PASS" in result.stdout, f"Expected PASS in output, got: {result.stdout}"
 
 
 # ---------------------------------------------------------------------------
@@ -209,6 +307,87 @@ def test_function_decomposes_permute():
     assert "patches.reshape(" in src
     assert "patches.permute(0, 1, 4, 3, 2, 5, 6)" in src, \
         "Second permute must be exactly 7D (under 8D limit)"
+
+
+# [repo_tests] pass_to_pass - optional: run repo's own tests if they exist and are fast
+def test_module_imports():
+    """
+    The modified module can be imported without errors.
+
+    This is a basic pass-to-pass gate to ensure no import regressions.
+    """
+    code = """
+import sys
+sys.path.insert(0, '/workspace/sglang/python')
+
+# Try importing the module - this exercises all imports in the file
+from sglang.srt.hardware_backend.npu.modules.qwen_vl_processor import (
+    transform_patches_to_flatten,
+    npu_wrapper_preprocess,
+    npu_wrapper_video_preprocess,
+    npu_apply_qwen_image_preprocess_patch,
+)
+
+print("PASS: All imports work correctly")
+"""
+
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+
+    assert result.returncode == 0, f"Import failed: {result.stderr}"
+    assert "PASS" in result.stdout, f"Expected PASS in output, got: {result.stdout}"
+
+
+# [repo_tests] pass_to_pass - ruff lint check
+def test_repo_ruff():
+    """
+    Repo lint check: ruff F401/F821 checks pass on modified module.
+
+    This ensures no unused imports or undefined names in the modified file.
+    Uses the repo's pre-commit style ruff configuration.
+    """
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True,
+        cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["ruff", "check", TARGET_FILE, "--select=F401,F821"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - black formatting check
+def test_repo_black():
+    """
+    Repo format check: black formatting passes on modified module.
+
+    This ensures the modified code follows the repo's formatting standards.
+    """
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "black", "-q"],
+        capture_output=True,
+        cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["black", "--check", TARGET_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black check failed:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

@@ -250,3 +250,37 @@ def test_not_stub():
         "determine_visible_components not found in _init.ts"
     )
     assert len(init_src.strip().splitlines()) > 100, "_init.ts appears stubbed"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo's code formatting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_vitest_core():
+    """Repo's core init tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "--config", ".config/vitest.config.ts", "js/core/src/init.test.ts"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Core tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_client_build():
+    """Repo's client package builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"

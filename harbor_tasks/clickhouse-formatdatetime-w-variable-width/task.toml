@@ -1,0 +1,21 @@
+name = "clickhouse-formatdatetime-w-variable-width"
+description = "Fix formatDateTime to treat %W (weekday name) as a variable-width formatter regardless of other settings"
+version = "1.0.0"
+
+[metadata]
+difficulty = "medium"
+tags = ["c++", "sql-functions", "datetime", "formatting", "clickhouse"]
+category = "bugfix"
+
+[estimates]
+agentic_baseline_minutes = 45
+agentic_baseline_cost = 3.00
+
+[source]
+repo = "ClickHouse/ClickHouse"
+base_commit = "61a4296fdce9d13cafb931cf73e4490b6d2bb315"
+merge_commit = "9e16e21cfe66ae5d89970e86ccb4d8238b0389f3"
+pr_number = 102096
+
+target_file = "src/Functions/formatDateTime.cpp"
+distinctive_line = "variable_width_formatter_M_is_month_name = {'M'}"

@@ -1,0 +1,73 @@
+source_pr:
+  repo: All-Hands-AI/OpenHands
+  number: 13568
+  merge_commit: 889754abfd214fa74138db496e06955edb323022
+  title: "fix: use API key's org_id when creating conversations via API key auth"
+
+# Fail-to-pass tests: These test the bug fix
+checks:
+  - id: test_api_key_org_id_used_when_available
+    type: fail_to_pass
+    origin: behavioral
+    description: API key's org_id is used when saving conversation via API key auth
+    file: enterprise/server/utils/saas_app_conversation_info_injector.py
+
+  - id: test_legacy_api_key_without_org_uses_user_current_org
+    type: fail_to_pass
+    origin: behavioral
+    description: Legacy API keys without org_id fall back to user's current org
+    file: enterprise/server/utils/saas_app_conversation_info_injector.py
+
+  - id: test_cookie_auth_without_api_key_uses_user_current_org
+    type: fail_to_pass
+    origin: behavioral
+    description: Cookie auth uses user's current org when no API key present
+    file: enterprise/server/utils/saas_app_conversation_info_injector.py
+
+  - id: test_org_isolation_with_api_key_org
+    type: fail_to_pass
+    origin: behavioral
+    description: Cross-org visibility works correctly for API key created conversations
+    file: enterprise/server/utils/saas_app_conversation_info_injector.py
+
+  # Pass-to-pass tests: These ensure the repo baseline works
+  - id: test_repo_enterprise_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Enterprise storage tests pass (baseline verification)
+
+  - id: test_source_file_syntax
+    type: pass_to_pass
+    origin: structural
+    description: Source file has valid Python syntax
+
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified files pass ruff linting checks
+
+  - id: test_repo_storage_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Enterprise storage module tests pass (baseline verification)
+
+# Agent config rules to follow (from AGENTS.md)
+agent_config:
+  - rule: "Run pre-commit hooks before submitting changes"
+    source: "AGENTS.md:18"
+    applies_to: python
+
+  - rule: "Backend changes require running pre-commit with dev_config/python/.pre-commit-config.yaml"
+    source: "AGENTS.md:22"
+    applies_to: python
+
+  - rule: "Enterprise tests should use SQLite in-memory databases for unit tests"
+    source: "AGENTS.md:158"
+    applies_to: testing
+
+  - rule: "Use relative imports without 'enterprise.' prefix in enterprise code"
+    source: "AGENTS.md:169"
+    applies_to: imports
+
+# Rubric for soft/subjective evaluation (if any)
+rubric: []

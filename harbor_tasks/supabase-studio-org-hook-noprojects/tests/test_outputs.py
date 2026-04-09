@@ -114,3 +114,27 @@ def test_imports_correct():
     assert "import { Admonition } from 'ui-patterns'" in src, "Should import Admonition"
     assert "import { useOrgProjectsInfiniteQuery }" in src, \
         "Should import useOrgProjectsInfiniteQuery"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint passes on studio app (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/supabase/apps/studio && npm install -g pnpm && pnpm install --frozen-lockfile && pnpm lint"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tests_billing():
+    """Repo's Billing component tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/supabase/apps/studio && npm install -g pnpm && pnpm install --frozen-lockfile && pnpm vitest --run tests/components/Billing"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert r.returncode == 0, f"Billing tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

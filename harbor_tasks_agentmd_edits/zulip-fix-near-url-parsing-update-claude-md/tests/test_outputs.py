@@ -10,6 +10,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import importlib.util
 import subprocess
 import sys
+from importlib.machinery import SourceFileLoader
 from pathlib import Path
 
 REPO = "/workspace/zulip"
@@ -20,7 +21,9 @@ FETCH_SCRIPT = (
 
 def _load_fetch_module():
     """Import the fetch-zulip-web-public-messages script as a module."""
-    spec = importlib.util.spec_from_file_location("fetch_zulip", str(FETCH_SCRIPT))
+    # Use SourceFileLoader since the script has no .py extension
+    loader = SourceFileLoader("fetch_zulip", str(FETCH_SCRIPT))
+    spec = importlib.util.spec_from_loader("fetch_zulip", loader)
     mod = importlib.util.module_from_spec(spec)
     # Prevent the module from calling sys.exit on import
     spec.loader.exec_module(mod)
@@ -125,3 +128,53 @@ def test_claude_md_zulip_chat_links():
     assert "WebFetch" in content or "webfetch" in content.lower(), (
         "CLAUDE.md should warn against using WebFetch for Zulip URLs"
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI-derived pass_to_pass tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_pylint_errors_only():
+    """Pylint finds no errors in fetch-zulip-web-public-messages (pass_to_pass)."""
+    # Install pylint temporarily and run with orjson generated members
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pylint", "-q"],
+        capture_output=True, timeout=60,
+    )
+    # Run pylint with errors-only and generated-members for orjson C extensions
+    r = subprocess.run(
+        [
+            sys.executable, "-m", "pylint",
+            "--errors-only",
+            "--generated-members=orjson.dumps,orjson.loads,orjson.JSONDecodeError,orjson.OPT_INDENT_2",
+            str(FETCH_SCRIPT),
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pylint errors found:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_pyflakes_clean():
+    """Pyflakes finds no issues in fetch-zulip-web-public-messages (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pyflakes", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pyflakes", str(FETCH_SCRIPT)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pyflakes errors found:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_script_help_works():
+    """fetch-zulip-web-public-messages --help runs without error (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, str(FETCH_SCRIPT), "--help"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Script --help failed:\n{r.stderr}"
+    assert "usage:" in r.stdout.lower(), "Help output should contain 'usage:'"

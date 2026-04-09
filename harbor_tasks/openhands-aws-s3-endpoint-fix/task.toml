@@ -1,0 +1,25 @@
+name = "openhands-aws-s3-endpoint-fix"
+description = "Fix AWS S3 (Minio) endpoint URL configuration for feature branches"
+
+[task]
+difficulty = "easy"
+tags = ["python", "configuration", "aws", "s3", "pydantic"]
+timeout = 1800  # 30 minutes for agent
+
+[verifier]
+timeout = 120   # 2 minutes for tests
+
+[repository]
+owner = "All-Hands-AI"
+repo = "OpenHands"
+base_commit = "c9b2ce2fb9c61313d80643a489f81728bb9f5b09"
+merge_commit = "eb189144f2dfbbf0dad964cf7bdbd44e7910cb29"
+pr_number = 13579
+
+[files]
+primary = [
+    "openhands/app_server/event/aws_event_service.py"
+]
+test = [
+    "tests/unit/app_server/test_aws_event_service.py"
+]

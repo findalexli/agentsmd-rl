@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T06:50:34.376984",
+  "total_time": 6055.87,
+  "sandbox_id": "ifnqi7b3o2y909ej7f18n",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 229.76,
+      "notes": "Added repo CI syntax checks as pass_to_pass gates: test_repo_syntax_glm4moe_lite, test_repo_syntax_model_provider. The repo's CI uses ruff, pytest, and pre-commit hooks but these require dependencies not available in the container. Syntax checks via py_compile work and validate the Python files parse correctly. Tests verified passing on base commit with gold patch applied."
+    },
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 8.42,
+      "notes": "Added 2 new pass_to_pass CI tests: test_repo_ruff_check (ruff linting passes), test_repo_plugin_contracts (plugin contract tests pass). Improved mocking setup for megatron and transformers. Docker build succeeded. All 5 p2p tests verified passing on base commit."
+    },
+    "improve": {
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 23.04,
+      "notes": "no subprocess.run (grep-only tests)"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 6055.87,
+      "at": "2026-04-09T06:50:34.376984"
+    }
+  ]
+}

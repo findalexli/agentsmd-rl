@@ -356,3 +356,17 @@ def test_class_structure_preserved():
                     assert m in found_classes[cls_name], (
                         f"{cls_name}.{m} missing from {filepath}"
                     )
+
+
+# [repo_tests] pass_to_pass
+def test_py_compile_all_modified():
+    """All modified Python files compile without syntax errors (pass_to_pass)."""
+    for filepath in ALL_FILES:
+        result = subprocess.run(
+            ["python3", "-m", "py_compile", filepath],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO,
+        )
+        assert result.returncode == 0, f"py_compile failed for {filepath}: {result.stderr}"

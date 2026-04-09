@@ -221,6 +221,51 @@ class GoodModel(PreTrainedModel):
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD (pass_to_pass) — ensure repo checks pass on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — CI: python -m py_compile
+def test_repo_py_compile():
+    """Repo's check_repo.py compiles without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", CHECK_REPO],
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass — CI: module import check
+def test_repo_module_importable():
+    """Repo's check_repo module can be imported (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"import sys; sys.path.insert(0, '{REPO}/utils'); sys.path.insert(0, '{REPO}/src'); import check_repo; print('OK')",
+        ],
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Module import failed:\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass — CI: check_model_list
+def test_repo_check_model_list():
+    """Repo's check_model_list() passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"import sys; sys.path.insert(0, '{REPO}/utils'); sys.path.insert(0, '{REPO}/src'); from check_repo import check_model_list; check_model_list(); print('OK')",
+        ],
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_model_list failed:\n{r.stderr.decode()[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — CLAUDE.md rules
 # ---------------------------------------------------------------------------
 

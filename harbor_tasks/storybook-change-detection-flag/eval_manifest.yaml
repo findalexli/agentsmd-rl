@@ -1,0 +1,45 @@
+version: "2.0"
+
+source:
+  repo: "storybookjs/storybook"
+  pr: 34314
+  base_commit: "3f91f48ddcd1bb7cb7ee42a8b22229599317b796"
+  merge_commit: "f65c67a56e7b0aca1da01904bc1b385284d25f92"
+
+checks:
+  - id: change_detection_type_declared
+    type: fail_to_pass
+    origin: pr_diff
+    description: "changeDetection must be declared as optional boolean in StorybookConfigRaw.features type"
+
+  - id: change_detection_preset_evaluated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Features preset must evaluate to include changeDetection with value false"
+
+  - id: change_detection_in_docs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Documentation must include changeDetection in the features reference"
+
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must parse without syntax errors"
+
+  - id: features_preset_integrity
+    type: pass_to_pass
+    origin: static
+    description: "All pre-existing feature flags must still be present in the features preset"
+
+  - id: test_repo_formatting
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo formatting check passes (oxfmt)"
+
+  - id: test_repo_typescript_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified TypeScript files have valid syntax using TypeScript compiler API"
+
+rubric: []

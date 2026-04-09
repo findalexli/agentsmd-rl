@@ -60,9 +60,19 @@ checks:
       lines: "11"
       commit: "39094877abb3e74557d3975dd015ee677220eb35"
 
-rubric:
-  - rule: "Memory management — In Zig code, be careful with allocators and use defer for cleanup"
-    source:
-      path: "CLAUDE.md"
-      lines: "232"
-      commit: "39094877abb3e74557d3975dd015ee677220eb35"
+  - id: test_repo_globwalker_zig_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "GlobWalker.zig has valid Zig syntax indicators (balanced delimiters, structure)"
+
+  - id: test_repo_no_banned_patterns
+    type: pass_to_pass
+    origin: repo_tests
+    description: "GlobWalker.zig contains no banned patterns (std.debug.*, usingnamespace, etc.)"
+
+rubric: []
+
+  - id: test_repo_oxlint_js
+    type: pass_to_pass
+    origin: repo_tests
+    description: "JavaScript/TypeScript linting passes with oxlint (mirrors 'bun lint' CI check)"

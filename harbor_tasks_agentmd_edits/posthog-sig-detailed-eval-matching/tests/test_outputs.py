@@ -30,6 +30,45 @@ def test_syntax_check():
         ast.parse(src, filename=str(fpath))
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's ruff linting passes on modified eval files."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Install ruff if not already present
+    r = subprocess.run(
+        ["ruff", "check", "products/signals/eval/"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff formatting passes on modified eval files."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--diff", "products/signals/eval/"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

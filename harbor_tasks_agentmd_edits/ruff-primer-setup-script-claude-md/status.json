@@ -1,11 +1,45 @@
 {
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-08T22:18:40.848231",
-  "sandbox_id": "iphds2dvn3hx9674z0vji",
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:47:40.529032",
+  "total_time": 5916.88,
+  "sandbox_id": "irh0noqmeelmaqdkbjjdu",
   "backend": "glm",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 2735.69
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 68.52,
+      "notes": "Added 3 p2p tests: test_ruff_check_scripts (ruff check on scripts dir), test_python_syntax_scripts (py_compile all .py files), test_scripts_pyproject_valid (TOML validation). Docker image has Python but no Rust toolchain, so focused on Python-specific CI checks for the scripts directory. Discovered CI commands from CONTRIBUTING.md (cargo clippy, cargo test) but cannot run due to missing Rust toolchain."
+    },
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 351.3,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 5916.88,
+      "at": "2026-04-09T07:47:40.529032"
+    }
+  ]
 }

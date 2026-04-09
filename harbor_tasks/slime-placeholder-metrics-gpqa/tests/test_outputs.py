@@ -9,28 +9,28 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import subprocess
+import sys
 import textwrap
 from pathlib import Path
 
 REPO = "/workspace/slime"
 
 
-def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Execute Python code in a subprocess within the repo directory."""
-    script = Path(REPO) / "_eval_tmp.py"
-    script.write_text(code)
-    try:
-        return subprocess.run(
-            ["python3", str(script)],
-            capture_output=True, text=True, timeout=timeout, cwd=REPO,
-        )
-    finally:
-        script.unlink(missing_ok=True)
+def _install_deps(deps: list[str]) -> None:
+    """Install dependencies if not already available."""
+    for dep in deps:
+        try:
+            __import__(dep.replace("-", "_").split("[")[0])
+        except ImportError:
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", "-q", dep],
+                capture_output=True, check=False,
+            )
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_syntax_check():
@@ -44,9 +44,46 @@ def test_syntax_check():
         ast.parse(src)  # raises SyntaxError on failure
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI/CD checks
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_linting():
+    """Repo's ruff linting passes (pass_to_pass)."""
+    _install_deps(["ruff"])
+    r = subprocess.run(
+        ["ruff", "check", "slime/", "slime_plugins/", "--select", "E,F,B,UP", "--ignore", "E402,E501"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_plugin_contracts():
+    """Repo's plugin contract tests pass (pass_to_pass)."""
+    _install_deps(["torch", "pillow", "numpy", "packaging", "pyyaml", "omegaconf", "tqdm", "httpx", "pybase64", "pylatexenc", "sympy"])
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "tests/plugin_contracts/", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin contract tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_chunked_gae():
+    """Repo's chunked GAE tests pass (pass_to_pass)."""
+    _install_deps(["torch", "numpy"])
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "tests/test_chunked_gae.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Chunked GAE tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — GPQA letter range
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_gpqa_label_8_letter_i():
@@ -84,9 +121,9 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) — GPQA regression
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
 def test_gpqa_existing_labels_a_through_h():
@@ -110,9 +147,9 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — WorkerType PLACEHOLDER enum
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_workertype_placeholder_enum():
@@ -144,9 +181,9 @@ def test_workertype_placeholder_enum():
     raise AssertionError("WorkerType class not found in router.py")
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — nodes_per_engine filters placeholders
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_nodes_per_engine_ignores_placeholder():
@@ -217,9 +254,9 @@ def test_nodes_per_engine_ignores_placeholder():
     assert result3 == 4, f"Expected 4 (ignoring all placeholders), got {result3}"
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — init_tracking moved after server launch
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_init_tracking_after_server_launch():
@@ -262,9 +299,9 @@ def test_init_tracking_after_server_launch():
     raise AssertionError("RolloutManager class not found")
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — _get_metrics_router_addr behavior
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_get_metrics_router_addr_behavior():
@@ -332,3 +369,16 @@ def test_get_metrics_router_addr_behavior():
     # Different IP/port
     obj = MockSelf(MockArgs(enable_metrics=True), server=MockServer("192.168.1.1", 9090))
     assert method(obj) == "http://192.168.1.1:9090"
+
+
+def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in a subprocess within the repo directory."""
+    script = Path(REPO) / "_eval_tmp.py"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["python3", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)

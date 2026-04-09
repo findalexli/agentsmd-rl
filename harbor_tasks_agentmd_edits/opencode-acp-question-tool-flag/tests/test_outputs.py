@@ -17,7 +17,7 @@ REPO = Path("/workspace/opencode")
 
 def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Run a JavaScript snippet with node."""
-    script_path = REPO / "_eval_tmp.mjs"
+    script_path = REPO / "_eval_tmp.cjs"
     script_path.write_text(script)
     try:
         return subprocess.run(

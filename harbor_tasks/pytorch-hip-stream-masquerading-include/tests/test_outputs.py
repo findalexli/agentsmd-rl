@@ -171,6 +171,98 @@ def test_source_files_exist():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that should pass before and after fix
+# ---------------------------------------------------------------------------
+
+def test_header_compiles_standalone():
+    """Extracted USE_ROCM block compiles without errors (pass_to_pass)."""
+    # This tests that the syntax of the modified headers is valid
+    # by extracting and compiling just the USE_ROCM block
+    block = _get_compilable_block()
+    
+    code = CPP_STUBS
+    if "class HIPStreamMasqueradingAsCUDA" not in block:
+        code += MASQ_CLASS_STUB
+    code += "\n" + block + "\n"
+    code += "int main() { return 0; }\n"
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".cpp", dir=REPO, delete=False,
+    ) as f:
+        f.write(code)
+        tmp_path = f.name
+    try:
+        r = subprocess.run(
+            ["g++", "-fsyntax-only", "-std=c++17", tmp_path],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Header syntax error:\n{r.stderr[:500]}"
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+
+def test_aten_hip_header_exists():
+    """ATen HIP masquerading header exists and is readable (pass_to_pass)."""
+    assert HIP_MASQ_H.is_file(), f"HIP header missing: {HIP_MASQ_H}"
+    content = HIP_MASQ_H.read_text()
+    assert "HIPStreamMasqueradingAsCUDA" in content, "HIP header missing expected class"
+
+
+def test_no_trailing_whitespace_in_modified_files():
+    """Modified header files have no trailing whitespace (pass_to_pass)."""
+    files_to_check = [
+        CUDA_STREAM_H,
+        HIP_MASQ_H,
+    ]
+    for filepath in files_to_check:
+        if not filepath.exists():
+            continue
+        content = filepath.read_text()
+        lines = content.split("\n")
+        for i, line in enumerate(lines, 1):
+            # Allow empty lines, but not lines with trailing whitespace
+            if line != line.rstrip():
+                assert False, f"Trailing whitespace in {filepath}:{i}"
+
+
+def test_header_guards_present():
+    """Header files have proper include guards or pragma once (pass_to_pass)."""
+    files_to_check = [
+        CUDA_STREAM_H,
+        HIP_MASQ_H,
+    ]
+    for filepath in files_to_check:
+        if not filepath.exists():
+            continue
+        content = filepath.read_text()
+        # Check for #pragma once or traditional include guards
+        has_pragma_once = "#pragma once" in content
+        has_ifndef_guard = re.search(r"#ifndef\s+\w+_H", content) is not None
+        assert has_pragma_once or has_ifndef_guard, (
+            f"{filepath} missing include guard (#pragma once or #ifndef)"
+        )
+
+
+def test_file_ends_with_newline():
+    """Source files end with a single newline (pass_to_pass)."""
+    files_to_check = [
+        CUDA_STREAM_H,
+        HIP_MASQ_H,
+    ]
+    for filepath in files_to_check:
+        if not filepath.exists():
+            continue
+        content = filepath.read_text()
+        if not content:
+            continue
+        # File should end with exactly one newline, not multiple
+        if content.endswith("\n\n"):
+            assert False, f"{filepath} ends with multiple newlines"
+        if not content.endswith("\n"):
+            assert False, f"{filepath} does not end with newline"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — C++ compilation verifies declarations accessible
 # ---------------------------------------------------------------------------
 

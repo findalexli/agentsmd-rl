@@ -13,6 +13,8 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
+
 REPO = "/workspace/AReaL"
 SERVER_FILE = f"{REPO}/areal/engine/vllm_ext/areal_vllm_server.py"
 REMOTE_FILE = f"{REPO}/areal/engine/vllm_remote.py"
@@ -283,3 +285,71 @@ def test_no_wildcard_imports():
                     assert alias.name != "*", (
                         f"Wildcard import found in {filepath}: from {node.module} import *"
                     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo CI checks)
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass - Python compilation check
+def test_repo_python_compilation():
+    """Repo CI: Modified Python files compile without errors."""
+    import py_compile
+    for filepath in [SERVER_FILE, REMOTE_FILE]:
+        try:
+            py_compile.compile(filepath, doraise=True)
+        except py_compile.PyCompileError as e:
+            raise AssertionError(f"Compilation failed for {filepath}: {e}")
+
+
+# [repo_ci] pass_to_pass - Function existence check
+def test_repo_key_functions_exist():
+    """Repo CI: Key functions modified in PR exist and are extractable."""
+    # Check server file functions
+    func_src = _extract_function(SERVER_FILE, None, "update_weight_lora_xccl")
+    assert func_src is not None, "update_weight_lora_xccl not found in server file"
+
+    # Check remote file method
+    method_src = _extract_function(REMOTE_FILE, "VLLMBackend", "build_distributed_weight_update_requests")
+    assert method_src is not None, "build_distributed_weight_update_requests not found in remote file"
+
+
+# [repo_ci] pass_to_pass - No syntax errors in function bodies
+def test_repo_function_bodies_parse():
+    """Repo CI: Key function bodies parse without syntax errors."""
+    # Test server function
+    func_src = _extract_function(SERVER_FILE, None, "update_weight_lora_xccl")
+    if func_src:
+        try:
+            ast.parse(textwrap.dedent(func_src))
+        except SyntaxError as e:
+            raise AssertionError(f"Syntax error in update_weight_lora_xccl: {e}")
+
+    # Test remote method
+    method_src = _extract_function(REMOTE_FILE, "VLLMBackend", "build_distributed_weight_update_requests")
+    if method_src:
+        try:
+            ast.parse(textwrap.dedent(method_src))
+        except SyntaxError as e:
+            raise AssertionError(f"Syntax error in build_distributed_weight_update_requests: {e}")
+
+
+# [repo_ci] pass_to_pass - Ruff linting check (matches repo's pre-commit v0.14.9)
+def test_repo_ruff_linting():
+    """Repo CI: Modified files pass ruff linting (matching .pre-commit-config.yaml)."""
+    # Install ruff if not present (matches repo's ruff version 0.14.9)
+    r = subprocess.run(["pip", "show", "ruff"], capture_output=True, text=True)
+    if r.returncode != 0:
+        r = subprocess.run(
+            ["pip", "install", "ruff==0.14.9", "-q"],
+            capture_output=True, text=True, timeout=60
+        )
+        if r.returncode != 0:
+            pytest.skip(f"Could not install ruff: {r.stderr}")
+
+    # Run ruff check on modified files
+    r = subprocess.run(
+        ["ruff", "check", SERVER_FILE, REMOTE_FILE, "--output-format=full"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout}\n{r.stderr}"

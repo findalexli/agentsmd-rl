@@ -316,3 +316,70 @@ def test_program_still_handles_open_close():
     assert "case 'open'" in content, "program.ts must handle 'open' command"
     assert "case 'close'" in content, "program.ts must handle 'close' command"
     assert "case 'delete-data'" in content, "program.ts must handle 'delete-data' command"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD validation
+# These tests validate the repo's structural integrity passes on both
+# the base commit AND after the gold fix is applied.
+# ---------------------------------------------------------------------------
+
+def test_modified_typescript_files_have_balanced_braces():
+    """Repo CI check: Modified TypeScript files have balanced braces (pass_to_pass)."""
+    for ts_file in [COMMAND_TS, COMMANDS_TS, HELP_GEN_TS, PROGRAM_TS]:
+        content = ts_file.read_text()
+        open_count = content.count('{')
+        close_count = content.count('}')
+        assert open_count == close_count, f"{ts_file.name}: Unbalanced braces ({open_count} open, {close_count} close)"
+
+
+def test_modified_typescript_files_have_balanced_parentheses():
+    """Repo CI check: Modified TypeScript files have balanced parentheses (pass_to_pass)."""
+    for ts_file in [COMMAND_TS, COMMANDS_TS, HELP_GEN_TS, PROGRAM_TS]:
+        content = ts_file.read_text()
+        open_count = content.count('(')
+        close_count = content.count(')')
+        assert open_count == close_count, f"{ts_file.name}: Unbalanced parentheses ({open_count} open, {close_count} close)"
+
+
+def test_terminal_files_are_valid_typescript():
+    """Repo CI check: Terminal TypeScript files have valid structure (pass_to_pass)."""
+    # Check that files have proper TypeScript structure markers
+    for ts_file in [COMMAND_TS, COMMANDS_TS, HELP_GEN_TS, PROGRAM_TS]:
+        content = ts_file.read_text()
+        # Check for import statements or exports (valid TS module markers)
+        has_import = 'import ' in content
+        has_export = 'export ' in content
+        assert has_import or has_export, f"{ts_file.name}: Missing import or export statements"
+
+
+def test_skill_documentation_files_exist():
+    """Repo CI check: SKILL.md and session-management.md exist and are non-empty (pass_to_pass)."""
+    assert SKILL_MD.exists(), 'SKILL.md must exist'
+    assert SKILL_MD.stat().st_size > 0, 'SKILL.md must not be empty'
+    assert SESSION_MGMT_MD.exists(), 'session-management.md must exist'
+    assert SESSION_MGMT_MD.stat().st_size > 0, 'session-management.md must not be empty'
+
+
+def test_command_ts_has_category_type():
+    """Repo CI check: command.ts defines Category type (pass_to_pass)."""
+    content = COMMAND_TS.read_text()
+    assert 'type Category' in content, 'command.ts must define Category type'
+
+
+def test_commands_ts_has_declare_command():
+    """Repo CI check: commands.ts uses declareCommand (pass_to_pass)."""
+    content = COMMANDS_TS.read_text()
+    assert 'declareCommand' in content, 'commands.ts must use declareCommand'
+
+
+def test_program_ts_has_switch_structure():
+    """Repo CI check: program.ts has command dispatch switch (pass_to_pass)."""
+    content = PROGRAM_TS.read_text()
+    assert 'switch(commandName)' in content or 'switch (commandName)' in content, 'program.ts must have command dispatch switch statement'
+
+
+def test_help_generator_has_categories():
+    """Repo CI check: helpGenerator.ts defines categories array (pass_to_pass)."""
+    content = HELP_GEN_TS.read_text()
+    assert 'categories' in content, 'helpGenerator.ts must define categories'

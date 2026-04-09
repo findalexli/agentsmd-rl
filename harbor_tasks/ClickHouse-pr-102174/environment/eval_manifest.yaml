@@ -1,0 +1,52 @@
+source_pr:
+  owner: ClickHouse
+  repo: ClickHouse
+  number: 102174
+  title: "Fix crash caused by stale ZooKeeper session in UDF retry loop"
+  merge_commit: 67fd1393f23ed23d0dc45a2999eafa186ac84218
+  base_commit: 172e4255c5cba41c87722d66c33f459256d56ce7
+
+target_file: src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp
+
+distinctive_line: "Renew the session on retry"
+
+checks:
+  # Fail-to-pass checks (must fail on base, pass on fix)
+  - id: test_zookeeper_session_renewal_in_retry
+    type: fail_to_pass
+    origin: code_analysis
+    description: "ZooKeeper session is renewed on retry via zookeeper_getter.getZooKeeper()"
+
+  - id: test_object_names_fetched_in_retry_loop
+    type: fail_to_pass
+    origin: code_analysis
+    description: "getObjectNamesAndSetWatch is called inside retryLoop, not before it"
+
+  - id: test_tryloadobject_uses_current_zookeeper
+    type: fail_to_pass
+    origin: code_analysis
+    description: "tryLoadObject uses current_zookeeper variable, not stale 'zookeeper' parameter"
+
+  - id: test_current_zookeeper_variable_declared
+    type: fail_to_pass
+    origin: code_analysis
+    description: "current_zookeeper variable is declared before the retry loop"
+
+  # Pass-to-pass checks (should pass on both base and fix)
+  - id: test_no_sleep_based_race_condition_fixes
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      config_file: .claude/CLAUDE.md
+      lines: "Never use sleep in C++ code to fix race conditions - this is stupid and not acceptable!"
+    description: "No sleep calls used to fix race conditions in the modified function"
+
+  - id: test_allman_brace_style_for_new_code
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      config_file: .claude/CLAUDE.md
+      lines: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
+    description: "Allman-style braces used for new/modified code (opening brace on new line)"
+
+rubric: []

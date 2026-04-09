@@ -27,6 +27,32 @@ def node_eval(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 
+
+# [repo_tests] pass_to_pass
+def test_changes_validate():
+    """Repo's changes:validate passes (pass_to_pass). Validates prerelease.json format."""
+    # changes:validate checks that change files and prerelease.json follow the correct format
+    r = subprocess.run(
+        ['node', './scripts/changes-validate.ts'],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"changes:validate failed: {r.stderr[-500:] or r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """ESLint passes on modified files (pass_to_pass)."""
+    files = [
+        REPO / 'scripts' / 'utils' / 'changes.ts',
+        REPO / 'scripts' / 'publish.ts',
+    ]
+    r = subprocess.run(
+        ['npx', 'eslint', '--max-warnings=0'] + [str(f) for f in files],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed: {r.stderr[-500:] or r.stdout[-500:]}"
+
+
 # [static] pass_to_pass
 def test_syntax_check():
     """Modified TypeScript files parse without syntax errors."""

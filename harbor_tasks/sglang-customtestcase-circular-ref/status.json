@@ -1,73 +1,94 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.981701",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T12:36:54.595488",
+  "total_time": 12302.04,
+  "sandbox_id": "i4jgvf0obsoyhabo41hos",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 383.65,
+      "ci_commands_discovered": [
+        "ruff check --select=E9 (syntax errors)",
+        "ruff check --select=F401,F821 (import/name issues)",
+        "ast.parse (Python AST validation)",
+        "isort --check (import order)",
+        "black --check (code formatting)",
+        "py_compile (Python syntax check)"
+      ],
+      "tests_added": [
+        "test_syntax_check - Python syntax check via py_compile",
+        "test_repo_ruff_syntax - Ruff E9 syntax error check",
+        "test_repo_ruff_imports - Ruff F401/F821 import/name check",
+        "test_repo_ast_valid - Python AST validation",
+        "test_repo_isort - isort import order check",
+        "test_repo_black - black code formatting check"
+      ],
+      "notes": "All 6 repo CI checks pass on base commit. Tests verified working. 2 fail_to_pass tests correctly fail on base commit (circular reference bug)."
     },
-    {
-      "timestamp": "2026-03-30T11:48:20.105645",
-      "runner": "audit (audit-tests_20260330_114820)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 10695
-    },
-    {
-      "timestamp": "2026-03-31T09:10:27.425033",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "error",
-      "output_tokens": 0
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.736423",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T02:00:26-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.0,
-      "verdict": "pass",
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 176.13,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: (1) Docker build succeeds, (2) NOP test reward=0 (correctly detects circular ref bug), (3) Gold test reward=1 (all 13 tests pass after fix), (4) solve.sh patch applies cleanly. Tests: 2 fail-to-pass (dill warning, circular ref), 11 pass-to-pass (syntax, CI checks, regression).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 97.31
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.7,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T14:28:08.962493",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 6347.27,
+      "at": "2026-04-09T06:40:38.216941"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.628109",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 12301.77,
+      "at": "2026-04-09T12:36:54.425539"
     },
     {
-      "timestamp": "2026-04-07T00:00:00.000000",
-      "phase": "test_upgrade",
-      "runner": "manual docker validate",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1",
-      "notes": "Upgraded f2p tests from in-process exec to subprocess.run with behavioral checks (dill warnings + circular ref detection)"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 12302.04,
+      "at": "2026-04-09T12:36:54.595488"
     }
   ]
 }

@@ -338,3 +338,38 @@ def test_no_unnecessary_try_except():
             assert abs(node.lineno - target_line) >= 8, (
                 f"Unnecessary try/except near debug.num_layers at line {node.lineno}"
             )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base commit
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass — CI: ruff check from .github/workflows/style.yaml
+def test_repo_ruff_check():
+    """Repo's ruff linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "--config=pyproject.toml", "src/prime_rl/trainer/model.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — CI: ruff format from .github/workflows/style.yaml
+def test_repo_ruff_format():
+    """Repo's ruff format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--config=pyproject.toml", "src/prime_rl/trainer/model.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Python syntax check via py_compile
+def test_repo_model_py_compiles():
+    """Repo's model.py must compile without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", "src/prime_rl/trainer/model.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python compilation failed:\n{r.stderr}"

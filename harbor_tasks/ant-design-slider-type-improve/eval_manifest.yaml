@@ -1,0 +1,67 @@
+source:
+  pr: "https://github.com/ant-design/ant-design/pull/57488"
+  title: "type: improve slider"
+  description: "Improve TypeScript types in Slider component by removing 'as any' cast and replacing @ts-ignore with proper type assertions"
+  base_commit: "447392669e4d1ccfe51dafde2b707c8c26a83949"
+  merge_commit: "61877c831805779958bf78bc300d166f4340dee5"
+
+checks:
+  # Fail-to-pass tests (verify the fix works)
+  - id: "typescript_compilation"
+    name: "TypeScript compilation passes"
+    description: "TypeScript should compile without errors related to slider component"
+    test_func: "test_typescript_compilation"
+    type: "programmatic"
+    origin: "derived"
+
+  - id: "no_as_any_cast"
+    name: "No 'as any' cast in onChangeComplete"
+    description: "The 'as any' cast should be removed from onChangeComplete call"
+    test_func: "test_no_as_any_cast"
+    type: "programmatic"
+    origin: "derived"
+
+  - id: "no_ts_ignore"
+    name: "No @ts-ignore before RcSlider"
+    description: "The @ts-ignore comment should be removed from before RcSlider component"
+    test_func: "test_no_ts_ignore_comment"
+    type: "programmatic"
+    origin: "derived"
+
+  - id: "proper_restprops_typing"
+    name: "Proper Omit typing for restProps"
+    description: "restProps should use proper Omit<SliderProps, 'onAfterChange' | 'onChange'> type assertion"
+    test_func: "test_proper_restprops_typing"
+    type: "programmatic"
+    origin: "derived"
+
+  - id: "component_functional"
+    name: "Slider component remains functional"
+    description: "The Slider component should still function correctly after type changes"
+    test_func: "test_slider_component_functional"
+    type: "programmatic"
+    origin: "derived"
+
+  # Pass-to-pass tests (verify existing CI checks still pass)
+  - id: "repo_slider_unit_tests"
+    name: "Repo slider unit tests pass"
+    description: "The repository's existing unit tests for the slider component pass"
+    test_func: "test_repo_slider_unit_tests"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "repo_eslint_slider"
+    name: "Repo ESLint check on slider passes"
+    description: "The repository's ESLint check on the slider component passes"
+    test_func: "test_repo_eslint_slider"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "repo_biome_lint_slider"
+    name: "Repo Biome lint check on slider passes"
+    description: "The repository's Biome lint check on the slider component passes"
+    test_func: "test_repo_biome_lint_slider"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+rubric: []

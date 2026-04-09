@@ -22,7 +22,7 @@ TARGET = "src/vs/workbench/services/themes/browser/workbenchThemeService.ts"
 
 def _node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Run a Node.js script in the repo directory."""
-    script = Path(REPO) / "_eval_tmp.mjs"
+    script = Path(REPO) / "_eval_tmp.cjs"
     script.write_text(code)
     try:
         return subprocess.run(
@@ -38,7 +38,8 @@ def _node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 _EXTRACT_TMPL = """\
 const fs = require("fs");
 const src = fs.readFileSync("TARGET_PATH", "utf8");
-const idx = src.indexOf("METHOD_NAME(");
+let idx = src.indexOf("private METHOD_NAME(");
+if (idx === -1) { idx = src.indexOf("async METHOD_NAME("); }
 if (idx === -1) { process.stdout.write("null"); process.exit(0); }
 const brace = src.indexOf("{", idx);
 if (brace === -1) { process.stdout.write("null"); process.exit(0); }
@@ -76,8 +77,8 @@ def test_method_exists():
 # [pr_diff] fail_to_pass
 def test_method_called_in_init():
     """showThemeAutoUpdatedNotification is called during theme initialization"""
-    init_body = _method_body("initializeThemes")
-    assert init_body is not None, "initializeThemes method not found"
+    init_body = _method_body("initialize")
+    assert init_body is not None, "initialize method not found"
     assert "this.showThemeAutoUpdatedNotification()" in init_body, (
         "showThemeAutoUpdatedNotification is not called during initialization"
     )

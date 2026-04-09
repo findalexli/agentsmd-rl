@@ -18,6 +18,22 @@ checks:
     origin: static
     description: "Existing csproj properties (PackageId, Description) are preserved"
 
+  # Repo CI checks (pass_to_pass) - project structure validation
+  - id: repo_csproj_project_references_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All ProjectReference paths in csproj resolve to existing files"
+
+  - id: repo_csproj_sdk_style_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "csproj follows SDK-style format with TargetFrameworks, AssemblyName, PackageId"
+
+  - id: repo_csproj_no_duplicate_includes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "csproj has no duplicate Include entries for the same file"
+
   # csproj packaging tests (fail_to_pass)
   - id: csproj_references_readme
     type: fail_to_pass

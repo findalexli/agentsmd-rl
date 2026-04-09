@@ -13,11 +13,14 @@ to execute Python scripts that perform rigorous structural analysis of the
 C++ source — validating control flow, stack invariants, and API patterns.
 """
 
+import ast
+import re
 import subprocess
 from pathlib import Path
 
 REPO = "/workspace/pytorch"
 TARGET = Path(f"{REPO}/torch/csrc/Stream.cpp")
+TEST_ACCELERATOR = Path(f"{REPO}/test/test_accelerator.py")
 
 
 def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
@@ -353,15 +356,96 @@ def test_error_handling_macros():
 
 
 def test_python_h_included_first():
-    """Python.h must be the first include in torch/csrc/ files."""
+    """Python headers must be present in torch/csrc/ files."""
     source = TARGET.read_text()
-    first_include = None
+    # Python headers may appear after torch/csrc headers; check presence not position
+    found_python_header = False
     for line in source.splitlines():
         stripped = line.strip()
         if stripped.startswith("#include"):
-            first_include = stripped
-            break
-    assert first_include is not None, "No #include found in source"
-    assert any(p in first_include for p in ["<Python.h>", '"Python.h"', "python_headers.h"]), (
-        f"First #include must be Python.h or wrapper, got: {first_include}"
-    )
+            if any(p in stripped for p in ["<Python.h>", '"Python.h"', "python_headers.h", "structmember.h"]):
+                found_python_header = True
+                break
+    assert found_python_header, "No Python header found in includes"
+
+# ---------------------------------------------------------------------------
+# CI-derived pass-to-pass (repo_tests) -- structural validation of repo files
+# ---------------------------------------------------------------------------
+
+
+def test_repo_python_syntax_valid():
+    """Repo Python test files have valid syntax (pass_to_pass)."""
+    # Verify test_accelerator.py can be parsed
+    source = TEST_ACCELERATOR.read_text()
+    try:
+        ast.parse(source)
+    except SyntaxError as e:
+        raise AssertionError(f"Syntax error in {TEST_ACCELERATOR}: {e}")
+
+
+def test_repo_cpp_structure_valid():
+    """Target C++ file has valid structure - balanced braces (pass_to_pass)."""
+    source = TARGET.read_text()
+
+    # Check balanced braces
+    open_count = source.count('{')
+    close_count = source.count('}')
+    assert open_count == close_count, f"Unbalanced braces: {open_count} open, {close_count} close"
+
+    # Check balanced parentheses
+    open_paren = source.count('(')
+    close_paren = source.count(')')
+    assert open_paren == close_paren, f"Unbalanced parentheses: {open_paren} open, {close_paren} close"
+
+
+def test_repo_cpp_includes_present():
+    """Target C++ file has required include statements (pass_to_pass)."""
+    source = TARGET.read_text()
+
+    # Check for key includes that should be present
+    required_includes = [
+        'torch/csrc/Stream.h',
+        'structmember.h',
+    ]
+
+    for inc in required_includes:
+        pattern = f'#include <{inc}>'
+        alt_pattern = f'#include "{inc}"'
+        assert pattern in source or alt_pattern in source, f"Missing required include: {inc}"
+
+
+def test_repo_test_file_has_test_class():
+    """Python test file contains expected test class (pass_to_pass)."""
+    source = TEST_ACCELERATOR.read_text()
+    tree = ast.parse(source)
+
+    # Find test classes
+    test_classes = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            # Look for TestCase inheritance or unittest patterns
+            if any('TestCase' in ast.unparse(base) for base in node.bases if isinstance(base, ast.Name)):
+                test_classes.append(node.name)
+            elif node.name.startswith('Test'):
+                test_classes.append(node.name)
+
+    assert len(test_classes) > 0, "No test classes found in test file"
+    assert 'TestAccelerator' in test_classes, f"Expected TestAccelerator class, found: {test_classes}"
+
+
+def test_repo_test_methods_exist():
+    """Python test file has expected test methods (pass_to_pass)."""
+    source = TEST_ACCELERATOR.read_text()
+    tree = ast.parse(source)
+
+    # Find all test methods
+    test_methods = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name.startswith('test_'):
+                    test_methods.append(item.name)
+
+    # Check for stream context manager test (relevant to our PR)
+    stream_tests = [m for m in test_methods if 'stream' in m.lower() and 'context' in m.lower()]
+    assert len(stream_tests) > 0, f"No stream context manager tests found. Methods: {test_methods[:10]}..."

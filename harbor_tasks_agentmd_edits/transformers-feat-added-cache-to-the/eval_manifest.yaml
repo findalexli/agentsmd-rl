@@ -47,6 +47,22 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: .gitignore must exclude the modeling structure cache file
+- id: test_repo_check_modeling_structure_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI check - check_modeling_structure.py runs without errors
+- id: test_repo_check_modeling_structure_help
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI check - check_modeling_structure.py --help works
+- id: test_repo_makefile_has_style_target
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI check - Makefile has 'style' target
+- id: test_repo_makefile_style_runs_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI check - Makefile style target runs ruff check and ruff format
 rubric:
 - rule: Agent config updates are consistent with the style of existing .ai/AGENTS.md
     entries
@@ -67,8 +83,7 @@ rubric:
     commit: 2cd52c267ce4d0212eaa40c0ec7192a11654336f
   reference: "- `make style`: runs formatters and linters (ruff), necessary to pass\
     \ code style checks\n- `make typing`: runs the ty type checker and model structure\
-    \ rules\n- `make check-repo` \u2014 CI-style consistency checks (includes `make\
-    \ typing`)"
+    \ rules\n- `make check-repo` — CI-style consistency checks (includes `make typing`)"
 - rule: SKILL.md must reference 'make typing' instead of 'make style' for type checks
   source:
     path: .ai/skills/add-or-fix-type-checking/SKILL.md
@@ -78,7 +93,7 @@ rubric:
     \ or make check-repo. Use when typing errors appear in local runs, CI, or PR logs.\n\
     - Optional `make typing` or CI output showing typing failures.\n   - If you already\
     \ have `make typing` or CI output, extract the failing file/module paths.\n  \
-    \   make typing\n   - Re-run `make typing` to confirm the type/model-rules step\
+    \  make typing\n   - Re-run `make typing` to confirm the type/model-rules step\
     \ passes"
 - rule: docs/source/en/pr_checks.md must document 'make typing' command
   source:
@@ -87,8 +102,8 @@ rubric:
     commit: 2cd52c267ce4d0212eaa40c0ec7192a11654336f
   reference: "# .ai/AGENTS.md\n- `make style`: runs formatters and linters (ruff),\
     \ necessary to pass code style checks\n- `make typing`: runs the ty type checker\
-    \ and model structure rules\n- `make check-repo` \u2014 CI-style consistency checks\
+    \ and model structure rules\n- `make check-repo` — CI-style consistency checks\
     \ (includes `make typing`)\n\n# .ai/skills/add-or-fix-type-checking/SKILL.md\n\
     description: Fixes broken typing checks detected by ty, make typing, or make check-repo.\
-    \ Use when typing errors appear in local runs, CI, or PR logs.\n- Optional `make\
+    \ Use when local runs, CI, or PR logs.\n- Optional `make\
     \ typing` or CI output showing typing fa"

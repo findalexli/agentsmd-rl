@@ -1,0 +1,84 @@
+# Evaluation manifest for ClickHouse/ClickHouse#102169
+# Fix crash caused by stale ZooKeeper session in UDF retry loop
+
+source_pr:
+  owner: ClickHouse
+  repo: ClickHouse
+  number: 102169
+  merge_commit: bcbca752faf0e9774a6b2f40fa558e363d786016
+  base_commit: 6d03f28ada8b3c521b504f43e04d05c915be3d75
+
+task:
+  name: clickhouse-zookeeper-session-renewal
+  title: "Fix stale ZooKeeper session renewal in UDF refreshObjects retry loop"
+  difficulty: medium
+  estimated_time: 60
+  tags: ["c++", "zookeeper", "distributed-systems", "session-management", "bug-fix"]
+  target_files:
+    - src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp
+
+checks:
+  # Fail-to-pass tests: These verify the fix works
+  - id: test_session_renewal_in_retry_loop
+    type: fail_to_pass
+    origin: behavioral
+    description: "Session renewal check (isRetry + getZooKeeper) exists inside retry loop"
+
+  - id: test_getobjectnames_inside_retry_loop
+    type: fail_to_pass
+    origin: behavioral
+    description: "getObjectNamesAndSetWatch is called inside retry loop, not before"
+
+  - id: test_current_zookeeper_variable_used
+    type: fail_to_pass
+    origin: behavioral
+    description: "current_zookeeper variable is declared and used instead of stale parameter"
+
+  - id: test_session_renewal_pattern_complete
+    type: fail_to_pass
+    origin: behavioral
+    description: "Complete session renewal pattern exists (isRetry check + assignment)"
+
+  # Pass-to-pass tests: These verify nothing is broken
+  - id: test_file_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "C++ file syntax validation via clang"
+
+  - id: test_libclang_parses
+    type: pass_to_pass
+    origin: repo_tests
+    description: "C++ file syntax validation via libclang (more robust)"
+
+  - id: test_header_has_pragma_once
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Header file has #pragma once (ClickHouse style requirement)"
+
+  - id: test_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No trailing whitespace in modified files (ClickHouse style)"
+
+  - id: test_claude_md_terminology
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: .claude/CLAUDE.md
+      lines: "7-9"
+      commit: 6d03f28ada8b3c521b504f43e04d05c915be3d75
+    description: "CLAUDE.md rule: say 'exception' not 'crash' for logical errors"
+
+# Rubric for LLM evaluation (soft/subjective rules)
+rubric:
+  - rule: "Use proper C++ naming and style consistent with ClickHouse codebase"
+    type: style
+    severity: minor
+
+  - rule: "Ensure session renewal happens before using the ZooKeeper handle"
+    type: correctness
+    severity: critical
+
+  - rule: "Follow the pattern: if (retries_ctl.isRetry()) current_zookeeper = zookeeper_getter.getZooKeeper()"
+    type: pattern
+    severity: critical

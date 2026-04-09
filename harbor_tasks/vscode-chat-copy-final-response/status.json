@@ -1,31 +1,79 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-04-02T13:47:53.984722",
-      "phase": "e2b_wave2",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:06:28.290015",
+  "total_time": 5743.11,
+  "sandbox_id": "i10jy8sw7vwanzka3xu1i",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 6.98,
+      "notes": "P2P enrichment completed. Added 12 new pass_to_pass CI checks from VS Code's actual CI pipeline. CI commands discovered from .github/workflows/pr.yml and package.json: eslint, hygiene, valid-layers-check, define-class-fields-check, monaco-compile-check, vscode-dts-compile-check, tsec-compile-check, check-cyclic-dependencies, test-build-scripts, stylelint, compile, core-ci. Docker build failed due to git config order issue - RUN at lines 16-21 executes git commit before git config at lines 24-25."
     },
-    {
-      "timestamp": "2026-04-02T14:28:08.979926",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 192.57,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-04-02T23:07:01.685865",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     }
-  ]
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 5743.11,
+      "at": "2026-04-09T07:06:28.290015"
+    }
+  ],
+  "p2p_enrichment": {
+    "docker_build_status": "failed",
+    "docker_build_error": "git config commands at lines 24-25 execute after git commit at line 21 in the RUN statement",
+    "ci_commands_discovered": [
+      "npm run eslint",
+      "npm run hygiene",
+      "npm run valid-layers-check",
+      "npm run define-class-fields-check",
+      "npm run monaco-compile-check",
+      "npm run vscode-dts-compile-check",
+      "npm run tsec-compile-check",
+      "npm run check-cyclic-dependencies",
+      "npm run test-build-scripts",
+      "npm run stylelint",
+      "npm run compile",
+      "npm run core-ci"
+    ],
+    "ci_commands_source": ".github/workflows/pr.yml, package.json",
+    "tests_added": [
+      "test_repo_eslint",
+      "test_repo_hygiene",
+      "test_repo_valid_layers",
+      "test_repo_define_class_fields",
+      "test_repo_monaco_compile",
+      "test_repo_vscode_dts_compile",
+      "test_repo_tsec_compile",
+      "test_repo_check_cyclic_deps",
+      "test_repo_build_scripts",
+      "test_repo_stylelint",
+      "test_repo_compile",
+      "test_repo_core_ci"
+    ],
+    "existing_tests_preserved": true
+  }
 }

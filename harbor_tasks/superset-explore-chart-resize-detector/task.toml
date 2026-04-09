@@ -1,0 +1,25 @@
+name = "superset-explore-chart-resize-detector"
+difficulty = "medium"
+type = "bug_fix"
+tags = ["react", "typescript", "frontend", "resize-observer", "hooks"]
+
+[time]
+agent = 1800
+verifier = 120
+
+[repository]
+url = "https://github.com/apache/superset"
+base_commit = "4f695e1b4d23beb67473b39d2f0ab71df56378b3"
+merge_commit = "3a3a6536b7ed9044ffaead2fbe0d8a944431925d"
+pr_number = 39160
+
+[source]
+primary_path = "superset-frontend/src/explore/components/ExploreChartPanel"
+files = [
+    "superset-frontend/src/explore/components/ExploreChartPanel/index.tsx",
+    "superset-frontend/src/explore/components/ExploreChartPanel/useResizeDetectorByObserver.ts"
+]
+
+[metadata]
+title = "Fix unnecessary scroll bars on charts in Explore view"
+description = "The useResizeDetectorByObserver hook was observing 'panel-body' but measuring a different element (chart container). When Split component resized the chart independently, resize wasn't detected causing stale dimensions and unnecessary scroll bars."

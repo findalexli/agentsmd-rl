@@ -1,74 +1,80 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.981769",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:57:16.400717",
+  "total_time": 4799.27,
+  "sandbox_id": "iq5up98m38llzttnniykb",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "timestamp": "2026-04-09T09:48:00Z",
+      "ci_commands_found": [
+        "ruff check --select=E9,F63,F7,F82 (syntax/import error checks)",
+        "isort --check-only (import sorting checks)",
+        "black --check (code formatting checks)"
+      ],
+      "tests_added": [
+        "test_repo_ruff - Repo ruff linting passes on modified files",
+        "test_repo_isort - Repo import sorting passes on modified files",
+        "test_repo_black - Repo code formatting passes on modified files"
+      ],
+      "notes": "Discovered CI/CD from .github/workflows/lint.yml and .pre-commit-config.yaml. Added 3 pass_to_pass tests that verify the repo's own linting/formatting passes on the base commit. Tests install missing tools at runtime since Dockerfile cannot be modified."
     },
-    {
-      "timestamp": "2026-03-30T11:48:20.105752",
-      "runner": "audit (audit-tests_20260330_114820)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 10633
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.749004",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T02:55:31-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 0.0,
-      "nop_score": 0.0,
-      "verdict": "fail_gold",
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 502.12,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "timestamp": "2026-04-09T09:58:00Z",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build OK, NOP reward=0 (5 fail-to-pass tests fail correctly), Gold reward=1 (13 tests pass), Rubric ICR=1.0. Tests include both PR diff checks (repickle stability, batch unwrap, scheduler placement) and repo CI checks (ruff, isort, black).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 52.73
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.74,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T20:10:00-07:00",
-      "runner": "manual_remake",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.0,
       "verdict": "pass",
-      "notes": "Remade test_outputs.py: AST extraction instead of broken module import"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:57:16.232714"
     },
     {
-      "timestamp": "2026-04-02T13:47:53.984043",
-      "phase": "e2b_wave2",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.964373",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.637573",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4799.27,
+      "at": "2026-04-09T02:57:16.400717"
     }
   ]
 }

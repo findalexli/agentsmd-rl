@@ -1,0 +1,48 @@
+name = "compose-callable-inference-fix"
+description = "Fix callableInferenceNodeOf in ComposableTargetChecker.kt to properly handle scheme storage for callable inference nodes"
+version = "1.0.0"
+
+[environment]
+image = "python:3.12-slim"
+type = "docker"
+
+[task]
+type = "code_fix"
+difficulty = "medium"
+time_estimate = 1800
+
+[repository]
+owner = "JetBrains"
+repo = "kotlin"
+base_commit = "a304b4b5c79aa22c62ab5410caccaeb3a05c276a"
+merge_commit = "167a139ee7e66f69f847c6d0ab2957ab162df1f3"
+pr_number = 5833
+
+[[tests]]
+id = "test_syntax"
+name = "Syntax Check"
+type = "syntax"
+weight = 0.1
+
+[[tests]]
+id = "test_callable_node_kind"
+name = "Callable Node Kind Check"
+type = "pytest"
+weight = 0.3
+
+[[tests]]
+id = "test_callable_inference_node_of"
+name = "Callable Inference Node Of Logic"
+type = "pytest"
+weight = 0.3
+
+[[tests]]
+id = "test_function_call_handling"
+name = "FirFunctionCall Handling"
+type = "pytest"
+weight = 0.3
+
+[tags]
+category = ["compiler", "kotlin", "compose", "inference"]
+language = ["kotlin", "java"]
+framework = ["gradle"]

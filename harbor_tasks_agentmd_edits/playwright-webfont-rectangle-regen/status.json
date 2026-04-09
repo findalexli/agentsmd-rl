@@ -1,13 +1,142 @@
 {
-  "validations": [
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T04:05:15.618939",
+  "total_time": 8878.81,
+  "sandbox_id": "iroogttl22gisbaovcqux",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "ci_commands_discovered": [
+        {
+          "command": "npm run tsc",
+          "description": "TypeScript typecheck for packages (tsc -p . && tsc -p packages/html-reporter/)",
+          "working": false,
+          "reason": "npm not available in Dockerfile (Node.js not installed) - requires Dockerfile update to add Node.js"
+        },
+        {
+          "command": "npm run check-deps",
+          "description": "Check package dependencies (node utils/check_deps.js)",
+          "working": false,
+          "reason": "npm not available in Dockerfile (Node.js not installed) - requires Dockerfile update to add Node.js"
+        },
+        {
+          "command": "npm run lint-tests",
+          "description": "Lint test files (node utils/lint_tests.js)",
+          "working": false,
+          "reason": "npm not available in Dockerfile (Node.js not installed) - requires Dockerfile update to add Node.js"
+        },
+        {
+          "command": "npm run eslint",
+          "description": "ESLint check (eslint --cache)",
+          "working": false,
+          "reason": "npm not available in Dockerfile (Node.js not installed) - requires Dockerfile update to add Node.js"
+        },
+        {
+          "command": "npm run build",
+          "description": "Build the project (node utils/build/build.js)",
+          "working": false,
+          "reason": "npm not available in Dockerfile (Node.js not installed) - requires Dockerfile update to add Node.js"
+        },
+        {
+          "command": "npm run ct",
+          "description": "Component tests (playwright test tests/components/test-all.spec.js)",
+          "working": false,
+          "reason": "npm not available in Dockerfile (Node.js not installed) - requires Dockerfile update to add Node.js"
+        },
+        {
+          "command": "cd tests/components/ct-react-vite && npm run typecheck",
+          "description": "TypeScript typecheck for ct-react-vite component (tsc --noEmit)",
+          "working": false,
+          "reason": "npm not available in Dockerfile (Node.js not installed) - requires Dockerfile update to add Node.js"
+        }
+      ],
+      "p2p_tests_added": [
+        {
+          "id": "webfont_files_exist",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Required webfont files must exist (iconfont.svg, iconfont.woff2, README.md)"
+        },
+        {
+          "id": "woff2_file_valid",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "The woff2 font file must be valid and readable (checks magic bytes)"
+        },
+        {
+          "id": "svg_has_expected_glyphs",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "SVG must contain expected plus and minus glyphs"
+        }
+      ],
+      "notes": [
+        "Playwright is a Node.js/TypeScript project with npm-based CI/CD",
+        "package.json has scripts: tsc, check-deps, lint-tests, eslint, build, ct",
+        "ct-react-vite component has typecheck script: tsc --noEmit",
+        "GitHub workflows in .github/workflows/: tests_components.yml runs build + ct",
+        "Current Dockerfile only has Python, no Node.js/npm installed",
+        "Added 3 new pass_to_pass tests that work in Python-only environment:",
+        "  - test_webfont_files_exist: verifies required files exist",
+        "  - test_woff2_file_valid: verifies woff2 magic bytes",
+        "  - test_svg_has_expected_glyphs: verifies SVG structure",
+        "To enable full repo CI tests, Dockerfile needs: curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs"
+      ]
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 244.89,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build OK, NOP test reward=0 (5 fail-to-pass tests correctly failed on base commit), Gold test reward=1 (all 9 tests passed after fix), Rubric judge ICR=0.0 (expected - judge evaluates agent diffs, not gold solution)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 80.18
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.7,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-03T07:38:12.344382",
-      "phase": "e2b_agentmd_initial",
-      "runner": "e2b_validate (agentmd)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T04:05:15.452856"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8878.81,
+      "at": "2026-04-09T04:05:15.618939"
     }
   ]
 }

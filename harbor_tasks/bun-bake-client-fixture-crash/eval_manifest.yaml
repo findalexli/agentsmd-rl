@@ -51,6 +51,22 @@ checks:
       lines: "218-220"
       commit: "923690e923b2f13e0815e8cf342748082058bede"
 
+  # CI/CD pass_to_pass gates
+  - id: test_repo_prettier_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's JavaScript/TypeScript files must pass prettier format check (from .github/workflows/format.yml)"
+
+  - id: test_repo_oxlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's JavaScript/TypeScript files must pass oxlint correctness checks (from .github/workflows/lint.yml)"
+
+  - id: test_bake_harness_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "bake-harness.ts must parse as valid TypeScript (syntax check from CI typecheck)"
+
 rubric:
   - rule: "Do not write flaky tests. Never wait for time to pass — always wait for the condition to be met."
     source:

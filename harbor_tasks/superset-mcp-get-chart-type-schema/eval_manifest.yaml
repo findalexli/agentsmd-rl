@@ -1,0 +1,176 @@
+source_pr:
+  owner: apache
+  repo: superset
+  number: 39142
+  merge_commit: 5f9fc31ae23cc25e7892780ccdcc17ab29bcc61a
+  base_commit: 8e811de5643022a97f6cb1890aa513197b7312e4
+
+task_description: |
+  Add a new MCP tool called `get_chart_type_schema` that returns the full JSON Schema
+  and working examples for a specific chart type. The tool should:
+  1. Accept a `chart_type` parameter (one of: xy, table, pie, pivot_table, mixed_timeseries, handlebars, big_number)
+  2. Accept an `include_examples` boolean parameter (default True)
+  3. Return a JSON Schema for the requested chart type
+  4. Return examples when include_examples=True
+  5. Return an error with valid_chart_types list for invalid chart_type values
+
+  The tool must follow MCP service conventions:
+  - Use @tool decorator with appropriate tags and annotations
+  - Include Apache license header
+  - Be imported and exported in the appropriate __init__.py files
+  - Be imported in app.py for auto-registration
+
+checks:
+  - id: "module_import"
+    description: "Tool module can be imported"
+    type: "test"
+    test_name: "test_tool_module_exists"
+    source: "functional"
+    weight: 2
+
+  - id: "valid_chart_types"
+    description: "VALID_CHART_TYPES constant has all 7 chart types"
+    type: "test"
+    test_name: "test_valid_chart_types_constant_exists"
+    source: "functional"
+    weight: 2
+
+  - id: "schema_returned_xy"
+    description: "XY chart type returns valid schema with properties"
+    type: "test"
+    test_name: "test_valid_chart_type_returns_schema[xy]"
+    source: "functional"
+    weight: 1
+
+  - id: "schema_returned_pie"
+    description: "Pie chart type returns valid schema with properties"
+    type: "test"
+    test_name: "test_valid_chart_type_returns_schema[pie]"
+    source: "functional"
+    weight: 1
+
+  - id: "schema_returned_table"
+    description: "Table chart type returns valid schema with properties"
+    type: "test"
+    test_name: "test_valid_chart_type_returns_schema[table]"
+    source: "functional"
+    weight: 1
+
+  - id: "schema_returned_big_number"
+    description: "Big number chart type returns valid schema with properties"
+    type: "test"
+    test_name: "test_valid_chart_type_returns_schema[big_number]"
+    source: "functional"
+    weight: 1
+
+  - id: "examples_returned"
+    description: "Examples are returned for valid chart types"
+    type: "test"
+    test_name: "test_valid_chart_type_returns_examples[xy]"
+    source: "functional"
+    weight: 1
+
+  - id: "examples_omitted"
+    description: "Examples omitted when include_examples=False"
+    type: "test"
+    test_name: "test_include_examples_false_omits_examples"
+    source: "functional"
+    weight: 2
+
+  - id: "error_handling"
+    description: "Invalid chart types return error with valid_chart_types list"
+    type: "test"
+    test_name: "test_invalid_chart_type_returns_error"
+    source: "functional"
+    weight: 2
+
+  - id: "license_header"
+    description: "Module has Apache license header"
+    type: "test"
+    test_name: "test_module_has_license_header"
+    source: "agent_config"
+    source_ref:
+      config_file: "superset/mcp_service/CLAUDE.md"
+      lines: "1-50"
+      commit: "8e811de5643022a97f6cb1890aa513197b7312e4"
+    weight: 1
+
+  # Pass-to-pass checks: repo CI/CD tests that must pass on both base and after fix
+  - id: "p2p_mcp_chart_schemas"
+    description: "MCP chart schema unit tests pass"
+    type: "pass_to_pass"
+    test_name: "test_repo_p2p.TestRepoP2P.test_mcp_chart_schemas"
+    source: "repo_tests"
+    weight: 1
+
+  - id: "p2p_mcp_chart_utils"
+    description: "MCP chart utils unit tests pass"
+    type: "pass_to_pass"
+    test_name: "test_repo_p2p.TestRepoP2P.test_mcp_chart_utils"
+    source: "repo_tests"
+    weight: 1
+
+  - id: "p2p_mcp_new_chart_types"
+    description: "MCP new chart types unit tests pass"
+    type: "pass_to_pass"
+    test_name: "test_repo_p2p.TestRepoP2P.test_mcp_new_chart_types"
+    source: "repo_tests"
+    weight: 1
+
+  - id: "p2p_mcp_big_number_chart"
+    description: "MCP big number chart unit tests pass"
+    type: "pass_to_pass"
+    test_name: "test_repo_p2p.TestRepoP2P.test_mcp_big_number_chart"
+    source: "repo_tests"
+    weight: 1
+
+  - id: "p2p_mcp_handlebars_chart"
+    description: "MCP handlebars chart unit tests pass"
+    type: "pass_to_pass"
+    test_name: "test_repo_p2p.TestRepoP2P.test_mcp_handlebars_chart"
+    source: "repo_tests"
+    weight: 1
+
+  - id: "p2p_mcp_preview_utils"
+    description: "MCP preview utils unit tests pass"
+    type: "pass_to_pass"
+    test_name: "test_repo_p2p.TestRepoP2P.test_mcp_preview_utils"
+    source: "repo_tests"
+    weight: 1
+
+  - id: "p2p_mcp_caching"
+    description: "MCP caching unit tests pass"
+    type: "pass_to_pass"
+    test_name: "test_repo_p2p.TestRepoP2P.test_mcp_caching"
+    source: "repo_tests"
+    weight: 1
+
+  - id: "p2p_mcp_storage"
+    description: "MCP storage unit tests pass"
+    type: "pass_to_pass"
+    test_name: "test_repo_p2p.TestRepoP2P.test_mcp_storage"
+    source: "repo_tests"
+    weight: 1
+
+  - id: "p2p_chart_validation_column_normalization"
+    description: "Chart validation column name normalization tests pass"
+    type: "pass_to_pass"
+    test_name: "test_repo_p2p.TestRepoP2P.test_chart_validation_column_normalization"
+    source: "repo_tests"
+    weight: 1
+
+  - id: "p2p_chart_validation_runtime"
+    description: "Chart validation runtime validator tests pass"
+    type: "pass_to_pass"
+    test_name: "test_repo_p2p.TestRepoP2P.test_chart_validation_runtime"
+    source: "repo_tests"
+    weight: 1
+
+  - id: "p2p_mcp_core_system_tool"
+    description: "MCP core system tool tests pass"
+    type: "pass_to_pass"
+    test_name: "test_repo_p2p.TestRepoP2P.test_mcp_core_system_tool"
+    source: "repo_tests"
+    weight: 1
+
+rubric: []

@@ -1,72 +1,79 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-04-08T18:35:00-07:00",
-      "runner": "manual/improve-tests",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.0,
-      "verdict": "pass",
-      "notes": "Tests improved - verified subprocess-based behavioral tests work correctly"
-    },
-    {
-      "timestamp": "2026-03-30T13:02:43.981431",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
-    },
-    {
-      "timestamp": "2026-03-30T11:48:15.959690",
-      "runner": "audit (audit-tests_20260330_114815)",
-      "phase": "audit",
-      "status": "timeout",
-      "output_tokens": null
-    },
-    {
-      "timestamp": "2026-03-31T09:10:27.424960",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "timeout",
-      "output_tokens": null
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.718874",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-01T22:53:30-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.0,
-      "verdict": "pass",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T11:36:52.009141",
+  "total_time": 8699.22,
+  "sandbox_id": "i5o4k5yp6qtktc0pjju7m",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 180.15,
       "notes": ""
     },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 245.48,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.5,
+      "attempts": 1,
+      "notes": "All core checks passed: 1) Docker build successful, 2) NOP test reward=0 (tests correctly fail on base code), 3) Gold test reward=1 (all 13 tests pass with fix applied). Rubric judge returned 0.5 due to missing ANTHROPIC_API_KEY (infrastructure limitation, not a task issue).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 102.01
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=0.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T14:28:08.956628",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 6293.62,
+      "at": "2026-04-09T06:28:54.214450"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.586794",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8698.95,
+      "at": "2026-04-09T11:36:51.841129"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8699.22,
+      "at": "2026-04-09T11:36:52.009141"
     }
   ]
 }

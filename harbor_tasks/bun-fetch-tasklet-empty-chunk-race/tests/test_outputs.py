@@ -162,3 +162,72 @@ server.stop();
     # We mainly care that it doesn't crash or hang
     assert r.returncode == 0, f"Stream test failed:\n{r.stderr.decode()}"
     assert b"Stream test passed" in r.stdout, "Stream test didn't complete correctly"
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - CI/CD checks from the repo
+# -----------------------------------------------------------------------------
+
+def test_repo_lint():
+    """Repo's JavaScript lint passes (pass_to_pass).
+
+    Runs oxlint on src/js to verify no lint errors.
+    This is part of the repo's CI (bun run lint).
+    Uses 'bun x' instead of bunx to avoid PATH issues.
+    """
+    r = subprocess.run(
+        ["bun", "x", "oxlint", "--config=oxlint.json", "--format=github", "src/js"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_banned_words():
+    """Repo's banned words check passes (pass_to_pass).
+
+    Runs internal test to verify no banned words are used.
+    This is part of the repo's CI format check.
+    """
+    r = subprocess.run(
+        ["bun", "test", "test/internal/ban-words.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Banned words check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_zig_fmt():
+    """Repo's Zig code passes zig fmt check (pass_to_pass).
+
+    Runs zig fmt --check on the target file to verify formatting.
+    This is part of the repo's CI format check.
+    """
+    r = subprocess.run(
+        ["zig", "fmt", "--check", TARGET_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Zig fmt check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_prettier():
+    """Repo's TypeScript files pass prettier check (pass_to_pass).
+
+    Runs prettier --check on scripts directory to verify formatting.
+    This is part of the repo's CI format check.
+    """
+    r = subprocess.run(
+        ["bun", "x", "prettier", "--check", "--plugin=prettier-plugin-organize-imports",
+         "--config=.prettierrc", "scripts/*.ts"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

@@ -78,6 +78,35 @@ checks:
       lines: "26"
       commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
 
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests) — CI/CD checks from the repository
+  # ---------------------------------------------------------------------------
+
+  - id: test_repo_ruff_lint_ppo
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linting passes on PPO files"
+
+  - id: test_repo_ruff_format_ppo
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff format check passes on PPO files"
+
+  - id: test_repo_syntax_areal
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All areal Python files parse without syntax errors"
+
+  - id: test_repo_syntax_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All test files parse without syntax errors"
+
+  - id: test_repo_actor_critic_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "actor.py and critic.py compile without errors"
+
 rubric:
   - rule: "No GPU-CPU sync in hot paths (.item(), .tolist(), print(tensor))."
     source:

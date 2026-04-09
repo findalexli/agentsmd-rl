@@ -3,7 +3,7 @@ version: "2.0"
 source:
   repo: "anomalyco/opencode"
   pr: 17144
-  base_commit: "c9c0318e0e5c2fcd80fc1a32a1ccfe360f182f90"
+  base_commit: "c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90"
   merge_commit: "328c6de80d51704c09bdd962df2ddf5b9d7c82ea"
 
 checks:
@@ -49,6 +49,19 @@ checks:
       path: "packages/app/e2e/AGENTS.md"
       lines: "167-180"
       commit: "c9c0318e0e5c2fcd80fc1a32a1ccfe360f182f90"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests) — CI/CD checks that should pass on base and after fix
+  # ---------------------------------------------------------------------------
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript typecheck passes (bun typecheck)"
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit test suite passes (bun turbo test:ci)"
 
   # ---------------------------------------------------------------------------
   # Pass-to-pass (static) — anti-stub checks

@@ -1,0 +1,78 @@
+source_pr:
+  owner: gohugoio
+  repo: hugo
+  pr_number: 14599
+  title: "internal/warpc: Fix SIGSEGV in Close() when dispatcher fails to start"
+  base_commit: 54c804876a5b63c3447b612ce6823339f3f486fc
+  merge_commit: c9b88e4d15b96bcf0468ac165f9df53a5fbcd1a5
+
+target_files:
+  - internal/warpc/warpc.go
+
+checks:
+  - id: "code_compiles"
+    description: "The modified code compiles without errors"
+    type: "pytest"
+    origin: "test_outputs"
+
+  - id: "lazy_dispatcher_started_flag_guarded"
+    description: "lazyDispatcher.start() only sets started=true on successful Start()"
+    type: "pytest"
+    origin: "test_outputs"
+
+  - id: "close_handles_failed_start"
+    description: "Dispatchers.Close() properly checks started flag before accessing dispatcher"
+    type: "pytest"
+    origin: "test_outputs"
+
+  - id: "no_unconditional_started_assignment"
+    description: "No unconditional 'd.started = true' in startOnce.Do block (this was the bug)"
+    type: "pytest"
+    origin: "test_outputs"
+
+  - id: "no_sigsegv_in_tests"
+    description: "Existing tests don't SIGSEGV (regression check)"
+    type: "pytest"
+    origin: "test_outputs"
+
+  - id: "test_repo_go_vet"
+    description: "Repo's go vet passes on the warpc package (pass_to_pass)"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "test_repo_gofmt"
+    description: "Repo's gofmt check passes on warpc package (pass_to_pass)"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "test_repo_warpc_build"
+    description: "Repo's warpc package builds successfully (pass_to_pass)"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "test_repo_unit_tests_warpc"
+    description: "Repo warpc package unit tests pass (pass_to_pass)"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "test_repo_go_mod_tidy"
+    description: "Repo's go.mod is tidy (pass_to_pass)"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+rubric:
+  # No soft/subjective rules from AGENTS.md that need LLM judging
+  # The programmatic tests cover the functional correctness
+  []
+
+# Agent configs that were discovered and tested against
+agent_configs:
+  - path: AGENTS.md
+    commit: 54c804876a5b63c3447b612ce6823339f3f486fc
+    rules_checked:
+      - "Never export symbols that's not needed outside of the package"
+      - "Avoid global state at (almost) all cost"
+
+  - path: CLAUDE.md
+    commit: 54c804876a5b63c3447b612ce6823339f3f486fc
+    note: "References AGENTS.md, contains no additional rules"

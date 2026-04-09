@@ -21,6 +21,9 @@ WORKDIR /repo
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir colorlog
 
+# Install CI/CD testing tools (ruff for linting/formatting, pytest for testing)
+RUN pip install --no-cache-dir ruff pytest pytest-json-ctrf
+
 # Configure git for potential patch application
 RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test"

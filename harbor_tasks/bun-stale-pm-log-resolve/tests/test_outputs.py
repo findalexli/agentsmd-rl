@@ -290,3 +290,121 @@ def test_no_catch_outofmemory():
             f"catch bun.outOfMemory() used instead of bun.handleOom: {line.strip()}\n"
             "src/CLAUDE.md: Use bun.handleOom(expr) — catch outOfMemory could swallow non-OOM errors."
         )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — banned words check from CI
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass — CI banned words check
+# Equivalent to: bun run banned (test/internal/ban-words.test.ts)
+def test_no_banned_words_in_diff():
+    """Added lines must not contain banned words/patterns (repo CI check)."""
+    # Banned word patterns from test/internal/ban-words.test.ts
+    banned_patterns = [
+        (r" != undefined", "This is by definition Undefined Behavior."),
+        (r" == undefined", "This is by definition Undefined Behavior."),
+        (r"undefined != ", "This is by definition Undefined Behavior."),
+        (r"undefined == ", "This is by definition Undefined Behavior."),
+        (r'@import\("bun"\)\.',
+         "Only import 'bun' once at the top of the file"),
+        (r"std\.debug\.assert",
+         "Use bun.assert instead"),
+        (r"std\.debug\.dumpStackTrace",
+         "Use bun.handleErrorReturnTrace or bun.crash_handler.dumpStackTrace instead"),
+        (r"std\.debug\.print",
+         "Don't let this be committed"),
+        (r"std\.log", "Don't let this be committed"),
+        (r"std\.mem\.indexOfAny\(u8",
+         "Use bun.strings.indexOfAny"),
+        (r"std\.StringArrayHashMapUnmanaged\(",
+         "bun.StringArrayHashMapUnmanaged has a faster `eql`"),
+        (r"std\.StringArrayHashMap\(",
+         "bun.StringArrayHashMap has a faster `eql`"),
+        (r"std\.StringHashMapUnmanaged\(",
+         "bun.StringHashMapUnmanaged has a faster `eql`"),
+        (r"std\.StringHashMap\(",
+         "bun.StringHashMap has a faster `eql`"),
+        (r"std\.enums\.tagName\(", "Use bun.tagName instead"),
+        (r"std\.unicode", "Use bun.strings instead"),
+        (r"std\.Thread\.Mutex", "Use bun.Mutex instead"),
+        (r"\.jsBoolean\(true\)", "Use .true instead"),
+        (r"JSValue\.true", "Use .true instead"),
+        (r"\.jsBoolean\(false\)", "Use .false instead"),
+        (r"JSValue\.false", "Use .false instead"),
+        (r"allocator\.ptr ==",
+         "The std.mem.Allocator context pointer can be undefined"),
+        (r"allocator\.ptr !=",
+         "The std.mem.Allocator context pointer can be undefined"),
+        (r"== allocator\.ptr",
+         "The std.mem.Allocator context pointer can be undefined"),
+        (r"!= allocator\.ptr",
+         "The std.mem.Allocator context pointer can be undefined"),
+        (r"alloc\.ptr ==",
+         "The std.mem.Allocator context pointer can be undefined"),
+        (r"alloc\.ptr !=",
+         "The std.mem.Allocator context pointer can be undefined"),
+        (r"== alloc\.ptr",
+         "The std.mem.Allocator context pointer can be undefined"),
+        (r"!= alloc\.ptr",
+         "The std.mem.Allocator context pointer can be undefined"),
+        (r": [^=]+= undefined,$",
+         "Do not default a struct field to undefined"),
+        (r"usingnamespace", "Zig 0.15 will remove `usingnamespace`"),
+        (r"std\.fs\.Dir", "Prefer bun.sys + bun.FD instead of std.fs"),
+        (r"std\.fs\.cwd", "Prefer bun.FD.cwd()"),
+        (r"std\.fs\.File", "Prefer bun.sys + bun.FD instead of std.fs"),
+        (r"std\.fs\.openFileAbsolute",
+         "Prefer bun.sys + bun.FD instead of std.fs"),
+        (r"\.stdFile\(\)",
+         "Prefer bun.sys + bun.FD instead of std.fs.File"),
+        (r"\.stdDir\(\)",
+         "Prefer bun.sys + bun.FD instead of std.fs.File"),
+        (r"\.arguments_old\(",
+         "Please migrate to .argumentsAsArray() or another argument API"),
+        (r"// autofix",
+         "Evaluate if this variable should be deleted entirely or explicitly discarded"),
+    ]
+
+    added_lines = _get_added_lines()
+    for line in added_lines:
+        for pattern, reason in banned_patterns:
+            assert not re.search(pattern, line), (
+                f"Banned pattern found in changed line: {line.strip()}\n"
+                f"Pattern: {pattern}\nReason: {reason}"
+            )
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# -----------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass — TypeScript typecheck
+REPO_SCRIPTS = Path(REPO) / "scripts"
+
+
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["tsc", "--noEmit"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — oxlint check
+def test_repo_lint():
+    """Repo's JavaScript linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["oxlint", "--quiet", "src/js"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Linting failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

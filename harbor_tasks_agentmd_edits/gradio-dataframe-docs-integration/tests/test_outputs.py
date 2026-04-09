@@ -44,9 +44,21 @@ def _check_typescript_syntax(file_path: str) -> tuple[bool, str]:
     return True, ""
 
 
-# ---------------------------------------------------------------------------
+def _run_pnpm_command(cmd: list[str], cwd: str = REPO, timeout: int = 120) -> tuple[int, str, str]:
+    """Run a pnpm command and return (returncode, stdout, stderr)."""
+    result = subprocess.run(
+        ["pnpm"] + cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=cwd,
+    )
+    return result.returncode, result.stdout, result.stderr
+
+
+# -----------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 def test_typescript_syntax_layout_server():
     """Layout server TypeScript file must be syntactically valid."""
@@ -82,9 +94,9 @@ def test_package_json_valid():
         raise AssertionError(f"Invalid JSON in package.json: {e}")
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 def test_dataframe_readme_has_comprehensive_docs():
     """js/dataframe/README.md must have comprehensive standalone documentation."""
@@ -188,9 +200,9 @@ def test_language_map_extended():
         "Language map must include css"
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Pass-to-pass (static) — consistency checks
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 def test_types_field_unchanged():
     """Package.json types field should remain properly ordered."""
@@ -216,3 +228,136 @@ def test_navigation_links_removed():
         "JSDoc page should have removed navigation links (prev_obj)"
     assert jsdoc_svelte.count('next_obj') < 2, \
         "JSDoc page should have removed navigation links (next_obj)"
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and after fix
+# -----------------------------------------------------------------------------
+
+def test_repo_package_json_valid_dataframe():
+    """Dataframe package.json must be valid JSON (pass_to_pass)."""
+    pkg_path = Path(REPO) / "js/dataframe/package.json"
+    assert pkg_path.exists(), "js/dataframe/package.json must exist"
+    content = pkg_path.read_text()
+    try:
+        pkg = json.loads(content)
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"Invalid JSON in js/dataframe/package.json: {e}")
+    # Verify expected fields
+    assert pkg.get("name") == "@gradio/dataframe", "Package name must be @gradio/dataframe"
+    assert "exports" in pkg, "Package must have exports field"
+
+
+def test_repo_package_json_valid_code():
+    """Code package.json must be valid JSON with proper exports (pass_to_pass)."""
+    pkg_path = Path(REPO) / "js/code/package.json"
+    assert pkg_path.exists(), "js/code/package.json must exist"
+    content = pkg_path.read_text()
+    try:
+        pkg = json.loads(content)
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"Invalid JSON in js/code/package.json: {e}")
+    # Verify expected exports structure
+    exports = pkg.get("exports", {})
+    assert "." in exports, "Package must have main export"
+    assert "types" in exports.get(".", {}), "Main export must have types"
+
+
+def test_repo_typescript_syntax_changelog_server():
+    """Changelog server TypeScript file must be syntactically valid (pass_to_pass)."""
+    ok, msg = _check_typescript_syntax("js/_website/src/routes/changelog/+page.server.ts")
+    assert ok, msg
+
+
+def test_repo_typescript_syntax_storybook_server():
+    """Storybook page server TypeScript file must be syntactically valid (pass_to_pass)."""
+    ok, msg = _check_typescript_syntax("js/_website/src/routes/[[version]]/docs/js/storybook/+page.server.ts")
+    assert ok, msg
+
+
+def test_repo_readme_exists_dataframe():
+    """Dataframe README.md must exist (pass_to_pass)."""
+    readme_path = Path(REPO) / "js/dataframe/README.md"
+    assert readme_path.exists(), "js/dataframe/README.md must exist"
+    # Must have content
+    content = readme_path.read_text()
+    assert len(content) > 100, "README.md must have substantial content"
+
+
+def test_repo_website_layout_valid():
+    """Website layout server must have valid TypeScript syntax (pass_to_pass)."""
+    layout_path = Path(REPO) / "js/_website/src/routes/[[version]]/docs/+layout.server.ts"
+    assert layout_path.exists(), "Layout server must exist"
+    content = layout_path.read_text()
+    # Basic TypeScript syntax checks
+    assert "export async function load" in content, "Must have load function"
+    assert "let cache = new Map()" in content, "Must have cache Map"
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD pipeline checks
+# These tests verify that the repo's actual CI/CD checks pass on both
+# the base commit and after the fix. Commands discovered from:
+# - .github/workflows/tests-js.yml
+# - package.json scripts
+# -----------------------------------------------------------------------------
+
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass).
+
+    CI Command: pnpm format:check
+    Source: .github/workflows/tests-js.yml
+    """
+    returncode, stdout, stderr = _run_pnpm_command(
+        ["format:check"],
+        timeout=120
+    )
+    combined_output = stdout + stderr
+    # Show last 500 chars of output on failure
+    error_msg = combined_output[-500:] if len(combined_output) > 500 else combined_output
+    assert returncode == 0, f"Format check failed:\n{error_msg}"
+
+
+def test_repo_lint():
+    """Repo's ESLint check passes (pass_to_pass).
+
+    CI Command: pnpm lint
+    Source: .github/workflows/tests-js.yml
+    """
+    returncode, stdout, stderr = _run_pnpm_command(
+        ["lint"],
+        timeout=120
+    )
+    combined_output = stdout + stderr
+    error_msg = combined_output[-500:] if len(combined_output) > 500 else combined_output
+    assert returncode == 0, f"Lint check failed:\n{error_msg}"
+
+
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass).
+
+    CI Command: pnpm ts:check
+    Source: .github/workflows/tests-js.yml
+    """
+    returncode, stdout, stderr = _run_pnpm_command(
+        ["ts:check"],
+        timeout=120
+    )
+    combined_output = stdout + stderr
+    error_msg = combined_output[-500:] if len(combined_output) > 500 else combined_output
+    assert returncode == 0, f"Typecheck failed:\n{error_msg}"
+
+
+def test_repo_client_builds():
+    """Repo's @gradio/client package builds successfully (pass_to_pass).
+
+    CI Command: pnpm --filter @gradio/client build
+    Source: .github/workflows/tests-js.yml (build step before tests)
+    """
+    returncode, stdout, stderr = _run_pnpm_command(
+        ["--filter", "@gradio/client", "build"],
+        timeout=120
+    )
+    combined_output = stdout + stderr
+    error_msg = combined_output[-500:] if len(combined_output) > 500 else combined_output
+    assert returncode == 0, f"Client build failed:\n{error_msg}"

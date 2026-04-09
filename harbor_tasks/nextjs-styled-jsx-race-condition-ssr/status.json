@@ -1,12 +1,89 @@
 {
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-08T21:43:04.836877",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 599.54,
-  "error": "No backend available within 600s. Pool: glm(14ok/0\u00d7429/ok) | fireworks(33ok/0\u00d7429/ok)"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:47:23.306072",
+  "total_time": 4206.13,
+  "sandbox_id": "i59eglt0dq37isn050b63",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "ci_commands_found": [
+        "pnpm typescript - tsc --noEmit (project-wide typecheck)",
+        "pnpm lint-typescript - turbo run typescript (all packages)",
+        "pnpm test-unit - jest test/unit/ packages/next/ packages/font",
+        "pnpm build - turbo run build"
+      ],
+      "tests_added": [
+        {
+          "id": "test_repo_typescript",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "command": "npx pnpm typescript",
+          "description": "Repo's TypeScript typecheck (tsc --noEmit) passes on base commit and after fix"
+        },
+        {
+          "id": "test_repo_unit_tests",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "command": "npx jest test/unit --passWithNoTests",
+          "description": "Repo's unit tests pass on base commit and after fix"
+        }
+      ],
+      "notes": "Docker build successful. Discovered CI commands from package.json scripts and .github/workflows/build_and_test.yml. TypeScript check and unit tests verified working on base commit (98330e3). Tests require build step before execution."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2465.28,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed. Docker build successful. NOP test correctly fails 3 fail-to-pass tests (Promise.all race condition patterns). Gold test passes all 8 tests after applying solve.sh patch. Rubric judge ICR=1.0. The task validates correctly: base commit has race condition in styled-jsx SSR, fix removes Promise.all to ensure sequential execution.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 427.53
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.69,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:47:23.140668"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4206.13,
+      "at": "2026-04-09T02:47:23.306072"
+    }
+  ]
 }

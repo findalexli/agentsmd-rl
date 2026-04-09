@@ -89,6 +89,58 @@ def test_compiles():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_build_ty():
+    """Repo's ty binary builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "build", "--bin", "ty"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ty build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_clippy_ty_python_semantic():
+    """Repo's clippy checks pass for ty_python_semantic (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty_python_semantic", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_fmt_check():
+    """Repo's code formatting is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"fmt check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ty_check_works():
+    """Repo's ty binary can check a simple Python file (pass_to_pass)."""
+    # Create a simple test file
+    test_code = "x: int = 1\n"
+    with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False, dir="/tmp") as f:
+        f.write(test_code)
+        tmp = f.name
+    try:
+        r = subprocess.run(
+            [_ty_bin(), "check", tmp],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"ty check failed:\n{r.stderr[-500:]}"
+    finally:
+        os.unlink(tmp)
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

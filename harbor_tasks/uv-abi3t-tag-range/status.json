@@ -1,11 +1,45 @@
 {
+  "schema_version": 2,
   "verdict": "fail",
-  "nop_reward": 1.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-08T21:48:26.397607",
-  "sandbox_id": "ic3eqsm7mgev294pu7751",
-  "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 921.12
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T06:59:40.507254",
+  "total_time": 5988.82,
+  "sandbox_id": "iaighf1ihzz77ayixlq7k",
+  "backend": "glm",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 257.09,
+      "notes": "Added 2 new pass_to_pass tests from repo CI: (1) test_uv_platform_tags_cargo_test - runs 'cargo test --package uv-platform-tags' to verify all crate tests pass, (2) test_uv_platform_tags_clippy - runs 'cargo clippy --package uv-platform-tags --all-targets --all-features -- -D warnings' to verify linting passes. CI commands discovered from .github/workflows/test.yml (cargo nextest run), .github/workflows/check-lint.yml (cargo clippy), .github/workflows/check-fmt.yml (cargo fmt). Full test suite uses cargo nextest but cargo test works for single crate. Clippy command matches upstream CI with -D warnings. Skipped: cargo fmt (requires rustfmt component), cargo shear (unused dep checker - not critical), ruff/ty (Python linters - not relevant to Rust crate)."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 299.65,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 5988.82,
+      "at": "2026-04-09T06:59:40.507254"
+    }
+  ]
 }

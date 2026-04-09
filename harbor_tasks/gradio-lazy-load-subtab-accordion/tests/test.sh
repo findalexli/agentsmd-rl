@@ -13,6 +13,16 @@ if ! python3 -c "import pytest" 2>/dev/null; then
         pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
 fi
 
+# Install pnpm if not available (needed for JS/TS repo tests)
+if ! command -v pnpm &>/dev/null; then
+    npm install -g pnpm 2>/dev/null || true
+fi
+
+# Install JS dependencies if pnpm is available and we're in the gradio repo
+if command -v pnpm &>/dev/null && [ -f "/workspace/gradio/package.json" ]; then
+    cd /workspace/gradio && pnpm install --frozen-lockfile >/dev/null 2>&1 || pnpm install >/dev/null 2>&1 || true
+fi
+
 python3 -m pytest --ctrf /logs/verifier/ctrf.json /tests/test_outputs.py -rA --tb=short -q
 
 if [ $? -eq 0 ]; then

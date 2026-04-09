@@ -1,0 +1,77 @@
+source_pr:
+  owner: containerd
+  repo: containerd
+  number: 13117
+  title: "tracing: add option to inject trace ID into logrus fields"
+  merge_commit: "43d906b6ff004f8602854b40e7dab056b40707cb"
+  base_commit: "ae04fbd2e11a28b32b184024b4ed397713d642d7"
+
+# Checks that verify the fix (must match test function names in test_outputs.py)
+checks:
+  # Fail-to-pass checks (must fail on base commit, pass on correct fix)
+  - id: test_log_compiles
+    name: "Tracing package compiles"
+    type: f2p
+    weight: 1.0
+
+  - id: test_trace_id_injection_enabled
+    name: "Trace ID injected when option enabled"
+    type: f2p
+    weight: 1.0
+
+  - id: test_trace_id_not_injected_when_disabled
+    name: "Trace ID not injected when option disabled"
+    type: f2p
+    weight: 1.0
+
+  - id: test_trace_id_not_injected_without_span
+    name: "Trace ID not injected without span context"
+    type: f2p
+    weight: 1.0
+
+  - id: test_config_has_log_trace_id_field
+    name: "Debug config has LogTraceID field"
+    type: f2p
+    weight: 1.0
+
+  - id: test_main_registers_hook_with_config
+    name: "main.go registers hook with config option"
+    type: f2p
+    weight: 1.0
+
+  - id: test_otlp_no_longer_registers_hook_in_init
+    name: "otlp.go no longer registers hook in init()"
+    type: f2p
+    weight: 1.0
+
+  # Pass-to-pass checks (pass on both base and fix - verify structure)
+  - id: test_hook_has_enable_trace_id_field
+    name: "LogrusHook has enableTraceIDField field"
+    type: p2p
+    weight: 0.5
+
+  - id: test_hook_opt_type_exists
+    name: "HookOpt type is defined"
+    type: p2p
+    weight: 0.5
+
+  - id: test_with_trace_id_field_option_exists
+    name: "WithTraceIDField option exists"
+    type: p2p
+    weight: 0.5
+
+  - id: test_new_logrus_hook_accepts_opts
+    name: "NewLogrusHook accepts variadic options"
+    type: p2p
+    weight: 0.5
+
+  - id: test_fire_method_checks_span_context
+    name: "Fire method checks span context validity"
+    type: p2p
+    weight: 0.5
+
+# Agent configuration compliance (none for this repo - no agent configs found)
+agent_config: []
+
+# Rubric for soft/subjective requirements (LLM-judged) - none for this task
+rubric: []

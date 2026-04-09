@@ -1,0 +1,137 @@
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:19:43.756321",
+  "total_time": 2546.47,
+  "sandbox_id": "izi8rag1u1l1diidsu0ke",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.5,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile (added unzip for bun), test_outputs.py (added text=True to subprocess.run calls), and eval_manifest.yaml (fixed AGENTS.md path). All 4 key checks pass: Docker build succeeds, NOP test reward=0 (5 fail-to-pass tests correctly fail), Gold test reward=1 (all 8 tests pass). Rubric judge skipped due to infrastructure limitation (Fireworks API key instead of Anthropic).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 442.59
+    },
+    "p2p_enrichment": {
+      "status": "complete_pending_permissions",
+      "discovery_completed": "2026-04-09",
+      "ci_commands_discovered": [
+        {
+          "command": "bun run test",
+          "cwd": "/workspace/opencode/packages/opencode",
+          "package_json": "packages/opencode/package.json",
+          "script_def": "bun test --timeout 30000",
+          "github_workflow": ".github/workflows/test.yml (bun turbo test)",
+          "description": "Unit tests for opencode package using bun test runner",
+          "timeout": 120,
+          "requires_network": false,
+          "requires_gpu": false,
+          "added": true
+        },
+        {
+          "command": "bun run typecheck",
+          "cwd": "/workspace/opencode/packages/opencode",
+          "package_json": "packages/opencode/package.json",
+          "script_def": "tsgo --noEmit",
+          "github_workflow": ".github/workflows/typecheck.yml (bun typecheck)",
+          "description": "TypeScript typecheck via tsgo (TypeScript native compiler)",
+          "timeout": 120,
+          "requires_network": false,
+          "requires_gpu": false,
+          "added": false,
+          "note": "Already exists as test_typecheck() in test_outputs.py"
+        }
+      ],
+      "ci_commands_rejected": [
+        {
+          "command": "bun turbo test",
+          "reason": "Full monorepo test suite - too broad for PR affecting only packages/opencode",
+          "alternative": "Use 'bun run test' in packages/opencode specifically"
+        },
+        {
+          "command": "bun turbo typecheck",
+          "reason": "Already covered by packages/opencode typecheck which is already tested",
+          "alternative": "Keep existing test_typecheck() which runs bun typecheck in PKG_DIR"
+        }
+      ],
+      "tests_added": [
+        {
+          "id": "test_repo_unit_tests",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Unit tests for packages/opencode must pass",
+          "location": "tests/test_outputs.py after test_typecheck()",
+          "code": "# [repo_tests] pass_to_pass\ndef test_repo_unit_tests():\n    \"\"\"Unit tests for packages/opencode must pass (pass_to_pass).\"\"\"\n    r = subprocess.run(\n        [\"bun\", \"run\", \"test\"],\n        cwd=str(PKG_DIR),\n        capture_output=True, text=True, timeout=120,\n    )\n    assert r.returncode == 0, (\n        f\"Unit tests failed:\\n{r.stdout[-2000:]}\\n{r.stderr[-2000:]}\"\n    )"
+        }
+      ],
+      "eval_manifest_additions": [
+        {
+          "id": "test_repo_unit_tests",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Unit tests for packages/opencode must pass",
+          "insert_after": "typecheck check"
+        }
+      ],
+      "docker_fix_required": {
+        "file": "environment/Dockerfile",
+        "issue": "Bun installation fails: 'unzip is required to install bun'",
+        "fix": "Add 'unzip' to apt-get install line 7",
+        "current": "git curl ca-certificates build-essential python3 tmux",
+        "required": "git curl ca-certificates build-essential python3 tmux unzip"
+      },
+      "blockers": [
+        "Previous permission issues resolved via docker chown"
+      ],
+      "files_prepared": [],
+      "summary": "Fixed permission issues using docker chown. Applied Dockerfile fix (added unzip), test_outputs.py fix (text=True in subprocess), and eval_manifest.yaml fix (correct AGENTS.md path). All validations pass."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 168.93,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.11,
+      "notes": "ICR=0.50"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:19:43.588444"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2546.47,
+      "at": "2026-04-09T02:19:43.756321"
+    }
+  ]
+}

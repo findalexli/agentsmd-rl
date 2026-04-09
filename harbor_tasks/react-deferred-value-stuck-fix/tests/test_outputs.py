@@ -130,6 +130,45 @@ def test_reconciler_tests_pass():
     assert r.returncode == 0, f"Deferred value tests failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow():
+    """Repo's Flow typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-node"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_plugin():
+    """ESLint plugin react-hooks tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "eslint-plugin-react-hooks", "test"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint plugin tests failed:\n{r.stderr[-500:]}"
+
+
 # [static] pass_to_pass
 def test_not_stub():
     """The fix adds real lane-merging logic, not just comments or empty statements."""

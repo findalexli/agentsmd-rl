@@ -1,0 +1,96 @@
+task_id: sui-graphql-display-v2-scope
+source_pr: MystenLabs/sui#26077
+base_commit: 4edd79bb00bb472bf7cfb56a891b7d6ab3e9db25
+merge_commit: ba68d9fe49e574bba1821bf39f169e8cb11900e3
+
+# Scoring weights
+weights:
+  correctness: 1.0
+  code_quality: 0.0
+
+# Evaluation checks
+checks:
+  # Fail-to-pass tests - verify the fix works
+  - id: test_code_compiles
+    type: fail_to_pass
+    origin: solution
+    description: Code compiles after fix is applied
+    weight: 0.25
+
+  - id: test_without_root_bound_applied
+    type: fail_to_pass
+    origin: solution
+    description: without_root_bound() call is present in display_v2 function
+    weight: 0.35
+
+  - id: test_fix_has_proper_comment
+    type: fail_to_pass
+    origin: solution
+    description: Fix includes explanatory comment about Display registry objects
+    weight: 0.15
+
+  # Pass-to-pass tests - verify repo still works
+  - id: test_scope_struct_unchanged
+    type: pass_to_pass
+    origin: repo_tests
+    description: Scope struct definition is intact
+    weight: 0.1
+
+  - id: test_cargo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code formatting check
+    weight: 0.05
+
+  - id: test_no_clippy_warnings_in_display
+    type: pass_to_pass
+    origin: repo_tests
+    description: Clippy passes on display module
+    weight: 0.1
+
+  - id: test_cargo_xlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo passes cargo xlint (license and workspace checks)
+    weight: 0.1
+
+  - id: test_cargo_check_package
+    type: pass_to_pass
+    origin: repo_tests
+    description: sui-indexer-alt-graphql package compiles with cargo check
+    weight: 0.1
+
+  - id: test_git_checks
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo passes git checks
+    weight: 0.05
+
+# Agent configuration rules - from CLAUDE.md and AGENTS.md
+agent_config:
+  - rule: License headers required
+    source: CLAUDE.md lines 18-22
+    description: All new files must start with Mysten Labs license header
+
+  - rule: Use cargo check for building
+    source: CLAUDE.md lines 26-28
+    description: Prefer cargo check over cargo build for faster feedback
+
+  - rule: Use SUI_SKIP_SIMTESTS=1 for nextest
+    source: CLAUDE.md lines 34-36
+    description: Skip simtests when running cargo nextest
+
+  - rule: Run cargo xclippy after development
+    source: CLAUDE.md lines 82-85
+    description: Always run cargo xclippy to ensure code passes linting
+
+  - rule: Never use lint suppressions
+    source: CLAUDE.md lines 86-88
+    description: Never use #[allow(dead_code)] or similar - fix underlying issues
+
+  - rule: Use #[tokio::test] for async tests
+    source: CLAUDE.md lines 89-90
+    description: All unit tests must use #[tokio::test] not #[test]
+
+# Rubric for subjective evaluation (empty as this is a straightforward fix)
+rubric: []

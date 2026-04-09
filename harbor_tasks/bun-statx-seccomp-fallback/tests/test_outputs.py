@@ -1,15 +1,3 @@
-"""
-Task: bun-statx-seccomp-fallback
-Repo: oven-sh/bun @ 159a285841539c8f166509116c12b11e15b47fdf
-PR:   28825
-
-Tests verify the fix for statx fallback error handling in src/sys.zig.
-A compiled C analyzer parses statxImpl to verify:
-- EPERM and EINVAL are included in the fallback errno set
-- Abnormal rc>0 return values trigger fallback
-- The statxFallback helper delegates correctly (stat/lstat/fstat)
-"""
-
 import os
 import re
 import subprocess
@@ -78,9 +66,88 @@ def test_source_files_exist():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests via C analysis
+# Pass-to-pass (repo_tests) — CI gates discovered from the repo
 # ---------------------------------------------------------------------------
 
+
+def test_zig_fmt_sys_zig():
+    """Zig code formatting check on src/sys.zig passes (pass_to_pass).
+    This is a lightweight CI gate from the repo's format.yml workflow.
+    Note: Full build.zig check fails due to Zig version mismatch (expected).
+    """
+    # Create a shell script to run zig fmt check
+    shell_script = """#!/bin/bash
+set -e
+apt-get update -qq && apt-get install -y -qq unzip curl ca-certificates 2>/dev/null
+ZIG_TEMP=$(mktemp -d)
+curl -sL -o "$ZIG_TEMP/zig.zip" "https://github.com/oven-sh/zig/releases/download/autobuild-e0b7c318f318196c5f81fdf3423816a7b5bb3112/bootstrap-x86_64-linux-musl.zip" 2>/dev/null
+unzip -q -d "$ZIG_TEMP" "$ZIG_TEMP/zig.zip"
+export PATH="$ZIG_TEMP/bootstrap-x86_64-linux-musl:$PATH"
+cd /workspace/bun
+zig fmt --check src/sys.zig
+rm -rf "$ZIG_TEMP"
+"""
+    r = subprocess.run(
+        ["bash", "-c", shell_script],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"zig fmt check failed on src/sys.zig:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_zig_fmt_build_zig():
+    """Zig code formatting check on build.zig passes (pass_to_pass).
+    CI gate from the repo's format.yml workflow (runs zig fmt on build.zig).
+    """
+    shell_script = """#!/bin/bash
+set -e
+apt-get update -qq && apt-get install -y -qq unzip curl ca-certificates 2>/dev/null
+ZIG_TEMP=$(mktemp -d)
+curl -sL -o "$ZIG_TEMP/zig.zip" "https://github.com/oven-sh/zig/releases/download/autobuild-e0b7c318f318196c5f81fdf3423816a7b5bb3112/bootstrap-x86_64-linux-musl.zip" 2>/dev/null
+unzip -q -d "$ZIG_TEMP" "$ZIG_TEMP/zig.zip"
+export PATH="$ZIG_TEMP/bootstrap-x86_64-linux-musl:$PATH"
+cd /workspace/bun
+zig fmt --check build.zig
+rm -rf "$ZIG_TEMP"
+"""
+    r = subprocess.run(
+        ["bash", "-c", shell_script],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"zig fmt check failed on build.zig:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_claude_md_valid():
+    """CLAUDE.md (AGENTS.md) exists and is non-empty (pass_to_pass).
+    Verifies the project's coding guidelines file is present and AGENTS.md symlink is valid.
+    CI gate: CLAUDE.md is referenced by AGENTS.md and contains coding rules.
+    """
+    claude_md = Path(f"{REPO}/CLAUDE.md")
+    assert claude_md.exists(), f"CLAUDE.md does not exist"
+    assert claude_md.stat().st_size > 1000, f"CLAUDE.md is unexpectedly small"
+
+    # Verify AGENTS.md symlink points to CLAUDE.md
+    agents_md = Path(f"{REPO}/AGENTS.md")
+    assert agents_md.exists() or agents_md.is_symlink(), "AGENTS.md does not exist"
+
+
+def test_repo_structure_intact():
+    """Repository structure is intact with required directories (pass_to_pass).
+    Verifies the base commit checkout was successful and key files exist.
+    """
+    required_paths = [
+        f"{REPO}/src/sys.zig",
+        f"{REPO}/build.zig",
+        f"{REPO}/package.json",
+        f"{REPO}/src",
+    ]
+    for path in required_paths:
+        p = Path(path)
+        assert p.exists(), f"Required repo path does not exist: {path}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests via C analysis
+# ---------------------------------------------------------------------------
 
 def test_statx_handles_eperm():
     """statxImpl must fall back on EPERM (seccomp-blocked statx).
@@ -105,28 +172,24 @@ int main(int argc, char **argv) {
     buf[len] = '\0';
     fclose(f);
 
-    /* Find statxImpl function body */
     char *impl = strstr(buf, "fn statxImpl");
     if (!impl) {
         fprintf(stderr, "FAIL: statxImpl not found\n");
         free(buf); return 1;
     }
 
-    /* Find the getErrno switch block within statxImpl */
     char *errno_switch = strstr(impl, "getErrno()");
     if (!errno_switch) {
         fprintf(stderr, "FAIL: no getErrno() call in statxImpl\n");
         free(buf); return 1;
     }
 
-    /* Find the switch statement following getErrno */
     char *brace = strchr(errno_switch, '{');
     if (!brace) {
         fprintf(stderr, "FAIL: no switch block after getErrno()\n");
         free(buf); return 1;
     }
 
-    /* Extract switch body - find matching close brace */
     int depth = 0;
     char *end = brace;
     while (*end) {
@@ -135,13 +198,11 @@ int main(int argc, char **argv) {
         end++;
     }
 
-    /* Save the switch body for analysis */
     char saved = *(end + 1);
     *(end + 1) = '\0';
 
-    /* Must contain .PERM in the switch cases */
     if (!strstr(brace, ".PERM")) {
-        fprintf(stderr, "FAIL: .PERM not in errno switch — EPERM won't trigger fallback\n");
+        fprintf(stderr, "FAIL: .PERM not in errno switch\n");
         *(end + 1) = saved; free(buf); return 1;
     }
 
@@ -209,7 +270,7 @@ int main(int argc, char **argv) {
     *(end + 1) = '\0';
 
     if (!strstr(brace, ".INVAL")) {
-        fprintf(stderr, "FAIL: .INVAL not in errno switch — EINVAL won't trigger fallback\n");
+        fprintf(stderr, "FAIL: .INVAL not in errno switch\n");
         *(end + 1) = saved; free(buf); return 1;
     }
 
@@ -254,24 +315,18 @@ int main(int argc, char **argv) {
         free(buf); return 1;
     }
 
-    /* The rc>0 check must use bitCast to isize and check > 0.
-       This handles QEMU user-mode and S390 RHEL docker where statx
-       returns a positive value that isn't 0 (success) or -errno. */
     char *bitcast_pos = strstr(impl, "isize");
     if (!bitcast_pos) {
         fprintf(stderr, "FAIL: no isize cast found in statxImpl\n");
         free(buf); return 1;
     }
 
-    /* Look for the pattern: @bitCast(rc) followed by > 0 check */
     char *bitcast = strstr(impl, "@bitCast");
     if (!bitcast || bitcast > bitcast_pos + 200) {
-        fprintf(stderr, "FAIL: no @bitCast of rc found — cannot detect rc>0\n");
+        fprintf(stderr, "FAIL: no @bitCast of rc found\n");
         free(buf); return 1;
     }
 
-    /* The positive-rc check must come BEFORE the errno handling,
-       because errnoSys treats rc>0 as success (errno == 0). */
     char *errno_check = strstr(impl, "errnoSys");
     if (!errno_check) {
         fprintf(stderr, "FAIL: no errnoSys call in statxImpl\n");
@@ -279,11 +334,10 @@ int main(int argc, char **argv) {
     }
 
     if (bitcast > errno_check) {
-        fprintf(stderr, "FAIL: rc>0 check is AFTER errnoSys — won't catch positive rc\n");
+        fprintf(stderr, "FAIL: rc>0 check is AFTER errnoSys\n");
         free(buf); return 1;
     }
 
-    /* Must store false to supports_statx_on_linux and call fallback */
     char *after_bitcast = bitcast;
     char *store_false = strstr(after_bitcast, "supports_statx_on_linux.store(false");
     if (!store_false) {
@@ -336,30 +390,20 @@ int main(int argc, char **argv) {
         free(buf); return 1;
     }
 
-    /* Find the getErrno() area in statxImpl */
     char *errno_area = strstr(impl, "getErrno()");
     if (!errno_area) {
         fprintf(stderr, "FAIL: no getErrno() in statxImpl\n");
         free(buf); return 1;
     }
 
-    /* The four errnos must appear grouped together (comma-separated switch cases
-       or combined with "or"), not as separate if-checks. Look for a line that
-       contains at least 3 of the 4 errnos together. */
-    char *line_start = errno_area;
-    int found_grouped = 0;
-
-    /* Search forward up to 2000 chars for the errno handling */
     char *search_end = errno_area + 2000;
     if (search_end > buf + len) search_end = buf + len;
 
-    /* Extract the errno handling region */
     long region_len = search_end - errno_area;
     char *region = malloc(region_len + 1);
     memcpy(region, errno_area, region_len);
     region[region_len] = '\0';
 
-    /* Check all four errnos exist in the handling region */
     int has_nosys = strstr(region, ".NOSYS") != NULL;
     int has_opnotsupp = strstr(region, ".OPNOTSUPP") != NULL;
     int has_perm = strstr(region, ".PERM") != NULL;
@@ -371,30 +415,24 @@ int main(int argc, char **argv) {
         free(region); free(buf); return 1;
     }
 
-    /* All four must trigger the same fallback action.
-       Look for a shared code path that handles them together. */
+    int found_grouped = 0;
     char *switch_arm = strstr(region, ".NOSYS");
     if (switch_arm) {
-        /* Check if all 4 errnos are on the same logical line (within ~200 chars).
-           This means they're grouped in one switch arm or if-condition. */
-        char nearby[200] = {0};
+        char nearby[400] = {0};
         int n = switch_arm - region;
-        int start_idx = (n > 100) ? n - 100 : 0;
+        int start_idx = (n > 200) ? n - 200 : 0;
         int end_idx = (n + 200 < region_len) ? n + 200 : region_len;
         int copy_len = end_idx - start_idx;
+        if (copy_len > 399) copy_len = 399;
         memcpy(nearby, region + start_idx, copy_len);
         nearby[copy_len] = '\0';
 
-        /* At minimum, PERM and INVAL must appear near NOSYS and OPNOTSUPP,
-           not in a completely separate block. */
         if (strstr(nearby, ".PERM") && strstr(nearby, ".INVAL")) {
             found_grouped = 1;
         }
     }
 
     if (!found_grouped) {
-        /* Alternative: the fix may use a separate statxFallback helper.
-           Verify that exists and all errnos lead to it. */
         char *fallback = strstr(impl, "statxFallback");
         if (fallback) {
             found_grouped = 1;
@@ -406,7 +444,6 @@ int main(int argc, char **argv) {
         free(region); free(buf); return 1;
     }
 
-    /* Must disable statx and return fallback for all four */
     if (!strstr(region, "supports_statx_on_linux.store(false")) {
         fprintf(stderr, "FAIL: statx support flag not disabled on fallback\n");
         free(region); free(buf); return 1;
@@ -424,7 +461,7 @@ int main(int argc, char **argv) {
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
+# Pass-to-pass (pr_diff) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
 

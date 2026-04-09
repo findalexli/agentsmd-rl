@@ -35,6 +35,22 @@ def test_typescript_compiles():
     assert r.returncode == 0, f"TypeScript compilation failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
 
 
+def test_repo_eslint():
+    """Repo's ESLint checks pass on modified files (pass_to_pass)."""
+    # Run ESLint on the modified packages/playwright-core files
+    modified_files = [
+        "packages/playwright-core/src/utils/isomorphic/trace/traceLoader.ts",
+        "packages/playwright-core/src/tools/trace/traceUtils.ts",
+        "packages/playwright-core/src/tools/backend/tracing.ts",
+        "packages/playwright-core/src/cli/program.ts",
+    ]
+    r = subprocess.run(
+        ["npx", "eslint"] + modified_files,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

@@ -20,7 +20,7 @@ WORKDIR /workspace/prime-rl
 ENV PYTHONPATH="/workspace/prime-rl"
 
 # Install minimal deps needed by test_outputs.py
-RUN pip install --no-cache-dir pydantic pandas rich pytest
+RUN pip install --no-cache-dir pydantic pandas rich pytest pytest-json-ctrf
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

@@ -1,0 +1,73 @@
+source_pr:
+  owner: SeleniumHQ
+  repo: selenium
+  number: 17235
+  title: "[grid] Fix VNC caps not propagated for sessions without browserName"
+  merge_commit: "458c350ca9c711184366d4cfc0dc547a26150f67"
+  base_commit: "b1a7b8de7bf8c9889627914888adee44c01f925a"
+
+# Checks run by test_outputs.py
+checks:
+  - id: "vnc_caps_propagated_for_no_browser_name"
+    name: "VNC capabilities propagated for sessions without browserName"
+    type: "f2p"
+    origin: "pr_regression"
+    description: |
+      When a session request arrives without a browserName capability (e.g. proxy-only
+      configuration), VNC capabilities (se:vncEnabled, se:noVncPort) should still be
+      propagated from the slot stereotype to the session capabilities.
+
+  - id: "existing_functionality_still_works"
+    name: "Existing SessionCapabilitiesMutator functionality intact"
+    type: "p2p"
+    origin: "regression_guard"
+    description: |
+      The fix should not break any existing functionality - browser name matching,
+      stereotype merging, and capability propagation for normal browser requests
+      should still work correctly.
+
+  - id: "vnc_caps_with_normal_browser_request"
+    name: "Normal browser requests still get proper capability merging"
+    type: "p2p"
+    origin: "regression_guard"
+    description: |
+      Normal browser requests (with browserName) should still receive proper capability
+      merging including VNC capabilities when the stereotype has them.
+
+  - id: "code_compiles"
+    name: "Java code compiles successfully"
+    type: "p2p"
+    origin: "basic"
+    description: |
+      The modified Java code should compile without errors using Bazel.
+
+  - id: "repo_grid_config_tests"
+    name: "Repo grid config tests pass"
+    type: "p2p"
+    origin: "repo_tests"
+    description: |
+      The repo's grid config tests (AnnotatedConfigTest, ConfigTest,
+      DefaultSlotMatcherTest) should pass on both base and fixed commits.
+
+  - id: "repo_format_lint"
+    name: "Repo format lint check passes"
+    type: "p2p"
+    origin: "repo_tests"
+    description: |
+      The repo's format lint check (./scripts/format.sh --lint) should pass
+      on both base and fixed commits, ensuring code follows formatting standards.
+
+  - id: "follows_java_agent_config"
+    name: "Follows Java AGENTS.md conventions"
+    type: "p2p"
+    origin: "agent_config"
+    description: |
+      Code should follow conventions in java/AGENTS.md:
+      - Use logging with java.util.logging.Logger
+      - Follow existing code style
+    source:
+      file: "java/AGENTS.md"
+      lines: "1-30"
+
+# Rubric for soft/subjective checks (LLM-judge only)
+rubric: []

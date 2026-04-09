@@ -23,36 +23,40 @@ def _extract_allgather_loop() -> str:
     """Extract the allgather method's loop body from the header."""
     source = TARGET.read_text()
 
-    # Find the allgather method
-    import re
-    pattern = r'allgather\([^)]*\)\s*override\s*\{([^}]*return[^}]*?)\}'
-    match = re.search(pattern, source, re.DOTALL)
+    # Find the allgather method - it spans multiple lines with signature on one
+    # line and 'override {' on a subsequent line
+    lines = source.split('\n')
+    in_signature = False
+    in_allgather = False
+    brace_count = 0
+    method_lines = []
 
-    if not match:
-        # Try alternative pattern - method might span multiple braces
-        lines = source.split('\n')
-        in_allgather = False
-        brace_count = 0
-        method_lines = []
+    for line in lines:
+        # Start of allgather signature
+        if 'allgather(' in line and 'c10::intrusive_ptr<Work>' in line:
+            in_signature = True
+            method_lines.append(line)
+            continue
 
-        for line in lines:
-            if 'allgather' in line and 'override' in line:
+        if in_signature:
+            method_lines.append(line)
+            # Check for override and opening brace
+            if 'override' in line:
+                in_signature = False
                 in_allgather = True
                 brace_count = line.count('{') - line.count('}')
-                method_lines.append(line)
                 continue
 
-            if in_allgather:
-                method_lines.append(line)
-                brace_count += line.count('{') - line.count('}')
-                if brace_count == 0 and '{' in ''.join(method_lines):
-                    break
+        if in_allgather:
+            method_lines.append(line)
+            brace_count += line.count('{') - line.count('}')
+            if brace_count == 0:
+                break
 
-        if method_lines:
-            return '\n'.join(method_lines)
-        return ""
+    if method_lines:
+        return '\n'.join(method_lines)
 
-    return match.group(0)
+    return ""
 
 
 # -----------------------------------------------------------------------------
@@ -324,3 +328,56 @@ def test_no_over_engineering():
         f"Loop body too complex ({len(lines)} lines). "
         "Change should be minimal per CLAUDE.md guidelines."
     )
+
+
+# -----------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates
+# These verify the repo's own CI checks pass on the code
+# -----------------------------------------------------------------------------
+
+def test_repo_fake_pg_python_syntax():
+    """FakeProcessGroup test file must have valid Python syntax (pass_to_pass)."""
+    import pytest
+    test_file = Path(REPO) / "test/distributed/test_fake_pg.py"
+    assert test_file.exists(), f"Test file not found: {test_file}"
+
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", str(test_file)],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Python syntax error in test_fake_pg.py:\n{r.stderr}"
+
+
+def test_repo_clang_format():
+    """FakeProcessGroup.hpp must pass clang-format check (pass_to_pass).
+
+    PyTorch CI runs clang-format on all C++ changes. This test verifies
+    the header file follows the project's formatting guidelines.
+    """
+    import pytest
+    # Install clang-format if not available
+    r = subprocess.run(
+        ["bash", "-c", "command -v clang-format || (apt-get update -qq && apt-get install -y -qq clang-format)"],
+        capture_output=True, text=True, timeout=120,
+    )
+    if r.returncode != 0:
+        pytest.skip("clang-format not available and could not be installed")
+
+    r = subprocess.run(
+        ["clang-format", "--dry-run", "-Werror", str(TARGET)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"clang-format check failed for FakeProcessGroup.hpp:\n"
+        f"{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+    )
+
+
+def test_repo_header_file_exists():
+    """FakeProcessGroup.hpp must exist and be readable (pass_to_pass)."""
+    assert TARGET.exists(), f"Target file not found: {TARGET}"
+    assert TARGET.is_file(), f"Target is not a file: {TARGET}"
+    # Verify we can read it
+    content = TARGET.read_text()
+    assert len(content) > 0, "Target file is empty"
+    assert "FakeProcessGroup" in content, "File does not contain FakeProcessGroup class"

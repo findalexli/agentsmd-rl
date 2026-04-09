@@ -64,6 +64,46 @@ def test_syntax_check():
         )
 
 
+def test_terraform_validate():
+    """Terraform configuration passes validation (pass_to_pass)."""
+    # Install terraform using curl (available in image)
+    install_cmd = """
+        apt-get update -qq && apt-get install -y -qq unzip >/dev/null 2>&1 &&
+        curl -fsSL -o /tmp/terraform.zip 
+        https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip &&
+        unzip -q /tmp/terraform.zip -d /tmp/
+    """.strip().replace("\n        ", " ")
+    r = subprocess.run(
+        ["bash", "-c", install_cmd],
+        capture_output=True, text=True, timeout=120, cwd="/tmp"
+    )
+    assert r.returncode == 0, f"Terraform installation failed: {r.stderr}"
+
+    # Initialize terraform
+    r = subprocess.run(
+        ["/tmp/terraform", "init", "-backend=false", "-input=false"],
+        capture_output=True, text=True, timeout=60, cwd=TF_DIR
+    )
+    assert r.returncode == 0, f"Terraform init failed:\n{r.stderr[-500:]}"
+
+    # Validate terraform
+    r = subprocess.run(
+        ["/tmp/terraform", "validate"],
+        capture_output=True, text=True, timeout=60, cwd=TF_DIR
+    )
+    assert r.returncode == 0, f"Terraform validate failed:\n{r.stderr[-500:]}" + \
+                              f"\nstdout:\n{r.stdout[-500:]}"
+
+
+def test_terraform_files_exist():
+    """Required Terraform files exist and are readable (pass_to_pass)."""
+    required_files = ["ratelimit.tf", "variables.tf", "gke.tf", "provider.tf"]
+    for tf_file in required_files:
+        fpath = TF_DIR / tf_file
+        assert fpath.exists(), f"Required file {tf_file} does not exist"
+        assert fpath.stat().st_size > 0, f"Required file {tf_file} is empty"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests with HCL block parsing
 # ---------------------------------------------------------------------------

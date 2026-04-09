@@ -12,6 +12,24 @@ checks:
     origin: static
     description: "Modified flag files must pass node --check"
 
+  - id: repo_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on repo (from shared_lint.yml CI)"
+    ci_source: ".github/workflows/shared_lint.yml:eslint"
+
+  - id: repo_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Prettier formatting check passes (from shared_lint.yml CI)"
+    ci_source: ".github/workflows/shared_lint.yml:prettier"
+
+  - id: repo_license_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "License check passes - no PATENTS references (from shared_lint.yml CI)"
+    ci_source: ".github/workflows/shared_lint.yml:check_license"
+
   - id: native_fb_view_transition_enabled
     type: fail_to_pass
     origin: pr_diff

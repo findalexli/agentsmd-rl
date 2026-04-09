@@ -65,6 +65,21 @@ checks:
       lines: "189"
       commit: "f6556e88582e82b747ab1ac4038af2e106a464ee"
 
+  - id: repo_all_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All Python files in areal/ have valid syntax"
+
+  - id: repo_no_bare_excepts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No bare except: clauses in areal/engine/"
+
+  - id: repo_import_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Engine module imports are syntactically valid"
+
   - id: no_print_statements
     type: pass_to_pass
     origin: agent_config
@@ -72,23 +87,4 @@ checks:
     source:
       path: "AGENTS.md"
       lines: "90-92"
-      commit: "f6556e88582e82b747ab1ac4038af2e106a464ee"
-
-rubric:
-  - rule: "Batch ops over Python loops on tensor elements"
-    source:
-      path: "AGENTS.md"
-      lines: "97"
-      commit: "f6556e88582e82b747ab1ac4038af2e106a464ee"
-
-  - rule: "No GPU-CPU sync in hot paths (.item(), .tolist(), print(tensor))"
-    source:
-      path: "AGENTS.md"
-      lines: "96"
-      commit: "f6556e88582e82b747ab1ac4038af2e106a464ee"
-
-  - rule: "Use explicit dtype/device when creating or casting tensors; prefer torch.Size assertions for shape validation"
-    source:
-      path: "AGENTS.md"
-      lines: "98"
       commit: "f6556e88582e82b747ab1ac4038af2e106a464ee"

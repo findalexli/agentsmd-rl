@@ -1,12 +1,77 @@
 {
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-08T21:43:04.840031",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 599.54,
-  "error": "No backend available within 600s. Pool: glm(14ok/0\u00d7429/ok) | fireworks(33ok/0\u00d7429/ok)"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T05:11:59.460855",
+  "total_time": 9553.14,
+  "sandbox_id": "inreccfv15tusm5ywyl7v",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "ci_commands_found": [
+        "npm run build - builds the entire repository successfully",
+        "npm run lint-packages - verifies workspace package consistency",
+        "./node_modules/.bin/eslint packages/web/src/ packages/trace-viewer/src/ - lints modified packages"
+      ],
+      "tests_added": [
+        "test_repo_eslint_modified - ESLint check on web and trace-viewer packages",
+        "test_repo_build - Full repository build verification",
+        "test_repo_lint_packages - Package consistency check"
+      ],
+      "notes": "Verified all 3 existing p2p tests pass on base commit (build: 120s, eslint: 180s, lint-packages: 120s). Excluded commands that fail on base commit: npm run tsc (type errors with bundle dependencies), npm run eslint (full lint has issues), npm run check-deps (fails on base commit)."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 976.3,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_outputs.py to use correct import pattern for tsx loader (mod.default.ansi2html). All 4 validations passed: Docker build OK, NOP test reward=0 (3 fail-to-pass tests correctly fail on buggy code), Gold test reward=1 (all 10 tests pass after fix), rubric is empty so ICR=1.0.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 734.7
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.86,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T05:11:59.292547"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9553.14,
+      "at": "2026-04-09T05:11:59.460855"
+    }
+  ]
 }

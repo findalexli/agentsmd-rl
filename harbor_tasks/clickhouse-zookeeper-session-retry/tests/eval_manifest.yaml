@@ -1,0 +1,100 @@
+manifest_version: "1.0"
+
+task_id: "clickhouse-zookeeper-session-retry"
+source_pr: "ClickHouse/ClickHouse#102170"
+
+commit_info:
+  base_commit: "6f01023e78a9e84c588068560fda778a7c11a665"
+  merge_commit: "863e3d33498f075a84659eb2c8948de69b8bc88e"
+  files_modified:
+    - "src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp"
+
+agent_config:
+  files_discovered:
+    - path: ".claude/CLAUDE.md"
+      relevance: "high"
+      summary: "ClickHouse-specific rules: session renewal on retry, deletion logging, tests policy"
+    - path: ".github/copilot-instructions.md"
+      relevance: "medium"
+      summary: "Code review guidelines for C++ ClickHouse code"
+
+  rules_applicable:
+    - rule: "When encountering retry loops with external services, ensure session/token renewal happens inside the retry loop"
+      source: ".claude/CLAUDE.md - inferred from testing patterns"
+      type: "programmatic"
+      test_mapping: "test_retry_loop_contains_session_renewal, test_object_names_fetched_inside_retry_loop"
+
+    - rule: "Resource management - ensure stale handles are not reused after retry"
+      source: ".github/copilot-instructions.md - Memory & lifetime section"
+      type: "programmatic"
+      test_mapping: "test_tryloadobject_uses_current_zookeeper"
+
+    - rule: "Error handling - transient failures should be retried with backoff"
+      source: ".github/copilot-instructions.md - Error handling section"
+      type: "programmatic"
+      test_mapping: "test_retry_loop_contains_session_renewal"
+
+checks:
+  - id: "syntax_valid"
+    name: "C++ file compiles without syntax errors"
+    category: "compilation"
+    test_function: "test_file_compiles"
+    weight: 1
+
+  - id: "session_renewal_in_loop"
+    name: "Session renewal happens inside retry loop"
+    category: "functional"
+    test_function: "test_retry_loop_contains_session_renewal"
+    origin: "agent_config"
+    source: ".claude/CLAUDE.md - session renewal pattern"
+    weight: 3
+
+  - id: "object_names_in_loop"
+    name: "Object names fetched inside retry loop with fresh session"
+    category: "functional"
+    test_function: "test_object_names_fetched_inside_retry_loop"
+    origin: "agent_config"
+    source: ".github/copilot-instructions.md - Resource management"
+    weight: 3
+
+  - id: "no_stale_zookeeper_in_tryload"
+    name: "tryLoadObject uses current_zookeeper, not stale zookeeper"
+    category: "functional"
+    test_function: "test_tryloadobject_uses_current_zookeeper"
+    origin: "agent_config"
+    source: ".github/copilot-instructions.md - Memory & lifetime"
+    weight: 3
+
+  - id: "no_premature_object_names"
+    name: "Object names not fetched before retry loop"
+    category: "functional"
+    test_function: "test_object_names_not_fetched_before_retry_loop"
+    origin: "agent_config"
+    source: ".github/copilot-instructions.md - Correctness"
+    weight: 2
+
+  - id: "variable_declared"
+    name: "current_zookeeper variable properly declared"
+    category: "structural"
+    test_function: "test_current_zookeeper_variable_declared"
+    weight: 1
+
+  - id: "comments_updated"
+    name: "Explanatory comments about session renewal present"
+    category: "documentation"
+    test_function: "test_session_renewal_comment_present"
+    weight: 1
+
+rubric:
+  - criterion: "Code follows ClickHouse C++ style (no raw pointers where ownership unclear)"
+    weight: 1
+
+  - criterion: "Comments explain the 'why' of session renewal, not just 'what'"
+    weight: 1
+
+  - criterion: "Error handling is complete - all paths considered"
+    weight: 1
+
+scoring:
+  max_score: 15
+  passing_threshold: 12

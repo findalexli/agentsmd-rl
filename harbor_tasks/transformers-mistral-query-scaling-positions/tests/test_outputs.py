@@ -77,6 +77,22 @@ def test_not_stub():
         assert found, f"{model}: get_llama_4_attn_scale not found in {f}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_imports():
+    """Repo modeling modules import without errors (pass_to_pass)."""
+    r = _run_py(f"""
+import sys
+sys.path.insert(0, "{REPO}/src")
+from transformers.models.ministral3.modeling_ministral3 import get_llama_4_attn_scale
+from transformers.models.ministral3.modular_ministral3 import get_llama_4_attn_scale as _
+from transformers.models.mistral4.modeling_mistral4 import get_llama_4_attn_scale as __
+from transformers.models.mistral4.modular_mistral4 import get_llama_4_attn_scale as ___
+print("PASS")
+""")
+    assert r.returncode == 0, f"Repo imports failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
 # -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # -----------------------------------------------------------------------------
@@ -243,6 +259,7 @@ def test_ministral3_modular_no_absolute_positions():
     """Ministral3 modular forward() no longer computes absolute_positions from cache; uses position_ids directly."""
     code = f"""
 import ast
+import sys
 from pathlib import Path
 
 src = Path("{REPO}/src/transformers/models/ministral3/modular_ministral3.py").read_text()

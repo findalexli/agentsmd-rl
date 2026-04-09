@@ -1,13 +1,82 @@
 {
-  "validations": [
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T04:29:44.193159",
+  "total_time": 10347.49,
+  "sandbox_id": "id7abu9hczx8sc04ny94b",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T11:23:00",
+      "ci_commands_found": [
+        "pnpm run prettier-check - passes (24s)",
+        "pnpm run check-engines-override - passes (<1s)",
+        "node --check packages/cli/src/Studio.ts - passes (<1s)"
+      ],
+      "ci_commands_skipped": [
+        "pnpm run lint - has 4 pre-existing errors in base commit (unrelated to PR)",
+        "pnpm audit --prod - has security advisories in base commit",
+        "pnpm run build - takes 4+ minutes (exceeds 120s limit)",
+        "vitest tests - require build first (workspace dependencies)"
+      ],
+      "tests_added": [
+        "test_repo_prettier - Repo Prettier formatting check",
+        "test_repo_engines_override - Repo engines override script check",
+        "test_studio_syntax_node_check - Node.js syntax validation for Studio.ts"
+      ]
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1187.77,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed regex patterns in test_import_map_includes_radix_toggle and test_import_map_includes_chartjs. The original regex used [\\s\\S]*?} which stopped at the first } character, incorrectly matching inside template literals like ${REACT_VERSION}. Changed to use indexOf('importmap') and indexOf('</script>') to properly extract the entire import map block.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 324.13
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.69,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-03T07:38:12.345244",
-      "phase": "e2b_agentmd_initial",
-      "runner": "e2b_validate (agentmd)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T04:29:44.030626"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 10347.49,
+      "at": "2026-04-09T04:29:44.193159"
     }
   ]
 }

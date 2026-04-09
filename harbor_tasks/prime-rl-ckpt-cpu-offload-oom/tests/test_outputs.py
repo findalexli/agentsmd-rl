@@ -13,6 +13,7 @@ we use AST analysis — the justified exception for GPU/CUDA-dependent code path
 
 import ast
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/prime-rl"
@@ -42,6 +43,44 @@ def test_syntax_check():
     """ckpt.py must parse without syntax errors."""
     source = _get_source()
     compile(source, str(CKPT_FILE), "exec")
+
+
+# [repo_tests] pass_to_pass - Repo CI: ruff lint check
+def test_repo_ruff_check():
+    """Repo's ruff lint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "--config=pyproject.toml", str(CKPT_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: ruff format check
+def test_repo_ruff_format():
+    """Repo's ruff format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--config=pyproject.toml", str(CKPT_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,112 @@
+source_pr:
+  owner: chroma-core
+  repo: chroma
+  number: 6714
+  title: "[BUG]: Create a new SourceRecordSegment operator for segment rebuild"
+  merge_commit: 974a673d86b3fb49b98af1898fa4e7e51c671167
+  base_commit: 320068e0817387ad35a47e0cef8038d45b2992da
+
+# No agent configs found for this Rust codebase - documentation configs only
+checks:
+  - id: "source_record_segment_v2_exists"
+    description: "SourceRecordSegmentV2Operator struct and file exist"
+    test: "test_source_record_segment_v2_operator_exists"
+    type: "f2p"
+    weight: 1.0
+
+  - id: "materialize_logs_for_rebuild_exists"
+    description: "materialize_logs_for_rebuild function and error type exist"
+    test: "test_materialize_logs_for_rebuild_exists"
+    type: "f2p"
+    weight: 1.0
+
+  - id: "v2_operator_tests_exist"
+    description: "Unit tests for V2 operator exist and pass"
+    test: "test_source_record_segment_v2_tests_exist"
+    type: "f2p"
+    weight: 1.0
+
+  - id: "operator_uses_add"
+    description: "SourceRecordSegmentOperator uses Operation::Add not Upsert"
+    test: "test_operator_uses_add_not_upsert"
+    type: "f2p"
+    weight: 1.0
+
+  - id: "v2_partition_logic"
+    description: "V2 operator correctly partitions records"
+    test: "test_v2_operator_partition_logic"
+    type: "f2p"
+    weight: 1.0
+
+  - id: "v2_empty_reader"
+    description: "V2 operator handles empty/None reader"
+    test: "test_v2_operator_handles_empty_reader"
+    type: "f2p"
+    weight: 0.5
+
+  - id: "non_add_error_handling"
+    description: "materialize_logs_for_rebuild rejects non-Add operations"
+    test: "test_error_handling_for_non_add_operations"
+    type: "f2p"
+    weight: 1.0
+
+  - id: "orchestrator_integration"
+    description: "LogFetchOrchestrator integrates V2 operator for partial rebuilds"
+    test: "test_log_fetch_orchestrator_integration"
+    type: "f2p"
+    weight: 1.0
+
+  - id: "compact_integration"
+    description: "Compact orchestration has metadata rebuild FTS test"
+    test: "test_compact_integration"
+    type: "f2p"
+    weight: 0.5
+
+  - id: "operator_constructors"
+    description: "SourceRecordSegmentOperator has new() and Default"
+    test: "test_source_record_segment_operator_constructors"
+    type: "p2p"
+    weight: 0.5
+
+  - id: "compilation"
+    description: "Worker package compiles successfully"
+    test: "test_compilation_succeeds"
+    type: "f2p"
+    weight: 1.0
+
+  - id: "unit_tests"
+    description: "All source record segment tests pass"
+    test: "test_unit_tests_pass"
+    type: "f2p"
+    weight: 1.0
+
+  # Pass-to-pass (P2P) tests - Repo CI/CD checks
+  - id: "repo_cargo_fmt"
+    description: "Rust code passes cargo fmt check"
+    test: "test_repo_cargo_fmt"
+    type: "p2p"
+    weight: 0.5
+    origin: "repo_tests"
+
+  - id: "repo_cargo_check_worker"
+    description: "Worker package compiles with cargo check"
+    test: "test_repo_cargo_check_worker"
+    type: "p2p"
+    weight: 0.5
+    origin: "repo_tests"
+
+  - id: "repo_cargo_clippy_worker"
+    description: "Worker package passes cargo clippy"
+    test: "test_repo_cargo_clippy_worker"
+    type: "p2p"
+    weight: 0.5
+    origin: "repo_tests"
+
+  - id: "repo_worker_tests"
+    description: "Worker package library tests pass"
+    test: "test_repo_worker_tests"
+    type: "p2p"
+    weight: 0.5
+    origin: "repo_tests"
+
+rubric: []

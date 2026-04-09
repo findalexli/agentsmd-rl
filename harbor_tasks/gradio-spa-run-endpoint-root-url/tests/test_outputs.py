@@ -36,6 +36,30 @@ def test_syntax_check():
     ast.parse(source)
 
 
+# [repo_tests] pass_to_pass
+def test_gradio_imports():
+    """Gradio package imports successfully (pass_to_pass)."""
+    r = _run_python("""
+import gradio
+from gradio.routes import App
+print("PASS")
+""")
+    assert r.returncode == 0, f"Import failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_routes_module_ruff_check():
+    """Ruff lint check passes on gradio/routes.py (pass_to_pass)."""
+    # Install ruff if not available (lightweight, fast install)
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "ruff"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "gradio/routes.py", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

@@ -6,11 +6,47 @@ the Linear issue workflow from "Done" to "In Review" when a PR is created.
 """
 
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
 
 REPO = Path("/workspace/lobe-chat")
+
+# Track if we've installed dependencies
+deps_installed = False
+
+
+def _ensure_deps():
+    """Ensure pnpm is enabled and dependencies are installed."""
+    global deps_installed
+    if deps_installed:
+        return
+    
+    # Enable pnpm via corepack
+    subprocess.run(["corepack", "enable", "pnpm"], capture_output=True, check=False)
+    
+    # Check if node_modules exists
+    if not (REPO / "node_modules").exists():
+        # Install root dependencies
+        subprocess.run(
+            ["pnpm", "install", "-s"],
+            capture_output=True,
+            timeout=300,
+            cwd=REPO,
+        )
+    
+    # Check if desktop node_modules exists
+    if not (REPO / "apps/desktop/node_modules").exists():
+        # Install desktop dependencies
+        subprocess.run(
+            ["pnpm", "install", "-s"],
+            capture_output=True,
+            timeout=300,
+            cwd=REPO / "apps/desktop",
+        )
+    
+    deps_installed = True
 
 
 # ---------------------------------------------------------------------------
@@ -239,7 +275,39 @@ def test_async_retry_dependency():
 
 
 # ===================================================================
-# p2p — pass-to-pass checks
+# p2p — pass-to-pass checks (repo CI/CD gates)
+# ===================================================================
+
+
+def test_repo_lint_ts():
+    """Repo's TypeScript linting passes (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["pnpm", "run", "lint:ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Allow warnings but no errors
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_desktop_tests():
+    """Repo's desktop tests pass (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["pnpm", "test", "--", "--run"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO / "apps/desktop",
+    )
+    assert r.returncode == 0, f"Desktop tests failed:\n{r.stderr[-500:]}"
+
+
+# ===================================================================
+# p2p — pass-to-pass checks (task-specific)
 # ===================================================================
 
 

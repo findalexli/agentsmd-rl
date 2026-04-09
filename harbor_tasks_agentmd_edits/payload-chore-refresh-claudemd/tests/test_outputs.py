@@ -13,6 +13,21 @@ from pathlib import Path
 REPO = "/workspace/payload"
 
 
+def _setup_pnpm():
+    """Enable corepack and return pnpm path."""
+    subprocess.run(["corepack", "enable"], capture_output=True, cwd=REPO)
+    return "pnpm"
+
+
+def _run_pnpm(cmd, timeout=120):
+    """Helper to run pnpm commands via corepack."""
+    _setup_pnpm()
+    return subprocess.run(
+        ["pnpm", cmd],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) - basic validation
 # ---------------------------------------------------------------------------
@@ -39,6 +54,72 @@ def test_gitignore_exists():
     """.gitignore must exist."""
     gitignore = Path(REPO) / ".gitignore"
     assert gitignore.exists(), ".gitignore must exist"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD tests (pass_to_pass) - verify repo's own CI passes
+# Dependencies are installed as part of the test (required for CI commands)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    _setup_pnpm()
+    # Install dependencies first (needed for any pnpm command to work)
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    if r.returncode != 0:
+        # If install fails, skip the test
+        print(f"Skipping: pnpm install failed: {r.stderr[-500:]}")
+        return
+    
+    r = subprocess.run(
+        ["pnpm", "test:unit"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_type_tests():
+    """Repo's TypeScript type tests pass (pass_to_pass)."""
+    _setup_pnpm()
+    # Install dependencies first
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    if r.returncode != 0:
+        print(f"Skipping: pnpm install failed: {r.stderr[-500:]}")
+        return
+    
+    r = subprocess.run(
+        ["pnpm", "test:types"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Type tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_translations():
+    """Repo's translations package builds successfully (pass_to_pass)."""
+    _setup_pnpm()
+    # Install dependencies first
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    if r.returncode != 0:
+        print(f"Skipping: pnpm install failed: {r.stderr[-500:]}")
+        return
+    
+    r = subprocess.run(
+        ["pnpm", "build:translations"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

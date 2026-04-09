@@ -112,6 +112,30 @@ def test_pattern_matches_reference_implementation():
 # Pass-to-pass (repo_tests / static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
+# [repo_tests] pass_to_pass
+def test_repo_syntax_compile():
+    """Repo's Python syntax is valid (byte-compile check)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/{TARGET_FILE}"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax compile failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_checks():
+    """Repo's ruff lint checks pass (F401, F821 - import and undefined name checks)."""
+    # Install ruff and run checks on the modified file
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "pip install ruff --quiet 2>/dev/null && ruff check python/sglang/srt/managers/tokenizer_communicator_mixin.py --select F401,F821"
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff checks failed:\n{r.stdout}\n{r.stderr}"
+
+
 # [static] pass_to_pass
 def test_not_stub():
     """Modified function has real logic, not just pass/return."""

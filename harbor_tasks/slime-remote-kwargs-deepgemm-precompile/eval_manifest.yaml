@@ -12,6 +12,16 @@ checks:
     origin: static
     description: "Both modified files must parse without syntax errors"
 
+  - id: ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linting passes on modified files (repo CI check)"
+
+  - id: no_syntax_errors_all_py
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All Python files in modified directories have valid syntax"
+
   - id: keyword_args_in_remote_call
     type: fail_to_pass
     origin: pr_diff

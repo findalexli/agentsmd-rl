@@ -1,0 +1,102 @@
+source_pr:
+  repo: excalidraw/excalidraw
+  number: 10695
+  merge_commit: 60759d314d3d4545b22d8c6f35f5afa24efa14e4
+  base_commit: d5e37cda812094bb103d53f9b122faa941f5b5bf
+  title: "fix: Regression - invert SVGs in Dark Mode"
+
+checks:
+  - id: "dark_theme_filter_constant"
+    name: "DARK_THEME_FILTER constant exported"
+    type: "f2p"
+    description: "DARK_THEME_FILTER constant must be exported from common/constants.ts"
+
+  - id: "render_element_imports_filter"
+    name: "renderElement imports DARK_THEME_FILTER"
+    type: "f2p"
+    description: "renderElement.ts must import DARK_THEME_FILTER from common"
+
+  - id: "render_element_dark_mode_check"
+    name: "Canvas rendering checks for dark mode"
+    type: "f2p"
+    description: "Canvas rendering must check for THEME.DARK and apply filter appropriately"
+
+  - id: "static_svg_scene_imports_filter"
+    name: "staticSvgScene imports DARK_THEME_FILTER"
+    type: "f2p"
+    description: "staticSvgScene.ts must import DARK_THEME_FILTER from common"
+
+  - id: "static_svg_scene_dark_mode_filter"
+    name: "SVG export applies dark mode filter"
+    type: "f2p"
+    description: "SVG export must apply DARK_THEME_FILTER to SVG images in dark mode"
+
+  - id: "static_svg_scene_imports_mime_types"
+    name: "staticSvgScene imports MIME_TYPES"
+    type: "f2p"
+    description: "MIME_TYPES must be imported for SVG mime type checking"
+
+  - id: "typescript_compiles"
+    name: "TypeScript compilation passes"
+    type: "p2p"
+    description: "Code must compile without TypeScript errors"
+
+  - id: "test_repo_typecheck"
+    name: "Repo typecheck passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's TypeScript typecheck passes (yarn test:typecheck)"
+
+  - id: "test_repo_lint"
+    name: "Repo lint passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's ESLint check passes (yarn test:code)"
+
+  - id: "test_repo_prettier"
+    name: "Repo prettier check passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's Prettier formatting check passes (yarn test:other)"
+
+  - id: "test_repo_unit_element"
+    name: "Repo element package tests pass"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's element package unit tests pass"
+
+  - id: "test_repo_unit_excalidraw"
+    name: "Repo excalidraw package tests pass"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's excalidraw package unit tests pass"
+
+  - id: "distinctive_line_pattern"
+    name: "Specific fix pattern present"
+    type: "f2p"
+    description: "context.filter = DARK_THEME_FILTER must be present in renderElement.ts"
+
+  - id: "filter_only_for_svgs_dark_mode"
+    name: "Filter logic is correctly gated"
+    type: "f2p"
+    description: "Filter must only apply when both dark mode AND SVG conditions are met"
+
+  - id: "svg_export_filter_gated"
+    name: "SVG export filter is correctly gated"
+    type: "f2p"
+    description: "SVG export filter must only apply when both dark mode AND SVG conditions are met"
+
+agent_config:
+  - source: "CLAUDE.md"
+    rules:
+      - programatic: false
+        description: "Use TypeScript for all new code"
+      - programatic: false
+        description: "Prefer immutable data (const, readonly)"
+      - programatic: false
+        description: "Use optional chaining and nullish coalescing operators"
+      - programatic: true
+        description: "Always run yarn test:typecheck before finishing"
+        test_ref: "test_typescript_compiles"
+
+rubric: []

@@ -1,60 +1,78 @@
 {
-  "task": "transformers-vidproc-pil-import-crash",
-  "validations": [
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T13:31:29.594059",
+  "total_time": 15577.29,
+  "sandbox_id": "iyayzjb1lpkkgcnvrah2m",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 124.51,
+      "notes": "Added 2 repo CI/CD pass_to_pass gates:\n\n1. test_repo_ruff_check - Runs ruff check on video_processing_utils.py\n2. test_repo_ruff_format - Runs ruff format --check on video_processing_utils.py\n\nCI commands discovered from repo:\n- Repo uses ruff (configured in pyproject.toml with line-length 119)\n- make check-repo runs: ruff check, ruff format --check, plus many custom Python scripts\n- Custom scripts (check_copies.py, check_modular_conversion.py, etc.) require specific repo state\n\nSelected ruff commands because:\n- They pass on both base commit (with the bug) and after the fix\n- They dont require network access\n- They complete in <60 seconds\n- They are standard CI checks used in the repo\n\nOther CI commands not added:\n- Full make check-repo - too many custom checks that may fail on minimal install\n- pytest tests - many require torch/PIL/extras not installed in base image\n- Modular conversion checks - requires make fix-repo first"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 464.32,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All core validations passed: Docker build SUCCESS; NOP test reward=0 (fail-to-pass tests correctly fail on buggy code); GOLD test reward=1 (all 10 tests pass after fix). Rubric judge skipped (missing taskforge module).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 99.9
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.39,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-01T20:15:41.773418",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "fail",
-      "nop": "0",
-      "gold": "missing",
-      "format": "pytest_binary"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 5997.54,
+      "at": "2026-04-09T07:00:00.362276"
     },
     {
-      "timestamp": "2026-04-02T04:34:25-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
-    },
-    {
-      "timestamp": "2026-04-02T10:48:33.895051",
-      "phase": "e2b_validate_phase9",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.973303",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
-    },
-    {
-      "timestamp": "2026-04-02T18:00:00.000000",
-      "phase": "docker_validate_remake",
-      "runner": "manual",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1",
-      "notes": "Removed test_processor_mapping_without_pil (PyTorch dep chain, not PIL-related)"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 15577.13,
+      "at": "2026-04-09T13:31:29.475827"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.664782",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 15577.29,
+      "at": "2026-04-09T13:31:29.594059"
     }
   ]
 }

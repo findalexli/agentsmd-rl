@@ -4,7 +4,7 @@
 
 The `storybook ai prepare` command generates a markdown prompt with project setup instructions, but it can only print the output to stdout. There is no way to write the output directly to a file, which means users have to use shell redirection (`> file.md`) and lose the informational log messages mixed into the output.
 
-Additionally, CLI options defined on the parent `ai` command (like `--output`) are not passed through to subcommands like `prepare`, because the subcommand's action handler only receives its own options — not its parent's.
+Additionally, CLI options defined on the parent `ai` command are not passed through to subcommands like `prepare`, because the subcommand's action handler only receives its own options — not its parent's.
 
 ## Expected Behavior
 

@@ -134,7 +134,7 @@ index 0000000000..ccbf127b10
 +
 +```toml
 +# Top-level fields first
-gpu_memory_utilization = 0.5
++gpu_memory_utilization = 0.5
 +seed = 42
 +
 +# Then sections

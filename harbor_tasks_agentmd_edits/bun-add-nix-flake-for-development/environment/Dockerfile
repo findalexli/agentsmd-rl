@@ -7,20 +7,24 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential tmux && \
+        git curl ca-certificates build-essential tmux nix-bin cmake && \
     rm -rf /var/lib/apt/lists/*
 
+# Enable Nix flakes and nix-command experimental features
+RUN mkdir -p /etc/nix && \
+    echo 'experimental-features = nix-command flakes' >> /etc/nix/nix.conf
+
 # Clone repo at base commit (use --depth=N for large monorepos)
-RUN git clone --filter=blob:none https://github.com/{{OWNER}}/{{REPO}}.git /workspace/{{REPO_SHORT}} && \
-    cd /workspace/{{REPO_SHORT}} && \
-    git checkout {{BASE_COMMIT}} && \
+RUN git clone --filter=blob:none https://github.com/oven-sh/bun.git /workspace/bun && \
+    cd /workspace/bun && \
+    git checkout 6e3359dd16aced2f6fca2a8e2de71f09e0bcb3cb && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 
-WORKDIR /workspace/{{REPO_SHORT}}
+WORKDIR /workspace/bun
 
 # For Python repos: uncomment if tests import from the repo
-# ENV PYTHONPATH="/workspace/{{REPO_SHORT}}"
+# ENV PYTHONPATH="/workspace/bun"
 
 # For Rust repos: pre-fetch deps for faster agent builds
 # RUN cargo fetch && cargo check 2>&1 || true

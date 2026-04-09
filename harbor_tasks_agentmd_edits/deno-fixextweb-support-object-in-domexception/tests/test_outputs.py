@@ -180,3 +180,42 @@ def test_reflecthas_imported():
     """ReflectHas is imported from primordials (needed for the fix)."""
     src = Path(f"{REPO}/ext/web/01_dom_exception.js").read_text()
     assert "ReflectHas" in src, "ReflectHas should be imported from primordials"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_web():
+    """Cargo check passes for deno_web crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "deno_web"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_clippy_web():
+    """Cargo clippy passes for deno_web crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "deno_web"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_test_web_lib():
+    """Cargo test --lib passes for deno_web crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--lib", "-p", "deno_web"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo test failed:\n{r.stderr[-500:]}"
+
+
+# Note: cargo check -p deno requires cmake which is not installed in the
+# test environment. The deno_web crate tests above provide sufficient CI/CD
+# coverage for this DOMException change which only affects ext/web.

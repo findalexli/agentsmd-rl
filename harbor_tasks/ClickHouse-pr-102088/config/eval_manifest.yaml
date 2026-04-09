@@ -1,0 +1,120 @@
+# Evaluation manifest for ClickHouse leftPad/rightPad heap-buffer-overflow fix
+# Source: ClickHouse/ClickHouse#102088
+
+task:
+  name: clickhouse-padstring-heap-overflow
+  title: Fix heap-buffer-overflow in leftPad/rightPad functions
+  source_pr:
+    owner: ClickHouse
+    repo: ClickHouse
+    number: 102088
+    merge_commit: 31deb8bb10fb7083a3c76f1112607b40cb26700b
+    base_commit: 73ad233a01a81190b2a45b820878e54c36a9a22c
+
+description: |
+  Fix a heap-buffer-overflow vulnerability in the leftPad and rightPad SQL functions.
+  The bug occurs because the padding string uses std::String which doesn't provide the
+  15 extra bytes of read padding required by memcpySmallAllowReadWriteOverflow15.
+  The fix changes to use PaddedPODArray<UInt8> which provides the necessary padding.
+
+agent_config:
+  source_files:
+    - source: ".claude/CLAUDE.md"
+      commit: 73ad233a01a81190b2a45b820878e54c36a9a22c
+      rules:
+        - id: "brace_style"
+          description: "Use Allman-style braces (opening brace on new line)"
+          severity: "error"
+          applies_to: "src/Functions/padString.cpp"
+        - id: "exception_terminology"
+          description: "Say 'exception' instead of 'crash' when referring to logical errors"
+          severity: "info"
+        - id: "literal_code_blocks"
+          description: "Wrap literal names from ClickHouse SQL language in inline code blocks"
+          severity: "info"
+    - source: "AGENTS.md"
+      commit: 73ad233a01a81190b2a45b820878e54c36a9a22c
+      rules:
+        - id: "no_rebase"
+          description: "Do not use rebase or amend - add new commits instead"
+          severity: "warning"
+
+scoring:
+  checks:
+    - id: "test_source_file_exists"
+      description: "Source file exists"
+      points: 5
+      type: "structural"
+
+    - id: "test_padding_chars_uses_padded_pod_array"
+      description: "PaddingChars uses PaddedPODArray instead of String"
+      points: 25
+      type: "fail_to_pass"
+      rationale: |
+        The core fix changes pad_string member from String to PaddedPODArray<UInt8>
+        to provide the 15 extra bytes of read padding required by memcpySmallAllowReadWriteOverflow15.
+
+    - id: "test_pad_string_initialized_with_insert"
+      description: "pad_string uses insert() and insertFromItself() for copying"
+      points: 20
+      type: "fail_to_pass"
+      rationale: |
+        The fix uses insert() to copy data and insertFromItself() for duplication
+        instead of operator+= which doesn't work properly with PaddedPODArray.
+
+    - id: "test_empty_pad_string_handling_moved"
+      description: "Empty pad_string handling moved to executeImpl"
+      points: 15
+      type: "fail_to_pass"
+      rationale: |
+        The empty string check is moved from PaddingChars constructor to executeImpl
+        where the pad string is extracted from the column.
+
+    - id: "test_get_return_type_uses_validate_function_arguments"
+      description: "getReturnTypeImpl uses validateFunctionArguments helper"
+      points: 10
+      type: "pass_to_pass"
+      rationale: |
+        Code quality improvement using standard validation helper.
+
+    - id: "test_utf8_offsets_use_size_not_length"
+      description: "Uses size() instead of length() for PaddedPODArray compatibility"
+      points: 10
+      type: "fail_to_pass"
+      rationale: |
+        PaddedPODArray uses size() method instead of length() like String.
+
+    - id: "test_num_chars_comparison_explicit"
+      description: "Uses explicit comparison num_chars == 0"
+      points: 5
+      type: "pass_to_pass"
+      rationale: |
+        Code style improvement: explicit comparison instead of implicit bool.
+
+    - id: "test_source_compiles"
+      description: "Modified source compiles without syntax errors"
+      points: 5
+      type: "structural"
+
+    - id: "test_validate_function_arguments_signature"
+      description: "getReturnTypeImpl signature uses ColumnsWithTypeAndName"
+      points: 5
+      type: "structural"
+
+    - id: "test_memcpy_small_requirement_satisfied"
+      description: "Code explains memcpySmallAllowReadWriteOverflow15 padding requirement"
+      points: 5
+      type: "behavioral"
+      rationale: |
+        The fix should include a comment explaining the 15 byte padding requirement.
+
+rubric: []
+  # No soft/subjective rules - all checks are programmatic
+
+metadata:
+  target_file: "src/Functions/padString.cpp"
+  distinctive_line: "PaddedPODArray<UInt8> pad_string"
+  difficulty: "medium"
+  category: "memory-safety"
+  language: "cpp"
+  estimated_time: "30m"

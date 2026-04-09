@@ -234,19 +234,24 @@ def test_effect_fn_domain_naming_retained():
     content = FILE.read_text()
     code = re.sub(r'(?<![:"\x27\\])//[^\n]*', "", content)
     code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
-    assert re.search(r'Effect\.fn\(["\']Config\.getGlobal["\']', code), (
+    assert re.search(r'Effect\.fn\(["\'\']Config\.getGlobal["\'\']', code), (
         "Effect.fn(\"Config.getGlobal\") not found"
     )
-    assert re.search(r'Effect\.fn\(["\']Config\.invalidate["\']', code), (
+    assert re.search(r'Effect\.fn\(["\'\']Config\.invalidate["\'\']', code), (
         "Effect.fn(\"Config.invalidate\") not found"
     )
 
 
 # [agent_config] pass_to_pass — AGENTS.md:84 @ 9f94bdb
 def test_no_else_statements_near_cache_code():
-    """No else statements near cache-related code (AGENTS.md: 'Prefer early returns')."""
+    """No else statements near cache-related code (AGENTS.md: 'Prefer early returns').
+
+    Only checks near cache *definition* code (cachedInvalidateWithTTL/cachedGlobal),
+    not near where the invalidation handle is used (which may be near pre-existing else).
+    """
     lines = FILE.read_text().splitlines()
-    keywords = {"cachedGlobal", "cachedInvalidateWithTTL", "invalidateGlobal", "invalidateCache"}
+    # Only check near cache initialization code, not near invalidate handle usage
+    keywords = {"cachedInvalidateWithTTL", "const [cachedGlobal"}
     for i, line in enumerate(lines):
         if any(kw in line for kw in keywords):
             region = lines[max(0, i - 5) : i + 15]
@@ -255,7 +260,6 @@ def test_no_else_statements_near_cache_code():
                 assert not re.search(r"\belse\b", stripped), (
                     f"'else' statement found near cache code: {l.strip()}"
                 )
-
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
@@ -269,3 +273,68 @@ def test_not_stub():
     assert len(lines) >= 1000, f"Only {len(lines)} lines — file appears gutted"
     for req in ["loadGlobal", "getGlobal", "invalidate", "loadFile", "namespace Config"]:
         assert req in content, f"Missing required identifier: {req}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD integrity verification gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — repo integrity
+def test_repo_git_clean():
+    """Repo must have clean working tree (no uncommitted changes) (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git status failed: {r.stderr}"
+    assert r.stdout.strip() == "", f"Repo has uncommitted changes:\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass — file existence
+def test_repo_config_file_exists():
+    """Config file must exist and be substantial (pass_to_pass)."""
+    assert FILE.exists(), f"Config file not found: {FILE}"
+    size = FILE.stat().st_size
+    assert size > 50000, f"Config file too small ({size} bytes)"
+
+
+# [repo_tests] pass_to_pass — required functions exist
+def test_repo_config_has_required_functions():
+    """Config file must contain required functions (pass_to_pass)."""
+    content = FILE.read_text()
+    required = ["loadGlobal", "getGlobal", "invalidate", "namespace Config",
+                "Effect", "cachedGlobal"]
+    for req in required:
+        assert req in content, f"Missing required identifier: {req}"
+
+
+# [repo_tests] pass_to_pass — git commit verification
+def test_repo_commit_correct():
+    """Repo must be at a valid commit with expected structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git rev-parse failed: {r.stderr}"
+    commit = r.stdout.strip()
+    # Verify it's a valid 40-char SHA
+    assert len(commit) == 40, f"Invalid commit hash: {commit}"
+    assert all(c in "0123456789abcdef" for c in commit), f"Invalid commit hash format: {commit}"
+
+
+# [repo_tests] pass_to_pass — no obvious syntax errors
+def test_repo_config_valid_syntax():
+    """Config file must be valid TypeScript (no obvious syntax errors) (pass_to_pass)."""
+    content = FILE.read_text()
+    # Basic syntax checks
+    open_braces = content.count("{")
+    close_braces = content.count("}")
+    assert open_braces > 100, f"Too few braces - file may be corrupted"
+    # Braces should be roughly balanced (allowing for strings/regexes)
+    assert abs(open_braces - close_braces) < 10, f"Brace mismatch: {open_braces} vs {close_braces}"
+    # Check for unclosed template literals
+    backticks = content.count("`")
+    assert backticks % 2 == 0, f"Unclosed template literals (odd number of backticks: {backticks})"
+    # Check for basic TypeScript keywords
+    keywords = ["import", "export", "const", "function", "class", "interface"]
+    assert any(kw in content for kw in keywords), "Missing basic TypeScript keywords"

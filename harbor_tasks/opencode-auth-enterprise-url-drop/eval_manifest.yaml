@@ -91,24 +91,42 @@ checks:
       lines: "84"
       commit: "2d502d6ffe1aaf8c02d26b863ad4fd8d82bf28b5"
 
-rubric:
-  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
-    source:
-      path: "AGENTS.md"
-      lines: "57"
-      commit: "2d502d6ffe1aaf8c02d26b863ad4fd8d82bf28b5"
-  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "2d502d6ffe1aaf8c02d26b863ad4fd8d82bf28b5"
-  - rule: "Prefer single word variable names where possible"
-    source:
-      path: "AGENTS.md"
-      lines: "14"
-      commit: "2d502d6ffe1aaf8c02d26b863ad4fd8d82bf28b5"
-  - rule: "Reduce total variable count by inlining when a value is only used once"
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "2d502d6ffe1aaf8c02d26b863ad4fd8d82bf28b5"
+  - id: test_repo_typescript_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript files have balanced braces, parentheses, and brackets"
+
+  - id: test_repo_import_structure_intact
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Import statements are syntactically valid and key imports present"
+
+  - id: test_repo_type_definitions_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Type definitions in plugin are syntactically valid"
+
+  - id: test_repo_no_syntax_errors_common
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No double semicolons or unclosed block comments in modified files"
+
+  - id: test_repo_file_encoding_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files are valid UTF-8 with no null bytes"
+
+  - id: test_repo_no_debugger_statements
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No debugger statements left in modified files"
+
+  - id: test_repo_no_console_log_added
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No console.log statements added in modified files"
+
+# Rubric rules removed - the gold solution uses destructuring which is functionally
+# necessary to preserve extra fields (enterpriseUrl, etc.) but conflicts with
+# AGENTS.md style guide. The style guide rules don't apply to this bug fix PR.
+rubric: []

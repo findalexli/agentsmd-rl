@@ -1,0 +1,14 @@
+name = "airflow-skip-asset-triggered-dags-without-serialization"
+description = "Fix scheduler bug where DAGs with AssetDagRunQueue but no SerializedDagModel were incorrectly included in DagRun creation"
+pr = "apache/airflow#64738"
+difficulty = "medium"
+estimated_time = "30m"
+tags = ["python", "airflow", "scheduler", "database", "sqlalchemy"]
+
+[environment]
+image = "task-env"
+dockerfile = "environment/Dockerfile"
+
+[tests]
+command = "bash /tests/test.sh"
+verifier_log_path = "/logs/verifier"

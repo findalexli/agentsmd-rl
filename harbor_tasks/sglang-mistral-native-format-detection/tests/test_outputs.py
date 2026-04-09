@@ -215,6 +215,73 @@ def test_neither_file_returns_false():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI checks that should pass on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax():
+    """Repo's server_args.py has valid Python syntax (pass_to_pass)."""
+    import py_compile
+    py_compile.compile(TARGET_FILE, doraise=True)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_debug_statements():
+    """Repo's server_args.py has no debug statements (pass_to_pass)."""
+    import re
+    source = Path(TARGET_FILE).read_text()
+    debug_pattern = re.compile(
+        r"^\s*(import pdb|from pdb|import ipdb|from ipdb|breakpoint\s*\(|pdb\.set_trace)",
+        re.MULTILINE
+    )
+    matches = debug_pattern.findall(source)
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI checks that should pass on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax():
+    """Repo's server_args.py has valid Python syntax (pass_to_pass)."""
+    import py_compile
+    py_compile.compile(TARGET_FILE, doraise=True)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_debug_statements():
+    """Repo's server_args.py has no debug statements (pass_to_pass)."""
+    import re
+    source = Path(TARGET_FILE).read_text()
+    debug_pattern = re.compile(
+        r"^\s*(import pdb|from pdb|import ipdb|from ipdb|breakpoint\s*\(|pdb\.set_trace)",
+        re.MULTILINE
+    )
+    matches = debug_pattern.findall(source)
+    assert len(matches) == 0, f"Found debug statements: {matches}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_trailing_whitespace():
+    """Repo's server_args.py has no trailing whitespace (pass_to_pass)."""
+    source = Path(TARGET_FILE).read_text()
+    lines = source.splitlines(keepends=True)
+    issues = []
+    for i, line in enumerate(lines, 1):
+        # Check if line has trailing whitespace before newline
+        stripped = line.rstrip("\n\r")
+        if stripped != stripped.rstrip():
+            issues.append(f"Line {i}")
+    assert len(issues) == 0, f"Found trailing whitespace in {len(issues)} lines: {issues[:5]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ends_with_newline():
+    """Repo's server_args.py ends with newline (pass_to_pass)."""
+    content = Path(TARGET_FILE).read_bytes()
+    assert content.endswith(b"\n"), "File does not end with newline"
+
+
+# ---------------------------------------------------------------------------
 # Anti-stub (static, pass_to_pass)
 # ---------------------------------------------------------------------------
 

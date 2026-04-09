@@ -379,6 +379,29 @@ def test_init_contiguity_assertion_preserved():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+# CI: Python syntax check for all inductor Python files
+def test_repo_inductor_syntax():
+    """All torch/_inductor/*.py files must have valid Python syntax (pass_to_pass)."""
+    import py_compile
+    inductor_dir = Path(REPO) / "torch" / "_inductor"
+    py_files = list(inductor_dir.glob("*.py"))
+    assert py_files, f"No Python files found in {inductor_dir}"
+    for f in py_files:
+        py_compile.compile(str(f), doraise=True)
+
+
+# [repo_tests] pass_to_pass
+# CI: AST validity check for scheduler.py (modified by this PR)
+def test_repo_scheduler_ast():
+    """scheduler.py must have valid AST structure (pass_to_pass)."""
+    source = Path(SCHEDULER).read_text()
+    tree = ast.parse(source)  # noqa: F841 - validates parse succeeds
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md
 # ---------------------------------------------------------------------------
 

@@ -46,6 +46,51 @@ def test_cargo_check():
     )
 
 
+# [repo_ci] pass_to_pass — from CI workflow
+def test_cargo_clippy():
+    """ty_python_semantic crate passes clippy linting (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "cargo", "clippy", "-p", "ty_python_semantic",
+            "--all-targets", "--all-features", "--", "-D", "warnings"
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"cargo clippy failed:\n{r.stderr.decode()[-2000:]}"
+    )
+
+
+# [repo_ci] pass_to_pass — from CI workflow
+def test_cargo_test_lib():
+    """ty_python_semantic library tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--lib"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"cargo test --lib failed:\n{r.stderr.decode()[-2000:]}"
+    )
+
+
+# [repo_ci] pass_to_pass — from CI workflow
+def test_cargo_fmt_check():
+    """Repo code is properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"cargo fmt --check failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core structural changes
 # ---------------------------------------------------------------------------

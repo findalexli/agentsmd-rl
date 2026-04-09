@@ -78,6 +78,20 @@ def test_cargo_check():
     """ty binary exists after build."""
     assert Path(_ty_bin()).exists(), "ty binary not found after build"
 
+# [repo_tests] pass_to_pass
+def test_cargo_check_ty_package():
+    """ty crate and its dependencies compile without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"cargo check -p ty failed:\n{r.stderr[-1000:]}"
+    )
+
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
@@ -277,3 +291,67 @@ def test_no_local_imports():
                 assert False, (
                     f"Local import in Visitor impl at builder.rs: {stripped}"
                 )
+
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_ty_all_targets():
+    """ty crate compiles with all targets and features (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty", "--all-targets", "--all-features"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"cargo check -p ty --all-targets --all-features failed:\n{r.stderr[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_clippy_ty():
+    """ty crate passes clippy linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty", "--all-targets", "--all-features", "--", "-D", "warnings"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"cargo clippy -p ty failed:\n{r.stderr[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_fmt_check():
+    """Code passes rustfmt formatting checks (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"cargo fmt --check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_ty_python_semantic_semantic_index_tests():
+    """Semantic index tests pass (pass_to_pass) - tests builder.rs module."""
+    env = os.environ.copy()
+    env["CARGO_PROFILE_DEV_OPT_LEVEL"] = "1"
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--lib", "--", "semantic_index"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env=env,
+    )
+    assert r.returncode == 0, (
+        f"ty_python_semantic semantic_index tests failed:\n{r.stderr[-1000:]}"
+    )

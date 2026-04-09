@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/prime-rl"
@@ -96,7 +97,31 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Pass-to-pass (repo_tests) - Repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linting passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "--config=pyproject.toml", CONFIG_PY, CKPT_PY],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff formatting passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--config=pyproject.toml", CONFIG_PY, CKPT_PY],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) - core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -193,9 +218,9 @@ def test_config_consistent_with_siblings():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — ckpt.py behavioral change
+# Fail-to-pass (pr_diff) - ckpt.py behavioral change
 # AST-only because: load_from_path requires torch.distributed (dcp_load,
-# AppState, get_world) — cannot call on CPU.
+# AppState, get_world) - cannot call on CPU.
 # ---------------------------------------------------------------------------
 
 def _is_empty_collection(node):
@@ -325,7 +350,7 @@ def test_ckpt_stores_skip_optimizer():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
+# Pass-to-pass (repo_tests / static) - regression + anti-stub
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -365,7 +390,7 @@ def test_not_stub():
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — AGENTS.md:5 @ d8030652042f38a019beffecd8aa5e07cfefe4c4
+# [agent_config] pass_to_pass - AGENTS.md:5 @ d8030652042f38a019beffecd8aa5e07cfefe4c4
 def test_no_try_except_in_config():
     """Avoid try/except blocks unless really necessary (AGENTS.md:5)."""
     src = Path(CONFIG_PY).read_text()

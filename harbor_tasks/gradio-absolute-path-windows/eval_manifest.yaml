@@ -12,6 +12,21 @@ checks:
     origin: static
     description: "gradio/utils.py must parse without errors"
 
+  - id: test_repo_ruff
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Ruff lint check passes on gradio/utils.py"
+
+  - id: test_repo_utils_no_syntax_errors
+    type: pass_to_pass
+    origin: repo_ci
+    description: "gradio/utils.py can be compiled and has no syntax errors"
+
+  - id: test_repo_safe_join_extractable
+    type: pass_to_pass
+    origin: repo_ci
+    description: "safe_join function can be extracted and executed from utils.py"
+
   - id: slash_path_rejected_simulated_win314
     type: fail_to_pass
     origin: pr_diff

@@ -12,24 +12,24 @@ checks:
     origin: static
     description: "packages/react-reconciler/src/getComponentNameFromFiber.js must parse without JavaScript syntax errors"
 
-  - id: suspense_offscreen_error_message
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Error thrown inside Suspense should report <Suspense> as the component name, not <Offscreen>"
+  - id: repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ESLint checks must pass"
 
-  - id: activity_offscreen_error_message
+  - id: repo_reconciler_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "React reconciler package tests must pass"
+
+  - id: offscreen_returns_parent_not_hardcoded
     type: fail_to_pass
     origin: pr_diff
-    description: "Error thrown inside Activity should report <Activity> as the component name, not <Offscreen>"
+    description: "OffscreenComponent case must return parent fiber name, not hardcoded 'Offscreen'"
 
   - id: existing_error_logging_tests_pass
     type: pass_to_pass
     origin: repo_tests
     description: "Existing ReactIncrementalErrorLogging tests must not break"
-
-  - id: not_stub
-    type: fail_to_pass
-    origin: static
-    description: "OffscreenComponent case must recursively walk to parent fiber, not return a hardcoded string"
 
 rubric: []

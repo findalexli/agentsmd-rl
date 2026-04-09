@@ -1,19 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd /workspace/{{REPO_SHORT}}
+cd /workspace/example-repo
 
-# Idempotent: skip if already applied
-if grep -q '{{DISTINCTIVE_LINE}}' {{TARGET_FILE}} 2>/dev/null; then
-    echo "Patch already applied."
-    exit 0
-fi
+# Fix the bug: change a - b to a + b
+sed -i 's/return a - b/return a + b/' calculator.py
 
-# Use --whitespace=fix if patch has trailing whitespace issues
-# IMPORTANT: patch content MUST end with a blank line before the PATCH delimiter
-git apply - <<'PATCH'
-{{PATCH_CONTENT}}
-
-PATCH
-
+# Verify the fix
+git diff
 echo "Patch applied successfully."

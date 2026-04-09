@@ -1,11 +1,90 @@
 {
+  "schema_version": 2,
   "verdict": "fail",
-  "nop_reward": 0.0,
-  "gold_reward": 0.0,
-  "validated_at": "2026-04-08T22:03:41.522733",
-  "sandbox_id": "iirbnotixdlzcruggs8xy",
-  "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 1836.31
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:24:05.903020",
+  "total_time": 5880.5,
+  "sandbox_id": "i1pqg51fbzoqjmuu80g5v",
+  "backend": "glm",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "ci_commands_found": [
+        {
+          "command": "pnpm lint-language",
+          "duration_sec": 8,
+          "status": "working",
+          "added_as_p2p": true,
+          "reason": "Fast language linting check with alex (no build needed)"
+        },
+        {
+          "command": "pnpm lint-eslint",
+          "duration_sec": 40,
+          "status": "working",
+          "added_as_p2p": true,
+          "reason": "ESLint check on modified files (no build needed)"
+        },
+        {
+          "command": "pnpm types:test-lib",
+          "duration_sec": 5,
+          "status": "type_errors_expected_pre_build",
+          "added_as_p2p": false,
+          "reason": "Requires build to pass - fails without next/dist/* built"
+        },
+        {
+          "command": "pnpm prettier-check",
+          "duration_sec": 129,
+          "status": "too_slow",
+          "added_as_p2p": false,
+          "reason": "Takes 2+ minutes, exceeds 120s threshold"
+        },
+        {
+          "command": "pnpm validate-externals-doc",
+          "duration_sec": 0.4,
+          "status": "requires_build",
+          "added_as_p2p": false,
+          "reason": "Requires compiled next/dist/ modules"
+        },
+        {
+          "command": "pnpm check-examples",
+          "duration_sec": 5,
+          "status": "missing_deps",
+          "added_as_p2p": false,
+          "reason": "Requires jq and sponge utilities not in image"
+        },
+        {
+          "command": "pnpm test-unit",
+          "duration_sec": null,
+          "status": "requires_build",
+          "added_as_p2p": false,
+          "reason": "Unit tests require next package to be built"
+        }
+      ],
+      "tests_added": [
+        "test_repo_lint_language",
+        "test_repo_lint_eslint"
+      ],
+      "notes": "Added fast CI checks that don't require build. ESLint and language lint pass on base commit and should pass after gold fix. Skipped slower checks (>120s) and those requiring build."
+    },
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 392.45,
+      "notes": ""
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 5880.5,
+      "at": "2026-04-09T07:24:05.903020"
+    }
+  ]
 }

@@ -233,3 +233,76 @@ def test_ruff_check_clean():
         timeout=30,
     )
     assert r.returncode == 0, f"ruff check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — ensure existing tests still pass
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Granite model tests
+def test_repo_granite_config():
+    """Granite base config test passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/models/granite/test_modeling_granite.py::GraniteModelTest::test_config",
+            "-v", "--timeout=60",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Granite config test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — GraniteMoe model tests
+def test_repo_granitemoe_config():
+    """GraniteMoe config test passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/models/granitemoe/test_modeling_granitemoe.py::GraniteMoeModelTest::test_config",
+            "-v", "--timeout=60",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"GraniteMoe config test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — GraniteMoeShared model tests
+def test_repo_granitemoeshared_config():
+    """GraniteMoeShared config test passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/models/granitemoeshared/test_modeling_granitemoeshared.py::GraniteMoeSharedModelTest::test_config",
+            "-v", "--timeout=60",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"GraniteMoeShared config test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — ruff format check
+def test_repo_ruff_format():
+    """Modified config files are properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "ruff", "format", "--check",
+            "src/transformers/models/granite/configuration_granite.py",
+            "src/transformers/models/granitemoe/configuration_granitemoe.py",
+            "src/transformers/models/granitemoeshared/configuration_granitemoeshared.py",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout}\n{r.stderr}"

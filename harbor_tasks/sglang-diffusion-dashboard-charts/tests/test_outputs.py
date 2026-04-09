@@ -328,3 +328,60 @@ def test_not_stub():
         assert axes, "no matplotlib axes created"
         pngs = [f for f in os.listdir(td) if f.endswith(".png")]
         assert pngs, "no chart files"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — Repo CI checks (p2p enrichment)
+# ---------------------------------------------------------------------------
+
+REPO = "/repo"
+
+# [repo] pass_to_pass
+def test_repo_black_formatting():
+    """Diffusion script passes Black formatting check (pass_to_pass)."""
+    import subprocess
+
+    # Install black if not available
+    subprocess.run(["pip", "install", "black", "--quiet"], check=False, capture_output=True)
+
+    r = subprocess.run(
+        ["black", "--check", "scripts/ci/utils/diffusion/generate_diffusion_dashboard.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black formatting check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo] pass_to_pass
+def test_repo_isort_imports():
+    """Diffusion script passes isort import order check (pass_to_pass)."""
+    import subprocess
+
+    # Install isort if not available
+    subprocess.run(["pip", "install", "isort", "--quiet"], check=False, capture_output=True)
+
+    r = subprocess.run(
+        ["isort", "--check", "scripts/ci/utils/diffusion/generate_diffusion_dashboard.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo] pass_to_pass
+def test_repo_script_imports():
+    """Diffusion script imports without errors (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python3", "-c", "from scripts.ci.utils.diffusion.generate_diffusion_dashboard import generate_dashboard, MAX_HISTORY_RUNS"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Script import failed:\n{r.stderr[-500:]}"

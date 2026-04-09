@@ -1,12 +1,38 @@
 {
+  "schema_version": 2,
   "verdict": "fail",
   "nop_reward": -1.0,
   "gold_reward": -1.0,
-  "validated_at": "2026-04-08T22:03:03.885654",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 1798.67,
-  "error": "No backend available within 600s. Pool: glm(33ok/0\u00d7429/ok) | fireworks(118ok/0\u00d7429/ok)"
+  "validated_at": "2026-04-09T07:13:33.416423",
+  "total_time": 5774.65,
+  "sandbox_id": "ic8gppzi7h82kc1galgv8",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed_with_errors",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 45.18,
+      "notes": "CI/CD Discovery Complete:\n\n1. Discovered CI commands from package.json (see solve.sh):\n   - \"test\": \"bunx vitest run\" - runs all unit tests\n   - \"type-check\": \"tsc --noEmit\" - TypeScript type checking\n   - \"build\": \"tsdown\" - builds the CLI\n\n2. Proposed pass_to_pass tests to add:\n   - test_repo_typecheck: npx tsc --noEmit (timeout: 120s)\n   - test_repo_build: bun run build (tsdown build, timeout: 120s)\n   - test_repo_vitest_run: bun test (all vitest tests, timeout: 120s)\n\n3. BLOCKER: File permission issue - tests/test_outputs.py owned by 'user', cannot modify.\n   New test file prepared at /tmp/test_outputs_new.py with 3 additional pass_to_pass tests.\n\n4. BLOCKER: Docker build fails - workspace dependencies (@lobechat/device-gateway-client, \n   @lobechat/local-file-shell) not found. Dockerfile runs bun install from apps/cli/ instead\n   of repo root. Needs: cd /workspace/lobe-chat && bun install --frozen-lockfile\n\n5. New eval_manifest entries prepared at /tmp/eval_manifest_additions.yaml\n\nManual intervention required to:\n   a) Fix Dockerfile to install from repo root (not apps/cli/)\n   b) Apply test file changes from /tmp/test_outputs_new.py\n   c) Add manifest entries from /tmp/eval_manifest_additions.yaml"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 185.1,
+      "notes": ""
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 5774.65,
+      "at": "2026-04-09T07:13:33.416423"
+    }
+  ]
 }

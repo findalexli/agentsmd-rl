@@ -1,0 +1,53 @@
+checks:
+  # Fail-to-Pass Tests: Verify the fix works
+  - id: test_use_should_show_user_features_hook_removed
+    type: fail_to_pass
+    origin: agent
+    description: useShouldShowUserFeatures hook is removed from user-actions.tsx
+
+  - id: test_context_menu_always_rendered
+    type: fail_to_pass
+    origin: agent
+    description: UserContextMenu is always rendered unconditionally
+
+  - id: test_context_menu_div_always_present
+    type: fail_to_pass
+    origin: agent
+    description: Context menu wrapper div with opacity classes is always present
+
+  # Pass-to-Pass Tests: Existing verification tests
+  - id: test_typescript_user_actions_no_errors
+    type: pass_to_pass
+    origin: agent
+    description: user-actions.tsx has no TypeScript errors
+
+  - id: test_frontend_lint_user_actions_clean
+    type: pass_to_pass
+    origin: agent
+    description: Frontend lint passes on user-actions.tsx
+
+  - id: test_user_actions_file_exists
+    type: pass_to_pass
+    origin: agent
+    description: Target file exists sanity check
+
+  - id: test_component_imports_clean
+    type: pass_to_pass
+    origin: agent
+    description: No unused imports remain after fix
+
+  # Pass-to-Pass Tests: Repo CI/CD checks
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's TypeScript typecheck passes (react-router typegen && tsc)
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's frontend build passes
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's frontend lint passes (typecheck + eslint + prettier)

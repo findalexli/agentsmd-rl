@@ -1,0 +1,104 @@
+version: "1.0"
+
+source_pr:
+  owner: ClickHouse
+  repo: ClickHouse
+  pr_number: 102080
+  base_commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+  merge_commit: d037e27f19e1ac3bc99d027a328d646853bc6b8e
+
+checks:
+  # Fail-to-pass tests
+  - id: test_large_file_check_exists
+    type: fail_to_pass
+    origin: task_tests
+    description: Large file check code exists in various_checks.sh
+
+  - id: test_large_file_check_logic
+    type: fail_to_pass
+    origin: task_tests
+    description: Large file detection logic correctly identifies oversized files
+
+  - id: test_whitelist_comprehensive
+    type: fail_to_pass
+    origin: task_tests
+    description: Whitelist contains expected entries for known large test files
+
+  - id: test_stat_format_detection
+    type: fail_to_pass
+    origin: task_tests
+    description: Script detects GNU vs BSD stat format correctly
+
+  - id: test_large_file_warning_message
+    type: fail_to_pass
+    origin: task_tests
+    description: Warning message follows expected format
+
+  # Pass-to-pass tests (repo CI/CD)
+  - id: test_script_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Shell script has valid bash syntax
+
+  - id: test_various_checks_runs
+    type: pass_to_pass
+    origin: repo_tests
+    description: various_checks.sh script runs without crashing
+
+  - id: test_check_submodules_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: check_submodules.sh has valid bash syntax
+
+  - id: test_check_submodules_runs
+    type: pass_to_pass
+    origin: repo_tests
+    description: check_submodules.sh runs without crashing
+
+  - id: test_check_cpp_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: check_cpp.sh has valid bash syntax
+
+  - id: test_check_aspell_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: check_aspell.sh has valid bash syntax
+
+  - id: test_check_typos_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: check_typos.sh has valid bash syntax
+
+  - id: test_check_mypy_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: check-mypy has valid bash syntax
+
+  - id: test_check_settings_style_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: check-settings-style has valid bash syntax
+
+  - id: test_check_style_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: check_style.py has valid Python syntax
+
+  - id: test_check_mypy_diff_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: check-mypy-diff.py has valid Python syntax
+
+  # Agent config rules from .claude/skills/review/SKILL.md
+  - id: agent_config_no_large_binary_files
+    type: fail_to_pass
+    origin: agent_config
+    description: No large / binary files in git check implemented as per SKILL.md rule
+    source:
+      file: .claude/skills/review/SKILL.md
+      lines: "226-228"
+      commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+      rule: "Binary blobs (JARs, archives, compiled artifacts, datasets >1 MB, fat dependency bundles) must never be committed. They permanently bloat the repository for every clone and cannot be removed without history rewriting."
+
+rubric: []

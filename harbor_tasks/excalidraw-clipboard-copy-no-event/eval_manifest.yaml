@@ -1,0 +1,99 @@
+id: excalidraw-clipboard-copy-no-event
+source:
+  pr: https://github.com/excalidraw/excalidraw/pull/10729
+  base_commit: d29fd62e417b8cb73d1d5dc3e207735046401491
+  merge_commit: 54a98268177c19cee7a49d05ce56e64f7a424db1
+
+# One check per test in test_outputs.py
+checks:
+  - id: clipboard-flow-control
+    title: Clipboard flow control returns in correct scope
+    description: |
+      The copyTextToSystemClipboard function must return inside the clipboardEvent
+      block only when clipboardEvent is provided, and return after navigator.clipboard.writeText
+      succeeds. This ensures proper fallback behavior when no ClipboardEvent is available.
+    type: pytest
+    origin: behavior
+    file: test_outputs.py
+    function: test_clipboard_flow_control
+
+  - id: plain-text-const
+    title: plainTextEntry uses const instead of let
+    description: |
+      The plainTextEntry variable should be declared as const since it is never reassigned.
+    type: pytest
+    origin: agent_config
+    source:
+      file: CLAUDE.md
+      rule: "Prefer immutable data (const, readonly)"
+    file: test_outputs.py
+    function: test_plain_text_const
+
+  - id: no-redundant-undefined
+    title: No redundant undefined assignment
+    description: |
+      After successful navigator.clipboard.writeText(), the code should return directly
+      instead of setting plainTextEntry to undefined and continuing.
+    type: pytest
+    origin: behavior
+    file: test_outputs.py
+    function: test_no_redundant_undefined
+
+  - id: scss-success-color
+    title: FilledButton SCSS adds success background color
+    description: |
+      The FilledButton.scss file should include background-color: var(--color-success)
+      for loading and success states.
+    type: pytest
+    origin: behavior
+    file: test_outputs.py
+    function: test_scss_success_color
+
+  # Pass-to-Pass checks - ensure fix doesn't break existing functionality
+  - id: repo-clipboard-ts-syntax
+    title: clipboard.ts has valid TypeScript syntax
+    description: |
+      The clipboard.ts file must have valid TypeScript syntax that can be parsed.
+      This is a pass_to_pass check to ensure the fix doesn't break syntax.
+    type: pass_to_pass
+    origin: repo_tests
+    file: test_outputs.py
+    function: test_repo_clipboard_ts_syntax
+
+  - id: repo-filledbutton-scss-syntax
+    title: FilledButton.scss has valid SCSS syntax
+    description: |
+      The FilledButton.scss file must have valid SCSS syntax that can be parsed.
+      This is a pass_to_pass check to ensure the fix doesn't break syntax.
+    type: pass_to_pass
+    origin: repo_tests
+    file: test_outputs.py
+    function: test_repo_filledbutton_scss_syntax
+
+  - id: repo-clipboard-test-exists
+    title: clipboard.test.ts exists and is accessible
+    description: |
+      The clipboard.test.ts file should exist and contain the expected test content.
+      This is a pass_to_pass check to ensure the test file wasn't accidentally removed.
+    type: pass_to_pass
+    origin: repo_tests
+    file: test_outputs.py
+    function: test_repo_clipboard_test_exists
+
+  - id: repo-constants-ts-exists
+    title: constants.ts exists and is accessible
+    description: |
+      The constants.ts file should exist in the common package.
+      This is a pass_to_pass check to ensure shared constants are available.
+    type: pass_to_pass
+    origin: repo_tests
+    file: test_outputs.py
+    function: test_repo_constants_ts_exists
+
+# Rubric for soft/subjective rules
+rubric:
+  - id: immutable-preference
+    description: "Prefer immutable data (const, readonly)"
+    source:
+      file: CLAUDE.md
+      lines: "Prefer immutable data (const, readonly)"

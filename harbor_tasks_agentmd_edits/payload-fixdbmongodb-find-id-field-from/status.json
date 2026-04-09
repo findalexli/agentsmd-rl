@@ -1,11 +1,57 @@
 {
+  "schema_version": 2,
   "verdict": "fail",
-  "nop_reward": 0.0,
-  "gold_reward": 0.0,
-  "validated_at": "2026-04-08T22:06:38.165452",
-  "sandbox_id": "idlku3ogbq68vhi5dheqe",
-  "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 2012.96
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:54:10.835577",
+  "total_time": 5727.38,
+  "sandbox_id": "ikqcpocjuown241639603",
+  "backend": "glm",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "completed_at": "2026-04-09T11:00:00Z",
+      "ci_commands_discovered": [
+        "pnpm test:unit - runs vitest unit tests (870 tests, ~15s)",
+        "pnpm lint -- --quiet - runs ESLint on all packages (fails on base commit with existing warnings)",
+        "pnpm build:core - builds core packages (takes ~2-3 min)",
+        "pnpm test:int - requires database, takes too long"
+      ],
+      "p2p_tests_added": [
+        "test_repo_unit_tests - runs 'pnpm test:unit' to verify repo unit tests pass on base commit"
+      ],
+      "notes": [
+        "Unit tests pass in ~15s with 870 tests - good for pass_to_pass gate",
+        "Linting fails on base commit due to existing warnings - not suitable for p2p",
+        "Build takes 2-3 min - too slow for p2p test",
+        "Integration tests require database and take 45+ min - not suitable for p2p",
+        "TypeScript typecheck requires build artifacts - fails without prior build"
+      ]
+    },
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 459.91,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 5727.38,
+      "at": "2026-04-09T07:54:10.835577"
+    }
+  ]
 }

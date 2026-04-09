@@ -1,11 +1,79 @@
 {
-  "verdict": "fail",
+  "schema_version": 2,
+  "verdict": "pass",
   "nop_reward": 0.0,
-  "gold_reward": 0.0,
-  "validated_at": "2026-04-08T21:50:14.018638",
-  "sandbox_id": "iftka38e6yhk6rfto23z5",
-  "backend": "glm",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 1028.74
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T14:07:24.476989",
+  "total_time": 17732.32,
+  "sandbox_id": "icvcaupm3v1futu261g2r",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 300.0,
+      "notes": "ENVRIONMENT ISSUE: Node.js is not installed in the Docker image, but all existing tests require it (they run subprocess.run(['node', '--experimental-strip-types', ...]) to execute TypeScript code). No p2p tests were added because the base environment lacks required tooling. TO FIX: Add Node.js to the Dockerfile (e.g., 'RUN apt-get install -y nodejs npm' or use nodesource setup). Once Node.js is available, add these p2p tests to test_outputs.py: test_repo_typescript_syntax (validates syntax of modified files), test_repo_typescript_types_basic (runs tsc --noEmit on scripts/build), test_repo_build_script_runnable (validates build.ts syntax). Corresponding eval_manifest.yaml entries needed with type=pass_to_pass and origin=repo_tests. Repo: oven-sh/bun at commit 485ec522a22b469b336aece8276b507a71665a87."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 165.87,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile to add Node.js 24.x. Fixed test_outputs.py JavaScript escaping. All 7 tests pass.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 545.15
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.37,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6928.41,
+      "at": "2026-04-09T07:26:53.321803"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 17732.16,
+      "at": "2026-04-09T14:07:24.360944"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 17732.32,
+      "at": "2026-04-09T14:07:24.476989"
+    }
+  ]
 }

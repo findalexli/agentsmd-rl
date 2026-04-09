@@ -91,6 +91,21 @@ checks:
     origin: static
     description: "Permissions.windows.cs has real implementation, not just stubs"
 
+  - id: repo_permissions_file_parses
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Permissions.windows.cs has valid C# syntax (balanced braces, valid structure)"
+
+  - id: repo_file_headers_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files have valid headers and structure (namespace, usings, class definitions)"
+
+  - id: no_stub_implementations
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Permissions file has no NotImplementedException stubs (real implementation only)"
+
   # ---------------------------------------------------------------------------
   # Config-derived (agent_config)
   # ---------------------------------------------------------------------------

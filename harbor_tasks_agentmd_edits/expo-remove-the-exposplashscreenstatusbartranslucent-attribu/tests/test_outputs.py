@@ -145,7 +145,7 @@ if 'translucent: Boolean' in content:
     raise AssertionError("SplashScreenStatusBar still accepts translucent boolean")
 
 # Verify the insets listener is always applied (no conditional branching)
-# The old code had `if (translucent) { ... } else { setListener(null) }`
+# The old code had 
 # The new code should NOT have setOnApplyWindowInsetsListener(null)
 if 'setOnApplyWindowInsetsListener(null)' in content:
     raise AssertionError("SplashScreenStatusBar still has null listener fallback")
@@ -284,3 +284,62 @@ def test_status_bar_still_applies_insets():
     assert "requestApplyInsets" in content, (
         "SplashScreenStatusBar.setTranslucent is missing requestApplyInsets"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD validation
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_kotlin_files_valid():
+    """Modified Kotlin files must have valid syntax (pass_to_pass)."""
+    kotlin_files = [
+        "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/experience/splashscreen/legacy/singletons/SplashScreen.kt",
+        "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/experience/splashscreen/legacy/singletons/SplashScreenStatusBar.kt",
+        "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/utils/ExperienceActivityUtils.kt",
+        "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/experience/splashscreen/legacy/SplashScreenReactActivityLifecycleListener.kt",
+        "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/experience/ExperienceActivity.kt",
+    ]
+    for rel in kotlin_files:
+        path = Path(REPO) / rel
+        assert path.exists(), f"Missing: {rel}"
+        content = path.read_text()
+        # Basic syntax validation
+        assert "package " in content, f"{rel}: missing package declaration"
+        # Check braces are balanced (basic check)
+        open_braces = content.count("{")
+        close_braces = content.count("}")
+        assert open_braces == close_braces, f"{rel}: unbalanced braces ({open_braces} vs {close_braces})"
+        # Check parentheses are roughly balanced
+        open_parens = content.count("(")
+        close_parens = content.count(")")
+        assert open_parens == close_parens, f"{rel}: unbalanced parentheses ({open_parens} vs {close_parens})"
+
+
+# [repo_tests] pass_to_pass
+def test_splash_screen_kt_structure():
+    """SplashScreen.kt must have required object structure (pass_to_pass)."""
+    splash_kt = Path(REPO) / (
+        "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/"
+        "experience/splashscreen/legacy/singletons/SplashScreen.kt"
+    )
+    content = splash_kt.read_text()
+    # Check for required structure
+    assert "object SplashScreen" in content, "Missing SplashScreen object declaration"
+    assert "fun show(" in content, "Missing show function"
+    assert "fun ensureShown(" in content, "Missing ensureShown function"
+    assert "SingletonModule" in content, "Missing SingletonModule interface"
+
+
+# [repo_tests] pass_to_pass
+def test_splash_screen_status_bar_kt_structure():
+    """SplashScreenStatusBar.kt must have required object structure (pass_to_pass)."""
+    status_bar_kt = Path(REPO) / (
+        "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/"
+        "experience/splashscreen/legacy/singletons/SplashScreenStatusBar.kt"
+    )
+    content = status_bar_kt.read_text()
+    # Check for required structure
+    assert "object SplashScreenStatusBar" in content, "Missing SplashScreenStatusBar object declaration"
+    assert "import android.app.Activity" in content, "Missing Activity import"
+    assert "import androidx.core.view.ViewCompat" in content, "Missing ViewCompat import"

@@ -9,6 +9,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified Rust files must compile without errors
+- id: test_repo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's clippy linting passes
+- id: test_repo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's rustfmt formatting check passes
+- id: test_repo_prqlc_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prqlc test suite passes
 - id: distinct_on_wildcard
   type: fail_to_pass
   origin: pr_diff
@@ -35,7 +47,7 @@ rubric:
     path: CLAUDE.md
     lines: 49-79
     commit: ed4eba8c8b74485da87be318453edf041c800c6f
-  reference: "### Test Strategy\n\n**Prefer small inline `insta` snapshot tests**\
+  reference: "### Test Strategy\n\n**Prefer small inline `\nsta` snapshot tests**\
     \ over full integration tests:\n\n- **Use inline tests** for most bug fixes and\
     \ small features\n  - Add `#[test]` functions in a `#[cfg(test)]` module at the\
     \ end of the file\n  - Use `insta::assert_snapshot!` for compact, readable test\
@@ -47,7 +59,7 @@ rubric:
     path: CLAUDE.md
     lines: 49-79
     commit: ed4eba8c8b74485da87be318453edf041c800c6f
-  reference: "### Test Strategy\n\n**Prefer small inline `insta` snapshot tests**\
+  reference: "### Test Strategy\n\n**Prefer small inline `\nsta` snapshot tests**\
     \ over full integration tests:\n\n- **Use inline tests** for most bug fixes and\
     \ small features\n  - Add `#[test]` functions in a `#[cfg(test)]` module at the\
     \ end of the file\n  - Use `insta::assert_snapshot!` for compact, readable test\

@@ -1,13 +1,54 @@
 {
-  "validations": [
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:58:57.608840",
+  "total_time": 5941.77,
+  "sandbox_id": "i8y5lqntwhqsgkmepeldl",
+  "backend": "glm",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T11:20:00",
+      "ci_commands_discovered": [
+        "yarn install --frozen-lockfile",
+        "yarn workspace babel-plugin-react-compiler build",
+        "yarn workspace babel-plugin-react-compiler lint",
+        "yarn workspace babel-plugin-react-compiler jest",
+        "npx tsc --noEmit (in babel-plugin-react-compiler dir)",
+        "npx tsc --noEmit (in snap dir)"
+      ],
+      "tests_added": [
+        "test_repo_ci_checks - Combined CI test that runs yarn install once then build, lint, jest, and typecheck for both babel-plugin-react-compiler and snap packages"
+      ],
+      "ci_source": ".github/workflows/compiler_typescript.yml",
+      "notes": "Discovered CI commands from GitHub workflow. All commands tested and verified to pass on base commit cd0c4879a2959db91f9bd51a09dafefedd95fb17. Combined into single test to share expensive yarn install (53s). Total test time ~88s."
+    },
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 748.19,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-03T07:38:12.348716",
-      "phase": "e2b_agentmd_initial",
-      "runner": "e2b_validate (agentmd)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 5941.77,
+      "at": "2026-04-09T07:58:57.608840"
     }
   ]
 }

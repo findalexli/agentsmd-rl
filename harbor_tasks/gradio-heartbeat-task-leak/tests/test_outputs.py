@@ -202,6 +202,61 @@ def test_no_bare_create_task_in_sse_stream():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linting passes on routes.py (pass_to_pass).
+
+    Runs: ruff check gradio/routes.py
+    From: .github/workflows/test-python.yml -> ./scripts/lint_backend.sh
+    """
+    r = subprocess.run(
+        ["ruff", "check", str(ROUTES)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff formatting passes on routes.py (pass_to_pass).
+
+    Runs: ruff format --check gradio/routes.py
+    From: .github/workflows/test-python.yml -> ./scripts/lint_backend.sh
+    """
+    r = subprocess.run(
+        ["ruff", "format", "--check", str(ROUTES)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile():
+    """Repo's Python code compiles without syntax errors (pass_to_pass).
+
+    Runs: python -m py_compile gradio/routes.py
+    From: Standard Python syntax validation
+    """
+    r = subprocess.run(
+        ["python", "-m", "py_compile", str(ROUTES)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Python compile failed:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 

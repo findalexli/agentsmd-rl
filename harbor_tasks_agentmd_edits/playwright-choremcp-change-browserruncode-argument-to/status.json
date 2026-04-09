@@ -1,1 +1,91 @@
-{"verdict": "pass", "nop": 0, "gold": 1}
+{
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:43:34.968387",
+  "total_time": 5609.83,
+  "sandbox_id": "iz5pso8yano7dmypfnsg7",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "timestamp": "2026-04-09",
+      "ci_commands_discovered": [
+        {
+          "command": "npm run build",
+          "status": "pass",
+          "timeout": 120,
+          "notes": "Builds the project successfully including all packages and bundles"
+        },
+        {
+          "command": "npm run lint-packages",
+          "status": "pass",
+          "timeout": 60,
+          "notes": "Checks workspace consistency across packages"
+        },
+        {
+          "command": "npm run tsc",
+          "status": "fail",
+          "notes": "Has type errors on base commit (incomplete types in repo)"
+        },
+        {
+          "command": "npm run eslint",
+          "status": "fail",
+          "notes": "OOM - requires more memory than available in container"
+        },
+        {
+          "command": "npm run check-deps",
+          "status": "fail",
+          "notes": "Fails on base commit due to DEPS issues in playwright-ct-core"
+        },
+        {
+          "command": "npm run test-mcp",
+          "status": "skip",
+          "notes": "Requires browser binaries not installed in image (chrome, chromium, firefox, webkit)"
+        }
+      ],
+      "tests_added": [
+        {
+          "id": "test_repo_build",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Repository build passes"
+        },
+        {
+          "id": "test_repo_lint_packages",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Repository workspace consistency check passes"
+        }
+      ],
+      "notes": "Added 2 P2P gates that pass on base commit. Build takes ~60s, lint-packages ~5s. Skipped tests requiring browsers, network, or GPU."
+    },
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 7.59,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 5609.83,
+      "at": "2026-04-09T07:43:34.968387"
+    }
+  ]
+}

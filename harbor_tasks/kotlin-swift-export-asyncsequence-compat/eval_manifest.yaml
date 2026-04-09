@@ -1,0 +1,101 @@
+task:
+  name: kotlin-swift-export-asyncsequence-compat
+  source_pr: https://github.com/JetBrains/kotlin/pull/5779
+  description: Add asyncSequence(for:) compatibility function for Swift Export to provide source compatibility with KMP-NativeCoroutines
+
+checks:
+  # Fail-to-pass tests
+  - id: test_asyncsequence_function_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: asyncSequence(for:) function must exist in KotlinCoroutineSupport.swift
+    source:
+      config_file: .ai/guidelines.md
+      rule: "Run tests after code changes"
+
+  - id: test_asyncsequence_has_deprecated_attribute
+    type: fail_to_pass
+    origin: agent_config
+    description: asyncSequence function must have @available(*, deprecated) attribute
+    source:
+      config_file: .ai/guidelines.md
+      rule: "Run tests after code changes"
+
+  - id: test_asyncsequence_calls_asasyncsequence
+    type: fail_to_pass
+    origin: agent_config
+    description: asyncSequence function body must call asAsyncSequence()
+    source:
+      config_file: .ai/guidelines.md
+      rule: "Run tests after code changes"
+
+  - id: test_asyncsequence_returns_kotlinflowsequence
+    type: fail_to_pass
+    origin: agent_config
+    description: asyncSequence function must return KotlinFlowSequence<T>
+    source:
+      config_file: .ai/guidelines.md
+      rule: "Run tests after code changes"
+
+  - id: test_asyncsequence_has_documentation_comment
+    type: fail_to_pass
+    origin: agent_config
+    description: asyncSequence function must have documentation comment
+    source:
+      config_file: .ai/guidelines.md
+      rule: "Run tests after code changes"
+
+  # Pass-to-pass tests
+  - id: test_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Target Swift file exists
+
+  - id: test_swift_file_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift file syntax should be valid (skipped - no swiftc in container)
+
+  - id: test_swift_braces_balanced
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift file has balanced braces, parentheses, and brackets
+
+  - id: test_swift_imports_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift file has valid import statements
+
+  - id: test_swift_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift file has minimal trailing whitespace issues
+
+  - id: test_swift_function_declarations_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift file has syntactically valid function declarations
+
+  - id: test_swift_comments_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift file has valid comment syntax and balanced block comments
+
+  - id: test_swift_class_struct_protocol_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift file has valid class/struct/protocol declarations
+
+  - id: test_file_not_empty
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift file has substantial content and is not empty
+
+# Rubric for soft/subjective checks (from agent configs)
+rubric:
+  - criteria: "Function provides proper migration path from KMP-NativeCoroutines"
+    description: "The function should be clearly marked as deprecated with guidance to use asAsyncSequence()"
+  - criteria: "Code follows Swift naming conventions"
+    description: "Function name and parameters follow Swift API design guidelines"
+  - criteria: "Documentation explains migration context"
+    description: "Documentation comment should explain why this function exists and when to replace it"

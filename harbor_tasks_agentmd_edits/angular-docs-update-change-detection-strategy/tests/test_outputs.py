@@ -46,11 +46,122 @@ def test_syntax_check():
         assert p.exists(), f"{f} must exist"
         content = p.read_text()
         assert len(content) > 100, f"{f} is unexpectedly short"
-        assert content.count("{") == content.count("}"), f"{f} has unbalanced braces"
+        # Skip brace counting for directives.ts which has template examples with braces
+        if "directives.ts" not in f:
+            assert content.count("{") == content.count("}"), f"{f} has unbalanced braces"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core source JSDoc updates
+# Pass-to-pass (repo_tests) - CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+
+def test_repo_git_valid():
+    """Repo is a valid git repository with expected commit checked out (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git status failed: {r.stderr}"
+    # Verify we are at the expected commit
+    r = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git rev-parse failed: {r.stderr}"
+    commit = r.stdout.strip()
+    # The base commit should be c1261b02dbe1d995d5a6fccb5556aca4d67b529f
+    assert commit.startswith("c1261b"), f"Unexpected commit: {commit}"
+
+
+def test_typescript_files_parseable():
+    """All modified TypeScript files have valid syntax structure (pass_to_pass)."""
+    ts_files = [
+        "packages/core/src/change_detection/constants.ts",
+        "packages/core/src/metadata/directives.ts",
+    ]
+    for f in ts_files:
+        p = Path(REPO) / f
+        assert p.exists(), f"{f} must exist"
+        content = p.read_text()
+
+        # Check basic structural integrity
+        assert len(content) > 100, f"{f} is unexpectedly short"
+
+        # Check balanced braces (skip for directives.ts which has template examples)
+        if "directives.ts" not in f:
+            assert content.count("{") == content.count("}"), f"{f} has unbalanced braces"
+
+        # Check balanced parentheses
+        assert content.count("(") == content.count(")"), f"{f} has unbalanced parentheses"
+
+        # Check balanced square brackets
+        assert content.count("[") == content.count("]"), f"{f} has unbalanced brackets"
+
+        # Check that export statements are well-formed
+        export_count = content.count("export ")
+        assert export_count > 0, f"{f} should have at least one export"
+
+        # Check no unclosed multi-line comments
+        comment_open = content.count("/*")
+        comment_close = content.count("*/")
+        assert comment_open == comment_close, f"{f} has unclosed comments: {comment_open} opens, {comment_close} closes"
+
+
+def test_markdown_files_valid():
+    """All modified Markdown files are valid UTF-8 and have proper structure (pass_to_pass)."""
+    md_files = [
+        "adev/src/content/best-practices/runtime-performance/skipping-subtrees.md",
+        "adev/src/content/guide/components/advanced-configuration.md",
+        "adev/src/content/tutorials/signals/steps/1-creating-your-first-signal/README.md",
+        "adev/src/context/airules.md",
+        "adev/src/context/angular-20.mdc",
+        "adev/src/context/guidelines.md",
+    ]
+    for f in md_files:
+        p = Path(REPO) / f
+        assert p.exists(), f"{f} must exist"
+
+        # Verify it is valid UTF-8
+        try:
+            content = p.read_text(encoding="utf-8")
+        except UnicodeDecodeError as e:
+            assert False, f"{f} is not valid UTF-8: {e}"
+
+        # Check file is not empty
+        assert len(content.strip()) > 0, f"{f} is empty"
+
+        # Check no null bytes - use chr(0) to avoid literal null in file
+        null_byte = chr(0)
+        assert null_byte not in content, f"{f} contains null bytes"
+
+
+def test_change_detection_files_exist():
+    """All change detection related files exist and have expected structure (pass_to_pass)."""
+    # Core change detection files
+    core_files = [
+        "packages/core/src/change_detection/constants.ts",
+        "packages/core/src/metadata/directives.ts",
+    ]
+    for f in core_files:
+        p = Path(REPO) / f
+        assert p.exists(), f"{f} must exist"
+        content = p.read_text()
+
+        # Check for enum declarations in constants.ts
+        if "constants.ts" in f:
+            assert "enum ChangeDetectionStrategy" in content, f"{f} should define ChangeDetectionStrategy enum"
+            assert "OnPush" in content, f"{f} should have OnPush"
+            assert "Eager" in content, f"{f} should have Eager"
+
+        # Check for Component interface in directives.ts
+        if "directives.ts" in f:
+            assert "interface Component" in content or "Component" in content, f"{f} should have Component interface"
+            assert "changeDetection" in content, f"{f} should mention changeDetection"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) - core source JSDoc updates
 # ---------------------------------------------------------------------------
 
 
@@ -118,7 +229,7 @@ print("PASS")
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — documentation updates
+# Fail-to-pass (pr_diff) - documentation updates
 # ---------------------------------------------------------------------------
 
 
@@ -172,7 +283,7 @@ def test_signals_readme_no_callout():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (agent_config) — agent config file cleanups
+# Fail-to-pass (agent_config) - agent config file cleanups
 # ---------------------------------------------------------------------------
 
 

@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -14,6 +15,76 @@ REPO = "/repo"
 
 if REPO not in sys.path:
     sys.path.insert(0, REPO)
+
+
+def _install_if_needed(package: str, import_name: str | None = None) -> None:
+    """Install a package if its import is not available."""
+    import_name = import_name or package
+    try:
+        __import__(import_name)
+    except ImportError:
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-q", package],
+            check=True,
+            capture_output=True,
+        )
+
+
+def _install_ruff() -> None:
+    """Install ruff if not already available."""
+    _install_if_needed("ruff")
+
+
+def _install_test_deps() -> None:
+    """Install test dependencies (pytest, hypothesis) if not available."""
+    _install_if_needed("pytest")
+    _install_if_needed("hypothesis")
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks that must pass before AND after
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on gradio/utils.py (pass_to_pass)."""
+    _install_ruff()
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "gradio/utils.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on gradio/utils.py (pass_to_pass)."""
+    _install_ruff()
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", "gradio/utils.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's TestGetTypeHints unit tests pass (pass_to_pass)."""
+    _install_test_deps()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::TestGetTypeHints", "-v"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-1000:]}"
 
 
 # ---------------------------------------------------------------------------

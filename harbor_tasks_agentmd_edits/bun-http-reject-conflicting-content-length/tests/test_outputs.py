@@ -91,3 +91,42 @@ def test_http_parser_content_length_parsing_preserved():
         "Content-Length string variable must still exist"
     assert "transfer-encoding" in src.lower(), \
         "Transfer-Encoding handling must be preserved"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+
+def test_repo_lint():
+    """Repo's JavaScript linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_ban_words():
+    """Banned words check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "./test/internal/ban-words.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ban words check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_bun_types():
+    """Bun types TypeScript check passes (pass_to_pass)."""
+    # Install root deps first (typescript is a devDependency at root)
+    r = subprocess.run(
+        ["bun", "install"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bun install failed: {r.stderr[-500:]}"
+    # Run tsc --noEmit from repo root pointing to bun-types tsconfig
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit", "-p", "packages/bun-types/tsconfig.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Bun types check failed:\n{r.stderr[-500:]}"

@@ -1,12 +1,71 @@
 {
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-08T21:48:20.149486",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 914.87,
-  "error": "No backend available within 600s. Pool: glm(19ok/0\u00d7429/ok) | fireworks(45ok/0\u00d7429/ok)"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T13:06:01.338162",
+  "total_time": 14048.93,
+  "sandbox_id": "i64ktamlwszl4ancdcsnf",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1570.78,
+      "notes": ""
+    },
+    "improve": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 178.44,
+      "notes": "syntax error or missing file: Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/lib/python3.12/ast.py\", line 52, in parse\n    return compile(source, filename, mode, flags,\n           ^^^^^^^^^^"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed solve.sh idempotency check. The original check 'grep -q FunctionLiteral(_)' was incorrect because line 5568 of bind.rs already contains that pattern. Changed to check for the specific line that gets removed by the patch: 'function_type.is_known(db, KnownFunction::Field)'. All 4 validation checks now pass: Docker build, NOP test (reward=0), Gold test (reward=1).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1715.45
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.75,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 6751.78,
+      "at": "2026-04-09T07:32:38.133445"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 14048.66,
+      "at": "2026-04-09T13:06:01.170211"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 14048.93,
+      "at": "2026-04-09T13:06:01.338162"
+    }
+  ]
 }

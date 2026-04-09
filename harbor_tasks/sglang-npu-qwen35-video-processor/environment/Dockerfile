@@ -24,7 +24,7 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
 RUN pip install --no-cache-dir transformers
 
 # Install additional dependencies needed by sglang
-RUN pip install --no-cache-dir pybase64 numpy pydantic
+RUN pip install --no-cache-dir pybase64 numpy pydantic requests
 
 # Verifier output directory
 RUN mkdir -p /logs/verifier

@@ -51,6 +51,30 @@ checks:
       lines: "22"
       commit: "aac12ce597b49093a5add54b00deee3d8980f874"
 
+  - id: test_repo_flow_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repos Flow typecheck passes on the modified file"
+    source:
+      ci_command: "yarn flow check TARGET"
+      timeout: 120
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repos ESLint passes on the modified file"
+    source:
+      ci_command: "yarn lint TARGET"
+      timeout: 120
+
+  - id: test_repo_react_native_renderer_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "React Native renderer unit tests pass"
+    source:
+      ci_command: "yarn test --releaseChannel=xplat --testPathPattern=react-native-renderer --ci"
+      timeout: 120
+
 rubric:
   - rule: "$FlowExpectedError comments should include a reason for the suppression"
     source:

@@ -116,6 +116,34 @@ def test_echo_tests_pass():
     )
 
 
+# [repo_tests] pass_to_pass
+def test_repo_make_vet():
+    """Repo's 'make vet' passes on echo module (pass_to_pass)."""
+    r = subprocess.run(
+        ["make", "vet"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"make vet failed:\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_make_build():
+    """Repo's 'make build' passes including echo module (pass_to_pass)."""
+    r = subprocess.run(
+        ["make", "build"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"make build failed:\n{r.stderr.decode()[-500:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Config-edit — README.md documentation update
 # ---------------------------------------------------------------------------

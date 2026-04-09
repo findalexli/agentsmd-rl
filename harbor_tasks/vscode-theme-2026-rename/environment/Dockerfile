@@ -8,6 +8,10 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
+# Configure git for any patch operations (MUST be before git commit)
+RUN git config --global user.email "agent@example.com" \
+    && git config --global user.name "Agent"
+
 # Set up workspace
 WORKDIR /workspace
 
@@ -29,6 +33,5 @@ RUN npm install --ignore-scripts 2>&1 | tail -20 || true
 # Create logs directory
 RUN mkdir -p /logs/verifier
 
-# Configure git for any patch operations
-RUN git config --global user.email "agent@example.com" \
-    && git config --global user.name "Agent"
+# Install dependencies for build scripts
+RUN cd build && npm install --ignore-scripts 2>&1 | tail -20 || true

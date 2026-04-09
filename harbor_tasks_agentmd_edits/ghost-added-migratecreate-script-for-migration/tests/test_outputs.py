@@ -158,7 +158,7 @@ def test_migration_creates_file():
 
 # [pr_diff] fail_to_pass
 def test_rc_bump_on_stable():
-    """createMigration bumps package.json to RC when current version is stable."""
+    """createMigration bumps package.json to RC when version is stable."""
     r = run_node(
         'const {createMigration} = require("./ghost/core/bin/create-migration");'
         'const fs = require("fs");'
@@ -242,3 +242,28 @@ def test_script_exports_functions():
     assert result["hasValidSlug"], "Missing export: isValidSlug"
     assert result["hasNextVersion"], "Missing export: getNextMigrationVersion"
     assert result["hasCreate"], "Missing export: createMigration"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """ghost/core/package.json is valid JSON (pass_to_pass)."""
+    core_package = Path(REPO) / "ghost" / "core" / "package.json"
+    assert core_package.exists(), f"package.json not found at {core_package}"
+    with open(core_package) as f:
+        json.load(f)  # Validates JSON syntax
+
+
+# [repo_tests] pass_to_pass
+def test_repo_existing_bin_syntax():
+    """Existing bin/minify-assets.js has no syntax errors (pass_to_pass)."""
+    script = Path(REPO) / "ghost" / "core" / "bin" / "minify-assets.js"
+    assert script.exists(), f"minify-assets.js not found at {script}"
+    r = subprocess.run(
+        ["node", "--check", str(script)],
+        capture_output=True, timeout=15,
+    )
+    assert r.returncode == 0, f"Syntax error in minify-assets.js:\n{r.stderr.decode()}"

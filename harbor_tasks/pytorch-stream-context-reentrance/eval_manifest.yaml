@@ -1,97 +1,111 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "pytorch/pytorch"
+  repo: pytorch/pytorch
   pr: 176603
-  base_commit: "3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c"
-  merge_commit: "f31baaae5d066cf833ac96a270495d71bdc1d508"
-
+  base_commit: 3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c
+  merge_commit: f31baaae5d066cf833ac96a270495d71bdc1d508
 checks:
-  - id: file_exists_and_has_functions
-    type: pass_to_pass
-    origin: static
-    description: "Target file exists with required function definitions and is not a stub"
-
-  - id: reentrance_assertion_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TORCH_CHECK assertion blocking reentrant stream context usage must be removed"
-
-  - id: context_uses_stack
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Context management uses a stack/list structure instead of single-dict assignment"
-
-  - id: enter_pushes_to_stack
-    type: fail_to_pass
-    origin: pr_diff
-    description: "enter() saves current stream state by pushing to stack before setting new stream"
-
-  - id: exit_pops_from_stack
-    type: fail_to_pass
-    origin: pr_diff
-    description: "exit() pops state from stack and restores previous stream without wiping entire stack"
-
-  - id: dealloc_clears_context
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Destructor clears self->context to prevent memory leak"
-
-  - id: noop_when_stream_already_current
-    type: fail_to_pass
-    origin: pr_diff
-    description: "enter() has a no-op fast path when the stream is already current (sentinel instead of redundant switch)"
-
-  - id: enter_exit_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "enter() and exit() have substantial implementations with real logic"
-
-  - id: error_handling_macros
-    type: pass_to_pass
-    origin: agent_config
-    description: "Entry points use HANDLE_TH_ERRORS / END_HANDLE_TH_ERRORS for exception conversion"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "91"
-      commit: "3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c"
-
-  - id: python_h_included_first
-    type: pass_to_pass
-    origin: agent_config
-    description: "Python.h must be the first include in torch/csrc/ files to avoid _XOPEN_SOURCE redefinition errors"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "89"
-      commit: "3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c"
-
+- id: file_exists_and_has_functions
+  type: pass_to_pass
+  origin: static
+  description: Target file exists with required function definitions and is not a
+    stub
+- id: reentrance_assertion_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: TORCH_CHECK assertion blocking reentrant stream context usage must
+    be removed
+- id: context_uses_stack
+  type: fail_to_pass
+  origin: pr_diff
+  description: Context management uses a stack/list structure instead of single-dict
+    assignment
+- id: enter_pushes_to_stack
+  type: fail_to_pass
+  origin: pr_diff
+  description: enter() saves current stream state by pushing to stack before setting
+    new stream
+- id: exit_pops_from_stack
+  type: fail_to_pass
+  origin: pr_diff
+  description: exit() pops state from stack and restores previous stream without wiping
+    entire stack
+- id: dealloc_clears_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: Destructor clears self->context to prevent memory leak
+- id: noop_when_stream_already_current
+  type: fail_to_pass
+  origin: pr_diff
+  description: enter() has a no-op fast path when the stream is already current (sentinel
+    instead of redundant switch)
+- id: enter_exit_not_stub
+  type: pass_to_pass
+  origin: static
+  description: enter() and exit() have substantial implementations with real logic
+- id: error_handling_macros
+  type: pass_to_pass
+  origin: agent_config
+  description: Entry points use HANDLE_TH_ERRORS / END_HANDLE_TH_ERRORS for exception
+    conversion
+  source:
+    path: .github/copilot-instructions.md
+    lines: '91'
+    commit: 3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c
+- id: python_h_included_first
+  type: pass_to_pass
+  origin: agent_config
+  description: Python.h must be the first include in torch/csrc/ files to avoid _XOPEN_SOURCE
+    redefinition errors
+  source:
+    path: .github/copilot-instructions.md
+    lines: '89'
+    commit: 3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c
+- id: repo_python_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Python test files have valid syntax (AST parseable)
+- id: repo_cpp_structure_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target C++ file has valid structure with balanced braces/parentheses
+- id: repo_cpp_includes_present
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target C++ file has required include statements
+- id: repo_test_file_has_test_class
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python test file contains expected test class (TestAccelerator)
+- id: repo_test_methods_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python test file has expected test methods including stream context
+    tests
 rubric:
-  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
-    source:
-      path: "CLAUDE.md"
-      lines: "48"
-      commit: "3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c"
-
-  - rule: "Don't make trivial (1-2 LOC) helper functions that are only used once unless it significantly improves code readability."
-    source:
-      path: "CLAUDE.md"
-      lines: "51-52"
-      commit: "3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c"
-
-  - rule: "Prefer clear abstractions. State management should be explicit."
-    source:
-      path: "CLAUDE.md"
-      lines: "53"
-      commit: "3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c"
-
-  - rule: "Match existing code style and architectural patterns."
-    source:
-      path: "CLAUDE.md"
-      lines: "57"
-      commit: "3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c"
-
-  - rule: "If uncertain, choose the simpler, more concise implementation."
-    source:
-      path: "CLAUDE.md"
-      lines: "62"
-      commit: "3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c"
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  source:
+    path: CLAUDE.md
+    lines: '48'
+    commit: 3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c
+- rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
+    it significantly improves code readability.
+  source:
+    path: CLAUDE.md
+    lines: 51-52
+    commit: 3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c
+- rule: Prefer clear abstractions. State management should be explicit.
+  source:
+    path: CLAUDE.md
+    lines: '53'
+    commit: 3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c
+- rule: Match existing code style and architectural patterns.
+  source:
+    path: CLAUDE.md
+    lines: '57'
+    commit: 3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c
+- rule: If uncertain, choose the simpler, more concise implementation.
+  source:
+    path: CLAUDE.md
+    lines: '62'
+    commit: 3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c

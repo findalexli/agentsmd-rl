@@ -45,7 +45,7 @@ checks:
   - id: no_bare_call_apply_in_ondata
     type: pass_to_pass
     origin: agent_config
-    description: "Use .$call/.$apply, not .call/.apply in ondata"
+    description: "Use .$call/$apply, not .call/.apply in ondata"
     source:
       path: "src/js/CLAUDE.md"
       lines: "56-65"
@@ -59,6 +59,26 @@ checks:
       path: "src/js/CLAUDE.md"
       lines: "71"
       commit: "2d4c2beb23085873380840c9bd18eeca29645843"
+
+  - id: target_file_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file has valid JavaScript/TypeScript syntax (Node.js vm module validates)"
+
+  - id: claude_md_conventions
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file follows src/js/CLAUDE.md conventions (no console.log, has required structure)"
+
+  - id: repo_prettier_target
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file passes prettier format check (from CI)"
+
+  - id: repo_oxlint_target
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file passes oxlint (from CI)"
 
 rubric:
   - rule: "Use `$debug()` for debug logging (stripped in release)"

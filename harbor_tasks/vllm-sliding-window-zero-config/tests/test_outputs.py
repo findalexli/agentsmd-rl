@@ -12,10 +12,19 @@ against mock objects.
 import ast
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/vllm"
 TARGET = f"{REPO}/vllm/config/model.py"
+
+
+def _install_tool(tool: str) -> None:
+    """Install a Python tool if not already installed."""
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", tool],
+        capture_output=True, check=True,
+    )
 
 
 def _exec_in_repo(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
@@ -37,9 +46,20 @@ def test_syntax_check():
     ast.parse(source)
 
 
+def test_repo_ruff_check():
+    """Repo's ruff check passes on target file (pass_to_pass)."""
+    _install_tool("ruff")
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", TARGET, "--output-format=github"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
 # -----------------------------------------------------------------------------
 # Helper: extract and run ModelConfig logic with a mock
 # -----------------------------------------------------------------------------
+
 
 def _test_sw_behavior(sw_val):
     """

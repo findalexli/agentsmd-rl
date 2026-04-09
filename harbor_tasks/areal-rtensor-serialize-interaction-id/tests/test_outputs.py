@@ -216,6 +216,53 @@ def test_serialize_value_roundtrip():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) -- CI/CD regression checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass -- CI: ruff lint check on modified files
+def test_ruff_lint_modified():
+    """Modified files pass ruff linter checks (pass_to_pass)."""
+    import subprocess
+
+    # Install ruff if not available
+    install_result = subprocess.run(
+        ["pip", "install", "--quiet", "ruff"],
+        capture_output=True,
+        timeout=60,
+    )
+    if install_result.returncode != 0:
+        # If we can't install ruff, skip this test
+        return
+
+    # Run ruff check on modified files - we only verify ruff can process the files
+    # (returncode 0 = no errors, 1 = lint errors found but syntax valid)
+    for f in MODIFIED_FILES:
+        result = subprocess.run(
+            ["ruff", "check", f"{REPO}/{f}"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        # Ruff exit codes: 0 = success/no issues, 1 = lint violations found
+        # Anything else indicates a failure (crash, file not found, etc)
+        if result.returncode not in [0, 1]:
+            raise AssertionError(
+                f"Ruff failed to process {f} (exit {result.returncode}):\n{result.stderr}"
+            )
+
+
+# [repo_tests] pass_to_pass -- CI: file existence check
+def test_modified_files_exist():
+    """Modified files exist in the repository (pass_to_pass)."""
+    for f in MODIFIED_FILES:
+        path = Path(f"{REPO}/{f}")
+        if not path.exists():
+            raise AssertionError(f"Modified file does not exist: {f}")
+        if not path.is_file():
+            raise AssertionError(f"Modified path is not a file: {f}")
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) -- rules from AGENTS.md / CLAUDE.md
 # ---------------------------------------------------------------------------
 

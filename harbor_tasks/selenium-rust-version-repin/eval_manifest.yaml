@@ -1,0 +1,91 @@
+source_pr:
+  repo: SeleniumHQ/selenium
+  number: 17320
+  merge_commit: 8797d1650c771217e6a6b3edee5c0c862a6ddf52
+  base_commit: 2fed1c09849431329f3e414479c627d652424f4e
+
+task_metadata:
+  name: selenium-rust-version-repin
+  description: |
+    Fix the Rust pre-release workflow to automatically repin cargo
+    dependencies after version updates, preventing Bazel lockfile conflicts.
+
+checks:
+  # Fail-to-pass tests (verify the fix is present)
+  - id: test_rust_rake_file_contains_reenable
+    type: fail_to_pass
+    origin: agent_config
+    source: "CLAUDE.md: High risk changes - Dependency updates / repin flows"
+    description: rust.rake contains reenable call for rust:update task
+
+  - id: test_rust_rake_file_contains_invoke_after_version
+    type: fail_to_pass
+    origin: agent_config
+    source: "CLAUDE.md: High risk changes - Dependency updates / repin flows"
+    description: rust.rake invokes rust:update after version update
+
+  - id: test_rust_rake_has_comment_explaining_fix
+    type: fail_to_pass
+    origin: agent_config
+    source: "CLAUDE.md: Comments should explain why"
+    description: rust.rake has comment explaining the repin fix
+
+  - id: test_rust_rake_comment_mentions_cargo_bazel_repin
+    type: fail_to_pass
+    origin: agent_config
+    source: "rust/AGENTS.md: Repin crates command"
+    description: rust.rake comment mentions CARGO_BAZEL_REPIN
+
+  - id: test_rust_rake_comment_mentions_mid_evaluation_conflict
+    type: fail_to_pass
+    origin: agent_config
+    source: "CLAUDE.md: Comments should explain why"
+    description: rust.rake comment explains mid-evaluation file-hash conflict
+
+  - id: test_workflow_simplified_command
+    type: fail_to_pass
+    origin: code_review
+    description: workflow uses simplified update command without conditional
+
+  - id: test_reenable_comes_before_invoke
+    type: fail_to_pass
+    origin: code_review
+    description: reenable is called before invoke (correct ordering)
+
+  - id: test_invoke_in_version_task_block
+    type: fail_to_pass
+    origin: code_review
+    description: invoke is inside the version task block
+
+  # Pass-to-pass tests (repo baseline quality)
+  - id: test_rust_update_task_defined
+    type: pass_to_pass
+    origin: repo_tests
+    description: rust:update task is defined in rake file
+
+  - id: test_version_task_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: version task exists in rust.rake
+
+  - id: test_rake_file_valid_ruby_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: rust.rake has valid Ruby syntax
+
+  - id: test_rust_bazel_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Rust Bazel build passes
+
+  - id: test_rust_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Rust unit tests pass
+
+  - id: test_rust_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Rust code formatting check passes
+
+rubric: []

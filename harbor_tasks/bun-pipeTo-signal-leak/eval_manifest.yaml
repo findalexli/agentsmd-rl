@@ -7,70 +7,101 @@ source:
   merge_commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
 
 checks:
-  - id: cpp_syntax_valid
+  - id: test_cpp_syntax_valid
     type: pass_to_pass
     origin: static
     description: "Modified C++ files must have valid syntax"
 
-  - id: jsabortalgorithm_uses_weak_ref
+  - id: test_jsabortalgorithm_compiles_with_weak_ref
     type: fail_to_pass
     origin: pr_diff
-    description: "JSAbortAlgorithm must use JSCallbackDataWeak instead of JSCallbackDataStrong"
+    description: "JSAbortAlgorithm using JSCallbackDataWeak must compile (clang syntax check)"
 
-  - id: jsabortalgorithm_has_visit_js_function
+  - id: test_abort_signal_header_compiles_with_new_members
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AbortSignal header with m_abortAlgorithms must have valid C++ syntax"
+
+  - id: test_js_abort_signal_custom_compiles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "JSAbortSignalCustom.cpp with visitAbortAlgorithms call must compile"
+
+  - id: test_jsabortalgorithm_has_visit_js_function
     type: fail_to_pass
     origin: pr_diff
     description: "JSAbortAlgorithm must implement visitJSFunction for GC marking"
 
-  - id: abort_signal_has_abort_algorithms_vector
+  - id: test_abort_signal_visit_abort_algorithms_implemented
     type: fail_to_pass
     origin: pr_diff
-    description: "AbortSignal must have m_abortAlgorithms vector and lock for GC visibility"
+    description: "AbortSignal::visitAbortAlgorithms must be implemented with proper visitor calls"
 
-  - id: abort_signal_has_visit_abort_algorithms
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AbortSignal must implement visitAbortAlgorithms for GC thread visitation"
-
-  - id: js_abort_signal_visits_abort_algorithms
-    type: fail_to_pass
-    origin: pr_diff
-    description: "JSAbortSignal::visitAdditionalChildrenInGCThread must call visitAbortAlgorithms"
-
-  - id: add_abort_algorithm_uses_new_vector
+  - id: test_add_abort_algorithm_uses_new_vector
     type: fail_to_pass
     origin: pr_diff
     description: "addAbortAlgorithmToSignal must use m_abortAlgorithms instead of addAlgorithm"
 
-  - id: remove_abort_algorithm_uses_new_vector
+  - id: test_remove_abort_algorithm_uses_new_vector
     type: fail_to_pass
     origin: pr_diff
     description: "removeAbortAlgorithmFromSignal must remove from m_abortAlgorithms"
 
-  - id: run_abort_steps_handles_new_vector
+  - id: test_run_abort_steps_handles_new_vector
     type: fail_to_pass
     origin: pr_diff
     description: "runAbortSteps must process m_abortAlgorithms under lock"
 
-  - id: handle_event_checks_callback_validity
+  - id: test_handle_event_checks_callback_validity
     type: fail_to_pass
     origin: pr_diff
     description: "JSAbortAlgorithm::handleEvent must check callback validity (Weak ref can be null)"
 
-  - id: memory_cost_includes_abort_algorithms
+  - id: test_memory_cost_includes_abort_algorithms
     type: fail_to_pass
     origin: pr_diff
     description: "memoryCost must include m_abortAlgorithms size for accurate reporting"
 
-  - id: fix_not_stub
+  - id: test_fix_not_stub
     type: pass_to_pass
     origin: static
     description: "Fix must have substantial implementation, not be a stub"
 
-  - id: includes_proper_headers
+  - id: test_includes_proper_headers
     type: pass_to_pass
     origin: static
     description: "All necessary headers must be included (wtf/Lock.h)"
+
+  # Pass-to-pass tests for CI/CD consistency (from repo_tests)
+  - id: test_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified C++ files must not have trailing whitespace (editorconfig convention)"
+
+  - id: test_no_tabs_for_indentation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified C++ files must use spaces for indentation (editorconfig convention)"
+
+  - id: test_include_guards_or_pragma_once
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Header files must have include guards or pragma once"
+
+  - id: test_refcounted_pattern_for_gc_classes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "GC-managed classes must use RefCounted pattern consistently"
+
+  - id: test_proper_inheritance_chain
+    type: pass_to_pass
+    origin: repo_tests
+    description: "JSAbortAlgorithm must inherit from AbortAlgorithm"
+
+  - id: test_local_includes_use_quotes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Local headers must use quoted includes, not angle brackets"
 
 rubric:
   # From CLAUDE.md / AGENTS.md

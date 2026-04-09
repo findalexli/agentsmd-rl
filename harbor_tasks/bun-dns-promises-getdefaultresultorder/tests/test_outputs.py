@@ -132,3 +132,43 @@ def test_shared_state_consistency():
     assert lines[4] == "verbatim", f"Expected 'verbatim' from node:dns/promises, got '{lines[4]}'. Bug: state not shared"
 
     assert exit_code == 0, f"Process exited with code {exit_code}, stderr: {stderr}"
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's CI/CD checks that must pass on base commit
+# -----------------------------------------------------------------------------
+
+def test_repo_lint():
+    """Repo's JavaScript linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "lint"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_ban_words():
+    """Repo's banned words check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/internal/ban-words.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ban words check failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_dns_tests():
+    """Repo's DNS module tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/node/dns/node-dns.test.js"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"DNS tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"

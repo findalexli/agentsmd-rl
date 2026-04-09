@@ -73,6 +73,38 @@ def test_syntax_check():
         ast.parse(src)  # raises SyntaxError on failure
 
 
+# [repo_tests] pass_to_pass
+def test_repo_python_ast():
+    """Repo CI: All modified files pass Python AST validation (check-ast)."""
+    for path in [CTX_MGR, FLASH_BE, PCG_RUN]:
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", path],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"AST check failed for {path}: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_trailing_whitespace():
+    """Repo CI: Modified files have no trailing whitespace (trailing-whitespace)."""
+    for path in [CTX_MGR, FLASH_BE, PCG_RUN]:
+        content = Path(path).read_text()
+        lines = content.splitlines()
+        for i, line in enumerate(lines, 1):
+            assert not line.endswith(" "), f"{path}:{i} has trailing whitespace"
+            assert not line.endswith("\t"), f"{path}:{i} has trailing tabs"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_debug_statements():
+    """Repo CI: Modified files have no debug statements (debug-statements)."""
+    debug_patterns = ["import pdb", "from pdb import", "breakpoint()", "pdb.set_trace"]
+    for path in [CTX_MGR, FLASH_BE, PCG_RUN]:
+        content = Path(path).read_text()
+        for pattern in debug_patterns:
+            assert pattern not in content, f"{path} contains debug statement: {pattern}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

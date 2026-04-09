@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/sglang"
@@ -105,3 +106,85 @@ def test_file_structure_valid():
         "TestToolChoiceLlama32 base class is missing"
     assert "TestToolChoiceLfm2" in class_names, \
         "TestToolChoiceLfm2 class is missing (this is NOT the one to remove)"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from repo's own pipeline
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — ruff linting check (from pre-commit)
+def test_p2p_ruff_check():
+    """Repo's ruff linting passes on the test file (pass_to_pass)."""
+    # Install ruff and run check
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr.decode()[-200:]}"
+
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "--select=F401,F821", TEST_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — black formatting check (from pre-commit)
+def test_p2p_black_check():
+    """Repo's black formatting check passes on the test file (pass_to_pass)."""
+    # Install black and run check
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "black", "-q"],
+        capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install black: {r.stderr.decode()[-200:]}"
+
+    r = subprocess.run(
+        [sys.executable, "-m", "black", "--check", TEST_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — isort import ordering check (from pre-commit)
+def test_p2p_isort_check():
+    """Repo's isort import ordering passes on the test file (pass_to_pass)."""
+    # Install isort and run check
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "isort", "-q"],
+        capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install isort: {r.stderr.decode()[-200:]}"
+
+    r = subprocess.run(
+        [sys.executable, "-m", "isort", "--check", TEST_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Isort check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — codespell check (from pre-commit)
+def test_p2p_codespell_check():
+    """Repo's codespell check passes on the test file (pass_to_pass)."""
+    # Install codespell and run check
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "codespell", "-q"],
+        capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install codespell: {r.stderr.decode()[-200:]}"
+
+    r = subprocess.run(
+        [sys.executable, "-m", "codespell", TEST_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Codespell check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Python syntax validation (from pre-commit check-ast)
+def test_p2p_py_compile():
+    """Modified test file must compile without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "py_compile", TEST_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr[-500:]}"

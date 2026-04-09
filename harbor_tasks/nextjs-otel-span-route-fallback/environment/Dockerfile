@@ -1,8 +1,6 @@
 FROM node:22-slim
 
-RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
-    git curl ca-certificates build-essential tmux python3 \
-    && rm -rf /var/lib/apt/lists/*
+RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y     git curl ca-certificates build-essential tmux python3     && rm -rf /var/lib/apt/lists/*
 
 RUN git config --global advice.detachedHead false
 
@@ -21,6 +19,9 @@ RUN cd /workspace/next.js && \
 # No build needed — tests inspect source files only (TS templates).
 # Full next.js build requires pnpm bootstrap + ~60s compile time and is
 # not needed for verifying the span-naming fix.
+
+# Install TypeScript globally for the TS parse test (repo_tests pass_to_pass)
+RUN npm install -g typescript
 
 RUN mkdir -p /logs/verifier
 

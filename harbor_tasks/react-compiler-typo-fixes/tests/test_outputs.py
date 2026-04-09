@@ -129,3 +129,38 @@ console.log('PASS');
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's CI/CD checks must pass
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's eslint passes on babel-plugin-react-compiler (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "lint"],
+        capture_output=True, text=True, timeout=120, cwd="/workspace/react/compiler",
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=120,
+        cwd="/workspace/react/compiler/packages/babel-plugin-react-compiler",
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_jest():
+    """Repo's jest tests pass for babel-plugin-react-compiler (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "jest"],
+        capture_output=True, text=True, timeout=180, cwd="/workspace/react/compiler",
+    )
+    assert r.returncode == 0, f"Jest tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

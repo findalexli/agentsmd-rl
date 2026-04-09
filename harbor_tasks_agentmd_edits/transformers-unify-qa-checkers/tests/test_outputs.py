@@ -12,6 +12,48 @@ REPO = Path("/workspace/transformers")
 
 
 # ---------------------------------------------------------------------------
+# pass_to_pass: repo CI/CD health checks
+# ---------------------------------------------------------------------------
+
+
+def test_repo_imports():
+    """Repo's main package imports without error (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c", "from transformers import *"],
+        capture_output=True, text=True, timeout=60, cwd=str(REPO),
+        env={"PYTHONPATH": str(REPO / "src")},
+    )
+    assert r.returncode == 0, f"Import failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_ruff_check():
+    """Repo's ruff check passes on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "setup.py", "conftest.py"],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "setup.py", "conftest.py"],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}"
+
+
+def test_makefile_style_target_exists():
+    """Makefile has 'style' target (pass_to_pass)."""
+    r = subprocess.run(
+        ["make", "-n", "style"],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"style target missing: {r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # fail_to_pass: behavioral tests (subprocess)
 # ---------------------------------------------------------------------------
 

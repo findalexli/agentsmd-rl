@@ -1,4 +1,4 @@
-FROM golang:1.25-slim
+FROM golang:1.23-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8

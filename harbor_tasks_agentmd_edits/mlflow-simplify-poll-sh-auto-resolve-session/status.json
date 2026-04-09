@@ -1,11 +1,80 @@
 {
+  "schema_version": 2,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-08T21:59:40.225667",
-  "sandbox_id": "iz3jne0jb3csjna9soam2",
+  "validated_at": "2026-04-09T03:38:46.655272",
+  "total_time": 7289.71,
+  "sandbox_id": "iwt8g4lyhv9bst877a0xt",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 1594.99
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "completed_at": "2026-04-09T10:37:00Z",
+      "ci_commands_found": [
+        "bash -n .claude/skills/copilot/poll.sh (syntax check)",
+        "python -m ruff check .claude/skills/copilot/ (linting)",
+        "pre-commit hooks (requires uv - not used)",
+        "mypy (no Python files in copilot/)",
+        "clint (requires uv - not used)",
+        "pytest (copilot skill has no Python tests)"
+      ],
+      "tests_added": [
+        "test_copilot_skill_ruff - ruff linting on copilot skill directory",
+        "test_copilot_files_exist - basic file structure validation"
+      ],
+      "notes": "MLflow repo uses ruff, pre-commit hooks, and custom linters. Added p2p tests that work without uv package manager. Docker image built successfully."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 337.48,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "icr": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build succeeded, NOP test reward=0 (4 fail-to-pass tests correctly fail), Gold test reward=1 (all 8 tests pass), Rubric ICR=1.0",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 76.12
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T03:38:46.477274"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 7289.71,
+      "at": "2026-04-09T03:38:46.655272"
+    }
+  ]
 }

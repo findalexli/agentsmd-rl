@@ -1,0 +1,122 @@
+source:
+  pr: apache/airflow#64779
+  title: "[chart/v1-2x-test] Add workers.celery.volumeClaimTemplates"
+  base_commit: afcde65e4d129817affb694fd5f214ddd1544013
+  merge_commit: 0b8d9f9d716836789f54e377379acf4bb213ff42
+
+checks:
+  # Values.yaml checks
+  - id: values_celery_volumeclaimtemplates_exists
+    test: test_outputs.TestValuesYaml.test_celery_volumeclaimtemplates_exists
+    description: "workers.celery.volumeClaimTemplates field exists in values.yaml"
+    type: behavioral
+    origin: agent_config
+    source: "AGENTS.md: Helm chart structure requirements"
+
+  - id: values_deprecated_comment
+    test: test_outputs.TestValuesYaml.test_deprecated_field_has_comment
+    description: "Deprecated field has deprecation comment in values.yaml"
+    type: behavioral
+
+  # Schema checks
+  - id: schema_valid_json
+    test: test_outputs.TestValuesSchema.test_schema_is_valid_json
+    description: "values.schema.json is valid JSON"
+    type: behavioral
+
+  - id: schema_celery_volumeclaimtemplates
+    test: test_outputs.TestValuesSchema.test_celery_volumeclaimtemplates_in_schema
+    description: "workers.celery.volumeClaimTemplates is in values.schema.json"
+    type: behavioral
+
+  - id: schema_deprecated_description
+    test: test_outputs.TestValuesSchema.test_deprecated_description_updated
+    description: "Old field description mentions deprecation"
+    type: behavioral
+
+  - id: schema_examples_valid
+    test: test_outputs.TestValuesSchema.test_schema_examples_are_valid
+    description: "Schema examples for new field are valid"
+    type: behavioral
+
+  # NOTES.txt checks
+  - id: notes_deprecation_warning
+    test: test_outputs.TestNotesTxt.test_deprecation_warning_exists
+    description: "NOTES.txt contains deprecation warning"
+    type: behavioral
+
+  # Helm render checks (F2P)
+  - id: helm_new_location_works
+    test: test_outputs.TestHelmRender.test_new_volumeclaimtemplates_location_works
+    description: "New workers.celery.volumeClaimTemplates location renders correctly"
+    type: behavioral
+    origin: agent_config
+    source: "AGENTS.md: Helm testing requirements"
+
+  - id: helm_backward_compat
+    test: test_outputs.TestHelmRender.test_backward_compatibility
+    description: "Backward compatibility with old location works"
+    type: behavioral
+
+  - id: helm_precedence
+    test: test_outputs.TestHelmRender.test_new_location_takes_precedence
+    description: "New location takes precedence when both are specified"
+    type: behavioral
+
+  # Structural checks
+  - id: yaml_valid
+    test: test_outputs.TestYamlStructure.test_values_yaml_is_valid
+    description: "values.yaml is valid YAML"
+    type: behavioral
+
+  - id: celery_section_structure
+    test: test_outputs.TestYamlStructure.test_celery_section_has_all_fields
+    description: "workers.celery section has expected structure"
+    type: behavioral
+
+  - id: documentation_comment
+    test: test_outputs.TestCommentsAndDocumentation.test_new_field_has_documentation_comment
+    description: "New field has documentation comment"
+    type: behavioral
+
+  # Pass-to-pass checks (repo CI tests)
+  - id: p2p_helm_lint
+    test: test_outputs.TestRepoPassToPass.test_repo_helm_lint
+    description: "Helm lint passes"
+    type: pass_to_pass
+    origin: repo_tests
+    source: "Helm lint validation"
+
+  - id: p2p_helm_template
+    test: test_outputs.TestRepoPassToPass.test_repo_helm_template_default
+    description: "Helm template with default values passes"
+    type: pass_to_pass
+    origin: repo_tests
+    source: "Helm template validation"
+
+  - id: p2p_schema_valid_json
+    test: test_outputs.TestRepoPassToPass.test_repo_values_schema_valid_json
+    description: "values.schema.json is valid JSON with expected structure"
+    type: pass_to_pass
+    origin: repo_tests
+    source: "Schema JSON validation"
+
+  - id: p2p_values_yaml_valid
+    test: test_outputs.TestRepoPassToPass.test_repo_values_yaml_valid
+    description: "values.yaml is valid YAML with expected structure"
+    type: pass_to_pass
+    origin: repo_tests
+    source: "Values YAML validation"
+
+rubric:
+  - rule: "Add deprecation warning in NOTES.txt"
+    type: soft
+    description: "NOTES.txt should warn users about the deprecated field"
+
+  - rule: "Update values.schema.json description for deprecated field"
+    type: soft
+    description: "Old field should be marked deprecated in schema"
+
+  - rule: "Add examples in schema for new field"
+    type: soft
+    description: "Schema should include examples for the new location"

@@ -7,6 +7,18 @@ source:
   merge_commit: "2c2fd9d12c7159efef81e7ea6ec899943cf7ca33"
 
 checks:
+  # Pass-to-pass tests (repo_tests) - CI/CD verification
+  - id: test_repo_babel_plugin_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's babel-plugin-react-compiler ESLint passes"
+
+  - id: test_repo_babel_plugin_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's babel-plugin-react-compiler unit tests pass"
+
+  # Fail-to-pass tests (pr_diff) - core behavioral tests
   - id: parseConfigOverrides_test_suite
     type: fail_to_pass
     origin: pr_diff

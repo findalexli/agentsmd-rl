@@ -1,0 +1,22 @@
+name = "containerd-blobs-fallback"
+description = "Fix containerd resolver to avoid content storage pollution by limiting /blobs/ endpoint fallback on transient errors"
+version = "1.0.0"
+creator = "taskforge"
+tags = ["go", "containerd", "docker", "registry", "resolver", "http", "fallback"]
+
+[evaluation]
+# Fail-to-pass tests: these test the core bug fix (transient errors should NOT trigger /blobs/ fallback)
+# Pass-to-pass tests: verify existing behavior still works (404 should still trigger /blobs/ fallback)
+manifest_path = "eval_manifest.yaml"
+
+[time_limits]
+# Agent has 30 minutes to solve
+agent = 1800
+# Each test has 2 minutes to run
+verifier = 120
+
+[repository]
+url = "https://github.com/containerd/containerd.git"
+base_commit = "18201e7d52037a8a9657a2764ef63f60ec556e37"
+merge_commit = "1abba0c96162254eb85b3350aec4dbe2684a94ef"
+pr_number = 13017

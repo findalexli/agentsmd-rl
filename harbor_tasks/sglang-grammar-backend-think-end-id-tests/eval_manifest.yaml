@@ -42,6 +42,32 @@ checks:
     origin: static
     description: "All original test methods still exist"
 
+  # Repo CI/CD checks (pass_to_pass)
+  - id: test_repo_syntax_test_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test file has valid Python syntax"
+
+  - id: test_repo_ruff_test_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test file passes ruff linting (E9,F63,F7,F82)"
+
+  - id: test_repo_black_test_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test file passes black formatting check"
+
+  - id: test_repo_ruff_prod_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Production file passes ruff linting (E9,F63,F7,F82)"
+
+  - id: test_repo_black_prod_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Production file passes black formatting check"
+
 rubric:
   - rule: "Prefer mock over real server — when testing logic that doesn't need a server / engine launch, use unittest.mock.patch / MagicMock and place tests in test/registered/unit/."
     source:

@@ -348,3 +348,137 @@ def test_no_raw_fetch():
     """Must not use raw fetch() — use HttpClient.HttpClient service instead."""
     src = _read_vcs()
     assert not re.search(r"\bfetch\s*\(", src), "vcs.ts uses raw fetch() — prefer HttpClient.HttpClient"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates
+# These verify the repo's own quality checks pass on the base commit
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass — Repo CI: typecheck pipeline
+def test_repo_vcs_syntax_valid():
+    """vcs.ts must be syntactically valid TypeScript (pass_to_pass)."""
+    r = _run_node(r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/opencode/src/project/vcs.ts', 'utf8');
+
+try {
+    const errors = [];
+
+    // Check for balanced braces
+    let depth = 0;
+    for (let i = 0; i < src.length; i++) {
+        if (src[i] === '{') depth++;
+        else if (src[i] === '}') depth--;
+        if (depth < 0) errors.push(`Unbalanced braces at position ${i}`);
+    }
+    if (depth !== 0) errors.push(`Unclosed braces: depth=${depth}`);
+
+    // Check for balanced parentheses
+    depth = 0;
+    for (let i = 0; i < src.length; i++) {
+        if (src[i] === '(') depth++;
+        else if (src[i] === ')') depth--;
+        if (depth < 0) errors.push(`Unbalanced parens at position ${i}`);
+    }
+    if (depth !== 0) errors.push(`Unclosed parens: depth=${depth}`);
+
+    // Check for balanced brackets
+    depth = 0;
+    for (let i = 0; i < src.length; i++) {
+        if (src[i] === '[') depth++;
+        else if (src[i] === ']') depth--;
+        if (depth < 0) errors.push(`Unbalanced brackets at position ${i}`);
+    }
+    if (depth !== 0) errors.push(`Unclosed brackets: depth=${depth}`);
+
+    if (errors.length > 0) {
+        console.error('Syntax errors:', errors.slice(0, 5));
+        process.exit(1);
+    }
+    console.log('PASS');
+} catch (e) {
+    console.error('Parse error:', e.message);
+    process.exit(1);
+}
+""")
+    assert r.returncode == 0, f"vcs.ts has syntax errors:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_ci] pass_to_pass — Repo CI: imports resolve
+def test_repo_vcs_imports_resolve():
+    """vcs.ts workspace imports must resolve to existing files (pass_to_pass)."""
+    src = _read_vcs()
+
+    # Check all import paths are valid
+    import_pattern = r"import\s+.*?\s+from\s+['\"]([^'\"]+)['\"]"
+    imports = re.findall(import_pattern, src)
+
+    for imp in imports:
+        # Skip node_modules imports (we can't verify without installing)
+        if not imp.startswith(".") and not imp.startswith("@/"):
+            continue
+
+        # Check local workspace imports point to existing files
+        if imp.startswith("@/"):
+            # Convert @/path to packages/opencode/src/path
+            relative_path = imp.replace("@/", "packages/opencode/src/")
+            base_path = f"/workspace/opencode/{relative_path}"
+
+            exists = (
+                Path(f"{base_path}.ts").exists() or
+                Path(f"{base_path}/index.ts").exists() or
+                Path(base_path).exists()
+            )
+            assert exists, f"Import path does not resolve: {imp}"
+
+
+# [repo_ci] pass_to_pass — Repo CI: no duplicate exports
+def test_repo_no_duplicate_exports():
+    """vcs.ts must not have duplicate export declarations (pass_to_pass)."""
+    src = _read_vcs()
+
+    # Find all export const/function declarations
+    export_consts = re.findall(r"export\s+const\s+(\w+)", src)
+    export_funcs = re.findall(r"export\s+function\s+(\w+)", src)
+    export_classes = re.findall(r"export\s+class\s+(\w+)", src)
+
+    all_exports = export_consts + export_funcs + export_classes
+    duplicates = [x for x in all_exports if all_exports.count(x) > 1]
+
+    assert len(duplicates) == 0, f"Duplicate exports found: {set(duplicates)}"
+
+
+# [repo_ci] pass_to_pass — Repo CI: valid Effect imports
+def test_repo_effect_imports_valid():
+    """Effect library imports must use valid module paths (pass_to_pass)."""
+    src = _read_vcs()
+
+    # Verify Effect imports use valid module paths
+    effect_imports = re.findall(r"import\s+.*?\s+from\s+['\"](effect[^'\"]*)['\"]", src)
+
+    valid_effect_modules = [
+        "effect",
+        "effect/unstable/process",
+        "@effect/platform-node",
+        "@effect/language-service",
+    ]
+
+    for imp in effect_imports:
+        is_valid = any(imp == valid or imp.startswith(f"{valid}/") for valid in valid_effect_modules)
+        assert is_valid, f"Invalid Effect import: {imp}"
+
+
+# [repo_ci] pass_to_pass — Repo CI: Layer signatures valid
+def test_repo_layer_signature_valid():
+    """Layer exports must have valid Layer type signatures (pass_to_pass)."""
+    src = _read_vcs()
+
+    # Check that layer exports use Layer.Layer<...> syntax correctly
+    layer_exports = re.findall(r"export\s+const\s+layer\s*:\s*Layer\.Layer<[^>]+>", src)
+    default_layer_exports = re.findall(r"export\s+const\s+defaultLayer\s*", src)
+
+    # Both layer and defaultLayer should exist
+    assert len(layer_exports) >= 1, "Missing layer export with Layer.Layer type signature"
+    assert len(default_layer_exports) >= 1, "Missing defaultLayer export"

@@ -9,6 +9,34 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files exist and are non-empty
+- id: all_modified_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: All files modified in PR exist and have valid content
+- id: typescript_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified TypeScript files have valid basic syntax
+- id: mcp_module_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP module imports and exports are structurally valid
+- id: documentation_files_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Documentation files are valid markdown
+- id: test_files_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP test files are valid spec files
+- id: test_mcp_deps_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP DEPS.list files are valid and all imports respect DEPS constraints
+- id: test_modified_files_deps_updated
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files in terminal/ have proper DEPS.list entries
 - id: session_flag_normalization_behavior
   type: fail_to_pass
   origin: pr_diff
@@ -61,10 +89,5 @@ rubric:
 - rule: session-management.md documents -s (not -b) for default session
   source:
     path: packages/playwright/src/skill/references/session-management.md
-    lines: '111'
-    commit: e0e7f41e80247f857e97cb23f4833d2eee2122fe
-- rule: SKILL.md and references use consistent session flag style
-  source:
-    path: .claude/skills/playwright-mcp-dev/SKILL.md
-    lines: 26-27
-    commit: 25d303f03424011dc0ad36d027a7af3368618eab
+    status: pending
+    description: 'Required: Add p2p tests for the repo''s CI/CD checks'

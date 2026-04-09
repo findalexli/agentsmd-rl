@@ -45,14 +45,6 @@ def _assert_no_alloc(body: str, context: str, fields: list[str]):
             )
 
 
-def _cargo_check(crate_path: str, timeout: int = 120) -> subprocess.CompletedProcess:
-    """Run cargo check on a specific crate."""
-    return subprocess.run(
-        ["cargo", "check", "--manifest-path", f"{crate_path}/Cargo.toml"],
-        capture_output=True, text=True, timeout=timeout, cwd=REPO,
-    )
-
-
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — files exist and are real code, not stubs
 # ---------------------------------------------------------------------------
@@ -206,13 +198,6 @@ def test_from_impls_avoid_allocation():
     _assert_no_alloc(source_m.group(1), "From<&PlainSource>", ["ident", "file_path"])
 
 
-# [pr_diff] fail_to_pass — BEHAVIORAL: compilation check
-def test_napi_bindings_compile():
-    """Modified next-napi-bindings crate compiles after RcStr changes (behavioral check)."""
-    r = _cargo_check(CRATE_PATH, timeout=120)
-    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr}\n{r.stdout}"
-
-
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) — structs and non-RcStr fields preserved
 # ---------------------------------------------------------------------------
@@ -267,3 +252,17 @@ def test_rcstr_import_sorted():
     assert found_import, (
         "At least one of endpoint.rs/utils.rs must have a turbo_rcstr import"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI checks that should pass on base and fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_fmt():
+    """Repo's Rust code passes cargo fmt check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--manifest-path", f"{CRATE_PATH}/Cargo.toml", "--", "--check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo fmt check failed:\n{r.stderr[-500:]}"

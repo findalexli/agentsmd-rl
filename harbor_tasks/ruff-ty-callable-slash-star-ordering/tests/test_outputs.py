@@ -102,6 +102,51 @@ def test_compiles():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass tests — verified on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — cargo clippy
+def test_repo_clippy():
+    """ty_python_semantic crate passes clippy lints (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty_python_semantic", "--all-targets", "--", "-D", "warnings"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env={**os.environ, "CARGO_PROFILE_DEV_OPT_LEVEL": "1"},
+    )
+    assert r.returncode == 0, f"Clippy failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass — cargo fmt check
+def test_repo_fmt():
+    """Code passes formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — unit tests in types::display module
+def test_repo_display_tests():
+    """types::display module unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--", "--test-threads=4", "types::display"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+        env={**os.environ, "CARGO_PROFILE_DEV_OPT_LEVEL": "1"},
+    )
+    assert r.returncode == 0, f"Display tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

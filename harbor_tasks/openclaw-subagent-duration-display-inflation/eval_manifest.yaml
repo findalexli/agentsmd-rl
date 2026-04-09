@@ -64,6 +64,22 @@ checks:
       lines: "164"
       commit: "f011d0be28afbc7868f5e55c1117c779bd0a9f10"
 
+  # Repo CI checks (pass_to_pass gates)
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's oxlint passes with 0 errors/warnings"
+
+  - id: test_repo_format_time_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's format-time unit tests pass — related to fix module"
+
+  - id: test_repo_no_conflict_markers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo has no git conflict markers"
+
 rubric:
   - rule: "Add brief code comments for tricky or non-obvious logic."
     source:

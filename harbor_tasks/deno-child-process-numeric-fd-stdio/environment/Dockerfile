@@ -5,8 +5,15 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential tmux && \
+        git curl ca-certificates build-essential tmux pkg-config libssl-dev && \
     rm -rf /var/lib/apt/lists/*
+
+# Install Rust toolchain (needed for cargo check/clippy tests)
+ENV RUSTUP_HOME=/usr/local/rustup
+ENV CARGO_HOME=/usr/local/cargo
+ENV PATH=/usr/local/cargo/bin:$PATH
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --no-modify-path && \
+    chmod -R a+w $RUSTUP_HOME $CARGO_HOME
 
 # Clone repo at base commit (shallow fetch — Deno is a large monorepo)
 RUN git init /workspace/deno && \

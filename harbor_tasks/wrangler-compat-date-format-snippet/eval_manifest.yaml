@@ -1,0 +1,39 @@
+version: "2.0"
+
+source:
+  repo: "cloudflare/workers-sdk"
+  pr: 13205
+  base_commit: "7d318e1b7e5af62c0ed09d3e5a51af84294c372e"
+  merge_commit: "6fa5dfddcbad1520db7c3d1bb12233001fe00e45"
+
+checks:
+  - id: compat_date_warning_not_hardcoded_toml
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Compat date warning must not hardcode TOML format for config snippet"
+
+  - id: compat_date_format_dynamic
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Compat date warning must use format-aware snippet generation (TOML vs JSON)"
+
+  - id: config_controller_parseable
+    type: pass_to_pass
+    origin: static
+    description: "ConfigController.ts must have valid structure and not be truncated"
+
+  - id: uses_logger_not_console
+    type: pass_to_pass
+    origin: agent_config
+    description: "Must use logger singleton, not console.* for warnings"
+    source:
+      path: "packages/wrangler/AGENTS.md"
+      lines: "25"
+      commit: "7d318e1b7e5af62c0ed09d3e5a51af84294c372e"
+
+rubric:
+  - rule: "Config examples must use wrangler.json (JSONC), not wrangler.toml"
+    source:
+      path: "AGENTS.md"
+      lines: "174"
+      commit: "7d318e1b7e5af62c0ed09d3e5a51af84294c372e"

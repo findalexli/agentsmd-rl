@@ -1,0 +1,86 @@
+source:
+  pr: ClickHouse/ClickHouse#101932
+  title: "Fix materialize_skip_indexes_on_merge not suppressing text indexes"
+  base_commit: 82211a574743ad08dfbe01e1252040efd544f9c5
+  merge_commit: 6328699b74215241c0416edcae5dbf5d9b4c086d
+  primary_file: src/Storages/MergeTree/MergeTask.cpp
+
+# Checks for the task
+checks:
+  # Fail-to-pass behavioral tests
+  - id: "test_text_indexes_clear_in_suppression_block"
+    type: "fail_to_pass"
+    description: "text_indexes_to_merge.clear() is in the materialize_skip_indexes_on_merge=false block alongside other skip index clears"
+    origin: "pr_diff"
+    file: "tests/test_outputs.py"
+    points: 2
+
+  - id: "test_text_indexes_cleared_after_skip_indexes"
+    type: "fail_to_pass"
+    description: "text_indexes_to_merge.clear() appears in correct sequence after merging_skip_indexes.clear() and skip_indexes_by_column.clear()"
+    origin: "pr_diff"
+    file: "tests/test_outputs.py"
+    points: 2
+
+  - id: "test_code_compiles"
+    type: "fail_to_pass"
+    description: "Modified code compiles without syntax errors related to text_indexes_to_merge member access"
+    origin: "pr_diff"
+    file: "tests/test_outputs.py"
+    points: 2
+
+  - id: "test_no_hardcoded_braces_kr_style"
+    type: "fail_to_pass"
+    description: "No K&R style braces introduced near text_indexes_to_merge.clear() - uses Allman style"
+    origin: "pr_diff"
+    file: "tests/test_outputs.py"
+    points: 1
+
+  # Pass-to-pass agent config tests
+  - id: "test_allman_braces_style"
+    type: "pass_to_pass"
+    description: "Code follows Allman-style braces (opening brace on new line)"
+    origin: "agent_config"
+    source:
+      config_file: ".claude/CLAUDE.md"
+      rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
+    file: "tests/test_outputs.py"
+    points: 1
+
+  - id: "test_no_sleep_in_code"
+    type: "pass_to_pass"
+    description: "No sleep calls are used in the modified code"
+    origin: "agent_config"
+    source:
+      config_file: ".claude/CLAUDE.md"
+      rule: "Never use sleep in C++ code to fix race conditions"
+    file: "tests/test_outputs.py"
+    points: 1
+
+  - id: "test_function_names_not_called_style"
+    type: "pass_to_pass"
+    description: "Function references in comments follow the f style instead of f()"
+    origin: "agent_config"
+    source:
+      config_file: ".claude/CLAUDE.md"
+      rule: "write names of functions and methods as f instead of f()"
+    file: "tests/test_outputs.py"
+    points: 0.5
+
+  # Pass-to-pass repo tests
+  - id: "test_clang_format_compliance"
+    type: "pass_to_pass"
+    description: "Modified code follows repo's clang-format style conventions"
+    origin: "repo_tests"
+    file: "tests/test_outputs.py"
+    points: 0.5
+
+  - id: "test_no_trailing_whitespace"
+    type: "pass_to_pass"
+    description: "Modified lines have no trailing whitespace"
+    origin: "repo_tests"
+    file: "tests/test_outputs.py"
+    points: 0.5
+
+# Rubric for LLM-judged criteria (soft/subjective rules)
+rubric: []

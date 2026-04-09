@@ -1,0 +1,103 @@
+source:
+  repo: JetBrains/kotlin
+  pr_number: 5782
+  base_commit: aa96b1eb9878f7e427671338882cd24dc514a090
+  merge_commit: 86147403c7400cd4f37c1edcaacb51e6fc0349fc
+  title: "[Swift Export] Properly cancel Flow collection"
+
+checks:
+  # Fail-to-pass tests: Verify the fix is in place
+  - id: test_coroutine_scope_parameter
+    type: fail_to_pass
+    origin: solution
+    description: SwiftFlowIterator has coroutineScope parameter with default value
+
+  - id: test_cancel_uses_scope_cancel
+    type: fail_to_pass
+    origin: solution
+    description: cancel() method uses coroutineScope.cancel() instead of complete()
+
+  - id: test_invoke_on_cancellation_ready_state
+    type: fail_to_pass
+    origin: solution
+    description: State.Ready handler has invokeOnCancellation to cancel on suspension cancel
+
+  - id: test_invoke_on_cancellation_awaiting_consumer_state
+    type: fail_to_pass
+    origin: solution
+    description: State.AwaitingConsumer handler has invokeOnCancellation to cancel on suspension cancel
+
+  - id: test_launch_uses_coroutine_scope
+    type: fail_to_pass
+    origin: solution
+    description: launch() method uses coroutineScope.launch instead of creating new scope each time
+
+  - id: test_swift_iterator_class
+    type: fail_to_pass
+    origin: solution
+    description: Swift file has new Iterator class that handles deinit cancellation
+
+  - id: test_swift_iterator_deinit_cancels
+    type: fail_to_pass
+    origin: solution
+    description: Iterator.deinit calls cancel on the underlying KotlinFlowIterator
+
+  - id: test_kotlin_flow_iterator_is_internal
+    type: fail_to_pass
+    origin: solution
+    description: KotlinFlowIterator is marked as internal (not public)
+
+  - id: test_kotlin_flow_iterator_no_deinit
+    type: fail_to_pass
+    origin: solution
+    description: KotlinFlowIterator no longer has deinit (it was moved to Iterator class)
+
+  # Pass-to-pass tests: Verify repo remains functional
+  - id: test_kotlin_syntax_basic
+    type: pass_to_pass
+    origin: repo_tests
+    description: Kotlin file has valid syntax (basic checks)
+
+  - id: test_swift_syntax_basic
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift file has valid syntax (basic checks)
+
+  - id: test_kotlin_coroutine_support_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: Kotlin coroutine support file has required imports
+
+  - id: test_kotlin_coroutine_support_classes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Kotlin coroutine support file has required class definitions
+
+  - id: test_swift_coroutine_support_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift coroutine support file has required imports
+
+  - id: test_swift_coroutine_support_classes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift coroutine support file has required class definitions
+
+  - id: test_coroutine_test_data_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Coroutine integration test data exists and is complete
+
+  - id: test_repo_git_status_expected
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository git status is as expected - clean at base or has fix applied
+
+  - id: test_patch_applies_cleanly
+    type: pass_to_pass
+    origin: repo_tests
+    description: Gold patch can be applied cleanly to repository
+
+# No agent_config checks or rubric needed - no applicable agent configs found
+agent_config: []
+rubric: []

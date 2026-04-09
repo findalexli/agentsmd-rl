@@ -1,0 +1,55 @@
+source_pr:
+  owner: apache
+  repo: airflow
+  number: 64736
+  merge_commit: "8e1f6c457c38c8547b04cc5a4b7cb6c634a48783"
+  base_commit: "84010007d2e5553e2212ce4c63d4df063b8ebf4b"
+
+checks:
+  - id: "typescript_compiles"
+    name: "TypeScript compiles without errors"
+    type: "f2p"
+    description: "Verify the TypeScript code compiles after the fix"
+
+  - id: "unit_tests_pass"
+    name: "Unit tests pass"
+    type: "f2p"
+    description: "Run the vitest tests for DagVersionSelect component"
+
+  - id: "component_uses_runid_from_params"
+    name: "Component extracts runId from useParams"
+    type: "p2p"
+    source:
+      origin: "agent_config"
+      config_file: "CLAUDE.md"
+      description: "Follow existing patterns for React component parameter extraction"
+
+  - id: "component_fetches_dagrun_data"
+    name: "Component fetches DagRun data when runId is present"
+    type: "p2p"
+    source:
+      origin: "agent_config"
+      config_file: "CLAUDE.md"
+      description: "Use appropriate hooks for data fetching patterns"
+
+  - id: "component_filters_versions_based_on_run"
+    name: "Component filters versions based on selected run"
+    type: "p2p"
+    description: "The core behavior fix - filter versions when run is selected"
+
+  - id: "version_options_use_filtered_versions"
+    name: "versionOptions uses filtered versions"
+    type: "p2p"
+    description: "Ensure dropdown options use the filtered array"
+
+  - id: "disabled_state_uses_filtered_versions"
+    name: "Disabled state checks filtered versions"
+    type: "p2p"
+    description: "Disabled state should check filtered versions, not all versions"
+
+  - id: "selected_version_uses_filtered_versions"
+    name: "selectedVersion lookup uses filtered versions"
+    type: "p2p"
+    description: "Selected version lookup should search in filtered array"
+
+rubric: []

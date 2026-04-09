@@ -1,0 +1,110 @@
+version: 1
+
+source:
+  pr:
+    owner: chroma-core
+    repo: chroma
+    number: 6721
+    title: "[ENH]: Bloom filter improvements and bug fixes"
+    merge_commit: a9dbc624ecdeb94256e5a42ecddefe89e746e7e8
+    base_commit: f206bbf894bd8a9f3bcf4db7d7a01425c70640d7
+
+task:
+  name: "chroma-bloom-filter-fixes"
+  description: "Fix several bugs in the bloom filter implementation including proper error propagation, cache key consistency, and introducing deep_clone for proper isolation between cached and writer instances."
+
+repository:
+  url: "https://github.com/chroma-core/chroma"
+  language: "rust"
+  base_commit: "f206bbf894bd8a9f3bcf4db7d7a01425c70640d7"
+
+files_modified:
+  - "rust/segment/src/bloom_filter.rs"
+  - "rust/segment/src/blockfile_record.rs"
+
+checks:
+  - id: "compile"
+    name: "Cargo Check"
+    description: "Rust code compiles without errors"
+    file: "tests/test_outputs.py"
+    test: "test_cargo_check"
+    points: 10
+
+  - id: "deep_clone_exists"
+    name: "deep_clone Method Exists"
+    description: "The deep_clone() method is implemented on BloomFilter"
+    file: "tests/test_outputs.py"
+    test: "test_deep_clone_method_exists"
+    points: 15
+
+  - id: "deep_clone_isolation"
+    name: "deep_clone Isolation Test"
+    description: "deep_clone() creates properly isolated bloom filter instances"
+    file: "tests/test_outputs.py"
+    test: "test_deep_clone_isolation"
+    points: 20
+
+  - id: "error_propagation"
+    name: "Error Propagation Fix"
+    description: "BloomFilterSerializationError wraps BloomFilterError"
+    file: "tests/test_outputs.py"
+    test: "test_error_propagation_fix"
+    points: 10
+
+  - id: "cache_key_method"
+    name: "Cache Key Helper Method"
+    description: "cache_key_from_path() method exists for consistent cache keys"
+    file: "tests/test_outputs.py"
+    test: "test_cache_key_from_path_method"
+    points: 5
+
+  - id: "deep_clone_in_commit"
+    name: "deep_clone Used in commit()"
+    description: "commit() uses deep_clone() instead of clone() for cache isolation"
+    file: "tests/test_outputs.py"
+    test: "test_deep_clone_used_in_commit"
+    points: 10
+
+  - id: "fetch_method"
+    name: "fetch_bloom_filter Method"
+    description: "fetch_bloom_filter() method exists for explicit storage fetching"
+    file: "tests/test_outputs.py"
+    test: "test_fetch_bloom_filter_method"
+    points: 5
+
+  - id: "try_load_method"
+    name: "try_load_bloom_filter_from_cache Method"
+    description: "try_load_bloom_filter_from_cache() method exists for cache-only reads"
+    file: "tests/test_outputs.py"
+    test: "test_try_load_from_cache_method"
+    points: 5
+
+  - id: "flush_error_propagation"
+    name: "Flush Error Propagation"
+    description: "Bloom filter flush errors are propagated, not just warned"
+    file: "tests/test_outputs.py"
+    test: "test_flush_error_propagation"
+    points: 10
+
+  - id: "relaxed_ordering"
+    name: "Relaxed Atomic Ordering"
+    description: "Atomic operations use Relaxed ordering for performance"
+    file: "tests/test_outputs.py"
+    test: "test_relaxed_ordering_usage"
+    points: 5
+
+  - id: "fpr_comment"
+    name: "False Positive Rate Comment"
+    description: "Comment correctly states 0.1% false positive rate"
+    file: "tests/test_outputs.py"
+    test: "test_false_positive_rate_comment"
+    points: 5
+
+  - id: "unit_tests_pass"
+    name: "All Bloom Filter Unit Tests"
+    description: "All bloom_filter module unit tests pass"
+    file: "tests/test_outputs.py"
+    test: "test_bloom_filter_unit_tests"
+    points: 10
+
+rubric: []

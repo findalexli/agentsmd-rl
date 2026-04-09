@@ -292,6 +292,63 @@ def test_aclosing_imported():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates -- ensure fix doesn't break existing functionality
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check_modified():
+    """Modified Python files pass ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, timeout=60,
+    )
+    for f in ["gradio/chat_interface.py", "gradio/utils.py"]:
+        r = subprocess.run(
+            ["ruff", "check", f],
+            cwd=REPO, capture_output=True, timeout=30,
+        )
+        assert r.returncode == 0, (
+            f"ruff check failed on {f}:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_modified():
+    """Modified Python files pass ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, timeout=60,
+    )
+    for f in ["gradio/chat_interface.py", "gradio/utils.py"]:
+        r = subprocess.run(
+            ["ruff", "format", "--check", f],
+            cwd=REPO, capture_output=True, timeout=30,
+        )
+        assert r.returncode == 0, (
+            f"ruff format --check failed on {f}:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports():
+    """gradio package imports successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "import gradio"],
+        cwd=REPO, capture_output=True, timeout=30,
+    )
+    assert r.returncode == 0, f"gradio import failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_modified_modules():
+    """Modified modules import successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "from gradio import utils; from gradio import chat_interface"],
+        cwd=REPO, capture_output=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Module import failed:\n{r.stderr.decode()[-500:]}"
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) -- rules from AGENTS.md
 # ---------------------------------------------------------------------------
 

@@ -12,6 +12,16 @@ checks:
     origin: static
     description: "Modified files (configs/trainer.py, trainer/ckpt.py) must parse without errors"
 
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linting passes on modified files (pass_to_pass)"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff formatting passes on modified files (pass_to_pass)"
+
   - id: config_field_exists
     type: fail_to_pass
     origin: pr_diff
@@ -55,7 +65,6 @@ checks:
   - id: no_try_except_in_config
     type: pass_to_pass
     origin: agent_config
-    description: "No unnecessary try/except blocks in configs/trainer.py"
     source:
       path: "AGENTS.md"
       lines: "5"

@@ -210,3 +210,79 @@ print(f"PASS: found {{len(store_calls)}} store syncs at lines {{store_line_nums}
 """)
     assert r.returncode == 0, f"Mutation sync check failed: {r.stdout}\n{r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) -- repository structure and integrity
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_module_files_exist():
+    """All declared Rust module files exist (pass_to_pass).
+
+    Validates that the crate structure is intact and no source files are missing.
+    This catches file corruption, incomplete checkouts, or broken module paths.
+    """
+    r = _run_py(f"""
+import sys
+from pathlib import Path
+
+src_dir = Path("{REPO}/turbopack/crates/turbo-persistence/src")
+lib_file = src_dir / "lib.rs"
+
+if not lib_file.exists():
+    print("FAIL: lib.rs not found")
+    sys.exit(1)
+
+src = lib_file.read_text()
+
+# Extract mod declarations
+import re
+mod_decls = re.findall(r"^\s*(?:pub\s+)?(?:mod|pub\s+mod)\s+(\w+)", src, re.MULTILINE)
+
+missing = []
+for mod in mod_decls:
+    mod_file = src_dir / f"{{mod}}.rs"
+    mod_dir_file = src_dir / mod / "mod.rs"
+    if not mod_file.exists() and not mod_dir_file.exists():
+        missing.append(mod)
+
+if missing:
+    print(f"FAIL: Missing module files: {{missing}}")
+    sys.exit(1)
+
+print(f"PASS: All {{len(mod_decls)}} module files exist")
+""")
+    assert r.returncode == 0, "Module file check failed: " + r.stdout + "\n" + r.stderr
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_source_integrity():
+    """Source files are not truncated/corrupted (pass_to_pass).
+
+    Validates that key source files have reasonable line counts and structure.
+    Catches truncated downloads, disk issues, or git checkout problems.
+    """
+    r = _run_py(f"""
+import sys
+from pathlib import Path
+
+src_dir = Path("{REPO}/turbopack/crates/turbo-persistence/src")
+files_to_check = ["lib.rs", "db.rs"]
+
+for fname in files_to_check:
+    fpath = src_dir / fname
+    if not fpath.exists():
+        print(f"FAIL: {{fname}} does not exist")
+        sys.exit(1)
+    lines = fpath.read_text().splitlines()
+    if len(lines) < 10:
+        print(f"FAIL: {{fname}} only has {{len(lines)}} lines -- likely truncated")
+        sys.exit(1)
+
+print(f"PASS: All source files have valid structure")
+""")
+    assert r.returncode == 0, "Source integrity check failed: " + r.stdout + "\n" + r.stderr
+    assert "PASS" in r.stdout

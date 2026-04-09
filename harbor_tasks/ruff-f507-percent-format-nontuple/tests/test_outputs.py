@@ -222,3 +222,37 @@ def test_no_allow_lint_suppression():
         assert "#[allow(" not in stripped, (
             f"Use #[expect()] instead of #[allow()] at line {i}: {stripped}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD tests (pass_to_pass) — ensure existing functionality not broken
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_fmt():
+    """Repo code formatting passes cargo fmt check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_clippy():
+    """Repo lints pass cargo clippy check on ruff_linter crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "--package", "ruff_linter", "--all-targets", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyflakes_tests():
+    """Repo pyflakes tests pass - relevant to F507 changes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ruff_linter", "--", "rules::pyflakes::tests", "--test-threads=4"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyflakes tests failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"

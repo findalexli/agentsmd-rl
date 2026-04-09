@@ -5,75 +5,42 @@ cd /workspace/opencode
 
 # Idempotent: skip if already applied
 if grep -q 'OPENCODE_ENABLE_QUESTION_TOOL' packages/opencode/src/flag/flag.ts 2>/dev/null; then
-    echo "Patch already applied."
+    echo 'Patch already applied.'
     exit 0
 fi
 
-# Use --whitespace=fix if patch has trailing whitespace issues
-# IMPORTANT: patch content MUST end with a blank line before the PATCH delimiter
-git apply --whitespace=fix <<'PATCH'
-diff --git a/.opencode/agent/translator.md b/.opencode/agent/translator.md
-index dec6fa6c4fc3..a2f2784e91fc 100644
---- a/.opencode/agent/translator.md
-+++ b/.opencode/agent/translator.md
-@@ -598,6 +598,7 @@ OPENCODE_EXPERIMENTAL_MARKDOWN
- OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX
- OPENCODE_EXPERIMENTAL_OXFMT
- OPENCODE_EXPERIMENTAL_PLAN_MODE
-+OPENCODE_ENABLE_QUESTION_TOOL
- OPENCODE_FAKE_VCS
- OPENCODE_GIT_BASH_PATH
- OPENCODE_MODEL
-diff --git a/packages/opencode/src/acp/README.md b/packages/opencode/src/acp/README.md
-index d998cb22da8d..aab33259bb18 100644
---- a/packages/opencode/src/acp/README.md
-+++ b/packages/opencode/src/acp/README.md
-@@ -44,6 +44,16 @@ opencode acp
- opencode acp --cwd /path/to/project
- ```
+echo 'Applying OPENCODE_ENABLE_QUESTION_TOOL changes...'
 
-+### Question Tool Opt-In
-+
-+ACP excludes `QuestionTool` by default.
-+
-+```bash
-+OPENCODE_ENABLE_QUESTION_TOOL=1 opencode acp
-+```
-+
-+Enable this only for ACP clients that support interactive question prompts.
-+
- ### Programmatic
+# 1. Update flag.ts - add OPENCODE_ENABLE_QUESTION_TOOL constant after OPENCODE_SERVER_USERNAME
+sed -i '/export const OPENCODE_SERVER_USERNAME = process.env\["OPENCODE_SERVER_USERNAME"\]/a\  export const OPENCODE_ENABLE_QUESTION_TOOL = truthy("OPENCODE_ENABLE_QUESTION_TOOL")' packages/opencode/src/flag/flag.ts
 
- ```typescript
-diff --git a/packages/opencode/src/flag/flag.ts b/packages/opencode/src/flag/flag.ts
-index dfcb88bc51a5..0049d716d095 100644
---- a/packages/opencode/src/flag/flag.ts
-+++ b/packages/opencode/src/flag/flag.ts
-@@ -30,6 +30,7 @@ export namespace Flag {
-   export declare const OPENCODE_CLIENT: string
-   export const OPENCODE_SERVER_PASSWORD = process.env["OPENCODE_SERVER_PASSWORD"]
-   export const OPENCODE_SERVER_USERNAME = process.env["OPENCODE_SERVER_USERNAME"]
-+  export const OPENCODE_ENABLE_QUESTION_TOOL = truthy("OPENCODE_ENABLE_QUESTION_TOOL")
+# 2. Update registry.ts - add question variable after config line
+sed -i '/const config = await Config.get()/a\    const question = ["app", "cli", "desktop"].includes(Flag.OPENCODE_CLIENT) || Flag.OPENCODE_ENABLE_QUESTION_TOOL' packages/opencode/src/tool/registry.ts
 
-   // Experimental
-   export const OPENCODE_EXPERIMENTAL = truthy("OPENCODE_EXPERIMENTAL")
-diff --git a/packages/opencode/src/tool/registry.ts b/packages/opencode/src/tool/registry.ts
-index 9a06cb59937b..3ff9cce8990f 100644
---- a/packages/opencode/src/tool/registry.ts
-+++ b/packages/opencode/src/tool/registry.ts
-@@ -94,10 +94,11 @@ export namespace ToolRegistry {
-   async function all(): Promise<Tool.Info[]> {
-     const custom = await state().then((x) => x.custom)
-     const config = await Config.get()
-+    const question = ["app", "cli", "desktop"].includes(Flag.OPENCODE_CLIENT) || Flag.OPENCODE_ENABLE_QUESTION_TOOL
+# 3. Update registry.ts - replace the QuestionTool conditional to use question variable  
+sed -i 's/(\["app", "cli", "desktop"\].includes(Flag.OPENCODE_CLIENT) ? \[QuestionTool\] : \[\])/(question ? [QuestionTool] : [])/' packages/opencode/src/tool/registry.ts
 
-     return [
-       InvalidTool,
--      ...(["app", "cli", "desktop"].includes(Flag.OPENCODE_CLIENT) ? [QuestionTool] : []),
-+      ...(question ? [QuestionTool] : []),
-       BashTool,
-       ReadTool,
+# 4. Update translator.md - add the env var after OPENCODE_EXPERIMENTAL_PLAN_MODE
+sed -i '/^OPENCODE_EXPERIMENTAL_PLAN_MODE$/a\OPENCODE_ENABLE_QUESTION_TOOL' .opencode/agent/translator.md
 
-PATCH
+# 5. Update acp/README.md - add the Question Tool Opt-In section before '### Programmatic'
+LINE=$(grep -n '### Programmatic' packages/opencode/src/acp/README.md | head -1 | cut -d: -f1)
+if [ -n "$LINE" ]; then
+    head -n $((LINE-1)) packages/opencode/src/acp/README.md > /tmp/readme_part1.txt
+    tail -n +$LINE packages/opencode/src/acp/README.md > /tmp/readme_part2.txt
+    cat > /tmp/readme_new_section.txt << 'SECTIONEOF'
+### Question Tool Opt-In
 
-echo "Patch applied successfully."
+ACP excludes `QuestionTool` by default.
+
+```bash
+OPENCODE_ENABLE_QUESTION_TOOL=1 opencode acp
+```
+
+Enable this only for ACP clients that support interactive question prompts.
+
+SECTIONEOF
+    cat /tmp/readme_part1.txt /tmp/readme_new_section.txt /tmp/readme_part2.txt > packages/opencode/src/acp/README.md
+fi
+
+echo 'Patch applied successfully.'

@@ -1,11 +1,84 @@
 {
+  "schema_version": 2,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-08T22:08:04.516579",
-  "sandbox_id": "iwfjdwqdhzpsuv5d64xn3",
-  "backend": "glm",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 2099.32
+  "validated_at": "2026-04-09T04:07:22.820978",
+  "total_time": 9006.03,
+  "sandbox_id": "irc17b21skeyjr071fdch",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Docker build OK. NOP test: 7 pass_to_pass tests pass, 7 fail_to_pass tests correctly fail (reward=0). Gold test: all 14 tests pass (reward=1). Rubric judge requires API key (not a task issue).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 102.94
+    },
+    "p2p_enrichment": {
+      "completed": "2026-04-09T11:00:00Z",
+      "ci_commands_discovered": [
+        "package.json scripts: build, lint, typescript, test-types, test-unit",
+        "packages/next-swc/package.json scripts: rust-check-fmt, rust-check-clippy, rust-check-napi",
+        "CI workflows: .github/workflows/build_and_test.yml runs lint, types-and-precompiled, test-cargo-unit"
+      ],
+      "ci_commands_tested": [
+        "python3 json.loads() on package.json files - passed",
+        "node --check on .js/.ts scripts - passed"
+      ],
+      "p2p_tests_added": [
+        "test_repo_package_json_valid - validates root package.json is valid JSON",
+        "test_repo_turbo_json_valid - validates root turbo.json is valid JSON",
+        "test_repo_next_swc_package_json_valid - validates packages/next-swc/package.json",
+        "test_repo_next_swc_turbo_json_valid - validates packages/next-swc/turbo.json",
+        "test_repo_validate_externals_doc_syntax - validates scripts/validate-externals-doc.js syntax",
+        "test_repo_build_native_syntax - validates scripts/build-native.ts syntax"
+      ],
+      "notes": "Added 6 pass_to_pass tests from repo_tests origin. These are lightweight syntax/validation checks that pass on both base commit and after the gold fix. Skipped heavier CI commands (pnpm install, eslint, prettier, typescript) as they require network or take >120s."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1964.59,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.75,
+      "notes": "ICR=0.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T04:07:22.662105"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9006.03,
+      "at": "2026-04-09T04:07:22.820978"
+    }
+  ]
 }

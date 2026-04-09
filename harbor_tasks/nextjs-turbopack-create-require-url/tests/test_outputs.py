@@ -17,6 +17,8 @@ would exceed timeout even if it were. Tests verify the source changes are
 correctly applied by parsing Rust source with Python.
 """
 
+import os
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/next.js"
@@ -173,7 +175,7 @@ def test_unit_cases_enabled():
         for line in lines:
             stripped = line.strip()
             if case_name in stripped:
-                # Active case: starts with #[case:: not // #[case::
+                # Active case: starts with #[case:: not //
                 if stripped.startswith("#[case::") and not stripped.startswith("//"):
                     found_active = True
                     break
@@ -243,3 +245,51 @@ def test_create_require_handler_unchanged():
     assert "WellKnownFunctionKind::CreateRequire" in src, (
         "CreateRequire pattern detection must be preserved"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_unused_turbo_tasks():
+    """Repo's check-unused-turbo-tasks script passes (pass_to_pass).
+
+    This validates that the known unused turbo-tasks items are the only
+    ones present. The base commit has 2 known unused items (size_bytes),
+    and the fix should not introduce any new unused items.
+    """
+    r = subprocess.run(
+        ["node", "scripts/check-unused-turbo-tasks.mjs"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # The base commit has 2 known unused items (size_bytes in turbopack-browser and turbopack-core)
+    # We verify the script output contains only these known items
+    if r.returncode != 0:
+        # Check that only known unused items are present
+        known_unused = [
+            "turbopack/crates/turbopack-browser/src/ecmascript/chunk.rs:133",
+            "turbopack/crates/turbopack-core/src/output.rs:48",
+        ]
+        for item in known_unused:
+            assert item in r.stdout, f"Unexpected unused items found beyond known baseline"
+        # Verify the count is exactly 2
+        assert "Found 2 unused turbo-tasks item(s)" in r.stdout, (
+            f"Expected 2 unused items (baseline), got different count:\n{r.stdout[-1000:]}"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_file_trace_fixtures_exist():
+    """Repo's node-file-trace test fixtures exist (pass_to_pass).
+
+    The test fixtures for the create-require tests must exist in the
+    node-file-trace test directory. These fixtures are used by the
+    turbopack-tracing unit tests.
+    """
+    fixtures_dir = f"{REPO}/turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit"
+    assert os.path.isdir(fixtures_dir), f"Test fixtures directory missing: {fixtures_dir}"
+
+    # Verify the base module-create-require fixture exists
+    base_fixture = f"{fixtures_dir}/module-create-require"
+    assert os.path.isdir(base_fixture), f"Base fixture missing: {base_fixture}"
+
+    # Verify input.js exists in the base fixture
+    input_file = f"{base_fixture}/input.js"
+    assert os.path.isfile(input_file), f"Base fixture input.js missing: {input_file}"

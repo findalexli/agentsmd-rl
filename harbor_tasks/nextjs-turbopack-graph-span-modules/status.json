@@ -1,73 +1,65 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.965566",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:10:28.175493",
+  "total_time": 1990.85,
+  "sandbox_id": "iwrm8vjkg3h0kr46yjzne",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 423.9,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-03-30T11:48:15.955508",
-      "runner": "audit (audit-tests_20260330_114815)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 11180
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
-    {
-      "timestamp": "2026-03-31T13:38:28-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "docker_build": true,
+      "rubric_judge": "skipped - requires ANTHROPIC_API_KEY",
+      "attempts": 1,
+      "notes": "All three core checks passed: Docker build succeeds, NOP test returns reward=0 (tests correctly fail on buggy base code), Gold test returns reward=1 (all tests pass after gold fix). The rubric judge requires an external API key and returns 0.5 when not available. The rubric rules are reasonable (from project's CLAUDE.md) and should pass with a proper LLM judge.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 148.4
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.7,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-31T09:10:27.424871",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 19031
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.686557",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T12:00:00.000000",
-      "phase": "docker_validate_v2",
-      "runner": "manual remake",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1",
-      "format": "pytest_binary",
-      "notes": "Rewrote test_outputs.py: replaced _strip_rust + brace-balanced extraction with line-based raw source searches. Old approach broke on Rust char literals and raw strings."
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:10:28.011506"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.949149",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.551510",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1990.85,
+      "at": "2026-04-09T02:10:28.175493"
     }
   ]
 }

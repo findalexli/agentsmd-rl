@@ -1,72 +1,106 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.965118",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T01:52:45.381943",
+  "total_time": 927.97,
+  "sandbox_id": "idocovzrpbjd46dcrm8rt",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "improve": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 259.89,
+      "notes": "no subprocess.run (grep-only tests)"
     },
-    {
-      "timestamp": "2026-03-30T11:48:11.528356",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 14550
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T08:30:00",
+      "status": "completed",
+      "ci_commands_found": [
+        "package.json scripts: zig:check, zig:check-all, lint, typecheck, banned",
+        "build.zig steps: check (semantic analysis), test",
+        ".github/workflows/lint.yml: oxlint, prettier",
+        ".github/workflows/format.yml: zig fmt, clang-format",
+        "test/internal/ban-words.test.ts: banned words validation (std.debug.assert, usingnamespace, etc.)"
+      ],
+      "ci_commands_tested": [
+        "bun CLI not available in node:22-slim container - cannot run full CI",
+        "Python-based replication of ban-words.test.ts checks added",
+        "All 3 new banned words tests pass on base commit"
+      ],
+      "tests_added": [
+        "test_repo_zig_syntax_valid - brace balance validation",
+        "test_repo_modified_files_readable - file integrity check",
+        "test_repo_required_fields_exist - required field presence",
+        "test_repo_bun_allocator_used - memory allocator patterns",
+        "test_repo_no_std_allocator_usage - forbidden std.heap/Allocator",
+        "test_repo_no_banned_words - 42 patterns from ban-words.test.ts",
+        "test_repo_no_autofix_comments - autofix comment check",
+        "test_repo_no_enum_tagname - std.enums.tagName check"
+      ],
+      "notes": "Discovered and replicated bun repo's banned words CI check (test/internal/ban-words.test.ts) which validates 42 forbidden patterns like std.debug.assert, usingnamespace, std.unicode, etc. Since bun CLI is unavailable in container, implemented Python-based checks that validate the same patterns. All 19 pass-to-pass tests now pass on base commit."
     },
-    {
-      "timestamp": "2026-03-31T13:34:38-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 326.58,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-03-31T09:10:27.424793",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 16718
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_individual_params_still_freed regex which was too strict about whitespace. Tests now correctly verify the gold fix for MySQL per-query memory leak (PR #28633). All 18 tests pass after fix.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 100.01
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.72,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-01T20:15:41.652908",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T12:58:21.145491",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:30:37.202962"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.939146",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1070.87,
+      "at": "2026-04-09T01:30:37.394436"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.522094",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:52:45.220219"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 927.97,
+      "at": "2026-04-09T01:52:45.381943"
     }
   ]
 }

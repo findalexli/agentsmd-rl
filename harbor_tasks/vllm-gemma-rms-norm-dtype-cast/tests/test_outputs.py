@@ -8,6 +8,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
+import sys
 import textwrap
 from pathlib import Path
 
@@ -72,6 +74,47 @@ def test_syntax_check():
             ast.parse(source)
         except SyntaxError as e:
             raise AssertionError(f"Syntax error in {path}: {e}") from e
+
+
+# [repo_tests] pass_to_pass - CI lint check
+def test_ruff_lint():
+    """Ruff linter passes on modified files (pass_to_pass)."""
+    files = [
+        LAYERNORM_IR,
+        LAYERNORM_MODEL,
+        VLLM_C,
+        f"{REPO}/vllm/kernels/aiter_ops.py",
+        f"{REPO}/vllm/kernels/xpu_ops.py",
+    ]
+    r = subprocess.run(
+        ["ruff", "check"] + files,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Module import check
+def test_modified_modules_import():
+    """Modified modules can be imported without errors (pass_to_pass)."""
+    # Set up minimal path for imports
+    sys.path.insert(0, REPO)
+
+    # Test importing the modified modules
+    try:
+        # These modules have minimal dependencies
+        from vllm.ir.ops import layernorm as ir_layernorm
+        from vllm.kernels import vllm_c
+        from vllm.kernels import aiter_ops
+        from vllm.kernels import xpu_ops
+
+        # Verify key functions/classes are accessible
+        assert hasattr(ir_layernorm, "rms_norm"), "rms_norm not found in ir.ops.layernorm"
+        assert hasattr(vllm_c, "rms_no_var_size"), "rms_no_var_size not found in vllm_c"
+    except Exception as e:
+        raise AssertionError(f"Failed to import modified modules: {e}") from e
 
 
 # ---------------------------------------------------------------------------

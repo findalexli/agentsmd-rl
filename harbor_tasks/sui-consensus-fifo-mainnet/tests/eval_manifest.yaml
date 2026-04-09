@@ -1,0 +1,38 @@
+source_pr:
+  owner: MystenLabs
+  repo: sui
+  number: 26149
+  title: "[consensus] enable fifo compaction for all networks"
+  base_commit: d40b0d0711182de2605732a49cba1f07e007c5ee
+  merge_commit: c6bf4049115d45c8c674c357f84f41fcc22c4f0e
+
+# Fail-to-pass: tests that fail on base commit and pass on correct fix
+fail_to_pass:
+  - id: test_mainnet_guard_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: Mainnet exclusion guard for FIFO compaction is removed
+
+  - id: test_chain_type_import_removed
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      - file: CLAUDE.md
+        lines: "49-51"
+        note: "Unconditional enabling preferred over chain == Chain::Mainnet pattern"
+    description: ChainType import is consolidated since it's no longer needed
+
+  - id: test_fifo_compaction_used_correctly
+    type: fail_to_pass
+    origin: behavioral
+    description: RocksDBStore initialized with simplified use_fifo_compaction parameter
+
+# Pass-to-pass: tests that should pass on both base and fixed code
+pass_to_pass:
+  - id: test_cargo_check_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code compiles after changes
+
+# Rubric for LLM-judged soft criteria (empty since all checks are programmatic)
+rubric: []

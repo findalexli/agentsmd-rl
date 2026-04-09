@@ -16,4 +16,7 @@ RUN git clone --filter=blob:none https://github.com/remix-run/remix.git /workspa
 
 WORKDIR /workspace/remix
 
+# Install dependencies (required for pass-to-pass repo tests)
+RUN corepack enable && pnpm install --frozen-lockfile
+
 RUN mkdir -p /logs/verifier

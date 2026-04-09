@@ -1,0 +1,134 @@
+# Evaluation manifest for electron-window-size-constraints task
+# Source: electron/electron#50754
+
+task:
+  name: electron-window-size-constraints
+  title: Enforce min/max window size constraints on BrowserWindow creation
+  source_pr: https://github.com/electron/electron/pull/50754
+  base_commit: a0f042f8d3e1123e7112a868954ab3c7c843f0b7
+  merge_commit: 1e43451d084f216dc6930d719b4ef71cdc7baaec
+  description: |
+    Fixes a bug where BrowserWindow did not enforce min/max size constraints
+    during window creation on Windows and Linux. The fix reorders the
+    InitFromOptions function to apply size constraints before setting position.
+
+checks:
+  # ────────────────────────────────────────────────────────────────────────────
+  # Fail-to-Pass Tests (Core behavioral fixes)
+  # ────────────────────────────────────────────────────────────────────────────
+
+  - id: test_clamp_size_called_before_setposition
+    description: Size clamping happens BEFORE SetPosition
+    weight: 3
+    origin: behavioral
+    source: PR diff - moved position code after size constraints
+
+  - id: test_content_size_clamping_logic
+    description: Content size is clamped when use_content_size is true
+    weight: 2
+    origin: behavioral
+    source: PR diff - added ClampSize for content size
+
+  - id: test_window_size_clamping_logic
+    description: Window size is clamped when use_content_size is false
+    weight: 2
+    origin: behavioral
+    source: PR diff - added ClampSize for window size
+
+  - id: test_clamped_size_conditional_set
+    description: Clamped size only set when different from current size
+    weight: 2
+    origin: behavioral
+    source: PR diff - conditional SetContentSize/SetSize calls
+
+  - id: test_comment_fixed_windows_typo
+    description: Comment typo fixed (Window -> Windows)
+    weight: 1
+    origin: behavioral
+    source: PR diff - comment correction
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Pass-to-Pass Tests (Code quality and ordering)
+  # ────────────────────────────────────────────────────────────────────────────
+
+  - id: test_minimum_size_set_before_clamping
+    description: Minimum size set before ClampSize is called
+    weight: 1
+    origin: quality
+    source: Logic ordering verification
+
+  - id: test_maximum_size_set_before_clamping
+    description: Maximum size set before ClampSize is called
+    weight: 1
+    origin: quality
+    source: Logic ordering verification
+
+  - id: test_size_constraints_initialized_before_use
+    description: size_constraints initialized with GetSizeConstraints before modifications
+    weight: 1
+    origin: quality
+    source: PR diff - initialization pattern
+
+  - id: test_code_compiles_syntax
+    description: C++ code passes basic syntax validation
+    weight: 1
+    origin: quality
+    source: General code quality
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Pass-to-Pass Repo CI Tests (actual CI/CD checks from the repo)
+  # ────────────────────────────────────────────────────────────────────────────
+
+  - id: test_repo_ci_clang_format_native_window
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI clang-format check passes on native_window.cc (npm run lint:clang-format)
+    weight: 1
+    source: CI command from package.json scripts.lint:clang-format
+
+  - id: test_repo_ci_clang_format_shell_dir
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI clang-format check passes on shell/ directory (npm run lint:clang-format)
+    weight: 1
+    source: CI command from package.json scripts.lint:clang-format
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Agent Config Rules (from CLAUDE.md and copilot-instructions.md)
+  # ────────────────────────────────────────────────────────────────────────────
+
+  - id: test_chromium_code_style_followed
+    description: Code follows Chromium style (2-space indentation)
+    weight: 1
+    origin: agent_config
+    source:
+      file: CLAUDE.md
+      lines: "C++: Follows Chromium style, enforced by clang-format"
+
+  - id: test_clang_format_compliance
+    description: Code passes clang-format check
+    weight: 1
+    origin: agent_config
+    source:
+      file: .github/copilot-instructions.md
+      lines: "Follows Chromium coding style, enforced by clang-format and clang-tidy"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Rubric for soft/subjective rules (LLM-judged)
+# ──────────────────────────────────────────────────────────────────────────────
+
+rubric:
+  - rule: The fix correctly reorders the InitFromOptions function so that size constraints are applied before position is set
+    source:
+      file: CLAUDE.md
+      context: Code style and structure guidelines
+
+  - rule: The code preserves the Windows-specific SetPosition workaround (calling it twice)
+    source:
+      file: PR diff
+      context: The Windows-specific double SetPosition call must be preserved
+
+  - rule: Conditional window centering logic (Center()) is preserved after the size constraint changes
+    source:
+      file: PR diff
+      context: The else-if center block must remain functional

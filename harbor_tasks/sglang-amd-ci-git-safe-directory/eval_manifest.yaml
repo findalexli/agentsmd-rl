@@ -12,6 +12,26 @@ checks:
     origin: static
     description: "Both AMD CI scripts must be valid bash"
 
+  - id: shellcheck
+    type: pass_to_pass
+    origin: static
+    description: "Both AMD CI scripts must pass shellcheck --severity=error"
+
+  - id: scripts_executable
+    type: pass_to_pass
+    origin: static
+    description: "Scripts with shebang are executable (repo CI: check-shebang-scripts-are-executable)"
+
+  - id: no_trailing_whitespace
+    type: pass_to_pass
+    origin: static
+    description: "Modified scripts have no trailing whitespace (repo CI: trailing-whitespace)"
+
+  - id: no_merge_conflict_markers
+    type: pass_to_pass
+    origin: static
+    description: "Modified scripts have no merge conflict markers (repo CI: check-merge-conflict)"
+
   - id: docker_exec_safe_directory
     type: fail_to_pass
     origin: pr_diff

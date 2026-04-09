@@ -1,0 +1,121 @@
+task_name: kotlin-swift-export-objcname
+source_pr: https://github.com/JetBrains/kotlin/pull/5700
+base_commit: 2a4c65fb2b7a8f7d50235c12145e07f1b8ffbf78
+merge_commit: f806db6f14f647931fbc536eb0a48e77ef0b45e2
+description: Add support for @ObjCName annotation in Swift Export
+
+# Agent configuration sources found in the repository
+agent_config_sources:
+  - path: .ai/guidelines.md
+    commit: 2a4c65fb2b7a8f7d50235c12145e07f1b8ffbf78
+    relevance: high
+  - path: AGENTS.md
+    commit: 2a4c65fb2b7a8f7d50235c12145e07f1b8ffbf78
+    relevance: high
+  - path: CLAUDE.md
+    commit: 2a4c65fb2b7a8f7d50235c12145e07f1b8ffbf78
+    relevance: high
+  - path: analysis/AGENTS.md
+    commit: 2a4c65fb2b7a8f7d50235c12145e07f1b8ffbf78
+    relevance: medium
+  - path: compiler/AGENTS.md
+    commit: 2a4c65fb2b7a8f7d50235c12145e07f1b8ffbf78
+    relevance: low
+
+# Key agent rules applied (from .ai/guidelines.md)
+agent_rules:
+  - rule: "Follow area-specific docs before running tests/modifying code"
+    category: process
+  - rule: "Use Gradle for building with -q flag for quieter output"
+    category: build
+  - rule: "Don't modify *Generated.java files directly"
+    category: code_quality
+  - rule: "Reference YouTrack issues with ^KT-XXXXX Fixed in commit messages"
+    category: process
+
+# Test coverage and verification
+checks:
+  # Fail-to-pass tests (behavioral - verify the functional fix)
+  - id: test_objcname_annotation_class_has_correct_structure
+    type: fail_to_pass
+    origin: pr_diff
+    description: ObjCNameAnnotation class is correctly defined with required properties (objCName, swiftName, isExact, name, argumentName)
+    source: native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/utils/AnalysisApiUtils.kt
+
+  - id: test_objcname_annotation_parses_annotation_arguments
+    type: fail_to_pass
+    origin: pr_diff
+    description: objCNameAnnotation extension correctly parses annotation arguments (name, swiftName, exact) from kotlin.native.ObjCName
+    source: native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/utils/AnalysisApiUtils.kt
+
+  - id: test_resolve_constant_value_helper_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: resolveConstantValue helper function exists for type-safe annotation parsing with KaConstantValue
+    source: native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/utils/AnalysisApiUtils.kt
+
+  - id: test_sirdeclarationnamer_checks_objcname_first
+    type: fail_to_pass
+    origin: pr_diff
+    description: SirDeclarationNamerImpl checks objCNameAnnotation first before default naming in getName()
+    source: native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/impl/SirDeclarationNamerImpl.kt
+
+  - id: test_typetranslationutils_extracts_custom_parameter_names
+    type: fail_to_pass
+    origin: pr_diff
+    description: TypeTranslationUtils uses objCNameAnnotation to extract custom parameter names for SirParameter
+    source: native/swift/sir-light-classes/src/org/jetbrains/sir/lightclasses/utils/TypeTranslationUtils.kt
+
+  - id: test_sirprotocolfromktsymbol_uses_sirdeclarationname
+    type: fail_to_pass
+    origin: pr_diff
+    description: SirProtocolFromKtSymbol uses sirDeclarationName() with lazyWithSessions instead of direct name access
+    source: native/swift/sir-light-classes/src/org/jetbrains/sir/lightclasses/nodes/SirProtocolFromKtSymbol.kt
+
+  - id: test_swift_underscore_converted_to_empty_string
+    type: fail_to_pass
+    origin: pr_diff
+    description: Swift underscore (_) is converted to empty string for parameter names in Swift export
+    source: native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/utils/AnalysisApiUtils.kt
+
+  # Pass-to-pass tests (verify no regressions in code structure)
+  - id: test_kotlin_files_compilable_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: Kotlin files have valid structure with balanced braces/parentheses
+
+  - id: test_kotlin_imports_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Kotlin import statements are well-formed
+
+  - id: test_no_duplicate_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: No duplicate import statements in modified files
+
+  - id: test_function_declarations_well_formed
+    type: pass_to_pass
+    origin: repo_tests
+    description: Function and property declarations are syntactically well-formed
+
+  - id: test_extension_functions_have_valid_receivers
+    type: pass_to_pass
+    origin: repo_tests
+    description: Extension functions on KaDeclarationSymbol have valid receiver types
+
+# LLM-judged rubric (subjective quality criteria)
+rubric: []
+
+# Task metadata
+target_files:
+  - native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/utils/AnalysisApiUtils.kt
+  - native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/impl/SirDeclarationNamerImpl.kt
+  - native/swift/sir-light-classes/src/org/jetbrains/sir/lightclasses/utils/TypeTranslationUtils.kt
+  - native/swift/sir-light-classes/src/org/jetbrains/sir/lightclasses/nodes/SirProtocolFromKtSymbol.kt
+
+test_files:
+  - native/swift/swift-export-standalone-integration-tests/simple/testData/generation/annotations/annotations.kt
+  - native/swift/swift-export-standalone-integration-tests/simple/testData/generation/annotations/golden_result/main/main.h
+  - native/swift/swift-export-standalone-integration-tests/simple/testData/generation/annotations/golden_result/main/main.kt
+  - native/swift/swift-export-standalone-integration-tests/simple/testData/generation/annotations/golden_result/main/main.swift

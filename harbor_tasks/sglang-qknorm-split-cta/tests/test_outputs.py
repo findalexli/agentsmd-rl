@@ -10,6 +10,7 @@ f2p tests execute Python analysis scripts via subprocess.
 p2p / agent_config tests verify structural invariants inline.
 """
 
+import ast
 import re
 import subprocess
 import textwrap
@@ -58,6 +59,49 @@ def test_not_stub():
     src = _read_stripped()
     nonempty = sum(1 for line in src.splitlines() if line.strip())
     assert nonempty >= 80, f"Only {nonempty} non-empty lines -- expected >= 80"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass tests
+# ---------------------------------------------------------------------------
+
+def test_repo_python_syntax():
+    """Python files for the JIT kernel module have valid syntax (pass_to_pass)."""
+    # Test that norm.py (which loads the .cuh file) has valid Python syntax
+    norm_py = Path(REPO) / "python/sglang/jit_kernel/norm.py"
+    assert norm_py.exists(), f"{norm_py} does not exist"
+    src = norm_py.read_text()
+    try:
+        ast.parse(src)
+    except SyntaxError as e:
+        raise AssertionError(f"Syntax error in {norm_py}: {e}")
+
+
+def test_repo_test_file_syntax():
+    """Test file for qknorm_across_heads has valid Python syntax (pass_to_pass)."""
+    test_py = Path(REPO) / "python/sglang/jit_kernel/tests/test_qknorm_across_heads.py"
+    assert test_py.exists(), f"{test_py} does not exist"
+    src = test_py.read_text()
+    try:
+        ast.parse(src)
+    except SyntaxError as e:
+        raise AssertionError(f"Syntax error in {test_py}: {e}")
+
+
+def test_repo_cuh_header_valid():
+    """CUDA header file has valid structure (pass_to_pass)."""
+    src = _read_raw()
+    # Basic structural checks that don't require compilation
+    # Check for balanced braces
+    open_braces = src.count("{")
+    close_braces = src.count("}")
+    assert open_braces == close_braces, f"Unbalanced braces: {open_braces} open, {close_braces} close"
+    # Check for balanced parentheses
+    open_parens = src.count("(")
+    close_parens = src.count(")")
+    assert open_parens == close_parens, f"Unbalanced parentheses: {open_parens} open, {close_parens} close"
+    # Check file ends with newline
+    assert src.endswith("\n"), "File should end with newline"
 
 
 # ---------------------------------------------------------------------------

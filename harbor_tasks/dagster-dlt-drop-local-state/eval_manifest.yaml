@@ -1,0 +1,38 @@
+source_pr:
+  owner: dagster-io
+  repo: dagster
+  number: 33620
+  title: "fix(dlt): drop local state before run"
+  merge_commit: b776602f1381cd661d3328ed7835ac0120f33111
+  base_commit: 095d02df486d2ab390f8d2385e1ef9413ecf37e0
+
+checks:
+  - id: test_drop_state_with_restore_from_destination
+    type: behavioral
+    description: "Verify drop() is called when restore_from_destination is True"
+    points: 4
+
+  - id: test_drop_pending_packages_when_restore_disabled
+    type: behavioral
+    description: "Verify drop_pending_packages() is called when restore_from_destination is False"
+    points: 3
+
+  - id: test_stale_state_interference_regression
+    type: behavioral
+    description: "Verify stale state from previous runs doesn't interfere"
+    points: 3
+
+agent_config:
+  - file: CLAUDE.md
+    rules:
+      - id: run_ruff_after_changes
+        description: "Run make ruff after any Python code changes"
+        applicable: true
+        origin: CLAUDE.md
+        lines: "MANDATORY: After ANY Python code changes, ALWAYS run make ruff"
+
+rubric: []
+
+scoring:
+  max_points: 10
+  passing_threshold: 8

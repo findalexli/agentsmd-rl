@@ -180,3 +180,61 @@ def test_not_stub():
             if setup_methods:
                 body = [s for s in setup_methods[0].body if not isinstance(s, (ast.Pass, ast.Expr))]
                 assert len(body) >= 3, "setUpClass must have meaningful implementation"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD verification
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_py_compile():
+    """Repo's Python files compile without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", TARGET_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_test_directory_syntax():
+    """All Python files in test/registered/spec/eagle compile (pass_to_pass)."""
+    eagle_dir = Path(REPO) / "test" / "registered" / "spec" / "eagle"
+    failed = []
+
+    for pyfile in eagle_dir.glob("*.py"):
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", str(pyfile)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        if r.returncode != 0:
+            failed.append(f"{pyfile.name}: {r.stderr[:200]}")
+
+    assert not failed, f"Syntax errors found:\n" + "\n".join(failed[:5])
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_sglang_syntax():
+    """Sample of Python files in python/sglang compile (pass_to_pass)."""
+    # Check a representative sample of Python files
+    sample_files = [
+        "python/sglang/srt/utils.py",
+        "python/sglang/srt/managers/io_struct.py",
+        "python/sglang/srt/configs/model_config.py",
+        "python/sglang/test/test_utils.py",
+        "python/sglang/check_env.py",
+    ]
+
+    failed = []
+    for rel_path in sample_files:
+        full_path = Path(REPO) / rel_path
+        if not full_path.exists():
+            continue
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", str(full_path)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        if r.returncode != 0:
+            failed.append(f"{rel_path}: {r.stderr[:200]}")
+
+    assert not failed, f"Syntax errors found:\n" + "\n".join(failed)

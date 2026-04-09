@@ -1,0 +1,30 @@
+name = "hugo-taxonomy-empty-key-fix"
+owner = "gohugoio"
+repo = "hugo"
+pr_number = 14551
+base_commit = "cc338a9d4854c7e7273a5c3c8fee436c642f4dde"
+merge_commit = "65b4287c68cfa17d4cf0f5526b2a53b960516ac0"
+title = "config: Skip taxonomy entries with empty keys or values"
+description = "Fix phantom taxonomy bug causing .Ancestors to hang when non-taxonomy config keys are placed inside [taxonomies] TOML table"
+
+difficulty = "medium"
+tags = ["go", "hugo", "config", "taxonomy", "toml", "bug-fix"]
+
+[environment]
+image = "golang:1.24-alpine"
+setup_time_seconds = 300
+
+[timeouts]
+agent_seconds = 1800
+verifier_seconds = 120
+
+[target_files]
+paths = [
+    "config/allconfig/alldecoders.go",
+]
+
+[distinctive_lines]
+lines = [
+    "if k == \"\" || v == \"\" {",
+    "delete(m, k)",
+]

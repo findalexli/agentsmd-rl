@@ -12,6 +12,31 @@ checks:
     origin: static
     description: "test_utils.py must parse without syntax errors"
 
+  - id: test_repo_ruff_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: ruff check --select=E9 catches syntax errors"
+
+  - id: test_repo_ruff_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: ruff check --select=F401,F821 catches import/name issues"
+
+  - id: test_repo_ast_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Python AST validation passes"
+
+  - id: test_repo_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: isort --check passes (import order)"
+
+  - id: test_repo_black
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: black --check passes (code formatting)"
+
   - id: dill_no_recursive_ref_warning
     type: fail_to_pass
     origin: pr_diff

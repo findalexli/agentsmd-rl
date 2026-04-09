@@ -31,12 +31,6 @@ def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         script.unlink(missing_ok=True)
 
 
-# ---------------------------------------------------------------------------
-# Behavioral test helper — written to repo dir so subprocess scripts can import it.
-# Extracts async endpoint functions from source via AST, executes them with
-# mocked engine clients, and tracks pause/rpc/resume call ordering.
-# ---------------------------------------------------------------------------
-
 _HELPER_CODE = '''\
 import ast
 import asyncio
@@ -137,22 +131,11 @@ def _write_behavioral_helper():
     _HELPER_PATH.unlink(missing_ok=True)
 
 
-# ---------------------------------------------------------------------------
-# Gate (pass_to_pass, static)
-# ---------------------------------------------------------------------------
-
 def test_syntax_check():
     """Modified file must parse without errors."""
     source = Path(FILE).read_text()
     ast.parse(source)
 
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests via subprocess
-# Each test extracts the actual async endpoint function from source, executes
-# it in an isolated subprocess with mocked engine clients, and verifies the
-# call pattern (pause -> rpc -> resume).
-# ---------------------------------------------------------------------------
 
 WEIGHT_UPDATE_ENDPOINTS = [
     "areal_update_weight",
@@ -291,10 +274,6 @@ def test_continue_endpoint_calls_resume():
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — subprocess structural checks
-# ---------------------------------------------------------------------------
-
 def test_no_monkey_patching():
     """setattr(EngineCore, ...) and hook() function must be removed."""
     r = _run_python(f"""
@@ -360,10 +339,6 @@ def test_removed_vllm_internals_imports():
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression checks
-# ---------------------------------------------------------------------------
-
 def test_routes_preserved():
     """All original API route paths must still be declared."""
     source = Path(FILE).read_text()
@@ -409,8 +384,35 @@ def test_request_models_preserved():
 
 
 # ---------------------------------------------------------------------------
-# Agent config (pass_to_pass)
+# Repo CI/CD checks (pass_to_pass)
 # ---------------------------------------------------------------------------
+
+def test_repo_ruff_lint():
+    """Repo's Python linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_ruff_format():
+    """Repo's Python formatting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_python_syntax():
+    """Modified file has valid Python syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"import ast; ast.parse(open('{FILE}').read())"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax error:\n{r.stderr[-500:]}"
+
 
 def test_no_wildcard_imports():
     """No wildcard imports (from x import *)."""

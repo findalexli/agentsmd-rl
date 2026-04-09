@@ -1,0 +1,72 @@
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T08:16:23.217598",
+  "total_time": 0.0,
+  "sandbox_id": "ixp55bvar5eiwqzo0410w",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "ci_commands_found": [
+        "cargo check -p move-unit-test",
+        "cargo test -p move-unit-test --lib",
+        "cargo clippy -p move-unit-test",
+        "cargo fmt --check -p move-unit-test",
+        "cargo test -p move-unit-test --test move_unit_test_testsuite"
+      ],
+      "tests_added": [
+        "test_move_clippy - Verifies clippy passes on move-unit-test crate",
+        "test_move_fmt - Verifies code formatting standards",
+        "test_move_unit_test_integration_tests - Verifies integration tests pass"
+      ],
+      "eval_manifest_updated": true,
+      "source": "CI workflows from .github/workflows/external.yml and .github/workflows/rust.yml"
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 975.38,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: (1) Docker build successful, (2) NOP test reward=0 as expected (6 f2p tests fail on base, 6 p2p tests pass), (3) Gold test reward=1 as expected (all 12 tests pass after fix), (4) No rubric judge needed (rubric is empty). Fixed test_unit_tests_run to run from external-crates/move directory instead of repo root. Also copied test.sh from environment/ to tests/ directory and fixed the path inside it.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 834.43
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.86,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T08:16:23.217598"
+    }
+  ]
+}

@@ -41,6 +41,28 @@ checks:
       lines: "139"
       commit: "891f5f2f96fe5161122912af25d8b3af708cbd1b"
 
+  # CI-derived pass-to-pass gates
+  - id: test_repo_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ESLint checks pass"
+    command: "npm run eslint"
+    timeout: 120
+
+  - id: test_repo_hygiene
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's hygiene checks pass"
+    command: "node build/hygiene.ts"
+    timeout: 120
+
+  - id: test_repo_test_node
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Node.js unit tests pass"
+    command: "npm run test-node"
+    timeout: 120
+
 rubric:
   - rule: "When removing an import, do not leave behind blank lines where the import was. Ensure the surrounding code remains compact."
     source:

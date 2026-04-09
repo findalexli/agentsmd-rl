@@ -32,7 +32,7 @@ def test_scoped_editor_service_created():
     r = _run_node("""
 const fs = require('fs');
 const src = fs.readFileSync('src/vs/workbench/browser/parts/titlebar/titlebarPart.ts', 'utf8');
-if (!src.includes('editorService.createScoped(editorGroupsContainer'))) {
+if (!src.includes('editorService.createScoped(editorGroupsContainer')) {
   console.error('FAIL: editorService.createScoped(editorGroupsContainer, ...) not found');
   process.exit(1);
 }
@@ -42,7 +42,7 @@ if (!src.includes('scopedEditorService')) {
 }
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Scoped editor service not created: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Scoped editor service not created: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -61,7 +61,7 @@ if (!src.includes('IEditorService, scopedEditorService')) {
 }
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Child instantiation service wrong: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Child instantiation service wrong: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -70,13 +70,13 @@ def test_window_title_uses_scoped_service():
     r = _run_node("""
 const fs = require('fs');
 const src = fs.readFileSync('src/vs/workbench/browser/parts/titlebar/titlebarPart.ts', 'utf8');
-if (!src.includes('this.instantiationService.createInstance(WindowTitle'))) {
+if (!src.includes('this.instantiationService.createInstance(WindowTitle')) {
   console.error('FAIL: must use this.instantiationService.createInstance(WindowTitle, ...)');
   process.exit(1);
 }
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"WindowTitle not using scoped service: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"WindowTitle not using scoped service: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -95,7 +95,7 @@ if (src.includes('this.editorService.activeEditor')) {
 }
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Active editor source wrong: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Active editor source wrong: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -133,5 +133,50 @@ if (result.diagnostics && result.diagnostics.length > 0) {
 }
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"TypeScript transpile failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"TypeScript transpile failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
+
+
+def test_repo_eslint():
+    """Repo's ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+
+
+def test_repo_monaco_compile_check():
+    """Repo's Monaco compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "monaco-compile-check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Monaco compile check failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+
+
+def test_repo_vscode_dts_compile_check():
+    """Repo's VSCode dts compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "vscode-dts-compile-check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"VSCode dts compile check failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+
+
+def test_repo_define_class_fields_check():
+    """Repo's define class fields check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "define-class-fields-check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Define class fields check failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+
+
+def test_repo_stylelint():
+    """Repo's Stylelint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "stylelint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Stylelint failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"

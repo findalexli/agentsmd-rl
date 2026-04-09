@@ -1,0 +1,123 @@
+# Evaluation manifest for move-unit-test-linkage-fix task
+# Source: MystenLabs/sui#26137
+
+source:
+  pr:
+    owner: MystenLabs
+    repo: sui
+    number: 26137
+    title: "[move-unit-test] Fix linkage for unit test runner"
+    merge_commit: 404f123f44711212ac69f27762a49a57eb3454f0
+    base_commit: 89286c8e52b8b358b3bd895e40ec4ee2f991c742
+
+# Task metadata
+task:
+  name: move-unit-test-linkage-fix
+  difficulty: medium
+  tags: [rust, move, unit-test, linkage, vm]
+
+# Checks define the test functions that must pass
+# Each check corresponds to a test_* function in tests/test_outputs.py
+checks:
+  # Fail-to-pass tests - These fail on base commit, pass on fix
+  - id: "linkage_import"
+    name: "Linkage context import present"
+    description: "Verify linkage_context is imported in the use statement"
+    test: "test_linkage_context_import_present"
+    type: "f2p"
+    points: 1
+
+  - id: "linkage_table"
+    name: "Linkage table construction"
+    description: "Verify linkage_table is constructed from package keys with identity mapping"
+    test: "test_linkage_table_construction"
+    type: "f2p"
+    points: 1
+
+  - id: "linkage_context"
+    name: "LinkageContext creation"
+    description: "Verify LinkageContext is created from the linkage table"
+    test: "test_linkage_context_creation"
+    type: "f2p"
+    points: 1
+
+  - id: "stored_package_with_linkage"
+    name: "StoredPackage uses with_linkage method"
+    description: "Verify StoredPackage uses from_module_for_testing_with_linkage instead of old method"
+    test: "test_stored_package_with_linkage"
+    type: "f2p"
+    points: 2
+
+  - id: "linkage_passed"
+    name: "Linkage context passed to StoredPackage"
+    description: "Verify linkage_context is passed as parameter to StoredPackage"
+    test: "test_linkage_context_passed_to_stored_package"
+    type: "f2p"
+    points: 1
+
+  - id: "function_structure"
+    name: "setup_test_storage function structure"
+    description: "Verify overall structure of the fixed function"
+    test: "test_setup_test_storage_function_structure"
+    type: "f2p"
+    points: 1
+
+  # Pass-to-pass tests - These pass on both base and fix
+  - id: "compilation"
+    name: "Code compiles"
+    description: "Verify modified code compiles successfully"
+    test: "test_code_compiles"
+    type: "p2p"
+    origin: repo_tests
+    points: 1
+
+  - id: "unit_tests"
+    name: "Unit tests pass"
+    description: "Verify move-unit-test crate unit tests pass"
+    test: "test_unit_tests_run"
+    type: "p2p"
+    origin: repo_tests
+    points: 1
+
+  - id: "clippy"
+    name: "Clippy passes"
+    description: "Verify move-unit-test crate passes clippy lints"
+    test: "test_move_clippy"
+    type: "p2p"
+    origin: repo_tests
+    points: 1
+
+  - id: "fmt"
+    name: "Format check passes"
+    description: "Verify move-unit-test crate follows formatting standards"
+    test: "test_move_fmt"
+    type: "p2p"
+    origin: repo_tests
+    points: 1
+
+  - id: "integration_tests"
+    name: "Integration tests pass"
+    description: "Verify move-unit-test integration tests pass"
+    test: "test_move_unit_test_integration_tests"
+    type: "p2p"
+    origin: repo_tests
+    points: 1
+
+  # Guard tests - Verify the fix is not broken
+  - id: "no_old_method"
+    name: "Old method not used"
+    description: "Verify old from_modules_for_testing is no longer used in setup_test_storage"
+    test: "test_old_method_not_used"
+    type: "guard"
+    points: 1
+
+# Agent config checks - None for this task as there are no applicable
+# agent config rules for this specific code change
+agent_config: []
+
+# Rubric for soft/subjective requirements (empty for this task)
+rubric: []
+
+# Scoring
+total_points: 10
+min_reward_threshold: 0.7  # 70% of points required for reward

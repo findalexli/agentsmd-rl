@@ -17,11 +17,11 @@ RUN git clone --filter=blob:none https://github.com/PrimeIntellect-ai/prime-rl.g
 
 WORKDIR /workspace/prime-rl
 
-ENV PYTHONPATH="/workspace/prime-rl"
+ENV PYTHONPATH="/workspace/prime-rl/src"
 
-# Install minimal deps needed by test_outputs.py (msgspec for TrainingSample, verifiers for vf.State)
+# Install minimal deps needed by test_outputs.py (msgspec for TrainingSample, verifiers tomli for vf.State)
 # We install only what's needed for tests, NOT the full project deps
-RUN pip install --no-cache-dir pytest msgspec pytest-json-ctrf
+RUN pip install --no-cache-dir pytest msgspec pytest-json-ctrf verifiers tomli
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

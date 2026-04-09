@@ -12,6 +12,8 @@ import json
 import re
 from pathlib import Path
 
+import pytest
+
 REPO = "/repo"
 TEST_FILE = Path(REPO) / "test/e2e/app-dir/typed-routes/typed-routes.test.ts"
 
@@ -308,6 +310,53 @@ def test_retry_blocks_have_assertions():
         assert "expect(" in body or "assert" in body.lower(), (
             f"retry block at offset {m.start()} has no assertions"
         )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD (pass_to_pass) — repo's own lint/format checks
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass — prettier check
+@pytest.mark.skip(reason="Installs dependencies - run in validation environment")
+def test_repo_prettier():
+    """Repo's prettier check passes on the test file (pass_to_pass)."""
+    # Install corepack/pnpm if needed
+    subprocess.run(["npm", "install", "-g", "corepack"], capture_output=True, timeout=60)
+    subprocess.run(["corepack", "enable"], capture_output=True, timeout=30)
+    # Install dependencies
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    # Run prettier check
+    r = subprocess.run(
+        ["npx", "prettier", "--check", str(TEST_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — ESLint check
+@pytest.mark.skip(reason="Installs dependencies - run in validation environment")
+def test_repo_eslint():
+    """Repo's ESLint check passes on the test file (pass_to_pass)."""
+    # Install corepack/pnpm if needed
+    subprocess.run(["npm", "install", "-g", "corepack"], capture_output=True, timeout=60)
+    subprocess.run(["corepack", "enable"], capture_output=True, timeout=30)
+    # Install dependencies
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    # Run eslint check
+    r = subprocess.run(
+        ["npx", "eslint", "--config", "eslint.cli.config.mjs", str(TEST_FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

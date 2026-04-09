@@ -61,6 +61,22 @@ checks:
     origin: static
     description: "Script main() has substantive logic, not just pass/return"
 
+  # Repo CI/CD checks — pass_to_pass (p2p enrichment)
+  - id: ruff_check_scripts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on scripts directory"
+
+  - id: python_syntax_scripts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All Python files in scripts directory have valid syntax"
+
+  - id: scripts_pyproject_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "scripts/pyproject.toml is valid TOML"
+
 rubric:
   - rule: "Follow existing code style. Check neighboring files for patterns."
     source:

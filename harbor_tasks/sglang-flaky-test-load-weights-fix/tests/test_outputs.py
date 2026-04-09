@@ -13,6 +13,7 @@ This is a GPU-dependent test, so we verify the fix via AST parsing:
 """
 
 import ast
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/sglang"
@@ -43,6 +44,71 @@ def test_syntax_check():
     content = get_test_file_content()
     tree = ast.parse(content)
     assert tree is not None, "Failed to parse test file"
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base commit
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax_check():
+    """Repo's Python syntax check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", f"{REPO}/{TEST_FILE}"],
+        capture_output=True, text=True, timeout=30
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linting passes (pass_to_pass)."""
+    # Install ruff if needed
+    install_r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60
+    )
+    assert install_r.returncode == 0, f"Failed to install ruff: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821", f"{REPO}/{TEST_FILE}"],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black_check():
+    """Repo's black formatting check passes (pass_to_pass)."""
+    # Install black if needed
+    install_r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=60
+    )
+    assert install_r.returncode == 0, f"Failed to install black: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["black", "--check", f"{REPO}/{TEST_FILE}"],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"Black formatting check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell_check():
+    """Repo's codespell check passes (pass_to_pass)."""
+    # Install codespell if needed
+    install_r = subprocess.run(
+        ["pip", "install", "codespell", "-q"],
+        capture_output=True, text=True, timeout=60
+    )
+    assert install_r.returncode == 0, f"Failed to install codespell: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["codespell", "--config", f"{REPO}/.codespellrc", f"{REPO}/{TEST_FILE}"],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"Codespell check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
 # -----------------------------------------------------------------------------
@@ -161,7 +227,7 @@ def test_no_conditional_transfer_engine_expression():
 
 
 # -----------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
+# Pass-to-pass (static) — regression + anti-stub
 # -----------------------------------------------------------------------------
 
 # [static] pass_to_pass

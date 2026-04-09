@@ -30,6 +30,28 @@ def test_agents_md_exists():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that should pass on base and gold
+# ---------------------------------------------------------------------------
+
+def test_repo_ruff_check():
+    """Repo's Python linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "--config=pyproject.toml", "src/", "tests/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_ruff_format():
+    """Repo's Python formatting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--config=pyproject.toml", "src/", "tests/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — skills directory structure tests
 # ---------------------------------------------------------------------------
 

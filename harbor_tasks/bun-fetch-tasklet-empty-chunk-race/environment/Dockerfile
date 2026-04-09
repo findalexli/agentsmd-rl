@@ -9,7 +9,7 @@ RUN apt-get update && \
         git curl ca-certificates build-essential cmake ninja-build \
         python3 python3-pip python3-venv pkg-config \
         libssl-dev zlib1g-dev libzstd-dev \
-        llvm-18 clang-18 lld-18 && \
+        llvm-18 clang-18 lld-18 unzip && \
     rm -rf /var/lib/apt/lists/*
 
 # Symlink LLVM tools

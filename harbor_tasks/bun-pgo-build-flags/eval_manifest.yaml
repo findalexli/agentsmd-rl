@@ -52,20 +52,24 @@ checks:
     origin: repo_tests
     description: "Upstream build script tests still pass"
 
+  - id: typescript_syntax_node_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified TypeScript files have valid syntax (node --check)"
+
+  - id: oxlint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files pass oxlint linting"
+
+  - id: prettier_formatting
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files pass prettier format check"
+
   - id: not_stub
     type: pass_to_pass
     origin: static
     description: "resolveConfig has real PGO validation logic, not placeholder"
 
-rubric:
-  - rule: "Follow existing code style - check neighboring files for patterns."
-    source:
-      path: "CLAUDE.md"
-      lines: "117"
-      commit: "d2e67536514b059cb317beea23ebbeafe2fa6c1a"
-
-  - rule: "All changes must be tested - if you're not testing your changes, you're not done."
-    source:
-      path: "CLAUDE.md"
-      lines: "110"
-      commit: "d2e67536514b059cb317beea23ebbeafe2fa6c1a"
+# No rubric rules - this task modifies build scripts, not agent config files

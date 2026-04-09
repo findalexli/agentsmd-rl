@@ -24,6 +24,9 @@ RUN pip install --no-cache-dir \
     torch --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir pybase64 Pillow psutil numpy tqdm
 
+# Install linting tools for repo_tests (matching .pre-commit-config.yaml versions)
+RUN pip install --no-cache-dir ruff==0.15.1 black==26.1.0 isort==7.0.0 codespell==2.4.1
+
 ENV PYTHONPATH="/workspace/sglang/python"
 
 RUN git config --global user.email "agent@test.com" && \

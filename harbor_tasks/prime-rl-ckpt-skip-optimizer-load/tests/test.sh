@@ -13,6 +13,12 @@ if ! python3 -c "import pytest" 2>/dev/null; then
         pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
 fi
 
+# Ensure ruff is available for linting tests
+if ! command -v ruff &>/dev/null; then
+    python3 -m pip install -q ruff 2>/dev/null || \
+        pip3 install -q --break-system-packages ruff 2>/dev/null
+fi
+
 python3 -m pytest --ctrf /logs/verifier/ctrf.json /tests/test_outputs.py -rA --tb=short -q
 
 if [ $? -eq 0 ]; then

@@ -1,0 +1,151 @@
+task:
+  name: excalidraw-binding-angle-lock
+  source_pr:
+    owner: excalidraw
+    repo: excalidraw
+    number: 10479
+    merge_commit: bf4c65f4835f5ce13d0c807797b849ad5d6b0121
+    base_commit: 8d18078f5c719166c30eb373312c130664a56ffe
+  description: |
+    Fix angle locking for inside-bound linear elements. When dragging a linear
+    element endpoint with Shift held (angle lock), the angle should be constrained
+    to discrete angles even when binding to another element.
+
+checks:
+  - id: angle_locked_param_exists
+    name: angleLocked parameter exists in binding.ts
+    description: |
+      Verify that the angleLocked parameter is added to the opts type in
+      bindOrUnbindBindingElement and getBindingStrategyForDraggingBindingElementEndpoints.
+    origin: code
+    test: test_angle_locked_param_exists_in_binding
+    weight: 1.0
+
+  - id: angle_locked_in_strategy
+    name: angleLocked used in binding strategy logic
+    description: |
+      Verify that angleLocked is actually used to determine binding strategy
+      when the other endpoint should use orbit mode with angle locking.
+    origin: code
+    test: test_angle_locked_used_in_strategy_logic
+    weight: 1.0
+
+  - id: shift_check_simplified
+    name: Shift key check simplified in linearElementEditor.ts
+    description: |
+      Verify that the over-restrictive check (!hoveredElement && !startBinding && !endBinding)
+      has been removed from the angle lock logic.
+    origin: code
+    test: test_shift_key_check_simplified_in_linear_editor
+    weight: 1.0
+
+  - id: point_dragging_angle_locked
+    name: pointDraggingUpdates uses angleLocked
+    description: |
+      Verify that pointDraggingUpdates receives angleLocked parameter instead of
+      shiftKey and that shouldRotateWithDiscreteAngle() result is passed.
+    origin: code
+    test: test_point_dragging_updates_passes_angle_locked
+    weight: 1.0
+
+  - id: action_finalize_angle_locked
+    name: actionFinalize passes angleLocked
+    description: |
+      Verify that actionFinalize.tsx passes angleLocked to bindOrUnbindBindingElement.
+    origin: code
+    test: test_action_finalize_passes_angle_locked
+    weight: 1.0
+
+  - id: app_component_angle_locked
+    name: App.tsx passes angleLocked
+    description: |
+      Verify that App.tsx passes angleLocked when creating new arrows with initial binding.
+    origin: code
+    test: test_app_component_passes_angle_locked
+    weight: 1.0
+
+  - id: binding_structure_fix
+    name: Binding strategy structure supports angle locking
+    description: |
+      Verify the complete structure: otherEndpoint computation exists,
+      projectFixedPointOntoDiagonal is used, and angleLocked ternary exists.
+    origin: code
+    test: test_binding_strategy_respects_angle_lock
+    weight: 1.0
+
+  - id: typescript_compiles
+    name: TypeScript compilation passes
+    description: |
+      Run yarn test:typecheck to verify the TypeScript changes compile without errors.
+    origin: code
+    test: test_typescript_compiles
+    weight: 1.0
+
+  # Pass-to-pass tests: Repo CI/CD checks that should pass on both base and fix
+  - id: repo_typecheck
+    name: Repo TypeScript typecheck
+    description: |
+      Run yarn test:typecheck to verify the repo's TypeScript compiles.
+    origin: repo_tests
+    test: test_repo_typecheck
+    type: pass_to_pass
+    weight: 1.0
+
+  - id: repo_lint
+    name: Repo ESLint
+    description: |
+      Run yarn test:code to verify the repo's code passes ESLint.
+    origin: repo_tests
+    test: test_repo_lint
+    type: pass_to_pass
+    weight: 1.0
+
+  - id: repo_prettier
+    name: Repo Prettier formatting
+    description: |
+      Run yarn test:other to verify the repo's formatting passes Prettier.
+    origin: repo_tests
+    test: test_repo_prettier
+    type: pass_to_pass
+    weight: 1.0
+
+  - id: repo_binding_tests
+    name: Repo binding tests
+    description: |
+      Run yarn test:app packages/element/tests/binding.test.tsx to verify
+      the repo's binding tests pass.
+    origin: repo_tests
+    test: test_repo_binding_tests
+    type: pass_to_pass
+    weight: 1.0
+
+agent_config:
+  - rule: "Use TypeScript for all new code"
+    source: "CLAUDE.md"
+    type: process
+
+  - rule: "Prefer implementations without allocation where possible"
+    source: "CLAUDE.md"
+    type: style
+
+  - rule: "When there is an option, opt for more performant solutions and trade RAM usage for less CPU cycles"
+    source: "CLAUDE.md"
+    type: style
+
+  - rule: "Prefer immutable data (const, readonly)"
+    source: "CLAUDE.md"
+    type: style
+
+  - rule: "Use optional chaining (?.) and nullish coalescing (??) operators"
+    source: "CLAUDE.md"
+    type: style
+
+  - rule: "Use PascalCase for component names, interfaces, and type aliases"
+    source: ".github/copilot-instructions.md"
+    type: style
+
+  - rule: "Use camelCase for variables, functions, and methods"
+    source: ".github/copilot-instructions.md"
+    type: style
+
+rubric: []

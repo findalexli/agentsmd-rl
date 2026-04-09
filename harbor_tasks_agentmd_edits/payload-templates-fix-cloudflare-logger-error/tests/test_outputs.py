@@ -31,6 +31,34 @@ def test_syntax_check():
         assert len(content) > 100, f"File suspiciously small: {f}"
 
 
+# [repo_tests] pass_to_pass
+def test_template_typecheck():
+    """Cloudflare D1 template TypeScript typecheck passes (pass_to_pass)."""
+    template_dir = Path(f"{REPO}/templates/with-cloudflare-d1")
+    # Install dependencies and run typecheck
+    r = subprocess.run(
+        ["bash", "-c",
+         "corepack enable && corepack prepare pnpm@latest --activate && "
+         "pnpm install --ignore-workspace && npx tsc --noEmit"],
+        capture_output=True, text=True, timeout=120, cwd=template_dir,
+    )
+    assert r.returncode == 0, f"Template typecheck failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_template_eslint():
+    """Cloudflare D1 template ESLint passes after fix (pass_to_pass)."""
+    template_dir = Path(f"{REPO}/templates/with-cloudflare-d1")
+    # Install dependencies and run ESLint on payload.config.ts
+    r = subprocess.run(
+        ["bash", "-c",
+         "corepack enable && corepack prepare pnpm@latest --activate && "
+         "pnpm install --ignore-workspace && npx eslint src/payload.config.ts --quiet"],
+        capture_output=True, text=True, timeout=120, cwd=template_dir,
+    )
+    assert r.returncode == 0, f"Template ESLint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

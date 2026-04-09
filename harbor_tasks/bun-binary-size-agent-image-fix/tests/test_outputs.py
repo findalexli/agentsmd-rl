@@ -57,9 +57,8 @@ def test_no_handbuilt_platform_object():
     file_path = Path(f"{REPO}/{TARGET_FILE}")
     content = file_path.read_text()
 
-    # Look for getBinarySizeStep function and check it doesn't have the old pattern
+    # Look for getBinarySizeStep function and check it does not have the old pattern
     # The old buggy code had: getEc2Agent({ os: "linux", arch: "aarch64", distro: "amazonlinux", release: "2023" }
-    # This pattern would appear inside getBinarySizeStep
 
     import re
 
@@ -76,12 +75,100 @@ def test_no_handbuilt_platform_object():
     handbuilt_pattern = r'\{\s*os:\s*"linux"\s*,\s*arch:\s*"aarch64"\s*,\s*distro:\s*"amazonlinux"\s*,\s*release:\s*"2023"\s*\}'
     assert not re.search(handbuilt_pattern, func_content), (
         "Must NOT use hand-built platform object with os/arch/distro/release - "
-        "this omits the 'features' field needed for correct image key generation"
+        "this omits the features field needed for correct image key generation"
     )
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
+# Pass-to-pass (repo_tests) — CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo JavaScript linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "bun"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["bun", "install"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bun install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["bun", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier():
+    """Modified file passes Prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "bun"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["bun", "install"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bun install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["npx", "prettier", "--check", f"{REPO}/{TARGET_FILE}"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_banned_words():
+    """Banned words check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "bun"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["bun", "install"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bun install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["bun", "run", "banned"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Banned words check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "bun"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["bun", "install"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bun install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -102,12 +189,12 @@ def test_not_stub():
     func_content = func_match.group(0)
 
     # Should have the key structure elements
-    assert "key: \"binary-size\"" in func_content, "Function should define the binary-size step key"
+    assert 'key: "binary-size"' in func_content, "Function should define the binary-size step key"
     assert "agents:" in func_content, "Function should define agents configuration"
     assert "getEc2Agent" in func_content, "Function should call getEc2Agent"
 
     # Function body should have more than minimal content
-    lines = [line.strip() for line in func_content.split('\n') if line.strip()]
+    lines = [line.strip() for line in func_content.split("\n") if line.strip()]
     assert len(lines) >= 5, f"Function body is too short/stub-like ({len(lines)} lines)"
 
 

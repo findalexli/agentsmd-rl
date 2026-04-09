@@ -41,4 +41,29 @@ checks:
     origin: static
     description: "PCH still uses implicit deps on depOutputs (unchanged behavior)"
 
+  - id: repo_build_scripts_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Build scripts have valid TypeScript syntax (balanced braces, valid structure)"
+
+  - id: repo_claude_md_consistency
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CLAUDE.md has required sections (Ninja Primer, Gotchas) and documents implicit/order-only inputs"
+
+  - id: repo_import_paths_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Import paths in build scripts point to existing files"
+
+  - id: repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript typecheck passes (tsc --noEmit)"
+
+  - id: repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's JavaScript lint passes (oxlint on src/js)"
+
 rubric: []

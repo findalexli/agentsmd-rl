@@ -1,0 +1,98 @@
+source_pr:
+  owner: All-Hands-AI
+  repo: OpenHands
+  number: 13643
+  title: "Handling the new server error event"
+  merge_commit: 73ba66faeae1520fc2671b07677db4b5e3e235d3
+  base_commit: a198599d917fca47c467715b43858fc30f8082d4
+
+task:
+  name: openhands-server-error-event
+  title: "Add ServerErrorEvent handling to OpenHands frontend"
+  description: |
+    The Agent Server now sends ServerErrorEvent messages over WebSocket for server-side
+    errors (e.g., MCP configuration failures). The frontend needs to handle these events
+    by displaying error banners to users, similar to how ConversationErrorEvent is handled.
+
+agent_configs:
+  - source: AGENTS.md
+    lines: "Frontend section - general frontend development guidelines"
+  - source: AGENTS.md
+    lines: "TypeScript/React development practices"
+
+checks:
+  # Pass-to-pass checks (repo CI/tests)
+  - id: test_typescript_compilation
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend TypeScript compilation passes
+
+  - id: test_frontend_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend linting passes
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend build passes
+
+  - id: test_repo_translation_completeness
+    type: pass_to_pass
+    origin: repo_tests
+    description: Translation completeness check passes
+
+  - id: test_repo_websocket_handler_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: WebSocket handler tests pass
+
+
+  - id: test_repo_error_message_banner_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Error message banner component tests pass
+  # Fail-to-pass checks (actual fix verification)
+  - id: test_server_error_event_type_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: ServerErrorEvent type definition exists with correct structure
+
+  - id: test_is_server_error_event_guard_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: isServerErrorEvent type guard exists and is correctly implemented
+
+  - id: test_is_displayable_error_event_guard_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: isDisplayableErrorEvent combines both error types for unified handling
+
+  - id: test_websocket_context_uses_displayable_error
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: WebSocket context uses isDisplayableErrorEvent for error banner display
+
+  - id: test_openhands_event_includes_server_error
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: OpenHandsEvent union type includes ServerErrorEvent
+
+  - id: test_mock_helper_includes_server_error
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: Mock helper includes createMockServerErrorEvent function
+
+  - id: test_websocket_handler_tests_exist
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: Tests for ServerErrorEvent handling exist in the test suite
+
+rubric: []

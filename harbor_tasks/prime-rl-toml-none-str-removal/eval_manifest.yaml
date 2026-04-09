@@ -55,7 +55,7 @@ checks:
   - id: config_no_try_except
     type: pass_to_pass
     origin: agent_config
-    description: "config.py must not have try/except blocks"
+    description: "config.py must not have try/except blocks (AGENTS.md rule)"
     source:
       path: "AGENTS.md"
       lines: "5"
@@ -64,11 +64,26 @@ checks:
   - id: no_class_based_tests_in_modified_files
     type: pass_to_pass
     origin: agent_config
-    description: "Modified files must not introduce class-based test patterns"
+    description: "Modified files must not introduce class-based test patterns (AGENTS.md rule)"
     source:
       path: "AGENTS.md"
       lines: "54"
       commit: "4f612601f6447b3df1ee17e535ac698b5cc3d16c"
+
+  - id: test_repo_python_syntax_all
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All Python files in src/ have valid syntax (CI: ruff/syntax check)"
+
+  - id: test_repo_utils_syntax_all
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's utils directory Python files have valid syntax (CI: ruff/syntax check)"
+
+  - id: test_repo_configs_toml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's CI config TOML files are valid and parseable"
 
 rubric:
   - rule: "Simple is better than complex."

@@ -7,6 +7,41 @@ source:
   merge_commit: "d1b0f8e8e2a9896713abe54c57fde40296a037b8"
 
 checks:
+  - id: repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's oxlint passes with 0 warnings/errors"
+
+  - id: repo_google_extension_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Google extension tests pass"
+
+  - id: repo_no_conflict_markers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo has no conflict markers"
+
+  - id: repo_extension_no_src_outside_plugin_sdk
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Extensions don't import src/** outside plugin-sdk"
+
+  - id: repo_extension_no_relative_outside_package
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Extensions don't use relative imports escaping package"
+
+  - id: repo_extension_no_plugin_sdk_internal
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Extensions don't import plugin-sdk-internal"
+
+  - id: repo_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified TypeScript files are properly formatted"
+
   - id: typescript_syntax
     type: pass_to_pass
     origin: static
@@ -115,7 +150,7 @@ checks:
       commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
 
 rubric:
-  - rule: "Prefer strict typing; avoid `any`. Do not disable `no-explicit-any`; prefer real types, `unknown`, or a narrow adapter/helper instead."
+  - rule: "Prefer strict typing; avoid 'any'. Do not disable 'no-explicit-any'; prefer real types, 'unknown', or a narrow adapter/helper instead."
     source:
       path: "CLAUDE.md"
       lines: "102-105"

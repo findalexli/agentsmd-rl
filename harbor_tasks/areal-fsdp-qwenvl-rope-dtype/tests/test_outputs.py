@@ -368,3 +368,88 @@ def test_no_global_process_groups():
                 raise AssertionError(
                     f"Global process group creation at module level: {call.func.attr}()"
                 )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass gates — static analysis (no torch/GPU required)
+# ---------------------------------------------------------------------------
+
+REPO = "/repo"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_all_python_syntax():
+    """All Python files in areal/ must have valid syntax (pass_to_pass)."""
+    import os
+
+    areal_dir = os.path.join(REPO, "areal")
+    errors = []
+
+    for root, dirs, files in os.walk(areal_dir):
+        for file in files:
+            if file.endswith(".py"):
+                path = os.path.join(root, file)
+                try:
+                    with open(path) as f:
+                        source = f.read()
+                    ast.parse(source)
+                except SyntaxError as e:
+                    rel_path = path.replace(REPO, "")
+                    errors.append(f"{rel_path}: {e}")
+
+    if errors:
+        raise AssertionError(
+            f"Syntax errors in {len(errors)} files:\n" + "\n".join(errors[:10])
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_bare_excepts():
+    """No bare except: clauses in areal/engine/ (pass_to_pass)."""
+    import os
+
+    engine_dir = os.path.join(REPO, "areal/engine")
+    errors = []
+
+    for root, dirs, files in os.walk(engine_dir):
+        for file in files:
+            if file.endswith(".py"):
+                path = os.path.join(root, file)
+                with open(path) as f:
+                    source = f.read()
+                try:
+                    tree = ast.parse(source)
+                except SyntaxError:
+                    continue
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.ExceptHandler) and node.type is None:
+                        errors.append(f"{path.replace(REPO, '')}:{node.lineno}")
+
+    if errors:
+        raise AssertionError(
+            f"Bare except: found in {len(errors)} locations:\n" + "\n".join(errors[:10])
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_structure():
+    """Engine module imports must be syntactically valid (pass_to_pass)."""
+    import os
+
+    fsdp_engine = os.path.join(REPO, "areal/engine/fsdp_engine.py")
+    with open(fsdp_engine) as f:
+        source = f.read()
+    tree = ast.parse(source)
+
+    # Check for relative imports (which should be minimal in engine files)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            # Ensure imports are absolute (from areal.xxx or third-party)
+            if node.module and node.level > 0:
+                # This is a relative import - note it but don't fail
+                # (relative imports are sometimes used intentionally)
+                pass
+
+    # Just verifying the file parses with valid import statements
+    # If we got here, the imports are syntactically valid
+    assert True

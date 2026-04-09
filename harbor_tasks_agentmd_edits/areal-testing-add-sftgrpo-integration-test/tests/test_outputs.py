@@ -95,7 +95,7 @@ for node in ast.walk(tree):
             if dec.args[0].value != 'backend':
                 continue
             if len(dec.args) > 1 and isinstance(dec.args[1], ast.List):
-                values = [e.value for e in dec.args[1].elts if isinstance(e, ast.Constant)]
+                values = [e.value for e in child.iter.elts if isinstance(e, ast.Constant)]
                 if 'fsdp' in values and 'megatron' in values:
                     has_parametrize = True
         assert has_parametrize, "test_sft missing @pytest.mark.parametrize with fsdp+megatron"
@@ -234,6 +234,75 @@ print("PASS")
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's Python linting passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # Install may fail if already installed, ignore
+
+    r = subprocess.run(
+        ["ruff", "check", "areal/tests/grpo/test_grpo.py", "areal/tests/sft/test_sft.py",
+         "--select", "E,W,F", "--ignore", "E501"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax():
+    """Modified Python files have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", "areal/tests/grpo/test_grpo.py", "areal/tests/sft/test_sft.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yaml_valid():
+    """YAML configs are syntactically valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    r = subprocess.run(
+        ["python3", "-c", """
+import yaml
+import os
+
+# Check YAML configs - works on both base (config.yaml) and after fix (config_fsdp.yaml)
+configs = [
+    "areal/tests/grpo/config.yaml",  # base commit
+    "areal/tests/grpo/config_fsdp.yaml",  # after fix
+    "areal/tests/sft/config.yaml",  # base commit
+    "areal/tests/sft/config_fsdp.yaml",  # after fix
+]
+found_any = False
+for path in configs:
+    if os.path.exists(path):
+        with open(path) as f:
+            yaml.safe_load(f.read())
+        print(f"OK: {path}")
+        found_any = True
+if not found_any:
+    print("ERROR: No config files found")
+    exit(1)
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"YAML validation failed:\n{r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
 
 

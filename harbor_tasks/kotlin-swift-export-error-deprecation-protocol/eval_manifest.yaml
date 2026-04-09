@@ -1,0 +1,130 @@
+source_pr:
+  owner: JetBrains
+  repo: kotlin
+  number: 5759
+  title: "[Swift Export] Don't export protocol members with DeprecationLevel.ERROR"
+  merge_commit: 76cb6717198bcd067bee8d1a723ce1e6b5de9105
+  base_commit: 933370d290eb76fda562b41a7491362ed110574d
+
+agent_config:
+  - id: sir_visibility_checker_import
+    type: fail_to_pass
+    origin: agent_config
+    description: SirVisibilityCheckerImpl imports containingDeclaration
+    source:
+      file: AGENTS.md
+      lines: "MCP tool usage guidelines"
+
+  - id: sir_visibility_checker_logic
+    type: fail_to_pass
+    origin: agent_config
+    description: Visibility checker has ERROR protocol member logic
+    source:
+      file: CLAUDE.md
+      lines: "Project guidelines reference"
+
+checks:
+  # =============================================================================
+  # FAIL_TO_PASS: Core behavioral tests - these MUST use subprocess.run()
+  # =============================================================================
+
+  - id: test_sir_attribute_no_obsoleted_parameter
+    type: fail_to_pass
+    origin: pr_diff
+    description: SirAttribute.Available class removed obsoleted parameter
+
+  - id: test_sir_attribute_require_statements_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: SirAttribute.Available validation logic updated to exclude obsoleted
+
+  - id: test_sir_attribute_isUnusable_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: SirAttribute.Available isUnusable property only checks unavailable
+
+  - id: test_sir_attribute_arguments_no_obsoleted
+    type: fail_to_pass
+    origin: pr_diff
+    description: SirAttribute.Available arguments list excludes obsoleted
+
+  - id: test_containing_declaration_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: Visibility checker imports containingDeclaration from Analysis API
+
+  - id: test_visibility_checker_has_error_protocol_check
+    type: fail_to_pass
+    origin: pr_diff
+    description: Visibility checker contains ERROR protocol member detection logic
+
+  - id: test_printer_test_compiles_after_fix
+    type: fail_to_pass
+    origin: pr_diff
+    description: SirAsSwiftSourcesPrinterTests compile with updated Available calls (no obsoleted)
+
+  - id: test_sir_printer_golden_output_matches
+    type: fail_to_pass
+    origin: pr_diff
+    description: SIR printer golden output matches expected (no obsoleted in generated Swift)
+
+  - id: test_swift_export_integration_test_data_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: Swift export integration test data includes InterfaceWithDeprecatedMembers
+
+  - id: test_swift_export_generates_correct_protocol_output
+    type: fail_to_pass
+    origin: pr_diff
+    description: Swift export generates correct output - ERROR protocol members marked unavailable
+
+  # =============================================================================
+  # PASS_TO_PASS: Repo structure and compilation tests
+  # =============================================================================
+
+  - id: test_repo_structure_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Key Swift export repository directories and files exist
+
+  - id: test_gradlew_executable
+    type: pass_to_pass
+    origin: repo_tests
+    description: Gradle wrapper is available and executable
+
+  - id: test_sir_module_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: The SIR module compiles without errors
+
+  - id: test_sir_providers_module_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: The SIR providers module compiles without errors
+
+  - id: test_sir_printer_module_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: The SIR printer module compiles without errors
+
+  - id: test_sir_attribute_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: SirAttribute.kt is valid Kotlin syntax (no unmatched braces)
+
+  - id: test_visibility_checker_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: SirVisibilityCheckerImpl.kt is valid Kotlin syntax
+
+  - id: test_repo_tests_sir_printer
+    type: pass_to_pass
+    origin: repo_tests
+    description: SIR printer module tests pass (repo CI gate)
+
+  - id: test_repo_swift_export_integration_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift export integration tests pass (repo CI gate)
+
+rubric: []

@@ -27,9 +27,41 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         script.unlink(missing_ok=True)
 
 
+def _pnpm_cmd(args: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
+    """Run a pnpm command in the repo directory, handling corepack if needed."""
+    # Ensure pnpm is available via corepack if not already in PATH
+    cmd_prefix = []
+    if subprocess.run(["which", "pnpm"], capture_output=True).returncode != 0:
+        cmd_prefix = ["sh", "-c", "corepack enable && pnpm " + " ".join(args)]
+    else:
+        cmd_prefix = ["pnpm"] + args
+    return subprocess.run(
+        cmd_prefix,
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
+
+def test_repo_lint():
+    """Repo's ESLint lint passes (pass_to_pass)."""
+    r = _pnpm_cmd(["lint"], timeout=120)
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = _pnpm_cmd(["typecheck"], timeout=120)
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    r = _pnpm_cmd(["format:check"], timeout=120)
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
 
 def test_syntax_check():
     """Modified TypeScript files exist and are non-empty."""

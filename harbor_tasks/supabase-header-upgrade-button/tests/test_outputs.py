@@ -321,3 +321,44 @@ def test_node_parses_modified_files():
         assert r.returncode == 0, (
             f"File {f} failed validation: {r.stderr.decode()}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes on studio app (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "run", "typecheck"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lint():
+    """Repo's ESLint passes on studio app (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "run", "lint"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_layout_header_tests():
+    """Repo's unit tests for LayoutHeader components pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "LayoutHeader"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"LayoutHeader tests failed:\n{r.stderr[-500:]}"

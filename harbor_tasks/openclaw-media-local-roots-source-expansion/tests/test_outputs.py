@@ -50,6 +50,28 @@ def strip_comments(code: str) -> str:
 # Gate (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
+# [repo_tests] pass_to_pass - oxlint type-aware linting
+def test_repo_lint():
+    """Repo's oxlint type-aware linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - media module unit tests (excluding local-roots tests
+# which test the old behavior being fixed)
+def test_repo_media_tests():
+    """Repo's media module unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--config", "vitest.unit.config.ts",
+         "--exclude", "**/local-roots.test.ts", "src/media/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Media tests failed:\n{r.stderr[-500:]}"
+
+
 # [static] pass_to_pass
 def test_syntax_check():
     """Modified files must parse without TypeScript syntax errors."""

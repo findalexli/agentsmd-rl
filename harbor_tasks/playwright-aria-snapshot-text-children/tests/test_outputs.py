@@ -15,6 +15,7 @@ from pathlib import Path
 
 REPO = "/workspace/playwright"
 TARGET = "packages/injected/src/ariaSnapshot.ts"
+NPM_TIMEOUT = 300  # seconds for npm ci + build + command
 
 # JavaScript helper: extracts textContributesInfo from the TS source and runs
 # it against a set of {name, text} test cases, returning JSON results.
@@ -39,7 +40,7 @@ function longestCommonSubstring(s1, s2) {
 }
 
 // Read source and extract textContributesInfo function body
-const src = fs.readFileSync(process.argv[1], 'utf8');
+const src = fs.readFileSync(process.argv[2], 'utf8');
 const match = src.match(
   /function textContributesInfo\([^)]*\)[^{]*\{([\s\S]*?)\n\}/
 );
@@ -166,3 +167,45 @@ def test_preserved_exclusions():
     assert results["no_name"] is True, (
         "Text should always be included when node has no name"
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass tests — ensure fix doesn't break existing functionality
+# ---------------------------------------------------------------------------
+
+def _run_npm_command(cmd, timeout=300):
+    """Run an npm command in the repo directory."""
+    full_cmd = f"cd {REPO} && npm ci && npm run build && {cmd}"
+    r = subprocess.run(
+        ["bash", "-c", full_cmd],
+        capture_output=True, text=True, timeout=timeout,
+    )
+    return r
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint():
+    """Repo's ESLint passes (pass_to_pass)."""
+    r = _run_npm_command("npm run eslint", timeout=NPM_TIMEOUT)
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tsc():
+    """Repo's TypeScript compilation passes (pass_to_pass)."""
+    r = _run_npm_command("npm run tsc", timeout=NPM_TIMEOUT)
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_tests():
+    """Repo's test linting passes (pass_to_pass)."""
+    r = _run_npm_command("npm run lint-tests", timeout=NPM_TIMEOUT)
+    assert r.returncode == 0, f"Lint tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_packages():
+    """Repo's package consistency check passes (pass_to_pass)."""
+    r = _run_npm_command("npm run lint-packages", timeout=NPM_TIMEOUT)
+    assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"

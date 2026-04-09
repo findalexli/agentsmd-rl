@@ -223,3 +223,16 @@ if (ct3 !== 'text/xml')
 """
     )
     assert r.returncode == 0, f"Regression: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mime_lib_tests_pass():
+    """Repo's own mime library tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--test", "src/lib/*.test.ts"],
+        capture_output=True,
+        text=True,
+        cwd=str(REPO / "packages/mime"),
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Repo mime lib tests failed:\n{r.stderr[-500:]}"

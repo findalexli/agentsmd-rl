@@ -1,0 +1,88 @@
+source_pr:
+  owner: SeleniumHQ
+  repo: selenium
+  number: 17225
+  merge_commit: 7e9d2f7c7eaaf20cf6ff24bb383369b55a141613
+  base_commit: 1303596bccafc9f39708d8ac61b52424c7d00394
+
+task_description: |
+  Improve error messages in Selenium's JSON parsing code. When duplicate field names
+  are detected during JSON deserialization (e.g., when a child class inherits a field
+  with the same name as a parent class field), the error message should identify which
+  fields are in conflict, not just state that duplicates were found.
+
+checks:
+  # Fail-to-pass tests (behavioral)
+  - id: test_duplicate_field_error_message_includes_field_names
+    type: fail_to_pass
+    origin: behavioral
+    description: |
+      JsonTest.shouldThrowWhenDuplicateFieldNamesExistWithFieldSetting should pass
+      with error messages that include conflicting field class and name information.
+
+  - id: test_error_message_contains_fieldwriter_info
+    type: fail_to_pass
+    origin: behavioral
+    description: |
+      When duplicate fields are detected, the exception message should contain
+      FieldWriter information showing class name and field name.
+
+  # Structure tests (verify implementation details)
+  - id: test_field_writer_has_tostring
+    type: fail_to_pass
+    origin: structural
+    description: |
+      InstanceCoercer.java should have a FieldWriter class with toString() method
+      that returns the class name, declaring class, and field name.
+
+  - id: test_simple_property_writer_has_tostring
+    type: fail_to_pass
+    origin: structural
+    description: |
+      InstanceCoercer.java should have a SimplePropertyWriter class with toString().
+
+  - id: test_simple_property_descriptor_has_tostring
+    type: fail_to_pass
+    origin: structural
+    description: |
+      SimplePropertyDescriptor.java should have toString() returning "ClassName.fieldName".
+
+  - id: test_type_and_writer_returns_writer_tostring
+    type: fail_to_pass
+    origin: structural
+    description: |
+      TypeAndWriter.toString() should delegate to writer.toString().
+
+  - id: test_duplicate_field_merge_function_updated
+    type: fail_to_pass
+    origin: structural
+    description: |
+      The merge function in getFieldWriters and getBeanWriters should format error
+      messages with "%s vs %s" to show conflicting fields.
+
+  # Pass-to-pass tests (repo health)
+  - id: test_json_test_compiles_and_runs
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      The JsonTest test suite should compile and run without errors.
+
+  - id: test_bazel_build_java_src
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Bazel build of //java/src/org/openqa/selenium/json should succeed.
+
+# Agent config rules to check (from java/AGENTS.md)
+agent_config:
+  - file: "java/AGENTS.md"
+    lines: "1-100"
+    rules:
+      - "Code location: Java Bindings in java/src/, java/test/"
+      - "Use bazel build //java/... and bazel test //java/..."
+      - "Use java.util.logging.Logger for logging"
+      - "Use @Deprecated(forRemoval = true) for deprecation"
+      - "Use Javadoc for public APIs"
+
+# Rubric for LLM evaluation (soft/subjective criteria)
+rubric: []

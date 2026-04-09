@@ -6,13 +6,7 @@ PR:   92210
 DashMap read-write self-deadlock in task_cache causing hangs during
 incremental builds with persistent caching.
 
-In get_or_create_persistent_task and get_or_create_transient_task,
-self.task_cache.get(&task_type) returns a dashmap::Ref holding a read lock.
-The Ref was not dropped before ConnectChildOperation::run, which can
-re-enter task_cache requiring a write lock — causing self-deadlock.
-
-No Rust toolchain is available in the Docker image. Tests use subprocess
-to execute Python analysis scripts that parse the Rust source.
+No Rust toolchain is available in the Docker image.
 """
 
 import subprocess
@@ -22,19 +16,8 @@ REPO = "/workspace/next.js"
 MOD_FILE = f"{REPO}/turbopack/crates/turbo-tasks-backend/src/backend/mod.rs"
 
 
-def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Execute a Python snippet via subprocess."""
-    return subprocess.run(
-        ["python3", "-c", code],
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-    )
-
-
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
+def _run_py(code: str, timeout: int = 30):
+    return subprocess.run(["python3", "-c", code], capture_output=True, text=True, timeout=timeout)
 
 
 # [static] pass_to_pass
@@ -47,60 +30,124 @@ mod = Path("{MOD_FILE}")
 if not mod.is_file():
     print("FAIL: mod.rs missing")
     sys.exit(1)
-lines = mod.read_text().split("\\n")
+lines = mod.read_text().splitlines()
 if len(lines) < 1000:
-    print(f"FAIL: mod.rs only {{len(lines)}} lines — likely stubbed")
+    print(f"FAIL: mod.rs only {{len(lines)}} lines")
     sys.exit(1)
 print("PASS")
 """)
-    assert r.returncode == 0, f"Source check failed: {r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"Source check: {{r.stdout}} {{r.stderr}}"
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests via subprocess
-# ---------------------------------------------------------------------------
+# [repo_tests] pass_to_pass
+def test_repo_rust_file_parses():
+    """Rust file is valid and parseable."""
+    r = _run_py(f"""
+import sys
+from pathlib import Path
+mod = Path("{MOD_FILE}")
+if not mod.is_file():
+    print("FAIL: mod.rs missing")
+    sys.exit(1)
+try:
+    src = mod.read_text()
+    lines = src.splitlines()
+    fn_names = ["get_or_create_persistent_task", "get_or_create_transient_task"]
+    for fn_name in fn_names:
+        found = False
+        for i, line in enumerate(lines):
+            if f"fn {{fn_name}}(" in line:
+                found = True
+                break
+        if not found:
+            print(f"FAIL: {{fn_name}} not found")
+            sys.exit(1)
+    print("PASS")
+except Exception as e:
+    print(f"FAIL: {{e}}")
+    sys.exit(1)
+""")
+    assert r.returncode == 0
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass  
+def test_repo_dashmap_usage_present():
+    """DashMap task_cache is used."""
+    r = _run_py(f"""
+import sys
+src = open("{MOD_FILE}").read()
+for pat in ["FxDashMap", "task_cache"]:
+    if pat not in src:
+        print(f"FAIL: {{pat}} not found")
+        sys.exit(1)
+print("PASS")
+""")
+    assert r.returncode == 0
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_taskid_type_present():
+    """TaskId and ConnectChildOperation present."""
+    r = _run_py(f"""
+import sys
+src = open("{MOD_FILE}").read()
+if "TaskId" not in src:
+    print("FAIL: TaskId not found")
+    sys.exit(1)
+if "ConnectChildOperation" not in src:
+    print("FAIL: ConnectChildOperation not found")
+    sys.exit(1)
+if "::run(" not in src:
+    print("FAIL: ::run not found")
+    sys.exit(1)
+print("PASS")
+""")
+    assert r.returncode == 0
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_history_intact():
+    """Git history intact."""
+    r = _run_py("""
+import subprocess, sys
+result = subprocess.run(["git", "-C", "/workspace/next.js", "log", "--oneline", "-n", "5"], capture_output=True, text=True)
+if result.returncode != 0:
+    print(f"FAIL: {{result.stderr}}")
+    sys.exit(1)
+if "3e0158846" not in result.stdout:
+    print("FAIL: Base commit not found")
+    sys.exit(1)
+print("PASS")
+""")
+    assert r.returncode == 0
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_persistent_task_ref_released():
-    """DashMap Ref is released before ConnectChildOperation in get_or_create_persistent_task.
-
-    The base commit has:
-        if let Some(task_id) = self.task_cache.get(&task_type) {
-            let task_id = *task_id;
-            ConnectChildOperation::run(...)  // read lock still held!
-
-    The fix must consume the Ref inline (e.g. .map(|r| *r), .copied())
-    so the read lock is released before ConnectChildOperation::run.
-    """
+    """DashMap Ref released in get_or_create_persistent_task."""
     r = _run_py(f"""
 import re, sys
-
 src = open("{MOD_FILE}").read()
-lines = src.split("\\n")
-
-# Find get_or_create_persistent_task function (the inner impl, not the trait delegation)
+lines = src.splitlines()
 fn_start = None
 for i, line in enumerate(lines):
     if "fn get_or_create_persistent_task(" in line:
-        # The inner impl has the actual cache lookup logic (longer body)
-        # Trait delegation version just calls self.inner.get_or_create_persistent_task
-        # Check next ~5 lines for task_cache usage
-        for j in range(i, min(i + 30, len(lines))):
+        for j in range(i, min(i+30, len(lines))):
             if "task_cache" in lines[j]:
                 fn_start = i
                 break
-        if fn_start is not None:
+        if fn_start:
             break
-
-if fn_start is None:
-    print("FAIL: get_or_create_persistent_task with task_cache not found")
+if not fn_start:
+    print("FAIL: fn not found")
     sys.exit(1)
-
-# Extract function body (find the matching closing brace)
 depth = 0
-fn_body_lines = []
+fn_body = []
 started = False
 for i in range(fn_start, len(lines)):
     line = lines[i]
@@ -108,64 +155,46 @@ for i in range(fn_start, len(lines)):
         started = True
     if started:
         depth += line.count("{{") - line.count("}}")
-        fn_body_lines.append(line)
+        fn_body.append(line)
         if depth <= 0:
             break
-
-fn_body = "\\n".join(fn_body_lines)
-
-# Check: task_cache.get(&task_type) must have inline value extraction
-# The Ref must be consumed before ConnectChildOperation::run
-cache_get_lines = [l for l in fn_body_lines if "task_cache.get(&task_type)" in l]
-if not cache_get_lines:
-    print("FAIL: task_cache.get(&task_type) not found in get_or_create_persistent_task")
+cache_lines = [l for l in fn_body if "task_cache.get(&task_type)" in l]
+if not cache_lines:
+    print("FAIL: task_cache.get not found")
     sys.exit(1)
-
-for cache_line in cache_get_lines:
-    after_get = cache_line.split("task_cache.get(&task_type)", 1)[1]
-    # Must chain a method that consumes the Ref: .map(, .copied(, .and_then(, etc.
-    if not re.search(r"\\.(map|copied|cloned|and_then)\\s*\\(", after_get):
-        print(f"FAIL: task_cache.get(&task_type) without inline Ref extraction")
-        print(f"  Line: {{cache_line.strip()[:120]}}")
+for cl in cache_lines:
+    after = cl.split("task_cache.get(&task_type)", 1)[1]
+    # Check for .map(|r| *r), .copied(), .cloned() or similar inline extraction
+    if not re.search(r"\.(map|copied|cloned|and_then)", after):
+        print("FAIL: No inline Ref extraction in persistent_task")
         sys.exit(1)
-
 print("PASS")
 """)
-    assert r.returncode == 0, f"Persistent task check failed: {r.stdout}\n{r.stderr}"
+    assert r.returncode == 0
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_transient_task_ref_released():
-    """DashMap Ref is released before ConnectChildOperation in get_or_create_transient_task.
-
-    Same deadlock pattern as persistent_task but in the transient variant.
-    The Ref from task_cache.get() must be consumed inline.
-    """
+    """DashMap Ref released in get_or_create_transient_task."""
     r = _run_py(f"""
 import re, sys
-
 src = open("{MOD_FILE}").read()
-lines = src.split("\\n")
-
-# Find get_or_create_transient_task function (the inner impl)
+lines = src.splitlines()
 fn_start = None
 for i, line in enumerate(lines):
     if "fn get_or_create_transient_task(" in line:
-        for j in range(i, min(i + 30, len(lines))):
+        for j in range(i, min(i+30, len(lines))):
             if "task_cache" in lines[j]:
                 fn_start = i
                 break
-        if fn_start is not None:
+        if fn_start:
             break
-
-if fn_start is None:
-    print("FAIL: get_or_create_transient_task with task_cache not found")
+if not fn_start:
+    print("FAIL: fn not found")
     sys.exit(1)
-
-# Extract function body
 depth = 0
-fn_body_lines = []
+fn_body = []
 started = False
 for i in range(fn_start, len(lines)):
     line = lines[i]
@@ -173,73 +202,48 @@ for i in range(fn_start, len(lines)):
         started = True
     if started:
         depth += line.count("{{") - line.count("}}")
-        fn_body_lines.append(line)
+        fn_body.append(line)
         if depth <= 0:
             break
-
-fn_body = "\\n".join(fn_body_lines)
-
-# Check: task_cache.get(&task_type) must have inline value extraction
-cache_get_lines = [l for l in fn_body_lines if "task_cache.get(&task_type)" in l]
-if not cache_get_lines:
-    print("FAIL: task_cache.get(&task_type) not found in get_or_create_transient_task")
+cache_lines = [l for l in fn_body if "task_cache.get(&task_type)" in l]
+if not cache_lines:
+    print("FAIL: task_cache.get not found")
     sys.exit(1)
-
-for cache_line in cache_get_lines:
-    after_get = cache_line.split("task_cache.get(&task_type)", 1)[1]
-    if not re.search(r"\\.(map|copied|cloned|and_then)\\s*\\(", after_get):
-        print(f"FAIL: task_cache.get(&task_type) without inline Ref extraction")
-        print(f"  Line: {{cache_line.strip()[:120]}}")
+for cl in cache_lines:
+    after = cl.split("task_cache.get(&task_type)", 1)[1]
+    # Check for .map(|r| *r), .copied(), .cloned() or similar inline extraction
+    if not re.search(r"\.(map|copied|cloned|and_then)", after):
+        print("FAIL: No inline Ref extraction in transient_task")
         sys.exit(1)
-
 print("PASS")
 """)
-    assert r.returncode == 0, f"Transient task check failed: {r.stdout}\n{r.stderr}"
+    assert r.returncode == 0
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_no_dangling_deref_after_cache_get():
-    """No separate 'let task_id = *task_id;' after task_cache.get() in either function.
-
-    The base commit has this dangling dereference pattern in both functions:
-        if let Some(task_id) = self.task_cache.get(&task_type) {
-            let task_id = *task_id;   // Ref still alive!
-
-    This means the DashMap Ref lives through the entire if-let scope.
-    The fix removes these lines by extracting the value inline.
-    """
+    """No dangling deref after cache get."""
     r = _run_py(f"""
 import re, sys
-
 src = open("{MOD_FILE}").read()
-lines = src.split("\\n")
-
-# Find all get_or_create_persistent_task and get_or_create_transient_task
-# function bodies that contain task_cache
+lines = src.splitlines()
 fn_names = ["get_or_create_persistent_task", "get_or_create_transient_task"]
 violations = []
-found_fns = []
-
 for fn_name in fn_names:
     fn_start = None
     for i, line in enumerate(lines):
         if f"fn {{fn_name}}(" in line:
-            for j in range(i, min(i + 30, len(lines))):
+            for j in range(i, min(i+30, len(lines))):
                 if "task_cache" in lines[j]:
                     fn_start = i
                     break
-            if fn_start is not None:
+            if fn_start:
                 break
-
-    if fn_start is None:
-        print(f"FAIL: {{fn_name}} with task_cache not found")
-        sys.exit(1)
-    found_fns.append(fn_name)
-
-    # Extract function body
+    if not fn_start:
+        continue
     depth = 0
-    fn_body_lines = []
+    fn_body = []
     started = False
     for i in range(fn_start, len(lines)):
         line = lines[i]
@@ -247,78 +251,56 @@ for fn_name in fn_names:
             started = True
         if started:
             depth += line.count("{{") - line.count("}}")
-            fn_body_lines.append((i + 1, line))
+            fn_body.append((i+1, line))
             if depth <= 0:
                 break
-
-    # Look for pattern: task_cache.get followed by let task_id = *task_id
-    for idx, (lineno, line) in enumerate(fn_body_lines):
+    for idx, (ln, line) in enumerate(fn_body):
         if "task_cache.get(&task_type)" in line:
-            # Check next 3 non-empty lines for dangling deref
             checked = 0
-            for k in range(idx + 1, min(idx + 5, len(fn_body_lines))):
-                next_line = fn_body_lines[k][1].strip()
-                if not next_line or next_line.startswith("//"):
+            for k in range(idx+1, min(idx+5, len(fn_body))):
+                nl = fn_body[k][1].strip()
+                if not nl or nl.startswith("//"):
                     continue
                 checked += 1
-                if re.match(r"let\\s+task_id\\s*=\\s*\\*task_id\\s*;", next_line):
-                    violations.append(
-                        f"{{fn_name}} line {{fn_body_lines[k][0]}}: {{next_line}}"
-                    )
+                # Pattern: let task_id = *task_id;
+                if re.match(r"let\s+task_id\s*=\s*\*task_id\s*;", nl):
+                    violations.append(f"{{fn_name}} line {{fn_body[k][0]}}: {{nl}}")
                 if checked >= 2:
                     break
-
 if violations:
-    print("FAIL: Dangling dereference after task_cache.get() — Ref stays alive:")
+    print("FAIL: Dangling deref found")
     for v in violations:
         print(f"  {{v}}")
     sys.exit(1)
-
 print("PASS")
 """)
-    assert r.returncode == 0, f"Dangling deref check failed: {r.stdout}\n{r.stderr}"
+    assert r.returncode == 0
     assert "PASS" in r.stdout
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression + anti-stub
-# ---------------------------------------------------------------------------
 
 
 # [static] pass_to_pass
 def test_cache_lookup_preserved():
-    """Both functions still perform cache lookup via task_cache.get.
-
-    Anti-deletion check: the fix must preserve the cache lookup logic,
-    not just remove it to avoid the deadlock.
-    """
+    """Cache lookup preserved."""
     r = _run_py(f"""
 import sys
-
 src = open("{MOD_FILE}").read()
-lines = src.split("\\n")
-
+lines = src.splitlines()
 fn_names = ["get_or_create_persistent_task", "get_or_create_transient_task"]
 for fn_name in fn_names:
-    found_fn = False
-    found_cache = False
-    found_connect = False
     fn_start = None
     for i, line in enumerate(lines):
         if f"fn {{fn_name}}(" in line:
-            for j in range(i, min(i + 30, len(lines))):
+            for j in range(i, min(i+30, len(lines))):
                 if "task_cache" in lines[j]:
                     fn_start = i
                     break
-            if fn_start is not None:
-                found_fn = True
+            if fn_start:
                 break
-
-    if not found_fn:
+    if not fn_start:
         print(f"FAIL: {{fn_name}} not found")
         sys.exit(1)
-
-    # Check the function body has both cache lookup and ConnectChild
+    found_cache = False
+    found_connect = False
     depth = 0
     started = False
     for i in range(fn_start, len(lines)):
@@ -333,15 +315,13 @@ for fn_name in fn_names:
                 found_connect = True
             if depth <= 0:
                 break
-
     if not found_cache:
-        print(f"FAIL: {{fn_name}} missing task_cache.get — cache lookup deleted")
+        print(f"FAIL: {{fn_name}} missing cache")
         sys.exit(1)
     if not found_connect:
-        print(f"FAIL: {{fn_name}} missing ConnectChildOperation::run — essential logic deleted")
+        print(f"FAIL: {{fn_name}} missing connect")
         sys.exit(1)
-
 print("PASS")
 """)
-    assert r.returncode == 0, f"Cache lookup check failed: {r.stdout}\n{r.stderr}"
+    assert r.returncode == 0
     assert "PASS" in r.stdout

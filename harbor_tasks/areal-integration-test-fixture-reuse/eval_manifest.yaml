@@ -84,6 +84,27 @@ checks:
       lines: "202"
       commit: "dfeab6396380f27be96ccb7cb642b57a5a25ef58"
 
+  # Repo CI/CD checks (pass_to_pass) - AST-based static analysis
+  - id: test_repo_test_classes_follow_naming
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All test classes follow Test* naming convention (matches ruff/pre-commit check)"
+
+  - id: test_repo_no_bare_excepts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No bare 'except:' clauses in test files (matches ruff E722)"
+
+  - id: test_repo_yaml_files_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All YAML files in the repo are valid (matches pre-commit check-yaml hook)"
+
+  - id: test_repo_pyproject_toml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pyproject.toml is valid TOML (basic syntax check for repo's main config)"
+
 rubric:
   - rule: "Follow existing code patterns in the same module"
     source:

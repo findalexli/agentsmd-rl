@@ -44,6 +44,41 @@ def test_root_tsconfig_valid_json():
     assert "compilerOptions" in data, "tsconfig.json must have compilerOptions"
 
 
+# [repo_ci] pass_to_pass - validates monorepo structure
+def test_repo_package_json_valid():
+    """Repo root package.json must be valid and define workspaces (pass_to_pass)."""
+    root_pkg_json = Path(REPO) / "package.json"
+    assert root_pkg_json.exists(), "Root package.json must exist"
+    data = json.loads(root_pkg_json.read_text())
+    # Must be a monorepo with workspaces
+    assert "workspaces" in data, "Root package.json must define workspaces"
+    workspaces = data.get("workspaces", [])
+    assert "packages/*" in workspaces, "Workspaces must include packages/*"
+    # Must have standard scripts
+    scripts = data.get("scripts", {})
+    assert "test-types" in scripts, "package.json must have test-types script"
+    assert "typescript" in scripts, "package.json must have typescript script"
+
+
+# [repo_ci] pass_to_pass - validates existing packages structure
+def test_existing_packages_have_valid_structure():
+    """Existing packages in monorepo must have valid structure (pass_to_pass)."""
+    packages_dir = Path(REPO) / "packages"
+    assert packages_dir.exists(), "packages/ directory must exist"
+    # Core 'next' package must exist with package.json
+    next_pkg_json = packages_dir / "next" / "package.json"
+    assert next_pkg_json.exists(), "packages/next/package.json must exist"
+    data = json.loads(next_pkg_json.read_text())
+    assert data.get("name") == "next", "Core package must be named 'next'"
+    # Check that at least the core 'next' package has valid tsconfig
+    next_pkg_tsconfig = packages_dir / "next" / "tsconfig.json"
+    if next_pkg_tsconfig.exists():
+        raw = next_pkg_tsconfig.read_text()
+        stripped = _strip_json_comments(raw)
+        data = json.loads(stripped)
+        assert "compilerOptions" in data, "packages/next/tsconfig.json must have compilerOptions"
+
+
 # -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # -----------------------------------------------------------------------------

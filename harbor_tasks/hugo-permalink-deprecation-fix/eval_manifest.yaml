@@ -1,0 +1,104 @@
+source_pr:
+  owner: gohugoio
+  repo: hugo
+  pr_number: 14645
+  title: "Replace deprecated :filename with :contentbasename in the permalinks test"
+  merge_commit: "eb11c3d0bc4642ed454521135810ed0ea7cf48b9"
+  base_commit: "fa8658111f9c79b3f6381273fe822854a759fe1a"
+
+checks:
+  - id: test_permalink_tokens_updated
+    name: "Permalink tokens use new :contentbasename format"
+    type: f2p
+    description: |
+      Verifies that the deprecated :filename token has been replaced
+      with :contentbasename in all permalink configurations across
+      test files (hugo_sites_multihost_test.go, page_test.go,
+      pagebundler_test.go, permalinks_integration_test.go).
+
+  - id: test_site_data_updated
+    name: "Template uses hugo.Data instead of .Site.Data"
+    type: f2p
+    description: |
+      Verifies that hugo_modules_test.go uses hugo.Data instead of
+      the deprecated .Site.Data pattern.
+
+  - id: test_permalink_integration_tests_pass
+    name: "Permalink integration tests pass"
+    type: p2p
+    description: |
+      Runs the Go permalink integration tests (TestPermalinks) and
+      verifies they pass without deprecation errors.
+
+  - id: test_pagebundler_tests_pass
+    name: "Page bundler tests pass with :slugorcontentbasename"
+    type: p2p
+    description: |
+      Runs the page bundler tests (TestHTMLFilesIsue11999) and verifies
+      they pass with the :slugorcontentbasename token.
+
+  - id: test_multihost_tests_pass
+    name: "Multihost tests pass with :contentbasename"
+    type: p2p
+    description: |
+      Runs the multihost tests (TestMultiHost) and verifies they pass
+      with the updated permalink configuration.
+
+  - id: test_hugo_modules_data_access
+    name: "Hugo modules tests pass with hugo.Data"
+    type: p2p
+    description: |
+      Runs the hugo modules tests (TestMount) and verifies they pass
+      with the hugo.Data pattern.
+
+  - id: test_page_path_tests_pass
+    name: "Page path tests pass with :contentbasename"
+    type: p2p
+    description: |
+      Runs the page path tests (TestPagePathDisablePathToLower) and
+      verifies they pass with the updated permalink configuration.
+
+  - id: test_repo_go_build
+    name: "Repo Go build passes"
+    type: p2p
+    origin: repo_ci
+    description: |
+      Verifies that the entire Hugo codebase compiles successfully with
+      `go build ./...`. This is a basic pass-to-pass check ensuring the
+      repo builds on both base and fixed commits.
+
+  - id: test_repo_go_vet
+    name: "Repo go vet passes on key packages"
+    type: p2p
+    origin: repo_ci
+    description: |
+      Runs `go vet` on key packages (./common/hugo/..., ./hugolib/...,
+      ./resources/page/...) to perform static analysis checks. This mirrors
+      the Hugo CI checks on packages relevant to the PR changes, while avoiding
+      resource issues from running on the entire codebase.
+
+  - id: test_repo_gofmt
+    name: "Repo gofmt passes"
+    type: p2p
+    origin: repo_ci
+    description: |
+      Verifies all Go files are properly formatted using `gofmt -l .`.
+      Empty output indicates all files are correctly formatted.
+
+rubric: []
+
+agent_config:
+  files:
+    - source: "AGENTS.md"
+      commit: "fa8658111f9c79b3f6381273fe822854a759fe1a"
+      rules:
+        - id: brevity
+          description: "Brevity is good. Don't write a novel in code, comments, or commit messages."
+        - id: go_experts
+          description: "Assume maintainers are Go experts - don't explain the obvious."
+        - id: qt_matchers
+          description: "In tests, use qt matchers instead of raw if/t.Fatal checks."
+        - id: latest_hugo_spec
+          description: "In tests, always use the latest Hugo specification for layouts."
+        - id: check_script
+          description: "Use ./check.sh ./somepackage/... when iterating, ./check.sh when done."

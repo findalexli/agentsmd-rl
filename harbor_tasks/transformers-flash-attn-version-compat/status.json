@@ -1,63 +1,98 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.977908",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T05:19:40.956240",
+  "total_time": 8240.1,
+  "sandbox_id": "iql4exrnvur0axb7jul4d",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T09:57:00Z",
+      "status": "completed",
+      "ci_commands_discovered": [
+        "inits - utils/check_inits.py - verifies __init__.py files are correctly structured",
+        "imports - verifies 'from transformers import *' works correctly",
+        "init_isort - utils/custom_init_isort.py - verifies import ordering in __init__.py files",
+        "auto_mappings - utils/sort_auto_mappings.py - verifies auto mappings are sorted",
+        "modeling_structure - utils/check_modeling_structure.py - verifies modeling file structure",
+        "dummies - utils/check_dummies.py - verifies dummy objects for optional dependencies"
+      ],
+      "ci_commands_skipped": [
+        "ruff_check - fails on pre-existing issues in base commit",
+        "ruff_format - fails on pre-existing formatting issues in base commit",
+        "types (ty type checker) - fails on pre-existing type issues in base commit",
+        "repo - fails on pre-existing documentation issues in base commit"
+      ],
+      "tests_added": [
+        "test_repo_inits_check - pass_to_pass test for utils/checkers.py inits",
+        "test_repo_imports_check - pass_to_pass test for utils/checkers.py imports",
+        "test_repo_init_isort_check - pass_to_pass test for utils/checkers.py init_isort",
+        "test_repo_auto_mappings_check - pass_to_pass test for utils/checkers.py auto_mappings",
+        "test_repo_modeling_structure_check - pass_to_pass test for utils/checkers.py modeling_structure",
+        "test_repo_dummies_check - pass_to_pass test for utils/checkers.py dummies"
+      ],
+      "tests_verified": {
+        "pass_on_base_commit": 6,
+        "pass_after_gold_patch": 6,
+        "total_tests": 15
+      },
+      "files_modified": [
+        "tests/test_outputs.py - added 6 new test functions",
+        "eval_manifest.yaml - added 6 new check entries"
+      ]
     },
-    {
-      "timestamp": "2026-03-30T11:48:20.105865",
-      "runner": "audit (audit-tests_20260330_114820)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 19082
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed. Docker build successful. NOP test correctly returns 0 (4 fail-to-pass tests fail on base). Gold test returns 1 (all 15 tests pass after fix). Rubric judge ICR=1.0.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 96.09
     },
-    {
-      "timestamp": "2026-03-31T09:10:27.425093",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "timeout",
-      "output_tokens": null
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.765691",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T03:43:54-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.0,
-      "verdict": "pass",
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 127.53,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.77,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T14:28:08.971323",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T05:19:40.786272"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.656166",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8240.1,
+      "at": "2026-04-09T05:19:40.956240"
     }
   ]
 }

@@ -1,0 +1,82 @@
+source_pr:
+  owner: SeleniumHQ
+  repo: selenium
+  number: 17166
+  merge_commit: 5b3c36cda86950b87f96039917822ff7301afd5f
+  base_commit: c685486d68fb96745b47842972a5940d7e9acb14
+
+task:
+  name: selenium-keys-charat-contract
+  title: "Selenium Keys: enforce CharSequence contract in charAt()"
+  description: |
+    Fix Keys.charAt() to throw IndexOutOfBoundsException for invalid indices
+    instead of returning null character, ensuring compliance with CharSequence contract.
+  main_language: java
+  primary_file: java/src/org/openqa/selenium/Keys.java
+
+checks:
+  # Fail-to-pass tests: These verify the actual bug fix
+  - id: test_charat_valid_index_returns_keycode
+    type: fail_to_pass
+    origin: behavioral
+    description: "Keys.charAt(0) returns the correct key code"
+
+  - id: test_charat_invalid_index_throws_exception
+    type: fail_to_pass
+    origin: behavioral
+    description: "Keys.charAt(n != 0) throws IndexOutOfBoundsException - core fix"
+
+  - id: test_charat_negative_index_throws
+    type: fail_to_pass
+    origin: behavioral
+    description: "Keys.charAt(-1) throws IndexOutOfBoundsException"
+
+  - id: test_keys_length_is_one
+    type: fail_to_pass
+    origin: behavioral
+    description: "Keys.length() returns 1 as documented"
+
+  # Structural verification test
+  - id: test_charat_code_structure
+    type: fail_to_pass
+    origin: structural
+    description: "charAt method has correct structure with IndexOutOfBoundsException"
+
+  # Pass-to-pass tests: Repo CI/CD checks that should pass on both base and fixed
+  - id: test_repo_build_core_lib
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's core Java library builds successfully"
+
+  - id: test_repo_build_client_combined
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's client combined library builds successfully"
+
+# Agent config rules extracted from applicable configs
+# Applicable: CLAUDE.md, AGENTS.md, java/AGENTS.md
+agent_config:
+  - rule: "Maintain API/ABI compatibility - users upgrade by changing only version number"
+    source: "CLAUDE.md Invariants"
+    check_ids: [test_charat_valid_index_returns_keycode]
+
+  - rule: "Use bazel query to explore build graph before reading files"
+    source: "CLAUDE.md Execution model"
+    check_ids: []
+
+  - rule: "Prefer small (unit) tests over browser tests for speed/reliability"
+    source: "CLAUDE.md Testing"
+    check_ids: [test_repo_keys_unit_tests]
+
+  - rule: "Use java.util.logging.Logger for logging"
+    source: "java/AGENTS.md"
+    check_ids: []
+
+  - rule: "Use Javadoc for public APIs"
+    source: "java/AGENTS.md"
+    check_ids: []
+
+# Rubric for soft/subjective rules (LLM-judge only)
+# Note: Rubric rules are evaluated against agent code changes, not test files
+# This task is for test validation - the rubric section is intentionally minimal
+rubric: []

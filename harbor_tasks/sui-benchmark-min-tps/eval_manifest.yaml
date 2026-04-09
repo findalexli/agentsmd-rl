@@ -1,0 +1,59 @@
+source_pr:
+  owner: MystenLabs
+  repo: sui
+  number: 26155
+  title: "Re-enable benchmark smoke tests in CI"
+  merge_commit: f6a774c2b71765b0bad451efe9b5ca171438eb72
+  base_commit: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
+
+agent_configs:
+  - file: CLAUDE.md
+    lines: "License comments section"
+    rule: "All new files must start with Apache-2.0 license and Copyright header"
+
+checks:
+  # Fail-to-pass tests (core functionality) - require subprocess.run()
+  - id: test_min_tps_compiles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "min_tps code compiles successfully with cargo check"
+
+  - id: test_min_tps_option_parses
+    type: fail_to_pass
+    origin: pr_diff
+    description: "stress binary builds and --help shows min-tps option"
+
+  - id: test_min_tps_field_exists_in_opts
+    type: fail_to_pass
+    origin: pr_diff
+    description: "min_tps field exists in Opts struct with proper type Option<f64>"
+    source:
+      file: crates/sui-benchmark/src/options.rs
+      ref: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
+
+  - id: test_min_tps_validation_in_stress
+    type: fail_to_pass
+    origin: pr_diff
+    description: "min_tps validation logic exists in stress.rs with TPS calculation and error handling"
+    source:
+      file: crates/sui-benchmark/src/bin/stress.rs
+      ref: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
+
+  # Agent config compliance tests
+  - id: test_license_header_options_rs
+    type: pass_to_pass
+    origin: agent_config
+    description: "options.rs has required Apache-2.0 license header per CLAUDE.md"
+    source:
+      file: CLAUDE.md
+      ref: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
+
+  - id: test_license_header_stress_rs
+    type: pass_to_pass
+    origin: agent_config
+    description: "stress.rs has required Apache-2.0 license header per CLAUDE.md"
+    source:
+      file: CLAUDE.md
+      ref: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
+
+rubric: []

@@ -1,12 +1,70 @@
 {
-  "verdict": "fail",
+  "schema_version": 2,
+  "verdict": "pass",
   "nop_reward": 0.0,
-  "gold_reward": -1,
-  "validated_at": "2026-04-08T22:17:29.812150",
-  "sandbox_id": "iwznffvuciiczd7o27dk8",
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T06:31:53.127192",
+  "total_time": 8599.68,
+  "sandbox_id": "itni5txy88oi2f4n08ko1",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 2664.65,
-  "error": "solve.sh failed: error: patch failed: package.json:32\nerror: package.json: patch does not apply\n"
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed solve.sh to apply PR changes correctly. Main issues: 1) Used git apply which failed due to line offset mismatch in package.json. Fixed by using patch --fuzz=3. 2) Added pnpm format step to ensure new files pass format check. 3) Used proper template literals without escaping in heredocs. All 11 tests now pass (6 pass-to-pass + 5 fail-to-pass).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1307.53
+    },
+    "p2p_enrichment": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 7.76,
+      "notes": "Added 5 repo CI/CD pass_to_pass tests: test_repo_lint (pnpm lint), test_repo_typecheck (pnpm typecheck), test_repo_changes_validate (pnpm changes:validate), test_repo_format_check (pnpm format:check), test_repo_build (pnpm build). Docker build successful with 'pnpm install --frozen-lockfile' added. All 5 p2p tests pass on base commit. 5 fail_to_pass tests correctly fail (PR not applied)."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 740.71,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.78,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T06:31:52.957383"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8599.68,
+      "at": "2026-04-09T06:31:53.127192"
+    }
+  ]
 }

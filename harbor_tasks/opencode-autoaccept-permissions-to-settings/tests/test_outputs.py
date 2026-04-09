@@ -13,6 +13,7 @@ from pathlib import Path
 REPO = "/workspace/opencode"
 PROMPT_INPUT = f"{REPO}/packages/app/src/components/prompt-input.tsx"
 SETTINGS_GENERAL = f"{REPO}/packages/app/src/components/settings-general.tsx"
+PACKAGES_APP = f"{REPO}/packages/app"
 
 
 def _node(script: str) -> str:
@@ -216,6 +217,40 @@ def test_settings_general_not_stubbed():
     """settings-general.tsx must have substantial content (>100 lines)."""
     lines = Path(SETTINGS_GENERAL).read_text().splitlines()
     assert len(lines) > 100, f"settings-general.tsx only has {len(lines)} lines — likely stubbed"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repository
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — bun typecheck
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes via bun typecheck (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "run", "--cwd", PACKAGES_APP, "typecheck"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — prompt-input unit tests
+def test_repo_prompt_input_tests():
+    """prompt-input unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/components/prompt-input"],
+        capture_output=True, text=True, timeout=60, cwd=PACKAGES_APP,
+    )
+    assert r.returncode == 0, f"prompt-input tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — permission context unit tests
+def test_repo_permission_tests():
+    """permission context unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/context/permission-auto-respond.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=PACKAGES_APP,
+    )
+    assert r.returncode == 0, f"permission tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

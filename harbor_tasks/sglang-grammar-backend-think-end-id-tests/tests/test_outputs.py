@@ -12,6 +12,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 import textwrap
 from pathlib import Path
 
@@ -212,3 +213,91 @@ def test_test_methods_preserved():
     ]
     for name in required:
         assert name in methods, f"Required test method {name} was deleted"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_test_file():
+    """Test file must have valid Python syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"import ast; ast.parse(open('{TEST_FILE}').read())"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax error in test file:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_test_file():
+    """Test file must pass ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "--select=E9,F63,F7,F82", TEST_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff check failed on test file:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black_test_file():
+    """Test file must pass black formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["black", "--check", TEST_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Black check failed on test file:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_prod_file():
+    """Production file must pass ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "--select=E9,F63,F7,F82", PROD_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff check failed on production file:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black_prod_file():
+    """Production file must pass black formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["black", "--check", PROD_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Black check failed on production file:\n{r.stdout}{r.stderr}"

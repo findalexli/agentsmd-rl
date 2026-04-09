@@ -148,6 +148,66 @@ def test_bugbot_documentation_updated():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile():
+    """Modified Python files must compile without errors (pass_to_pass)."""
+    files = [
+        "src/prime_rl/trainer/rl/loss.py",
+        "src/prime_rl/configs/trainer.py",
+    ]
+    for f in files:
+        path = Path(REPO) / f
+        result = subprocess.run(
+            ["python3", "-m", "py_compile", str(path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, f"Python compilation failed for {f}: {result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ast_parse():
+    """Modified Python files must parse as valid AST (pass_to_pass)."""
+    files = [
+        "src/prime_rl/trainer/rl/loss.py",
+        "src/prime_rl/configs/trainer.py",
+    ]
+    for f in files:
+        path = Path(REPO) / f
+        src = path.read_text()
+        try:
+            ast.parse(src)
+        except SyntaxError as e:
+            assert False, f"AST parse failed for {f}: {e}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_configs_ast():
+    """DefaultLossConfig class must exist in trainer.py (pass_to_pass)."""
+    config_path = Path(REPO) / "src/prime_rl/configs/trainer.py"
+    src = config_path.read_text()
+    tree = ast.parse(src)
+
+    classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+    assert "DefaultLossConfig" in classes, "DefaultLossConfig class not found in trainer.py"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_loss_ast():
+    """default_loss_fn function must exist in loss.py (pass_to_pass)."""
+    loss_path = Path(REPO) / "src/prime_rl/trainer/rl/loss.py"
+    src = loss_path.read_text()
+    tree = ast.parse(src)
+
+    funcs = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
+    assert "default_loss_fn" in funcs, "default_loss_fn function not found in loss.py"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------
 

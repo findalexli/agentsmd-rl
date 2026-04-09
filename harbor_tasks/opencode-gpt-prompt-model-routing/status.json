@@ -1,82 +1,71 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-04-01T12:00:00-07:00",
-      "runner": "manual v2 remake",
-      "docker_build": true,
-      "gold_score": 1,
-      "nop_score": 0,
-      "verdict": "pass",
-      "notes": "v2 remake: 11 tests (5 f2p, 6 p2p), fixed Dockerfile (removed COPY, added unzip), fixed routing harness (extract provider fn), fixed codex-mini test case"
-    },
-    {
-      "timestamp": "2026-03-30T13:02:43.981080",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
-    },
-    {
-      "timestamp": "2026-03-31T13:44:49-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.706468",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T12:58:21.150113",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Template build: failed to run command 'bun install --frozen-lockfile || bun install': signal: killed"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.953091",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'bun install --frozen-lockfile || bun install': signal: killed"
-    },
-    {
-      "timestamp": "2026-04-02T17:47:54.327946",
-      "phase": "local_docker_validate",
-      "runner": "local_docker_82",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Command '['docker', 'build', '-q', '-t', 'harbor-opencode-gpt-prompt-model-routing:latest', 'harbor_"
-    },
-    {
-      "timestamp": "2026-04-03T01:02:54.378912+00:00",
-      "phase": "local_docker_retry",
-      "runner": "local_600s",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T11:22:20.836201",
+  "total_time": 7827.99,
+  "sandbox_id": "i7569468c6f5rbfmotiwp",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 451.77,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: Docker build OK, NOP reward=0 (5 fail-to-pass tests correctly fail on base code), Gold reward=1 (15 tests pass after fix). Rubric judge N/A for gold state (no uncommitted diff).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 327.01
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.73,
+      "notes": "ICR=0.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T23:07:01.569006",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 2606.34,
+      "at": "2026-04-09T02:20:43.621762"
+    },
+    {
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 7827.73,
+      "at": "2026-04-09T11:22:20.676625"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 7827.99,
+      "at": "2026-04-09T11:22:20.836201"
     }
   ]
 }

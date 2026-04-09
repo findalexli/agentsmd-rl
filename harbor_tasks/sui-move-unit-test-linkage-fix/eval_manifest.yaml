@@ -1,0 +1,69 @@
+source_pr:
+  owner: MystenLabs
+  repo: sui
+  number: 26137
+  merge_commit: 404f123f44711212ac69f27762a49a57eb3454f0
+  base_commit: 89286c8e52b8b358b3bd895e40ec4ee2f991c742
+
+target_files:
+  - external-crates/move/crates/move-unit-test/src/test_runner.rs
+
+checks:
+  # Fail-to-pass tests - these verify the fix is correctly applied
+  - id: test_compilation_move_unit_test
+    type: fail_to_pass
+    origin: behavior
+    description: move-unit-test crate compiles successfully with the linkage fix
+
+  - id: test_linkage_context_import_present
+    type: fail_to_pass
+    origin: behavior
+    description: LinkageContext import and usage is present in test_runner.rs
+
+  - id: test_from_module_for_testing_with_linkage_used
+    type: fail_to_pass
+    origin: behavior
+    description: from_module_for_testing_with_linkage replaces the old from_modules_for_testing
+
+  - id: test_linkage_table_creation
+    type: fail_to_pass
+    origin: behavior
+    description: Linkage table is properly constructed from package addresses
+
+  # Pass-to-pass tests - these verify repo CI still passes
+  - id: test_repo_cargo_check_all
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cargo check passes for move-unit-test crate
+
+  - id: test_repo_cargo_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cargo clippy passes for move-unit-test crate
+
+  - id: test_repo_cargo_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cargo test passes for move-unit-test crate
+
+  - id: test_repo_cargo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cargo fmt check passes for move-unit-test crate
+
+# Agent config rules from CLAUDE.md that apply to this task
+agent_config_rules:
+  - source: CLAUDE.md
+    lines: "License comments section"
+    rule: "All new files must start with the following license in comments at the top of the file: Copyright (c) Mysten Labs, Inc. SPDX-License-Identifier: Apache-2.0"
+
+  - source: CLAUDE.md
+    lines: "Testing section"
+    rule: "Set timeout limits to at least 10 minutes due to the large codebase size"
+
+  - source: CLAUDE.md
+    lines: "Critical Development Notes"
+    rule: "ALWAYS run cargo xclippy after finishing development"
+
+# Soft/rubric rules for LLM evaluation (none needed for this task - all rules are programmatic)
+rubric: []

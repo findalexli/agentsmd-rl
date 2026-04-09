@@ -308,6 +308,25 @@ def test_file_not_truncated():
     assert line_count > 480, f"File suspiciously small ({line_count} lines, expected >480)"
 
 
+# [repo_tests] pass_to_pass — CSS parseable with Node.js
+def test_css_parseable_nodejs():
+    """CSS file must be parseable by Node.js-based parser (no syntax errors)."""
+    # This uses the same _get_rules() helper used by fail_to_pass tests
+    rules = _get_rules()
+    assert len(rules) > 50, f"CSS has suspiciously few rules ({len(rules)}, expected >50)"
+
+
+# [repo_tests] pass_to_pass — Node.js available for CSS validation
+def test_nodejs_available():
+    """Node.js must be available for CSS parsing (CI environment check)."""
+    r = subprocess.run(
+        ["node", "--version"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"Node.js not available: {r.stderr}"
+    assert "v" in r.stdout, f"Unexpected Node.js version output: {r.stdout}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — AGENTS.md line 45 @ e8dadd6
 # ---------------------------------------------------------------------------

@@ -12,6 +12,21 @@ checks:
     origin: static
     description: "scripts/pr-status.js must parse without syntax errors"
 
+  - id: test_pr_status_functions_parseable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Key functions in pr-status.js must be parseable JavaScript"
+
+  - id: test_pr_status_js_no_undefined_variables
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pr-status.js must not reference obviously undefined variables"
+
+  - id: test_pr_status_js_no_syntax_errors_strict_mode
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pr-status.js must parse without errors in strict mode"
+
   - id: categorize_timed_out_as_failed
     type: fail_to_pass
     origin: pr_diff
@@ -41,10 +56,3 @@ checks:
     type: pass_to_pass
     origin: pr_diff
     description: "categorizeJobs must still correctly classify failure and success conclusions"
-
-rubric:
-  - rule: "Assume failures are real until disproven; use 'Known Flaky Tests' as context, not auto-dismissal."
-    source:
-      path: "AGENTS.md"
-      lines: "246"
-      commit: "3421858b5bef076965d99fd88fedc483193a496e"

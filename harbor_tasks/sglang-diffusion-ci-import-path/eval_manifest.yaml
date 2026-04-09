@@ -47,4 +47,30 @@ checks:
     origin: static
     description: "Modified files contain substantial logic with argparse and helper references"
 
+  # Repo CI/CD pass-to-pass gates
+  - id: repo_precommit_on_modified_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pre-commit checks pass on the modified CI files"
+
+  - id: repo_ruff_linting
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linting passes on modified CI files"
+
+  - id: repo_isort_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's isort check passes on modified CI files"
+
+  - id: repo_black_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's black formatting check passes on modified CI files"
+
+  - id: repo_codespell
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's codespell check passes on modified CI files"
+
 rubric: []

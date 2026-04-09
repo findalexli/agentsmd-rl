@@ -197,9 +197,27 @@ import re
 
 test_file = "test/e2e/app-dir/segment-cache/staleness/segment-cache-per-page-dynamic-stale-time.test.ts"
 with open(test_file, "r") as f:
-    content = f.read()
+    full_content = f.read()
 
-# Add explanatory comment after the existing comment block
+# Find the specific test we need to modify: "per-page value overrides global staleTimes.dynamic"
+test_start_marker = "it('per-page value overrides global"
+test_start = full_content.find(test_start_marker)
+assert test_start > 0, "Could not find the target test"
+
+# Find the end of this test (next it( or closing of describe block)
+next_test_pattern = r"\n  it\(|\n}\)"
+next_match = re.search(next_test_pattern, full_content[test_start + 50:])
+if next_match:
+    test_end = test_start + 50 + next_match.start()
+    test_section = full_content[test_start:test_end]
+    suffix = full_content[test_end:]
+else:
+    test_section = full_content[test_start:]
+    suffix = ""
+
+prefix = full_content[:test_start]
+
+# Add explanatory comment after the existing comment block in this test section
 old_comment = "    // value of 60s (larger) causes the data to last longer."
 new_comment = """    // value of 60s (larger) causes the data to last longer.
     //
@@ -207,7 +225,7 @@ new_comment = """    // value of 60s (larger) causes the data to last longer.
     // visited, this test navigates forward to fresh "hub" pages. This avoids
     // flakiness caused by restored accordion state (from BFCache) triggering
     // uncontrolled re-prefetches outside the act scope."""
-content = content.replace(old_comment, new_comment, 1)
+test_section = test_section.replace(old_comment, new_comment, 1)
 
 # Replace first browser.back() with hub-a navigation
 hub_a_nav = """    // Navigate forward to hub/a — a fresh page with its own accordion links.
@@ -226,7 +244,7 @@ hub_a_nav = """    // Navigate forward to hub/a — a fresh page with its own ac
       },
       { includes: 'Hub a' }
     )"""
-content = content.replace("    await browser.back()", hub_a_nav, 1)
+test_section = test_section.replace("    await browser.back()", hub_a_nav, 1)
 
 # Add accordion toggle before the dynamic-stale-10 link click after hub-a
 old_act_10 = """    await act(
@@ -251,7 +269,7 @@ new_act_10 = """    await act(
       },
       { includes: 'Dynamic content (stale time 10s)' }
     )"""
-content = content.replace(old_act_10, new_act_10, 1)
+test_section = test_section.replace(old_act_10, new_act_10, 1)
 
 # Replace second browser.back() with hub-b navigation
 hub_b_nav = """    // Navigate forward to hub/b
@@ -268,7 +286,7 @@ hub_b_nav = """    // Navigate forward to hub/b
       },
       { includes: 'Hub b' }
     )"""
-content = content.replace("    await browser.back()", hub_b_nav, 1)
+test_section = test_section.replace("    await browser.back()", hub_b_nav, 1)
 
 # Replace third browser.back() with hub-c navigation
 hub_c_nav = """    // Navigate forward to hub/c
@@ -285,7 +303,7 @@ hub_c_nav = """    // Navigate forward to hub/c
       },
       { includes: 'Hub c' }
     )"""
-content = content.replace("    await browser.back()", hub_c_nav, 1)
+test_section = test_section.replace("    await browser.back()", hub_c_nav, 1)
 
 # Add accordion toggle before the dynamic-stale-60 link click after hub-c
 old_act_60 = """    await act(async () => {
@@ -302,10 +320,13 @@ new_act_60 = """    await act(async () => {
         'a[href="/per-page-config/dynamic-stale-60"]'
       )
       await link.click()"""
-content = content.replace(old_act_60, new_act_60, 1)
+test_section = test_section.replace(old_act_60, new_act_60, 1)
+
+# Reassemble the full content
+full_content = prefix + test_section + suffix
 
 with open(test_file, "w") as f:
-    f.write(content)
+    f.write(full_content)
 
 print("Test file updated.")
 PYEOF
@@ -597,5 +618,21 @@ async function startBrowserWithFakeClock(url: string) {
 - `LinkAccordion`: `test/e2e/app-dir/segment-cache/staleness/components/link-accordion.tsx`
 - Example tests: `test/e2e/app-dir/segment-cache/staleness/`
 SKILLEOF
+
+# ---------------------------------------------------------------------------
+# 6. Format the modified files with Prettier
+# ---------------------------------------------------------------------------
+
+# Format the files we created/modified to ensure they pass Prettier check
+./node_modules/.bin/prettier --write \
+  test/e2e/app-dir/segment-cache/staleness/app/per-page-config/hub-a/page.tsx \
+  test/e2e/app-dir/segment-cache/staleness/app/per-page-config/hub-b/page.tsx \
+  test/e2e/app-dir/segment-cache/staleness/app/per-page-config/hub-c/page.tsx \
+  test/e2e/app-dir/segment-cache/staleness/app/per-page-config/dynamic-stale-10/page.tsx \
+  test/e2e/app-dir/segment-cache/staleness/app/per-page-config/dynamic-stale-60/page.tsx \
+  test/e2e/app-dir/segment-cache/staleness/segment-cache-per-page-dynamic-stale-time.test.ts \
+  AGENTS.md \
+  .agents/skills/router-act/SKILL.md \
+  2>/dev/null || true
 
 echo "All patches applied successfully."

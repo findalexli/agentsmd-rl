@@ -51,13 +51,33 @@ def _ty_check(code, suffix=".py"):
 
 # [static] pass_to_pass
 def test_cargo_check():
-    """ty_python_semantic crate compiles without errors."""
+    """ty_python_semantic crate compiles without errors (pass_to_pass)."""
     env = {**os.environ, "CARGO_PROFILE_DEV_OPT_LEVEL": "1"}
     r = subprocess.run(
         ["cargo", "check", "-p", "ty_python_semantic"],
         cwd=REPO, capture_output=True, timeout=900, env=env,
     )
     assert r.returncode == 0, f"cargo check failed:\n{r.stderr.decode()[-3000:]}"
+
+
+# [repo_tests] pass_to_pass — repo's CI unit tests for ty_python_semantic (subset for speed)
+def test_ty_python_semantic_unit_tests():
+    """ty_python_semantic unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--lib", "--", "types::typed_dict"],
+        cwd=REPO, capture_output=True, timeout=180,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr.decode()[-2000:]}"
+
+
+# [repo_tests] pass_to_pass — repo's TypedDict mdtest
+def test_ty_python_semantic_typed_dict_mdtest():
+    """ty_python_semantic TypedDict mdtest passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest", "--", "typed_dict"],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"TypedDict mdtest failed:\n{r.stderr.decode()[-2000:]}"
 
 
 # ---------------------------------------------------------------------------

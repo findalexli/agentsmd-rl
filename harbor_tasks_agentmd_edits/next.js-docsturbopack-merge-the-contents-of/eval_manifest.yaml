@@ -10,15 +10,15 @@ checks:
   # ---------------------------------------------------------------------------
   # Gates (pass_to_pass) — syntax / compilation checks
   # ---------------------------------------------------------------------------
-  - id: crate_compiles
+  - id: test_crate_compiles
     type: pass_to_pass
-    origin: static
-    description: "Modified crate compiles without errors"
+    origin: repo_tests
+    description: "Modified crate compiles without errors (cargo check)"
 
-  - id: rustdoc_builds
+  - id: test_rustdoc_builds
     type: pass_to_pass
-    origin: static
-    description: "Documentation builds successfully with cargo doc"
+    origin: repo_tests
+    description: "Documentation builds successfully with cargo doc --no-deps)"
 
   # ---------------------------------------------------------------------------
   # Fail-to-pass (pr_diff) — core behavioral tests
@@ -66,12 +66,22 @@ checks:
   # ---------------------------------------------------------------------------
   # Pass-to-pass (repo_tests / static) — regression + anti-stub
   # ---------------------------------------------------------------------------
-  - id: existing_tests_pass
+  - id: test_repo_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's clippy linting passes (cargo clippy)"
+
+  - id: test_repo_formatting
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's code formatting passes (cargo fmt --check)"
+
+  - id: test_existing_tests_pass
     type: pass_to_pass
     origin: repo_tests
     description: "Upstream test suite (cargo test) still passes"
 
-  - id: not_stub
+  - id: test_not_stub
     type: pass_to_pass
     origin: static
     description: "README.md has substantial content, not just a placeholder"

@@ -1,81 +1,78 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.977489",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T13:02:26.304887",
+  "total_time": 13833.88,
+  "sandbox_id": "iwewisx5vycqtqli4y1cp",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 228.56,
+      "notes": "Added 4 repo_tests pass_to_pass gates to test_outputs.py and eval_manifest.yaml. CI discovery: .github/workflows/pr-test.yml (GPU-heavy e2e tests), .github/workflows/pre-commit.yml (black, ruff, isort). Pre-existing lint failures on base commit (black formatting and ruff errors exist), so used synthetic p2p tests instead: (1) test_repo_python_syntax_valid - verifies all Python files compile, (2) test_repo_package_importable - verifies slime package imports successfully, (3) test_repo_patch_file_valid - verifies sglang.patch structure, (4) test_repo_pyproject_toml_valid - verifies pyproject.toml is valid TOML with pytest config."
     },
-    {
-      "timestamp": "2026-03-30T11:48:20.105779",
-      "runner": "audit (audit-tests_20260330_114820)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 24105
-    },
-    {
-      "timestamp": "2026-03-31T09:10:27.425063",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 14150
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.750209",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "1",
-      "gold": "missing",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T03:05:21-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": null,
-      "nop_score": 1.0,
-      "verdict": "error",
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 230.48,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_outputs.py fail-to-pass tests. The UNCONDITIONAL_INIT_CHECK script was incorrectly passing on base commit because it found skip_topk inside the 'else' block (not is_nextn) and exited early. Fixed to require method-body level initialization (indent <= 8) which is truly unconditional. Docker build: pass, NOP test: pass (reward=0), Gold test: pass (reward=1), Rubric: pass (ICR=1.0)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 169.77
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T12:30:00-07:00",
-      "runner": "manual (remake v2)",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.0,
-      "verdict": "pass",
-      "notes": "Rewrote solve.sh (sed/python instead of fragile patch-of-patch)"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6157.75,
+      "at": "2026-04-09T06:57:49.347552"
     },
     {
-      "timestamp": "2026-04-02T13:47:53.984130",
-      "phase": "e2b_wave2",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 13833.61,
+      "at": "2026-04-09T13:02:26.134771"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.965575",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.643102",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 13833.88,
+      "at": "2026-04-09T13:02:26.304887"
     }
   ]
 }

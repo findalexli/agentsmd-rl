@@ -9,6 +9,14 @@ checks:
   type: pass_to_pass
   origin: static
   description: settings.json is valid JSON if present
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests pass (pnpm run test:unit)
+- id: test_repo_type_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo type tests pass (pnpm run test:types)
 - id: post_edit_hook_exists_and_executable
   type: fail_to_pass
   origin: pr_diff
@@ -64,70 +72,70 @@ rubric:
     lines: 1-10
     commit: 80d7781b4f2fc2e874323532a0a8a8da65c8fc22
 - rule: CLAUDE.md exists and has valid markdown structure
-  reference: "# CLAUDE.md\n- `packages/kv-redis` - Redis key-value store adapter\n\
-    \  - `packages/storage-*` - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel\
-    \ Blob, R2)\n## Quick Start\n\n1. `pnpm install`\n2. `pnpm run build:core`\n3.\
-    \ `pnpm run dev` (MongoDB) or `pnpm run dev:postgres`\n\n- `pnpm install` - Install\
-    \ all dependencies\n- `pnpm turbo` - All Turbo commands should be run from root\
-    \ with pnpm - not with `turbo` directly\n- `pnpm run build` or `pnpm run build:core`\
-    \ - Build core packages (excludes plugins an"
+  reference: "# CLAUDE.md\n- \`packages/kv-redis\` - Redis key-value store adapter\\n\
+    \  - \`packages/storage-*\` - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel\
+    \ Blob, R2)\\n## Quick Start\\n\\n1. \`pnpm install\`\\n2. \`pnpm run build:core\`\\n\
+    3. \`pnpm run dev\` (MongoDB) or \`pnpm run dev:postgres\`\\n\\n- \`pnpm install\`\
+    \ - Install all dependencies\\n- \`pnpm turbo\` - All Turbo commands should be run\
+    \ from root with pnpm - not with \`turbo\` directly\\n- \`pnpm run build\` or \`\
+    pnpm run build:core\` - Build core packages (excludes plugins an"
 - rule: CLAUDE.md lists kv-redis package
   source:
     path: CLAUDE.md
     lines: '17'
     commit: aa14d867a57fc1c9827b55f69046bb05ef3815d9
-  reference: "- `packages/kv-redis` - Redis key-value store adapter\n  - `packages/storage-*`\
-    \ - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel Blob, R2)\n## Quick\
-    \ Start\n\n1. `pnpm install`\n2. `pnpm run build:core`\n3. `pnpm run dev` (MongoDB)\
-    \ or `pnpm run dev:postgres`\n\n- `pnpm install` - Install all dependencies\n\
-    - `pnpm turbo` - All Turbo commands should be run from root with pnpm - not with\
-    \ `turbo` directly\n- `pnpm run build` or `pnpm run build:core` - Build core packages\
-    \ (excludes plugins and storage ad"
+  reference: "- \`packages/kv-redis\` - Redis key-value store adapter\\n  - \`packages/storage-*\`\
+    \ - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel Blob, R2)\\n## Quick\
+    \ Start\\n\\n1. \`pnpm install\`\\n2. \`pnpm run build:core\`\\n3. \`pnpm run\
+    \ dev\` (MongoDB) or \`pnpm run dev:postgres\`\\n\\n- \`pnpm install\` - Install\
+    \ all dependencies\\n- \`pnpm turbo\` - All Turbo commands should be run from root\
+    \ with pnpm - not with \`turbo\` directly\\n- \`pnpm run build\` or \`pnpm run\
+    \ build:core\` - Build core packages (excludes plugins and storage ad"
 - rule: CLAUDE.md lists R2 among storage adapters
   source:
     path: CLAUDE.md
     lines: '19'
     commit: aa14d867a57fc1c9827b55f69046bb05ef3815d9
-  reference: "- `packages/kv-redis` - Redis key-value store adapter\n  - `packages/storage-*`\
-    \ - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel Blob, R2)\n## Quick\
-    \ Start\n\n1. `pnpm install`\n2. `pnpm run build:core`\n3. `pnpm run dev` (MongoDB)\
-    \ or `pnpm run dev:postgres`\n\n- `pnpm install` - Install all dependencies\n\
-    - `pnpm turbo` - All Turbo commands should be run from root with pnpm - not with\
-    \ `turbo` directly\n- `pnpm run build` or `pnpm run build:core` - Build core packages\
-    \ (excludes plugins and storage ad"
+  reference: "- \`packages/kv-redis\` - Redis key-value store adapter\\n  - \`packages/storage-*\`\
+    \ - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel Blob, R2)\\n## Quick\
+    \ Start\\n\\n1. \`pnpm install\`\\n2. \`pnpm run build:core\`\\n3. \`pnpm run\
+    \ dev\` (MongoDB) or \`pnpm run dev:postgres\`\\n\\n- \`pnpm install\` - Install\
+    \ all dependencies\\n- \`pnpm turbo\` - All Turbo commands should be run from root\
+    \ with pnpm - not with \`turbo\` directly\\n- \`pnpm run build\` or \`pnpm run\
+    \ build:core\` - Build core packages (excludes plugins and storage ad"
 - rule: CLAUDE.md standardizes commands to use pnpm run prefix
   source:
     path: CLAUDE.md
     lines: 42-56
     commit: aa14d867a57fc1c9827b55f69046bb05ef3815d9
-  reference: "- `packages/kv-redis` - Redis key-value store adapter\n  - `packages/storage-*`\
-    \ - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel Blob, R2)\n## Quick\
-    \ Start\n\n1. `pnpm install`\n2. `pnpm run build:core`\n3. `pnpm run dev` (MongoDB)\
-    \ or `pnpm run dev:postgres`\n\n- `pnpm install` - Install all dependencies\n\
-    - `pnpm turbo` - All Turbo commands should be run from root with pnpm - not with\
-    \ `turbo` directly\n- `pnpm run build` or `pnpm run build:core` - Build core packages\
-    \ (excludes plugins and storage ad"
+  reference: "- \`packages/kv-redis\` - Redis key-value store adapter\\n  - \`packages/storage-*\`\
+    \ - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel Blob, R2)\\n## Quick\
+    \ Start\\n\\n1. \`pnpm install\`\\n2. \`pnpm run build:core\`\\n3. \`pnpm run\
+    \ dev\` (MongoDB) or \`pnpm run dev:postgres\`\\n\\n- \`pnpm install\` - Install\
+    \ all dependencies\\n- \`pnpm turbo\` - All Turbo commands should be run from root\
+    \ with pnpm - not with \`turbo\` directly\\n- \`pnpm run build\` or \`pnpm run\
+    \ build:core\` - Build core packages (excludes plugins and storage ad"
 - rule: CLAUDE.md includes a Quick Start section
   source:
     path: CLAUDE.md
     lines: 38-41
     commit: aa14d867a57fc1c9827b55f69046bb05ef3815d9
-  reference: "- `packages/kv-redis` - Redis key-value store adapter\n  - `packages/storage-*`\
-    \ - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel Blob, R2)\n## Quick\
-    \ Start\n\n1. `pnpm install`\n2. `pnpm run build:core`\n3. `pnpm run dev` (MongoDB)\
-    \ or `pnpm run dev:postgres`\n\n- `pnpm install` - Install all dependencies\n\
-    - `pnpm turbo` - All Turbo commands should be run from root with pnpm - not with\
-    \ `turbo` directly\n- `pnpm run build` or `pnpm run build:core` - Build core packages\
-    \ (excludes plugins and storage ad"
+  reference: "- \`packages/kv-redis\` - Redis key-value store adapter\\n  - \`packages/storage-*\`\
+    \ - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel Blob, R2)\\n## Quick\
+    \ Start\\n\\n1. \`pnpm install\`\\n2. \`pnpm run build:core\`\\n3. \`pnpm run\
+    \ dev\` (MongoDB) or \`pnpm run dev:postgres\`\\n\\n- \`pnpm install\` - Install\
+    \ all dependencies\\n- \`pnpm turbo\` - All Turbo commands should be run from root\
+    \ with pnpm - not with \`turbo\` directly\\n- \`pnpm run build\` or \`pnpm run\
+    \ build:core\` - Build core packages (excludes plugins and storage ad"
 - rule: CLAUDE.md clarifies Turbo commands use pnpm turbo
   source:
     path: CLAUDE.md
     lines: '43'
     commit: aa14d867a57fc1c9827b55f69046bb05ef3815d9
-  reference: "- `packages/kv-redis` - Redis key-value store adapter\n  - `packages/storage-*`\
-    \ - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel Blob, R2)\n## Quick\
-    \ Start\n\n1. `pnpm install`\n2. `pnpm run build:core`\n3. `pnpm run dev` (MongoDB)\
-    \ or `pnpm run dev:postgres`\n\n- `pnpm install` - Install all dependencies\n\
-    - `pnpm turbo` - All Turbo commands should be run from root with pnpm - not with\
-    \ `turbo` directly\n- `pnpm run build` or `pnpm run build:core` - Build core packages\
-    \ (excludes plugins and storage ad"
+  reference: "- \`packages/kv-redis\` - Redis key-value store adapter\\n  - \`packages/storage-*\`\
+    \ - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel Blob, R2)\\n## Quick\
+    \ Start\\n\\n1. \`pnpm install\`\\n2. \`pnpm run build:core\`\\n3. \`pnpm run\
+    \ dev\` (MongoDB) or \`pnpm run dev:postgres\`\\n\\n- \`pnpm install\` - Install\
+    \ all dependencies\\n- \`pnpm turbo\` - All Turbo commands should be run from root\
+    \ with pnpm - not with \`turbo\` directly\\n- \`pnpm run build\` or \`pnpm run\
+    \ build:core\` - Build core packages (excludes plugins and storage ad"

@@ -1,31 +1,103 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-04-02T13:47:53.979398",
-      "phase": "e2b_wave2",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:00:02.718253",
+  "total_time": 1365.34,
+  "sandbox_id": "ixkmejo5nrrm65xv2yp55",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T00:00:00.000000",
+      "phase": "p2p_enrichment",
+      "ci_commands_discovered": [
+        "yarn lint",
+        "yarn test",
+        "node --check"
+      ],
+      "tests_added": [
+        {
+          "test_id": "test_repo_lint",
+          "command": "yarn lint packages/react-reconciler/src/ReactFiberNewContext.js",
+          "type": "pass_to_pass",
+          "timeout": 120,
+          "notes": "ESLint check on the modified file"
+        },
+        {
+          "test_id": "test_repo_reconciler_tests",
+          "command": "yarn test --testPathPattern react-reconciler",
+          "type": "pass_to_pass",
+          "timeout": 180,
+          "notes": "Full reconciler test suite (76 test suites, ~1150 tests, ~30s)"
+        }
+      ],
+      "tests_skipped": [
+        {
+          "command": "yarn prettier-check",
+          "reason": "Out of memory error in container"
+        },
+        {
+          "command": "yarn flow",
+          "reason": "Would add significant time, file already covered by syntax check"
+        },
+        {
+          "command": "yarn test (full suite)",
+          "reason": "Too large, targeted reconciler tests provide sufficient coverage"
+        }
+      ],
+      "status": "completed"
     },
-    {
-      "timestamp": "2026-04-02T14:28:08.941731",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 671.38,
+      "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed. Docker build successful. NOP test correctly fails (reward=0) - fail-to-pass tests detect the bug where context changes don't propagate to Suspense fallback consumers. Gold test passes (reward=1) - after applying the fix, context properly propagates to fallback consumers via fiber propagation. Rubric rule about FlowFixMe suppressions is reasonable and gold solution follows it (no FlowFixMe found).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 269.16
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.72,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T23:07:01.526685",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:00:02.546785"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1365.34,
+      "at": "2026-04-09T02:00:02.718253"
     }
   ]
 }

@@ -1,133 +1,70 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.981306",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
-    },
-    {
-      "timestamp": "2026-03-30T11:48:15.959554",
-      "runner": "audit (audit-tests_20260330_114815)",
-      "phase": "audit",
-      "status": "timeout",
-      "output_tokens": null
-    },
-    {
-      "timestamp": "2026-03-31T09:10:27.424934",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 6787
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.714878",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-01T21:58:47-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
-    },
-    {
-      "timestamp": "2026-04-02T10:48:33.886683",
-      "phase": "e2b_validate_phase9",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "notes": "Template build: failed to run command 'bun install --frozen-lockfile || bun install': signal: killed"
-    },
-    {
-      "timestamp": "2026-04-02T10:53:30.535314",
-      "phase": "e2b_validate_phase9_retry",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox create: 404: template 'niongjsbvdqs03hzbd8k' not found"
-    },
-    {
-      "timestamp": "2026-04-02T14:06:36.421902",
-      "phase": "e2b_sandbox404_retry",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'bun install --frozen-lockfile || bun install': signal: killed"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.954259",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Sandbox rebuild+create: failed to run command 'bun install --frozen-lockfile || bun install': signal: killed"
-    },
-    {
-      "timestamp": "2026-04-02T17:47:54.335197",
-      "phase": "local_docker_validate",
-      "runner": "local_docker_82",
-      "format": "pytest_binary",
-      "verdict": "fail_build",
-      "notes": "Command '['docker', 'build', '-q', '-t', 'harbor-opencode-slash-cmd-image-preserve:latest', 'harbor_"
-    },
-    {
-      "timestamp": "2026-04-03T01:27:18.132644+00:00",
-      "phase": "local_docker_retry",
-      "runner": "local_600s",
-      "verdict": "fail_gold",
-      "nop": "0",
-      "gold": "0",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T04:45:37.311924",
+  "total_time": 8515.7,
+  "sandbox_id": "iau5alz9nrjiopretsqrh",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 514.59,
       "notes": ""
     },
-    {
-      "timestamp": "2026-04-02T18:27:57.339907",
-      "phase": "e2b_highres",
-      "runner": "e2b_4cpu_4gb",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+    "p2p_enrichment": {
+      "status": "completed",
+      "model": "kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 600,
+      "notes": "CI commands: bun typecheck (turbo repo-wide typecheck), bun test --preload ./happydom.ts ./src/components/prompt-input/ (unit tests for modified module). Both verified to pass on base commit 47d2ab1. Tests added to test_outputs.py: test_repo_typecheck, test_repo_unit_tests_prompt_input. Checks added to eval_manifest.yaml with origin: repo_tests"
     },
-    {
-      "timestamp": "2026-04-02T23:07:01.574808",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All four checks passed: Docker build OK, NOP test reward=0 (3 image preservation tests correctly fail on buggy base), Gold test reward=1 (all 15 tests pass after solve.sh patch), rubric judge returned 0.0 (expected - judge checks git diff in environment/ which only has Dockerfile, not the actual code changes in container)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 272.55
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-03T12:00:00.000000",
-      "phase": "local_docker_remake",
-      "runner": "manual docker validate",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1",
-      "notes": "Fixed: solve.sh idempotency false positive, ts.ModuleTarget->ModuleKind, process.argv[2]->[1] for Node 22"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T04:45:37.150136"
     },
     {
-      "timestamp": "2026-04-03T18:17:47.090259",
-      "phase": "e2b_salvage_remake",
-      "runner": "e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8515.7,
+      "at": "2026-04-09T04:45:37.311924"
     }
   ]
 }

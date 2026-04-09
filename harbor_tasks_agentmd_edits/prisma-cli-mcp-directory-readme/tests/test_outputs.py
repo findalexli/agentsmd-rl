@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -213,3 +214,41 @@ if (missing.length > 0) {
 console.log('OK: core tools present [' + tools.join(', ') + ']');
 """)
     assert r.returncode == 0, f"Core tools check failed: {r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — Repo CI/CD checks (verify fix does not break existing functionality)
+# ---------------------------------------------------------------------------
+
+
+def test_repo_check_engines_override():
+    """Repo check-engines-override script passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "run", "check-engines-override"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-engines-override failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_cli():
+    """Repo prettier check passes on CLI files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "prettier", "--check", "packages/cli/src"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_eslint_cli_modified():
+    """Repo eslint passes on modified CLI files (pass_to_pass)."""
+    # Check MCP.ts at either location (base or fix)
+    mcp_path = os.path.join(REPO, "packages/cli/src/mcp/MCP.ts")
+    if not os.path.exists(mcp_path):
+        mcp_path = os.path.join(REPO, "packages/cli/src/MCP.ts")
+    bin_path = os.path.join(REPO, "packages/cli/src/bin.ts")
+
+    r = subprocess.run(
+        ["pnpm", "eslint", mcp_path, bin_path],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-500:]}"

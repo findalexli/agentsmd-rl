@@ -37,7 +37,6 @@ while i < len(text) and depth > 0:
     elif text[i] == "}": depth -= 1
     i += 1
 body = text[brace+1:i-1]
-# Strip single-line comments and string literals
 body = re.sub(r"//[^\n]*", "", body)
 body = re.sub(r'"(?:[^"\\]|\\.)*"', '""', body)
 print(json.dumps({"body": body}))
@@ -62,7 +61,8 @@ def _iterator_skips_indices(body: str) -> bool:
     if re.search(r"\.initFast\s*\([^)]*\b(?:true|false)\b[^)]*\)", body):
         return True
     if re.search(
-        r"(?:isIndex|parseIndex)\s*\([^)]*\)\s*[^;]*(?:continue|break|return)", body
+        r"(?:isIndex|parseIndex)\s*\([^)]*\)\s*[^;]*(?:continue|break|return)",
+        body,
     ):
         return True
     return False
@@ -77,7 +77,7 @@ def _iterator_skips_indices(body: str) -> bool:
 def test_no_bare_put_on_registration_targets():
     """Buggy .put() calls on expect_proto/constructor/static_proto are removed."""
     r = subprocess.run(
-        ["python3", "-c", """
+        ["python3", "-c", r"""
 import re, sys
 text = open("/workspace/bun/src/bun.js/test/expect.zig").read()
 idx = text.find("pub fn extend")
@@ -93,13 +93,12 @@ body = text[brace+1:i-1]
 body = re.sub(r"//[^\n]*", "", body)
 body = re.sub(r'"(?:[^"\\]|\\.)*"', '""', body)
 targets = ["expect_proto", "expect_constructor", "expect_static_proto"]
-# Check for iterator-based index skipping as alternative fix
-if re.search(r"\\.initFast\\s*\\([^)]*\\b(?:true|false)\\b[^)]*\\)", body):
+if re.search(r"\.initFast\s*\([^)]*\b(?:true|false)\b[^)]*\)", body):
     sys.exit(0)
-if re.search(r"(?:isIndex|parseIndex)\\s*\\([^)]*\\)\\s*[^;]*(?:continue|break|return)", body):
+if re.search(r"(?:isIndex|parseIndex)\s*\([^)]*\)\s*[^;]*(?:continue|break|return)", body):
     sys.exit(0)
 for t in targets:
-    if re.search(re.escape(t) + r"\\.put\\s*\\(", body):
+    if re.search(re.escape(t) + r"\.put\s*\(", body):
         print(f"FAIL: bare .put() on {t}", file=sys.stderr)
         sys.exit(1)
 print("PASS")
@@ -114,7 +113,7 @@ print("PASS")
 def test_index_safe_property_setting():
     """Properties registered via a method that handles index keys (putMayBeIndex, etc.)."""
     r = subprocess.run(
-        ["python3", "-c", """
+        ["python3", "-c", r"""
 import re, sys
 text = open("/workspace/bun/src/bun.js/test/expect.zig").read()
 idx = text.find("pub fn extend")
@@ -131,14 +130,13 @@ body = re.sub(r"//[^\n]*", "", body)
 body = re.sub(r'"(?:[^"\\]|\\.)*"', '""', body)
 READ_ONLY = {"get", "has", "contains", "count", "next", "keys", "iterator",
              "len", "ptr", "items", "reset", "deinit", "init", "format"}
-# Check for iterator-based index skipping as alternative fix
-if re.search(r"\\.initFast\\s*\\([^)]*\\b(?:true|false)\\b[^)]*\\)", body):
+if re.search(r"\.initFast\s*\([^)]*\b(?:true|false)\b[^)]*\)", body):
     sys.exit(0)
-if re.search(r"(?:isIndex|parseIndex)\\s*\\([^)]*\\)\\s*[^;]*(?:continue|break|return)", body):
+if re.search(r"(?:isIndex|parseIndex)\s*\([^)]*\)\s*[^;]*(?:continue|break|return)", body):
     sys.exit(0)
 targets = ["expect_proto", "expect_constructor", "expect_static_proto"]
 for t in targets:
-    methods = re.findall(re.escape(t) + r"\\.(\\w+)\\s*\\(", body)
+    methods = re.findall(re.escape(t) + r"\.(\w+)\s*\(", body)
     setters = [m for m in methods if m.lower() not in READ_ONLY and m != "put"]
     if not setters:
         print(f"FAIL: {t} has no safe setter", file=sys.stderr)
@@ -155,7 +153,7 @@ print("PASS")
 def test_all_three_targets_use_safe_setter():
     """All three registration targets are updated, not just one or two."""
     r = subprocess.run(
-        ["python3", "-c", """
+        ["python3", "-c", r"""
 import re, sys
 text = open("/workspace/bun/src/bun.js/test/expect.zig").read()
 idx = text.find("pub fn extend")
@@ -172,16 +170,15 @@ body = re.sub(r"//[^\n]*", "", body)
 body = re.sub(r'"(?:[^"\\]|\\.)*"', '""', body)
 READ_ONLY = {"get", "has", "contains", "count", "next", "keys", "iterator",
              "len", "ptr", "items", "reset", "deinit", "init", "format"}
-# Check for iterator-based index skipping as alternative fix
-if re.search(r"\\.initFast\\s*\\([^)]*\\b(?:true|false)\\b[^)]*\\)", body):
+if re.search(r"\.initFast\s*\([^)]*\b(?:true|false)\b[^)]*\)", body):
     sys.exit(0)
-if re.search(r"(?:isIndex|parseIndex)\\s*\\([^)]*\\)\\s*[^;]*(?:continue|break|return)", body):
+if re.search(r"(?:isIndex|parseIndex)\s*\([^)]*\)\s*[^;]*(?:continue|break|return)", body):
     sys.exit(0)
 targets = ["expect_proto", "expect_constructor", "expect_static_proto"]
 safe_count = 0
 for t in targets:
-    bare_puts = re.findall(re.escape(t) + r"\\.put\\s*\\(", body)
-    all_methods = re.findall(re.escape(t) + r"\\.(\\w+)\\s*\\(", body)
+    bare_puts = re.findall(re.escape(t) + r"\.put\s*\(", body)
+    all_methods = re.findall(re.escape(t) + r"\.(\w+)\s*\(", body)
     safe_methods = [m for m in all_methods if m.lower() not in READ_ONLY and m != "put"]
     if safe_methods and not bare_puts:
         safe_count += 1
@@ -280,4 +277,142 @@ def test_no_catch_outofmemory_pattern():
     body = _get_extend_body()
     assert not re.search(r"catch\s+bun\.outOfMemory\s*\(\s*\)", body), (
         "extend() uses 'catch bun.outOfMemory()' — use bun.handleOom() instead"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass tests — static analysis of Zig code quality
+# ---------------------------------------------------------------------------
+
+
+# [repo_ci] pass_to_pass — Zig file syntax/structure validation
+def test_repo_zig_syntax_basic():
+    """Zig source file has valid basic structure (pass_to_pass).
+
+    Validates that the expect.zig file has proper Zig syntax markers:
+    - Balanced braces (simplified check)
+    - Has proper imports via @import references
+    - Contains valid pub declarations
+    """
+    text = FILE.read_text()
+
+    # Check for common syntax issues - unbalanced braces
+    # Note: This is a simplified check that may have false positives for
+    # braces inside string literals, but should catch major syntax errors
+    open_braces = text.count("{")
+    close_braces = text.count("}")
+    assert open_braces == close_braces, (
+        f"Unbalanced braces: {open_braces} open, {close_braces} close"
+    )
+
+    # Ensure file has expected structure with @import usage
+    # In bun, std is often imported via Global.zig, so we check for any @import
+    assert "@import" in text, (
+        "Missing expected @import usage in file"
+    )
+
+
+# [repo_ci] pass_to_pass — Zig formatting conventions
+def test_repo_zig_no_trailing_whitespace():
+    """Zig source has no trailing whitespace (matches repo CI linting).
+
+    This is part of standard Zig formatting that CI would check.
+    """
+    lines = FILE.read_text().splitlines()
+    violations = []
+    for i, line in enumerate(lines, 1):
+        if line.rstrip() != line:
+            violations.append(i)
+    assert len(violations) == 0, (
+        f"Trailing whitespace found on lines: {violations[:10]}"
+    )
+
+
+# [repo_ci] pass_to_pass — Zig naming conventions
+def test_repo_zig_naming_conventions():
+    """Zig code follows standard naming conventions (pass_to_pass).
+
+    Validates camelCase for functions/variables and PascalCase for types,
+    matching what zig fmt would enforce.
+    """
+    text = FILE.read_text()
+
+    # Check for snake_case function definitions (should be camelCase)
+    # Only check within the file we're testing
+    snake_case_funcs = re.findall(r"\bfn\s+([a-z]+_[a-z_]+)\s*\(", text)
+    # Filter out common exceptions or test functions
+    exceptions = {"to_be", "to_have", "to_match", "to_equal"}
+    violations = [f for f in snake_case_funcs if not any(f.startswith(e) for e in exceptions)]
+
+    # Allow some common patterns that might be intentionally snake_case
+    # This is a lightweight check - we're mainly looking for obvious violations
+    assert len(violations) <= 3, (
+        f"Too many snake_case functions (should be camelCase): {violations[:5]}"
+    )
+
+
+# [repo_ci] pass_to_pass — File structure validation
+def test_repo_expect_file_structure():
+    """expect.zig follows expected module structure (pass_to_pass).
+
+    Validates proper imports and struct definitions.
+    """
+    text = FILE.read_text()
+
+    # Check for essential Zig module structure
+    assert "const" in text, "Missing const declarations"
+    assert "pub" in text, "Missing pub declarations"
+
+    # Check for struct definition (Expect struct)
+    assert re.search(r"pub\s+const\s+Expect\s*=\s*struct", text), (
+        "Missing Expect struct definition"
+    )
+
+
+# [repo_ci] pass_to_pass — Import organization
+def test_repo_zig_import_organization():
+    """Zig imports are organized properly (pass_to_pass).
+
+    Checks that imports follow repo conventions.
+    """
+    text = FILE.read_text()
+
+    # Check for bun import patterns (common in this codebase)
+    bun_imports = re.findall(r"@import\([\"']bun[\"']\)", text)
+    # There should be at least one reference to bun imports
+    # Note: this is a lightweight check since imports may come from Global.zig
+
+    # Check for Global import pattern (common in bun codebase)
+    assert "Global" in text or "bun" in text, (
+        "Missing expected Global or bun references for imports"
+    )
+
+
+# [repo_ci] pass_to_pass — Ban words validation in extend() function
+def test_repo_zig_ban_words():
+    """extend() function does not contain banned patterns (pass_to_pass).
+
+    Validates against patterns that would be caught by ban-words.test.ts.
+    Only checks for patterns relevant to the extend() function body,
+    not the entire file (which may have pre-existing violations).
+    """
+    body = _get_extend_body()
+
+    # Banned patterns from ban-words.test.ts that apply to this function
+    # Only checking patterns relevant to code changes, not pre-existing issues
+    banned_patterns = [
+        ("std.debug.print", "Don't let this be committed"),
+        ("std.log", "Don't let this be committed"),
+        ("allocator.ptr ==", "The std.mem.Allocator context pointer can be undefined"),
+        ("allocator.ptr !=", "The std.mem.Allocator context pointer can be undefined"),
+        (" catch bun.outOfMemory()", "Use bun.handleOom to avoid catching unrelated errors"),
+    ]
+
+    violations = []
+    for pattern, reason in banned_patterns:
+        if pattern in body:
+            violations.append(f"{pattern}: {reason}")
+
+    assert len(violations) == 0, (
+        f"Banned patterns found in extend(): {violations[:3]}"
     )

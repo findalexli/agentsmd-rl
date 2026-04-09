@@ -1,0 +1,60 @@
+source_pr:
+  owner: ClickHouse
+  repo: ClickHouse
+  number: 102098
+  title: "Backport #101847 to 26.1: formatDateTime: Treat %W unconditionally as a variable-length formatter"
+  base_commit: 23059ebe14d3e8ff8ddabbafd89edcf4071de0fe
+  merge_commit: 6f01023e78a9e84c588068560fda778a7c11a665
+
+checks:
+  # Fail-to-pass tests - these verify the fix is correctly applied
+  - id: test_w_in_variable_width_formatter_M_is_month_name_removed
+    type: fail_to_pass
+    origin: behavior
+    description: "%W must not be in variable_width_formatter_M_is_month_name array (should only have 'M')"
+
+  - id: test_w_checked_unconditionally_before_mysql_M_is_month_name
+    type: fail_to_pass
+    origin: behavior
+    description: "%W check must come BEFORE the mysql_M_is_month_name conditional (unconditional check)"
+
+  - id: test_no_else_branch_with_variable_width_formatter
+    type: fail_to_pass
+    origin: behavior
+    description: "The else branch containing variable_width_formatter check should be removed"
+
+  # Pass-to-pass tests - verify the solution doesn't break existing functionality
+  - id: test_file_has_valid_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file has valid C++ structure (balanced braces)"
+
+  - id: test_cmake_configures
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CMake configuration succeeds with the fix"
+
+  - id: test_cpp_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified C++ file has valid syntax (clang -fsyntax-only)"
+
+  - id: test_git_repo_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository is in a valid state and file is tracked"
+
+  - id: test_file_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file has no trailing whitespace (lint check)"
+
+rubric: []
+
+agent_config_refs:
+  - file: .claude/CLAUDE.md
+    lines: "1-100"
+    commit: 23059ebe14d3e8ff8ddabbafd89edcf4071de0fe
+  - file: .github/copilot-instructions.md
+    lines: "1-100"
+    commit: 23059ebe14d3e8ff8ddabbafd89edcf4071de0fe

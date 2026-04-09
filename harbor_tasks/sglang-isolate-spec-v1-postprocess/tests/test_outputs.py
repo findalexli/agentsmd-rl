@@ -226,6 +226,75 @@ def test_removed_else_block_reconstructing_tokens():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+def test_repo_ruff_check():
+    """Repo's ruff lint check passes on modified files (pass_to_pass)."""
+    modified_files = [
+        "python/sglang/srt/configs/model_config.py",
+        "python/sglang/srt/managers/scheduler.py",
+        "python/sglang/srt/managers/scheduler_output_processor_mixin.py",
+        "python/sglang/srt/speculative/eagle_info.py",
+        "python/sglang/srt/speculative/ngram_info.py",
+    ]
+    r = subprocess.run(
+        ["ruff", "check"] + [f"{REPO}/{f}" for f in modified_files] + ["--select=F401,F821"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_black_check():
+    """Repo's black format check passes on modified files (pass_to_pass)."""
+    modified_files = [
+        "python/sglang/srt/configs/model_config.py",
+        "python/sglang/srt/managers/scheduler.py",
+        "python/sglang/srt/managers/scheduler_output_processor_mixin.py",
+        "python/sglang/srt/speculative/eagle_info.py",
+        "python/sglang/srt/speculative/ngram_info.py",
+    ]
+    r = subprocess.run(
+        ["black", "--check"] + [f"{REPO}/{f}" for f in modified_files],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_isort_check():
+    """Repo's isort import order check passes on modified files (pass_to_pass)."""
+    modified_files = [
+        "python/sglang/srt/configs/model_config.py",
+        "python/sglang/srt/managers/scheduler.py",
+        "python/sglang/srt/managers/scheduler_output_processor_mixin.py",
+        "python/sglang/srt/speculative/eagle_info.py",
+        "python/sglang/srt/speculative/ngram_info.py",
+    ]
+    r = subprocess.run(
+        ["isort", "--check-only"] + [f"{REPO}/{f}" for f in modified_files],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_codespell_check():
+    """Repo's codespell check passes on modified files (pass_to_pass)."""
+    modified_files = [
+        "python/sglang/srt/configs/model_config.py",
+        "python/sglang/srt/managers/scheduler.py",
+        "python/sglang/srt/managers/scheduler_output_processor_mixin.py",
+        "python/sglang/srt/speculative/eagle_info.py",
+        "python/sglang/srt/speculative/ngram_info.py",
+    ]
+    r = subprocess.run(
+        ["codespell"] + [f"{REPO}/{f}" for f in modified_files] +
+        ["--ignore-words-list=ans,als,hel,boostrap,childs,te,vas,hsa,ment,cann,thi,makro,wil,rouge,PRIS"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"codespell check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub checks
 # ---------------------------------------------------------------------------
 

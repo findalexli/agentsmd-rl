@@ -12,6 +12,21 @@ checks:
     origin: static
     description: "All three modified files parse without syntax errors"
 
+  - id: test_repo_python_ast
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: All modified files pass Python AST validation (check-ast)"
+
+  - id: test_repo_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Modified files have no trailing whitespace (trailing-whitespace)"
+
+  - id: test_repo_no_debug_statements
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Modified files have no debug statements (debug-statements)"
+
   - id: forward_context_has_num_tokens
     type: fail_to_pass
     origin: pr_diff

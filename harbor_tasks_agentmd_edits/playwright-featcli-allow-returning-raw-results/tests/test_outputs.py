@@ -152,6 +152,9 @@ def test_daemon_forwards_raw_metadata():
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
+def test_skill_md_raw_documentation():
+    """SKILL.md must document the --raw option."""
+    skill_md = Path(f"{TOOLS}/cli-client/skill/SKILL.md").read_text()
 
     # Must have a section about raw output
     assert "--raw" in skill_md, \
@@ -171,6 +174,95 @@ def test_daemon_forwards_raw_metadata():
                     if "playwright-cli --raw" in line and not line.strip().startswith("#")]
     assert len(raw_examples) >= 2, \
         f"SKILL.md should have at least 2 --raw examples, found {len(raw_examples)}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and gold
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's build command passes (pass_to_pass)."""
+    # First install dependencies
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    # Then run build
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_packages():
+    """Repo's package lint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ts_parse_modified_files():
+    """Modified TypeScript files parse without errors (pass_to_pass)."""
+    files = [
+        f"{TOOLS}/backend/response.ts",
+        f"{TOOLS}/cli-client/program.ts",
+        f"{TOOLS}/cli-client/session.ts",
+        f"{TOOLS}/cli-daemon/daemon.ts",
+        f"{TOOLS}/cli-daemon/helpGenerator.ts",
+    ]
+    # Install dependencies first
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    for fpath in files:
+        assert Path(fpath).exists(), f"File not found: {fpath}"
+        # Simple parse check using TypeScript compiler API
+        r = subprocess.run(
+            ["node", "-e", f"""
+                const ts = require('typescript');
+                const content = require('fs').readFileSync('{fpath}', 'utf8');
+                const source = ts.createSourceFile('{fpath}', content, ts.ScriptTarget.Latest, true);
+                console.log('OK');
+            """],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"TypeScript parse failed for {fpath}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cli_help():
+    """CLI help tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    # Build first
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-1000:]}"
+    # Run tests
+    r = subprocess.run(
+        ["npx", "playwright", "test", "--config=tests/mcp/playwright.config.ts", "cli-help.spec.ts", "--reporter=list"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CLI help tests failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

@@ -1,67 +1,75 @@
-version: '2.0'
+version: "2.0"
 source:
   repo: microsoft/vscode
   pr: 305837
   base_commit: 2de60eada57a6ea88a11ff72091e26b2825e84af
   merge_commit: c065b175fdbadc9fc204d668ccdd8e7e0155c63b
 checks:
-- id: syntax_check
-  type: pass_to_pass
-  origin: static
-  description: Modified shell scripts parse without syntax errors
-- id: help_shows_suite_option
-  type: fail_to_pass
-  origin: pr_diff
-  description: test-integration.sh --help documents --suite and --grep options
-- id: help_lists_available_suites
-  type: fail_to_pass
-  origin: pr_diff
-  description: test-integration.sh --help lists known suite names (api-folder, git,
-    etc.)
-- id: invalid_suite_exits_error
-  type: fail_to_pass
-  origin: pr_diff
-  description: test-integration.sh --suite nonexistent exits non-zero with error message
-- id: mocha_grep_in_test_runners
-  type: fail_to_pass
-  origin: pr_diff
-  description: CSS, HTML, and electron test runners support MOCHA_GREP env var
-- id: should_run_suite_function
-  type: fail_to_pass
-  origin: pr_diff
-  description: test-integration.sh defines and uses should_run_suite function for
-    filtering
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: Modified shell scripts parse without syntax errors
+  - id: all_shell_scripts_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: All repo shell scripts parse without syntax errors
+  - id: shell_script_executability
+    type: pass_to_pass
+    origin: repo_tests
+    description: Shell scripts referenced in CI are executable
+  - id: help_shows_suite_option
+    type: fail_to_pass
+    origin: pr_diff
+    description: test-integration.sh --help documents --suite and --grep options
+  - id: help_lists_available_suites
+    type: fail_to_pass
+    origin: pr_diff
+    description: test-integration.sh --help lists known suite names (api-folder, git,
+      etc.)
+  - id: invalid_suite_exits_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: test-integration.sh --suite nonexistent exits non-zero with error message
+  - id: mocha_grep_in_test_runners
+    type: fail_to_pass
+    origin: pr_diff
+    description: CSS, HTML, and electron test runners support MOCHA_GREP env var
+  - id: should_run_suite_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: test-integration.sh defines and uses should_run_suite function for
+      filtering
 rubric:
-- rule: Integration tests SKILL.md follows the same structure and style as the existing
-    unit-tests SKILL.md
-  source:
-    path: .github/skills/unit-tests/SKILL.md
-    lines: 1-5
-    commit: 2de60eada57a6ea88a11ff72091e26b2825e84af
-- rule: SKILL.md frontmatter includes name and description fields consistent with
-    other skills
-  source:
-    path: .github/skills/unit-tests/SKILL.md
-    lines: 1-4
-    commit: 2de60eada57a6ea88a11ff72091e26b2825e84af
-- rule: New integration-tests SKILL.md documents --grep, --suite, --run, --runGlob
-  source:
-    path: .github/skills/integration-tests/SKILL.md
-    lines: 1-122
-    commit: c065b175fdbadc9fc204d668ccdd8e7e0155c63b
-- rule: Integration-tests SKILL.md lists available suite names
-  source:
-    path: .github/skills/integration-tests/SKILL.md
-    lines: 67-72
-    commit: c065b175fdbadc9fc204d668ccdd8e7e0155c63b
-- rule: Integration-tests SKILL.md describes both node.js and extension host test
-    categories
-  source:
-    path: .github/skills/integration-tests/SKILL.md
-    lines: 7-12
-    commit: c065b175fdbadc9fc204d668ccdd8e7e0155c63b
-- rule: unit-tests SKILL.md updated to cross-reference integration-tests skill
-  source:
-    path: .github/skills/unit-tests/SKILL.md
-    lines: '83'
-    commit: c065b175fdbadc9fc204d668ccdd8e7e0155c63b
+  - rule: Integration tests SKILL.md follows the same structure and style as the existing
+      unit-tests SKILL.md
+    source:
+      path: .github/skills/unit-tests/SKILL.md
+      lines: 1-5
+      commit: 2de60eada57a6ea88a11ff72091e26b2825e84af
+  - rule: SKILL.md frontmatter includes name and description fields consistent with
+      other skills
+    source:
+      path: .github/skills/unit-tests/SKILL.md
+      lines: 1-4
+      commit: 2de60eada57a6ea88a11ff72091e26b2825e84af
+  - rule: New integration-tests SKILL.md documents --grep, --suite, --run, --runGlob
+    source:
+      path: .github/skills/integration-tests/SKILL.md
+      lines: 1-122
+      commit: c065b175fdbadc9fc204d668ccdd8e7e0155c63b
+  - rule: Integration-tests SKILL.md lists available suite names
+    source:
+      path: .github/skills/integration-tests/SKILL.md
+      lines: 67-72
+      commit: c065b175fdbadc9fc204d668ccdd8e7e0155c63b
+  - rule: Integration-tests SKILL.md describes both node.js and extension host test
+      categories
+    source:
+      path: .github/skills/integration-tests/SKILL.md
+      lines: 7-12
+      commit: c065b175fdbadc9fc204d668ccdd8e7e0155c63b
+  - rule: unit-tests SKILL.md updated to cross-reference integration-tests skill
+    source:
+      path: .github/skills/unit-tests/SKILL.md
+      lines: "83"
+      commit: c065b175fdbadc9fc204d668ccdd8e7e0155c63b

@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import subprocess
 import re
+import os
 from pathlib import Path
 
 REPO = "/workspace/mlflow"
@@ -23,26 +24,75 @@ def _read_file(path: Path) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) - TypeScript compilation checks
+# Gates (pass_to_pass) - Repo CI/CD checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
-def test_typescript_compiles():
-    """Modified TypeScript files must compile without errors."""
-    js_dir = Path(REPO) / "mlflow/server/js"
+JS_DIR = Path(REPO) / "mlflow/server/js"
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_compiles():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
     r = subprocess.run(
-        ["yarn", "tsc", "--noEmit", "--skipLibCheck"],
-        cwd=js_dir,
+        ["yarn", "type-check"],
+        cwd=JS_DIR,
         capture_output=True,
         text=True,
         timeout=120,
     )
-    # Ignore lib check errors, focus on our files
-    stderr_filtered = "\n".join(
-        line for line in r.stderr.split("\n")
-        if "error TS" in line and "genai-traces-table" in line
-    ) if r.stderr else ""
-    assert not stderr_filtered, f"TypeScript errors in modified files:\n{stderr_filtered}"
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint lint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        cwd=JS_DIR,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier():
+    """Repo's Prettier formatting check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "prettier:check"],
+        cwd=JS_DIR,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_i18n():
+    """Repo's i18n extraction check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "i18n:check"],
+        cwd=JS_DIR,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"i18n check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_genai_traces_table_tests():
+    """Repo's genai-traces-table tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--silent", "--testPathPattern", "genai-traces-table", "--forceExit", "--ci"],
+        cwd=JS_DIR,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env={**os.environ, "CI": "true"},
+    )
+    assert r.returncode == 0, f"genai-traces-table tests failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

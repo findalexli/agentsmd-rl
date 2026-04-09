@@ -12,6 +12,31 @@ checks:
     origin: static
     description: "Both CUDAStream.h and HIPStreamMasqueradingAsCUDA.h must exist"
 
+  - id: header_compiles_standalone
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Extracted USE_ROCM block compiles without syntax errors"
+
+  - id: aten_hip_header_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ATen HIP masquerading header exists and is readable"
+
+  - id: no_trailing_whitespace_in_modified_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified header files have no trailing whitespace"
+
+  - id: header_guards_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Header files have proper include guards or pragma once"
+
+  - id: file_ends_with_newline
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source files end with a single newline"
+
   - id: getCurrentHIPStreamMasqueradingAsCUDA
     type: fail_to_pass
     origin: pr_diff

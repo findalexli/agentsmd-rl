@@ -1,0 +1,43 @@
+name = "tanstack-router-ssr-hash-scroll"
+title = "Fix SSR hash scroll preservation after hydration"
+difficulty = "medium"
+tags = ["typescript", "ssr", "hydration", "scroll-restoration", "router"]
+
+[description]
+brief = "Fix a bug where hash scroll position is lost after SSR hydration when preloading routes or invalidating data"
+details = """
+The TanStack Router has an SSR hydration bug where the scroll position anchored to a URL hash
+(e.g., /page#section) gets reset when:
+1. Preloading another route via hover
+2. Invalidating router data
+
+The issue is that during SSR hydration, `router.load()` is skipped, leaving `resolvedLocation`
+unset. Later load cycles incorrectly detect a location change and re-run hash scrolling.
+
+The fix is to set `router.stores.resolvedLocation` to the current location after SSR hydration
+in `packages/router-core/src/ssr/ssr-client.ts`.
+"""
+
+[time_estimate]
+agent = 1800
+verifier = 120
+
+[timeouts]
+agent = 1800
+verifier = 120
+
+[repository]
+url = "https://github.com/TanStack/router.git"
+base_commit = "a556afa0f07c551cc0edaf17fa7d0de7014a1c68"
+merge_commit = "6ee0e795b085651beb2f1ac6503cdbd7eaffedd1"
+pr_number = 7066
+
+[paths]
+solution = "solution"
+tests = "tests"
+verifier = "tests"
+logs = "/logs"
+
+[[tests.files]]
+name = "test_outputs.py"
+path = "tests/test_outputs.py"

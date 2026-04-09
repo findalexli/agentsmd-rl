@@ -1,0 +1,67 @@
+source_pr:
+  owner: ClickHouse
+  repo: ClickHouse
+  number: 101930
+  title: "Backport #101230 to 26.1: s3queue: fix cleanup of stale processing nodes"
+  merge_commit: dae8318c5ed52baecd784a85a67c45d985b20d6a
+  base_commit: c71831a6b0df9e6b69eaba0e4cf83801c1fb3832
+
+checks:
+  # Pass-to-pass checks: repo CI/CD tests
+  - id: "test_repo_cpp_style"
+    description: "Repo C++ style check passes (pass_to_pass)"
+    origin: repo_tests
+    file: "test_outputs.py"
+
+  - id: "test_repo_various_checks"
+    description: "Repo various checks pass (pass_to_pass)"
+    origin: repo_tests
+    file: "test_outputs.py"
+
+  - id: "test_target_file_pragma_once"
+    description: "Target header file has #pragma once (pass_to_pass)"
+    origin: repo_tests
+    file: "test_outputs.py"
+
+  - id: "test_target_files_exist"
+    description: "Target source files exist and are readable (pass_to_pass)"
+    origin: repo_tests
+    file: "test_outputs.py"
+
+  # Fail-to-pass checks: the actual fix verification
+  - id: "nodes_to_remove_uses_pair_type"
+    description: "nodes_to_remove is declared as vector<pair<String, int32_t>> to track node versions"
+    origin: behavior
+    file: "test_outputs.py"
+
+  - id: "emplace_back_with_version"
+    description: "Nodes are added with emplace_back including version info"
+    origin: behavior
+    file: "test_outputs.py"
+
+  - id: "tryremove_uses_version"
+    description: "tryRemove is called with version parameter for safe deletion"
+    origin: behavior
+    file: "test_outputs.py"
+
+  - id: "zbadversion_error_handling"
+    description: "ZBADVERSION error is handled gracefully (race condition safety)"
+    origin: behavior
+    file: "test_outputs.py"
+
+  - id: "removed_count_tracking"
+    description: "Successful removals are counted for observability"
+    origin: behavior
+    file: "test_outputs.py"
+
+  - id: "log_includes_count_ratio"
+    description: "Log message shows removed/total ratio"
+    origin: behavior
+    file: "test_outputs.py"
+
+  - id: "node_and_version_extracted_from_pair"
+    description: "Node and version are properly extracted from pair in removal loop"
+    origin: behavior
+    file: "test_outputs.py"
+
+rubric: []

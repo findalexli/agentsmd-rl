@@ -61,6 +61,7 @@ describe('HarborDeferredValueStuckRegression', () => {
         case 'resolved':
           return record.value;
         case 'pending':
+          Scheduler.log(`Suspend! [${text}]`);
           throw record.value;
         case 'rejected':
           throw record.value;
@@ -74,6 +75,7 @@ describe('HarborDeferredValueStuckRegression', () => {
         }
       },
     };
+    Scheduler.log(`Suspend! [${text}]`);
     const newRecord = {status: 'pending', value: thenable};
     textCache.set(text, newRecord);
     throw thenable;
@@ -255,6 +257,92 @@ def test_existing_deferred_value_tests():
     )
     assert r.returncode == 0, (
         f"Existing deferred value test failed:\n"
+        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI/CD lint check
+def test_repo_lint():
+    """Repo's ESLint passes on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"ESLint check failed:\n"
+        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI/CD flow typecheck
+def test_repo_flow():
+    """Repo's Flow typecheck passes on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-browser"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Flow typecheck failed:\n"
+        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI/CD reconciler tests (subset that passes on base)
+def test_repo_reconciler_hooks_basic():
+    """Repo's react-reconciler hooks basic tests pass on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "yarn", "test",
+            "--silent",
+            "--no-watchman",
+            "--testPathPattern", "ReactHooks-test",
+            "--testNamePattern", "basic",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"ReactHooks basic tests failed:\n"
+        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI/CD version check
+def test_repo_version_check():
+    """Repo's version check passes on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/version-check.js"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"Version check failed:\n"
+        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI/CD license check
+def test_repo_license_check():
+    """Repo's license check passes on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/check_license.sh"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"License check failed:\n"
         f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
     )
 

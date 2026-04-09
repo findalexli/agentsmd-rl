@@ -69,6 +69,22 @@ checks:
     origin: static
     description: "asRef preserves existing ref-based behavior (ref patterns return { ref: value })"
 
+  # Pass-to-pass (repo_tests) - CI/CD checks
+  - id: repo_lint_packages
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo workspace packages are consistent (npm run lint-packages)"
+
+  - id: repo_modified_files_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All modified TypeScript files have valid syntax (node --check)"
+
+  - id: repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo builds successfully (npm run build)"
+
 rubric:
   - rule: "SKILL.md update is consistent with the style of existing documentation sections"
     source:

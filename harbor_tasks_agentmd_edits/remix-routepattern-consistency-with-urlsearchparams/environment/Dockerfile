@@ -8,6 +8,9 @@ RUN apt-get update && \
         git curl ca-certificates build-essential tmux python3 python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
+# Install pnpm
+RUN npm install -g pnpm
+
 # Shallow clone at base commit (remix is a large monorepo)
 RUN git init /workspace/remix && \
     cd /workspace/remix && \
@@ -18,6 +21,9 @@ RUN git init /workspace/remix && \
     git config user.name "Agent"
 
 WORKDIR /workspace/remix
+
+# Install dependencies
+RUN pnpm install
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

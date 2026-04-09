@@ -247,3 +247,52 @@ console.log('PASS');
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that should pass on base and fix
+# ---------------------------------------------------------------------------
+
+def test_repo_eslint():
+    """Repo's ESLint passes on all files (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_version_check():
+    """Repo's version check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/version-check.js"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_print_warnings():
+    """Repo's print warnings test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/test_print_warnings.sh"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Print warnings test failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_modified_files_syntax():
+    """Modified files have valid JavaScript syntax (pass_to_pass)."""
+    files_to_check = [
+        "packages/react-devtools-extensions/src/main/index.js",
+        "packages/react-devtools-shared/src/backend/agent.js",
+        "packages/react-devtools-shared/src/bridge.js",
+        "packages/react-devtools-shared/src/devtools/store.js",
+        "packages/react-devtools-shared/src/devtools/views/DevTools.js",
+    ]
+    for f in files_to_check:
+        path = Path(REPO) / f
+        r = subprocess.run(
+            ["node", "--check", str(path)],
+            capture_output=True, text=True, timeout=10, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Syntax error in {f}:\n{r.stderr[-500:]}"

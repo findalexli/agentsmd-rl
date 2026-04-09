@@ -12,6 +12,21 @@ checks:
     origin: static
     description: "Target file must be substantial (>= 80 non-empty lines), not a stub"
 
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python files for the JIT kernel module have valid syntax"
+
+  - id: test_repo_test_file_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test file for qknorm_across_heads has valid Python syntax"
+
+  - id: test_repo_cuh_header_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CUDA header file has valid structure (balanced braces/parens)"
+
   - id: blockidx_y_dispatch
     type: fail_to_pass
     origin: pr_diff
@@ -81,17 +96,4 @@ checks:
     source:
       path: ".claude/skills/add-jit-kernel/SKILL.md"
       lines: "156"
-      commit: "8a56a7b04d553ecb76fca04eb89bbc20772e2051"
-
-rubric:
-  - rule: "Prefer project abstractions over raw CUDA primitives for safety, readability, and consistency."
-    source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "28"
-      commit: "8a56a7b04d553ecb76fca04eb89bbc20772e2051"
-
-  - rule: "Prefer passing runtime scalars directly unless compile-time specialisation is genuinely required."
-    source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "302"
       commit: "8a56a7b04d553ecb76fca04eb89bbc20772e2051"

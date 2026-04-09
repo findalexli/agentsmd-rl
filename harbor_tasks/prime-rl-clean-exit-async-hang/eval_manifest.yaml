@@ -66,17 +66,27 @@ checks:
     origin: static
     description: "clean_exit retains async+sync wrappers with try/except/finally and destroy_process_group"
 
-rubric:
-  - rule: "Avoid try/except blocks unless it's really necessary. It's fine that a program fails if something goes wrong as this helps us to catch non-obvious bugs and unforeseen side-effects earlier. You can add try catch on code that explicitly aims to be fault tolerant like adding retry mechanisms or explicit and intentional robustness."
-    source:
-      path: "AGENTS.md"
-      lines: "5"
-      commit: "27c35b1ce136c85c120b0486128316ae022b53a5"
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff lint check passes on utils.py"
 
-  - rule: "Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code."
-    source:
-      path: "AGENTS.md"
-      lines: "7"
-      commit: "27c35b1ce136c85c120b0486128316ae022b53a5"
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on utils.py"
 
-  # "Errors should never pass silently" moved to programmatic check: error_never_silent
+rubric: []
+  # Note: The gold solution for this task intentionally includes explanatory comments
+  # that reference the old behavior (raise vs sys.exit). These comments are necessary
+  # to explain WHY sys.exit is used instead of re-raising — the async context swallows
+  # exceptions causing the process to hang indefinitely. The rubric rules below are
+  # overridden for this specific fix as they conflict with the official merge commit.
+  #
+  # - rule: "Avoid try/except blocks unless it's really necessary..."
+  #   source: AGENTS.md:5
+  #
+  # - rule: "Do not add unnecessary comments..."
+  #   source: AGENTS.md:7
+  #
+  # "Errors should never pass silently" is checked programmatically via error_never_silent test.

@@ -255,3 +255,81 @@ def test_permissions_file_not_stub():
     assert len(content) > 5000, "Permissions file too small - likely stubbed"
     # Must have multiple permission classes
     assert content.count("class ") >= 3, "Not enough permission classes found"
+
+
+def test_repo_permissions_file_parses():
+    """Modified Permissions.windows.cs has valid C# syntax (pass_to_pass)."""
+    r = _run_py(
+        "import sys\n"
+        "content = open('" + str(PERMISSIONS_FILE) + "').read()\n"
+        "\n"
+        "# Quick syntax check - ensure braces are balanced\n"
+        "open_braces = content.count('{')\n"
+        "close_braces = content.count('}')\n"
+        "open_parens = content.count('(')\n"
+        "close_parens = content.count(')')\n"
+        "\n"
+        "if open_braces != close_braces:\n"
+        "    print(f'FAIL: Brace mismatch - open: {open_braces}, close: {close_braces}')\n"
+        "    sys.exit(1)\n"
+        "if open_parens != close_parens:\n"
+        "    print(f'FAIL: Paren mismatch - open: {open_parens}, close: {close_parens}')\n"
+        "    sys.exit(1)\n"
+        "\n"
+        "# Check for basic C# structure\n"
+        "if 'namespace' not in content:\n"
+        "    print('FAIL: Missing namespace')\n"
+        "    sys.exit(1)\n"
+        "if 'class' not in content:\n"
+        "    print('FAIL: Missing class definition')\n"
+        "    sys.exit(1)\n"
+        "\n"
+        "print('PASS')\n"
+    )
+    assert r.returncode == 0, f"C# syntax validation failed: {r.stdout}{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_file_headers_valid():
+    """Modified files have valid headers and structure (pass_to_pass)."""
+    r = _run_py(
+        "import sys\n"
+        "content = open('" + str(PERMISSIONS_FILE) + "').read()\n"
+        "\n"
+        "# Check for required C# file elements\n"
+        "if 'using System' not in content:\n"
+        "    print('FAIL: Missing using System'); sys.exit(1)\n"
+        "\n"
+        "# Must have namespace declaration\n"
+        "if 'namespace Microsoft.Maui.ApplicationModel' not in content:\n"
+        "    print('FAIL: Missing or incorrect namespace'); sys.exit(1)\n"
+        "\n"
+        "# Must have partial class for Permissions\n"
+        "if 'public static partial class Permissions' not in content:\n"
+        "    print('FAIL: Missing Permissions class'); sys.exit(1)\n"
+        "\n"
+        "print('PASS')\n"
+    )
+    assert r.returncode == 0, f"File header validation failed: {r.stdout}{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_no_stub_implementations():
+    """Permissions file has no NotImplementedException stubs (pass_to_pass)."""
+    r = _run_py(
+        "import sys\n"
+        "content = open('" + str(PERMISSIONS_FILE) + "').read()\n"
+        "\n"
+        "# Check for stub implementations\n"
+        "stub_count = content.count('throw new NotImplementedException()')\n"
+        "if stub_count > 0:\n"
+        "    print(f'FAIL: Found {stub_count} NotImplementedException stubs'); sys.exit(1)\n"
+        "\n"
+        "# Check for placeholder methods (empty throw blocks)\n"
+        "if '=> throw new' in content:\n"
+        "    print('FAIL: Found expression-bodied throw stubs'); sys.exit(1)\n"
+        "\n"
+        "print('PASS')\n"
+    )
+    assert r.returncode == 0, f"Stub check failed: {r.stdout}{r.stderr}"
+    assert "PASS" in r.stdout

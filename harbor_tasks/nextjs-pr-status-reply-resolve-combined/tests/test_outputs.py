@@ -168,6 +168,29 @@ def test_resolve_thread_usage_error():
     )
 
 
+# [repo_tests] pass_to_pass — CI/CD checks that must pass on both base and gold
+def test_repo_prettier_pr_status():
+    """Repo's Prettier check passes on scripts/pr-status.js (pass_to_pass)."""
+    # Install pnpm and dependencies first
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install pnpm:\n{r.stderr}"
+
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "scripts/pr-status.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from skill files
 # ---------------------------------------------------------------------------

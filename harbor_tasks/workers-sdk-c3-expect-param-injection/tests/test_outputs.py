@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -20,6 +21,78 @@ TO_EXIST = f"{C3}/e2e/helpers/to-exist.ts"
 MOCKS = f"{C3}/src/helpers/__tests__/mocks.ts"
 FRAMEWORKS_TEST = f"{C3}/e2e/tests/frameworks/frameworks.test.ts"
 WORKERS_TEST = f"{C3}/e2e/tests/workers/workers.test.ts"
+
+
+def run_in_repo(cmd, cwd=REPO, timeout=120):
+    """Run a command in the repo and return the result."""
+    env = os.environ.copy()
+    env["PATH"] = "/usr/local/bin:" + env.get("PATH", "")
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=cwd,
+        env=env,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - CI/CD checks that should pass on base and gold
+# ---------------------------------------------------------------------------
+
+
+def test_c3_typecheck():
+    """C3 package TypeScript typecheck passes (pass_to_pass)."""
+    # First ensure pnpm is available
+    r = run_in_repo(["npm", "install", "-g", "pnpm@10.33.0"])
+    if r.returncode != 0:
+        # pnpm might already be installed
+        pass
+
+    # Install dependencies
+    r = run_in_repo(["pnpm", "install", "--frozen-lockfile"])
+    assert r.returncode == 0, f"Failed to install dependencies:\n{r.stderr[-500:]}"
+
+    # Run typecheck via turbo
+    r = run_in_repo(["pnpm", "turbo", "check:type", "--filter=create-cloudflare"], timeout=120)
+    assert r.returncode == 0, f"C3 typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_c3_unit_tests():
+    """C3 package unit tests pass (pass_to_pass)."""
+    # First ensure pnpm is available
+    r = run_in_repo(["npm", "install", "-g", "pnpm@10.33.0"])
+    if r.returncode != 0:
+        pass  # pnpm might already be installed
+
+    # Install dependencies
+    r = run_in_repo(["pnpm", "install", "--frozen-lockfile"])
+    assert r.returncode == 0, f"Failed to install dependencies:\n{r.stderr[-500:]}"
+
+    # Run unit tests via turbo (builds deps first)
+    r = run_in_repo(["pnpm", "turbo", "test:ci", "--filter=create-cloudflare"], timeout=120)
+    assert r.returncode == 0, f"C3 unit tests failed:\n{r.stderr[-500:]}"
+
+
+def test_c3_lint_format():
+    """C3 package lint and format checks pass (pass_to_pass)."""
+    # First ensure pnpm is available
+    r = run_in_repo(["npm", "install", "-g", "pnpm@10.33.0"])
+    if r.returncode != 0:
+        pass  # pnpm might already be installed
+
+    # Install dependencies
+    r = run_in_repo(["pnpm", "install", "--frozen-lockfile"])
+    assert r.returncode == 0, f"Failed to install dependencies:\n{r.stderr[-500:]}"
+
+    # Run oxlint
+    r = run_in_repo(["npx", "oxlint", "--deny-warnings", "--type-aware"], cwd=C3, timeout=60)
+    assert r.returncode == 0, f"C3 lint failed:\n{r.stderr[-500:]}"
+
+    # Run format check
+    r = run_in_repo(["npx", "oxfmt", "--check"], cwd=C3, timeout=60)
+    assert r.returncode == 0, f"C3 format check failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -55,6 +128,25 @@ def test_eslint_disable_comments_resolved():
 # [pr_diff] fail_to_pass
 def test_helpers_accept_expect_param():
     """E2E helper functions accept expect as an injected parameter instead of importing it."""
+
+    def extract_params(content, fn_name):
+        """Extract the text of a function's parameter list (between parens)."""
+        match = re.search(
+            rf"(?:export\s+)?(?:async\s+)?function\s+{fn_name}\s*\(", content
+        )
+        if not match:
+            return None
+        start = match.end()  # position right after (
+        depth = 1
+        i = start
+        while i < len(content) and depth > 0:
+            if content[i] == "(":
+                depth += 1
+            elif content[i] == ")":
+                depth -= 1
+            i += 1
+        return content[start : i - 1]
+
     # framework-helpers.ts: 8 exported async functions should accept expect param
     fw_content = Path(FRAMEWORK_HELPERS).read_text()
 
@@ -70,13 +162,10 @@ def test_helpers_accept_expect_param():
     ]
 
     for fn_name in fw_functions:
-        # Find the function declaration and check its parameters include expect
-        pattern = rf"(?:export\s+)?(?:async\s+)?function\s+{fn_name}\s*\("
-        match = re.search(pattern, fw_content)
-        assert match, f"Function {fn_name} not found in framework-helpers.ts"
-        # Get the text from function start through next ~200 chars to see params
-        snippet = fw_content[match.start():match.start() + 300]
-        assert re.search(r"\bexpect\b", snippet), (
+        params = extract_params(fw_content, fn_name)
+        assert params is not None, f"Function {fn_name} not found in framework-helpers.ts"
+        # Check that 'expect' appears as a parameter (with type annotation colon)
+        assert re.search(r"\bexpect\s*:", params), (
             f"{fn_name} in framework-helpers.ts does not accept an 'expect' parameter"
         )
 
@@ -86,11 +175,9 @@ def test_helpers_accept_expect_param():
     wk_functions = ["runC3ForWorkerTest", "verifyLocalDev"]
 
     for fn_name in wk_functions:
-        pattern = rf"(?:export\s+)?(?:async\s+)?function\s+{fn_name}\s*\("
-        match = re.search(pattern, wk_content)
-        assert match, f"Function {fn_name} not found in workers-helpers.ts"
-        snippet = wk_content[match.start():match.start() + 300]
-        assert re.search(r"\bexpect\b", snippet), (
+        params = extract_params(wk_content, fn_name)
+        assert params is not None, f"Function {fn_name} not found in workers-helpers.ts"
+        assert re.search(r"\bexpect\s*:", params), (
             f"{fn_name} in workers-helpers.ts does not accept an 'expect' parameter"
         )
 

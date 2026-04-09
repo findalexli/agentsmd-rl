@@ -32,4 +32,7 @@ WORKDIR /workspace/react
 # Install minimal dependencies (yarn, no heavy packages needed)
 RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 
+# Install node_modules during build so they're available for tests
+RUN yarn install --frozen-lockfile --network-timeout 100000
+
 RUN mkdir -p /logs/verifier

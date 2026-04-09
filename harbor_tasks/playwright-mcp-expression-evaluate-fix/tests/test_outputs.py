@@ -129,3 +129,52 @@ def test_not_stub():
     # Count the number of assignment statements to ensure substantial logic
     assignments = func_section.count("const ") + func_section.count("let ")
     assert assignments >= 5, f"Function appears to be a stub (only {assignments} assignments)"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — verify CI/CD checks pass on base commit
+# ---------------------------------------------------------------------------
+
+def test_repo_tsc():
+    """Repo's TypeScript compilation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "tsc"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript compilation failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_check_deps():
+    """Repo's dependency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dependency check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_lint_packages():
+    """Repo's package consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Package lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_lint_tests():
+    """Repo's test linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-tests"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_test_types():
+    """Repo's type tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "test-types"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Type tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

@@ -1,11 +1,80 @@
 {
-  "verdict": "fail",
+  "schema_version": 2,
+  "verdict": "pass",
   "nop_reward": 0.0,
-  "gold_reward": 0.0,
-  "validated_at": "2026-04-08T22:06:41.315568",
-  "sandbox_id": "ib2qng35wt0ucufm239tt",
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T07:52:08.693623",
+  "total_time": 6769.84,
+  "sandbox_id": "iggigrwmd33eeiuw125iq",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 2016.11
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validations passed. Docker build succeeded. NOP test correctly returned reward=0 with 5 pass-to-pass tests passing and 15 fail-to-pass tests failing. Gold test correctly returned reward=1 with all 20 tests passing. Rubric judge returned ICR=1.0. The benchmark task is properly configured.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 252.61
+    },
+    "p2p_enrichment": {
+      "completed": "2026-04-09",
+      "ci_commands_found": [
+        "cargo check --lib",
+        "cargo check --tests",
+        "cargo clippy --lib",
+        "cargo fmt --check"
+      ],
+      "tests_added": [
+        "test_cargo_check_lib - Verifies Rust lib compiles (pass_to_pass)",
+        "test_cargo_check_tests - Verifies Rust tests compile (pass_to_pass)",
+        "test_cargo_clippy_lib - Verifies Rust linting passes (pass_to_pass)",
+        "test_cargo_fmt_check - Verifies Rust code formatting passes (pass_to_pass)"
+      ],
+      "source": "GitHub workflow .github/workflows/build_and_test.yml, build_reusable.yml and Cargo.toml",
+      "notes": "Full cargo test suite times out (>120s), so using cargo check --tests for compilation verification. cargo clippy --lib works for linting verification. cargo fmt --check added for formatting verification. All p2p tests pass on base commit b2f193b0964212c3ef0213efb74fe40dfd5be43b."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 950.02,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.77,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T07:52:08.522635"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 6769.84,
+      "at": "2026-04-09T07:52:08.693623"
+    }
+  ]
 }

@@ -188,6 +188,49 @@ print("PASS")
 
 
 # ---------------------------------------------------------------------------
+# pass_to_pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+def test_repo_ruff_check():
+    """Repo's ruff linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "check", "slime/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_plugin_contracts():
+    """Repo's plugin contract tests pass (pass_to_pass)."""
+    # Install torch CPU version first
+    r = subprocess.run(
+        ["pip", "install", "torch", "--index-url", "https://download.pytorch.org/whl/cpu", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install torch: {r.stderr[-500:]}"
+
+    # Install other dependencies
+    deps = ["numpy", "packaging", "pyyaml", "omegaconf", "tqdm", "httpx", "pybase64", "pylatexenc", "sympy", "aiohttp", "pytest"]
+    r = subprocess.run(
+        ["pip", "install"] + deps + ["-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install deps: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/plugin_contracts/", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin contracts tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Anti-stub (static)
 # ---------------------------------------------------------------------------
 

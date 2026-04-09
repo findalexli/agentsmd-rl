@@ -1,0 +1,73 @@
+task_name: clickhouse-udf-zookeeper-session-renewal
+title: Fix crash caused by stale ZooKeeper session in UDF retry loop
+source_pr: ClickHouse/ClickHouse#102173
+original_pr: ClickHouse/ClickHouse#102059
+base_commit: 255e0773744e57c9b6435e713a6f8417ee690ea5
+merge_commit: de2627596adb1fd0909ee4a5603f6b8b31aa8347
+
+checks:
+  # Pass-to-pass baseline
+  - id: test_compilation
+    type: pass_to_pass
+    origin: repo_tests
+    description: Target file exists with refreshObjects function and ZooKeeperRetriesControl
+
+  - id: test_no_sleep_in_code
+    type: fail_to_pass
+    origin: pr_diff
+    description: No sleep calls in code (ClickHouse rule - never use sleep for race conditions)
+
+  - id: test_deletion_logging
+    type: pass_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: No unlogged deletions (ClickHouse deletion logging rule)
+
+  - id: test_clickhouse_allman_braces
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code follows ClickHouse Allman brace style convention
+
+  - id: test_clickhouse_naming_conventions
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code follows ClickHouse naming conventions (CamelCase types, snake_case members)
+
+  - id: test_no_raw_assert
+    type: pass_to_pass
+    origin: repo_tests
+    description: No raw assert() calls (ClickHouse uses CH_ASSERT)
+
+  - id: test_clickhouse_logger_usage
+    type: pass_to_pass
+    origin: repo_tests
+    description: Uses ClickHouse LOG_* macros instead of std::cout/std::cerr
+
+  - id: test_exception_handling_patterns
+    type: pass_to_pass
+    origin: repo_tests
+    description: Follows ClickHouse exception handling patterns (tryLogCurrentException, KeeperException)
+
+  - id: test_cpp_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: C++ code passes basic syntax validation via clang-format
+
+  # Fail-to-pass: Core behavioral fixes
+  - id: test_session_renewal_in_retry_loop
+    type: fail_to_pass
+    origin: pr_diff
+    description: Session renewal mechanism present (current_zookeeper variable, isRetry() check, zookeeper_getter renewal, using current_zookeeper in tryLoadObject)
+
+  - id: test_object_names_inside_retry_loop
+    type: fail_to_pass
+    origin: pr_diff
+    description: getObjectNamesAndSetWatch called inside retry loop with current_zookeeper (not outside with stale session)
+
+  - id: test_comment_describes_fix
+    type: fail_to_pass
+    origin: pr_diff
+    description: Comments explain session renewal via zookeeper_getter and expired session handling
+
+# Rubric for subjective evaluation criteria
+rubric: []

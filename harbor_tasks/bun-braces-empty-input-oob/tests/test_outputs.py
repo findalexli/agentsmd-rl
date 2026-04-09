@@ -227,6 +227,68 @@ def test_flatten_tokens_not_stub():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD checks (pass_to_pass) — from .github/workflows/*.yml
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass — JS lint from lint.yml
+def test_repo_oxlint_brace_test():
+    """Repo's oxlint passes on shell/brace.test.ts (pass_to_pass).
+
+    From .github/workflows/lint.yml:
+      - name: Lint
+        run: bun lint  # which runs oxlint
+    """
+    r = subprocess.run(
+        ["npx", "oxlint", "--deny-warnings", "test/js/bun/shell/brace.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"oxlint failed on brace.test.ts:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — JS lint on shell lex tests
+def test_repo_oxlint_shell_lex():
+    """Repo's oxlint passes on shell/lex.test.ts (pass_to_pass).
+
+    Tests that the shell lexer test file has no lint errors.
+    From .github/workflows/lint.yml: bun lint (oxlint on src/js and test)
+    """
+    r = subprocess.run(
+        ["npx", "oxlint", "--deny-warnings", "test/js/bun/shell/lex.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"oxlint failed on lex.test.ts:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — git repository integrity
+def test_repo_git_status_clean():
+    """Git repository has clean status at base commit (pass_to_pass).
+
+    Verifies the repo was properly checked out and is in expected state.
+    """
+    # Check we are at expected commit
+    r = subprocess.run(
+        ["git", "rev-parse", "--short", "HEAD"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, "git rev-parse failed"
+    commit = r.stdout.strip()
+    # Accept either the full or short base commit
+    base_commit = "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
+    assert commit in [base_commit, base_commit[:7]], (
+        f"Not at expected base commit: {commit}"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from src/CLAUDE.md
 # ---------------------------------------------------------------------------
 

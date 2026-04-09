@@ -8,6 +8,11 @@ source:
 
 checks:
   # Gates (pass_to_pass)
+  - id: typescript_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files have valid syntax and structure"
+
   - id: syntax_check
     type: pass_to_pass
     origin: static
@@ -17,6 +22,17 @@ checks:
     type: pass_to_pass
     origin: static
     description: "tasks object still exports trigger, batchTrigger, triggerAndWait, batchTriggerAndWait"
+
+  # Repo CI checks (pass_to_pass)
+  - id: repo_ts_files_parseable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's modified TypeScript files are parseable by Node.js 22 --experimental-strip-types"
+
+  - id: repo_import_export_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's modified files have valid import/export structure (balanced braces, valid imports)"
 
   # Core code removal (fail_to_pass)
   - id: triggerandpoll_function_removed

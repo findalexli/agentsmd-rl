@@ -23,6 +23,22 @@ checks:
     origin: static
     description: ".gitignore must exist"
 
+  # Repo CI/CD tests (pass_to_pass) - verify repo's own CI passes
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests pass"
+
+  - id: test_repo_type_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript type tests pass"
+
+  - id: test_repo_build_translations
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's translations package builds successfully"
+
   # CLAUDE.md content tests (fail_to_pass)
   - id: claude_md_has_project_structure
     type: fail_to_pass

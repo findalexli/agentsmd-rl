@@ -1,11 +1,58 @@
 {
+  "schema_version": 2,
   "verdict": "fail",
-  "nop_reward": 0.0,
-  "gold_reward": 0.0,
-  "validated_at": "2026-04-08T22:17:36.524456",
-  "sandbox_id": "ik4wtg4gnoluw4k2nc8vq",
-  "backend": "glm",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 2671.37
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:48:21.175883",
+  "total_time": 5729.24,
+  "sandbox_id": "iaw3gdgln5kzyrdubc7kq",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "error": "rate limited during validate",
+  "nodes": {
+    "p2p_enrichment": {
+      "completed": true,
+      "verified_at": "2026-04-09",
+      "ci_commands_found": [
+        "ruff check (from Makefile style target and GitHub workflow pr-repo-consistency-bot.yml)",
+        "ruff format --check (from Makefile style target)",
+        "python setup.py deps_table_update (from Makefile fix-repo/check-repo targets - skipped)",
+        "make style / make check-code-quality (full style checking from Makefile)"
+      ],
+      "tests_added": [
+        "test_ruff_check - runs ruff check on setup.py and dependency_versions_table.py",
+        "test_ruff_format - runs ruff format --check on setup.py and dependency_versions_table.py"
+      ],
+      "tests_verified": [
+        "test_syntax_check - passes on base commit",
+        "test_ruff_check - passes on base commit",
+        "test_ruff_format - passes on base commit"
+      ],
+      "notes": "Added 2 pass_to_pass tests (test_ruff_check, test_ruff_format) that verify the repo's own CI linting/formatting rules pass on the base commit. These tests run the same ruff commands used in the transformers CI pipeline (via .github/workflows/pr-repo-consistency-bot.yml and Makefile). Verified working on 2026-04-09: all 3 p2p tests pass on base commit. Skipped full ruff check on entire repo due to 79 pre-existing errors. Skipped setup.py deps_table_update as a test since it only updates on Python 3.10.x and returns a non-error exit code even when not updating. The ruff tests cover the modified files mentioned in the fail_to_pass tests."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 151.29,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 5729.24,
+      "at": "2026-04-09T07:48:21.175883"
+    }
+  ]
 }

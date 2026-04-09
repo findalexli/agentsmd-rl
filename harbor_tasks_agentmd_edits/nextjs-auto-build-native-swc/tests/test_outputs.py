@@ -31,6 +31,56 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates that must pass on base AND after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_json_valid():
+    """Repo's JSON config files must be valid (pass_to_pass)."""
+    json_files = [
+        Path(REPO) / "packages/next-swc/package.json",
+        Path(REPO) / "packages/next-swc/turbo.json",
+    ]
+    for json_file in json_files:
+        assert json_file.exists(), f"{json_file} must exist"
+        content = json_file.read_text()
+        try:
+            json.loads(content)
+        except json.JSONDecodeError as e:
+            assert False, f"{json_file} is not valid JSON: {e}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_scripts_syntax():
+    """Repo's JS/TS scripts must have valid syntax (pass_to_pass)."""
+    scripts_dir = Path(REPO) / "scripts"
+    scripts_to_check = [
+        "build-native.ts",
+        "pack-util.ts",
+        "check-is-release.js",
+        "check-manifests.js",
+        "validate-externals-doc.js",
+    ]
+    for script in scripts_to_check:
+        script_path = scripts_dir / script
+        assert script_path.exists(), f"{script} must exist"
+        r = subprocess.run(
+            ["node", "--check", str(script_path)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"{script} has syntax errors: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_agents_md_exists():
+    """AGENTS.md must exist and have content (pass_to_pass)."""
+    agents_md = Path(REPO) / "AGENTS.md"
+    assert agents_md.exists(), "AGENTS.md must exist"
+    content = agents_md.read_text()
+    assert len(content) > 100, "AGENTS.md must have substantial content"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -127,6 +177,10 @@ def test_turbo_json_build_task():
 
 
 # [pr_diff] fail_to_pass
+def test_build_native_ts_uses_stdin_filepath():
+    """scripts/build-native.ts must use --stdin-filepath instead of --write for prettier."""
+    ts_file = Path(REPO) / "scripts/build-native.ts"
+    content = ts_file.read_text()
 
     # Must use --stdin-filepath pattern for prettier
     assert "--stdin-filepath" in content or "stdin-filepath" in content, (
@@ -153,6 +207,10 @@ def test_turbo_json_build_task():
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass — AGENTS.md:367-371 @ 9a7733ed83bce9cc1264454ddc7335fdcfb0c1eb
+def test_agents_md_rebuild_instructions():
+    """AGENTS.md must have updated rebuild instructions."""
+    agents_md = Path(REPO) / "AGENTS.md"
+    content = agents_md.read_text()
 
     # The old instructions had separate commands for Rust-only and both edits.
     # After the change, pnpm build handles everything automatically.
@@ -173,11 +231,12 @@ def test_turbo_json_build_task():
     rebuild_section = ""
     in_rebuild = False
     for line in content.splitlines():
-        if "rebuild" in line.lower() and "test" in line.lower():
+        if "rebuild" in line.lower() and "test" in line.lower() and line.startswith("##"):
             in_rebuild = True
+            rebuild_section += line + "\n"
         elif in_rebuild and line.startswith("## "):
             break
-        if in_rebuild:
+        elif in_rebuild:
             rebuild_section += line + "\n"
 
     assert len(rebuild_section) > 0, (

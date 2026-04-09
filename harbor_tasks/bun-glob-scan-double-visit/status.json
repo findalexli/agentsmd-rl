@@ -1,13 +1,98 @@
 {
-  "validations": [
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T01:47:10.790149",
+  "total_time": 593.36,
+  "sandbox_id": "id5rcdu4gao6wnn8ly09c",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.5,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Docker build successful. NOP test: reward=0 (6 fail-to-pass tests correctly fail on base commit). Gold test: reward=1 (all 16 tests pass after gold fix applied). Rubric judge skipped - requires ANTHROPIC_API_KEY for LLM evaluation; rubric rules are informational coding conventions from CLAUDE.md that gold solution already follows.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 85.64
+    },
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T08:44:00",
+      "ci_commands_discovered": [
+        "bun ./test/internal/ban-words.test.ts - from .github/workflows/format.yml",
+        "bunx tsc --noEmit - TypeScript typecheck from package.json"
+      ],
+      "ci_commands_skipped": [
+        "bun lint (oxlint) - oxlint.json has incompatible rule 'no-undef-init' for this oxlint version",
+        "zig fmt --check - Zig compiler not available in container",
+        "prettier - requires npm packages not installed in container",
+        "clang-format - requires LLVM toolchain not available",
+        "bun test - requires building bun binary with Zig/WebKit toolchain"
+      ],
+      "tests_added": [
+        "test_repo_ban_words - validates no banned patterns (std.debug.assert, usingnamespace, etc.) in codebase",
+        "test_repo_typecheck - validates TypeScript code compiles without errors"
+      ],
+      "notes": "Bun repo CI/CD primarily requires full Zig compiler + WebKit/JSC + CMake toolchain to build and run tests. Added ban-words and typecheck tests which run without needing the full build toolchain."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 271.96,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.83,
+      "notes": "ICR=0.50"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T23:07:01.519568",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:26:50.572071"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 844.2,
+      "at": "2026-04-09T01:26:50.742472"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:47:10.608616"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 593.36,
+      "at": "2026-04-09T01:47:10.790149"
     }
   ]
 }

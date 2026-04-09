@@ -460,3 +460,88 @@ def test_no_assert_type_narrowing():
         f"Found {len(violations)} assert(s) used for type narrowing in check_bad_commit.py. "
         "Use 'if ...: raise' instead of assert for type narrowing."
     )
+
+
+# [repo_tests] pass_to_pass - CI: ruff check from Makefile style target
+def test_repo_ruff_check():
+    """Repo's ruff linting passes on check_bad_commit.py (pass_to_pass).
+
+    Per AGENTS.md: make style or make fix-repo should be run as the final step
+    before opening PR — code should pass ruff formatting and linting.
+    """
+    # Install ruff if not available (minimal Docker environment)
+    import sys
+    try:
+        subprocess.run([sys.executable, "-m", "pip", "install", "ruff", "-q"], check=True, capture_output=True)
+    except Exception:
+        pass  # May already be installed or fail silently
+
+    r = subprocess.run(
+        ["ruff", "check", SCRIPT],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - CI: ruff format check from Makefile style target
+def test_repo_ruff_format():
+    """Repo's ruff formatting passes on check_bad_commit.py (pass_to_pass).
+
+    Per AGENTS.md: make style or make fix-repo should be run as the final step
+    before opening PR — code should pass ruff formatting and linting.
+    """
+    # Install ruff if not available (minimal Docker environment)
+    import sys
+    try:
+        subprocess.run([sys.executable, "-m", "pip", "install", "ruff", "-q"], check=True, capture_output=True)
+    except Exception:
+        pass  # May already be installed or fail silently
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", SCRIPT],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - CI: Workflow structure validation
+def test_workflow_schema_valid():
+    """check_failed_tests.yml has valid workflow structure (pass_to_pass).
+
+    Validates that the workflow has required GitHub Actions structure:
+    - Has workflow_call trigger
+    - Jobs have required fields (runs-on/container and steps)
+    """
+    with open(WORKFLOW) as f:
+        wf = yaml.safe_load(f)
+
+    # Check workflow trigger exists
+    triggers = wf.get("on", wf.get(True, {}))
+    assert "workflow_call" in triggers, "Missing workflow_call trigger"
+
+    # Check jobs have required structure
+    jobs = wf.get("jobs", {})
+    assert len(jobs) > 0, "No jobs defined in workflow"
+
+    for name, job in jobs.items():
+        assert "runs-on" in job or "container" in job, f"Job {name} missing runs-on or container"
+        assert "steps" in job, f"Job {name} missing steps"
+        assert len(job["steps"]) > 0, f"Job {name} has no steps"
+
+
+# [repo_tests] pass_to_pass - CI: check_bad_commit.py has expected functions
+def test_script_has_expected_functions():
+    """check_bad_commit.py defines expected functions (pass_to_pass).
+
+    Validates that the script exports the expected public API functions
+    used by the CI workflow.
+    """
+    import ast
+    source = Path(SCRIPT).read_text()
+    tree = ast.parse(source)
+
+    functions = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
+    expected = ["find_bad_commit", "get_commit_info"]
+
+    for func in expected:
+        assert func in functions, f"Expected function '{func}' not found in check_bad_commit.py"

@@ -1,70 +1,85 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T23:46:02.223735",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.2,
-      "verdict": "pass",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T04:47:38.931843",
+  "total_time": 9580.11,
+  "sandbox_id": "iyme8mjap52babw6j6vhr",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "timestamp": "2026-04-09T11:40:00Z",
+      "ci_commands_found": [
+        "npx oxlint src/infra/clawhub.ts",
+        "npx oxfmt --check src/infra/clawhub.ts",
+        "pnpm test (vitest - requires dependencies)",
+        "pnpm lint (oxlint --type-aware - requires dependencies)",
+        "pnpm build (requires canvas/ui build steps)"
+      ],
+      "p2p_tests_added": [
+        "test_repo_lint_clawhub - runs oxlint on target file",
+        "test_repo_format_clawhub - runs oxfmt format check on target file"
+      ],
+      "notes": "Added 2 pass_to_pass tests from repo CI/CD. TypeScript typecheck (tsc --noEmit) requires too much memory (>3GB). Unit tests require pnpm install which isn't available in test container. The lint and format checks work without dependencies and run in <120s."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 853.07,
       "notes": ""
     },
-    {
-      "timestamp": "2026-03-30T23:47:11.711986",
-      "runner": "validate_all.sh",
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
       "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.2,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "Fixed solve.sh to add npx oxfmt --write to auto-fix formatting issues after sed operations. The original script added the import in a location that violated the project's import ordering rules.",
+      "changes_made": [
+        "Updated solve.sh to run 'npx oxfmt --write src/infra/clawhub.ts' after sed operations",
+        "Also updated the import insertion point to be after 'node:path' for better alphabetical ordering"
+      ],
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 293.6
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=0.00"
+    }
+  },
+  "history": [
+    {
       "verdict": "pass",
-      "notes": ""
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T04:47:38.758299"
     },
     {
-      "timestamp": "2026-03-29T14:30:05.194938",
-      "runner": "rubric (rebuild-rubrics_20260329_143005)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 4377
-    },
-    {
-      "timestamp": "2026-03-29T16:44:41.808893",
-      "runner": "rubric (rebuild-rubrics_20260329_164441)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 3590
-    },
-    {
-      "timestamp": "2026-03-31T09:10:27.424884",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 9257
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.690040",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.950613",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.554393",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9580.11,
+      "at": "2026-04-09T04:47:38.931843"
     }
   ]
 }

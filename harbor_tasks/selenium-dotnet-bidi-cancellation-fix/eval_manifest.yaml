@@ -1,0 +1,57 @@
+source_pr:
+  owner: SeleniumHQ
+  repo: selenium
+  number: 17315
+  merge_commit: 91c9b4dfc6a00334aabdc9c11c6237d1eae394d1
+  base_commit: b6a1ff4dcea3f83f45bf10cbe20ea2f9c29469d4
+
+task:
+  name: selenium-dotnet-bidi-cancellation-fix
+  language: csharp
+  description: Fix cancellation token registration disposal in Selenium .NET BiDi Broker
+
+# Each check maps to a test function in test_outputs.py
+checks:
+  - id: code_compiles
+    description: C# code compiles successfully
+    type: fail_to_pass
+    origin: behavioral
+    points: 1
+
+  - id: serialization_error_handling
+    description: Serialization errors properly return buffer via catch block
+    type: fail_to_pass
+    origin: behavioral
+    points: 2
+
+  - id: cts_registration_scope
+    description: ctsRegistration declared outside send try block with correct scope
+    type: fail_to_pass
+    origin: behavioral
+    points: 3
+
+  - id: buffer_returned_in_serialization_error
+    description: Buffer returned immediately in serialization catch block
+    type: pass_to_pass
+    origin: behavioral
+    points: 1
+
+  - id: pending_commands_cleanup_on_send_error
+    description: Pending commands cleaned up on transport send errors
+    type: pass_to_pass
+    origin: behavioral
+    points: 1
+
+  - id: no_nested_try_with_registration
+    description: ctsRegistration not incorrectly nested inside try block
+    type: fail_to_pass
+    origin: behavioral
+    points: 2
+
+# No agent_config rules - the applicable config files (CLAUDE.md, AGENTS.md, dotnet/AGENTS.md)
+# mostly contain process and general guidance rather than specific programmatic rules
+# that would apply to this fix.
+agent_config: []
+
+# No rubric rules needed - the behavioral tests cover the fix adequately
+rubric: []

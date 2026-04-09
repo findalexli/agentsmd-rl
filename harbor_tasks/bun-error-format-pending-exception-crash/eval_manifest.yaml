@@ -69,6 +69,36 @@ checks:
       lines: "234-238"
       commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
 
+  # ---------------------------------------------------------------------------
+  # Repo CI/CD pass_to_pass gates — static analysis (no build tools required)
+  # These simulate the repo's CI checks that can run without Bun/Zig compilers.
+  # ---------------------------------------------------------------------------
+
+  - id: zig_file_balanced_braces
+    type: pass_to_pass
+    origin: repo_ci
+    description: "JSGlobalObject.zig has balanced braces (basic syntax check)"
+
+  - id: zig_file_balanced_parens
+    type: pass_to_pass
+    origin: repo_ci
+    description: "JSGlobalObject.zig has balanced parentheses (basic syntax check)"
+
+  - id: zig_file_no_double_semicolons
+    type: pass_to_pass
+    origin: repo_ci
+    description: "JSGlobalObject.zig has no double semicolons (common syntax error)"
+
+  - id: zig_file_pub_fn_syntax
+    type: pass_to_pass
+    origin: repo_ci
+    description: "JSGlobalObject.zig pub fn declarations have valid syntax"
+
+  - id: zig_file_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_ci
+    description: "JSGlobalObject.zig has no lines with trailing whitespace (code style)"
+
 rubric:
   - rule: "Memory management - In Zig code, be careful with allocators and use defer for cleanup"
     source:

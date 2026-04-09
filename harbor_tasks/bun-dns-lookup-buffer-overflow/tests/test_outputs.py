@@ -17,6 +17,7 @@ from pathlib import Path
 
 REPO = "/workspace/bun"
 DNS_FILE = f"{REPO}/src/bun.js/api/bun/dns.zig"
+BAN_WORDS_FILE = f"{REPO}/test/internal/ban-words.test.ts"
 
 
 def _get_libinfo_lookup_section():
@@ -34,9 +35,9 @@ def _get_libinfo_lookup_section():
     return src  # Fall back to full file if pattern doesn't match
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 def test_zig_file_parses():
     """Modified Zig file must at least be readable and have expected structure."""
@@ -50,9 +51,50 @@ def test_zig_file_parses():
     assert "fn lookup(" in src, "lookup function not found"
 
 
-# ---------------------------------------------------------------------------
+def test_zig_file_formatted():
+    """Modified Zig file must be properly formatted (zig fmt --check passes)."""
+    r = subprocess.run(
+        ["zig", "fmt", "--check", DNS_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"zig fmt --check failed:\n{r.stderr[-500:]}"
+
+
+def test_no_banned_patterns():
+    """Modified code must not contain banned patterns from repo's ban-words list."""
+    src = Path(DNS_FILE).read_text()
+
+    # Critical banned patterns from ban-words.test.ts that should never appear
+    banned_patterns = [
+        (r"std\.debug\.assert", "Use bun.assert instead"),
+        (r"std\.debug\.print", "Don't let this be committed"),
+        (r"std\.log", "Don't let this be committed"),
+    ]
+
+    for pattern, reason in banned_patterns:
+        matches = re.findall(pattern, src)
+        assert len(matches) == 0, f"Banned pattern found ({reason}): {pattern}"
+
+
+def test_zig_syntax_basic():
+    """Basic Zig syntax validation - file should have valid structure."""
+    src = Path(DNS_FILE).read_text()
+
+    # Check for basic Zig structural validity
+    # Count braces to detect obvious syntax issues
+    open_braces = src.count("{")
+    close_braces = src.count("}")
+    assert open_braces == close_braces, f"Mismatched braces: {open_braces} open, {close_braces} close"
+
+    # Check for valid function declarations
+    fn_pattern = r"^\s*fn\s+\w+\s*\("
+    fn_matches = re.findall(fn_pattern, src, re.MULTILINE)
+    assert len(fn_matches) >= 1, "No valid function declarations found"
+
+
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 def test_no_fixed_buffer_used():
     """The vulnerable fixed 1024-byte buffer pattern must be removed."""
@@ -95,9 +137,9 @@ def test_proper_cleanup_with_defer_free():
     assert len(matches) >= 1, f"defer name_allocator.free pattern not found (memory leak risk)"
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 def test_lookup_function_has_real_logic():
     """LibInfo.lookup function must have substantial implementation."""

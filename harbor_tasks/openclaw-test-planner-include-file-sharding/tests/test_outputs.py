@@ -344,3 +344,50 @@ def test_parallel_tests_still_pass():
         assert "SyntaxError" not in r.stderr and "ParseError" not in r.stderr, (
             f"Syntax error in modified files: {r.stderr}"
         )
+
+
+
+# -----------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass gates
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo build passes (pass_to_pass).
+
+    Runs pnpm build to verify the codebase compiles without errors.
+    This is a critical gate to ensure changes don't break the build.
+    """
+    r = subprocess.run(
+        ["pnpm", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, "Build failed:\n" + r.stderr[-1000:]
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo linting passes (pass_to_pass).
+
+    Runs pnpm lint (oxlint) to verify code style and catch common issues.
+    This ensures modified files follow the repo's linting standards.
+    """
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, "Lint failed:\n" + r.stderr[-1000:]
+
+
+# [repo_tests] pass_to_pass
+def test_repo_test_planner():
+    """Repo test-planner tests pass (pass_to_pass).
+
+    Runs the test-planner test suite to verify the planner and executor
+    modules work correctly. This covers both the base commit and the fix.
+    """
+    r = subprocess.run(
+        ["pnpm", "test", "--", "test/scripts/test-planner.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, "Test-planner tests failed:\n" + r.stderr[-1000:]

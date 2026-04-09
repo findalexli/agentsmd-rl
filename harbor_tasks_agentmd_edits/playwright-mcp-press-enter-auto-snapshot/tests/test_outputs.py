@@ -104,7 +104,7 @@ def test_skill_md_no_separate_snapshot_step():
     """SKILL.md core workflow should not list Snapshot as a separate numbered step."""
     content = SKILL_MD.read_text()
     workflow_match = re.search(
-        r"## Core workflow\s*\n(.*?)(?=\n## |\Z)",
+        r"## Core workflow\s*\n(.*?)\n(\n## |\Z)",
         content,
         re.DOTALL,
     )
@@ -120,7 +120,7 @@ def test_skill_md_workflow_step_count():
     """Core workflow should have at most 3 steps after removing the manual snapshot step."""
     content = SKILL_MD.read_text()
     workflow_match = re.search(
-        r"## Core workflow\s*\n(.*?)(?=\n## |\Z)",
+        r"## Core workflow\s*\n(.*?)\n(\n## |\Z)",
         content,
         re.DOTALL,
     )
@@ -156,10 +156,10 @@ def test_press_tool_still_exported():
 def test_press_sequentially_submit_unchanged():
     """pressSequentially with submit:true should still waitForCompletion + setIncludeSnapshot."""
     src = KEYBOARD_TS.read_text()
+    # Extract the entire pressSequentially tool definition
     ps_match = re.search(
-        r"const pressSequentially\s*=\s*defineTabTool\(\{.*?handle:\s*async\s*\(.*?\)\s*=>\s*\{(.*?)\n\s*\},\n\}\);",
+        r"const pressSequentially\s*=\s*defineTabTool\(\{[\s\S]*?handle:\s*async\s*\([^)]*\)\s*=>\s*\{([\s\S]*?)\n\s*\},\n\}\);",
         src,
-        re.DOTALL,
     )
     assert ps_match, "Could not find pressSequentially handle function"
     ps_body = ps_match.group(1)
@@ -167,3 +167,36 @@ def test_press_sequentially_submit_unchanged():
         "pressSequentially must still use waitForCompletion for submit"
     assert "setIncludeSnapshot" in ps_body, \
         "pressSequentially must still call setIncludeSnapshot for submit"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression checks
+# ---------------------------------------------------------------------------
+
+def test_repo_npm_install():
+    """Repo npm install succeeds (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "--include=dev"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed: {r.stderr[-500:]}"
+
+
+def test_repo_keyboard_file_valid():
+    """Keyboard.ts has valid structure with required exports (pass_to_pass)."""
+    content = KEYBOARD_TS.read_text()
+    # Check for required imports
+    assert "import { z }" in content, "Missing z import"
+    assert "import { defineTabTool }" in content, "Missing defineTabTool import"
+    assert "const press = defineTabTool" in content, "Missing press tool definition"
+    assert "const pressSequentially = defineTabTool" in content, "Missing pressSequentially tool definition"
+    assert "export default" in content, "Missing default export"
+
+
+def test_repo_skill_md_valid():
+    """SKILL.md has valid structure with required sections (pass_to_pass)."""
+    content = SKILL_MD.read_text()
+    # Check for required sections
+    assert "## Core workflow" in content, "Missing Core workflow section"
+    assert "## Commands" in content, "Missing Commands section"
+    assert "name: playwright-cli" in content, "Missing header frontmatter"

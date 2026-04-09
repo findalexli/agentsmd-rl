@@ -245,6 +245,53 @@ def test_skill_md_shows_ref_and_selector_examples():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - npm run lint-packages
+def test_repo_lint_packages():
+    """Repo workspace packages are consistent (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-packages failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - modified files syntax check
+def test_repo_modified_files_syntax():
+    """All modified TypeScript files have valid syntax (pass_to_pass)."""
+    modified_files = [
+        "packages/playwright-core/src/cli/daemon/commands.ts",
+        "packages/playwright-core/src/tools/tab.ts",
+        "packages/playwright-core/src/tools/tools.ts",
+        "packages/playwright-core/src/tools/snapshot.ts",
+        "packages/playwright-core/src/tools/evaluate.ts",
+        "packages/playwright-core/src/tools/screenshot.ts",
+        "packages/playwright-core/src/tools/verify.ts",
+        "packages/playwright-core/src/tools/form.ts",
+    ]
+    for f in modified_files:
+        p = Path(REPO) / f
+        assert p.exists(), f"File not found: {f}"
+        r = subprocess.run(
+            ["node", "--check", "--experimental-strip-types", str(p)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Syntax error in {f}:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - npm run build
+def test_repo_build():
+    """Repo builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression
 # ---------------------------------------------------------------------------
 

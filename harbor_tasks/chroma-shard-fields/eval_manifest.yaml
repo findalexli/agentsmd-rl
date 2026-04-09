@@ -1,0 +1,65 @@
+source:
+  repo: chroma-core/chroma
+  pr_number: 6810
+  base_commit: 2c83ca50da86f4f71d2c8b9a8ae9f17ec0ae6c20
+  merge_commit: 8a1aaccb3bc9a2c6942d22874ad94b3c04ff7ce9
+  title: "[ENH]: Pass down shard_index, num_shards and log_upper_bound_offset to query"
+
+# This repo has no applicable agent configs for the core code changes
+agent_config:
+  files: []
+  checks: []
+
+# Rubric is empty as this is a straightforward structural change
+rubric: []
+
+checks:
+  - id: "scan_struct_has_shard_fields"
+    description: "Scan struct has all three new fields: shard_index, num_shards, log_upper_bound_offset"
+    type: "f2p"
+    target: "structural"
+
+  - id: "scan_operator_proto_has_fields"
+    description: "ScanOperator protobuf message has all three new fields"
+    type: "f2p"
+    target: "structural"
+
+  - id: "scan_try_from_proto_conversion"
+    description: "TryFrom<ScanOperator> for Scan correctly converts all new fields"
+    type: "f2p"
+    target: "behavioral"
+
+  - id: "scan_try_into_proto_conversion"
+    description: "TryFrom<Scan> for ScanOperator correctly converts all new fields"
+    type: "f2p"
+    target: "behavioral"
+
+  - id: "num_shards_backward_compatibility"
+    description: "num_shards defaults to 1 when proto field is 0 (backward compatibility)"
+    type: "f2p"
+    target: "behavioral"
+
+  - id: "code_compiles"
+    description: "Rust code compiles successfully after changes"
+    type: "p2p"
+    target: "structural"
+
+  - id: "repo_cargo_check"
+    description: "Repo's cargo check passes for chroma-types"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "repo_cargo_clippy"
+    description: "Repo's cargo clippy passes for chroma-types"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "repo_cargo_test_types"
+    description: "Repo's cargo test passes for chroma-types library"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "repo_cargo_fmt"
+    description: "Repo's cargo fmt check passes for chroma-types"
+    type: "pass_to_pass"
+    origin: "repo_tests"

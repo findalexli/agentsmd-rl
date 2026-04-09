@@ -29,4 +29,4 @@ WORKDIR /workspace/ruff
 
 # Pre-build ty (debug) so the test environment has a binary ready.
 # The gold solve.sh applies the patch and rebuilds incrementally.
-RUN cargo build --bin ty
+RUN cargo install --locked cargo-nextest && cargo build --bin ty

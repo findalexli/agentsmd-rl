@@ -9,9 +9,38 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import subprocess
 import tomllib
+import os
 from pathlib import Path
 
 REPO = "/workspace/edgequake"
+EDGEQUAKE_CRATES = Path(REPO) / "edgequake"
+
+
+def _setup_rust_env():
+    """Ensure Rust and system dependencies are installed."""
+    # Install system dependencies
+    subprocess.run(
+        ["apt-get", "update"],
+        capture_output=True, timeout=60
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "--no-install-recommends", "pkg-config", "libssl-dev"],
+        capture_output=True, timeout=60
+    )
+    # Ensure rustup is installed
+    rustup_path = Path("/root/.cargo/bin/cargo")
+    if not rustup_path.exists():
+        r = subprocess.run(
+            ["curl", "--proto", "=https", "--tlsv1.2", "-sSf", "https://sh.rustup.rs"],
+            capture_output=True, timeout=60
+        )
+        if r.returncode == 0:
+            subprocess.run(
+                ["sh", "-s", "--", "-y"],
+                input=r.stdout,
+                capture_output=True, timeout=180
+            )
+    return "/root/.cargo/bin"
 
 
 def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
@@ -43,6 +72,44 @@ def test_existing_providers_intact():
     provider_names = [p["name"] for p in data["providers"]]
     for expected in ["openai", "ollama", "mock"]:
         assert expected in provider_names, f"Provider '{expected}' missing from models.toml"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks
+# ---------------------------------------------------------------------------
+
+
+def test_repo_cargo_fmt():
+    """Repo's Rust code formatting passes (pass_to_pass)."""
+    cargo_bin = _setup_rust_env()
+    env = {**os.environ, "PATH": f"{cargo_bin}:{os.environ.get('PATH', '')}"}
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--", "--check"],
+        capture_output=True, text=True, timeout=120, cwd=EDGEQUAKE_CRATES, env=env
+    )
+    assert r.returncode == 0, f"Cargo fmt failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_check():
+    """Repo's Rust code compiles (pass_to_pass)."""
+    cargo_bin = _setup_rust_env()
+    env = {**os.environ, "PATH": f"{cargo_bin}:{os.environ.get('PATH', '')}"}
+    r = subprocess.run(
+        ["cargo", "check", "--workspace", "--lib"],
+        capture_output=True, text=True, timeout=180, cwd=EDGEQUAKE_CRATES, env=env
+    )
+    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_test():
+    """Repo's Rust library tests pass (pass_to_pass)."""
+    cargo_bin = _setup_rust_env()
+    env = {**os.environ, "PATH": f"{cargo_bin}:{os.environ.get('PATH', '')}"}
+    r = subprocess.run(
+        ["cargo", "test", "--workspace", "--lib", "--no-fail-fast"],
+        capture_output=True, text=True, timeout=180, cwd=EDGEQUAKE_CRATES, env=env
+    )
+    assert r.returncode == 0, f"Cargo test failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

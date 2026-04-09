@@ -12,6 +12,26 @@ checks:
     origin: static
     description: "Modified files (routes.py, blocks.py) must parse without syntax errors"
 
+  - id: ruff_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must pass ruff linting (repo's CI standard)"
+
+  - id: test_repo_analytics
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's analytics tests pass (no external deps)"
+
+  - id: test_repo_http_server
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's HTTP server tests pass (no heavy deps)"
+
+  - id: test_repo_gradio_import
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Gradio imports correctly (basic smoke test)"
+
   - id: default_debug_false
     type: fail_to_pass
     origin: pr_diff
@@ -42,15 +62,5 @@ checks:
     origin: pr_diff
     description: "App class is still a FastAPI subclass with auth_dependency param"
 
-rubric:
-  - rule: "Python code is formatted with ruff. Run bash scripts/format_backend.sh."
-    source:
-      path: "AGENTS.md"
-      lines: "43"
-      commit: "4d97c68f8a5a55ba686ab5ce599b932b51754984"
-
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "4d97c68f8a5a55ba686ab5ce599b932b51754984"
+# No rubric rules - the ruff_check test already validates code formatting
+# and the gold solution is minimal/correct by design

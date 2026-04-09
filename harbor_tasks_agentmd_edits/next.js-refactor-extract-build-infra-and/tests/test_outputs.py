@@ -78,9 +78,9 @@ def test_experimental_exports_pipeable_stream():
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
+def test_skill_covers_v8_concepts():
+    """SKILL.md must cover V8 JIT optimization concepts."""
+    content = SKILL_PATH.read_text()
 
     # Must cover hidden classes / shapes (core V8 concept)
     assert "hidden class" in content or "shape" in content, (
@@ -104,6 +104,9 @@ def test_experimental_exports_pipeable_stream():
 
 
 # [config_edit] fail_to_pass
+def test_skill_has_examples_and_context():
+    """SKILL.md must have practical examples and Next.js context."""
+    content = SKILL_PATH.read_text()
 
     # Must have code blocks (practical examples)
     code_blocks = re.findall(r"```", content)
@@ -131,3 +134,35 @@ def test_existing_server_exports_preserved():
             assert f"exports.{export_name}" in content, (
                 f"{path.name} must still export {export_name}"
             )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_alias_files_syntax():
+    """Repo's webpack alias files have valid syntax (pass_to_pass)."""
+    # Install dependencies first (needed for any node operations)
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    # Install may fail on network but syntax check can still work
+
+    # Check syntax of all alias files in the webpack alias directory
+    alias_dir = Path(REPO) / "packages/next/src/build/webpack/alias"
+    for js_file in alias_dir.glob("*.js"):
+        r = subprocess.run(
+            ["node", "--check", str(js_file)],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, (
+            f"Syntax error in {js_file.name}: {r.stderr[-500:]}"
+        )

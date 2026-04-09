@@ -140,3 +140,40 @@ def test_eventinterface_structure_preserved():
     assert "timeStamp:" in content, "timeStamp key missing from EventInterface"
     assert "bubbles:" in content, "bubbles key missing from EventInterface"
     assert "defaultPrevented:" in content, "defaultPrevented key missing from EventInterface"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint checks pass on react-native-renderer package (pass_to_pass)."""
+    # Run lint only on the modified package to keep it fast
+    r = subprocess.run(
+        ["yarn", "lint", "packages/react-native-renderer"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow():
+    """Repo's Flow type checks pass on react-native-renderer package (pass_to_pass)."""
+    # Run flow check on the react-native-renderer package
+    r = subprocess.run(
+        ["yarn", "flow", "native"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests for react-native-renderer pass (pass_to_pass)."""
+    # Run tests for react-native-renderer specifically
+    r = subprocess.run(
+        ["bash", "-c", "NODE_ENV=development yarn test packages/react-native-renderer --ci --shard=1/1"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"

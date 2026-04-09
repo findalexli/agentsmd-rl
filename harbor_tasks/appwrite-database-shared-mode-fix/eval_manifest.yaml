@@ -1,0 +1,137 @@
+source:
+  repo: appwrite/appwrite
+  pr_number: 11750
+  base_commit: 6e1f0d57af305affe7dbebf9d71f19ec4d6f68e5
+  merge_commit: 7d9cf48ca3a5b647232fc712081dc43fa7e71637
+  title: "bump utopia-php/database to 5.3.19 and fix shared-mode CI failures"
+
+checks:
+  - id: "request_php_array_filter"
+    type: fail_to_pass
+    description: "request.php uses array_filter on _APP_DATABASE_SHARED_TABLES"
+    origin: behavioral
+
+  - id: "request_php_remove_int_cast"
+    type: fail_to_pass
+    description: "request.php removes (int) cast from setTenant() calls"
+    origin: behavioral
+
+  - id: "request_php_separate_pool_detection"
+    type: fail_to_pass
+    description: "request.php has separate pool detection for documentsdb/vectorsdb"
+    origin: behavioral
+
+  - id: "worker_php_array_filter"
+    type: fail_to_pass
+    description: "worker message.php uses array_filter on _APP_DATABASE_SHARED_TABLES"
+    origin: behavioral
+
+  - id: "worker_php_remove_int_cast"
+    type: fail_to_pass
+    description: "worker message.php removes (int) cast from setTenant() calls"
+    origin: behavioral
+
+  - id: "worker_php_separate_pool_detection"
+    type: fail_to_pass
+    description: "worker message.php has separate pool detection for documentsdb/vectorsdb"
+    origin: behavioral
+
+  - id: "create_php_documentsdb_array_filter"
+    type: fail_to_pass
+    description: "Create.php uses array_filter for documentsdb shared tables"
+    origin: behavioral
+
+  - id: "create_php_vectorsdb_array_filter"
+    type: fail_to_pass
+    description: "Create.php uses array_filter for vectorsdb shared tables"
+    origin: behavioral
+
+  - id: "create_php_empty_shared_tables_check"
+    type: fail_to_pass
+    description: "Create.php checks for empty shared tables before filtering pools"
+    origin: behavioral
+
+  - id: "create_php_exception_empty_pools"
+    type: fail_to_pass
+    description: "Create.php throws exception when no database pool available"
+    origin: behavioral
+
+  - id: "create_php_explicit_empty_check"
+    type: fail_to_pass
+    description: "Create.php explicitly checks for empty databases after filtering"
+    origin: behavioral
+
+  - id: "syntax_request_php"
+    type: pass_to_pass
+    description: "request.php has valid PHP syntax"
+    origin: agent_config
+    source:
+      file: "AGENTS.md"
+      lines: "22-23"
+      text: "composer format - Auto-format code (Pint, PSR-12)"
+
+  - id: "syntax_worker_php"
+    type: pass_to_pass
+    description: "worker message.php has valid PHP syntax"
+    origin: agent_config
+    source:
+      file: "AGENTS.md"
+      lines: "22-23"
+      text: "composer format - Auto-format code (Pint, PSR-12)"
+
+  - id: "syntax_create_php"
+    type: pass_to_pass
+    description: "Create.php has valid PHP syntax"
+    origin: agent_config
+    source:
+      file: "AGENTS.md"
+      lines: "22-23"
+      text: "composer format - Auto-format code (Pint, PSR-12)"
+
+  - id: "repo_composer_validate"
+    type: pass_to_pass
+    description: "Repo's composer.json is valid"
+    origin: repo_tests
+
+  - id: "repo_lint_request_php"
+    type: pass_to_pass
+    description: "Repo's request.php passes Pint linting"
+    origin: repo_tests
+
+  - id: "repo_lint_worker_message_php"
+    type: pass_to_pass
+    description: "Repo's worker message.php passes Pint linting"
+    origin: repo_tests
+
+  - id: "repo_lint_create_php"
+    type: pass_to_pass
+    description: "Repo's Create.php passes Pint linting"
+    origin: repo_tests
+
+  - id: "repo_phpstan_request_php"
+    type: pass_to_pass
+    description: "Repo's request.php passes PHPStan analysis"
+    origin: repo_tests
+
+  - id: "repo_phpstan_worker_message_php"
+    type: pass_to_pass
+    description: "Repo's worker message.php passes PHPStan analysis"
+    origin: repo_tests
+
+  - id: "repo_phpstan_create_php"
+    type: pass_to_pass
+    description: "Repo's Create.php passes PHPStan analysis"
+    origin: repo_tests
+
+rubric:
+  - criteria: "Code follows PSR-12 formatting conventions"
+    weight: 0.2
+
+  - criteria: "Proper handling of tenant type for shared tables configuration"
+    weight: 0.3
+
+  - criteria: "Fail-fast behavior when no database pool is available"
+    weight: 0.3
+
+  - criteria: "Cross-engine compatibility for documentsdb/vectorsdb pools"
+    weight: 0.2

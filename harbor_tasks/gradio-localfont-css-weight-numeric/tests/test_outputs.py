@@ -206,3 +206,49 @@ def test_ruff_format_python():
     assert result.returncode == 0, (
         f"ruff format --check failed on modified Python files:\n{result.stdout}\n{result.stderr}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_gradio_themes_ruff_check():
+    """Repo's ruff linter passes on gradio/themes/ directory (pass_to_pass)."""
+    import shutil
+    ruff = shutil.which("ruff")
+    if ruff is None:
+        ruff_result = subprocess.run(
+            [sys.executable, "-m", "ruff", "--version"],
+            capture_output=True,
+        )
+        if ruff_result.returncode != 0:
+            import pytest
+            pytest.skip("ruff not available in this environment")
+        ruff_cmd = [sys.executable, "-m", "ruff"]
+    else:
+        ruff_cmd = [ruff]
+
+    result = subprocess.run(
+        ruff_cmd + ["check", f"{REPO}/gradio/themes/utils/fonts.py", f"{REPO}/scripts/generate_theme.py"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert result.returncode == 0, f"ruff check failed:\n{result.stdout}\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+
+# [repo_tests] pass_to_pass
+def test_gradio_theme_tests():
+    """Repo's theme-related tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", "test/test_theme_sharing.py", "-v", "-k", "not test_theme_builder_launches", "-x"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Theme tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_gradio_fonts_module_imports():
+    """Fonts module can be imported without errors (pass_to_pass)."""
+    result = subprocess.run(
+        [sys.executable, "-c", "from gradio.themes.utils.fonts import LocalFont, GoogleFont, Font; print('OK')"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Fonts module import failed:\n{result.stderr}"

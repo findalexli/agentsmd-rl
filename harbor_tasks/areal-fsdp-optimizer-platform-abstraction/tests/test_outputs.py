@@ -17,6 +17,18 @@ FILE = f"{REPO}/areal/engine/fsdp_utils/optimizer.py"
 
 
 # ---------------------------------------------------------------------------
+# CI Tool Installation (for repo-level pass-to-pass tests)
+# ---------------------------------------------------------------------------
+
+def _ensure_ruff():
+    """Ensure ruff is installed for linting/formatting checks."""
+    try:
+        subprocess.run(["ruff", "--version"], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, check=True)
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -66,6 +78,28 @@ def test_syntax_check():
     """optimizer.py must parse as valid Python."""
     source = _read_source()
     ast.parse(source)
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's ruff linting passes on optimizer.py (pass_to_pass)."""
+    _ensure_ruff()
+    r = subprocess.run(
+        ["ruff", "check", FILE],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff formatting check passes on optimizer.py (pass_to_pass)."""
+    _ensure_ruff()
+    r = subprocess.run(
+        ["ruff", "format", "--check", FILE],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------
@@ -208,27 +242,48 @@ for node in ast.walk(tree):
 assert func_src is not None, "step not found"
 
 accessed = []
+
+class _Stream:
+    def __enter__(self): return self
+    def __exit__(self, *args, **kwargs): pass
+    def wait_event(self, *args, **kwargs): pass
+    def record_event(self, *args, **kwargs): pass
+    def synchronize(self, *args, **kwargs): pass
+    def __call__(self, *args, **kwargs): return _Stream()
+
 class _Tracker:
     def __getattr__(self, name):
         accessed.append(name)
-        class _Ctx:
-            def __enter__(self): return self
-            def __exit__(self, *a): pass
-            def __call__(self, *a, **kw): return _Ctx()
-        return _Ctx()
+        return _Stream()
+
+class _MockEvent:
+    pass
 
 class _MockSelf:
     def __init__(self):
         self._layer_param_groups = [None] * 3
         self.prefetch_layers = 1
         self.device = "cpu"
-        self._h2d_stream = type('S', (), {
-            'record_event': lambda *a: None,
-        })()
-        self._d2h_stream = type('S', (), {
-            'wait_event': lambda *a: None,
-            'record_event': lambda *a: None,
-        })()
+        self._h2d_stream = _Stream()
+        self._d2h_stream = _Stream()
+        self._compute_end_events = [_MockEvent() for _ in range(3)]
+        self._h2d_end_events = [_MockEvent() for _ in range(3)]
+
+    def _prefetch_layer(self, idx):
+        return {
+            "device_p": type("T", (), {"record_stream": lambda *a, **kw: None})(),
+            "device_g": type("T", (), {"record_stream": lambda *a, **kw: None})(),
+            "device_states": {},
+        }
+
+    def _compute_for_layer(self, states):
+        pass
+
+    def _offload_layer(self, states):
+        pass
+
+    def _record_streams_for_layer(self, states, *streams):
+        pass
 
 class _MockTorch:
     class cuda:
@@ -242,9 +297,10 @@ ns = {
 try:
     exec(func_src, ns)
     ns["step"](_MockSelf())
-except Exception:
-    pass  # Partial exec is fine; we check what was accessed
+except Exception as e:
+    print(f"Exception (may be expected): {e}")
 
+# Check that we got far enough to call the key platform methods
 assert "current_stream" in accessed, f"current_platform.current_stream not called in step(): {accessed}"
 assert "empty_cache" in accessed, f"current_platform.empty_cache not called in step(): {accessed}"
 print("PASS")
@@ -428,4 +484,4 @@ def test_no_heavy_toplevel_imports():
             if pkg in heavy_packages:
                 raise AssertionError(
                     f"Heavy dep '{node.module}' imported at module level (line {node.lineno})"
-                )
+                    )

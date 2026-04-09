@@ -200,3 +200,65 @@ def test_lru_writeback_block_exists():
     assert miss_comment in content or "// Misses:" in content, (
         "Missing comment about miss handling - this is the key part of the fix"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base AND fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_hisparse_cuh_structure():
+    """hisparse.cuh must have substantial structure (pass_to_pass)."""
+    content = Path(TARGET_FILE).read_text()
+
+    # Basic structure checks
+    assert "__global__ void load_cache_to_device_buffer_kernel" in content, (
+        "Missing kernel function declaration"
+    )
+    assert "__syncthreads()" in content, "Missing CUDA synchronization"
+    assert "req_lru_slots" in content, "Missing req_lru_slots array"
+
+    # Count lines - should be substantial (300+ lines for a real implementation)
+    lines = content.split("\n")
+    assert len(lines) > 300, f"hisparse.cuh seems truncated ({len(lines)} lines)"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_syntax_check():
+    """Python files in jit_kernel must have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Install may fail if already installed, that's okay
+
+    r = subprocess.run(
+        ["ruff", "check", "--select=E9,F63,F7,F82", f"{REPO}/python/sglang/jit_kernel/"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff syntax check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black_format_check():
+    """hisparse.py must be properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+    r = subprocess.run(
+        ["black", "--check", f"{REPO}/python/sglang/jit_kernel/hisparse.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stderr}"

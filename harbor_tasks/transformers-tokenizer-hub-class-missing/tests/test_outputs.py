@@ -168,3 +168,40 @@ def test_no_copied_from_blocks_modified():
             assert "# Copied from" not in line, (
                 "A '# Copied from' block was modified"
             )
+
+
+# ---------------------------------------------------------------------------
+# Additional pass_to_pass (repo_tests) — CI/CD gates discovered from Makefile
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — auto mappings sorted
+def test_repo_sort_auto_mappings():
+    """Auto mappings must be sorted (make check-repo style gate)."""
+    r = subprocess.run(
+        ["python", "utils/sort_auto_mappings.py", "--check_only"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"sort_auto_mappings check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — tokenization_auto imports work
+def test_repo_tokenization_auto_imports():
+    """Tokenization auto module imports must work (repo import check)."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            "from transformers.models.auto.tokenization_auto import "
+            "TOKENIZER_MAPPING_NAMES, MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS; "
+            "assert len(TOKENIZER_MAPPING_NAMES) > 0; "
+            "assert len(MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS) > 0",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Tokenization auto imports failed:\n{r.stderr}"

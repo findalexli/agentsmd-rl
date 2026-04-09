@@ -41,6 +41,27 @@ checks:
       lines: "16"
       commit: "c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87"
 
+  # Pass-to-pass checks — repo CI/CD tests that must pass on base AND fix
+  - id: test_repo_cargo_check_uv_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "uv-build crate compiles cleanly with cargo check"
+
+  - id: test_repo_cargo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rust code formatting is correct (cargo fmt --check)"
+
+  - id: test_repo_cargo_clippy_uv_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "uv-build crate passes clippy linting"
+
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python scripts in scripts/ have valid syntax"
+
 rubric:
   - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
     source:

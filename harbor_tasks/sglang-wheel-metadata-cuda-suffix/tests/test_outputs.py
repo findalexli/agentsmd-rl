@@ -17,6 +17,7 @@ import zipfile
 from pathlib import Path
 
 SCRIPT = "/repo/sgl-kernel/rename_wheels.sh"
+REPO = "/repo"
 
 # Cleanup any leftover fake CUDA dirs from previous test runs
 _CUDA_DIRS_TO_MANAGE = [
@@ -170,6 +171,34 @@ def test_syntax_check():
     assert r.returncode == 0, (
         f"Bash syntax error in {SCRIPT}:\n{r.stderr.decode()}"
     )
+
+
+# [repo_tests] pass_to_pass — shellcheck linting
+def test_shellcheck_rename_wheels():
+    """Repo's shellcheck on rename_wheels.sh passes (pass_to_pass)."""
+    # Install shellcheck if not available
+    try:
+        subprocess.run(["shellcheck", "--version"], capture_output=True, timeout=5)
+    except FileNotFoundError:
+        subprocess.run(
+            ["apt-get", "update", "-qq"],
+            capture_output=True, timeout=30
+        )
+        subprocess.run(
+            ["apt-get", "install", "-y", "-qq", "shellcheck"],
+            capture_output=True, timeout=60
+        )
+    r = subprocess.run(
+        ["shellcheck", "--severity=error", SCRIPT],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shellcheck errors:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — script is executable
+def test_rename_wheels_executable():
+    """rename_wheels.sh must be executable (pass_to_pass)."""
+    assert os.access(SCRIPT, os.X_OK), f"{SCRIPT} is not executable"
 
 
 # ---------------------------------------------------------------------------

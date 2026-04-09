@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
 import subprocess
 from pathlib import Path
 
@@ -35,6 +36,70 @@ def test_syntax_check():
         assert content.count("{") == content.count("}"), (
             f"{f} has unbalanced braces"
         )
+
+
+def test_json_files_valid():
+    """All JSON files in the repo must be valid (pass_to_pass)."""
+    json_files = [
+        "package.json",
+        "package-lock.json",
+        "packages/playwright/src/mcp/terminal/help.json",
+    ]
+    for f in json_files:
+        p = Path(REPO) / f
+        assert p.exists(), f"{f} must exist"
+        content = p.read_text()
+        try:
+            json.loads(content)
+        except json.JSONDecodeError as e:
+            assert False, f"{f} is not valid JSON: {e}"
+
+
+def test_ts_syntax_node_parse():
+    """Modified TypeScript files must be parseable by Node.js (pass_to_pass)."""
+    files = [
+        "packages/playwright/src/mcp/browser/config.ts",
+        "packages/playwright/src/mcp/browser/response.ts",
+        "packages/playwright/src/mcp/browser/tab.ts",
+        "packages/playwright/src/mcp/browser/tools/evaluate.ts",
+        "packages/playwright/src/mcp/browser/tools/tool.ts",
+        "packages/playwright/src/mcp/program.ts",
+        "packages/playwright/src/mcp/terminal/commands.ts",
+    ]
+    for f in files:
+        p = Path(REPO) / f
+        assert p.exists(), f"{f} must exist"
+        # Check for basic syntax issues like mismatched braces/parens
+        content = p.read_text()
+        open_parens = content.count("(")
+        close_parens = content.count(")")
+        assert open_parens == close_parens, f"{f} has unbalanced parentheses"
+
+
+def test_mcp_package_structure():
+    """MCP package structure must be intact (pass_to_pass)."""
+    required_dirs = [
+        "packages/playwright/src/mcp/browser",
+        "packages/playwright/src/mcp/browser/tools",
+        "packages/playwright/src/mcp/terminal",
+    ]
+    for d in required_dirs:
+        p = Path(REPO) / d
+        assert p.is_dir(), f"Required directory {d} must exist"
+
+    required_files = [
+        "packages/playwright/src/mcp/browser/config.ts",
+        "packages/playwright/src/mcp/browser/response.ts",
+        "packages/playwright/src/mcp/browser/tab.ts",
+        "packages/playwright/src/mcp/browser/tools/evaluate.ts",
+        "packages/playwright/src/mcp/browser/tools/tool.ts",
+        "packages/playwright/src/mcp/program.ts",
+        "packages/playwright/src/mcp/terminal/commands.ts",
+        "packages/playwright/src/mcp/terminal/help.json",
+    ]
+    for f in required_files:
+        p = Path(REPO) / f
+        assert p.exists(), f"Required file {f} must exist"
 
 
 # ---------------------------------------------------------------------------

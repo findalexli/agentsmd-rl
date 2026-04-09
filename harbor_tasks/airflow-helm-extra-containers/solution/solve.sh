@@ -1,0 +1,394 @@
+#!/bin/bash
+set -e
+
+cd /workspace/airflow
+
+# Apply the gold patch
+cat << 'PATCH' | git apply -
+diff --git a/chart/docs/using-additional-containers.rst b/chart/docs/using-additional-containers.rst
+index 60ce810492655..2a9d82579178d 100644
+--- a/chart/docs/using-additional-containers.rst
++++ b/chart/docs/using-additional-containers.rst
+@@ -22,7 +22,7 @@ Sidecar Containers
+ ------------------
+
+ If you want to deploy your own sidecar container, you can add it through the ``extraContainers`` parameter.
+-You can define different containers for the scheduler, webserver, api server, worker, triggerer, dag processor, flower, create user job and migrate database job pods.
++You can define different containers for the scheduler, webserver/api-server, Kubernetes/Celery workers, triggerer, dag processor, flower, create user job and migrate database job pods.
+
+ For example, sidecars that sync Dags from object storage:
+
+@@ -34,15 +34,17 @@ For example, sidecars that sync Dags from object storage:
+        - name: s3-sync
+          image: my-company/s3-sync:latest
+          imagePullPolicy: Always
++
+    workers:
+-     extraContainers:
+-       - name: s3-sync
+-         image: my-company/s3-sync:latest
+-         imagePullPolicy: Always
++     kubernetes:
++       extraContainers:
++         - name: s3-sync
++           image: my-company/s3-sync:latest
++           imagePullPolicy: Always
+
+ .. note::
+
+-   If you use ``workers.extraContainers`` with ``KubernetesExecutor``, you are responsible for signaling
++   If you use ``workers.kubernetes.extraContainers`` (dedicated for ``KubernetesExecutor``), you are responsible for signaling
+    sidecars to exit when the main container finishes so Airflow can continue the worker shutdown process.
+
+
+diff --git a/chart/files/pod-template-file.kubernetes-helm-yaml b/chart/files/pod-template-file.kubernetes-helm-yaml
+index 5aae2d8fc94ce..e9108745a82c3 100644
+--- a/chart/files/pod-template-file.kubernetes-helm-yaml
++++ b/chart/files/pod-template-file.kubernetes-helm-yaml
+@@ -213,8 +213,8 @@ spec:
+         {{- include "custom_airflow_environment" . | indent 6 }}
+         {{- include "standard_airflow_environment" . | indent 6 }}
+     {{- end }}
+-    {{- if .Values.workers.extraContainers }}
+-      {{- tpl (toYaml .Values.workers.extraContainers) . | nindent 4 }}
++    {{- if or .Values.workers.kubernetes.extraContainers .Values.workers.extraContainers }}
++      {{- tpl (toYaml (.Values.workers.kubernetes.extraContainers | default .Values.workers.extraContainers)) . | nindent 4 }}
+     {{- end }}
+   {{- if or .Values.workers.kubernetes.priorityClassName .Values.workers.priorityClassName }}
+   priorityClassName: {{ .Values.workers.kubernetes.priorityClassName | default .Values.workers.priorityClassName }}
+diff --git a/chart/newsfragments/64739.significant.rst b/chart/newsfragments/64739.significant.rst
+new file mode 100644
+index 0000000000000..3ae49c41234e6
+--- /dev/null
++++ b/chart/newsfragments/64739.significant.rst
+@@ -0,0 +1 @@
++``workers.extraContainers`` field is now deprecated in favor of ``workers.celery.extraContainers`` and ``workers.kubernetes.extraContainers``. Please update your configuration accordingly.
+diff --git a/chart/templates/NOTES.txt b/chart/templates/NOTES.txt
+index 7728d1654f71b..840e55e43ed23 100644
+--- a/chart/templates/NOTES.txt
++++ b/chart/templates/NOTES.txt
+@@ -701,6 +701,14 @@ DEPRECATION WARNING:
+
+ {{- end }}
+
++{{- if not (empty .Values.workers.extraContainers) }}
++
++ DEPRECATION WARNING:
++    `workers.extraContainers` has been renamed to `workers.celery.extraContainers`/`workers.kubernetes.extraContainers`.
++    Please change your values as support for the old name will be dropped in a future release.
++
++{{- end }}
++
+ {{- if not (empty .Values.workers.runtimeClassName) }}
+
+  DEPRECATION WARNING:
+diff --git a/chart/values.schema.json b/chart/values.schema.json
+index a67e56b35af86..9809be9468b43 100644
+--- a/chart/values.schema.json
++++ b/chart/values.schema.json
+@@ -2293,7 +2293,7 @@
+                     "default": false
+                 },
+                 "extraContainers": {
+-                    "description": "Launch additional containers into Airflow Celery workers and pods created with pod-template-file (templated). Note, if used with KubernetesExecutor, you are responsible for signaling sidecars to exit when the main container finishes so Airflow can continue the worker shutdown process!",
++                    "description": "Launch additional containers into Airflow Celery workers and pods created with pod-template-file (templated) (deprecated, use ``workers.celery.extraContainers`` and/or ``workers.kubernetes.extraContainers`` instead). Note, if used with KubernetesExecutor, you are responsible for signaling sidecars to exit when the main container finishes so Airflow can continue the worker shutdown process!",
+                     "type": "array",
+                     "default": [],
+                     "items": {
+@@ -3380,6 +3380,14 @@
+                             ],
+                             "default": null
+                         },
++                        "extraContainers": {
++                            "description": "Launch additional containers into Airflow Celery worker (templated).",
++                            "type": "array",
++                            "default": [],
++                            "items": {
++                                "$ref": "#/definitions/io.k8s.api.core.v1.Container"
++                            }
++                        },
+                         "extraPorts": {
+                             "description": "Expose additional ports of Airflow Celery worker container.",
+                             "type": "array",
+@@ -3870,6 +3878,14 @@
+                             ],
+                             "default": null
+                         },
++                        "extraContainers": {
++                            "description": "Launch additional containers into pods created with pod-template-file (templated). Note, you are responsible for signaling sidecars to exit when the main container finishes so Airflow can continue the worker shutdown process!",
++                            "type": "array",
++                            "default": [],
++                            "items": {
++                                "$ref": "#/definitions/io.k8s.api.core.v1.Container"
++                            }
++                        },
+                         "nodeSelector": {
+                             "description": "Select certain nodes for pods created with pod-template-file.",
+                             "type": "object",
+diff --git a/chart/values.yaml b/chart/values.yaml
+index 651a6779aea59..b4f4499bac255 100644
+--- a/chart/values.yaml
++++ b/chart/values.yaml
+@@ -1042,6 +1042,10 @@ workers:
+
+   # Launch additional containers into Airflow Celery worker
+   # and pods created with pod-template-file (templated).
++  # (deprecated, use
++  #   `workers.celery.extraContainers` and/or
++  #   `workers.kubernetes.extraContainers`
++  # instead)
+   # Note: If used with KubernetesExecutor, you are responsible for signaling sidecars to exit when the main
+   # container finishes so Airflow can continue the worker shutdown process!
+   extraContainers: []
+@@ -1447,6 +1451,9 @@ workers:
+     # This setting tells Kubernetes that its ok to evict when it wants to scale a node down
+     safeToEvict: ~
+
++    # Launch additional containers into Airflow Celery worker (templated)
++    extraContainers: []
++
+     # Expose additional ports of Airflow Celery workers. These can be used for additional metric collection.
+     extraPorts: []
+
+@@ -1612,6 +1619,11 @@ workers:
+     # This setting tells Kubernetes that its ok to evict when it wants to scale a node down
+     safeToEvict: ~
+
++    # Launch additional containers into pods created with pod-template-file (templated).
++    # Note: You are responsible for signaling sidecars to exit when the main
++    # container finishes so Airflow can continue the worker shutdown process!
++    extraContainers: []
++
+     # Select certain nodes for pods created with pod-template-file
+     nodeSelector: {}
+
+diff --git a/helm-tests/tests/helm_tests/airflow_aux/test_pod_template_file.py b/helm-tests/tests/helm_tests/airflow_aux/test_pod_template_file.py
+index 376c3f25ff2fc..70a4f751cb8ce 100644
+--- a/helm-tests/tests/helm_tests/airflow_aux/test_pod_template_file.py
++++ b/helm-tests/tests/helm_tests/airflow_aux/test_pod_template_file.py
+@@ -1100,38 +1100,64 @@ class TestPodTemplateFile:
+             "name": "release-name-test-init-container",
+         }
+
+-    def test_should_add_extra_containers(self):
+-        docs = render_chart(
+-            values={
+-                "workers": {
++    @pytest.mark.parametrize(
++        "workers_values",
++        [
++            {"extraContainers": [{"name": "test-container", "image": "test-registry/test-repo:test-tag"}]},
++            {
++                "kubernetes": {
+                     "extraContainers": [
+                         {"name": "test-container", "image": "test-registry/test-repo:test-tag"}
+-                    ],
++                    ]
++                }
++            },
++            {
++                "extraContainers": [{"name": "container", "image": "repo:tag"}],
++                "kubernetes": {
++                    "extraContainers": [
++                        {"name": "test-container", "image": "test-registry/test-repo:test-tag"}
++                    ]
+                 },
+             },
++        ],
++    )
++    def test_should_add_extra_containers(self, workers_values):
++        docs = render_chart(
++            values={"workers": workers_values},
+             show_only=["templates/pod-template-file.yaml"],
+             chart_dir=self.temp_chart_dir,
+         )
+
+-        assert jmespath.search("spec.containers[-1]", docs[0]) == {
+-            "name": "test-container",
+-            "image": "test-registry/test-repo:test-tag",
+-        }
++        assert jmespath.search("spec.containers[1:]", docs[0]) == [
++            {
++                "name": "test-container",
++                "image": "test-registry/test-repo:test-tag",
++            }
++        ]
+
+-    def test_should_template_extra_containers(self):
+-        docs = render_chart_chart(
+-            values={
+-                "workers": {
+-                    "extraContainers": [{"name": "{{ .Release.Name }}-test-container"}],
+-                },
++    @pytest.mark.parametrize(
++        "workers_values",
++        [
++            {"extraContainers": [{"name": "{{ .Release.Name }}-test-container"}]},
++            {"kubernetes": {"extraContainers": [{"name": "{{ .Release.Name }}-test-container"}]}},
++            {
++                "extraContainers": [{"name": "{{ .Release.Name }}-test"}],
++                "kubernetes": {"extraContainers": [{"name": "{{ .Release.Name }}-test-container"}]},
+             },
++        ],
++    )
++    def test_should_template_extra_containers(self, workers_values):
++        docs = render_chart(
++            values={"workers": workers_values},
+             show_only=["templates/pod-template-file.yaml"],
+             chart_dir=self.temp_chart_dir,
+         )
+
+-        assert jmespath.search("spec.containers[-1]", docs[0]) == {
+-            "name": "release-name-test-container",
+-        }
++        assert jmespath.search("spec.containers[1:]", docs[0]) == [
++            {
++                "name": "release-name-test-container",
++            }
++        ]
+
+     def test_should_add_pod_labels(self):
+         docs = render_chart(
+diff --git a/helm-tests/tests/helm_tests/airflow_core/test_worker.py b/helm-tests/tests/helm_tests/airflow_core/test_worker.py
+index 03764d3d9e376..09ca0ee151c6a 100644
+--- a/helm-tests/tests/helm_tests/airflow_core/test_worker.py
++++ b/helm-tests/tests/helm_tests/airflow_core/test_worker.py
+@@ -135,23 +135,53 @@ class TestWorker:
+
+         assert jmespath.search("spec.revisionHistoryLimit", docs[0]) == expected
+
+-    def test_should_add_extra_containers(self):
++    @pytest.mark.parametrize(
++        "workers_values",
++        [
++            {
++                "extraContainers": [
++                    {"name": "{{ .Chart.Name }}-test-container", "image": "test-registry/test-repo:test-tag"}
++                ]
++            },
++            {
++                "celery": {
++                    "extraContainers": [
++                        {
++                            "name": "{{ .Chart.Name }}-test-container",
++                            "image": "test-registry/test-repo:test-tag",
++                        }
++                    ]
++                }
++            },
++            {
++                "extraContainers": [{"name": "test", "image": "repo:test"}],
++                "celery": {
++                    "extraContainers": [
++                        {
++                            "name": "{{ .Chart.Name }}-test-container",
++                            "image": "test-registry/test-repo:test-tag",
++                        }
++                    ]
++                },
++            },
++        ],
++    )
++    def test_should_add_extra_containers_with_template(self, workers_values):
+         docs = render_chart(
+             values={
+                 "executor": "CeleryExecutor",
+-                "workers": {
+-                    "extraContainers": [
+-                        {"name": "{{ .Chart.Name }}", "image": "test-registry/test-repo:test-tag"}
+-                    ],
+-                },
++                "workers": workers_values,
+             },
+             show_only=["templates/workers/worker-deployment.yaml"],
+         )
+
+-        assert jmespath.search("spec.template.spec.containers[-1]", docs[0]) == {
+-            "name": "airflow",
+-            "image": "test-registry/test-repo:test-tag",
+-        }
++        # [2:] -> Skipping worker and worker-log-groomer containers
++        assert jmespath.search("spec.template.spec.containers[2:]", docs[0]) == [
++            {
++                "name": "airflow-test-container",
++                "image": "test-registry/test-repo:test-tag",
++            }
++        ]
+
+     @pytest.mark.parametrize(
+         "workers_values",
+@@ -188,21 +218,6 @@ class TestWorker:
+             "whenDeleted": "Delete",
+         }
+
+-    def test_should_template_extra_containers(self):
+-        docs = render_chart(
+-            values={
+-                "executor": "CeleryExecutor",
+-                "workers": {
+-                    "extraContainers": [{"name": "{{ .Release.Name }}-test-container"}],
+-                },
+-            },
+-            show_only=["templates/workers/worker-deployment.yaml"],
+-        )
+-
+-        assert jmespath.search("spec.template.spec.containers[-1]", docs[0]) == {
+-            "name": "release-name-test-container"
+-        }
+-
+     @pytest.mark.parametrize(
+         "workers_values",
+         [
+diff --git a/helm-tests/tests/helm_tests/airflow_core/test_worker_sets.py b/helm-tests/tests/helm_tests/airflow_core/test_worker_sets.py
+index a77d78eb91c6b..9dad8b7ad93dc 100644
+--- a/helm-tests/tests/helm_tests/airflow_core/test_worker_sets.py
++++ b/helm-tests/tests/helm_tests/airflow_core/test_worker_sets.py
+@@ -2458,6 +2458,20 @@ class TestWorker:
+                     ],
+                 },
+             },
++            {
++                "celery": {
++                    "enableDefault": False,
++                    "extraContainers": [{"name": "test", "image": "test"}],
++                    "sets": [
++                        {
++                            "name": "set1",
++                            "extraContainers": [
++                                {"name": "{{ .Chart.Name }}", "image": "test-registry/test-repo:test-tag"}
++                            ],
++                        }
++                    ],
++                },
++            },
+         ],
+     )
+     def test_overwrite_extra_containers(self, workers_values):
+@@ -2468,13 +2482,13 @@ class TestWorker:
+             show_only=["templates/workers/worker-deployment.yaml"],
+         )
+
+-        containers = jmespath.search("spec.template.spec.containers", docs[0])
+-
+-        assert len(containers) == 3  # worker, worker-log-groomer, extra
+-        assert containers[-1] == {
+-            "name": "airflow",
+-            "image": "test-registry/test-repo:test-tag",
+-        }
++        # [2:] -> Skipping worker and worker-log-groomer containers
++        assert jmespath.search("spec.template.spec.containers[2:]", docs[0]) == [
++            {
++                "name": "airflow",
++                "image": "test-registry/test-repo:test-tag",
++            }
++        ]
+ PATCH
+
+# Verify the changes were applied
+echo "Verifying patch application..."
+if ! grep -q "workers.kubernetes.extraContainers" chart/files/pod-template-file.kubernetes-helm-yaml; then
+    echo "ERROR: Patch was not applied correctly"
+    exit 1
+fi
+
+echo "Patch applied successfully"

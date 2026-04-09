@@ -17,5 +17,8 @@ RUN git clone --filter=blob:none https://github.com/facebook/react.git /workspac
 
 WORKDIR /workspace/react
 
+# Install dependencies so repo tests can run
+RUN yarn install --frozen-lockfile
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

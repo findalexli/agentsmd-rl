@@ -1,11 +1,54 @@
 {
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-08T22:12:58.590670",
-  "sandbox_id": "ixqyrxtw3r6ow8aieskai",
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:37:09.882014",
+  "total_time": 5618.25,
+  "sandbox_id": "i0ssafk1ph2n93y7k1n1i",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 2393.41
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "ci_commands_found": [
+        "ruff check src/ --config=pyproject.toml (from .github/workflows/style.yaml)",
+        "ruff format --check (from .pre-commit-config.yaml)"
+      ],
+      "tests_added": [
+        "test_repo_ruff_lint - validates ruff lint passes on all source files",
+        "test_repo_ruff_format - validates ruff format passes on modified files"
+      ],
+      "test_results": {
+        "p2p_tests_passed": 4,
+        "p2p_tests_total": 4,
+        "f2p_tests_failed_as_expected": 5
+      }
+    },
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 4.43,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 5618.25,
+      "at": "2026-04-09T07:37:09.882014"
+    }
+  ]
 }

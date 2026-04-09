@@ -92,7 +92,7 @@ for json_input, expected_msg in test_cases:
 
     resp = captured["resp"]
     assert "error" in resp, f"Response missing 'error' key: {resp}"
-    assert resp["error"] == expected_msg, f"Expected '{expected_msg}', got '{resp['error']}'"
+    assert resp["error"] == expected_msg, f"Expected '{expected_msg}', got '{resp['error']}"
     assert "detail" not in resp, f"Found 'detail' key (should be 'error'): {resp}"
 
 print("PASS")
@@ -343,3 +343,44 @@ def test_no_print_statements():
         assert len(prints) == 0, (
             f"print() calls found in {path} at lines {prints} — use logger instead"
         )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass — from .github/workflows/pre-commit.yml
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "check"] + MODIFIED_FILES,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass — from .github/workflows/pre-commit.yml
+def test_repo_precommit_hooks():
+    """Repo's pre-commit hooks pass on modified files (pass_to_pass).
+
+    Skips network-dependent hooks (generate-cli-docs).
+    """
+    r = subprocess.run(
+        ["pip", "install", "-q", "pre-commit"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr}"
+
+    # Run pre-commit on just the modified files, skipping network-dependent hooks
+    files_str = " ".join(MODIFIED_FILES)
+    r = subprocess.run(
+        ["bash", "-c", f"SKIP=generate-cli-docs pre-commit run --files {files_str}"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit hooks failed:\n{r.stdout}\n{r.stderr}"

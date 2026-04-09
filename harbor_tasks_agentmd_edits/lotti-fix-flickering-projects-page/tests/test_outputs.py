@@ -146,3 +146,36 @@ def test_when_call_still_has_loading_error_data():
     assert "loading:" in when_block, ".when() must still have loading callback"
     assert "error:" in when_block, ".when() must still have error callback"
     assert "data:" in when_block, ".when() must still have data callback"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - from .github/workflows/type-check.yml
+def test_mypy_ai_proxy_service():
+    """Python type checking passes for ai-proxy-service (mypy)."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "cd /workspace/lotti/services/ai-proxy-service && "
+            "pip install -q mypy types-requests 2>/dev/null && "
+            "mypy . --ignore-missing-imports"
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MyPy type check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - from .github/workflows/python-tools-ci.yml
+def test_python_syntax_ai_proxy_service():
+    """Python files in ai-proxy-service have valid syntax."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "cd /workspace/lotti/services/ai-proxy-service && "
+            "find . -name '*.py' -exec python3 -m py_compile {} +"
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr[-500:]}"

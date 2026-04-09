@@ -16,7 +16,7 @@ PER_PAGE_DIR = f"{TEST_DIR}/app/per-page-config"
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — existing infrastructure checks
+# Pass-to-pass (static) - existing infrastructure checks
 # ---------------------------------------------------------------------------
 
 
@@ -30,7 +30,30 @@ def test_link_accordion_component_exists():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — code behavior tests
+# Pass-to-pass (repo_tests) - repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+
+def test_repo_prettier_segment_cache():
+    """Repo's Prettier check passes on segment-cache test files (pass_to_pass)."""
+    r = subprocess.run(
+        ["./node_modules/.bin/prettier", "--check", TEST_DIR],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_deps_install():
+    """Repo dependencies install cleanly (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dependencies install failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) - code behavior tests
 # ---------------------------------------------------------------------------
 
 
@@ -85,9 +108,6 @@ def test_test_uses_hub_navigation():
     assert test_file.exists(), "Test file must exist"
     content = test_file.read_text()
 
-    # Find the specific test that was deflaked (contains 'per-page value overrides global')
-    # Extract the section of the test between the describe block that has the stale time test
-    # Check that hub pages are referenced in the navigation pattern
     assert "/per-page-config/hub-a" in content, \
         "Test must navigate to hub-a instead of using browser.back()"
     assert "/per-page-config/hub-b" in content, \
@@ -95,24 +115,32 @@ def test_test_uses_hub_navigation():
     assert "/per-page-config/hub-c" in content, \
         "Test must navigate to hub-c instead of using browser.back()"
 
-    # Verify browser.back() is not used in the "overrides global" test section
-    # Find the test function content
-    test_start = content.find("per-page value overrides global")
-    assert test_start > 0, "Could not find the deflaked test"
+    # Check that the specific deflaked test (per-page value overrides global)
+    # doesn't use browser.back() - it should use hub navigation instead.
+    # Find the specific test and check only that section
+    import re
 
-    # Find the end of this test (next 'it(' or end of describe)
-    next_test = content.find("it(", test_start + 100)
-    if next_test < 0:
-        test_section = content[test_start:]
+    test_start = content.find("it('per-page value overrides global")
+    assert test_start > 0, "Could not find the deflaked test 'per-page value overrides global'"
+
+    # Find the end of this specific test (next it( or test( at same indentation level)
+    # Look for patterns that indicate the next test or end of describe block
+    next_test_pattern = r"\n  it\(|\n  test\(|\n}\)"
+    next_match = re.search(next_test_pattern, content[test_start + 50:])
+    if next_match:
+        test_section = content[test_start:test_start + 50 + next_match.start()]
     else:
-        test_section = content[test_start:next_test]
+        test_section = content[test_start:]
 
-    assert "browser.back()" not in test_section, \
-        "Test must not use browser.back() — use hub page navigation instead"
+    # Check for actual await browser.back() calls in this test section
+    code_pattern = r'await\s+browser\.back\(\)'
+    matches = re.findall(code_pattern, test_section)
+    assert len(matches) == 0, \
+        f"Test 'per-page value overrides global' must not use 'await browser.back()' - use hub page navigation instead. Found {len(matches)} occurrence(s)"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — config/instruction file update tests
+# Fail-to-pass (pr_diff) - config/instruction file update tests
 # ---------------------------------------------------------------------------
 
 
@@ -135,11 +163,8 @@ def test_router_act_skill_created():
     assert skill_path.exists(), "Router act skill file must exist"
     content = skill_path.read_text()
 
-    # Check frontmatter has required fields
     assert "name: router-act" in content, "SKILL.md must have name: router-act in frontmatter"
     assert "description:" in content, "SKILL.md must have description in frontmatter"
-
-    # Check core content patterns
     assert "LinkAccordion" in content, \
         "SKILL.md must document LinkAccordion pattern"
     assert "no-requests" in content, \
@@ -157,7 +182,6 @@ def test_skill_documents_no_requests_pattern():
     skill_path = Path(REPO) / ".agents/skills/router-act/SKILL.md"
     content = skill_path.read_text()
 
-    # Verify the no-requests pattern is properly documented
     assert "'no-requests'" in content, \
         "SKILL.md must document 'no-requests' string assertion"
     assert "includes" in content, \

@@ -105,3 +105,6 @@ index 54315ea2cdebf7..813276376d6c28 100644
      }
 
 PATCH
+
+# Copy the updated snapshot file
+cp /solution/UP008.py.snap /workspace/ruff/crates/ruff_linter/src/rules/pyupgrade/snapshots/ruff_linter__rules__pyupgrade__tests__UP008.py.snap

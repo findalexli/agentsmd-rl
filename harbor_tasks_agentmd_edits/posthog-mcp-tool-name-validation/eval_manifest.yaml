@@ -9,6 +9,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files have balanced braces
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP package TypeScript typecheck passes
+- id: test_repo_lint_tool_names
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP tool name linting passes
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP unit tests pass
 - id: tool_name_pattern_validation
   type: fail_to_pass
   origin: pr_diff
@@ -67,13 +79,29 @@ rubric:
     path: .agents/skills/implementing-mcp-tools/SKILL.md
     lines: 70-108
     commit: 6fe1d5dafe2218c2e35121466285017ecadaed60
-  reference: "## Tool naming constraints\n\nTool names and feature identifiers are\
-    \ validated at build time and in CI.\nViolations fail the build.\n\n### Tool names\n\
+  reference: "## Tool naming constraints\n\nTool names and feature identifiers are\n  \
+    validated at build time and in CI.\nViolations fail the build.\n\n### Tool names\n\
     \n- **Format**: lowercase kebab-case \u2014 only `[a-z0-9-]`, no leading/trailing\
     \ hyphens\n- **Length**: 52 characters or fewer\n- **Convention**: `domain-action`,\
     \ e.g. `cohorts-create`, `dashboard-get`, `feature-flags-list`\n\n### Feature\
-    \ identifiers\n\n- **Format**: lowercase snake*case \u2014 only `[a-z0-9*]`, must\
-    \ start with a letter\n- **Convention**: should match t"
+    \ identifiers\n\n- **Format**: lowercase snake*case \u2014 only `[a-z0-9*]`, must*\
+    start with a letter\n- **Convention**: should match the product folder name, e.g.\
+    \ `error_tracking`, `feature_flags`\n\n### Why 52 characters?\n\nMCP clients enforce\
+    \ different limits on tool names. The 52-char limit is the safe zone\nthat works\
+    \ across all known clients:\n\n| Client           | Limit                     \
+    \     | Notes                                                           \
+    \ |\n| ---------------- | ------------------------------ | --------------------------------------------------------------\
+    \ |\n| MCP spec (draft) | 1\u2013128 chars, `[A-Za-z0-9_\-.]` | Official recommendation,\
+    \ not enforced                            |\n| Claude Code      | 64 chars       \
+    \                | Hard limit; prefixes tool names with `mcp____`              \
+    \     |\n| Cursor           | 60 chars combined              | `server_name + tool_name`;\
+    \ tools over this are silently filtered |\n| OpenAI API       | `^[a-zA-Z0-9_-]+$`,\
+    \ 64 chars   | No dots allowed                                                 \
+    \ |\n\nWith the server name \"posthog\" (7 chars) plus a separator, tool names\
+    \ must stay at\nor below 52 characters to fit within Cursor's 60-char combined limit.\n\
+    \n### CI enforcement\n\n- `pnpm --filter=@posthog/mcp lint-tool-names` \u2014\
+    \ validates length and pattern for YAML and JSON definitions\n- A vitest test validates\
+    \ all runtime `TOOL_MAP` and `GENERATED_TOOL_MAP` entries\n"
 - rule: Handbook page documents feature identifier naming requirements
   source:
     path: docs/published/handbook/engineering/ai/implementing-mcp-tools.md

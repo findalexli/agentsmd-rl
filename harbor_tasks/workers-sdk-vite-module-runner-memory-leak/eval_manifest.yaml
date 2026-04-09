@@ -1,0 +1,35 @@
+version: "2.0"
+
+source:
+  repo: "cloudflare/workers-sdk"
+  pr: 13087
+  base_commit: "9fcdfca775d3d412abe7547d0833414599bab221"
+  merge_commit: "94243850d6240ef50dadd1a4820f5c8f8c65769b"
+
+checks:
+  - id: typescript_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Modified file must parse and contain expected structure"
+
+  - id: cleanup_on_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pendingCallbacks and callbackResults must be cleaned up when executeCallback throws"
+
+  - id: caller_cleans_up_pending_callbacks
+    type: fail_to_pass
+    origin: pr_diff
+    description: "runInRunnerObject must clean up pendingCallbacks within its own body"
+
+  - id: error_handling_around_rpc_call
+    type: fail_to_pass
+    origin: pr_diff
+    description: "runInRunnerObject must wrap the RPC call in try/catch or try/finally"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "runInRunnerObject has real logic, not just pass/return"
+
+rubric: []

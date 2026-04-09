@@ -206,3 +206,34 @@ def test_pipeline_has_required_functions():
     ]
     for func_name in required:
         assert func_name in content, f"Pipeline.ts must reference {func_name}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI/CD checks (p2p enrichment)
+# ---------------------------------------------------------------------------
+
+def test_repo_lint():
+    """Repo's ESLint passes on babel-plugin-react-compiler (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/compiler",
+    )
+    assert r.returncode == 0, f"ESLint failed:\\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes on babel-plugin-react-compiler (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/compiler",
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_jest():
+    """Repo's Jest tests pass on babel-plugin-react-compiler (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "jest"],
+        capture_output=True, text=True, timeout=180, cwd=f"{REPO}/compiler",
+    )
+    assert r.returncode == 0, f"Jest tests failed:\\n{r.stderr[-500:]}{r.stdout[-500:]}"

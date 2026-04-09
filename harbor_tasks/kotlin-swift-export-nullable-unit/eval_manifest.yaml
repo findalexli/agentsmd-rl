@@ -1,0 +1,84 @@
+source:
+  repo: https://github.com/JetBrains/kotlin
+  pr: 5749
+  base_commit: 2e2f6a81403366bb2c15c300005f637de413319e
+  merge_commit: 6d64ea9f4b8f79e9ba76129e85e6a44f57d35dc7
+
+checks:
+  # Fail-to-pass tests (behavioral - execute code to validate)
+  - id: test_asoptional_void_bridge_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: AsOptionalVoid bridge class exists with correct Swift/Kotlin/C type definitions (executes validation code)
+
+  - id: test_asoptional_void_value_conversions
+    type: fail_to_pass
+    origin: pr_diff
+    description: AsOptionalVoid has correct value conversion implementations for Kotlin and Swift sources (executes validation code)
+
+  - id: test_bridge_nominal_type_handles_void_in_optional
+    type: fail_to_pass
+    origin: pr_diff
+    description: bridgeNominalType handles AsVoid inside Optional wrapper correctly by returning AsOptionalVoid (executes validation code)
+
+  - id: test_bridge_nscollection_handles_asoptional_void
+    type: fail_to_pass
+    origin: pr_diff
+    description: bridgeAsNSCollectionElement handles AsOptionalVoid with AsObjCBridgedOptional wrapper (executes validation code)
+
+  - id: test_asoptional_void_error_message
+    type: fail_to_pass
+    origin: pr_diff
+    description: Error message properly mentions AsOptionalVoid for AsVoid in optional wrapper (executes validation code)
+
+  - id: test_asvoid_removed_from_todo_list
+    type: fail_to_pass
+    origin: pr_diff
+    description: AsVoid removed from TODO list in AsOptionalWrapper since it now has proper handling (executes validation code)
+
+  # Pass-to-pass tests
+  - id: test_type_bridging_file_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeBridging.kt has valid structure with correct package and Bridge sealed class
+
+  - id: test_repo_file_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository has expected directories and TypeBridging.kt exists
+
+  - id: test_type_bridging_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeBridging.kt has balanced braces/parens and valid Kotlin syntax (executes syntax validation)
+
+  - id: test_type_bridging_bridge_objects
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeBridging.kt contains all expected bridge infrastructure objects
+
+  - id: test_repo_swift_modules_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift export modules have valid build.gradle.kts and src structure
+
+  - id: test_integration_tests_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift export integration tests have proper directory structure
+
+rubric: []
+
+agent_config_rules:
+  - source: AGENTS.md
+    file: compiler/AGENTS.md
+    rules:
+      - "FIR prefix: When changes are mostly related to FIR (compiler/fir/), use `FIR: ` prefix in the commit subject line."
+      - "Test-before-fix: When fixing an issue and adding a test, commit the test data as a separate commit before the fix."
+  - source: CLAUDE.md
+    file: .ai/guidelines.md
+    rules:
+      - "BEFORE running tests, modifying, or investigating code — identify the area and READ its docs."
+      - "Use `-q` (quiet) flag to reduce output noise when running tests."
+      - "Reference YouTrack issues (KT-XXXXX) in commit messages when applicable."
+      - "Use `^KT-XXXXX Fixed` in body to auto-close issues."

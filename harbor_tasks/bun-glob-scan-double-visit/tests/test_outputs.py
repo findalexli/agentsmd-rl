@@ -73,6 +73,36 @@ def test_zig_files_balanced_braces():
         )
 
 
+
+# [repo_tests] pass_to_pass
+def test_repo_ban_words():
+    """Repo's ban-words check passes (pass_to_pass).
+
+    Validates that no banned patterns (e.g., std.debug.assert, usingnamespace,
+    undefined == comparisons) are present in the codebase.
+    From .github/workflows/format.yml CI pipeline.
+    """
+    r = subprocess.run(
+        ["bun", "./test/internal/ban-words.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ban-words check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass).
+
+    Validates TypeScript code compiles without errors.
+    From package.json scripts.typecheck.
+    """
+    r = subprocess.run(
+        ["bunx", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) -- core behavioral tests
 # ---------------------------------------------------------------------------

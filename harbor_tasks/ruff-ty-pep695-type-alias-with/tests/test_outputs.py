@@ -33,6 +33,51 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD tests that must pass on both base and fix
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_fmt():
+    """Rust code formatting check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_ty_python_semantic():
+    """Cargo check for ty_python_semantic crate passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty_python_semantic"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_clippy_ty_python_semantic():
+    """Cargo clippy for ty_python_semantic crate passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty_python_semantic", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_mdtest_with_sync():
+    """Markdown tests for with/sync module pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest", "with/sync", "--", "-q"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"mdtest for with/sync failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — file existence and basic integrity
 # ---------------------------------------------------------------------------
 
@@ -98,7 +143,7 @@ if func_start is None:
 func_body_lines = []
 depth = 0
 started = False
-for i in range(func_start, min(func_start + 200, len(lines))):
+for i in range(func_start, min(func_start + 300, len(lines))):
     line = lines[i]
     if "{{" in line:
         depth += line.count("{{")
@@ -116,7 +161,9 @@ for lineno, line in func_body_lines:
     stripped = line.strip()
     if "Type::TypeAlias" in stripped and "=>" in stripped:
         alias_lines.append(lineno)
-    if "no_instance_fallback" in stripped:
+    # Only match no_instance_fallback() calls in code, not in comments
+    # Look for "policy.no_instance_fallback()" pattern (with parentheses)
+    if "no_instance_fallback()" in stripped and not stripped.startswith("//"):
         fallback_lines.append(lineno)
 
 if not alias_lines:
@@ -170,13 +217,14 @@ if func_start is None:
 # Collect lines for each TypeAlias match arm
 # Check that each TypeAlias arm body contains value_type and member_lookup_with_policy
 in_typealias_arm = False
+in_arm_body = False
 arm_depth = 0
 arm_content = []
 found_delegation = False
 
 depth = 0
 started = False
-for i in range(func_start, min(func_start + 200, len(lines))):
+for i in range(func_start, min(func_start + 300, len(lines))):
     line = lines[i]
     depth += line.count("{{") - line.count("}}")
     if depth > 0:
@@ -185,19 +233,37 @@ for i in range(func_start, min(func_start + 200, len(lines))):
 
     if "Type::TypeAlias" in stripped and "=>" in stripped:
         in_typealias_arm = True
+        in_arm_body = False
         arm_depth = 0
         arm_content = [stripped]
         continue
 
     if in_typealias_arm:
-        arm_depth += line.count("{{") - line.count("}}")
+        # Check if we've reached the body of the arm
+        if not in_arm_body:
+            # Body starts after the => on the same line or next lines
+            in_arm_body = True
+            # If the arm started on a previous line, count braces in this line too
+            arm_depth += line.count("{{") - line.count("}}")
+        else:
+            arm_depth += line.count("{{") - line.count("}}")
+
         arm_content.append(stripped)
-        if arm_depth <= 0 and started:
+
+        # End of arm: either depth <= 0 (for brace-less arms, this means next match arm or end)
+        # OR line starts with another match pattern (Type::, _ if, etc.)
+        is_next_arm = (stripped.startswith("Type::") and "=>" in stripped) or \
+                      stripped.startswith("_ if") or \
+                      stripped.startswith("_ =>") or \
+                      stripped.startswith("}}")  # End of match block
+
+        if arm_depth <= 0 and (is_next_arm or not stripped or stripped.startswith("//")):
             # End of this match arm
             arm_text = " ".join(arm_content)
             if "value_type" in arm_text and "member_lookup_with_policy" in arm_text:
                 found_delegation = True
             in_typealias_arm = False
+            in_arm_body = False
 
     if started and depth <= 0:
         break
@@ -337,7 +403,7 @@ for i in range(func_start, min(func_start + 300, len(lines))):
         started = True
     if started:
         func_lines += 1
-        if re.search(r'Type::\w+', line.strip()):
+        if re.search(r'Type::\\w+', line.strip()):
             match_arms += 1
     depth -= line.count("}}")
     if started and depth <= 0:

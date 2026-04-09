@@ -52,7 +52,7 @@ if (blockStart !== -1) {
         if (foundBrace && braceCount === 0) { blockEnd = i + 1; break; }
     }
     const block = source.substring(blockStart, blockEnd);
-    eval(block);  // mutates `args` in this scope
+    eval(block);  // mutates args in this scope
     applied = true;
 }
 
@@ -94,8 +94,27 @@ def _normalize_run(run_val) -> list:
 
 
 # ---------------------------------------------------------------------------
-# pass_to_pass — gates / regression
+# pass_to_pass - gates / regression (including repo CI tests)
 # ---------------------------------------------------------------------------
+
+def test_repo_syntax_check():
+    """Repo's test/unit/electron/index.js must parse without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", str(INDEX_JS)],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax error in repo's index.js:\n{r.stderr}"
+
+
+def test_repo_unit_node_syntax():
+    """Repo's test/unit/node/index.js must parse without syntax errors (pass_to_pass)."""
+    node_index = Path(REPO) / "test" / "unit" / "node" / "index.js"
+    r = subprocess.run(
+        ["node", "--check", str(node_index)],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax error in test/unit/node/index.js:\n{r.stderr}"
+
 
 def test_syntax_check():
     """Modified JS file must parse without syntax errors."""
@@ -130,14 +149,14 @@ def test_non_ts_bare_args_not_converted():
 
 
 # ---------------------------------------------------------------------------
-# fail_to_pass — core behavioral changes from the PR
+# fail_to_pass - core behavioral changes from the PR
 # ---------------------------------------------------------------------------
 
 def test_bare_ts_file_becomes_run_arg():
     """A bare .ts file passed as a positional arg must be converted to --run."""
     result = _run_arg_test(["src/vs/editor/test/common/model.test.ts"])
     assert result["applied"], (
-        "index.js must have bare-file conversion logic (// Treat bare ...)"
+        "index.js must have bare-file conversion logic (// Treat bear ...)"
     )
     run = _normalize_run(result["run"])
     assert "src/vs/editor/test/common/model.test.ts" in run, (

@@ -23,6 +23,12 @@ checks:
       lines: "11"
       commit: "dc36d5601c2c3e7aa191baed6db231d6a7ca5e04"
 
+  # Repo CI compliance — no banned patterns in modified files
+  - id: test_no_std_debug_assert
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Zig files do not use std.debug.assert (bun.assert preferred)"
+
   # Code behavior — Watcher.zig lazy file watching
   - id: watcher_add_file_by_path_slow
     type: fail_to_pass

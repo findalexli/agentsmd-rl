@@ -12,6 +12,47 @@ from pathlib import Path
 
 REPO = "/workspace/react"
 PLAYGROUND = f"{REPO}/compiler/apps/playground"
+COMPILER = f"{REPO}/compiler"
+BABEL_PLUGIN = f"{COMPILER}/packages/babel-plugin-react-compiler"
+
+
+def _ensure_compiler_deps():
+    """Install compiler dependencies if not already installed."""
+    if not Path(f"{COMPILER}/node_modules/.bin/eslint").exists():
+        subprocess.run(
+            ["yarn", "install", "--frozen-lockfile", "--network-concurrency", "1"],
+            cwd=COMPILER,
+            capture_output=True,
+            timeout=300,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD verification tests
+# These ensure the fix doesn't break existing functionality.
+# ---------------------------------------------------------------------------
+
+
+def test_repo_babel_plugin_eslint():
+    """Repo's babel-plugin-react-compiler ESLint passes (pass_to_pass)."""
+    _ensure_compiler_deps()
+    r = subprocess.run(
+        ["./node_modules/.bin/eslint", "packages/babel-plugin-react-compiler/src", "--ext", ".ts"],
+        capture_output=True, text=True, timeout=120, cwd=COMPILER,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_babel_plugin_unit_tests():
+    """Repo's babel-plugin-react-compiler unit tests pass (pass_to_pass)."""
+    _ensure_compiler_deps()
+    r = subprocess.run(
+        ["./node_modules/.bin/jest",
+         "--testPathPattern=Result-test|envConfig-test|parseConfigPragma-test|DisjointSet-test|Logger-test",
+         "--no-coverage"],
+        capture_output=True, text=True, timeout=120, cwd=BABEL_PLUGIN,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

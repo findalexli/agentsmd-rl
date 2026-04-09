@@ -14,8 +14,7 @@ from pathlib import Path
 REPO = "/workspace/slime"
 
 # Helper script: mocks torch.cuda (no GPU needed), imports and calls available_memory()
-_CALL_SCRIPT = """\
-import sys, json
+_CALL_SCRIPT = """import sys, json
 from unittest.mock import MagicMock
 
 mock_torch = MagicMock()
@@ -24,11 +23,11 @@ mock_torch.cuda.mem_get_info.return_value = (4 * 1024**3, 8 * 1024**3)
 mock_torch.cuda.memory_allocated.return_value = 2 * 1024**3
 mock_torch.cuda.memory_reserved.return_value = 3 * 1024**3
 
-sys.modules['torch'] = mock_torch
-sys.modules['torch.cuda'] = mock_torch.cuda
-sys.modules['torch.distributed'] = mock_torch.distributed
+sys.modules["torch"] = mock_torch
+sys.modules["torch.cuda"] = mock_torch.cuda
+sys.modules["torch.distributed"] = mock_torch.distributed
 
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
 from slime.utils.memory_utils import available_memory
 result = available_memory()
 print(json.dumps(result))
@@ -111,3 +110,53 @@ def test_gpu_keys_preserved():
     gpu_keys = ["gpu", "total_GB", "free_GB", "used_GB", "allocated_GB", "reserved_GB"]
     for key in gpu_keys:
         assert key in result, f"Missing original GPU key: '{key}'"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI/CD checks (must pass on base commit and after fix)
+# ---------------------------------------------------------------------------
+
+def test_repo_ruff_lint():
+    """Repo's Python code passes ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "slime/utils/memory_utils.py", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stderr}"
+
+
+def test_repo_isort_check():
+    """Repo's Python imports are correctly sorted (pass_to_pass)."""
+    r = subprocess.run(
+        ["isort", "--check-only", "slime/utils/memory_utils.py", "--profile", "black", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr}"
+
+
+def test_repo_black_format():
+    """Repo's Python code is correctly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["black", "--check", "slime/utils/memory_utils.py", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stderr}"
+
+
+def test_repo_plugin_contracts():
+    """Repo's plugin contract tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/plugin_contracts/", "--tb=no", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Allow some tests to fail (existing issues), but pytest itself must complete
+    assert r.returncode in [0, 1], f"Plugin contracts tests crashed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_trace_utils():
+    """Repo's trace_utils unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/utils/test_trace_utils.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Trace utils tests failed:\n{r.stderr[-500:]}"

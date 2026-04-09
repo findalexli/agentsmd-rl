@@ -50,15 +50,22 @@ checks:
       lines: "76"
       commit: "af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca"
 
-rubric:
-  - rule: "Try hard to avoid patterns that require panic!, unreachable!, or .unwrap(). Instead, try to encode those constraints in the type system."
-    source:
-      path: "AGENTS.md"
-      lines: "79"
-      commit: "af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca"
+  - id: repo_cargo_check_ty_project
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cargo check -p ty_project passes (repo CI)"
 
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "AGENTS.md"
-      lines: "75"
-      commit: "af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca"
+  - id: repo_cargo_check_ty
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cargo check -p ty passes (repo CI)"
+
+  - id: repo_cargo_test_ty_project
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cargo test -p ty_project passes (repo CI)"
+
+  - id: repo_cargo_clippy_ty_project
+    type: pass_to_pass
+    origin: repo_tests
+    description: "cargo clippy -p ty_project --all-targets --all-features passes (repo CI)"

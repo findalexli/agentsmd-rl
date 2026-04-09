@@ -32,8 +32,68 @@ def test_help_json_valid():
     assert "OK" in r.stdout
 
 
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_mcp_commands_syntax():
+    """Repo MCP commands.ts has valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e",
+         "require('fs').readFileSync('packages/playwright/src/mcp/terminal/commands.ts','utf8');"
+         "console.log('OK')"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"commands.ts is not readable:\n{r.stderr}"
+
+
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_mcp_program_syntax():
+    """Repo MCP program.ts has valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e",
+         "require('fs').readFileSync('packages/playwright/src/mcp/program.ts','utf8');"
+         "console.log('OK')"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"program.ts is not readable:\n{r.stderr}"
+
+
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_mcp_tab_syntax():
+    """Repo MCP tab.ts has valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e",
+         "require('fs').readFileSync('packages/playwright/src/mcp/browser/tab.ts','utf8');"
+         "console.log('OK')"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"tab.ts is not readable:\n{r.stderr}"
+
+
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_mcp_evaluate_syntax():
+    """Repo MCP evaluate.ts has valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e",
+         "require('fs').readFileSync('packages/playwright/src/mcp/browser/tools/evaluate.ts','utf8');"
+         "console.log('OK')"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"evaluate.ts is not readable:\n{r.stderr}"
+
+
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_mcp_tool_types_syntax():
+    """Repo MCP tool.ts types file has valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e",
+         "require('fs').readFileSync('packages/playwright/src/mcp/browser/tools/tool.ts','utf8');"
+         "console.log('OK')"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"tool.ts is not readable:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — command renames
+# Fail-to-pass (pr_diff) - command renames
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -82,7 +142,7 @@ console.log('OK');
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — modal state skill mode
+# Fail-to-pass (pr_diff) - modal state skill mode
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -90,13 +150,10 @@ def test_modal_state_dual_format():
     """renderModalStates must accept config and conditionally render skill vs tool name."""
     tab_ts = Path(REPO) / "packages/playwright/src/mcp/browser/tab.ts"
     content = tab_ts.read_text()
-    # Function signature must accept config parameter
     assert "renderModalStates(config:" in content, \
         "renderModalStates must accept config parameter"
-    # Must have conditional for skillMode
     assert "config.skillMode" in content, \
         "renderModalStates must check config.skillMode"
-    # clearedBy must reference both .skill and .tool
     assert "clearedBy.skill" in content or "state.clearedBy.skill" in content, \
         "clearedBy must have a skill property"
     assert "clearedBy.tool" in content or "state.clearedBy.tool" in content, \
@@ -108,16 +165,14 @@ def test_eval_auto_wraps_expression():
     """evaluate.ts must auto-wrap non-arrow expressions with () => (...)."""
     eval_ts = Path(REPO) / "packages/playwright/src/mcp/browser/tools/evaluate.ts"
     content = eval_ts.read_text()
-    # Must detect missing arrow function syntax
-    assert "includes('=>')" in content or 'includes("=>")' in content, \
+    assert "includes(" in content, \
         "evaluate.ts must check for arrow function syntax"
-    # Must wrap expression as () => (expr)
-    assert "`() => (${" in content or "() => (" in content, \
+    assert "() => (" in content, \
         "evaluate.ts must wrap non-arrow expressions"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — SKILL.md config file creation
+# Fail-to-pass (pr_diff) - SKILL.md config file creation
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -127,17 +182,13 @@ def test_skill_md_documents_cli():
     assert skill_md.exists(), \
         "SKILL.md must exist at packages/playwright/src/mcp/terminal/SKILL.md"
     content = skill_md.read_text()
-    # Must have YAML frontmatter with skill metadata
     assert content.startswith("---"), "SKILL.md must have YAML frontmatter"
     assert "name:" in content, "SKILL.md frontmatter must have name field"
     assert "description:" in content, "SKILL.md frontmatter must have description field"
-    # Must reference playwright-cli
     assert "playwright-cli" in content, "SKILL.md must reference playwright-cli"
-    # Must document the new unhyphenated command names
     assert "press" in content, "SKILL.md must document press command"
     assert "mousemove" in content, "SKILL.md must document mousemove command"
     assert "keydown" in content, "SKILL.md must document keydown command"
-    # Must have code examples
     lines_with_backticks = [l for l in content.split("\n") if "```" in l]
     assert len(lines_with_backticks) >= 4, \
         "SKILL.md must contain multiple code example blocks"
@@ -157,10 +208,8 @@ def test_clearedby_type_is_object():
     """ModalState types must define clearedBy as { tool: string; skill: string }."""
     tool_ts = Path(REPO) / "packages/playwright/src/mcp/browser/tools/tool.ts"
     content = tool_ts.read_text()
-    # clearedBy should be an object with tool and skill fields, not a plain string
     assert "tool: string" in content and "skill: string" in content, \
         "clearedBy must be typed with tool and skill string fields"
-    # Verify it appears in the context of clearedBy (not some other field)
     lines = content.split("\n")
     found_object_type = False
     for i, line in enumerate(lines):

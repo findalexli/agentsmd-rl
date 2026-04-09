@@ -33,7 +33,7 @@ def _bun_check(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # Gates (pass_to_pass, static) — compilation checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+# [static] pass_to_pass — repo's typecheck (from package.json)
 def test_typecheck():
     """All modified packages must pass type checking."""
     r = subprocess.run(
@@ -44,6 +44,19 @@ def test_typecheck():
         timeout=120,
     )
     assert r.returncode == 0, f"Type check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass — repo's typecheck via turbo (from GitHub CI)
+def test_repo_typecheck():
+    """Repo's bun typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "typecheck"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Repo typecheck failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

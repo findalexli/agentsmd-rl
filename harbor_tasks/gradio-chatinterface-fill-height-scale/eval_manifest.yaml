@@ -75,6 +75,30 @@ checks:
       lines: "44"
       commit: "bb127c74bd6301e3782e0ce4744161ae976a8481"
 
+  - id: repo_chat_interface_unit
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ChatInterface unit tests pass (from test-python.yml)"
+    source:
+      path: ".github/workflows/test-python.yml"
+      command: "python -m pytest test/test_chat_interface.py -k '<unit_tests>'"
+
+  - id: repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on modified file (from test-python.yml)"
+    source:
+      path: ".github/workflows/test-python.yml"
+      command: "python -m ruff format --check gradio/chat_interface.py"
+
+  - id: repo_generate_skill
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's skill generation check passes (from test-hygiene.yml)"
+    source:
+      path: ".github/workflows/test-hygiene.yml"
+      command: "python scripts/generate_skill.py --check"
+
 rubric:
   - rule: "Be consistent with the style of the surrounding code."
     source:

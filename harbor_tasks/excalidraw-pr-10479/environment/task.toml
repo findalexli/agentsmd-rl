@@ -1,0 +1,23 @@
+[task]
+name = "excalidraw-binding-angle-lock"
+title = "Fix angle locking for inside-bound linear elements"
+description = "When dragging a linear element (arrow/line) endpoint with Shift held (angle lock), the angle should be constrained to discrete angles even when the endpoint is being bound to another element. Currently, the angle lock is incorrectly disabled when binding is active."
+owner = "excalidraw"
+repo = "excalidraw"
+pr_number = 10479
+difficulty = "medium"
+tags = ["typescript", "binding", "angle-lock", "arrow", "interaction"]
+
+[environment]
+base_image = "node:22-slim"
+setup_time_seconds = 300  # Monorepo with yarn install
+
+[agent]
+timeout_seconds = 1800  # 30 minutes for understanding and fixing
+
+[verifier]
+timeout_seconds = 120
+
+[solution]
+type = "patch"
+file = "solve.sh"

@@ -1,58 +1,81 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-04-01T12:00:00-07:00",
-      "runner": "manual (v2 remake)",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T01:53:16.402642",
+  "total_time": 959.0,
+  "sandbox_id": "irvof7iwmu0q1nmge3nm5",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All checks pass. Fixed bogus rubric rule referencing non-existent AGENTS.md file - removed rubric section since this task only requires code changes.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 51.17
+    },
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09",
+      "status": "completed",
       "docker_build": true,
-      "gold_score": 1,
-      "nop_score": 0,
+      "ci_commands_found": [
+        "python -m pytest test/test_utils.py::test_strip_invalid_filename_characters (from .github/workflows/test-python.yml)"
+      ],
+      "p2p_tests_added": [
+        {
+          "id": "gradio_client_utils_tests",
+          "type": "pass_to_pass",
+          "origin": "repo_tests",
+          "description": "Repo's existing gradio_client utils tests pass (pass_to_pass)",
+          "notes": "Runs pytest on test_strip_invalid_filename_characters. Temporarily renames conftest.py which requires full gradio package (not installed)."
+        }
+      ],
+      "notes": "Added 1 p2p test for repo's existing CI tests. The main gradio repo has complex CI (ruff, ty typecheck, full pytest) that requires full gradio package installation which is not available in the minimal task environment."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 236.86,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
       "verdict": "pass",
-      "notes": "v2 remake: removed broken ruff_lint test (pre-existing E501), fixed partial_strip f2p->p2p, added anti-stub guards to f2p tests"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:53:16.231361"
     },
     {
-      "timestamp": "2026-03-30T13:02:43.965381",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
-    },
-    {
-      "timestamp": "2026-03-31T13:37:37-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.667043",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.944557",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.535077",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 959.0,
+      "at": "2026-04-09T01:53:16.402642"
     }
   ]
 }

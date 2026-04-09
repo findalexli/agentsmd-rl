@@ -224,3 +224,49 @@ def test_existing_deferred_value_tests():
     assert r.returncode == 0, (
         f"Existing ReactDeferredValue tests failed:\n{combined[-3000:]}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    assert r.returncode == 0, f"Lint failed:\n{combined[-2000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow():
+    """Repo's Flow typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "dom-node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    assert r.returncode == 0, f"Flow typecheck failed:\n{combined[-2000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_reconciler_suspense_tests():
+    """React reconciler Suspense-related tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--forceExit",
+         "packages/react-reconciler/src/__tests__/ReactSuspenseCallback-test.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    assert r.returncode == 0, f"ReactSuspenseCallback tests failed:\n{combined[-2000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_reconciler_cpu_suspense_tests():
+    """React reconciler CPU Suspense tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--forceExit",
+         "packages/react-reconciler/src/__tests__/ReactCPUSuspense-test.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    assert r.returncode == 0, f"ReactCPUSuspense tests failed:\n{combined[-2000:]}"

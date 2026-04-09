@@ -18,9 +18,10 @@ RUN git init /workspace/openclaw && \
     git fetch --depth=1 origin 6be14ab388eb74cd100e43bf975aad78146ac220 && \
     git checkout FETCH_HEAD
 
-# Install minimal deps (agent fills in specifics)
-
-
+# Install pnpm and project dependencies
+RUN npm install -g pnpm && \
+    cd /workspace/openclaw && \
+    pnpm install --frozen-lockfile
 
 RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Test Agent"

@@ -10,6 +10,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 
 from pathlib import Path
 import json
+import subprocess
 
 REPO = "/workspace/vscode"
 
@@ -71,3 +72,72 @@ def test_test_file_updated():
     src = Path(f"{REPO}/src/vs/workbench/services/themes/test/common/workbenchThemeService.test.ts").read_text()
     assert "ThemeSettingDefaults" in src or "Dark 2026" in src, \
         "Test should reference new theme names"
+
+
+# =============================================================================
+# Pass-to-Pass Tests (Repo CI/CD Checks)
+# These verify the repo's own quality checks pass on both base and fixed code.
+# =============================================================================
+
+
+def test_repo_stylelint():
+    """Repo's Stylelint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "stylelint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Stylelint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_valid_layers():
+    """Repo's valid-layers-check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "valid-layers-check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Valid-layers-check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_precommit():
+    """Repo's precommit/hygiene checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "precommit"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Precommit hygiene failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_node():
+    """Repo's Node unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "test-node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node unit tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_monaco_compile_check():
+    """Repo's Monaco compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "monaco-compile-check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Monaco compile check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_tsec_compile_check():
+    """Repo's tsec compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "tsec-compile-check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"tsec compile check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_vscode_dts_compile_check():
+    """Repo's vscode-dts compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "vscode-dts-compile-check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"vscode-dts compile check failed:\n{r.stderr[-500:]}"

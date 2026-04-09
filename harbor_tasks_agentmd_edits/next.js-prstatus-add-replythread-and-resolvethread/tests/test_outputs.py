@@ -146,14 +146,26 @@ def test_not_stub():
     src = Path(SCRIPT_PATH).read_text()
 
     # Find replyToThread function and check it has meaningful body
-    reply_match = re.search(
-        r'function replyToThread\(threadId, body\)\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}',
-        src,
-        re.DOTALL
-    )
-    assert reply_match, "Could not find replyToThread function body"
+    # Use a simpler approach: find the function and check the overall content
+    reply_start = src.find("function replyToThread(threadId, body)")
+    assert reply_start != -1, "Could not find replyToThread function"
 
-    reply_body = reply_match.group(1)
+    # Find the matching closing brace by counting braces
+    brace_count = 0
+    found_opening = False
+    reply_end = reply_start
+    for i, char in enumerate(src[reply_start:]):
+        if char == "{":
+            brace_count += 1
+            found_opening = True
+        elif char == "}":
+            brace_count -= 1
+        if found_opening and brace_count == 0:
+            reply_end = reply_start + i + 1
+            break
+
+    reply_body = src[reply_start:reply_end]
+
     # Should have execFileSync call and mutation
     assert "execFileSync" in reply_body, \
         "replyToThread should call execFileSync"
@@ -161,14 +173,25 @@ def test_not_stub():
         "replyToThread should define GraphQL mutation"
 
     # Find resolveThread function and check it has meaningful body
-    resolve_match = re.search(
-        r'function resolveThread\(threadId\)\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}',
-        src,
-        re.DOTALL
-    )
-    assert resolve_match, "Could not find resolveThread function body"
+    resolve_start = src.find("function resolveThread(threadId)")
+    assert resolve_start != -1, "Could not find resolveThread function"
 
-    resolve_body = resolve_match.group(1)
+    # Find the matching closing brace by counting braces
+    brace_count = 0
+    found_opening = False
+    resolve_end = resolve_start
+    for i, char in enumerate(src[resolve_start:]):
+        if char == "{":
+            brace_count += 1
+            found_opening = True
+        elif char == "}":
+            brace_count -= 1
+        if found_opening and brace_count == 0:
+            resolve_end = resolve_start + i + 1
+            break
+
+    resolve_body = src[resolve_start:resolve_end]
+
     # Should have execFileSync call
     assert "execFileSync" in resolve_body, \
         "resolveThread should call execFileSync"
@@ -225,3 +248,15 @@ def test_workflow_documentation_updated():
     # Should remind to reply before resolving
     assert "reply" in content.lower(), \
         "workflow.md should remind to reply before resolving"
+
+
+# [repo_tests] pass_to_pass — prettier check from CI pipeline (added by p2p enrichment)
+def test_repo_prettier():
+    """Repo's Prettier formatting check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "scripts/pr-status.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+

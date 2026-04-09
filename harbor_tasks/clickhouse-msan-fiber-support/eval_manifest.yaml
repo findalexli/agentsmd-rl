@@ -1,0 +1,86 @@
+source_pr:
+  owner: ClickHouse
+  repo: ClickHouse
+  number: 102158
+  title: "Add MSan support for fibers and fix dragonbox struct padding"
+  merge_commit: 231542d8cbfd94a8a73cd0a8f436a7227847d3a3
+  base_commit: 97e4a1a630071d7b2ec74b2639d0d6727f8034c9
+
+checks:
+  # Fail-to-pass tests (verify the fix works)
+  - id: test_cmake_boost_use_msan_defined
+    type: fail_to_pass
+    origin: behavior
+    description: "CMakeLists.txt defines BOOST_USE_MSAN for memory sanitizer builds"
+
+  - id: test_fiber_h_comment_updated
+    type: fail_to_pass
+    origin: behavior
+    description: "Fiber.h comment mentions BOOST_USE_MSAN and updated explanation"
+
+  - id: test_fiber_stack_cpp_comment_explains_msan_unpoison
+    type: fail_to_pass
+    origin: behavior
+    description: "FiberStack.cpp comment explains MSan struct padding issue"
+
+  - id: test_dragonbox_msan_test_file_exists
+    type: fail_to_pass
+    origin: behavior
+    description: "gtest_dragonbox_msan.cpp test file exists with correct content"
+
+  # Pass-to-pass tests (verify existing functionality still works)
+  - id: test_cmake_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CMakeLists.txt has valid syntax structure"
+
+  - id: test_fiber_stack_cpp_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "FiberStack.cpp has valid C++ syntax"
+
+  - id: test_dragonbox_test_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "gtest_dragonbox_msan.cpp has valid C++ syntax"
+
+  - id: test_pr_files_no_style_violations
+    type: pass_to_pass
+    origin: repo_tests
+    description: "PR-modified files pass ClickHouse C++ style check"
+
+  - id: test_cmake_syntax_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CMakeLists.txt has valid if/endif structure"
+
+  - id: test_fiber_h_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Fiber.h has valid header structure with proper includes"
+
+  - id: test_fiber_stack_cpp_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "FiberStack.cpp has valid implementation structure"
+
+# Agent config checks (from applicable config files)
+agent_config:
+  - id: allman_braces_style
+    file: ".claude/CLAUDE.md"
+    description: "Use Allman-style braces (opening brace on a new line)"
+    lines: "C++ code, always use Allman-style braces"
+
+  - id: sanitizer_naming
+    file: ".claude/CLAUDE.md"
+    description: "Say ASan/MSan, not ASAN/MSAN (two words: Address/Memory Sanitizer)"
+    lines: "When writing messages, say ASan, not ASAN"
+
+# Rubric for soft/subjective checks
+rubric:
+  - id: comment_quality
+    description: "Comments should accurately explain the MSan limitation with struct padding"
+    criteria:
+      - "Explains that MSan tracks shadow per-field, not per-byte"
+      - "Mentions that struct padding shadow is lost through return values"
+      - "Explains why __msan_unpoison is needed for fiber stacks"

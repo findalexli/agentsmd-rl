@@ -93,3 +93,13 @@ def test_existing_flags_preserved():
     assert "--warnings" in content, "Script must still support --warnings flag"
     assert "--flaky" in content, "Script must still support --flaky flag"
     assert "buildkite.com" in content, "Script must still reference BuildKite API"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_banned_words():
+    """Repo's banned words check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/internal/ban-words.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Banned words test failed:\n{r.stderr[-500:]}"

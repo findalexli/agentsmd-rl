@@ -1,0 +1,91 @@
+source_pr:
+  owner: excalidraw
+  repo: excalidraw
+  number: 10676
+  title: "fix: Arrow drag start in bindable area jumps across bindable"
+  merge_commit: 9ba0f5dbc9d551aad9277341a82449e04043c5ae
+  base_commit: 60ab14c2f633112613843eec3c049f6da0f566e8
+
+task:
+  name: excalidraw-arrow-drag-start-fix
+  title: "Fix arrow drag start jumping when initiated in bindable element area"
+  description: |
+    When dragging to create an arrow starting from within a bindable element's area,
+    the arrow jumps across the element instead of starting from the pointer position.
+    The fix involves modifying updateBoundPoint in packages/element/src/binding.ts to
+    check for initial arrow state (last point at [0,0]) and skip binding updates.
+
+checks:
+  - id: binding_logic_initial_arrow
+    name: "Fix applied: pointsEqual check for initial arrow state"
+    type: structural
+    description: |
+      The updateBoundPoint function must have the fix applied: importing pointsEqual
+      and checking if the arrow's last point is at origin [0,0] to return null for
+      initial arrow state. This prevents the jump bug.
+    origin: f2p
+
+  - id: repo_lint
+    name: "Repo lint check passes"
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      The codebase passes ESLint checks (yarn test:code).
+      This is the lint check from the repo's CI pipeline.
+
+  - id: repo_prettier
+    name: "Repo prettier check passes"
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      The codebase passes Prettier formatting checks (yarn test:other).
+      This is the prettier check from the repo's CI pipeline.
+
+  - id: move_tests_pass
+    name: "Move tests pass with correct arrow positioning"
+    type: behavioral
+    description: |
+      The move.test.tsx tests should pass, validating that arrows with bindings
+      correctly update their position when elements are moved.
+    origin: p2p
+
+  - id: history_tests_pass
+    name: "History tests pass with bidirectional binding"
+    type: behavioral
+    description: |
+      The history.test.tsx tests should pass, validating bidirectional binding
+      behavior during undo/redo operations.
+    origin: p2p
+
+  - id: binding_imports
+    name: "pointsEqual and pointFrom are imported"
+    type: structural
+    description: |
+      The fix requires importing pointsEqual and pointFrom from the math package.
+    origin: agent_config
+    source:
+      config_file: CLAUDE.md
+      lines: "Types section - include packages/math/src/types.ts for math code"
+
+  - id: updateBoundPoint_condition
+    name: "Initial arrow check added to updateBoundPoint"
+    type: structural
+    description: |
+      The updateBoundPoint function must have a check for initial arrow state
+      using pointsEqual to compare the last point with pointFrom<LocalPoint>(0, 0).
+    origin: agent_config
+    source:
+      config_file: .github/copilot-instructions.md
+      lines: "TypeScript Guidelines - prefer implementations without allocation"
+
+  - id: no_regression_in_syntax
+    name: "TypeScript type checking passes"
+    type: behavioral
+    description: |
+      The modified code must pass TypeScript type checking (yarn test:typecheck).
+    origin: agent_config
+    source:
+      config_file: CLAUDE.md
+      lines: "Development Workflow - use yarn test:typecheck to verify TypeScript"
+
+rubric: []

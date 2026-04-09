@@ -5,6 +5,14 @@ source:
   base_commit: 73b0fb29377f401a4e2b792b9065e77b9fa19e9e
   merge_commit: 23c0b41d69d42b85e1ae7ee4b99801dc4e21e232
 checks:
+- id: repo_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test/unit/electron/index.js must parse without syntax errors
+- id: repo_unit_node_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test/unit/node/index.js must parse without syntax errors
 - id: syntax_check
   type: pass_to_pass
   origin: static
@@ -53,27 +61,25 @@ rubric:
 
 
     Pass source file paths directly as positional arguments. The test runner automatically
-    treats bare `.ts`/`.js` positional arguments as `--run` values.
+    treats bare .ts/.js positional arguments as --run values.
 
 
-    ```bash
+    bash
 
     ./scripts/test.sh src/vs/editor/test/common/model.test.ts
 
-    ```
 
 
-    ```bat
+    bat
 
     .\scripts\test.bat src\vs\editor\test\common\model.test.ts
 
-    ```
 
 
     Multiple files:
 
 
-    ```bash
+    bash
 
     ./scripts/test.sh src/vs/editor/test/common/model.test.ts src/vs/editor/test/common/range.'
 - rule: SKILL.md documents the bare file path positional argument feature
@@ -85,98 +91,48 @@ rubric:
 
 
     Pass source file paths directly as positional arguments. The test runner automatically
-    treats bare `.ts`/`.js` positional arguments as `--run` values.
+    treats bare .ts/.js positional arguments as --run values.
 
 
-    ```bash
+    bash
 
     ./scripts/test.sh src/vs/editor/test/common/model.test.ts
 
-    ```
 
 
-    ```bat
+    bat
 
     .\scripts\test.bat src\vs\editor\test\common\model.test.ts
 
-    ```
 
 
     Multiple files:
 
 
-    ```bash
+    bash
 
     ./scripts/test.sh src/vs/editor/test/common/model.test.ts src/vs/editor/test/common/range.test.ts
 
-    ```
-
-
-    #### `--run <file>` - Ru'
-- rule: SKILL.md shows an example of passing a file path without --run
-  source:
-    path: .github/skills/unit-tests/SKILL.md
-    lines: 33-43
-    commit: 23c0b41d69d42b85e1ae7ee4b99801dc4e21e232
-  reference: '#### Bare file paths - Run tests from specific files
-
-
-    Pass source file paths directly as positional arguments. The test runner automatically
-    treats bare `.ts`/`.js` positional arguments as `--run` values.
-
-
-    ```bash
+    --run <file>bash
 
     ./scripts/test.sh src/vs/editor/test/common/model.test.ts
 
-    ```
-
-
-    ```bat
+    bat
 
     .\scripts\test.bat src\vs\editor\test\common\model.test.ts
 
-    ```
-
-
-    Multiple files:
-
-
-    ```bash
+    bash
 
     ./scripts/test.sh src/vs/editor/test/common/model.test.ts src/vs/editor/test/common/range.test.ts
 
-    ```
-
-
-    #### `--run <file>` - Ru'
-- rule: index.js converts bare .ts/.js positional args into --run values
-  reference: '# .github/skills/unit-tests/SKILL.md
-
-    #### Bare file paths - Run tests from specific files
-
-
-    Pass source file paths directly as positional arguments. The test runner automatically
-    treats bare `.ts`/`.js` positional arguments as `--run` values.
-
-
-    ```bash
+    --run <file>bash
 
     ./scripts/test.sh src/vs/editor/test/common/model.test.ts
 
-    ```
-
-
-    ```bat
+    bat
 
     .\scripts\test.bat src\vs\editor\test\common\model.test.ts
 
-    ```
-
-
-    Multiple files:
-
-
-    ```bash
+    bash
 
     ./scripts/test.sh src/vs/editor/test/common/model.test.ts src/vs/editor/test/common/range.'

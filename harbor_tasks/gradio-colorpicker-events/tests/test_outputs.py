@@ -8,6 +8,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
+import os
+import re
 import subprocess
 
 REPO = "/workspace/gradio"
@@ -60,12 +62,17 @@ for i, line in enumerate(lines):
 # Extract text input element block
 input_block = ""
 for i, line in enumerate(lines):
-    if '<input' in line and 'type="text"' in line:
+    if '<input' in line:
+        # Collect lines until /> to get full input element
+        temp_block = ""
         for j in range(i, min(i + 15, len(lines))):
-            input_block += lines[j] + "\n"
+            temp_block += lines[j] + "\n"
             if "/>" in lines[j]:
                 break
-        break
+        # Check if this is the text input
+        if 'type="text"' in temp_block:
+            input_block = temp_block
+            break
 
 # Extract svelte:window section
 window_section = ""
@@ -170,3 +177,88 @@ def test_svelte_window_native_handlers():
     data = _analyze_svelte()
     assert data["window_has_onmousemove"], "svelte:window missing onmousemove"
     assert data["window_has_onmouseup"], "svelte:window missing onmouseup"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo CI equivalents - run without Node.js)
+# These tests validate the Svelte component structure without requiring Node.js.
+# They approximate basic repo CI checks that would run on the base commit.
+# ---------------------------------------------------------------------------
+
+
+def test_repo_svelte_file_valid():
+    """Svelte file is valid and parseable (basic structural checks).
+
+    Mirrors basic validation from: pnpm ts:check / svelte-check
+    Origin: repo_tests (pass_to_pass)
+    """
+    content = open(TARGET).read()
+
+    # Basic Svelte file structure checks that work on BOTH base and fixed commit
+    assert "<script" in content, "Missing <script> tag"
+    assert "</script>" in content, "Missing </script> tag"
+
+    # Check for basic tag balance (HTML template level only)
+    # Count only template-level tags, not JS object literals
+    template = re.sub(r'<script[^>]*>.*?</script>', '', content, flags=re.DOTALL)
+
+    # Svelte component must have a template section
+    assert len(template.strip()) > 0, "No template content outside script blocks"
+
+    # Check for valid HTML-like structure (basic tag balance)
+    # Count opening/closing angle brackets for template tags only
+    void_tags = {"br", "hr", "img", "input", "meta", "link", "area", "base",
+                 "col", "embed", "param", "source", "track", "wbr"}
+
+    # Simple check: find self-closing tags and regular tags
+    self_closing = len(re.findall(r'<[\w-]+[^>]*/>', template))
+    open_tags = len(re.findall(r'<[\w-]+[^>]*>', template)) - self_closing
+    close_tags = len(re.findall(r'</[\w-]+>', template))
+
+    # Account for svelte special tags
+    svelte_self_closing = len(re.findall(r'<svelte:[\w]+[^>]*/>', template))
+
+    # Template should have reasonable tag structure
+    total_tags = open_tags + self_closing + svelte_self_closing
+    assert total_tags > 0, "No HTML tags found in template"
+
+
+def test_repo_colorpicker_package_structure():
+    """Colorpicker package has valid structure for build.
+
+    Mirrors: pnpm build validation
+    Origin: repo_tests (pass_to_pass)
+    """
+    pkg_dir = f"{REPO}/js/colorpicker"
+
+    # Required files for building
+    required = ["package.json", "Index.svelte"]
+    for f in required:
+        path = os.path.join(pkg_dir, f)
+        assert os.path.exists(path), f"Required package file missing: {f}"
+
+    # Validate package.json structure
+    with open(f"{pkg_dir}/package.json") as f:
+        pkg = json.load(f)
+
+    assert pkg.get("name") == "@gradio/colorpicker", "Package name mismatch"
+    assert "exports" in pkg, "Missing exports field (required for build)"
+    assert "svelte" in pkg.get("peerDependencies", {}), "Missing Svelte peer dependency"
+
+
+def test_repo_component_has_required_elements():
+    """Component has all required UI elements (buttons, inputs, dialog).
+
+    Mirrors: component test validation that would run in CI
+    Origin: repo_tests (pass_to_pass)
+    """
+    data = _analyze_svelte()
+
+    # These are structural checks that pass on both base and fixed
+    assert data["has_script"], "Missing script section"
+    assert data["has_html"], "Missing template section"
+    assert data["button_count"] >= 2, f"Expected >=2 buttons, found {data['button_count']}"
+    assert data["has_input"], "Missing input element"
+    assert data["has_dialog"], "Missing dialog references"
+    assert data["has_color"], "Missing color-related code"
+    assert data["line_count"] > 100, f"Component too small: {data['line_count']} lines"

@@ -1,0 +1,129 @@
+source:
+  pr:
+    owner: gohugoio
+    repo: hugo
+    number: 14671
+    title: "minifiers: Keep x-bind and blank namespace in SVG minification"
+    merge_commit: 42289d76f9ccac052c22b84d7024e64cfb0a683b
+    base_commit: 0c013c2326be1bbebba9a9f89d27072074fc6cc4
+  files:
+    - minifiers/config.go
+    - minifiers/minifiers_test.go
+    - go.mod
+    - go.sum
+
+# Checks - one per test function in test_outputs.py
+checks:
+  - id: svg_alpine_x_bind
+    name: "SVG preserves x-bind:href directives"
+    description: "Fail-to-pass: Alpine.js x-bind directives must not be stripped from SVG"
+    type: behavioral
+    test_function: test_svg_minifier_preserves_alpine_x_bind
+    points: 25
+
+  - id: svg_alpine_shorthand
+    name: "SVG preserves :href shorthand"
+    description: "Fail-to-pass: Alpine.js : shorthand directives must not be stripped from SVG"
+    type: behavioral
+    test_function: test_svg_minifier_preserves_alpine_shorthand
+    points: 25
+
+  - id: alpine_variations
+    name: "Various Alpine.js patterns preserved"
+    description: "Fail-to-pass: Multiple Alpine.js directive patterns work correctly"
+    type: behavioral
+    test_function: test_alpine_variations_preserved
+    points: 20
+
+  - id: config_has_keep_namespaces
+    name: "KeepNamespaces configured in minifiers/config.go"
+    description: "Pass-to-pass: Configuration includes KeepNamespaces setting"
+    type: structural
+    test_function: test_minifiers_config_has_keep_namespaces
+    points: 15
+
+  - id: upstream_version
+    name: "tdewolff/minify updated to v2.24.11"
+    description: "Pass-to-pass: Dependency updated to version with KeepNamespaces support"
+    type: structural
+    test_function: test_upstream_minify_version
+    points: 10
+
+  - id: compilation
+    name: "Hugo compiles successfully"
+    description: "Pass-to-pass: Code compiles without errors"
+    type: structural
+    test_function: test_compilation_passes
+    points: 5
+
+  - id: repo_gofmt
+    name: "Repo passes gofmt check"
+    description: "Pass-to-pass: Repo code is properly formatted"
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_gofmt
+    points: 5
+
+  - id: repo_vet_minifiers
+    name: "Repo minifiers passes go vet"
+    description: "Pass-to-pass: Repo minifiers package passes go vet"
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_vet_minifiers
+    points: 5
+
+  - id: repo_tests_minifiers
+    name: "Repo minifiers tests pass"
+    description: "Pass-to-pass: Repo minifiers package tests pass"
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_tests_minifiers
+    points: 5
+
+  - id: repo_build
+    name: "Repo builds successfully"
+    description: "Pass-to-pass: Repo builds without errors"
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_build
+    points: 5
+
+  - id: repo_module_check
+    name: "Repo Go modules valid"
+    description: "Pass-to-pass: Repo Go modules are valid"
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_module_check
+    points: 5
+
+# Agent config rules - from AGENTS.md and CLAUDE.md
+agent_config:
+  - rule: "Use qt matchers in tests instead of raw if/t.Fatal checks"
+    file_pattern: "*_test.go"
+    check_type: grep
+    content: "qt\\."
+    source: "AGENTS.md: In tests, use qt matchers"
+
+  - rule: "Avoid exporting symbols not needed outside package"
+    file_pattern: "*.go"
+    check_type: grep
+    content: "^func [A-Z]"  # If new exports added, flag for review
+    negative_check: true  # No NEW exports should be added
+    source: "AGENTS.md: Never export symbols not needed"
+
+  - rule: "Avoid global state"
+    file_pattern: "*.go"
+    check_type: grep
+    content: "^var\\s+\\w+.*="  # Check for package-level vars
+    negative_check: true  # No new globals
+    source: "AGENTS.md: Avoid global state at (almost) all cost"
+
+# Rubric for LLM evaluation
+rubric:
+  - criterion: "Solution follows Hugo code style"
+    description: "Code is brief, uses clear variable names, follows Go conventions"
+    weight: optional
+
+  - criterion: "Test cases follow Hugo test conventions"
+    description: "Tests use qt matchers and latest Hugo spec conventions"
+    weight: optional

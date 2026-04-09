@@ -7,11 +7,14 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 import sys
 import types
+
 import torch
 from unittest.mock import MagicMock
 
+REPO = "/workspace"
 FILE = "/workspace/vllm/model_executor/kernels/linear/mixed_precision/conch.py"
 OUT_N = 64
 
@@ -235,3 +238,39 @@ def test_not_stub():
             return
 
     assert False, "apply_weights function not found in conch.py"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff():
+    """Repo's ruff linting passes on conch.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff:\n{r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "check", FILE],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mypy():
+    """Repo's mypy type checking passes on conch.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "mypy", "pydantic", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install mypy:\n{r.stderr}"
+
+    r = subprocess.run(
+        ["mypy", FILE, "--ignore-missing-imports"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Mypy type check failed:\n{r.stdout}\n{r.stderr}"

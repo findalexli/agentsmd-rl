@@ -13,6 +13,32 @@ checks:
     origin: static
     description: "getRootDir (unchanged function) still works after logAndExec refactor"
 
+  # Pass-to-pass — repo CI/CD checks
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ESLint check passes"
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript typecheck passes"
+
+  - id: test_repo_changes_validate
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's changes file validation passes"
+
+  - id: test_repo_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Prettier format check passes"
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's build passes"
+
   # Fail-to-pass — code behavior tests
   - id: logandexec_captures_output
     type: fail_to_pass

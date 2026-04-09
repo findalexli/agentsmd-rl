@@ -61,6 +61,17 @@ checks:
     origin: static
     description: "emitBun has substantial implementation (>= 50 real lines, control flow, compile calls)"
 
+  # Repo CI/CD — pass-to-pass
+  - id: repo_build_scripts_parseable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Build scripts (bun.ts, compile.ts) are syntactically valid TypeScript with balanced braces and valid structure"
+
+  - id: repo_claude_md_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CLAUDE.md is valid markdown with required sections (Ninja primer, Gotchas, Iterating) and code blocks"
+
 rubric:
   - rule: "Config update style is consistent with the existing CLAUDE.md documentation"
     source:

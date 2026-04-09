@@ -264,3 +264,46 @@ def test_no_hardcoded_secrets():
         content,
         re.IGNORECASE,
     ), "Hardcoded secret values found"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — ensure candidate solutions don't break CI
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_syntax_app_router():
+    """Repo's router TypeScript files parse without errors (pass_to_pass)."""
+    # Verify the main app.ts and its dependencies can be parsed by tsx
+    router_dir = f"{REPO}/packages/next/src/shared/lib/router"
+    files_to_check = [
+        f"{router_dir}/routes/app.ts",
+        f"{router_dir}/utils/get-segment-param.tsx",
+        f"{router_dir}/utils/interception-routes.ts",
+    ]
+    for filepath in files_to_check:
+        r = subprocess.run(
+            ["npx", "tsx", "--eval", f"import '{filepath}'; console.log('OK')"],
+            cwd=REPO,
+            capture_output=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, f"TypeScript syntax check failed for {filepath}:\\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports_resolvable():
+    """Router module imports are resolvable without runtime errors (pass_to_pass)."""
+    # Test that the target file's dependencies can be imported
+    test_script = textwrap.dedent(f"""\
+        import {{ parseAppRoute }} from '{REPO}/packages/next/src/shared/lib/router/routes/app.ts'
+        console.log('parseAppRoute imported successfully')
+    """)
+    script_path = "/tmp/test_imports.ts"
+    Path(script_path).write_text(test_script)
+    r = subprocess.run(
+        ["npx", "tsx", script_path],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Import test failed:\\n{r.stderr.decode()}"

@@ -12,10 +12,25 @@ checks:
     origin: static
     description: "mps.py must parse without syntax errors"
 
+  - id: test_mps_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "mps.py must compile to bytecode without errors"
+
   - id: test_utils_h_balanced_braces
     type: pass_to_pass
     origin: static
     description: "c10/metal/utils.h must have balanced braces"
+
+  - id: test_utils_h_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "c10/metal/utils.h must be valid C++ header (pragma/namespace/braces)"
+
+  - id: test_codegen_mps_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "mps.py must have valid import statements"
 
   - id: test_buggy_pattern_not_bare_modulo
     type: fail_to_pass

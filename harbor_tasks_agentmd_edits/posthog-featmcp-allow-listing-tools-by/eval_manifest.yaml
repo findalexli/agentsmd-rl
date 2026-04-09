@@ -21,10 +21,26 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Nonexistent tool name yields empty result when tools param is set
+- id: readme_documents_tools_param
+  type: fail_to_pass
+  origin: config_edit
+  description: README documents the tools query parameter and union behavior
 - id: existing_feature_filtering
   type: pass_to_pass
   origin: repo_tests
   description: Existing feature-based filtering tests still pass
+- id: repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All MCP unit tests pass (from ci-mcp.yml)
+- id: repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP build passes (from ci-mcp.yml)
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP lint-tool-names passes (from ci-mcp.yml)
 rubric:
 - rule: Documentation update is consistent with the style of the existing README sections
   source:
@@ -36,9 +52,4 @@ rubric:
     path: services/mcp/README.md
     lines: 303-318
     commit: 2499a0b60e1b6e3357937435635be179392039ee
-  reference: "### Tool filtering\n\nFor finer-grained control you can allowlist specific\
-    \ tools by name using the `tools` query parameter. Only the exact tool names listed\
-    \ will be exposed, regardless of their feature category.\n\n```text\nhttps://mcp.posthog.com/mcp?tools=dashboard-get,feature-flag-get-all,execute-sql\n\
-    ```\n\nWhen `features` and `tools` are both provided they are combined as a **union**\
-    \ \u2014 a tool is included if it matches a feature category **or** is in the\
-    \ tools list. This lets you select a feature gr"
+  reference: "### Tool filtering\\n\\nFor finer-grained control you can allowlist specific\\n    \\ tools by name using the \`tools\` query parameter. Only the exact tool names listed\\n    \\ will be exposed, regardless of their feature category.\\n\\n\`\`\`text\\nhttps://mcp.posthog.com/mcp?tools=dashboard-get,feature-flag-get-all,execute-sql\\n\`\`\`\\n\\nWhen \`features\` and \`tools\` are both provided they are combined as a **union**\\n    \\ — a tool is included if it matches a feature category **or** is in the\\n    \\ tools list. This lets you select a feature gr"

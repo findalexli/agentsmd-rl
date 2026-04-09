@@ -95,8 +95,37 @@ def test_cargo_check():
 def test_cargo_clippy():
     """No clippy warnings on the affected crate after removal."""
     r = subprocess.run(
-        ["cargo", "clippy", "-p", "ty_python_semantic", "--",
-         "-W", "clippy::all", "-D", "warnings"],
+        ["cargo", "clippy", "-p", "ty_python_semantic", "--all-features", "--", "-D", "warnings"],
         cwd=REPO, capture_output=True, text=True, timeout=300,
     )
     assert r.returncode == 0, f"clippy reported warnings:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_test_lib():
+    """ty_python_semantic library unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--lib", "--", "--test-threads=4"],
+        cwd=REPO, capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"Library tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_test_mdtest():
+    """ty_python_semantic markdown tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest"],
+        cwd=REPO, capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"Markdown tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_workspace():
+    """Full workspace compiles cleanly (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--workspace"],
+        cwd=REPO, capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"Workspace check failed:\n{r.stderr[-500:]}"

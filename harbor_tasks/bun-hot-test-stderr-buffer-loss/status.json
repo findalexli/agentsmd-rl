@@ -1,65 +1,97 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.965100",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T01:50:48.885618",
+  "total_time": 811.47,
+  "sandbox_id": "injquzsex302a3nlv20lq",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.5,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T08:21:00Z",
+      "status": "completed",
+      "ci_commands_discovered": [
+        "npx prettier --check test/cli/hot/hot.test.ts",
+        "TypeScript syntax validation (balanced braces, imports, test structure)",
+        "npx oxlint test/cli/hot/hot.test.ts (0 errors, warnings acceptable)",
+        "npx tsc --noEmit -p test --skipLibCheck (excluding regression fixtures)"
+      ],
+      "tests_added": [
+        "test_repo_format - Prettier format check",
+        "test_target_typescript_syntax - TypeScript syntax and structure validation",
+        "test_repo_oxlint - oxlint check with 0 errors",
+        "test_repo_typescript_project - TypeScript project compilation check"
+      ],
+      "notes": "Bun runtime not available in node:slim image, so cannot run actual bun tests. Added CI checks that work with available tooling (prettier, oxlint, tsc). Full test suite requires bun binary which is not installed in the Docker image."
     },
-    {
-      "timestamp": "2026-03-30T11:48:11.528343",
-      "runner": "audit (audit-tests_20260330_114811)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 19143
-    },
-    {
-      "timestamp": "2026-03-31T13:33:50-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 0.4595,
-      "nop_score": 0.1667,
-      "verdict": "fail_gold",
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 444.31,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed. NOP test correctly fails on buggy code (5 fail-to-pass tests failed). Gold test passes all 10 tests after applying solve.sh patch. Rubric judge ICR=1.0.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 129.7
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.06,
+      "notes": "ICR=0.50"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-01T20:15:41.653254",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:27:38.614171"
     },
     {
-      "timestamp": "2026-04-02T12:58:21.145305",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 892.24,
+      "at": "2026-04-09T01:27:38.781873"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.938884",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:50:48.706028"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.520264",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 811.47,
+      "at": "2026-04-09T01:50:48.885618"
     }
   ]
 }

@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 from pathlib import Path
 
 REPO = "/repo"
@@ -202,3 +203,40 @@ def test_validation_raises_valueerror():
     for bad in ["bogus", "SHARED", ""]:
         with pytest.raises(ValueError, match=r"ray_placement_strategy"):
             S(ray_placement_strategy=bad)
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's ruff linting passes on areal/api/ (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Install errors are not fatal; ruff might already be present
+
+    r = subprocess.run(
+        ["ruff", "check", "areal/api/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on areal/api/ (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Install errors are not fatal; ruff might already be present
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", "areal/api/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

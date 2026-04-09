@@ -1,0 +1,57 @@
+checks:
+  # ============================================================================
+  # PASS-TO-PASS TESTS - verify repo CI/CD health (these pass on both base and fixed)
+  # ============================================================================
+  - id: test_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Basic Kotlin syntax validation - balanced braces/parens and structure
+
+  - id: test_kotlin_syntax_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: Kotlin syntax structure validation - package, imports, class declarations
+
+  - id: test_api_compatibility_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: API structure validation - Stability class hierarchy and StabilityInferencer
+
+  - id: test_file_consistency
+    type: pass_to_pass
+    origin: repo_tests
+    description: File consistency checks - no corruption, valid encoding
+
+  - id: test_no_duplicate_top_level_declarations
+    type: pass_to_pass
+    origin: repo_tests
+    description: Check for duplicate top-level function/class declarations
+
+  # ============================================================================
+  # FAIL-TO-PASS TESTS - verify the fix works (these fail on base, pass after fix)
+  # All use subprocess.run() for behavioral code execution
+  # ============================================================================
+  - id: test_cache_field_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: Cache field exists in StabilityInferencer class with proper type and usage pattern
+
+  - id: test_refactored_stability_method_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: New private stabilityOf method with separate SymbolForAnalysis parameter exists
+
+  - id: test_cache_prevents_redundant_computation
+    type: fail_to_pass
+    origin: pr_diff
+    description: Cache structure prevents redundant stability analysis via early return and store
+
+  - id: test_stability_inferencer_method_ordering
+    type: fail_to_pass
+    origin: pr_diff
+    description: Public stabilityOf(IrClass) method has correct delegation flow - cache check before compute, store after
+
+  - id: test_cache_logic_flow
+    type: fail_to_pass
+    origin: pr_diff
+    description: Cache lookup occurs before computation and cache store occurs after - correct execution ordering

@@ -22,6 +22,21 @@ checks:
     origin: pr_diff
     description: "shim_common.cpp forwards context pointer through wrapping lambda"
 
+  - id: repo_git_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo is at expected base commit with no uncommitted changes"
+
+  - id: repo_files_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified source files exist and are non-empty"
+
+  - id: repo_header_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "C++ headers have valid include guards or #pragma once"
+
   - id: no_deleter_overload_preserved
     type: pass_to_pass
     origin: pr_diff
@@ -72,7 +87,7 @@ rubric:
     source:
       path: ".claude/skills/pr-review/review-checklist.md"
       lines: "12"
-      commit: "41f8e3e0381395e1669ca4bc6e36a7872d25cdcd"
+      commit: "41f8e3e0381395e1669ca4bc6e36a36a7872d25cdcd"
 
   - rule: "Self-explanatory code — variable and function names convey intent; minimal comments needed."
     source:

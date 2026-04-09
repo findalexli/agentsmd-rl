@@ -113,6 +113,48 @@ class FakeProc:
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
+# [repo_ci] pass_to_pass
+def test_repo_ruff_check():
+    """Ruff lint check on engine.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821", str(ENGINE_FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_black_check():
+    """Black format check on engine.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["black", "--check", str(ENGINE_FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_isort_check():
+    """isort import order check on engine.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["isort", "--check", str(ENGINE_FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}"
+
+
 # [static] pass_to_pass
 def test_syntax_check():
     """engine.py must parse without errors."""
@@ -332,6 +374,48 @@ def test_dead_process_detected():
 # ---------------------------------------------------------------------------
 # Anti-stub (static, pass_to_pass)
 # ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_check():
+    """Ruff lint check on engine.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821", str(ENGINE_FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_black_check():
+    """Black format check on engine.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["black", "--check", str(ENGINE_FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_isort_check():
+    """isort import order check on engine.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["isort", "--check", str(ENGINE_FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}"
+
 
 # [static] pass_to_pass
 def test_not_stub():

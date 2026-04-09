@@ -1,0 +1,103 @@
+task_name: sui-kv-rpc-remove-data-ingestion-dep
+source_pr: https://github.com/MystenLabs/sui/pull/26066
+base_commit: 80af79ea6b5e18a23042fc7bda481e07472c7a8d
+merge_commit: 137b12f337d790dcae827caa3dbbd56d22732716
+
+# Repository info
+repo:
+  owner: MystenLabs
+  name: sui
+  language: rust
+
+# Task metadata
+description: |
+  Remove sui-data-ingestion-core dependency from sui-kv-rpc crate and
+  replace it with sui-storage. Update get_checkpoint.rs to use new
+  APIs from sui_storage::object_store::util instead of the old APIs
+  from sui_data_ingestion_core.
+
+difficulty: medium
+tags: [rust, dependency-management, refactoring, api-migration]
+estimated_time: 15-30 minutes
+
+# Evaluation checks (1:1 with test_outputs.py functions)
+checks:
+  # Fail-to-pass tests (behavioral changes)
+  - id: test_sui_data_ingestion_core_removed_from_cargo_toml
+    type: fail_to_pass
+    origin: behavioral
+    description: sui-data-ingestion-core dependency removed from Cargo.toml
+
+  - id: test_sui_storage_added_to_cargo_toml
+    type: fail_to_pass
+    origin: behavioral
+    description: sui-storage dependency added to Cargo.toml
+
+  - id: test_sui_data_ingestion_core_import_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: sui_data_ingestion_core imports removed from get_checkpoint.rs
+
+  - id: test_sui_storage_import_added
+    type: fail_to_pass
+    origin: behavioral
+    description: sui_storage imports added to get_checkpoint.rs
+
+  - id: test_create_remote_store_client_not_used
+    type: fail_to_pass
+    origin: behavioral
+    description: create_remote_store_client function no longer used
+
+  - id: test_checkpointreader_not_used
+    type: fail_to_pass
+    origin: behavioral
+    description: CheckpointReader no longer used
+
+  - id: test_build_object_store_used
+    type: fail_to_pass
+    origin: behavioral
+    description: build_object_store function is now used
+
+  - id: test_fetch_checkpoint_used
+    type: fail_to_pass
+    origin: behavioral
+    description: fetch_checkpoint function is now used
+
+  - id: test_refactored_code_structure
+    type: fail_to_pass
+    origin: behavioral
+    description: Code uses new simplified pattern with build_object_store and fetch_checkpoint
+
+  # Pass-to-pass tests (maintain existing behavior)
+  - id: test_license_header_preserved
+    type: pass_to_pass
+    origin: repo_standards
+    description: Apache license header preserved per CLAUDE.md requirements
+
+  - id: test_repo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo code formatting passes cargo fmt check
+
+  - id: test_repo_xlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo passes license/workspace lints (cargo xlint)
+
+  - id: test_cargo_lock_consistent
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cargo.lock is consistent with Cargo.toml dependencies
+
+# Agent configuration rules (from CLAUDE.md)
+agent_config:
+  - file: CLAUDE.md
+    rules:
+      - "All new files must start with Apache license header"
+      - "Use cargo check for quick compilation checks"
+      - "Run cargo xclippy after finishing development"
+      - "Never disable or ignore tests"
+      - "Never use #[allow(dead_code)] or #[allow(unused)]"
+
+# Rubric for soft/subjective evaluation (LLM judge)
+rubric: []

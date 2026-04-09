@@ -1,0 +1,44 @@
+task_id: kotlin-maven-toolchain-support
+source_pr: JetBrains/kotlin#5694
+base_commit: 18c87a604b930e8d6bcf50f2e182f5f9ceac09ab
+merge_commit: aea67c8f98c28861102af48e40a1234b356c4f4f
+target_file: libraries/tools/kotlin-maven-plugin/src/main/java/org/jetbrains/kotlin/maven/K2JVMCompileMojo.java
+
+checks:
+  - id: test_toolchain_manager_field_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: ToolchainManager field with @Component annotation exists
+    source: CLAUDE.md - Use JetBrains MCP tools for file operations
+
+  - id: test_jdk_toolchain_parameter_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: jdkToolchain parameter field exists
+    source: CLAUDE.md - Use JetBrains MCP tools for file operations
+
+  - id: test_get_toolchain_method_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: getToolchain() method queries toolchains properly
+    source: CLAUDE.md - Use JetBrains MCP tools for file operations
+
+  - id: test_get_toolchain_jdk_home_method_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: getToolchainJdkHome() extracts JDK home from toolchain
+    source: CLAUDE.md - Use JetBrains MCP tools for file operations
+
+  - id: test_jdk_home_takes_precedence_over_toolchain
+    type: fail_to_pass
+    origin: agent_config
+    description: jdkHome takes precedence over toolchain with warning log
+    source: CLAUDE.md - Use JetBrains MCP tools for file operations
+
+  - id: test_toolchain_imports_exist
+    type: fail_to_pass
+    origin: agent_config
+    description: Required Toolchain and ToolchainManager imports exist
+    source: CLAUDE.md - Use JetBrains MCP tools for file operations
+
+rubric: []

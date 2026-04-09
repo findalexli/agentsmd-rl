@@ -331,3 +331,65 @@ def test_not_stub():
         ):
             body = body[1:]
         assert len(body) >= 3, f"{fn.name}() has only {len(body)} non-docstring statements"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_smoke_test_py_compile():
+    """Repo's smoke_test Python files compile without syntax errors (pass_to_pass)."""
+    import py_compile
+
+    smoke_test_dir = Path(REPO) / ".ci" / "pytorch" / "smoke_test"
+    py_files = list(smoke_test_dir.glob("*.py"))
+    assert len(py_files) > 0, f"No Python files found in {smoke_test_dir}"
+    for py_file in py_files:
+        py_compile.compile(py_file, doraise=True)
+
+
+# [repo_tests] pass_to_pass
+def test_smoke_test_ruff():
+    """Repo's smoke_test Python files pass ruff linting (pass_to_pass)."""
+    import subprocess
+
+    smoke_test_dir = Path(REPO) / ".ci" / "pytorch" / "smoke_test"
+    r = subprocess.run(
+        ["python", "-m", "pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", str(smoke_test_dir)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_smoke_test_flake8():
+    """Repo's smoke_test Python files pass flake8 linting (pass_to_pass)."""
+    import subprocess
+
+    smoke_test_dir = Path(REPO) / ".ci" / "pytorch" / "smoke_test"
+    r = subprocess.run(
+        ["python", "-m", "pip", "install", "flake8", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install flake8: {r.stderr}"
+
+    r = subprocess.run(
+        ["python", "-m", "flake8", str(smoke_test_dir)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Flake8 check failed:\n{r.stdout}{r.stderr}"

@@ -6,7 +6,7 @@ ENV LANG=C.UTF-8
 # Install python3 (for pytest runner), git, curl, ca-certificates
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential python3 python3-pip python3-venv && \
+        git curl ca-certificates build-essential python3 python3-pip python3-venv unzip && \
     rm -rf /var/lib/apt/lists/*
 
 # Install bun for running TypeScript test scripts

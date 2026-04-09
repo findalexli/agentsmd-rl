@@ -1,0 +1,50 @@
+version: "2.0"
+
+source:
+  repo: "sveltejs/svelte"
+  pr: 17980
+  base_commit: "6b33dd2a1e8aa48dc88c9ce6e19c4a49a2eac51a"
+  merge_commit: "8e4de9b14500e195ec7f084c8c32b1782b31c5c9"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "effects.js must parse without syntax errors"
+
+  - id: boundary_ref_cleared
+    type: fail_to_pass
+    origin: pr_diff
+    description: "destroy_effect must null out effect.b (boundary reference) during cleanup"
+
+  - id: effect_cleanup_behavior
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Executing the cleanup assignments must set effect.b to null on a mock effect object"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "destroy_effect has substantial logic, not a stub"
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo's TypeScript typecheck passes"
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo's lint (eslint + prettier) passes"
+
+  - id: test_repo_signals_tests
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo's signals tests pass"
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo's build passes"
+
+rubric: []

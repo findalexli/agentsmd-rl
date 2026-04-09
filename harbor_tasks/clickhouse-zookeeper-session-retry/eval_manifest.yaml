@@ -1,0 +1,121 @@
+source_pr:
+  owner: ClickHouse
+  repo: ClickHouse
+  number: 102170
+  title: "Backport #102059 to 26.1: Fix crash caused by stale ZooKeeper session in UDF retry loop"
+  base_commit: 6f01023e78a9e84c588068560fda778a7c11a665
+  merge_commit: 863e3d33498f075a84659eb2c8948de69b8bc88e
+
+target_files:
+  - src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp
+
+checks:
+  - id: target_file_exists
+    description: "Target file exists in repository"
+    type: behavioral
+    origin: task_definition
+
+  - id: refresh_objects_uses_retry_loop
+    description: "refreshObjects method uses ZooKeeperRetriesControl for retry logic"
+    type: behavioral
+    origin: task_definition
+
+  - id: session_renewal_on_retry
+    description: "Session is renewed inside retry loop with isRetry() check"
+    type: behavioral
+    origin: task_definition
+    criteria:
+      - "isRetry() check exists"
+      - "zookeeper_getter.getZooKeeper() is called for session refresh"
+      - "current_zookeeper variable is used"
+
+  - id: get_object_names_inside_retry_loop
+    description: "getObjectNamesAndSetWatch is called INSIDE the retry loop"
+    type: behavioral
+    origin: task_definition
+    criteria:
+      - "getObjectNamesAndSetWatch inside retryLoop lambda"
+      - "tryLoadObject uses current_zookeeper inside loop"
+
+  - id: no_session_outside_retry_loop
+    description: "Stale session pattern removed - no session calls before retry loop"
+    type: behavioral
+    origin: task_definition
+
+  - id: session_refresh_comment
+    description: "Explanatory comment about session renewal is present"
+    type: behavioral
+    origin: task_definition
+
+  - id: compiles_without_syntax_errors
+    description: "Code compiles without syntax errors"
+    type: behavioral
+    origin: task_definition
+
+  - id: try_load_uses_current_zookeeper
+    description: "tryLoadObject uses current_zookeeper handle"
+    type: behavioral
+    origin: task_definition
+
+agent_config:
+  - file: ".claude/CLAUDE.md"
+    lines: "When writing text such as documentation, comments, or commit messages, wrap literal names from ClickHouse SQL language, classes and functions, or literal excerpts from log messages inside inline code blocks"
+    relevance: "medium"
+
+  - file: ".github/copilot-instructions.md"
+    lines: "Resource management - Opened file descriptors or sockets not closed on all paths (including error paths)"
+    relevance: "high"
+
+  - file: ".github/copilot-instructions.md"
+    lines: "Error handling & observability - Ignored return values of functions that can fail (IO, network, syscalls)"
+    relevance: "high"
+
+  - file: ".github/copilot-instructions.md"
+    lines: "Concurrency & robustness - Using non-thread-safe data structures from multiple threads"
+    relevance: "medium"
+
+  - file: ".github/copilot-instructions.md"
+    lines: "Missing logs for serious failure modes (data loss risk, query aborts, background task failures)"
+    relevance: "low"
+
+  - id: test_repo_python_syntax_ci_scripts
+    description: "All Python scripts in ci/ directory have valid syntax"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_python_syntax_tests_ci
+    description: "All Python scripts in tests/ci/ have valid syntax"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_yaml_valid
+    description: "GitHub workflow YAML files are syntactically valid"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_pyproject_toml_valid
+    description: "pyproject.toml is syntactically valid"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_clang_format_config_valid
+    description: ".clang-format config file is valid YAML"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_cmake_lists_exists
+    description: "CMakeLists.txt exists and has valid content"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_git_submodule_config_valid
+    description: ".gitmodules file is valid if it exists"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_no_broken_symlinks
+    description: "No broken symlinks outside contrib/ directory"
+    type: pass_to_pass
+    origin: repo_tests
+
+rubric: []

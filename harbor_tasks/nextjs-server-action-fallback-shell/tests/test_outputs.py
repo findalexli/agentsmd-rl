@@ -12,6 +12,7 @@ All checks necessarily use source analysis.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/next.js"
@@ -112,7 +113,7 @@ def test_server_action_excluded_from_static_path_key():
         before = src[max(0, idx - 3000) : idx]
         has_negation = bool(
             re.search(
-                r"if\s*\([^)]*[Aa]ction[^)]*\)\s*\{[\s\S]{0,200}return", before
+                r"if\s*\([^)]*[Aa]ction[^)]*\)\s*\{\s*[\s\S]{0,200}return", before
             )
         )
 
@@ -217,3 +218,55 @@ def test_no_react_server_dom_webpack_import():
         f"Found {len(matches)} direct react-server-dom-webpack import(s) in build template — "
         "must use entryBase.* exports instead"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_check_error_codes():
+    """Repo's error codes check passes (pass_to_pass).
+
+    Verifies that all error codes in the Next.js package are properly defined.
+    """
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm run check-error-codes"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-error-codes failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_eslint():
+    """Repo's ESLint passes on app-page.ts (pass_to_pass).
+
+    Verifies that the modified build template passes ESLint checks.
+    """
+    r = subprocess.run(
+        ["bash", "-c", f"corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm exec eslint --config eslint.cli.config.mjs {TARGET}"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check():
+    """Repo's Prettier formatting passes on app-page.ts (pass_to_pass).
+
+    Verifies that the modified build template is properly formatted.
+    """
+    r = subprocess.run(
+        ["bash", "-c", f"corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm exec prettier --check {TARGET}"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

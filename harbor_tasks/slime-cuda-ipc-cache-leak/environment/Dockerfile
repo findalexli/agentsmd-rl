@@ -18,8 +18,8 @@ RUN git init /workspace/slime && \
     git fetch --depth=1 origin 08b201bd576e02fba08dae22e5c9324643e88884 && \
     git checkout FETCH_HEAD
 
-# Install minimal deps
-RUN pip install --no-cache-dir numpy 2>/dev/null || true
+# Install minimal deps + linting tools for p2p tests
+RUN pip install --no-cache-dir numpy ruff black isort 2>/dev/null || true
 
 ENV PYTHONPATH="/workspace/slime"
 

@@ -19,7 +19,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /workspace
 
 # Clone repo at base commit (shallow for speed)
-RUN git clone --depth=100 https://github.com/remix-run/remix.git remix && \
+RUN git clone --depth=500 https://github.com/remix-run/remix.git remix && \
     cd remix && \
     git checkout 649aecadeb54fc3027a2b6a85020dd31421b5327 && \
     git config user.email "agent@test" && \

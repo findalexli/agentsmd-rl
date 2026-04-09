@@ -124,3 +124,28 @@ def test_existing_tests_pass():
     assert r.returncode == 0, (
         f"Existing tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_uv_platform_tags_cargo_test():
+    """All tests in uv-platform-tags crate pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "uv-platform-tags"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"Cargo test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_uv_platform_tags_clippy():
+    """Clippy lints pass for uv-platform-tags crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "--package", "uv-platform-tags",
+         "--all-targets", "--all-features", "--", "-D", "warnings"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"Clippy failed:\n{r.stderr[-500:]}"
+    )

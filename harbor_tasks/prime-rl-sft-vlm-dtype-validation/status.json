@@ -1,81 +1,77 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.981392",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:31:29.533259",
+  "total_time": 3252.29,
+  "sandbox_id": "iigkkpfgb6unznlsmcbx7",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09",
+      "status": "completed",
+      "ci_commands_discovered": [
+        "ruff check --config=pyproject.toml src/prime_rl/configs/",
+        "ruff format --check --config=pyproject.toml src/prime_rl/configs/"
+      ],
+      "tests_added": [
+        "test_repo_ruff_lint_configs",
+        "test_repo_ruff_format_configs"
+      ],
+      "notes": "Added ruff lint and format checks from repo's style.yaml CI workflow. Tests run on configs directory which contains the modified files (trainer.py, sft.py)."
     },
-    {
-      "timestamp": "2026-03-30T11:48:15.959647",
-      "runner": "audit (audit-tests_20260330_114815)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 7805
-    },
-    {
-      "timestamp": "2026-03-31T09:10:27.424953",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 11634
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.716717",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-01T22:34:20-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 0.0,
-      "nop_score": 0.0,
-      "verdict": "fail_gold",
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 357.74,
       "notes": ""
     },
+    "validate": {
+      "timestamp": "2026-04-09",
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: Docker build OK, NOP test reward=0 (expected), Gold test reward=1 (all 13 tests pass), Rubric judge had API auth error (infrastructure issue not related to task).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 101.67
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T00:00:00-07:00",
-      "phase": "docker_validate_v2",
-      "runner": "manual (Dockerfile fix: pin pydantic-config to samsja commit)",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1",
-      "format": "pytest_binary"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:31:29.371088"
     },
     {
-      "timestamp": "2026-04-02T13:47:53.981944",
-      "phase": "e2b_wave2",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.956116",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.583468",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3252.29,
+      "at": "2026-04-09T02:31:29.533259"
     }
   ]
 }

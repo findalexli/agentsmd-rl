@@ -1,3 +1,4 @@
+
 """
 Task: bun-pipe-objectmode-write-crash
 Repo: oven-sh/bun @ 2d4c2beb23085873380840c9bd18eeca29645843
@@ -276,3 +277,89 @@ def test_no_console_log_in_ondata():
     assert "console.log" not in clean, "Found console.log in ondata — use $debug() instead"
     assert "console.warn" not in clean, "Found console.warn in ondata — use $debug() instead"
     assert "console.error" not in clean, "Found console.error in ondata — use $debug() instead"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI checks (pass_to_pass) — verified to work without bun build
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — validates TypeScript syntax without typecheck
+def test_target_file_syntax_valid():
+    """Target file has valid JavaScript/TypeScript syntax (pass_to_pass)."""
+    _install_node()
+    content = Path(TARGET).read_text()
+    # Use Node.js to verify the file parses as valid JS (treating TS as JS for basic syntax)
+    # This catches basic syntax errors without needing bun or full typecheck
+    script = textwrap.dedent(r"""
+        const fs = require('fs');
+        const vm = require('vm');
+        const content = fs.readFileSync(process.argv[2], 'utf8');
+        // Extract just the ondata function and try to parse it
+        const ondataIdx = content.indexOf('function ondata');
+        if (ondataIdx === -1) { console.error('No ondata function found'); process.exit(1); }
+        const openBrace = content.indexOf('{', ondataIdx);
+        if (openBrace === -1) { console.error('No opening brace found'); process.exit(1); }
+        let depth = 1, i = openBrace + 1;
+        while (depth > 0 && i < content.length) {
+            if (content[i] === '{') depth++;
+            else if (content[i] === '}') depth--;
+            i++;
+        }
+        const funcSrc = content.substring(ondataIdx, i);
+        // Replace $debug calls with nothing to make it valid JS
+        const cleanFunc = funcSrc.replace(/\$debug\([^)]*\);?/g, '');
+        try {
+            new vm.Script(cleanFunc);
+            console.log('Syntax valid');
+        } catch (e) {
+            console.error('Syntax error:', e.message);
+            process.exit(1);
+        }
+    """).strip()
+    Path("/tmp/syntax_check.js").write_text(script)
+    r = subprocess.run(
+        ["node", "/tmp/syntax_check.js", TARGET],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax validation failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — CLAUDE.md conventions in target file
+def test_claude_md_conventions():
+    """Target file follows src/js/CLAUDE.md conventions (pass_to_pass)."""
+    content = Path(TARGET).read_text()
+    # Check basic conventions from CLAUDE.md
+    # 1. Use $debug() not console.log (already covered in ondata test, but verify file-wide)
+    assert "console.log" not in content, "Found console.log in file — use $debug() per CLAUDE.md"
+    # 2. Basic structure checks
+    assert "Readable.prototype.pipe" in content, "Readable.prototype.pipe not found"
+    assert "function ondata" in content, "function ondata not found"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI checks (pass_to_pass) — discovered from .github/workflows/lint.yml
+# These verify the repo's actual CI passes on both base and after gold fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — prettier formatting check (from CI)
+def test_repo_prettier_target():
+    """Target file passes prettier format check (pass_to_pass)."""
+    _install_node()
+    r = subprocess.run(
+        ["npx", "-y", "prettier@latest", "--config", f"{REPO}/.prettierrc",
+         "--check", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — oxlint check (from CI)
+def test_repo_oxlint_target():
+    """Target file passes oxlint (pass_to_pass)."""
+    _install_node()
+    r = subprocess.run(
+        ["npx", "-y", "oxlint@0.15.0", f"--config={REPO}/oxlint.json", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Oxlint check failed:\n{r.stdout}\n{r.stderr}"
+

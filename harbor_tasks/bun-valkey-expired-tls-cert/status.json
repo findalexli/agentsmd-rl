@@ -1,11 +1,145 @@
 {
-  "verdict": "fail",
+  "schema_version": 2,
+  "verdict": "pass",
   "nop_reward": 0.0,
-  "gold_reward": 0.0,
-  "validated_at": "2026-04-08T21:33:53.340981",
-  "sandbox_id": "i8tbed4ol9jovr8m4pdw2",
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T01:44:32.259273",
+  "total_time": 434.81,
+  "sandbox_id": "i30a8ifjx0jlm7esugprm",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 48.0
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Verification confirmed: Docker build succeeded, NOP test correctly yields reward=0 (expired cert detected by fail-to-pass tests), Gold test yields reward=1 (all 17 tests pass after fix), rubric judge ICR=1.0. Task is valid and ready.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 37.72
+    },
+    "p2p_enrichment": {
+      "completed_at": "2026-04-09T08:30:00Z",
+      "ci_commands_discovered": [
+        "openssl x509 -in CERT -noout -checkend 0 (certificate expiry check)",
+        "openssl x509 -in CERT -noout -enddate (certificate end date)",
+        "openssl x509 -in CERT -noout -subject (certificate CN check)",
+        "openssl x509 -in CERT -noout -ext subjectAltName (certificate SAN check)",
+        "openssl x509 -in CERT -noout -modulus (certificate modulus)",
+        "openssl rsa -in KEY -noout -modulus (key modulus)",
+        "openssl x509 -in CERT -noout -issuer (certificate issuer)",
+        "openssl x509 -in CERT -noout -text (certificate details)",
+        "bash -n script.sh (shell script syntax validation)",
+        "openssl rsa -in KEY -check -noout (RSA key consistency check)"
+      ],
+      "ci_commands_added_as_p2p": [
+        "test_cert_cn_localhost - verify certificate CN is localhost (static)",
+        "test_cert_san_localhost - verify certificate SAN includes DNS:localhost (static)",
+        "test_key_matches_cert - verify key modulus matches certificate (static)",
+        "test_cert_self_signed - verify certificate is self-signed (static)",
+        "test_cert_file_exists - verify certificate file exists (repo_tests)",
+        "test_key_file_exists - verify key file exists (repo_tests)",
+        "test_cert_valid_pem_format - validate certificate PEM format (repo_tests)",
+        "test_key_valid_pem_format - validate key PEM format (repo_tests)",
+        "test_cert_has_rsa_2048 - verify RSA 2048-bit key (repo_tests)",
+        "test_cert_sig_sha256 - verify SHA256 signature (repo_tests)",
+        "test_repo_files_unchanged - verify Dockerfile/redis.conf exist (repo_tests)",
+        "test_cert_not_empty - verify certificate file has content (repo_tests)",
+        "test_key_not_empty - verify key file has content (repo_tests)",
+        "test_redis_conf_valid - verify redis.conf references TLS files (repo_tests)",
+        "test_valkey_dockerfile_valid - verify Dockerfile references cert files (repo_tests)"
+      ],
+      "test_counts": {
+        "total": 17,
+        "fail_to_pass": 2,
+        "pass_to_pass": 15,
+        "pass_to_pass_static": 4,
+        "pass_to_pass_repo_tests": 11
+      },
+      "verification_results": {
+        "base_commit": "c99fd9d1e17ec73ce4c0edd1c49f34be8e8edc25",
+        "all_pass_to_pass_pass_on_base": true,
+        "fail_to_pass_fail_on_base": true,
+        "pass_to_pass_tests": [
+          "test_cert_cn_localhost - PASSED",
+          "test_cert_san_localhost - PASSED",
+          "test_key_matches_cert - PASSED",
+          "test_cert_self_signed - PASSED",
+          "test_cert_file_exists - PASSED",
+          "test_key_file_exists - PASSED",
+          "test_cert_valid_pem_format - PASSED",
+          "test_key_valid_pem_format - PASSED",
+          "test_cert_has_rsa_2048 - PASSED",
+          "test_cert_sig_sha256 - PASSED",
+          "test_repo_files_unchanged - PASSED",
+          "test_cert_not_empty - PASSED",
+          "test_key_not_empty - PASSED",
+          "test_redis_conf_valid - PASSED",
+          "test_valkey_dockerfile_valid - PASSED"
+        ],
+        "fail_to_pass_tests": [
+          "test_cert_not_expired - FAILED (expected: cert expired Apr 7 2026)",
+          "test_cert_long_validity - FAILED (expected: only 1 year validity, need 5+)"
+        ]
+      },
+      "notes": "Discovered CI validation commands via openssl and bash. The bun repo's main CI uses bun/zig/clang for build/lint/typecheck/test, but these require the full bun build environment not available in the minimal Docker image. Instead, added 15 pass-to-pass tests that verify: (1) certificate/key static properties (4 tests), and (2) repository file structure and validity (11 tests). All 15 pass-to-pass tests pass on the base commit. The 2 fail_to_pass tests correctly fail (cert expired Apr 7 2026, validity too short). Added checks: shell script syntax validation, RSA key consistency check, TLS config validation in redis.conf, Dockerfile reference validation."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 129.39,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.7,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:33:28.199143"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1242.19,
+      "at": "2026-04-09T01:33:28.703501"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:44:32.087369"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 434.81,
+      "at": "2026-04-09T01:44:32.259273"
+    }
+  ]
 }

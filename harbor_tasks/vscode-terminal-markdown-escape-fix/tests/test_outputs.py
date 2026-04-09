@@ -10,6 +10,11 @@ already handle special characters correctly.
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
+
+CI-derived pass-to-pass gates:
+- test_repo_eslint: Repo's ESLint checks pass
+- test_repo_hygiene: Repo's hygiene checks pass
+- test_repo_test_node: Repo's Node.js unit tests pass
 """
 
 import subprocess
@@ -288,3 +293,51 @@ def test_no_blank_line_left_in_import_block():
         f"Blank line(s) found in import block between event.js and lifecycle.js: "
         f"{len(blank_lines)} blank line(s)"
     )
+
+
+# ---------------------------------------------------------------------------
+# CI-derived pass-to-pass gates — repo's CI/CD checks must pass
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass
+def test_repo_eslint():
+    """Repo ESLint checks pass (pass_to_pass).
+
+    Verifies that the codebase passes the repository's ESLint configuration.
+    This is a standard CI check from the VS Code repo's CI pipeline.
+    """
+    r = subprocess.run(
+        ["npx", "eslint", "--no-error-on-unmatched-pattern", "src/vs/workbench/contrib/terminalContrib/chatAgentTools/browser/tools/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_hygiene():
+    """Repo's hygiene checks pass (pass_to_pass).
+
+    Verifies that the codebase passes the repository's hygiene checks
+    (copyright headers, file permissions, etc.).
+    This is a standard CI check from the VS Code repo's CI pipeline.
+    """
+    r = subprocess.run(
+        ["node", "build/hygiene.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Hygiene check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_test_node():
+    """Repo's Node.js unit tests pass (pass_to_pass).
+
+    Verifies that the repository's Node.js unit tests pass.
+    This is a standard CI check from the VS Code repo's CI pipeline.
+    """
+    r = subprocess.run(
+        ["npm", "run", "test-node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node.js tests failed:\n{r.stderr[-500:]}"
+

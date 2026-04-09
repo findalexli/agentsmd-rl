@@ -3,7 +3,7 @@ version: "2.0"
 source:
   repo: "PostHog/posthog"
   pr: 53653
-  base_commit: "011a93306e5dfe5e26464fba7c61680076df62c8"
+  base_commit: "011a93306e5dfe6e26464fba7c61680076df62c8"
   merge_commit: "9605abc9a963ca91597ae0a16a217bf683de7fb4"
 
 checks:
@@ -11,6 +11,21 @@ checks:
     type: pass_to_pass
     origin: static
     description: "posthog/api/insight.py must parse without syntax errors"
+
+  - id: test_repo_syntax_insight_py
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo: posthog/api/insight.py passes Python syntax check (pass_to_pass)"
+
+  - id: test_repo_syntax_test_insight_py
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo: posthog/api/test/test_insight.py passes Python syntax check (pass_to_pass)"
+
+  - id: test_repo_ast_parse_insight_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo: All insight-related Python files parse as valid AST (pass_to_pass)"
 
   - id: legacy_filters_flag_constant
     type: fail_to_pass
@@ -54,16 +69,16 @@ checks:
     source:
       path: "AGENTS.md"
       lines: "92"
-      commit: "011a93306e5dfe5e26464fba7c61680076df62c8"
+      commit: "011a93306e5dfe6e26464fba7c61680076df62c8"
 
 rubric:
   - rule: "Comments: explain _why_, not _what_ — if the reason isn't important, skip the comment"
     source:
       path: "AGENTS.md"
       lines: "99"
-      commit: "011a93306e5dfe5e26464fba7c61680076df62c8"
+      commit: "011a93306e5dfe6e26464fba7c61680076df62c8"
   - rule: "When touching a viewset or serializer, ensure schema annotations are present (@extend_schema or @validated_request on viewset methods, help_text on serializer fields)"
     source:
       path: "AGENTS.md"
       lines: "85"
-      commit: "011a93306e5dfe5e26464fba7c61680076df62c8"
+      commit: "011a93306e5dfe6e26464fba7c61680076df62c8"

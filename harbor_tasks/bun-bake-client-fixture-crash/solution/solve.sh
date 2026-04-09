@@ -31,7 +31,7 @@ index 39f39686703..4010e44fd31 100644
  import { exitCodeMap } from "./exit-code-map.mjs";
 
 +// Prevent silent crashes from unhandled promise rejections
-+process.on("unhandledRejection", (reason) => {
++process.on("unhandledRejection", reason => {
 +  console.error("[E] Unhandled rejection:", reason);
 +  process.exit(exitCodeMap.reloadFailed);
 +});

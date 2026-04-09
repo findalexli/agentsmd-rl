@@ -13,6 +13,15 @@ from pathlib import Path
 REPO = "/workspace/playwright"
 
 
+def _npm_install():
+    """Install npm dependencies if needed."""
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    return r.returncode == 0
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core code behavioral tests
 # ---------------------------------------------------------------------------
@@ -92,7 +101,8 @@ def test_runcode_schema_describes_function():
 def test_runcode_addcode_wraps_invocation():
     """response.addCode must show function invocation format."""
     src = Path(f"{REPO}/packages/playwright/src/mcp/browser/tools/runCode.ts").read_text()
-    assert "addCode(`await (" in src, \
+    # Check that addCode wraps code with await and function invocation
+    assert 'addCode(`await (' in src, \
         "addCode should wrap code as function invocation"
     assert "addCode(params.code)" not in src, \
         "addCode should not just echo raw params.code"
@@ -151,3 +161,31 @@ def test_runcode_uses_vm_context():
     src = Path(f"{REPO}/packages/playwright/src/mcp/browser/tools/runCode.ts").read_text()
     assert "vm.createContext" in src, "Should use vm.createContext"
     assert "vm.runInContext" in src, "Should use vm.runInContext"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repository CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repository build passes (pass_to_pass)."""
+    # Install dependencies first
+    _npm_install()
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_packages():
+    """Repository workspace consistency check passes (pass_to_pass)."""
+    # Install dependencies first
+    _npm_install()
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:]}"

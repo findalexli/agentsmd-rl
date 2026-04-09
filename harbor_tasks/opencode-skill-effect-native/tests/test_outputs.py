@@ -99,12 +99,9 @@ def _read_stripped():
 def test_loadskills_is_effect_generator():
     """loadSkills must be a native Effect generator, not an async function."""
     a = _get_analysis()
-    assert not a["loadskills_is_async_fn"], \
-        "loadSkills is still declared as async function"
-    assert not a["loadskills_is_async_const"], \
-        "loadSkills is still an async arrow/expression"
-    assert a["loadskills_is_effect_gen"], \
-        "loadSkills must be assigned to Effect.fnUntraced/fn/gen"
+    assert not a["loadskills_is_async_fn"],         "loadSkills is still declared as async function"
+    assert not a["loadskills_is_async_const"],         "loadSkills is still an async arrow/expression"
+    assert a["loadskills_is_effect_gen"],         "loadSkills must be assigned to Effect.fnUntraced/fn/gen"
 
 
 # [pr_diff] fail_to_pass
@@ -127,26 +124,22 @@ def test_scan_helper_is_effect_generator():
 def test_static_config_facades_removed():
     """Config.get() and Config.directories() static facades must be removed."""
     a = _get_analysis()
-    assert not a["has_config_get_static"], \
-        "Static Config.get() facade still present -- yield Config.Service and use the instance"
-    assert not a["has_config_directories_static"], \
-        "Static Config.directories() facade still present"
+    assert not a["has_config_get_static"],         "Static Config.get() facade still present -- yield Config.Service and use the instance"
+    assert not a["has_config_directories_static"],         "Static Config.directories() facade still present"
 
 
 # [pr_diff] fail_to_pass
 def test_effect_run_promise_removed():
     """Effect.runPromise bridge must be removed -- discovery.pull() should be yielded natively."""
     a = _get_analysis()
-    assert not a["has_effect_run_promise"], \
-        "Effect.runPromise bridge still present -- yield* the Effect directly"
+    assert not a["has_effect_run_promise"],         "Effect.runPromise bridge still present -- yield* the Effect directly"
 
 
 # [pr_diff] fail_to_pass
 def test_monolithic_promise_wrapper_removed():
     """The monolithic Effect.promise(() => loadSkills(...)) wrapper must be removed."""
     a = _get_analysis()
-    assert not a["has_effect_promise_loadskills"], \
-        "Monolithic Effect.promise(() => loadSkills(...)) wrapper still present"
+    assert not a["has_effect_promise_loadskills"],         "Monolithic Effect.promise(() => loadSkills(...)) wrapper still present"
 
 
 # [pr_diff] fail_to_pass
@@ -171,16 +164,14 @@ def test_default_layer_provides_config_and_bus():
 def test_no_promise_then_chains():
     """Promise .then() chains must be replaced with Effect combinators."""
     a = _get_analysis()
-    assert not a["has_then_chain"], \
-        ".then() promise chain still present -- use Effect combinators instead"
+    assert not a["has_then_chain"],         ".then() promise chain still present -- use Effect combinators instead"
 
 
 # [pr_diff] fail_to_pass
 def test_no_promise_all():
     """Promise.all must be replaced with Effect.forEach or Effect.all."""
     a = _get_analysis()
-    assert not a["has_promise_all"], \
-        "Promise.all still present -- use Effect.forEach or Effect.all instead"
+    assert not a["has_promise_all"],         "Promise.all still present -- use Effect.forEach or Effect.all instead"
 
 
 # ---------------------------------------------------------------------------
@@ -200,8 +191,7 @@ def test_core_patterns_preserved():
 def test_error_reporting_preserved():
     """Session.Event.Error reporting must be preserved in the error handling path."""
     _, stripped = _read_stripped()
-    assert "Session.Event.Error" in stripped, \
-        "Session.Event.Error reporting missing -- errors must still be published to the bus"
+    assert "Session.Event.Error" in stripped,         "Session.Event.Error reporting missing -- errors must still be published to the bus"
 
 
 # ---------------------------------------------------------------------------
@@ -213,8 +203,7 @@ def test_no_try_catch():
     """No try/catch blocks (AGENTS.md: 'Avoid try/catch where possible')."""
     _, stripped = _read_stripped()
     matches = re.findall(r"\btry\s*\{", stripped)
-    assert len(matches) == 0, \
-        f"Found {len(matches)} try/catch block(s) -- use Effect.tryPromise or Effect.catch instead"
+    assert len(matches) == 0,         f"Found {len(matches)} try/catch block(s) -- use Effect.tryPromise or Effect.catch instead"
 
 
 # [agent_config] pass_to_pass — AGENTS.md:13 @ 21023337fa8011568b2570a3bd49fffed842ce86
@@ -222,24 +211,21 @@ def test_no_any_type():
     """No 'any' type annotations (AGENTS.md: 'Avoid using the any type')."""
     _, stripped = _read_stripped()
     any_annotations = re.findall(r":\s*any\b|as\s+any\b|<any[>,]", stripped)
-    assert len(any_annotations) == 0, \
-        f"Found {len(any_annotations)} 'any' type annotation(s) -- use specific types instead"
+    assert len(any_annotations) == 0,         f"Found {len(any_annotations)} 'any' type annotation(s) -- use specific types instead"
 
 
 # [agent_config] pass_to_pass — packages/opencode/AGENTS.md:46 @ 21023337fa8011568b2570a3bd49fffed842ce86
 def test_no_raw_fs_imports():
     """No raw 'fs/promises' imports (packages/opencode/AGENTS.md: 'Prefer FileSystem.FileSystem instead of raw fs/promises')."""
     code, _ = _read_stripped()
-    assert not re.search(r"""["']fs/promises["']""", code), \
-        "Raw 'fs/promises' import found -- use FileSystem.FileSystem service instead"
+    assert not re.search(r"""["']fs/promises["']""", code),         "Raw 'fs/promises' import found -- use FileSystem.FileSystem service instead"
 
 
 # [agent_config] pass_to_pass — packages/opencode/AGENTS.md:48 @ 21023337fa8011568b2570a3bd49fffed842ce86
 def test_no_raw_fetch_calls():
     """No raw fetch() calls (packages/opencode/AGENTS.md: 'Prefer HttpClient.HttpClient instead of raw fetch')."""
     _, stripped = _read_stripped()
-    assert not re.search(r"\bfetch\s*\(", stripped), \
-        "Raw fetch() call found -- use HttpClient.HttpClient service instead"
+    assert not re.search(r"\bfetch\s*\(", stripped),         "Raw fetch() call found -- use HttpClient.HttpClient service instead"
 
 
 # ---------------------------------------------------------------------------
@@ -255,3 +241,52 @@ def test_not_stub():
     decls = re.findall(r"\b(function\*?|const|let)\s+\w+", code)
     assert len(decls) >= 5, f"Too few declarations ({len(decls)}) -- likely stubbed"
     assert "export" in code, "No exports found -- file likely gutted"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — verify repo package.json is valid
+def test_repo_package_json_valid():
+    """Repo's root package.json must be valid JSON with expected structure."""
+    import json
+    pkg_file = Path(REPO) / "package.json"
+    assert pkg_file.exists(), "package.json not found"
+    content = pkg_file.read_text()
+    pkg = json.loads(content)
+    assert "name" in pkg, "package.json missing name field"
+    assert "workspaces" in pkg, "package.json missing workspaces"
+
+
+# [repo_tests] pass_to_pass — verify modified file is valid TypeScript syntactically
+def test_repo_modified_file_syntax():
+    """Modified skill/index.ts must have valid TypeScript syntax (no unmatched braces)."""
+    code = FILE.read_text()
+    # Check for balanced braces
+    open_count = code.count("{")
+    close_count = code.count("}")
+    assert open_count == close_count, f"Unbalanced braces: {open_count} open, {close_count} close"
+    # Check for balanced parentheses
+    open_paren = code.count("(")
+    close_paren = code.count(")")
+    assert open_paren == close_paren, f"Unbalanced parentheses: {open_paren} open, {close_paren} close"
+
+
+# [repo_tests] pass_to_pass — verify file structure preserved
+def test_repo_skill_module_structure():
+    """Skill module must preserve expected exports and namespace structure."""
+    code = FILE.read_text()
+    # Key structures that should exist in the module
+    assert "export namespace Skill" in code, "Skill namespace export missing"
+    assert "export const defaultLayer" in code, "defaultLayer export missing"
+    assert "export const layer" in code, "layer export missing"
+
+
+# [repo_tests] pass_to_pass — verify no syntax errors in key patterns
+def test_repo_no_common_syntax_errors():
+    """Modified file must not contain common syntax errors."""
+    code = FILE.read_text()
+    # Check for common syntax issues
+    assert code.count('"') % 2 == 0, "Unbalanced double quotes"
+    assert code.count("'") % 2 == 0, "Unbalanced single quotes"

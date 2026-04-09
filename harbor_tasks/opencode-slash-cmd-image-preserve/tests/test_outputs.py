@@ -220,6 +220,33 @@ def test_syntax_check():
     assert r.returncode == 0, f"Syntax errors in {TARGET}:\n{r.stderr}"
 
 
+
+
+# [repo_tests] pass_to_pass — repo CI/CD checks
+def test_repo_typecheck():
+    """Repo's bun typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "typecheck"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo unit tests for the modified module
+def test_repo_unit_tests_prompt_input():
+    """Repo's unit tests for prompt-input module pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/components/prompt-input/"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

@@ -297,6 +297,60 @@ def test_existing_typed_dict_behavior():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — cargo clippy
+def test_repo_clippy_ty_python_semantic():
+    """Repo's clippy linting passes for ty_python_semantic (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty_python_semantic"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — cargo fmt
+def test_repo_fmt_ty_python_semantic():
+    """Repo's formatting check passes for ty_python_semantic (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--check", "-p", "ty_python_semantic"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — cargo check
+def test_repo_check_ty_python_semantic():
+    """Repo's type check passes for ty_python_semantic (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty_python_semantic"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — mdtest for typed_dict
+def test_repo_mdtest_typed_dict():
+    """Repo's mdtest for typed_dict passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest", "--", "typed_dict"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypedDict mdtest failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — unit tests for ty_python_semantic
+def test_repo_unit_tests_ty_python_semantic():
+    """Repo's unit tests for ty_python_semantic pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--lib"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 

@@ -1,0 +1,96 @@
+source:
+  repo: "ant-design/ant-design"
+  pr_number: 57543
+  base_commit: "227f2ba440c36ccec4afe7487c7b2b946b83de4e"
+  merge_commit: "011bbcc07e7a6d05aae52a7ac0555f5986bf1b48"
+  task_name: "ant-design-test-types"
+  description: "Add TypeScript type safety to test utilities by replacing 'any' types with proper type definitions"
+
+checks:
+  # Fail-to-pass tests for setupAfterEnv.ts changes
+  - id: test_snapshot_target_type_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: "CLAUDE.md (TypeScript Requirements: Never use 'any' type - define precise types instead)"
+    description: "SnapshotTarget type must be defined with proper union type"
+
+  - id: test_format_html_uses_proper_types
+    type: fail_to_pass
+    origin: agent_config
+    source: "CLAUDE.md (TypeScript Requirements: Never use 'any' type - define precise types instead)"
+    description: "formatHTML function must use SnapshotTarget type instead of any"
+
+  - id: test_print_uses_type_assertion
+    type: fail_to_pass
+    origin: agent_config
+    source: "CLAUDE.md (TypeScript Requirements: Define precise types)"
+    description: "print functions must use SnapshotTarget type assertion"
+
+  # Fail-to-pass tests for focusTest.tsx changes
+  - id: test_focusable_ref_type_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: "CLAUDE.md (TypeScript Requirements: Component ref types should use proper types)"
+    description: "FocusableRef type must be defined with focus/blur methods"
+
+  - id: test_focus_test_ref_uses_proper_type
+    type: fail_to_pass
+    origin: agent_config
+    source: "CLAUDE.md (TypeScript Requirements: Never use 'any' type)"
+    description: "React.createRef must use FocusableRef instead of any"
+
+  - id: test_get_element_returns_typed_element
+    type: fail_to_pass
+    origin: agent_config
+    source: "CLAUDE.md (TypeScript Requirements: Use proper generic types)"
+    description: "getElement must return HTMLElement and use generic querySelector"
+
+  - id: test_fire_event_calls_without_nonnull_assertion
+    type: fail_to_pass
+    origin: agent_config
+    source: "CLAUDE.md (TypeScript Requirements: Use precise types)"
+    description: "fireEvent calls should not need non-null assertion after proper typing"
+
+  # Pass-to-pass tests (repo CI/CD)
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript compilation passes (tsc --noEmit)"
+
+  - id: test_focus_test_runs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Jest tests for focus utilities pass"
+
+  - id: test_lint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes without @typescript-eslint/no-explicit-any errors"
+
+  - id: test_lint_biome_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Biome lint passes (npm run lint:biome)"
+
+  - id: test_full_lint_suite_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Full lint suite passes (npm run lint - version, tsc, eslint, biome, md, changelog)"
+
+# Rubric for soft/subjective requirements from agent configs
+rubric:
+  - id: no_explicit_any
+    text: "Never use 'any' type - define precise types instead"
+    source: "CLAUDE.md TypeScript Requirements"
+
+  - id: use_generic_queryselector
+    text: "Use generic type parameters for querySelector (e.g., querySelector<HTMLElement>)"
+    source: "CLAUDE.md TypeScript Requirements"
+
+  - id: proper_ref_types
+    text: "Component ref types should use proper interface types, not 'any'"
+    source: "CLAUDE.md React Component Guidelines"
+
+  - id: type_assertions_proper
+    text: "Use proper type assertions (e.g., 'as HTMLElement') instead of 'as any'"
+    source: "CLAUDE.md TypeScript Requirements"

@@ -362,6 +362,21 @@ else:
 
 
 # [repo_tests] pass_to_pass
+def test_repo_flake8():
+    """Modified files pass flake8 linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "flake8", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # flake8 installation should succeed or be already installed
+    r = subprocess.run(
+        ["python3", "-m", "flake8", CONFIG_PY, CODEGEN_TRITON, HEURISTICS_PY],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flake8 linting failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_existing_configs_intact():
     """Existing mix_order_reduction config attributes still present."""
     source = Path(CONFIG_PY).read_text()

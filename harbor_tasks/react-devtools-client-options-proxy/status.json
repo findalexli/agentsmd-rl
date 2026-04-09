@@ -1,12 +1,78 @@
 {
-  "verdict": "fail",
+  "schema_version": 2,
+  "verdict": "pass",
   "nop_reward": 0.0,
-  "gold_reward": -1,
-  "validated_at": "2026-04-08T21:36:08.808242",
-  "sandbox_id": "ialsikixk58buueco3j2v",
-  "backend": "glm",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 183.48,
-  "error": "solve.sh failed: error: patch failed: packages/react-devtools-core/src/standalone.js:358\nerror: packages/react-devtools-core/src/standalone.js: patch does not apply\nerror: patch failed: packages/react-devtools/app.html:158\nerror: packages/react-devtools/app.html: patch does not apply\n"
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T12:06:51.103672",
+  "total_time": 10498.43,
+  "sandbox_id": "imnq0l7xso7gd70272dah",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "claude",
+      "backend": "anthropic",
+      "time": 0,
+      "notes": "Added 3 pass_to_pass tests from repo CI/CD: (1) eslint via node ./scripts/tasks/eslint.js - full repo lint, passes in ~60s; (2) flow dom-node via yarn flow dom-node - typechecks packages including react-devtools-core, passes in ~30s; (3) node --check on preload.js - syntax check for plain JS file. Excluded: prettier-check (OOM), full test suite (too slow/requires build), test-build-devtools (requires pre-built artifacts). Modified files: packages/react-devtools-core/src/backend.js, packages/react-devtools-core/src/standalone.js, packages/react-devtools/app.html, packages/react-devtools/preload.js"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 997.22,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed solve.sh to properly apply all changes. The original patch format had issues with file line numbers. Replaced with a Python-based file modification approach that correctly updates backend.js, standalone.js, app.html, and preload.js with the client options proxy feature. All 9 tests now pass (5 fail-to-pass, 4 pass-to-pass).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 693.63
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.77,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6435.08,
+      "at": "2026-04-09T06:32:48.760616"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 10498.17,
+      "at": "2026-04-09T12:06:50.935131"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 10498.43,
+      "at": "2026-04-09T12:06:51.103672"
+    }
+  ]
 }

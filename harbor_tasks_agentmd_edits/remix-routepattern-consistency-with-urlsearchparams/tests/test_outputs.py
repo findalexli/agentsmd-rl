@@ -49,6 +49,36 @@ def test_syntax_check():
         assert "export" in content, f"{f} missing exports"
 
 
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes for route-pattern (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "run", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/route-pattern",
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_tests():
+    """Repo's tests for route-pattern pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "run", "test"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/route-pattern",
+    )
+    assert r.returncode == 0, f"Tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_lint():
+    """Repo's lint for route-pattern passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "run", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/route-pattern",
+    )
+    # Skip if package has no lint script (will error with missing script)
+    if "missing script" in r.stderr.lower() or "missing script" in r.stdout.lower():
+        return
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

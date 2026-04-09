@@ -1,0 +1,105 @@
+source_pr:
+  owner: MystenLabs
+  repo: sui
+  number: 26133
+  merge_commit: 92cdfc7fe041bf824567e76995a5d5ef973bc6d6
+  base_commit: ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a
+
+task_metadata:
+  name: sui-indexer-concurrent-connection
+  description: "Implement ConcurrentConnection trait and init_watermark for ObjectStoreConnection"
+  category: rust
+  difficulty: medium
+
+# Programmatic checks that run via test_outputs.py
+checks:
+  - id: compilation
+    name: "Code compiles"
+    test: test_compilation
+    type: p2p
+
+  - id: committer_watermark_operations
+    name: "Committer watermark operations work correctly"
+    test: test_comitter_watermark_operations
+    type: f2p
+
+  - id: init_watermark_fresh_with_checkpoint
+    name: "init_watermark creates new watermark with checkpoint value"
+    test: test_init_watermark_fresh_with_checkpoint
+    type: f2p
+
+  - id: init_watermark_fresh_without_checkpoint
+    name: "init_watermark creates new watermark without checkpoint value"
+    test: test_init_watermark_fresh_without_checkpoint
+    type: f2p
+
+  - id: init_watermark_reads_new_format
+    name: "init_watermark correctly reads new format watermark"
+    test: test_init_watermark_reads_new_format
+    type: f2p
+
+  - id: init_watermark_reads_legacy_format
+    name: "init_watermark correctly reads legacy format watermark"
+    test: test_init_watermark_reads_legacy_format
+    type: f2p
+
+  - id: init_watermark_migrates_legacy_format
+    name: "init_watermark migrates legacy format to new format"
+    test: test_init_watermark_migrates_legacy_format
+    type: f2p
+
+  - id: init_watermark_does_not_rewrite_new_format
+    name: "init_watermark doesn't rewrite already-migrated watermarks"
+    test: test_init_watermark_does_not_rewrite_new_format
+    type: f2p
+
+  - id: init_watermark_returns_existing_on_conflict
+    name: "init_watermark returns existing values when watermark already exists"
+    test: test_init_watermark_returns_existing_on_conflict
+    type: f2p
+
+  - id: reader_watermark_roundtrip
+    name: "reader_watermark returns values and set_reader_watermark updates them"
+    test: test_reader_watermark_roundtrip
+    type: f2p
+
+  - id: pruner_watermark_wait_calculation
+    name: "pruner_watermark calculates wait_for_ms correctly"
+    test: test_pruner_watermark_wait_calculation
+    type: f2p
+
+  - id: set_pruner_watermark
+    name: "set_pruner_watermark updates pruner_hi correctly"
+    test: test_set_pruner_watermark
+    type: f2p
+
+  - id: pruner_watermark_saturates_when_ready
+    name: "pruner_watermark uses saturating_sub to avoid underflow"
+    test: test_pruner_watermark_saturates_when_ready
+    type: f2p
+
+  - id: pruner_watermark_overflow_handling
+    name: "pruner_watermark handles overflow errors correctly"
+    test: test_pruner_watermark_overflow_handling
+    type: f2p
+
+  - id: all_unit_tests
+    name: "All unit tests in the crate pass"
+    test: test_all_unit_tests
+    type: p2p
+
+# Soft/subjective rules from agent config (none applicable for this task)
+rubric: []
+
+# Agent config sources that were consulted (for tracking)
+agent_config_sources:
+  - file: CLAUDE.md
+    commit: ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a
+    relevant_rules:
+      - "All new files must start with license comment"
+      - "Run cargo check for faster iteration"
+      - "Set timeout limits to at least 10 minutes"
+      - "Always run tests before submitting changes"
+      - "Run cargo xclippy after finishing development"
+      - "NEVER use linting suppressions - fix underlying issues"
+      - "Use #[tokio::test] for async tests"

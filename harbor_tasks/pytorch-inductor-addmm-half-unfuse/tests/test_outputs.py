@@ -257,3 +257,44 @@ def test_no_dynamic_attr_access():
                         )
             return
     raise AssertionError("unfuse_bias_add_to_pointwise not found")
+
+
+# ---------------------------------------------------------------------------
+# [repo_tests] pass_to_pass — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+def test_repo_flake8():
+    """Repo's Python linting (flake8) passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "flake8", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install flake8: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["flake8", POST_GRAD],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"flake8 failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_ruff():
+    """Repo's Python linting (ruff) passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["ruff", "check", POST_GRAD],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_python_syntax():
+    """Modified file compiles without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "py_compile", POST_GRAD],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr[-500:]}"

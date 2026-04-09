@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -130,6 +131,117 @@ def test_terminal_probe_noop_without_window():
     )
     assert result.returncode == 0, f"Probe should not throw without window: {result.stderr}"
     assert "ok" in result.stdout
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass tests — verify base commit health
+# ---------------------------------------------------------------------------
+
+
+def _ensure_system_deps():
+    """Ensure system dependencies (unzip) are installed."""
+    try:
+        subprocess.run(
+            ["unzip", "-v"],
+            capture_output=True,
+            timeout=5,
+        )
+    except FileNotFoundError:
+        # Install unzip if not available
+        subprocess.run(
+            ["apt-get", "update", "-qq"],
+            capture_output=True,
+            timeout=30,
+        )
+        subprocess.run(
+            ["apt-get", "install", "-y", "-qq", "unzip"],
+            capture_output=True,
+            timeout=60,
+        )
+
+
+def _get_bun_path() -> Path:
+    """Get bun path, installing if necessary."""
+    _ensure_system_deps()
+    bun_bin = Path.home() / ".bun" / "bin"
+    bun_path = bun_bin / "bun"
+
+    if not bun_path.exists():
+        install_result = subprocess.run(
+            "curl -fsSL https://bun.sh/install | bash",
+            capture_output=True,
+            text=True,
+            timeout=120,
+            shell=True,
+        )
+        if install_result.returncode != 0:
+            raise RuntimeError(f"Failed to install bun: {install_result.stderr}")
+
+    return bun_path
+
+
+def _bun_env() -> dict:
+    """Get environment with bun in PATH."""
+    bun_bin = Path.home() / ".bun" / "bin"
+    return {**os.environ, "PATH": f"{bun_bin}:{os.environ.get('PATH', '')}"}
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck_app():
+    """Repo's packages/app typecheck passes (pass_to_pass)."""
+    bun_path = _get_bun_path()
+    env = _bun_env()
+
+    # Install dependencies
+    r = subprocess.run(
+        [str(bun_path), "install"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"bun install failed: {r.stderr[-500:]}"
+
+    # Run typecheck on packages/app
+    r = subprocess.run(
+        [str(bun_path), "run", "typecheck"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(APP),
+        env=env,
+    )
+    assert r.returncode == 0, f"packages/app typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck_turbo():
+    """Repo's turbo typecheck passes (pass_to_pass)."""
+    bun_path = _get_bun_path()
+    env = _bun_env()
+
+    # Install dependencies
+    r = subprocess.run(
+        [str(bun_path), "install"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"bun install failed: {r.stderr[-500:]}"
+
+    # Run turbo typecheck from root
+    r = subprocess.run(
+        [str(bun_path), "run", "typecheck"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"turbo typecheck failed:\n{r.stderr[-1000:]}"
 
 
 # ---------------------------------------------------------------------------

@@ -9,10 +9,30 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/AReaL"
 TARGET = "areal/engine/megatron_engine.py"
+
+
+def _ensure_ruff():
+    """Ensure ruff is installed for repo CI/CD checks."""
+    try:
+        subprocess.run(
+            [sys.executable, "-m", "ruff", "--version"],
+            capture_output=True,
+            timeout=30,
+            check=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Install ruff if not available
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "--break-system-packages", "ruff"],
+            capture_output=True,
+            timeout=120,
+            check=True,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -168,3 +188,46 @@ def test_no_wildcard_imports():
                     wildcards.append(f"from {node.module} import *")
 
     assert not wildcards, f"Wildcard imports found: {wildcards}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — pyproject.toml: ruff lint
+def test_repo_ruff_lint():
+    """Repo's ruff lint check passes on modified file (pass_to_pass)."""
+    _ensure_ruff()
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", f"{REPO}/{TARGET}"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — pyproject.toml: ruff format check
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified file (pass_to_pass)."""
+    _ensure_ruff()
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "format", "--check", f"{REPO}/{TARGET}"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — pyproject.toml: ruff import sorting
+def test_repo_ruff_imports():
+    """Repo's import sorting check passes on modified file (pass_to_pass)."""
+    _ensure_ruff()
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "--select", "I", f"{REPO}/{TARGET}"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff import check failed:\n{r.stdout}{r.stderr}"

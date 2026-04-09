@@ -73,6 +73,37 @@ checks:
     origin: pr_diff
     description: "SKILL.md lint command uses npm run flint (not flint:mcp)"
 
+  # Pass-to-pass gates from repo CI/CD
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo TypeScript compilation passes"
+
+  - id: test_repo_check_deps
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo dependency check passes"
+
+  - id: test_repo_lint_mcp
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint on MCP files passes"
+
+  - id: test_repo_lint_packages
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo package consistency check passes"
+
+  - id: test_repo_lint_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo test linting passes"
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo build passes"
+
 rubric:
   - rule: "New tool implementations follow the patterns of existing MCP tools (defineTool, schema shape, handle signature)"
     source:

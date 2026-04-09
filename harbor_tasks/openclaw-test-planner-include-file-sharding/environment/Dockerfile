@@ -18,7 +18,8 @@ RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace/openclaw
 
-# Install dependencies
+# Install dependencies with memory limit to prevent OOM
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN pnpm install --frozen-lockfile || pnpm install
 
 ENV PYTHONPATH=/workspace/openclaw

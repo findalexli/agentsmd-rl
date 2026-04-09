@@ -27,9 +27,9 @@ def test_syntax_check():
     # Read the file - if it can be read as UTF-8 text, basic check passes
     # The actual TypeScript validity is implicitly tested by the fix pattern tests
     src = Path(TARGET_FILE).read_text()
-    # Verify it's a TypeScript/React file by checking for basic structure
-    assert "import" in src, "File doesn't appear to be valid TypeScript (no imports found)"
-    assert "export" in src, "File doesn't appear to be valid TypeScript (no exports found)"
+    # Verify it is a TypeScript/React file by checking for basic structure
+    assert "import" in src, "File does not appear to be valid TypeScript (no imports found)"
+    assert "export" in src, "File does not appear to be valid TypeScript (no exports found)"
 
 
 # ---------------------------------------------------------------------------
@@ -69,8 +69,8 @@ def test_imports_connection_string_pooler_type():
     src = Path(TARGET_FILE).read_text()
     # Check that the ConnectionStringPooler type is imported
     assert "ConnectionStringPooler" in src, "Missing ConnectionStringPooler type import"
-    # Check it's imported from the correct module
-    import_pattern = r'import\s+type\s*\{[^}]*ConnectionStringPooler[^}]*\}\s*from\s*[\'"]@/components/interfaces/ConnectSheet/Connect.types[\'"]'
+    # Check it is imported from the correct module
+    import_pattern = r"import\s+type\s*\{[^}]*ConnectionStringPooler[^}]*\}\s*from\s*[\"\'']@/components/interfaces/ConnectSheet/Connect.types[\"\'']"
     assert re.search(import_pattern, src) is not None, (
         "ConnectionStringPooler type not imported from Connect.types"
     )
@@ -85,9 +85,27 @@ def test_not_stub():
     """Modified function is not a stub (has real logic, not just pass/return)."""
     src = Path(TARGET_FILE).read_text()
     # The component should have substantial content (hooks, logic, JSX)
-    # Just verify it's not a trivial stub function
+    # Just verify it is not a trivial stub function
     assert "const connectionStrings = useConnectionStringDatabases()" in src, (
         "Function appears to be a stub - missing expected hook usage"
     )
     # Verify the function has the hasIPv4Addon logic (not just a stub return)
     assert "hasIPv4Addon" in src, "Missing hasIPv4Addon variable usage"
+
+
+def test_repo_lint():
+    """Repo ESLint check passes on studio app (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && cd apps/studio && NODE_OPTIONS='--max-old-space-size=512' pnpm run lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_tests_connect_sheet():
+    """Repo ConnectSheet tests pass (pass_to_pass) - tests for modified module."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && cd apps/studio && NODE_OPTIONS='--max-old-space-size=1024' pnpm vitest run --reporter=verbose 'ConnectSheet'"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ConnectSheet tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"

@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/react"
@@ -37,7 +38,7 @@ def test_package_json_valid():
 def test_package_structure_intact():
     """Essential package fields (name, version, peerDependencies) are present."""
     pkg = _load_pkg()
-    assert pkg.get("name") == "eslint-plugin-react-hooks", f"name wrong: {pkg.get('name')}"
+    assert pkg.get("name") == "eslint-plugin-react-hooks", f"name wrong: {pkg.get(name)}"
     assert "version" in pkg, "version field missing"
     assert isinstance(pkg.get("peerDependencies"), dict), "peerDependencies must be an object"
     assert "eslint" in pkg["peerDependencies"], "eslint missing from peerDependencies"
@@ -78,3 +79,27 @@ def test_backward_compat_maintained():
     assert not missing, (
         f"Backward compatibility broken — missing from range: {missing}. Got: {r!r}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_eslint_plugin_tests():
+    """eslint-plugin-react-hooks tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/eslint-plugin-react-hooks",
+    )
+    assert r.returncode == 0, f"Tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

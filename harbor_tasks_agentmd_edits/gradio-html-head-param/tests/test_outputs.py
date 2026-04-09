@@ -50,7 +50,39 @@ print("PASS")
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — code behavior
+# Pass-to-pass gates (repo CI/CD tests)
+# ---------------------------------------------------------------------------
+
+
+def test_repo_ruff_check():
+    """Repo's ruff lint passes on html.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "gradio/components/html.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on html.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", "gradio/components/html.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_html_tests():
+    """HTML component tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/components/test_html.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"HTML component tests failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) - code behavior
 # ---------------------------------------------------------------------------
 
 
@@ -187,7 +219,7 @@ print("PASS")
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — config/documentation updates
+# Fail-to-pass (pr_diff) - config/documentation updates
 # ---------------------------------------------------------------------------
 
 

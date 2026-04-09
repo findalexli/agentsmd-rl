@@ -92,16 +92,47 @@ def test_bin_shim_passes_current_node():
     )
 
 
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — verify repo CI/CD still works
+# ---------------------------------------------------------------------------
 
 
+def test_c3_typecheck():
+    """C3 package TypeScript typecheck passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["bash", "-c", """
+            cd /workspace/workers-sdk &&
+            corepack enable &&
+            pnpm install --frozen-lockfile > /dev/null 2>&1 &&
+            pnpm run build --filter='@cloudflare/workers-utils' --filter='@cloudflare/codemod' --filter='@cloudflare/mock-npm-registry' > /dev/null 2>&1 &&
+            cd packages/create-cloudflare &&
+            pnpm run build > /dev/null 2>&1 &&
+            pnpm run check:type
+        """],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert result.returncode == 0, f"C3 typecheck failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+
+
+def test_c3_unit_tests():
+    """C3 package unit tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["bash", "-c", """
+            cd /workspace/workers-sdk &&
+            corepack enable &&
+            pnpm install --frozen-lockfile > /dev/null 2>&1 &&
+            pnpm run build --filter='@cloudflare/workers-utils' --filter='@cloudflare/codemod' --filter='@cloudflare/mock-npm-registry' > /dev/null 2>&1 &&
+            cd packages/create-cloudflare &&
+            pnpm run build > /dev/null 2>&1 &&
+            pnpm run test:ci
+        """],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert result.returncode == 0, f"C3 unit tests failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------
 # Config edit (config_edit) — AGENTS.md must document the bin shim
 # ---------------------------------------------------------------------------
-
-
-
-
 
 

@@ -10,6 +10,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import subprocess
 import json
 from pathlib import Path
+import tempfile
+import os
 
 REPO = "/workspace/react"
 CONTEXT_MENU = f"{REPO}/packages/react-devtools-shared/src/devtools/ContextMenu/ContextMenu.js"
@@ -17,8 +19,8 @@ CONTAINER = f"{REPO}/packages/react-devtools-shared/src/devtools/ContextMenu/Con
 
 
 def _run_js_in_repo(code: str, timeout: int = 60) -> subprocess.CompletedProcess:
-    """Execute JavaScript code via Node in the repo directory."""
-    script = Path(REPO) / "_eval_tmp.mjs"
+    """Execute JavaScript code via Node in the repo directory using .cjs extension."""
+    script = Path(REPO) / "_eval_tmp.cjs"
     script.write_text(code)
     try:
         return subprocess.run(
@@ -58,149 +60,161 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_effect_guards_empty_items():
     """useLayoutEffect returns early when items is empty or portal container is null."""
-    r = subprocess.run(
-        [
-            "node", "-e",
-            """
+    js_code = f"""
 const fs = require('fs');
-const src = fs.readFileSync(process.argv[1], 'utf8');
+const src = fs.readFileSync('{CONTEXT_MENU}', 'utf8');
 
-// Find useLayoutEffect block
-const effectMatch = src.match(/useLayoutEffect\\(\\(\\)\\s*\\{([\\s\\S]*?)\\},\\s*\\[([^\\]]*)\\]\\)/);
-if (!effectMatch) throw new Error('useLayoutEffect block not found');
+// Find the actual useLayoutEffect call (not the import) - look for 'useLayoutEffect(()'
+const effectCallIdx = src.indexOf('useLayoutEffect(()');
+if (effectCallIdx === -1) throw new Error('useLayoutEffect call not found');
 
-const effectBody = effectMatch[1];
-const deps = effectMatch[2].trim();
+// Find the arrow function start
+const arrowIdx = src.indexOf('=> {{', effectCallIdx);
+if (arrowIdx === -1) throw new Error('useLayoutEffect arrow function not found');
+
+// Find the dependency array by looking for the pattern after the effect body
+// The effect body ends with '}}' followed by ', [' or '),' for deps
+
+// Find the closing brace of the arrow function body by counting braces
+let braceCount = 0;
+let foundOpening = false;
+let closingBraceIdx = -1;
+
+for (let i = arrowIdx; i < src.length; i++) {{
+  if (src[i] === '{{') {{
+    braceCount++;
+    foundOpening = true;
+  }} else if (src[i] === '}}') {{
+    braceCount--;
+    if (foundOpening && braceCount === 0) {{
+      closingBraceIdx = i;
+      break;
+    }}
+  }}
+}}
+
+if (closingBraceIdx === -1) throw new Error('Could not find end of useLayoutEffect body');
+
+// Extract the deps array - it should be right after the closing brace
+const afterBody = src.substring(closingBraceIdx, closingBraceIdx + 30);
+const depsMatch = afterBody.match(/,\\s*\\[([^\\]]*)\\]/);
+if (!depsMatch) throw new Error('useLayoutEffect dependency array not found after: ' + afterBody);
+
+const deps = depsMatch[1].trim();
 
 // Must depend on hideMenu (not empty array [])
-if (!deps.includes('hideMenu')) {
+if (!deps.includes('hideMenu')) {{
     throw new Error('useLayoutEffect deps must include hideMenu, got: [' + deps + ']');
-}
+}}
+
+// Get the effect body for checking the guard
+const effectBody = src.substring(arrowIdx + 4, closingBraceIdx);
 
 // Must have early return for hideMenu inside the effect body
-if (!effectBody.includes('if (hideMenu)')) {
+if (!effectBody.includes('if (hideMenu)')) {{
     throw new Error('useLayoutEffect must guard with hideMenu condition');
-}
+}}
 
 // Must have return statement after hideMenu check
-const lines = effectBody.split('\\n');
+const lines = effectBody.split("\\n");
 let foundGuard = false;
 let foundReturn = false;
-for (const line of lines) {
+for (const line of lines) {{
     if (line.includes('if (hideMenu)')) foundGuard = true;
-    if (foundGuard && line.includes('return;')) { foundReturn = true; break; }
-}
+    if (foundGuard && line.includes('return;')) {{ foundReturn = true; break; }}
+}}
 if (!foundReturn) throw new Error('useLayoutEffect must return early when hideMenu is true');
 
 console.log('OK');
-""",
-            CONTEXT_MENU,
-        ],
-        capture_output=True, text=True,
-    )
+"""
+    r = _run_js_in_repo(js_code, timeout=30)
     assert r.returncode == 0, f"Effect guard check failed:\n{r.stderr}\n{r.stdout}"
 
 
 # [pr_diff] fail_to_pass
 def test_hide_menu_before_effect():
     """hideMenu variable is computed before useLayoutEffect so the guard can work."""
-    r = subprocess.run(
-        [
-            "node", "-e",
-            """
+    js_code = f"""
 const fs = require('fs');
-const src = fs.readFileSync(process.argv[1], 'utf8');
+const src = fs.readFileSync('{CONTEXT_MENU}', 'utf8');
 
+// Find positions using the actual call not import
 const hideMenuPos = src.indexOf('const hideMenu');
-const useEffectPos = src.indexOf('useLayoutEffect');
+const useEffectPos = src.indexOf('useLayoutEffect(()');
 
 if (hideMenuPos === -1) throw new Error('hideMenu variable not found');
-if (useEffectPos === -1) throw new Error('useLayoutEffect not found');
-if (hideMenuPos > useEffectPos) {
+if (useEffectPos === -1) throw new Error('useLayoutEffect call not found');
+if (hideMenuPos > useEffectPos) {{
     throw new Error('hideMenu must be computed before useLayoutEffect');
-}
+}}
 
 // hideMenu must check both conditions: null portal AND empty items
-const hideMenuLine = src.substring(hideMenuPos, src.indexOf(';', hideMenuPos));
-if (!hideMenuLine.includes('portalContainer == null')) {
+const semiPos = src.indexOf(';', hideMenuPos);
+const hideMenuLine = src.substring(hideMenuPos, semiPos);
+if (!hideMenuLine.includes('portalContainer == null')) {{
     throw new Error('hideMenu must check portalContainer == null');
-}
-if (!hideMenuLine.includes('items.length === 0')) {
+}}
+if (!hideMenuLine.includes('items.length === 0')) {{
     throw new Error('hideMenu must check items.length === 0');
-}
+}}
 
 console.log('OK');
-""",
-            CONTEXT_MENU,
-        ],
-        capture_output=True, text=True,
-    )
+"""
+    r = _run_js_in_repo(js_code, timeout=30)
     assert r.returncode == 0, f"hideMenu ordering check failed:\n{r.stderr}\n{r.stdout}"
 
 
 # [pr_diff] fail_to_pass
 def test_ref_is_internal_use_ref():
     """ContextMenu creates its ref internally via React.useRef, not from an external prop."""
-    r = subprocess.run(
-        [
-            "node", "-e",
-            """
+    js_code = f"""
 const fs = require('fs');
-const src = fs.readFileSync(process.argv[1], 'utf8');
+const src = fs.readFileSync('{CONTEXT_MENU}', 'utf8');
 
 // Must NOT accept ref as a prop with createRef default
-if (src.match(/ref\\s*[=]\\s*createRef/)) {
+if (src.match(/ref\\s*[=]\\s*createRef/)) {{
     throw new Error('ContextMenu should not use createRef() default for ref prop');
-}
+}}
 
 // Must NOT have ref in the Props type definition
-const propsBlock = src.match(/type Props\\s*=\\s*\\{([\\s\\S]*?)\\};/);
-if (propsBlock && propsBlock[1].includes('ref?')) {
+const propsBlockMatch = src.match(/type Props\\s*=\\s*\\{{([\\s\\S]*?)\\}};/);
+if (propsBlockMatch && propsBlockMatch[1].includes('ref?')) {{
     throw new Error('ref should not appear in Props type');
-}
+}}
 
 // Must create menuRef internally via React.useRef
-if (!src.includes('React.useRef')) {
+if (!src.includes('React.useRef')) {{
     throw new Error('Must use React.useRef for internal ref');
-}
-if (!src.includes('menuRef')) {
+}}
+if (!src.includes('menuRef')) {{
     throw new Error('Must create menuRef variable');
-}
+}}
 
 // The portal div must use menuRef, not the old ref
-if (!src.includes('ref={menuRef}')) {
-    throw new Error('Portal div must use ref={menuRef}');
-}
+if (!src.includes('ref={{menuRef}}')) {{
+    throw new Error('Portal div must use ref={{menuRef}}');
+}}
 
 console.log('OK');
-""",
-            CONTEXT_MENU,
-        ],
-        capture_output=True, text=True,
-    )
+"""
+    r = _run_js_in_repo(js_code, timeout=30)
     assert r.returncode == 0, f"Internal ref check failed:\n{r.stderr}\n{r.stdout}"
 
 
 # [pr_diff] fail_to_pass
 def test_container_no_ref_forwarding():
     """ContextMenuContainer no longer passes ref prop to ContextMenu."""
-    r = subprocess.run(
-        [
-            "node", "-e",
-            """
+    js_code = f"""
 const fs = require('fs');
-const src = fs.readFileSync(process.argv[1], 'utf8');
+const src = fs.readFileSync('{CONTAINER}', 'utf8');
 
-if (src.match(/ref=\\{ref\\}/)) {
-    throw new Error('ContextMenuContainer should not forward ref={ref} to ContextMenu');
-}
+if (src.match(/ref={{ref}}/)) {{
+    throw new Error('ContextMenuContainer should not forward ref={{ref}} to ContextMenu');
+}}
 
 console.log('OK');
-""",
-            CONTAINER,
-        ],
-        capture_output=True, text=True,
-    )
+"""
+    r = _run_js_in_repo(js_code, timeout=30)
     assert r.returncode == 0, f"Container ref check failed:\n{r.stderr}\n{r.stdout}"
 
 
@@ -208,31 +222,11 @@ console.log('OK');
 def test_context_menu_empty_items_no_crash():
     """ContextMenu component does not crash when rendered with empty items array."""
     code = r"""
-import * as React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
-
-// Mock the CSS module
-const styles = { ContextMenu: 'ContextMenu' };
-
-// Read and transform ContextMenu source
 const fs = require('fs');
 const path = require('path');
 
 const srcPath = path.join(process.cwd(), 'packages/react-devtools-shared/src/devtools/ContextMenu/ContextMenu.js');
 let src = fs.readFileSync(srcPath, 'utf8');
-
-// Transform the source to make it testable
-// Remove Flow types and imports that cause issues
-src = src.replace(/import type \{[^}]+\} from '[^']+';?\\n?/g, '');
-src = src.replace(/:\s*React\.Node/g, '');
-src = src.replace(/export default function ContextMenu/, 'function ContextMenu');
-
-// Extract the component implementation
-const match = src.match(/function ContextMenu\([^)]+\)\s*\{[\\s\\S]*?return null;\s*\}/);
-if (!match) {
-    console.error('Could not extract ContextMenu function');
-    process.exit(1);
-}
 
 // Verify the hideMenu guard exists
 if (!src.includes('const hideMenu = portalContainer == null || items.length === 0;')) {
@@ -241,22 +235,59 @@ if (!src.includes('const hideMenu = portalContainer == null || items.length === 
 }
 
 // Verify useLayoutEffect has hideMenu guard
-const effectMatch = src.match(/useLayoutEffect\(\(\)\s*\{([\\s\\S]*?)\},\s*\[([^\]]*)\]\)/);
-if (!effectMatch) {
-    console.error('FAIL: useLayoutEffect not found');
+const effectCallIdx = src.indexOf('useLayoutEffect(()');
+if (effectCallIdx === -1) {
+    console.error('FAIL: useLayoutEffect call not found');
     process.exit(1);
 }
 
-const effectBody = effectMatch[1];
-const deps = effectMatch[2].trim();
+// Find the arrow function and deps array
+const arrowIdx = src.indexOf('=> {', effectCallIdx);
+if (arrowIdx === -1) {
+    console.error('FAIL: useLayoutEffect arrow not found');
+    process.exit(1);
+}
 
-// Check deps include hideMenu
-if (!deps.includes('hideMenu')) {
+// Find the dependency array after the effect body
+let braceCount = 0;
+let foundOpening = false;
+let closingBraceIdx = -1;
+
+for (let i = arrowIdx; i < src.length; i++) {
+  if (src[i] === '{') {
+    braceCount++;
+    foundOpening = true;
+  } else if (src[i] === '}') {
+    braceCount--;
+    if (foundOpening && braceCount === 0) {
+      closingBraceIdx = i;
+      break;
+    }
+  }
+}
+
+if (closingBraceIdx === -1) {
+    console.error('FAIL: Could not find end of useLayoutEffect body');
+    process.exit(1);
+}
+
+// Extract the deps array
+const afterBody = src.substring(closingBraceIdx, closingBraceIdx + 30);
+const depsMatch = afterBody.match(/,\s*\[([^\]]*)\]/);
+if (!depsMatch) {
+    console.error('FAIL: useLayoutEffect deps not found');
+    process.exit(1);
+}
+
+const depsStr = depsMatch[1].trim();
+if (!depsStr.includes('hideMenu')) {
     console.error('FAIL: useLayoutEffect deps must include hideMenu');
     process.exit(1);
 }
 
 // Check effect has early return for hideMenu
+const effectBody = src.substring(arrowIdx + 4, closingBraceIdx);
+
 if (!effectBody.includes('if (hideMenu)')) {
     console.error('FAIL: useLayoutEffect must have hideMenu guard');
     process.exit(1);
@@ -274,7 +305,8 @@ if (!src.includes('const menuRef = React.useRef')) {
 }
 
 // Check that the component returns null when hideMenu is true
-if (!src.includes('if (hideMenu) {') || !src.match(/if\s*\(\s*hideMenu\s*\)\s*\{[\\s\\S]*?return\s+null;\s*\}/)) {
+const hideMenuReturnMatch = src.match(/if\s*\(\s*hideMenu\s*\)\s*\{[\s\S]*?return\s+null;[\s\S]*?\}/);
+if (!hideMenuReturnMatch) {
     console.error('FAIL: hideMenu early return not properly structured');
     process.exit(1);
 }
@@ -286,7 +318,7 @@ console.log('PASS: ContextMenu properly guards against empty items');
     assert "PASS" in r.stdout, f"Expected PASS in output, got: {r.stdout}"
 
 
-# [pr_diff] fail_to_pass - BEHAVIORAL: imports and runs actual code
+# [pr_diff] fail-to-pass - BEHAVIORAL: imports and runs actual code
 def test_use_layout_effect_with_empty_items():
     """useLayoutEffect hook guards against null ref when items array is empty."""
     code = r"""
@@ -317,13 +349,50 @@ if (!hideMenuExpr.includes('items.length === 0')) {
 }
 
 // Verify useLayoutEffect dependency array includes hideMenu
-const effectMatch = src.match(/useLayoutEffect\(\(\)\s*\{[\\s\\S]*?\},\s*\[([^\]]*)\]\)/);
-if (!effectMatch) {
-    console.error('FAIL: useLayoutEffect with dependency array not found');
+const effectCallIdx = src.indexOf('useLayoutEffect(()');
+if (effectCallIdx === -1) {
+    console.error('FAIL: useLayoutEffect call not found');
     process.exit(1);
 }
 
-const depsStr = effectMatch[1].trim();
+// Find the arrow function
+const arrowIdx = src.indexOf('=> {', effectCallIdx);
+if (arrowIdx === -1) {
+    console.error('FAIL: useLayoutEffect arrow not found');
+    process.exit(1);
+}
+
+// Find the dependency array after the effect body
+let braceCount = 0;
+let foundOpening = false;
+let closingBraceIdx = -1;
+
+for (let i = arrowIdx; i < src.length; i++) {
+  if (src[i] === '{') {
+    braceCount++;
+    foundOpening = true;
+  } else if (src[i] === '}') {
+    braceCount--;
+    if (foundOpening && braceCount === 0) {
+      closingBraceIdx = i;
+      break;
+    }
+  }
+}
+
+if (closingBraceIdx === -1) {
+    console.error('FAIL: Could not find end of useLayoutEffect body');
+    process.exit(1);
+}
+
+const afterBody = src.substring(closingBraceIdx, closingBraceIdx + 30);
+const depsMatch = afterBody.match(/,\s*\[([^\]]*)\]/);
+if (!depsMatch) {
+    console.error('FAIL: useLayoutEffect deps not found');
+    process.exit(1);
+}
+
+const depsStr = depsMatch[1].trim();
 if (depsStr === '' || depsStr === '[]') {
     console.error('FAIL: useLayoutEffect must have hideMenu in dependency array');
     process.exit(1);
@@ -335,13 +404,7 @@ if (!depsStr.includes('hideMenu')) {
 }
 
 // Find the useLayoutEffect body and verify early return
-const fullEffectMatch = src.match(/useLayoutEffect\((\(\)\s*\{[\\s\\S]*?\}),\s*\[([^\]]*)\]\)/);
-if (!fullEffectMatch) {
-    console.error('FAIL: Could not parse useLayoutEffect body');
-    process.exit(1);
-}
-
-const effectBody = fullEffectMatch[1];
+const effectBody = src.substring(arrowIdx + 4, closingBraceIdx);
 
 // Must check hideMenu before accessing menuRef.current
 const hideMenuCheckIndex = effectBody.indexOf('if (hideMenu)');
@@ -365,7 +428,7 @@ if (hideMenuCheckIndex > menuRefAccessIndex) {
 
 // Verify there's a return statement after hideMenu check
 const afterHideMenu = effectBody.substring(hideMenuCheckIndex);
-if (!afterHideMenu.match(/if\s*\(\s*hideMenu\s*\)[\\s\\S]*?return\s*;/)) {
+if (!afterHideMenu.match(/if\s*\(\s*hideMenu\s*\)[\s\S]*?return\s*;/)) {
     console.error('FAIL: No return statement after hideMenu check');
     process.exit(1);
 }
@@ -375,6 +438,30 @@ console.log('PASS: useLayoutEffect properly guarded against null ref');
     r = _run_js_in_repo(code, timeout=30)
     assert r.returncode == 0, f"useLayoutEffect behavioral test failed:\n{r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout, f"Expected PASS in output, got: {r.stdout}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint passes on all files (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow_dom_node():
+    """Repo's Flow typecheck passes for dom-node config (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/flow.js", "dom-node"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

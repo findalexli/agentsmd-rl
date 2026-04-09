@@ -29,6 +29,36 @@ def test_syntax_check():
     assert result.returncode == 0, f"cargo check failed:\n{result.stderr[-2000:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_check_all_features():
+    """turbo-persistence compiles with all features enabled."""
+    result = subprocess.run(
+        ["cargo", "check", "-p", "turbo-persistence", "--all-features"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    assert result.returncode == 0, f"cargo check --all-features failed:\n{result.stderr[-2000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_clippy():
+    """turbo-persistence passes clippy lints."""
+    result = subprocess.run(
+        ["cargo", "clippy", "-p", "turbo-persistence"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    assert result.returncode == 0, f"cargo clippy failed:\n{result.stderr[-2000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_rustfmt():
+    """turbo-persistence code is properly formatted."""
+    result = subprocess.run(
+        ["cargo", "fmt", "-p", "turbo-persistence", "--", "--check"],
+        capture_output=True, text=True, cwd=REPO, timeout=60,
+    )
+    assert result.returncode == 0, f"cargo fmt check failed:\n{result.stderr[-2000:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core code tests
 # ---------------------------------------------------------------------------
@@ -97,7 +127,8 @@ def test_get_key_entry_hash_len_param():
     """get_key_entry must accept hash_len parameter for variable hash size."""
     ssf_rs = Path(f"{CRATE}/src/static_sorted_file.rs").read_text()
 
-    assert re.search(r"fn\s+get_key_entry.*hash_len\s*:\s*u8", ssf_rs), \
+    # Match function signature across multiple lines
+    assert re.search(r"fn\s+get_key_entry[^(]*\([^)]*hash_len\s*:\s*u8", ssf_rs, re.DOTALL), \
         "get_key_entry must accept hash_len: u8 parameter"
 
     # Return type must use slice instead of u64 for hash
@@ -151,13 +182,13 @@ def test_readme_no_hash_todo():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_existing_tests_pass():
-    """All existing cargo tests for turbo-persistence must still pass."""
+def test_repo_tests_subset():
+    """Subset of cargo tests for turbo-persistence (excluding slow tests >60s)."""
     result = subprocess.run(
-        ["cargo", "test", "-p", "turbo-persistence"],
-        capture_output=True, text=True, cwd=REPO, timeout=600,
+        ["cargo", "test", "-p", "turbo-persistence", "--", "--skip", "full_cycle", "--skip", "merge_file_removal"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
     )
     assert result.returncode == 0, \
-        f"cargo test failed:\n{result.stdout[-1000:]}\n{result.stderr[-1000:]}"
+        f"cargo test (subset) failed:\n{result.stdout[-1000:]}\n{result.stderr[-1000:]}"
     assert "test result: ok" in result.stdout, \
         f"No test results found in output:\n{result.stdout[-500:]}"

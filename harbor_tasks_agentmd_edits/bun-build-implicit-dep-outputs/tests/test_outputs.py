@@ -349,3 +349,50 @@ def test_not_stub():
     assert "const " in body, "emitBun must have variable declarations"
     assert "cc(" in body or "cxx(" in body, \
         "emitBun must call cc/cxx compile functions"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI/CD tests
+# ---------------------------------------------------------------------------
+
+
+def test_repo_build_scripts_parseable():
+    """Build scripts are syntactically valid TypeScript (pass_to_pass)."""
+    assert _NODE_OK, "Node.js is required for syntax validation"
+
+    for ts_file in [BUN_TS, COMPILE_TS]:
+        code = r"""
+const fs = require('fs');
+const text = fs.readFileSync('%s', 'utf8');
+
+// Basic structural validation for TypeScript files
+const checks = {
+    hasImports: /import\s*\{/.test(text) || /import\s+\w+\s+from/.test(text),
+    hasExports: /export\s+(function|const|interface|class|type)/.test(text),
+    balancedBraces: (text.match(/\{/g) || []).length === (text.match(/\}/g) || []).length,
+    balancedParens: (text.match(/\(/g) || []).length === (text.match(/\)/g) || []).length,
+    noUnclosedComments: !/\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\//.test(text.replace(/\/\*[\s\S]*?\*\//g, ''))
+};
+
+console.log(JSON.stringify({pass: Object.values(checks).every(Boolean), checks, file: '%s'}));
+""" % (str(ts_file).replace('\\', '/'), ts_file.name)
+
+        r = _run_node(code, timeout=30)
+        assert r.returncode == 0, f"Node.js error parsing {ts_file.name}: {r.stderr}"
+        result = json.loads(r.stdout.strip().split('\n')[-1])
+        assert result["pass"], f"{ts_file.name} failed syntax checks: {result.get('checks', {})}"
+
+
+def test_repo_claude_md_valid():
+    """CLAUDE.md is valid markdown with expected sections (pass_to_pass)."""
+    text = CLAUDE_MD.read_text()
+
+    # Check for required sections
+    required_sections = ["## Ninja primer", "## Gotchas", "## Iterating"]
+    for section in required_sections:
+        assert section in text, f"CLAUDE.md missing section: {section}"
+
+    # Check markdown structure
+    assert text.count("#") > 5, "CLAUDE.md should have multiple headings"
+    assert "```" in text, "CLAUDE.md should have code blocks"
+    assert len(text.split('\n')) > 50, "CLAUDE.md should have substantial content"

@@ -19,4 +19,7 @@ RUN git clone --depth=500 https://github.com/sgl-project/sglang.git /workspace/s
 WORKDIR /workspace/sglang
 
 # No heavy sglang dependencies needed - we use AST parsing for verification
+# Install linting tools for repo checks
+RUN pip install --no-cache-dir ruff black isort codespell
+
 RUN mkdir -p /logs/verifier

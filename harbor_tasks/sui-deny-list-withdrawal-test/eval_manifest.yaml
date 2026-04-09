@@ -1,0 +1,90 @@
+source_pr:
+  owner: MystenLabs
+  repo: sui
+  number: 26142
+  title: "Add test for denied address withdrawal"
+  merge_commit: f620dfc7c8d05e828e8f63bc5466b10ed4979e6d
+  base_commit: 404f123f44711212ac69f27762a49a57eb3454f0
+
+# Checks that the agent's changes are correct
+checks:
+  - id: test_move_file_has_withdrawal_test
+    type: fail_to_pass
+    origin: task_requirement
+    description: "The Move test file contains the withdrawal from denied address test case"
+
+  - id: test_move_file_task_count
+    type: fail_to_pass
+    origin: task_requirement
+    description: "The Move test file has correct number of tasks (13)"
+
+  - id: test_move_file_task_ordering
+    type: fail_to_pass
+    origin: task_requirement
+    description: "The Move test file has tasks in correct order"
+
+  - id: test_move_file_withdrawal_sender
+    type: fail_to_pass
+    origin: task_requirement
+    description: "The withdrawal test uses sender B (the denied address)"
+
+  - id: test_snapshot_file_updated
+    type: fail_to_pass
+    origin: task_requirement
+    description: "The snapshot file reflects the new test cases with 13 tasks"
+
+  - id: test_snapshot_has_withdrawal_error
+    type: fail_to_pass
+    origin: task_requirement
+    description: "The snapshot shows the withdrawal denial error message"
+
+  - id: test_snapshot_task_numbering
+    type: fail_to_pass
+    origin: task_requirement
+    description: "The snapshot has correct task numbering for new tasks"
+
+  - id: test_snapshot_no_assertion_line
+    type: fail_to_pass
+    origin: task_requirement
+    description: "The snapshot has assertion_line removed as per PR"
+
+  # Pass-to-Pass tests (Repo CI/CD checks)
+  - id: test_move_workspace_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Move workspace compiles with cargo check"
+
+  - id: test_move_workspace_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Move workspace passes clippy lints"
+
+  - id: test_move_workspace_formatting
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Move workspace code is properly formatted"
+
+  - id: test_move_core_types_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Move core types crate compiles"
+
+  - id: test_sui_adapter_tx_tests_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Sui adapter transactional tests crate compiles"
+
+# Agent config rules that apply (from CLAUDE.md)
+agent_config:
+  - rule: "Do NOT comment the obvious"
+    file: CLAUDE.md
+    lines: "93-103"
+    applicable: true
+
+  - rule: "NEVER disable or ignore tests"
+    file: CLAUDE.md
+    lines: "89"
+    applicable: true
+
+# Soft rubric rules for LLM evaluation
+rubric: []

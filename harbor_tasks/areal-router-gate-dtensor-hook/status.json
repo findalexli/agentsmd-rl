@@ -1,91 +1,95 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T23:46:02.220540",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": null,
-      "nop_score": 0.2,
-      "verdict": "error",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T09:23:51.882696",
+  "total_time": 718.54,
+  "sandbox_id": "igkyi9pddlm7vva636vvm",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p-turbo",
+      "backend": "fireworks",
+      "time": 113.31,
+      "notes": "Added repo CI/CD tests as pass_to_pass gates: (1) test_repo_ruff_lint - runs 'ruff check areal/experimental/' to verify linting; (2) test_repo_ruff_format - runs 'ruff format --check areal/experimental/' to verify formatting. Both tests install ruff==0.14.9 (matching pre-commit config) and run on the experimental module. CI discovery: repo uses ruff 0.14.9 for lint/format (from .pre-commit-config.yaml and pyproject.toml), pytest for testing (from .github/workflows/test-areal.yml), but pytest tests require many dependencies not in base Docker image."
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All four checks passed: Docker build OK, NOP test reward=0 (tests correctly fail on buggy base), Gold test reward=1 (all 15 tests pass with fix applied), Rubric judge ICR=1.0 (gold solution follows all rules)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 116.03
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 348.84,
       "notes": ""
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.72,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-30T23:47:11.708050",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": null,
-      "nop_score": 0.2,
-      "verdict": "error",
-      "notes": ""
-    },
-    {
-      "timestamp": "2026-03-29T14:30:05.186176",
-      "runner": "rubric (rebuild-rubrics_20260329_143005)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 4641
-    },
-    {
-      "timestamp": "2026-03-29T16:44:41.799639",
-      "runner": "rubric (rebuild-rubrics_20260329_164441)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 4234
-    },
-    {
-      "timestamp": "2026-03-31T09:36:47-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": null,
-      "nop_score": 0.1,
-      "verdict": "error",
-      "notes": ""
-    },
-    {
-      "timestamp": "2026-03-31T13:27:29-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": null,
-      "nop_score": 0.1,
-      "verdict": "error",
-      "notes": ""
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.643173",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "fail",
-      "nop": "0",
-      "gold": "missing",
-      "format": "pytest_binary"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 0.0,
+      "at": "2026-04-09T01:21:28.578406"
     },
     {
-      "timestamp": "2026-04-02T12:58:21.144667",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0",
-      "notes": "edErro...\nFAILED ../../tests/test_outputs.py::test_gate_hook_with_varied_inputs - NotIm...\nFAILED ../../tests/test_outputs.py::test_router_forward_shapes - NotImplement...\n3 failed, 5 passed in 1.33s\n"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 522.18,
+      "at": "2026-04-09T01:21:28.743220"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.936868",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "fail",
-      "nop": "0.0",
-      "gold": "0.0"
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 6470.38,
+      "at": "2026-04-09T06:14:18.698794"
     },
     {
-      "timestamp": "2026-04-02T23:07:01.510460",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 718.27,
+      "at": "2026-04-09T09:23:51.711335"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 718.54,
+      "at": "2026-04-09T09:23:51.882696"
     }
   ]
 }

@@ -1,0 +1,60 @@
+{
+  "validations": [
+    {
+      "timestamp": "2026-04-03T07:38:12.334051",
+      "phase": "e2b_agentmd_initial",
+      "runner": "e2b_validate (agentmd)",
+      "format": "pytest_binary",
+      "verdict": "pass",
+      "nop": "0",
+      "gold": "1"
+    }
+  ],
+  "p2p_enrichment": {
+    "timestamp": "2026-04-09T10:30:00Z",
+    "ci_discovery": {
+      "repo": "dotnet/maui",
+      "type": ".NET MAUI with Arcade SDK",
+      "ci_commands_found": [
+        "./eng/build.sh --help (Arcade build script available)",
+        "dotnet build (requires .NET SDK 10.0.100-rtm.25523.113 - not installed)",
+        "pwsh (PowerShell - not available in container)"
+      ],
+      "ci_commands_working": [],
+      "notes": [
+        "Docker container has minimal tooling - only git, python3, basic shell",
+        "PowerShell is not available (would need manual installation)",
+        ".NET SDK is not available (would need ~500MB+ download)",
+        "Tests rely on static file analysis rather than running CI commands",
+        "No actual build/test commands can run in this environment"
+      ]
+    },
+    "tests_added": [
+      {
+        "id": "powershell_script_basic_structure",
+        "type": "pass_to_pass",
+        "origin": "repo_tests",
+        "description": "PowerShell script has valid basic structure with balanced braces and parentheses"
+      },
+      {
+        "id": "shared_baseline_script_imports",
+        "type": "pass_to_pass",
+        "origin": "repo_tests",
+        "description": "Verify-tests-fail.ps1 properly imports from EstablishBrokenBaseline.ps1"
+      },
+      {
+        "id": "skill_md_documentation_structure",
+        "type": "pass_to_pass",
+        "origin": "repo_tests",
+        "description": "SKILL.md has all required documentation sections (name, description, modes, output files)"
+      },
+      {
+        "id": "git_repository_integrity",
+        "type": "pass_to_pass",
+        "origin": "repo_tests",
+        "description": "Git repository is properly initialized at expected base commit d7d5e048"
+      }
+    ],
+    "rationale": "Since this is a PowerShell/.NET repository and the Docker environment lacks PowerShell and .NET SDK, traditional CI commands (dotnet build, dotnet test, etc.) cannot be used. Instead, added static analysis tests that validate: 1) PowerShell script structural integrity, 2) Proper dependency imports, 3) Documentation completeness, 4) Git repository state. These tests ensure the files are in the expected state on both base commit and after the fix."
+  }
+}

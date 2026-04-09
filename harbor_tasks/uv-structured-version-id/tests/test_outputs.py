@@ -129,6 +129,48 @@ def test_cargo_check():
 
 
 # ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) — repo's own CI/CD checks
+# ---------------------------------------------------------------------------
+
+def test_cargo_check_workspace():
+    """Full workspace cargo check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--workspace", "--all-targets"],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Workspace cargo check failed:\n{r.stderr.decode()[-2000:]}"
+    )
+
+
+def test_cargo_clippy():
+    """Workspace clippy lints pass without warnings (pass_to_pass)."""
+    # Ensure clippy is installed
+    subprocess.run(
+        ["rustup", "component", "add", "clippy"],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["cargo", "clippy", "--workspace", "--all-targets"],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Clippy check failed:\n{r.stderr.decode()[-2000:]}"
+    )
+
+
+def test_cargo_test_crate():
+    """Tests for uv-distribution-types crate pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "uv-distribution-types", "--lib"],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Crate tests failed:\n{r.stderr.decode()[-2000:]}"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests via injected Rust tests
 # ---------------------------------------------------------------------------
 

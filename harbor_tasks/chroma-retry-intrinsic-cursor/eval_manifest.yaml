@@ -1,0 +1,75 @@
+version: "1.0"
+
+task:
+  name: chroma-retry-intrinsic-cursor
+  source:
+    repo: chroma-core/chroma
+    pr_number: 6703
+    base_commit: 5e3503530862e1de135711cb68a70243bfed9acb
+    merge_commit: b0dba666a48cbfc5f724dee2bdf56d0f6a0d4c28
+  description: |
+    Add exponential backoff retry to update_intrinsic_cursor for transient
+    precondition errors. Uses backon crate with 20ms min, 200ms max, 3 retries.
+
+checks:
+  - id: "backon_dependency"
+    name: "backon dependency added"
+    description: "Verify backon workspace dependency is added to Cargo.toml"
+    test: "test_backon_dependency_added"
+    type: "fail_to_pass"
+    points: 10
+
+  - id: "backon_import"
+    name: "backon import present"
+    description: "Verify backon types are imported in lib.rs"
+    test: "test_backon_import_present"
+    type: "fail_to_pass"
+    points: 10
+
+  - id: "retry_structure"
+    name: "retry closure structure"
+    description: "Verify retry closure pattern is used correctly"
+    test: "test_retry_logic_structure"
+    type: "fail_to_pass"
+    points: 15
+
+  - id: "retry_params"
+    name: "exponential backoff params"
+    description: "Verify retry parameters match spec (20ms, 200ms, 3 attempts)"
+    test: "test_exponential_builder_params"
+    type: "fail_to_pass"
+    points: 15
+
+  - id: "error_filter"
+    name: "precondition error filter"
+    description: "Verify retry only triggers on StorageError::Precondition"
+    test: "test_precondition_error_filter"
+    type: "fail_to_pass"
+    points: 15
+
+  - id: "cargo_check"
+    name: "code compiles"
+    description: "Verify the modified code compiles successfully"
+    test: "test_cargo_check_passes"
+    type: "pass_to_pass"
+    points: 15
+
+  - id: "cargo_lock"
+    name: "Cargo.lock updated"
+    description: "Verify Cargo.lock includes backon dependency"
+    test: "test_cargo_lock_updated"
+    type: "pass_to_pass"
+    points: 10
+
+  - id: "async_pattern"
+    name: "async retry pattern"
+    description: "Verify async/await is used correctly in retry closure"
+    test: "test_no_blocking_sync_in_retry"
+    type: "fail_to_pass"
+    points: 10
+
+scoring:
+  total_points: 100
+  min_for_success: 70
+
+rubric: []

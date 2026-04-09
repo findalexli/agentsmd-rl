@@ -254,6 +254,47 @@ def test_imports_decoder_block_spec():
 # Pass-to-pass (repo_tests / static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
+def test_repo_syntax_valid():
+    """Repo's Python files must have valid syntax (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", str(FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
+
+
+def test_repo_ruff_linting():
+    """Repo's ruff linting passes on target file (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60
+    )
+    r = subprocess.run(
+        ["ruff", "check", str(FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_black_formatting():
+    """Repo's black formatting passes on target file (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=60
+    )
+    r = subprocess.run(
+        ["black", "--check", str(FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black formatting check failed:\n{r.stderr}"
+
+
 def test_key_classes_exist():
     """Core classes must still be defined."""
     _, tree = _parse()

@@ -1,12 +1,89 @@
 {
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-08T21:53:04.383282",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 1199.12,
-  "error": "No backend available within 600s. Pool: glm(25ok/0\u00d7429/ok) | fireworks(70ok/0\u00d7429/ok)"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:59:51.845529",
+  "total_time": 4954.73,
+  "sandbox_id": "ix9e7brd0xize9765eumm",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "completed": "2026-04-09T09:55:00Z",
+      "ci_commands_found": [
+        "pre-commit hooks: ruff, black, isort, codespell, check-ast (from .pre-commit-config.yaml)",
+        "lint workflow: SKIP=no-commit-to-branch pre-commit run --all-files (from .github/workflows/lint.yml)"
+      ],
+      "ci_commands_used": [
+        "python3 -m py_compile (syntax check)",
+        "ast.parse() (AST validation)",
+        "AST symbol analysis (classes and functions defined)"
+      ],
+      "tests_added": [
+        "test_repo_conn_py_syntax - verifies conn.py compiles with py_compile",
+        "test_repo_conn_py_ast_parse - verifies conn.py parses into valid AST",
+        "test_repo_conn_py_no_undefined_names - verifies required symbols are defined",
+        "test_repo_conn_py_classes_exist - verifies NixlKVManager and TransferStatus classes exist"
+      ],
+      "notes": [
+        "Skipped heavy lint tools (ruff, black) as they require network install and complex deps",
+        "Focused on static checks that mirror CI without requiring repo dependencies",
+        "All 4 new p2p tests pass on base commit AND after gold fix",
+        "8 p2p tests total now (4 original static + 4 new repo_tests)",
+        "3 f2p tests fail on base commit and pass after gold fix"
+      ]
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 625.43,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "icr": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build succeeded, NOP test correctly failed with reward=0 (3 f2p tests failed as expected), Gold test passed with reward=1 (all 11 tests pass), Rubric judge ICR=1.0 (empty rubric). No fixes needed.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 45.4
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.69,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:59:51.679763"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4954.73,
+      "at": "2026-04-09T02:59:51.845529"
+    }
+  ]
 }

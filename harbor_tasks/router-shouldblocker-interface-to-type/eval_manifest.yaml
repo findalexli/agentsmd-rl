@@ -1,0 +1,112 @@
+task_name: router-shouldblocker-interface-to-type
+source_pr:
+  owner: TanStack
+  repo: router
+  number: 7037
+  title: "fix: unexported `ShouldBlockFnLocation` interface causes TS4023"
+  merge_commit: a1ab2646348cb9fa89c98b2128a65d992925014f
+  base_commit: e1b019ccb84ba2a5c60d36adae2440ac9f5bc34f
+
+checks:
+  # Fail-to-pass tests - verify the fix works
+  - id: test_react_router_interface_to_type
+    type: fail_to_pass
+    origin: agent_config
+    source: "AGENTS.md - TypeScript strict mode with extensive type safety"
+    description: ShouldBlockFnLocation in react-router should be type not interface
+
+  - id: test_solid_router_interface_to_type
+    type: fail_to_pass
+    origin: agent_config
+    source: "AGENTS.md - TypeScript strict mode with extensive type safety"
+    description: ShouldBlockFnLocation in solid-router should be type not interface
+
+  - id: test_vue_router_interface_to_type
+    type: fail_to_pass
+    origin: agent_config
+    source: "AGENTS.md - TypeScript strict mode with extensive type safety"
+    description: ShouldBlockFnLocation in vue-router should be type not interface
+
+  - id: test_useblocker_type_export_regression
+    type: fail_to_pass
+    origin: agent_config
+    source: "AGENTS.md - TypeScript strict mode with extensive type safety"
+    description: TS4023 regression scenario should be fixed (wrapping useBlocker in custom hook)
+
+  # Pass-to-pass tests - verify repo tests still pass
+  - id: test_react_router_types_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: react-router type tests pass (pnpm nx run @tanstack/react-router:test:types)
+
+  - id: test_solid_router_types_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: solid-router type tests pass (pnpm nx run @tanstack/solid-router:test:types)
+
+  - id: test_vue_router_types_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: vue-router type tests pass (pnpm nx run @tanstack/vue-router:test:types)
+
+  - id: test_repo_react_router_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: react-router unit tests pass (pnpm nx run @tanstack/react-router:test:unit --run)
+
+  - id: test_repo_solid_router_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: solid-router unit tests pass (pnpm nx run @tanstack/solid-router:test:unit --run)
+
+  - id: test_repo_vue_router_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: vue-router unit tests pass (pnpm nx run @tanstack/vue-router:test:unit --run)
+
+  - id: test_repo_react_router_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: react-router ESLint passes (pnpm nx run @tanstack/react-router:test:eslint)
+
+  - id: test_repo_solid_router_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: solid-router ESLint passes (pnpm nx run @tanstack/solid-router:test:eslint)
+
+  - id: test_repo_vue_router_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: vue-router ESLint passes (pnpm nx run @tanstack/vue-router:test:eslint)
+
+  - id: test_repo_react_router_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: react-router build validation passes (pnpm nx run @tanstack/react-router:test:build)
+
+  - id: test_repo_solid_router_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: solid-router build validation passes (pnpm nx run @tanstack/solid-router:test:build)
+
+  - id: test_repo_vue_router_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: vue-router build validation passes (pnpm nx run @tanstack/vue-router:test:build)
+
+rubric:
+  - rule: "Type declarations use 'type' keyword not 'interface'"
+    weight: 3
+    guidance: "All three router packages should change ShouldBlockFnLocation from 'interface' to 'type'. The type alias syntax requires '=' before the opening brace."
+
+  - rule: "Type safety is preserved - no 'any' casts or type assertions"
+    weight: 2
+    guidance: "The fix should maintain type safety. The solution should not introduce 'any' or type assertions to work around the error."
+
+  - rule: "Consistency across all framework packages"
+    weight: 2
+    guidance: "All three packages (react-router, solid-router, vue-router) should have the same fix applied since they share the same pattern."
+
+  - rule: "Follow existing code style and patterns"
+    weight: 1
+    guidance: "The change should match the existing style in the codebase. Look at other type declarations in the file for consistency."

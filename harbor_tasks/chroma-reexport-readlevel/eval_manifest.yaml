@@ -1,0 +1,59 @@
+source_pr:
+  owner: chroma-core
+  repo: chroma
+  number: 6768
+  title: "[ENH] Re-export read level for rust client"
+  merge_commit: a2fe8c7b83e00e5ff0f5af4f040474b32d3d76a0
+  base_commit: 5221b7fe03361916adff5efde364cd6899afef7e
+
+checks:
+  - id: "test_readlevel_re_exported_in_types"
+    type: "pytest"
+    name: "ReadLevel re-exported in types.rs"
+    file: "tests/test_outputs.py"
+    weight: 2
+    origin: "f2p"
+
+  - id: "test_readlevel_publicly_accessible"
+    type: "pytest"
+    name: "ReadLevel accessible via chroma::types"
+    file: "tests/test_outputs.py"
+    weight: 3
+    origin: "f2p"
+
+  - id: "test_collection_docs_use_correct_import"
+    type: "pytest"
+    name: "Doc examples use chroma::types import path"
+    file: "tests/test_outputs.py"
+    weight: 2
+    origin: "p2p"
+
+  - id: "test_rust_compiles_cleanly"
+    type: "pytest"
+    name: "Rust crate compiles without errors"
+    file: "tests/test_outputs.py"
+    weight: 1
+    origin: "p2p"
+
+  - id: "test_all_re_exports_present"
+    type: "pytest"
+    name: "All expected re-exports are present"
+    file: "tests/test_outputs.py"
+    weight: 1
+    origin: "p2p"
+
+  - id: "test_cargo_fmt"
+    type: "pytest"
+    name: "Rust code formatting check (pass_to_pass)"
+    file: "tests/test_outputs.py"
+    weight: 1
+    origin: "p2p"
+
+  - id: "test_cargo_metadata"
+    type: "pytest"
+    name: "Cargo.toml validation check (pass_to_pass)"
+    file: "tests/test_outputs.py"
+    weight: 1
+    origin: "p2p"
+
+rubric: []

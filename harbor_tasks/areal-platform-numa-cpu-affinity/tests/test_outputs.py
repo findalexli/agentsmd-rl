@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 import sys
 from pathlib import Path
 
@@ -443,3 +444,112 @@ def test_pynvml_imported_inside_function():
                         if isinstance(child, ast.ImportFrom) and child.module and "pynvml" in child.module:
                             found_local_import = True
     assert found_local_import, "pynvml must be imported inside set_numa_affinity (lazy import pattern)"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD validation tests
+# These tests verify the repo's existing CI checks pass on both base and gold
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_platform():
+    """Repo's platform.py must have valid Python syntax (pass_to_pass)."""
+    files = [
+        "areal/infra/platforms/platform.py",
+        "areal/infra/platforms/cuda.py",
+        "areal/engine/fsdp_engine.py",
+        "areal/engine/megatron_engine.py",
+        "areal/experimental/engine/archon_engine.py",
+    ]
+    for f in files:
+        src = (Path(REPO) / f).read_text()
+        try:
+            ast.parse(src)
+        except SyntaxError as e:
+            raise AssertionError(f"Syntax error in {f}: {e}")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile():
+    """Repo's modified files must compile without errors (pass_to_pass)."""
+    files = [
+        "areal/infra/platforms/platform.py",
+        "areal/infra/platforms/cuda.py",
+        "areal/engine/fsdp_engine.py",
+        "areal/engine/megatron_engine.py",
+        "areal/experimental/engine/archon_engine.py",
+    ]
+    for f in files:
+        path = Path(REPO) / f
+        r = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, f"py_compile failed for {f}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_torch():
+    """Repo must be able to import torch (basic dependency check)."""
+    r = subprocess.run(
+        [sys.executable, "-c", "import torch; print('torch OK')"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"torch import failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ast_valid_platform():
+    """Platform files must have valid AST structure (pass_to_pass)."""
+    files = [
+        "areal/infra/platforms/platform.py",
+        "areal/infra/platforms/cuda.py",
+    ]
+    for f in files:
+        src = (Path(REPO) / f).read_text()
+        tree = ast.parse(src)
+        # Check for class definitions
+        classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+        assert len(classes) > 0, f"No classes found in {f}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's modified files must pass ruff linting (pass_to_pass)."""
+    files = [
+        "areal/infra/platforms/platform.py",
+        "areal/infra/platforms/cuda.py",
+        "areal/engine/fsdp_engine.py",
+        "areal/engine/megatron_engine.py",
+        "areal/experimental/engine/archon_engine.py",
+    ]
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check"] + [str(Path(REPO) / f) for f in files],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's modified files must be formatted correctly (pass_to_pass)."""
+    files = [
+        "areal/infra/platforms/platform.py",
+        "areal/infra/platforms/cuda.py",
+        "areal/engine/fsdp_engine.py",
+        "areal/engine/megatron_engine.py",
+        "areal/experimental/engine/archon_engine.py",
+    ]
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "format", "--check"] + [str(Path(REPO) / f) for f in files],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"

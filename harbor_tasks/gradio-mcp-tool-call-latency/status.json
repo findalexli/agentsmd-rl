@@ -1,79 +1,77 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T23:46:02.222765",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.45,
-      "verdict": "pass",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T01:56:46.335229",
+  "total_time": 1168.94,
+  "sandbox_id": "i0kryp9pzp4xcacjirgj4",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T08:55:00",
+      "status": "completed",
+      "ci_commands_found": [
+        "ruff check gradio/mcp.py (from lint_backend.sh)",
+        "python -m py_compile gradio/mcp.py (repo Python standard)",
+        "python -c \"from gradio import mcp\" (module import test)"
+      ],
+      "tests_added": [
+        "test_mcp_py_compiles - verifies mcp.py compiles with python -m py_compile",
+        "test_mcp_module_importable - verifies gradio.mcp can be imported in subprocess"
+      ],
+      "notes": "Added 2 repo_tests pass_to_pass gates. Skipped test_gradio_mcp_imports_session_state as it requires the gold patch (fail-to-pass behavior)."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 281.92,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All checks passed. Docker build successful, NOP test reward=0 (5 fail-to-pass tests correctly fail on base), Gold test reward=1 (13/13 tests pass), rubric style check passes ruff.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 68.15
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.7,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-30T23:47:11.710535",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.45,
       "verdict": "pass",
-      "notes": ""
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:56:46.163158"
     },
     {
-      "timestamp": "2026-03-29T14:30:05.194284",
-      "runner": "rubric (rebuild-rubrics_20260329_143005)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 2203
-    },
-    {
-      "timestamp": "2026-03-29T16:44:41.807895",
-      "runner": "rubric (rebuild-rubrics_20260329_164441)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 2027
-    },
-    {
-      "timestamp": "2026-03-31T09:10:27.424844",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 27960
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.672755",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "0",
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T12:58:21.146327",
-      "phase": "e2b_post_remake",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.945669",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.539327",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1168.94,
+      "at": "2026-04-09T01:56:46.335229"
     }
   ]
 }

@@ -1,0 +1,122 @@
+version: 1.0
+source:
+  pr: containerd/containerd#13181
+  title: "[release/2.0] fix: sanitize error before gRPC return to prevent credential leak in pod events"
+  base_commit: 11eca1958537a47c43cd6b922f7242cb98196db7
+  merge_commit: a1ba5feb7f28928b5d5d17f2bddfe2c353adee66
+  description: |
+    Backports #12491 and #12801. Sanitizes errors before gRPC return to prevent
+    credential leak in pod events. Creates a new utility function that redacts
+    sensitive URL query parameters.
+
+checks:
+  # Fail-to-pass behavioral tests
+  - id: sanitize_error_nil_input
+    description: "SanitizeError(nil) returns nil"
+    type: test
+    test: test_sanitize_error_nil_input
+    weight: 1
+
+  - id: sanitize_url_redacts_query_params
+    description: "SanitizeError redacts query parameters from URLs"
+    type: test
+    test: test_sanitize_url_redacts_query_params
+    weight: 1
+
+  - id: sanitize_error_non_url_error
+    description: "Non-URL errors pass through unchanged"
+    type: test
+    test: test_sanitize_error_non_url_error
+    weight: 1
+
+  - id: sanitize_error_unwrap
+    description: "Sanitized errors can be unwrapped to access original"
+    type: test
+    test: test_sanitize_error_unwrap
+    weight: 1
+
+  - id: sanitize_error_wrapped
+    description: "Wrapped URL errors are properly sanitized"
+    type: test
+    test: test_sanitize_error_wrapped
+    weight: 1
+
+  - id: sanitize_error_no_query_params
+    description: "URLs without query params pass through unchanged"
+    type: test
+    test: test_sanitize_error_no_query_params
+    weight: 1
+
+  # Code structure tests
+  - id: sanitize_error_file_exists
+    description: "sanitize.go exists with required functions and types"
+    type: test
+    test: test_sanitize_error_file_exists
+    weight: 0.5
+
+  - id: instrumented_service_uses_sanitize
+    description: "instrumented_service.go calls SanitizeError on errors"
+    type: test
+    test: test_instrumented_service_uses_sanitize
+    weight: 1
+
+  - id: code_compiles
+    description: "Code compiles without errors"
+    type: test
+    test: test_code_compiles
+    weight: 1
+
+  # Agent config rules from CONTRIBUTING.md
+  - id: agent_config
+    description: "Verify agent followed CONTRIBUTING.md guidelines"
+    type: judge
+    weight: 1
+
+  # Pass-to-pass tests: Repo CI/CD checks
+  - id: repo_unit_tests_cri_util
+    description: "Repo's unit tests for cri/util package pass"
+    type: pass_to_pass
+    origin: repo_tests
+    test: test_repo_unit_tests_cri_util
+    weight: 0.5
+
+  - id: repo_go_vet_cri_util
+    description: "Repo's go vet for cri/util package passes"
+    type: pass_to_pass
+    origin: repo_tests
+    test: test_repo_go_vet_cri_util
+    weight: 0.5
+
+  - id: repo_gofmt_cri_util
+    description: "Repo's gofmt for cri/util package passes"
+    type: pass_to_pass
+    origin: repo_tests
+    test: test_repo_gofmt_cri_util
+    weight: 0.5
+
+  - id: repo_build_cri_util
+    description: "Repo's cri/util package builds successfully"
+    type: pass_to_pass
+    origin: repo_tests
+    test: test_repo_build_cri_util
+    weight: 0.5
+
+  - id: repo_build_cri_instrument
+    description: "Repo's cri/instrument package builds successfully"
+    type: pass_to_pass
+    origin: repo_tests
+    test: test_repo_build_cri_instrument
+    weight: 0.5
+
+rubric:
+  - rule: "Go files adhere to standard Go formatting and styling (use gofmt)"
+    source:
+      path: "CONTRIBUTING.md"
+      lines: "37-38"
+    reference: "Go files adhere to standard Go formatting and styling"
+
+  - rule: "Files must not contain trailing whitespace and should end with a single new line character"
+    source:
+      path: "CONTRIBUTING.md"
+      lines: "39-40"
+    reference: "not contain trailing whitespace and should end with a single new line character"

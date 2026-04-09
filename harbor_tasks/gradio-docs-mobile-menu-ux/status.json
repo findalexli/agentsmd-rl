@@ -1,11 +1,81 @@
 {
+  "schema_version": 2,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-08T21:34:09.940735",
-  "sandbox_id": "id7l6v2nbnt16z211chkl",
+  "validated_at": "2026-04-09T01:58:11.834513",
+  "total_time": 1254.45,
+  "sandbox_id": "iqmd4ghnur6s7lqg52e0d",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 64.6
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation steps passed: Docker build succeeds, NOP test reward=0 (5 fail_to_pass tests correctly fail on buggy base), Gold test reward=1 (all 7 tests pass after fix), Rubric judge returns 0.5 due to missing API key (environment limitation).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 132.73
+    },
+    "p2p_enrichment": {
+      "ci_commands_discovered": [
+        "pnpm format:check - Prettier format check (works, <60s)",
+        "pnpm lint - ESLint (fails due to @eslint/js module resolution)",
+        "pnpm ts:check - svelte-check (fails due to missing generated JSONs)",
+        "pnpm css - CSS generation (works but not a test)",
+        "pnpm test:run - Unit tests (would require build steps)"
+      ],
+      "ci_commands_added": [
+        "test_repo_format_check - Runs pnpm format:check to verify code formatting passes on both base commit and after fix"
+      ],
+      "tests_added": [
+        "test_repo_format_check in test_outputs.py - pass_to_pass test that installs pnpm, runs pnpm install, and runs pnpm format:check"
+      ],
+      "eval_manifest_updated": "Added repo_format_check check with type=pass_to_pass and origin=repo_tests",
+      "dockerfile_notes": "Docker image builds successfully. Added pnpm installation to test runs since it's not pre-installed in the image.",
+      "verification": "All 7 tests pass after gold fix: 2 pass_to_pass (1 static + 1 repo_tests), 5 fail_to_pass"
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 480.92,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.68,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T01:58:11.661527"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1254.45,
+      "at": "2026-04-09T01:58:11.834513"
+    }
+  ]
 }

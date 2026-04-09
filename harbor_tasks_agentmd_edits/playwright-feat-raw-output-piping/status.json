@@ -1,12 +1,60 @@
 {
+  "schema_version": 2,
   "verdict": "fail",
-  "nop_reward": 0.0,
-  "gold_reward": -1,
-  "validated_at": "2026-04-08T22:10:20.815236",
-  "sandbox_id": "i1duyyc9qauhe2qgl42yb",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:23:41.415250",
+  "total_time": 5715.1,
+  "sandbox_id": "ikn3je3pqolkyrzac51gj",
   "backend": "fireworks",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 2235.63,
-  "error": "solve.sh failed: error: corrupt patch at line 81\n"
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "tests_added_dockerfile_needs_node",
+      "dockerfile_issue": "Base image python:3.12-slim lacks Node.js/npm which is required for Playwright TypeScript project",
+      "required_for": "npm install, npm run build, npm run tsc, npm run eslint, npm run test-mcp",
+      "ci_commands_discovered": [
+        "npm run tsc (TypeScript typecheck)",
+        "npm run eslint (Linting)",
+        "npm run build (Build)",
+        "npm run check-deps (Dependency check)",
+        "npm run test-mcp (MCP tests - most relevant to PR #40010)"
+      ],
+      "p2p_tests_added": [
+        "test_repo_typecheck - runs npm run tsc",
+        "test_repo_lint - runs npm run eslint",
+        "test_repo_build - runs npm run build",
+        "test_repo_mcp_tests - runs npm run test-mcp"
+      ],
+      "files_affected_by_pr": [
+        "packages/playwright-core/src/tools/backend/response.ts",
+        "packages/playwright-core/src/tools/backend/browserBackend.ts",
+        "packages/playwright-core/src/tools/backend/evaluate.ts",
+        "packages/playwright-core/src/tools/cli-client/program.ts",
+        "packages/playwright-core/src/tools/cli-client/session.ts",
+        "packages/playwright-core/src/tools/cli-daemon/daemon.ts",
+        "packages/playwright-core/src/tools/cli-daemon/helpGenerator.ts",
+        "packages/playwright-core/src/tools/cli-client/skill/SKILL.md"
+      ],
+      "notes": "Added 4 pass_to_pass tests to test_outputs.py and eval_manifest.yaml. Tests require Node.js to be installed in Dockerfile. The validate agent should add: RUN apt-get install -y nodejs npm && npm ci"
+    },
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 113.47,
+      "notes": ""
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 5715.1,
+      "at": "2026-04-09T07:23:41.415250"
+    }
+  ]
 }

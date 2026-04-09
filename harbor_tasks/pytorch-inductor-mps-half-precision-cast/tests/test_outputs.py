@@ -39,6 +39,102 @@ def test_syntax_check():
     assert "OK" in r.stdout
 
 
+# [repo_tests] pass_to_pass - CI-style py_compile check
+def test_py_compile():
+    """mps.py must compile to bytecode without errors (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "py_compile", MPS_FILE],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass - AST validation
+def test_ast_parseable():
+    """mps.py must produce valid AST with expected structure (pass_to_pass)."""
+    r = _run_python(f"""
+import ast
+with open('{MPS_FILE}') as f:
+    src = f.read()
+tree = ast.parse(src)
+# Verify it is a module
+assert isinstance(tree, ast.Module), "Not a valid module"
+# Count top-level functions and classes
+defs = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.ClassDef))]
+print(f"OK: {{len(defs)}} definitions found")
+""")
+    assert r.returncode == 0, f"AST parsing failed: {r.stderr}"
+    assert "OK:" in r.stdout
+
+
+# [repo_tests] pass_to_pass - function compile check
+def test_functions_compile():
+    """All functions in mps.py must be individually compilable (pass_to_pass)."""
+    r = _run_python(f"""
+import ast
+with open('{MPS_FILE}') as f:
+    src = f.read()
+tree = ast.parse(src)
+errors = []
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef):
+        try:
+            compile(ast.Module([node], []), "<func>", "exec")
+        except SyntaxError as e:
+            errors.append(f"{{node.name}}: {{e}}")
+if errors:
+    print(f"COMPILE_ERRORS: {{errors}}")
+else:
+    print("OK: All functions compile")
+""")
+    assert r.returncode == 0, f"Function compile test failed: {r.stderr}"
+    assert "OK:" in r.stdout
+
+
+# [repo_tests] pass_to_pass - validate MetalOverrides class exists
+def test_metal_overrides_exists():
+    """MetalOverrides class must exist in mps.py (pass_to_pass)."""
+    r = _run_python(f"""
+import ast
+with open('{MPS_FILE}') as f:
+    src = f.read()
+tree = ast.parse(src)
+found = any(
+    isinstance(node, ast.ClassDef) and node.name == "MetalOverrides"
+    for node in ast.walk(tree)
+)
+assert found, "MetalOverrides class not found"
+print("OK: MetalOverrides class exists")
+""")
+    assert r.returncode == 0, f"MetalOverrides check failed: {r.stderr}"
+    assert "OK:" in r.stdout
+
+
+# [repo_tests] pass_to_pass - validate key methods exist
+def test_required_methods_exist():
+    """Required methods (where, masked, value_to_metal) must exist (pass_to_pass)."""
+    r = _run_python(f"""
+import ast
+with open('{MPS_FILE}') as f:
+    src = f.read()
+tree = ast.parse(src)
+required = {{"where", "masked", "value_to_metal"}}
+found = set()
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "MetalOverrides":
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name in required:
+                found.add(item.name)
+    elif isinstance(node, ast.FunctionDef) and node.name == "value_to_metal":
+        found.add(node.name)
+missing = required - found
+assert not missing, f"Missing methods: {{missing}}"
+print(f"OK: Found {{len(found)}} required methods")
+""")
+    assert r.returncode == 0, f"Required methods check failed: {r.stderr}"
+    assert "OK:" in r.stdout
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

@@ -1,0 +1,103 @@
+evaluation_format_version: 1.0
+
+task:
+  name: kotlin-noreturn-exception-fix
+  source_pr: JetBrains/kotlin#5745
+  base_commit: c962899eaa18746e5b6f2e4d9a6d0f5785d49a06
+  merge_commit: ba6c05e8cd6a1eb47df280eba395c2043a881f9f
+
+# Checks are evaluated in order - each must pass to receive the point
+checks:
+  # ============================================================================
+  # FAIL-TO-PASS TESTS (Behavioral - the main fix)
+  # ============================================================================
+  - id: test_exceptions_h_has_noreturn
+    type: fail_to_pass
+    origin: task_outputs
+    description: Exceptions.h declares HandleCurrentExceptionWhenLeavingKotlinCode with RUNTIME_NORETURN
+
+  - id: test_exceptions_cpp_has_noreturn
+    type: fail_to_pass
+    origin: task_outputs
+    description: Exceptions.cpp defines HandleCurrentExceptionWhenLeavingKotlinCode with RUNTIME_NORETURN
+
+  - id: test_c_adapter_exporter_has_noreturn
+    type: fail_to_pass
+    origin: task_outputs
+    description: CAdapterApiExporter.kt generates HandleCurrentExceptionWhenLeavingKotlinCode with RUNTIME_NORETURN
+
+  # ============================================================================
+  # STRUCTURAL TESTS (Verify implementation correctness)
+  # ============================================================================
+  - id: test_function_actually_terminates
+    type: fail_to_pass
+    origin: task_outputs
+    description: HandleCurrentExceptionWhenLeavingKotlinCode implementation calls std::terminate or rethrows
+
+  - id: test_noreturn_macro_defined
+    type: fail_to_pass
+    origin: task_outputs
+    description: RUNTIME_NORETURN macro is defined and used in the codebase
+
+  - id: test_all_three_locations_consistent
+    type: fail_to_pass
+    origin: task_outputs
+    description: All three locations (h, cpp, kt) consistently use RUNTIME_NORETURN
+
+  # ============================================================================
+  # PASS-TO-PASS TESTS (Repo integrity - these pass on base and fixed)
+  # ============================================================================
+  - id: test_files_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: Required source files exist in the repository
+
+  - id: test_cpp_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: C++ source files have valid syntax (balanced braces)
+
+  - id: test_kotlin_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Kotlin source file has valid structure
+
+  - id: test_cpp_header_guards_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: C++ header files have proper include guards
+
+  - id: test_cpp_valid_extern_c
+    type: pass_to_pass
+    origin: repo_tests
+    description: C++ header has valid extern C blocks for C linkage
+
+  - id: test_kotlin_code_patterns
+    type: pass_to_pass
+    origin: repo_tests
+    description: Kotlin file follows repo code style patterns
+
+  - id: test_copyright_headers_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: All modified files have JetBrains copyright headers
+
+  - id: test_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified files have minimal trailing whitespace
+
+  - id: test_repo_git_state_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git repository is in a valid state
+
+# Agent config rules to check (from applicable config files)
+agent_config:
+  - rule: "When modifying C++ headers and implementations, keep declarations consistent"
+    source: "general C++ best practices"
+    check_type: "programmatic"
+    test_ids: ["test_all_three_locations_consistent"]
+
+# Soft/subjective rules for LLM judge evaluation (rubric-based)
+rubric: []

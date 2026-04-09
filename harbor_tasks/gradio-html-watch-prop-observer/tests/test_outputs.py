@@ -234,3 +234,81 @@ def test_existing_features_preserved():
         assert lines >= min_lines, f"{path} has {lines} lines, expected >= {min_lines}"
         for req in required:
             assert req in content, f"{path} missing expected content '{req}'"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo CI/CD) — ensure repo's own checks pass on base and after fix
+# ---------------------------------------------------------------------------
+
+
+# [repo_ci] pass_to_pass
+def test_repo_python_syntax():
+    """Repo's Python files have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", "gradio/components/html.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax error in html.py: {r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's Python linting passes on html.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+            apt-get update -qq 2>/dev/null || true
+            apt-get install -y -qq python3-pip 2>/dev/null || true
+            pip3 install --break-system-packages ruff 2>/dev/null || pip3 install ruff 2>/dev/null || true
+            ruff check gradio/components/html.py
+        """],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's Python formatting passes on html.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+            apt-get update -qq 2>/dev/null || true
+            apt-get install -y -qq python3-pip 2>/dev/null || true
+            pip3 install --break-system-packages ruff 2>/dev/null || pip3 install ruff 2>/dev/null || true
+            ruff format --check gradio/components/html.py
+        """],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_svelte_syntax():
+    """Svelte files are valid JS/HTML syntax (pass_to_pass)."""
+    # Check that Svelte files parse as valid HTML-like content
+    for path in [INDEX, SHARED]:
+        content = path.read_text()
+        # Basic checks for valid Svelte component structure
+        assert "<script" in content, f"{path} missing script tag"
+        assert len(content) > 100, f"{path} seems too short ({len(content)} chars)"
+        # Check for balanced basic brackets (rough check)
+        open_tags = content.count("<")
+        close_tags = content.count(">")
+        assert open_tags > 0 and close_tags > 0, f"{path} missing HTML tags"
+        assert content.count("{") >= content.count("}"), f"{path} may have unbalanced braces"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_imports_parse():
+    """Repo's Python imports parse correctly (pass_to_pass)."""
+    # Check that imports in html.py are syntactically valid (AST parse only)
+    # Don't actually import because gradio_client is not in the minimal environment
+    r = _run_py("""
+import ast
+source = open('gradio/components/html.py').read()
+tree = ast.parse(source)
+imports = [node for node in ast.walk(tree) if isinstance(node, (ast.Import, ast.ImportFrom))]
+assert len(imports) > 0, "No imports found in html.py"
+print('PASS')
+""")
+    assert r.returncode == 0, f"Import parse failed:\n{r.stderr}"
+    assert "PASS" in r.stdout

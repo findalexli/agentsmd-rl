@@ -1,0 +1,133 @@
+source_pr:
+  owner: ClickHouse
+  repo: ClickHouse
+  number: 102032
+  title: "Rename HTML_S3_PATH to S3_REPORT_BUCKET, add upstream catalog merge"
+  merge_commit: 47a1d36eb5723869b8a32c2dcf441aa5386f280c
+  base_commit: d0432097aed783bd35054dce2edcefe0c4e5122c
+
+checks:
+  # FAIL-TO-PASS tests
+  - id: test_html_s3_path_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: HTML_S3_PATH is completely removed from all CI files
+
+  - id: test_s3_report_bucket_exists_in_settings
+    type: fail_to_pass
+    origin: behavioral
+    description: S3_REPORT_BUCKET setting is defined in settings.py
+
+  - id: test_s3_upstream_report_bucket_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: S3_UPSTREAM_REPORT_BUCKET setting is defined in settings.py
+
+  - id: test_s3_upstream_report_bucket_in_user_defined
+    type: fail_to_pass
+    origin: behavioral
+    description: S3_UPSTREAM_REPORT_BUCKET is in _USER_DEFINED_SETTINGS list
+
+  - id: test_download_catalog_method_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: TestCaseIssueCatalog has _download_catalog method
+
+  - id: test_settings_import_in_issue_py
+    type: fail_to_pass
+    origin: behavioral
+    description: issue.py imports Settings from praktika.settings
+
+  - id: test_issue_to_s3_uses_settings
+    type: fail_to_pass
+    origin: behavioral
+    description: to_s3 uses Settings.S3_REPORT_BUCKET
+
+  - id: test_from_s3_merge_logic
+    type: fail_to_pass
+    origin: behavioral
+    description: from_s3 has merge logic for upstream catalogs
+
+  - id: test_validator_uses_new_setting_name
+    type: fail_to_pass
+    origin: behavioral
+    description: validator.py uses S3_REPORT_BUCKET in assertions
+
+  - id: test_hook_html_uses_new_setting
+    type: fail_to_pass
+    origin: behavioral
+    description: hook_html.py uses Settings.S3_REPORT_BUCKET
+
+  - id: test_html_prepare_uses_new_setting
+    type: fail_to_pass
+    origin: behavioral
+    description: html_prepare.py uses Settings.S3_REPORT_BUCKET
+
+  - id: test_info_uses_new_setting
+    type: fail_to_pass
+    origin: behavioral
+    description: info.py uses Settings.S3_REPORT_BUCKET
+
+  - id: test_result_uses_new_setting
+    type: fail_to_pass
+    origin: behavioral
+    description: result.py uses Settings.S3_REPORT_BUCKET
+
+  - id: test_s3_uses_new_setting
+    type: fail_to_pass
+    origin: behavioral
+    description: s3.py uses Settings.S3_REPORT_BUCKET
+
+  - id: test_settings_has_both_new_settings
+    type: fail_to_pass
+    origin: behavioral
+    description: settings.py has both S3_REPORT_BUCKET and S3_UPSTREAM_REPORT_BUCKET
+
+  - id: test_collect_statistics_uses_settings
+    type: fail_to_pass
+    origin: behavioral
+    description: collect_statistics.py imports and uses Settings
+
+  - id: test_ci_settings_uses_new_name
+    type: fail_to_pass
+    origin: behavioral
+    description: ci/settings/settings.py defines S3_REPORT_BUCKET
+
+  # PASS-TO-PASS tests
+  - id: test_settings_importable
+    type: pass_to_pass
+    origin: repo_tests
+    description: Settings module is importable and has new attributes
+
+  - id: test_issue_module_importable
+    type: pass_to_pass
+    origin: repo_tests
+    description: TestCaseIssueCatalog is importable with new methods
+
+  - id: test_python_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: All modified Python files have valid syntax
+
+  - id: test_no_broken_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: Imports in modified modules work correctly
+
+  - id: test_repo_python_syntax_all_modified
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - Python syntax check on all modified files
+
+  - id: test_repo_praktika_modules_importable
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - All praktika modules are importable
+
+  - id: test_repo_settings_attrs_accessible
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - Settings class attributes are accessible
+
+rubric: []
+# No soft/subjective rules for this task - all requirements are programmatically testable

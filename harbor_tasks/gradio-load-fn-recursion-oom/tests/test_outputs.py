@@ -240,3 +240,23 @@ def test_ruff_lint_modified_files():
         assert r.returncode == 0, (
             f"ruff lint failed on {path}:\n{r.stdout.decode()}\n{r.stderr.decode()}"
         )
+
+
+# [repo_tests] pass_to_pass - repo's CI: pytest test/test_external_utils.py
+def test_repo_external_utils_tests():
+    """Repo's external_utils tests must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_external_utils.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"external_utils tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - repo's CI: ruff format check
+def test_repo_ruff_format():
+    """Modified files must pass ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "gradio/external.py", "gradio/external_utils.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stderr[-500:]}"

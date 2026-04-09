@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import multiprocessing as mp
+import os
 import subprocess
 import sys
 import textwrap
@@ -59,39 +60,59 @@ def _run_forward_test(script: str, timeout: int = 25) -> subprocess.CompletedPro
     )
 
 
-MOCK_PREAMBLE = textwrap.dedent("""\
-    import multiprocessing as mp
-    import queue as queue_mod
-    import sys
-    import time
-
-    class FakeProcess:
-        def __init__(self, exitcode, alive=False):
-            self._exitcode = exitcode
-            self._alive = alive
-        def is_alive(self):
-            return self._alive
-        @property
-        def exitcode(self):
-            return self._exitcode
-        @property
-        def pid(self):
-            return 12345 if self._alive else -1
-        def terminate(self): pass
-        def kill(self): pass
-        def join(self, timeout=None): pass
-
-    class FakeSelf:
-        def __init__(self, exitcode=None, alive=True):
-            self.in_queue = mp.Queue()
-            self.out_queue = mp.Queue()
-            self.model_proc = FakeProcess(exitcode, alive)
-            self.model_type = "generation"
-            self.output_str_only = False
-
-    def forward(self, prompts=None, image_data=None, max_new_tokens=8,
-                lora_paths=None, token_ids_logprob=None):
-    """)
+MOCK_PREAMBLE = (
+    "import multiprocessing as mp\n"
+    "import queue as queue_mod\n"
+    "import sys\n"
+    "import time\n"
+    "\n"
+    "class FakeProcess:\n"
+    "    def __init__(self, exitcode, alive=False):\n"
+    "        self._exitcode = exitcode\n"
+    "        self._alive = alive\n"
+    "    def is_alive(self):\n"
+    "        return self._alive\n"
+    "    @property\n"
+    "    def exitcode(self):\n"
+    "        return self._exitcode\n"
+    "    @property\n"
+    "    def pid(self):\n"
+    "        return 12345 if self._alive else -1\n"
+    "    def terminate(self): pass\n"
+    "    def kill(self): pass\n"
+    "    def join(self, timeout=None): pass\n"
+    "\n"
+    "class MockQueue:\n"
+    "    def __init__(self):\n"
+    "        self._data = []\n"
+    "        self._get_count = 0\n"
+    "    def put(self, item):\n"
+    "        self._data.append(item)\n"
+    "    def get(self, timeout=None):\n"
+    "        self._get_count += 1\n"
+    "        if self._get_count > 3:\n"
+    "            print('FAIL: infinite loop detected')\n"
+    "            sys.exit(1)\n"
+    "        actual_timeout = 2 if timeout is None else timeout\n"
+    "        if not self._data:\n"
+    "            import time\n"
+    "            time.sleep(actual_timeout)\n"
+    "            raise queue_mod.Empty()\n"
+    "        return self._data.pop(0)\n"
+    "    def empty(self):\n"
+    "        return len(self._data) == 0\n"
+    "\n"
+    "class FakeSelf:\n"
+    "    def __init__(self, exitcode=None, alive=True):\n"
+    "        self.in_queue = MockQueue()\n"
+    "        self.out_queue = MockQueue()\n"
+    "        self.model_proc = FakeProcess(exitcode, alive)\n"
+    "        self.model_type = 'generation'\n"
+    "        self.output_str_only = False\n"
+    "\n"
+    "def forward(self, prompts=None, image_data=None, max_new_tokens=8,\n"
+    "            lora_paths=None, token_ids_logprob=None):\n"
+)
 
 
 # ---------------------------------------------------------------------------
@@ -239,3 +260,74 @@ def test_not_stub():
     assert line_count > 100, f"File only has {line_count} lines (expected >100)"
     assert class_count >= 2, f"File gutted: only {class_count} classes"
     assert func_count >= 5, f"File gutted: only {func_count} functions"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from repository
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_basic():
+    """Repo pre-commit basic checks pass (symlinks, yaml, toml, ast, merge conflicts, private keys, debug statements)."""
+    # Install pre-commit
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Install may fail if already installed, continue anyway
+
+    env = {**os.environ, "SKIP": "no-commit-to-branch,lychee,clang-format,isort,ruff,black,black-jupyter,codespell,nbstripout,check-chinese-characters,sort-ci-permissions"}
+    r = subprocess.run(
+        [sys.executable, "-m", "pre_commit", "run", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"Pre-commit basic checks failed:\n{r.stdout[-2000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo ruff lint checks pass (F401 unused imports, F821 undefined names) for runners.py."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "--select=F401,F821", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_compileall():
+    """Repo Python files compile without syntax errors."""
+    r = subprocess.run(
+        [sys.executable, "-m", "compileall", "-q", f"{REPO}/python/sglang/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # compileall returns 0 even with warnings, only fail on actual errors
+    # Check stderr for SyntaxError patterns
+    if r.stderr and ("SyntaxError" in r.stderr or "IndentationError" in r.stderr):
+        assert False, f"Python compileall found syntax errors:\n{r.stderr[-1000:]}"
+    assert r.returncode == 0, f"Python compileall failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell():
+    """Repo codespell passes on runners.py (no common typos)."""
+    # Install codespell to user location
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "--user", "codespell", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    # Find codespell in user bin
+    user_base = Path.home() / ".local" / "bin"
+    codespell_cmd = str(user_base / "codespell") if (user_base / "codespell").exists() else "codespell"
+
+    r = subprocess.run(
+        [codespell_cmd, "--config", f"{REPO}/.codespellrc", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Codespell found typos:\n{r.stdout}\n{r.stderr}"

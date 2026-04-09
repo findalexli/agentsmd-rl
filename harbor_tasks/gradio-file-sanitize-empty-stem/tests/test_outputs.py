@@ -104,6 +104,39 @@ def test_existing_strip_behavior():
         assert result == expected, f"{inp!r}: expected {expected!r}, got {result!r}"
 
 
+# [repo_tests] pass_to_pass
+def test_gradio_client_utils_tests():
+    """Repo's existing gradio_client utils tests pass (pass_to_pass).
+
+    The conftest.py requires the full gradio package which isn't installed,
+    so we temporarily rename it to run just the utils tests.
+    """
+    import subprocess
+    import os
+
+    client_dir = f"{REPO}/client/python"
+    conftest = f"{client_dir}/test/conftest.py"
+    conftest_bak = f"{conftest}.bak"
+
+    # Temporarily rename conftest.py if it exists (it imports gradio which isn't installed)
+    if os.path.exists(conftest):
+        os.rename(conftest, conftest_bak)
+
+    try:
+        r = subprocess.run(
+            ["python", "-m", "pytest", "test/test_utils.py::test_strip_invalid_filename_characters", "-v"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=client_dir,
+        )
+        assert r.returncode == 0, f"gradio_client utils tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-500:]}"
+    finally:
+        # Restore conftest.py
+        if os.path.exists(conftest_bak):
+            os.rename(conftest_bak, conftest)
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------
@@ -127,5 +160,3 @@ def test_not_stub():
             )
             return
     raise AssertionError("Function strip_invalid_filename_characters not found")
-
-

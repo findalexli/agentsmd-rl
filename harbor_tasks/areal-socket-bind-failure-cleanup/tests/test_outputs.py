@@ -231,13 +231,16 @@ from pathlib import Path
 
 src = Path("/workspace/AReaL/areal/trainer/rl_trainer.py").read_text()
 tree = ast.parse(src)
+exit_func = None
 for node in ast.walk(tree):
     if isinstance(node, ast.ClassDef):
         for item in node.body:
             if isinstance(item, ast.FunctionDef) and item.name == "__exit__":
                 exit_func = item
                 break
-else:
+    if exit_func:
+        break
+if exit_func is None:
     raise AssertionError("__exit__ not found")
 
 lines = src.splitlines(keepends=True)
@@ -290,13 +293,16 @@ from pathlib import Path
 
 src = Path("/workspace/AReaL/areal/trainer/sft_trainer.py").read_text()
 tree = ast.parse(src)
+exit_func = None
 for node in ast.walk(tree):
     if isinstance(node, ast.ClassDef):
         for item in node.body:
             if isinstance(item, ast.FunctionDef) and item.name == "__exit__":
                 exit_func = item
                 break
-else:
+    if exit_func:
+        break
+if exit_func is None:
     raise AssertionError("__exit__ not found")
 
 lines = src.splitlines(keepends=True)
@@ -458,3 +464,36 @@ def test_no_print_logging():
                     f"Bare print() call found in {f}:{node.lineno} — "
                     "use areal.utils.logging.getLogger() instead"
                 )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Modified files pass ruff lint check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check"] + [f"{REPO}/{f}" for f in MODIFIED_FILES],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Modified files pass ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check"] + [f"{REPO}/{f}" for f in MODIFIED_FILES],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"

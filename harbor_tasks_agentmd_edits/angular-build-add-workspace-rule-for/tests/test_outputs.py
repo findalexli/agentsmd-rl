@@ -98,3 +98,57 @@ def test_prettierignore_exists():
     p = Path(f"{REPO}/.prettierignore")
     assert p.exists(), ".prettierignore missing"
     assert len(p.read_text().strip()) > 0, ".prettierignore is empty"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_tslint():
+    """Repo's TSLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/angular && corepack enable && pnpm install --frozen-lockfile && pnpm tslint"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TSLint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_tooling_setup():
+    """Repo's TypeScript tooling setup compiles (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/angular && corepack enable && pnpm install --frozen-lockfile && pnpm check-tooling-setup"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Tooling setup check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ts_circular_deps_check():
+    """Repo has no circular TypeScript dependencies (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/angular && corepack enable && pnpm install --frozen-lockfile && pnpm ts-circular-deps:check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Circular deps check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pullapprove_verify():
+    """Repo's PullApprove config is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/angular && corepack enable && pnpm install --frozen-lockfile && pnpm ng-dev pullapprove verify"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"PullApprove verify failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ngbot_verify():
+    """Repo's NgBot config is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/angular && corepack enable && pnpm install --frozen-lockfile && pnpm ng-dev ngbot verify"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"NgBot verify failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

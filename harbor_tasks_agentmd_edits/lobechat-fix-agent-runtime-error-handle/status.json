@@ -1,12 +1,83 @@
 {
+  "schema_version": 2,
   "verdict": "fail",
-  "nop_reward": -1,
-  "gold_reward": -1,
-  "validated_at": "2026-04-08T21:54:17.814204",
-  "sandbox_id": "ijl6gqlhhfqdb68a9hhy5",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T07:20:00.693896",
+  "total_time": 5781.84,
+  "sandbox_id": "iq1x4xxlqb8bhvxghxr0d",
   "backend": "glm",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 1272.56,
-  "error": "docker build failed: --\n > [3/6] RUN curl -fsSL https://bun.sh/install | bash:\n0.407 error: unzip is required to install bun\n------\nDockerfile:13\n--------------------\n  11 |     \n  12 |     # Install bun for running TypeScript test scripts\n  13 | >>> RUN curl -fsSL https://bun.sh/install | bash\n  14 |     ENV PATH=\"/root/.bun/bin:${PATH}\"\n  15 |     \n--------------------\nERROR: failed to build: failed to solve: process \"/bin/sh -c curl -fsSL https://bun.sh/install | bash\" did not complete succes"
+  "pipeline": "agents",
+  "error": "rate limited during p2p_enrich",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "docker_build_failed",
+      "note": "Dockerfile is missing 'unzip' package needed for bun installation. Cannot add p2p tests until Docker builds successfully.",
+      "discovered_ci_commands": [
+        "bun run lint:ts - lints TypeScript files (eslint src/ tests/)",
+        "bun run type-check - TypeScript type checking (tsgo --noEmit)",
+        "bun run type-check:tsc - Alternative type check (tsc --noEmit)",
+        "bun run test-app - Run vitest tests (excludes packages/)"
+      ],
+      "potential_p2p_tests": [
+        {
+          "id": "repo_lint_ts",
+          "command": "bun run lint:ts",
+          "description": "TypeScript linting passes (pass_to_pass)"
+        },
+        {
+          "id": "repo_typecheck",
+          "command": "bun run type-check:tsc",
+          "description": "TypeScript typecheck passes (pass_to_pass)"
+        },
+        {
+          "id": "repo_agent_tracing_test",
+          "command": "cd packages/agent-tracing && npx vitest run src/utils/reconstruct.test.ts",
+          "description": "agent-tracing unit tests pass (pass_to_pass)"
+        }
+      ],
+      "files_discovered": {
+        "github_workflows": [
+          ".github/workflows/claude.yml",
+          ".github/workflows/claude-auto-testing.yml",
+          ".github/workflows/claude-auto-e2e-testing.yml"
+        ],
+        "package_json_scripts": [
+          "test",
+          "test-app",
+          "lint",
+          "lint:ts",
+          "type-check",
+          "type-check:tsc"
+        ],
+        "agent_tracing_tests": [
+          "packages/agent-tracing/src/utils/reconstruct.test.ts"
+        ]
+      }
+    },
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 212.54,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 5781.84,
+      "at": "2026-04-09T07:20:00.693896"
+    }
+  ]
 }

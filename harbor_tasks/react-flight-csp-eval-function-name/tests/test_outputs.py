@@ -240,3 +240,72 @@ console.log('PASS: fn is callable and correctly named');
 """
     r = _node_eval(node_script)
     assert r.returncode == 0, f"CSP fallback function not callable or not named:\n{r.stderr}\n{r.stdout}"
+
+
+# -----------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass tests
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_react_client():
+    """ESLint passes on react-client package (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js", "packages/react-client"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on react-client:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow_dom_browser():
+    """Flow typecheck passes for dom-browser config (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/flow.js", "dom-browser"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow typecheck failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flags():
+    """Feature flags check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flags"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Feature flags check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_version_check():
+    """Version check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "version-check"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tests_react_client():
+    """Jest tests pass for react-client package (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "packages/react-client", "--ci"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Jest tests failed for react-client:\n{r.stderr[-500:]}{r.stdout[-500:]}"

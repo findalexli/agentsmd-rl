@@ -3,8 +3,8 @@ set -euo pipefail
 
 cd /workspace/gradio
 
-# Idempotent: skip if already applied
-if grep -q 'route_path=request.url.path,' gradio/routes.py 2>/dev/null; then
+# Idempotent: skip if already applied (check specifically in predict function context)
+if grep -A2 'def predict(' gradio/routes.py | grep -q 'route_path=request.url.path'; then
     echo "Patch already applied."
     exit 0
 fi

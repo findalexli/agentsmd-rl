@@ -1,0 +1,64 @@
+source_pr:
+  repo: SeleniumHQ/selenium
+  pr_number: 17235
+  title: "[grid] Fix VNC caps not propagated for sessions without browserName"
+  base_commit: b1a7b8de7bf8c9889627914888adee44c01f925a
+  merge_commit: 458c350ca9c711184366d4cfc0dc547a26150f67
+
+checks:
+  - id: "compile"
+    name: "Code compiles"
+    type: "p2p"
+    description: "Java code compiles without syntax errors"
+
+  - id: "vnc_caps_order"
+    name: "VNC caps order correct"
+    type: "f2p"
+    description: "VNC capability handling happens before browserName check"
+
+  - id: "existing_tests"
+    name: "Existing tests pass"
+    type: "p2p"
+    description: "Existing SessionCapabilitiesMutator tests still pass"
+
+  - id: "vnc_port_order"
+    name: "VNC port order correct"
+    type: "f2p"
+    description: "VNC port handling happens before browserName check"
+
+  - id: "no_early_return"
+    name: "No early return before VNC"
+    type: "f2p"
+    description: "No early return statement prevents VNC capability propagation"
+
+  # Pass-to-pass tests from repo CI/CD
+  - id: "repo_grid_java_tests"
+    name: "Repo Grid Java tests"
+    type: "p2p"
+    description: "Grid node config medium-tests pass (bazel test //java/test/org/openqa/selenium/grid/node/config:medium-tests)"
+    origin: "repo_tests"
+
+  - id: "repo_grid_build"
+    name: "Repo Grid build"
+    type: "p2p"
+    description: "Grid node config package builds (bazel build //java/src/org/openqa/selenium/grid/node/config:all)"
+    origin: "repo_tests"
+
+  - id: "repo_bazel_query"
+    name: "Repo Bazel query"
+    type: "p2p"
+    description: "Bazel can query grid package structure (bazel query //java/src/org/openqa/selenium/grid/node/config:all)"
+    origin: "repo_tests"
+
+agent_config:
+  - source: "AGENTS.md"
+    lines: "1-50"
+    rule: "Use Bazel for building and testing Java code"
+    check_id: "compile"
+
+  - source: "java/AGENTS.md"
+    lines: "1-10"
+    rule: "Java code follows conventions in java/src/ and java/test/"
+    check_id: "vnc_caps_order"
+
+rubric: []

@@ -1,0 +1,58 @@
+source_pr:
+  owner: All-Hands-AI
+  repo: OpenHands
+  number: 13608
+  merge_commit: 98c61e1ee47f7a8fc48c25e3e21e71470a8b7475
+  base_commit: 3268c299459b690337c89f858671329fd99f9b48
+
+target_file: enterprise/migrations/env.py
+
+difficulty: easy
+estimated_time: 10 min
+
+checks:
+  - id: test_sqlalchemy_text_imported
+    type: fail_to_pass
+    description: Verify that `text` is imported from sqlalchemy
+    origin: behavior
+
+  - id: test_pg_advisory_lock_call_present
+    type: fail_to_pass
+    description: Verify that pg_advisory_lock is called with correct lock ID
+    origin: behavior
+
+  - id: test_advisory_lock_in_run_migrations_online
+    type: fail_to_pass
+    description: Verify the lock is acquired inside run_migrations_online() function
+    origin: behavior
+
+  - id: test_lock_before_begin_transaction
+    type: pass_to_pass
+    description: Verify the lock is acquired BEFORE begin_transaction()
+    origin: behavior
+
+  - id: test_text_function_used_for_lock
+    type: pass_to_pass
+    description: Verify text() wrapper is used for raw SQL lock query
+    origin: behavior
+
+  - id: test_lock_acquired_via_connection_execute
+    type: pass_to_pass
+    description: Verify the lock is acquired using connection.execute()
+    origin: behavior
+
+  - id: test_file_is_valid_python
+    type: pass_to_pass
+    description: Verify the modified file is valid Python syntax
+    origin: behavior
+
+  - id: test_pre_commit_hooks_pass
+    type: pass_to_pass
+    description: Verify file passes Python compilation (pre-commit quality gate)
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      section: Enterprise Development Setup
+      quote: "Always use --show-diff-on-failure flag to match CI behavior exactly"
+
+rubric: []

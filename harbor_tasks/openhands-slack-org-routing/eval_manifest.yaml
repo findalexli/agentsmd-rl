@@ -1,0 +1,105 @@
+task_id: openhands-slack-org-routing
+pr_source: All-Hands-AI/OpenHands#13758
+description: Route Slack resolver conversations to claimed org workspaces based on git organization membership
+difficulty: medium
+
+# Agent instruction source files
+agent_config:
+  applicable_configs:
+    - source: AGENTS.md
+      relevant_sections:
+        - "Enterprise Directory"
+        - "Enterprise Development Setup"
+        - "Enterprise Testing Best Practices"
+        - "Mocking Strategy"
+    - source: .agents/skills/cross-repo-testing/SKILL.md
+      relevant_sections: []
+    - source: .agents/skills/upcoming-release/SKILL.md
+      relevant_sections: []
+    - source: .agents/skills/update-sdk/SKILL.md
+      relevant_sections: []
+
+# Rubric for LLM-judge evaluation (soft/subjective rules)
+rubric: []
+
+# Checks - must map 1:1 with test_outputs.py::test_* functions
+checks:
+  - id: test_slack_view_imports_resolve_org_for_repo
+    name: Import resolve_org_for_repo
+    description: slack_view.py imports resolve_org_for_repo from integrations.resolver_org_router
+    type: behavioral
+
+  - id: test_slack_view_imports_saas_conversation_store
+    name: Import SaasConversationStore
+    description: slack_view.py imports SaasConversationStore from storage.saas_conversation_store
+    type: behavioral
+
+  - id: test_slack_view_imports_start_conversation
+    name: Import start_conversation
+    description: slack_view.py imports start_conversation (replaces create_new_conversation)
+    type: behavioral
+
+  - id: test_slack_view_has_resolved_org_id_attribute
+    name: Set resolved_org_id attribute
+    description: Slack view sets self.resolved_org_id and calls resolve_org_for_repo
+    type: behavioral
+
+  - id: test_v0_path_uses_saas_conversation_store
+    name: V0 path uses SaasConversationStore
+    description: V0 conversation creation uses SaasConversationStore.get_resolver_instance with resolver_org_id
+    type: behavioral
+
+  - id: test_v0_path_uses_start_conversation
+    name: V0 path uses start_conversation
+    description: V0 path calls start_conversation instead of create_new_conversation
+    type: behavioral
+
+  - id: test_v0_path_saves_conversation_metadata
+    name: V0 path saves metadata
+    description: V0 path creates and saves ConversationMetadata via store.save_metadata
+    type: behavioral
+
+  - id: test_v1_path_passes_resolver_org_id_to_context
+    name: V1 path passes resolver_org_id
+    description: V1 path passes resolver_org_id to ResolverUserContext
+    type: behavioral
+
+  - id: test_v1_path_uses_resolved_git_provider
+    name: V1 path uses resolved git provider
+    description: V1 path uses self._resolved_git_provider instead of computing locally
+    type: behavioral
+
+  - id: test_git_provider_resolved_early
+    name: Git provider resolved early
+    description: Git provider is resolved early in create_or_update_conversation and stored in _resolved_git_provider
+    type: behavioral
+
+  - id: test_enterprise_unit_tests_pass
+    name: Enterprise unit tests pass
+    description: All enterprise unit tests in test_slack_view.py pass
+    type: behavioral
+
+  # Pass-to-Pass tests - verify repo CI/CD checks pass on both base and fix commits
+  - id: test_repo_poetry_check
+    name: Poetry configuration valid
+    description: Repo's poetry configuration passes validation (pass_to_pass)
+    type: pass_to_pass
+    origin: repo_ci
+
+  - id: test_repo_syntax_valid
+    name: Python syntax valid
+    description: Key Python files have valid syntax (pass_to_pass)
+    type: pass_to_pass
+    origin: repo_ci
+
+  - id: test_repo_imports_resolve
+    name: Package imports resolve
+    description: Key package imports can be resolved after installation (pass_to_pass)
+    type: pass_to_pass
+    origin: repo_ci
+
+  - id: test_repo_unit_tests_basic
+    name: Basic unit tests pass
+    description: Basic unit tests pass after package installation (pass_to_pass)
+    type: pass_to_pass
+    origin: repo_ci

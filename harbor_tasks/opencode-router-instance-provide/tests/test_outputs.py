@@ -335,3 +335,33 @@ def test_no_else_in_router():
         if (count > 0) {{ console.error(count + ' else statement(s) found'); process.exit(1); }}
     """)
     assert r.returncode == 0, f"`else` statements found in router.ts:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD tests (pass_to_pass, repo_tests) — ensure repo's own tests pass
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "turbo", "typecheck"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests for opencode package pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"

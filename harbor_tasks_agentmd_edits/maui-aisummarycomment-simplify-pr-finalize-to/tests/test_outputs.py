@@ -175,6 +175,31 @@ def test_skillmd_updated_format():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_powershell_script_parses():
+    """Modified PowerShell script parses without syntax errors (pass_to_pass)."""
+    # Use PowerShell to parse the script and verify syntax
+    r = subprocess.run(
+        ["pwsh", "-Command", f"$null = [System.Management.Automation.Language.Parser]::ParseFile('{SCRIPT_PATH}', [ref]$null, [ref]$null); Write-Host 'Parse successful'"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"PowerShell parsing failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_powershell_no_parse_errors():
+    """PowerShell script has no parse-time errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["pwsh", "-Command", f"$errors = @(); $null = [System.Management.Automation.Language.Parser]::ParseFile('{SCRIPT_PATH}', [ref]$errors, [ref]$null); if ($errors.Count -gt 0) {{ Write-Host $errors; exit 1 }} else {{ exit 0 }}"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"PowerShell parse errors found:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — structural checks
 # ---------------------------------------------------------------------------
 

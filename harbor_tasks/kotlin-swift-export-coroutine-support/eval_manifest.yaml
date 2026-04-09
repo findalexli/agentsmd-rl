@@ -1,0 +1,64 @@
+task_metadata:
+  name: kotlin-swift-export-coroutine-support
+  source_pr: "JetBrains/kotlin#5788"
+  source_commit: 13e2c77fa880489a64328e6fc703c9b6468790c5
+  base_commit: 783211b67208a95c1695c51eb5beed9bb5bed072
+
+checks:
+  # Fail-to-pass: source code fix - BEHAVIORAL (uses subprocess.run via grep)
+  - id: test_source_code_has_exported_fix
+    type: fail_to_pass
+    origin: pr_diff
+    description: ModuleTranslation.kt contains SirImport.Mode.Exported fix
+    source:
+      file: native/swift/swift-export-standalone/src/org/jetbrains/kotlin/swiftexport/standalone/translation/ModuleTranslation.kt
+      lines: around 161
+
+  # Fail-to-pass: golden result files
+  - id: test_golden_closures_main
+    type: fail_to_pass
+    origin: pr_diff
+    description: closures golden result uses @_exported import KotlinCoroutineSupport
+    source:
+      file: native/swift/swift-export-standalone-integration-tests/coroutines/testData/generation/closures/golden_result/main/main.swift
+      lines: 2
+
+  - id: test_golden_coroutines_kcs
+    type: fail_to_pass
+    origin: pr_diff
+    description: KotlinxCoroutinesCore golden result uses @_exported import
+    source:
+      file: native/swift/swift-export-standalone-integration-tests/coroutines/testData/generation/coroutines/golden_result/KotlinxCoroutinesCore/KotlinxCoroutinesCore.swift
+      lines: 2
+
+  - id: test_golden_coroutines_flow
+    type: fail_to_pass
+    origin: pr_diff
+    description: flow_overrides golden result uses @_exported import
+    source:
+      file: native/swift/swift-export-standalone-integration-tests/coroutines/testData/generation/coroutines/golden_result/flow_overrides/flow_overrides.swift
+      lines: 2
+
+  - id: test_golden_coroutines_main
+    type: fail_to_pass
+    origin: pr_diff
+    description: coroutines main golden result uses @_exported import
+    source:
+      file: native/swift/swift-export-standalone-integration-tests/coroutines/testData/generation/coroutines/golden_result/main/main.swift
+      lines: 2
+
+  - id: test_golden_flattening_main
+    type: fail_to_pass
+    origin: pr_diff
+    description: coroutinesWithPackageFlattening golden result uses @_exported import
+    source:
+      file: native/swift/swift-export-standalone-integration-tests/coroutines/testData/generation/coroutinesWithPackageFlattening/golden_result/main/main.swift
+      lines: 3
+
+  # Pass-to-pass: Repo CI gates
+  - id: test_coroutine_integration_test_data_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Coroutine integration test data directory structure exists
+
+rubric: []

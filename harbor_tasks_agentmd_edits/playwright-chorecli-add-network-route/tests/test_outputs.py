@@ -321,19 +321,19 @@ const fs = require('fs');
 const src = fs.readFileSync('packages/playwright/src/mcp/terminal/commands.ts', 'utf8');
 
 // Must have route command
-if (!src.match(/name:\\s*['\"]route['\"]/)) {
+if (!src.match(/name:\\s*['"]route['"]/)) {
     console.error('FAIL: must declare route command');
     process.exit(1);
 }
 
 // Must have route-list command
-if (!src.match(/name:\\s*['\"]route-list['\"]/)) {
+if (!src.match(/name:\\s*['"]route-list['"]/)) {
     console.error('FAIL: must declare route-list command');
     process.exit(1);
 }
 
 // Must have unroute command
-if (!src.match(/name:\\s*['\"]unroute['\"]/)) {
+if (!src.match(/name:\\s*['"]unroute['"]/)) {
     console.error('FAIL: must declare unroute command');
     process.exit(1);
 }
@@ -383,3 +383,67 @@ def test_skill_md_lint_command():
     assert "Lint" in content, "SKILL.md must have a Lint section"
     assert "flint:mcp" not in content, \
         "Lint section must use 'npm run flint', not 'npm run flint:mcp'"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass gates from repo CI/CD
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - TypeScript compilation
+def test_repo_typecheck():
+    """Repo TypeScript compilation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "tsc", "-p", "."],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript compilation failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass - Dependency check
+def test_repo_check_deps():
+    """Repo dependency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dependency check failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass - ESLint on MCP files
+def test_repo_lint_mcp():
+    """ESLint on MCP files passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", "--cache", "packages/playwright/src/mcp/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint on MCP files failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass - Package consistency
+def test_repo_lint_packages():
+    """Repo package consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Package consistency check failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass - Test linting
+def test_repo_lint_tests():
+    """Repo test linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-tests"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test linting failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass - Build verification
+def test_repo_build():
+    """Repo build passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-1000:]}"

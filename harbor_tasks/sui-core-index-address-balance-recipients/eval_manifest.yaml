@@ -1,0 +1,105 @@
+task_name: sui-core-index-address-balance-recipients
+source_pr: MystenLabs/sui#26087
+description: |
+  Fix transactions_to_addr index to include accumulator event addresses
+  so that queryTransactionBlocks with ToAddress filter returns transactions
+  involving address balance transfers.
+
+# Checks map 1:1 to test_outputs.py test functions
+checks:
+  - id: test_accumulator_events_included_in_index
+    type: fail_to_pass
+    origin: gold_patch
+    description: |
+      Verify that accumulator_events are now chained into the affected_addresses
+      iterator that populates transactions_to_addr. Before the fix, only
+      mutated_objects were indexed, missing address balance transfers via
+      accumulator events.
+
+  - id: test_cargo_check_sui_core
+    type: pass_to_pass
+    origin: repo_tests
+    description: sui-core crate compiles without errors
+
+  - id: test_cargo_check_sui_json_rpc_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: sui-json-rpc-tests crate compiles without errors
+
+  - id: test_jsonrpc_index_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: jsonrpc_index.rs has valid Rust syntax
+
+  - id: test_index_tx_method_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: IndexStore::index_tx method exists with accumulator_events parameter
+
+  - id: test_transactions_to_addr_indexing_logic
+    type: fail_to_pass
+    origin: gold_patch
+    description: |
+      Verify transactions_to_addr includes both mutated_objects and
+      accumulator_events via the affected_addresses combined iterator
+
+  # Pass-to-pass tests from repo CI/CD
+  - id: test_cargo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code formatting check passes (cargo fmt --check)
+
+  - id: test_cargo_clippy_sui_core
+    type: pass_to_pass
+    origin: repo_tests
+    description: Clippy lints pass for sui-core crate
+
+  - id: test_cargo_xlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: License header check passes (cargo xlint)
+
+  - id: test_git_checks
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git checks script passes (scripts/git-checks.sh)
+
+# Agent config rules (from CLAUDE.md, AGENTS.md)
+agent_config:
+  - rule: Always consult CLAUDE.md files in sub-crates
+    source: CLAUDE.md
+    lines: 1-10
+    type: programmatic
+
+  - rule: All new files must include license header
+    source: CLAUDE.md
+    lines: 20-25
+    type: programmatic
+
+  - rule: Use cargo check instead of cargo build for faster iteration
+    source: CLAUDE.md
+    lines: 28-35
+    type: soft
+
+  - rule: Run tests before submitting changes
+    source: CLAUDE.md
+    lines: 90-92
+    type: soft
+
+  - rule: ALWAYS run cargo xclippy after finishing development
+    source: CLAUDE.md
+    lines: 96-97
+    type: programmatic
+
+  - rule: NEVER disable or ignore tests
+    source: CLAUDE.md
+    lines: 98-99
+    type: programmatic
+
+  - rule: NEVER use #[allow(dead_code)], #[allow(unused)], or other lint suppressions
+    source: CLAUDE.md
+    lines: 100-101
+    type: programmatic
+
+# Rubric for LLM-judge evaluation
+rubric: []

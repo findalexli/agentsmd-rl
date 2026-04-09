@@ -7,6 +7,27 @@ source:
   merge_commit: "b3d7942fbaedda791668d7fe42eaaa323ed7a089"
 
 checks:
+  # pass_to_pass: repo CI/CD health checks
+  - id: test_repo_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's main transformers package imports without error"
+
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff check passes on base commit"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on base commit"
+
+  - id: test_makefile_style_target_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Makefile has 'style' target and dry-run succeeds"
+
   # Behavioral: checkers.py module (subprocess)
   - id: checkers_module_imports
     type: fail_to_pass

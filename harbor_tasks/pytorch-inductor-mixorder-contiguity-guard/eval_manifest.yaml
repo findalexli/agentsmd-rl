@@ -1,108 +1,104 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "pytorch/pytorch"
+  repo: pytorch/pytorch
   pr: 176131
-  base_commit: "63fcbe1040ffef63e82abd4e66da1d7554d23aa4"
-  merge_commit: "5a6d6b3ece55cc4f4db0e377fa33b9c8374a507f"
-
+  base_commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+  merge_commit: 5a6d6b3ece55cc4f4db0e377fa33b9c8374a507f
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "scheduler.py must be valid Python"
-
-  - id: contiguity_guard_rejects_noncontiguous_pointwise
-    type: fail_to_pass
-    origin: pr_diff
-    description: "sub_node_can_fuse rejects fusion when node1 is contiguous but node2 is non-contiguous pointwise, across varying scores/numel"
-
-  - id: contiguity_guard_rejects_noncontiguous_reduction
-    type: fail_to_pass
-    origin: pr_diff
-    description: "sub_node_can_fuse rejects non-contiguous reduction when node1 is contiguous, regardless of score"
-
-  - id: contiguity_guard_with_ancestors_and_other_nodes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Guard rejects contiguous+non-contiguous even when nodes have ancestors and other_nodes are present"
-
-  - id: both_contiguous_fusion_allowed
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Both contiguous nodes are allowed to fuse (guard does not over-reject)"
-
-  - id: noncontiguous_node1_contiguous_node2_allowed
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Non-contiguous node1 + contiguous node2 still allowed to fuse"
-
-  - id: both_noncontiguous_allowed
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Both non-contiguous nodes still allowed (guard only fires when node1 IS contiguous)"
-
-  - id: ancestor_cycle_still_rejected
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Ancestor/operation-name cycle detection still works after contiguity guard"
-
-  - id: can_fuse_false_still_rejected
-    type: pass_to_pass
-    origin: pr_diff
-    description: "When scheduler.can_fuse returns False, fusion is rejected regardless"
-
-  - id: sub_node_can_fuse_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "sub_node_can_fuse has real logic (>= 5 top-level statements)"
-
-  - id: fuse_with_method_preserved
-    type: pass_to_pass
-    origin: static
-    description: "fuse_with method still exists in FusedMixOrderReductions"
-
-  - id: init_contiguity_assertion_preserved
-    type: pass_to_pass
-    origin: static
-    description: "FusedMixOrderReductions.__init__ still asserts contiguity invariant"
-
-  - id: no_dynamic_setattr_in_fix
-    type: pass_to_pass
-    origin: agent_config
-    description: "Fix must not use dynamic setattr/getattr (explicit state management)"
-    source:
-      path: "CLAUDE.md"
-      lines: "53-56"
-      commit: "63fcbe1040ffef63e82abd4e66da1d7554d23aa4"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: scheduler.py must be valid Python
+- id: contiguity_guard_rejects_noncontiguous_pointwise
+  type: fail_to_pass
+  origin: pr_diff
+  description: sub_node_can_fuse rejects fusion when node1 is contiguous but node2
+    is non-contiguous pointwise, across varying scores/numel
+- id: contiguity_guard_rejects_noncontiguous_reduction
+  type: fail_to_pass
+  origin: pr_diff
+  description: sub_node_can_fuse rejects non-contiguous reduction when node1 is contiguous,
+    regardless of score
+- id: contiguity_guard_with_ancestors_and_other_nodes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Guard rejects contiguous+non-contiguous even when nodes have ancestors
+    and other_nodes are present
+- id: both_contiguous_fusion_allowed
+  type: pass_to_pass
+  origin: pr_diff
+  description: Both contiguous nodes are allowed to fuse (guard does not over-reject)
+- id: noncontiguous_node1_contiguous_node2_allowed
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-contiguous node1 + contiguous node2 still allowed to fuse
+- id: both_noncontiguous_allowed
+  type: pass_to_pass
+  origin: pr_diff
+  description: Both non-contiguous nodes still allowed (guard only fires when node1
+    IS contiguous)
+- id: ancestor_cycle_still_rejected
+  type: pass_to_pass
+  origin: pr_diff
+  description: Ancestor/operation-name cycle detection still works after contiguity
+    guard
+- id: can_fuse_false_still_rejected
+  type: pass_to_pass
+  origin: pr_diff
+  description: When scheduler.can_fuse returns False, fusion is rejected regardless
+- id: sub_node_can_fuse_not_stub
+  type: pass_to_pass
+  origin: static
+  description: sub_node_can_fuse has real logic (>= 5 top-level statements)
+- id: fuse_with_method_preserved
+  type: pass_to_pass
+  origin: static
+  description: fuse_with method still exists in FusedMixOrderReductions
+- id: init_contiguity_assertion_preserved
+  type: pass_to_pass
+  origin: static
+  description: FusedMixOrderReductions.__init__ still asserts contiguity invariant
+- id: no_dynamic_setattr_in_fix
+  type: pass_to_pass
+  origin: agent_config
+  description: Fix must not use dynamic setattr/getattr (explicit state management)
+  source:
+    path: CLAUDE.md
+    lines: 53-56
+    commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+- id: test_repo_inductor_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All torch/_inductor/*.py files have valid Python syntax
+- id: test_repo_scheduler_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: scheduler.py has valid AST structure
 rubric:
-  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
-    source:
-      path: "CLAUDE.md"
-      lines: "48"
-      commit: "63fcbe1040ffef63e82abd4e66da1d7554d23aa4"
-
-  - rule: "If uncertain, choose the simpler, more concise implementation."
-    source:
-      path: "CLAUDE.md"
-      lines: "62"
-      commit: "63fcbe1040ffef63e82abd4e66da1d7554d23aa4"
-
-  - rule: "Match existing code style and architectural patterns."
-    source:
-      path: "CLAUDE.md"
-      lines: "57"
-      commit: "63fcbe1040ffef63e82abd4e66da1d7554d23aa4"
-
-  - rule: "Don't make trivial (1-2 LOC) helper functions that are only used once unless it significantly improves code readability."
-    source:
-      path: "CLAUDE.md"
-      lines: "51-52"
-      commit: "63fcbe1040ffef63e82abd4e66da1d7554d23aa4"
-
-  - rule: "Comments should be useful — remind the reader about global context that is non-obvious and can't be inferred locally."
-    source:
-      path: "CLAUDE.md"
-      lines: "49-50"
-      commit: "63fcbe1040ffef63e82abd4e66da1d7554d23aa4"
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  source:
+    path: CLAUDE.md
+    lines: '48'
+    commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+- rule: If uncertain, choose the simpler, more concise implementation.
+  source:
+    path: CLAUDE.md
+    lines: '62'
+    commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+- rule: Match existing code style and architectural patterns.
+  source:
+    path: CLAUDE.md
+    lines: '57'
+    commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+- rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
+    it significantly improves code readability.
+  source:
+    path: CLAUDE.md
+    lines: 51-52
+    commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+- rule: Comments should be useful — remind the reader about global context that is
+    non-obvious and can't be inferred locally.
+  source:
+    path: CLAUDE.md
+    lines: 49-50
+    commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4

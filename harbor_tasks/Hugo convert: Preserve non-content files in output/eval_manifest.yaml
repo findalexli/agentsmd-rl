@@ -1,0 +1,66 @@
+source_pr:
+  owner: gohugoio
+  repo: hugo
+  number: 14657
+  merge_commit: c4fb61d9dfb7a2a638ef69ef8ba4e4dc3ecd93ef
+  base_commit: d88a29e002ebc31bf9b4e1e024f141cc0b39a657
+
+instructions_file: instruction.md
+
+checks:
+  - id: bundle_resource_preserved
+    type: test_outputs
+    description: "Bundle resources (data.txt) preserved in convert output"
+    origin: fail_to_pass
+
+  - id: nested_resource_preserved
+    type: test_outputs
+    description: "Nested resources (nested/asset.dat) preserved in convert output"
+    origin: fail_to_pass
+
+  - id: multiple_content_files
+    type: test_outputs
+    description: "Multiple content files converted, all resources preserved"
+    origin: fail_to_pass
+
+  - id: convert_compiles
+    type: test_outputs
+    description: "Hugo compiles successfully with fix applied"
+    origin: pass_to_pass
+
+  - id: convert_command_help
+    type: test_outputs
+    description: "Convert command help works correctly"
+    origin: pass_to_pass
+
+  - id: convert_format_variations
+    type: test_outputs
+    description: "All format conversions (JSON/TOML/YAML) work with resource preservation"
+    origin: pass_to_pass
+
+agent_config:
+  - description: "Use brevity - don't over-comment code"
+    source: "AGENTS.md:1-3"
+    origin: agent_config
+
+  - description: "Assume Go expertise - don't explain obvious code"
+    source: "AGENTS.md:2-6"
+    origin: agent_config
+
+  - description: "Use short variable names when context is clear"
+    source: "AGENTS.md:6"
+    origin: agent_config
+
+  - description: "Never export symbols not needed outside package"
+    source: "AGENTS.md:8"
+    origin: agent_config
+
+  - description: "Avoid global state"
+    source: "AGENTS.md:9"
+    origin: agent_config
+
+  - description: "Look for helper functions before creating new ones"
+    source: "AGENTS.md:10"
+    origin: agent_config
+
+rubric: []

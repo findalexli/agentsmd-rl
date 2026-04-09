@@ -80,6 +80,36 @@ def test_cargo_check():
     assert Path(_ty_bin()).exists(), "ty binary not found after build"
 
 
+# [repo_tests] pass_to_pass — CI cargo check
+def test_cargo_check_ty_semantic():
+    """Repo's cargo check passes for ty_python_semantic crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty_python_semantic"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass — CI cargo clippy
+def test_cargo_clippy_ty_semantic():
+    """Repo's cargo clippy passes for ty_python_semantic crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty_python_semantic"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass — CI cargo fmt
+def test_cargo_fmt_check():
+    """Repo's code formatting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -211,9 +241,8 @@ def test_typed_dict_mdtest():
     env["INSTA_UPDATE"] = "always"
     r = subprocess.run(
         [
-            "cargo", "nextest", "run",
-            "-p", "ty_python_semantic",
-            "--", "mdtest::typed_dict",
+            "cargo", "test", "-p", "ty_python_semantic",
+            "--test", "mdtest", "--", "typed_dict",
         ],
         cwd=REPO,
         capture_output=True,

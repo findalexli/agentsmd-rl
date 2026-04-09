@@ -1,0 +1,27 @@
+name = "electron-permission-frame-propagation"
+difficulty = "medium"
+tags = ["c++", "electron", "security", "permissions", "frame-handling"]
+time_estimate = "45m"
+
+[timeouts]
+agent = 1800
+verifier = 120
+
+[source]
+owner = "electron"
+repo = "electron"
+pr_number = 50687
+base_commit = "821b738db0a64c863e8371e7141564cef70d56b8"
+merge_commit = "dbc7cbd00064e0f5791154ed6279cb49c1fcaef8"
+
+[description]
+title = "Propagate requesting frame through sync permission checks"
+problem = "The WebContentsPermissionHelper class was using the main frame's origin instead of the requesting frame's origin when checking permissions, causing permission checks from iframes to report incorrect origins."
+
+[files]
+target = [
+    "shell/browser/web_contents_permission_helper.cc",
+    "shell/browser/web_contents_permission_helper.h",
+    "shell/browser/api/electron_api_web_contents.cc",
+    "shell/browser/serial/electron_serial_delegate.cc"
+]

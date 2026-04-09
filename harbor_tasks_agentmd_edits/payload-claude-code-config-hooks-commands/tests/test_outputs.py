@@ -172,3 +172,28 @@ def test_settings_has_git_permissions():
 
 
 # [config_edit] fail_to_pass
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "run", "test:unit"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+        env={**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096", "DISABLE_LOGGING": "true"}
+    )
+    assert r.returncode == 0, f"Unit tests failed:\\n{r.stdout[-1000:]}\\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_type_tests():
+    """Repo's TypeScript type tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "run", "test:types"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Type tests failed:\\n{r.stderr[-500:]}"

@@ -30,6 +30,73 @@ def test_tsconfig_valid_json():
     assert "compilerOptions" in data, "Root tsconfig must have compilerOptions"
 
 
+# [repo_tests] pass_to_pass - validates key config files are valid JSON
+def test_package_json_valid():
+    """Root package.json is valid JSON (pass_to_pass)."""
+    pkg_file = REPO / "package.json"
+    data = json.loads(pkg_file.read_text())
+    assert "name" in data, "package.json must have a name field"
+    assert "workspaces" in data, "package.json must define workspaces"
+
+
+# [repo_tests] pass_to_pass - validates Prettier formatting on key files
+def test_prettier_formatting_configs():
+    """Key config files follow Prettier formatting (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "tsconfig.json", "package.json"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - validates tsconfig paths are valid
+def test_tsconfig_paths_valid():
+    """Root tsconfig.json paths resolve to existing files (pass_to_pass)."""
+    tsconfig = REPO / "tsconfig.json"
+    data = json.loads(tsconfig.read_text())
+
+    paths = data.get("compilerOptions", {}).get("paths", {})
+    for alias, targets in paths.items():
+        for target in targets:
+            target_path = REPO / target
+            assert target_path.exists() or target_path.parent.exists(), \
+                f"tsconfig path alias '{alias}' -> '{target}' does not resolve to existing file/dir"
+
+
+# [repo_tests] pass_to_pass - validates repo structure integrity
+def test_packages_directory_structure():
+    """Packages directory structure is intact (pass_to_pass)."""
+    packages_dir = REPO / "packages"
+    assert packages_dir.exists(), "packages/ directory must exist"
+
+    # Check core packages exist
+    core_packages = ["next"]
+    for pkg in core_packages:
+        pkg_path = packages_dir / pkg
+        assert pkg_path.exists(), f"Core package '{pkg}' must exist"
+        assert (pkg_path / "package.json").exists(), f"{pkg}/package.json must exist"
+
+
+# [repo_tests] pass_to_pass - validates test infrastructure
+def test_test_lib_structure():
+    """Test library infrastructure is intact (pass_to_pass)."""
+    test_lib = REPO / "test" / "lib"
+    assert test_lib.exists(), "test/lib directory must exist"
+
+    # Check core test utility files exist
+    key_files = ["next-test-utils.ts", "next-webdriver.ts"]
+    for f in key_files:
+        assert (test_lib / f).exists(), f"test/lib/{f} must exist"
+
+    # Check e2e-utils directory exists with its index.ts
+    e2e_utils = test_lib / "e2e-utils"
+    assert e2e_utils.exists(), "test/lib/e2e-utils directory must exist"
+    assert (e2e_utils / "index.ts").exists(), "test/lib/e2e-utils/index.ts must exist"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -71,7 +138,7 @@ def test_package_exports_instant():
 
 
 # [pr_diff] fail_to_pass
-def test_package_json_valid():
+def test_playwright_package_json_valid():
     """package.json must define @next/playwright with correct configuration."""
     pkg_json = REPO / "packages/next-playwright/package.json"
     assert pkg_json.exists(), "packages/next-playwright/package.json must exist"
@@ -158,3 +225,78 @@ def test_readme_documents_design():
         "README must document the cookie name used by the protocol"
     assert "design" in content.lower() or "how it works" in content.lower(), \
         "README must have a section explaining the design or mechanism"
+
+
+# [repo_tests] pass_to_pass - validates e2e test for instant navigation exists at base commit
+def test_instant_navigation_test_file_exists():
+    """Instant navigation test file exists at base commit (pass_to_pass)."""
+    test_file = REPO / "test/e2e/app-dir/instant-navigation-testing-api/instant-navigation-testing-api.test.ts"
+    assert test_file.exists(), "instant-navigation-testing-api.test.ts must exist at base commit"
+
+
+# [repo_tests] pass_to_pass - validates core next package exists
+def test_next_package_structure():
+    """Core next package structure is intact (pass_to_pass)."""
+    next_pkg = REPO / "packages/next"
+    assert next_pkg.exists(), "packages/next must exist"
+    assert (next_pkg / "package.json").exists(), "packages/next/package.json must exist"
+
+    # Check src directory exists (dist is built, not present at base commit)
+    assert (next_pkg / "src").exists(), "packages/next/src must exist"
+
+
+# [repo_tests] pass_to_pass - validates all root config files are valid JSON/YAML
+def test_root_config_files_valid():
+    """Root configuration files are valid and parseable (pass_to_pass)."""
+    # JSON files should be valid
+    json_files = ["package.json", "tsconfig.json"]
+    for f in json_files:
+        path = REPO / f
+        if path.exists():
+            content = path.read_text()
+            data = json.loads(content)
+            assert data is not None, f"{f} must contain valid JSON"
+
+
+# [repo_tests] pass_to_pass - validates Prettier formatting on workflow files
+def test_prettier_formatting_workflows():
+    """GitHub workflow files follow Prettier formatting (pass_to_pass)."""
+    workflows_dir = REPO / ".github/workflows"
+    if workflows_dir.exists():
+        # Check formatting on a subset of workflow files
+        workflow_files = list(workflows_dir.glob("*.yml"))[:3]
+        if workflow_files:
+            r = subprocess.run(
+                ["npx", "prettier", "--check"] + [str(f.relative_to(REPO)) for f in workflow_files],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                cwd=REPO,
+            )
+            assert r.returncode == 0, f"Prettier check failed on workflow files:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - validates Cargo.toml is valid TOML
+def test_cargo_toml_valid():
+    """Cargo.toml is valid and parseable (pass_to_pass)."""
+    cargo_toml = REPO / "Cargo.toml"
+    if cargo_toml.exists():
+        content = cargo_toml.read_text()
+        # Basic TOML validation - check for required sections
+        assert "[workspace]" in content, "Cargo.toml must have [workspace] section"
+        assert "members" in content, "Cargo.toml must have members in workspace"
+
+
+# [repo_tests] pass_to_pass - validates test directory structure
+def test_e2e_directory_structure():
+    """E2E test directory structure is intact (pass_to_pass)."""
+    e2e_dir = REPO / "test/e2e"
+    assert e2e_dir.exists(), "test/e2e directory must exist"
+
+    app_dir = e2e_dir / "app-dir"
+    assert app_dir.exists(), "test/e2e/app-dir directory must exist"
+
+    # Check the instant-navigation-testing-api directory exists
+    instant_test_dir = app_dir / "instant-navigation-testing-api"
+    assert instant_test_dir.exists(), "instant-navigation-testing-api directory must exist"
+    assert (instant_test_dir / "app").exists(), "instant-navigation-testing-api/app directory must exist"

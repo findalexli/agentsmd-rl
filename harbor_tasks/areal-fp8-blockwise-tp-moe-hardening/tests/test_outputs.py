@@ -458,3 +458,141 @@ def test_config_validation_uses_valueerror():
                     assert exc.func.id == "ValueError", (
                         f"_check_fp8_shard_compatibility raises {exc.func.id}, expected ValueError"
                     )
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the actual repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's Python files pass ruff linting (pass_to_pass).
+
+    Ruff is the linter configured in the repo's pre-commit hooks.
+    This test ensures the modified files pass basic linting.
+    """
+    import subprocess
+    import sys
+
+    # Install ruff if not present
+    subprocess.run([sys.executable, "-m", "pip", "install", "ruff", "-q"], check=True)
+
+    # Run ruff check on modified files
+    modified_files = [
+        "areal/api/cli_args.py",
+        "areal/experimental/engine/archon_checkpoint.py",
+        "areal/experimental/engine/archon_engine.py",
+        "areal/experimental/engine/archon_utils.py",
+        "areal/experimental/models/archon/fp8.py",
+        "areal/experimental/models/archon/fp8_checkpoint.py",
+    ]
+    for fname in modified_files:
+        r = subprocess.run(
+            ["ruff", "check", f"{REPO}/{fname}"],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        # Ruff returns 0 on success, 1 if there are fixable issues, 2+ for errors
+        assert r.returncode <= 1, f"Ruff linting failed for {fname}:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyproject_valid():
+    """Repo's pyproject.toml is valid (pass_to_pass).
+
+    Validates pyproject.toml using validate-pyproject.
+    """
+    import subprocess
+    import sys
+
+    # Install validate-pyproject if not present
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "validate-pyproject", "packaging", "-q"],
+        check=True
+    )
+
+    r = subprocess.run(
+        ["validate-pyproject", f"{REPO}/pyproject.toml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyproject.toml validation failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_yaml():
+    """Repo's YAML files pass pre-commit check-yaml (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit", "-q"], check=True)
+
+    yaml_files = [
+        "examples/math/gsm8k_sft_archon_fp8.yaml",
+    ]
+    for fname in yaml_files:
+        r = subprocess.run(
+            ["pre-commit", "run", "check-yaml", "--files", f"{REPO}/{fname}"],
+            capture_output=True, text=True, timeout=120, cwd=REPO,
+        )
+        assert r.returncode == 0, f"YAML check failed for {fname}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_trailing_whitespace():
+    """Modified Python files pass pre-commit trailing-whitespace check (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit", "-q"], check=True)
+
+    modified_files = [
+        "areal/api/cli_args.py",
+        "areal/experimental/engine/archon_checkpoint.py",
+        "areal/experimental/engine/archon_engine.py",
+        "areal/experimental/engine/archon_utils.py",
+        "areal/experimental/models/archon/fp8.py",
+        "areal/experimental/models/archon/fp8_checkpoint.py",
+    ]
+    for fname in modified_files:
+        r = subprocess.run(
+            ["pre-commit", "run", "trailing-whitespace", "--files", f"{REPO}/{fname}"],
+            capture_output=True, text=True, timeout=120, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Trailing whitespace check failed for {fname}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_eof_fixer():
+    """Modified Python files pass pre-commit end-of-file-fixer check (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit", "-q"], check=True)
+
+    modified_files = [
+        "areal/api/cli_args.py",
+        "areal/experimental/engine/archon_checkpoint.py",
+        "areal/experimental/engine/archon_engine.py",
+        "areal/experimental/engine/archon_utils.py",
+        "areal/experimental/models/archon/fp8.py",
+        "areal/experimental/models/archon/fp8_checkpoint.py",
+    ]
+    for fname in modified_files:
+        r = subprocess.run(
+            ["pre-commit", "run", "end-of-file-fixer", "--files", f"{REPO}/{fname}"],
+            capture_output=True, text=True, timeout=120, cwd=REPO,
+        )
+        assert r.returncode == 0, f"EOF fixer check failed for {fname}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_private_key():
+    """Repo passes pre-commit detect-private-key check (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit", "-q"], check=True)
+
+    r = subprocess.run(
+        ["pre-commit", "run", "detect-private-key", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Private key detection check failed:\n{r.stderr}"

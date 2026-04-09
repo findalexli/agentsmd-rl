@@ -1,0 +1,76 @@
+source:
+  pr: apache/airflow#64876
+  url: https://github.com/apache/airflow/pull/64876
+  title: "fix(migrations): move UPDATEs inside disable_sqlite_fkeys in migration 0097"
+  author: apache
+  base_commit: 06101dc5daa2f4a3e4b6020b6e2f305566816e8a
+  merge_commit: 666879c6735a08296e4d407709f50a0efe894eff
+
+# All programmatic checks from test_outputs.py
+checks:
+  - id: "test_migration_file_exists"
+    description: "Migration file exists at expected path"
+    type: "programmatic"
+    origin: "task_definition"
+
+  - id: "test_migration_valid_syntax"
+    description: "Migration file is valid Python syntax"
+    type: "programmatic"
+    origin: "task_definition"
+
+  - id: "test_update_statements_inside_disable_sqlite_fkeys"
+    description: "UPDATE statements are inside disable_sqlite_fkeys context manager"
+    type: "programmatic"
+    origin: "task_definition"
+
+  - id: "test_no_updates_before_disable_sqlite_fkeys"
+    description: "No UPDATE statements before disable_sqlite_fkeys block"
+    type: "programmatic"
+    origin: "task_definition"
+
+  - id: "test_disable_sqlite_fkeys_context_structure"
+    description: "disable_sqlite_fkeys context has correct structure with updates before alters"
+    type: "programmatic"
+    origin: "task_definition"
+
+  - id: "agent_config_no_assert_in_production"
+    description: "No assert statements in production code (from CLAUDE.md)"
+    type: "programmatic"
+    origin: "agent_config"
+    source:
+      file: "CLAUDE.md"
+      lines: "84"
+
+  - id: "agent_config_imports_at_top"
+    description: "Imports at top of file (from CLAUDE.md)"
+    type: "programmatic"
+    origin: "agent_config"
+    source:
+      file: "CLAUDE.md"
+      lines: "84"
+
+  - id: "agent_config_dedicated_exceptions"
+    description: "Use dedicated exception classes or existing exceptions like ValueError (from CLAUDE.md)"
+    type: "programmatic"
+    origin: "agent_config"
+    source:
+      file: "CLAUDE.md"
+      lines: "85"
+
+  - id: "agent_config_apache_license_header"
+    description: "Apache License header on all new files (from CLAUDE.md)"
+    type: "programmatic"
+    origin: "agent_config"
+    source:
+      file: "CLAUDE.md"
+      lines: "86"
+
+  - id: "agent_config_type_checking_guard"
+    description: "Guard heavy type-only imports with TYPE_CHECKING (from CLAUDE.md)"
+    type: "programmatic"
+    origin: "agent_config"
+    source:
+      file: "CLAUDE.md"
+      lines: "84"
+
+rubric: []

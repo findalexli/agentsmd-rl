@@ -3,8 +3,8 @@ set -euo pipefail
 
 cd /workspace/ruff
 
-# Idempotent: skip if already applied
-if grep -q "trim_start_matches.*0C" crates/ruff_python_trivia/src/textwrap.rs 2>/dev/null; then
+# Idempotent: skip if already applied (check for the specific indent handling in dedent_to)
+if grep -q "let indent = indent.trim_start_matches" crates/ruff_python_trivia/src/textwrap.rs 2>/dev/null; then
     echo "Patch already applied."
     exit 0
 fi
@@ -29,7 +29,7 @@ index 7c422fb1c5d76c..0261718218dbd9 100644
 +    1
 +finally:
 +    pass
-diff --git a/crates/ruff_linter/src/rules/ruff/snapshots/ruff_linter__rules__ruff__tests__preview__RUF072_RUF072.py.snap b/crates/ruff_linter/src/rules/ruff/snapshots/ruff_linter__rules__ruff__tests__preview__RUF072_RUF072.py.snap
+ diff --git a/crates/ruff_linter/src/rules/ruff/snapshots/ruff_linter__rules__ruff__tests__preview__RUF072_RUF072.py.snap b/crates/ruff_linter/src/rules/ruff/snapshots/ruff_linter__rules__ruff__tests__preview__RUF072_RUF072.py.snap
 index c46cec7598b757..2e420a0007e32a 100644
 --- a/crates/ruff_linter/src/rules/ruff/snapshots/ruff_linter__rules__ruff__tests__preview__RUF072_RUF072.py.snap
 +++ b/crates/ruff_linter/src/rules/ruff/snapshots/ruff_linter__rules__ruff__tests__preview__RUF072_RUF072.py.snap
@@ -59,7 +59,7 @@ index c46cec7598b757..2e420a0007e32a 100644
 +    - finally:
 +    -     pass
 +184 + 1
-diff --git a/crates/ruff_python_trivia/src/textwrap.rs b/crates/ruff_python_trivia/src/textwrap.rs
+ diff --git a/crates/ruff_python_trivia/src/textwrap.rs b/crates/ruff_python_trivia/src/textwrap.rs
 index 7ef766fbfd9197..df7b1618dea2f8 100644
 --- a/crates/ruff_python_trivia/src/textwrap.rs
 +++ b/crates/ruff_python_trivia/src/textwrap.rs
@@ -91,10 +91,10 @@ index 7ef766fbfd9197..df7b1618dea2f8 100644
 +            "1",
 +            "2",
 +        ].join("\n");
-+        assert_eq!(dedent_to(&x, "\x0C\x0C"), Some(y));
++        assert_eq!(dedent_to(&x, "\x0c\x0c"), Some(y));
 +    }
  }
-
-PATCH
+ 
+ PATCH
 
 echo "Patch applied successfully."

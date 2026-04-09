@@ -75,9 +75,29 @@ checks:
       lines: "245"
       commit: "9804f55e762ada50e595e693361e3ed770d7796a"
 
-rubric:
-  - rule: "Follow existing code style - check neighboring files for patterns"
+  # Repo CI/CD pass_to_pass tests - discovered from .github/workflows/
+  - id: test_cpp_file_clang_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ErrorStackTrace.cpp must pass clang-format check (WebKit style)"
     source:
-      path: "CLAUDE.md"
-      lines: "245"
-      commit: "9804f55e762ada50e595e693361e3ed770d7796a"
+      path: ".github/workflows/format.yml"
+      ci_command: "clang-format --dry-run --Werror src/bun.js/bindings/ErrorStackTrace.cpp"
+
+  - id: test_cpp_file_basic_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ErrorStackTrace.cpp must have valid C++ structure (includes present, no double semicolons)"
+    source:
+      path: ".github/workflows/lint.yml"
+      note: "Basic syntax validation derived from lint requirements"
+
+  - id: test_repo_configs_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository lint and format configs must exist and be non-empty"
+    source:
+      paths: [".github/workflows/lint.yml", ".github/workflows/format.yml"]
+      note: "Validates oxlint.json, .prettierrc, and .clang-tidy exist and are non-empty"
+
+rubric: []  # Gold solution is a pure code fix; no config/documentation changes needed

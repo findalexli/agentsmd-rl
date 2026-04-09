@@ -123,6 +123,36 @@ def test_existing_dedent_tests_pass():
     )
 
 
+# [repo_tests] pass_to_pass — CI/CD gates
+def test_repo_cargo_fmt():
+    """Repo code formatting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+    assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI/CD gates
+def test_repo_cargo_clippy():
+    """Repo clippy linting passes on ruff_python_trivia (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ruff_python_trivia", "--all-targets", "--all-features", "--", "-D", "warnings"],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI/CD gates
+def test_repo_cargo_doc():
+    """Repo documentation builds for ruff_python_trivia (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "doc", "--no-deps", "-p", "ruff_python_trivia"],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+    assert r.returncode == 0, f"cargo doc failed:\n{r.stderr.decode()[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

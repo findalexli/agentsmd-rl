@@ -217,3 +217,48 @@ def test_no_trailing_whitespace(svelte_src):
     for i, line in enumerate(svelte_src.split("\n"), 1):
         assert line == line.rstrip(), \
             f"Line {i} has trailing whitespace: {line!r}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates
+# ---------------------------------------------------------------------------
+# Note: The following repo CI commands were tested but don't work on base commit:
+# - pnpm lint: fails due to pre-existing eslint config issues
+# - pnpm ts:check: fails due to pre-existing TypeScript errors in cs.js
+# - pnpm test:run: requires additional build steps and playwright setup
+# - pnpm --filter @gradio/client test: requires browser testing infrastructure
+# Only pnpm format:check and client build pass on the base commit.
+
+def _setup_pnpm():
+    """Install pnpm and dependencies (shared setup for repo CI tests)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_formatting():
+    """Repo's frontend code must be formatted with prettier (pass_to_pass)."""
+    _setup_pnpm()
+    # Run format check (the main CI formatting gate)
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier formatting check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_client_build():
+    """Repo's client library must build successfully (pass_to_pass)."""
+    _setup_pnpm()
+    # Run client build (ensures the client package compiles correctly)
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

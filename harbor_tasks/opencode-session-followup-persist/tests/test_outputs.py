@@ -291,3 +291,29 @@ def test_no_for_loop_in_followup_block():
     region = _followup_region()
     assert region, "Could not locate followup store region"
     assert not re.search(r'\bfor\s*\(', region), "for loop found in followup persistence block — use functional methods"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_app_typecheck():
+    """Repo's app package TypeScript typecheck passes (pass_to_pass)."""
+    app_dir = Path(REPO) / "packages" / "app"
+    r = subprocess.run(
+        ["bash", "-c", "apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null && curl -fsSL https://bun.sh/install | bash 2>/dev/null && export PATH=\"/root/.bun/bin:\\$PATH\" && bun install 2>&1 >/dev/null && bun run typecheck"],
+        capture_output=True, text=True, timeout=180, cwd=app_dir,
+    )
+    assert r.returncode == 0, f"App typecheck failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_app_unit_tests():
+    """Repo's app package unit tests pass (pass_to_pass)."""
+    app_dir = Path(REPO) / "packages" / "app"
+    r = subprocess.run(
+        ["bash", "-c", "apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null && curl -fsSL https://bun.sh/install | bash 2>/dev/null && export PATH=\"/root/.bun/bin:\\$PATH\" && bun install 2>&1 >/dev/null && bun run test:unit"],
+        capture_output=True, text=True, timeout=180, cwd=app_dir,
+    )
+    assert r.returncode == 0, f"App unit tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"

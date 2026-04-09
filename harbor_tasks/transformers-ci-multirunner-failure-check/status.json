@@ -1,59 +1,68 @@
 {
-  "task": "transformers-ci-multirunner-failure-check",
-  "validations": [
-    {
-      "timestamp": "2026-04-01T20:15:41.759536",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail",
-      "nop": "0",
-      "gold": "missing",
-      "format": "pytest_binary"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T06:58:12.971372",
+  "total_time": 6443.96,
+  "sandbox_id": "ioh4wsc8442ehrt2xh9ox",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "timestamp": "2026-04-09",
+      "notes": "Added 4 new pass_to_pass tests from repo CI/CD. Discovered commands: ruff check, ruff format (from Makefile style target), workflow YAML schema validation. Tests added: test_repo_ruff_check, test_repo_ruff_format, test_workflow_schema_valid, test_script_has_expected_functions. All 12 p2p tests pass on base commit."
     },
-    {
-      "timestamp": "2026-04-02T03:25:58-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": null,
-      "nop_score": 0.0,
-      "verdict": "error",
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 352.98,
       "notes": ""
     },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build, NOP test (reward=0, 5 f2p tests fail as expected), Gold test (reward=1, all 17 tests pass), Rubric judge returned 0.0 (expected - judge is for evaluating agent solutions, not task validation).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 110.84
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.7,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-02T12:00:00-07:00",
-      "runner": "manual_remake",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.0,
       "verdict": "pass",
-      "notes": "Fixed solve.sh trailing whitespace issue in workflow YAML"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T06:58:12.807758"
     },
     {
-      "timestamp": "2026-04-02T13:47:53.984239",
-      "phase": "e2b_wave2",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.969420",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.651868",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 6443.96,
+      "at": "2026-04-09T06:58:12.971372"
     }
   ]
 }

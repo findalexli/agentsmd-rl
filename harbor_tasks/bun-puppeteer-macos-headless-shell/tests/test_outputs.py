@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -29,16 +30,36 @@ def _code_lines(src):
     )
 
 
-def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+def _run_node(code: str, timeout: int = 30, install_deps: list[str] | None = None) -> subprocess.CompletedProcess:
     """Execute JavaScript code via Node.js."""
-    script = Path("/tmp/_eval_tmp.mjs")
+    # Install dependencies if needed
+    if install_deps:
+        pkg_dir = Path("/tmp/node_deps")
+        pkg_dir.mkdir(parents=True, exist_ok=True)
+        # Check if already installed
+        if not (pkg_dir / "node_modules").exists():
+            deps_str = " ".join(install_deps)
+            subprocess.run(
+                f"cd {pkg_dir} && npm install {deps_str}",
+                shell=True,
+                capture_output=True,
+            )
+
+    script = Path("/tmp/_eval_tmp.cjs")
     script.write_text(code)
     try:
+        env = os.environ.copy()
+        # Add node_modules path if we installed deps
+        if install_deps:
+            pkg_dir = Path("/tmp/node_deps")
+            node_path = str(pkg_dir / "node_modules")
+            env["NODE_PATH"] = node_path
         return subprocess.run(
             ["node", str(script)],
             capture_output=True,
             text=True,
             timeout=timeout,
+            env=env,
         )
     finally:
         script.unlink(missing_ok=True)
@@ -304,3 +325,48 @@ def test_xattr_quarantine_removal():
     code = _code_lines(_src())
     assert "xattr" in code, "xattr call missing from macOS quarantine workaround"
     assert "quarantine" in code, "com.apple.quarantine removal missing"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_syntax():
+    """TypeScript file must have valid syntax (repo CI check)."""
+    src = _src()
+
+    # Use TypeScript parser to validate syntax
+    r = _run_node(
+        f"""
+const parser = require("@typescript-eslint/typescript-estree");
+const src = {json.dumps(src)};
+try {{
+  parser.parse(src, {{ range: false, loc: false }});
+  console.log("PASS");
+}} catch (e) {{
+  console.error("Syntax error:", e.message);
+  process.exit(1);
+}}
+""",
+        timeout=60,
+        install_deps=["@typescript-eslint/typescript-estree@8.30.1"],
+    )
+    assert r.returncode == 0, f"TypeScript syntax validation failed: {r.stderr}"
+    assert "PASS" in r.stdout, "TypeScript syntax check did not pass"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_oxlint():
+    """Repo's oxlint check passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "oxlint", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Exit code 0 = success (warnings don't cause non-zero exit)
+    # Exit code 1 = errors found
+    assert r.returncode == 0, f"oxlint failed with errors:\\n{r.stderr[-500:]}"

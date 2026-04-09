@@ -44,7 +44,7 @@ def _run_node(script: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Gate (pass_to_pass, static) — utils.ts must be parseable
+# Gate (pass_to_pass, static) - utils.ts must be parseable
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -62,12 +62,109 @@ def test_utils_syntax():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Pass-to-pass (repo_tests) - regression
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_hsva_to_rgba_runs():
+    """hsva_to_rgba function must execute and return valid color string (pass_to_pass)."""
+    script = EVAL_UTILS_JS + r"""
+const fn = new Function('tinycolor', js + '; return hsva_to_rgba;');
+const hsva_to_rgba = fn(tinycolor);
+
+const tests = [
+    { h: 0, s: 1, v: 1, a: 1 },
+    { h: 120, s: 1, v: 1, a: 1 },
+    { h: 240, s: 1, v: 1, a: 1 },
+    { h: 0, s: 0, v: 0, a: 1 },
+    { h: 0, s: 0, v: 1, a: 1 },
+];
+
+const results = [];
+for (const input of tests) {
+    const result = hsva_to_rgba(input);
+    // Accept either rgba() or #hex format - both are valid color representations
+    const isValidColor = typeof result === 'string' && (
+        result.startsWith('rgba(') || 
+        /^#[0-9a-f]{6}$/i.test(result)
+    );
+    results.push({ input, result, isValidColor });
+}
+console.log(JSON.stringify(results));
+"""
+    raw = _run_node(script)
+    results = json.loads(raw)
+    for r in results:
+        assert r["isValidColor"], f"hsva_to_rgba({r['input']}) = {r['result']!r}, expected valid color string"
+
+
+# [repo_tests] pass_to_pass
+def test_colorpicker_utils_file_structure():
+    """utils.ts must have proper structure: tinycolor import and exported functions (pass_to_pass)."""
+    src = Path(UTILS_TS).read_text()
+
+    # Check for tinycolor import
+    assert "import tinycolor" in src, "utils.ts must import tinycolor"
+
+    # Check for required function exports
+    assert "export function hsva_to_rgba" in src, "utils.ts must export hsva_to_rgba function"
+    assert "export function format_color" in src, "utils.ts must export format_color function"
+
+    # Check for TypeScript types
+    assert "h: number" in src or "hsva:" in src, "utils.ts must use TypeScript types"
+
+
+# [repo_tests] pass_to_pass
+def test_colorpicker_svelte_file_structure():
+    """Colorpicker.svelte must have proper imports and structure (pass_to_pass)."""
+    src = Path(SVELTE).read_text()
+
+    # Check for Svelte imports
+    assert "import { BlockTitle }" in src or "@gradio/atoms" in src, "Colorpicker.svelte must import from @gradio/atoms"
+    assert "import { hsva_to_rgba" in src or "import" in src, "Colorpicker.svelte must have imports"
+
+    # Check for Svelte reactive syntax
+    assert "bind:value" in src or "onchange" in src or "bind:value=" in src, "Colorpicker.svelte must have input handling"
+
+
+# [repo_tests] pass_to_pass
+def test_format_color_regression():
+    """Existing format_color function must still produce correct output."""
+    script = EVAL_UTILS_JS + r"""
+const fn = new Function('tinycolor', js + '; return format_color;');
+const format_color = fn(tinycolor);
+
+const tests = [
+    ['#ff0000', 'hex', '#ff0000'],
+    ['#ff0000', 'rgb', 'rgb(255, 0, 0)'],
+    ['#ff0000', 'hsl', 'hsl(0, 100%, 50%)'],
+    ['red', 'hex', '#ff0000'],
+    ['#00ff00', 'rgb', 'rgb(0, 255, 0)'],
+    ['#0000ff', 'hsl', 'hsl(240, 100%, 50%)'],
+    ['#663399', 'hex', '#663399'],
+    ['#663399', 'rgb', 'rgb(102, 51, 153)'],
+];
+
+const results = [];
+for (const [color, mode, expected] of tests) {
+    const result = format_color(color, mode);
+    results.push({ color, mode, result, expected, ok: result === expected });
+}
+console.log(JSON.stringify(results));
+"""
+    raw = _run_node(script)
+    results = json.loads(raw)
+    for r in results:
+        assert r["ok"], f"format_color({r['color']!r}, {r['mode']!r}) = {r['result']!r}, expected {r['expected']!r}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) - core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_hsva_to_rgba_returns_hex():
-    """hsva_to_rgba must return #rrggbb hex strings for known color inputs."""
+    """hsva_to_rgba must return #rrggbb hex strings, not rgba() strings."""
     script = EVAL_UTILS_JS + r"""
 const fn = new Function('tinycolor', js + '; return hsva_to_rgba;');
 const hsva_to_rgba = fn(tinycolor);
@@ -110,7 +207,7 @@ console.log(JSON.stringify(results));
 def test_normalize_color_various_formats():
     """A normalize function must convert rgb/hsl/named/shorthand colors to #rrggbb."""
     # Discover the normalizer: any exported function (not format_color/hsva_to_rgba)
-    # that converts 'red' → '#ff0000'
+    # that converts 'red' -> '#ff0000'
     script = EVAL_UTILS_JS + r"""
 const fn = new Function('tinycolor', js + ';' +
     'return { ' + (js.match(/function\s+(\w+)/g) || []).map(m => {
@@ -228,7 +325,7 @@ console.log(JSON.stringify({ found: true, results }));
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — integration check
+# Fail-to-pass (pr_diff) - integration check
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -253,7 +350,7 @@ def test_svelte_text_input_normalization():
     )
 
     assert has_new_import_usage or has_inline_tinycolor, (
-        "Text input handler does not normalize color value — "
+        "Text input handler does not normalize color value - "
         "value = e.currentTarget.value is passed raw"
     )
 
@@ -268,10 +365,6 @@ def test_svelte_text_input_normalization():
             ), "Raw e.currentTarget.value still assigned directly to value"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — regression
-# ---------------------------------------------------------------------------
-
 # [agent_config] fail_to_pass
 def test_normalize_color_has_typescript_types():
     """normalize_color must have explicit TypeScript parameter and return type annotations."""
@@ -281,37 +374,6 @@ def test_normalize_color_has_typescript_types():
         r'function\s+normalize_color\s*\(\s*\w+\s*:\s*string\s*\)\s*:\s*string',
         src,
     ), (
-        "normalize_color must declare TypeScript types: (color: string): string — "
+        "normalize_color must declare TypeScript types: (color: string): string - "
         "js/README.md line 81 requires static types on JavaScript/TypeScript code"
     )
-
-
-# [repo_tests] pass_to_pass
-def test_format_color_regression():
-    """Existing format_color function must still produce correct output."""
-    script = EVAL_UTILS_JS + r"""
-const fn = new Function('tinycolor', js + '; return format_color;');
-const format_color = fn(tinycolor);
-
-const tests = [
-    ['#ff0000', 'hex', '#ff0000'],
-    ['#ff0000', 'rgb', 'rgb(255, 0, 0)'],
-    ['#ff0000', 'hsl', 'hsl(0, 100%, 50%)'],
-    ['red', 'hex', '#ff0000'],
-    ['#00ff00', 'rgb', 'rgb(0, 255, 0)'],
-    ['#0000ff', 'hsl', 'hsl(240, 100%, 50%)'],
-    ['#663399', 'hex', '#663399'],
-    ['#663399', 'rgb', 'rgb(102, 51, 153)'],
-];
-
-const results = [];
-for (const [color, mode, expected] of tests) {
-    const result = format_color(color, mode);
-    results.push({ color, mode, result, expected, ok: result === expected });
-}
-console.log(JSON.stringify(results));
-"""
-    raw = _run_node(script)
-    results = json.loads(raw)
-    for r in results:
-        assert r["ok"], f"format_color({r['color']!r}, {r['mode']!r}) = {r['result']!r}, expected {r['expected']!r}"

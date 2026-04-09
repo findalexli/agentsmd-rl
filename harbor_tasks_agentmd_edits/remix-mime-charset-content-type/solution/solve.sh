@@ -100,6 +100,70 @@ INDEX_EOF
 sed -i "s/import { isCompressibleMimeType } from '@remix-run\/mime'/import { isCompressibleMimeType, mimeTypeToContentType } from '@remix-run\/mime'/" packages/response/src/lib/file.ts
 sed -i 's/let contentType = file\.type/let contentType = mimeTypeToContentType(file.type)/' packages/response/src/lib/file.ts
 
+# --- 4b. Update file.test.ts to expect charset in Content-Type ---
+# Write Node.js script to a file to avoid escaping issues
+cat > /tmp/update_test.py << 'PY_SCRIPT'
+import re
+
+with open('packages/response/src/lib/file.test.ts', 'r') as f:
+    content = f.read()
+
+# Update simple assertions for text/plain
+content = content.replace(
+    "assert.equal(response.headers.get('Content-Type'), 'text/plain')",
+    "assert.equal(response.headers.get('Content-Type'), 'text/plain; charset=utf-8')"
+)
+
+# Update simple assertions for text/html
+content = content.replace(
+    "assert.equal(response.headers.get('Content-Type'), 'text/html')",
+    "assert.equal(response.headers.get('Content-Type'), 'text/html; charset=utf-8')"
+)
+
+# Replace the testCases array - use a simpler approach with line-by-line replacement
+lines = content.split('\n')
+new_lines = []
+i = 0
+while i < len(lines):
+    line = lines[i]
+    # Look for the testCases array start
+    if "let testCases = [" in line and i + 10 < len(lines):
+        # Check if this is the Content-Type test
+        next_lines = '\n'.join(lines[i:i+10])
+        if "test.html" in next_lines and "test.css" in next_lines:
+            # Replace the entire testCases block
+            new_lines.append("      let testCases = [")
+            new_lines.append("        { type: 'text/html', expected: 'text/html; charset=utf-8', name: 'test.html' },")
+            new_lines.append("        { type: 'text/css', expected: 'text/css; charset=utf-8', name: 'test.css' },")
+            new_lines.append("        { type: 'text/javascript', expected: 'text/javascript; charset=utf-8', name: 'test.js' },")
+            new_lines.append("        { type: 'application/json', expected: 'application/json; charset=utf-8', name: 'test.json' },")
+            new_lines.append("        { type: 'image/png', expected: 'image/png', name: 'test.png' },")
+            new_lines.append("        { type: 'image/jpeg', expected: 'image/jpeg', name: 'test.jpg' },")
+            new_lines.append("        { type: 'image/svg+xml', expected: 'image/svg+xml', name: 'test.svg' },")
+            new_lines.append("      ]")
+            # Skip until we find the closing bracket of the old array
+            while i < len(lines) and "]" not in lines[i]:
+                i += 1
+            i += 1  # Skip the closing bracket line too
+            continue
+    # Update the loop variable and assertion
+    if "for (let { type, name } of testCases)" in line:
+        line = line.replace("{ type, name }", "{ type, expected, name }")
+    if "assert.equal(response.headers.get('Content-Type'), type)" in line:
+        line = "        assert.equal(response.headers.get('Content-Type'), expected)"
+    new_lines.append(line)
+    i += 1
+
+content = '\n'.join(new_lines)
+
+with open('packages/response/src/lib/file.test.ts', 'w') as f:
+    f.write(content)
+
+print('Updated file.test.ts')
+PY_SCRIPT
+
+python3 /tmp/update_test.py
+
 # --- 5. Update packages/mime/README.md to document new functions ---
 cat > packages/mime/README.md << 'README_EOF'
 # @remix-run/mime

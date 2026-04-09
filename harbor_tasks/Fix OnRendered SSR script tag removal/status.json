@@ -1,0 +1,72 @@
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T08:14:32.467448",
+  "total_time": 0.0,
+  "sandbox_id": "ifv7ew70k14tiqknmidqy",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "completed": true,
+      "timestamp": "2026-04-09",
+      "ci_commands_found": [
+        "pnpm nx run @tanstack/react-router:test:eslint",
+        "pnpm nx run @tanstack/react-router:test:types",
+        "pnpm nx run @tanstack/react-router:test:unit",
+        "pnpm nx run @tanstack/react-router:test:build"
+      ],
+      "p2p_tests_added": [
+        "test_p2p_repo_eslint",
+        "test_p2p_repo_typescript",
+        "test_p2p_repo_unit_tests_ssr",
+        "test_p2p_repo_build"
+      ],
+      "notes": "Discovered CI commands from package.json and .github/workflows/pr.yml. All 4 p2p tests pass on base commit. The test:unit command runs Scripts.test.tsx subset (16 tests, ~2s) which is most relevant to the SSR fix."
+    },
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 464.85,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Fixed: (1) Dockerfile - added pytest with --break-system-packages; (2) test.sh - removed 'set -e' to ensure reward file is always written; (3) test_outputs.py - fixed test_ssr_output_no_sentinel_script to properly detect sentinel script across multiple lines; (4) solve.sh - rewrote using Python to reliably update Match.tsx, Scripts.test.tsx, and solid-router Match.tsx. All 4 f2p tests now correctly fail on base commit and pass after gold fix. All 4 p2p tests pass on both. Rubric ICR=1.0.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 879.45
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.71,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T08:14:32.467448"
+    }
+  ]
+}

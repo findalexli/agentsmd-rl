@@ -164,3 +164,25 @@ print("All head parameter tests passed!")
         timeout=30,
     )
     assert result.returncode == 0, f"Functional test failed: {result.stderr}\n{result.stdout}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — verify repo CI tests pass on base commit
+# ---------------------------------------------------------------------------
+
+def test_repo_imports_gradio():
+    """Repo's gradio package imports without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import gradio; print(gradio.__version__)"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"gradio import failed:\n{r.stderr}"
+
+
+def test_repo_html_component_tests():
+    """Repo's HTML component unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/components/test_html.py", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"HTML component tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

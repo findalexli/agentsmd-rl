@@ -151,13 +151,17 @@ console.log('PASS');
 
 
 def test_modified_files_parse():
-    """Modified JS files parse as valid Flow-enabled JavaScript via babel."""
+    """Modified JS files parse as valid Flow-enabled JavaScript via babel.
+
+    Note: scripts/flow/react-devtools.js is a Flow declaration file (not a module)
+    and is validated by Flow typecheck (test_repo_flow_check), not Babel parsing.
+    """
     r = _run_node("""
 const parser = require('@babel/parser');
 const fs = require('fs');
 
+// Only check actual JS source files, not Flow declaration files
 const files = [
-    'scripts/flow/react-devtools.js',
     'packages/react-devtools-extensions/src/background/index.js',
     'packages/react-devtools-extensions/src/main/index.js',
 ];
@@ -186,3 +190,51 @@ def test_modified_files_exist():
     ]:
         text = Path(f"{REPO}/{f}").read_text()
         assert len(text) > 0, f"{f} is empty"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+
+def test_repo_eslint_modified_files():
+    """Repo's ESLint passes on modified files (pass_to_pass)."""
+    files = [
+        "scripts/flow/react-devtools.js",
+        "packages/react-devtools-extensions/src/background/index.js",
+        "packages/react-devtools-extensions/src/main/index.js",
+    ]
+    r = subprocess.run(
+        ["node", "./scripts/tasks/eslint.js"] + files,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_flow_check():
+    """Repo's Flow typecheck passes (pass_to_pass)."""
+    # Flow check on dom-node config covers the modified files
+    r = subprocess.run(
+        ["node", "./scripts/flow/runFlow.js", "dom-node", "check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    # Flow returns 0 on success, non-zero on errors
+    assert r.returncode == 0, f"Flow check failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_license_check():
+    """Repo's license check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/check_license.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"License check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_version_check():
+    """Repo's version check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/version-check.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:]}"

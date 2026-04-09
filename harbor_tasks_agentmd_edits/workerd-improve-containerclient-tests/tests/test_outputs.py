@@ -29,6 +29,33 @@ def test_syntax_check():
     assert r.returncode == 0, f"test.js has syntax errors:\n{r.stderr}"
 
 
+# [repo] pass_to_pass — Repo CI/CD checks that must pass on base and gold
+
+def test_readme_prettier():
+    """README.md must be properly formatted (repo CI pass_to_pass)."""
+    # Install prettier in temp location and check README formatting
+    r = subprocess.run(
+        ["bash", "-c",
+         "mkdir -p /tmp/test-tools && cd /tmp/test-tools && npm init -y >/dev/null 2>&1 && "
+         "npm install prettier@3.8.1 >/dev/null 2>&1 && "
+         "/tmp/test-tools/node_modules/.bin/prettier --check " + str(README)],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"README.md formatting check failed:\n{r.stderr}"
+
+
+def test_python_lint():
+    """Python tools must pass ruff linting (repo CI pass_to_pass)."""
+    # Install ruff and check Python files
+    r = subprocess.run(
+        ["bash", "-c",
+         "pip3 install ruff --break-system-packages >/dev/null 2>&1 && "
+         "ruff check tools/cross/format.py tools/cross/internal_build.py tools/cross/wpt_logs.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python linting failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests
 # ---------------------------------------------------------------------------

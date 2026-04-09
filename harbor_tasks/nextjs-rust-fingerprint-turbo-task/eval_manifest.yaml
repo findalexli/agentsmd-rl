@@ -7,11 +7,28 @@ source:
   merge_commit: "4b62ff78c0ad4117477ab78806df809f4c1f8b33"
 
 checks:
+  # Pass-to-pass gates (existing repo CI checks)
   - id: turbo_json_valid_syntax
     type: pass_to_pass
     origin: static
     description: "turbo.json must parse as valid JSON"
 
+  - id: turbo_jsonc_valid_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "packages/next-swc/turbo.jsonc must parse as valid JSONC"
+
+  - id: next_swc_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "packages/next-swc/package.json must be valid JSON with required scripts"
+
+  - id: repo_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo must have required directories and files"
+
+  # Fail-to-pass gates (PR-specific behavioral tests)
   - id: rust_fingerprint_writes_stamp
     type: fail_to_pass
     origin: pr_diff

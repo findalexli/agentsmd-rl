@@ -1,12 +1,67 @@
 {
+  "schema_version": 2,
   "verdict": "fail",
   "nop_reward": -1.0,
   "gold_reward": -1.0,
-  "validated_at": "2026-04-08T22:13:03.363300",
-  "sandbox_id": "",
-  "backend": "",
-  "improve_status": "",
-  "repair_attempted": false,
-  "total_time": 2398.19,
-  "error": "No backend available within 600s. Pool: glm(47ok/0\u00d7429/ok) | fireworks(170ok/0\u00d7429/ok)"
+  "validated_at": "2026-04-09T07:44:50.904438",
+  "total_time": 6692.86,
+  "sandbox_id": "ifqobdm0vrv7783t3cb7f",
+  "backend": "glm",
+  "pipeline": "agents",
+  "error": "rate limited during validate",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "completed",
+      "ci_commands_discovered": [
+        "bun run typecheck (packages/app) - uses tsgo -b (Go-based TypeScript compiler)",
+        "bun run typecheck (turbo - monorepo) - turbo typecheck across all packages",
+        "bun run test:unit - skipped: requires happydom/browser environment",
+        "bun run test:e2e - skipped: requires Playwright browsers, network, and running server"
+      ],
+      "tests_added": [
+        "test_repo_typecheck_app - TypeScript typecheck for packages/app using bun tsgo -b",
+        "test_repo_typecheck_turbo - Turbo typecheck across all monorepo packages"
+      ],
+      "tests_verified": {
+        "date": "2026-04-09",
+        "results": [
+          "test_repo_typecheck_app: PASSED (34.5s)",
+          "test_repo_typecheck_turbo: PASSED"
+        ]
+      },
+      "notes": [
+        "Repo uses bun as package manager with turbo for monorepo orchestration",
+        "Typecheck uses tsgo (fast Go-based TypeScript compiler), not tsc",
+        "Unit tests require happydom/browser environment - skipped as p2p",
+        "E2E tests require Playwright browsers and network - skipped as p2p",
+        "Both p2p tests pass on base commit c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90",
+        "Docker image builds successfully with node:22-slim",
+        "7 original tests fail as expected on base commit (f2p tests for features not yet added)"
+      ]
+    },
+    "p2p_enrich": {
+      "status": "error",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 707.98,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0,
+      "notes": "tests look good"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6692.86,
+      "at": "2026-04-09T07:44:50.904438"
+    }
+  ]
 }

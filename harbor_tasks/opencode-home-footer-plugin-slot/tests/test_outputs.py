@@ -101,11 +101,11 @@ JS_INTERNAL_FOOTER = r"""
 const fs = require('fs');
 const path = require('path');
 const src = fs.readFileSync('packages/opencode/src/cli/cmd/tui/plugin/internal.ts', 'utf8');
-const hasRef = /home\/footer|home-footer|HomeFooter|homeFooter|feature-plugins.*footer/i.test(src);
-if (!hasRef) throw new Error('Footer plugin not imported/registered in internal.ts');
+const hasRef = /HomeFooter/.test(src) && /home\/footer/.test(src);
+if (!hasRef) throw new Error('HomeFooter plugin not imported/registered in internal.ts from home/footer path');
 // Also verify the import resolves to a real file
-const importMatch = src.match(/from\s+['"]([^'"]*footer[^'"]*)['"]/);
-if (!importMatch) throw new Error('No footer import statement in internal.ts');
+const importMatch = src.match(/from\s+['"]([^'"]*home\/footer[^'"]*)['"]/);
+if (!importMatch) throw new Error('No home/footer import statement in internal.ts');
 const importPath = importMatch[1];
 const internalDir = path.dirname('packages/opencode/src/cli/cmd/tui/plugin/internal.ts');
 const resolved = path.resolve(internalDir, importPath);
@@ -316,3 +316,29 @@ def test_footer_plugin_const_over_let():
             continue
         if re.search(r"\blet\s+\w+", line):
             assert False, f"Footer plugin uses `let` at line {i}: {line.strip()} — prefer const"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's own CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "export PATH=/root/.bun/bin:$PATH && cd /workspace/opencode && bun run typecheck"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "export PATH=/root/.bun/bin:$PATH && cd /workspace/opencode/packages/opencode && bun test"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"

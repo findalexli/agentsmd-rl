@@ -1,0 +1,64 @@
+source_pr: "JetBrains/kotlin#5801"
+merge_commit: "9f40849b87558c0bf5c2722be3917e663b237d56"
+base_commit: "6030128bf5943db6bda17fb603eadcd5214064cd"
+title: "Prevent `$stable` property from being added to any object"
+
+# Checks for each test in test_outputs.py
+checks:
+  # Fail-to-pass tests (verify the fix is present)
+  - id: test_stability_kt_has_object_check
+    type: fail_to_pass
+    origin: code_structure
+    description: "Stability.kt must have declaration.isObject check"
+    file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt
+
+  - id: test_lowering_kt_has_isobject_check
+    type: fail_to_pass
+    origin: code_structure
+    description: "AbstractComposeLowering.kt must use isObject instead of isCompanion"
+    file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/lower/AbstractComposeLowering.kt
+
+  - id: test_no_stable_property_in_golden_files
+    type: fail_to_pass
+    origin: test_behavior
+    description: "Golden files should not contain Object.%stable references"
+
+  - id: test_new_golden_files_exist
+    type: fail_to_pass
+    origin: test_behavior
+    description: "New golden files for object stability test should exist"
+
+  - id: test_test_methods_exist
+    type: fail_to_pass
+    origin: test_behavior
+    description: "Test methods for object stability should exist in test files"
+
+  # Pass-to-pass tests (repo CI/tests that should continue working)
+  - id: test_compose_compiler_tests_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Compose compiler plugin compiles successfully"
+
+  - id: test_static_expression_detection_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Static expression detection tests compile"
+
+# Agent config rules (from CLAUDE.md and AGENTS.md)
+# This PR touches the compose compiler plugin area
+agent_config:
+  - rule: "Check compose compiler plugin area before making changes"
+    source: "CLAUDE.md:project:plugins/"
+    applies: true
+  - rule: "Reference YouTrack issues in commits when applicable"
+    source: ".ai/guidelines.md:Commit Guidelines"
+    applies: true
+  - rule: "Commit tests together with corresponding code changes"
+    source: ".ai/guidelines.md:Commit Guidelines"
+    applies: true
+  - rule: "Commit messages must explain not just WHAT but also WHY and HOW"
+    source: ".ai/guidelines.md:Commit Guidelines"
+    applies: true
+
+# Rubric for LLM evaluation (subjective aspects)
+rubric: []

@@ -1,0 +1,32 @@
+name = "dagster-partition-subset-validation"
+version = "1.0.0"
+description = "Add validation when a default partition subset is matched with a time window partitions definition"
+category = "code"
+task_type = "fail_to_pass"
+
+[source]
+repo = "dagster"
+owner = "dagster-io"
+pr_number = 33335
+base_commit = "3fc2834d865a46aa88a3271159edf52c5a0f07f2"
+merge_commit = "a8489c31b7762a79def57643bf38e7a17190c8e9"
+target_file = "python_modules/dagster/dagster/_core/asset_graph_view/serializable_entity_subset.py"
+
+[metadata]
+difficulty = "medium"
+language = "python"
+tags = ["python", "dagster", "partitions", "validation", "data-structures"]
+
+[time]
+agent_timeout = 1800
+verifier_timeout = 120
+
+[environment]
+image = "dagster-partition-subset-validation"
+setup = "Dockerfile"
+
+[solution]
+apply_patch = "solve.sh"
+
+[evaluation]
+test_command = "bash tests/test.sh"

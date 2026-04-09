@@ -19,6 +19,186 @@ def test_syntax_valid():
     assert result.returncode == 0, f"Zig syntax check failed:\n{result.stderr}"
 
 
+def test_repo_zig_fmt_threadpool():
+    """Repo's Zig ThreadPool.zig passes formatting check (pass_to_pass)."""
+    result = subprocess.run(
+        ["zig", "fmt", "--check", str(THREADPOOL_PATH)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig fmt --check failed on ThreadPool.zig:\n{result.stderr}"
+
+
+def test_repo_zig_fmt_mutex():
+    """Repo's Zig Mutex.zig passes formatting check (pass_to_pass)."""
+    mutex_path = REPO / "src/threading/Mutex.zig"
+    result = subprocess.run(
+        ["zig", "fmt", "--check", str(mutex_path)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig fmt --check failed on Mutex.zig:\n{result.stderr}"
+
+
+def test_repo_zig_fmt_condition():
+    """Repo's Zig Condition.zig passes formatting check (pass_to_pass)."""
+    condition_path = REPO / "src/threading/Condition.zig"
+    result = subprocess.run(
+        ["zig", "fmt", "--check", str(condition_path)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig fmt --check failed on Condition.zig:\n{result.stderr}"
+
+
+def test_repo_zig_fmt_futex():
+    """Repo's Zig Futex.zig passes formatting check (pass_to_pass)."""
+    futex_path = REPO / "src/threading/Futex.zig"
+    result = subprocess.run(
+        ["zig", "fmt", "--check", str(futex_path)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig fmt --check failed on Futex.zig:\n{result.stderr}"
+
+
+def test_repo_zig_fmt_channel():
+    """Repo's Zig channel.zig passes formatting check (pass_to_pass)."""
+    channel_path = REPO / "src/threading/channel.zig"
+    result = subprocess.run(
+        ["zig", "fmt", "--check", str(channel_path)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig fmt --check failed on channel.zig:\n{result.stderr}"
+
+
+def test_repo_zig_fmt_waitgroup():
+    """Repo's Zig WaitGroup.zig passes formatting check (pass_to_pass)."""
+    waitgroup_path = REPO / "src/threading/WaitGroup.zig"
+    result = subprocess.run(
+        ["zig", "fmt", "--check", str(waitgroup_path)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig fmt --check failed on WaitGroup.zig:\n{result.stderr}"
+
+
+def test_repo_zig_fmt_unbounded_queue():
+    """Repo's Zig unbounded_queue.zig passes formatting check (pass_to_pass)."""
+    queue_path = REPO / "src/threading/unbounded_queue.zig"
+    result = subprocess.run(
+        ["zig", "fmt", "--check", str(queue_path)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig fmt --check failed on unbounded_queue.zig:\n{result.stderr}"
+
+
+def test_repo_zig_ast_check_threadpool():
+    """Repo's Zig ThreadPool.zig passes AST check (pass_to_pass)."""
+    result = subprocess.run(
+        ["zig", "ast-check", str(THREADPOOL_PATH)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig ast-check failed on ThreadPool.zig:\n{result.stderr}"
+
+
+def test_repo_zig_ast_check_mutex():
+    """Repo's Zig Mutex.zig passes AST check (pass_to_pass)."""
+    mutex_path = REPO / "src/threading/Mutex.zig"
+    result = subprocess.run(
+        ["zig", "ast-check", str(mutex_path)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig ast-check failed on Mutex.zig:\n{result.stderr}"
+
+
+def test_repo_zig_ast_check_condition():
+    """Repo's Zig Condition.zig passes AST check (pass_to_pass)."""
+    condition_path = REPO / "src/threading/Condition.zig"
+    result = subprocess.run(
+        ["zig", "ast-check", str(condition_path)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig ast-check failed on Condition.zig:\n{result.stderr}"
+
+
+def test_repo_zig_ast_check_futex():
+    """Repo's Zig Futex.zig passes AST check (pass_to_pass)."""
+    futex_path = REPO / "src/threading/Futex.zig"
+    result = subprocess.run(
+        ["zig", "ast-check", str(futex_path)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig ast-check failed on Futex.zig:\n{result.stderr}"
+
+
+def test_repo_zig_ast_check_channel():
+    """Repo's Zig channel.zig passes AST check (pass_to_pass)."""
+    channel_path = REPO / "src/threading/channel.zig"
+    result = subprocess.run(
+        ["zig", "ast-check", str(channel_path)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig ast-check failed on channel.zig:\n{result.stderr}"
+
+
+def test_repo_zig_ast_check_waitgroup():
+    """Repo's Zig WaitGroup.zig passes AST check (pass_to_pass)."""
+    waitgroup_path = REPO / "src/threading/WaitGroup.zig"
+    result = subprocess.run(
+        ["zig", "ast-check", str(waitgroup_path)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig ast-check failed on WaitGroup.zig:\n{result.stderr}"
+
+
+def test_repo_zig_ast_check_unbounded_queue():
+    """Repo's Zig unbounded_queue.zig passes AST check (pass_to_pass)."""
+    queue_path = REPO / "src/threading/unbounded_queue.zig"
+    result = subprocess.run(
+        ["zig", "ast-check", str(queue_path)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig ast-check failed on unbounded_queue.zig:\n{result.stderr}"
+
+
 def test_warm_uses_target_not_delta():
     """warm() compares against target (min(count, max_threads)) not delta."""
     content = THREADPOOL_PATH.read_text()

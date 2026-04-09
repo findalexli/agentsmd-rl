@@ -12,7 +12,7 @@ RUN git init /workspace/gradio && \
     git checkout FETCH_HEAD
 
 # Install gradio_client and its dependencies (minimal — no full gradio)
-RUN cd /workspace/gradio && pip install --no-cache-dir ./client/python/
+RUN cd /workspace/gradio && pip install --no-cache-dir ./client/python/ && pip install --no-cache-dir ruff
 
 ENV PYTHONPATH=/workspace/gradio/client/python
 RUN mkdir -p /logs/verifier

@@ -35,6 +35,52 @@ def test_cargo_check():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo's CI/CD tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_cargo_clippy():
+    """Repo's clippy lints pass for turbo-persistence (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "turbo-persistence"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"cargo clippy failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_fmt():
+    """Repo's rustfmt formatting check passes for turbo-persistence (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "-p", "turbo-persistence", "--", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"cargo fmt check failed:\n{r.stdout.decode()[-500:]}{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_test_lib():
+    """Repo's unit tests pass for turbo-persistence (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "turbo-persistence", "--lib"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"cargo test failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

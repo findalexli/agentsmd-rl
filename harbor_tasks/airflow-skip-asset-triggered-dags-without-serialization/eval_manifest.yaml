@@ -1,0 +1,82 @@
+source_pr:
+  owner: apache
+  repo: airflow
+  number: 64738
+  merge_commit: 93d8984a40e43d94c09b82c0cdfa624a5c09bd57
+  base_commit: 97deef5f615b17f618a2bf4c2e9e0f8c3ec15cde
+
+target_files:
+  - airflow-core/src/airflow/models/dag.py
+  - airflow-core/tests/unit/models/test_dag.py
+
+distinctive_line: "missing_from_serialized := set(adrq_by_dag.keys()) - ser_dag_ids"
+
+checks:
+  # Fail-to-pass tests (structure-based, since runtime tests are complex in Airflow)
+  - id: test_code_structure_fix_applied
+    type: fail_to_pass
+    origin: behavioral
+    description: "Fix for identifying missing serialized DAGs is present in code"
+    points: 1
+
+  - id: test_docstring_added
+    type: fail_to_pass
+    origin: behavioral
+    description: "Documentation about omitting DAGs without SerializedDagModel is present"
+    points: 1
+
+  - id: test_sorted_missing_dag_ids
+    type: fail_to_pass
+    origin: behavioral
+    description: "Missing DAG IDs are logged in sorted order"
+    points: 1
+
+  # Pass-to-pass tests
+  - id: test_repo_unit_tests_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository's unit tests for the fix are present"
+    points: 1
+
+  - id: test_fix_does_not_delete_adrq_rows
+    type: pass_to_pass
+    origin: behavioral
+    description: "Fix only removes from in-memory dicts, not database"
+    points: 1
+
+# Rubric rules from agent config files
+rubric:
+  - rule: "Functions with a `session` parameter must not call `session.commit()`. Use keyword-only `session` parameters."
+    source: "CLAUDE.md"
+    file: "airflow-core/src/airflow/models/dag.py"
+    relevance: high
+
+  - rule: "Always format and check Python files with ruff immediately after writing or editing them."
+    source: "CLAUDE.md"
+    file: "airflow-core/src/airflow/models/dag.py"
+    relevance: medium
+
+  - rule: "No `assert` in production code."
+    source: "CLAUDE.md"
+    file: "airflow-core/src/airflow/models/dag.py"
+    relevance: high
+
+  - rule: "Add tests for new behavior — cover success, failure, and edge cases."
+    source: "CLAUDE.md"
+    file: "airflow-core/tests/unit/models/test_dag.py"
+    relevance: high
+
+  - rule: "Use pytest patterns, not `unittest.TestCase`."
+    source: "CLAUDE.md"
+    file: "airflow-core/tests/unit/models/test_dag.py"
+    relevance: medium
+
+  - rule: "Use `@pytest.mark.db_test` for tests that require database access."
+    source: "CLAUDE.md"
+    file: "airflow-core/tests/unit/models/test_dag.py"
+    relevance: medium
+
+  - rule: "Test location mirrors source: `airflow/cli/cli_parser.py` → `tests/cli/test_cli_parser.py`."
+    source: "CLAUDE.md"
+    file: "airflow-core/tests/unit/models/test_dag.py"
+    relevance: low

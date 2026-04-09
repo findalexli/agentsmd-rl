@@ -10,6 +10,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import asyncio
 import json
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/AReaL"
@@ -312,3 +313,45 @@ def test_no_bare_print():
             assert node.func.id != "print", (
                 f"Bare print() at line {node.lineno} — use logger instead"
             )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from repo
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's ruff linter passes on the target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Install may warn about root user; ignore non-fatal output
+    r = subprocess.run(
+        ["ruff", "check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff formatter passes on the target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}{r.stderr}"

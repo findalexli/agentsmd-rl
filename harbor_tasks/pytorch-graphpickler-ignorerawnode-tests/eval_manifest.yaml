@@ -12,6 +12,16 @@ checks:
     origin: static
     description: "Target test file must parse without syntax errors"
 
+  - id: test_p2p_repo_ast_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo test file must have valid AST structure (CI/CD gate)"
+
+  - id: test_p2p_repo_imports_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo test file imports must be syntactically valid (CI/CD gate)"
+
   - id: has_ignore_raw_node_tests
     type: fail_to_pass
     origin: pr_diff
@@ -94,12 +104,12 @@ rubric:
       path: ".claude/skills/pr-review/review-checklist.md"
       lines: "62"
       commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
-  - rule: "No duplicated test logic — similar tests should share a private helper method called from individual tests with different configs."
+  - rule: "No duplicated test logic - similar tests should share a private helper method called from individual tests with different configs."
     source:
       path: ".claude/skills/pr-review/review-checklist.md"
       lines: "69"
       commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
-  - rule: "Edge cases covered — tests include boundary conditions, empty inputs, and error cases."
+  - rule: "Edge cases covered - tests include boundary conditions, empty inputs, and error cases."
     source:
       path: ".claude/skills/pr-review/review-checklist.md"
       lines: "67"

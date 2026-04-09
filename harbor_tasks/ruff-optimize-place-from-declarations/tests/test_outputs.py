@@ -249,6 +249,27 @@ def test_existing_crate_tests():
     )
 
 
+# [repo_tests] pass_to_pass
+def test_cargo_clippy():
+    """Repo's clippy linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty_python_semantic", "--", "-D", "warnings"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Clippy failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_mdtest():
+    """Repo's Markdown-based tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+        env={**os.environ, "CARGO_PROFILE_DEV_OPT_LEVEL": "1"},
+    )
+    assert r.returncode == 0, f"Mdtest failed:\n{r.stderr[-1000:]}"
+
+
 # [agent_config] pass_to_pass — AGENTS.md:76
 def test_no_local_imports():
     """Rust imports are at the top of the file, not inside functions.

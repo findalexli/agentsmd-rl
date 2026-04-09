@@ -249,3 +249,34 @@ def test_no_dynamic_import_mixed_with_static():
     assert not dynamic.search(src), (
         "exec-approvals-allowlist.ts must not mix await import() with static import of exec-inline-eval"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) -- repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+def test_repo_lint():
+    """Repo's oxlint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "oxlint", "--type-aware"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_infra_exec():
+    """Repo's exec-related infra unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--config", "vitest.unit.config.ts", "src/infra/exec-inline-eval.test.ts", "src/infra/exec-approvals-allow-always.test.ts", "src/infra/exec-approvals.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Infra exec unit tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_security_audit():
+    """Repo's security audit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--config", "vitest.unit.config.ts", "src/security/audit.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Security audit tests failed:\n{r.stderr[-500:]}"

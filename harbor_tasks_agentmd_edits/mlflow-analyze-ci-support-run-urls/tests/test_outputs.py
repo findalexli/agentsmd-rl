@@ -168,3 +168,38 @@ def test_existing_patterns_intact():
     assert "JOB_URL_PATTERN" in patterns, "JOB_URL_PATTERN was removed"
     job_pat = re.compile(patterns["JOB_URL_PATTERN"])
     assert job_pat.search("https://github.com/mlflow/mlflow/actions/runs/12345/job/67890") is not None
+
+
+# [repo_tests] pass_to_pass
+def test_analyze_ci_module_structure():
+    """Repo: analyze_ci.py has expected structure (register func, run func, resolve_urls)."""
+    source = ANALYZE_CI.read_text()
+    tree = ast.parse(source)
+
+    # Check for required async functions
+    async_funcs = {node.name for node in ast.walk(tree) if isinstance(node, ast.AsyncFunctionDef)}
+    required_async = {"resolve_urls", "cmd_analyze_async"}
+    for func in required_async:
+        assert func in async_funcs, f"Required async function '{func}' missing"
+
+    # Check for required regular functions
+    funcs = {node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)}
+    required_funcs = {"register", "run"}
+    for func in required_funcs:
+        assert func in funcs, f"Required function '{func}' missing"
+
+
+# [repo_tests] pass_to_pass
+def test_skill_md_valid_structure():
+    """Repo: SKILL.md has valid markdown structure with Usage and Examples sections."""
+    content = SKILL_MD.read_text()
+
+    # Check for required sections
+    assert "## Usage" in content, "SKILL.md missing ## Usage section"
+    assert "## Examples" in content, "SKILL.md missing ## Examples section"
+
+    # Check that examples are code blocks
+    assert "```" in content, "SKILL.md should have code blocks in examples"
+
+    # Verify at least one GitHub URL pattern is documented
+    assert "github.com/" in content, "SKILL.md should document GitHub URL patterns"

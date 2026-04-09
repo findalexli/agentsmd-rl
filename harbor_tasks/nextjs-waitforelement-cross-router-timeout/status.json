@@ -1,72 +1,82 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T13:02:43.965587",
-      "runner": "run_pipeline.py validate (20260330)",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "error",
-      "notes": "timeout"
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T02:10:54.848168",
+  "total_time": 2017.52,
+  "sandbox_id": "ibt14q5lzwlznzpfbvrak",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "timestamp": "2026-04-09T09:00:00Z",
+      "status": "completed",
+      "ci_commands_discovered": [
+        "prettier --check <file> (works without dependencies)",
+        "npm install -g prettier && prettier --check test/e2e/app-dir/interoperability-with-pages/navigation.test.ts"
+      ],
+      "ci_commands_skipped": [
+        "tsc --noEmit (requires node_modules dependencies)",
+        "eslint (requires complex setup with @typescript-eslint)",
+        "pnpm test-* (requires network and full build)",
+        "jest (requires network and full build)"
+      ],
+      "p2p_tests_added": [
+        "test_repo_prettier_formatting - verifies prettier formatting passes",
+        "test_repo_typescript_syntax - basic syntax validation via brace/paren balance"
+      ],
+      "notes": "Added repo CI-derived pass_to_pass gates. Prettier check works in isolated container without node_modules. TypeScript typecheck requires dependencies not present in base image."
     },
-    {
-      "timestamp": "2026-03-30T11:48:15.959345",
-      "runner": "audit (audit-tests_20260330_114815)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 8785
+    "p2p_enrich": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 403.35,
+      "notes": ""
     },
-    {
-      "timestamp": "2026-03-31T13:38:37-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": false,
-      "gold_score": null,
-      "nop_score": null,
-      "verdict": "fail_build",
-      "notes": "Docker build failed"
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
-    {
-      "timestamp": "2026-03-31T09:10:27.424882",
-      "runner": "audit (audit-tests_20260331_091027)",
-      "phase": "audit",
-      "status": "success",
-      "output_tokens": 21530
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build succeeded, NOP test returned 0 (3 fail-to-pass tests correctly failed on base commit), Gold test returned 1 (all 13 tests passed after patch), Rubric judge ICR=1.0 (empty rubric).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 56.83
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.67,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-04-01T20:15:41.686976",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
-      "verdict": "fail_build",
-      "nop": null,
-      "gold": null,
-      "format": "pytest_binary"
-    },
-    {
-      "timestamp": "2026-04-02T10:48:33.884901",
-      "phase": "e2b_validate_phase9",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T02:10:54.677970"
     },
     {
-      "timestamp": "2026-04-02T14:28:08.950508",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
       "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.553742",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2017.52,
+      "at": "2026-04-09T02:10:54.848168"
     }
   ]
 }

@@ -1,72 +1,67 @@
 {
-  "validations": [
-    {
-      "timestamp": "2026-03-30T23:46:02.225257",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": 0.15,
-      "nop_score": 0.15,
-      "verdict": "fail_gold",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T11:41:36.001546",
+  "total_time": 8983.23,
+  "sandbox_id": "itezpt5y3fa07f1zywcmn",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "notes": "Added 3 repo CI/CD pass_to_pass gates: (1) test_repo_fake_pg_python_syntax - validates Python syntax of test/distributed/test_fake_pg.py, (2) test_repo_clang_format - validates FakeProcessGroup.hpp follows PyTorch clang-format rules, (3) test_repo_header_file_exists - validates target file exists and is readable. All 3 tests verified passing on base commit. CI commands discovered: clang-format (PyTorch CI lint workflow), python3 -m py_compile (Python syntax validation)."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 305.87,
       "notes": ""
     },
-    {
-      "timestamp": "2026-03-30T23:47:11.713941",
-      "runner": "validate_all.sh",
-      "docker_build": true,
-      "gold_score": 0.15,
-      "nop_score": 0.15,
-      "verdict": "fail_gold",
-      "notes": ""
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
-    {
-      "timestamp": "2026-03-29T14:30:05.195853",
-      "runner": "rubric (rebuild-rubrics_20260329_143005)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 2944
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed 2 issues: (1) Added clang and clang-format to Dockerfile - needed for test_syntax_valid and test_repo_clang_format, (2) Fixed _extract_allgather_loop() in test_outputs.py - original code looked for 'allgather' and 'override' on same line, but FakeProcessGroup.hpp has them on different lines. Updated extraction to handle multi-line function signatures. All 4 validation checks now pass: Docker build succeeds, NOP test reward=0 (f2p tests correctly fail on base), Gold test reward=1 (all 12 tests pass after fix), Rubric judge ICR=0.5 (expected - gold solution only modifies C++ header, no config files).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 340.22
     },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.8,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
     {
-      "timestamp": "2026-03-29T16:44:41.810561",
-      "runner": "rubric (rebuild-rubrics_20260329_164441)",
-      "phase": "rubric",
-      "status": "success",
-      "output_tokens": 2767
-    },
-    {
-      "timestamp": "2026-04-01T20:15:41.721127",
-      "phase": "docker_validate_v2",
-      "runner": "scripts/docker_validate_all.sh",
       "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "format": "pytest_binary"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8982.96,
+      "at": "2026-04-09T11:41:35.826922"
     },
     {
-      "timestamp": "2026-04-01T22:44:45-07:00",
-      "runner": "validate_and_fix.sh",
-      "docker_build": true,
-      "gold_score": 1.0,
-      "nop_score": 0.0,
       "verdict": "pass",
-      "notes": ""
-    },
-    {
-      "timestamp": "2026-04-02T14:28:08.956431",
-      "phase": "e2b_full_validation",
-      "runner": "scripts/e2b_validate_batch.py",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
-    },
-    {
-      "timestamp": "2026-04-02T23:07:01.585454",
-      "phase": "e2b_full_post_migration",
-      "runner": "e2b_validate_batch.py (shallow git)",
-      "format": "pytest_binary",
-      "verdict": "pass",
-      "nop": "0",
-      "gold": "1"
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8983.23,
+      "at": "2026-04-09T11:41:36.001546"
     }
   ]
 }

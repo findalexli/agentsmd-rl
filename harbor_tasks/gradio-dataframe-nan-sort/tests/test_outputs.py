@@ -166,3 +166,72 @@ def test_not_stub():
     # File must be substantial
     lines = content.strip().splitlines()
     assert len(lines) > 15, f"File too short ({len(lines)} lines) — likely a stub"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+def _ensure_pnpm():
+    """Ensure pnpm is installed and available."""
+    r = subprocess.run(["which", "pnpm"], capture_output=True)
+    if r.returncode != 0:
+        subprocess.run(["npm", "install", "-g", "pnpm"], check=True, capture_output=True)
+
+
+def _install_deps():
+    """Install pnpm dependencies if not already installed."""
+    if not Path(f"{REPO}/node_modules").exists():
+        _ensure_pnpm()
+        subprocess.run(
+            ["pnpm", "install", "--frozen-lockfile"],
+            cwd=REPO, capture_output=True, timeout=180
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    _ensure_pnpm()
+    _install_deps()
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    _ensure_pnpm()
+    _install_deps()
+    # Build client first (required by test:run)
+    subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "test:run"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Tests pass even with some skipped tests
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_dataframe_utils_tests():
+    """Dataframe utils-specific tests pass (pass_to_pass)."""
+    _ensure_pnpm()
+    _install_deps()
+    # Build client first (required)
+    subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "--config", ".config/vitest.config.ts",
+         "js/dataframe/test/table_utils.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dataframe utils tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

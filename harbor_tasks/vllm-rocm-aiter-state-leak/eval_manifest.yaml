@@ -42,6 +42,36 @@ checks:
     origin: static
     description: "cleanup_dist_env_and_memory has meaningful code, not emptied out"
 
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files pass ruff linting (repo CI check)"
+
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Python files have valid syntax (repo CI check)"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files pass ruff format check (repo CI check)"
+
+  - id: test_repo_spdx_headers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Python files have SPDX headers (repo CI check)"
+
+  - id: test_repo_no_forbidden_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files have no forbidden imports (repo CI check)"
+
+  - id: test_repo_no_torch_cuda_calls
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files don't use forbidden torch.cuda APIs (repo CI check)"
+
 rubric:
   # AGENTS.md and CLAUDE.md at base commit contain only process/workflow/tooling rules
   # (duplicate-work checks, uv usage, commit trailers, pre-commit hooks).

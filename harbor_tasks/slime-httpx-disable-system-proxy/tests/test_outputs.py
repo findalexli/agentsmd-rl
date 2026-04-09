@@ -11,6 +11,8 @@ import ast
 import subprocess
 from pathlib import Path
 
+import pytest
+
 TARGET = Path("/workspace/slime/slime/utils/http_utils.py")
 REPO = "/workspace/slime"
 
@@ -150,6 +152,38 @@ def test_ray_actor_trust_env_disabled():
     assert found_trust_env_false, (
         "_HttpPosterActor.__init__ must create AsyncClient with trust_env=False"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo passes ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Installation may fail without network, that's ok - test is skipped
+    if r.returncode != 0:
+        pytest.skip("Could not install ruff (no network)")
+
+    r = subprocess.run(
+        ["ruff", "check", "slime/utils/http_utils.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_compileall():
+    """All Python modules compile without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "compileall", "slime/utils/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Compileall failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

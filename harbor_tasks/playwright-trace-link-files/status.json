@@ -1,11 +1,78 @@
 {
+  "schema_version": 2,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-08T21:35:39.927479",
-  "sandbox_id": "iuhyy003bw91r6oukd6qu",
-  "backend": "glm",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 154.59
+  "validated_at": "2026-04-09T11:31:58.577277",
+  "total_time": 8405.77,
+  "sandbox_id": "i5nmye8ktgkvxv7ekmsgi",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "kimi",
+      "backend": "fireworks",
+      "time": 600,
+      "notes": "Added repo CI/CD tests as pass_to_pass gates: (1) ESLint check on modified files (packages/playwright-core/src/utils/isomorphic/trace/traceLoader.ts, traceUtils.ts, tracing.ts, program.ts) - test_repo_eslint. CI commands discovered: npm run build (existing), npm run eslint (new p2p test). Commands not added due to pre-existing failures on base commit: npm run tsc (type errors in other packages), npm run check-deps (disallowed import errors in playwright-ct-core)."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 403.06,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build OK, NOP test reward=0 (4 fail-to-pass tests correctly failing on base commit), Gold test reward=1 (all 11 tests pass after fix), rubric ICR=1.0 (empty rubric)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 120.26
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.73,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6481.18,
+      "at": "2026-04-09T06:25:26.066604"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8405.49,
+      "at": "2026-04-09T11:31:58.396792"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8405.77,
+      "at": "2026-04-09T11:31:58.577277"
+    }
+  ]
 }

@@ -1,12 +1,75 @@
 {
-  "verdict": "fail",
+  "schema_version": 2,
+  "verdict": "pass",
   "nop_reward": 0.0,
-  "gold_reward": -1,
-  "validated_at": "2026-04-08T21:47:56.655091",
-  "sandbox_id": "irmtweg0owegc7qx49pwa",
-  "backend": "glm",
-  "improve_status": "skipped",
-  "repair_attempted": false,
-  "total_time": 891.37,
-  "error": "solve.sh failed: error: corrupt patch at line 54\n"
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T12:47:17.900850",
+  "total_time": 12925.4,
+  "sandbox_id": "ian5gvmgoaixv1dps7gln",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.5,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "notes": "Added 4 new pass_to_pass tests: cargo_test_lib, cargo_test_mdtest, cargo_check_workspace. Updated cargo_clippy to use --all-features. CI commands verified: cargo check -p ty_python_semantic, cargo clippy -p ty_python_semantic --all-features -- -D warnings, cargo test -p ty_python_semantic --lib, cargo test -p ty_python_semantic --test mdtest, cargo check --workspace"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1285.87,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Docker build: PASSED. NOP test: PASSED (reward=0, 3 f2p tests correctly fail on base commit, 6 p2p tests pass). Gold test: PASSED (reward=1, all 9 tests pass after fix). Solution applied via Python script instead of original git patch due to shell escaping issues with lifetime annotations. Rubric judge: Failed due to HTTP 401 (API auth required) - external dependency issue, not task problem.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 917.03
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.0,
+      "notes": "ICR=0.50"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 6081.34,
+      "at": "2026-04-09T06:46:27.216272"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 12925.11,
+      "at": "2026-04-09T12:47:17.705439"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 12925.4,
+      "at": "2026-04-09T12:47:17.900850"
+    }
+  ]
 }

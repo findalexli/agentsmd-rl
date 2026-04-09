@@ -12,6 +12,21 @@ checks:
     origin: static
     description: "modeling_xlnet.py must parse without syntax errors"
 
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff lint check passes on xlnet module"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on xlnet module"
+
+  - id: test_repo_model_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's xlnet model imports work correctly"
+
   - id: device_param_uni
     type: fail_to_pass
     origin: pr_diff
@@ -54,7 +69,7 @@ rubric:
       lines: "15"
       commit: "be6cf0848668852e3267d297211eb7e983e6c786"
 
-  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`. Edit the code it's copying from and propagate the change, or break the link if needed."
+  - rule: "Do not edit a # Copied from block, as it will be reverted by make fix-repo. Edit the code it's copying from and propagate the change, or break the link if needed."
     source:
       path: "CLAUDE.md"
       lines: "65"

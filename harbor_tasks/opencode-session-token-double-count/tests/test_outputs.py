@@ -374,3 +374,27 @@ def test_no_for_loops_in_getusage():
     assert not re.search(r'\bfor\s*\(', region), (
         "getUsage contains a for loop — AGENTS.md:17 says prefer functional array methods"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "run", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_session_tests():
+    """Repo session and provider tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/session/llm.test.ts", "test/provider/transform.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Session LLM/provider transform tests failed:\n{r.stderr[-500:]}"

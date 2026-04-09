@@ -196,3 +196,65 @@ def test_settings_keybinds_test_updated():
     if settings_keybinds.exists():
         content = settings_keybinds.read_text()
         assert "waitTerminalReady" in content, "settings-keybinds.spec.ts doesn't use waitTerminalReady"
+
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base AND after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    # Install bun and dependencies, then run typecheck
+    r = subprocess.run(
+        ["bash", "-c", """
+            set -e
+            apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null
+            curl -fsSL https://bun.sh/install 2>/dev/null | bash 2>/dev/null
+            mv ~/.bun/bin/bun /usr/local/bin/
+            cd /workspace/opencode
+            bun install 2>&1 | tail -1
+            npx turbo typecheck 2>&1
+        """],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stdout[-2000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+            set -e
+            apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null
+            curl -fsSL https://bun.sh/install 2>/dev/null | bash 2>/dev/null
+            mv ~/.bun/bin/bun /usr/local/bin/
+            cd /workspace/opencode
+            bun install 2>&1 | tail -1
+            cd packages/app
+            bun run test:unit 2>&1
+        """],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's app package builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+            set -e
+            apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null
+            curl -fsSL https://bun.sh/install 2>/dev/null | bash 2>/dev/null
+            mv ~/.bun/bin/bun /usr/local/bin/
+            cd /workspace/opencode
+            bun install 2>&1 | tail -1
+            cd packages/app
+            bun run build 2>&1
+        """],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stdout[-2000:]}\n{r.stderr[-500:]}"

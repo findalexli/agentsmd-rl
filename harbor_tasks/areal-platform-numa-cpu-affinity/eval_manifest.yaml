@@ -93,6 +93,37 @@ checks:
       lines: "100"
       commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
 
+  # CI/CD pass-to-pass gates - verify repo tests pass on both base and gold
+  - id: test_repo_syntax_platform
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's platform files must have valid Python syntax"
+
+  - id: test_repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's modified files must compile without errors"
+
+  - id: test_repo_import_torch
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo must be able to import torch (basic dependency check)"
+
+  - id: test_repo_ast_valid_platform
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Platform files must have valid AST structure"
+
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's modified files must pass ruff linting"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's modified files must be formatted correctly"
+
 rubric:
   - rule: "Prefer composition over inheritance: Avoid deep class hierarchies"
     source:

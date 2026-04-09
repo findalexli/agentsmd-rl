@@ -92,6 +92,32 @@ checks:
     origin: static
     description: "config.ts retains original structure (not gutted)"
 
+  # Repo CI/CD pass_to_pass gates
+  - id: repo_git_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo has clean working tree (no uncommitted changes)"
+
+  - id: repo_config_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Config file exists and has substantial content"
+
+  - id: repo_config_has_required_functions
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Config file contains required functions (loadGlobal, getGlobal, invalidate, etc.)"
+
+  - id: repo_commit_correct
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo is at a valid git commit"
+
+  - id: repo_config_valid_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Config file has valid TypeScript syntax (no obvious errors)"
+
 rubric:
   - rule: "Use Effect.cached when multiple concurrent callers should share a single in-flight computation rather than storing Fiber | undefined or Promise | undefined manually."
     source:

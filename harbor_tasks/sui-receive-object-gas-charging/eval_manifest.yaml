@@ -1,0 +1,106 @@
+source:
+  repo: MystenLabs/sui
+  pr: 26018
+  base_commit: a6d32d34bb8e01047eca44e9e62001639090b9a7
+  merge_commit: 8812c22233b30d8f48178af5e9d7ff2b2aab8f76
+  task_name: sui-receive-object-gas-charging
+
+# Checks that determine task completion
+checks:
+  # Fail-to-pass: Protocol config fields
+  - id: test_protocol_config_has_new_fields
+    type: fail_to_pass
+    origin: source_code
+    description: Protocol config has transfer_receive_object_cost_per_byte and transfer_receive_object_type_cost_per_byte fields
+
+  - id: test_protocol_config_sets_values_for_version_119
+    type: fail_to_pass
+    origin: source_code
+    description: Protocol version 119 sets the new cost values to Some(1) and Some(2)
+
+  # Fail-to-pass: Native implementation fields
+  - id: test_native_cost_params_has_new_fields
+    type: fail_to_pass
+    origin: source_code
+    description: TransferReceiveObjectInternalCostParams struct has the new cost fields
+
+  - id: test_native_receive_charges_type_cost
+    type: fail_to_pass
+    origin: source_code
+    description: receive_object_internal charges gas based on child_ty.size()
+
+  - id: test_native_receive_charges_per_byte_cost
+    type: fail_to_pass
+    origin: source_code
+    description: receive_object_internal charges gas based on child abstract_memory_size
+
+  - id: test_natives_cost_table_passes_new_params
+    type: fail_to_pass
+    origin: source_code
+    description: NativesCostTable passes new protocol config values to TransferReceiveObjectInternalCostParams
+
+  - id: test_transfer_rs_imports_sizeconfig
+    type: fail_to_pass
+    origin: source_code
+    description: transfer.rs imports SizeConfig and ValueView for size calculation
+
+  # Pass-to-pass: Repo compilation checks
+  - id: test_cargo_check_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: cargo check -p sui-protocol-config passes
+
+  - id: test_natives_check_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: cargo check -p sui-move-natives-latest passes
+
+  - id: test_protocol_config_clippy_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: cargo clippy on sui-protocol-config passes
+
+  - id: test_move_natives_clippy_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: cargo clippy on sui-move-natives-latest passes
+
+  - id: test_protocol_config_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Unit tests for sui-protocol-config pass
+
+  - id: test_move_natives_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Unit tests for sui-move-natives-latest pass
+
+# Rules derived from agent config files (CLAUDE.md, AGENTS.md, SKILL.md)
+# This PR touches protocol config, so relevant rules from the protocol-config skill apply
+agent_config:
+  - source: .claude/skills/protocol-config/SKILL.md
+    rule: When modifying ProtocolConfig, ensure new fields are Option<T> and use as_option() accessors
+    relevant: true
+
+  - source: .claude/skills/protocol-config/SKILL.md
+    rule: Update protocol config snapshots with 'cargo insta test -p sui-protocol-config --accept'
+    relevant: true
+
+  - source: .claude/skills/protocol-config/SKILL.md
+    rule: Protocol version settings CANNOT be changed once released to production networks
+    relevant: false  # This is process guidance, not a testable behavior
+
+  - source: CLAUDE.md
+    rule: Always run 'cargo xclippy' after finishing development
+    relevant: false  # Process guidance
+
+  - source: CLAUDE.md
+    rule: Never use #[allow(dead_code)] or lint suppressions - fix underlying issues
+    relevant: true
+
+  - source: CLAUDE.md
+    rule: All new files must start with SPDX license header
+    relevant: false  # Not adding new files
+
+# Rubric for soft/subjective criteria (LLM-judge only)
+rubric: []

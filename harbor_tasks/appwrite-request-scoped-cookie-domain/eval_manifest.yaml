@@ -1,0 +1,84 @@
+task: appwrite-request-scoped-cookie-domain
+version: "1.0.0"
+description: Refactor domainVerification and cookieDomain from global Config to request-scoped resources
+
+source:
+  pr: appwrite/appwrite#11799
+  base_commit: 2dce141d1747e95e50d8d9575baae1d8ac42699b
+  merge_commit: aa9a58b44d4728a570c73e5e43e376e72df50f4f
+
+checks:
+  # Fail-to-pass tests - these fail on base commit and pass on correct fix
+  - id: cookie_domain_resource_exists
+    name: cookieDomain resource defined in resources.php
+    type: f2p
+    description: Verify Http::setResource('cookieDomain', ...) exists in app/init/resources.php
+
+  - id: domain_verification_resource_exists
+    name: domainVerification resource defined in resources.php
+    type: f2p
+    description: Verify Http::setResource('domainVerification', ...) exists in app/init/resources.php
+
+  - id: domain_class_imported
+    name: Domain class imported in resources.php
+    type: f2p
+    description: Verify use Utopia\Domains\Domain import exists
+
+  - id: general_php_no_config_mutations
+    name: general.php removes Config mutations
+    type: f2p
+    description: Verify Config::setParam for domainVerification and cookieDomain removed from general.php
+
+  - id: account_controller_uses_injection
+    name: account.php uses dependency injection
+    type: f2p
+    description: Verify account.php controllers inject domainVerification and cookieDomain
+
+  - id: account_controller_no_global_config
+    name: account.php removes Config::getParam calls
+    type: f2p
+    description: Verify account.php no longer reads these values from Config::getParam()
+
+  - id: teams_membership_uses_injection
+    name: Teams Update.php uses dependency injection
+    type: f2p
+    description: Verify Teams membership status update uses injected values
+
+  - id: teams_membership_no_global_config
+    name: Teams Update.php removes Config::getParam calls
+    type: f2p
+    description: Verify Teams Update.php no longer reads from Config::getParam()
+
+  # Pass-to-pass tests - pass on both base and fixed
+  - id: create_session_closure_uses_params
+    name: createSession closure accepts params
+    type: p2p
+    description: Verify the createSession closure signature includes new parameters
+
+  - id: php_syntax_valid
+    name: PHP syntax is valid
+    type: p2p
+    description: All modified PHP files must have valid syntax
+
+# Agent config rules (from AGENTS.md, CLAUDE.md, etc.)
+agent_config:
+  # None of the config files have specific programmatic rules that apply to this refactoring.
+  # The AGENTS.md and CLAUDE.md files describe general architecture patterns but don't
+  # mandate specific implementation details for this change.
+  checks: []
+
+# Rubric for LLM judge evaluation (soft/subjective rules)
+rubric: []
+
+# Test mapping - each check maps to a test function
+test_mapping:
+  cookie_domain_resource_exists: test_cookie_domain_resource_exists
+  domain_verification_resource_exists: test_domain_verification_resource_exists
+  domain_class_imported: test_domain_class_imported
+  general_php_no_config_mutations: test_general_php_no_config_mutations
+  account_controller_uses_injection: test_account_controller_uses_injection
+  account_controller_no_global_config: test_account_controller_no_global_config
+  teams_membership_uses_injection: test_teams_membership_uses_injection
+  teams_membership_no_global_config: test_teams_membership_no_global_config
+  create_session_closure_uses_params: test_create_session_closure_uses_params
+  php_syntax_valid: test_php_syntax_valid

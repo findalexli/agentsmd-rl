@@ -1,33 +1,28 @@
 FROM python:3.12-slim
-# For Node/TS repos: FROM node:22-slim  (add python3 for test runner)
-# For Rust repos:    FROM rust:1.85-slim (add python3 for test runner)
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential tmux && \
+        git curl ca-certificates build-essential tmux unzip && \
     rm -rf /var/lib/apt/lists/*
 
-# Clone repo at base commit (use --depth=N for large monorepos)
-RUN git clone --filter=blob:none https://github.com/{{OWNER}}/{{REPO}}.git /workspace/{{REPO_SHORT}} && \
-    cd /workspace/{{REPO_SHORT}} && \
-    git checkout {{BASE_COMMIT}} && \
+# Install Bun (needed for tests that run TypeScript)
+RUN curl -fsSL https://bun.sh/install | bash && \
+    ln -s /root/.bun/bin/bun /usr/local/bin/bun
+
+# Clone repo at base commit (bun repo, PR 27506)
+RUN git clone --filter=blob:none https://github.com/oven-sh/bun.git /workspace/bun && \
+    cd /workspace/bun && \
+    git checkout f06119ad0cd49bba93908329ef5e53a39c50fb70 && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 
-WORKDIR /workspace/{{REPO_SHORT}}
+WORKDIR /workspace/bun
 
-# For Python repos: uncomment if tests import from the repo
-# ENV PYTHONPATH="/workspace/{{REPO_SHORT}}"
-
-# For Rust repos: pre-fetch deps for faster agent builds
-# RUN cargo fetch && cargo check 2>&1 || true
-
-# Install minimal deps needed by test_outputs.py (NOT full project deps)
-# TODO: add only what test_outputs.py imports
-# RUN pip install --no-cache-dir numpy ruff  # example
+# Install minimal deps needed by test_outputs.py
+RUN pip install --no-cache-dir pytest pytest-json-ctrf
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

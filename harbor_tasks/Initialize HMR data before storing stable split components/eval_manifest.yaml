@@ -1,0 +1,52 @@
+source_pr:
+  owner: TanStack
+  repo: router
+  number: 7074
+  title: "fix: initialize import.meta.hot.data before storing stable split components"
+  merge_commit: f8351a8d7aa9f5a341377f96966451892acb39f1
+  base_commit: 30835cb8e935b740c92fa95909a073e644dde530
+
+checks:
+  - id: test_source_file_has_data_initialization
+    name: "Source has data initialization"
+    description: "Template must initialize import.meta.hot.data before use"
+    category: functional
+    origin: agent_config
+    source: "AGENTS.md - Run unit and type tests during development"
+
+  - id: test_template_produces_correct_output
+    name: "Template produces correct output"
+    description: "Babel template generates code with data ??= {}"
+    category: functional
+    origin: agent_config
+    source: "AGENTS.md - Test changes in relevant example apps"
+
+  - id: test_add_hmr_unit_tests_pass
+    name: "Add-HMR unit tests pass"
+    description: "Existing unit tests including new regression test pass"
+    category: functional
+    origin: upstream_test
+    source: "packages/router-plugin/tests/add-hmr.test.ts"
+
+  - id: test_snapshots_have_data_initialization
+    name: "Snapshots have data initialization"
+    description: "Snapshot files updated with data ??= {}"
+    category: functional
+    origin: agent_config
+    source: "AGENTS.md - Add or update tests for any code changes"
+
+  - id: test_code_compiles_after_fix
+    name: "Code compiles successfully"
+    description: "Package builds without TypeScript errors"
+    category: functional
+    origin: agent_config
+    source: "AGENTS.md - Always run test:types and test:unit before committing"
+
+  - id: test_no_direct_data_access_without_check
+    name: "No unchecked data access"
+    description: "Template does not access data[key] without initialization"
+    category: functional
+    origin: agent_config
+    source: "AGENTS.md - TypeScript strict mode with extensive type safety"
+
+rubric: []
