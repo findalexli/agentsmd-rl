@@ -451,15 +451,17 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
         ))
 
     # Gemini 3.1 Pro via litellm proxy inside sandbox
-    # Tier 0.5: free, high concurrency, needs litellm proxy in sandbox
-    if _get("GEMINI_API_KEY"):
+    # DISABLED as main agent — thinking tokens too expensive ($0.47/task vs $0.05 for Kimi)
+    # Gemini is used ONLY for rubric judge (1 API call/task via judge.py)
+    # To re-enable: set GEMINI_AS_AGENT=1 in env
+    if _get("GEMINI_API_KEY") and _get("GEMINI_AS_AGENT"):
         backends.append(Backend(
             name="gemini",
             base_url="http://localhost:4000",  # litellm proxy started inside sandbox
             api_key="dummy",  # litellm doesn't need auth from localhost
             model_map={"opus": "opus", "sonnet": "sonnet", "haiku": "haiku"},
             max_concurrent=50,
-            cost_tier=0,  # Free tier - prefer over Kimi
+            cost_tier=0,
         ))
 
     # OAuth — subscription, subprocess-only (direct API returns 401)
