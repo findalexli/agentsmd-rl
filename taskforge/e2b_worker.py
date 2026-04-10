@@ -1409,9 +1409,8 @@ async def run_task_agents(
             except Exception:
                 pass
 
-            # ── Agent 1b: Enrich Rubric (Gemini 3.1 Pro via litellm) ──
-            # Rubric quality is critical — route through Gemini for better reasoning.
-            # Check if rubric is empty — if so, run enrichment
+            # ── Agent 1b: Rubric Enrich → Gemini Validate → Fix loop ──
+            # Kimi writes rubric → Gemini checks for hallucinations → Kimi fixes
             code, stdout_check, _ = await run_cmd(
                 sandbox,
                 "python3 -c \"import yaml; m=yaml.safe_load(open('/workspace/task/eval_manifest.yaml')); "
@@ -1420,21 +1419,83 @@ async def run_task_agents(
             )
             rubric_count = int(stdout_check.strip()) if code == 0 and stdout_check.strip().isdigit() else 0
             if rubric_count == 0:
+                # Step 1: Kimi writes initial rubric
                 t0 = time.monotonic()
-                # Use Gemini for rubric enrichment (better config file reasoning)
-                s, stdout, stderr = await _run_agent_gemini(sandbox, "enrich_rubric.md")
+                s, stdout, stderr = await _run_agent(sandbox, "enrich_rubric.md")
                 rubric_time = time.monotonic() - t0
-                # Merge our provenance with what the agent wrote (preserve configs_found, rules_added)
                 existing_node = (await read_sandbox_status(sandbox)).get("nodes", {}).get("rubric_enrichment", {})
-                gemini_stamp = _stamp("rubric_enrichment", s, rubric_time)
-                gemini_stamp["model"] = "gemini-3.1-pro"  # Override: this node uses Gemini
-                existing_node.update(gemini_stamp)
+                existing_node.update(_stamp("rubric_enrichment", s, rubric_time))
                 await update_sandbox_status(sandbox, "rubric_enrichment", existing_node)
                 if dest:
                     await download_task_files(sandbox, dest)
-                    logger.info("[%s] rubric enrich done (%s, via Gemini), synced", task_name, s)
+                    logger.info("[%s] rubric enrich done (%s), synced", task_name, s)
                 if _check_rate_limit("rubric_enrich", s):
                     raise _RateLimited(result.error)
+
+                try:
+                    await sandbox.set_timeout(3600)
+                except Exception:
+                    pass
+
+                # Step 2: Gemini validates rubric (programmatic + semantic)
+                # Upload rubric_validator.py to sandbox
+                validator_py = ROOT / "taskforge" / "rubric_validator.py"
+                if validator_py.exists():
+                    await sandbox.files.write("/workspace/rubric_validator.py", validator_py.read_bytes())
+
+                    t0 = time.monotonic()
+                    val_code, val_out, val_err = await run_cmd(
+                        sandbox,
+                        "python3 /workspace/rubric_validator.py "
+                        "--task /workspace/task --repo /workspace/repo "
+                        "--output /workspace/rubric_feedback.json",
+                        timeout=120,
+                    )
+                    val_time = time.monotonic() - t0
+
+                    # Read validation result
+                    precision = 1.0
+                    try:
+                        feedback_raw = await sandbox.files.read("/workspace/rubric_feedback.json", format="text")
+                        feedback = json.loads(feedback_raw)
+                        precision = feedback.get("precision_score", 1.0)
+                        summary = feedback.get("summary", "")
+                        logger.info("[%s] rubric validation: precision=%.2f %s", task_name, precision, summary[:100])
+                    except Exception:
+                        feedback = {}
+
+                    await update_sandbox_status(sandbox, "rubric_validate", {
+                        **_stamp("rubric_validate", "ok" if val_code == 0 else "error", val_time),
+                        "model": "gemini-3.1-pro",
+                        "precision": precision,
+                    })
+
+                    # Step 3: If hallucinations found, Kimi fixes based on Gemini feedback
+                    has_bad_rules = any(
+                        r.get("verdict") in ("hallucinated", "redundant")
+                        for r in feedback.get("rules", [])
+                    )
+                    if has_bad_rules and precision < 0.9:
+                        try:
+                            await sandbox.set_timeout(3600)
+                        except Exception:
+                            pass
+
+                        t0 = time.monotonic()
+                        s, stdout, stderr = await _run_agent(sandbox, "fix_rubric.md")
+                        fix_time = time.monotonic() - t0
+                        await update_sandbox_status(sandbox, "rubric_fix", _stamp(
+                            "rubric_fix", s, fix_time,
+                            f"precision was {precision:.2f}, fixing hallucinated rules",
+                        ))
+                        if dest:
+                            await download_task_files(sandbox, dest)
+                            logger.info("[%s] rubric fix done (%s), synced", task_name, s)
+                        if _check_rate_limit("rubric_fix", s):
+                            raise _RateLimited(result.error)
+
+                    if dest:
+                        await download_task_files(sandbox, dest)
 
                 try:
                     await sandbox.set_timeout(3600)
