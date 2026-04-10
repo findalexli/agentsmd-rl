@@ -77,6 +77,7 @@ source:
   pr: 123
   base_commit: abc123
 
+# Track 1: Hard tests (binary pass/fail via test.sh)
 checks:
   - id: crash_on_none
     type: fail_to_pass
@@ -92,13 +93,34 @@ checks:
       lines: "30"
       commit: abc123
 
-rubric:  # Soft rules → LLM judge (when LLM_JUDGE=1)
-  - rule: "Be consistent with the style of the surrounding code."
+# Track 2: Gold config edits (for agentmd-edit tasks)
+# Extracted deterministically from solve.sh by config_extract.py
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1            # 1 = agent instruction file, 2 = documentation
+    gold_added: "## Writing Standards\nSee style guide..."
+    gold_removed: ""
+
+# Track 3: Convention rubric (LLM judge)
+# Must be: derived from config files, NOT linting-inferable,
+# NOT just restating what solve.sh does
+rubric:
+  - rule: "Prefer single-word variable names for new locals"
     source:
       path: AGENTS.md
-      lines: "45"
+      lines: "28-32"
       commit: abc123
 ```
+
+### Three evaluation tracks
+
+| Track | What | How | Artifact |
+|-------|------|-----|----------|
+| 1. Code correctness | Did the agent fix the bug? | test.sh → nop=0, gold=1 | `checks` |
+| 2. Config edits | Did the agent update config files correctly? | Gold config vs agent diff (Gemini) | `config_edits` |
+| 3. Convention rubric | Does the agent follow repo conventions? | LLM judge on diff vs rules | `rubric` |
+
+Track 2 gold references are extracted by `taskforge/config_extract.py` at scaffold time — deterministic, no LLM hallucination. Track 3 rubric rules go through a Kimi→Gemini→Kimi validation loop to remove hallucinated sources.
 
 ### Source attribution
 
