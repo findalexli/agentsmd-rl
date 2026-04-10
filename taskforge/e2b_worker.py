@@ -237,16 +237,22 @@ async def create_worker_sandbox(
             await run_cmd(
                 sandbox,
                 "nohup litellm --config /tmp/litellm_config.yaml --port 4000 "
-                "> /tmp/litellm.log 2>&1 & sleep 8",
-                timeout=30,
-            )
-            # Verify proxy is up
-            probe_code, probe_out, _ = await run_cmd(
-                sandbox,
-                'curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/health',
+                "> /tmp/litellm.log 2>&1 &",
                 timeout=10,
             )
-            if probe_out.strip() == "200":
+            # Poll for proxy readiness (litellm takes 10-20s to start)
+            proxy_ready = False
+            for _attempt in range(20):
+                await asyncio.sleep(2)
+                probe_code, probe_out, _ = await run_cmd(
+                    sandbox,
+                    'curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/health 2>/dev/null || echo 000',
+                    timeout=5,
+                )
+                if probe_out.strip() == "200":
+                    proxy_ready = True
+                    break
+            if proxy_ready:
                 logger.info("Sandbox %s: litellm proxy -> Gemini 3.1 Pro ready", sandbox.sandbox_id)
             else:
                 logger.warning("Sandbox %s: litellm proxy failed to start", sandbox.sandbox_id)
