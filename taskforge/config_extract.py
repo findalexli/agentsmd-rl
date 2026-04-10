@@ -290,20 +290,88 @@ def compare_config_changes(
     }
 
 
+# ── Stamp config_edits into eval_manifest.yaml ──────────────────────────────
+
+def stamp_manifest(task_dir: Path) -> int:
+    """Extract gold config changes and write config_edits into eval_manifest.yaml.
+
+    Returns number of config edits found.
+    """
+    try:
+        import yaml
+    except ImportError:
+        print("pyyaml required", file=sys.stderr)
+        return 0
+
+    manifest_path = task_dir / "eval_manifest.yaml"
+    if not manifest_path.exists():
+        return 0
+
+    gold = extract_gold_config(task_dir)
+    gold_files = gold.get("files", {})
+    if not gold_files:
+        return 0
+
+    # Build config_edits list
+    config_edits = []
+    for path, change in sorted(gold_files.items()):
+        tier = 1 if is_agent_instruction_file(path) else 2
+        config_edits.append({
+            "path": path,
+            "tier": tier,
+            "gold_added": change.get("added", "")[:3000],
+            "gold_removed": change.get("removed", "")[:1000],
+        })
+
+    # Merge into manifest
+    manifest = yaml.safe_load(manifest_path.read_text())
+    manifest["config_edits"] = config_edits
+    manifest_path.write_text(yaml.dump(
+        manifest, default_flow_style=False, sort_keys=False, allow_unicode=True
+    ))
+
+    return len(config_edits)
+
+
 # ── CLI ──────────────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(description="Extract/compare config changes")
-    parser.add_argument("--task", required=True, help="Task directory")
+    parser.add_argument("--task", help="Single task directory")
+    parser.add_argument("--task-dir", help="Parent directory for batch mode")
     parser.add_argument("--compare", action="store_true", help="Compare mode")
+    parser.add_argument("--stamp", action="store_true",
+                        help="Write config_edits into eval_manifest.yaml")
     parser.add_argument("--agent-diff", help="Path to agent's diff file")
     parser.add_argument("--output", help="Output file (default: stdout)")
     args = parser.parse_args()
 
+    # Batch mode: process all tasks in a directory
+    if args.task_dir:
+        task_dir = Path(args.task_dir)
+        total = 0
+        stamped = 0
+        for d in sorted(task_dir.iterdir()):
+            if not d.is_dir() or not (d / "solution" / "solve.sh").exists():
+                continue
+            total += 1
+            if args.stamp:
+                n = stamp_manifest(d)
+                if n > 0:
+                    stamped += 1
+                    print(f"  {d.name}: {n} config edits")
+            else:
+                gold = extract_gold_config(d)
+                files = gold.get("files", {})
+                if files:
+                    stamped += 1
+                    print(f"  {d.name}: {list(files.keys())}")
+        print(f"\nTotal: {total} tasks, {stamped} with config edits")
+        return
+
     task_dir = Path(args.task)
 
     if args.compare:
-        # Load gold config
         gold_path = task_dir / "gold_config.json"
         if not gold_path.exists():
             gold = extract_gold_config(task_dir)
@@ -316,9 +384,12 @@ def main():
             agent_diff = sys.stdin.read()
 
         result = compare_config_changes(gold, agent_diff)
+    elif args.stamp:
+        n = stamp_manifest(task_dir)
+        print(f"Stamped {n} config_edits into eval_manifest.yaml")
+        return
     else:
         result = extract_gold_config(task_dir)
-        # Save to task dir
         out_path = task_dir / "gold_config.json"
         out_path.write_text(json.dumps(result, indent=2))
         print(f"Extracted to {out_path}", file=sys.stderr)

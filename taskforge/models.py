@@ -75,10 +75,35 @@ class Check(BaseModel):
 
 
 class RubricRule(BaseModel):
-    """A soft rule evaluated by LLM judge — not programmatically verifiable."""
+    """A soft rule evaluated by LLM judge.
+
+    Must be derived from an actual agent config file (CLAUDE.md, AGENTS.md, etc.)
+    and must NOT be:
+    - Trivially inferable from linting/tooling (eslint, prettier, ruff)
+    - Inferable from existing code patterns alone
+    - A restatement of what the gold patch does (that's a hard check)
+
+    Good rubric rules capture non-obvious, human-curated knowledge from config
+    files: instructions, conventions, architectural rules, workflow requirements.
+    """
     rule: str                        # What the agent should do
-    source: SourceRef | None = None  # Where rule came from (optional)
-    reference: str | None = None     # Gold answer extracted from solve.sh (optional)
+    source: SourceRef | None = None  # Where rule came from (required for quality)
+    reference: str | None = None     # Gold answer for agentmd-edit tasks (optional)
+
+
+class GoldConfigEdit(BaseModel):
+    """A config/doc file change extracted from the gold solution.
+
+    For agentmd-edit tasks, the gold patch modifies config files alongside
+    code files. This captures the EXACT expected config change — deterministic,
+    no LLM hallucination. Used by the judge to evaluate whether the agent
+    made the right config edits.
+    """
+    path: str                        # Repo-relative path, e.g. "AGENTS.md"
+    tier: int = 1                    # 1 = agent instruction, 2 = documentation
+    gold_added: str = ""             # Lines added by gold solution
+    gold_removed: str = ""           # Lines removed by gold solution
+    diff_hunk: str = ""              # Full diff hunk for context (optional)
 
 
 class SourcePR(BaseModel):
@@ -93,12 +118,17 @@ class EvalManifest(BaseModel):
     """Per-task evaluation specification.
 
     Scoring is binary: all checks pass → reward 1.0, any fail → 0.0.
-    Check types (f2p/p2p) and origins are for analysis, not weighted scoring.
+
+    Three evaluation tracks:
+      1. checks (hard tests)  — test.sh, deterministic pass/fail
+      2. config_edits         — gold config changes, Gemini semantic comparison
+      3. rubric               — style/convention rules from config files, LLM judge
     """
     version: Literal["2.0"] = "2.0"
     source: SourcePR
     checks: list[Check] = Field(default_factory=list)
-    rubric: list[RubricRule] = Field(default_factory=list)  # LLM judge only
+    config_edits: list[GoldConfigEdit] = Field(default_factory=list)  # Track 2
+    rubric: list[RubricRule] = Field(default_factory=list)            # Track 3
 
     # -- helpers --
 
