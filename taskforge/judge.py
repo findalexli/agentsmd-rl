@@ -37,7 +37,7 @@ except ImportError:
 # ── Rubric loading ────────────────────────────────────────────────────────
 
 def load_manifest_rubric(manifest_path: str) -> list[dict]:
-    """Load rubric rules from eval_manifest.yaml."""
+    """Load rubric rules (Track 3) from eval_manifest.yaml."""
     if not yaml:
         return []
     data = yaml.safe_load(Path(manifest_path).read_text())
@@ -52,6 +52,27 @@ def load_manifest_rubric(manifest_path: str) -> list[dict]:
         elif isinstance(r, str):
             rules.append({"rule": r, "source": None, "reference": None})
     return rules
+
+
+def load_manifest_config_edits(manifest_path: str) -> list[dict]:
+    """Load config_edits (Track 2) from eval_manifest.yaml.
+
+    Returns list of {path, tier, gold_added, gold_removed}.
+    These are deterministic gold references extracted from solve.sh.
+    """
+    if not yaml:
+        return []
+    data = yaml.safe_load(Path(manifest_path).read_text())
+    edits = []
+    for ce in (data.get("config_edits") or []):
+        if isinstance(ce, dict):
+            edits.append({
+                "path": ce.get("path", ""),
+                "tier": ce.get("tier", 2),
+                "gold_added": ce.get("gold_added", ""),
+                "gold_removed": ce.get("gold_removed", ""),
+            })
+    return edits
 
 
 def parse_rubric(path: str) -> list[dict]:
@@ -119,7 +140,111 @@ def get_diff(repo_dir: str) -> str:
     return diff[:50000]
 
 
-# ── LLM judge call ────────────────────────────────────────────────────────
+# ── Track 2: Config edit comparison ──────────────────────────────────────
+
+def judge_config_edits(config_edits: list[dict], diff: str, api_key: str) -> tuple[float, list[dict]]:
+    """Evaluate whether agent made the correct config file edits (Track 2).
+
+    Compares agent's actual config changes against deterministic gold references
+    extracted from solve.sh. Uses Gemini for semantic comparison (not exact match).
+
+    Returns (score, per_edit_results).
+    Score is fraction of gold config edits the agent correctly made.
+    """
+    if not config_edits:
+        return 1.0, []  # No config edits expected
+
+    agent_config_hunks = extract_config_hunks(diff)
+
+    # Build per-file comparison
+    comparisons = []
+    for ce in config_edits:
+        gold_path = ce["path"]
+        gold_added = ce.get("gold_added", "")
+
+        # Find agent's edit to this file
+        agent_edit = ""
+        for agent_path, agent_hunk in agent_config_hunks.items():
+            if gold_path in agent_path or agent_path in gold_path:
+                agent_edit = extract_added_lines(agent_hunk)
+                break
+        # Broader match: same filename
+        if not agent_edit:
+            fname = gold_path.rsplit("/", 1)[-1] if "/" in gold_path else gold_path
+            for agent_path, agent_hunk in agent_config_hunks.items():
+                if fname in agent_path:
+                    agent_edit = extract_added_lines(agent_hunk)
+                    break
+
+        comparisons.append({
+            "path": gold_path,
+            "tier": ce.get("tier", 2),
+            "gold_added": gold_added[:500],
+            "agent_added": agent_edit[:500],
+            "file_modified": bool(agent_edit),
+        })
+
+    # If no gold edits have content, skip LLM call
+    if all(not c["gold_added"] for c in comparisons):
+        # Just check file modification
+        modified = sum(1 for c in comparisons if c["file_modified"])
+        return modified / len(comparisons) if comparisons else 1.0, comparisons
+
+    # Call Gemini for semantic comparison
+    gemini_key = os.environ.get("GEMINI_API_KEY", "")
+    if not gemini_key:
+        # Fallback: simple file-modified check
+        modified = sum(1 for c in comparisons if c["file_modified"])
+        return modified / len(comparisons) if comparisons else 1.0, comparisons
+
+    eval_text = ""
+    for i, c in enumerate(comparisons):
+        eval_text += f"\nFile {i+1}: {c['path']} (tier {c['tier']})\n"
+        eval_text += f"  Gold added:\n    {c['gold_added'][:400]}\n"
+        if c["file_modified"]:
+            eval_text += f"  Agent added:\n    {c['agent_added'][:400]}\n"
+        else:
+            eval_text += f"  Agent: (did not modify this file)\n"
+
+    prompt = f"""You are evaluating whether a coding agent made the correct config/documentation file edits.
+
+The gold solution modifies certain config files (CLAUDE.md, AGENTS.md, README.md, etc.). Below is a comparison of what the gold solution added vs what the agent added to each file.
+
+{eval_text}
+
+For each file, decide: did the agent make a SEMANTICALLY EQUIVALENT edit?
+- Same meaning in different words = PASS
+- Right file, right information, different structure = PASS
+- Agent didn't modify the file at all = FAIL
+- Agent modified the file but with wrong/unrelated content = FAIL
+- Agent added partial information (some key points missing) = PARTIAL
+
+Respond with ONLY a JSON array:
+[{{"file_num": N, "verdict": "pass|partial|fail", "reason": "one sentence"}}]"""
+
+    try:
+        results = _call_gemini(prompt, gemini_key)
+    except Exception:
+        # Fallback
+        modified = sum(1 for c in comparisons if c["file_modified"])
+        return modified / len(comparisons) if comparisons else 1.0, comparisons
+
+    # Calculate score
+    score_map = {"pass": 1.0, "partial": 0.5, "fail": 0.0}
+    total_score = 0.0
+    for r in results:
+        idx = r.get("file_num", 0) - 1
+        verdict = r.get("verdict", "fail").lower()
+        total_score += score_map.get(verdict, 0.0)
+        if 0 <= idx < len(comparisons):
+            comparisons[idx]["verdict"] = verdict
+            comparisons[idx]["reason"] = r.get("reason", "")
+
+    config_score = total_score / len(comparisons) if comparisons else 1.0
+    return config_score, comparisons
+
+
+# ── Track 3: Rubric LLM judge ───────────────────────────────────────────
 
 def call_judge(rules: list[dict], diff: str, api_key: str) -> list[dict]:
     """Evaluate whether the agent made the right config file edits.
@@ -322,19 +447,6 @@ def main():
             print("0.5")
             sys.exit(0)
 
-    # Load rules
-    if manifest_path:
-        rules = load_manifest_rubric(manifest_path)
-    elif rubric_path:
-        rules = parse_rubric(rubric_path)
-    else:
-        print("1.0")
-        sys.exit(0)
-
-    if not rules:
-        print("1.0")  # No rules = perfect
-        sys.exit(0)
-
     # Get agent's work
     diff = get_diff(repo_dir)
 
@@ -342,28 +454,54 @@ def main():
         print("0.0")  # No changes at all
         sys.exit(0)
 
-    try:
-        results = call_judge(rules, diff, api_key)
-    except Exception as e:
-        print(f"Judge error: {e}", file=sys.stderr)
-        print("0.5")
-        sys.exit(0)
+    scores = {}
 
-    if not results:
-        print("0.5")
-        sys.exit(0)
+    # ── Track 2: Config edits (deterministic gold comparison) ──
+    if manifest_path:
+        config_edits = load_manifest_config_edits(manifest_path)
+        if config_edits:
+            try:
+                ce_score, ce_results = judge_config_edits(config_edits, diff, api_key)
+                scores["config_edits"] = ce_score
+                for cr in ce_results:
+                    v = cr.get("verdict", "?")
+                    print(f"  Config {cr['path']}: {v} — {cr.get('reason', '')}", file=sys.stderr)
+                print(f"  Config edit score: {ce_score:.2f}", file=sys.stderr)
+            except Exception as e:
+                print(f"  Config edit judge error: {e}", file=sys.stderr)
 
-    # Compute ICR: fraction of rules that pass
-    passed = sum(1 for r in results if r.get("pass", False))
-    total = len(results)
-    icr = passed / total if total > 0 else 0.5
+    # ── Track 3: Rubric rules (convention compliance) ──
+    if manifest_path:
+        rules = load_manifest_rubric(manifest_path)
+    elif rubric_path:
+        rules = parse_rubric(rubric_path)
+    else:
+        rules = []
 
-    for r in results:
-        status = "PASS" if r.get("pass") else "FAIL"
-        print(f"  Rule {r.get('rule_num', '?')}: {status} — {r.get('reason', '')}", file=sys.stderr)
-    print(f"  ICR: {passed}/{total} = {icr:.2f}", file=sys.stderr)
+    if rules:
+        try:
+            results = call_judge(rules, diff, api_key)
+            if results:
+                passed = sum(1 for r in results if r.get("pass", False))
+                total = len(results)
+                icr = passed / total if total > 0 else 0.5
+                scores["rubric"] = icr
 
-    print(f"{icr:.4f}")
+                for r in results:
+                    status = "PASS" if r.get("pass") else "FAIL"
+                    print(f"  Rule {r.get('rule_num', '?')}: {status} — {r.get('reason', '')}", file=sys.stderr)
+                print(f"  Rubric ICR: {passed}/{total} = {icr:.2f}", file=sys.stderr)
+        except Exception as e:
+            print(f"  Rubric judge error: {e}", file=sys.stderr)
+
+    # ── Combined score ──
+    if not scores:
+        print("1.0")  # No tracks to evaluate = perfect
+    else:
+        # Average across active tracks
+        combined = sum(scores.values()) / len(scores)
+        print(f"  Combined: {scores} → {combined:.2f}", file=sys.stderr)
+        print(f"{combined:.4f}")
 
 
 if __name__ == "__main__":

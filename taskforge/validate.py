@@ -134,24 +134,35 @@ def generate_summary():
             continue
 
         data = json.loads(status_path.read_text())
-        if not data.get("validations"):
+
+        # Support both v1 (validations array) and v2 (flat schema) status.json
+        if data.get("schema_version") == 2 or data.get("verdict"):
+            # v2 schema from e2b_worker.write_status_json()
+            v = data.get("verdict", "")
+            gold = data.get("gold_reward")
+            nop = data.get("nop_reward")
+            runner = data.get("backend", data.get("pipeline", "?"))
+        elif data.get("validations"):
+            # v1 schema (legacy CSV/E2B import)
+            latest = None
+            for entry in reversed(data["validations"]):
+                if "verdict" in entry:
+                    latest = entry
+                    break
+            if latest is None:
+                no_validation.append(task)
+                continue
+            v = latest["verdict"]
+            gold = latest.get("gold_score")
+            nop = latest.get("nop_score")
+            runner = latest.get("runner", "?")
+        else:
             no_validation.append(task)
             continue
 
-        # Find the latest validation entry that has a verdict (skip audit-only entries)
-        latest = None
-        for entry in reversed(data["validations"]):
-            if "verdict" in entry:
-                latest = entry
-                break
-        if latest is None:
+        if not v:
             no_validation.append(task)
             continue
-
-        v = latest["verdict"]
-        gold = latest.get("gold_score")
-        nop = latest.get("nop_score")
-        runner = latest.get("runner", "?")
 
         row = {"task": task, "gold": gold, "nop": nop, "runner": runner, "verdict": v}
 

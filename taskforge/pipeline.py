@@ -44,7 +44,7 @@ PROMPT_FILES = {
     "improve-tests": "improve_tests.md",
     "validate": "validate.md",
     "remake": "remake.md",
-    "enrich-rubric": "enrich-rubric.md",
+    "enrich-agent-checks": "enrich_agent_checks.md",
 }
 COMMAND_FILES = {
     "scaffold": "scaffold-task.md",
@@ -60,7 +60,7 @@ DEFAULT_MODELS = {
     "validate": "opus",
     "remake": "opus",
     "solve": "opus",
-    "enrich-rubric": "sonnet",
+    "enrich-agent-checks": "sonnet",
 }
 
 DEFAULT_BUDGETS = {
@@ -72,7 +72,7 @@ DEFAULT_BUDGETS = {
     "validate": 2.0,
     "remake": 5.0,
     "solve": 5.0,
-    "enrich-rubric": 1.0,
+    "enrich-agent-checks": 1.0,
 }
 
 
