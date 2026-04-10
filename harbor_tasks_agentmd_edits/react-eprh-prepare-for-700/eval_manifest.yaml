@@ -86,3 +86,58 @@ rubric:
     path: packages/eslint-plugin-react-hooks/README.md
     lines: 1-130
     commit: 9724e3e66e4ad3cc82c728e5c732c21986825b06
+config_edits:
+- path: packages/eslint-plugin-react-hooks/CHANGELOG.md
+  tier: 2
+  gold_added: '## 7.0.0
+
+
+    This release slims down presets to just 2 configurations (`recommended` and `recommended-latest`),
+    and all compiler rules are enabled by default.
+
+
+    - **Breaking:** Removed `recommended-latest-legacy` and `flat/recommended` configs.
+    The plugin now provides `recommended` (legacy and flat configs with all recommended
+    rules),  and `recommended-latest` (legacy and flat configs with all recommended
+    rules plus new bleeding edge experimental compiler rules). ([@poteto](https://github.com/poteto)
+    in [#34757](https://github.com/facebook/react/pull/34757))'
+  gold_removed: ''
+- path: packages/eslint-plugin-react-hooks/README.md
+  tier: 2
+  gold_added: "Add the `recommended` config for all recommended rules:\n  reactHooks.configs.flat.recommended,\n\
+    If you want to try bleeding edge experimental compiler rules, use `recommended-latest`.\n\
+    // eslint.config.js\n  reactHooks.configs.flat['recommended-latest'],\nIf you\
+    \ are still using ESLint below 9.0.0, the `recommended` preset can also be used\
+    \ to enable all recommended rules.\n  \"extends\": [\"plugin:react-hooks/recommended\"\
+    ],\n  // ...\nimport reactHooks from 'eslint-plugin-react-hooks';\n      // Core\
+    \ hooks rules\n\n      // React Compiler rules\n      'react-hooks/config': 'error',\n\
+    \      'react-hooks/error-boundaries': 'error',\n      'react-hooks/component-hook-factories':\
+    \ 'error',\n      'react-hooks/gating': 'error',\n      'react-hooks/globals':\
+    \ 'error',\n      'react-hooks/immutability': 'error',\n      'react-hooks/preserve-manual-memoization':\
+    \ 'error',\n      'react-hooks/purity': 'error',\n      'react-hooks/refs': 'error',\n\
+    \      'react-hooks/set-state-in-effect': 'error',\n      'react-hooks/set-state-in-render':\
+    \ 'error',\n      'react-hooks/static-components': 'error',\n      'react-hooks/unsupported-syntax':\
+    \ 'warn',\n      'react-hooks/use-memo': 'error',\n      'react-hooks/incompatible-library':\
+    \ 'warn',\n    // Core hooks rules\n    \"react-hooks/exhaustive-deps\": \"warn\"\
+    ,\n\n    // React Compiler rules\n    \"react-hooks/config\": \"error\",\n   \
+    \ \"react-hooks/error-boundaries\": \"error\",\n    \"react-hooks/component-hook-factories\"\
+    : \"error\",\n    \"react-hooks/gating\": \"error\",\n    \"react-hooks/globals\"\
+    : \"error\",\n    \"react-hooks/immutability\": \"error\",\n    \"react-hooks/preserve-manual-memoization\"\
+    : \"error\",\n    \"react-hooks/purity\": \"error\",\n    \"react-hooks/refs\"\
+    : \"error\",\n    \"react-hooks/set-state-in-effect\": \"error\",\n    \"react-hooks/set-state-in-render\"\
+    : \"error\",\n    \"react-hooks/static-components\": \"error\",\n    \"react-hooks/unsupported-syntax\"\
+    : \"warn\",\n    \"react-hooks/use-memo\": \"error\",\n    \"react-hooks/incompatible-library\"\
+    : \"warn\""
+  gold_removed: "**Note: If you're using Create React App, please use `react-scripts`\
+    \ >= 3 instead of adding it directly.**\n\n#### >= 6.0.0\n\nFor users of 6.0 and\
+    \ beyond, add the `recommended` config.\n  {\n    files: [\"src/**/*.{js,jsx,ts,tsx}\"\
+    ],\n    plugins: {\n      'react-hooks': reactHooks,\n    },\n    extends: ['react-hooks/recommended'],\n\
+    \  },\n#### 5.2.0\n\nFor users of 5.2.0 (the first version with flat config support),\
+    \ add the `recommended-latest` config.\n  {\n    files: [\"src/**/*.{js,jsx,ts,tsx}\"\
+    ],\n    plugins: {\n      'react-hooks': reactHooks,\n    },\n    extends: ['react-hooks/recommended-latest'],\n\
+    \  },\n#### >= 5.2.0\n\nIf you are still using ESLint below 9.0.0, you can use\
+    \ `recommended-legacy` for accessing a legacy version of the recommended config.\n\
+    \  \"extends\": [\n    // ...\n    \"plugin:react-hooks/recommended-legacy\"\n\
+    \  ]\n```\n\n#### < 5.2.0\n\nIf you're using a version earlier than 5.2.0, the\
+    \ legacy config was simply `recommended`.\n```js\n{\n  \"extends\": [\n    //\
+    \ ...\n    \"plugin:react-hooks/recommended\"\n"

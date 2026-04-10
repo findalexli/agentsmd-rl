@@ -38,8 +38,8 @@ checks:
 - id: readme_no_eval_instructions
   type: fail_to_pass
   origin: pr_diff
-  description: README no longer instructs users to use rabbitmqctl eval for trust store
-    operations
+  description: README no longer instructs users to use rabbitmqctl eval for trust
+    store operations
 rubric:
 - rule: README documentation is consistent with the style of the existing trust store
     README
@@ -52,3 +52,30 @@ rubric:
     path: CLAUDE.md
     lines: 37-38
     commit: 95cfcbac9099290f72f99665a8b9ba7f63a8c266
+config_edits:
+- path: deps/rabbitmq_trust_store/README.md
+  tier: 2
+  gold_added: "To list the currently loaded certificates, use `rabbitmqctl`:\n```\
+    \ sh\n# Available as of RabbitMQ `4.3.0`, `4.2.6`\nrabbitmqctl list_trust_store_certificates\n\
+    This will output a table of certificates similar to:\nListing trust store certificates\
+    \ on node rabbit@hostname...\nname\tserial\tsubject\tissuer\tvalidity\ncert.pem\t\
+    0x1\tO=client,CN=snowman.local\tL=87613,CN=MyTestRootCA\t2016-05-24T15:28:25Z\
+    \ - 2026-05-22T15:28:25Z\n### Refreshing certificates\n\nTo trigger a manual refresh\
+    \ of the trust store certificates, use `rabbitmqctl`:\n\n``` sh\n# Available as\
+    \ of RabbitMQ `4.3.0`, `4.2.6`\nrabbitmqctl refresh_trust_store\n```\ninterval\
+    \ or a manual refresh (by running `rabbitmqctl refresh_trust_store`).\n(c) 2007-2026\
+    \ Broadcom. The term \"Broadcom\" refers to Broadcom Inc. and/or its subsidiaries.\
+    \ All rights reserved.\nReleased under the MPLv2, the same license as RabbitMQ."
+  gold_removed: "To list the currently loaded certificates use the `rabbitmqctl` utility\
+    \ as follows:\n```\n    rabbitmqctl eval 'io:format(rabbit_trust_store:list()).'\n\
+    This will output a formatted list of certificates similar to:\n    Name: cert.pem\n\
+    \    Serial: 1 | 0x1\n    Subject: O=client,CN=snowman.local\n    Issuer: L=87613,CN=MyTestRootCA\n\
+    \    Validity: \"2016-05-24T15:28:25Z - 2026-05-22T15:28:25Z\"\nNote that this\
+    \ command reads each certificate from disk in order to extract\nall the relevant\
+    \ information. If there are a large number of certificates in the\ntrust store\
+    \ use this command sparingly.\ninterval or a manual refresh (by invoking a `rabbitmqctl\
+    \ eval\n'rabbit_trust_store:refresh().'` from the commandline).\n\n\n## Building\
+    \ from Source\n\nSee [Plugin Development guide](https://www.rabbitmq.com/plugin-development.html).\n\
+    \nTL;DR: running\n\n    make dist\n\nwill build the plugin and put build artifacts\
+    \ under the `./plugins` directory.\n(c) 2007-2024 Broadcom. The term \"Broadcom\"\
+    \ refers to Broadcom Inc. and/or its s"

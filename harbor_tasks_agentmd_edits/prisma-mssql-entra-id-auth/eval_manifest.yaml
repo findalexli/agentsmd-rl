@@ -42,7 +42,6 @@ checks:
   origin: static
   description: Existing connection string parameters (database, user, encrypt, etc.)
     still work
-# New p2p tests from repo CI/CD
 - id: test_repo_prettier_formatting
   type: pass_to_pass
   origin: repo_tests
@@ -126,3 +125,29 @@ rubric:
     const adapter = new PrismaMssql(''sqlserver://localhost:1433;database=testdb;user=sa;password=mypassword;encrypt=true'')
 
     const prisma = new PrismaClient({ adapter })'
+config_edits:
+- path: packages/adapter-mssql/README.md
+  tier: 2
+  gold_added: "### 2. Instantiate Prisma Client using the driver adapter\n\nYou can\
+    \ also instantiate the adapter with a [JDBC](https://learn.microsoft.com/en-us/sql/connect/jdbc/building-the-connection-url?view=sql-server-ver15)\
+    \ connection string:\n\n```ts\nimport { PrismaMssql } from '@prisma/adapter-mssql'\n\
+    import { PrismaClient } from '@prisma/client'\n\nconst adapter = new PrismaMssql('sqlserver://localhost:1433;database=testdb;user=sa;password=mypassword;encrypt=true')\n\
+    const prisma = new PrismaClient({ adapter })\n```\n\n### 3. Entra ID Authentication\
+    \ (formerly Azure Active Directory)\n\nEntra ID authentication is supported by\
+    \ the mssql driver used by this adapter.\n\nFor options using the config object,\
+    \ see the options documentation for the [Tedious driver](https://github.com/tediousjs/node-mssql?tab=readme-ov-file#tedious).\n\
+    \nFor example, using the config object to configure [DefaultAzureCredential](https://learn.microsoft.com/en-gb/azure/developer/javascript/sdk/authentication/credential-chains#use-defaultazurecredential-for-flexibility):\n\
+    \n```ts\nimport { PrismaMssql } from '@prisma/adapter-mssql'\nimport { PrismaClient\
+    \ } from '@prisma/client'\n\nconst config = {\n  server: 'localhost',\n  port:\
+    \ 1433,\n  database: 'mydb',\n  authentication: {\n    type: 'azure-active-directory-default',\n\
+    \  },\n  options: {\n    encrypt: true,\n  },\n}\n\nconst adapter = new PrismaMssql(config)\n\
+    const prisma = new PrismaClient({ adapter })\n```\n\nConnection string parsing\
+    \ also supports authentication options, as per below:\n\n- to use [DefaultAzureCredential](https://learn.microsoft.com/en-gb/azure/developer/javascript/sdk/authentication/credential-chains#use-defaultazurecredential-for-flexibility),\
+    \ set:\n  - `authentication=DefaultAzureCredential` in your connection string\n\
+    - to use an Entra username/password, set:\n  - `authentication=ActiveDirectoryPassword`\n\
+    \  - `userName=<value>`\n  - `password=<value>`\n  - `clientId=<value>`\n- to\
+    \ use an Entra managed identity, set:\n  - `authentication=ActiveDirectoryManagedIdentity`\n\
+    \  - `clientId=<value>` (optional)\n- to use a Service Principal with clientId\
+    \ and secret, set:\n  - `authentication=ActiveDirectoryServicePrincipal`\n  -\
+    \ `userName=<client id>`\n  - `password=<client secret>`"
+  gold_removed: '### 3. Instantiate Prisma Client using the driver adapter'

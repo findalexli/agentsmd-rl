@@ -72,3 +72,92 @@ rubric:
     lines: 68-75
     commit: 915dc42e42b4b3bf1a5350090469eb77470adb91
 - rule: Running with no arguments prints usage and exits non-zero
+config_edits:
+- path: .claude/skills/split-file/SKILL.md
+  tier: 1
+  gold_added: '---
+
+    name: split-file
+
+    description: Split a large Go file into smaller focused files while preserving
+    git history. Use when a file is too large and needs to be broken into logical
+    modules.
+
+    argument-hint: [filepath]
+
+    ---
+
+
+    # Split a Go file into multiple files preserving git history
+
+
+    Split the file at `$ARGUMENTS` into multiple smaller files, grouped by logical
+    concern, while preserving `git log --follow` history for each new file.
+
+
+    ## Phase 1: Analyze
+
+
+    1. Read the file and catalog every function, method, type, const block, and var
+    block with their line numbers.
+
+    2. Group them into logical categories (e.g., push path, query path, TSDB lifecycle,
+    HTTP handlers, etc.).
+
+    3. Check existing files in the same package to understand naming conventions and
+    avoid conflicts.
+
+    4. Propose the split to the user: list each new file, what goes in it, and approximate
+    line count. Keep the original file for initialization, config, types, and lifecycle.
+    Aim for at least 4 files.
+
+    5. Wait for user approval before proceeding.
+
+
+    ## Phase 2: Split with history preservation
+
+
+    For each new file, repeat this sequence. Process files from largest to smallest.
+
+
+    ### Git dance (creates the new file with full history)
+
+
+    ```bash
+
+    # 1. Create temp branch from current branch
+
+    git checkout -b temp-split-SUFFIX $CURRENT_BRANCH
+
+
+    # 2. Rename original to new filename
+
+    git mv path/to/original.go path/to/new_file.go
+
+    git commit -m "temp: rename original.go to new_file.go"
+
+
+    # 3. Go back to working branch
+
+    git checkout $CURRENT_BRANCH
+
+
+    # 4. Rename original to a temp name (creates rename/rename conflict)
+
+    git mv path/to/original.go path/to/original_main_temp.go
+
+    git commit -m "temp: rename original.go to original_main_temp.go"
+
+
+    # 5. Merge — this triggers a CONFLICT (rename/rename), which is what we want
+
+    git merge temp-split-SUFFIX --no-commit
+
+    git checkout --ours path/to/original_main_temp.go
+
+    git checkout --theirs path/to/new_file.go
+
+    git add path/to/original_main_temp.go path/to/new_file.go
+
+    git rm --cached path/to/original.go 2>/d'
+  gold_removed: ''

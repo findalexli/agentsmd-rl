@@ -57,3 +57,13 @@ rubric:
     lines: '44'
     commit: 9c05f82591c422ffc958bd61deb1b29c181ae225
 - rule: Existing detectMimeType behavior is preserved (txt -> text/plain)
+config_edits:
+- path: packages/mime/.changes/minor.define-mime-type.md
+  tier: 2
+  gold_added: "Add `defineMimeType()` for registering custom MIME types. This allows\
+    \ adding support for file extensions not included in the defaults, or overriding\
+    \ existing behavior. Custom registrations take precedence over built-in types.\n\
+    \n```ts\nimport { defineMimeType, detectMimeType } from '@remix-run/mime'\n\n\
+    defineMimeType({\n  extensions: 'myformat',\n  mimeType: 'application/x-myformat',\n\
+    })\n\ndetectMimeType('file.myformat') // 'application/x-myformat'\n```"
+  gold_removed: ''

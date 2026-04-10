@@ -1,95 +1,80 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 89819
-  base_commit: "def0e3aabfa112ada22ece9297501c52471d34bd"
-  merge_commit: "9a7733ed83bce9cc1264454ddc7335fdcfb0c1eb"
-
+  base_commit: def0e3aabfa112ada22ece9297501c52471d34bd
+  merge_commit: 9a7733ed83bce9cc1264454ddc7335fdcfb0c1eb
 checks:
-  # P2P gate: AGENTS.md retains rebuild section
-  - id: agents_md_has_rebuild_section
-    type: pass_to_pass
-    origin: static
-    description: "AGENTS.md retains the 'Rebuilding Before Running Tests' section"
-
-  # F2P: core behavioral — run script with CI=1
-  - id: maybe_build_native_skips_in_ci
-    type: fail_to_pass
-    origin: pr_diff
-    description: "maybe-build-native.mjs exits cleanly with skip message when CI=1"
-
-  # F2P: script has Rust change detection logic
-  - id: maybe_build_native_has_rust_detection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "maybe-build-native.mjs contains hasRustChanges and getVersionBumpCommit logic"
-
-  # F2P: package.json wiring
-  - id: package_json_build_script
-    type: fail_to_pass
-    origin: pr_diff
-    description: "packages/next-swc/package.json has build script pointing to maybe-build-native"
-
-  # F2P: turbo.json build task
-  - id: turbo_json_build_task
-    type: fail_to_pass
-    origin: pr_diff
-    description: "packages/next-swc/turbo.json defines build task with Rust inputs and CI env"
-
-  # F2P: build-native.ts prettier refactor
-  - id: build_native_uses_stdin_prettier
-    type: fail_to_pass
-    origin: pr_diff
-    description: "scripts/build-native.ts uses prettier --stdin-filepath instead of --write"
-
-  # F2P: config edit — AGENTS.md simplified
-  - id: agents_md_simplified_rebuild
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md replaces separate Rust/both rebuild commands with unified pnpm build"
-
-  # F2P: syntax gate (file doesn't exist on base)
-  - id: maybe_build_native_syntax
-    type: fail_to_pass
-    origin: pr_diff
-    description: "maybe-build-native.mjs exists and is syntactically valid JavaScript"
-
-  # P2P: repo_tests — JSON validity checks
-  - id: test_repo_package_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Root package.json is valid JSON"
-
-  - id: test_repo_turbo_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Root turbo.json is valid JSON"
-
-  - id: test_repo_next_swc_package_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "packages/next-swc/package.json is valid JSON"
-
-  - id: test_repo_next_swc_turbo_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "packages/next-swc/turbo.json is valid JSON"
-
-  # P2P: repo_tests — Script syntax checks
-  - id: test_repo_validate_externals_doc_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "scripts/validate-externals-doc.js has valid syntax"
-
-  - id: test_repo_build_native_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "scripts/build-native.ts has valid syntax"
-
+- id: agents_md_has_rebuild_section
+  type: pass_to_pass
+  origin: static
+  description: AGENTS.md retains the 'Rebuilding Before Running Tests' section
+- id: maybe_build_native_skips_in_ci
+  type: fail_to_pass
+  origin: pr_diff
+  description: maybe-build-native.mjs exits cleanly with skip message when CI=1
+- id: maybe_build_native_has_rust_detection
+  type: fail_to_pass
+  origin: pr_diff
+  description: maybe-build-native.mjs contains hasRustChanges and getVersionBumpCommit
+    logic
+- id: package_json_build_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/next-swc/package.json has build script pointing to maybe-build-native
+- id: turbo_json_build_task
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/next-swc/turbo.json defines build task with Rust inputs and
+    CI env
+- id: build_native_uses_stdin_prettier
+  type: fail_to_pass
+  origin: pr_diff
+  description: scripts/build-native.ts uses prettier --stdin-filepath instead of --write
+- id: agents_md_simplified_rebuild
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md replaces separate Rust/both rebuild commands with unified
+    pnpm build
+- id: maybe_build_native_syntax
+  type: fail_to_pass
+  origin: pr_diff
+  description: maybe-build-native.mjs exists and is syntactically valid JavaScript
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Root package.json is valid JSON
+- id: test_repo_turbo_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Root turbo.json is valid JSON
+- id: test_repo_next_swc_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: packages/next-swc/package.json is valid JSON
+- id: test_repo_next_swc_turbo_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: packages/next-swc/turbo.json is valid JSON
+- id: test_repo_validate_externals_doc_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/validate-externals-doc.js has valid syntax
+- id: test_repo_build_native_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/build-native.ts has valid syntax
 rubric:
-  - rule: "The AGENTS.md update is consistent with the style of the surrounding rebuild instructions section"
-    source:
-      path: "AGENTS.md"
-      lines: "364-371"
-      commit: "def0e3aabfa112ada22ece9297501c52471d34bd"
+- rule: The AGENTS.md update is consistent with the style of the surrounding rebuild
+    instructions section
+  source:
+    path: AGENTS.md
+    lines: 364-371
+    commit: def0e3aabfa112ada22ece9297501c52471d34bd
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- **Edited Next.js code or Turbopack (Rust)?** → `pnpm build`'
+  gold_removed: '- **Edited Turbopack (Rust)?** → `pnpm swc-build-native`
+
+    - **Edited both?** → `pnpm turbo build build-native`'

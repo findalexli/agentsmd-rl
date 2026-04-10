@@ -23,7 +23,8 @@ checks:
 - id: close_trace_function_exported
   type: fail_to_pass
   origin: pr_diff
-  description: traceUtils.ts exports an async closeTrace function with fs cleanup logic
+  description: traceUtils.ts exports an async closeTrace function with fs cleanup
+    logic
 - id: close_trace_removes_directory
   type: fail_to_pass
   origin: pr_diff
@@ -40,10 +41,11 @@ checks:
 - id: skill_md_close_section
   type: fail_to_pass
   origin: agent_config
-  description: SKILL.md documents the trace close command with a heading and code block
+  description: SKILL.md documents the trace close command with a heading and code
+    block
   source:
     path: packages/playwright-core/src/tools/trace/SKILL.md
-    lines: '23-28'
+    lines: 23-28
     commit: 21268964f99d52e5a48e24c04df5f6dc9e7fa0bc
 - id: skill_md_workflow_mentions_close
   type: fail_to_pass
@@ -51,7 +53,7 @@ checks:
   description: SKILL.md workflow steps include a numbered step for trace close
   source:
     path: packages/playwright-core/src/tools/trace/SKILL.md
-    lines: '13-17'
+    lines: 13-17
     commit: 21268964f99d52e5a48e24c04df5f6dc9e7fa0bc
 rubric:
 - rule: SKILL.md close documentation should be consistent with the style and structure
@@ -59,5 +61,21 @@ rubric:
     description comment, and code block)
   source:
     path: packages/playwright-core/src/tools/trace/SKILL.md
-    lines: '24-28'
+    lines: 24-28
     commit: 21268964f99d52e5a48e24c04df5f6dc9e7fa0bc
+config_edits:
+- path: packages/playwright-core/src/tools/trace/SKILL.md
+  tier: 1
+  gold_added: '6. Use `trace close` to remove the extracted trace data when done.
+
+    ### Close a trace
+
+
+    ```bash
+
+    # Remove extracted trace data
+
+    npx playwright trace close
+
+    ```'
+  gold_removed: ''

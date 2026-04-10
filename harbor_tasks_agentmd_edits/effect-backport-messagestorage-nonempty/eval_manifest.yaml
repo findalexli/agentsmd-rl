@@ -1,51 +1,55 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "effect-ts/effect"
+  repo: effect-ts/effect
   pr: 6031
-  base_commit: "33712058e2655dd50f9b2b511ab8d38c2bd5268a"
-  merge_commit: "17812444c6c0d8f19f9fbc85d82f911dff5523ab"
-
+  base_commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
+  merge_commit: 17812444c6c0d8f19f9fbc85d82f911dff5523ab
 checks:
-  - id: source_files_parse
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files parse without syntax errors"
-
-  - id: encoded_nonemptyarray_types
-    type: fail_to_pass
-    origin: pr_diff
-    description: "MessageStorage.Encoded type uses Arr.NonEmptyArray for all id parameters"
-
-  - id: makeencoded_empty_guards
-    type: fail_to_pass
-    origin: pr_diff
-    description: "makeEncoded guards empty id lists with Arr.isNonEmptyArray before delegating"
-
-  - id: sql_driver_nonemptyarray
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SqlMessageStorage uses Arr.NonEmptyArray for shard id parameters"
-
-  - id: agents_md_changesets
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md includes a Changesets section requiring .changeset/ files"
-
-  - id: changeset_file_for_cluster
-    type: fail_to_pass
-    origin: pr_diff
-    description: "A changeset file exists in .changeset/ referencing @effect/cluster"
-
+- id: source_files_parse
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without syntax errors
+- id: encoded_nonemptyarray_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: MessageStorage.Encoded type uses Arr.NonEmptyArray for all id parameters
+- id: makeencoded_empty_guards
+  type: fail_to_pass
+  origin: pr_diff
+  description: makeEncoded guards empty id lists with Arr.isNonEmptyArray before delegating
+- id: sql_driver_nonemptyarray
+  type: fail_to_pass
+  origin: pr_diff
+  description: SqlMessageStorage uses Arr.NonEmptyArray for shard id parameters
+- id: agents_md_changesets
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md includes a Changesets section requiring .changeset/ files
+- id: changeset_file_for_cluster
+  type: fail_to_pass
+  origin: pr_diff
+  description: A changeset file exists in .changeset/ referencing @effect/cluster
 rubric:
-  - rule: "Always look at existing code in the repository to learn and follow established patterns before writing new code"
-    source:
-      path: "AGENTS.md"
-      lines: "28-29"
-      commit: "33712058e2655dd50f9b2b511ab8d38c2bd5268a"
+- rule: Always look at existing code in the repository to learn and follow established
+    patterns before writing new code
+  source:
+    path: AGENTS.md
+    lines: 28-29
+    commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
+- rule: Keep code and any wording concise and to the point. Sacrifice grammar for
+    the sake of concision.
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '## Changesets
 
-  - rule: "Keep code and any wording concise and to the point. Sacrifice grammar for the sake of concision."
-    source:
-      path: "AGENTS.md"
-      lines: "14"
-      commit: "33712058e2655dd50f9b2b511ab8d38c2bd5268a"
+
+    All pull requests must include a changeset in the `.changeset/` directory.
+
+    This is important for maintaining a clear changelog and ensuring proper versioning
+    of packages.'
+  gold_removed: ''

@@ -1,38 +1,111 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "electric-sql/electric"
+  repo: electric-sql/electric
   pr: 3225
-  base_commit: "617b429f0f8b9b78bed42b897092e065cf993e35"
-  merge_commit: "45e3f0da9dc29eb3fc5c1174264cdfdcbcf60c0b"
-
+  base_commit: 617b429f0f8b9b78bed42b897092e065cf993e35
+  merge_commit: 45e3f0da9dc29eb3fc5c1174264cdfdcbcf60c0b
 checks:
-  # Code behavior checks
-  - id: vite_plugin_exports
-    type: fail_to_pass
-    origin: pr_diff
-    description: "vite-plugin-caddy.ts exports caddyPlugin returning valid plugin with configureServer and buildEnd"
-
-  - id: vite_config_uses_caddy
-    type: fail_to_pass
-    origin: pr_diff
-    description: "vite.config.ts imports and uses caddyPlugin with server.host enabled"
-
-  # Config/documentation update checks
-  - id: agents_md_http2_proxy_tip
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md slow shapes tip mentions HTTP/2 proxy fix, not outdated version upgrade"
-
-  - id: readme_documents_caddy
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README documents Caddy with HTTP/2 multiplexing explanation and setup instructions"
-
-  # Regression guard
-  - id: vite_config_still_has_existing_plugins
-    type: pass_to_pass
-    origin: static
-    description: "vite.config.ts retains all existing plugins (tanstack, react, tailwind)"
-
+- id: vite_plugin_exports
+  type: fail_to_pass
+  origin: pr_diff
+  description: vite-plugin-caddy.ts exports caddyPlugin returning valid plugin with
+    configureServer and buildEnd
+- id: vite_config_uses_caddy
+  type: fail_to_pass
+  origin: pr_diff
+  description: vite.config.ts imports and uses caddyPlugin with server.host enabled
+- id: agents_md_http2_proxy_tip
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md slow shapes tip mentions HTTP/2 proxy fix, not outdated version
+    upgrade
+- id: readme_documents_caddy
+  type: fail_to_pass
+  origin: pr_diff
+  description: README documents Caddy with HTTP/2 multiplexing explanation and setup
+    instructions
+- id: vite_config_still_has_existing_plugins
+  type: pass_to_pass
+  origin: static
+  description: vite.config.ts retains all existing plugins (tanstack, react, tailwind)
 rubric: []
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '3. **Local dev slow shapes** - HTTP/1.1 6-connection limit. Fix: HTTP/2
+    proxy (Caddy/nginx) or Electric Cloud ([Electric][18])'
+  gold_removed: 3. **Local dev slow shapes** - Fixed by default in `@electric-sql/client`
+    v1.0.13+ UPGRADE!
+- path: examples/burn/README.md
+  tier: 2
+  gold_added: '# `asdf plugin add <name> <git-url> if you don''t have the dependency
+    plugin already, e.g.:
+
+    # asdf plugin add caddy https://github.com/salasrod/asdf-caddy.git
+
+    In a different terminal start Caddy (this proxies port `4001` to Phoenix running
+    on `4000`):
+
+
+    ```sh
+
+    caddy start
+
+    ```
+
+
+    Open [localhost:4001](http://localhost:4001) in your web browser.'
+  gold_removed: Open [localhost:4000](http://localhost:4000) in your web browser.
+- path: examples/tanstack-db-web-starter/README.md
+  tier: 2
+  gold_added: "This starts the dev server, Docker Compose (Postgres + Electric), and\
+    \ Caddy automatically.\n   Open [https://tanstack-start-db-electric-starter.localhost](https://tanstack-start-db-electric-starter.localhost)\n\
+    This project uses [Docker](https://www.docker.com), [Node](https://nodejs.org/en)\
+    \ with [pnpm](https://pnpm.io) and [Caddy](https://caddyserver.com/). You can\
+    \ see compatible versions in the `.tool-versions` file.\n### Caddy\n\n#### Why\
+    \ Caddy?\n\nElectric SQL's shape delivery benefits significantly from **HTTP/2\
+    \ multiplexing**. Without HTTP/2, each shape subscription creates a new HTTP/1.1\
+    \ connection, which browsers limit to 6 concurrent connections per domain. This\
+    \ creates a bottleneck that makes shapes appear slow.\n\nCaddy provides HTTP/2\
+    \ support with automatic HTTPS, giving you:\n\n- **Faster shape loading** - Multiple\
+    \ shapes load concurrently over a single connection\n- **Better development experience**\
+    \ - No connection limits or artificial delays\n- **Production-like performance**\
+    \ - Your local dev mirrors production HTTP/2 behavior\n\nThe Vite development\
+    \ server runs on HTTP/1.1 only, so Caddy acts as a reverse proxy to upgrade the\
+    \ connection.\n\n#### Setup\n\nOnce you've [installed Caddy](https://caddyserver.com/docs/install),\
+    \ install its root certificate using:\n\n```sh\ncaddy trust\n```\n\nThis is necessary\
+    \ for HTTP/2 to work [without SSL warnings/errors in the browser](https://caddyserver.com/docs/command-line#caddy-trust).\n\
+    \n#### How It Works\n\n- Caddy auto-starts via a Vite plugin when you run `pnpm\
+    \ dev`\n- The `Caddyfile` is automatically generated with your project name\n\
+    - Your app is available at `https://<project-name>.localhost`\n- Direct access\
+    \ to `http://localhost:5173` still works but will be slower for Electric shapes\n\
+    \n#### Troubleshooting Caddy\n\nIf Caddy fails to start:\n\n1. **Test Caddy manually:**\n\
+    \n   ```sh\n   caddy start\n   ```\n\n2. **Check certificate trust:**\n\n   ```sh\n\
+    \   caddy trust\n   # To remove later: caddy untrust\n   ```\n\n3. **Verify Caddyfile\
+    \ was generated:**\n   Look for a `Caddyfile` in your project root after running\
+    \ `pnpm dev`\n\n4. **Stop conflicting Caddy instances:**\n\n   ```sh\n   caddy\
+    \ stop\n   ```\n\n5. **Check for port conflicts:**\n   Caddy needs ports 80 and\
+    \ 443 available\n\n| Issue                    | Symptoms                     \
+    \              | Solution                                                    \
+    \       |\n| ------------------------ | ------------------------------------------\
+    \ | ------------------------------------------------------------------ |\n| **Docker\
+    \ not running**   | `docker compose ps` shows nothing          | Start Docker\
+    \ Desktop/daemon                                        |\n| **Caddy not trusted**\
+    \    | SSL warnings in browser                    | Run `caddy trust` (see Caddy\
+    \ section below)                        |\n| **Port conflicts**       | Postgres\
+    \ (54321) or Electric (3000) in use | Stop conflicting services or change ports\
+    \ in `docker-compose.yaml` |\n| **Missing .env**         | Database connection\
+    \ errors          "
+  gold_removed: "This starts the dev server and Docker Compose (Postgres + Electric)\
+    \ automatically.\n   Open [http://localhost:5173](http://localhost:5173)\nThis\
+    \ project uses [Docker](https://www.docker.com) and [Node](https://nodejs.org/en)\
+    \ with [pnpm](https://pnpm.io). You can see compatible versions in the `.tool-versions`\
+    \ file.\n| Issue                  | Symptoms                                 \
+    \  | Solution                                                           |\n| ----------------------\
+    \ | ------------------------------------------ | ------------------------------------------------------------------\
+    \ |\n| **Docker not running** | `docker compose ps` shows nothing          | Start\
+    \ Docker Desktop/daemon                                        |\n| **Port conflicts**\
+    \     | Postgres (54321) or Electric (3000) in use | Stop conflicting services\
+    \ or change ports in `docker-compose.yaml` |\n| **Missing .env**       | Database\
+    \ connection errors                 | Copy `.env.example` to `.env`          \
+    \          "

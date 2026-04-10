@@ -1,55 +1,107 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "weaviate/weaviate"
+  repo: weaviate/weaviate
   pr: 10542
-  base_commit: "57d1e03321fd1648889b5c3fae5261cf5a7a0217"
-  merge_commit: "b8c2a029c1c3c11cc8a20284ed1e3675d78ac18e"
-
+  base_commit: 57d1e03321fd1648889b5c3fae5261cf5a7a0217
+  merge_commit: b8c2a029c1c3c11cc8a20284ed1e3675d78ac18e
 checks:
-  - id: shell_syntax
-    type: pass_to_pass
-    origin: static
-    description: "All shell scripts in .claude/scripts/ parse without syntax errors"
-
-  - id: monitor_pr_script_exists_and_executable
-    type: fail_to_pass
-    origin: pr_diff
-    description: "monitor_pr.sh exists, is executable, accepts PR env var, and uses gh pr checks"
-
-  - id: monitor_pr_exits_on_missing_pr
-    type: fail_to_pass
-    origin: pr_diff
-    description: "monitor_pr.sh exits non-zero with usage when PR env var is not set"
-
-  - id: monitor_docker_script_exists_and_executable
-    type: fail_to_pass
-    origin: pr_diff
-    description: "monitor_docker.sh exists, is executable, and accepts a run ID"
-
-  - id: monitor_docker_exits_on_missing_arg
-    type: fail_to_pass
-    origin: pr_diff
-    description: "monitor_docker.sh exits non-zero when no run ID argument is provided"
-
-  - id: gitignore_allows_claude_scripts
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".gitignore has negation pattern to allow .claude/scripts/ to be tracked"
-
-  - id: claude_md_has_ci_monitoring_section
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md documents CI monitoring and references both monitoring scripts"
-
-  - id: claude_md_documents_script_usage
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md documents PR= usage, re-run commands, and .claude/scripts/ location"
-
-  - id: claude_md_preserves_existing_sections
-    type: pass_to_pass
-    origin: static
-    description: "CLAUDE.md preserves existing Build & Run, Testing, Architecture, Code Conventions sections"
-
+- id: shell_syntax
+  type: pass_to_pass
+  origin: static
+  description: All shell scripts in .claude/scripts/ parse without syntax errors
+- id: monitor_pr_script_exists_and_executable
+  type: fail_to_pass
+  origin: pr_diff
+  description: monitor_pr.sh exists, is executable, accepts PR env var, and uses gh
+    pr checks
+- id: monitor_pr_exits_on_missing_pr
+  type: fail_to_pass
+  origin: pr_diff
+  description: monitor_pr.sh exits non-zero with usage when PR env var is not set
+- id: monitor_docker_script_exists_and_executable
+  type: fail_to_pass
+  origin: pr_diff
+  description: monitor_docker.sh exists, is executable, and accepts a run ID
+- id: monitor_docker_exits_on_missing_arg
+  type: fail_to_pass
+  origin: pr_diff
+  description: monitor_docker.sh exits non-zero when no run ID argument is provided
+- id: gitignore_allows_claude_scripts
+  type: fail_to_pass
+  origin: pr_diff
+  description: .gitignore has negation pattern to allow .claude/scripts/ to be tracked
+- id: claude_md_has_ci_monitoring_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md documents CI monitoring and references both monitoring scripts
+- id: claude_md_documents_script_usage
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md documents PR= usage, re-run commands, and .claude/scripts/
+    location
+- id: claude_md_preserves_existing_sections
+  type: pass_to_pass
+  origin: static
+  description: CLAUDE.md preserves existing Build & Run, Testing, Architecture, Code
+    Conventions sections
 rubric: []
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '## CI / Pipeline Monitoring
+
+
+    All monitoring scripts live in `.claude/scripts/` and are committed to the repo.
+    Always run them as background tasks (use `run_in_background=true` in the Bash
+    tool) so you get notified on completion without blocking the conversation.
+
+
+    ### Monitor PR checks
+
+    Polls all CI checks for a PR until they complete. Exits with code 1 if any checks
+    fail:
+
+    ```bash
+
+    PR=1234 .claude/scripts/monitor_pr.sh
+
+    ```
+
+
+    ### Monitor Docker image build
+
+    Use this when waiting for a PR''s docker image to be produced. First get the run
+    ID from the PR''s docker checks, then pass it to the script:
+
+    ```bash
+
+    # Get the run ID
+
+    gh pr checks <PR> --repo weaviate/weaviate 2>&1 | grep -i "docker"
+
+    # Monitor the build
+
+    .claude/scripts/monitor_docker.sh <run_id>
+
+    ```
+
+    The script also prints the docker image tags on success. Tags are fetched via
+    `gh api` (works even if the overall run is still in progress).
+
+
+    ### Inspect failed checks / rerun
+
+    ```bash
+
+    # Get job ID from: gh pr checks <PR> --repo weaviate/weaviate
+
+    gh api repos/weaviate/weaviate/actions/jobs/<job_id>/logs 2>&1 | grep "FAIL:"
+    | head -20
+
+
+    # Re-run only failed jobs:
+
+    gh run rerun <run_id> --failed --repo weaviate/weaviate
+
+    ```'
+  gold_removed: ''

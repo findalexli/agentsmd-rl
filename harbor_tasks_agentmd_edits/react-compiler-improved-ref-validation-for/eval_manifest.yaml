@@ -1,74 +1,90 @@
-version: "2.0"
-
+version: '2.0'
 source:
   repo: facebook/react
   pr: 35893
   base_commit: b354bbd2d231fdeeec31d438c8e7c54877eee4ac
   merge_commit: e33071c6142ae5212483a63b87d5d962860e535a
-
 checks:
-  # Code behavior tests (fail_to_pass)
-  - id: panresponder_runtime_works
-    type: fail_to_pass
-    origin: pr_diff
-    description: "PanResponder.create() in shared-runtime returns its argument (freezing behavior)"
-
-  - id: validation_handles_immutable_capture
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ValidateNoRefAccessInRender handles ImmutableCapture+Freeze for non-hook functions"
-
-  - id: panresponder_type_has_freeze_aliasing
-    type: fail_to_pass
-    origin: pr_diff
-    description: "PanResponder type in type-provider has Freeze+ImmutableCapture aliasing effects"
-
-  - id: mutate_ref_fixture_uses_mutate
-    type: fail_to_pass
-    origin: pr_diff
-    description: "error.validate-mutate-ref-arg-in-render fixture uses mutate() not console.log()"
-
-  - id: panresponder_fixture_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "panresponder-ref-in-callback fixture exists with PanResponder.create and ref usage"
-
-  # Repo CI/CD tests (pass_to_pass)
-  - id: repo_typescript_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript in babel-plugin-react-compiler compiles"
-
-  - id: repo_compiler_package_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Compiler package structure is valid"
-
-  # Regression checks (pass_to_pass)
-  - id: validation_preserves_ref_lvalue_branch
-    type: pass_to_pass
-    origin: static
-    description: "Refactored validation preserves isRefLValue and interpolatedAsJsx branches"
-
-  - id: shared_runtime_exports_typedlog
-    type: pass_to_pass
-    origin: static
-    description: "shared-runtime.ts still exports typedLog and typedMutate after PanResponder addition"
-
-  # Config/documentation update tests (fail_to_pass)
-  - id: claude_md_lint_section
-    type: fail_to_pass
-    origin: pr_diff
-    description: "compiler/CLAUDE.md documents the lint command for the compiler source"
-
-  - id: claude_md_formatting_section
-    type: fail_to_pass
-    origin: pr_diff
-    description: "compiler/CLAUDE.md documents the prettier formatting command"
-
+- id: panresponder_runtime_works
+  type: fail_to_pass
+  origin: pr_diff
+  description: PanResponder.create() in shared-runtime returns its argument (freezing
+    behavior)
+- id: validation_handles_immutable_capture
+  type: fail_to_pass
+  origin: pr_diff
+  description: ValidateNoRefAccessInRender handles ImmutableCapture+Freeze for non-hook
+    functions
+- id: panresponder_type_has_freeze_aliasing
+  type: fail_to_pass
+  origin: pr_diff
+  description: PanResponder type in type-provider has Freeze+ImmutableCapture aliasing
+    effects
+- id: mutate_ref_fixture_uses_mutate
+  type: fail_to_pass
+  origin: pr_diff
+  description: error.validate-mutate-ref-arg-in-render fixture uses mutate() not console.log()
+- id: panresponder_fixture_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: panresponder-ref-in-callback fixture exists with PanResponder.create
+    and ref usage
+- id: repo_typescript_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript in babel-plugin-react-compiler compiles
+- id: repo_compiler_package_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Compiler package structure is valid
+- id: validation_preserves_ref_lvalue_branch
+  type: pass_to_pass
+  origin: static
+  description: Refactored validation preserves isRefLValue and interpolatedAsJsx branches
+- id: shared_runtime_exports_typedlog
+  type: pass_to_pass
+  origin: static
+  description: shared-runtime.ts still exports typedLog and typedMutate after PanResponder
+    addition
+- id: claude_md_lint_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: compiler/CLAUDE.md documents the lint command for the compiler source
+- id: claude_md_formatting_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: compiler/CLAUDE.md documents the prettier formatting command
 rubric:
-  - rule: "New Linting and Formatting sections in CLAUDE.md follow the existing style: ## heading, ```bash code block with a descriptive comment, consistent with Running Tests / Compiling Arbitrary Files sections"
-    source:
-      path: "compiler/CLAUDE.md"
-      lines: "1-36"
-      commit: "b354bbd2d231fdeeec31d438c8e7c54877eee4ac"
+- rule: 'New Linting and Formatting sections in CLAUDE.md follow the existing style:
+    ## heading, ```bash code block with a descriptive comment, consistent with Running
+    Tests / Compiling Arbitrary Files sections'
+  source:
+    path: compiler/CLAUDE.md
+    lines: 1-36
+    commit: b354bbd2d231fdeeec31d438c8e7c54877eee4ac
+config_edits:
+- path: compiler/CLAUDE.md
+  tier: 1
+  gold_added: '## Linting
+
+
+    ```bash
+
+    # Run lint on the compiler source
+
+    yarn workspace babel-plugin-react-compiler lint
+
+    ```
+
+
+    ## Formatting
+
+
+    ```bash
+
+    # Run prettier on all files (from the react root directory, not compiler/)
+
+    yarn prettier-all
+
+    ```'
+  gold_removed: ''

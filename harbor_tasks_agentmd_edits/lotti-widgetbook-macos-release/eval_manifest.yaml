@@ -46,11 +46,13 @@ checks:
 - id: widgetbook_workflow_exists
   type: fail_to_pass
   origin: pr_diff
-  description: Widgetbook CI workflow exists triggering on main with build and release steps
+  description: Widgetbook CI workflow exists triggering on main with build and release
+    steps
 - id: gh_cli_release_support
   type: fail_to_pass
   origin: pr_diff
-  description: Build script uses gh CLI for creating/editing releases and uploading artifacts
+  description: Build script uses gh CLI for creating/editing releases and uploading
+    artifacts
 - id: fvm_support
   type: fail_to_pass
   origin: agent_config
@@ -58,7 +60,8 @@ checks:
 - id: readme_widgetbook_documentation
   type: fail_to_pass
   origin: config_edit
-  description: Design system README documents widgetbook export workflow with make commands
+  description: Design system README documents widgetbook export workflow with make
+    commands
 - id: readme_artifact_documentation
   type: fail_to_pass
   origin: config_edit
@@ -95,3 +98,82 @@ rubric:
     commit: 267f107483c1d7ca272b6a76fba12ea0da9de2a7
 - rule: CI workflow for widgetbook macOS release is valid YAML triggering on main
     with build and release steps
+config_edits:
+- path: lib/features/design_system/README.md
+  tier: 2
+  gold_added: '## Widgetbook Export
+
+
+    Build the standalone Widgetbook macOS bundle and zip it for review:
+
+
+    ```sh
+
+    make widgetbook_macos_build
+
+    ```
+
+
+    Upload the existing zip to the rolling GitHub release without rebuilding:
+
+
+    ```sh
+
+    make widgetbook_macos_upload
+
+    ```
+
+
+    Build and then upload the latest zip to the rolling GitHub release:
+
+
+    ```sh
+
+    make widgetbook_macos_publish
+
+    ```
+
+
+    This writes:
+
+
+    - `build/widgetbook_macos_export/Lotti_Widgetbook.app`
+
+    - `build/widgetbook_macos_export/Lotti_Widgetbook.app.zip`
+
+
+    The app is built from `lib/widgetbook.dart` and then copied into a separate
+
+    macOS app bundle for sharing.
+
+
+    After unzipping, open the app bundle in Finder:
+
+
+    ```sh
+
+    open "build/widgetbook_macos_export/Lotti_Widgetbook.app"
+
+    ```
+
+
+    Because the app is unsigned, macOS may warn on first launch, especially if it
+
+    was downloaded from GitHub Releases. In that case, use Finder''s right-click
+
+    `Open`, or remove quarantine locally:
+
+
+    ```sh
+
+    xattr -dr com.apple.quarantine "Lotti_Widgetbook.app"
+
+    ```
+
+
+    The publish command updates the `widgetbook-macos-latest` tag and uploads the
+
+    zip to the matching prerelease via the GitHub CLI. It expects `gh` to be
+
+    installed and authenticated locally.'
+  gold_removed: ''

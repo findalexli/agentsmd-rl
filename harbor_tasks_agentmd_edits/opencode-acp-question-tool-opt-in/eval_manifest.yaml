@@ -1,49 +1,54 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 13562
-  base_commit: "86e545a23ecdb2c1840ab01e82eca292117c6bbc"
-  merge_commit: "9d3c81a68391399e46fab5307b03984511f92b09"
-
+  base_commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
+  merge_commit: 9d3c81a68391399e46fab5307b03984511f92b09
 checks:
-  # ---------------------------------------------------------------------------
-  # Gates (syntax/compilation)
-  # ---------------------------------------------------------------------------
-  - id: typescript_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files parse without errors"
-
-  # ---------------------------------------------------------------------------
-  # Core behavioral tests (fail-to-pass)
-  # ---------------------------------------------------------------------------
-  - id: flag_opencode_enable_question_tool_defined
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Flag.OPENCODE_ENABLE_QUESTION_TOOL must be defined and work as truthy flag"
-
-  - id: question_tool_gated_by_env_var
-    type: fail_to_pass
-    origin: pr_diff
-    description: "QuestionTool must be excluded for ACP by default but included when env var is set"
-
-  - id: cli_client_has_question_tool_by_default
-    type: fail_to_pass
-    origin: pr_diff
-    description: "app/cli/desktop clients must have QuestionTool enabled without env var"
-
-  # ---------------------------------------------------------------------------
-  # Documentation/config update tests (fail-to-pass)
-  # ---------------------------------------------------------------------------
-  - id: acp_readme_documents_question_tool_opt_in
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README.md must document the Question Tool opt-in for ACP"
-
-  - id: translator_md_includes_env_var
-    type: fail_to_pass
-    origin: pr_diff
-    description: "translator.md must include OPENCODE_ENABLE_QUESTION_TOOL in env var list"
-
+- id: typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without errors
+- id: flag_opencode_enable_question_tool_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: Flag.OPENCODE_ENABLE_QUESTION_TOOL must be defined and work as truthy
+    flag
+- id: question_tool_gated_by_env_var
+  type: fail_to_pass
+  origin: pr_diff
+  description: QuestionTool must be excluded for ACP by default but included when
+    env var is set
+- id: cli_client_has_question_tool_by_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: app/cli/desktop clients must have QuestionTool enabled without env
+    var
+- id: acp_readme_documents_question_tool_opt_in
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md must document the Question Tool opt-in for ACP
+- id: translator_md_includes_env_var
+  type: fail_to_pass
+  origin: pr_diff
+  description: translator.md must include OPENCODE_ENABLE_QUESTION_TOOL in env var
+    list
 rubric: []
+config_edits:
+- path: packages/opencode/src/acp/README.md
+  tier: 2
+  gold_added: '### Question Tool Opt-In
+
+
+    ACP excludes `QuestionTool` by default.
+
+
+    ```bash
+
+    OPENCODE_ENABLE_QUESTION_TOOL=1 opencode acp
+
+    ```
+
+
+    Enable this only for ACP clients that support interactive question prompts.'
+  gold_removed: ''

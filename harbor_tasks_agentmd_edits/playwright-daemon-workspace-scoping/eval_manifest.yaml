@@ -1,71 +1,81 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 39144
-  base_commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
-  merge_commit: "c4a4efa50a02f404829c8cf8a169d5b70e8e35ae"
-
+  base_commit: 08752e9a9be05e5d11173977c8651cf105c1aace
+  merge_commit: c4a4efa50a02f404829c8cf8a169d5b70e8e35ae
 checks:
-  # p2p: install-browser command must still exist
-  - id: install_browser_command_exists
-    type: pass_to_pass
-    origin: static
-    description: "install-browser command remains registered in commands.ts"
-
-  # f2p: kill-all renamed to session-kill-all
-  - id: session_kill_all_command
-    type: fail_to_pass
-    origin: pr_diff
-    description: "kill-all command renamed to session-kill-all in commands.ts"
-
-  # f2p: new install command with workspace initialization
-  - id: install_command_workspace_init
-    type: fail_to_pass
-    origin: pr_diff
-    description: "New 'install' command initializes workspace with .playwright marker"
-
-  # f2p: config path changed to .playwright/cli.config.json
-  - id: config_path_uses_dot_playwright
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Default config path changed from playwright-cli.json to .playwright/cli.config.json"
-
-  # f2p: findWorkspaceDir function added and behaves correctly
-  - id: find_workspace_dir_behavior
-    type: fail_to_pass
-    origin: pr_diff
-    description: "findWorkspaceDir walks up from cwd looking for .playwright directory"
-
-  # f2p: daemon scoping uses workspace hash
-  - id: workspace_dir_hash_replaces_installation_dir
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Daemon scoping uses workspaceDirHash instead of installationDirHash"
-
-  # f2p: SKILL.md updated for renamed command
-  - id: skill_md_documents_session_kill_all
-    type: fail_to_pass
-    origin: agent_config
-    description: "SKILL.md updated to document session-kill-all instead of kill-all"
-    source:
-      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
-      lines: "29-30"
-      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
-
-  # f2p: session-management.md reference updated
-  - id: session_management_md_updated
-    type: fail_to_pass
-    origin: agent_config
-    description: "session-management.md reference doc uses session-kill-all instead of kill-all"
-    source:
-      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
-      lines: "29-30"
-      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
-
+- id: install_browser_command_exists
+  type: pass_to_pass
+  origin: static
+  description: install-browser command remains registered in commands.ts
+- id: session_kill_all_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: kill-all command renamed to session-kill-all in commands.ts
+- id: install_command_workspace_init
+  type: fail_to_pass
+  origin: pr_diff
+  description: New 'install' command initializes workspace with .playwright marker
+- id: config_path_uses_dot_playwright
+  type: fail_to_pass
+  origin: pr_diff
+  description: Default config path changed from playwright-cli.json to .playwright/cli.config.json
+- id: find_workspace_dir_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: findWorkspaceDir walks up from cwd looking for .playwright directory
+- id: workspace_dir_hash_replaces_installation_dir
+  type: fail_to_pass
+  origin: pr_diff
+  description: Daemon scoping uses workspaceDirHash instead of installationDirHash
+- id: skill_md_documents_session_kill_all
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md updated to document session-kill-all instead of kill-all
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 29-30
+    commit: 08752e9a9be05e5d11173977c8651cf105c1aace
+- id: session_management_md_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: session-management.md reference doc uses session-kill-all instead of
+    kill-all
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 29-30
+    commit: 08752e9a9be05e5d11173977c8651cf105c1aace
 rubric:
-  - rule: "Documentation updates in SKILL.md and session-management.md are consistent in style with surrounding content"
-    source:
-      path: "packages/playwright/src/skill/SKILL.md"
-      lines: "170-200"
-      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+- rule: Documentation updates in SKILL.md and session-management.md are consistent
+    in style with surrounding content
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 170-200
+    commit: 08752e9a9be05e5d11173977c8651cf105c1aace
+config_edits:
+- path: packages/playwright/src/skill/SKILL.md
+  tier: 1
+  gold_added: '# Close the browser
+
+    playwright-cli close
+
+    # Delete user data for the default session
+
+    playwright-cli delete-data
+
+    # Close all browsers
+
+    playwright-cli session-close-all
+
+    # Forcefully kill all browser processes
+
+    playwright-cli session-kill-all'
+  gold_removed: 'playwright-cli close                      # stop the default session
+
+    playwright-cli session-close-all          # stop all sessions
+
+    playwright-cli delete-data                # delete user data for default session
+
+    playwright-cli kill-all                   # forcefully kill all daemon processes
+    (for stale/zombie processes)'

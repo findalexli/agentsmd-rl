@@ -46,9 +46,8 @@ checks:
   origin: static
   description: Non-renamed commands (build, test, etc.) remain in the run script
 rubric:
-- rule: "Command renaming should be consistent across all files \u2014 the run script,\
-    \ package.json, CI config, and documentation should all use the same new naming\
-    \ convention."
+- rule: Command renaming should be consistent across all files — the run script, package.json,
+    CI config, and documentation should all use the same new naming convention.
   source:
     path: waspc/README.md
     lines: 1-10
@@ -61,3 +60,12 @@ rubric:
   reference: './run check:ormolu
 
     ./run format:ormolu'
+config_edits:
+- path: waspc/README.md
+  tier: 2
+  gold_added: './run check:ormolu
+
+    ./run format:ormolu'
+  gold_removed: './run ormolu:check
+
+    ./run ormolu:format'

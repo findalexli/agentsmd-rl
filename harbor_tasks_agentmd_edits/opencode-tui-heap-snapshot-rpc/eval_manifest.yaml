@@ -1,45 +1,83 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 19028
-  base_commit: "1398674e531acc845e062b219f718cac1cd89a44"
-  merge_commit: "15dc33d1a38f3beb30fdc1a2bd2a0f3dd124a3a8"
-
+  base_commit: 1398674e531acc845e062b219f718cac1cd89a44
+  merge_commit: 15dc33d1a38f3beb30fdc1a2bd2a0f3dd124a3a8
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files parse without errors"
-
-  - id: worker_has_snapshot_rpc
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Worker RPC has snapshot method that calls writeHeapSnapshot"
-
-  - id: thread_implements_onsnapshot
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Thread implements onSnapshot callback coordinating TUI and server snapshots"
-
-  - id: app_accepts_onsnapshot_prop
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TUI App component accepts onSnapshot prop and passes it to heap snapshot command"
-
-  - id: changelog_command_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".opencode/command/changelog.md has updated instructions with TUI/Desktop/Core/Misc sections"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "RPC snapshot method has real implementation, not just a stub"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without errors
+- id: worker_has_snapshot_rpc
+  type: fail_to_pass
+  origin: pr_diff
+  description: Worker RPC has snapshot method that calls writeHeapSnapshot
+- id: thread_implements_onsnapshot
+  type: fail_to_pass
+  origin: pr_diff
+  description: Thread implements onSnapshot callback coordinating TUI and server snapshots
+- id: app_accepts_onsnapshot_prop
+  type: fail_to_pass
+  origin: pr_diff
+  description: TUI App component accepts onSnapshot prop and passes it to heap snapshot
+    command
+- id: changelog_command_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: .opencode/command/changelog.md has updated instructions with TUI/Desktop/Core/Misc
+    sections
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: RPC snapshot method has real implementation, not just a stub
 rubric:
-  - rule: "Config update follows the structure and style of existing .opencode command files"
-    source:
-      path: ".opencode/command/changelog.md"
-      lines: "1-5"
-      commit: "1398674e531acc845e062b219f718cac1cd89a44"
+- rule: Config update follows the structure and style of existing .opencode command
+    files
+  source:
+    path: .opencode/command/changelog.md
+    lines: 1-5
+    commit: 1398674e531acc845e062b219f718cac1cd89a44
+config_edits:
+- path: .opencode/command/changelog.md
+  tier: 2
+  gold_added: 'create UPCOMING_CHANGELOG.md
+
+    it should have sections
+
+    ```
+
+    # TUI
+
+
+    # Desktop
+
+
+    # Core
+
+
+    # Misc
+
+    ```
+
+
+    go through each PR merged since the last tag
+
+    for each PR spawn a subagent to summarize what the PR was about. focus on user
+    facing changes. if it was entirely internal or code related you can ignore it.
+    also skip docs updates. each subagent should append its summary to UPCOMING_CHANGELOG.md
+    into the appropriate section.
+
+    once that is done, read UPCOMING_CHANGELOG.md and group it into sections for better
+    readability. make sure all PR references are preserved'
+  gold_removed: 'go through each PR merged since the last tag
+
+    for each PR spawn a subagent to summarize what the PR was about. focus on user
+    facing changes. if it was entirely internal or code related you can ignore it.
+    also skip docs updates. each subagent should append its summary to UPCOMING_CHANGELOG.md
+
+    once that is done, read UPCOMING_CHANGELOG.md and group it into sections for better
+    readability. make sure all PR references are preserved
+
+    once that is done, read UPCOMING_CHANGELOG.md and group it into sections for better
+    readability. make sure all PR references are preserved'

@@ -1,65 +1,169 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 87943
-  base_commit: "c74cb2ae25bbe515c600b85f1e974f7eb26db576"
-  merge_commit: "3c47bd99afb7babc202898f71a815a8663db42b1"
-
+  base_commit: c74cb2ae25bbe515c600b85f1e974f7eb26db576
+  merge_commit: 3c47bd99afb7babc202898f71a815a8663db42b1
 checks:
-  # ---------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core behavioral tests
-  # ---------------------------------------------------------------------------
+- id: test_claude_md_exists_with_content
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md created with Next.js development guide content
+- id: test_claude_ci_failures_command_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: .claude/commands/ci-failures.md created with CI analysis instructions
+- id: test_gitignore_updated_for_claude
+  type: fail_to_pass
+  origin: pr_diff
+  description: .gitignore updated to ignore Claude Code local settings
+- id: test_alexignore_updated_for_claude
+  type: fail_to_pass
+  origin: pr_diff
+  description: .alexignore updated to ignore .claude/ directory and CLAUDE.md
+- id: test_claude_md_has_graphite_safety_rules
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md contains Graphite stack safety rules
+- id: test_claude_md_has_testing_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md contains testing commands section with pnpm test commands
+- id: test_claude_md_not_empty
+  type: pass_to_pass
+  origin: static
+  description: CLAUDE.md is not empty or stub
+- id: test_ci_failures_md_not_empty
+  type: pass_to_pass
+  origin: static
+  description: .claude/commands/ci-failures.md is not empty or stub
+- id: test_claude_directory_structure_correct
+  type: pass_to_pass
+  origin: static
+  description: .claude/ directory exists with correct structure
+rubric: []
+config_edits:
+- path: .claude/commands/ci-failures.md
+  tier: 2
+  gold_added: "# Check CI Failures\n\nAnalyze failing tests from PR CI runs with parallel\
+    \ subagent log analysis.\n\n## Usage\n\n```\n/ci-failures [pr-number]\n```\n\n\
+    If no PR number provided, detect from current branch.\n\n## Instructions\n\n1.\
+    \ Get the PR number from argument or current branch:\n\n   ```bash\n   gh pr view\
+    \ --json number,headRefName --jq '\"\\(.number) \\(.headRefName)\"'\n   ```\n\n\
+    2. **CRITICAL: Always fetch fresh run IDs** - never trust cached IDs from conversation\
+    \ summaries:\n\n   ```bash\n   gh api \"repos/vercel/next.js/actions/runs?branch={branch}&per_page=10\"\
+    \ \\\n     --jq '.workflow_runs[] | select(.name == \"build-and-test\") | \"\\\
+    (.id) attempts:\\(.run_attempt) status:\\(.status) conclusion:\\(.conclusion)\"\
+    '\n   ```\n\n3. **Prioritize the MOST RECENT run, even if in-progress:**\n   -\
+    \ If the latest run is `in_progress` or `queued`, check it FIRST - it has the\
+    \ most relevant failures\n   - Individual jobs complete before the overall run\
+    \ - analyze them as they finish\n   - Only fall back to older completed runs if\
+    \ the current run has no completed jobs yet\n\n4. Get all failed jobs from the\
+    \ run (works for in-progress runs too):\n\n   ```bash\n   gh api \"repos/vercel/next.js/actions/runs/{run_id}/jobs?per_page=100\"\
+    \ \\\n     --jq '.jobs[] | select(.conclusion == \"failure\") | \"\\(.id) \\(.name)\"\
+    '\n   ```\n\n   **Note:** For runs with >100 jobs, paginate:\n\n   ```bash\n \
+    \  gh api \"repos/vercel/next.js/actions/runs/{run_id}/jobs?per_page=100&page=2\"\
+    \n   ```\n\n5. Spawn parallel haiku subagents to analyze logs (limit to 3-4 to\
+    \ avoid rate limits):\n   - **CRITICAL: Use the API endpoint for logs, NOT `gh\
+    \ run view --log`**\n   - `gh run view --job --log` FAILS when run is in-progress\n\
+    \   - **Do NOT group by job name** (e.g., \"test dev\", \"turbopack\") - group\
+    \ by failure pattern instead\n   - Agent prompt should extract structured data\
+    \ using:\n     ```bash\n     # Extract assertion failures with context:\n    \
+    \ gh api \"repos/vercel/next.js/actions/jobs/{job_id}/logs\" 2>&1 | \\\n     \
+    \  grep -B3 -A10 \"expect.*\\(toBe\\|toContain\\|toEqual\\|toSt"
+  gold_removed: ''
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '# Next.js Development Guide
 
-  - id: test_claude_md_exists_with_content
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md created with Next.js development guide content"
 
-  - id: test_claude_ci_failures_command_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".claude/commands/ci-failures.md created with CI analysis instructions"
+    ## Git Workflow
 
-  - id: test_gitignore_updated_for_claude
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".gitignore updated to ignore Claude Code local settings"
 
-  - id: test_alexignore_updated_for_claude
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".alexignore updated to ignore .claude/ directory and CLAUDE.md"
+    **Use Graphite for all git operations** instead of raw git commands:
 
-  - id: test_claude_md_has_graphite_safety_rules
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md contains Graphite stack safety rules"
 
-  - id: test_claude_md_has_testing_commands
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md contains testing commands section with pnpm test commands"
+    - `gt create <branch-name> -m "message"` - Create a new branch with commit
 
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (static) — anti-stub and structural checks
-  # ---------------------------------------------------------------------------
+    - `gt modify -a --no-edit` - Stage all and amend current branch''s commit
 
-  - id: test_claude_md_not_empty
-    type: pass_to_pass
-    origin: static
-    description: "CLAUDE.md is not empty or stub"
+    - `gt checkout <branch>` - Switch branches (use instead of `git checkout`)
 
-  - id: test_ci_failures_md_not_empty
-    type: pass_to_pass
-    origin: static
-    description: ".claude/commands/ci-failures.md is not empty or stub"
+    - `gt sync` - Sync and restack all branches
 
-  - id: test_claude_directory_structure_correct
-    type: pass_to_pass
-    origin: static
-    description: ".claude/ directory exists with correct structure"
+    - `gt submit --no-edit` - Push and create/update PRs (use `--no-edit` to avoid
+    interactive prompts)
 
-rubric:
-  # No soft rules needed - all checks are programmatically verifiable
-  []
+    - `gt log short` - View stack status
+
+
+    **Note**: `gt submit` runs in interactive mode by default and won''t push in automated
+    contexts. Always use `gt submit --no-edit` or `gt submit -q` when running from
+    Claude.
+
+
+    **Graphite Stack Safety Rules:**
+
+
+    - Graphite force-pushes everything - old commits only recoverable via reflog
+
+    - Never have uncommitted changes when switching branches - they get lost during
+    restack
+
+    - Never use `git stash` with Graphite - causes conflicts when `gt modify` restacks
+
+    - Never use `git checkout HEAD -- <file>` after editing - silently restores unfixed
+    version
+
+    - Always use `gt checkout` (not `git checkout`) to switch branches
+
+    - `gt modify --no-edit` with unstaged/untracked files stages ALL changes
+
+    - `gt sync` pulls FROM remote, doesn''t push TO remote
+
+    - `gt modify` restacks children locally but doesn''t push them
+
+    - Always verify with `git status -sb` after stack operations
+
+    - When resuming from summarized conversation, never trust cached IDs - re-fetch
+    from git/GitHub API
+
+
+    **Safe multi-branch fix workflow:**
+
+
+    ```bash
+
+    gt checkout parent-branch
+
+    # make edits
+
+    gt modify -a --no-edit        # Stage all, amend, restack children
+
+    git show HEAD -- <files>      # VERIFY fix is in commit
+
+    gt submit --no-edit           # Push immediately
+
+
+    gt checkout child-branch      # Already restacked from gt modify
+
+    # make edits
+
+    gt modify -a --no-edit
+
+    git show HEAD -- <files>      # VERIFY
+
+    gt submit --no-edit
+
+    ```
+
+
+    ## Build Commands
+
+
+    ```bash
+
+    # Build the Next.js package (dev server only - faster)
+
+    pnpm --fi'
+  gold_removed: ''

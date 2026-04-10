@@ -12,7 +12,8 @@ checks:
 - id: release_pr_import_chain
   type: fail_to_pass
   origin: pr_diff
-  description: release-pr.ts exists with import to utils/release-pr.ts, old files removed
+  description: release-pr.ts exists with import to utils/release-pr.ts, old files
+    removed
 - id: pr_config_values
   type: fail_to_pass
   origin: pr_diff
@@ -58,3 +59,46 @@ rubric:
     path: AGENTS.md
     lines: 1-10
     commit: 130fbdc7b808a2d313363458dabc00caf036f482
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- **Automated releases**: When changes are pushed to `main`, the [release-pr
+    workflow](/.github/workflows/release-pr.yaml) automatically opens/updates a "Release"
+    PR. The [publish workflow](/.github/workflows/publish.yaml) runs on every push
+    to `main` and publishes when no change files are present (i.e., after merging
+    the Release PR).
+
+    - **Test change/release code with preview scripts**: When modifying any change/release
+    code, run `pnpm changes:preview` to test locally. For the release PR script, run
+    `node ./scripts/release-pr.ts --preview`. For the publish script, run `node ./scripts/publish.ts
+    --dry-run` to see what commands would be executed without actually publishing.'
+  gold_removed: '- **Automated releases**: When changes are pushed to `main`, the
+    [changes-version-pr workflow](/.github/workflows/changes-version-pr.yaml) automatically
+    opens/updates a "Version Packages" PR. The [publish workflow](/.github/workflows/publish.yaml)
+    runs on every push to `main` and publishes when no change files are present (i.e.,
+    after merging the Version Packages PR).
+
+    - **Test change/release code with preview scripts**: When modifying any change/release
+    code, run `pnpm changes:preview` to test locally. For the version PR script, run
+    `node ./scripts/changes-version-pr.ts --preview`. For the publish script, run
+    `node ./scripts/publish.ts --dry-run` to see what commands would be executed without
+    actually publishing.'
+- path: CONTRIBUTING.md
+  tier: 2
+  gold_added: 'Releases are automated via the [release-pr workflow](/.github/workflows/release-pr.yaml)
+    and [publish workflow](/.github/workflows/publish.yaml).
+
+    2. **A "Release" PR is automatically opened** (or updated if one exists)
+
+    The "Release" PR simply automates the `pnpm changes:version` command. If needed,
+    you can run this command manually. This will update the `package.json` versions,
+    `CHANGELOG.md` files, and delete the change files. It will then commit the result.'
+  gold_removed: 'Releases are automated via the [changes-version-pr workflow](/.github/workflows/changes-version-pr.yaml)
+    and [publish workflow](/.github/workflows/publish.yaml).
+
+    2. **A "Version Packages" PR is automatically opened** (or updated if one exists)
+
+    The "Version Packages" PR simply automates the `pnpm changes:version` command.
+    If needed, you can run this command manually. This will update the `package.json`
+    versions, `CHANGELOG.md` files, and delete the change files. It will then commit
+    the result.'

@@ -33,8 +33,8 @@ checks:
 - id: makefile_includes_modulus_hash_ct
   type: fail_to_pass
   origin: pr_diff
-  description: Makefile includes rabbit_exchange_type_modulus_hash in parallel CT test
-    sets
+  description: Makefile includes rabbit_exchange_type_modulus_hash in parallel CT
+    test sets
 - id: erlang_module_well_formed
   type: pass_to_pass
   origin: static
@@ -55,3 +55,37 @@ rubric:
     path: CLAUDE.md
     lines: '111'
     commit: f5c203919fe89ebe26d7a5650a58cced4ab807a6
+config_edits:
+- path: deps/rabbitmq_sharding/README.md
+  tier: 2
+  gold_added: 'RabbitMQ provides a built-in exchange type, `"x-modulus-hash"`, that
+    will use
+
+    across a number of regular queues (shards). This exchange type is available
+
+    in core RabbitMQ and does not require enabling this plugin to be used.
+
+    This exchange guarantees stable routing. As long as the bindings to the exchange
+    remain the same,
+
+    messages with the same routing key will always be routed to exactly the same destination
+    queue,
+
+    even across node restarts.'
+  gold_removed: 'The exchanges that ship by default with RabbitMQ work in an "all
+    or
+
+    nothing" fashion, i.e: if a routing key matches a set of queues bound
+
+    to the exchange, then RabbitMQ will route the message to all the
+
+    queues in that set. For this plugin to work it is necessary to
+
+    route messages to an exchange that would partition messages, so they
+
+    are routed to _at most_ one queue (a subset).
+
+
+    The plugin provides a new exchange type, `"x-modulus-hash"`, that will use
+
+    across a number of regular queues (shards).'

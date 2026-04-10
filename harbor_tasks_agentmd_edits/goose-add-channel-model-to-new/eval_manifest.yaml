@@ -1,52 +1,67 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "goose-lang/goose"
+  repo: goose-lang/goose
   pr: 94
-  base_commit: "3be88bbb4982f58e5813b6f0344302d5582c8e8a"
-  merge_commit: "0fda1a638596598c27aa37345101ee254ba48c55"
-
+  base_commit: 3be88bbb4982f58e5813b6f0344302d5582c8e8a
+  merge_commit: 0fda1a638596598c27aa37345101ee254ba48c55
 checks:
-  # Core behavior: dependencies added to go.mod
-  - id: go_mod_deps_added
-    type: fail_to_pass
-    origin: pr_diff
-    description: "go.mod includes goose-lang/primitive and goose-lang/std dependencies"
-
-  # Core behavior: dependencies in go.sum
-  - id: go_sum_deps_added
-    type: fail_to_pass
-    origin: pr_diff
-    description: "go.sum includes checksums for goose-lang/primitive and goose-lang/std"
-
-  # Core behavior: channel model created
-  - id: channel_model_created
-    type: fail_to_pass
-    origin: pr_diff
-    description: "model/channel/channel.go created with Channel struct and methods"
-
-  # Core behavior: channel README created
-  - id: channel_readme_created
-    type: fail_to_pass
-    origin: pr_diff
-    description: "model/channel/README.md created with documentation"
-
-  # Core behavior: code compiles
-  - id: go_build_succeeds
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Go code compiles without errors after adding channel model"
-
-  # Syntax check: Go files are valid
-  - id: go_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified Go files have valid syntax"
-
-  # Anti-stub: channel.go has substantial content
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "channel.go has real implementation, not just stubs"
-
+- id: go_mod_deps_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: go.mod includes goose-lang/primitive and goose-lang/std dependencies
+- id: go_sum_deps_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: go.sum includes checksums for goose-lang/primitive and goose-lang/std
+- id: channel_model_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: model/channel/channel.go created with Channel struct and methods
+- id: channel_readme_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: model/channel/README.md created with documentation
+- id: go_build_succeeds
+  type: fail_to_pass
+  origin: pr_diff
+  description: Go code compiles without errors after adding channel model
+- id: go_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified Go files have valid syntax
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: channel.go has real implementation, not just stubs
 rubric: []
+config_edits:
+- path: model/channel/README.md
+  tier: 2
+  gold_added: "This directory contains a model for channels in Go for use in Perennial\
+    \ that has the following characteristics:\n1. It is implemented as a generic struct\
+    \ in Go.\n2. The struct stores a buffered ring queue that is used for buffered\
+    \ channels and 4 boolean flags that are used for unbuffered channel synchronization.\n\
+    3. Each method in the struct other than Len/Cap/Close branches on whether the\
+    \ buffer has capacity 0 to determine whether the channel is Unbuffered or Buffered.\
+    \ Buffered channels use logic very similar to the concurrent blocking queue here:\
+    \ https://github.com/mit-pdos/gokv/blob/main/tutorial/queue/queue.go and unbuffered\
+    \ channels have a more subtle barrier-like implementation\n4. There are TryReceive\
+    \ and TrySend functions that will be used by select statements and range for loops\
+    \ as described in the source code comments\n\nThe code here is translated using\
+    \ Goose's preexisting support for struct generics and Go code that uses channels\
+    \ is then translated directly into Gooselang code that references the output from\
+    \ translating channel.go.\n\nThe tests in channel_test.go are the correctness\
+    \ based tests from https://go.dev/src/runtime/chanbarrier_test.go and https://go.dev/src/runtime/chan_test.go\
+    \ translated to this model from Go channels. These all passed except for TestSelfSelect.\
+    \ I documented the known edge cases in select statements that aren't quite modeled\
+    \ correctly.\n\nThe unbuffered channel behavior in this model is described in\
+    \ the diagram below:\n\n```mermaid\nstateDiagram-v2\n\t[*] --> start: Create Channel\n\
+    \    start-->sender_ready: Sender arrives first and makes offer\n    start-->receiver_ready:\
+    \ Receiver arrives first and makes offer\n    sender_ready-->start: Sender rescinds\
+    \ offer after wait period\n    receiver_ready-->start: Receiver rescinds offer\
+    \ after wait period\n    sender_ready-->receiver_done: Receiver completes exchange\n\
+    \    receiver_ready-->sender_done: Sender completes exchange\n    receiver_done-->start:\
+    \ Sender observes completed exchange\n    sender_done-->start: Receiver observes\
+    \ completed exchange\n    start-->closed\n    receiver_ready-->closed\n    sender_ready-->closed\n\
+    \    closed-->[*]\n```"
+  gold_removed: ''

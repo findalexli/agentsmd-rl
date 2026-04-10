@@ -42,13 +42,13 @@ rubric:
     source code
   source:
     path: AGENTS.md
-    lines: '28-33'
+    lines: 28-33
     commit: 0b0ca631198af88cda1ecceef5a51d20e1b3b3e2
 - rule: Changeset description clearly explains the migration path from old to new
     API
   source:
     path: AGENTS.md
-    lines: '28-33'
+    lines: 28-33
     commit: 0b0ca631198af88cda1ecceef5a51d20e1b3b3e2
 - rule: Modified files use 'let' for locals, not 'var', per AGENTS.md
   source:
@@ -56,3 +56,12 @@ rubric:
     lines: '17'
     commit: 0b0ca631198af88cda1ecceef5a51d20e1b3b3e2
 - rule: JSDoc on Interaction interface describes parameter-based API, not 'this'
+config_edits:
+- path: packages/interaction/README.md
+  tier: 2
+  gold_added: "function KeydownEnter(handle: Interaction) {\n  if (!(handle.target\
+    \ instanceof HTMLElement)) return\n  handle.on(handle.target, {\n        handle.target.dispatchEvent(new\
+    \ KeyboardEvent(keydownEnter, { key: 'Enter' }))"
+  gold_removed: "function KeydownEnter(this: Interaction) {\n  if (!(this.target instanceof\
+    \ HTMLElement)) return\n  this.on(this.target, {\n        this.target.dispatchEvent(new\
+    \ KeyboardEvent(keydownEnter, { key: 'Enter' }))"

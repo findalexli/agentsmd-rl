@@ -1,55 +1,172 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "dotnet/maui"
+  repo: dotnet/maui
   pr: 34160
-  base_commit: "48dae02e3e04dce551396f747f234bf3e30801ec"
-  merge_commit: "dea56cb4078346ca5983f4b431bae6501f4f114f"
-
+  base_commit: 48dae02e3e04dce551396f747f234bf3e30801ec
+  merge_commit: dea56cb4078346ca5983f4b431bae6501f4f114f
 checks:
-  - id: script_file_exists
-    type: pass_to_pass
-    origin: static
-    description: "PowerShell script and SKILL.md files exist"
-
-  - id: script_param_defaults
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script param defaults: Category='default' (was 'all'), Limit=100 (was 10)"
-
-  - id: script_validate_set_has_new_categories
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script ValidateSet includes default, approved, ready-to-review, agent-reviewed"
-
-  - id: script_new_functions_and_fields
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script defines Write-PREntry and Get-ReadyToReviewPRNumbers, includes Assignees field and agent label handling"
-
-  - id: script_default_mode_logic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script implements 'default' mode showing P/0 + milestoned, filtering CHANGES_REQUESTED"
-
-  - id: skill_md_priority_categories
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md lists 9 priority categories including Approved, Agent Reviewed, Ready To Review"
-
-  - id: skill_md_param_table_defaults
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md parameter table shows Category='default' and Limit=100"
-
-  - id: skill_md_new_category_docs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md documents Approved (Not Merged), Agent Reviewed, Ready To Review, and Assignees column"
-
+- id: script_file_exists
+  type: pass_to_pass
+  origin: static
+  description: PowerShell script and SKILL.md files exist
+- id: script_param_defaults
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Script param defaults: Category=''default'' (was ''all''), Limit=100
+    (was 10)'
+- id: script_validate_set_has_new_categories
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script ValidateSet includes default, approved, ready-to-review, agent-reviewed
+- id: script_new_functions_and_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script defines Write-PREntry and Get-ReadyToReviewPRNumbers, includes
+    Assignees field and agent label handling
+- id: script_default_mode_logic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script implements 'default' mode showing P/0 + milestoned, filtering
+    CHANGES_REQUESTED
+- id: skill_md_priority_categories
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md lists 9 priority categories including Approved, Agent Reviewed,
+    Ready To Review
+- id: skill_md_param_table_defaults
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md parameter table shows Category='default' and Limit=100
+- id: skill_md_new_category_docs
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md documents Approved (Not Merged), Agent Reviewed, Ready To
+    Review, and Assignees column
 rubric:
-  - rule: "Documentation updates are consistent with the style and formatting of the existing SKILL.md"
-    source:
-      path: ".github/skills/find-reviewable-pr/SKILL.md"
-      lines: "1-20"
-      commit: "48dae02e3e04dce551396f747f234bf3e30801ec"
+- rule: Documentation updates are consistent with the style and formatting of the
+    existing SKILL.md
+  source:
+    path: .github/skills/find-reviewable-pr/SKILL.md
+    lines: 1-20
+    commit: 48dae02e3e04dce551396f747f234bf3e30801ec
+config_edits:
+- path: .github/skills/find-reviewable-pr/SKILL.md
+  tier: 1
+  gold_added: '1. **Priority (P/0)** - Critical priority PRs that need immediate attention
+    (always on top)
+
+    2. **Approved (Not Merged)** - PRs with human approval that haven''t been merged
+    yet
+
+    3. **Ready To Review (Project Board)** - PRs in "Ready To Review" column of the
+    MAUI SDK Ongoing project board (requires `read:project` scope)
+
+    4. **Milestoned** - PRs assigned to current milestone(s), sorted by lowest SR
+    number first (e.g., SR5 before SR6), then Servicing
+
+    5. **Agent Reviewed** - PRs reviewed by AI agent workflow (detected via labels)
+
+    6. **Partner** - PRs from Syncfusion and other partners
+
+    7. **Community** - External contributions needing review
+
+    8. **Recent Waiting for Review** - PRs created in last 2 weeks that need review
+    (minimum 5)
+
+    9. **docs-maui Waiting for Review** - Documentation PRs needing review (minimum
+    5)
+
+    # Find P/0 and milestoned PRs (default behavior, excludes changes-requested)
+
+    # Find all reviewable PRs across all categories
+
+    pwsh .github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1 -Category
+    all
+
+
+    # Find approved PRs waiting to be merged
+
+    pwsh .github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1 -Category
+    approved
+
+
+    # Find PRs in "Ready To Review" on the project board
+
+    pwsh .github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1 -Category
+    ready-to-review
+
+
+    # Find agent-reviewed PRs with merge summaries
+
+    pwsh .github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1 -Category
+    agent-reviewed
+
+
+    | `-Category` | default, milestoned, priority, recent, partner, community, docs-maui,
+    approved, ready-to-review, agent-reviewed, all | default | Filter by category.
+    `default` shows only P/0 + milestoned, excluding changes-requested PRs. |
+
+    | `-Limit` | 1-100 | 100 | Max PRs per category (maui repo) |
+
+    **CRITICAL**: You MUST use the PowerShell script below. Do NOT attempt to query
+    GitHub directly with `gh` commands or `jq` if the script fails. The script contains
+    important prioritization logic (SR5 before SR6, P/0 first, etc.) that cannot be
+    replicated with ad-hoc queries.
+
+    pwsh .github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1
+
+    1. 🔴 **Priority (P/0)** - Always include if present (always first)
+
+    2. 🟢 **Approved (Not Merged)** - Always include if present
+
+    3. 📋 **Ready To Review (Board)** - Always include if present
+
+    4. 📅 **Milestoned** - Always include if present
+
+    5. 🤖 **Agent Reviewed** - Always include if present
+
+    6. 🤝 **Partner** - Always include if present
+
+    7. ✨ **Community** - Always include if present
+
+    8. 🕐 **Recent** - Always include if present
+
+    9. 📖 **docs-maui** - Always include if present
+
+    **DO NOT** omit any category. Each category table should include columns for:
+    PR, Title, Author, Assignees, Platform/Repo, Status, Agent Review, Age, Updated.
+
+    - **P/0 PRs** should always be reviewed first - they''re blocking releases
+
+    - **Approved PRs** are ready to merge - verify CI is green and merge
+
+    - **Ready To Review PRs** are in the project board pipeline and need timely review
+
+    - **Agent Reviewed PRs** have been an'
+  gold_removed: '1. **Priority (P/0)** - Critical priority PRs that need immediate
+    attention
+
+    2. **Milestoned** - PRs assigned to current milestone(s), sorted by lowest SR
+    number first (e.g., SR5 before SR6), then Servicing
+
+    3. **Partner** - PRs from Syncfusion and other partners
+
+    4. **Community** - External contributions needing review
+
+    5. **Recent Waiting for Review** - PRs created in last 2 weeks that need review
+    (minimum 5)
+
+    6. **docs-maui Waiting for Review** - Documentation PRs needing review (minimum
+    5)
+
+    # Find all reviewable PRs (shows top from each category including docs-maui)
+
+    | `-Category` | milestoned, priority, recent, partner, community, docs-maui, all
+    | all | Filter by category |
+
+    | `-Limit` | 1-100 | 10 | Max PRs per category (maui repo) |
+
+    **CRITICAL**: You MUST use the PowerShell script below. Do NOT attempt to query
+    GitHub directly with `gh` commands or `jq` if the script fails. The script contains
+    important prioritization logic (SR3 before SR4, P/0 first, etc.) that cannot be
+    replicated wit'

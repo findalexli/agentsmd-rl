@@ -11,8 +11,8 @@ checks:
 - id: test_prompt_documents_dynamic_properties
   type: fail_to_pass
   origin: pr_diff
-  description: PROPERTY_TYPES_PROMPT contains <dynamic_person_properties> section with
-    all 8 dynamic property patterns
+  description: PROPERTY_TYPES_PROMPT contains <dynamic_person_properties> section
+    with all 8 dynamic property patterns
 - id: test_taxonomy_tool_person_hint
   type: fail_to_pass
   origin: pr_diff
@@ -34,7 +34,7 @@ checks:
   description: SKILL.md references the dynamic properties documentation
   source:
     path: products/posthog_ai/skills/query-examples/SKILL.md
-    lines: "24-29"
+    lines: 24-29
     commit: 14b7a8edebb1b574414ac9866a417fbe7c8170c0
 - id: test_dynamic_properties_reference_doc
   type: fail_to_pass
@@ -43,7 +43,7 @@ checks:
     types
   source:
     path: products/posthog_ai/skills/query-examples/SKILL.md
-    lines: "24-29"
+    lines: 24-29
     commit: 14b7a8edebb1b574414ac9866a417fbe7c8170c0
 - id: test_not_stub
   type: pass_to_pass
@@ -54,11 +54,125 @@ rubric:
     SKILL.md references
   source:
     path: products/posthog_ai/skills/query-examples/SKILL.md
-    lines: "1-30"
+    lines: 1-30
     commit: 14b7a8edebb1b574414ac9866a417fbe7c8170c0
 - rule: Hint text appended to tool results should be concise and actionable for an
     AI agent
   source:
     path: products/posthog_ai/skills/query-examples/SKILL.md
-    lines: "1-5"
+    lines: 1-5
     commit: 14b7a8edebb1b574414ac9866a417fbe7c8170c0
+config_edits:
+- path: products/posthog_ai/skills/query-examples/references/taxonomy-dynamic-properties.md
+  tier: 2
+  gold_added: '# Dynamic person and event properties
+
+
+    Some properties follow dynamic naming patterns with IDs or keys.
+
+    These are **not returned** by the `read-data-schema` tool because they are generated
+    per survey, feature flag, or product tour.
+
+    If a user''s question involves these features, construct the property name using
+    the patterns below.
+
+
+    ## Person properties
+
+
+    Pattern | Type | Description
+
+    `$survey_dismissed/{survey_id}` | Boolean | Whether a person dismissed a specific
+    survey
+
+    `$survey_responded/{survey_id}` | Boolean | Whether a person responded to a specific
+    survey
+
+    `$feature_enrollment/{flag_key}` | Boolean | Whether a person opted into an early
+    access feature
+
+    `$feature_interaction/{feature_key}` | Boolean | Whether a person interacted with
+    a specific feature
+
+    `$product_tour_dismissed/{tour_id}` | Boolean | Whether a person dismissed a product
+    tour
+
+    `$product_tour_shown/{tour_id}` | Boolean | Whether a person was shown a product
+    tour
+
+    `$product_tour_completed/{tour_id}` | Boolean | Whether a person completed a product
+    tour
+
+
+    ## Event properties
+
+
+    Pattern | Type | Description
+
+    `$feature/{flag_key}` | String | The feature flag value for a specific flag
+
+
+    ## Querying dynamic properties with SQL
+
+
+    Because these properties are not discoverable via the `read-data-schema` tool,
+    you must know the ID or key.
+
+    Use these queries to find the IDs, then construct the property name.
+
+
+    ### Find survey IDs
+
+
+    ```sql
+
+    SELECT id, name, description, type
+
+    FROM system.surveys
+
+    WHERE NOT archived
+
+    ORDER BY created_at DESC
+
+    LIMIT 20
+
+    ```
+
+
+    Then query person properties like `$survey_dismissed/{id}` or `$survey_responded/{id}`.
+
+
+    ### Find feature flag keys
+
+
+    ```sql
+
+    SELECT id, key, name, rollout_percentage
+
+    FROM system.feature_flags
+
+    WHERE NOT deleted
+
+    ORDER BY created_at DESC
+
+    LIMIT 20
+
+    ```
+
+
+    Then query event properties like `$feature/{key}` or person properties like `$feature_enrollment/{key}`.
+
+
+    ### Find early access features
+
+
+    ```sql
+
+    SELECT id, name, feature_flag_id
+
+    FROM system.early_access_features
+
+    WHERE NOT deleted
+
+    ORDER'
+  gold_removed: ''

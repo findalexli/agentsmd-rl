@@ -1,146 +1,174 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 11766
-  base_commit: "5a4ae4926b9dadefd5cf9d0225f5e8ed69eebb51"
-  merge_commit: "dfc0e0305068dbd16ce905afc73d139e1e51eb46"
-
+  base_commit: 5a4ae4926b9dadefd5cf9d0225f5e8ed69eebb51
+  merge_commit: dfc0e0305068dbd16ce905afc73d139e1e51eb46
 checks:
-  # ---------------------------------------------------------------------------
-  # Syntax/compilation gates (pass_to_pass)
-  # ---------------------------------------------------------------------------
-  - id: typescript_syntax_layout_server
-    type: pass_to_pass
-    origin: static
-    description: "Layout server TypeScript file must be syntactically valid"
-
-  - id: typescript_syntax_js_page_server
-    type: pass_to_pass
-    origin: static
-    description: "JS page server TypeScript file must be syntactically valid"
-
-  - id: typescript_syntax_jsdoc_page_server
-    type: pass_to_pass
-    origin: static
-    description: "JSDoc page server TypeScript file must be syntactically valid"
-
-  - id: typescript_syntax_js_client_page_server
-    type: pass_to_pass
-    origin: static
-    description: "JS client page server TypeScript file must be syntactically valid"
-
-  - id: package_json_valid
-    type: pass_to_pass
-    origin: static
-    description: "Package.json must be valid JSON"
-
-  # ---------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core behavioral tests
-  # ---------------------------------------------------------------------------
-  - id: dataframe_readme_has_comprehensive_docs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "js/dataframe/README.md must have comprehensive standalone documentation with Install, Usage, Props, Events sections"
-
-  - id: standalone_readme_deleted
-    type: fail_to_pass
-    origin: pr_diff
-    description: "js/dataframe/standalone/README.md must be deleted (content moved to main README.md)"
-
-  - id: website_layout_has_components_filter
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Website layout must filter js_pages to only include documented components (dataframe, js-client)"
-
-  - id: website_js_page_dynamic_redirect
-    type: fail_to_pass
-    origin: pr_diff
-    description: "JS index page must use dynamic redirect with urlExists instead of hardcoded atoms redirect"
-
-  - id: package_exports_have_default
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Package.json exports must include 'default' field for proper module resolution"
-
-  - id: prism_svelte_import_added
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Prism-svelte must be imported in documentation page servers for syntax highlighting"
-
-  - id: language_map_extended
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Language map must include svelte, markdown, and css support"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (static) — consistency checks
-  # ---------------------------------------------------------------------------
-  - id: types_field_unchanged
-    type: pass_to_pass
-    origin: static
-    description: "Package.json types field should remain properly ordered"
-
-  - id: navigation_links_removed
-    type: pass_to_pass
-    origin: static
-    description: "Navigation next/prev links removed from documentation pages"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and after fix
-  # ---------------------------------------------------------------------------
-  - id: test_repo_package_json_valid_dataframe
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Dataframe package.json must be valid JSON"
-
-  - id: test_repo_package_json_valid_code
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Code package.json must be valid JSON with proper exports"
-
-  - id: test_repo_typescript_syntax_changelog_server
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Changelog server TypeScript file must be syntactically valid"
-
-  - id: test_repo_typescript_syntax_storybook_server
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Storybook page server TypeScript file must be syntactically valid"
-
-  - id: test_repo_readme_exists_dataframe
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Dataframe README.md must exist with substantial content"
-
-  - id: test_repo_website_layout_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Website layout server must have valid TypeScript syntax and required functions"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests) — CI/CD pipeline checks
-  # Discovered from .github/workflows/tests-js.yml and package.json
-  # ---------------------------------------------------------------------------
-  - id: test_repo_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Prettier format check passes (pnpm format:check)"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint check passes (pnpm lint)"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes (pnpm ts:check)"
-
-  - id: test_repo_client_builds
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's @gradio/client package builds successfully (pnpm --filter @gradio/client build)"
-
+- id: typescript_syntax_layout_server
+  type: pass_to_pass
+  origin: static
+  description: Layout server TypeScript file must be syntactically valid
+- id: typescript_syntax_js_page_server
+  type: pass_to_pass
+  origin: static
+  description: JS page server TypeScript file must be syntactically valid
+- id: typescript_syntax_jsdoc_page_server
+  type: pass_to_pass
+  origin: static
+  description: JSDoc page server TypeScript file must be syntactically valid
+- id: typescript_syntax_js_client_page_server
+  type: pass_to_pass
+  origin: static
+  description: JS client page server TypeScript file must be syntactically valid
+- id: package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: Package.json must be valid JSON
+- id: dataframe_readme_has_comprehensive_docs
+  type: fail_to_pass
+  origin: pr_diff
+  description: js/dataframe/README.md must have comprehensive standalone documentation
+    with Install, Usage, Props, Events sections
+- id: standalone_readme_deleted
+  type: fail_to_pass
+  origin: pr_diff
+  description: js/dataframe/standalone/README.md must be deleted (content moved to
+    main README.md)
+- id: website_layout_has_components_filter
+  type: fail_to_pass
+  origin: pr_diff
+  description: Website layout must filter js_pages to only include documented components
+    (dataframe, js-client)
+- id: website_js_page_dynamic_redirect
+  type: fail_to_pass
+  origin: pr_diff
+  description: JS index page must use dynamic redirect with urlExists instead of hardcoded
+    atoms redirect
+- id: package_exports_have_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: Package.json exports must include 'default' field for proper module
+    resolution
+- id: prism_svelte_import_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: Prism-svelte must be imported in documentation page servers for syntax
+    highlighting
+- id: language_map_extended
+  type: fail_to_pass
+  origin: pr_diff
+  description: Language map must include svelte, markdown, and css support
+- id: types_field_unchanged
+  type: pass_to_pass
+  origin: static
+  description: Package.json types field should remain properly ordered
+- id: navigation_links_removed
+  type: pass_to_pass
+  origin: static
+  description: Navigation next/prev links removed from documentation pages
+- id: test_repo_package_json_valid_dataframe
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dataframe package.json must be valid JSON
+- id: test_repo_package_json_valid_code
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code package.json must be valid JSON with proper exports
+- id: test_repo_typescript_syntax_changelog_server
+  type: pass_to_pass
+  origin: repo_tests
+  description: Changelog server TypeScript file must be syntactically valid
+- id: test_repo_typescript_syntax_storybook_server
+  type: pass_to_pass
+  origin: repo_tests
+  description: Storybook page server TypeScript file must be syntactically valid
+- id: test_repo_readme_exists_dataframe
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dataframe README.md must exist with substantial content
+- id: test_repo_website_layout_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Website layout server must have valid TypeScript syntax and required
+    functions
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier format check passes (pnpm format:check)
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint check passes (pnpm lint)
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes (pnpm ts:check)
+- id: test_repo_client_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @gradio/client package builds successfully (pnpm --filter @gradio/client
+    build)
 rubric: []
+config_edits:
+- path: js/dataframe/README.md
+  tier: 2
+  gold_added: "# @gradio/dataframe\nStandalone Svelte component that brings Gradio's\
+    \ Dataframe UI to any Svelte/SvelteKit project.\n\nThis component is lightweight,\
+    \ virtualized for efficient rendering of large datasets, and offers features like\
+    \ column freezing, and customizable styling via CSS variables. Use this component\
+    \ when you need a highly interactive, accessible, and easily themeable table for\
+    \ user-facing applications, especially where seamless Svelte/SvelteKit integration\
+    \ is important.\n\n## Install\n\nWith `npm`:\n\n```shell\nnpm i @gradio/dataframe\n\
+    ```\n\nWith `pnpm`:\n\n```shell\npnpm add @gradio/dataframe\n```\n\n**[View on\
+    \ npm](https://www.npmjs.com/package/@gradio/dataframe)**\n\n## Usage (Svelte/SvelteKit)\n\
+    \n```svelte\n<script lang=\"ts\">\n  import Dataframe from \"@gradio/dataframe\"\
+    ;\n\n  let value = {\n    data: [\n      [\"Alice\", 25, true],\n      [\"Bob\"\
+    , 30, false]\n    ],\n    headers: [\"Name\", \"Age\", \"Active\"],\n  };\n\n\
+    \  function handle_change(e: any) {\n    console.log(\"changed\", e.detail);\n\
+    \  }\n\n  function handle_select(e: any) {\n    console.log(\"selected\", e.detail);\n\
+    \  }\n\n  function handle_input(e: any) {\n    console.log(\"input\", e.detail);\n\
+    \  }\n</script>\n\n<Dataframe\n  bind:value\n  {datatype}\n  show_search=\"search\"\
+    \n  show_row_numbers={true}\n  show_copy_button={true}\n  show_fullscreen_button={true}\n\
+    \  editable={true}\n  on:change={handle_change}\n  on:select={handle_select}\n\
+    \  on:input={handle_input}\n  />\n```\n\n## Props\n\n```typescript\ninterface\
+    \ DataframeProps {\n\n  /**\n   * The value object containing the table data,\
+    \ headers, and optional metadata.\n   * Example: { data: [...], headers: [...],\
+    \ metadata?: any }\n   * Default: { data: [[]], headers: [] }\n   */\n  value:\
+    \ {\n    data: (string | number | boolean)[][];\n    headers: string[];\n    metadata?:\
+    \ any;\n  };\n\n  /**\n   * Array of data types per column. Supported: \"str\"\
+    , \"number\", \"bool\", \"date\", \"markdown\", \"html\".\n   * Default: []\n\
+    \   */\n  datatype?: string[];\n\n  /**\n   * Enable or disable cell editing.\n\
+    \   * Default: true\n   */\n  editable?: boolean;\n\n  /**\n   * Show or hide\
+    \ the row number column.\n   * Default: true\n   */\n  show_row_numbers?: boolean;\n\
+    \n  /**\n   * Show search input. Can be \"search\", \"filter\", or \"none.\n \
+    \  * Default: \"none\"\n   */\n  show_search?: \"none\" | \"search\" | \"filter\"\
+    \ | boolean;\n\n  /**\n   * Show or hide the copy to clipboard button.\n   * Default:\
+    \ true\n   */\n  show_copy_button?: boolean;\n\n  /**\n   * Show or hide the fullscreen\
+    \ toggle button.\n   * Default: true\n   */\n  show_fullscreen_button?: boolean;\n\
+    \n  /**\n   * Accessible caption for the table.\n   * Default: null\n   */\n \
+    \ label?: string | null;\n\n  /**\n   * Show or hide the dataframe label.\n  \
+    \ * Default: true\n   */\n  show_label?: boolean;\n\n  /**\n   * (Optional) Set\
+    \ column widths in CSS units (e.g. [\"100px\", \"20%\", ...]).\n   */\n  column_widths?:\
+    \ string[];\n\n  /**\n   * (Optional) Set the maximum height of the table in pixels.\n\
+    \   * Default: 500\n   */\n  max_height?: number;\n\n  /**\n   * (Optional) Set\
+    \ the maximum number of characters per cell.\n   */\n  max_chars?: number;"
+  gold_removed: "# `@gradio/dataframe`\n```html\n<script>\n    import { BaseDataFrame,\
+    \ BaseExample } from \"@gradio/dataframe\";\n</script>\n```"
+- path: js/dataframe/standalone/README.md
+  tier: 2
+  gold_added: ''
+  gold_removed: "@gradio/dataframe\n================================\n\nStandalone\
+    \ Svelte component that brings Gradio's Dataframe UI to any Svelte/SvelteKit project.\n\
+    \nInstall\n\n```\nnpm i @gradio/dataframe\n# or\npnpm add @gradio/dataframe\n\
+    ```\n\nUsage (Svelte/SvelteKit)\n\n```svelte\n<script lang=\"ts\">\n  import Dataframe\
+    \ from \"@gradio/dataframe\";\n\n  let value = {\n    data: [\n      [\"Alice\"\
+    , 25, true],\n      [\"Bob\", 30, false]\n    ],\n    headers: [\"Name\", \"Age\"\
+    , \"Active\"],\n  };\n\n  function handle_change(e: any) {\n    console.log(\"\
+    changed\", e.detail);\n  }\n\n  function handle_select(e: any) {\n    console.log(\"\
+    selected\", e.detail);\n  }\n\n  function handle_input(e: any) {\n    console.log(\"\
+    input\", e.detail);\n  }\n</script>\n\n<Dataframe\n  bind:value\n  {datatype}\n\
+    \  show_search=\"search\"\n  show_row_numbers={true}\n  show_copy_button={true}\n\
+    \  show_fullscreen_button={true}\n  editable={true}\n  on:change={handle_change}\n\
+    \  on:select={handle_select}\n  on:input={handle_input}\n/>\n```\n\nProps\n\n\
+    | Prop                    | Type           "

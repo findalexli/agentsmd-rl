@@ -4,54 +4,76 @@ source:
   pr: 11160
   base_commit: 1c0176eae3dd77d18e293c53d54237357ffc8efd
 checks:
-  - id: mysql_exports_only_adapter_types
-    type: fail_to_pass
-    origin: pr_diff
-    description: MySQL index.ts exports only adapter-owned types, not driver-shaped types
-  - id: postgres_exports_only_adapter_types
-    type: fail_to_pass
-    origin: pr_diff
-    description: Postgres index.ts exports only adapter-owned types, not driver-shaped types
-  - id: sqlite_exports_only_adapter_types
-    type: fail_to_pass
-    origin: pr_diff
-    description: SQLite index.ts must not export SqliteDatabaseConnection
-  - id: mysql_pool_connection_type_guard
-    type: fail_to_pass
-    origin: pr_diff
-    description: isMysqlPoolConnection type guard exists and correctly identifies pool
-      connections
-  - id: postgres_pool_type_guard
-    type: fail_to_pass
-    origin: pr_diff
-    description: isPostgresPool type guard exists and correctly identifies pool vs
-      client
-  - id: mysql_adapter_imports_driver_package
-    type: fail_to_pass
-    origin: pr_diff
-    description: MySQL adapter imports types directly from mysql2/promise
-  - id: readmes_redirect_to_driver_packages
-    type: fail_to_pass
-    origin: pr_diff
-    description: READMEs instruct users to import driver-specific types from driver
-      packages
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: All modified TypeScript source files are non-empty with balanced braces
-  - id: adapter_classes_still_exported
-    type: pass_to_pass
-    origin: static
-    description: All adapter classes and factory functions remain exported
+- id: mysql_exports_only_adapter_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: MySQL index.ts exports only adapter-owned types, not driver-shaped
+    types
+- id: postgres_exports_only_adapter_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: Postgres index.ts exports only adapter-owned types, not driver-shaped
+    types
+- id: sqlite_exports_only_adapter_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: SQLite index.ts must not export SqliteDatabaseConnection
+- id: mysql_pool_connection_type_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: isMysqlPoolConnection type guard exists and correctly identifies pool
+    connections
+- id: postgres_pool_type_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: isPostgresPool type guard exists and correctly identifies pool vs client
+- id: mysql_adapter_imports_driver_package
+  type: fail_to_pass
+  origin: pr_diff
+  description: MySQL adapter imports types directly from mysql2/promise
+- id: readmes_redirect_to_driver_packages
+  type: fail_to_pass
+  origin: pr_diff
+  description: READMEs instruct users to import driver-specific types from driver
+    packages
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified TypeScript source files are non-empty with balanced braces
+- id: adapter_classes_still_exported
+  type: pass_to_pass
+  origin: static
+  description: All adapter classes and factory functions remain exported
 rubric:
-  - rule: README updates are consistent with the style of the existing documentation
-    source:
-      path: .agents/skills/write-readme/SKILL.md
-      lines: 1-10
-      commit: 1c0176eae3dd77d18e293c53d54237357ffc8efd
-  - rule: Adapter types that wrap a single driver type should be replaced with the
-      driver type directly
-    source:
-      path: AGENTS.md
-      lines: '12'
-      commit: 1c0176eae3dd77d18e293c53d54237357ffc8efd
+- rule: README updates are consistent with the style of the existing documentation
+  source:
+    path: .agents/skills/write-readme/SKILL.md
+    lines: 1-10
+    commit: 1c0176eae3dd77d18e293c53d54237357ffc8efd
+- rule: Adapter types that wrap a single driver type should be replaced with the driver
+    type directly
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 1c0176eae3dd77d18e293c53d54237357ffc8efd
+config_edits:
+- path: packages/data-table-mysql/README.md
+  tier: 2
+  gold_added: '- **Native `mysql2` Integration**: Works with `mysql2/promise` `Pool`
+    and `PoolConnection` instances
+
+    Import any driver-specific types you need directly from `mysql2/promise`.'
+  gold_removed: '- **Native `mysql2` Integration**: Works with `mysql2/promise` connection
+    pools'
+- path: packages/data-table-postgres/README.md
+  tier: 2
+  gold_added: '- **Native `pg` Integration**: Works with `pg` `Pool` and `PoolClient`
+    instances
+
+    Import any driver-specific types you need directly from `pg`.'
+  gold_removed: '- **Native `pg` Integration**: Works with `Pool` and Postgres connection
+    strings'
+- path: packages/data-table-sqlite/README.md
+  tier: 2
+  gold_added: Import any driver-specific types you need directly from `better-sqlite3`.
+  gold_removed: ''

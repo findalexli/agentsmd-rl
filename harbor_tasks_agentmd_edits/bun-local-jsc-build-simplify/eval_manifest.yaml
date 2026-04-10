@@ -1,69 +1,93 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 26645
-  base_commit: "a14a89ca953910e89697895dfdfb4cdf4c90a151"
-  merge_commit: "6c119d608e4007530ec9d7b4c58e803e80f6e5b3"
-
+  base_commit: a14a89ca953910e89697895dfdfb4cdf4c90a151
+  merge_commit: 6c119d608e4007530ec9d7b4c58e803e80f6e5b3
 checks:
-  # Gate
-  - id: cmake_files_exist
-    type: pass_to_pass
-    origin: static
-    description: "Modified CMake and doc files must exist"
-
-  # CMake code changes (fail-to-pass)
-  - id: setupwebkit_jsc_configure
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SetupWebKit.cmake contains JSC configure integration with -DPORT=JSCOnly"
-
-  - id: setupwebkit_webkit_build_type
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SetupWebKit.cmake defines WEBKIT_BUILD_TYPE option"
-
-  - id: setupwebkit_jsc_custom_target
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SetupWebKit.cmake defines a jsc custom target for building JSC"
-
-  - id: buildbun_jsc_dependency
-    type: fail_to_pass
-    origin: pr_diff
-    description: "BuildBun.cmake adds jsc as a build dependency for local WebKit"
-
-  - id: buildbun_system_icu_for_local
-    type: fail_to_pass
-    origin: pr_diff
-    description: "BuildBun.cmake uses find_package(ICU) for WEBKIT_LOCAL on Linux"
-
-  # Documentation updates (fail-to-pass)
-  - id: contributing_simplified_build
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CONTRIBUTING.md describes build:local as a single auto-build command"
-
-  - id: contributing_no_manual_jsc_steps
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CONTRIBUTING.md removes old manual jsc:build:debug steps"
-
-  - id: contributing_mdx_simplified
-    type: fail_to_pass
-    origin: pr_diff
-    description: "docs/project/contributing.mdx matches simplified build:local docs"
-
-  # Regression (pass-to-pass)
-  - id: setupwebkit_retains_prebuilt_path
-    type: pass_to_pass
-    origin: pr_diff
-    description: "SetupWebKit.cmake still supports prebuilt WebKit downloads"
-
+- id: cmake_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Modified CMake and doc files must exist
+- id: setupwebkit_jsc_configure
+  type: fail_to_pass
+  origin: pr_diff
+  description: SetupWebKit.cmake contains JSC configure integration with -DPORT=JSCOnly
+- id: setupwebkit_webkit_build_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: SetupWebKit.cmake defines WEBKIT_BUILD_TYPE option
+- id: setupwebkit_jsc_custom_target
+  type: fail_to_pass
+  origin: pr_diff
+  description: SetupWebKit.cmake defines a jsc custom target for building JSC
+- id: buildbun_jsc_dependency
+  type: fail_to_pass
+  origin: pr_diff
+  description: BuildBun.cmake adds jsc as a build dependency for local WebKit
+- id: buildbun_system_icu_for_local
+  type: fail_to_pass
+  origin: pr_diff
+  description: BuildBun.cmake uses find_package(ICU) for WEBKIT_LOCAL on Linux
+- id: contributing_simplified_build
+  type: fail_to_pass
+  origin: pr_diff
+  description: CONTRIBUTING.md describes build:local as a single auto-build command
+- id: contributing_no_manual_jsc_steps
+  type: fail_to_pass
+  origin: pr_diff
+  description: CONTRIBUTING.md removes old manual jsc:build:debug steps
+- id: contributing_mdx_simplified
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/project/contributing.mdx matches simplified build:local docs
+- id: setupwebkit_retains_prebuilt_path
+  type: pass_to_pass
+  origin: pr_diff
+  description: SetupWebKit.cmake still supports prebuilt WebKit downloads
 rubric:
-  - rule: "Follow existing code style — check neighboring files for patterns"
-    source:
-      path: "CLAUDE.md"
-      lines: "203"
-      commit: "a14a89ca953910e89697895dfdfb4cdf4c90a151"
+- rule: Follow existing code style — check neighboring files for patterns
+  source:
+    path: CLAUDE.md
+    lines: '203'
+    commit: a14a89ca953910e89697895dfdfb4cdf4c90a151
+config_edits:
+- path: CONTRIBUTING.md
+  tier: 2
+  gold_added: '# Build bun with the local JSC build — this automatically configures
+    and builds JSC
+
+    `bun run build:local` handles everything: configuring JSC, building JSC, and building
+    Bun. On subsequent runs, JSC will incrementally rebuild if any WebKit sources
+    changed. `ninja -Cbuild/debug-local` also works after the first build, and will
+    build Bun+JSC.
+
+
+    The build output goes to `./build/debug-local` (instead of `./build/debug`), so
+    you''ll need to update a couple of places:
+
+    Note that if you make changes to our [WebKit fork](https://github.com/oven-sh/WebKit),
+    you will also have to change [`SetupWebKit.cmake`](/cmake/tools/SetupWebKit.cmake)
+    to point to the commit hash.'
+  gold_removed: '# Make a debug build of JSC. This will output build artifacts in
+    ./vendor/WebKit/WebKitBuild/Debug
+
+    # Optionally, you can use `bun run jsc:build` for a release build
+
+    $ bun run jsc:build:debug && rm vendor/WebKit/WebKitBuild/Debug/JavaScriptCore/DerivedSources/inspector/InspectorProtocolObjects.h
+
+
+    # After an initial run of `make jsc-debug`, you can rebuild JSC with:
+
+    $ cmake --build vendor/WebKit/WebKitBuild/Debug --target jsc && rm vendor/WebKit/WebKitBuild/Debug/JavaScriptCore/DerivedSources/inspector/InspectorProtocolObjects.h
+
+
+    # Build bun with the local JSC build
+
+    Using `bun run build:local` will build Bun in the `./build/debug-local` directory
+    (instead of `./build/debug`), you''ll have to change a couple of places to use
+    this new directory:
+
+    Note that if you change make changes to our [WebKit fork](https://github.com/oven-sh/WebKit),
+    you will also have to change [`SetupWebKit.cmake`](/cmake/tools/SetupWebKit.cmake)
+    to point to the commit hash.'

@@ -44,7 +44,8 @@ checks:
 - id: browser_error_includes_channel_name
   type: fail_to_pass
   origin: pr_diff
-  description: throwBrowserIsNotInstalledError includes specific browser channel in error
+  description: throwBrowserIsNotInstalledError includes specific browser channel in
+    error
 - id: help_generator_shows_new_flag
   type: fail_to_pass
   origin: pr_diff
@@ -91,3 +92,20 @@ rubric:
     path: packages/playwright/src/skill/references/session-management.md
     status: pending
     description: 'Required: Add p2p tests for the repo''s CI/CD checks'
+config_edits:
+- path: packages/playwright/src/skill/SKILL.md
+  tier: 1
+  gold_added: 'playwright-cli -s=mysession open example.com
+
+    playwright-cli -s=mysession click e6
+
+    playwright-cli -s=mysession close  # stop a named browser
+
+    playwright-cli -s=mysession delete-data   # delete profile'
+  gold_removed: 'playwright-cli -b mysession open example.com
+
+    playwright-cli -b mysession click e6
+
+    playwright-cli -b mysession close  # stop a named browser
+
+    playwright-cli -b mysession delete-data   # delete profile'

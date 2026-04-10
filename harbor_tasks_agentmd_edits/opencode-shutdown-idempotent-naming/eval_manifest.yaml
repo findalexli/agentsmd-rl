@@ -1,108 +1,105 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 15924
-  base_commit: "2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2"
-  merge_commit: "3ebebe0a96de5ec4757de12a21cb9f933e0fbba0"
-
+  base_commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
+  merge_commit: 3ebebe0a96de5ec4757de12a21cb9f933e0fbba0
 checks:
-  # ---------------------------------------------------------------------------
-  # Gates (pass_to_pass, static) — syntax / compilation
-  # ---------------------------------------------------------------------------
-  - id: typescript_compiles
-    type: pass_to_pass
-    origin: static
-    description: "thread.ts TypeScript compiles without errors"
-
-  - id: worker_typescript_compiles
-    type: pass_to_pass
-    origin: static
-    description: "worker.ts TypeScript compiles without errors"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests) — CI/CD checks from repo's actual CI pipeline
-  # ---------------------------------------------------------------------------
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's bun turbo typecheck passes (CI gate)"
-
-  - id: test_repo_opencode_package_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Opencode package unit tests pass (bun test --timeout 30000)"
-
-  # ---------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core shutdown fix behavioral tests
-  # ---------------------------------------------------------------------------
-  - id: stop_function_is_idempotent
-    type: fail_to_pass
-    origin: pr_diff
-    description: "stop() function uses 'stopped' flag for idempotent shutdown"
-
-  - id: stop_unregisters_process_listeners
-    type: fail_to_pass
-    origin: pr_diff
-    description: "stop() unregisters uncaughtException, unhandledRejection, SIGUSR2 listeners"
-
-  - id: stop_calls_worker_terminate
-    type: fail_to_pass
-    origin: pr_diff
-    description: "stop() calls worker.terminate() to force cleanup"
-
-  - id: worker_shutdown_simplified
-    type: fail_to_pass
-    origin: pr_diff
-    description: "worker.ts shutdown() removes Promise.race timeout (now caller's responsibility)"
-
-  - id: helper_functions_extracted
-    type: fail_to_pass
-    origin: pr_diff
-    description: "target() and input() helper functions extracted from inline IIFEs"
-
-  # ---------------------------------------------------------------------------
-  # Fail-to-pass (agent_config) — AGENTS.md naming rule compliance
-  # ---------------------------------------------------------------------------
-  - id: short_variable_names
-    type: fail_to_pass
-    origin: agent_config
-    description: "Code uses short variable names per AGENTS.md (root, file, network, external)"
-    source:
-      path: "AGENTS.md"
-      lines: "24-26"
-      commit: "2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2"
-
-  - id: agents_md_has_naming_enforcement
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md adds Naming Enforcement section with mandatory single-word rule"
-
-  - id: agents_md_naming_rules_bullet_points
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md Naming Enforcement has specific bullet point rules"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (static) — implementation quality
-  # ---------------------------------------------------------------------------
-  - id: import_with_timeout
-    type: pass_to_pass
-    origin: static
-    description: "thread.ts imports withTimeout and uses it for bounded shutdown"
-
-  - id: no_iife_import
-    type: pass_to_pass
-    origin: agent_config
-    description: "thread.ts removes iife import (replaced with helper functions per AGENTS.md style)"
-    source:
-      path: "AGENTS.md"
-      lines: "24-26"
-      commit: "2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2"
-
-  - id: error_handler_reused
-    type: pass_to_pass
-    origin: static
-    description: "Error handler extracted as reusable function, used for both exception types"
-
+- id: typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: thread.ts TypeScript compiles without errors
+- id: worker_typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: worker.ts TypeScript compiles without errors
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's bun turbo typecheck passes (CI gate)
+- id: test_repo_opencode_package_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Opencode package unit tests pass (bun test --timeout 30000)
+- id: stop_function_is_idempotent
+  type: fail_to_pass
+  origin: pr_diff
+  description: stop() function uses 'stopped' flag for idempotent shutdown
+- id: stop_unregisters_process_listeners
+  type: fail_to_pass
+  origin: pr_diff
+  description: stop() unregisters uncaughtException, unhandledRejection, SIGUSR2 listeners
+- id: stop_calls_worker_terminate
+  type: fail_to_pass
+  origin: pr_diff
+  description: stop() calls worker.terminate() to force cleanup
+- id: worker_shutdown_simplified
+  type: fail_to_pass
+  origin: pr_diff
+  description: worker.ts shutdown() removes Promise.race timeout (now caller's responsibility)
+- id: helper_functions_extracted
+  type: fail_to_pass
+  origin: pr_diff
+  description: target() and input() helper functions extracted from inline IIFEs
+- id: short_variable_names
+  type: fail_to_pass
+  origin: agent_config
+  description: Code uses short variable names per AGENTS.md (root, file, network,
+    external)
+  source:
+    path: AGENTS.md
+    lines: 24-26
+    commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
+- id: agents_md_has_naming_enforcement
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md adds Naming Enforcement section with mandatory single-word
+    rule
+- id: agents_md_naming_rules_bullet_points
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md Naming Enforcement has specific bullet point rules
+- id: import_with_timeout
+  type: pass_to_pass
+  origin: static
+  description: thread.ts imports withTimeout and uses it for bounded shutdown
+- id: no_iife_import
+  type: pass_to_pass
+  origin: agent_config
+  description: thread.ts removes iife import (replaced with helper functions per AGENTS.md
+    style)
+  source:
+    path: AGENTS.md
+    lines: 24-26
+    commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
+- id: error_handler_reused
+  type: pass_to_pass
+  origin: static
+  description: Error handler extracted as reusable function, used for both exception
+    types
 rubric: []
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '### Naming Enforcement (Read This)
+
+
+    THIS RULE IS MANDATORY FOR AGENT WRITTEN CODE.
+
+
+    - Use single word names by default for new locals, params, and helper functions.
+
+    - Multi-word names are allowed only when a single word would be unclear or ambiguous.
+
+    - Do not introduce new camelCase compounds when a short single-word alternative
+    is clear.
+
+    - Before finishing edits, review touched lines and shorten newly introduced identifiers
+    where possible.
+
+    - Good short names to prefer: `pid`, `cfg`, `err`, `opts`, `dir`, `root`, `child`,
+    `state`, `timeout`.
+
+    - Examples to avoid unless truly required: `inputPID`, `existingClient`, `connectTimeout`,
+    `workerPath`.'
+  gold_removed: ''

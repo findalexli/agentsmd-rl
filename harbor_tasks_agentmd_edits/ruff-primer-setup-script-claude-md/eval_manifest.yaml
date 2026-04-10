@@ -1,90 +1,89 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/ruff"
+  repo: astral-sh/ruff
   pr: 23195
-  base_commit: "bbaa7698227fcf4f7ec001af6aa5110d405ee54f"
-  merge_commit: "20a17411b2e1567eb6ef207f1e35d45d3863f55e"
-
+  base_commit: bbaa7698227fcf4f7ec001af6aa5110d405ee54f
+  merge_commit: 20a17411b2e1567eb6ef207f1e35d45d3863f55e
 checks:
-  # Gate — script must exist and be valid
-  - id: script_syntax
-    type: fail_to_pass
-    origin: static
-    description: "setup_primer_project.py must exist and be valid Python"
-
-  # Code behavior — fail_to_pass
-  - id: script_help_flag
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script accepts --help and displays usage information"
-
-  - id: script_rejects_unknown_project
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script exits with clear error for unknown project name"
-
-  - id: script_find_project
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script's find_project() locates a known project from mypy_primer registry"
-
-  - id: pyproject_mypy_primer_dependency
-    type: fail_to_pass
-    origin: pr_diff
-    description: "scripts/pyproject.toml declares mypy-primer dependency (TOML-parsed)"
-
-  - id: pyproject_uv_sources
-    type: fail_to_pass
-    origin: pr_diff
-    description: "scripts/pyproject.toml configures uv git source for mypy-primer (TOML-parsed)"
-
-  # Config/documentation update — fail_to_pass
-  - id: claude_md_has_ecosystem_section
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md documents how to reproduce ty ecosystem changes"
-
-  - id: claude_md_shows_usage_command
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md includes the uv run command for the primer setup script"
-
-  # Regression — pass_to_pass
-  - id: claude_md_preserves_test_instructions
-    type: pass_to_pass
-    origin: static
-    description: "CLAUDE.md preserves existing test running instructions"
-
-  - id: script_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Script main() has substantive logic, not just pass/return"
-
-  # Repo CI/CD checks — pass_to_pass (p2p enrichment)
-  - id: ruff_check_scripts
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on scripts directory"
-
-  - id: python_syntax_scripts
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All Python files in scripts directory have valid syntax"
-
-  - id: scripts_pyproject_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "scripts/pyproject.toml is valid TOML"
-
+- id: script_syntax
+  type: fail_to_pass
+  origin: static
+  description: setup_primer_project.py must exist and be valid Python
+- id: script_help_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script accepts --help and displays usage information
+- id: script_rejects_unknown_project
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script exits with clear error for unknown project name
+- id: script_find_project
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script's find_project() locates a known project from mypy_primer registry
+- id: pyproject_mypy_primer_dependency
+  type: fail_to_pass
+  origin: pr_diff
+  description: scripts/pyproject.toml declares mypy-primer dependency (TOML-parsed)
+- id: pyproject_uv_sources
+  type: fail_to_pass
+  origin: pr_diff
+  description: scripts/pyproject.toml configures uv git source for mypy-primer (TOML-parsed)
+- id: claude_md_has_ecosystem_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md documents how to reproduce ty ecosystem changes
+- id: claude_md_shows_usage_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md includes the uv run command for the primer setup script
+- id: claude_md_preserves_test_instructions
+  type: pass_to_pass
+  origin: static
+  description: CLAUDE.md preserves existing test running instructions
+- id: script_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Script main() has substantive logic, not just pass/return
+- id: ruff_check_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on scripts directory
+- id: python_syntax_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in scripts directory have valid syntax
+- id: scripts_pyproject_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/pyproject.toml is valid TOML
 rubric:
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "CLAUDE.md"
-      lines: "73"
-      commit: "bbaa7698227fcf4f7ec001af6aa5110d405ee54f"
-  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
-    source:
-      path: "CLAUDE.md"
-      lines: "79"
-      commit: "bbaa7698227fcf4f7ec001af6aa5110d405ee54f"
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: CLAUDE.md
+    lines: '73'
+    commit: bbaa7698227fcf4f7ec001af6aa5110d405ee54f
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use
+    them to explain invariants and why something unusual was done a particular way.
+  source:
+    path: CLAUDE.md
+    lines: '79'
+    commit: bbaa7698227fcf4f7ec001af6aa5110d405ee54f
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '## Reproducing ty ecosystem changes
+
+
+    If asked to reproduce changes in the ty ecosystem, use this script to clone the
+    project to some
+
+    directory and install its dependencies into `.venv`:
+
+
+    ```sh
+
+    uv run scripts/setup_primer_project.py <project-name> <some-temp-dir>
+
+    ```'
+  gold_removed: ''

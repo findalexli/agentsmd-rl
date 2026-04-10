@@ -1,100 +1,84 @@
-version: "2.0"
-
+version: '2.0'
 source:
   repo: payloadcms/payload
   pr: 15974
   base_commit: 5efc2ffa032b6b5f908b9c94c34276f23a62b71d
   merge_commit: f89e7361463f08e6ee90a99d44d3dd8626ae560a
-
 checks:
-  # ---------------------------------------------------------------------------
-  # Gates (pass_to_pass, static) - syntax / validation checks
-  # ---------------------------------------------------------------------------
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: package.json parses as valid JSON
-
-  - id: docker_compose_syntax
-    type: pass_to_pass
-    origin: static
-    description: test/docker-compose.yml is valid YAML with required services and profiles structure
-
-  - id: ci_action_syntax
-    type: pass_to_pass
-    origin: static
-    description: .github/actions/start-database/action.yml is valid YAML with runs.steps structure
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests) - CI/CD gates verifying repo CI commands work
-  # ---------------------------------------------------------------------------
-  - id: docker_compose_schema
-    type: pass_to_pass
-    origin: repo_tests
-    description: test/docker-compose.yml has valid schema with name, volumes, and healthchecks
-
-  - id: package_scripts_consistent
-    type: pass_to_pass
-    origin: repo_tests
-    description: package.json docker scripts reference unified test/docker-compose.yml
-
-  - id: ci_action_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: CI start-database action references valid profiles and unified compose file
-
-  # ---------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) - core behavioral tests
-  # ---------------------------------------------------------------------------
-  - id: docker_start_uses_profiles
-    type: fail_to_pass
-    origin: pr_diff
-    description: docker:start script uses --profile all with volume cleanup and is valid shell syntax
-
-  - id: docker_stop_uses_profiles
-    type: fail_to_pass
-    origin: pr_diff
-    description: docker:stop script uses --profile all and is valid shell syntax
-
-  - id: old_docker_scripts_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: Per-database docker scripts (docker:mongodb:start, etc.) removed from package.json
-
-  - id: compose_profiles_defined
-    type: fail_to_pass
-    origin: pr_diff
-    description: test/docker-compose.yml defines profiles for postgres, mongodb, mongodb-atlas, storage
-
-  - id: old_compose_files_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: Separate per-database docker-compose files deleted
-
-  - id: ci_action_uses_unified_compose
-    type: fail_to_pass
-    origin: pr_diff
-    description: CI start-database action uses unified test/docker-compose.yml with --profile
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (agent_config) - documentation consistency
-  # ---------------------------------------------------------------------------
-  - id: contributing_docs_reference_unified_commands
-    type: pass_to_pass
-    origin: agent_config
-    description: CONTRIBUTING.md documents unified docker:start and docker:stop commands
-    source:
-      path: CONTRIBUTING.md
-      lines: "143-168"
-      commit: 5efc2ffa032b6b5f908b9c94c34276f23a62b71d
-
-  - id: claude_md_references_docker_test
-    type: pass_to_pass
-    origin: agent_config
-    description: CLAUDE.md references docker:test instead of removed docker:restart
-    source:
-      path: CLAUDE.md
-      lines: "85"
-      commit: 5efc2ffa032b6b5f908b9c94c34276f23a62b71d
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: package.json parses as valid JSON
+- id: docker_compose_syntax
+  type: pass_to_pass
+  origin: static
+  description: test/docker-compose.yml is valid YAML with required services and profiles
+    structure
+- id: ci_action_syntax
+  type: pass_to_pass
+  origin: static
+  description: .github/actions/start-database/action.yml is valid YAML with runs.steps
+    structure
+- id: docker_compose_schema
+  type: pass_to_pass
+  origin: repo_tests
+  description: test/docker-compose.yml has valid schema with name, volumes, and healthchecks
+- id: package_scripts_consistent
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json docker scripts reference unified test/docker-compose.yml
+- id: ci_action_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI start-database action references valid profiles and unified compose
+    file
+- id: docker_start_uses_profiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: docker:start script uses --profile all with volume cleanup and is valid
+    shell syntax
+- id: docker_stop_uses_profiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: docker:stop script uses --profile all and is valid shell syntax
+- id: old_docker_scripts_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Per-database docker scripts (docker:mongodb:start, etc.) removed from
+    package.json
+- id: compose_profiles_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: test/docker-compose.yml defines profiles for postgres, mongodb, mongodb-atlas,
+    storage
+- id: old_compose_files_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Separate per-database docker-compose files deleted
+- id: ci_action_uses_unified_compose
+  type: fail_to_pass
+  origin: pr_diff
+  description: CI start-database action uses unified test/docker-compose.yml with
+    --profile
+- id: contributing_docs_reference_unified_commands
+  type: pass_to_pass
+  origin: agent_config
+  description: CONTRIBUTING.md documents unified docker:start and docker:stop commands
+  source:
+    path: CONTRIBUTING.md
+    lines: 143-168
+    commit: 5efc2ffa032b6b5f908b9c94c34276f23a62b71d
+- id: claude_md_references_docker_test
+  type: pass_to_pass
+  origin: agent_config
+  description: CLAUDE.md references docker:test instead of removed docker:restart
+  source:
+    path: CLAUDE.md
+    lines: '85'
+    commit: 5efc2ffa032b6b5f908b9c94c34276f23a62b71d
 rubric: []
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: ' \`pnpm docker:restart\`'
+  gold_removed: ''

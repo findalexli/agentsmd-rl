@@ -1,76 +1,71 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "remix-run/remix"
+  repo: remix-run/remix
   pr: 10921
-  base_commit: "9c05f82591c422ffc958bd61deb1b29c181ae225"
-  merge_commit: "e658e9a62492d06306bc74bb783ccce26c41b238"
-
+  base_commit: 9c05f82591c422ffc958bd61deb1b29c181ae225
+  merge_commit: e658e9a62492d06306bc74bb783ccce26c41b238
 checks:
-  # Code behavior tests (fail-to-pass)
-  - id: define_mime_type_registers_custom_ext
-    type: fail_to_pass
-    origin: pr_diff
-    description: "defineMimeType registers a new extension and detectMimeType finds it"
-
-  - id: define_mime_type_overrides_builtin
-    type: fail_to_pass
-    origin: pr_diff
-    description: "defineMimeType overrides a built-in MIME type mapping"
-
-  - id: define_mime_type_custom_compressible
-    type: fail_to_pass
-    origin: pr_diff
-    description: "defineMimeType compressible option overrides default heuristics"
-
-  - id: define_mime_type_custom_charset
-    type: fail_to_pass
-    origin: pr_diff
-    description: "defineMimeType charset option overrides default charset heuristics"
-
-  # Config/documentation update tests (fail-to-pass)
-  - id: readme_documents_define_mime_type
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README.md documents the defineMimeType function with description"
-
-  - id: readme_shows_api_options
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README.md documents extensions, mimeType, and optional compressible/charset parameters"
-
-  # Regression tests (pass-to-pass)
-  - id: existing_detect_mime_type_works
-    type: pass_to_pass
-    origin: repo_tests
-    description: "detectMimeType still works for built-in types after the change"
-
-  - id: existing_content_type_functions_work
-    type: pass_to_pass
-    origin: repo_tests
-    description: "isCompressibleMimeType and mimeTypeToContentType still work for builtins"
-
-  # Repo CI/CD tests (pass-to-pass)
-  - id: repo_mime_lib_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's own mime library unit tests pass (38 tests in src/lib/)"
-
+- id: define_mime_type_registers_custom_ext
+  type: fail_to_pass
+  origin: pr_diff
+  description: defineMimeType registers a new extension and detectMimeType finds it
+- id: define_mime_type_overrides_builtin
+  type: fail_to_pass
+  origin: pr_diff
+  description: defineMimeType overrides a built-in MIME type mapping
+- id: define_mime_type_custom_compressible
+  type: fail_to_pass
+  origin: pr_diff
+  description: defineMimeType compressible option overrides default heuristics
+- id: define_mime_type_custom_charset
+  type: fail_to_pass
+  origin: pr_diff
+  description: defineMimeType charset option overrides default charset heuristics
+- id: readme_documents_define_mime_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md documents the defineMimeType function with description
+- id: readme_shows_api_options
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md documents extensions, mimeType, and optional compressible/charset
+    parameters
+- id: existing_detect_mime_type_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: detectMimeType still works for built-in types after the change
+- id: existing_content_type_functions_work
+  type: pass_to_pass
+  origin: repo_tests
+  description: isCompressibleMimeType and mimeTypeToContentType still work for builtins
+- id: repo_mime_lib_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's own mime library unit tests pass (38 tests in src/lib/)
 rubric:
-  - rule: "Use `let` for locals, `const` only at module scope; never use `var`"
-    source:
-      path: "AGENTS.md"
-      lines: "30"
-      commit: "9c05f82591c422ffc958bd61deb1b29c181ae225"
-
-  - rule: "Always use `import type { X }` for types (separate from value imports)"
-    source:
-      path: "AGENTS.md"
-      lines: "29"
-      commit: "9c05f82591c422ffc958bd61deb1b29c181ae225"
-
-  - rule: "Include `.ts` extensions in all imports"
-    source:
-      path: "AGENTS.md"
-      lines: "29"
-      commit: "9c05f82591c422ffc958bd61deb1b29c181ae225"
+- rule: Use `let` for locals, `const` only at module scope; never use `var`
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 9c05f82591c422ffc958bd61deb1b29c181ae225
+- rule: Always use `import type { X }` for types (separate from value imports)
+  source:
+    path: AGENTS.md
+    lines: '29'
+    commit: 9c05f82591c422ffc958bd61deb1b29c181ae225
+- rule: Include `.ts` extensions in all imports
+  source:
+    path: AGENTS.md
+    lines: '29'
+    commit: 9c05f82591c422ffc958bd61deb1b29c181ae225
+config_edits:
+- path: packages/mime/README.md
+  tier: 2
+  gold_added: "### `defineMimeType(definition)`\n\nRegisters or overrides a MIME type\
+    \ for one or more file extensions.\n\n```ts\nimport { defineMimeType } from '@remix-run/mime'\n\
+    \ndefineMimeType({\n  extensions: ['myformat'],\n  mimeType: 'application/x-myformat',\n\
+    })\n```\n\nYou can also optionally configure the charset and whether the MIME\
+    \ type is compressible:\n\n```ts\ndefineMimeType({\n  extensions: ['myformat'],\n\
+    \  mimeType: 'application/x-myformat',\n  compressible: true,\n  charset: 'utf-8',\n\
+    })\n```"
+  gold_removed: ''

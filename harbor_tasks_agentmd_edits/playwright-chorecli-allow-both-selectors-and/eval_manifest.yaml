@@ -1,72 +1,82 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 39708
-  base_commit: "35f853d5c293c901ea66a9aa3f56f6879a94e66a"
-  merge_commit: "f78f716db22acaea3623017586fa3d56d0e48951"
-
+  base_commit: 35f853d5c293c901ea66a9aa3f56f6879a94e66a
+  merge_commit: f78f716db22acaea3623017586fa3d56d0e48951
 checks:
-  # Code behavioral tests (fail-to-pass)
-  - id: tab_imports_locator_parser
-    type: fail_to_pass
-    origin: pr_diff
-    description: "tab.ts imports locatorOrSelectorAsSelector from locatorParser module"
-
-  - id: tab_converts_selector_through_parser
-    type: fail_to_pass
-    origin: pr_diff
-    description: "tab.ts converts selector input through locatorOrSelectorAsSelector with testIdAttribute"
-
-  - id: tab_checks_element_via_query_selector
-    type: fail_to_pass
-    origin: pr_diff
-    description: "tab.ts uses page.$() for element existence check instead of isVisible()"
-
-  - id: tab_error_message_quoted_format
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Error message uses quoted format without 'Selector' prefix"
-
-  - id: tab_locator_parser_integration
-    type: fail_to_pass
-    origin: pr_diff
-    description: "tab.ts imports locatorOrSelectorAsSelector and the parser correctly handles locator inputs"
-
-  # Config/instruction file update tests (agentmd-edit, fail-to-pass)
-  - id: skill_md_documents_locator_syntax
-    type: fail_to_pass
-    origin: agent_config
-    description: "SKILL.md documents Playwright locator syntax, not just old-style selectors"
-    source:
-      path: ".claude/skills/playwright-dev/tools.md"
-      lines: "399-401"
-      commit: "35f853d5c293c901ea66a9aa3f56f6879a94e66a"
-
-  - id: skill_md_getbyrole_example
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md shows a getByRole locator example"
-
-  - id: skill_md_getbytestid_example
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md shows a getByTestId locator example"
-
-  # Regression tests (pass-to-pass)
-  - id: tab_still_handles_ref_path
-    type: pass_to_pass
-    origin: static
-    description: "tab.ts still handles ref-based (aria-ref) element targeting"
-
-  - id: skill_md_preserves_ref_and_css_examples
-    type: pass_to_pass
-    origin: static
-    description: "SKILL.md still shows ref-based and CSS selector examples"
-
+- id: tab_imports_locator_parser
+  type: fail_to_pass
+  origin: pr_diff
+  description: tab.ts imports locatorOrSelectorAsSelector from locatorParser module
+- id: tab_converts_selector_through_parser
+  type: fail_to_pass
+  origin: pr_diff
+  description: tab.ts converts selector input through locatorOrSelectorAsSelector
+    with testIdAttribute
+- id: tab_checks_element_via_query_selector
+  type: fail_to_pass
+  origin: pr_diff
+  description: tab.ts uses page.$() for element existence check instead of isVisible()
+- id: tab_error_message_quoted_format
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error message uses quoted format without 'Selector' prefix
+- id: tab_locator_parser_integration
+  type: fail_to_pass
+  origin: pr_diff
+  description: tab.ts imports locatorOrSelectorAsSelector and the parser correctly
+    handles locator inputs
+- id: skill_md_documents_locator_syntax
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md documents Playwright locator syntax, not just old-style selectors
+  source:
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 399-401
+    commit: 35f853d5c293c901ea66a9aa3f56f6879a94e66a
+- id: skill_md_getbyrole_example
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md shows a getByRole locator example
+- id: skill_md_getbytestid_example
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md shows a getByTestId locator example
+- id: tab_still_handles_ref_path
+  type: pass_to_pass
+  origin: static
+  description: tab.ts still handles ref-based (aria-ref) element targeting
+- id: skill_md_preserves_ref_and_css_examples
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md still shows ref-based and CSS selector examples
 rubric:
-  - rule: "SKILL.md update is consistent with the style of the existing documentation sections"
-    source:
-      path: "packages/playwright-core/src/tools/cli-client/skill/SKILL.md"
-      lines: "1-10"
-      commit: "35f853d5c293c901ea66a9aa3f56f6879a94e66a"
+- rule: SKILL.md update is consistent with the style of the existing documentation
+    sections
+  source:
+    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+    lines: 1-10
+    commit: 35f853d5c293c901ea66a9aa3f56f6879a94e66a
+config_edits:
+- path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+  tier: 1
+  gold_added: 'You can also use css selectors or Playwright locators.
+
+    # role locator
+
+    playwright-cli click "getByRole(''button'', { name: ''Submit'' })"
+
+    # test id
+
+    playwright-cli click "getByTestId(''submit-button'')"'
+  gold_removed: 'You can also use css or role selectors, for example when explicitly
+    asked for it.
+
+    # role selector
+
+    playwright-cli click "role=button[name=Submit]"
+
+    # chaining css and role selectors
+
+    playwright-cli click "#footer >> role=button[name=Submit]"'

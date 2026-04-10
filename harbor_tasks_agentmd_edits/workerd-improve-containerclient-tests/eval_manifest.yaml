@@ -37,3 +37,10 @@ checks:
   origin: pr_diff
   description: README uses correct Bazel target with container-client@ suffix
 rubric: []
+config_edits:
+- path: src/workerd/server/tests/container-client/README.md
+  tier: 2
+  gold_added: "docker ps -aq --filter name=workerd-container-client-test | xargs -r\
+    \ docker rm -f\n   just stream-test //src/workerd/server/tests/container-client:container-client@"
+  gold_removed: "docker rm -f $(docker ps -aq --filter name=workerd-container-client-test\
+    \ --all)\n   just stream-test //src/workerd/server/tests/container-client"

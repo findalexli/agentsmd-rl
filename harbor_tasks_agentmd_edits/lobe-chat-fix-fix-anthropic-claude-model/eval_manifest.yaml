@@ -1,68 +1,243 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "lobehub/lobe-chat"
+  repo: lobehub/lobe-chat
   pr: 13206
-  base_commit: "66fba601942579a3c37fe4f0abe92e20de8e1831"
-  merge_commit: "0f534906335353602da8c7908ae2afbaf2800028"
-
+  base_commit: 66fba601942579a3c37fe4f0abe92e20de8e1831
+  merge_commit: 0f534906335353602da8c7908ae2afbaf2800028
 checks:
-  # --- Fail-to-pass: code behavior ---
-  - id: resolve_max_tokens_normal_models
-    type: fail_to_pass
-    origin: pr_diff
-    description: "resolveMaxTokens returns 64000 for non-small-context models (was 8192)"
-
-  - id: tool_result_max_length_default_25000
-    type: fail_to_pass
-    origin: pr_diff
-    description: "toolResultMaxLength default in chatConfig is 25000 (was 6000)"
-
-  # --- Fail-to-pass: config / SKILL.md updates ---
-  - id: trpc_router_skill_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "New .agents/skills/trpc-router/SKILL.md documents router conventions"
-
-  - id: cli_skill_documents_dev_mode
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLI SKILL.md documents dev mode with LOBEHUB_CLI_HOME isolation"
-
-  - id: db_migrations_skill_has_journal_tag
-    type: fail_to_pass
-    origin: pr_diff
-    description: "db-migrations SKILL.md Step 4 mentions journal tag update"
-
-  # --- Pass-to-pass: regression ---
-  - id: resolve_max_tokens_small_context_4096
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Small-context models (opus, haiku, v2) still return 4096"
-
-  - id: resolve_max_tokens_user_override
-    type: pass_to_pass
-    origin: pr_diff
-    description: "User-provided max_tokens takes priority over default"
-
-  - id: resolve_max_tokens_thinking_modes
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Thinking enabled returns 32000, adaptive returns 64000"
-
-  - id: resolve_max_tokens_provider_model_default
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Provider model maxOutput takes priority when no user override"
-
+- id: resolve_max_tokens_normal_models
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolveMaxTokens returns 64000 for non-small-context models (was 8192)
+- id: tool_result_max_length_default_25000
+  type: fail_to_pass
+  origin: pr_diff
+  description: toolResultMaxLength default in chatConfig is 25000 (was 6000)
+- id: trpc_router_skill_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: New .agents/skills/trpc-router/SKILL.md documents router conventions
+- id: cli_skill_documents_dev_mode
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLI SKILL.md documents dev mode with LOBEHUB_CLI_HOME isolation
+- id: db_migrations_skill_has_journal_tag
+  type: fail_to_pass
+  origin: pr_diff
+  description: db-migrations SKILL.md Step 4 mentions journal tag update
+- id: resolve_max_tokens_small_context_4096
+  type: pass_to_pass
+  origin: pr_diff
+  description: Small-context models (opus, haiku, v2) still return 4096
+- id: resolve_max_tokens_user_override
+  type: pass_to_pass
+  origin: pr_diff
+  description: User-provided max_tokens takes priority over default
+- id: resolve_max_tokens_thinking_modes
+  type: pass_to_pass
+  origin: pr_diff
+  description: Thinking enabled returns 32000, adaptive returns 64000
+- id: resolve_max_tokens_provider_model_default
+  type: pass_to_pass
+  origin: pr_diff
+  description: Provider model maxOutput takes priority when no user override
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "1"
-      commit: "66fba601942579a3c37fe4f0abe92e20de8e1831"
-  - rule: "Prefer interfaces over types for object shapes"
-    source:
-      path: "AGENTS.md"
-      lines: "42"
-      commit: "66fba601942579a3c37fe4f0abe92e20de8e1831"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '1'
+    commit: 66fba601942579a3c37fe4f0abe92e20de8e1831
+- rule: Prefer interfaces over types for object shapes
+  source:
+    path: AGENTS.md
+    lines: '42'
+    commit: 66fba601942579a3c37fe4f0abe92e20de8e1831
+config_edits:
+- path: .agents/skills/cli/SKILL.md
+  tier: 1
+  gold_added: '### Running in Dev Mode
+
+
+    Dev mode uses `LOBEHUB_CLI_HOME=.lobehub-dev` to isolate credentials from the
+    global `~/.lobehub/` directory, so dev and production configs never conflict.
+
+
+    ```bash
+
+    # Run a command in dev mode (from apps/cli/)
+
+    cd apps/cli && bun run dev -- <command>
+
+
+    # This is equivalent to:
+
+    LOBEHUB_CLI_HOME=.lobehub-dev bun src/index.ts <command>
+
+    ```
+
+
+    ### Connecting to Local Dev Server
+
+
+    To test CLI against a local dev server (e.g. `localhost:3011`):
+
+
+    **Step 1: Start the local server**
+
+
+    ```bash
+
+    # From cloud repo root
+
+    bun run dev
+
+    # Server starts on http://localhost:3011 (or configured port)
+
+    ```
+
+
+    **Step 2: Login to local server via Device Code Flow**
+
+
+    ```bash
+
+    cd apps/cli && bun run dev -- login --server http://localhost:3011
+
+    ```
+
+
+    This will:
+
+
+    1. Call `POST http://localhost:3011/oidc/device/auth` to get a device code
+
+    2. Print a URL like `http://localhost:3011/oidc/device?user_code=XXXX-YYYY`
+
+    3. Open the URL in your browser — log in and authorize
+
+    4. Save credentials to `apps/cli/.lobehub-dev/credentials.json`
+
+    5. Save server URL to `apps/cli/.lobehub-dev/settings.json`
+
+
+    After login, all subsequent `bun run dev -- <command>` calls will use the local
+    server.
+
+
+    **Step 3: Run commands against local server**
+
+
+    ```bash
+
+    cd apps/cli && bun run dev -- task list
+
+    cd apps/cli && bun run dev -- task create -i "Test task" -n "My Task"
+
+    cd apps/cli && bun run dev -- agent list
+
+    ```
+
+
+    **Troubleshooting:**
+
+
+    - If login returns `invalid_grant`, make sure the local OIDC provider is properly
+    configured (check `OIDC_*` env vars in `.env`)
+
+    - If you get `UNAUTHORIZED` on API calls, your token may have expired — run `bun
+    run dev -- login --server http://localhost:3011` again
+
+    - Dev credentials are stored in `apps/cli/.lobehub-dev/` (gitignored), not in
+    `~/.lobehub/`
+
+
+    ### Switching Between Local and Production
+
+
+    # Dev mode (local server) — uses .lobehub-dev/
+
+    # Production (app.lobehub.com) — uses ~/.lobehub/
+
+    lh <command>
+
+    ```
+
+
+    The two environments are completely isolated by different credential directories.
+
+
+    ### Build & Test
+
+
+    ```bash
+
+    # Build CLI
+
+    # Unit tests
+
+    # Link globally for testing (installs lh/lobe/lobehub commands)'
+  gold_removed: '# Run directly (dev mode, uses ~/.lobehub-dev for credentials)
+
+    # Build
+
+    # Test (unit tests)
+
+    # Link globally for testing'
+- path: .agents/skills/db-migrations/SKILL.md
+  tier: 1
+  gold_added: '## Step 4: Update Journal Tag
+
+    After renaming the migration SQL file in Step 2, update the `tag` field in `packages/database/migrations/meta/_journal.json`
+    to match the new filename (without `.sql` extension).'
+  gold_removed: '## Step 4: Regenerate Client After SQL Edits
+
+    After modifying the generated SQL (e.g., adding `IF NOT EXISTS`), regenerate the
+    client:
+
+
+    ```bash
+
+    bun run db:generate:client
+
+    ```'
+- path: .agents/skills/trpc-router/SKILL.md
+  tier: 1
+  gold_added: "---\nname: trpc-router\ndescription: TRPC router development guide.\
+    \ Use when creating or modifying TRPC routers (src/server/routers/**), adding\
+    \ procedures, or working with server-side API endpoints. Triggers on TRPC router\
+    \ creation, procedure implementation, or API endpoint tasks.\n---\n\n# TRPC Router\
+    \ Guide\n\n## File Location\n\n- Routers: `src/server/routers/lambda/<domain>.ts`\n\
+    - Helpers: `src/server/routers/lambda/_helpers/`\n- Schemas: `src/server/routers/lambda/_schema/`\n\
+    \n## Router Structure\n\n### Imports\n\n```typescript\nimport { TRPCError } from\
+    \ '@trpc/server';\nimport { z } from 'zod';\n\nimport { SomeModel } from '@/database/models/some';\n\
+    import { authedProcedure, router } from '@/libs/trpc/lambda';\nimport { serverDatabase\
+    \ } from '@/libs/trpc/lambda/middleware';\n```\n\n### Middleware: Inject Models\
+    \ into ctx\n\n**Always use middleware to inject models into `ctx`** instead of\
+    \ creating `new Model(ctx.serverDB, ctx.userId)` inside every procedure.\n\n```typescript\n\
+    const domainProcedure = authedProcedure.use(serverDatabase).use(async (opts) =>\
+    \ {\n  const { ctx } = opts;\n  return opts.next({\n    ctx: {\n      fooModel:\
+    \ new FooModel(ctx.serverDB, ctx.userId),\n      barModel: new BarModel(ctx.serverDB,\
+    \ ctx.userId),\n    },\n  });\n});\n```\n\nThen use `ctx.fooModel` in procedures:\n\
+    \n```typescript\n// Good\nconst model = ctx.fooModel;\n\n// Bad - don't create\
+    \ models inside procedures\nconst model = new FooModel(ctx.serverDB, ctx.userId);\n\
+    ```\n\n**Exception**: When a model needs a different `userId` (e.g., watchdog\
+    \ iterating over multiple users' tasks), create it inline.\n\n### Procedure Pattern\n\
+    \n```typescript\nexport const fooRouter = router({\n  // Query\n  find: domainProcedure.input(z.object({\
+    \ id: z.string() })).query(async ({ input, ctx }) => {\n    try {\n      const\
+    \ item = await ctx.fooModel.findById(input.id);\n      if (!item) throw new TRPCError({\
+    \ code: 'NOT_FOUND', message: 'Not found' });\n      return { data: item, success:\
+    \ true };\n    } catch (error) {\n      if (error instanceof TRPCError) throw\
+    \ error;\n      console.error('[foo:find]', error);\n      throw new TRPCError({\n\
+    \        cause: error,\n        code: 'INTERNAL_SERVER_ERROR',\n        message:\
+    \ 'Failed to find item',\n      });\n    }\n  }),\n\n  // Mutation\n  create:\
+    \ domainProcedure.input(createSchema).mutation(async ({ input, ctx }) => {\n \
+    \   try {\n      const item = await ctx.fooModel.create(input);\n      return\
+    \ { data: item, message: 'Created', success: true };\n    } catch (error) {\n\
+    \      if (error instanceof TRPCError) throw error;\n      console.error('[foo:create]',\
+    \ error);\n      throw new TRPCError({\n        cause: error,\n        code: 'INTERNAL_SERVER_ERROR',\n\
+    \        message: 'Failed to create',\n      });\n    }\n  }),\n});\n```\n\n###\
+    \ Aggregated Detail Endpoint\n\nFor views that need multiple related data, create\
+    \ a single `detail` procedure that fetches everything in parallel:\n\n```typescript\n\
+    detail: domainProcedure.input(idInput).query(async ({ input, ctx }) => {\n  const\
+    \ item = await resolveOrThrow(ctx.fooModel, input.id);\n\n  cons"
+  gold_removed: ''

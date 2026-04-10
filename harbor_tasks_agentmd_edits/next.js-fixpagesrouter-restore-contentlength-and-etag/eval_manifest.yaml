@@ -1,68 +1,66 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 90304
-  base_commit: "56d75a0b77f2ceda8ea747810275da8e0a9a3d71"
-  merge_commit: "495261fb5671111512936cdde6ecc6f2093d9058"
-
+  base_commit: 56d75a0b77f2ceda8ea747810275da8e0a9a3d71
+  merge_commit: 495261fb5671111512936cdde6ecc6f2093d9058
 checks:
-  # ---------------------------------------------------------------------------
-  # Gates (pass_to_pass, static)
-  # ---------------------------------------------------------------------------
-  - id: typescript_compiles
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files compile without errors"
+- id: typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files compile without errors
+- id: render_result_isdynamic_with_string
+  type: fail_to_pass
+  origin: pr_diff
+  description: RenderResult.isDynamic returns false for string response (not Buffer)
+- id: pages_handler_uses_string_not_buffer
+  type: fail_to_pass
+  origin: pr_diff
+  description: pages-handler.ts passes string to RenderResult, not Buffer.from()
+- id: send_payload_generates_headers_for_static
+  type: fail_to_pass
+  origin: pr_diff
+  description: sendRenderResult generates Content-Length and ETag for non-dynamic
+    responses
+- id: render_result_class_exists
+  type: pass_to_pass
+  origin: static
+  description: RenderResult class is exported and functional
+- id: pages_handler_file_not_stub
+  type: pass_to_pass
+  origin: static
+  description: pages-handler.ts has meaningful implementation, not stub
+- id: repo_eslint_pages_handler
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint check passes on pages-handler.ts
+- id: agents_md_new_test_syntax
+  type: fail_to_pass
+  origin: agent_config
+  description: AGENTS.md documents correct pnpm new-test syntax with -- --args
+  source:
+    path: AGENTS.md
+    lines: 148-150
+    commit: 56d75a0b77f2ceda8ea747810275da8e0a9a3d71
+rubric: []
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: "# Use --args for non-interactive mode (forward args to the script using\
+    \ `--`)\n# Format: pnpm new-test -- --args <appDir> <name> <type>\npnpm new-test\
+    \ -- --args true my-feature e2e\n  -- **Quick smoke testing with toy apps**: For\
+    \ fast feedback, generate a minimal test fixture with `pnpm new-test -- --args\
+    \ true <name> e2e`, then run the dev server directly with `node packages/next/dist/dist/bin/next\
+    \ dev --port <port>` and `curl --max-time 10`. This avoids the overhead of the\
+    \ full test harness and gives immediate feedback on hangs/crashes."
+  gold_removed: '# Use --args for non-interactive mode
 
-  # ---------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core behavioral tests
-  # ---------------------------------------------------------------------------
-  - id: render_result_isdynamic_with_string
-    type: fail_to_pass
-    origin: pr_diff
-    description: "RenderResult.isDynamic returns false for string response (not Buffer)"
+    # Format: pnpm new-test --args <appDir> <name> <type>
 
-  - id: pages_handler_uses_string_not_buffer
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pages-handler.ts passes string to RenderResult, not Buffer.from()"
+    pnpm new-test --args true my-feature e2e
 
-  - id: send_payload_generates_headers_for_static
-    type: fail_to_pass
-    origin: pr_diff
-    description: "sendRenderResult generates Content-Length and ETag for non-dynamic responses"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests / static) — regression + anti-stub
-  # ---------------------------------------------------------------------------
-  - id: render_result_class_exists
-    type: pass_to_pass
-    origin: static
-    description: "RenderResult class is exported and functional"
-
-  - id: pages_handler_file_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "pages-handler.ts has meaningful implementation, not stub"
-
-  - id: repo_eslint_pages_handler
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint check passes on pages-handler.ts"
-
-  # ---------------------------------------------------------------------------
-  # Config-derived (agent_config) — rules from AGENTS.md
-  # ---------------------------------------------------------------------------
-  - id: agents_md_new_test_syntax
-    type: fail_to_pass
-    origin: agent_config
-    description: "AGENTS.md documents correct pnpm new-test syntax with -- --args"
-    source:
-      path: "AGENTS.md"
-      lines: "148-150"
-      commit: "56d75a0b77f2ceda8ea747810275da8e0a9a3d71"
-
-rubric:
-  # Soft rules for LLM judge. Only rules genuinely needing subjective evaluation.
-  []
+    - **Quick smoke testing with toy apps**: For fast feedback, generate a minimal
+    test fixture with `pnpm new-test --args true <name> e2e`, then run the dev server
+    directly with `node packages/next/dist/bin/next dev --port <port>` and `curl --max-time
+    10`. This avoids the overhead of the full test harness and gives immediate feedback
+    on hangs/crashes.'

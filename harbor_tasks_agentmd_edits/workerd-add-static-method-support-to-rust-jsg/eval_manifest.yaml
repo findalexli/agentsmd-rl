@@ -1,59 +1,83 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "cloudflare/workerd"
+  repo: cloudflare/workerd
   pr: 6279
-  base_commit: "d7dc27c438f7ea1fd5eb28a0258d5dbae265a99d"
-  merge_commit: "287d33c71dc9dcbb1a12a9c30b562fb5c28238ec"
-
+  base_commit: d7dc27c438f7ea1fd5eb28a0258d5dbae265a99d
+  merge_commit: 287d33c71dc9dcbb1a12a9c30b562fb5c28238ec
 checks:
-  - id: rust_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified .rs files parse without rustfmt errors"
-
-  - id: jsg_method_static_detection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "jsg_method macro detects receiver to distinguish static vs instance methods"
-
-  - id: static_member_variant
-    type: fail_to_pass
-    origin: pr_diff
-    description: "generate_resource_impl emits Member::StaticMethod for receiver-less methods"
-
-  - id: function_type_and_ffi
-    type: fail_to_pass
-    origin: pr_diff
-    description: "v8.rs defines Function type and ffi.h declares function_template_get_function"
-
-  - id: ffi_cpp_implements_get_function
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ffi.c++ implements function_template_get_function using V8 GetFunction"
-
-  - id: agents_md_documents_static_methods
-    type: fail_to_pass
-    origin: agent_config
-    description: "src/rust/AGENTS.md documents that methods without &self become static"
-    source:
-      path: "AGENTS.md"
-      lines: "9"
-      commit: "d7dc27c438f7ea1fd5eb28a0258d5dbae265a99d"
-
-  - id: readme_documents_static_instance
-    type: fail_to_pass
-    origin: pr_diff
-    description: "jsg-macros README documents static vs instance method distinction"
-
-  - id: review_checklist_instance_static
-    type: fail_to_pass
-    origin: pr_diff
-    description: "rust-review-checklist.md documents instance/static method behavior"
-
+- id: rust_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified .rs files parse without rustfmt errors
+- id: jsg_method_static_detection
+  type: fail_to_pass
+  origin: pr_diff
+  description: jsg_method macro detects receiver to distinguish static vs instance
+    methods
+- id: static_member_variant
+  type: fail_to_pass
+  origin: pr_diff
+  description: generate_resource_impl emits Member::StaticMethod for receiver-less
+    methods
+- id: function_type_and_ffi
+  type: fail_to_pass
+  origin: pr_diff
+  description: v8.rs defines Function type and ffi.h declares function_template_get_function
+- id: ffi_cpp_implements_get_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: ffi.c++ implements function_template_get_function using V8 GetFunction
+- id: agents_md_documents_static_methods
+  type: fail_to_pass
+  origin: agent_config
+  description: src/rust/AGENTS.md documents that methods without &self become static
+  source:
+    path: AGENTS.md
+    lines: '9'
+    commit: d7dc27c438f7ea1fd5eb28a0258d5dbae265a99d
+- id: readme_documents_static_instance
+  type: fail_to_pass
+  origin: pr_diff
+  description: jsg-macros README documents static vs instance method distinction
+- id: review_checklist_instance_static
+  type: fail_to_pass
+  origin: pr_diff
+  description: rust-review-checklist.md documents instance/static method behavior
 rubric:
-  - rule: "Documentation updates should be consistent with the existing style and level of detail in each file"
-    source:
-      path: "AGENTS.md"
-      lines: "299"
-      commit: "d7dc27c438f7ea1fd5eb28a0258d5dbae265a99d"
+- rule: Documentation updates should be consistent with the existing style and level
+    of detail in each file
+  source:
+    path: AGENTS.md
+    lines: '299'
+    commit: d7dc27c438f7ea1fd5eb28a0258d5dbae265a99d
+config_edits:
+- path: src/rust/AGENTS.md
+  tier: 1
+  gold_added: '- **JSG resources**: must include `_state: jsg::ResourceState` field;
+    `#[jsg_method]` auto-converts `snake_case` → `camelCase`; methods with `&self`/`&mut
+    self` become instance methods, methods without a receiver become static methods'
+  gold_removed: '- **JSG resources**: must include `_state: jsg::ResourceState` field;
+    `#[jsg_method]` auto-converts `snake_case` → `camelCase`'
+- path: src/rust/jsg-macros/README.md
+  tier: 2
+  gold_added: "The macro automatically detects whether a method is an instance method\
+    \ or a static method based on the presence of a receiver (`&self` or `&mut self`):\n\
+    \n- **Instance methods** (with `&self`/`&mut self`) are placed on the prototype,\
+    \ called on instances (e.g., `obj.getName()`).\n- **Static methods** (without\
+    \ a receiver) are placed on the constructor, called on the class itself (e.g.,\
+    \ `MyClass.create()`).\n\n    // Instance method: called as obj.parseCaaRecord(...)\n\
+    \    // Instance method: called as obj.getName()\n    // Instance method: void\
+    \ methods return undefined in JavaScript\n    }\n\n    // Static method: called\
+    \ as DnsUtil.create(...)\n    #[jsg_method]\n    pub fn create(name: String) ->\
+    \ Result<String, jsg::Error> {\n        Ok(name)\n        // Instance method on\
+    \ the prototype\n    }\n\n    #[jsg_method]\n    pub fn create(name: String) ->\
+    \ Result<String, jsg::Error> {\n        // Static method on the constructor (no\
+    \ &self)\nOn struct definitions, generates `jsg::Type`, wrapper struct, and `ResourceTemplate`\
+    \ implementations. On impl blocks, scans for `#[jsg_method]` attributes and generates\
+    \ the `Resource` trait implementation. Methods with a receiver (`&self`/`&mut\
+    \ self`) are registered as instance methods; methods without a receiver are registered\
+    \ as static methods."
+  gold_removed: "// Void methods return undefined in JavaScript\n        // implementation\n\
+    On struct definitions, generates `jsg::Type`, wrapper struct, and `ResourceTemplate`\
+    \ implementations. On impl blocks, scans for `#[jsg_method]` attributes and generates\
+    \ the `Resource` trait implementation."

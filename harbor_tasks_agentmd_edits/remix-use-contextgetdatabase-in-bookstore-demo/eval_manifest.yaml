@@ -24,7 +24,8 @@ checks:
 - id: middleware_has_real_logic
   type: pass_to_pass
   origin: static
-  description: database.ts middleware has real logic (exports loadDatabase, calls next)
+  description: database.ts middleware has real logic (exports loadDatabase, calls
+    next)
 - id: database_middleware_uses_context_set
   type: fail_to_pass
   origin: pr_diff
@@ -41,8 +42,8 @@ checks:
 - id: auth_middleware_uses_get_database
   type: fail_to_pass
   origin: pr_diff
-  description: auth.ts middleware imports Database and uses get(Database) instead of
-    destructuring db
+  description: auth.ts middleware imports Database and uses get(Database) instead
+    of destructuring db
 - id: readme_documents_context_set_pattern
   type: fail_to_pass
   origin: pr_diff
@@ -79,3 +80,17 @@ rubric:
     the bookstore database on request context with `context.set(Database, db)`, and
     request handlers read it back with `get(Database)` just like they do for `Session`
     and `FormData`.'
+config_edits:
+- path: demos/bookstore/README.md
+  tier: 2
+  gold_added: '- [`app/middleware/database.ts`](app/middleware/database.ts) stores
+    the bookstore database on request context with `context.set(Database, db)`, and
+    request handlers read it back with `get(Database)` just like they do for `Session`
+    and `FormData`.'
+  gold_removed: '- [`app/middleware/database.ts`](app/middleware/database.ts) shows
+    a request-scoped database pattern. It "checks out" a database handle at the start
+    of each request, stores it in request context, and releases it in a `finally`
+    block.
+
+    - [`app/middleware/database.ts`](app/middleware/database.ts) attaches `context.db`
+    for every request so route actions can query tables directly without AsyncLocalStorage.'

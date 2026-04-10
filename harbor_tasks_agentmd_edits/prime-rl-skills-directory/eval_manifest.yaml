@@ -1,64 +1,249 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PrimeIntellect-ai/prime-rl"
+  repo: PrimeIntellect-ai/prime-rl
   pr: 1747
-  base_commit: "31b48b8b10db390d835909a6fd976f29d9880c81"
-  merge_commit: "5cdada64575330a37488cf156e49d9914cf7c369"
-
+  base_commit: 31b48b8b10db390d835909a6fd976f29d9880c81
+  merge_commit: 5cdada64575330a37488cf156e49d9914cf7c369
 checks:
-  # Static structural checks
-  - id: agents_md_exists
-    type: pass_to_pass
-    origin: static
-    description: "AGENTS.md must exist and be readable"
-
-  # Pass-to-pass: repo CI checks
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python linting passes"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python formatting passes"
-
-  # Fail-to-pass: skills directory structure
-  - id: skills_directory_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "skills/ directory must exist"
-
-  - id: inference_server_skill_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "skills/inference-server/SKILL.md must exist with proper content"
-
-  - id: toml_config_skill_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "skills/toml-config/SKILL.md must exist with proper content"
-
-  - id: claude_skills_symlink_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".claude/skills symlink must point to ../skills"
-
-  # Fail-to-pass: AGENTS.md documentation updates
-  - id: agents_md_documents_skills_section
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md must have a Skills section documenting the skills system"
-
-  - id: agents_md_documents_skill_maintenance
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md must explain skill maintenance responsibilities"
-
-  - id: agents_md_references_toml_config_skill
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md must reference the toml-config skill for CLI usage"
-
+- id: agents_md_exists
+  type: pass_to_pass
+  origin: static
+  description: AGENTS.md must exist and be readable
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python linting passes
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python formatting passes
+- id: skills_directory_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: skills/ directory must exist
+- id: inference_server_skill_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: skills/inference-server/SKILL.md must exist with proper content
+- id: toml_config_skill_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: skills/toml-config/SKILL.md must exist with proper content
+- id: claude_skills_symlink_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: .claude/skills symlink must point to ../skills
+- id: agents_md_documents_skills_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must have a Skills section documenting the skills system
+- id: agents_md_documents_skill_maintenance
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must explain skill maintenance responsibilities
+- id: agents_md_references_toml_config_skill
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must reference the toml-config skill for CLI usage
 rubric: []
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- See the `toml-config` skill in `skills/` for full details on TOML
+    structure, CLI overrides, and available commands.
+
+
+    ## Skills
+
+
+    Skills live in `skills/` and are symlinked to `.claude/skills/`. They teach agents
+    how to handle specific workflows (e.g. starting the inference server, writing
+    configs). When you make changes to the codebase, check if any skills need to be
+    updated to stay accurate.
+
+
+    You are responsible for maintaining the skills folder. When a workflow fails and
+    you fix it – whether with help from the user or through trial and error – you
+    must update the skills to make implicit knowledge explicit. You are also responsible
+    for keeping the skills up to date whenever you or anyone else modifies the code.'
+  gold_removed: '- Boolean flags don''t need `true`: use `--model.optim_cpu_offload`
+    not `--model.optim_cpu_offload true`, use `--no-model.optim_cpu_offload` to pass
+    False.
+
+    - Override config values with CLI flags: `--model.name Qwen/Qwen3-0.6B --training.max_steps
+    100`'
+- path: skills/inference-server/SKILL.md
+  tier: 1
+  gold_added: "---\nname: inference-server\ndescription: Start and test the prime-rl\
+    \ inference server. Use when asked to run inference, start vLLM, test a model,\
+    \ or launch the inference server.\n---\n\n# Inference Server\n\n## Starting the\
+    \ server\n\nAlways use the `inference` entry point — never `vllm serve` or `python\
+    \ -m vllm.entrypoints.openai.api_server` directly. The entry point runs `setup_vllm_env()`\
+    \ which configures environment variables (LoRA, multiprocessing) before vLLM is\
+    \ imported.\n\n```bash\n# With a TOML config\nuv run inference @ path/to/config.toml\n\
+    \n# With CLI overrides\nuv run inference --model.name Qwen/Qwen3-0.6B --model.max_model_len\
+    \ 2048 --model.enforce_eager\n\n# Combined\nuv run inference @ path/to/config.toml\
+    \ --server.port 8001 --gpu-memory-utilization 0.5\n```\n\n## Custom endpoints\n\
+    \nThe server extends vLLM with:\n\n- `/v1/chat/completions/tokens` — accepts token\
+    \ IDs as prompt input (used by multi-turn RL rollouts)\n- `/update_weights` —\
+    \ hot-reload model weights from the trainer\n- `/load_lora_adapter` — load LoRA\
+    \ adapters at runtime\n- `/init_broadcaster` — initialize weight broadcast for\
+    \ distributed training\n\n## Testing the server\n\n```bash\ncurl http://localhost:8000/v1/chat/completions\
+    \ \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"model\": \"Qwen/Qwen3-0.6B\"\
+    ,\n    \"messages\": [{\"role\": \"user\", \"content\": \"Hi\"}],\n    \"max_tokens\"\
+    : 50\n  }'\n```\n\n## Key files\n\n- `src/prime_rl/inference/server.py` — entry\
+    \ point, env var setup\n- `src/prime_rl/inference/config.py` — `InferenceConfig`\
+    \ and all sub-configs\n- `src/prime_rl/inference/vllm/server.py` — FastAPI routes\
+    \ and vLLM monkey-patches\n- `configs/debug/infer.toml` — minimal debug config"
+  gold_removed: ''
+- path: skills/toml-config/SKILL.md
+  tier: 1
+  gold_added: '---
+
+    name: toml-config
+
+    description: How to write and use TOML configs in prime-rl. Use when creating
+    config files, running commands with configs, or overriding config values via CLI.
+
+    ---
+
+
+    # TOML Config
+
+
+    All prime-rl commands use pydantic-settings with TOML configs and CLI overrides.
+
+
+    ## Running with configs
+
+
+    ```bash
+
+    # Load a config file with @ syntax
+
+    uv run inference @ configs/debug/infer.toml
+
+    uv run sft @ configs/debug/sft/train.toml
+
+    uv run rl @ configs/debug/rl/train.toml
+
+
+    # CLI overrides (take precedence over TOML)
+
+    uv run inference @ config.toml --model.name Qwen/Qwen3-0.6B --server.port 8001
+
+
+    # Boolean flags: no value needed
+
+    uv run inference --model.enforce_eager          # sets to true
+
+    uv run inference --no-model.enforce_eager       # sets to false
+
+
+    # CLI-only (no TOML file)
+
+    uv run inference --model.name Qwen/Qwen3-0.6B --model.max_model_len 2048
+
+    ```
+
+
+    ## TOML structure
+
+
+    Top-level fields must come before any `[section]` header — this is a TOML rule.
+
+
+    ```toml
+
+    # Top-level fields first
+
+    gpu_memory_utilization = 0.5
+
+    seed = 42
+
+
+    # Then sections
+
+    [model]
+
+    name = "Qwen/Qwen3-0.6B"
+
+    max_model_len = 4096
+
+
+    [server]
+
+    port = 8000
+
+    ```
+
+
+    Putting a top-level field after a section header nests it inside that section,
+    which causes validation errors.
+
+
+    ## Config inheritance
+
+
+    Configs can inherit from other TOML files:
+
+
+    ```toml
+
+    toml_files = ["base.toml"]
+
+
+    [model]
+
+    name = "Qwen/Qwen3-0.6B"  # overrides base
+
+    ```
+
+
+    Paths in `toml_files` are relative to the file containing the field.
+
+
+    ## Setting None
+
+
+    Use the string `"None"` in TOML to set a field to None:
+
+
+    ```toml
+
+    max_model_len = "None"
+
+    ```
+
+
+    ## Available commands
+
+
+    All accept `@ config.toml` and CLI overrides:
+
+
+    | Command | Config class | Description |
+
+    |---------|-------------|-------------|
+
+    | `uv run rl` | full RL pipeline | Orchestrator + inference + trainer |
+
+    | `uv run inference` | `InferenceConfig` | vLLM inference server |
+
+    | `uv run trainer` | trainer config | RL trainer |
+
+    | `uv run orchestrator` | orchestrator config | Rollout orchestrator |
+
+    | `uv run env-server` | env server config | Environment server |
+
+    | `uv run sft` | SFT config | Supervised fine-tuning |
+
+
+    ## Key files
+
+
+    - `src/prime_rl/utils/pydantic_config.py` — `parse_argv`, `BaseSettings`, `@`
+    syntax parsing
+
+    - `configs/` — all config files, organized by task'
+  gold_removed: ''

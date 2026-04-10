@@ -1,54 +1,46 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 13562
-  base_commit: "86e545a23ecdb2c1840ab01e82eca292117c6bbc"
-  merge_commit: "9d3c81a68391399e46fab5307b03984511f92b09"
-
+  base_commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
+  merge_commit: 9d3c81a68391399e46fab5307b03984511f92b09
 checks:
-  # Gates (pass_to_pass, static)
-  - id: typescript_parseable
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files are syntactically valid"
-
-  # Code behavior (fail_to_pass, pr_diff)
-  - id: flag_constant_defined
-    type: fail_to_pass
-    origin: pr_diff
-    description: "flag.ts exports OPENCODE_ENABLE_QUESTION_TOOL using truthy()"
-
-  - id: question_gating_behavior
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Question tool gating: ACP needs flag, app/cli/desktop always work"
-
-  # Config update checks (fail_to_pass)
-  - id: translator_md_lists_env_var
-    type: fail_to_pass
-    origin: pr_diff
-    description: "translator.md agent config includes OPENCODE_ENABLE_QUESTION_TOOL in env var list"
-
-  - id: acp_readme_documents_opt_in
-    type: fail_to_pass
-    origin: pr_diff
-    description: "acp/README.md documents the Question Tool Opt-In feature with env var"
-
-  - id: acp_readme_enable_example
-    type: fail_to_pass
-    origin: pr_diff
-    description: "acp/README.md shows OPENCODE_ENABLE_QUESTION_TOOL=1 enable command"
-
-  # Pass-to-pass regression / anti-stub
-  - id: existing_client_behavior_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "app/cli/desktop clients still get QuestionTool without flag"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified code has real conditional logic, not stubs"
-
+- id: typescript_parseable
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files are syntactically valid
+- id: flag_constant_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: flag.ts exports OPENCODE_ENABLE_QUESTION_TOOL using truthy()
+- id: question_gating_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Question tool gating: ACP needs flag, app/cli/desktop always work'
+- id: translator_md_lists_env_var
+  type: fail_to_pass
+  origin: pr_diff
+  description: translator.md agent config includes OPENCODE_ENABLE_QUESTION_TOOL in
+    env var list
+- id: acp_readme_documents_opt_in
+  type: fail_to_pass
+  origin: pr_diff
+  description: acp/README.md documents the Question Tool Opt-In feature with env var
+- id: acp_readme_enable_example
+  type: fail_to_pass
+  origin: pr_diff
+  description: acp/README.md shows OPENCODE_ENABLE_QUESTION_TOOL=1 enable command
+- id: existing_client_behavior_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: app/cli/desktop clients still get QuestionTool without flag
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified code has real conditional logic, not stubs
 rubric: []
+config_edits:
+- path: .opencode/agent/translator.md
+  tier: 2
+  gold_added: OPENCODE_ENABLE_QUESTION_TOOL' .opencode/agent/translator.md
+  gold_removed: ''

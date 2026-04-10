@@ -1,97 +1,117 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "cloudflare/workerd"
+  repo: cloudflare/workerd
   pr: 6281
-  base_commit: "d6046133f33e986f27c166556e9036efd2c1ec85"
-  merge_commit: "1f0f17f78d2a458529e83dc9a0ecb00eb230e7ac"
-
+  base_commit: d6046133f33e986f27c166556e9036efd2c1ec85
+  merge_commit: 1f0f17f78d2a458529e83dc9a0ecb00eb230e7ac
 checks:
-  # Gate: syntax validation
-  - id: rust_files_parse
-    type: pass_to_pass
-    origin: static
-    description: "Modified Rust files are syntactically valid (balanced delimiters)"
-
-  # Core code changes (fail-to-pass)
-  - id: feature_flags_module_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "feature_flags.rs exists with FeatureFlags struct, from_bytes, reader"
-
-  - id: lock_has_feature_flags_method
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Lock exposes pub fn feature_flags() returning capnp Reader"
-
-  - id: realm_stores_feature_flags
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Realm struct stores FeatureFlags and realm_create accepts it"
-
-  - id: realm_create_ffi_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CXX bridge realm_create declaration includes feature_flags_data"
-
-  - id: cpp_passes_feature_flags
-    type: fail_to_pass
-    origin: pr_diff
-    description: "C++ worker.c++ canonicalizes and passes feature flags to realm_create"
-
-  - id: build_deps_include_capnp
-    type: fail_to_pass
-    origin: pr_diff
-    description: "jsg BUILD.bazel depends on capnp and compatibility-date bindings"
-
-  # Config/documentation update checks (agentmd-edit)
-  - id: agents_md_crate_table_updated
-    type: fail_to_pass
-    origin: agent_config
-    description: "src/rust/AGENTS.md crate table lists FeatureFlags for jsg"
-    source:
-      path: "AGENTS.md"
-      lines: "9"
-      commit: "d6046133f33e986f27c166556e9036efd2c1ec85"
-
-  - id: agents_md_feature_flags_convention
-    type: fail_to_pass
-    origin: agent_config
-    description: "src/rust/AGENTS.md CONVENTIONS documents feature flags pattern"
-    source:
-      path: "AGENTS.md"
-      lines: "9"
-      commit: "d6046133f33e986f27c166556e9036efd2c1ec85"
-
-  - id: jsg_readme_documents_feature_flags
-    type: fail_to_pass
-    origin: pr_diff
-    description: "src/rust/jsg/README.md has Feature Flags documentation section"
-
-  - id: jsg_readme_updated_ffi_example
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README.md FFI example shows realm_create with new signature"
-
-  # Anti-stub + regression (pass-to-pass)
-  - id: feature_flags_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "feature_flags.rs has real validation logic and unit tests"
-
-  - id: lib_rs_module_declaration
-    type: pass_to_pass
-    origin: static
-    description: "lib.rs declares and re-exports feature_flags module"
-
+- id: rust_files_parse
+  type: pass_to_pass
+  origin: static
+  description: Modified Rust files are syntactically valid (balanced delimiters)
+- id: feature_flags_module_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: feature_flags.rs exists with FeatureFlags struct, from_bytes, reader
+- id: lock_has_feature_flags_method
+  type: fail_to_pass
+  origin: pr_diff
+  description: Lock exposes pub fn feature_flags() returning capnp Reader
+- id: realm_stores_feature_flags
+  type: fail_to_pass
+  origin: pr_diff
+  description: Realm struct stores FeatureFlags and realm_create accepts it
+- id: realm_create_ffi_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: CXX bridge realm_create declaration includes feature_flags_data
+- id: cpp_passes_feature_flags
+  type: fail_to_pass
+  origin: pr_diff
+  description: C++ worker.c++ canonicalizes and passes feature flags to realm_create
+- id: build_deps_include_capnp
+  type: fail_to_pass
+  origin: pr_diff
+  description: jsg BUILD.bazel depends on capnp and compatibility-date bindings
+- id: agents_md_crate_table_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: src/rust/AGENTS.md crate table lists FeatureFlags for jsg
+  source:
+    path: AGENTS.md
+    lines: '9'
+    commit: d6046133f33e986f27c166556e9036efd2c1ec85
+- id: agents_md_feature_flags_convention
+  type: fail_to_pass
+  origin: agent_config
+  description: src/rust/AGENTS.md CONVENTIONS documents feature flags pattern
+  source:
+    path: AGENTS.md
+    lines: '9'
+    commit: d6046133f33e986f27c166556e9036efd2c1ec85
+- id: jsg_readme_documents_feature_flags
+  type: fail_to_pass
+  origin: pr_diff
+  description: src/rust/jsg/README.md has Feature Flags documentation section
+- id: jsg_readme_updated_ffi_example
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md FFI example shows realm_create with new signature
+- id: feature_flags_not_stub
+  type: pass_to_pass
+  origin: static
+  description: feature_flags.rs has real validation logic and unit tests
+- id: lib_rs_module_declaration
+  type: pass_to_pass
+  origin: static
+  description: lib.rs declares and re-exports feature_flags module
 rubric:
-  - rule: "AGENTS.md feature flags convention should be consistent with existing convention formatting (bold key, colon, description)"
-    source:
-      path: "src/rust/AGENTS.md"
-      lines: "28-32"
-      commit: "d6046133f33e986f27c166556e9036efd2c1ec85"
-  - rule: "README.md Feature Flags section should follow the existing documentation style (H2 heading, code examples, explanation)"
-    source:
-      path: "src/rust/jsg/README.md"
-      lines: "1-40"
-      commit: "d6046133f33e986f27c166556e9036efd2c1ec85"
+- rule: AGENTS.md feature flags convention should be consistent with existing convention
+    formatting (bold key, colon, description)
+  source:
+    path: src/rust/AGENTS.md
+    lines: 28-32
+    commit: d6046133f33e986f27c166556e9036efd2c1ec85
+- rule: README.md Feature Flags section should follow the existing documentation style
+    (H2 heading, code examples, explanation)
+  source:
+    path: src/rust/jsg/README.md
+    lines: 1-40
+    commit: d6046133f33e986f27c166556e9036efd2c1ec85
+config_edits:
+- path: src/rust/AGENTS.md
+  tier: 1
+  gold_added: '| `jsg/`               | Rust JSG bindings: `Lock`, `Ref<T>`, `Resource`,
+    `Struct`, `Type`, `Realm`, `FeatureFlags`, module registration |
+
+    - **Feature flags**: `Lock::feature_flags()` returns a capnp `compatibility_flags::Reader`
+    for the current worker. Use `lock.feature_flags().get_node_js_compat()`. Flags
+    are parsed once and stored in the `Realm` at construction; C++ passes canonical
+    capnp bytes to `realm_create()`. Schema: `src/workerd/io/compatibility-date.capnp`,
+    generated Rust bindings: `compatibility_date_capnp` crate.'
+  gold_removed: '| `jsg/`               | Rust JSG bindings: `Lock`, `Ref<T>`, `Resource`,
+    `Struct`, `Type`, `Realm`, module registration        |'
+- path: src/rust/jsg/README.md
+  tier: 2
+  gold_added: "pub unsafe fn realm_create(\n    isolate: *mut v8::ffi::Isolate,\n\
+    \    feature_flags_data: &[u8],\n) -> Box<Realm> {\n\n## Feature Flags (Compatibility\
+    \ Flags)\n\n`Lock::feature_flags()` provides Rust-native access to the worker's\
+    \ compatibility flags, backed by the Cap'n Proto Rust crate (`capnp`). The flags\
+    \ are deserialized from the `CompatibilityFlags` schema in `src/workerd/io/compatibility-date.capnp`.\n\
+    \n### Reading flags\n\n```rust\nif lock.feature_flags().get_node_js_compat() {\n\
+    \    // Node.js compatibility behavior\n}\n```\n\n`feature_flags()` returns a\
+    \ capnp-generated `compatibility_flags::Reader` with a getter for each boolean\
+    \ flag (e.g., `get_node_js_compat()`, `get_url_standard()`, `get_fetch_refuses_unknown_protocols()`).\n\
+    \n### How it works\n\n1. During worker initialization, C++ canonicalizes the worker's\
+    \ `CompatibilityFlags` via `capnp::canonicalize()` and passes the bytes to `realm_create()`,\
+    \ which parses them once and stores the result in the per-context `Realm`.\n2.\
+    \ `lock.feature_flags()` reads the cached `FeatureFlags` and returns its capnp\
+    \ reader. No copies or re-parsing on access.\n\n### Key types and files\n\n| Item\
+    \ | Location |\n|------|----------|\n| `FeatureFlags` struct | `src/rust/jsg/feature_flags.rs`\
+    \ |\n| `Lock::feature_flags()` | `src/rust/jsg/lib.rs` |\n| `realm_create()` FFI\
+    \ | `src/rust/jsg/lib.rs` (CXX bridge) |\n| C++ call site | `src/workerd/io/worker.c++`\
+    \ (`initIsolate`) |\n| Cap'n Proto schema | `src/workerd/io/compatibility-date.capnp`\
+    \ |\n| Generated Rust bindings | `//src/workerd/io:compatibility-date_capnp_rust`\
+    \ (Bazel target) |"
+  gold_removed: 'pub unsafe fn realm_create(isolate: *mut v8::ffi::Isolate) -> Box<Realm>
+    {'

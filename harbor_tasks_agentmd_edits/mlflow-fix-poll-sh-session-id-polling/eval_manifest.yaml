@@ -1,55 +1,70 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "mlflow/mlflow"
+  repo: mlflow/mlflow
   pr: 21888
-  base_commit: "e226b6470db43c522bf00ca5e5a4cd7f51f83e5b"
-  merge_commit: "703372b1c23f679b07fa63d76a1e8d16d3917e8c"
-
+  base_commit: e226b6470db43c522bf00ca5e5a4cd7f51f83e5b
+  merge_commit: 703372b1c23f679b07fa63d76a1e8d16d3917e8c
 checks:
-  - id: bash_syntax
-    type: pass_to_pass
-    origin: static
-    description: "poll.sh must be valid bash syntax"
-
-  - id: copilot_skill_files_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Copilot skill files (poll.sh and SKILL.md) must exist"
-
-  - id: poll_sh_executable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "poll.sh must have bash shebang and be executable"
-
-  - id: skill_md_valid_yaml_frontmatter
-    type: pass_to_pass
-    origin: repo_tests
-    description: "SKILL.md must have valid YAML frontmatter structure"
-
-  - id: skill_md_has_required_fields
-    type: pass_to_pass
-    origin: repo_tests
-    description: "SKILL.md must have required frontmatter fields (name, description, allowed-tools)"
-
-  - id: poll_session_id_polling
-    type: fail_to_pass
-    origin: pr_diff
-    description: "poll.sh accepts session_id as $1 and calls 'gh agent-task view' with it"
-
-  - id: poll_no_timeline_api
-    type: fail_to_pass
-    origin: pr_diff
-    description: "poll.sh no longer uses the timeline API for polling"
-
-  - id: skill_md_allows_agent_task_view
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md allowed-tools includes 'gh agent-task view'"
-
-  - id: skill_md_documents_session_id
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md documents session ID extraction for poll.sh"
-
+- id: bash_syntax
+  type: pass_to_pass
+  origin: static
+  description: poll.sh must be valid bash syntax
+- id: copilot_skill_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Copilot skill files (poll.sh and SKILL.md) must exist
+- id: poll_sh_executable
+  type: pass_to_pass
+  origin: repo_tests
+  description: poll.sh must have bash shebang and be executable
+- id: skill_md_valid_yaml_frontmatter
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md must have valid YAML frontmatter structure
+- id: skill_md_has_required_fields
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md must have required frontmatter fields (name, description,
+    allowed-tools)
+- id: poll_session_id_polling
+  type: fail_to_pass
+  origin: pr_diff
+  description: poll.sh accepts session_id as $1 and calls 'gh agent-task view' with
+    it
+- id: poll_no_timeline_api
+  type: fail_to_pass
+  origin: pr_diff
+  description: poll.sh no longer uses the timeline API for polling
+- id: skill_md_allows_agent_task_view
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md allowed-tools includes 'gh agent-task view'
+- id: skill_md_documents_session_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md documents session ID extraction for poll.sh
 rubric: []
+config_edits:
+- path: .claude/skills/copilot/SKILL.md
+  tier: 1
+  gold_added: '- Bash(gh agent-task view:*)
+
+    Once Copilot starts working, extract the session ID from the output URL and poll
+    in the background until Copilot finishes:
+
+    # gh agent-task create returns a URL like:
+
+    # https://github.com/mlflow/mlflow/pull/21887/agent-sessions/523bb0e1-...
+
+    session_url=$(gh agent-task create -F task-desc.md)
+
+    session_id="${session_url##*/}"
+
+
+    # Poll using session ID
+
+    bash .claude/skills/copilot/poll.sh "$session_id" "<owner>/<repo>" <pr_number>'
+  gold_removed: 'Once Copilot starts working, poll in the background until Copilot
+    finishes:
+
+    bash .claude/skills/copilot/poll.sh <owner>/<repo> <pr_number>'

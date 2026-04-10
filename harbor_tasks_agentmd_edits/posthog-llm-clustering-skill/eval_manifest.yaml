@@ -1,109 +1,130 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PostHog/posthog"
+  repo: PostHog/posthog
   pr: 53107
-  base_commit: "d67b05b91702b8d6c5fcf03a1361d1afe7daf287"
-  merge_commit: "ee9eb212266b294edb421b0030c567fba458fb68"
-
+  base_commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
+  merge_commit: ee9eb212266b294edb421b0030c567fba458fb68
 checks:
-  # ---------------------------------------------------------------------------
-  # Gates (pass_to_pass, static) — syntax / configuration validation
-  # ---------------------------------------------------------------------------
-
-  - id: tools_yaml_valid
-    type: pass_to_pass
-    origin: static
-    description: "tools.yaml must be valid YAML with required structure"
-
-  - id: pyproject_toml_valid
-    type: pass_to_pass
-    origin: static
-    description: "pyproject.toml must be valid TOML with tool section"
-
-  - id: package_json_valid
-    type: pass_to_pass
-    origin: static
-    description: "package.json must be valid JSON with lint-staged section"
-
-  # ---------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core behavioral/config tests
-  # ---------------------------------------------------------------------------
-
-  - id: clustering_jobs_list_enabled
-    type: fail_to_pass
-    origin: pr_diff
-    description: "llm-analytics-clustering-jobs-list tool must be enabled with proper config via YAML parsing in subprocess"
-
-  - id: clustering_jobs_retrieve_enabled
-    type: fail_to_pass
-    origin: pr_diff
-    description: "llm-analytics-clustering-jobs-retrieve tool must be enabled with proper config via YAML parsing in subprocess"
-
-  - id: skill_directory_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "exploring-llm-clusters skill directory must be created"
-
-  - id: skill_md_exists_with_frontmatter
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md must exist with proper frontmatter parsed via regex in subprocess"
-
-  - id: skill_md_has_required_sections
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md must document tools, clustering concepts, workflows, investigation patterns, and tips"
-
-  - id: print_clusters_script_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "print_clusters.py helper script must exist in scripts/ directory"
-
-  - id: print_clusters_script_runnable
-    type: fail_to_pass
-    origin: pr_diff
-    description: "print_clusters.py must have valid Python syntax via py_compile in subprocess"
-
-  - id: print_clusters_script_functional
-    type: fail_to_pass
-    origin: pr_diff
-    description: "print_clusters.py must correctly parse and format cluster JSON data via subprocess execution"
-
-  - id: print_clusters_sql_format
-    type: fail_to_pass
-    origin: pr_diff
-    description: "print_clusters.py must handle SQL result format with metadata extraction via subprocess"
-
-  - id: pyproject_toml_has_ruff_exclusion
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pyproject.toml must exclude skill scripts from ruff via TOML parsing in subprocess"
-
-  - id: package_json_has_lint_staged_exclusion
-    type: fail_to_pass
-    origin: pr_diff
-    description: "package.json lint-staged must exclude skill scripts via JSON parsing in subprocess"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (static) — structural consistency
-  # ---------------------------------------------------------------------------
-
-  - id: skill_md_consistent_style
-    type: pass_to_pass
-    origin: static
-    description: "SKILL.md follows existing skill documentation style with tables, code blocks, and headers"
-
+- id: tools_yaml_valid
+  type: pass_to_pass
+  origin: static
+  description: tools.yaml must be valid YAML with required structure
+- id: pyproject_toml_valid
+  type: pass_to_pass
+  origin: static
+  description: pyproject.toml must be valid TOML with tool section
+- id: package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: package.json must be valid JSON with lint-staged section
+- id: clustering_jobs_list_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: llm-analytics-clustering-jobs-list tool must be enabled with proper
+    config via YAML parsing in subprocess
+- id: clustering_jobs_retrieve_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: llm-analytics-clustering-jobs-retrieve tool must be enabled with proper
+    config via YAML parsing in subprocess
+- id: skill_directory_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: exploring-llm-clusters skill directory must be created
+- id: skill_md_exists_with_frontmatter
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must exist with proper frontmatter parsed via regex in subprocess
+- id: skill_md_has_required_sections
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must document tools, clustering concepts, workflows, investigation
+    patterns, and tips
+- id: print_clusters_script_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: print_clusters.py helper script must exist in scripts/ directory
+- id: print_clusters_script_runnable
+  type: fail_to_pass
+  origin: pr_diff
+  description: print_clusters.py must have valid Python syntax via py_compile in subprocess
+- id: print_clusters_script_functional
+  type: fail_to_pass
+  origin: pr_diff
+  description: print_clusters.py must correctly parse and format cluster JSON data
+    via subprocess execution
+- id: print_clusters_sql_format
+  type: fail_to_pass
+  origin: pr_diff
+  description: print_clusters.py must handle SQL result format with metadata extraction
+    via subprocess
+- id: pyproject_toml_has_ruff_exclusion
+  type: fail_to_pass
+  origin: pr_diff
+  description: pyproject.toml must exclude skill scripts from ruff via TOML parsing
+    in subprocess
+- id: package_json_has_lint_staged_exclusion
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json lint-staged must exclude skill scripts via JSON parsing
+    in subprocess
+- id: skill_md_consistent_style
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md follows existing skill documentation style with tables, code
+    blocks, and headers
 rubric:
-  # Soft rules for LLM judge
-  - rule: "Skill documentation should be clear and actionable for agents investigating LLM clusters"
-    source:
-      path: ".agents/skills/writing-skills/SKILL.md"
-      lines: "1-50"
-      commit: "d67b05b91702b8d6c5fcf03a1361d1afe7daf287"
-
-  - rule: "Scripts in skills should have proper CLI interfaces with usage messages"
-    source:
-      path: ".agents/skills/writing-skills/SKILL.md"
-      lines: "50-100"
-      commit: "d67b05b91702b8d6c5fcf03a1361d1afe7daf287"
+- rule: Skill documentation should be clear and actionable for agents investigating
+    LLM clusters
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: 1-50
+    commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
+- rule: Scripts in skills should have proper CLI interfaces with usage messages
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: 50-100
+    commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
+config_edits:
+- path: products/llm_analytics/skills/exploring-llm-clusters/SKILL.md
+  tier: 1
+  gold_added: "---\nname: exploring-llm-clusters\ndescription: 'Investigate LLM analytics\
+    \ clusters — understand usage patterns in AI/LLM traffic, compare cluster behavior,\
+    \ compute cost/latency metrics, and drill into individual traces within clusters.'\n\
+    ---\n\n# Exploring LLM clusters\n\nUse this skill when investigating LLM analytics\
+    \ clusters —\nunderstanding what patterns exist in your AI/LLM traffic,\ncomparing\
+    \ cluster behavior, and drilling into individual clusters.\n\n## Tools\n\n| Tool\
+    \                                             | Purpose                      \
+    \                   |\n| ------------------------------------------------ | -----------------------------------------------\
+    \ |\n| `posthog:llm-analytics-clustering-jobs-list`     | List clustering job\
+    \ configurations for the team |\n| `posthog:llm-analytics-clustering-jobs-retrieve`\
+    \ | Get a specific clustering job by ID             |\n| `posthog:execute-sql`\
+    \                            | Query cluster run events and compute metrics  \
+    \  |\n| `posthog:query-llm-traces-list`                  | Find traces belonging\
+    \ to a cluster              |\n| `posthog:query-llm-trace`                   \
+    \     | Inspect a specific trace in detail              |\n\n## How clustering\
+    \ works\n\nPostHog clusters LLM traces (or individual generations) by embedding\
+    \ similarity.\nA Temporal workflow runs periodically or on-demand, producing cluster\
+    \ events stored as\n`$ai_trace_clusters` (trace-level) or `$ai_generation_clusters`\
+    \ (generation-level).\n\nEach cluster event contains:\n\n- `$ai_clustering_run_id`\
+    \ — unique run identifier (format: `<team_id>_<level>_<YYYYMMDD>_<HHMMSS>[_<job_id>]`)\n\
+    - `$ai_clustering_level` — `\"trace\"` or `\"generation\"`\n- `$ai_window_start`\
+    \ / `$ai_window_end` — time window analyzed\n- `$ai_total_items_analyzed` — number\
+    \ of traces/generations processed\n- `$ai_clusters` — JSON array of cluster objects\n\
+    - `$ai_clustering_params` — algorithm parameters used\n\n### Cluster object shape\
+    \ (inside `$ai_clusters`)\n\n```json\n{\n  \"cluster_id\": 0,\n  \"size\": 42,\n\
+    \  \"title\": \"User authentication flows\",\n  \"description\": \"Traces involving\
+    \ login, signup, and token refresh operations\",\n  \"traces\": {\n    \"<trace_or_generation_id>\"\
+    : {\n      \"distance_to_centroid\": 0.123,\n      \"rank\": 0,\n      \"x\":\
+    \ -2.34,\n      \"y\": 1.56,\n      \"timestamp\": \"2026-03-28T10:00:00Z\",\n\
+    \      \"trace_id\": \"abc-123\",\n      \"generation_id\": \"gen-456\"\n    }\n\
+    \  },\n  \"centroid_x\": -2.1,\n  \"centroid_y\": 1.4\n}\n```\n\n- `cluster_id:\
+    \ -1` is the **noise/outlier** cluster (items that didn't fit any cluster)\n-\
+    \ Items in `traces` are keyed by trace ID (trace-level) or generation event UUID\
+    \ (generation-level)\n- `rank` orders items by proximity to centroid (0 = closest)\n\
+    - `x`, `y` are 2D coordinates for visualization (UMAP/PCA/t-SNE reduced)\n\n##\
+    \ Clustering jobs\n\nEach team can have up to 5 clustering jobs. A job defines:\n\
+    \n- **name** — human-readable label\n- **analysis_level** — `\"trace\"` or `\"\
+    generation\"`\n- **event_filters** — property filters scoping which traces are\
+    \ included\n- **enabled** — whether the "
+  gold_removed: ''

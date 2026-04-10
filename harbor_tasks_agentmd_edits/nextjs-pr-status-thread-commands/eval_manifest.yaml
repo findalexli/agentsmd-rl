@@ -1,50 +1,48 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 90773
-  base_commit: "5102fd079423e01019266560237667aad629588e"
-  merge_commit: "b7c11377b150330566dd085735a2d33d5acf5a2b"
-
+  base_commit: 5102fd079423e01019266560237667aad629588e
+  merge_commit: b7c11377b150330566dd085735a2d33d5acf5a2b
 checks:
-  - id: repo_syntax_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo JavaScript files have no syntax errors (node --check)"
-
-  - id: reply_thread_no_args_exits_with_usage
-    type: fail_to_pass
-    origin: pr_diff
-    description: "reply-thread subcommand with no args exits 1 and prints usage"
-
-  - id: reply_thread_missing_body_exits_with_usage
-    type: fail_to_pass
-    origin: pr_diff
-    description: "reply-thread with threadId but no body exits 1 and prints usage"
-
-  - id: resolve_thread_no_args_exits_with_usage
-    type: fail_to_pass
-    origin: pr_diff
-    description: "resolve-thread subcommand with no args exits 1 and prints usage"
-
-  - id: thread_md_includes_commands_section
-    type: fail_to_pass
-    origin: pr_diff
-    description: "generateThreadMd produces Commands section with reply and resolve commands"
-
-  - id: skill_md_thread_resolution_rule
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md includes guidance on replying to and resolving review threads"
-
-  - id: workflow_md_resolving_threads_section
-    type: fail_to_pass
-    origin: pr_diff
-    description: "workflow.md includes Resolving Review Threads section with commands"
-
+- id: repo_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo JavaScript files have no syntax errors (node --check)
+- id: reply_thread_no_args_exits_with_usage
+  type: fail_to_pass
+  origin: pr_diff
+  description: reply-thread subcommand with no args exits 1 and prints usage
+- id: reply_thread_missing_body_exits_with_usage
+  type: fail_to_pass
+  origin: pr_diff
+  description: reply-thread with threadId but no body exits 1 and prints usage
+- id: resolve_thread_no_args_exits_with_usage
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolve-thread subcommand with no args exits 1 and prints usage
+- id: thread_md_includes_commands_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: generateThreadMd produces Commands section with reply and resolve commands
+- id: skill_md_thread_resolution_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md includes guidance on replying to and resolving review threads
+- id: workflow_md_resolving_threads_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: workflow.md includes Resolving Review Threads section with commands
 rubric:
-  - rule: "Skill documentation updates follow the structure-for-action convention: step-by-step procedures with ready-to-use commands, not just descriptions."
-    source:
-      path: ".agents/skills/authoring-skills/SKILL.md"
-      lines: "77-85"
-      commit: "5102fd079423e01019266560237667aad629588e"
+- rule: 'Skill documentation updates follow the structure-for-action convention: step-by-step
+    procedures with ready-to-use commands, not just descriptions.'
+  source:
+    path: .agents/skills/authoring-skills/SKILL.md
+    lines: 77-85
+    commit: 5102fd079423e01019266560237667aad629588e
+config_edits:
+- path: .agents/skills/pr-status-triage/SKILL.md
+  tier: 1
+  gold_added: 6. After addressing review comments, reply to the thread describing
+    what was done, then resolve it. See `thread-N.md` files for ready-to-use commands.
+  gold_removed: ''

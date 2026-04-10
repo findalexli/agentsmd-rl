@@ -75,3 +75,55 @@ rubric:
     path: .agent/skills/pr_review/reference/router.md
     lines: 1-7
     commit: 2e3492464769b468b7471ee0b7d17a56f253344b
+config_edits:
+- path: .agent/skills/pr_review/SKILL.md
+  tier: 1
+  gold_added: "---\nname: PR Review\ndescription: Guidelines and tools for reviewing\
+    \ pull requests in the Angular repository.\n---\n\n# PR Review Guidelines\n\n\
+    When reviewing a pull request for the `angular` repository, follow these essential\
+    \ guidelines to ensure high-quality contributions:\n\n1. **Context & Ecosystem**:\n\
+    \   - Keep in mind that this is the core Angular framework. Changes here can impact\
+    \ millions of developers.\n   - Be mindful of backwards compatibility. Breaking\
+    \ changes require strict approval processes and deprecation periods.\n\n2. **Key\
+    \ Focus Areas**:\n   - **Comprehensive Reviews**: You **MUST always** perform\
+    \ a deep, comprehensive review of the _entire_ pull request. If the user asks\
+    \ you to look into a specific issue, file, or area of concern, you must investigate\
+    \ that specific area _in addition to_ reviewing the rest of the PR's substantive\
+    \ changes. Do not terminate your review after addressing only the user's focal\
+    \ point.\n   - **Package-Specific Guidelines**: Check if there are specific guidelines\
+    \ for the package being modified in the `reference/` directory (e.g., `reference/router.md`).\
+    \ Always prioritize these rules for their respective packages.\n   - **Commit\
+    \ Messages**: Evaluate the quality of commit messages. They should explain the\
+    \ _why_ behind the change, not just the _what_. Someone should be able to look\
+    \ at the commit history years from now and clearly understand the context and\
+    \ reasoning for the change.\n   - **Code Cleanliness**: Ensure the code is readable,\
+    \ maintainable, and follows Angular's project standards.\n   - **Performance**:\
+    \ Look out for code that might negatively impact runtime performance or bundle\
+    \ size, particularly in hot paths like change detection or rendering.\n   - **Testing**:\
+    \ Ensure all new logic has comprehensive tests, including edge cases. **Do NOT\
+    \ run tests locally** as part of your review process. CI handles this automatically,\
+    \ and running tests locally is redundant and inefficient.\n   - **API Design**:\
+    \ Ensure new public APIs are well-des"
+  gold_removed: ''
+- path: .agent/skills/pr_review/reference/router.md
+  tier: 2
+  gold_added: '# Router PR Review Guidelines
+
+
+    When reviewing pull requests that modify the Angular Router (`packages/router`),
+    pay special attention to the following:
+
+
+    - **Timing Sensitivity**: The router is extremely sensitive to timing changes.
+    Any changes that alter the asynchronous timing of navigations, resolvers, or guards
+    are almost always breaking changes and must be scrutinized carefully.
+
+    - **Testing Practices**: Tests should usually use the `RouterTestingHarness`.
+    Many existing tests are older and do not use this harness. Do not blindly follow
+    the shape of existing tests when writing or reviewing new ones; encourage the
+    use of modern testing utilities.
+
+    - **Feature Justification**: Changes to router core code should be well-justified.
+    Consider whether the change is proven to be a core developer ask, such as resolving
+    a highly upvoted GitHub issue or addressing a critical bug.'
+  gold_removed: ''

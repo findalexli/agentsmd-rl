@@ -145,3 +145,71 @@ rubric:
 
 
     ##'
+config_edits:
+- path: .claude/skills/clickup/SKILL.md
+  tier: 1
+  gold_added: '| `watch <task> <user>` | Notify user via @mention comment (watchers
+    not supported in API) |
+
+    | `tag <task> "tag_name"` | Add a tag to task |
+
+    | `description <task> "text"` | Update task description (markdown supported) |
+
+    ### Notify Users (Watch)
+
+
+    ```bash
+
+    # Notify user via @mention comment (ClickUp API doesn''t support adding watchers
+    directly)
+
+    node .claude/skills/clickup/query.mjs watch 86a1b2c3d koen
+
+
+    # Notify by email
+
+    node .claude/skills/clickup/query.mjs watch 86a1b2c3d jane@example.com
+
+    ```
+
+
+    ### Add Tags
+
+
+    ```bash
+
+    # Add a tag to a task
+
+    node .claude/skills/clickup/query.mjs tag 86a1b2c3d "DevOps"
+
+    node .claude/skills/clickup/query.mjs tag 86a1b2c3d "bug"
+
+    ```
+
+
+    ### Update Description
+
+
+    ```bash
+
+    # Update task description with markdown
+
+    node .claude/skills/clickup/query.mjs description 86a1b2c3d "## Summary
+
+    This is a **bold** statement.
+
+
+    - Item 1
+
+    - Item 2
+
+
+    See [documentation](https://example.com) for more info."
+
+    ```
+
+
+    - **Collaboration**: View recent comments for context, add watchers
+
+    - **Task organization**: Add tags to categorize tasks'
+  gold_removed: '- **Collaboration**: View recent comments for context'

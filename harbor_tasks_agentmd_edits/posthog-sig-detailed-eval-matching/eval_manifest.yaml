@@ -1,73 +1,123 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PostHog/posthog"
+  repo: PostHog/posthog
   pr: 51319
-  base_commit: "7b8a1992516a0218c75784e8d2c987f78118d400"
-  merge_commit: "ca291b5bdb1e943f755d7da85208129f394f8081"
-
+  base_commit: 7b8a1992516a0218c75784e8d2c987f78118d400
+  merge_commit: ca291b5bdb1e943f755d7da85208129f394f8081
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified Python files must parse without errors"
-
-  - id: cosine_distance_behavior
-    type: fail_to_pass
-    origin: pr_diff
-    description: "cosine_distance static method exists on EmbeddingStore and computes correctly"
-
-  - id: specificity_split_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "MatchFailureMode enum must not contain SPECIFICITY_SPLIT"
-
-  - id: new_eval_metrics_emitted
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_capture_match_quality emits correct_match_pre_specificity, query_diversity, and candidate_diversity"
-
-  - id: diversity_computation_logic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Diversity metrics use itertools.combinations for pairwise cosine and Jaccard computation"
-
-  - id: agents_md_metrics_updated
-    type: fail_to_pass
-    origin: agent_config
-    description: "AGENTS.md metrics table documents new metrics and removes SPECIFICITY_SPLIT"
-    source:
-      path: "products/signals/eval/AGENTS.md"
-      lines: "78-88"
-      commit: "7b8a1992516a0218c75784e8d2c987f78118d400"
-
-  - id: agents_md_new_sql_sections
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md has new SQL sections for specificity judge impact and diversity queries"
-
-  - id: agents_md_sql_no_specificity_split
-    type: fail_to_pass
-    origin: agent_config
-    description: "SQL query in AGENTS.md must not reference SPECIFICITY_SPLIT failure mode"
-    source:
-      path: "products/signals/eval/AGENTS.md"
-      lines: "157-178"
-      commit: "7b8a1992516a0218c75784e8d2c987f78118d400"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "_capture_match_quality has substantial logic, not a stub"
-
-  - id: repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linting passes on modified eval files"
-
-  - id: repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff formatting passes on modified eval files"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files must parse without errors
+- id: cosine_distance_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: cosine_distance static method exists on EmbeddingStore and computes
+    correctly
+- id: specificity_split_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: MatchFailureMode enum must not contain SPECIFICITY_SPLIT
+- id: new_eval_metrics_emitted
+  type: fail_to_pass
+  origin: pr_diff
+  description: _capture_match_quality emits correct_match_pre_specificity, query_diversity,
+    and candidate_diversity
+- id: diversity_computation_logic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Diversity metrics use itertools.combinations for pairwise cosine and
+    Jaccard computation
+- id: agents_md_metrics_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: AGENTS.md metrics table documents new metrics and removes SPECIFICITY_SPLIT
+  source:
+    path: products/signals/eval/AGENTS.md
+    lines: 78-88
+    commit: 7b8a1992516a0218c75784e8d2c987f78118d400
+- id: agents_md_new_sql_sections
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md has new SQL sections for specificity judge impact and diversity
+    queries
+- id: agents_md_sql_no_specificity_split
+  type: fail_to_pass
+  origin: agent_config
+  description: SQL query in AGENTS.md must not reference SPECIFICITY_SPLIT failure
+    mode
+  source:
+    path: products/signals/eval/AGENTS.md
+    lines: 157-178
+    commit: 7b8a1992516a0218c75784e8d2c987f78118d400
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: _capture_match_quality has substantial logic, not a stub
+- id: repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on modified eval files
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff formatting passes on modified eval files
 rubric: []
+config_edits:
+- path: products/signals/eval/AGENTS.md
+  tier: 1
+  gold_added: "| Experiment                     | Granularity | Metrics          \
+    \                                                                            \
+    \                                                                            \
+    \                               |\n| ------------------------------ | -----------\
+    \ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\
+    \ |\n| `match-quality`                | Per-signal  | `correct_match` (binary),\
+    \ `correct_match_pre_specificity` (binary), failure mode: NONE/UNDERGROUP/OVERGROUP,\
+    \ `query_diversity` (numeric, cosine distance), `candidate_diversity` (numeric,\
+    \ 1 − Jaccard) |\n| `{source}-actionability-check` | Per-signal  | `correct_classification`\
+    \ (binary) — did pre-emit filter agree with ground truth                     \
+    \                                                                            \
+    \                        |\n| `grouping-quality`             | Per-report  | `purity`,\
+    \ `is_pure`, `group_recall`                                                  \
+    \                                                                            \
+    \                                       |\n| `report-safety-check`          |\
+    \ Per-report  | `correct_classification` (binary) — safety judge vs ground truth\
+    \                                                                            \
+    \                                                            |\n| `report-actionability-check`\
+    \   | Per-report  | `correct_classification` (binary) — actionability judge vs\
+    \ ground truth                                                               \
+    \                                                                  |\n| `grouping-aggregate`\
+    \           | Global      | `ari`, `homogeneity`, `completeness`, `mean_purity`,\
+    \ `group_recall`, `malicious_leaked_rate`                                    \
+    \                                                                        |\n###\
+    \ Specificity judge impact\n\nCompares pre- and post-specificity correctness to\
+    \ show\nhow often the specificity judge helps (prevents overgroup),\nhurts (causes\
+    \ undergroup), or has no effect.\n\n```sql\nSELECT\n    multiIf(\n        pre.score\
+    \ = 1.0 AND post.score = 1.0, 'no_effect_correct',\n        pre.score = 0.0 AND\
+    \ post.score = 0.0 AND pre.reasoning = post.reasoning, 'no_effect_wrong',\n  \
+    \      pre.score = 0.0 AND post.score = 1.0, 'prevented_overgroup',\n        pre.score\
+    \ = 1.0 AND post.score = 0.0, 'caused_undergroup',\n        pre.score = 0.0 AND\
+    \ post.score = 0.0, 'changed_failure_mode',\n        'unknown'\n    ) AS specificity_impact,\n\
+    \    count() AS cnt\nFROM (\n    SELECT properties.$ai_experiment_item_name AS\
+    \ item, properties.$ai_score AS score, properties.$ai_reasoning AS reasoning\n\
+    \    FROM events\n    WHERE event = '$ai_evaluation' AND properties.$ai_eval_source\
+    \ = 'signals-grouping' AND properties.$ai_evaluation_type = 'offline'\n      AND\
+    \ properties.$ai_experiment_name = 'signals-g"
+  gold_removed: '| Experiment                     | Granularity | Metrics                                                                                      |
+
+    | ------------------------------ | ----------- | --------------------------------------------------------------------------------------------
+    |
+
+    | `match-quality`                | Per-signal  | `correct_match` (binary), failure
+    mode: NONE/UNDERGROUP/OVERGROUP/SPECIFICITY_SPLIT          |
+
+    | `{source}-actionability-check` | Per-signal  | `correct_classification` (binary)
+    — did pre-emit filter agree with ground truth              |
+
+    | `grouping-quality`             | Per-report  | `purity`, `is_pure`, `group_recall`                                                          |
+
+    | `report-safety-check`          | Per-report  | `correct_classification` (binary)
+    — safety judge vs ground truth                             |
+
+    | `report-actionability-check`   | Per-report  | `correct_classification` (binary)
+    — actionability judge vs ground truth                '

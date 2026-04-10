@@ -1,85 +1,83 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PostHog/posthog"
+  repo: PostHog/posthog
   pr: 53198
-  base_commit: "631f99184cf89fc8eef5163938c1a796a0e4af1b"
-  merge_commit: "1beb93dbfd9aac254f926e76dc73d62ba2e9f09a"
-
+  base_commit: 631f99184cf89fc8eef5163938c1a796a0e4af1b
+  merge_commit: 1beb93dbfd9aac254f926e76dc73d62ba2e9f09a
 checks:
-  # Gate — syntax/load check
-  - id: test_tool_utils_parseable
-    type: pass_to_pass
-    origin: static
-    description: "tool-utils.ts must be valid TypeScript that node can load"
-
-  # Core behavioral tests — runtime helpers
-  - id: test_pick_response_fields_top_level
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pickResponseFields keeps only specified top-level fields"
-
-  - id: test_pick_response_fields_wildcard
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pickResponseFields supports wildcard dot-path patterns on arrays"
-
-  - id: test_omit_response_fields_top_level
-    type: fail_to_pass
-    origin: pr_diff
-    description: "omitResponseFields removes specified top-level fields"
-
-  - id: test_omit_response_fields_wildcard
-    type: fail_to_pass
-    origin: pr_diff
-    description: "omitResponseFields supports wildcard dot-path patterns on arrays"
-
-  # Schema and codegen — BEHAVIORAL: actually execute code
-  - id: test_response_schema_validates_include_exclude
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Zod schema validates response config with include/exclude mutual exclusivity"
-
-  - id: test_build_response_filter_generates_correct_code
-    type: fail_to_pass
-    origin: pr_diff
-    description: "buildResponseFilter generates correct filtering code for include/exclude configs"
-
-  - id: test_feature_flags_yaml_response_include
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Feature flags tools.yaml has response.include with id, key, name, status"
-
-  # Config/documentation update tests
-  - id: test_skill_md_documents_response_config
-    type: fail_to_pass
-    origin: pr_diff
-    description: "implementing-mcp-tools SKILL.md documents response filtering with include/exclude and wildcards"
-
-  - id: test_definitions_readme_documents_response
-    type: fail_to_pass
-    origin: pr_diff
-    description: "services/mcp/definitions/README.md documents response filtering"
-
-  # Regression — existing exports preserved
-  - id: test_existing_with_posthog_url_export
-    type: pass_to_pass
-    origin: static
-    description: "Existing withPostHogUrl export must still be present in tool-utils.ts"
-
-  # Agent config compliance — Zod strict() rule
-  - id: test_response_schema_uses_strict
-    type: pass_to_pass
-    origin: agent_config
-    description: "Response schema object uses .strict() per SKILL.md validation rule"
-    source:
-      path: ".agents/skills/implementing-mcp-tools/SKILL.md"
-      lines: "144"
-      commit: "631f99184cf89fc8eef5163938c1a796a0e4af1b"
-
+- id: test_tool_utils_parseable
+  type: pass_to_pass
+  origin: static
+  description: tool-utils.ts must be valid TypeScript that node can load
+- id: test_pick_response_fields_top_level
+  type: fail_to_pass
+  origin: pr_diff
+  description: pickResponseFields keeps only specified top-level fields
+- id: test_pick_response_fields_wildcard
+  type: fail_to_pass
+  origin: pr_diff
+  description: pickResponseFields supports wildcard dot-path patterns on arrays
+- id: test_omit_response_fields_top_level
+  type: fail_to_pass
+  origin: pr_diff
+  description: omitResponseFields removes specified top-level fields
+- id: test_omit_response_fields_wildcard
+  type: fail_to_pass
+  origin: pr_diff
+  description: omitResponseFields supports wildcard dot-path patterns on arrays
+- id: test_response_schema_validates_include_exclude
+  type: fail_to_pass
+  origin: pr_diff
+  description: Zod schema validates response config with include/exclude mutual exclusivity
+- id: test_build_response_filter_generates_correct_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: buildResponseFilter generates correct filtering code for include/exclude
+    configs
+- id: test_feature_flags_yaml_response_include
+  type: fail_to_pass
+  origin: pr_diff
+  description: Feature flags tools.yaml has response.include with id, key, name, status
+- id: test_skill_md_documents_response_config
+  type: fail_to_pass
+  origin: pr_diff
+  description: implementing-mcp-tools SKILL.md documents response filtering with include/exclude
+    and wildcards
+- id: test_definitions_readme_documents_response
+  type: fail_to_pass
+  origin: pr_diff
+  description: services/mcp/definitions/README.md documents response filtering
+- id: test_existing_with_posthog_url_export
+  type: pass_to_pass
+  origin: static
+  description: Existing withPostHogUrl export must still be present in tool-utils.ts
+- id: test_response_schema_uses_strict
+  type: pass_to_pass
+  origin: agent_config
+  description: Response schema object uses .strict() per SKILL.md validation rule
+  source:
+    path: .agents/skills/implementing-mcp-tools/SKILL.md
+    lines: '144'
+    commit: 631f99184cf89fc8eef5163938c1a796a0e4af1b
 rubric:
-  - rule: "Documentation updates are consistent with the style of existing YAML schema references in the SKILL.md and README"
-    source:
-      path: ".agents/skills/implementing-mcp-tools/SKILL.md"
-      lines: "120-144"
-      commit: "631f99184cf89fc8eef5163938c1a796a0e4af1b"
+- rule: Documentation updates are consistent with the style of existing YAML schema
+    references in the SKILL.md and README
+  source:
+    path: .agents/skills/implementing-mcp-tools/SKILL.md
+    lines: 120-144
+    commit: 631f99184cf89fc8eef5163938c1a796a0e4af1b
+config_edits:
+- path: .agents/skills/implementing-mcp-tools/SKILL.md
+  tier: 1
+  gold_added: "response: # filter response fields (applied per-item on list endpoints)\n\
+    \      include: [id, key, name] # keep only these fields (dot-path wildcards supported)\n\
+    \      exclude: [filters.groups.*.properties] # remove these fields\n      # include\
+    \ and exclude are mutually exclusive"
+  gold_removed: ''
+- path: services/mcp/definitions/README.md
+  tier: 2
+  gold_added: "response: # filter response fields (applied per-item on list endpoints)\n\
+    \      include: [id, key, name] # keep only these fields (dot-path wildcards supported)\n\
+    \      exclude: [filters.groups.*.properties] # remove these fields\n      # include\
+    \ and exclude are mutually exclusive"
+  gold_removed: ''

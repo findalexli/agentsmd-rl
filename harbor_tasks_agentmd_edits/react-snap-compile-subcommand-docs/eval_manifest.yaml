@@ -4,51 +4,124 @@ source:
   pr: 35688
   base_commit: cd0c4879a2959db91f9bd51a09dafefedd95fb17
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: Modified TypeScript files have no obvious syntax errors
-  - id: constants_evaluate_with_babel_plugin_exports
-    type: fail_to_pass
-    origin: pr_diff
-    description: Transpile and evaluate constants.ts; verify BABEL_PLUGIN_ROOT/SRC are defined
-  - id: compile_command_in_yargs
-    type: fail_to_pass
-    origin: pr_diff
-    description: Parse runner.ts and verify compile <path> is a registered yargs command
-  - id: minimize_positional_path
-    type: fail_to_pass
-    origin: pr_diff
-    description: minimize command accepts path as positional arg, not --path flag
-  - id: path_resolution_uses_project_root
-    type: fail_to_pass
-    origin: pr_diff
-    description: Relative paths resolve from PROJECT_ROOT (compiler dir), not process.cwd()
-  - id: consumer_files_use_renamed_constants
-    type: fail_to_pass
-    origin: pr_diff
-    description: runner-worker, runner-watch, minimize use BABEL_PLUGIN_ROOT/SRC
-  - id: claude_md_documents_compile
-    type: fail_to_pass
-    origin: pr_diff
-    description: compiler/CLAUDE.md documents the yarn snap compile command
-  - id: claude_md_documents_minimize
-    type: fail_to_pass
-    origin: pr_diff
-    description: compiler/CLAUDE.md documents the yarn snap minimize command
-  - id: dev_guide_documents_commands
-    type: fail_to_pass
-    origin: pr_diff
-    description: DEVELOPMENT_GUIDE.md documents compile and minimize commands
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have no obvious syntax errors
+- id: constants_evaluate_with_babel_plugin_exports
+  type: fail_to_pass
+  origin: pr_diff
+  description: Transpile and evaluate constants.ts; verify BABEL_PLUGIN_ROOT/SRC are
+    defined
+- id: compile_command_in_yargs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Parse runner.ts and verify compile <path> is a registered yargs command
+- id: minimize_positional_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: minimize command accepts path as positional arg, not --path flag
+- id: path_resolution_uses_project_root
+  type: fail_to_pass
+  origin: pr_diff
+  description: Relative paths resolve from PROJECT_ROOT (compiler dir), not process.cwd()
+- id: consumer_files_use_renamed_constants
+  type: fail_to_pass
+  origin: pr_diff
+  description: runner-worker, runner-watch, minimize use BABEL_PLUGIN_ROOT/SRC
+- id: claude_md_documents_compile
+  type: fail_to_pass
+  origin: pr_diff
+  description: compiler/CLAUDE.md documents the yarn snap compile command
+- id: claude_md_documents_minimize
+  type: fail_to_pass
+  origin: pr_diff
+  description: compiler/CLAUDE.md documents the yarn snap minimize command
+- id: dev_guide_documents_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: DEVELOPMENT_GUIDE.md documents compile and minimize commands
 rubric:
-  - rule: Documentation for compile/minimize commands is consistent with the style of
-      existing CLAUDE.md sections
-    source:
-      path: compiler/CLAUDE.md
-      lines: 1-35
-      commit: cd0c4879a2959db91f9bd51a09dafefedd95fb17
-  - rule: Config update mentions that compile works on arbitrary files, not just fixtures
-    source:
-      path: compiler/CLAUDE.md
-      lines: 38-48
-      commit: 3ce1316b05968d2a8cffe42a110f2726f2c44c3e
+- rule: Documentation for compile/minimize commands is consistent with the style of
+    existing CLAUDE.md sections
+  source:
+    path: compiler/CLAUDE.md
+    lines: 1-35
+    commit: cd0c4879a2959db91f9bd51a09dafefedd95fb17
+- rule: Config update mentions that compile works on arbitrary files, not just fixtures
+  source:
+    path: compiler/CLAUDE.md
+    lines: 38-48
+    commit: 3ce1316b05968d2a8cffe42a110f2726f2c44c3e
+config_edits:
+- path: compiler/.claude/agents/investigate-error.md
+  tier: 1
+  gold_added: Execute `yarn snap -d -p <fixture-name>` to compile the fixture with
+    full debug output. This shows the state of the program after each compilation
+    pass. You can also use `yarn snap compile -d <path-to-fixture>`.
+  gold_removed: Execute `yarn snap -d -p <fixture-name>` to compile the fixture with
+    full debug output. This shows the state of the program after each compilation
+    pass.
+- path: compiler/CLAUDE.md
+  tier: 1
+  gold_added: '## Compiling Arbitrary Files
+
+
+    Use `yarn snap compile` to compile any file (not just fixtures) with the React
+    Compiler:
+
+
+    ```bash
+
+    # Compile a file and see the output
+
+    yarn snap compile <path>
+
+
+    # Compile with debug logging to see the state after each compiler pass
+
+    # This is an alternative to `yarn snap -d -p <pattern>` when you don''t have a
+    fixture file yet
+
+    yarn snap compile --debug <path>
+
+    ```
+
+
+    ## Minimizing Test Cases
+
+
+    Use `yarn snap minimize` to automatically reduce a failing test case to its minimal
+    reproduction:
+
+
+    ```bash
+
+    # Minimize a file that causes a compiler error
+
+    yarn snap minimize <path>
+
+
+    # Minimize and update the file in-place with the minimized version
+
+    yarn snap minimize --update <path>
+
+    ```'
+  gold_removed: ''
+- path: compiler/packages/babel-plugin-react-compiler/docs/passes/README.md
+  tier: 2
+  gold_added: '# Compile any file (not just fixtures) and see output
+
+    yarn snap compile <path>
+
+
+    # Compile any file with debug output (alternative to yarn snap -d -p when you
+    don''t have a fixture)
+
+    yarn snap compile --debug <path>
+
+
+    # Minimize a failing test case to its minimal reproduction
+
+    yarn snap minimize <path>'
+  gold_removed: ''

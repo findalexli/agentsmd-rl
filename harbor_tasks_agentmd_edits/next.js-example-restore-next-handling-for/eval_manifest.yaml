@@ -1,121 +1,147 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 90651
-  base_commit: "ef993b251cef0a71050515665c26cfd41cdf090f"
-  merge_commit: "7643fc948398c38fe0792836fb4c014a45f6fb07"
-
+  base_commit: ef993b251cef0a71050515665c26cfd41cdf090f
+  merge_commit: 7643fc948398c38fe0792836fb4c014a45f6fb07
 checks:
-  # ---------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core behavioral tests
-  # These tests should FAIL on base commit and PASS after the fix is applied.
-  # ---------------------------------------------------------------------------
-
-  - id: test_dockerfile_no_buildkit_cache_mount
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dockerfile build stage no longer uses BuildKit cache mount on .next/cache (which trapped fetch cache in unreachable volume)"
-
-  - id: test_dockerfile_has_mkdir_chown
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dockerfile runner stage creates writable .next directory with correct ownership (node:node)"
-
-  - id: test_dockerfile_has_optional_cache_copy
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dockerfile includes commented line for optional fetch cache persistence from build stage"
-
-  - id: test_dockerfile_bun_has_mkdir_chown
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dockerfile.bun runner stage creates writable .next directory with correct ownership (bun:bun)"
-
-  - id: test_readme_no_emoji_prefixes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README features list uses plain markdown bullets instead of emoji checkmarks"
-
-  # BEHAVIORAL TEST: Uses subprocess.run() to validate Dockerfile with docker build
-  - id: test_dockerfile_build_succeeds
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dockerfile passes docker build syntax validation (behavioral test using subprocess)"
-
-  # BEHAVIORAL TEST: Uses json.loads() to parse and validate package.json
-  - id: test_package_json_valid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "package.json is valid JSON with required build/start scripts and next dependency (behavioral test using subprocess)"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests) — Repo CI checks that should pass before AND after fix
-  # These tests verify the example maintains valid structure in both states.
-  # ---------------------------------------------------------------------------
-
-  - id: test_repo_readme_has_features_section
-    type: pass_to_pass
-    origin: repo_tests
-    description: "README has properly formatted Features section with markdown bullets"
-
-  - id: test_repo_dockerfile_multi_stage
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Dockerfile has proper 3-stage build structure (dependencies, builder, runner)"
-
-  - id: test_repo_dockerfile_bun_multi_stage
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Dockerfile.bun has proper multi-stage build structure with oven/bun base image"
-
-  - id: test_repo_dockerfile_has_cache_mounts
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Dockerfile uses BuildKit cache mounts for package manager stores (npm/yarn/pnpm)"
-
-  # BEHAVIORAL TEST: Uses yaml.safe_load() to validate compose.yml
-  - id: test_repo_compose_yml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "compose.yml has valid YAML structure with nextjs-standalone service (behavioral test using yaml parser)"
-
-  # BEHAVIORAL TEST: Uses npx tsc to validate TypeScript config
-  - id: test_repo_next_config_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "next.config.ts has valid standalone output configuration (behavioral test using TypeScript compiler)"
-
-  # BEHAVIORAL TEST: Uses json.loads() to validate package.json
-  - id: test_repo_package_json_scripts_work
-    type: pass_to_pass
-    origin: repo_tests
-    description: "package.json scripts are valid JSON with required fields (behavioral test using JSON parser)"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (static) — syntax / compilation checks
-  # These are basic structural checks that should always pass.
-  # ---------------------------------------------------------------------------
-
-  - id: test_dockerfile_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Dockerfile has valid basic structure with multi-stage build"
-
-  - id: test_dockerfile_bun_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Dockerfile.bun has valid basic structure"
-
-  - id: test_dockerfile_has_build_stage
-    type: pass_to_pass
-    origin: static
-    description: "Dockerfile has builder stage with build command"
-
-  - id: test_dockerfile_has_runner_stage
-    type: pass_to_pass
-    origin: static
-    description: "Dockerfile has runner stage with production server"
-
+- id: test_dockerfile_no_buildkit_cache_mount
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dockerfile build stage no longer uses BuildKit cache mount on .next/cache
+    (which trapped fetch cache in unreachable volume)
+- id: test_dockerfile_has_mkdir_chown
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dockerfile runner stage creates writable .next directory with correct
+    ownership (node:node)
+- id: test_dockerfile_has_optional_cache_copy
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dockerfile includes commented line for optional fetch cache persistence
+    from build stage
+- id: test_dockerfile_bun_has_mkdir_chown
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dockerfile.bun runner stage creates writable .next directory with correct
+    ownership (bun:bun)
+- id: test_readme_no_emoji_prefixes
+  type: fail_to_pass
+  origin: pr_diff
+  description: README features list uses plain markdown bullets instead of emoji checkmarks
+- id: test_dockerfile_build_succeeds
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dockerfile passes docker build syntax validation (behavioral test using
+    subprocess)
+- id: test_package_json_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json is valid JSON with required build/start scripts and next
+    dependency (behavioral test using subprocess)
+- id: test_repo_readme_has_features_section
+  type: pass_to_pass
+  origin: repo_tests
+  description: README has properly formatted Features section with markdown bullets
+- id: test_repo_dockerfile_multi_stage
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dockerfile has proper 3-stage build structure (dependencies, builder,
+    runner)
+- id: test_repo_dockerfile_bun_multi_stage
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dockerfile.bun has proper multi-stage build structure with oven/bun
+    base image
+- id: test_repo_dockerfile_has_cache_mounts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dockerfile uses BuildKit cache mounts for package manager stores (npm/yarn/pnpm)
+- id: test_repo_compose_yml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: compose.yml has valid YAML structure with nextjs-standalone service
+    (behavioral test using yaml parser)
+- id: test_repo_next_config_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: next.config.ts has valid standalone output configuration (behavioral
+    test using TypeScript compiler)
+- id: test_repo_package_json_scripts_work
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json scripts are valid JSON with required fields (behavioral
+    test using JSON parser)
+- id: test_dockerfile_syntax
+  type: pass_to_pass
+  origin: static
+  description: Dockerfile has valid basic structure with multi-stage build
+- id: test_dockerfile_bun_syntax
+  type: pass_to_pass
+  origin: static
+  description: Dockerfile.bun has valid basic structure
+- id: test_dockerfile_has_build_stage
+  type: pass_to_pass
+  origin: static
+  description: Dockerfile has builder stage with build command
+- id: test_dockerfile_has_runner_stage
+  type: pass_to_pass
+  origin: static
+  description: Dockerfile has runner stage with production server
 rubric: []
-  # No subjective rules from agent config files needed for this Dockerfile fix
+config_edits:
+- path: examples/with-docker/README.md
+  tier: 2
+  gold_added: '- Multi-stage Docker build for optimal image size
+
+    - Next.js standalone mode for minimal production builds
+
+    - Security best practices (non-root user)
+
+    - Slim Linux base image for optimal compatibility and smaller size
+
+    - BuildKit cache mounts for faster builds
+
+    - Production-ready configuration
+
+    - **BuildKit cache mounts**: Speeds up builds by caching package manager stores
+    (`/root/.npm`, `/usr/local/share/.cache/yarn`, `/root/.local/share/pnpm/store`).
+    See the Dockerfile for an optional `.next/cache` mount to speed up rebuilds.
+
+    - **Writable `.next` directory**: The `.next` directory is created and owned by
+    the `node` user so the server can write prerender cache and optimized images at
+    runtime
+
+    - **Standalone output**: Same optimized output as the Node.js version, with writable
+    `.next` directory for runtime cache
+
+    > [!IMPORTANT]
+
+    > **Node.js Version Maintenance**: This Dockerfile uses Node.js 24.13.0-slim,
+    which was the latest LTS version at the time of writing. To ensure security and
+    stay up-to-date, regularly check and update the `NODE_VERSION` ARG in the Dockerfile
+    to the latest Node.js LTS version. Check the latest version at [Nodejs official
+    website](https://nodejs.org/) and browse available Node.js images on [Docker Hub](https://hub.docker.com/_/node).'
+  gold_removed: '- ✅ Multi-stage Docker build for optimal image size
+
+    - ✅ Next.js standalone mode for minimal production builds
+
+    - ✅ Security best practices (non-root user)
+
+    - ✅ Slim Linux base image for optimal compatibility and smaller size
+
+    - ✅ BuildKit cache mounts for faster builds
+
+    - ✅ Production-ready configuration
+
+    - **BuildKit cache mounts**: Speeds up builds by caching package manager stores
+    (`/root/.npm`, `/usr/local/share/.cache/yarn`, `/root/.local/share/pnpm/store`)
+    and Next.js build cache (`/app/.next/cache`)
+
+    - **Standalone output**: Same optimized output as the Node.js version
+
+    **⚠️ Important - Node.js Version Maintenance**: This Dockerfile uses Node.js 24.13.0-slim,
+    which was the latest LTS version at the time of writing. To ensure security and
+    stay up-to-date, regularly check and update the `NODE_VERSION` ARG in the Dockerfile
+    to the latest Node.js LTS version. Check the latest version at [Nodejs official
+    website](https://nodejs.org/) and browse available Node.js images on [Docker Hub](https'

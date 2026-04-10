@@ -1,158 +1,187 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PostHog/posthog"
+  repo: PostHog/posthog
   pr: 53656
-  base_commit: "69f47d880ee65fd3e9a769a12a7d80997dea555e"
-  merge_commit: "92dcf444055fdc6379cfd469f0d1adaab6886e55"
-
+  base_commit: 69f47d880ee65fd3e9a769a12a7d80997dea555e
+  merge_commit: 92dcf444055fdc6379cfd469f0d1adaab6886e55
 checks:
-  # --- YAML validation (behavioral) ---
-  - id: test_tools_yaml_valid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "tools.yaml must be valid parseable YAML"
-
-  # --- Code behavior: tools.yaml configuration ---
-  - id: test_eval_summary_tool_enabled
-    type: fail_to_pass
-    origin: pr_diff
-    description: "tools.yaml must have llm-analytics-evaluation-summary-create enabled"
-
-  - id: test_eval_summary_tool_scopes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Tool must declare llm_analytics:write scope"
-
-  - id: test_eval_summary_tool_annotations_and_consent
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Tool must have correct annotations (not readOnly, not destructive, idempotent) and requires_ai_consent"
-
-  - id: test_eval_summary_tool_description_complete
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Tool must have a descriptive title and description with evaluation_id, filter, pass, and fail documented"
-
-  # --- TypeScript validation (behavioral) ---
-  - id: test_typescript_api_file_compiles
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Generated api.ts must have valid TypeScript syntax with exports and Zod schemas"
-
-  - id: test_zod_schema_exported_in_api_ts
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Generated api.ts must export the LlmAnalyticsEvaluationSummaryCreateBody Zod schema with evaluation_id, filter, force_refresh, generation_ids fields"
-
-  - id: test_tool_handler_registered_in_generated_tools
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Generated llm_analytics.ts must register the evaluation-summary handler with correct schema reference"
-
-  - id: test_generated_tools_record_has_entry
-    type: fail_to_pass
-    origin: pr_diff
-    description: "GENERATED_TOOLS record must include the evaluation-summary tool entry"
-
-  # --- JSON validation (behavioral) ---
-  - id: test_tool_def_json_valid_and_has_entry
-    type: fail_to_pass
-    origin: pr_diff
-    description: "generated-tool-definitions.json must be valid JSON and include the tool with scopes and consent"
-
-  - id: test_tool_def_all_json_has_entry
-    type: fail_to_pass
-    origin: pr_diff
-    description: "tool-definitions-all.json must also include the evaluation summary tool"
-
-  - id: test_snapshot_json_exists_and_valid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "JSON snapshot for the tool schema must exist with required properties (evaluation_id, filter, force_refresh, generation_ids)"
-
-  # --- Config/documentation: skills README (behavioral) ---
-  - id: test_skills_readme_valid_markdown
-    type: fail_to_pass
-    origin: pr_diff
-    description: "products/llm_analytics/skills/README.md must be valid markdown and list the exploring-llm-evaluations skill"
-
-  # --- Config/documentation: SKILL.md (behavioral) ---
-  - id: test_skill_md_exists_with_valid_frontmatter
-    type: fail_to_pass
-    origin: pr_diff
-    description: "exploring-llm-evaluations/SKILL.md must exist with valid YAML frontmatter (name, description) mentioning evaluations"
-
-  - id: test_skill_md_documents_summary_tool
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md must document the evaluation summary tool including filter and force_refresh parameters"
-
-  - id: test_skill_md_covers_both_evaluation_types
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md must document both hog and llm_judge evaluation types with their characteristics"
-
-  - id: test_skill_md_has_workflow_sections
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md must contain workflow guidance and reference the $ai_evaluation event schema"
-
-  # --- Agent config compliance: naming conventions ---
-  - id: test_skill_md_follows_naming_conventions
-    type: pass_to_pass
-    origin: agent_config
-    description: "SKILL.md frontmatter follows naming conventions from writing-skills guide (kebab-case, description < 1024 chars)"
-    source:
-      path: ".agents/skills/writing-skills/SKILL.md"
-      lines: "31-37"
-      commit: "69f47d880ee65fd3e9a769a12a7d80997dea555e"
-
-  # --- Agent config compliance: no wildcard imports ---
-  - id: test_no_wildcard_imports_in_generated_code
-    type: pass_to_pass
-    origin: agent_config
-    description: "Generated TypeScript must not use wildcard imports"
-    source:
-      path: ".agents/skills/implementing-mcp-tools/SKILL.md"
-      lines: "1-50"
-      commit: "69f47d880ee65fd3e9a769a12a7d80997dea555e"
-
-  # --- Pass-to-pass: regression ---
-  - id: test_existing_clustering_tool_unchanged
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Previously enabled clustering-jobs-list tool must remain enabled"
-
-  - id: test_existing_skills_remain_in_readme
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Previously listed skills must still appear in skills/README.md"
-
-  # --- Pass-to-pass: repo CI/CD checks (p2p enrichment) ---
-  - id: test_mcp_tools_yaml_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: MCP tools.yaml must be valid YAML syntax"
-
-  - id: test_mcp_schema_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: MCP generated-tool-definitions.json must be valid JSON"
-
-  - id: test_mcp_typescript_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: MCP generated TypeScript files must have valid syntax"
-
+- id: test_tools_yaml_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: tools.yaml must be valid parseable YAML
+- id: test_eval_summary_tool_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: tools.yaml must have llm-analytics-evaluation-summary-create enabled
+- id: test_eval_summary_tool_scopes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Tool must declare llm_analytics:write scope
+- id: test_eval_summary_tool_annotations_and_consent
+  type: fail_to_pass
+  origin: pr_diff
+  description: Tool must have correct annotations (not readOnly, not destructive,
+    idempotent) and requires_ai_consent
+- id: test_eval_summary_tool_description_complete
+  type: fail_to_pass
+  origin: pr_diff
+  description: Tool must have a descriptive title and description with evaluation_id,
+    filter, pass, and fail documented
+- id: test_typescript_api_file_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Generated api.ts must have valid TypeScript syntax with exports and
+    Zod schemas
+- id: test_zod_schema_exported_in_api_ts
+  type: fail_to_pass
+  origin: pr_diff
+  description: Generated api.ts must export the LlmAnalyticsEvaluationSummaryCreateBody
+    Zod schema with evaluation_id, filter, force_refresh, generation_ids fields
+- id: test_tool_handler_registered_in_generated_tools
+  type: fail_to_pass
+  origin: pr_diff
+  description: Generated llm_analytics.ts must register the evaluation-summary handler
+    with correct schema reference
+- id: test_generated_tools_record_has_entry
+  type: fail_to_pass
+  origin: pr_diff
+  description: GENERATED_TOOLS record must include the evaluation-summary tool entry
+- id: test_tool_def_json_valid_and_has_entry
+  type: fail_to_pass
+  origin: pr_diff
+  description: generated-tool-definitions.json must be valid JSON and include the
+    tool with scopes and consent
+- id: test_tool_def_all_json_has_entry
+  type: fail_to_pass
+  origin: pr_diff
+  description: tool-definitions-all.json must also include the evaluation summary
+    tool
+- id: test_snapshot_json_exists_and_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: JSON snapshot for the tool schema must exist with required properties
+    (evaluation_id, filter, force_refresh, generation_ids)
+- id: test_skills_readme_valid_markdown
+  type: fail_to_pass
+  origin: pr_diff
+  description: products/llm_analytics/skills/README.md must be valid markdown and
+    list the exploring-llm-evaluations skill
+- id: test_skill_md_exists_with_valid_frontmatter
+  type: fail_to_pass
+  origin: pr_diff
+  description: exploring-llm-evaluations/SKILL.md must exist with valid YAML frontmatter
+    (name, description) mentioning evaluations
+- id: test_skill_md_documents_summary_tool
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must document the evaluation summary tool including filter
+    and force_refresh parameters
+- id: test_skill_md_covers_both_evaluation_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must document both hog and llm_judge evaluation types with
+    their characteristics
+- id: test_skill_md_has_workflow_sections
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must contain workflow guidance and reference the $ai_evaluation
+    event schema
+- id: test_skill_md_follows_naming_conventions
+  type: pass_to_pass
+  origin: agent_config
+  description: SKILL.md frontmatter follows naming conventions from writing-skills
+    guide (kebab-case, description < 1024 chars)
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: 31-37
+    commit: 69f47d880ee65fd3e9a769a12a7d80997dea555e
+- id: test_no_wildcard_imports_in_generated_code
+  type: pass_to_pass
+  origin: agent_config
+  description: Generated TypeScript must not use wildcard imports
+  source:
+    path: .agents/skills/implementing-mcp-tools/SKILL.md
+    lines: 1-50
+    commit: 69f47d880ee65fd3e9a769a12a7d80997dea555e
+- id: test_existing_clustering_tool_unchanged
+  type: pass_to_pass
+  origin: pr_diff
+  description: Previously enabled clustering-jobs-list tool must remain enabled
+- id: test_existing_skills_remain_in_readme
+  type: pass_to_pass
+  origin: pr_diff
+  description: Previously listed skills must still appear in skills/README.md
+- id: test_mcp_tools_yaml_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: MCP tools.yaml must be valid YAML syntax'
+- id: test_mcp_schema_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: MCP generated-tool-definitions.json must be valid JSON'
+- id: test_mcp_typescript_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: MCP generated TypeScript files must have valid syntax'
 rubric:
-  - rule: "SKILL.md description should include trigger terms and when to use it, per the writing-skills guide"
-    source:
-      path: ".agents/skills/writing-skills/SKILL.md"
-      lines: "33"
-      commit: "69f47d880ee65fd3e9a769a12a7d80997dea555e"
-  - rule: "Config update is consistent with the style of existing skill documentation in exploring-llm-traces and exploring-llm-clusters"
-    source:
-      path: "products/llm_analytics/skills/README.md"
-      lines: "1-10"
-      commit: "69f47d880ee65fd3e9a769a12a7d80997dea555e"
+- rule: SKILL.md description should include trigger terms and when to use it, per
+    the writing-skills guide
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '33'
+    commit: 69f47d880ee65fd3e9a769a12a7d80997dea555e
+- rule: Config update is consistent with the style of existing skill documentation
+    in exploring-llm-traces and exploring-llm-clusters
+  source:
+    path: products/llm_analytics/skills/README.md
+    lines: 1-10
+    commit: 69f47d880ee65fd3e9a769a12a7d80997dea555e
+config_edits:
+- path: products/llm_analytics/skills/README.md
+  tier: 2
+  gold_added: "- **exploring-llm-evaluations** — how to manage and investigate LLM\
+    \ analytics\n  evaluations (both `hog` and `llm_judge` types), run them on specific\
+    \ generations,\n  query individual results, and generate AI-powered summaries\
+    \ of pass/fail/N/A patterns."
+  gold_removed: ''
+- path: products/llm_analytics/skills/exploring-llm-evaluations/SKILL.md
+  tier: 1
+  gold_added: "---\nname: exploring-llm-evaluations\ndescription: >\n  Investigate\
+    \ LLM analytics evaluations of both types — `hog` (deterministic\n  code-based)\
+    \ and `llm_judge` (LLM-prompt-based). Find existing evaluations,\n  inspect their\
+    \ configuration, run them against specific generations, query\n  individual pass/fail\
+    \ results, and generate AI-powered summaries of patterns\n  across many runs.\
+    \ Use when the user asks to debug why an evaluation is\n  failing, surface common\
+    \ failure modes, compare results across filters,\n  dry-run a Hog evaluator, prototype\
+    \ a new LLM-judge prompt, or manage the\n  evaluation lifecycle (create, update,\
+    \ enable/disable, delete).\n---\n\n# Exploring LLM evaluations\n\nPostHog evaluations\
+    \ score `$ai_generation` events. Each evaluation is one of two types,\nboth first-class:\n\
+    \n- **`hog`** — deterministic Hog code that returns `true`/`false` (and optionally\
+    \ N/A).\n  Best for objective rule-based checks: format validation (JSON parses,\
+    \ schema matches),\n  length limits, keyword presence/absence, regex patterns,\
+    \ structural assertions, latency\n  thresholds, cost guards. Cheap, fast, reproducible\
+    \ — no LLM call per run. Prefer this\n  when the criterion can be expressed as\
+    \ code.\n- **`llm_judge`** — an LLM scores generations against a prompt you write.\
+    \ Best for\n  subjective or fuzzy checks: tone, helpfulness, hallucination detection,\
+    \ off-topic\n  drift, instruction-following. Costs an LLM call per run and requires\
+    \ AI data\n  processing approval at the org level.\n\nResults from both types\
+    \ land in ClickHouse as `$ai_evaluation` events with the same\nschema, so the\
+    \ read/query/summary workflows are identical regardless of evaluator type —\n\
+    the only thing that changes is whether `$ai_evaluation_reasoning` was written\
+    \ by Hog\ncode or by an LLM.\n\nThis skill covers the full lifecycle: list/inspect/manage\
+    \ evaluation configs (Hog or\nLLM judge), run them on specific generations, query\
+    \ individual results, and get an\nAI-generated summary of pass/fail/N/A patterns\
+    \ across many runs.\n\n## Tools\n\n| Tool                                    \
+    \          | Purpose                                                        |\n\
+    | ------------------------------------------------- | --------------------------------------------------------------\
+    \ |\n| `posthog:evaluations-get`                         | List/search evaluation\
+    \ configs (filter by name, enabled flag)  |\n| `posthog:evaluation-get`      \
+    \                    | Get a single evaluation config by UUID                \
+    \         |\n| `posthog:evaluation-create`                       | Create a new\
+    \ `llm_judge` or `hog` evaluation                   |\n| `posthog:evaluation-update`\
+    \                       | Update an existing evaluation (name, prompt, enabled,\
+    \ …)       |\n| `posthog:evaluation-delete`                       | Soft-delete\
+    \ an evaluation                                      |\n| `posthog:evaluation-run`\
+    \                          | Run an evaluation against a specific `$ai_generation`\
+    \ event    |\n| `posthog:evaluation-test-hog`                     "
+  gold_removed: ''

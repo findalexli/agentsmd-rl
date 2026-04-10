@@ -1,70 +1,92 @@
-version: "2.0"
-
+version: '2.0'
 source:
   repo: gradio-app/gradio
   pr: 11766
   base_commit: f67faa464add0ef6a4a58d60eb2ae850125ebb87
   merge_commit: dfc0e0305068dbd16ce905afc73d139e1e51eb46
-
 checks:
-  - id: test_readme_has_comprehensive_docs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "js/dataframe/README.md has full documentation with Install, Usage, Props, Events, and Custom Styling sections"
-
-  - id: test_standalone_readme_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "js/dataframe/standalone/README.md has been removed (content merged into main README)"
-
-  - id: test_js_page_redirects_to_dataframe
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The /docs/js page redirect logic checks for dataframe page existence and falls back to js-client"
-
-  - id: test_syntax_highlighting_supports_svelte
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Documentation page servers import prism-svelte and register svelte language"
-
-  - id: test_layout_filters_to_documented_components
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The docs layout server filters js_pages to only dataframe and js-client using components_to_document array"
-
-  - id: test_package_exports_has_default
-    type: fail_to_pass
-    origin: pr_diff
-    description: "js/code/package.json exports include default field for compatibility"
-
-  - id: test_changelog_has_prism_svelte
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Changelog page server also has prism-svelte support for consistency"
-
-  - id: test_syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files have valid syntax"
-
-  - id: test_repo_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Prettier format check passes"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint passes"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript/svelte-check passes"
-
-  - id: test_repo_dataframe_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's dataframe unit tests pass"
-
+- id: test_readme_has_comprehensive_docs
+  type: fail_to_pass
+  origin: pr_diff
+  description: js/dataframe/README.md has full documentation with Install, Usage,
+    Props, Events, and Custom Styling sections
+- id: test_standalone_readme_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: js/dataframe/standalone/README.md has been removed (content merged
+    into main README)
+- id: test_js_page_redirects_to_dataframe
+  type: fail_to_pass
+  origin: pr_diff
+  description: The /docs/js page redirect logic checks for dataframe page existence
+    and falls back to js-client
+- id: test_syntax_highlighting_supports_svelte
+  type: fail_to_pass
+  origin: pr_diff
+  description: Documentation page servers import prism-svelte and register svelte
+    language
+- id: test_layout_filters_to_documented_components
+  type: fail_to_pass
+  origin: pr_diff
+  description: The docs layout server filters js_pages to only dataframe and js-client
+    using components_to_document array
+- id: test_package_exports_has_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: js/code/package.json exports include default field for compatibility
+- id: test_changelog_has_prism_svelte
+  type: fail_to_pass
+  origin: pr_diff
+  description: Changelog page server also has prism-svelte support for consistency
+- id: test_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have valid syntax
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier format check passes
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript/svelte-check passes
+- id: test_repo_dataframe_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dataframe unit tests pass
 rubric: []
+config_edits:
+- path: js/dataframe/README.md
+  tier: 2
+  gold_added: "# @gradio/dataframe\n\nStandalone Svelte component that brings Gradio's\
+    \ Dataframe UI to any Svelte/SvelteKit project.\n\nThis component is lightweight,\
+    \ virtualized for efficient rendering of large datasets, and offers features like\
+    \ column freezing, and customizable styling via CSS variables. Use this component\
+    \ when you need a highly interactive, accessible, and easily themeable table for\
+    \ user-facing applications, especially where seamless Svelte/SvelteKit integration\
+    \ is important.\n\n## Install\n\nWith `npm`:\n\n```shell\nnpm i @gradio/dataframe\n\
+    ```\n\nWith `pnpm`:\n\n```shell\npnpm add @gradio/dataframe\n```\n\n**[View on\
+    \ npm](https://www.npmjs.com/package/@gradio/dataframe)**\n\n## Usage (Svelte/SvelteKit)\n\
+    \n```svelte\n<script lang=\"ts\">\n  import Dataframe from \"@gradio/dataframe\"\
+    ;\n\n  let value = {\n    data: [\n      [\"Alice\", 25, true],\n      [\"Bob\"\
+    , 30, false]\n    ],\n    headers: [\"Name\", \"Age\", \"Active\"],\n  };\n\n\
+    \  function handle_change(e: any) {\n    console.log(\"changed\", e.detail);\n\
+    \  }\n\n  function handle_select(e: any) {\n    console.log(\"selected\", e.detail);\n\
+    \  }\n\n  function handle_input(e: any) {\n    console.log(\"input\", e.detail);\n\
+    \  }\n</script>\n\n<Dataframe\n  bind:value\n  {datatype}\n  show_search=\"search\"\
+    \n  show_row_numbers={true}\n  show_copy_button={true}\n  show_fullscreen_button={true}\n\
+    \  editable={true}\n  on:change={handle_change}\n  on:select={handle_select}\n\
+    \  on:input={handle_input}\n  />\n```\n\n## Props\n\n```typescript\ninterface\
+    \ DataframeProps {\n\n  /**\n   * The value object containing the table data,\
+    \ headers, and optional metadata.\n   * Example: { data: [...], headers: [...],\
+    \ metadata?: any }\n   * Default: { data: [[]], headers: [] }\n   */\n  value:\
+    \ {\n    data: (string | number | boolean)[][];\n    headers: string[];\n    metadata?:\
+    \ any;\n  };\n\n  /**\n   * Array of data types per column. Supported: \"str\"\
+    , \"number\", \"bool\", \"date\", \"markdown\", \"html\".\n   * Default: []\n\
+    \   */\n  datatype?: string[];\n\n  /**\n   * Enable or disable cell editing.\n\
+    \   * Default: true\n   */\n  editable?: boolean;\n\n "
+  gold_removed: ''

@@ -1,91 +1,97 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "effect-ts/effect"
+  repo: effect-ts/effect
   pr: 6030
-  base_commit: "5487cfb65a69a308e7c0b29ae666c8a9ddcab159"
-  merge_commit: "33712058e2655dd50f9b2b511ab8d38c2bd5268a"
-
+  base_commit: 5487cfb65a69a308e7c0b29ae666c8a9ddcab159
+  merge_commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
 checks:
-  # F2P: AGENTS.md documentation tests
-  - id: agentsmd_test_run_command
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md specifies 'pnpm test run' (with required 'run' subcommand) for running tests"
-
-  - id: agentsmd_tsx_scratchpad
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md uses 'tsx' (not 'node') to run scratchpad TypeScript files"
-
-  - id: agentsmd_v4_learning_section
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md includes section about learning effect v4 with .repos/effect-v4 path"
-
-  # F2P: eslint.config.mjs tests
-  - id: eslint_ignores_repos
-    type: fail_to_pass
-    origin: pr_diff
-    description: "eslint.config.mjs includes .repos/ and .lalph/ in its ignore patterns"
-
-  - id: eslint_formatted_correctly
-    type: fail_to_pass
-    origin: pr_diff
-    description: "eslint.config.mjs has proper formatting (selector on its own line, single-line packageNames)"
-
-  # F2P: packages/sql/tsconfig.test.json test
-  - id: sql_tsconfig_outdir
-    type: fail_to_pass
-    origin: pr_diff
-    description: "packages/sql/tsconfig.test.json specifies outDir for test build output"
-
-  # F2P: packages/effect/src/Schema.ts JSDoc test
-  - id: schema_jsdoc_example_reference
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Schema.ts JSDoc example uses Schema.JsonNumber (not S.JsonNumber)"
-
-  # F2P: AI package JSDoc import pattern tests
-  - id: ai_chat_jsdoc_import_pattern
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Chat.ts JSDoc uses 'effect/Effect' import and Chat.Chat service access"
-
-  - id: ai_aierror_jsdoc_import_patterns
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AiError.ts JSDoc uses 'effect/Effect' and 'effect/Option' imports with proper return types"
-
-  - id: ai_embeddingmodel_jsdoc_import_pattern
-    type: fail_to_pass
-    origin: pr_diff
-    description: "EmbeddingModel.ts JSDoc uses 'effect/Effect' import and EmbeddingModel.EmbeddingModel service access"
-
-  - id: ai_languagemodel_jsdoc_import_pattern
-    type: fail_to_pass
-    origin: pr_diff
-    description: "LanguageModel.ts JSDoc uses 'effect/Effect' import and LanguageModel.LanguageModel service access"
-
-  - id: ai_telemetry_jsdoc_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Telemetry.ts JSDoc uses 'effect/Effect' import and options.response.length (not options.model)"
-
-  # P2P: Structure/regression tests
-  - id: agentsmd_core_sections_intact
-    type: pass_to_pass
-    origin: static
-    description: "AGENTS.md retains core Development Workflow, Code Style, and Testing sections"
-
-  - id: eslint_standard_ignores
-    type: pass_to_pass
-    origin: static
-    description: "eslint.config.mjs still includes standard ignore patterns (dist, build, docs, md)"
-
-  - id: gitignore_repos_added
-    type: pass_to_pass
-    origin: static
-    description: ".gitignore includes .repos/ directory"
-
+- id: agentsmd_test_run_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md specifies 'pnpm test run' (with required 'run' subcommand)
+    for running tests
+- id: agentsmd_tsx_scratchpad
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md uses 'tsx' (not 'node') to run scratchpad TypeScript files
+- id: agentsmd_v4_learning_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md includes section about learning effect v4 with .repos/effect-v4
+    path
+- id: eslint_ignores_repos
+  type: fail_to_pass
+  origin: pr_diff
+  description: eslint.config.mjs includes .repos/ and .lalph/ in its ignore patterns
+- id: eslint_formatted_correctly
+  type: fail_to_pass
+  origin: pr_diff
+  description: eslint.config.mjs has proper formatting (selector on its own line,
+    single-line packageNames)
+- id: sql_tsconfig_outdir
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/sql/tsconfig.test.json specifies outDir for test build output
+- id: schema_jsdoc_example_reference
+  type: fail_to_pass
+  origin: pr_diff
+  description: Schema.ts JSDoc example uses Schema.JsonNumber (not S.JsonNumber)
+- id: ai_chat_jsdoc_import_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: Chat.ts JSDoc uses 'effect/Effect' import and Chat.Chat service access
+- id: ai_aierror_jsdoc_import_patterns
+  type: fail_to_pass
+  origin: pr_diff
+  description: AiError.ts JSDoc uses 'effect/Effect' and 'effect/Option' imports with
+    proper return types
+- id: ai_embeddingmodel_jsdoc_import_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: EmbeddingModel.ts JSDoc uses 'effect/Effect' import and EmbeddingModel.EmbeddingModel
+    service access
+- id: ai_languagemodel_jsdoc_import_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: LanguageModel.ts JSDoc uses 'effect/Effect' import and LanguageModel.LanguageModel
+    service access
+- id: ai_telemetry_jsdoc_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Telemetry.ts JSDoc uses 'effect/Effect' import and options.response.length
+    (not options.model)
+- id: agentsmd_core_sections_intact
+  type: pass_to_pass
+  origin: static
+  description: AGENTS.md retains core Development Workflow, Code Style, and Testing
+    sections
+- id: eslint_standard_ignores
+  type: pass_to_pass
+  origin: static
+  description: eslint.config.mjs still includes standard ignore patterns (dist, build,
+    docs, md)
+- id: gitignore_repos_added
+  type: pass_to_pass
+  origin: static
+  description: .gitignore includes .repos/ directory
 rubric: []
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- Always run tests after making changes: `pnpm test run <test_file.ts>`
+
+    run the file with `tsx scratchpad/your-file.ts`.
+
+
+    ## Learning about "effect" v4
+
+
+    If you need to learn more about the new version of effect (version 4), you can
+
+    access the repository here:
+
+
+    \`.repos/effect-v4\`'
+  gold_removed: '- Always run tests after making changes: `pnpm test <test_file.ts>`
+
+    run the file with `node scratchpad/your-file.ts`.'

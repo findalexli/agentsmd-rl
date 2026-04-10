@@ -1,119 +1,100 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 89309
-  base_commit: "b2f193b0964212c3ef0213efb74fe40dfd5be43b"
-  merge_commit: "0d49dd888fbe6767ee6a4e0dd6845dd22f5044bf"
-
+  base_commit: b2f193b0964212c3ef0213efb74fe40dfd5be43b
+  merge_commit: 0d49dd888fbe6767ee6a4e0dd6845dd22f5044bf
 checks:
-  # Code behavior: ArcSlice → ArcBytes with Mmap backing
-  - id: arc_bytes_replaces_arc_slice
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ArcSlice<T> replaced by ArcBytes with Mmap backing support"
-
-  # Code behavior: CompressionConfig enum with Uncompressed variant
-  - id: compression_config_optional
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CompressionConfig enum added with TryCompress and Uncompressed variants"
-
-  # Code behavior: Index blocks skip compression
-  - id: index_blocks_skip_compression
-    type: fail_to_pass
-    origin: pr_diff
-    description: "write_index_block uses Uncompressed config instead of TryCompress"
-
-  # Code behavior: Zero-copy mmap for uncompressed blocks
-  - id: uncompressed_block_zero_copy_mmap
-    type: fail_to_pass
-    origin: pr_diff
-    description: "read_block returns zero-copy mmap slice when uncompressed_length == 0"
-
-  # Code behavior: 7/8 compression threshold
-  - id: compression_threshold_78
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Compression uses 7/8 threshold (LevelDB/RocksDB pattern)"
-
-  # Config update: README documents new block compression format
-  - id: readme_documents_block_compression
-    type: fail_to_pass
-    origin: agent_config
-    description: "README.md updated to document optional block compression format"
-    source:
-      path: "CLAUDE.md"
-      lines: "44-46"
-      commit: "b2f193b0964212c3ef0213efb74fe40dfd5be43b"
-
-  # Module rename: lib.rs exports ArcBytes
-  - id: lib_exports_arc_bytes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "lib.rs exports ArcBytes (renamed from ArcSlice)"
-
-  # Regression: README retains SST format documentation
-  - id: readme_has_sst_format_section
-    type: pass_to_pass
-    origin: agent_config
-    description: "README retains SST file on-disk format documentation"
-    source:
-      path: "CLAUDE.md"
-      lines: "44-46"
-      commit: "b2f193b0964212c3ef0213efb74fe40dfd5be43b"
-
-  # Anti-stub
-  - id: anti_stub_builder
-    type: pass_to_pass
-    origin: static
-    description: "static_sorted_file_builder.rs has substantial content (not stubbed)"
-
-  # Repo CI: lib.rs structure intact
-  - id: lib_rs_structure
-    type: pass_to_pass
-    origin: repo_ci
-    description: "lib.rs has basic module structure (arc_slice/arc_bytes, static_sorted_file modules)"
-
-  # Repo CI: tests.rs has substantial content
-  - id: tests_rs_not_stub
-    type: pass_to_pass
-    origin: repo_ci
-    description: "tests.rs has substantial test content (>1000 lines, #[test] functions)"
-
-  # Repo CI: Cargo.toml is valid
-  - id: cargo_toml_valid
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Cargo.toml is valid with memmap2, lzzzz dependencies and Rust 2024 edition"
-
-  # Repo CI: README SST documentation
-  - id: readme_sst_documentation
-    type: pass_to_pass
-    origin: repo_ci
-    description: "README documents SST format (Index/Key/Value Block sections)"
-
-  # Repo CI: static_sorted_file.rs structure
-  - id: static_sorted_file_structure
-    type: pass_to_pass
-    origin: repo_ci
-    description: "static_sorted_file.rs has expected structure (StaticSortedFile struct, read_block methods)"
-
-  # Repo CI: git repo valid
-  - id: git_repo_valid
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Git repository is in valid state with commit history"
-
-  # Repo CI: compression.rs structure
-  - id: compression_rs_structure
-    type: pass_to_pass
-    origin: repo_ci
-    description: "compression.rs has decompress_into_arc function and LZ4 references"
-
+- id: arc_bytes_replaces_arc_slice
+  type: fail_to_pass
+  origin: pr_diff
+  description: ArcSlice<T> replaced by ArcBytes with Mmap backing support
+- id: compression_config_optional
+  type: fail_to_pass
+  origin: pr_diff
+  description: CompressionConfig enum added with TryCompress and Uncompressed variants
+- id: index_blocks_skip_compression
+  type: fail_to_pass
+  origin: pr_diff
+  description: write_index_block uses Uncompressed config instead of TryCompress
+- id: uncompressed_block_zero_copy_mmap
+  type: fail_to_pass
+  origin: pr_diff
+  description: read_block returns zero-copy mmap slice when uncompressed_length ==
+    0
+- id: compression_threshold_78
+  type: fail_to_pass
+  origin: pr_diff
+  description: Compression uses 7/8 threshold (LevelDB/RocksDB pattern)
+- id: readme_documents_block_compression
+  type: fail_to_pass
+  origin: agent_config
+  description: README.md updated to document optional block compression format
+  source:
+    path: CLAUDE.md
+    lines: 44-46
+    commit: b2f193b0964212c3ef0213efb74fe40dfd5be43b
+- id: lib_exports_arc_bytes
+  type: fail_to_pass
+  origin: pr_diff
+  description: lib.rs exports ArcBytes (renamed from ArcSlice)
+- id: readme_has_sst_format_section
+  type: pass_to_pass
+  origin: agent_config
+  description: README retains SST file on-disk format documentation
+  source:
+    path: CLAUDE.md
+    lines: 44-46
+    commit: b2f193b0964212c3ef0213efb74fe40dfd5be43b
+- id: anti_stub_builder
+  type: pass_to_pass
+  origin: static
+  description: static_sorted_file_builder.rs has substantial content (not stubbed)
+- id: lib_rs_structure
+  type: pass_to_pass
+  origin: repo_ci
+  description: lib.rs has basic module structure (arc_slice/arc_bytes, static_sorted_file
+    modules)
+- id: tests_rs_not_stub
+  type: pass_to_pass
+  origin: repo_ci
+  description: 'tests.rs has substantial test content (>1000 lines, #[test] functions)'
+- id: cargo_toml_valid
+  type: pass_to_pass
+  origin: repo_ci
+  description: Cargo.toml is valid with memmap2, lzzzz dependencies and Rust 2024
+    edition
+- id: readme_sst_documentation
+  type: pass_to_pass
+  origin: repo_ci
+  description: README documents SST format (Index/Key/Value Block sections)
+- id: static_sorted_file_structure
+  type: pass_to_pass
+  origin: repo_ci
+  description: static_sorted_file.rs has expected structure (StaticSortedFile struct,
+    read_block methods)
+- id: git_repo_valid
+  type: pass_to_pass
+  origin: repo_ci
+  description: Git repository is in valid state with commit history
+- id: compression_rs_structure
+  type: pass_to_pass
+  origin: repo_ci
+  description: compression.rs has decompress_into_arc function and LZ4 references
 rubric:
-  - rule: "README update is consistent with the style and structure of the existing SST file format documentation"
-    source:
-      path: "turbopack/crates/turbo-persistence/README.md"
-      lines: "1-10"
-      commit: "b2f193b0964212c3ef0213efb74fe40dfd5be43b"
+- rule: README update is consistent with the style and structure of the existing SST
+    file format documentation
+  source:
+    path: turbopack/crates/turbo-persistence/README.md
+    lines: 1-10
+    commit: b2f193b0964212c3ef0213efb74fe40dfd5be43b
+config_edits:
+- path: turbopack/crates/turbo-persistence/README.md
+  tier: 2
+  gold_added: "- 4 bytes block header (uncompressed length or sentinel)\n  - block\
+    \ data (compressed or uncompressed)\n#### Block Compression\n\nBlocks can be stored\
+    \ compressed (LZ4) or uncompressed. The 4-byte header distinguishes them:\n\n\
+    - **Header > 0**: Block is LZ4 compressed. Header value is the uncompressed length.\n\
+    - **Header = 0**: Block is stored uncompressed. Actual length is derived from\
+    \ block offsets."
+  gold_removed: "- 4 bytes uncompressed block length\n  - compressed data"

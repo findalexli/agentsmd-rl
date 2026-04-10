@@ -12,7 +12,8 @@ checks:
 - id: test_repo_ci_checks
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's CI checks pass - build, lint, jest, typecheck for babel-plugin and snap
+  description: Repo's CI checks pass - build, lint, jest, typecheck for babel-plugin
+    and snap
 - id: constants_separation
   type: fail_to_pass
   origin: pr_diff
@@ -61,3 +62,75 @@ rubric:
     path: compiler/CLAUDE.md
     lines: 28-34
     commit: cd0c4879a2959db91f9bd51a09dafefedd95fb17
+config_edits:
+- path: compiler/.claude/agents/investigate-error.md
+  tier: 1
+  gold_added: Execute `yarn snap -d -p <fixture-name>` to compile the fixture with
+    full debug output. This shows the state of the program after each compilation
+    pass. You can also use `yarn snap compile -d <path-to-fixture>`.
+  gold_removed: Execute `yarn snap -d -p <fixture-name>` to compile the fixture with
+    full debug output. This shows the state of the program after each compilation
+    pass.
+- path: compiler/CLAUDE.md
+  tier: 1
+  gold_added: '## Compiling Arbitrary Files
+
+
+    Use `yarn snap compile` to compile any file (not just fixtures) with the React
+    Compiler:
+
+
+    ```bash
+
+    # Compile a file and see the output
+
+    yarn snap compile <path>
+
+
+    # Compile with debug logging to see the state after each compiler pass
+
+    # This is an alternative to `yarn snap -d -p <pattern>` when you don''t have a
+    fixture file yet
+
+    yarn snap compile --debug <path>
+
+    ```
+
+
+    ## Minimizing Test Cases
+
+
+    Use `yarn snap minimize` to automatically reduce a failing test case to its minimal
+    reproduction:
+
+
+    ```bash
+
+    # Minimize a file that causes a compiler error
+
+    yarn snap minimize <path>
+
+
+    # Minimize and update the file in-place with the minimized version
+
+    yarn snap minimize --update <path>
+
+    ```'
+  gold_removed: ''
+- path: compiler/packages/babel-plugin-react-compiler/docs/passes/README.md
+  tier: 2
+  gold_added: '# Compile any file (not just fixtures) and see output
+
+    yarn snap compile <path>
+
+
+    # Compile any file with debug output (alternative to yarn snap -d -p when you
+    don''t have a fixture)
+
+    yarn snap compile --debug <path>
+
+
+    # Minimize a failing test case to its minimal reproduction
+
+    yarn snap minimize <path>'
+  gold_removed: ''

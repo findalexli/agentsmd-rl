@@ -1,58 +1,54 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 39729
-  base_commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-  merge_commit: "7a4bfa1ae6afb2c2b30fe0d4107256793dde8a3a"
-
+  base_commit: 1ed53ac99ec225a5fc0aacb762a18e3195c61a6c
+  merge_commit: 7a4bfa1ae6afb2c2b30fe0d4107256793dde8a3a
 checks:
-  # Gates (pass_to_pass)
-  - id: tracing_ts_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files must exist and have valid structure"
-
-  - id: group_method_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "group() method has real logic, not just a stub"
-
-  # Core code behavior (fail_to_pass)
-  - id: group_returns_disposable_stub
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Tracing.group() imports and returns DisposableStub for auto-cleanup via await using"
-
-  - id: disposable_callback_invokes_groupend
-    type: fail_to_pass
-    origin: pr_diff
-    description: "DisposableStub's callback is properly configured to call groupEnd() when disposed"
-
-  - id: types_dts_group_returns_disposable
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Both types.d.ts files declare group() returning Promise<Disposable>"
-
-  # Config-derived: API docs must be updated per skill guide
-  - id: api_docs_disposable_return_type
-    type: fail_to_pass
-    origin: agent_config
-    description: "class-tracing.md API docs updated to declare Tracing.group() returns Disposable"
-    source:
-      path: ".claude/skills/playwright-dev/api.md"
-      lines: "5-7"
-      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-
-  # Config/doc update (CLAUDE.md)
-  - id: claude_md_flint_in_commit_convention
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md Commit Convention section adds npm run flint instruction"
-
+- id: tracing_ts_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must exist and have valid structure
+- id: group_method_not_stub
+  type: pass_to_pass
+  origin: static
+  description: group() method has real logic, not just a stub
+- id: group_returns_disposable_stub
+  type: fail_to_pass
+  origin: pr_diff
+  description: Tracing.group() imports and returns DisposableStub for auto-cleanup
+    via await using
+- id: disposable_callback_invokes_groupend
+  type: fail_to_pass
+  origin: pr_diff
+  description: DisposableStub's callback is properly configured to call groupEnd()
+    when disposed
+- id: types_dts_group_returns_disposable
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both types.d.ts files declare group() returning Promise<Disposable>
+- id: api_docs_disposable_return_type
+  type: fail_to_pass
+  origin: agent_config
+  description: class-tracing.md API docs updated to declare Tracing.group() returns
+    Disposable
+  source:
+    path: .claude/skills/playwright-dev/api.md
+    lines: 5-7
+    commit: 1ed53ac99ec225a5fc0aacb762a18e3195c61a6c
+- id: claude_md_flint_in_commit_convention
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md Commit Convention section adds npm run flint instruction
 rubric:
-  - rule: "The API documentation update is consistent with the formatting conventions used in other method definitions in class-tracing.md"
-    source:
-      path: ".claude/skills/playwright-dev/api.md"
-      lines: "9-40"
-      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+- rule: The API documentation update is consistent with the formatting conventions
+    used in other method definitions in class-tracing.md
+  source:
+    path: .claude/skills/playwright-dev/api.md
+    lines: 9-40
+    commit: 1ed53ac99ec225a5fc0aacb762a18e3195c61a6c
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: Before committing, run `npm run flint` and fix errors.
+  gold_removed: ''

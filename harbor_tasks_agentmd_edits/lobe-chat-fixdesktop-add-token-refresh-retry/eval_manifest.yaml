@@ -1,85 +1,98 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "lobehub/lobe-chat"
+  repo: lobehub/lobe-chat
   pr: 10575
-  base_commit: "95bc5c2e6c9cca04b584002fbd85145e3b977e1f"
-  merge_commit: "83fc2e8bc61f8fedbd021d9b02d3b380a41f38e9"
-
+  base_commit: 95bc5c2e6c9cca04b584002fbd85145e3b977e1f
+  merge_commit: 83fc2e8bc61f8fedbd021d9b02d3b380a41f38e9
 checks:
-  # --- f2p: code behavior tests ---
-  - id: oidc_error_codes_detected
-    type: fail_to_pass
-    origin: pr_diff
-    description: "isNonRetryableError flags OIDC error codes (invalid_grant, invalid_client, etc.)"
-
-  - id: deterministic_failures_detected
-    type: fail_to_pass
-    origin: pr_diff
-    description: "isNonRetryableError flags deterministic failures (missing token, inactive server)"
-
-  - id: transient_errors_are_retryable
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Network/transient errors are NOT flagged as non-retryable"
-
-  - id: error_matching_case_insensitive
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Error matching is case-insensitive"
-
-  - id: retry_mechanism_parameters
-    type: fail_to_pass
-    origin: pr_diff
-    description: "performTokenRefreshWithRetry uses retries=3, minTimeout=1000, maxTimeout=4000, factor=2"
-
-  - id: grace_period_in_adapter
-    type: fail_to_pass
-    origin: pr_diff
-    description: "adapter.ts defines REFRESH_TOKEN_GRACE_PERIOD_SECONDS = 180"
-
-  - id: is_non_retryable_error_method_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "RemoteServerConfigConfigCtr exposes isNonRetryableError method used by AuthCtr to decide token clearing"
-
-  # --- f2p: config/documentation update test (REQUIRED) ---
-  - id: claude_md_in_review_workflow
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md instructs setting issue status to 'In Review' (not 'Done') when PR is created"
-
-  # --- f2p: dependency check ---
-  - id: async_retry_dependency
-    type: fail_to_pass
-    origin: pr_diff
-    description: "async-retry and @types/async-retry added to desktop package.json"
-
-  # --- p2p: repo CI/CD regression checks ---
-  - id: repo_lint_ts
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript linting passes (pnpm run lint:ts)"
-
-  - id: repo_desktop_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's desktop tests pass (pnpm test -- --run in apps/desktop)"
-
-  # --- p2p: task-specific regression checks ---
-  - id: typescript_compiles
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files compile without errors"
-
-  - id: auth_ctr_existing_methods_preserved
-    type: pass_to_pass
-    origin: static
-    description: "Core AuthCtr methods (startAutoRefresh, refreshAccessToken, initializeAutoRefresh) still exist"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "isNonRetryableError has real logic, not just return false"
-
+- id: oidc_error_codes_detected
+  type: fail_to_pass
+  origin: pr_diff
+  description: isNonRetryableError flags OIDC error codes (invalid_grant, invalid_client,
+    etc.)
+- id: deterministic_failures_detected
+  type: fail_to_pass
+  origin: pr_diff
+  description: isNonRetryableError flags deterministic failures (missing token, inactive
+    server)
+- id: transient_errors_are_retryable
+  type: fail_to_pass
+  origin: pr_diff
+  description: Network/transient errors are NOT flagged as non-retryable
+- id: error_matching_case_insensitive
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error matching is case-insensitive
+- id: retry_mechanism_parameters
+  type: fail_to_pass
+  origin: pr_diff
+  description: performTokenRefreshWithRetry uses retries=3, minTimeout=1000, maxTimeout=4000,
+    factor=2
+- id: grace_period_in_adapter
+  type: fail_to_pass
+  origin: pr_diff
+  description: adapter.ts defines REFRESH_TOKEN_GRACE_PERIOD_SECONDS = 180
+- id: is_non_retryable_error_method_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: RemoteServerConfigConfigCtr exposes isNonRetryableError method used
+    by AuthCtr to decide token clearing
+- id: claude_md_in_review_workflow
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md instructs setting issue status to 'In Review' (not 'Done')
+    when PR is created
+- id: async_retry_dependency
+  type: fail_to_pass
+  origin: pr_diff
+  description: async-retry and @types/async-retry added to desktop package.json
+- id: repo_lint_ts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript linting passes (pnpm run lint:ts)
+- id: repo_desktop_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's desktop tests pass (pnpm test -- --run in apps/desktop)
+- id: typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files compile without errors
+- id: auth_ctr_existing_methods_preserved
+  type: pass_to_pass
+  origin: static
+  description: Core AuthCtr methods (startAutoRefresh, refreshAccessToken, initializeAutoRefresh)
+    still exist
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: isNonRetryableError has real logic, not just return false
 rubric: []
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '4. Create PR if needed
+
+    5. **IMMEDIATELY** update issue status to **"In Review"** (NOT "Done"): `mcp__linear-server__update_issue`
+
+    6. **IMMEDIATELY** add completion comment: `mcp__linear-server__create_comment`
+
+    7. Only then move on to the next issue
+
+
+    **Note:** Issue status should be set to **"In Review"** when PR is created. The
+    status will be updated to **"Done"** only after the PR is merged (usually handled
+    by Linear-GitHub integration or manually).
+
+    - Mark issue as "Done" immediately after creating PR
+
+    - Complete Issue A → Create PR → Update A status to "In Review" → Add A comment
+    → Complete Issue B → ...'
+  gold_removed: '4. **IMMEDIATELY** update issue status to "Done": `mcp__linear-server__update_issue`
+
+    5. **IMMEDIATELY** add completion comment: `mcp__linear-server__create_comment`
+
+    6. Only then move on to the next issue
+
+    - Complete Issue A → Update A status → Add A comment → Complete Issue B → Update
+    B status → Add B comment → ...'

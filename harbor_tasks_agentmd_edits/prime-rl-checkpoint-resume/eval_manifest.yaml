@@ -1,93 +1,115 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PrimeIntellect-ai/prime-rl"
+  repo: PrimeIntellect-ai/prime-rl
   pr: 536
-  base_commit: "5c5560039dad1359efc2dcd7e3a939bc3d95b6fe"
-  merge_commit: "04a824e3f685b6a686e3308c65c1bd637a3e8eeb"
-
+  base_commit: 5c5560039dad1359efc2dcd7e3a939bc3d95b6fe
+  merge_commit: 04a824e3f685b6a686e3308c65c1bd637a3e8eeb
 checks:
-  # === Gates (pass_to_pass, static) ===
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified Python files must parse without errors"
-
-  - id: all_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All Python files in the repo must parse without errors"
-
-  - id: pyproject_toml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "pyproject.toml must be valid and parseable"
-
-  - id: config_files_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All TOML config files must be valid"
-
-  - id: repo_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo must have expected directory structure"
-
-  - id: scripts_valid_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Shell scripts must have valid syntax"
-
-  # === Fail-to-pass (pr_diff) — core code behavioral tests ===
-  - id: trainer_checkpoint_manager_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Trainer CheckpointManager class must exist with save/load methods"
-
-  - id: orchestrator_checkpoint_manager_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Orchestrator CheckpointManager class must exist with save/load methods"
-
-  - id: checkpoint_config_has_resume_step
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CheckpointConfig must have resume_step and save_async fields"
-
-  - id: weights_module_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "weights.py module must exist with save_weight_checkpoint function"
-
-  - id: weight_filename_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Orchestrator utils.py should use pytorch_model.bin not model.pt"
-
-  - id: client_uses_pytorch_model_bin
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Client.py should use pytorch_model.bin"
-
-  - id: orchestrator_config_path_changes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "OrchestratorConfig should use rollout_path/weights_path, not PathConfig"
-
-  - id: checkpoint_save_load_cycle
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CheckpointManager can save and load progress correctly"
-
-  # === Fail-to-pass (pr_diff) — config/documentation update tests ===
-  - id: readme_has_checkpointing_section
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README.md must document the checkpointing feature with resume_step"
-
-  - id: readme_section_renamed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README.md should have 'Developer' and 'Configs' sections"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files must parse without errors
+- id: all_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in the repo must parse without errors
+- id: pyproject_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml must be valid and parseable
+- id: config_files_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All TOML config files must be valid
+- id: repo_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo must have expected directory structure
+- id: scripts_valid_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts must have valid syntax
+- id: trainer_checkpoint_manager_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Trainer CheckpointManager class must exist with save/load methods
+- id: orchestrator_checkpoint_manager_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Orchestrator CheckpointManager class must exist with save/load methods
+- id: checkpoint_config_has_resume_step
+  type: fail_to_pass
+  origin: pr_diff
+  description: CheckpointConfig must have resume_step and save_async fields
+- id: weights_module_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: weights.py module must exist with save_weight_checkpoint function
+- id: weight_filename_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Orchestrator utils.py should use pytorch_model.bin not model.pt
+- id: client_uses_pytorch_model_bin
+  type: fail_to_pass
+  origin: pr_diff
+  description: Client.py should use pytorch_model.bin
+- id: orchestrator_config_path_changes
+  type: fail_to_pass
+  origin: pr_diff
+  description: OrchestratorConfig should use rollout_path/weights_path, not PathConfig
+- id: checkpoint_save_load_cycle
+  type: fail_to_pass
+  origin: pr_diff
+  description: CheckpointManager can save and load progress correctly
+- id: readme_has_checkpointing_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md must document the checkpointing feature with resume_step
+- id: readme_section_renamed
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md should have 'Developer' and 'Configs' sections
 rubric: []
+config_edits:
+- path: README.md
+  tier: 2
+  gold_added: "## Developer\n### Configs\n### Checkpointing\n\nOur codebase supports\
+    \ checkpointing. Because of the trainer/ orchestrator design, as well as the natural\
+    \ asynchrony checkpointing is non-standard.\n\n- Trainer (`src/zeroband/training/ckpt.py`):\
+    \ Checkpoints FSDP model shard, optimizer state and progress (training step, total\
+    \ samples, total tokens)\n- Orchestrator (`src/zeroband/training/ckpt.py`): Checkpoints\
+    \ orchestrator progress\n\n*NB: Each run with asynchrony level `async_level` and\
+    \ some checkpoint step `x`, requires weight checkpoints in the step range `[x-async_level,\
+    \ x]`. Currently we do not duplicate weight checkpoints into the `checkpoints`\
+    \ directory but simply keep them around in `weights`, by keeping the trainer from\
+    \ cleaning up weight checkpoints that are required for resuming training. This\
+    \ way, the orchestrator only needs to checkpoint its progress (read: step) to\
+    \ load the correct weights into the inference engine upon resuming.*\n\nThe default\
+    \ checkpoint directory is `checkpoints` and each checkpoint step will live in\
+    \ a subdirectory enumerated by the step, i.e. `checkpoints/step_{step}`. The trainer\
+    \ checkpoint is called `trainer.pt` for single GPU workloads, else `trainer_{local_rank}.pt`.\
+    \ The orchestrator checkpoint is callec `orchestrator.pt`. Thus, this is a typical\
+    \ directory structure:\n\n```bash\ncheckpoints\n├── step_10\n│   ├── orchestrator.pt\n\
+    │   └── trainer.pt\n├── step_25\n│   ├── orchestrator.pt\n│   └── trainer.pt\n\
+    └── step_30\n    ├── orchestrator.pt\n    └── trainer.pt\n```\n\nCheckpointing\
+    \ is configured by the `CheckpointConfig`, with the config key `--ckpt`. One can\
+    \ specify:\n- `--ckpt.path` to change the checkpoint directory (default: `checkpoints`)\n\
+    - `--ckpt.interval` to change the interval frequency (default: `50`)\n- `--ckpt.save-async`\
+    \ to save the checkpoint asynchronously (default: `False`)\n\nBy default, runs\
+    \ do no write checkpoints to save disk space. To checkpoint every 10 steps on\
+    \ our debug RL run, run the following command\n\n```bash\nCUDA_VISIBLE_DEVICES=1\
+    \ uv run train @ configs/training/reverse_text.toml --ckpt.interval 10\n```\n\n\
+    To resume a run use the `--ckpt.resume-step` flag. To resume from the checkpoint\
+    \ stpe 10 from the previous command, run the following command\n\n```bash\nCUDA_VISIBLE_DEVICES=1\
+    \ uv run train @ configs/training/reverse_text.toml --ckpt.resume_step 10\n```\n\
+    \nBecause we save progress information, resuming from a checkpoint is fully W&B\
+    \ compatible. By default, resuming from a checkpoint, will simply create a new\
+    \ run. To resume the same W&B run, you'd have to pass the same W&B run ID for\
+    \ both the trainer and the orchestrator, e.g.\n\n```bash\nCUDA_VISIBLE_DEVICES=1\
+    \ uv run train @ configs/training/reverse_text.toml \\\n  --monitor.wandb.project\
+    \ <project> \\\n  --monitor.wandb.group <group> \\\n  --ckpt.resume-step 10 \\\
+    \n  --monitor.wandb.id <trainer-run-id> \\\n  --orchestrator.monitor.wandb.id\
+    \ <orchestrator-run-id>\n```"
+  gold_removed: '## Contributing
+
+    ### Config System'

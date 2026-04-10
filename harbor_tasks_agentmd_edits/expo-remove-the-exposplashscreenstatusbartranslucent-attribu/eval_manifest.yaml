@@ -45,11 +45,13 @@ checks:
 - id: test_kotlin_files_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Modified Kotlin files have valid syntax (balanced braces/parens, package declarations)
+  description: Modified Kotlin files have valid syntax (balanced braces/parens, package
+    declarations)
 - id: test_splash_screen_kt_structure
   type: pass_to_pass
   origin: repo_tests
-  description: SplashScreen.kt has required object structure (object, show, ensureShown, SingletonModule)
+  description: SplashScreen.kt has required object structure (object, show, ensureShown,
+    SingletonModule)
 - id: test_splash_screen_status_bar_kt_structure
   type: pass_to_pass
   origin: repo_tests
@@ -67,3 +69,25 @@ rubric:
     lines: 757-769
     commit: 9c5343ad06d7ecb11537d6c45e24086877a1fa08
   reference: 3. Override default  in strings.xml
+config_edits:
+- path: packages/expo-splash-screen/CHANGELOG.md
+  tier: 2
+  gold_added: '- Removed the `expo_splash_screen_status_bar_translucent` Android leftover
+    attribute. ([#43514](https://github.com/expo/expo/pull/43514) by [@zoontek](https://github.com/zoontek))'
+  gold_removed: ''
+- path: packages/expo-splash-screen/README.md
+  tier: 2
+  gold_added: 3. Override default `resizeMode` in strings.xml
+  gold_removed: "3. Customize `StatusBar color` option (a.k.a. `background color`\
+    \ of the StatusBar component)\n\nTo achieve custom background color you need to\
+    \ create a new color resource and provide it to the SplashScreen `style` description.\n\
+    \nCreate new color resource in your `res/values/colors.xml` (if your application\
+    \ supports dark mode, consider adding different color in `res/values-night/colors.xml`\
+    \ file):\n\n```diff\n  <resources>\n    <color name=\"splashscreen_background\"\
+    >#D0D0C0</color>\n+   <color name=\"splashscreen_statusbar_color\">#(AA)RRGGBB</color>\
+    \ <!-- #AARRGGBB or #RRGGBB format -->\n  </resources>\n```\n\nUpdate your `res/values/styles.xml`\
+    \ file with the following entry:\n\n```diff\n  <!-- Main/SplashScreen activity\
+    \ theme. -->\n  <style name=\"AppTheme\" parent=\"Theme.AppCompat.Light.NoActionBar\"\
+    >\n    <item name=\"android:windowBackground\">@drawable/splashscreen</item>\n\
+    +   <item name=\"android:statusBarColor\">@color/splashscreen_statusbar_color</item>\n\
+    \    <!-- Other style properties -->\n  </style>\n```\n\nI"

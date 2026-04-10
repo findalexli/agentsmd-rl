@@ -1,64 +1,151 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "biomejs/biome"
+  repo: biomejs/biome
   pr: 9053
-  base_commit: "c047e86583434beb33ed4fb0b49e627d26a8afbd"
-  merge_commit: "66ef5baf6325d324efcb3a1a527496406cfbf72e"
-
+  base_commit: c047e86583434beb33ed4fb0b49e627d26a8afbd
+  merge_commit: 66ef5baf6325d324efcb3a1a527496406cfbf72e
 checks:
-  # Static gates
-  - id: new_module_registered
-    type: pass_to_pass
-    origin: static
-    description: "biome_html_syntax::lib.rs declares the new directive_ext module"
-
-  # Code behavior tests — Vue directive tracking
-  - id: directive_ext_initializer
-    type: fail_to_pass
-    origin: pr_diff
-    description: "directive_ext.rs provides initializer() covering all 8 Svelte directive types"
-
-  - id: vue_directive_tracking
-    type: fail_to_pass
-    origin: pr_diff
-    description: "html.rs parses all 4 Vue directive variants (VueVOn, VueVBind, VueVSlot, VueDirective) as embedded JS"
-
-  - id: svelte_directive_tracking
-    type: fail_to_pass
-    origin: pr_diff
-    description: "html.rs parses Svelte directives (AnySvelteDirective) as embedded JS"
-
-  - id: parse_directive_helpers
-    type: fail_to_pass
-    origin: pr_diff
-    description: "parse_directive_string_value (Vue) and parse_directive_text_expression (Svelte) helpers exist with correct logic"
-
-  # Config/documentation update tests
-  - id: biome_developer_skill_created
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".claude/skills/biome-developer/SKILL.md created with frontmatter, inner_string_text, quick_test, EmbeddingKind content"
-
-  - id: agents_md_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md updated with new do/don't rules about legacy syntax, AST inspection, skills reference"
-
-  - id: testing_codegen_skill_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "testing-codegen SKILL.md updated with parser quick test section and just qt command"
-
-  # Anti-stub
-  - id: directive_ext_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "directive_ext.rs has 8 real match arms, not a stub returning None"
-
+- id: new_module_registered
+  type: pass_to_pass
+  origin: static
+  description: biome_html_syntax::lib.rs declares the new directive_ext module
+- id: directive_ext_initializer
+  type: fail_to_pass
+  origin: pr_diff
+  description: directive_ext.rs provides initializer() covering all 8 Svelte directive
+    types
+- id: vue_directive_tracking
+  type: fail_to_pass
+  origin: pr_diff
+  description: html.rs parses all 4 Vue directive variants (VueVOn, VueVBind, VueVSlot,
+    VueDirective) as embedded JS
+- id: svelte_directive_tracking
+  type: fail_to_pass
+  origin: pr_diff
+  description: html.rs parses Svelte directives (AnySvelteDirective) as embedded JS
+- id: parse_directive_helpers
+  type: fail_to_pass
+  origin: pr_diff
+  description: parse_directive_string_value (Vue) and parse_directive_text_expression
+    (Svelte) helpers exist with correct logic
+- id: biome_developer_skill_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: .claude/skills/biome-developer/SKILL.md created with frontmatter, inner_string_text,
+    quick_test, EmbeddingKind content
+- id: agents_md_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md updated with new do/don't rules about legacy syntax, AST
+    inspection, skills reference
+- id: testing_codegen_skill_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: testing-codegen SKILL.md updated with parser quick test section and
+    just qt command
+- id: directive_ext_not_stub
+  type: pass_to_pass
+  origin: static
+  description: directive_ext.rs has 8 real match arms, not a stub returning None
 rubric:
-  - rule: "Config updates follow the style and formatting of existing documentation in the repo"
-    source:
-      path: "AGENTS.md"
-      lines: "350-370"
-      commit: "c047e86583434beb33ed4fb0b49e627d26a8afbd"
+- rule: Config updates follow the style and formatting of existing documentation in
+    the repo
+  source:
+    path: AGENTS.md
+    lines: 350-370
+    commit: c047e86583434beb33ed4fb0b49e627d26a8afbd
+config_edits:
+- path: .claude/skills/README.md
+  tier: 2
+  gold_added: '| **[biome-developer](./biome-developer/SKILL.md)** | General development
+    best practices, common gotchas, Biome-specific patterns | Any agent | ~320 |
+
+    ├── biome-developer/
+
+    │   └── SKILL.md'
+  gold_removed: ''
+- path: .claude/skills/biome-developer/SKILL.md
+  tier: 1
+  gold_added: "---\nname: biome-developer\ndescription: General development best practices\
+    \ and common gotchas when working on Biome. Use for avoiding common mistakes,\
+    \ understanding Biome-specific patterns, and learning technical tips. Examples:<example>Working\
+    \ with Biome's AST and syntax nodes</example><example>Understanding string extraction\
+    \ methods</example><example>Handling embedded languages and directives</example>\n\
+    ---\n\n## Purpose\n\nThis skill provides general development best practices, common\
+    \ gotchas, and Biome-specific patterns that apply across different areas of the\
+    \ codebase. Use this as a reference when you encounter unfamiliar APIs or need\
+    \ to avoid common mistakes.\n\n## Prerequisites\n\n- Basic familiarity with Rust\n\
+    - Understanding of Biome's architecture (parser, analyzer, formatter)\n- Development\
+    \ environment set up (see CONTRIBUTING.md)\n\n## Common Gotchas and Best Practices\n\
+    \n### Working with AST and Syntax Nodes\n\n**DO:**\n- ✅ Use parser crate's `quick_test`\
+    \ to inspect AST structure before implementing\n- ✅ Understand the node hierarchy\
+    \ and parent-child relationships\n- ✅ Check both general cases AND specific types\
+    \ (e.g., Vue has both `VueDirective` and `VueV*ShorthandDirective`)\n- ✅ Verify\
+    \ your solution works for all relevant variant types, not just the first one you\
+    \ find\n\n**DON'T:**\n- ❌ Build the full Biome binary just to inspect syntax (expensive)\
+    \ - use parser crate's `quick_test` instead\n- ❌ Assume syntax patterns without\
+    \ inspecting the AST first\n\n**Example - Inspecting AST:**\n```rust\n// In crates/biome_html_parser/tests/quick_test.rs\n\
+    // Modify the quick_test function:\n#[test]\npub fn quick_test() {\n    let code\
+    \ = r#\"<button on:click={handleClick}>Click</button>\"#;\n    let source_type\
+    \ = HtmlFileSource::svelte();\n    let options = HtmlParseOptions::from(&source_type);\n\
+    \    let root = parse_html(code, options);\n    dbg!(&root.syntax());  // Shows\
+    \ full AST structure\n}\n```\n\nRun: `just qt biome_html_parser`\n\n### String\
+    \ Extraction and Text Handling\n\n**DO:**\n- ✅ Use `inner_string_text()` when\
+    \ extracting content from quoted strings (removes quotes)\n- ✅ Use `text_trimmed()`\
+    \ when you need the full token text without leading/trailing whitespace\n- ✅ Use\
+    \ `token_text_trimmed()` on nodes like `HtmlAttributeName` to get the text content\n\
+    - ✅ Verify whether values use `HtmlString` (quotes) or `HtmlTextExpression` (curly\
+    \ braces)\n\n**DON'T:**\n- ❌ Use `text_trimmed()` when you need `inner_string_text()`\
+    \ for extracting quoted string contents\n\n**Example - String Extraction:**\n\
+    ```rust\n// WRONG: text_trimmed() includes quotes\nlet html_string = value.as_html_string()?;\n\
+    let content = html_string.value_token()?.text_trimmed(); // Returns: \"\\\"handler\\\
+    \"\"\n\n// CORRECT: inner_string_text() removes quotes\nlet html_string = value.as_html_string()?;\n\
+    let inner_text = html_string.inner_string_text().ok()?;\nlet content = inner_text.text();\
+    \ // Returns: \"handler\"\n```\n\n### Working with Embedded Languages\n\n**DO:**\n\
+    - ✅ Verify changes work for different value formats (quoted strings vs text expressio"
+  gold_removed: ''
+- path: .claude/skills/testing-codegen/SKILL.md
+  tier: 1
+  gold_added: "// Modify the quick_test function:\njust qt biome_js_analyze\n```\n\
+    \n### Quick Test for Parser Development\n\n**IMPORTANT:** Use this instead of\
+    \ building full Biome binary for syntax inspection - it's much faster!\n\nFor\
+    \ inspecting AST structure when implementing parsers or working with embedded\
+    \ languages:\n\n```rust\n// In crates/biome_html_parser/tests/quick_test.rs\n\
+    // Modify the quick_test function:\n\n#[test]\npub fn quick_test() {\n    let\
+    \ code = r#\"<button on:click={handleClick}>Click</button>\"#;\n\n    let source_type\
+    \ = HtmlFileSource::svelte();\n    let options = HtmlParseOptions::from(&source_type);\n\
+    \    let root = parse_html(code, options);\n    let syntax = root.syntax();\n\n\
+    \    dbg!(&syntax, root.diagnostics(), root.has_errors());\n}\n```\n```shell\n\
+    just qt biome_html_parser\n```\n\nThe `dbg!` output shows the full AST tree structure,\
+    \ helping you understand:\n- How directives/attributes are parsed (e.g., `HtmlAttribute`\
+    \ vs `SvelteBindDirective`)\n- Whether values use `HtmlString` (quotes) or `HtmlTextExpression`\
+    \ (curly braces)\n- Token ranges and offsets needed for proper snippet creation\n\
+    - Node hierarchy and parent-child relationships\n\n- **Parser inspection**: Use\
+    \ `just qt <package>` to run quick_test and inspect AST, NOT full Biome builds\
+    \ (much faster)\n- **String extraction**: Use `inner_string_text()` for quoted\
+    \ strings, not `text_trimmed()` (which includes quotes)\n- **Legacy syntax**:\
+    \ Ask users before implementing deprecated/legacy syntax - wait for user demand\n\
+    - **Borrow checker**: Avoid temporary borrows that get dropped - use `let binding\
+    \ = value; binding.method()` pattern"
+  gold_removed: '// Uncomment #[ignore] and modify:
+
+    cd crates/biome_js_analyze
+
+    cargo test quick_test -- --show-output'
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- Claim patterns are "widely used" or "common" without evidence
+
+    - Implement legacy/deprecated syntax without checking with the user first
+
+    - Make assumptions about API design - inspect actual code structure first
+
+    - Inspect AST structure before implementing (use parser crate''s `quick_test`)
+
+    - Ask users about legacy/deprecated syntax support - wait for demand before implementing
+
+    - Verify your solution works for all relevant cases, not just the first one you
+    find
+
+    - Reference the skills in `.claude/skills/` for technical implementation details'
+  gold_removed: ''

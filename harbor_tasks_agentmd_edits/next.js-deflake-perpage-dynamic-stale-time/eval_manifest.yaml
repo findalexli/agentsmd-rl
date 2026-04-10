@@ -1,63 +1,95 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 91492
-  base_commit: "3af4cc14ea400ebc01fdc267f3d3495bfe086a7e"
-  merge_commit: "a060fbf9f7ba603bb32ab9cf9da48bfa9d3739d2"
-
+  base_commit: 3af4cc14ea400ebc01fdc267f3d3495bfe086a7e
+  merge_commit: a060fbf9f7ba603bb32ab9cf9da48bfa9d3739d2
 checks:
-  # [static] pass_to_pass
-  - id: hub_pages_created
-    type: pass_to_pass
-    origin: static
-    description: "Hub pages (hub-a, hub-b, hub-c) must exist with proper structure"
-
-  # [static] pass_to_pass
-  - id: skill_file_created
-    type: pass_to_pass
-    origin: static
-    description: "Router act SKILL.md must exist with proper documentation"
-
-  # [static] pass_to_pass
-  - id: dynamic_pages_updated
-    type: pass_to_pass
-    origin: static
-    description: "Dynamic pages must have LinkAccordion links to hub pages"
-
-  # [pr_diff] fail_to_pass
-  - id: test_uses_hub_navigation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Test must use hub navigation instead of browser.back()"
-
-  # [pr_diff] fail_to_pass
-  - id: agents_md_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md must contain router act rule about LinkAccordion"
-
-  # [static] pass_to_pass
-  - id: typescript_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files must have valid syntax"
-
-  # [static] pass_to_pass
-  - id: test_file_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Test file must have meaningful content, not just placeholders"
-
-  # [agent_config] pass_to_pass
-  - id: router_act_rule_present
-    type: pass_to_pass
-    origin: agent_config
-    description: "AGENTS.md must document router act testing patterns"
-    source:
-      path: "AGENTS.md"
-      lines: "410"
-      commit: "3af4cc14ea400ebc01fdc267f3d3495bfe086a7e"
-
-rubric:
-  []
+- id: hub_pages_created
+  type: pass_to_pass
+  origin: static
+  description: Hub pages (hub-a, hub-b, hub-c) must exist with proper structure
+- id: skill_file_created
+  type: pass_to_pass
+  origin: static
+  description: Router act SKILL.md must exist with proper documentation
+- id: dynamic_pages_updated
+  type: pass_to_pass
+  origin: static
+  description: Dynamic pages must have LinkAccordion links to hub pages
+- id: test_uses_hub_navigation
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test must use hub navigation instead of browser.back()
+- id: agents_md_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must contain router act rule about LinkAccordion
+- id: typescript_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must have valid syntax
+- id: test_file_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Test file must have meaningful content, not just placeholders
+- id: router_act_rule_present
+  type: pass_to_pass
+  origin: agent_config
+  description: AGENTS.md must document router act testing patterns
+  source:
+    path: AGENTS.md
+    lines: '410'
+    commit: 3af4cc14ea400ebc01fdc267f3d3495bfe086a7e
+rubric: []
+config_edits:
+- path: .agents/skills/router-act/SKILL.md
+  tier: 1
+  gold_added: "---\nname: router-act\ndescription: >\n  How to write end-to-end tests\
+    \ using createRouterAct and LinkAccordion.\n  Use when writing or modifying tests\
+    \ that need to control the timing of\n  internal Next.js requests (like prefetches)\
+    \ or assert on their responses.\n  Covers the act API, fixture patterns, prefetch\
+    \ control via LinkAccordion,\n  fake clocks, and avoiding flaky testing patterns.\n\
+    user-invocable: false\n---\n\n# Router Act Testing\n\nUse this skill when writing\
+    \ or modifying tests that involve prefetch requests, client router navigations,\
+    \ or the segment cache. The `createRouterAct` utility from `test/lib/router-act.ts`\
+    \ lets you assert on prefetch and navigation responses in an end-to-end way without\
+    \ coupling to the exact number of requests or the protocol details. This is why\
+    \ most client router-related tests use this pattern.\n\n## When NOT to Use `act`\n\
+    \nDon't bother with `act` if you don't need to instrument the network responses\
+    \ — either to control their timing or to assert on what's included in them. If\
+    \ all you're doing is waiting for some part of the UI to appear after a navigation,\
+    \ regular Playwright helpers like `browser.elementById()`, `browser.elementByCss()`,\
+    \ and `browser.waitForElementByCss()` are sufficient.\n\n## Core Principles\n\n\
+    1. **Use `LinkAccordion` to control when prefetches happen.** Never let links\
+    \ be visible outside an `act` scope.\n2. **Prefer `'no-requests'`** whenever the\
+    \ data should be served from cache. This is the strongest assertion — it proves\
+    \ the cache is working.\n3. **Avoid retry/polling timers.** The `act` utility\
+    \ exists specifically to replace inherently flaky patterns like `retry()` loops\
+    \ or `setTimeout` waits for network activity. If you find yourself wanting to\
+    \ poll, you're probably not using `act` correctly.\n4. **Avoid the `block` feature.**\
+    \ It's prone to false negatives. Prefer `includes` and `'no-requests'` assertions\
+    \ instead.\n\n## Act API\n\n### Config Options\n\n```typescript\n// Assert NO\
+    \ router requests are made (data served from cache).\n// Prefer this whenever\
+    \ possible — it's the strongest assertion.\nawait act(async () => { ... }, 'no-requests')\n\
+    \n// Expect at least one response containing this substring\nawait act(async ()\
+    \ => { ... }, { includes: 'Page content' })\n\n// Expect multiple responses (checked\
+    \ in order)\nawait act(async () => { ... }, [\n  { includes: 'First response'\
+    \ },\n  { includes: 'Second response' },\n])\n\n// Assert the same content appears\
+    \ in two separate responses\nawait act(async () => { ... }, [\n  { includes: 'Repeated\
+    \ content' },\n  { includes: 'Repeated content' },\n])\n\n// Expect at least one\
+    \ request, don't assert on content\nawait act(async () => { ... })\n```\n\n###\
+    \ How `includes` Matching Works\n\n- The `includes` substring is matched against\
+    \ the HTTP response body. Use text content that appears literally in the rendered\
+    \ output (e.g. `'Dynamic content (stale time 60s)'`).\n- Extra responses that\
+    \ don't match any `includes` assertion are silently ignored — you only need to\
+    \ assert on the responses you care about."
+  gold_removed: ''
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- **Router act tests must use LinkAccordion to control prefetches**:
+    Always use `LinkAccordion` to control when prefetches happen inside `act` scopes.
+    Never use `browser.back()` to return to a page where accordion links are already
+    visible — BFCache restores state and triggers uncontrolled re-prefetches. See
+    `$router-act` for full patterns.'
+  gold_removed: ''

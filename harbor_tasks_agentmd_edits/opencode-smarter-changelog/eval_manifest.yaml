@@ -1,58 +1,89 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 20138
-  base_commit: "057848deb847d59250e7db08ab2402f4a69bfcda"
-  merge_commit: "93fad99f7f345173250aeb336e8e3c49d46d524e"
-
+  base_commit: 057848deb847d59250e7db08ab2402f4a69bfcda
+  merge_commit: 93fad99f7f345173250aeb336e8e3c49d46d524e
 checks:
-  # Code behavior tests (subprocess execution)
-  - id: raw_changelog_runs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "script/raw-changelog.ts exists and --help outputs usage info"
-
-  - id: changelog_wrapper_flags
-    type: fail_to_pass
-    origin: pr_diff
-    description: "script/changelog.ts --help shows new --variant, --quiet, --print flags"
-
-  - id: version_uses_bun_script
-    type: fail_to_pass
-    origin: pr_diff
-    description: "script/version.ts calls bun script/changelog.ts instead of opencode run"
-
-  # Config/instruction file update tests
-  - id: command_uses_raw_changelog
-    type: fail_to_pass
-    origin: pr_diff
-    description: "changelog.md command uses raw-changelog.ts for input generation"
-
-  - id: command_user_focus_guidance
-    type: fail_to_pass
-    origin: pr_diff
-    description: "changelog.md includes user-focused guidance about flow-on effects"
-
-  - id: command_wraps_input_in_tags
-    type: fail_to_pass
-    origin: pr_diff
-    description: "changelog.md wraps input in <changelog_input> tags"
-
-  # Regression checks (pass_to_pass)
-  - id: raw_changelog_has_sections
-    type: pass_to_pass
-    origin: pr_diff
-    description: "raw-changelog.ts defines section mapping for all product areas"
-
-  - id: command_preserves_attribution_rules
-    type: pass_to_pass
-    origin: pr_diff
-    description: "changelog.md preserves deterministic attribution rules"
-
+- id: raw_changelog_runs
+  type: fail_to_pass
+  origin: pr_diff
+  description: script/raw-changelog.ts exists and --help outputs usage info
+- id: changelog_wrapper_flags
+  type: fail_to_pass
+  origin: pr_diff
+  description: script/changelog.ts --help shows new --variant, --quiet, --print flags
+- id: version_uses_bun_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: script/version.ts calls bun script/changelog.ts instead of opencode
+    run
+- id: command_uses_raw_changelog
+  type: fail_to_pass
+  origin: pr_diff
+  description: changelog.md command uses raw-changelog.ts for input generation
+- id: command_user_focus_guidance
+  type: fail_to_pass
+  origin: pr_diff
+  description: changelog.md includes user-focused guidance about flow-on effects
+- id: command_wraps_input_in_tags
+  type: fail_to_pass
+  origin: pr_diff
+  description: changelog.md wraps input in <changelog_input> tags
+- id: raw_changelog_has_sections
+  type: pass_to_pass
+  origin: pr_diff
+  description: raw-changelog.ts defines section mapping for all product areas
+- id: command_preserves_attribution_rules
+  type: pass_to_pass
+  origin: pr_diff
+  description: changelog.md preserves deterministic attribution rules
 rubric:
-  - rule: "Config update is consistent with the style of existing command templates in .opencode/command/"
-    source:
-      path: ".opencode/command/commit.md"
-      lines: "1-30"
-      commit: "057848deb847d59250e7db08ab2402f4a69bfcda"
+- rule: Config update is consistent with the style of existing command templates in
+    .opencode/command/
+  source:
+    path: .opencode/command/commit.md
+    lines: 1-30
+    commit: 057848deb847d59250e7db08ab2402f4a69bfcda
+config_edits:
+- path: .opencode/command/changelog.md
+  tier: 2
+  gold_added: 'model: opencode/gpt-5.4
+
+    `git show --stat --format='''' <hash>` or `git show --format='''' <hash>` so you
+    can
+
+    understand the actual code changes and not just the commit message (they may be
+    misleading).
+
+    - Focus on writing the least words to get your point across - users will skim
+    read the changelog, so we should be precise
+
+
+    **Importantly, the changelog is for users (who are at least slightly technical),
+    they may use the TUI, Desktop, SDK, Plugins and so forth. Be thorough in understanding
+    flow on effects may not be immediately apparent. e.g. a package upgrade looks
+    internal but may patch a bug. Or a refactor may also stabilise some race condition
+    that fixes bugs for users. The PR title/body + commit message will give you the
+    authors context, usually containing the outcome not just technical detail**
+
+
+    <changelog_input>
+
+    !`bun script/raw-changelog.ts $ARGUMENTS`
+
+    </changelog_input>'
+  gold_removed: 'model: opencode/kimi-k2.5
+
+    Any command arguments are passed directly to `bun script/changelog.ts`.
+
+    Use `--from` / `-f` and `--to` / `-t` to preview a specific release range.
+
+
+    `git show --stat --format='''' <hash>` or `git show --format='''' <hash>` so the
+
+    summary reflects the actual user-facing change and not just the commit message.
+
+    ## Changelog Input
+
+    !`bun script/changelog.ts $ARGUMENTS`'

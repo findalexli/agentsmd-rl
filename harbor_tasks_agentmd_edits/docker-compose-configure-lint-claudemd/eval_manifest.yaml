@@ -1,38 +1,82 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "docker/compose"
+  repo: docker/compose
   pr: 13656
-  base_commit: "27d9d506306e808965d99b70c1f59308dcabca13"
-  merge_commit: "5de4353a6a8bd872dbf1591a545df04f8241b805"
-
+  base_commit: 27d9d506306e808965d99b70c1f59308dcabca13
+  merge_commit: 5de4353a6a8bd872dbf1591a545df04f8241b805
 checks:
-  # Syntax gate
-  - id: go_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified Go files parse without errors"
-
-  # Code style fixes
-  - id: publish_uses_fprintf
-    type: fail_to_pass
-    origin: pr_diff
-    description: "publish.go uses fmt.Fprintf instead of WriteString(fmt.Sprintf)"
-
-  - id: no_unnecessary_nolint
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Test file has no unnecessary //nolint:errcheck directive"
-
-  # Config/documentation updates
-  - id: claude_md_documents_build
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md exists and documents build/test commands"
-
-  - id: claude_md_documents_lint_style
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md documents linting setup and fmt.Fprintf style preference"
-
+- id: go_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified Go files parse without errors
+- id: publish_uses_fprintf
+  type: fail_to_pass
+  origin: pr_diff
+  description: publish.go uses fmt.Fprintf instead of WriteString(fmt.Sprintf)
+- id: no_unnecessary_nolint
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test file has no unnecessary //nolint:errcheck directive
+- id: claude_md_documents_build
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md exists and documents build/test commands
+- id: claude_md_documents_lint_style
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md documents linting setup and fmt.Fprintf style preference
 rubric: []
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '# Project: Docker Compose
+
+
+    ## Build & Test
+
+
+    - Build: `make build`
+
+    - Test all: `make test`
+
+    - Test unit: `go test ./pkg/...`
+
+    - Test single: `go test ./pkg/compose/ -run TestFunctionName`
+
+    - E2E tests: `go test -tags e2e ./pkg/e2e/ -run TestName`
+
+
+    ## Lint
+
+
+    - Linter: golangci-lint v2 (config in `.golangci.yml`)
+
+    - Run: `golangci-lint run --build-tags "e2e" ./...`
+
+    - **After modifying any Go code, ALWAYS run the linter and fix all reported issues
+    before considering the task complete.**
+
+    - Lint is also run via Docker: `docker buildx bake lint` (uses version pinned
+    in `Dockerfile`)
+
+
+    ## Code Style
+
+
+    - Formatting is enforced by golangci-lint (gofumpt + gci)
+
+    - Import order: stdlib, third-party, local module (enforced by gci)
+
+    - Max line length: 200 chars
+
+    - Max cyclomatic complexity: 16
+
+    - No `io/ioutil`, `github.com/pkg/errors`, `gopkg.in/yaml.v2`, `golang.org/x/exp/maps`,
+    `golang.org/x/exp/slices`
+
+    - Use `github.com/containerd/errdefs` instead of `github.com/docker/docker/errdefs`
+
+    - In tests: use `t.Context()` instead of `context.Background()` or `context.TODO()`
+
+    - Prefer `fmt.Fprintf` over `WriteString(fmt.Sprintf(...))`'
+  gold_removed: ''

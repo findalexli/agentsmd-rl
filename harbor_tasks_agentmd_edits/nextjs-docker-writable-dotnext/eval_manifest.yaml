@@ -1,45 +1,155 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 90651
-  base_commit: "15fcfb9ce4ec73c6ff8d08d72201726b983127fa"
-  merge_commit: "7643fc948398c38fe0792836fb4c014a45f6fb07"
-
+  base_commit: 15fcfb9ce4ec73c6ff8d08d72201726b983127fa
+  merge_commit: 7643fc948398c38fe0792836fb4c014a45f6fb07
 checks:
-  - id: dockerfile_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "RUN commands in Dockerfiles have valid shell syntax"
-
-  - id: standalone_copy_intact
-    type: pass_to_pass
-    origin: static
-    description: "COPY .next/standalone and .next/static still present"
-
-  - id: dockerfile_runner_creates_dotnext
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dockerfile runner stage creates .next directory with node ownership"
-
-  - id: dockerfile_build_no_cache_mount
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Build RUN command no longer mounts cache on .next/cache"
-
-  - id: dockerfile_bun_creates_dotnext
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dockerfile.bun runner stage creates .next directory with bun ownership"
-
-  - id: readme_documents_writable_dotnext
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README.md documents the writable .next directory for prerender cache"
-
-  - id: readme_describes_cache_tradeoff
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README.md explains the BuildKit .next/cache mount is optional"
-
+- id: dockerfile_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: RUN commands in Dockerfiles have valid shell syntax
+- id: standalone_copy_intact
+  type: pass_to_pass
+  origin: static
+  description: COPY .next/standalone and .next/static still present
+- id: dockerfile_runner_creates_dotnext
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dockerfile runner stage creates .next directory with node ownership
+- id: dockerfile_build_no_cache_mount
+  type: fail_to_pass
+  origin: pr_diff
+  description: Build RUN command no longer mounts cache on .next/cache
+- id: dockerfile_bun_creates_dotnext
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dockerfile.bun runner stage creates .next directory with bun ownership
+- id: readme_documents_writable_dotnext
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md documents the writable .next directory for prerender cache
+- id: readme_describes_cache_tradeoff
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md explains the BuildKit .next/cache mount is optional
 rubric: []
+config_edits:
+- path: examples/with-docker-export-output/README.md
+  tier: 2
+  gold_added: '- Multi-stage Docker build for optimal image size
+
+    - Static export: Fully static HTML/CSS/JavaScript site
+
+    - Two serving options: Nginx (production-grade) and serve (simple Node.js server)
+
+    - Security best practices (non-root user)
+
+    - Slim/Alpine Linux base images for optimal compatibility and smaller size
+
+    - BuildKit cache mounts for faster builds
+
+    - Production-ready configuration with optimized Nginx settings
+
+    - Docker Compose support for easy deployment
+
+    > [!IMPORTANT]
+
+    > **Version Maintenance**:
+
+    >
+
+    > - **Node.js**: This Dockerfile uses Node.js 24.13.0-slim, which was the latest
+    LTS version at the time of writing. To ensure security and stay up-to-date, regularly
+    check and update the `NODE_VERSION` ARG in the Dockerfile to the latest Node.js
+    LTS version. Check the latest version at [Node.js official website](https://nodejs.org/)
+    and browse available Node.js images on [Docker Hub](https://hub.docker.com/_/node).
+
+    > - **Nginx**: The Nginx Dockerfile uses `nginxinc/nginx-unprivileged:alpine3.22`.
+    Regularly check and update the `NGINXINC_IMAGE_TAG` ARG to the latest version.
+    Browse available Nginx images on [Docker Hub](https://hub.docker.com/r/nginxinc/nginx-unprivileged).
+
+    > - **serve package**: The serve Dockerfile uses `serve@14.2.5`. Update to the
+    latest version as needed for bug fixes and features.'
+  gold_removed: '- ✅ Multi-stage Docker build for optimal image size
+
+    - ✅ Static export: Fully static HTML/CSS/JavaScript site
+
+    - ✅ Two serving options: Nginx (production-grade) and serve (simple Node.js server)
+
+    - ✅ Security best practices (non-root user)
+
+    - ✅ Slim/Alpine Linux base images for optimal compatibility and smaller size
+
+    - ✅ BuildKit cache mounts for faster builds
+
+    - ✅ Production-ready configuration with optimized Nginx settings
+
+    - ✅ Docker Compose support for easy deployment
+
+    **⚠️ Important - Version Maintenance**:
+
+
+    - **Node.js**: This Dockerfile uses Node.js 24.13.0-slim, which was the latest
+    LTS version at the time of writing. To ensure security and stay up-to-date, regularly
+    check and update the `NODE_VERSION` ARG in the Dockerfile to the latest Node.js
+    LTS version. Check the latest version at [Node.js official website](https://nodejs.org/)
+    and browse available Node.js images on [Docker Hub](https://hub.docker.com/_/node).
+
+
+    - **Nginx**: The Nginx Dockerfile uses `nginxinc/nginx-unprivileged:al'
+- path: examples/with-docker/README.md
+  tier: 2
+  gold_added: '- Multi-stage Docker build for optimal image size
+
+    - Next.js standalone mode for minimal production builds
+
+    - Security best practices (non-root user)
+
+    - Slim Linux base image for optimal compatibility and smaller size
+
+    - BuildKit cache mounts for faster builds
+
+    - Production-ready configuration
+
+    - **BuildKit cache mounts**: Speeds up builds by caching package manager stores
+    (`/root/.npm`, `/usr/local/share/.cache/yarn`, `/root/.local/share/pnpm/store`).
+    See the Dockerfile for an optional `.next/cache` mount to speed up rebuilds.
+
+    - **Writable `.next` directory**: The `.next` directory is created and owned by
+    the `node` user so the server can write prerender cache and optimized images at
+    runtime
+
+    - **Standalone output**: Same optimized output as the Node.js version, with writable
+    `.next` directory for runtime cache
+
+    > [!IMPORTANT]
+
+    > **Node.js Version Maintenance**: This Dockerfile uses Node.js 24.13.0-slim,
+    which was the latest LTS version at the time of writing. To ensure security and
+    stay up-to-date, regularly check and update the `NODE_VERSION` ARG in the Dockerfile
+    to the latest Node.js LTS version. Check the latest version at [Nodejs official
+    website](https://nodejs.org/) and browse available Node.js images on [Docker Hub](https://hub.docker.com/_/node).'
+  gold_removed: '- ✅ Multi-stage Docker build for optimal image size
+
+    - ✅ Next.js standalone mode for minimal production builds
+
+    - ✅ Security best practices (non-root user)
+
+    - ✅ Slim Linux base image for optimal compatibility and smaller size
+
+    - ✅ BuildKit cache mounts for faster builds
+
+    - ✅ Production-ready configuration
+
+    - **BuildKit cache mounts**: Speeds up builds by caching package manager stores
+    (`/root/.npm`, `/usr/local/share/.cache/yarn`, `/root/.local/share/pnpm/store`)
+    and Next.js build cache (`/app/.next/cache`)
+
+    - **Standalone output**: Same optimized output as the Node.js version
+
+    **⚠️ Important - Node.js Version Maintenance**: This Dockerfile uses Node.js 24.13.0-slim,
+    which was the latest LTS version at the time of writing. To ensure security and
+    stay up-to-date, regularly check and update the `NODE_VERSION` ARG in the Dockerfile
+    to the latest Node.js LTS version. Check the latest version at [Nodejs official
+    website](https://nodejs.org/) and browse available Node.js images on [Docker Hub](https'

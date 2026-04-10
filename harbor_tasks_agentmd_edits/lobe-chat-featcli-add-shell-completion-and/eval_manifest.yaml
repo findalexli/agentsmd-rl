@@ -1,84 +1,142 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "lobehub/lobe-chat"
+  repo: lobehub/lobe-chat
   pr: 13164
-  base_commit: "12280badbdf288b7018a9d5b907898780cd31a96"
-  merge_commit: "4e89a00d2a8e98fe4d680d15f2094081beb555ab"
-
+  base_commit: 12280badbdf288b7018a9d5b907898780cd31a96
+  merge_commit: 4e89a00d2a8e98fe4d680d15f2094081beb555ab
 checks:
-  # ---------------------------------------------------------------------------
-  # Gates (pass_to_pass, static)
-  # ---------------------------------------------------------------------------
-  - id: typescript_compiles
-    type: pass_to_pass
-    origin: static
-    description: "TypeScript source files compile without errors"
-
-  # ---------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core behavioral tests
-  # ---------------------------------------------------------------------------
-  - id: completion_command_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The completion command outputs a valid shell completion script"
-
-  - id: completion_bash_output
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The completion command outputs valid bash completion script"
-
-  - id: complete_internal_command_suggests_commands
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The __complete internal command suggests subcommands"
-
-  - id: complete_internal_nested_subcommands
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The __complete command suggests nested subcommands in context"
-
-  - id: tsdown_build_config_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The tsdown.config.ts exists and is valid"
-
-  - id: tsup_config_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The old tsup.config.ts is removed"
-
-  - id: package_json_uses_tsdown
-    type: fail_to_pass
-    origin: pr_diff
-    description: "package.json uses tsdown instead of tsup for build"
-
-  - id: completion_utils_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The completion utility module exists with required exports"
-
-  - id: completion_command_module_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The completion command module exists and exports register function"
-
-  - id: index_imports_completion
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The CLI index imports and registers the completion command"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests / static)
-  # ---------------------------------------------------------------------------
-  - id: upstream_completion_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "The upstream completion.test.ts unit tests pass"
-
-  - id: not_stub_completion_utils
-    type: pass_to_pass
-    origin: static
-    description: "The completion utils have meaningful implementation, not stubs"
-
+- id: typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: TypeScript source files compile without errors
+- id: completion_command_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: The completion command outputs a valid shell completion script
+- id: completion_bash_output
+  type: fail_to_pass
+  origin: pr_diff
+  description: The completion command outputs valid bash completion script
+- id: complete_internal_command_suggests_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: The __complete internal command suggests subcommands
+- id: complete_internal_nested_subcommands
+  type: fail_to_pass
+  origin: pr_diff
+  description: The __complete command suggests nested subcommands in context
+- id: tsdown_build_config_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: The tsdown.config.ts exists and is valid
+- id: tsup_config_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: The old tsup.config.ts is removed
+- id: package_json_uses_tsdown
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json uses tsdown instead of tsup for build
+- id: completion_utils_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: The completion utility module exists with required exports
+- id: completion_command_module_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: The completion command module exists and exports register function
+- id: index_imports_completion
+  type: fail_to_pass
+  origin: pr_diff
+  description: The CLI index imports and registers the completion command
+- id: upstream_completion_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: The upstream completion.test.ts unit tests pass
+- id: not_stub_completion_utils
+  type: pass_to_pass
+  origin: static
+  description: The completion utils have meaningful implementation, not stubs
 rubric: []
+config_edits:
+- path: apps/cli/README.md
+  tier: 2
+  gold_added: '# @lobehub/cli
+
+
+    LobeHub command-line interface.
+
+
+    ## Local Development
+
+
+    | Task                                       | Command                    |
+
+    | ------------------------------------------ | -------------------------- |
+
+    | Run in dev mode                            | `bun run dev -- <command>` |
+
+    | Build the CLI                              | `bun run build`            |
+
+    | Link `lh`/`lobe`/`lobehub` into your shell | `bun run cli:link`         |
+
+    | Remove the global link                     | `bun run cli:unlink`       |
+
+
+    - `bun run build` only generates `dist/index.js`.
+
+    - To make `lh` available in your shell, run `bun run cli:link`.
+
+    - After linking, if your shell still cannot find `lh`, run `rehash` in `zsh`.
+
+
+    ## Shell Completion
+
+
+    ### Install completion for a linked CLI
+
+
+    | Shell  | Command                        |
+
+    | ------ | ------------------------------ |
+
+    | `zsh`  | `source <(lh completion zsh)`  |
+
+    | `bash` | `source <(lh completion bash)` |
+
+
+    ### Use completion during local development
+
+
+    | Shell  | Command                                      |
+
+    | ------ | -------------------------------------------- |
+
+    | `zsh`  | `source <(bun src/index.ts completion zsh)`  |
+
+    | `bash` | `source <(bun src/index.ts completion bash)` |
+
+
+    - Completion is context-aware. For example, `lh agent <Tab>` shows agent subcommands
+    instead of top-level commands.
+
+    - If you update completion logic locally, re-run the corresponding `source <(...)`
+    command to reload it in the current shell session.
+
+    - Completion only registers shell functions. It does not install the `lh` binary
+    by itself.
+
+
+    ## Quick Check
+
+
+    ```bash
+
+    which lh
+
+    lh --help
+
+    lh agent <TAB>
+
+    ```'
+  gold_removed: ''

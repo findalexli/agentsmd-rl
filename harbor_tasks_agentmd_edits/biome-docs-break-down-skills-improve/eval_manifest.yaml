@@ -106,3 +106,230 @@ rubric:
     path: .claude/skills/testing-codegen/SKILL.md
     lines: '425'
     commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+config_edits:
+- path: .claude/skills/README.md
+  tier: 2
+  gold_added: ' \*\*\[testing-codegen\](\.\'
+  gold_removed: ''
+- path: .claude/skills/changeset/SKILL.md
+  tier: 1
+  gold_added: '---
+
+    name: changeset
+
+    description: Guide for creating and writing proper changesets for Biome PRs. Use
+    when a PR introduces user-visible changes (bug fixes, new features, rule changes,
+    formatter changes, parser changes) that need a changeset entry for the CHANGELOG.
+    Trigger when creating changesets, writing changeset descriptions, or choosing
+    the correct change type.
+
+    compatibility: Designed for coding agents working on the Biome codebase (github.com/biomejs/biome).
+
+    ---
+
+
+    ## Purpose
+
+
+    Use this skill when a PR introduces user-facing changes that require a changeset.
+    Changesets drive CHANGELOG generation and release automation. Internal-only changes
+    (refactors with no user-visible effect) do not need changesets.
+
+
+    ## Create a Changeset
+
+
+    **Do not create changeset files manually.** Use:
+
+
+    ```shell
+
+    just new-changeset-empty
+
+    ```
+
+
+    The command will create an empty file `.changeset/`. Edit it directly to add detail.
+
+
+    > Requires `pnpm` — run `pnpm i` from repo root first.
+
+
+    ## Choose the Correct Change Type
+
+
+    - `patch` — Bug fixes.
+
+    - `minor` — New features. PR must target the `next` branch.
+
+    - `major` — Breaking user API changes. PR must target the `next` branch. These
+    are rare and strictly controlled.
+
+
+    Refer to the [versioning page](https://biomejs.dev/internals/versioning/) when
+    unsure.
+
+
+    ## Changeset Format
+
+
+    ```markdown
+
+    ---
+
+    "@biomejs/biome": patch
+
+    ---
+
+
+    Description here.
+
+    ```
+
+
+    If you need headers inside the description, use `####` or `#####` only. Other
+    header levels break the CHANGELOG tooling.
+
+
+    ## Writing Guidelines
+
+
+    ### General Rules
+
+
+    - Write about **user-facing changes only**. No changeset needed for pure refactoring.
+    Describe how the change affects the user.
+
+    - Be **concise and clear** — 1 to 3 sentences. Longer entries signal to users
+    that the change deserves attention.
+
+    - **Past tense** for what you did: "Added", "Fixed", "Changed".
+
+    - **Present tense** for Biome behavior: "Biome now supports...", "The rule now
+    detects...".
+
+    - End every sentence with a **full stop** (`.`).
+
+
+    ### Bug F'
+  gold_removed: ''
+- path: .claude/skills/pull-request/SKILL.md
+  tier: 1
+  gold_added: '---
+
+    name: pull-request
+
+    description: Guide for creating proper pull requests for the Biome project. Use
+    when opening a PR, writing a PR description, choosing the correct target branch,
+    or filling out the PR template. Trigger when creating PRs, writing PR summaries,
+    or preparing code for review.
+
+    compatibility: Designed for coding agents working on the Biome codebase (github.com/biomejs/biome).
+
+    ---
+
+
+    ## Purpose
+
+
+    Use this skill when creating a pull request for the Biome repository. It covers
+    branch targeting, title formatting, the PR template, and AI disclosure requirements.
+
+
+    ## AI Assistance Disclosure
+
+
+    If AI was used in any capacity to produce the PR, **you must disclose it** in
+    the PR description. Examples:
+
+
+    > This PR was written primarily by Claude Code.
+
+    >
+
+    > I consulted ChatGPT to understand the codebase but the solution was fully authored
+    manually by myself.
+
+
+    This is mandatory. It helps reviewers apply appropriate scrutiny.
+
+
+    ## Choose the Target Branch
+
+
+    | Change type | Target branch |
+
+    | --- | --- |
+
+    | Bug fix (code or docs) | `main` |
+
+    | New **nursery** rule | `main` |
+
+    | Rule promotion from nursery | `next` |
+
+    | New feature (user-facing) | `next` |
+
+    | New feature (internal only) | `main` |
+
+
+    ## PR Title
+
+
+    Use **conventional commit format**. The title becomes the squash-merge commit
+    message.
+
+
+    ```
+
+    <type>(<scope>): <short description>
+
+    ```
+
+
+    Supported prefixes:
+
+
+    - `feat:` — new feature
+
+    - `fix:` — bugfix
+
+    - `docs:` — documentation update
+
+    - `refactor:` — code refactor (no behavior change)
+
+    - `test:` — test update
+
+    - `chore:` — housekeeping
+
+    - `perf:` — performance improvement
+
+    - `ci:` — CI change
+
+    - `build:` — build system or dependency change
+
+    - `revert:` — revert a previous change
+
+
+    Examples:
+
+
+    ```
+
+    feat(css): add noDuplicateSelectors rule
+
+    fix(linter): handle edge case in useOptionalChain
+
+    docs: update contributing guide
+
+    refactor(parser): simplify HTML attribute parsing
+
+    ```
+
+
+    The CI runs [action-semantic-pull-request](https://github.com/amannn/action-semantic-pull-request)
+    to validate the'
+  gold_removed: ''
+- path: .claude/skills/testing-codegen/SKILL.md
+  tier: 1
+  gold_added: '- Changeset guide: \`..'
+  gold_removed: ''

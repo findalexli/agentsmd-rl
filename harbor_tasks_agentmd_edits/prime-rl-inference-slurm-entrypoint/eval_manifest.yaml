@@ -1,105 +1,187 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PrimeIntellect-ai/prime-rl"
+  repo: PrimeIntellect-ai/prime-rl
   pr: 1898
-  base_commit: "6f6fa002a55a26ba1cc33aa9ac6b7301f59b82e0"
-  merge_commit: "68e443b833a15289b62ed60daea477a5b8d7e751"
-
+  base_commit: 6f6fa002a55a26ba1cc33aa9ac6b7301f59b82e0
+  merge_commit: 68e443b833a15289b62ed60daea477a5b8d7e751
 checks:
-  # ---------------------------------------------------------------------------
-  # Syntax gates (static)
-  # ---------------------------------------------------------------------------
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "New entrypoint file must parse without syntax errors"
-
-  # ---------------------------------------------------------------------------
-  # Code behavior tests (pr_diff)
-  # ---------------------------------------------------------------------------
-  - id: entrypoint_file_exists_with_main
-    type: fail_to_pass
-    origin: pr_diff
-    description: "New inference entrypoint file exists with main() and inference() functions"
-
-  - id: pyproject_entrypoint_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pyproject.toml points inference command to new entrypoints.inference:main"
-
-  - id: config_has_slurm_and_deployment
-    type: fail_to_pass
-    origin: pr_diff
-    description: "InferenceConfig has slurm, deployment, output_dir, and dry_run fields"
-
-  - id: config_validators_exist
-    type: fail_to_pass
-    origin: pr_diff
-    description: "InferenceConfig has validators for multi_node+slurm and slurm template auto-setup"
-
-  - id: slurm_template_file_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SLURM template file inference.sbatch.j2 exists with proper SBATCH directives"
-
-  # ---------------------------------------------------------------------------
-  # Config/documentation update tests (pr_diff + agent_config)
-  # ---------------------------------------------------------------------------
-  - id: skill_md_updated_with_slurm_docs
-    type: fail_to_pass
-    origin: agent_config
-    description: "SKILL.md updated with SLURM scheduling documentation per AGENTS.md rule"
-    source:
-      path: "AGENTS.md"
-      lines: "46-48"
-      commit: "6f6fa002a55a26ba1cc33aa9ac6b7301f59b82e0"
-
-  - id: skill_md_key_files_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md key files section references new entrypoint and SLURM template"
-
-  # ---------------------------------------------------------------------------
-  # Anti-stub checks (static)
-  # ---------------------------------------------------------------------------
-  - id: entrypoint_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Entrypoint functions have real logic, not just pass/return"
-
-  - id: config_classes_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Deployment config classes have real fields, not empty"
-
-  # ---------------------------------------------------------------------------
-  # Repo CI/CD checks (repo_tests)
-  # ---------------------------------------------------------------------------
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff lint check passes on src/ directory"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on src/ directory"
-
-  - id: test_repo_syntax_pyproject
-    type: pass_to_pass
-    origin: repo_tests
-    description: "pyproject.toml has valid TOML syntax"
-
-  - id: test_repo_configs_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All config files in configs/ directory have valid TOML syntax"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: New entrypoint file must parse without syntax errors
+- id: entrypoint_file_exists_with_main
+  type: fail_to_pass
+  origin: pr_diff
+  description: New inference entrypoint file exists with main() and inference() functions
+- id: pyproject_entrypoint_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: pyproject.toml points inference command to new entrypoints.inference:main
+- id: config_has_slurm_and_deployment
+  type: fail_to_pass
+  origin: pr_diff
+  description: InferenceConfig has slurm, deployment, output_dir, and dry_run fields
+- id: config_validators_exist
+  type: fail_to_pass
+  origin: pr_diff
+  description: InferenceConfig has validators for multi_node+slurm and slurm template
+    auto-setup
+- id: slurm_template_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: SLURM template file inference.sbatch.j2 exists with proper SBATCH directives
+- id: skill_md_updated_with_slurm_docs
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md updated with SLURM scheduling documentation per AGENTS.md
+    rule
+  source:
+    path: AGENTS.md
+    lines: 46-48
+    commit: 6f6fa002a55a26ba1cc33aa9ac6b7301f59b82e0
+- id: skill_md_key_files_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md key files section references new entrypoint and SLURM template
+- id: entrypoint_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Entrypoint functions have real logic, not just pass/return
+- id: config_classes_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Deployment config classes have real fields, not empty
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint check passes on src/ directory
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on src/ directory
+- id: test_repo_syntax_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml has valid TOML syntax
+- id: test_repo_configs_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All config files in configs/ directory have valid TOML syntax
 rubric:
-  # Soft rule from AGENTS.md
-  - rule: "Skills live in skills/ and are symlinked to .claude/skills/. They teach agents how to handle specific workflows. When you make changes to the codebase, check if any skills need to be updated to stay accurate."
-    source:
-      path: "AGENTS.md"
-      lines: "46-48"
-      commit: "6f6fa002a55a26ba1cc33aa9ac6b7301f59b82e0"
+- rule: Skills live in skills/ and are symlinked to .claude/skills/. They teach agents
+    how to handle specific workflows. When you make changes to the codebase, check
+    if any skills need to be updated to stay accurate.
+  source:
+    path: AGENTS.md
+    lines: 46-48
+    commit: 6f6fa002a55a26ba1cc33aa9ac6b7301f59b82e0
+config_edits:
+- path: skills/inference-server/SKILL.md
+  tier: 1
+  gold_added: '## SLURM scheduling
+
+
+    The inference entrypoint supports optional SLURM scheduling, following the same
+    patterns as SFT and RL.
+
+
+    ### Single-node SLURM
+
+
+    ```toml
+
+    # inference_slurm.toml
+
+    output_dir = "/shared/outputs/my-inference"
+
+
+    [model]
+
+    name = "Qwen/Qwen3-8B"
+
+
+    [parallel]
+
+    tp = 8
+
+
+    [slurm]
+
+    job_name = "my-inference"
+
+    partition = "cluster"
+
+    ```
+
+
+    ```bash
+
+    uv run inference @ inference_slurm.toml
+
+    ```
+
+
+    ### Multi-node SLURM (independent vLLM replicas)
+
+
+    Each node runs an independent vLLM instance. No cross-node parallelism — TP and
+    DP must fit within a single node''s GPUs.
+
+
+    ```toml
+
+    # inference_multinode.toml
+
+    output_dir = "/shared/outputs/my-inference"
+
+
+    [model]
+
+    name = "PrimeIntellect/INTELLECT-3-RL-600"
+
+
+    [parallel]
+
+    tp = 8
+
+    dp = 1
+
+
+    [deployment]
+
+    type = "multi_node"
+
+    num_nodes = 4
+
+    gpus_per_node = 8
+
+
+    [slurm]
+
+    job_name = "my-inference"
+
+    partition = "cluster"
+
+    ```
+
+
+    ### Dry run
+
+
+    Add `dry_run = true` to generate the sbatch script without submitting:
+
+
+    ```bash
+
+    uv run inference @ config.toml --dry-run true
+
+    ```
+
+
+    - `src/prime_rl/entrypoints/inference.py` — entrypoint with local/SLURM routing
+
+    - `src/prime_rl/inference/server.py` — vLLM env setup
+
+    - `src/prime_rl/templates/inference.sbatch.j2` — SLURM template (handles both
+    single and multi-node)'
+  gold_removed: '- `src/prime_rl/inference/server.py` — entry point, env var setup'

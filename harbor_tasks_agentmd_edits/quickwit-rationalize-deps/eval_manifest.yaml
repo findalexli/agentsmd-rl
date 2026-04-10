@@ -57,3 +57,34 @@ rubric:
     path: .claude/skills/rationalize-deps/SKILL.md
     lines: 60-80
     commit: 73877d1402ab9c294ab7f7a4ee02fb6c0c0f2f85
+config_edits:
+- path: .claude/skills/rationalize-deps/SKILL.md
+  tier: 1
+  gold_added: "---\nname: rationalize-deps\ndescription: Analyze Cargo.toml dependencies\
+    \ and attempt to remove unused features to reduce compile times and binary size\n\
+    ---\n\n# Rationalize Dependencies\n\nThis skill analyzes Cargo.toml dependencies\
+    \ to identify and remove unused features.\n\n## Overview\n\nMany crates enable\
+    \ features by default that may not be needed. This skill:\n1. Identifies dependencies\
+    \ with default features enabled\n2. Tests if `default-features = false` works\n\
+    3. Identifies which specific features are actually needed\n4. Verifies compilation\
+    \ after changes\n\n## Step 1: Identify the target\n\nAsk the user which crate(s)\
+    \ to analyze:\n- A specific crate name (e.g., \"tokio\", \"serde\")\n- A specific\
+    \ workspace member (e.g., \"quickwit-search\")\n- \"all\" to scan the entire workspace\n\
+    \n## Step 2: Analyze current dependencies\n\nFor the workspace Cargo.toml (`quickwit/Cargo.toml`),\
+    \ list dependencies that:\n- Do NOT have `default-features = false`\n- Have default\
+    \ features that might be unnecessary\n\nRun: `cargo tree -p <crate> -f \"{p} {f}\"\
+    \ --edges features` to see what features are actually used.\n\n## Step 3: For\
+    \ each candidate dependency\n\n### 3a: Check the crate's default features\n\n\
+    Look up the crate on crates.io or check its Cargo.toml to understand:\n- What\
+    \ features are enabled by default\n- What each feature provides\n\nUse: `cargo\
+    \ metadata --format-version=1 | jq '.packages[] | select(.name == \"<crate>\"\
+    ) | .features'`\n\n### 3b: Try disabling default features\n\nModify the dependency\
+    \ in `quickwit/Cargo.toml`:\n\nFrom:\n```toml\nsome-crate = { version = \"1.0\"\
+    \ }\n```\n\nTo:\n```toml\nsome-crate = { version = \"1.0\", default-features =\
+    \ false }\n```\n\n### 3c: Run cargo check\n\nRun: `cargo check --workspace` (or\
+    \ target specific packages for faster feedback)\n\nIf compilation fails:\n1. Read\
+    \ the error messages to identify which features are needed\n2. Add only the required\
+    \ features explicitly:\n   ```toml\n   some-crate = { version = \"1.0\", default-features\
+    \ = false, features = [\"needed-feature\"] }\n   ```\n3. Re-run cargo check\n\n\
+    #"
+  gold_removed: ''

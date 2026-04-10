@@ -1,55 +1,85 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "payloadcms/payload"
+  repo: payloadcms/payload
   pr: 15752
-  base_commit: "23d52a0d7d5780954bf5b027e537cabb008b8a0a"
-  merge_commit: "8791a726d6c7a516811c77ce785f0673f6729378"
-
+  base_commit: 23d52a0d7d5780954bf5b027e537cabb008b8a0a
+  merge_commit: 8791a726d6c7a516811c77ce785f0673f6729378
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript/JS files exist and parse without errors"
-
-  - id: template_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Cloudflare D1 template TypeScript typecheck passes"
-
-  - id: template_eslint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Cloudflare D1 template ESLint passes after fix"
-
-  - id: cloudflare_logger_json_output
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Custom console logger produces valid JSON through console methods"
-
-  - id: logger_has_all_levels
-    type: fail_to_pass
-    origin: pr_diff
-    description: "cloudflareLogger defines all standard pino log level methods (trace/debug/info/warn/error/fatal/silent)"
-
-  - id: logger_production_conditional
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Logger is only active in production, not development"
-
-  - id: payload_logger_type_exported
-    type: fail_to_pass
-    origin: pr_diff
-    description: "PayloadLogger type is exported from the payload package index"
-
-  - id: readme_logger_configuration
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README.md documents the custom logger configuration for Cloudflare Workers"
-
-  - id: readme_diagnostic_channel
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README.md documents the diagnostic channel error workaround"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript/JS files exist and parse without errors
+- id: template_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cloudflare D1 template TypeScript typecheck passes
+- id: template_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cloudflare D1 template ESLint passes after fix
+- id: cloudflare_logger_json_output
+  type: fail_to_pass
+  origin: pr_diff
+  description: Custom console logger produces valid JSON through console methods
+- id: logger_has_all_levels
+  type: fail_to_pass
+  origin: pr_diff
+  description: cloudflareLogger defines all standard pino log level methods (trace/debug/info/warn/error/fatal/silent)
+- id: logger_production_conditional
+  type: fail_to_pass
+  origin: pr_diff
+  description: Logger is only active in production, not development
+- id: payload_logger_type_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: PayloadLogger type is exported from the payload package index
+- id: readme_logger_configuration
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md documents the custom logger configuration for Cloudflare
+    Workers
+- id: readme_diagnostic_channel
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md documents the diagnostic channel error workaround
 rubric: []
+config_edits:
+- path: templates/with-cloudflare-d1/README.md
+  tier: 2
+  gold_added: '### Logger Configuration
+
+
+    This template includes a custom console-based logger compatible with Cloudflare
+    Workers. Payload''s default logger uses `pino-pretty`, which relies on Node.js
+    APIs not available in Workers and would cause `fs.write is not implemented` errors.
+
+
+    The custom logger in `payload.config.ts`:
+
+
+    - Routes logs through `console.*` methods which Workers handles correctly
+
+    - Outputs JSON-formatted logs for Cloudflare observability
+
+    - Only active in production (development uses the default `pino-pretty` for better
+    DX)
+
+
+    You can control the log level via the `PAYLOAD_LOG_LEVEL` environment variable
+    (e.g., `debug`, `info`, `warn`, `error`).
+
+
+    ### Diagnostic Channel Errors
+
+
+    If you see "Failed to publish diagnostic channel message" errors in your observability
+    logs, these typically come from the `undici` HTTP client library. The template
+    includes `skipSafeFetch: true` in the Media collection to use native fetch instead
+    of undici for file uploads, which helps reduce these errors.
+
+
+    Cloudflare Workers runs in an [isolated environment that cannot access private
+    IP ranges](https://developers.cloudflare.com/workers-vpc/examples/route-across-private-services/)
+    by default, providing built-in SSRF protection. This makes `skipSafeFetch` safe
+    to use.'
+  gold_removed: ''

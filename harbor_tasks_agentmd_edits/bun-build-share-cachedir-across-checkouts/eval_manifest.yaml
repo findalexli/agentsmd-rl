@@ -1,58 +1,61 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28846
-  base_commit: "485ec522a22b469b336aece8276b507a71665a87"
-  merge_commit: "0d09afea645d2ecd0998fb8f5867536b264fed45"
-
+  base_commit: 485ec522a22b469b336aece8276b507a71665a87
+  merge_commit: 0d09afea645d2ecd0998fb8f5867536b264fed45
 checks:
-  # Gates
-  - id: test_source_files_exist
-    type: pass_to_pass
-    origin: static
-    description: "Modified source files (config.ts, download.ts, clean.ts, CLAUDE.md) exist"
-
-  # Code behavior — fail-to-pass
-  - id: test_cachedir_branches_on_ci
-    type: fail_to_pass
-    origin: pr_diff
-    description: "resolveConfig() defaults cacheDir to shared build-cache for local builds, <buildDir>/cache for CI"
-
-  - id: test_download_pid_unique_temps
-    type: fail_to_pass
-    origin: pr_diff
-    description: "downloadWithRetry and fetchPrebuilt use process.pid in temp paths for concurrent safety"
-
-  - id: test_clean_cache_preset
-    type: fail_to_pass
-    origin: pr_diff
-    description: "clean.ts defines a 'cache' preset targeting the shared build cache directory"
-
-  # Config documentation — fail-to-pass (agent_config)
-  - id: test_claudemd_documents_shared_cache
-    type: fail_to_pass
-    origin: agent_config
-    description: "scripts/build/CLAUDE.md Gotchas section documents shared cache and that rm -rf build/ doesn't clear it locally"
-    source:
-      path: "scripts/build/CLAUDE.md"
-      lines: "223-235"
-      commit: "485ec522a22b469b336aece8276b507a71665a87"
-
-  # Regression — pass-to-pass
-  - id: test_cachedir_explicit_override_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Explicit cacheDir override still takes precedence over CI/local defaults"
-
-  - id: test_config_imports_homedir
-    type: pass_to_pass
-    origin: static
-    description: "config.ts imports homedir from node:os for shared cache path resolution"
-
+- id: test_source_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Modified source files (config.ts, download.ts, clean.ts, CLAUDE.md)
+    exist
+- id: test_cachedir_branches_on_ci
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolveConfig() defaults cacheDir to shared build-cache for local builds,
+    <buildDir>/cache for CI
+- id: test_download_pid_unique_temps
+  type: fail_to_pass
+  origin: pr_diff
+  description: downloadWithRetry and fetchPrebuilt use process.pid in temp paths for
+    concurrent safety
+- id: test_clean_cache_preset
+  type: fail_to_pass
+  origin: pr_diff
+  description: clean.ts defines a 'cache' preset targeting the shared build cache
+    directory
+- id: test_claudemd_documents_shared_cache
+  type: fail_to_pass
+  origin: agent_config
+  description: scripts/build/CLAUDE.md Gotchas section documents shared cache and
+    that rm -rf build/ doesn't clear it locally
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 223-235
+    commit: 485ec522a22b469b336aece8276b507a71665a87
+- id: test_cachedir_explicit_override_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Explicit cacheDir override still takes precedence over CI/local defaults
+- id: test_config_imports_homedir
+  type: pass_to_pass
+  origin: static
+  description: config.ts imports homedir from node:os for shared cache path resolution
 rubric:
-  - rule: "Code comments follow the existing pattern of explaining WHY, not just WHAT"
-    source:
-      path: "scripts/build/CLAUDE.md"
-      lines: "16-18"
-      commit: "485ec522a22b469b336aece8276b507a71665a87"
+- rule: Code comments follow the existing pattern of explaining WHY, not just WHAT
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 16-18
+    commit: 485ec522a22b469b336aece8276b507a71665a87
+config_edits:
+- path: scripts/build/CLAUDE.md
+  tier: 1
+  gold_added: '**`rm -rf build/` doesn''t clear the cache locally.** `cfg.cacheDir`
+    is machine-shared at `$BUN_INSTALL/build-cache` for non-CI builds (ccache, zig,
+    tarballs, prebuilt WebKit). Everything there is content-addressed or version-stamped,
+    so a stale entry can''t be hit — don''t reach for `bun run clean cache` as a debugging
+    step. If a build misbehaves, the bug is in the inputs or the graph, not the cache;
+    nuking it just costs you a cold rebuild. CI keeps `<buildDir>/cache` so `rm -rf
+    build/` is still a full reset there.'
+  gold_removed: ''

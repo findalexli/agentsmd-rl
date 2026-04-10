@@ -1,60 +1,84 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "lobehub/lobe-chat"
+  repo: lobehub/lobe-chat
   pr: 11746
-  base_commit: "17544558908a97902ef5bf1f564254288f0cf649"
-  merge_commit: "ad34072d9c25642e430519d4907d7836b3e476f9"
-
+  base_commit: 17544558908a97902ef5bf1f564254288f0cf649
+  merge_commit: ad34072d9c25642e430519d4907d7836b3e476f9
 checks:
-  - id: ensure_worker_sets_src
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pdfjs module sets GlobalWorkerOptions.workerSrc before Document renders"
-
-  - id: old_worker_files_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Unreliable side-effect worker files (worker.ts, pdf.worker.ts) are deleted"
-
-  - id: pdf_viewer_imports_unified
-    type: fail_to_pass
-    origin: pr_diff
-    description: "PDF FileViewer imports from unified @/libs/pdfjs, not react-pdf directly"
-
-  - id: pdf_preview_imports_unified
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SharePdf/PdfPreview imports from unified @/libs/pdfjs, not react-pdf directly"
-
-  - id: claude_md_linear_section_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md Linear Issue Management section restructured with trigger conditions and workflow"
-
-  - id: pdf_viewers_still_use_document
-    type: pass_to_pass
-    origin: static
-    description: "Both PDF viewers still render Document component (no regression)"
-
-  - id: repo_eslint_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ESLint check passes (npm run lint:ts)"
-
-  - id: repo_stylelint_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Stylelint check passes (npm run lint:style)"
-
-  - id: repo_no_circular_deps
-    type: pass_to_pass
-    origin: repo_tests
-    description: "No circular dependencies in main src (npm run lint:circular:main)"
-
-  - id: repo_component_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Component unit tests pass (vitest run src/components)"
-
+- id: ensure_worker_sets_src
+  type: fail_to_pass
+  origin: pr_diff
+  description: pdfjs module sets GlobalWorkerOptions.workerSrc before Document renders
+- id: old_worker_files_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Unreliable side-effect worker files (worker.ts, pdf.worker.ts) are
+    deleted
+- id: pdf_viewer_imports_unified
+  type: fail_to_pass
+  origin: pr_diff
+  description: PDF FileViewer imports from unified @/libs/pdfjs, not react-pdf directly
+- id: pdf_preview_imports_unified
+  type: fail_to_pass
+  origin: pr_diff
+  description: SharePdf/PdfPreview imports from unified @/libs/pdfjs, not react-pdf
+    directly
+- id: claude_md_linear_section_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md Linear Issue Management section restructured with trigger
+    conditions and workflow
+- id: pdf_viewers_still_use_document
+  type: pass_to_pass
+  origin: static
+  description: Both PDF viewers still render Document component (no regression)
+- id: repo_eslint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint check passes (npm run lint:ts)
+- id: repo_stylelint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Stylelint check passes (npm run lint:style)
+- id: repo_no_circular_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: No circular dependencies in main src (npm run lint:circular:main)
+- id: repo_component_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Component unit tests pass (vitest run src/components)
 rubric: []
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '## Linear Issue Management
+
+    **Trigger conditions** - when ANY of these occur, apply Linear workflow:
+
+
+    - User mentions issue ID like `LOBE-XXX`
+
+    - User says "linear", "link linear", "linear issue"
+
+    - Creating PR that references a Linear issue
+
+
+    **Workflow:**
+
+
+    1. Use `ToolSearch` to confirm `linear-server` MCP exists (search `linear` or
+    `mcp__linear-server__`)
+
+    2. If found, read `.cursor/rules/linear.mdc` and follow the workflow
+
+    3. If not found, skip Linear integration (treat as not installed)'
+  gold_removed: '## Linear Issue Management (search tools first; ignore if not installed)
+
+    ClaudeCode may not inject MCP tools until they are discovered/used.\
+
+    Before applying Linear workflows, **use tool search** to confirm `linear-server`
+    exists (e.g. search `linear` / `mcp__linear-server__`). If not found, treat it
+    as not installed.\
+
+    Then read `@.cursor/rules/linear.mdc` when working with Linear issues.'

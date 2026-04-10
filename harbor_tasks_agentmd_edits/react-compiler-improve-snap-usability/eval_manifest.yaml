@@ -47,3 +47,46 @@ rubric:
     path: compiler/CLAUDE.md
     lines: 1-20
     commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+config_edits:
+- path: compiler/CLAUDE.md
+  tier: 1
+  gold_added: "# React Compiler Knowledge Base\n\nThis document contains knowledge\
+    \ about the React Compiler gathered during development sessions. It serves as\
+    \ a reference for understanding the codebase architecture and key concepts.\n\n\
+    ## Project Structure\n\n- `packages/babel-plugin-react-compiler/` - Main compiler\
+    \ package\n  - `src/HIR/` - High-level Intermediate Representation types and utilities\n\
+    \  - `src/Inference/` - Effect inference passes (aliasing, mutation, etc.)\n \
+    \ - `src/Validation/` - Validation passes that check for errors\n  - `src/Entrypoint/Pipeline.ts`\
+    \ - Main compilation pipeline with pass ordering\n  - `src/__tests__/fixtures/compiler/`\
+    \ - Test fixtures\n    - `error.todo-*.js` - Unsupported feature, correctly throws\
+    \ Todo error (graceful bailout)\n    - `error.bug-*.js` - Known bug, throws wrong\
+    \ error type or incorrect behavior\n    - `*.expect.md` - Expected output for\
+    \ each fixture\n\n## Running Tests\n\n```bash\n# Run all tests\nyarn snap\n\n\
+    # Run tests matching a pattern\n# Example: yarn snap -p 'error.*'\nyarn snap -p\
+    \ <pattern>\n\n# Run a single fixture in debug mode. Use the path relative to\
+    \ the __tests__/fixtures/compiler directory\n# For each step of compilation, outputs\
+    \ the step name and state of the compiled program\n# Example: yarn snap -p simple.js\
+    \ -d\nyarn snap -p <file-basename> -d\n\n# Update fixture outputs (also works\
+    \ with -p)\nyarn snap -u\n```\n\n## Version Control\n\nThis repository uses Sapling\
+    \ (`sl`) for version control. Sapling is similar to Mercurial: there is not staging\
+    \ area, but new/deleted files must be explicitlyu added/removed.\n\n```bash\n\
+    # Check status\nsl status\n\n# Add new files, remove deleted files\nsl addremove\n\
+    \n# Commit all changes\nsl commit -m \"Your commit message\"\n\n# Commit with\
+    \ multi-line message using heredoc\nsl commit -m \"$(cat <<'EOF'\nSummary line\n\
+    \nDetailed description here\nEOF\n)\"\n```\n\n## Key Concepts\n\n### HIR (High-level\
+    \ Intermediate Representation)\n\nThe compiler converts source code to HIR for\
+    \ analysis. Key types in `src/HIR/HIR.ts`:\n\n- **HIRFunction** - A function being\
+    \ compiled\n  - `body.blocks` - Map of BasicBlocks\n  - `context` - Captured variables\
+    \ from outer scope\n  - `params` - Function parameters\n  - `returns` - The function's\
+    \ return place\n  - `aliasingEffects` - Effects that describe the function's behavior\
+    \ when called\n\n- **Instruction** - A single operation\n  - `lvalue` - The place\
+    \ being assigned to\n  - `value` - The instruction kind (CallExpression, FunctionExpression,\
+    \ LoadLocal, etc.)\n  - `effects` - Array of AliasingEffects for this instruction\n\
+    \n- **Terminal** - Block terminators (return, branch, etc.)\n  - `effects` - Array\
+    \ of AliasingEffects\n\n- **Place** - A reference to a value\n  - `identifier.id`\
+    \ - Unique IdentifierId\n\n- **Phi nodes** - Join points for values from different\
+    \ control flow paths\n  - Located at `block.phis`\n  - `phi.place` - The result\
+    \ place\n  - `phi.operands` - Map of predecessor block to source place\n\n###\
+    \ AliasingEffects System\n\nEffects describe data flow and operations. Defined\
+    \ in `src/Inference/AliasingEffects"
+  gold_removed: ''

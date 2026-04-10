@@ -1,69 +1,103 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "remix-run/remix"
+  repo: remix-run/remix
   pr: 11000
-  base_commit: "130fbdc7b808a2d313363458dabc00caf036f482"
-  merge_commit: "3e76bb387aa32f42ae7933daab00a879286e4e91"
-
+  base_commit: 130fbdc7b808a2d313363458dabc00caf036f482
+  merge_commit: 3e76bb387aa32f42ae7933daab00a879286e4e91
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files parse without errors"
-
-  - id: release_pr_script_renamed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script renamed from changes-version-pr.ts to release-pr.ts"
-
-  - id: release_pr_utils_renamed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Util renamed from version-pr.ts to release-pr.ts"
-
-  - id: commit_message_subject
-    type: fail_to_pass
-    origin: pr_diff
-    description: "generateCommitMessage uses 'Release' not 'Version Packages'"
-
-  - id: release_pr_title_and_branch
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Release PR script uses 'Release' title and 'release-pr/main' branch"
-
-  - id: package_utils_new_functions
-    type: fail_to_pass
-    origin: pr_diff
-    description: "packages.ts exports getPackageShortName, getGitTag, getGitHubReleaseUrl with correct behavior"
-
-  - id: dependency_bumps_in_changelog
-    type: fail_to_pass
-    origin: pr_diff
-    description: "DependencyBump interface and transitive dependency release tracking added to changes.ts"
-
-  - id: workflow_yaml_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Workflow YAML renamed to release-pr.yaml and references updated"
-
-  - id: agents_md_references_release_pr
-    type: fail_to_pass
-    origin: agent_config
-    description: "AGENTS.md updated to reference release-pr workflow and 'Release' PR naming"
-    source:
-      path: "AGENTS.md"
-      lines: "58-61"
-      commit: "130fbdc7b808a2d313363458dabc00caf036f482"
-
-  - id: contributing_md_references_release_pr
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CONTRIBUTING.md updated to reference release-pr workflow and 'Release' PR naming"
-
-  - id: publish_script_no_old_refs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "publish.ts updated to reference 'Release' instead of 'Version Packages'"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without errors
+- id: release_pr_script_renamed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script renamed from changes-version-pr.ts to release-pr.ts
+- id: release_pr_utils_renamed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Util renamed from version-pr.ts to release-pr.ts
+- id: commit_message_subject
+  type: fail_to_pass
+  origin: pr_diff
+  description: generateCommitMessage uses 'Release' not 'Version Packages'
+- id: release_pr_title_and_branch
+  type: fail_to_pass
+  origin: pr_diff
+  description: Release PR script uses 'Release' title and 'release-pr/main' branch
+- id: package_utils_new_functions
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages.ts exports getPackageShortName, getGitTag, getGitHubReleaseUrl
+    with correct behavior
+- id: dependency_bumps_in_changelog
+  type: fail_to_pass
+  origin: pr_diff
+  description: DependencyBump interface and transitive dependency release tracking
+    added to changes.ts
+- id: workflow_yaml_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Workflow YAML renamed to release-pr.yaml and references updated
+- id: agents_md_references_release_pr
+  type: fail_to_pass
+  origin: agent_config
+  description: AGENTS.md updated to reference release-pr workflow and 'Release' PR
+    naming
+  source:
+    path: AGENTS.md
+    lines: 58-61
+    commit: 130fbdc7b808a2d313363458dabc00caf036f482
+- id: contributing_md_references_release_pr
+  type: fail_to_pass
+  origin: pr_diff
+  description: CONTRIBUTING.md updated to reference release-pr workflow and 'Release'
+    PR naming
+- id: publish_script_no_old_refs
+  type: fail_to_pass
+  origin: pr_diff
+  description: publish.ts updated to reference 'Release' instead of 'Version Packages'
 rubric: []
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- **Automated releases**: When changes are pushed to `main`, the [release-pr
+    workflow](/.github/workflows/release-pr.yaml) automatically opens/updates a "Release"
+    PR. The [publish workflow](/.github/workflows/publish.yaml) runs on every push
+    to `main` and publishes when no change files are present (i.e., after merging
+    the Release PR).
+
+    - **Test change/release code with preview scripts**: When modifying any change/release
+    code, run `pnpm changes:preview` to test locally. For the release PR script, run
+    `node ./scripts/release-pr.ts --preview`. For the publish script, run `node ./scripts/publish.ts
+    --dry-run` to see what commands would be executed without actually publishing.'
+  gold_removed: '- **Automated releases**: When changes are pushed to `main`, the
+    [changes-version-pr workflow](/.github/workflows/changes-version-pr.yaml) automatically
+    opens/updates a "Version Packages" PR. The [publish workflow](/.github/workflows/publish.yaml)
+    runs on every push to `main` and publishes when no change files are present (i.e.,
+    after merging the Version Packages PR).
+
+    - **Test change/release code with preview scripts**: When modifying any change/release
+    code, run `pnpm changes:preview` to test locally. For the version PR script, run
+    `node ./scripts/changes-version-pr.ts --preview`. For the publish script, run
+    `node ./scripts/publish.ts --dry-run` to see what commands would be executed without
+    actually publishing.'
+- path: CONTRIBUTING.md
+  tier: 2
+  gold_added: 'Releases are automated via the [release-pr workflow](/.github/workflows/release-pr.yaml)
+    and [publish workflow](/.github/workflows/publish.yaml).
+
+    2. **A "Release" PR is automatically opened** (or updated if one exists)
+
+    The "Release" PR simply automates the `pnpm changes:version` command. If needed,
+    you can run this command manually. This will update the `package.json` versions,
+    `CHANGELOG.md` files, and delete the change files. It will then commit the result.'
+  gold_removed: 'Releases are automated via the [changes-version-pr workflow](/.github/workflows/changes-version-pr.yaml)
+    and [publish workflow](/.github/workflows/publish.yaml).
+
+    2. **A "Version Packages" PR is automatically opened** (or updated if one exists)
+
+    The "Version Packages" PR simply automates the `pnpm changes:version` command.
+    If needed, you can run this command manually. This will update the `package.json`
+    versions, `CHANGELOG.md` files, and delete the change files. It will then commit
+    the result.'

@@ -1,85 +1,231 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 91126
-  base_commit: "196ed2b83919892d45eaf7aed80852d0c9cc38c7"
-  merge_commit: "885016306d325fb682e831e0e9679a0990a1e6b1"
-
+  base_commit: 196ed2b83919892d45eaf7aed80852d0c9cc38c7
+  merge_commit: 885016306d325fb682e831e0e9679a0990a1e6b1
 checks:
-  # ---------------------------------------------------------------------------
-  # Gates (pass_to_pass, static) — syntax / compilation checks
-  # ---------------------------------------------------------------------------
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified Rust files must parse and compile without errors"
-
-  - id: doc_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Rust documentation tests must pass"
-
-  # ---------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core documentation refactor tests
-  # ---------------------------------------------------------------------------
-  - id: vc_readme_created
-    type: fail_to_pass
-    origin: pr_diff
-    description: "New Vc README.md file must be created with the mdbook content"
-
-  - id: vc_mod_uses_include_str
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Vc mod.rs must use include_str! to embed README.md documentation"
-
-  - id: readme_updated_cells_description
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Main turbo-tasks README.md must be updated to consolidate Cells into Vc description"
-
-  - id: lib_rs_docs_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "lib.rs documentation for value macro must be updated (serde -> bincode)"
-
-  - id: raw_vc_docs_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "raw_vc.rs must have updated intra-doc links for Vc references"
-
-  - id: typo_fixed_resolved_vc
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Typo in mod.rs upcast_non_strict docs must be fixed"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (static) — anti-stub and quality checks
-  # ---------------------------------------------------------------------------
-  - id: vc_readme_not_empty
-    type: pass_to_pass
-    origin: static
-    description: "Vc README.md must have substantial content, not be a stub"
-
-  - id: resolved_vc_docs_updated
-    type: pass_to_pass
-    origin: pr_diff
-    description: "resolved.rs must have new 'Reading a ResolvedVc' section"
-
-  - id: alexrc_updated
-    type: pass_to_pass
-    origin: pr_diff
-    description: ".alexrc file should have 'dirty' added to the denylist"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Rust files must parse and compile without errors
+- id: doc_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rust documentation tests must pass
+- id: vc_readme_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: New Vc README.md file must be created with the mdbook content
+- id: vc_mod_uses_include_str
+  type: fail_to_pass
+  origin: pr_diff
+  description: Vc mod.rs must use include_str! to embed README.md documentation
+- id: readme_updated_cells_description
+  type: fail_to_pass
+  origin: pr_diff
+  description: Main turbo-tasks README.md must be updated to consolidate Cells into
+    Vc description
+- id: lib_rs_docs_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: lib.rs documentation for value macro must be updated (serde -> bincode)
+- id: raw_vc_docs_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: raw_vc.rs must have updated intra-doc links for Vc references
+- id: typo_fixed_resolved_vc
+  type: fail_to_pass
+  origin: pr_diff
+  description: Typo in mod.rs upcast_non_strict docs must be fixed
+- id: vc_readme_not_empty
+  type: pass_to_pass
+  origin: static
+  description: Vc README.md must have substantial content, not be a stub
+- id: resolved_vc_docs_updated
+  type: pass_to_pass
+  origin: pr_diff
+  description: resolved.rs must have new 'Reading a ResolvedVc' section
+- id: alexrc_updated
+  type: pass_to_pass
+  origin: pr_diff
+  description: .alexrc file should have 'dirty' added to the denylist
 rubric:
-  - rule: "Documentation should be clear, well-structured, and consistent with existing rustdoc conventions in the codebase"
-    source:
-      path: "CLAUDE.md"
-      lines: "1-50"
-      commit: "196ed2b83919892d45eaf7aed80852d0c9cc38c7"
+- rule: Documentation should be clear, well-structured, and consistent with existing
+    rustdoc conventions in the codebase
+  source:
+    path: CLAUDE.md
+    lines: 1-50
+    commit: 196ed2b83919892d45eaf7aed80852d0c9cc38c7
+- rule: README files should be read before editing files in a directory
+  source:
+    path: CLAUDE.md
+    lines: 28-35
+    commit: 196ed2b83919892d45eaf7aed80852d0c9cc38c7
+config_edits:
+- path: turbopack/crates/turbo-tasks/README.md
+  tier: 2
+  gold_added: '- **[`Vc`s ("Value Cells")][`Vc`]:** References to locations associated
+    with tasks where values are stored. The contents of a cell can change after the
+    reexecution of a function due to invalidation. A [`Vc`] can be read to get [a
+    read-only reference][crate::ReadRef] to the stored data, representing a snapshot
+    of that cell at that point in time.'
+  gold_removed: '- **[Cells][book-cells]:** The locations associated with tasks where
+    values are stored. The contents of a cell can change after the reexecution of
+    a function due to invalidation.
 
-  - rule: "README files should be read before editing files in a directory"
-    source:
-      path: "CLAUDE.md"
-      lines: "28-35"
-      commit: "196ed2b83919892d45eaf7aed80852d0c9cc38c7"
+    - **[`Vc`s ("Value Cells")][`Vc`]:** A reference to a cell or a return value of
+    a function.
+
+
+    A [`Vc`] can be read to get [a read-only reference][crate::ReadRef] to the stored
+    data, representing a snapshot of that cell at that point in time.'
+- path: turbopack/crates/turbo-tasks/src/vc/README.md
+  tier: 2
+  gold_added: '**Value cells** represent the pending result of a computation, similar
+    to a cell in a spreadsheet. When a `Vc`''s contents change, the change is propagated
+    by invalidating dependent tasks.
+
+
+    In order to get a reference to the pointed value, you need to `.await` the [`Vc<T>`]
+    to get a [`ReadRef<T>`][`ReadRef`]:
+
+
+    ```
+
+    let some_vc: Vc<T>;
+
+    let some_ref: ReadRef<T> = some_vc.await?;
+
+    some_ref.some_method_on_t();
+
+    ```
+
+
+    The returned [`ReadRef<T>`][`ReadRef`] represents a [reference-counted][triomphe::Arc]
+    snapshot of a cell''s value at a given point in time.
+
+
+    ## Understanding Cells
+
+
+    A **cell** is a storage location for data associated with a task. Cells provide:
+
+
+    - **Immutability**: Once a value is stored in a cell, it becomes immutable until
+    that task is re-executed.
+
+    - **Recomputability**: If invalidated or cache evicted, a cell''s contents can
+    be re-computed by re-executing its associated task.
+
+    - **Dependency Tracking**: When a cell''s contents are read (with `.await`), the
+    reading task is marked as dependent on the cell.
+
+    - **Persistence**: Cells owned by persisted tasks are serializable using the [`bincode`]
+    crate.
+
+
+    Cells are stored in arrays associated with the task that constructed them. A `Vc`
+    can either point to a specific cell (this is a *"resolved"* cell), or the return
+    value of a function (this is an *"unresolved"* cell).
+
+
+    <figure style="display: flex; flex-direction: column; justify-content: center;">
+
+    <img alt="A diagram showing where cells are stored in tasks" width="850px" src="https://h8dxkfmaphn8o0p3.public.blob.vercel-storage.com/rustdoc-images/RawVc.excalidraw.png">
+
+    <figcaption style="font-style: italic; font-size: 80%;">
+
+    <tt>TaskOutput</tt>s point to a specific task, and refer to the output cell for
+    that task. <tt>TaskCell</tt>s point to a specific cell within a task. Task cells
+    are stored in a table (conceptually a <tt>Map&lt;ValueTypeId, Vec&lt;SharedReference&gt;&gt</tt>)
+    and are referenced by a pair of a type id and a sequentially allocated index.
+
+    </figcaption>
+
+    <!-- https://excalidraw.com/#json=Dfb59fd_4hUjwNkoSrL4y,PQ1myzskgKE3IKyESoiYPg
+    -->
+
+    </figure>
+
+
+    ## Constructing a Cell
+
+
+    Most types using the [`#[turbo_tasks::value]` macro][value-macro] are given a
+    `.cell()` method. This method returns a `Vc` of the type.
+
+
+    Transparent wrapper types that use [`#[turbo_tasks::value(transparent)]`][value-macro]
+    cannot define methods on their wrapped type, so instead the [`Vc::cell`] function
+    can be used to construct these types.
+
+
+    [`Vc::cell`]: /rustdoc/turbo_tasks/struct.Vc.html#method.cell
+
+
+    ## Updating a Cell
+
+
+    Every time a task runs, its cells are re-constructed.
+
+
+    When `.cell()` or `Vc::cell` is called, the cell counter for the `ValueTypeId`
+    is incremented, and the value is compared to the previous execution''s using `PartialEq`.
+    If the value with that index differs, the cell is updated, and all dependent tasks
+    are invalidated.
+
+
+    The compare-then-update behavior [can be overridden to always update and invalidate
+    using the `cell = "new"` argument][value-ma'
+  gold_removed: '/// A "Value Cell" (`Vc` for short) is a reference to a memoized
+    computation result stored on the
+
+    /// heap or in filesystem cache, depending on the Turbo Engine backend implementation.
+
+    ///
+
+    /// In order to get a reference to the pointed value, you need to `.await` the
+    [`Vc<T>`] to get a
+
+    /// [`ReadRef<T>`][`ReadRef`]:
+
+    ///
+
+    /// ```
+
+    /// let some_vc: Vc<T>;
+
+    /// let some_ref: ReadRef<T> = some_vc.await?;
+
+    /// some_ref.some_method_on_t();
+
+    /// ```
+
+    ///
+
+    /// `Vc`s are similar to a [`Future`] or a Promise with a few key differences:
+
+    ///
+
+    /// - The value pointed to by a `Vc` can be invalidated by changing dependencies
+    or cache evicted,
+
+    ///   meaning that `await`ing a `Vc` multiple times can give different results.
+    A [`ReadRef`] is
+
+    ///   snapshot of the underlying cell at a point in time.
+
+    ///
+
+    /// - Reading (`await`ing) `Vc`s causes the current task to be tracked a dependent
+    of the `Vc`''s
+
+    ///   task or task cell. When the read task or task cell changes, the current
+    task may be
+
+    ///   re-executed.
+
+    ///
+
+    ///'

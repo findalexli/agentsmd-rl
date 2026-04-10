@@ -1,45 +1,55 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "mlflow/mlflow"
+  repo: mlflow/mlflow
   pr: 21684
-  base_commit: "91ce5a5514917a562304c7946c9c6313b88cce40"
-  merge_commit: "b460601384095df968e91854766478f87c5ddb06"
-
+  base_commit: 91ce5a5514917a562304c7946c9c6313b88cce40
+  merge_commit: b460601384095df968e91854766478f87c5ddb06
 checks:
-  - id: skill_frontmatter_valid
-    type: pass_to_pass
-    origin: static
-    description: "SKILL.md has valid YAML frontmatter with name and allowed-tools"
-
-  - id: poll_script_exists_executable
-    type: fail_to_pass
-    origin: pr_diff
-    description: "poll.sh exists and is executable"
-
-  - id: poll_script_syntax_valid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "poll.sh passes bash syntax validation"
-
-  - id: poll_script_requires_args
-    type: fail_to_pass
-    origin: pr_diff
-    description: "poll.sh fails gracefully when invoked without required arguments"
-
-  - id: poll_script_api_and_event
-    type: fail_to_pass
-    origin: pr_diff
-    description: "poll.sh uses GitHub timeline API and checks for copilot_work_finished event"
-
-  - id: skill_allows_poll_tool
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md allowed-tools includes poll.sh for completion polling"
-
-  - id: skill_polling_docs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md has a polling for completion section with usage instructions"
-
+- id: skill_frontmatter_valid
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md has valid YAML frontmatter with name and allowed-tools
+- id: poll_script_exists_executable
+  type: fail_to_pass
+  origin: pr_diff
+  description: poll.sh exists and is executable
+- id: poll_script_syntax_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: poll.sh passes bash syntax validation
+- id: poll_script_requires_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: poll.sh fails gracefully when invoked without required arguments
+- id: poll_script_api_and_event
+  type: fail_to_pass
+  origin: pr_diff
+  description: poll.sh uses GitHub timeline API and checks for copilot_work_finished
+    event
+- id: skill_allows_poll_tool
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md allowed-tools includes poll.sh for completion polling
+- id: skill_polling_docs
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md has a polling for completion section with usage instructions
 rubric: []
+config_edits:
+- path: .claude/skills/copilot/SKILL.md
+  tier: 1
+  gold_added: '- Bash(bash .claude/skills/copilot/poll.sh *)
+
+
+    ## Polling for completion
+
+
+    Once Copilot starts working, poll in the background until Copilot finishes:
+
+
+    ```bash
+
+    bash .claude/skills/copilot/poll.sh {owner}/{repo} {pr_number}
+
+    ```'
+  gold_removed: ''

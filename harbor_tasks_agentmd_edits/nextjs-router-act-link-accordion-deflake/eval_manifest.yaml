@@ -1,69 +1,92 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 91492
-  base_commit: "8283b1260ba3eb187baf20727e739fbd8ba7bbf6"
-  merge_commit: "a060fbf9f7ba603bb32ab9cf9da48bfa9d3739d2"
-
+  base_commit: 8283b1260ba3eb187baf20727e739fbd8ba7bbf6
+  merge_commit: a060fbf9f7ba603bb32ab9cf9da48bfa9d3739d2
 checks:
-  # Pass-to-pass: existing infrastructure
-  - id: link_accordion_component_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "LinkAccordion component exists at expected path (pre-existing fixture)"
-
-  # Pass-to-pass: repo CI/CD checks (enrichment)
-  - id: test_repo_prettier_segment_cache
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Prettier check passes on segment-cache test files"
-
-  - id: test_repo_deps_install
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo dependencies install cleanly with pnpm"
-
-  # Fail-to-pass: code behavior tests
-  - id: hub_pages_structure
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Hub pages (hub-a, hub-b, hub-c) exist with LinkAccordion, connection(), and Suspense"
-
-  - id: stale_pages_link_to_hubs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dynamic stale pages have LinkAccordion links to hub pages"
-
-  - id: test_uses_hub_navigation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Test navigates via hub pages instead of browser.back()"
-
-  # Fail-to-pass: config/instruction file updates
-  - id: agents_md_router_act_rule
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md documents the LinkAccordion/router-act rule with BFCache warning"
-
-  - id: router_act_skill_created
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Router act SKILL.md exists with core patterns: LinkAccordion, hub pages, no-requests, BFCache"
-
-  - id: skill_documents_no_requests_pattern
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md documents the no-requests assertion and includes matching patterns"
-
+- id: link_accordion_component_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: LinkAccordion component exists at expected path (pre-existing fixture)
+- id: test_repo_prettier_segment_cache
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier check passes on segment-cache test files
+- id: test_repo_deps_install
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dependencies install cleanly with pnpm
+- id: hub_pages_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hub pages (hub-a, hub-b, hub-c) exist with LinkAccordion, connection(),
+    and Suspense
+- id: stale_pages_link_to_hubs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dynamic stale pages have LinkAccordion links to hub pages
+- id: test_uses_hub_navigation
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test navigates via hub pages instead of browser.back()
+- id: agents_md_router_act_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md documents the LinkAccordion/router-act rule with BFCache
+    warning
+- id: router_act_skill_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Router act SKILL.md exists with core patterns: LinkAccordion, hub
+    pages, no-requests, BFCache'
+- id: skill_documents_no_requests_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md documents the no-requests assertion and includes matching
+    patterns
 rubric:
-  - rule: "Skill content is consistent with the style of existing skills in .agents/skills/"
-    source:
-      path: ".agents/skills/authoring-skills/SKILL.md"
-      lines: "1-30"
-      commit: "8283b1260ba3eb187baf20727e739fbd8ba7bbf6"
-  - rule: "Hub page components follow the same patterns as existing test fixture pages"
-    source:
-      path: "AGENTS.md"
-      lines: "235-265"
-      commit: "8283b1260ba3eb187baf20727e739fbd8ba7bbf6"
+- rule: Skill content is consistent with the style of existing skills in .agents/skills/
+  source:
+    path: .agents/skills/authoring-skills/SKILL.md
+    lines: 1-30
+    commit: 8283b1260ba3eb187baf20727e739fbd8ba7bbf6
+- rule: Hub page components follow the same patterns as existing test fixture pages
+  source:
+    path: AGENTS.md
+    lines: 235-265
+    commit: 8283b1260ba3eb187baf20727e739fbd8ba7bbf6
+config_edits:
+- path: .agents/skills/router-act/SKILL.md
+  tier: 1
+  gold_added: "---\nname: router-act\ndescription: >\n  How to write end-to-end tests\
+    \ using createRouterAct and LinkAccordion.\n  Use when writing or modifying tests\
+    \ that need to control the timing of\n  internal Next.js requests (like prefetches)\
+    \ or assert on their responses.\n  Covers the act API, fixture patterns, prefetch\
+    \ control via LinkAccordion,\n  fake clocks, and avoiding flaky testing patterns.\n\
+    user-invocable: false\n---\n\n# Router Act Testing\n\nUse this skill when writing\
+    \ or modifying tests that involve prefetch requests, client router navigations,\
+    \ or the segment cache. The `createRouterAct` utility from `test/lib/router-act.ts`\
+    \ lets you assert on prefetch and navigation responses in an end-to-end way without\
+    \ coupling to the exact number of requests or the protocol details. This is why\
+    \ most client router-related tests use this pattern.\n\n## When NOT to Use `act`\n\
+    \nDon't bother with `act` if you don't need to instrument the network responses\
+    \ — either to control their timing or to assert on what's included in them. If\
+    \ all you're doing is waiting for some part of the UI to appear after a navigation,\
+    \ regular Playwright helpers like `browser.elementById()`, `browser.elementByCss()`,\
+    \ and `browser.waitForElementByCss()` are sufficient.\n\n## Core Principles\n\n\
+    1. **Use `LinkAccordion` to control when prefetches happen.** Never let links\
+    \ be visible outside an `act` scope.\n2. **Prefer `'no-requests'`** whenever the\
+    \ data should be served from cache. This is the strongest assertion — it proves\
+    \ the cache is working.\n3. **Avoid retry/polling timers.** The `act` utility\
+    \ exists specifically to replace inherently flaky patterns like `retry()` loops\
+    \ or `setTimeout` waits for network activity. If you find yourself wanting to\
+    \ poll, you're probably not using `act` correctly.\n4. **Avoid the `block` feature.**\
+    \ It's prone to false negatives. Prefer `includes` and `'no-requests'` assertions\
+    \ instead.\n\n## Act API\n\n### Config Options\n\n```typescript\n// Assert NO\
+    \ router requests are made (data served from cache).\n"
+  gold_removed: ''
+- path: AGENTS.md
+  tier: 1
+  gold_added: ''
+  gold_removed: ''

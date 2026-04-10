@@ -1,35 +1,173 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "lobehub/lobe-chat"
+  repo: lobehub/lobe-chat
   pr: 11514
-  base_commit: "959c210e869803545d451c3019e178966188ef17"
-  merge_commit: "d44616354efaa54d76bd388a67ed8ed4736f279e"
-
+  base_commit: 959c210e869803545d451c3019e178966188ef17
+  merge_commit: d44616354efaa54d76bd388a67ed8ed4736f279e
 checks:
-  - id: swr_module_loads
-    type: pass_to_pass
-    origin: static
-    description: "SWR module can be loaded and exports all expected hooks"
-
-  - id: use_action_swr_uses_fallback_data
-    type: fail_to_pass
-    origin: pr_diff
-    description: "useActionSWR uses useSWR with fallbackData instead of useSWRMutation"
-
-  - id: swr_comments_english_only
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SWR module comments are in English, not Chinese"
-
-  - id: claude_md_references_linear_mdc
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md references .cursor/rules/linear.mdc for Linear rules"
-
-  - id: linear_mdc_exists_with_rules
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".cursor/rules/linear.mdc file exists with Linear issue management rules"
-
+- id: swr_module_loads
+  type: pass_to_pass
+  origin: static
+  description: SWR module can be loaded and exports all expected hooks
+- id: use_action_swr_uses_fallback_data
+  type: fail_to_pass
+  origin: pr_diff
+  description: useActionSWR uses useSWR with fallbackData instead of useSWRMutation
+- id: swr_comments_english_only
+  type: fail_to_pass
+  origin: pr_diff
+  description: SWR module comments are in English, not Chinese
+- id: claude_md_references_linear_mdc
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md references .cursor/rules/linear.mdc for Linear rules
+- id: linear_mdc_exists_with_rules
+  type: fail_to_pass
+  origin: pr_diff
+  description: .cursor/rules/linear.mdc file exists with Linear issue management rules
 rubric: []
+config_edits:
+- path: .cursor/rules/linear.mdc
+  tier: 1
+  gold_added: '---
+
+    alwaysApply: true
+
+    ---
+
+
+    # Linear Issue Management
+
+
+    When working with Linear issues:
+
+
+    1. **Retrieve issue details** before starting work using `mcp__linear-server__get_issue`
+
+    2. **Check for sub-issues**: If the issue has sub-issues, retrieve and review
+    ALL sub-issues using `mcp__linear-server__list_issues` with `parentId` filter
+    before starting work
+
+    3. **Update issue status** when completing tasks using `mcp__linear-server__update_issue`
+
+    4. **MUST add completion comment** using `mcp__linear-server__create_comment`
+
+
+    ## Creating Issues
+
+
+    When creating new Linear issues using `mcp__linear-server__create_issue`, **MUST
+    add the `claude code` label** to indicate the issue was created by Claude Code.
+
+
+    ## Completion Comment (REQUIRED)
+
+
+    **Every time you complete an issue, you MUST add a comment summarizing the work
+    done.** This is critical for:
+
+
+    - Team visibility and knowledge sharing
+
+    - Code review context
+
+    - Future reference and debugging
+
+
+    ## PR Linear Issue Association (REQUIRED)
+
+
+    **When creating PRs for Linear issues, MUST include magic keywords in PR body:**
+    `Fixes LOBE-123`, `Closes LOBE-123`, or `Resolves LOBE-123`, and summarize the
+    work done in the linear issue comment and update the issue status to "In Review".
+
+
+    ## IMPORTANT: Per-Issue Completion Rule
+
+
+    **When working with multiple issues (e.g., parent issue with sub-issues), you
+    MUST update status and add comment for EACH issue IMMEDIATELY after completing
+    it.** Do NOT wait until all issues are done to update them in batch.
+
+
+    **Workflow for EACH individual issue:**
+
+
+    1. Complete the implementation for this specific issue
+
+    2. Run type check: `bun run type-check`
+
+    3. Run related tests if applicable
+
+    4. Create PR if needed
+
+    5. **IMMEDIATELY** update issue status to **"In Review"** (NOT "Done"): `mcp__linear-server__update_issue`
+
+    6. **IMMEDIATELY** add completion comment: `mcp__linear-server__create_comment`
+
+    7. Only then move on to the next issue
+
+
+    **Note:** Issue status should be set to **"In Review"** when PR is created. The
+    status will be updated to **"Done"** only after the PR is merged (usually handled
+    by Linear-GitHub integration or manually).
+
+
+    **Wrong approach:**
+
+
+    - Complete Issue A -> Complete Issue B -> Complete Issue C -> Update all statuses
+    -> Add all comments
+
+    - Mark issue as "Done" immediately after creating PR
+
+
+    **Correct approach:**
+
+
+    - Complete Issue A -> Create PR -> Update A status to "In Review" -> Add A comment
+    -> Complete Issue B -> ...'
+  gold_removed: ''
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '## Linear Issue Management(ignore if not installed linear mcp)
+
+    Read @.cursor/rules/linear.mdc when working with Linear issues.'
+  gold_removed: '## Linear Issue Management (ignore if not installed linear mcp)
+
+    When working with Linear issues:
+
+
+    1. **Retrieve issue details** before starting work using `mcp__linear-server__get_issue`
+
+    2. **Check for sub-issues**: If the issue has sub-issues, retrieve and review
+    ALL sub-issues using `mcp__linear-server__list_issues` with `parentId` filter
+    before starting work
+
+    3. **Update issue status** when completing tasks using `mcp__linear-server__update_issue`
+
+    4. **MUST add completion comment** using `mcp__linear-server__create_comment`
+
+
+    ### Creating Issues
+
+
+    When creating new Linear issues using `mcp__linear-server__create_issue`, **MUST
+    add the `claude code` label** to indicate the issue was created by Claude Code.
+
+
+    ### Completion Comment (REQUIRED)
+
+
+    **Every time you complete an issue, you MUST add a comment summarizing the work
+    done.** This is critical for:
+
+
+    - Team visibility and knowledge sharing
+
+    - Code review context
+
+    - Future reference and debugging
+
+
+    ### PR Linear Issue Association (REQUIRED)'

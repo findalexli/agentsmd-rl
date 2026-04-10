@@ -1,65 +1,104 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28838
-  base_commit: "5b3ca83b84f90ccc9c71005db0ab9bd87850bc70"
-  merge_commit: "196ed8a1bd4d5c9915e71816ce64a6a281eee23e"
-
+  base_commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+  merge_commit: 196ed8a1bd4d5c9915e71816ce64a6a281eee23e
 checks:
-  # Code behavior checks — HTTP parser fix
-  - id: http_parser_validates_duplicate_content_length
-    type: fail_to_pass
-    origin: pr_diff
-    description: "HttpParser validates all Content-Length headers and rejects conflicting values"
-
-  - id: http_parser_rejects_empty_content_length
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Empty Content-Length values are rejected to prevent smuggling bypass"
-
-  # Code behavior checks — pr-comments.ts script
-  - id: pr_comments_script_parses
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pr-comments.ts exists and is valid TypeScript that bun can transpile"
-
-  # Config/documentation update checks
-  - id: claude_md_documents_pr_comments
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md documents the pr:comments script with usage examples"
-
-  - id: package_json_has_pr_comments
-    type: fail_to_pass
-    origin: pr_diff
-    description: "package.json includes pr:comments script entry pointing to pr-comments.ts"
-
-  # Pass-to-pass regression
-  - id: http_parser_content_length_parsing_preserved
-    type: pass_to_pass
-    origin: static
-    description: "Basic Content-Length and Transfer-Encoding parsing still intact"
-
-  # Pass-to-pass repo CI/CD checks
-  - id: repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's JavaScript linting (oxlint) passes"
-
-  - id: repo_ban_words
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Banned words check passes"
-
-  - id: repo_bun_types
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Bun types TypeScript check passes"
-
+- id: http_parser_validates_duplicate_content_length
+  type: fail_to_pass
+  origin: pr_diff
+  description: HttpParser validates all Content-Length headers and rejects conflicting
+    values
+- id: http_parser_rejects_empty_content_length
+  type: fail_to_pass
+  origin: pr_diff
+  description: Empty Content-Length values are rejected to prevent smuggling bypass
+- id: pr_comments_script_parses
+  type: fail_to_pass
+  origin: pr_diff
+  description: pr-comments.ts exists and is valid TypeScript that bun can transpile
+- id: claude_md_documents_pr_comments
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md documents the pr:comments script with usage examples
+- id: package_json_has_pr_comments
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json includes pr:comments script entry pointing to pr-comments.ts
+- id: http_parser_content_length_parsing_preserved
+  type: pass_to_pass
+  origin: static
+  description: Basic Content-Length and Transfer-Encoding parsing still intact
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JavaScript linting (oxlint) passes
+- id: repo_ban_words
+  type: pass_to_pass
+  origin: repo_tests
+  description: Banned words check passes
+- id: repo_bun_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bun types TypeScript check passes
 rubric:
-  - rule: "Follow existing code style - check neighboring files for patterns"
-    source:
-      path: "CLAUDE.md"
-      lines: "245"
-      commit: "5b3ca83b84f90ccc9c71005db0ab9bd87850bc70"
+- rule: Follow existing code style - check neighboring files for patterns
+  source:
+    path: CLAUDE.md
+    lines: '245'
+    commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '## Reading PR Feedback
+
+
+    `gh pr view --comments` is fine for a quick look at the Conversation tab, but
+    it has a footgun worth knowing about: it only returns issue-stream comments and
+    silently omits review summaries and line-level review comments. If a reviewer
+    leaves an inline comment on a specific file line, it will not show up — no error,
+    no hint that anything is missing.
+
+
+    When you want the complete picture — especially when responding to a review or
+    checking whether anyone requested changes — use `bun run pr:comments`. It fetches
+    all three GitHub endpoints (`/issues/N/comments`, `/pulls/N/reviews`, `/pulls/N/comments`)
+    and prints them in one chronological listing, each labelled with its actual type
+    (issue comment, review verdict, line comment, reply, suggestion block).
+
+
+    ```bash
+
+    bun run pr:comments                    # current branch''s PR
+
+    bun run pr:comments 28838              # by PR number
+
+    bun run pr:comments ''#28838''           # also works
+
+    bun run pr:comments https://github.com/oven-sh/bun/pull/28838
+
+
+    # Machine-readable output for jq pipelines — one object per entry with
+
+    # { when, user, kind, location?, body, url?, resolved?, outdated? }.
+
+    # resolved/outdated come from GraphQL reviewThreads and are present only
+
+    # on line comments / replies whose thread state was successfully fetched
+
+    # (omitted on issue comments, review verdicts, and on GraphQL fetch
+
+    # failure), so `resolved == false` unambiguously means "confirmed open
+
+    # thread". No header, no truncation. The PR is optional here too
+
+    # (defaults to the current branch''s PR).
+
+    bun run pr:comments --json | jq ''.[] | select(.user == "Jarred-Sumner")''
+
+    bun run pr:comments --json | jq ''[.[] | select(.resolved == false)]''   # still
+    open
+
+    ```'
+  gold_removed: ''

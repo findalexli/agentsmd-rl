@@ -1,68 +1,88 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "dotnet/maui"
+  repo: dotnet/maui
   pr: 33937
-  base_commit: "c1e543e1f116911ffb934e60c79bb501ea1814e3"
-  merge_commit: "a6129347bf172dcdd7d501f8d3e8debe426e2c3b"
-
+  base_commit: c1e543e1f116911ffb934e60c79bb501ea1814e3
+  merge_commit: a6129347bf172dcdd7d501f8d3e8debe426e2c3b
 checks:
-  # Pass-to-pass (static) — syntax gates
-  - id: shared_utils_valid_syntax
-    type: pass_to_pass
-    origin: static
-    description: "shared-utils.ps1 sources without syntax errors in PowerShell"
-
-  # Fail-to-pass — code behavioral tests
-  - id: write_warn_executes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Write-Warn function exists in shared-utils.ps1 and produces output when called"
-
-  - id: host_app_uses_write_warn
-    type: fail_to_pass
-    origin: pr_diff
-    description: "BuildAndRunHostApp.ps1 uses Write-Warn helper instead of Write-Warning"
-
-  - id: review_pr_logfile_param
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Review-PR.ps1 accepts -LogFile parameter with Start-Transcript logging"
-
-  - id: review_pr_tree_restore
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Review-PR.ps1 restores working tree between phases with git checkout HEAD -- ."
-
-  - id: android_cake_boot_timeout
-    type: fail_to_pass
-    origin: pr_diff
-    description: "android.cake sets EmulatorBootTimeoutSeconds to 10 minutes (10 * 60)"
-
-  # Fail-to-pass — config/instruction file updates
-  - id: plan_template_model_version
-    type: fail_to_pass
-    origin: pr_diff
-    description: "PLAN-TEMPLATE.md references claude-opus-4.6 (not 4.5)"
-
-  - id: shared_rules_model_version
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SHARED-RULES.md references claude-opus-4.6 in model table"
-
-  - id: post_gate_env_blockers
-    type: fail_to_pass
-    origin: pr_diff
-    description: "post-gate.md has stop-on-environment-blocker rules for Phase 4"
-
-  - id: post_gate_mandatory_cleanup
-    type: fail_to_pass
-    origin: pr_diff
-    description: "post-gate.md requires git checkout HEAD + git clean -fd between try-fix attempts"
-
-  - id: skill_md_no_git_add_state
-    type: fail_to_pass
-    origin: pr_diff
-    description: "try-fix SKILL.md warns against git add of state files in CustomAgentLogsTmp"
-
+- id: shared_utils_valid_syntax
+  type: pass_to_pass
+  origin: static
+  description: shared-utils.ps1 sources without syntax errors in PowerShell
+- id: write_warn_executes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Write-Warn function exists in shared-utils.ps1 and produces output
+    when called
+- id: host_app_uses_write_warn
+  type: fail_to_pass
+  origin: pr_diff
+  description: BuildAndRunHostApp.ps1 uses Write-Warn helper instead of Write-Warning
+- id: review_pr_logfile_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: Review-PR.ps1 accepts -LogFile parameter with Start-Transcript logging
+- id: review_pr_tree_restore
+  type: fail_to_pass
+  origin: pr_diff
+  description: Review-PR.ps1 restores working tree between phases with git checkout
+    HEAD -- .
+- id: android_cake_boot_timeout
+  type: fail_to_pass
+  origin: pr_diff
+  description: android.cake sets EmulatorBootTimeoutSeconds to 10 minutes (10 * 60)
+- id: plan_template_model_version
+  type: fail_to_pass
+  origin: pr_diff
+  description: PLAN-TEMPLATE.md references claude-opus-4.6 (not 4.5)
+- id: shared_rules_model_version
+  type: fail_to_pass
+  origin: pr_diff
+  description: SHARED-RULES.md references claude-opus-4.6 in model table
+- id: post_gate_env_blockers
+  type: fail_to_pass
+  origin: pr_diff
+  description: post-gate.md has stop-on-environment-blocker rules for Phase 4
+- id: post_gate_mandatory_cleanup
+  type: fail_to_pass
+  origin: pr_diff
+  description: post-gate.md requires git checkout HEAD + git clean -fd between try-fix
+    attempts
+- id: skill_md_no_git_add_state
+  type: fail_to_pass
+  origin: pr_diff
+  description: try-fix SKILL.md warns against git add of state files in CustomAgentLogsTmp
 rubric: []
+config_edits:
+- path: .github/skills/try-fix/SKILL.md
+  tier: 1
+  gold_added: 'git checkout HEAD -- .
+
+    **⚠️ Do NOT `git add` or `git commit` the state file.** It lives in `CustomAgentLogsTmp/`
+    which is `.gitignore`d. Committing it with `git add -f` would cause `git checkout
+    HEAD -- .` (used between phases) to revert it, losing data.
+
+
+    **⚠️ IMPORTANT: Do NOT set any "Exhausted" field.** Cross-pollination exhaustion
+    is determined by the pr agent after invoking ALL 6 models and confirming none
+    have new ideas. try-fix only reports its own attempt result.
+
+    | Git state unrecoverable | Run `git checkout HEAD -- .` and `git clean -fd` if
+    needed |'
+  gold_removed: 'git checkout -- .
+
+    4. **Commit state file:**
+
+    ```bash
+
+    git add "$STATE_FILE" && git commit -m "try-fix: attempt #N"
+
+    ```
+
+
+    **⚠️ IMPORTANT: Do NOT set any "Exhausted" field.** Cross-pollination exhaustion
+    is determined by the pr agent after invoking ALL 5 models and confirming none
+    have new ideas. try-fix only reports its own attempt result.
+
+    | Git state unrecoverable | Run `git checkout -- .` and `git clean -fd` if needed
+    |'

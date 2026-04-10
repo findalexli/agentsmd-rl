@@ -1,83 +1,76 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 39734
-  base_commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
-  merge_commit: "61afb37f4e6af73ae536c7d05ee1a926328b6d80"
-
+  base_commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  merge_commit: 61afb37f4e6af73ae536c7d05ee1a926328b6d80
 checks:
-  - id: minimist_parses_args
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Vendored minimist correctly parses boolean, string, and positional args"
-
-  - id: minimist_boolean_equals_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Vendored minimist throws error when boolean option passed with =value"
-
-  - id: minimist_double_dash
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Vendored minimist handles -- separator correctly"
-
-  - id: program_imports_vendored
-    type: fail_to_pass
-    origin: pr_diff
-    description: "program.ts imports minimist from local vendored file, not npm package"
-
-  - id: types_minimist_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "@types/minimist dev dependency removed from package.json"
-
-  - id: deps_list_updated
-    type: fail_to_pass
-    origin: agent_config
-    description: "DEPS.list declares minimist.ts as allowed import per CLAUDE.md DEPS rule"
-    source:
-      path: "CLAUDE.md"
-      lines: "95"
-      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
-
-  - id: claude_md_generated_with_rule
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md includes rule against 'Generated with' in commit messages"
-
-  - id: claude_md_commit_rules_intact
-    type: pass_to_pass
-    origin: agent_config
-    description: "CLAUDE.md still has existing commit message and branch naming rules"
-    source:
-      path: "CLAUDE.md"
-      lines: "127-128"
-      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
-
-  - id: repo_cli_client_files_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cli-client source files exist and are non-empty"
-
-  - id: repo_cli_client_typescript_no_syntax_errors
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cli-client TypeScript files have no obvious syntax errors"
-
-  - id: repo_deps_list_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's DEPS.list file is valid and parseable"
-
-  - id: repo_package_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's package.json is valid JSON with expected structure"
-
+- id: minimist_parses_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: Vendored minimist correctly parses boolean, string, and positional
+    args
+- id: minimist_boolean_equals_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: Vendored minimist throws error when boolean option passed with =value
+- id: minimist_double_dash
+  type: fail_to_pass
+  origin: pr_diff
+  description: Vendored minimist handles -- separator correctly
+- id: program_imports_vendored
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts imports minimist from local vendored file, not npm package
+- id: types_minimist_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: '@types/minimist dev dependency removed from package.json'
+- id: deps_list_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: DEPS.list declares minimist.ts as allowed import per CLAUDE.md DEPS
+    rule
+  source:
+    path: CLAUDE.md
+    lines: '95'
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+- id: claude_md_generated_with_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md includes rule against 'Generated with' in commit messages
+- id: claude_md_commit_rules_intact
+  type: pass_to_pass
+  origin: agent_config
+  description: CLAUDE.md still has existing commit message and branch naming rules
+  source:
+    path: CLAUDE.md
+    lines: 127-128
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+- id: repo_cli_client_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cli-client source files exist and are non-empty
+- id: repo_cli_client_typescript_no_syntax_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cli-client TypeScript files have no obvious syntax errors
+- id: repo_deps_list_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's DEPS.list file is valid and parseable
+- id: repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package.json is valid JSON with expected structure
 rubric:
-  - rule: "Vendored code should include proper license/attribution headers"
-    source:
-      path: ".claude/skills/playwright-dev/vendor.md"
-      lines: "1-10"
-      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+- rule: Vendored code should include proper license/attribution headers
+  source:
+    path: .claude/skills/playwright-dev/vendor.md
+    lines: 1-10
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: Never add "Generated with" in commit message.
+  gold_removed: ''

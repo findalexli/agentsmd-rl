@@ -1,68 +1,64 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 40017
-  base_commit: "9d81a6754d9426295ac10bd33278fb2af476c8a9"
-  merge_commit: "bf7d912bd5974f9dc6a1a470af7b65896af4dc14"
-
+  base_commit: 9d81a6754d9426295ac10bd33278fb2af476c8a9
+  merge_commit: bf7d912bd5974f9dc6a1a470af7b65896af4dc14
 checks:
-  # Behavioral code tests (subprocess + node)
-  - id: global_options_includes_cdp
-    type: fail_to_pass
-    origin: pr_diff
-    description: "globalOptions array includes 'cdp' for CLI argument parsing"
-
-  - id: attach_schema_has_cdp_option
-    type: fail_to_pass
-    origin: pr_diff
-    description: "attach command zod schema declares cdp option"
-
-  - id: attach_conflict_detection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "attach command detects conflicting target + --cdp/--endpoint/--extension args"
-
-  - id: daemon_registers_cdp_flag
-    type: fail_to_pass
-    origin: pr_diff
-    description: "daemon program.ts registers --cdp CLI flag via .option()"
-
-  - id: session_passes_cdp_to_daemon
-    type: fail_to_pass
-    origin: pr_diff
-    description: "session.ts passes --cdp flag value to daemon arguments"
-
-  - id: config_cdp_endpoint_in_isolation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "config.ts maps cdpEndpoint and uses it in browser isolation logic"
-
-  # Documentation update checks
-  - id: skill_md_attach_has_extension
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md documents 'playwright-cli attach --extension' command"
-
-  - id: skill_md_open_no_extension
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md no longer documents 'open --extension'"
-
-  # Static regression checks
-  - id: typescript_balanced_braces
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files have balanced braces"
-
-  - id: resolve_session_name_has_logic
-    type: pass_to_pass
-    origin: static
-    description: "resolveSessionName function has real logic, not a stub"
-
+- id: global_options_includes_cdp
+  type: fail_to_pass
+  origin: pr_diff
+  description: globalOptions array includes 'cdp' for CLI argument parsing
+- id: attach_schema_has_cdp_option
+  type: fail_to_pass
+  origin: pr_diff
+  description: attach command zod schema declares cdp option
+- id: attach_conflict_detection
+  type: fail_to_pass
+  origin: pr_diff
+  description: attach command detects conflicting target + --cdp/--endpoint/--extension
+    args
+- id: daemon_registers_cdp_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: daemon program.ts registers --cdp CLI flag via .option()
+- id: session_passes_cdp_to_daemon
+  type: fail_to_pass
+  origin: pr_diff
+  description: session.ts passes --cdp flag value to daemon arguments
+- id: config_cdp_endpoint_in_isolation
+  type: fail_to_pass
+  origin: pr_diff
+  description: config.ts maps cdpEndpoint and uses it in browser isolation logic
+- id: skill_md_attach_has_extension
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md documents 'playwright-cli attach --extension' command
+- id: skill_md_open_no_extension
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md no longer documents 'open --extension'
+- id: typescript_balanced_braces
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have balanced braces
+- id: resolve_session_name_has_logic
+  type: pass_to_pass
+  origin: static
+  description: resolveSessionName function has real logic, not a stub
 rubric:
-  - rule: "SKILL.md documentation update is consistent with the existing command documentation style"
-    source:
-      path: ".claude/skills/playwright-dev/tools.md"
-      lines: "95-98"
-      commit: "9d81a6754d9426295ac10bd33278fb2af476c8a9"
+- rule: SKILL.md documentation update is consistent with the existing command documentation
+    style
+  source:
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 95-98
+    commit: 9d81a6754d9426295ac10bd33278fb2af476c8a9
+config_edits:
+- path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+  tier: 1
+  gold_added: '# Connect to browser via extension
+
+    playwright-cli attach --extension'
+  gold_removed: '# Connect to browser via extension
+
+    playwright-cli open --extension'

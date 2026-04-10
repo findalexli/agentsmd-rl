@@ -1,100 +1,220 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "remix-run/remix"
+  repo: remix-run/remix
   pr: 10905
-  base_commit: "848194ecde3f143b5d0d1fde9b11fa713b7c142e"
-  merge_commit: "d0ee7eb0e1dd485a9c707eaaf97e58c420e181ee"
-
+  base_commit: 848194ecde3f143b5d0d1fde9b11fa713b7c142e
+  merge_commit: d0ee7eb0e1dd485a9c707eaaf97e58c420e181ee
 checks:
-  # Gate
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Pre-existing modified files (index.ts, file.ts) still parse correctly"
-
-  # Repo CI/CD tests (pass_to_pass, repo_tests)
-  - id: mime_package_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's @remix-run/mime package tests pass"
-
-  - id: mime_package_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's @remix-run/mime package typecheck passes"
-
-  - id: response_package_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's @remix-run/response package tests pass"
-
-  - id: response_package_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's @remix-run/response package typecheck passes"
-
-  - id: changes_validate
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's changes file validation passes"
-
-  # Core behavioral tests (code)
-  - id: mime_type_to_content_type_text_types
-    type: fail_to_pass
-    origin: pr_diff
-    description: "mimeTypeToContentType adds charset to text/* MIME types"
-
-  - id: mime_type_to_content_type_json_and_js
-    type: fail_to_pass
-    origin: pr_diff
-    description: "mimeTypeToContentType adds charset to application/json, application/javascript, +json types"
-
-  - id: mime_type_to_content_type_exclusions
-    type: fail_to_pass
-    origin: pr_diff
-    description: "mimeTypeToContentType excludes text/xml, binary types, and already-charset types"
-
-  - id: detect_content_type_exists_and_composes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "detectContentType function exists, composing detectMimeType with mimeTypeToContentType"
-
-  # Config/documentation update tests
-  - id: readme_documents_detect_content_type
-    type: fail_to_pass
-    origin: pr_diff
-    description: "packages/mime/README.md documents detectContentType with usage examples"
-
-  - id: readme_documents_mime_type_to_content_type
-    type: fail_to_pass
-    origin: pr_diff
-    description: "packages/mime/README.md documents mimeTypeToContentType with charset logic"
-
-  # Agent config compliance
-  - id: index_exports_new_functions
-    type: fail_to_pass
-    origin: agent_config
-    description: "index.ts re-exports both new functions per AGENTS.md package exports architecture rule"
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "848194ecde3f143b5d0d1fde9b11fa713b7c142e"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Pre-existing modified files (index.ts, file.ts) still parse correctly
+- id: mime_package_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @remix-run/mime package tests pass
+- id: mime_package_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @remix-run/mime package typecheck passes
+- id: response_package_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @remix-run/response package tests pass
+- id: response_package_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @remix-run/response package typecheck passes
+- id: changes_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's changes file validation passes
+- id: mime_type_to_content_type_text_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: mimeTypeToContentType adds charset to text/* MIME types
+- id: mime_type_to_content_type_json_and_js
+  type: fail_to_pass
+  origin: pr_diff
+  description: mimeTypeToContentType adds charset to application/json, application/javascript,
+    +json types
+- id: mime_type_to_content_type_exclusions
+  type: fail_to_pass
+  origin: pr_diff
+  description: mimeTypeToContentType excludes text/xml, binary types, and already-charset
+    types
+- id: detect_content_type_exists_and_composes
+  type: fail_to_pass
+  origin: pr_diff
+  description: detectContentType function exists, composing detectMimeType with mimeTypeToContentType
+- id: readme_documents_detect_content_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/mime/README.md documents detectContentType with usage examples
+- id: readme_documents_mime_type_to_content_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/mime/README.md documents mimeTypeToContentType with charset
+    logic
+- id: index_exports_new_functions
+  type: fail_to_pass
+  origin: agent_config
+  description: index.ts re-exports both new functions per AGENTS.md package exports
+    architecture rule
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: 848194ecde3f143b5d0d1fde9b11fa713b7c142e
 rubric:
-  - rule: "README documentation style is consistent with existing function docs (detectMimeType, isCompressibleMimeType)"
-    source:
-      path: "packages/mime/README.md"
-      lines: "1-55"
-      commit: "848194ecde3f143b5d0d1fde9b11fa713b7c142e"
-  - rule: "Code comments follow AGENTS.md rule: only non-JSDoc comments when the code is doing something surprising or non-obvious"
-    source:
-      path: "AGENTS.md"
-      lines: "30"
-      commit: "848194ecde3f143b5d0d1fde9b11fa713b7c142e"
-  - rule: "New code uses let for local variables per AGENTS.md code style"
-    source:
-      path: "AGENTS.md"
-      lines: "23"
-      commit: "848194ecde3f143b5d0d1fde9b11fa713b7c142e"
-  - rule: "packages/response/src/lib/file.ts uses mimeTypeToContentType for Content-Type header"
+- rule: README documentation style is consistent with existing function docs (detectMimeType,
+    isCompressibleMimeType)
+  source:
+    path: packages/mime/README.md
+    lines: 1-55
+    commit: 848194ecde3f143b5d0d1fde9b11fa713b7c142e
+- rule: 'Code comments follow AGENTS.md rule: only non-JSDoc comments when the code
+    is doing something surprising or non-obvious'
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 848194ecde3f143b5d0d1fde9b11fa713b7c142e
+- rule: New code uses let for local variables per AGENTS.md code style
+  source:
+    path: AGENTS.md
+    lines: '23'
+    commit: 848194ecde3f143b5d0d1fde9b11fa713b7c142e
+- rule: packages/response/src/lib/file.ts uses mimeTypeToContentType for Content-Type
+    header
+config_edits:
+- path: packages/mime/.changes/minor.detect-content-type.md
+  tier: 2
+  gold_added: Add `detectContentType(extension)` function that returns a Content-Type
+    header value with `charset` for text-based types.
+  gold_removed: ''
+- path: packages/mime/.changes/minor.mime-type-to-content-type.md
+  tier: 2
+  gold_added: Add `mimeTypeToContentType(mimeType)` function that converts a MIME
+    type to a Content-Type header value, adding `charset` for text-based types.
+  gold_removed: ''
+- path: packages/mime/README.md
+  tier: 2
+  gold_added: '# @remix-run/mime
+
+
+    Utilities for working with MIME types.
+
+
+    Data used for these utilities is generated at build time from [mime-db](https://github.com/jshttp/mime-db),
+    but only includes standard MIME types. Experimental (`x-`) and vendor-specific
+    (`vnd.`) MIME types have been excluded.
+
+
+    ## Installation
+
+
+    ```bash
+
+    npm install @remix-run/mime
+
+    ```
+
+
+    ## Usage
+
+
+    ### `detectContentType(extension)`
+
+
+    Detects the Content-Type header value for a given file extension or filename,
+    including `charset` for text-based types. See [`mimeTypeToContentType`](#mimetypetocontenttypemimetype)
+    for charset logic.
+
+
+    ```ts
+
+    import { detectContentType } from ''@remix-run/mime''
+
+
+    detectContentType(''css'') // ''text/css; charset=utf-8''
+
+    detectContentType(''.json'') // ''application/json; charset=utf-8''
+
+    detectContentType(''image.png'') // ''image/png''
+
+    detectContentType(''path/to/file.unknown'') // undefined
+
+    ```
+
+
+    ### `detectMimeType(extension)`
+
+
+    Detects the MIME type for a given file extension or filename.
+
+
+    ```ts
+
+    import { detectMimeType } from ''@remix-run/mime''
+
+
+    detectMimeType(''txt'') // ''text/plain''
+
+    detectMimeType(''.txt'') // ''text/plain''
+
+    detectMimeType(''file.txt'') // ''text/plain''
+
+    detectMimeType(''path/to/file.txt'') // ''text/plain''
+
+    detectMimeType(''unknown'') // undefined
+
+    ```
+
+
+    ### `isCompressibleMimeType(mimeType)`
+
+
+    Checks if a MIME type is known to be compressible.
+
+
+    ```ts
+
+    import { isCompressibleMimeType } from ''@remix-run/mime''
+
+
+    isCompressibleMimeType(''text/html'') // true
+
+    isCompressibleMimeType(''application/json'') // true
+
+    isCompressibleMimeType(''image/png'') // false
+
+    isCompressibleMimeType(''video/mp4'') // false
+
+    ```
+
+
+    For convenience, the function also accepts a full Content-Type header value:
+
+
+    ```ts
+
+    import { isCompressibleMimeType } from ''@remix-run/mime''
+
+
+    isCompressibleMimeType(''text/html; charset=utf-8'') // true
+
+    isCompressibleMimeType(''application/json; charset=utf-8'') // true
+
+    isCompressibleMimeType(''image/png; charset=utf-8'') // false
+
+    isCompressibleMimeType(''video/mp4; charset=utf-8'') // false
+
+    ```
+
+
+    ### `mimeTypeToCont'
+  gold_removed: ''
+- path: packages/response/.changes/patch.content-type-charset.md
+  tier: 2
+  gold_added: '`createFileResponse` now includes `charset` in Content-Type for text-based
+    files.'
+  gold_removed: ''

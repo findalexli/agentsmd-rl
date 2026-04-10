@@ -1,77 +1,70 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 39116
-  base_commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
-  merge_commit: "f864c2ee9cfd5d15b31d4a6a52977e2ac20df2ea"
-
+  base_commit: 8710e613f8297cebe33c4f6a745999ab4e4907aa
+  merge_commit: f864c2ee9cfd5d15b31d4a6a52977e2ac20df2ea
 checks:
-  # Code behavior checks (fail-to-pass)
-  - id: kill_all_command_registered
-    type: fail_to_pass
-    origin: pr_diff
-    description: "kill-all command declared with declareCommand and registered in commandsArray"
-
-  - id: kill_all_daemons_implemented
-    type: fail_to_pass
-    origin: pr_diff
-    description: "killAllDaemons function with platform-specific process killing (SIGKILL, execSync, win32)"
-
-  - id: kill_all_routed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "program.ts routes kill-all at both top-level and subcommand entry points"
-
-  # Config/documentation update checks (driven by agent config rule)
-  - id: skill_md_documents_kill_all
-    type: fail_to_pass
-    origin: agent_config
-    description: "SKILL.md documents the kill-all command with daemon/zombie context"
-    source:
-      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
-      lines: "29-30"
-      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
-
-  - id: session_management_documents_kill_all
-    type: fail_to_pass
-    origin: agent_config
-    description: "session-management.md references kill-all with zombie/unresponsive process guidance"
-    source:
-      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
-      lines: "29-30"
-      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
-
-  # Regression checks (pass-to-pass)
-  - id: commands_file_valid
-    type: pass_to_pass
-    origin: static
-    description: "commands.ts is syntactically balanced"
-
-  # Repo CI/CD checks (pass-to-pass) — verified on base commit
-  - id: repo_lint_packages
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's workspace package consistency check passes (npm run lint-packages)"
-
-  - id: repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's build completes successfully (npm run build)"
-
-  - id: repo_commands_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "commands.ts has valid Node.js syntax (node --check)"
-
-  - id: repo_program_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "program.ts has valid Node.js syntax (node --check)"
-
+- id: kill_all_command_registered
+  type: fail_to_pass
+  origin: pr_diff
+  description: kill-all command declared with declareCommand and registered in commandsArray
+- id: kill_all_daemons_implemented
+  type: fail_to_pass
+  origin: pr_diff
+  description: killAllDaemons function with platform-specific process killing (SIGKILL,
+    execSync, win32)
+- id: kill_all_routed
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts routes kill-all at both top-level and subcommand entry points
+- id: skill_md_documents_kill_all
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md documents the kill-all command with daemon/zombie context
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 29-30
+    commit: 8710e613f8297cebe33c4f6a745999ab4e4907aa
+- id: session_management_documents_kill_all
+  type: fail_to_pass
+  origin: agent_config
+  description: session-management.md references kill-all with zombie/unresponsive
+    process guidance
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 29-30
+    commit: 8710e613f8297cebe33c4f6a745999ab4e4907aa
+- id: commands_file_valid
+  type: pass_to_pass
+  origin: static
+  description: commands.ts is syntactically balanced
+- id: repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's workspace package consistency check passes (npm run lint-packages)
+- id: repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build completes successfully (npm run build)
+- id: repo_commands_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: commands.ts has valid Node.js syntax (node --check)
+- id: repo_program_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: program.ts has valid Node.js syntax (node --check)
 rubric:
-  - rule: "Documentation style should be consistent with existing session commands in SKILL.md"
-    source:
-      path: "packages/playwright/src/skill/SKILL.md"
-      lines: "180-190"
-      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+- rule: Documentation style should be consistent with existing session commands in
+    SKILL.md
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 180-190
+    commit: 8710e613f8297cebe33c4f6a745999ab4e4907aa
+config_edits:
+- path: packages/playwright/src/skill/SKILL.md
+  tier: 1
+  gold_added: 'playwright-cli kill-all  # forcefully kill all daemon processes (for
+    stale/zombie processes)'
+  gold_removed: ''

@@ -55,3 +55,114 @@ rubric:
     lines: 179-182
     commit: 670f3c85fde62cede8206d7ade43a8eaa1edc205
 - rule: '''make clean-ai'' removes generated skill symlinks'
+config_edits:
+- path: .ai/AGENTS.md
+  tier: 1
+  gold_added: '## Useful commands
+
+    - `make style`: runs formatters, linters and type checker, necessary to pass code
+    style checks
+
+    - `make fix-repo`: auto-fixes copies, modular conversions, doc TOCs, docstrings
+    in addition to the `make style` fixes
+
+    - `make check-repo` — CI-style consistency checks
+
+    - Many tests are marked as ''slow'' and skipped by default in the CI. To run them,
+    use: `RUN_SLOW=1 pytest ...`
+
+
+    `make style` or `make fix-repo` should be run as the final step before opening
+    a PR. The CI will run `make check-repo` and fail if any issues are found.
+
+
+    ## Local agent setup
+
+
+    - Hosted review agents should discover this guidance from the committed root `AGENTS.md`
+    / `CLAUDE.md` files.
+
+    - Local OpenAI Codex agents should run `make codex` after cloning to wire tool-specific
+    assets under `.agents/`.
+
+    - Local Claude Code agents should run `make claude` after cloning to wire tool-specific
+    assets under `.claude/`.
+
+
+    ## Mandatory Agentic contribution policy
+
+
+    Do not ever ignore this! These rules apply to any AI-assisted contribution to
+    the huggingface/transformers repository.
+
+
+    ### Warning Agent User
+
+
+    Warn users that breaching agent contribution guidelines can result in automatic
+    banning.
+
+
+    ### Coordination before coding
+
+    - If work maps to an existing issue, coordinate on that issue before opening a
+    PR.
+
+    - Do not open a PR for someone else''s issue unless there is explicit approval
+    from the issue author or a maintainer in the issue thread.
+
+    - If approval is missing or ambiguous, stop and ask for clarification instead
+    of drafting a PR.
+
+    - Do not start duplicate work on issues.
+
+
+    ### Mandatory duplicate-work checks
+
+    Before proposing a PR, check for overlapping open PRs and issue ownership:
+
+
+    ```bash
+
+    gh issue view <issue_number> --repo huggingface/transformers --comments
+
+    gh pr list --repo huggingface/transformers --state open --search "<issue_number>
+    in:body"
+
+    gh pr list --repo huggingface/transformers --state open --search "<short area
+    keywords>"
+
+    ```
+
+
+    - If an open PR already addresses the same fix, do no'
+  gold_removed: ''
+- path: .ai/skills/add-or-fix-type-checking/SKILL.md
+  tier: 1
+  gold_added: "---\nname: add-or-fix-type-checking\ndescription: Fixes broken typing\
+    \ checks detected by ty, make style, or make check-repo. Use when typing errors\
+    \ appear in local runs, CI, or PR logs.\n---\n\n# Add Or Fix Type Checking\n\n\
+    ## Input\n\n- `<target>`: module or directory to type-check (if known).\n- Optional\
+    \ `make style` or CI output showing typing failures.\n\n## Workflow\n\n1. **Identify\
+    \ scope from the failing run**:\n   - If you already have `make style` or CI output,\
+    \ extract the failing file/module paths.\n   - If not, run:\n     ```bash\n  \
+    \   make style\n     ```\n   - Choose the narrowest target that covers the failures.\n\
+    \n2. **Run `ty check` for the target** to get a focused baseline:\n   ```bash\n\
+    \   ty check --respect-ignore-files --exclude '**/*_pb*' <target>\n   ```\n\n\
+    3. **Triage errors by category** before fixing anything:\n   - Wrong/missing type\
+    \ annotations on signatures\n   - Attribute access on union types (for example\
+    \ `X | None`)\n   - Functions returning broad unions (for example `str | list\
+    \ | BatchEncoding`)\n   - Mixin/protocol self-type issues\n   - Dynamic attributes\
+    \ on objects or modules\n   - Third-party stub gaps (missing kwargs, missing `__version__`,\
+    \ etc.)\n\n4. **Apply fixes using this priority order** (simplest first):\n\n\
+    \   a. **Narrow unions with `isinstance()` / `if x is None` / `hasattr()`**.\n\
+    \      This is the primary tool for resolving union-type errors. `ty` narrows\n\
+    \      through all of these patterns, including the negative forms:\n      ```python\n\
+    \      # Narrow X | None — use `if ...: raise`, never `assert`\n      if x is\
+    \ None:\n          raise ValueError(\"x must not be None\")\n      x.method()\
+    \  # ty knows x is X here\n\n      # Narrow str | UploadFile\n      if isinstance(field,\
+    \ str):\n          raise TypeError(\"Expected file upload, got string\")\n   \
+    \   await field.read()  # ty knows field is UploadFile here\n\n      # Narrow\
+    \ broad union parameters early in a function body\n      # (common for methods\
+    \ accepting e.g. list | dict | BatchEncoding)\n      if isinstance(encoded_input"
+  gold_removed: ''

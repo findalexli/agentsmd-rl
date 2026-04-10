@@ -1,90 +1,99 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 13168
-  base_commit: "835e4bd1adcaf5716283fa379e909f916a032b8a"
-  merge_commit: "a8e0cc66b0c5a9032e8c70de320419a724e674e1"
-
+  base_commit: 835e4bd1adcaf5716283fa379e909f916a032b8a
+  merge_commit: a8e0cc66b0c5a9032e8c70de320419a724e674e1
 checks:
-  # Gate — syntax
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files parse without errors"
-
-  # Code behavior — profiling sync utilities
-  - id: trace_phase_sync_records_timing
-    type: fail_to_pass
-    origin: pr_diff
-    description: "trace_phase_sync context manager records timing into RequestTrace"
-
-  - id: traced_sync_decorator_records_timing
-    type: fail_to_pass
-    origin: pr_diff
-    description: "traced_sync decorator wraps a function and records phase timing"
-
-  - id: request_trace_has_new_phase_fields
-    type: fail_to_pass
-    origin: pr_diff
-    description: "RequestTrace has upload_ms and component-specific phase fields"
-
-  - id: to_dict_includes_new_phase_keys
-    type: fail_to_pass
-    origin: pr_diff
-    description: "RequestTrace.to_dict() includes new component-level phase keys"
-
-  - id: trace_phase_sync_no_trace_noop
-    type: fail_to_pass
-    origin: pr_diff
-    description: "trace_phase_sync is a no-op when no current trace is set"
-
-  # Config/documentation update
-  - id: benchmark_readme_documents_results_directory_structure
-    type: fail_to_pass
-    origin: pr_diff
-    description: "scripts/benchmark/README.md documents results directory structure with tier details"
-
-  - id: benchmark_readme_documents_ab_test_structure
-    type: fail_to_pass
-    origin: pr_diff
-    description: "scripts/benchmark/README.md explains A/B test directory layout"
-
-  # Regression — existing functionality preserved
-  - id: trace_phase_async_still_exists
-    type: pass_to_pass
-    origin: static
-    description: "Existing async trace_phase function still works correctly"
-
-  - id: set_phase_accumulates
-    type: pass_to_pass
-    origin: static
-    description: "RequestTrace.set_phase accumulates values across multiple calls"
-
-  # CI/CD regression checks — repo's own tests
-  - id: repo_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Python files have valid syntax"
-
-  - id: repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff lint check passes on modified files"
-
-  - id: repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff format check passes on modified files"
-
-  - id: repo_benchmark_readme_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Benchmark README exists and is readable"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files parse without errors
+- id: trace_phase_sync_records_timing
+  type: fail_to_pass
+  origin: pr_diff
+  description: trace_phase_sync context manager records timing into RequestTrace
+- id: traced_sync_decorator_records_timing
+  type: fail_to_pass
+  origin: pr_diff
+  description: traced_sync decorator wraps a function and records phase timing
+- id: request_trace_has_new_phase_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: RequestTrace has upload_ms and component-specific phase fields
+- id: to_dict_includes_new_phase_keys
+  type: fail_to_pass
+  origin: pr_diff
+  description: RequestTrace.to_dict() includes new component-level phase keys
+- id: trace_phase_sync_no_trace_noop
+  type: fail_to_pass
+  origin: pr_diff
+  description: trace_phase_sync is a no-op when no current trace is set
+- id: benchmark_readme_documents_results_directory_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: scripts/benchmark/README.md documents results directory structure with
+    tier details
+- id: benchmark_readme_documents_ab_test_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: scripts/benchmark/README.md explains A/B test directory layout
+- id: trace_phase_async_still_exists
+  type: pass_to_pass
+  origin: static
+  description: Existing async trace_phase function still works correctly
+- id: set_phase_accumulates
+  type: pass_to_pass
+  origin: static
+  description: RequestTrace.set_phase accumulates values across multiple calls
+- id: repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files have valid syntax
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff lint check passes on modified files
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on modified files
+- id: repo_benchmark_readme_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Benchmark README exists and is readable
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "835e4bd1adcaf5716283fa379e909f916a032b8a"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 835e4bd1adcaf5716283fa379e909f916a032b8a
+config_edits:
+- path: scripts/benchmark/README.md
+  tier: 2
+  gold_added: "This submits two identical jobs (one per branch) to HF Jobs. Results\
+    \ are uploaded to a shared HF bucket path for easy comparison. Use `--dry-run`\
+    \ to preview the generated bash script without submitting.\n\n### Results Directory\
+    \ Structure\n\nEach branch produces the following structure in the HF bucket:\n\
+    \n```\nhf://buckets/gradio/backend-benchmarks/{run_name}/{branch}/\n├── runner.py\
+    \                          # Copy of the benchmark runner script (for reproducibility)\n\
+    ├── run_params.json                    # Job parameters (branch, commit, apps,\
+    \ tiers, etc.)\n└── {app_stem}/                        # One directory per app\
+    \ (e.g. \"echo_text\")\n    └── {timestamp}/                   # e.g. \"20260330_142500\"\
+    \n        ├── summary.json               # Overall results: app name, timestamp,\
+    \ all tier results\n        ├── summary_table.txt          # Human-readable table\
+    \ (client/server p50/p90/p99, success%)\n        ├── tier_1/\n        │   ├──\
+    \ client_latencies.jsonl  # One JSON object per request (client-side timing)\n\
+    \        │   └── traces.jsonl            # Server-side profiling traces\n    \
+    \    ├── tier_10/\n        │   ├── client_latencies.jsonl\n        │   └── traces.jsonl\n\
+    \        └── tier_100/\n            ├── client_latencies.jsonl\n            └──\
+    \ traces.jsonl\n```\n\nFor A/B tests, both branches share the same `{run_name}`\
+    \ prefix:\n├── main/\n│   ├── runner.py\n│   ├── run_params.json\n│   └── {app_stem}/{timestamp}/...\n\
+    └── {compare_branch}/\n    ├── runner.py\n    ├── run_params.json\n    └── {app_stem}/{timestamp}/...\n\
+    The `tier_{N}` directories are created for each value in `--tiers` (default `1,10,100`),\
+    \ and each app passed via `--apps` gets its own `{app_stem}/` directory."
+  gold_removed: "This submits two identical jobs (one per branch) to HF Jobs. Results\
+    \ are uploaded to a shared HF bucket path for easy comparison:\n  main/\n    run_params.json\n\
+    \    runner.py              # exact runner script used\n    echo_text/summary.json\n\
+    \    streaming_chat/...\n  avoid-asyncio-sleep-sse/\n    ...\nUse `--dry-run`\
+    \ to preview the generated bash script without submitting."

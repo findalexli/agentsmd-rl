@@ -1,84 +1,127 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "payloadcms/payload"
+  repo: payloadcms/payload
   pr: 14445
-  base_commit: "80d7781b4f2fc2e874323532a0a8a8da65c8fc22"
-  merge_commit: "aa14d867a57fc1c9827b55f69046bb05ef3815d9"
-
+  base_commit: 80d7781b4f2fc2e874323532a0a8a8da65c8fc22
+  merge_commit: aa14d867a57fc1c9827b55f69046bb05ef3815d9
 checks:
-  # Gates (pass_to_pass)
-  - id: post_edit_hook_syntax
-    type: pass_to_pass
-    origin: static
-    description: "post-edit.sh must be valid bash"
-
-  - id: settings_json_valid
-    type: pass_to_pass
-    origin: static
-    description: "settings.json must be valid JSON"
-
-  # Hook behavior tests (fail_to_pass)
-  - id: post_edit_hook_extracts_filepath
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Hook reads file_path from JSON stdin and processes matching files"
-
-  - id: post_edit_hook_handles_null_input
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Hook exits 0 gracefully when file_path is null or missing"
-
-  - id: post_edit_hook_case_matching
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Hook has case/esac matching for TS, MD, JSON, package.json with prettier/eslint"
-
-  # Settings config tests (fail_to_pass)
-  - id: settings_json_hooks_configured
-    type: fail_to_pass
-    origin: pr_diff
-    description: "settings.json configures PostToolUse hooks for Edit|Write"
-
-  - id: settings_json_permissions
-    type: fail_to_pass
-    origin: pr_diff
-    description: "settings.json has permissions allowlist with pnpm run and git commands"
-
-  # CLAUDE.md documentation update tests (fail_to_pass)
-  - id: claude_md_documents_kv_redis
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md lists kv-redis in key directories"
-
-  - id: claude_md_documents_r2_storage
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md lists R2 in storage adapters"
-
-  - id: claude_md_has_quick_start
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md has a Quick Start section with pnpm commands"
-
-  - id: claude_md_pnpm_run_prefix
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Build/dev/test/lint commands use pnpm run prefix"
-
-  - id: claude_md_pnpm_turbo_note
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md warns turbo should be run via pnpm, not directly"
-
+- id: post_edit_hook_syntax
+  type: pass_to_pass
+  origin: static
+  description: post-edit.sh must be valid bash
+- id: settings_json_valid
+  type: pass_to_pass
+  origin: static
+  description: settings.json must be valid JSON
+- id: post_edit_hook_extracts_filepath
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hook reads file_path from JSON stdin and processes matching files
+- id: post_edit_hook_handles_null_input
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hook exits 0 gracefully when file_path is null or missing
+- id: post_edit_hook_case_matching
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hook has case/esac matching for TS, MD, JSON, package.json with prettier/eslint
+- id: settings_json_hooks_configured
+  type: fail_to_pass
+  origin: pr_diff
+  description: settings.json configures PostToolUse hooks for Edit|Write
+- id: settings_json_permissions
+  type: fail_to_pass
+  origin: pr_diff
+  description: settings.json has permissions allowlist with pnpm run and git commands
+- id: claude_md_documents_kv_redis
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md lists kv-redis in key directories
+- id: claude_md_documents_r2_storage
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md lists R2 in storage adapters
+- id: claude_md_has_quick_start
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md has a Quick Start section with pnpm commands
+- id: claude_md_pnpm_run_prefix
+  type: fail_to_pass
+  origin: pr_diff
+  description: Build/dev/test/lint commands use pnpm run prefix
+- id: claude_md_pnpm_turbo_note
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md warns turbo should be run via pnpm, not directly
 rubric:
-  - rule: "The post-edit hook should handle file type detection idiomatically (case/esac or equivalent), not with long if/elif chains"
-    source:
-      path: "CLAUDE.md"
-      lines: "1-5"
-      commit: "80d7781b4f2fc2e874323532a0a8a8da65c8fc22"
-  - rule: "Documentation updates in CLAUDE.md should be consistent with the existing formatting style"
-    source:
-      path: "CLAUDE.md"
-      lines: "1-10"
-      commit: "80d7781b4f2fc2e874323532a0a8a8da65c8fc22"
+- rule: The post-edit hook should handle file type detection idiomatically (case/esac
+    or equivalent), not with long if/elif chains
+  source:
+    path: CLAUDE.md
+    lines: 1-5
+    commit: 80d7781b4f2fc2e874323532a0a8a8da65c8fc22
+- rule: Documentation updates in CLAUDE.md should be consistent with the existing
+    formatting style
+  source:
+    path: CLAUDE.md
+    lines: 1-10
+    commit: 80d7781b4f2fc2e874323532a0a8a8da65c8fc22
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: "- `packages/kv-redis` - Redis key-value store adapter\n  - `packages/storage-*`\
+    \ - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel Blob, R2)\n## Quick\
+    \ Start\n\n1. `pnpm install`\n2. `pnpm run build:core`\n3. `pnpm run dev` (MongoDB)\
+    \ or `pnpm run dev:postgres`\n\n- `pnpm install` - Install all dependencies\n\
+    - `pnpm turbo` - All Turbo commands should be run from root with pnpm - not with\
+    \ `turbo` directly\n- `pnpm run build` or `pnpm run build:core` - Build core packages\
+    \ (excludes plugins and storage adapters)\n- `pnpm run build:all` - Build all\
+    \ packages\n- `pnpm run build:<directory_name>` - Build specific package (e.g.\
+    \ `pnpm run build:db-mongodb`, `pnpm run build:ui`)\n- `pnpm run dev` - Start\
+    \ dev server with default config (`test/_community/config.ts`)\n- `pnpm run dev\
+    \ <directory_name>` - Start dev server with specific test config (e.g. `pnpm run\
+    \ dev fields` loads `test/fields/config.ts`)\n- `pnpm run dev:postgres` - Run\
+    \ dev server with Postgres\n- `pnpm run dev:memorydb` - Run dev server with in-memory\
+    \ MongoDB\n- `pnpm run test` - Run all tests (integration + components + e2e)\n\
+    - `pnpm run test:int` - Integration tests (MongoDB, recommended)\n- `pnpm run\
+    \ test:int <dir>` - Specific test suite (e.g. `fields`)\n- `pnpm run test:int:postgres|sqlite`\
+    \ - Integration tests with other databases\n- `pnpm run test:e2e` - Playwright\
+    \ tests (add `:headed` or `:debug` suffix)\n- `pnpm run test:unit|components|types`\
+    \ - Other test suites\nGenerate types for a test directory: `pnpm run dev:generate-types\
+    \ <directory_name>`\n- `pnpm run lint` - Run linter across all packages\n- `pnpm\
+    \ run lint:fix` - Fix linting issues\n- Run `pnpm run translateNewKeys` to auto-translate\
+    \ new keys (requires `OPENAI_KEY` in `.env`)\n- Lexical translations: `cd packages/richtext-lexical\
+    \ && pnpm run translateNewKeys`"
+  gold_removed: '- `packages/storage-*` - Storage adapters (S3, Azure, GCS, Uploadthing,
+    Vercel Blob)
+
+    - `pnpm install` - Install all dependencies (pnpm required - run `corepack enable`
+    first)
+
+    - `pnpm build` or `pnpm build:core` - Build core packages (excludes plugins and
+    storage adapters)
+
+    - `pnpm build:all` - Build all packages
+
+    - `pnpm build:<directory_name>` - Build specific package (e.g. `pnpm build:db-mongodb`,
+    `pnpm build:ui`)
+
+    - `pnpm dev` - Start dev server with default config (`test/_community/config.ts`)
+
+    - `pnpm dev <directory_name>` - Start dev server with specific test config (e.g.
+    `pnpm dev fields` loads `test/fields/config.ts`)
+
+    - `pnpm dev:postgres` - Run dev server with Postgres
+
+    - `pnpm dev:memorydb` - Run dev server with in-memory MongoDB
+
+    ### Running Tests
+
+
+    - `pnpm test` - Run all tests (integration + components + e2e)
+
+    - `pnpm test:int` - Run integration tests (MongoDB, recommended for verifying
+    local changes)
+
+    - `pnpm test:int <directory_name>` - Run specific integration test suite (e.g.
+    `'

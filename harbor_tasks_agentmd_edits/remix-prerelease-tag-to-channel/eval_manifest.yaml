@@ -1,59 +1,104 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "remix-run/remix"
+  repo: remix-run/remix
   pr: 10981
-  base_commit: "40a755c50f40ed444a928363beddd75e6edc1f52"
-  merge_commit: "4c77c95a478c863bc7245c7ec11a576df2808d20"
-
+  base_commit: 40a755c50f40ed444a928363beddd75e6edc1f52
+  merge_commit: 4c77c95a478c863bc7245c7ec11a576df2808d20
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript and JSON files must parse without errors"
-
-  - id: prerelease_config_validates_channel
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Node runtime reads prerelease.json and validates 'channel' field exists"
-
-  - id: changes_ts_uses_channel
-    type: fail_to_pass
-    origin: pr_diff
-    description: "RemixPrereleaseConfig interface and validation must use 'channel' not 'tag'"
-
-  - id: publish_uses_next_tag
-    type: fail_to_pass
-    origin: pr_diff
-    description: "publish.ts must use '--tag next' for remix prerelease, not dynamic tag"
-
-  - id: agents_md_documents_channel
-    type: fail_to_pass
-    origin: agent_config
-    description: "AGENTS.md must use 'channel' terminology and document 'next' npm tag"
-    source:
-      path: "AGENTS.md"
-      lines: "49-54"
-      commit: "40a755c50f40ed444a928363beddd75e6edc1f52"
-
-  - id: contributing_md_documents_channel
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CONTRIBUTING.md must use 'channel' in prerelease JSON example and docs"
-
-  - id: changes_ts_still_validates
-    type: pass_to_pass
-    origin: static
-    description: "changes.ts must still validate that the config field is a non-empty string"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript and JSON files must parse without errors
+- id: prerelease_config_validates_channel
+  type: fail_to_pass
+  origin: pr_diff
+  description: Node runtime reads prerelease.json and validates 'channel' field exists
+- id: changes_ts_uses_channel
+  type: fail_to_pass
+  origin: pr_diff
+  description: RemixPrereleaseConfig interface and validation must use 'channel' not
+    'tag'
+- id: publish_uses_next_tag
+  type: fail_to_pass
+  origin: pr_diff
+  description: publish.ts must use '--tag next' for remix prerelease, not dynamic
+    tag
+- id: agents_md_documents_channel
+  type: fail_to_pass
+  origin: agent_config
+  description: AGENTS.md must use 'channel' terminology and document 'next' npm tag
+  source:
+    path: AGENTS.md
+    lines: 49-54
+    commit: 40a755c50f40ed444a928363beddd75e6edc1f52
+- id: contributing_md_documents_channel
+  type: fail_to_pass
+  origin: pr_diff
+  description: CONTRIBUTING.md must use 'channel' in prerelease JSON example and docs
+- id: changes_ts_still_validates
+  type: pass_to_pass
+  origin: static
+  description: changes.ts must still validate that the config field is a non-empty
+    string
 rubric:
-  - rule: "Documentation updates should be consistent with the existing style and tone of AGENTS.md and CONTRIBUTING.md"
-    source:
-      path: "AGENTS.md"
-      lines: "1-10"
-      commit: "40a755c50f40ed444a928363beddd75e6edc1f52"
-  - rule: "The rename from 'tag' to 'channel' should be applied consistently across all references — code, comments, docs, and error messages"
-    source:
-      path: "AGENTS.md"
-      lines: "49-54"
-      commit: "40a755c50f40ed444a928363beddd75e6edc1f52"
+- rule: Documentation updates should be consistent with the existing style and tone
+    of AGENTS.md and CONTRIBUTING.md
+  source:
+    path: AGENTS.md
+    lines: 1-10
+    commit: 40a755c50f40ed444a928363beddd75e6edc1f52
+- rule: The rename from 'tag' to 'channel' should be applied consistently across all
+    references — code, comments, docs, and error messages
+  source:
+    path: AGENTS.md
+    lines: 49-54
+    commit: 40a755c50f40ed444a928363beddd75e6edc1f52
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: "- **Prerelease mode**: An optional `.changes/prerelease.json` file\
+    \ denotes that the package is in prerelease mode. The `channel` field (e.g. `\"\
+    alpha\"`, `\"beta\"`, `\"rc\"`) determines the version suffix, while the npm dist-tag\
+    \ is always `\"next\"`. **This is only supported for the `remix` package.**\n\
+    \    - **Transitioning between prerelease channels** (e.g. `alpha` → `beta`):\
+    \ Update `prerelease.json` channel and add a change file. Version resets to new\
+    \ channel (e.g. `3.0.0-alpha.7` → `3.0.0-beta.0`). The bump type is for changelog\
+    \ categorization only—by convention, use `patch`."
+  gold_removed: "- **Prelease mode**: An optional `.changes/prerelease.json` file\
+    \ denotes that the package is in prerelease mode and what the npm dist-tag is.\
+    \ **This is only supported for the `remix` package.**\n    - **Transitioning between\
+    \ prerelease tags** (e.g. `alpha` → `beta`): Update `prerelease.json` tag and\
+    \ add a change file. Version resets to new tag (e.g. `3.0.0-alpha.7` → `3.0.0-beta.0`).\
+    \ The bump type is for changelog categorization only—by convention, use `patch`."
+- path: CONTRIBUTING.md
+  tier: 2
+  gold_added: '"channel": "alpha"
+
+    The `channel` field determines the version suffix (e.g. `alpha`, `beta`, `rc`),
+    while prereleases are always published to npm with the `next` tag. This is only
+    supported for `remix` because it''s the only package that needs to publish prereleases
+    alongside an existing stable version on npm. All other packages in this monorepo
+    are new and publish directly as `latest`.
+
+    #### Transitioning between `remix` prerelease channels
+
+    To transition between channels (e.g. `alpha` → `beta`):
+
+    1. Update `.changes/prerelease.json` to the new channel
+
+    Version resets to the new channel (e.g. `3.0.0-alpha.7` → `3.0.0-beta.0`). The
+    bump type is for changelog categorization only—by convention, use `patch`.'
+  gold_removed: '"tag": "alpha"
+
+    This is only supported for `remix` because it''s the only package that needs to
+    publish prereleases alongside an existing stable version on npm. All other packages
+    in this monorepo are new and publish directly as `latest`.
+
+    #### Transitioning between `remix` prerelease tags
+
+    To transition between tags (e.g. `alpha` → `beta`):
+
+    1. Update `.changes/prerelease.json` to the new tag
+
+    Version resets to the new tag (e.g. `3.0.0-alpha.7` → `3.0.0-beta.0`). The bump
+    type is for changelog categorization only—by convention, use `patch`.'

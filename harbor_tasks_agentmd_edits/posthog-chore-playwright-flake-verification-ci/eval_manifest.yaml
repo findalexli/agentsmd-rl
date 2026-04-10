@@ -1,74 +1,127 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PostHog/posthog"
+  repo: PostHog/posthog
   pr: 51426
-  base_commit: "e74eb42064ccff936e8b2039626646132a444c8d"
-  merge_commit: "ef7d04c7c5544276bf91260ec29506cfc71d8186"
-
+  base_commit: e74eb42064ccff936e8b2039626646132a444c8d
+  merge_commit: ef7d04c7c5544276bf91260ec29506cfc71d8186
 checks:
-  - id: shell_script_syntax
-    type: fail_to_pass
-    origin: static
-    description: "Verification shell script must exist and parse without bash syntax errors"
-
-  - id: workflow_yaml_valid
-    type: pass_to_pass
-    origin: static
-    description: "CI workflow file must be valid YAML"
-
-  - id: verification_script_validates_args
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Verification script validates arguments and rejects bad input"
-
-  - id: verification_script_detects_changed_specs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script uses git diff to find changed playwright spec files"
-
-  - id: verification_script_repeat_each
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script runs playwright with --repeat-each for flake detection"
-
-  - id: workflow_has_verification_step
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CI workflow includes the flake verification step for PRs"
-
-  - id: workflow_reports_flake_results
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CI workflow reads and reports flake verification results in PR comments"
-
-  - id: skill_references_readme
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md references README instead of duplicating best practices inline"
-
-  - id: readme_has_best_practices
-    type: fail_to_pass
-    origin: pr_diff
-    description: "playwright/README.md has best practices section with rules from SKILL.md"
-
-  - id: readme_has_gotchas_section
-    type: fail_to_pass
-    origin: agent_config
-    description: "playwright/README.md has gotchas section covering flaky tests and selectors"
-    source:
-      path: ".agents/skills/playwright-test/SKILL.md"
-      lines: "7-11"
-      commit: "e74eb42064ccff936e8b2039626646132a444c8d"
-
-  - id: script_not_stub
-    type: fail_to_pass
-    origin: static
-    description: "Verification script has real logic, not a stub"
-
+- id: shell_script_syntax
+  type: fail_to_pass
+  origin: static
+  description: Verification shell script must exist and parse without bash syntax
+    errors
+- id: workflow_yaml_valid
+  type: pass_to_pass
+  origin: static
+  description: CI workflow file must be valid YAML
+- id: verification_script_validates_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verification script validates arguments and rejects bad input
+- id: verification_script_detects_changed_specs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script uses git diff to find changed playwright spec files
+- id: verification_script_repeat_each
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script runs playwright with --repeat-each for flake detection
+- id: workflow_has_verification_step
+  type: fail_to_pass
+  origin: pr_diff
+  description: CI workflow includes the flake verification step for PRs
+- id: workflow_reports_flake_results
+  type: fail_to_pass
+  origin: pr_diff
+  description: CI workflow reads and reports flake verification results in PR comments
+- id: skill_references_readme
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md references README instead of duplicating best practices inline
+- id: readme_has_best_practices
+  type: fail_to_pass
+  origin: pr_diff
+  description: playwright/README.md has best practices section with rules from SKILL.md
+- id: readme_has_gotchas_section
+  type: fail_to_pass
+  origin: agent_config
+  description: playwright/README.md has gotchas section covering flaky tests and selectors
+  source:
+    path: .agents/skills/playwright-test/SKILL.md
+    lines: 7-11
+    commit: e74eb42064ccff936e8b2039626646132a444c8d
+- id: script_not_stub
+  type: fail_to_pass
+  origin: static
+  description: Verification script has real logic, not a stub
 rubric:
-  - rule: "Config update is consistent with the style of existing documentation in the repo"
-    source:
-      path: "playwright/README.md"
-      lines: "1-10"
-      commit: "e74eb42064ccff936e8b2039626646132a444c8d"
+- rule: Config update is consistent with the style of existing documentation in the
+    repo
+  source:
+    path: playwright/README.md
+    lines: 1-10
+    commit: e74eb42064ccff936e8b2039626646132a444c8d
+config_edits:
+- path: .agents/skills/playwright-test/SKILL.md
+  tier: 1
+  gold_added: 'Read @playwright/README.md for best practices, gotchas, and how to
+    run tests.
+
+
+    - Follow the best practices in the README strictly
+
+    - **Keep looping until all tests pass.** Do not give up or ask the user for help.
+    You must resolve every failure yourself.'
+  gold_removed: '- Don''t use any locators with css selectors, prefer getting elements
+    via accessibility roles or data-testids, add data-attr if required.
+
+    - Write fewer longer tests that do multiple things, split up by test.steps into
+    logical steps
+
+    - Use page object models for common tasks and accessing common elements
+
+    - Never put an if statement in a test
+
+    - **Keep looping until all tests pass.** Do not give up or ask the user for help.
+    You must resolve every failure yourself.'
+- path: playwright/README.md
+  tier: 2
+  gold_added: '### Best practices
+
+    - Don''t use CSS selectors — prefer accessibility roles (`getByRole`) or `getByTestId()`
+    which maps to `data-attr` in our config. Add `data-attr` to components if needed.
+
+    - Write fewer, longer tests that do multiple things. Split logical steps with
+    `test.step()`.
+
+    - Use page object models for common tasks and accessing common elements (see `page-models/`).
+
+    - After UI interactions, assert on UI changes — don''t assert on network requests
+    resolving.
+
+    - Never put conditional logic (`if`) in a test.
+
+    ### Gotchas
+
+    **Flaky tests are almost always due to not waiting for the right thing.**
+
+    Consider adding a better selector, an intermediate step like waiting for URL or
+    page title to change,
+
+    or waiting for a critical network request to complete.
+
+
+    **Loose selectors cause strict mode violations.**
+
+    If a selector matches multiple elements, Playwright will show all matches — use
+    the output to narrow down:'
+  gold_removed: '### Flaky tests are almost always due to not waiting for the right
+    thing
+
+    Consider adding a better selector, an intermediate step like waiting for URL or
+    page title to change, or waiting for a critical network request to complete.
+
+    ### Useful output from Playwright
+
+    If you write a selector that is too loose and matches multiple elements, Playwright
+    will output all the matches. With a better selector for each:'

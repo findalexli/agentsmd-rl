@@ -1,96 +1,120 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "payloadcms/payload"
+  repo: payloadcms/payload
   pr: 14268
-  base_commit: "fdea8d8457fafe59be4b877a52a00990a735fd38"
-  merge_commit: "05a869d37e1d6b45c36e450828b6f3b5abe71e0b"
-
+  base_commit: fdea8d8457fafe59be4b877a52a00990a735fd38
+  merge_commit: 05a869d37e1d6b45c36e450828b6f3b5abe71e0b
 checks:
-  # Gates (pass_to_pass) - basic file existence
-  - id: claude_md_exists
-    type: pass_to_pass
-    origin: static
-    description: "CLAUDE.md must exist as a regular file (not a symlink)"
-
-  - id: agents_md_is_symlink
-    type: pass_to_pass
-    origin: static
-    description: "AGENTS.md must exist as a symlink"
-
-  - id: gitignore_exists
-    type: pass_to_pass
-    origin: static
-    description: ".gitignore must exist"
-
-  # Repo CI/CD tests (pass_to_pass) - verify repo's own CI passes
-  - id: test_repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit tests pass"
-
-  - id: test_repo_type_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript type tests pass"
-
-  - id: test_repo_build_translations
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's translations package builds successfully"
-
-  # CLAUDE.md content tests (fail_to_pass)
-  - id: claude_md_has_project_structure
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md must contain Project Structure section with key directories"
-
-  - id: claude_md_has_build_commands
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md must document build commands (pnpm build, pnpm build:all)"
-
-  - id: claude_md_has_development_section
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md must have Development section with dev server commands"
-
-  - id: claude_md_has_testing_instructions
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md must have Testing section with test commands"
-
-  - id: claude_md_has_pr_guidelines
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md must document PR guidelines with Conventional Commits"
-
-  # Symlink and gitignore tests (fail_to_pass)
-  - id: agents_md_symlink_points_to_claude
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md symlink must point to CLAUDE.md"
-
-  - id: gitignore_has_claude_local_patterns
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".gitignore must include patterns for local AI agent files (.claude/commands/*.local.md, .claude/artifacts)"
-
-  # Content quality tests (fail_to_pass)
-  - id: claude_md_not_stub
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md must have substantial content (not a stub)"
-
-  # Behavioral subprocess tests (fail_to_pass)
-  - id: symlink_behaviorally_works
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md symlink behaviorally resolves to CLAUDE.md content"
-
-  - id: gitignore_patterns_work
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".gitignore patterns for .claude files are correctly formatted"
-
+- id: claude_md_exists
+  type: pass_to_pass
+  origin: static
+  description: CLAUDE.md must exist as a regular file (not a symlink)
+- id: agents_md_is_symlink
+  type: pass_to_pass
+  origin: static
+  description: AGENTS.md must exist as a symlink
+- id: gitignore_exists
+  type: pass_to_pass
+  origin: static
+  description: .gitignore must exist
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests pass
+- id: test_repo_type_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript type tests pass
+- id: test_repo_build_translations
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's translations package builds successfully
+- id: claude_md_has_project_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md must contain Project Structure section with key directories
+- id: claude_md_has_build_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md must document build commands (pnpm build, pnpm build:all)
+- id: claude_md_has_development_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md must have Development section with dev server commands
+- id: claude_md_has_testing_instructions
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md must have Testing section with test commands
+- id: claude_md_has_pr_guidelines
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md must document PR guidelines with Conventional Commits
+- id: agents_md_symlink_points_to_claude
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md symlink must point to CLAUDE.md
+- id: gitignore_has_claude_local_patterns
+  type: fail_to_pass
+  origin: pr_diff
+  description: .gitignore must include patterns for local AI agent files (.claude/commands/*.local.md,
+    .claude/artifacts)
+- id: claude_md_not_stub
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md must have substantial content (not a stub)
+- id: symlink_behaviorally_works
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md symlink behaviorally resolves to CLAUDE.md content
+- id: gitignore_patterns_work
+  type: fail_to_pass
+  origin: pr_diff
+  description: .gitignore patterns for .claude files are correctly formatted
 rubric: []
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: CLAUDE.md
+  gold_removed: ''
+- path: CLAUDE.md
+  tier: 1
+  gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code)\
+    \ when working with code in this repository.\n\n## Project Structure\n\nPayload\
+    \ is a monorepo structured around Next.js, containing the core CMS platform, database\
+    \ adapters, plugins, and tooling.\n\n### Key Directories\n\n- `packages/` - All\
+    \ publishable packages\n  - `packages/payload` - Core Payload package containing\
+    \ the main CMS logic\n  - `packages/ui` - Admin UI components (React Server Components)\n\
+    \  - `packages/next` - Next.js integration layer\n  - `packages/db-*` - Database\
+    \ adapters (MongoDB, Postgres, SQLite, Vercel Postgres, D1 SQLite)\n  - `packages/drizzle`\
+    \ - Drizzle ORM integration\n  - `packages/richtext-*` - Rich text editors (Lexical,\
+    \ Slate)\n  - `packages/storage-*` - Storage adapters (S3, Azure, GCS, Uploadthing,\
+    \ Vercel Blob)\n  - `packages/email-*` - Email adapters (Nodemailer, Resend)\n\
+    \  - `packages/plugin-*` - Additional functionality plugins\n  - `packages/graphql`\
+    \ - GraphQL API layer\n  - `packages/translations` - i18n translations\n- `test/`\
+    \ - Test suites organized by feature area. Each directory contains a granular\
+    \ Payload config and test files\n- `docs/` - Documentation (deployed to payloadcms.com)\n\
+    - `tools/` - Monorepo tooling\n- `templates/` - Production-ready project templates\n\
+    - `examples/` - Example implementations\n\n### Architecture Notes\n\n- Payload\
+    \ 3.x is built as a Next.js native CMS that installs directly in `/app` folder\n\
+    - UI is built with React Server Components (RSC)\n- Database adapters use Drizzle\
+    \ ORM under the hood\n- Packages use TypeScript with strict mode and path mappings\
+    \ defined in `tsconfig.base.json`\n- Source files are in `src/`, compiled outputs\
+    \ go to `dist/`\n- Monorepo uses pnpm workspaces and Turbo for builds\n\n## Build\
+    \ Commands\n\n- `pnpm install` - Install all dependencies (pnpm required - run\
+    \ `corepack enable` first)\n- `pnpm build` or `pnpm build:core` - Build core packages\
+    \ (excludes plugins and storage adapters)\n- `pnpm build:all` - Build all packages\n\
+    - `pnpm build:<directory_name>` - Build specific package (e.g. `pnpm build:db-mongodb`,\
+    \ `pnpm build:ui`)\n\n## Development\n\n### Running Dev Server\n\n- `pnpm dev`\
+    \ - Start dev server with default config (`test/_community/config.ts`)\n- `pnpm\
+    \ dev <directory_name>` - Start dev server with specific test config (e.g. `pnpm\
+    \ dev fields` loads `test/fields/config.ts`)\n- `pnpm dev:postgres` - Run dev\
+    \ server with Postgres\n- `pnpm dev:memorydb` - Run dev server with in-memory\
+    \ MongoDB\n\n### Development Environment\n\n- Auto-login is enabled by default\
+    \ with credentials: `dev@payloadcms.com` / `test`\n- To disable: pass `--no-auto-login`\
+    \ flag or set `PAYLOAD_PUBLIC_DISABLE_AUTO_LOGIN=false`\n- Default database is\
+    \ MongoDB (in-memory). Switch to Postgres with `PAYLOAD_DATABASE=postgres`\n-\
+    \ Docker services: `pnpm docker:start` / `pnpm docker:stop` / `pnpm docker:restart`\n\
+    \n## Testing\n\n### Running Tests\n\n- `pnpm test` - Run all tests (integration\
+    \ + components + e2e)\n- `pnpm test:int` - Run integration tests (MongoDB, recommended\
+    \ for"
+  gold_removed: ''

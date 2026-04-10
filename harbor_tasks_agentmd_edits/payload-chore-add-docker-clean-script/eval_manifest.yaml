@@ -1,50 +1,59 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "payloadcms/payload"
+  repo: payloadcms/payload
   pr: 16000
-  base_commit: "a188556e99d94c96266671b2129e5c8cb05e46a5"
-  merge_commit: "2646018559ce984407587c2f059d1341c6e27a60"
-
+  base_commit: a188556e99d94c96266671b2129e5c8cb05e46a5
+  merge_commit: 2646018559ce984407587c2f059d1341c6e27a60
 checks:
-  - id: docker_clean_js_syntax
-    type: fail_to_pass
-    origin: pr_diff
-    description: "scripts/docker-clean.js must exist and be valid JavaScript"
-
-  - id: docker_clean_removes_all_containers
-    type: fail_to_pass
-    origin: pr_diff
-    description: "docker-clean.js force-removes all named test containers"
-
-  - id: docker_clean_runs_compose_down
-    type: fail_to_pass
-    origin: pr_diff
-    description: "docker-clean.js runs docker compose down with -v and --remove-orphans"
-
-  - id: package_json_scripts
-    type: fail_to_pass
-    origin: pr_diff
-    description: "package.json defines docker:clean, updates docker:start, removes docker:stop"
-
-  - id: claude_md_docker_commands
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md references docker:clean instead of docker:stop"
-
-  - id: contributing_md_docker_commands
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CONTRIBUTING.md references docker:clean instead of docker:stop"
-
-  - id: docker_compose_yml_comments
-    type: fail_to_pass
-    origin: pr_diff
-    description: "test/docker-compose.yml usage comments reference docker:clean"
-
+- id: docker_clean_js_syntax
+  type: fail_to_pass
+  origin: pr_diff
+  description: scripts/docker-clean.js must exist and be valid JavaScript
+- id: docker_clean_removes_all_containers
+  type: fail_to_pass
+  origin: pr_diff
+  description: docker-clean.js force-removes all named test containers
+- id: docker_clean_runs_compose_down
+  type: fail_to_pass
+  origin: pr_diff
+  description: docker-clean.js runs docker compose down with -v and --remove-orphans
+- id: package_json_scripts
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json defines docker:clean, updates docker:start, removes docker:stop
+- id: claude_md_docker_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md references docker:clean instead of docker:stop
+- id: contributing_md_docker_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: CONTRIBUTING.md references docker:clean instead of docker:stop
+- id: docker_compose_yml_comments
+  type: fail_to_pass
+  origin: pr_diff
+  description: test/docker-compose.yml usage comments reference docker:clean
 rubric:
-  - rule: "The docker:clean script should handle the case where containers don't exist gracefully (try/catch or similar error suppression)"
-    source:
-      path: "CLAUDE.md"
-      lines: "85"
-      commit: "a188556e99d94c96266671b2129e5c8cb05e46a5"
+- rule: The docker:clean script should handle the case where containers don't exist
+    gracefully (try/catch or similar error suppression)
+  source:
+    path: CLAUDE.md
+    lines: '85'
+    commit: a188556e99d94c96266671b2129e5c8cb05e46a5
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '- Docker services: `pnpm docker:start` / `pnpm docker:clean` / `pnpm
+    docker:test`'
+  gold_removed: '- Docker services: `pnpm docker:start` / `pnpm docker:stop` / `pnpm
+    docker:test`'
+- path: CONTRIBUTING.md
+  tier: 2
+  gold_added: 'pnpm docker:start  # Clean + start all services (PostgreSQL, MongoDB,
+    storage emulators) with fresh data
+
+    pnpm docker:clean  # Stop and remove all services'
+  gold_removed: 'pnpm docker:start  # Start all services (PostgreSQL, MongoDB, storage
+    emulators) with fresh data
+
+    pnpm docker:stop   # Stop all services'

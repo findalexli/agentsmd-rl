@@ -1,80 +1,105 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PostHog/posthog"
+  repo: PostHog/posthog
   pr: 51171
-  base_commit: "12335b96f2209c3044a2fd623928284ab81b861d"
-  merge_commit: "7bc4977e59e631d71057e68c77d8edddc4db0d52"
-
+  base_commit: 12335b96f2209c3044a2fd623928284ab81b861d
+  merge_commit: 7bc4977e59e631d71057e68c77d8edddc4db0d52
 checks:
-  # Gate: syntax
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "All modified Python files must parse without errors"
-
-  # Code: new safety_filter module
-  - id: safety_filter_module_structure
-    type: fail_to_pass
-    origin: pr_diff
-    description: "safety_filter.py exists with SafetyFilterInput, SafetyFilterOutput, SafetyFilterJudgeResponse, safety_filter_activity, SAFETY_FILTER_PROMPT"
-
-  # Code: rename safety_judge -> report_safety_judge
-  - id: safety_judge_renamed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "safety_judge.py renamed to report_safety_judge.py with all functions and constants renamed"
-
-  # Code: buffer workflow integration
-  - id: buffer_integrates_safety_filter
-    type: fail_to_pass
-    origin: pr_diff
-    description: "buffer.py imports and uses safety_filter_activity to filter signals before S3 flush"
-
-  # Code: __init__.py activity registration
-  - id: init_registers_new_activities
-    type: fail_to_pass
-    origin: pr_diff
-    description: "__init__.py exports report_safety_judge_activity and safety_filter_activity"
-
-  # Code: EmptyLLMResponseError in llm.py
-  - id: empty_llm_response_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: "llm.py defines EmptyLLMResponseError and uses it in _extract_text_content"
-
-  # Code: summary.py updated imports
-  - id: summary_uses_renamed_judge
-    type: fail_to_pass
-    origin: pr_diff
-    description: "summary.py imports from report_safety_judge module instead of safety_judge"
-
-  # Config: ARCHITECTURE.md documents safety_filter
-  - id: architecture_documents_safety_filter
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ARCHITECTURE.md documents the new per-signal safety_filter with threat taxonomy and buffer integration"
-
-  # Config: eval/AGENTS.md HogQL report queries
-  - id: eval_agents_md_has_report_queries
-    type: fail_to_pass
-    origin: pr_diff
-    description: "eval/AGENTS.md has Reports section with HogQL query templates for eval analysis"
-
-  # Anti-stub
-  - id: safety_filter_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "safety_filter and safety_filter_activity have real implementation, not stubs"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified Python files must parse without errors
+- id: safety_filter_module_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: safety_filter.py exists with SafetyFilterInput, SafetyFilterOutput,
+    SafetyFilterJudgeResponse, safety_filter_activity, SAFETY_FILTER_PROMPT
+- id: safety_judge_renamed
+  type: fail_to_pass
+  origin: pr_diff
+  description: safety_judge.py renamed to report_safety_judge.py with all functions
+    and constants renamed
+- id: buffer_integrates_safety_filter
+  type: fail_to_pass
+  origin: pr_diff
+  description: buffer.py imports and uses safety_filter_activity to filter signals
+    before S3 flush
+- id: init_registers_new_activities
+  type: fail_to_pass
+  origin: pr_diff
+  description: __init__.py exports report_safety_judge_activity and safety_filter_activity
+- id: empty_llm_response_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: llm.py defines EmptyLLMResponseError and uses it in _extract_text_content
+- id: summary_uses_renamed_judge
+  type: fail_to_pass
+  origin: pr_diff
+  description: summary.py imports from report_safety_judge module instead of safety_judge
+- id: architecture_documents_safety_filter
+  type: fail_to_pass
+  origin: pr_diff
+  description: ARCHITECTURE.md documents the new per-signal safety_filter with threat
+    taxonomy and buffer integration
+- id: eval_agents_md_has_report_queries
+  type: fail_to_pass
+  origin: pr_diff
+  description: eval/AGENTS.md has Reports section with HogQL query templates for eval
+    analysis
+- id: safety_filter_not_stub
+  type: pass_to_pass
+  origin: static
+  description: safety_filter and safety_filter_activity have real implementation,
+    not stubs
 rubric:
-  - rule: "ARCHITECTURE.md updates are consistent with the style and detail level of existing documentation sections"
-    source:
-      path: "products/signals/ARCHITECTURE.md"
-      lines: "1-10"
-      commit: "12335b96f2209c3044a2fd623928284ab81b861d"
-  - rule: "eval/AGENTS.md queries section follows the same formatting and structure as the existing eval documentation"
-    source:
-      path: "products/signals/eval/AGENTS.md"
-      lines: "1-10"
-      commit: "12335b96f2209c3044a2fd623928284ab81b861d"
+- rule: ARCHITECTURE.md updates are consistent with the style and detail level of
+    existing documentation sections
+  source:
+    path: products/signals/ARCHITECTURE.md
+    lines: 1-10
+    commit: 12335b96f2209c3044a2fd623928284ab81b861d
+- rule: eval/AGENTS.md queries section follows the same formatting and structure as
+    the existing eval documentation
+  source:
+    path: products/signals/eval/AGENTS.md
+    lines: 1-10
+    commit: 12335b96f2209c3044a2fd623928284ab81b861d
+config_edits:
+- path: products/signals/eval/AGENTS.md
+  tier: 1
+  gold_added: "# Reports\n\n## HogQL queries\n\nAll queries filter on `$ai_eval_source\
+    \ = 'signals-grouping'` and `$ai_evaluation_type = 'offline'`.\nRun these in the\
+    \ PostHog SQL editor.\n\n### Aggregate metrics\n\nARI, homogeneity, completeness,\
+    \ purity, recall, malicious leak rate.\n\n```sql\nSELECT\n    properties.$ai_metric_name\
+    \ AS metric,\n    properties.$ai_score AS score,\n    properties.$ai_metric_description\
+    \ AS description,\n    properties.$ai_reasoning AS reasoning,\n    properties.$ai_input\
+    \ AS input,\n    properties.$ai_output AS output,\n    properties.$ai_expected\
+    \ AS expected\nFROM events\nWHERE event = '$ai_evaluation'\n  AND properties.$ai_eval_source\
+    \ = 'signals-grouping'\n  AND properties.$ai_evaluation_type = 'offline'\n  AND\
+    \ properties.$ai_experiment_name = 'signals-grouping/grouping-aggregate'\nORDER\
+    \ BY metric\n```\n\n### Match quality failure mode breakdown\n\n```sql\nSELECT\n\
+    \    multiIf(\n        properties.$ai_score = 1.0, 'CORRECT',\n        properties.$ai_reasoning\
+    \ LIKE '%UNDERGROUP%', 'UNDERGROUP',\n        properties.$ai_reasoning LIKE '%SPECIFICITY_SPLIT%',\
+    \ 'SPECIFICITY_SPLIT',\n        properties.$ai_reasoning LIKE '%OVERGROUP%', 'OVERGROUP',\n\
+    \        'UNKNOWN'\n    ) AS failure_mode,\n    count() AS cnt,\n    round(count()\
+    \ * 100.0 / (SELECT count() FROM events WHERE event = '$ai_evaluation' AND properties.$ai_eval_source\
+    \ = 'signals-grouping' AND properties.$ai_evaluation_type = 'offline' AND properties.$ai_experiment_name\
+    \ = 'signals-grouping/match-quality'), 1) AS pct\nFROM events\nWHERE event = '$ai_evaluation'\n\
+    \  AND properties.$ai_eval_source = 'signals-grouping'\n  AND properties.$ai_evaluation_type\
+    \ = 'offline'\n  AND properties.$ai_experiment_name = 'signals-grouping/match-quality'\n\
+    \  AND properties.$ai_metric_name = 'correct_match'\nGROUP BY failure_mode\nORDER\
+    \ BY cnt DESC\n```\n\n### Pre-emit actionability by source type\n\n```sql\nSELECT\n\
+    \    replaceOne(properties.$ai_experiment_name, 'signals-grouping/', '') AS check_name,\n\
+    \    count() AS total,\n    countIf(properties.$ai_score = 1.0) AS correct,\n\
+    \    countIf(properties.$ai_score != 1.0) AS failures,\n    round(countIf(properties.$ai_score\
+    \ != 1.0) * 100.0 / count(), 1) AS failure_pct,\n    countIf(properties.$ai_score\
+    \ != 1.0 AND properties.$ai_output = 'ACTIONABLE') AS false_positives,\n    countIf(properties.$ai_score\
+    \ != 1.0 AND properties.$ai_output = 'NOT_ACTIONABLE') AS false_negatives\nFROM\
+    \ events\nWHERE event = '$ai_evaluation'\n  AND properties.$ai_eval_source = 'signals-grouping'\n\
+    \  AND properties.$ai_evaluation_type = 'offline'\n  AND properties.$ai_experiment_name\
+    \ IN (\n      'signals-grouping/zendesk-actionability-check',\n      'signals-grouping/github-actionability-check',\n\
+    \      'signals-grouping/linear-actionability-check'\n  )\n  AND properties.$ai_metric_name\
+    \ = 'correct_classification'\nGROUP BY check_name\nORDER BY check_name\n```\n\n\
+    ### Report-level judges (safety + actionability)\n\n```sql\nSELECT\n    replaceOne(properties.$ai_experiment_name,\
+    \ 'signals-grouping/', '') AS judge,\n    count() AS total,\n    countIf(properties.$ai_score "
+  gold_removed: ''

@@ -1,61 +1,62 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "zulip/zulip"
+  repo: zulip/zulip
   pr: 37872
-  base_commit: "305c52c35a7dad3e6c9bde470e8f717186abaae5"
-  merge_commit: "1a56a9fef3180b5588642ba6f0326f91b0097b00"
-
+  base_commit: 305c52c35a7dad3e6c9bde470e8f717186abaae5
+  merge_commit: 1a56a9fef3180b5588642ba6f0326f91b0097b00
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "fetch-zulip-web-public-messages parses without syntax errors"
-
-  - id: parse_near_url
-    type: fail_to_pass
-    origin: pr_diff
-    description: "parse_zulip_url handles near/ID anchor format"
-
-  - id: parse_near_url_stream_variant
-    type: fail_to_pass
-    origin: pr_diff
-    description: "parse_zulip_url handles near/ID with stream prefix"
-
-  - id: error_message_mentions_near
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Error message documents near/ID URL format"
-
-  - id: parse_with_url_still_works
-    type: pass_to_pass
-    origin: static
-    description: "parse_zulip_url still handles the original with/ID format"
-
-  - id: parse_url_no_anchor
-    type: pass_to_pass
-    origin: static
-    description: "parse_zulip_url handles URLs without any anchor"
-
-  - id: claude_md_zulip_chat_links
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md documents how to handle Zulip chat links"
-
-  # Repo CI-derived pass_to_pass tests
-  - id: test_pylint_errors_only
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Pylint finds no errors in fetch-zulip-web-public-messages"
-
-  - id: test_pyflakes_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Pyflakes finds no issues in fetch-zulip-web-public-messages"
-
-  - id: test_script_help_works
-    type: pass_to_pass
-    origin: repo_tests
-    description: "fetch-zulip-web-public-messages --help runs without error"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: fetch-zulip-web-public-messages parses without syntax errors
+- id: parse_near_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: parse_zulip_url handles near/ID anchor format
+- id: parse_near_url_stream_variant
+  type: fail_to_pass
+  origin: pr_diff
+  description: parse_zulip_url handles near/ID with stream prefix
+- id: error_message_mentions_near
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error message documents near/ID URL format
+- id: parse_with_url_still_works
+  type: pass_to_pass
+  origin: static
+  description: parse_zulip_url still handles the original with/ID format
+- id: parse_url_no_anchor
+  type: pass_to_pass
+  origin: static
+  description: parse_zulip_url handles URLs without any anchor
+- id: claude_md_zulip_chat_links
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md documents how to handle Zulip chat links
+- id: test_pylint_errors_only
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pylint finds no errors in fetch-zulip-web-public-messages
+- id: test_pyflakes_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pyflakes finds no issues in fetch-zulip-web-public-messages
+- id: test_script_help_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: fetch-zulip-web-public-messages --help runs without error
 rubric: []
+config_edits:
+- path: .claude/CLAUDE.md
+  tier: 1
+  gold_added: '## Zulip Chat Links
+
+
+    When you encounter a Zulip narrow URL (e.g., from `chat.zulip.org` in a
+
+    GitHub issue, PR, or user message), use the `/fetch-zulip-messages` skill
+
+    to read the conversation. Do not use `WebFetch` — it cannot access Zulip
+
+    message content.'
+  gold_removed: ''

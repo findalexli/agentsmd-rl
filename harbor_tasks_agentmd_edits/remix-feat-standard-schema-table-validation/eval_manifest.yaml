@@ -1,63 +1,109 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "remix-run/remix"
+  repo: remix-run/remix
   pr: 11067
-  base_commit: "89db125c56d3b0d637a283ac9122c6cb8f5542c3"
-  merge_commit: "28d74aae012ca78b82fedaf6f7f5de53094fd002"
-
+  base_commit: 89db125c56d3b0d637a283ac9122c6cb8f5542c3
+  merge_commit: 28d74aae012ca78b82fedaf6f7f5de53094fd002
 checks:
-  # Fail-to-pass: Standard Schema compatibility (code behavior)
-  - id: table_standard_schema_partial
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Table objects accept partial objects via ~standard.validate"
-
-  - id: table_standard_schema_unknown_column
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Table objects reject unknown columns with path info"
-
-  - id: table_standard_schema_invalid_value
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Table objects reject invalid column values with path info"
-
-  - id: table_standard_schema_with_parseSafe
-    type: fail_to_pass
-    origin: pr_diff
-    description: "parseSafe from data-schema works directly on table objects"
-
-  # Fail-to-pass: config/documentation updates
-  - id: agents_md_cross_package_rule
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md documents the cross-package boundaries rule about avoiding re-exports"
-
-  - id: readme_documents_data_validation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "packages/data-table/README.md documents data validation and Standard Schema compatibility"
-
-  # Pass-to-pass: regression
-  - id: existing_table_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Pre-existing table.test.ts still passes"
-
-  - id: create_table_basic
-    type: pass_to_pass
-    origin: static
-    description: "Basic createTable functionality (metadata, column refs) works"
-
-  - id: not_stub
-    type: fail_to_pass
-    origin: static
-    description: "Table validate rejects non-objects, arrays, and reports all unknown columns"
-
+- id: table_standard_schema_partial
+  type: fail_to_pass
+  origin: pr_diff
+  description: Table objects accept partial objects via ~standard.validate
+- id: table_standard_schema_unknown_column
+  type: fail_to_pass
+  origin: pr_diff
+  description: Table objects reject unknown columns with path info
+- id: table_standard_schema_invalid_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: Table objects reject invalid column values with path info
+- id: table_standard_schema_with_parseSafe
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseSafe from data-schema works directly on table objects
+- id: agents_md_cross_package_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md documents the cross-package boundaries rule about avoiding
+    re-exports
+- id: readme_documents_data_validation
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/data-table/README.md documents data validation and Standard
+    Schema compatibility
+- id: existing_table_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing table.test.ts still passes
+- id: create_table_basic
+  type: pass_to_pass
+  origin: static
+  description: Basic createTable functionality (metadata, column refs) works
+- id: not_stub
+  type: fail_to_pass
+  origin: static
+  description: Table validate rejects non-objects, arrays, and reports all unknown
+    columns
 rubric:
-  - rule: "Config updates should be consistent with the style of existing AGENTS.md and README.md content"
-    source:
-      path: "AGENTS.md"
-      lines: "1-5"
-      commit: "89db125c56d3b0d637a283ac9122c6cb8f5542c3"
+- rule: Config updates should be consistent with the style of existing AGENTS.md and
+    README.md content
+  source:
+    path: AGENTS.md
+    lines: 1-5
+    commit: 89db125c56d3b0d637a283ac9122c6cb8f5542c3
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- **Cross-package boundaries**: Avoid re-exporting APIs/types from
+    other packages. Consumers should import from the owning package directly. Reuse
+    shared concepts from sibling packages internally instead of creating bespoke duplicate
+    implementations.'
+  gold_removed: ''
+- path: packages/data-table/README.md
+  tier: 2
+  gold_added: "- [**Query Builder**](#query-builder) for expressive joins, aggregates,\
+    \ eager loading, and scoped writes\n- [**CRUD Helpers**](#crud-helpers) for common\
+    \ create/read/update/delete flows (`find`, `create`, `update`, `delete`)\nBoth\
+    \ APIs are type-safe and validate values using your [remix/data-schema](https://github.com/remix-run/remix/tree/main/packages/data-schema)\
+    \ definitions.\n## Query Builder\nUse `db.query(table)` when you need joins, custom\
+    \ shape selection, eager loading, or aggregate logic.\n## CRUD Helpers\n`data-table`\
+    \ provides helpers for common create/read/update/delete operations. Use these\
+    \ helpers for common operations without building a full query chain.\n### Read\
+    \ operations\n- `createMany` -> `WriteResult` by default, rows when `returnRows:\
+    \ true` (not supported in MySQL because it doesn't support `RETURNING`)\n### Data\
+    \ Validation\n\nFor write operations, data validation happens before SQL is executed\
+    \ so invalid data does not get written to the database.\n\n`data-table` treats\
+    \ each column schema as both:\n\n- a runtime validator (is this input valid?)\n\
+    - a parser (what normalized value should be written?)\n\nIf you're familiar with\
+    \ Zod, this is the same idea: schema-first validation where values are checked\
+    \ and parsed before use. In `data-table`, that parsing runs automatically on writes\
+    \ (`create`, `createMany`, `update`, `upsert`) so only schema-valid values are\
+    \ sent to the database. Invalid values and unknown columns fail fast before a\
+    \ write is attempted.\n\nTables are also [Standard Schema](https://standardschema.dev/)-compatible,\
+    \ so you can run the same validation explicitly with `remix/data-schema` before\
+    \ writing:\n\n```ts\nimport { parseSafe } from 'remix/data-schema'\n\nlet result\
+    \ = parseSafe(users, {\n  id: 'u_004',\n  email: 'new@example.com',\n  role: 'customer',\n\
+    })\n\nif (!result.success) {\n  // Handle validation issues\n}\n```\n\nValidation\
+    \ semantics match `create()`/`update()` input behavior:\n\n- Partial objects are\
+    \ allowed\n- Unknown columns fail validation\n- Provided column values are parsed\
+    \ through each column schema"
+  gold_removed: '- **Query Builder API** for expressive joins, aggregates, eager loading,
+    and scoped writes
+
+    - **Database Helper API** for common CRUD flows (`find`, `create`, `update`, `delete`)
+
+    Both APIs are type-safe and validate values using your `remix/data-schema` definitions.
+
+    ## Query Builder API
+
+    Use `db.query(Table)` when you need joins, custom shape selection, eager loading,
+    or aggregate logic.
+
+    ## Database Helper API (High-Level CRUD)
+
+    Use these helpers for common operations without building a full query chain.
+
+    ### Read helpers
+
+    - `createMany` -> `WriteResult` by default, rows when `returnRows: true` (RETURNING
+    adapters only)'

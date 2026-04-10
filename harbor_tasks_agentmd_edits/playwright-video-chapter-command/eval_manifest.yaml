@@ -1,98 +1,92 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 39891
-  base_commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
-  merge_commit: "9377dab3e620acaffc283122d2f061317d88da25"
-
+  base_commit: a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1
+  merge_commit: 9377dab3e620acaffc283122d2f061317d88da25
 checks:
-  - id: test_syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files parse without syntax errors"
-
-  - id: test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's npm run build passes"
-
-  - id: test_repo_lint_packages
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's lint-packages check passes"
-
-  - id: test_repo_check_deps
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's check-deps passes"
-
-  - id: test_repo_eslint_modified
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint on modified files passes"
-
-  - id: test_video_chapter_tool_defined
-    type: fail_to_pass
-    origin: pr_diff
-    description: "video.ts defines browser_video_chapter MCP tool with title, description, duration params"
-
-  - id: test_video_chapter_tool_exported
-    type: fail_to_pass
-    origin: pr_diff
-    description: "videoChapter tool is included in the default export array of video.ts"
-
-  - id: test_video_chapter_command_declared
-    type: fail_to_pass
-    origin: pr_diff
-    description: "commands.ts declares video-chapter CLI command mapping to browser_video_chapter"
-
-  - id: test_video_chapter_in_commands_array
-    type: fail_to_pass
-    origin: pr_diff
-    description: "videoChapter is registered in the commandsArray"
-
-  - id: test_skill_md_documents_video_chapter
-    type: fail_to_pass
-    origin: agent_config
-    description: "SKILL.md documents the video-chapter command with usage example"
-    source:
-      path: ".claude/skills/playwright-dev/tools.md"
-      lines: "276-279"
-      commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
-
-  - id: test_video_recording_ref_documents_chapters
-    type: fail_to_pass
-    origin: agent_config
-    description: "video-recording.md reference includes chapter command examples"
-    source:
-      path: ".claude/skills/playwright-dev/tools.md"
-      lines: "276-279"
-      commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
-
-  - id: test_getting_started_cli_documents_video_chapter
-    type: fail_to_pass
-    origin: pr_diff
-    description: "getting-started-cli.md lists video-chapter in the DevTools commands section"
-
-  - id: test_tool_export_structure
-    type: fail_to_pass
-    origin: pr_diff
-    description: "video.ts export array contains exactly videoStart, videoStop, videoChapter in order"
-
-  - id: test_getting_started_cli_format
-    type: fail_to_pass
-    origin: pr_diff
-    description: "getting-started-cli.md shows video-chapter with proper format <title>"
-
+- id: test_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without syntax errors
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's npm run build passes
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's lint-packages check passes
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check-deps passes
+- id: test_repo_eslint_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint on modified files passes
+- id: test_video_chapter_tool_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: video.ts defines browser_video_chapter MCP tool with title, description,
+    duration params
+- id: test_video_chapter_tool_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: videoChapter tool is included in the default export array of video.ts
+- id: test_video_chapter_command_declared
+  type: fail_to_pass
+  origin: pr_diff
+  description: commands.ts declares video-chapter CLI command mapping to browser_video_chapter
+- id: test_video_chapter_in_commands_array
+  type: fail_to_pass
+  origin: pr_diff
+  description: videoChapter is registered in the commandsArray
+- id: test_skill_md_documents_video_chapter
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md documents the video-chapter command with usage example
+  source:
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 276-279
+    commit: a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1
+- id: test_video_recording_ref_documents_chapters
+  type: fail_to_pass
+  origin: agent_config
+  description: video-recording.md reference includes chapter command examples
+  source:
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 276-279
+    commit: a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1
+- id: test_getting_started_cli_documents_video_chapter
+  type: fail_to_pass
+  origin: pr_diff
+  description: getting-started-cli.md lists video-chapter in the DevTools commands
+    section
+- id: test_tool_export_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: video.ts export array contains exactly videoStart, videoStop, videoChapter
+    in order
+- id: test_getting_started_cli_format
+  type: fail_to_pass
+  origin: pr_diff
+  description: getting-started-cli.md shows video-chapter with proper format <title>
 rubric:
-  - rule: "Config update is consistent with the style of existing documentation in SKILL.md"
-    source:
-      path: "packages/playwright-core/src/tools/cli-client/skill/SKILL.md"
-      lines: "150-160"
-      commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
-  - rule: "video-recording.md examples follow the same pattern as existing examples in the file"
-    source:
-      path: "packages/playwright-core/src/tools/cli-client/skill/references/video-recording.md"
-      lines: "1-30"
-      commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
+- rule: Config update is consistent with the style of existing documentation in SKILL.md
+  source:
+    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+    lines: 150-160
+    commit: a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1
+- rule: video-recording.md examples follow the same pattern as existing examples in
+    the file
+  source:
+    path: packages/playwright-core/src/tools/cli-client/skill/references/video-recording.md
+    lines: 1-30
+    commit: a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1
+config_edits:
+- path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+  tier: 1
+  gold_added: playwright-cli video-chapter "Chapter Title" --description="Details"
+    --duration=2000
+  gold_removed: ''

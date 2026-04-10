@@ -1,74 +1,76 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PostHog/posthog"
+  repo: PostHog/posthog
   pr: 53378
-  base_commit: "209f5d790aaee15baaf509ee15268edd932f5f23"
-  merge_commit: "b41bc4f1b72f45bea5a5dfb331af049e2b66c94d"
-
+  base_commit: 209f5d790aaee15baaf509ee15268edd932f5f23
+  merge_commit: b41bc4f1b72f45bea5a5dfb331af049e2b66c94d
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified Python files must parse without errors"
-
-  - id: apply_edits_single
-    type: fail_to_pass
-    origin: pr_diff
-    description: "apply_prompt_edits applies a single find/replace to a string prompt"
-
-  - id: apply_edits_multiple_sequential
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Multiple edits are applied in sequential order"
-
-  - id: apply_edits_not_found_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: "apply_prompt_edits raises error when old text is not found"
-
-  - id: apply_edits_ambiguous_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: "apply_prompt_edits raises error when old text matches multiple times"
-
-  - id: apply_edits_json_prompt
-    type: fail_to_pass
-    origin: pr_diff
-    description: "apply_prompt_edits works on JSON (dict) prompts"
-
-  - id: serializer_has_edits_field
-    type: fail_to_pass
-    origin: pr_diff
-    description: "LLMPromptPublishSerializer defines an edits field"
-
-  - id: skill_md_documents_edits
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md documents the incremental edits feature for prompt-update"
-
-  - id: mcp_yaml_includes_edits
-    type: fail_to_pass
-    origin: pr_diff
-    description: "prompts.yaml MCP tool definition includes the edits parameter"
-
-  - id: serializer_fields_have_help_text
-    type: fail_to_pass
-    origin: agent_config
-    description: "New serializer fields have help_text per AGENTS.md style rule"
-    source:
-      path: "AGENTS.md"
-      lines: "85"
-      commit: "209f5d790aaee15baaf509ee15268edd932f5f23"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files must parse without errors
+- id: apply_edits_single
+  type: fail_to_pass
+  origin: pr_diff
+  description: apply_prompt_edits applies a single find/replace to a string prompt
+- id: apply_edits_multiple_sequential
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple edits are applied in sequential order
+- id: apply_edits_not_found_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: apply_prompt_edits raises error when old text is not found
+- id: apply_edits_ambiguous_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: apply_prompt_edits raises error when old text matches multiple times
+- id: apply_edits_json_prompt
+  type: fail_to_pass
+  origin: pr_diff
+  description: apply_prompt_edits works on JSON (dict) prompts
+- id: serializer_has_edits_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: LLMPromptPublishSerializer defines an edits field
+- id: skill_md_documents_edits
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md documents the incremental edits feature for prompt-update
+- id: mcp_yaml_includes_edits
+  type: fail_to_pass
+  origin: pr_diff
+  description: prompts.yaml MCP tool definition includes the edits parameter
+- id: serializer_fields_have_help_text
+  type: fail_to_pass
+  origin: agent_config
+  description: New serializer fields have help_text per AGENTS.md style rule
+  source:
+    path: AGENTS.md
+    lines: '85'
+    commit: 209f5d790aaee15baaf509ee15268edd932f5f23
 rubric:
-  - rule: "Config update is consistent with the style of the existing SKILL.md documentation"
-    source:
-      path: "products/llm_analytics/skills/skills-store/SKILL.md"
-      lines: "1-100"
-      commit: "209f5d790aaee15baaf509ee15268edd932f5f23"
-  - rule: "When touching a viewset or serializer, ensure schema annotations are present — help_text on serializer fields flow into generated frontend types and MCP tool schemas"
-    source:
-      path: "AGENTS.md"
-      lines: "85"
-      commit: "209f5d790aaee15baaf509ee15268edd932f5f23"
+- rule: Config update is consistent with the style of the existing SKILL.md documentation
+  source:
+    path: products/llm_analytics/skills/skills-store/SKILL.md
+    lines: 1-100
+    commit: 209f5d790aaee15baaf509ee15268edd932f5f23
+- rule: When touching a viewset or serializer, ensure schema annotations are present
+    — help_text on serializer fields flow into generated frontend types and MCP tool
+    schemas
+  source:
+    path: AGENTS.md
+    lines: '85'
+    commit: 209f5d790aaee15baaf509ee15268edd932f5f23
+config_edits:
+- path: products/llm_analytics/skills/skills-store/SKILL.md
+  tier: 1
+  gold_added: "Then update using the version from the response.\nYou can either send\
+    \ the full prompt, or use `edits` for incremental find/replace changes:\n\n###\
+    \ Full replacement\n### Incremental edits\n\nFor small changes, use `edits` instead\
+    \ of resending the entire prompt.\nEach edit's `old` text must match exactly once\
+    \ in the current version:\n\n```json\nposthog:prompt-update\n{\n  \"prompt_name\"\
+    : \"my-new-skill\",\n  \"edits\": [\n    { \"old\": \"old text to find\", \"new\"\
+    : \"replacement text\" }\n  ],\n  \"base_version\": 1\n}\n```\n\nOnly one of `prompt`\
+    \ or `edits` may be provided, not both."
+  gold_removed: 'Then update using the version from the response:'

@@ -1,121 +1,167 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "payloadcms/payload"
+  repo: payloadcms/payload
   pr: 15736
-  base_commit: "7f3c6c8f4628fb066002e2fd5c3cc6b83ddf4ccc"
-  merge_commit: "b317eaa59124eb3a1a7e26c8ccdf909bbea03f96"
-
+  base_commit: 7f3c6c8f4628fb066002e2fd5c3cc6b83ddf4ccc
+  merge_commit: b317eaa59124eb3a1a7e26c8ccdf909bbea03f96
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Key TypeScript files have balanced braces and parentheses"
-
-  - id: access_token_field_behavior
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Plugin config adds accessToken field with UUID generation hook that produces valid UUIDs"
-
-  - id: access_token_in_response_behavior
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Stripe confirmOrder conditionally spreads accessToken into success response"
-
-  - id: order_page_access_control_behavior
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Order page enforces accessToken requirement for guest order access"
-
-  - id: send_order_access_email_behavior
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Server action sendOrderAccessEmail constructs secure URLs and sends email with access link"
-
-  - id: find_order_form_behavior
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FindOrderForm uses email verification flow instead of direct navigation"
-
-  - id: checkout_redirects_behavior
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Checkout components build URLs with accessToken in query params"
-
-  - id: existing_plugin_config_intact
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing plugin configuration (customers, payments, stripe) still present"
-
-  - id: readme_updated
-    type: pass_to_pass
-    origin: static
-    description: "README documents the accessToken-based guest order access flow"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified functions have real logic, not just pass/return"
-
-  # CI/CD pass_to_pass checks (repo_tests) - added during p2p enrichment
-  - id: tsconfig_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript configuration files are valid JSON"
-
-  - id: package_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Package.json files are valid and parseable"
-
-  - id: eslint_config_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ESLint configuration files exist and are valid"
-
-  - id: modified_files_typescript_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified TypeScript files have valid syntax"
-
-  - id: ecommerce_build_config
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ecommerce template build configuration is valid"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Key TypeScript files have balanced braces and parentheses
+- id: access_token_field_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: Plugin config adds accessToken field with UUID generation hook that
+    produces valid UUIDs
+- id: access_token_in_response_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: Stripe confirmOrder conditionally spreads accessToken into success
+    response
+- id: order_page_access_control_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: Order page enforces accessToken requirement for guest order access
+- id: send_order_access_email_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server action sendOrderAccessEmail constructs secure URLs and sends
+    email with access link
+- id: find_order_form_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: FindOrderForm uses email verification flow instead of direct navigation
+- id: checkout_redirects_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: Checkout components build URLs with accessToken in query params
+- id: existing_plugin_config_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing plugin configuration (customers, payments, stripe) still present
+- id: readme_updated
+  type: pass_to_pass
+  origin: static
+  description: README documents the accessToken-based guest order access flow
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified functions have real logic, not just pass/return
+- id: tsconfig_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript configuration files are valid JSON
+- id: package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Package.json files are valid and parseable
+- id: eslint_config_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint configuration files exist and are valid
+- id: modified_files_typescript_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files have valid syntax
+- id: ecommerce_build_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ecommerce template build configuration is valid
 rubric:
-  - rule: "Documentation updates in README.md should be consistent with the existing style and structure of the file"
-    source:
-      path: "templates/ecommerce/README.md"
-      lines: "1-120"
-      commit: "7f3c6c8f4628fb066002e2fd5c3cc6b83ddf4ccc"
+- rule: Documentation updates in README.md should be consistent with the existing
+    style and structure of the file
+  source:
+    path: templates/ecommerce/README.md
+    lines: 1-120
+    commit: 7f3c6c8f4628fb066002e2fd5c3cc6b83ddf4ccc
+- rule: 'Code follows Payload conventions: prefer single object parameters, use import
+    type for types'
+  source:
+    path: CLAUDE.md
+    lines: 52-55
+    commit: 7f3c6c8f4628fb066002e2fd5c3cc6b83ddf4ccc
+- rule: 'Logger usage follows the pattern: payload.logger.error({ msg: ''...'', err:
+    error }) with err not error'
+  source:
+    path: CLAUDE.md
+    lines: 63-65
+    commit: 7f3c6c8f4628fb066002e2fd5c3cc6b83ddf4ccc
+- rule: README documents the accessToken-based guest order access flow and security
+    rationale
+  source:
+    path: templates/ecommerce/README.md
+    lines: 122-146
+    commit: b317eaa59124eb3a1a7e26c8ccdf909bbea03f96
+- rule: README Guests section describes guest checkout flow with accessToken
+  source:
+    path: templates/ecommerce/README.md
+    lines: 131-140
+    commit: b317eaa59124eb3a1a7e26c8ccdf909bbea03f96
+- rule: Access control section notes guests need accessToken for order access
+  source:
+    path: templates/ecommerce/README.md
+    lines: '122'
+    commit: b317eaa59124eb3a1a7e26c8ccdf909bbea03f96
+config_edits:
+- path: templates/ecommerce/README.md
+  tier: 2
+  gold_added: '- `orders`: Only admins and users who own the orders can access these.
+    Guests require a valid `accessToken` (sent via email) along with the order''s
+    email to view order details.
 
-  - rule: "Code follows Payload conventions: prefer single object parameters, use import type for types"
-    source:
-      path: "CLAUDE.md"
-      lines: "52-55"
-      commit: "7f3c6c8f4628fb066002e2fd5c3cc6b83ddf4ccc"
+    Registered users can log in to view their order history, manage saved addresses,
+    and track ongoing orders directly from their account dashboard.
 
-  - rule: "Logger usage follows the pattern: payload.logger.error({ msg: '...', err: error }) with err not error"
-    source:
-      path: "CLAUDE.md"
-      lines: "63-65"
-      commit: "7f3c6c8f4628fb066002e2fd5c3cc6b83ddf4ccc"
 
-  - rule: "README documents the accessToken-based guest order access flow and security rationale"
-    source:
-      path: "templates/ecommerce/README.md"
-      lines: "122-146"
-      commit: "b317eaa59124eb3a1a7e26c8ccdf909bbea03f96"
+    Guest checkout allows users to complete purchases without creating an account.
+    When a guest places an order:
 
-  - rule: "README Guests section describes guest checkout flow with accessToken"
-    source:
-      path: "templates/ecommerce/README.md"
-      lines: "131-140"
-      commit: "b317eaa59124eb3a1a7e26c8ccdf909bbea03f96"
 
-  - rule: "Access control section notes guests need accessToken for order access"
-    source:
-      path: "templates/ecommerce/README.md"
-      lines: "122"
-      commit: "b317eaa59124eb3a1a7e26c8ccdf909bbea03f96"
+    1. The order is associated with their email address
+
+    2. A unique `accessToken` is generated for secure order lookup
+
+    3. An order confirmation email is sent containing a secure link to view the order
+
+
+    To look up an order as a guest, users visit `/find-order`, enter their email and
+    order ID, and receive an email with a secure access link. This prevents order
+    enumeration attacks where malicious users could iterate through sequential order
+    IDs to access other customers'' order information.
+
+
+    An order is created only once a transaction is successfully completed. This is
+    a record that the user who completed the transaction has access so they can keep
+    track of their history.
+
+
+    ### Guest Order Access
+
+
+    Guest users can securely access their orders through the `/find-order` page:
+
+
+    1. Guest enters their email address and order ID
+
+    2. If the order exists and matches the email, an access link is sent to their
+    email
+
+    3. The link contains a secure `accessToken` that grants temporary access to view
+    the order
+
+
+    This email verification flow prevents unauthorized access to order details. The
+    `accessToken` is a unique UUID generated when the order is created and is required
+    (along with the email) to view order details as a guest.
+
+
+    **Security note:** Order confirmation emails should include the order ID so guests
+    can use the "Find Order" feature. The access token is only sent via the verification
+    email to prevent enumeration attacks.'
+  gold_removed: '- `orders`: Only admins and users who own the orders can access these.
+
+    An order is created only once a transaction is successfully completed. This is
+    a record that the user who completed the transaction has access so they can keep
+    track of their history. Guests can also access their own orders by providing an
+    order ID and the email associated with that order.'

@@ -1,71 +1,76 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "mlflow/mlflow"
+  repo: mlflow/mlflow
   pr: 22330
-  base_commit: "39f35acce9e63788371bfaaa2c57cafef10a02ec"
-  merge_commit: "4173076f2df42da7413d8a989af530f794cd9da2"
-
+  base_commit: 39f35acce9e63788371bfaaa2c57cafef10a02ec
+  merge_commit: 4173076f2df42da7413d8a989af530f794cd9da2
 checks:
-  - id: approve_sh_syntax
-    type: fail_to_pass
-    origin: pr_diff
-    description: "approve.sh must exist and have valid bash syntax"
-
-  - id: approve_sh_exits_on_missing_args
-    type: fail_to_pass
-    origin: pr_diff
-    description: "approve.sh must fail when called without required arguments"
-
-  - id: approve_sh_rerun_not_approve_api
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script must use the /rerun API endpoint, not /approve"
-
-  - id: approve_sh_filters_copilot_action_required
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script must filter for action_required conclusion and Copilot actor"
-
-  - id: approve_sh_handles_empty_results
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script must handle the case where no matching workflow runs are found"
-
-  - id: skill_md_approve_in_allowed_tools
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md must list approve.sh in allowed-tools frontmatter"
-
-  - id: skill_md_documents_approve_workflow
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md must document how to use the approve workflow script"
-
-  # Pass-to-pass tests - repo CI checks
-  - id: test_repo_bash_syntax_copilot
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All shell scripts in .claude/skills/copilot have valid bash syntax"
-
-  - id: test_repo_ruff_claude
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff linting passes on .claude directory"
-
-  - id: test_repo_bash_syntax_all_claude
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All shell scripts in .claude have valid bash syntax"
-
+- id: approve_sh_syntax
+  type: fail_to_pass
+  origin: pr_diff
+  description: approve.sh must exist and have valid bash syntax
+- id: approve_sh_exits_on_missing_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: approve.sh must fail when called without required arguments
+- id: approve_sh_rerun_not_approve_api
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script must use the /rerun API endpoint, not /approve
+- id: approve_sh_filters_copilot_action_required
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script must filter for action_required conclusion and Copilot actor
+- id: approve_sh_handles_empty_results
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script must handle the case where no matching workflow runs are found
+- id: skill_md_approve_in_allowed_tools
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must list approve.sh in allowed-tools frontmatter
+- id: skill_md_documents_approve_workflow
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must document how to use the approve workflow script
+- id: test_repo_bash_syntax_copilot
+  type: pass_to_pass
+  origin: repo_tests
+  description: All shell scripts in .claude/skills/copilot have valid bash syntax
+- id: test_repo_ruff_claude
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on .claude directory
+- id: test_repo_bash_syntax_all_claude
+  type: pass_to_pass
+  origin: repo_tests
+  description: All shell scripts in .claude have valid bash syntax
 rubric:
-  - rule: "The approve.sh script should follow the same patterns as the existing poll.sh script (set -euo pipefail, gh CLI usage, error handling style)"
-    source:
-      path: ".claude/skills/copilot/SKILL.md"
-      lines: "1-62"
-      commit: "39f35acce9e63788371bfaaa2c57cafef10a02ec"
-  - rule: "Prefer gh CLI over actions/github-script for GitHub API operations"
-    source:
-      path: ".claude/rules/github-actions.md"
-      lines: "7-8"
-      commit: "39f35acce9e63788371bfaaa2c57cafef10a02ec"
+- rule: The approve.sh script should follow the same patterns as the existing poll.sh
+    script (set -euo pipefail, gh CLI usage, error handling style)
+  source:
+    path: .claude/skills/copilot/SKILL.md
+    lines: 1-62
+    commit: 39f35acce9e63788371bfaaa2c57cafef10a02ec
+- rule: Prefer gh CLI over actions/github-script for GitHub API operations
+  source:
+    path: .claude/rules/github-actions.md
+    lines: 7-8
+    commit: 39f35acce9e63788371bfaaa2c57cafef10a02ec
+config_edits:
+- path: .claude/skills/copilot/SKILL.md
+  tier: 1
+  gold_added: '- Bash(bash .claude/skills/copilot/approve.sh *)'' .claude/skills/copilot/SKILL.md
+
+    ## Approving workflows
+
+
+    Approve workflows to run once the PR is finalized:
+
+
+    ```bash
+
+    bash .claude/skills/copilot/approve.sh "<owner>/<repo>" <pr_number>
+
+    ```'
+  gold_removed: ''

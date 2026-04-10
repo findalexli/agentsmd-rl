@@ -1,55 +1,67 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12990
-  base_commit: "0b943a4fd0d7701203f1b79b70b5afed19ee8413"
-  merge_commit: "b0b1dc3282389a64ef3e16edb98805911f97444c"
-
+  base_commit: 0b943a4fd0d7701203f1b79b70b5afed19ee8413
+  merge_commit: b0b1dc3282389a64ef3e16edb98805911f97444c
 checks:
-  # Gates (pass-to-pass)
-  - id: syntax_check_python
-    type: pass_to_pass
-    origin: static
-    description: "Python source files parse without errors"
-
-  # Pass-to-pass: repo CI tests
-  - id: test_repo_imports_gradio
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's gradio package imports without errors"
-
-  - id: test_repo_html_component_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's HTML component unit tests pass"
-
-  # Fail-to-pass: core behavioral tests
-  - id: html_accepts_head_parameter
-    type: fail_to_pass
-    origin: pr_diff
-    description: "gr.HTML component __init__ accepts head= parameter"
-
-  - id: head_stored_as_instance_attribute
-    type: fail_to_pass
-    origin: pr_diff
-    description: "head parameter is stored as self.head instance attribute"
-
-  # Fail-to-pass: config/documentation update test
-  - id: skill_md_documents_head_param
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md HTML signature includes head parameter documentation"
-
-  - id: skill_md_signature_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md HTML component signature matches the updated Python signature"
-
-  # Pass-to-pass: functional verification
-  - id: head_parameter_functional
-    type: pass_to_pass
-    origin: pr_diff
-    description: "HTML component can be instantiated with head parameter and returns it in api_info"
-
+- id: syntax_check_python
+  type: pass_to_pass
+  origin: static
+  description: Python source files parse without errors
+- id: test_repo_imports_gradio
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's gradio package imports without errors
+- id: test_repo_html_component_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's HTML component unit tests pass
+- id: html_accepts_head_parameter
+  type: fail_to_pass
+  origin: pr_diff
+  description: gr.HTML component __init__ accepts head= parameter
+- id: head_stored_as_instance_attribute
+  type: fail_to_pass
+  origin: pr_diff
+  description: head parameter is stored as self.head instance attribute
+- id: skill_md_documents_head_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md HTML signature includes head parameter documentation
+- id: skill_md_signature_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md HTML component signature matches the updated Python signature
+- id: head_parameter_functional
+  type: pass_to_pass
+  origin: pr_diff
+  description: HTML component can be instantiated with head parameter and returns
+    it in api_info
 rubric: []
+config_edits:
+- path: .agents/skills/gradio/SKILL.md
+  tier: 1
+  gold_added: '### `HTML(value: Any | Callable | None = None, label: str | I18nData
+    | None = None, html_template: str = "${value}", css_template: str = "", js_on_load:
+    str | None = "element.addEventListener(''click'', function() { trigger(''click'')
+    });", apply_default_css: bool = True, every: Timer | float | None = None, inputs:
+    Component | Sequence[Component] | set[Component] | None = None, show_label: bool
+    = False, visible: bool | Literal[''hidden''] = True, elem_id: str | None = None,
+    elem_classes: list[str] | str | None = None, render: bool = True, key: int | str
+    | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None
+    = "value", min_height: int | None = None, max_height: int | None = None, container:
+    bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button]
+    | None = None, head: str | None = None, server_functions: list[Callable] | None
+    = None, props: Any)`'
+  gold_removed: '### `HTML(value: Any | Callable | None = None, label: str | I18nData
+    | None = None, html_template: str = "${value}", css_template: str = "", js_on_load:
+    str | None = "element.addEventListener(''click'', function() { trigger(''click'')
+    });", apply_default_css: bool = True, every: Timer | float | None = None, inputs:
+    Component | Sequence[Component] | set[Component] | None = None, show_label: bool
+    = False, visible: bool | Literal[''hidden''] = True, elem_id: str | None = None,
+    elem_classes: list[str] | str | None = None, render: bool = True, key: int | str
+    | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None
+    = "value", min_height: int | None = None, max_height: int | None = None, container:
+    bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button]
+    | None = None, server_functions: list[Callable] | None = None, props: Any)`'

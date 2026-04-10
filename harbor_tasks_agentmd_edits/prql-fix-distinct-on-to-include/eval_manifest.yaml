@@ -66,3 +66,20 @@ rubric:
     \ assertions\n  - Fast to run, easy to review in PRs\n\n- **Use integration tests**\
     \ (`prqlc/tests/integration/queries/*.prql`) only\n  when:\n  - Developing large,\
     \ complex features that need comprehensive testin"
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: "### Test Strategy\n\n**Prefer small inline `insta` snapshot tests**\
+    \ over full integration tests:\n\n- **Use inline tests** for most bug fixes and\
+    \ small features\n  - Add `#[test]` functions in a `#[cfg(test)]` module at the\
+    \ end of the file\n  - Use `insta::assert_snapshot!` for compact, readable test\
+    \ assertions\n  - Fast to run, easy to review in PRs\n\n- **Use integration tests**\
+    \ (`prqlc/tests/integration/queries/*.prql`) only\n  when:\n  - Developing large,\
+    \ complex features that need comprehensive testing\n  - Testing end-to-end behavior\
+    \ across multiple compilation stages\n  - The test requires external resources\
+    \ or multi-file scenarios\n\nExample of a good inline test:\n\n```rust\n#[cfg(test)]\n\
+    mod test {\n    use insta::assert_snapshot;\n\n    #[test]\n    fn test_my_feature()\
+    \ {\n        let query = \"from employees | filter country == 'USA'\";\n     \
+    \   assert_snapshot!(crate::tests::compile(query).unwrap(), @\"\");\n    }\n}\n\
+    ```"
+  gold_removed: ''

@@ -1,63 +1,207 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "remix-run/remix"
+  repo: remix-run/remix
   pr: 11088
-  base_commit: "64b3a160dc25bbb082b96673e12bb55935f3528d"
-  merge_commit: "27765d6ff3fc9671802defcc69693cebd554ce6d"
-
+  base_commit: 64b3a160dc25bbb082b96673e12bb55935f3528d
+  merge_commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
 checks:
-  # Code behavior tests
-  - id: help_shows_usage
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script --help exits 0 and shows usage info with PR number placeholders"
-
-  - id: requires_two_positional_args
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script exits non-zero when called with fewer than 2 positional args"
-
-  - id: rejects_non_numeric_pr
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script rejects non-numeric PR numbers with a descriptive error"
-
-  - id: rejects_same_pr_numbers
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script rejects when old_pr and new_pr are the same number"
-
-  - id: rejects_unknown_arguments
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script rejects unrecognized command-line flags"
-
-  # Config/doc update tests
-  - id: agents_md_documents_skills
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md has a Skills section mentioning the supersede-pr skill"
-
-  - id: agents_md_one_off_scripts_rule
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md notes that one-off scripts should be executable TypeScript"
-
-  # Pass-to-pass
-  - id: existing_code_style_preserved
-    type: pass_to_pass
-    origin: static
-    description: "Existing AGENTS.md code style rules (let/var) remain intact"
-
+- id: help_shows_usage
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script --help exits 0 and shows usage info with PR number placeholders
+- id: requires_two_positional_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script exits non-zero when called with fewer than 2 positional args
+- id: rejects_non_numeric_pr
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script rejects non-numeric PR numbers with a descriptive error
+- id: rejects_same_pr_numbers
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script rejects when old_pr and new_pr are the same number
+- id: rejects_unknown_arguments
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script rejects unrecognized command-line flags
+- id: agents_md_documents_skills
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md has a Skills section mentioning the supersede-pr skill
+- id: agents_md_one_off_scripts_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md notes that one-off scripts should be executable TypeScript
+- id: existing_code_style_preserved
+  type: pass_to_pass
+  origin: static
+  description: Existing AGENTS.md code style rules (let/var) remain intact
 rubric:
-  - rule: "Code uses let for locals, const only at module scope; never use var"
-    source:
-      path: "AGENTS.md"
-      lines: "25"
-      commit: "64b3a160dc25bbb082b96673e12bb55935f3528d"
-  - rule: "Always use import type { X } for types; include .ts extensions"
-    source:
-      path: "AGENTS.md"
-      lines: "24"
-      commit: "64b3a160dc25bbb082b96673e12bb55935f3528d"
+- rule: Code uses let for locals, const only at module scope; never use var
+  source:
+    path: AGENTS.md
+    lines: '25'
+    commit: 64b3a160dc25bbb082b96673e12bb55935f3528d
+- rule: Always use import type { X } for types; include .ts extensions
+  source:
+    path: AGENTS.md
+    lines: '24'
+    commit: 64b3a160dc25bbb082b96673e12bb55935f3528d
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- **One-off scripts**: Write one-off scripts in this repo as TypeScript
+    and make them executable natively with modern Node.js (for example, executable
+    `.ts` files)
+
+
+    ## Skills
+
+
+    A skill is a reusable local instruction set stored in a `SKILL.md` file.
+
+
+    ### Available skills
+
+
+    - **supersede-pr**: Replace one GitHub PR with another and explicitly close the
+    superseded PR (instead of relying on `Closes #...` keywords). (file: `./skills/supersede-pr/SKILL.md`)
+
+    - **make-pr**: Create GitHub pull requests with clear context, issue/feature bullets,
+    and required usage examples for new or changed APIs. (file: `./skills/make-pr/SKILL.md`)'
+  gold_removed: ''
+- path: skills/make-pr/SKILL.md
+  tier: 1
+  gold_added: "---\nname: make-pr\ndescription: Create GitHub pull requests with clear,\
+    \ reviewer-friendly descriptions. Use when asked to open or prepare a PR, especially\
+    \ when the PR needs strong context, related links, and feature usage examples.\
+    \ This skill enforces concise PR structure, avoids redundant sections like validation/testing,\
+    \ and creates the PR with gh CLI.\n---\n\n# Make PR\n\n## Overview\n\nUse this\
+    \ skill to draft and open a PR with consistent, high-signal writing.\nKeep headings\
+    \ sparse and focus on the problem/feature explanation, context links, and practical\
+    \ code examples.\n\n## Workflow\n\n1. Gather context from branch diff and related\
+    \ work.\n- Capture what changed, why it changed, and who it affects.\n- Find related\
+    \ issues/PRs and include links when relevant.\n\n1. Draft the PR body with minimal\
+    \ structure.\n- Start with 1-2 short introductory paragraphs.\n- In those intro\
+    \ paragraphs, include clear bullets describing:\n  - the feature and/or issue\
+    \ addressed\n  - key behavior/API changes\n  - expected impact\n- If the change\
+    \ is extensive, expand to up to 3-4 paragraphs and include background context\
+    \ with related links.\n\n1. Add required usage examples for feature work.\n- If\
+    \ the PR introduces a new feature, include a comprehensive usage snippet.\n- If\
+    \ it replaces or improves an older approach, include before/after examples.\n\n\
+    1. Exclude redundant sections.\n- Do not include `Validation`, `Testing`, or other\
+    \ process sections that are already implicit in PR workflow.\n- Do not add boilerplate\
+    \ sections that do not help review.\n\n1. Create the PR.\n- Save the body to a\
+    \ temporary file and run:\n```bash\ngh pr create --base main --head <branch> --title\
+    \ \"<title>\" --body-file <file>\n```\n\n## Body Template\n\nUse this as a base\
+    \ and fill with concrete repo-specific details:\n\n```md\n<One or two short intro\
+    \ paragraphs explaining the change and why it matters.>\n\n- <Feature/issue addressed>\n\
+    - <What changed in behavior or API>\n- <Why this is needed now>\n\n<Optional additional\
+    \ context paragraph(s), up to 3-4 total for large changes, including links to\
+    \ related PRs/issues.>\n\n```ts\n// New feature usage example\n```\n\n```ts\n\
+    // Before\n```\n\n```ts\n// After\n```\n```"
+  gold_removed: ''
+- path: skills/supersede-pr/SKILL.md
+  tier: 1
+  gold_added: '---
+
+    name: supersede-pr
+
+    description: Safely replace one GitHub pull request with another. Use when a user
+    says a PR supersedes/replaces an older PR, asks to auto-close a superseded PR,
+    or needs guaranteed closure behavior after merge. This skill explicitly closes
+    the superseded PR with gh CLI and verifies final PR states instead of relying
+    on closing keywords.
+
+    ---
+
+
+    # Supersede PR
+
+
+    ## Overview
+
+
+    Use this skill to handle PR supersession end-to-end.
+
+    Do not rely on `Closes #<number>` to close another PR. GitHub closing keywords
+    close issues, not pull requests.
+
+
+    ## Workflow
+
+
+    1. Identify PR numbers and target repo.
+
+    - Capture `old_pr` (the superseded PR) and `new_pr` (the replacement PR).
+
+    - Resolve the repo with `gh repo view --json nameWithOwner -q .nameWithOwner`
+    when not provided.
+
+
+    1. Create or update the replacement PR first.
+
+    - Open/push the replacement branch.
+
+    - Open the new PR.
+
+    - Include a traceable link in the PR body such as `Supersedes #<old_pr>`.
+
+
+    1. Close the superseded PR explicitly.
+
+    - Run:
+
+    ```bash
+
+    ./skills/supersede-pr/scripts/close_superseded_pr.ts <old_pr> <new_pr>
+
+    ```
+
+    - This adds a comment (`Superseded by #<new_pr>.`) and closes the old PR.
+
+
+    1. Verify states.
+
+    - Confirm the superseded PR is closed:
+
+    ```bash
+
+    gh pr view <old_pr> --json state,url
+
+    ```
+
+    - Confirm the replacement PR status/checks:
+
+    ```bash
+
+    gh pr checks <new_pr>
+
+    ```
+
+
+    ## Rules
+
+
+    1. Do not use `Closes #<old_pr>` when `<old_pr>` is a pull request.
+
+    - Use `Closes/Fixes` only for issues.
+
+    - Use `Supersedes #<old_pr>` or `Refs #<old_pr>` for PR-to-PR linkage.
+
+
+    1. Prefer explicit closure over implied automation.
+
+    - Always run the close command when the user asks to supersede a PR.
+
+    - Treat closure as incomplete until `gh pr view <old_pr>` returns `CLOSED`.
+
+
+    ## Script
+
+
+    Use the bundled script for deterministic closure:
+
+    - `scripts/close_superseded_pr.ts`'
+  gold_removed: ''

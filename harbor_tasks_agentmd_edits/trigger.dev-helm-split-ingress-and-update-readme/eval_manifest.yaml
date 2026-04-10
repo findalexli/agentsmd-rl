@@ -1,84 +1,86 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "triggerdotdev/trigger.dev"
+  repo: triggerdotdev/trigger.dev
   pr: 2212
-  base_commit: "dc568e7f3edc168defc0a7e9afab382eba770bf1"
-  merge_commit: "aa24a9aae626a1f2ea34bd4930b158867f4a6ff8"
-
+  base_commit: dc568e7f3edc168defc0a7e9afab382eba770bf1
+  merge_commit: aa24a9aae626a1f2ea34bd4930b158867f4a6ff8
 checks:
-  # Gates (pass_to_pass)
-  - id: values_yaml_valid
-    type: pass_to_pass
-    origin: static
-    description: "values.yaml must be valid YAML"
-
-  - id: production_example_valid
-    type: pass_to_pass
-    origin: static
-    description: "values-production-example.yaml must be valid YAML"
-
-  # Core structural changes (fail_to_pass)
-  - id: webapp_origin_in_values
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Origin config moved from top-level config to webapp section"
-
-  - id: webapp_ingress_in_values
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Ingress config moved from top-level to webapp.ingress"
-
-  - id: registry_ingress_in_values
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Registry gets its own ingress section in values.yaml"
-
-  - id: registry_ingress_template_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "New registry-ingress.yaml template created"
-
-  - id: webapp_ingress_template_references
-    type: fail_to_pass
-    origin: pr_diff
-    description: "webapp-ingress.yaml references .Values.webapp.ingress"
-
-  - id: webapp_template_uses_webapp_origin
-    type: fail_to_pass
-    origin: pr_diff
-    description: "webapp.yaml references .Values.webapp.appOrigin instead of .Values.config"
-
-  - id: helpers_split_annotations
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Separate annotation helpers for webapp and registry ingress"
-
-  - id: registry_host_no_port_concat
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Registry host helper no longer concatenates host:port"
-
-  # Config/documentation update checks (agentmd-edit)
-  - id: readme_documents_webapp_ingress
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Helm README documents webapp.ingress nested config pattern"
-
-  - id: readme_documents_registry_ingress
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Helm README documents separate registry.ingress configuration"
-
-  - id: readme_no_toplevel_ingress_example
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README Ingress Configuration section no longer shows bare top-level ingress"
-
-  # Validation template correctness (pass_to_pass)
-  - id: validation_template_no_port
-    type: pass_to_pass
-    origin: static
-    description: "Validation template no longer requires registry.external.port"
-
+- id: values_yaml_valid
+  type: pass_to_pass
+  origin: static
+  description: values.yaml must be valid YAML
+- id: production_example_valid
+  type: pass_to_pass
+  origin: static
+  description: values-production-example.yaml must be valid YAML
+- id: webapp_origin_in_values
+  type: fail_to_pass
+  origin: pr_diff
+  description: Origin config moved from top-level config to webapp section
+- id: webapp_ingress_in_values
+  type: fail_to_pass
+  origin: pr_diff
+  description: Ingress config moved from top-level to webapp.ingress
+- id: registry_ingress_in_values
+  type: fail_to_pass
+  origin: pr_diff
+  description: Registry gets its own ingress section in values.yaml
+- id: registry_ingress_template_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: New registry-ingress.yaml template created
+- id: webapp_ingress_template_references
+  type: fail_to_pass
+  origin: pr_diff
+  description: webapp-ingress.yaml references .Values.webapp.ingress
+- id: webapp_template_uses_webapp_origin
+  type: fail_to_pass
+  origin: pr_diff
+  description: webapp.yaml references .Values.webapp.appOrigin instead of .Values.config
+- id: helpers_split_annotations
+  type: fail_to_pass
+  origin: pr_diff
+  description: Separate annotation helpers for webapp and registry ingress
+- id: registry_host_no_port_concat
+  type: fail_to_pass
+  origin: pr_diff
+  description: Registry host helper no longer concatenates host:port
+- id: readme_documents_webapp_ingress
+  type: fail_to_pass
+  origin: pr_diff
+  description: Helm README documents webapp.ingress nested config pattern
+- id: readme_documents_registry_ingress
+  type: fail_to_pass
+  origin: pr_diff
+  description: Helm README documents separate registry.ingress configuration
+- id: readme_no_toplevel_ingress_example
+  type: fail_to_pass
+  origin: pr_diff
+  description: README Ingress Configuration section no longer shows bare top-level
+    ingress
+- id: validation_template_no_port
+  type: pass_to_pass
+  origin: static
+  description: Validation template no longer requires registry.external.port
 rubric: []
+config_edits:
+- path: hosting/k8s/helm/README.md
+  tier: 2
+  gold_added: "webapp:\n  # Application URLs\n  # Bootstrap mode (auto-creates worker\
+    \ group)\n  deploy: false\n  deploy: false\n  deploy: true\n# Webapp ingress\n\
+    webapp:\n  ingress:\n    enabled: true\n    className: \"nginx\"\n    annotations:\n\
+    \      cert-manager.io/cluster-issuer: \"letsencrypt-prod\"\n    hosts:\n    \
+    \  - host: trigger.example.com\n        paths:\n          - path: /\n        \
+    \    pathType: Prefix\n    tls:\n      - secretName: trigger-tls\n        hosts:\n\
+    \          - trigger.example.com\n\n# Registry ingress\nregistry:\n  ingress:\n\
+    \    enabled: true\n    className: \"nginx\"\n    annotations:\n      cert-manager.io/cluster-issuer:\
+    \ \"letsencrypt-prod\"\n    hosts:\n      - host: registry.example.com\n     \
+    \   paths:\n          - path: /\n            pathType: Prefix\n    tls:\n    \
+    \  - secretName: registry-tls\n        hosts:\n          - registry.example.com"
+  gold_removed: "# Application URLs\nconfig:\n# Bootstrap mode (auto-creates worker\
+    \ group)\nconfig:\n  enabled: false\n  external: true\n  enabled: false\n  external:\
+    \ true\n  enabled: true\n  external: true\ningress:\n  enabled: true\n  className:\
+    \ \"nginx\"\n  annotations:\n    cert-manager.io/cluster-issuer: \"letsencrypt-prod\"\
+    \n  hosts:\n    - host: trigger.example.com\n      paths:\n        - path: /\n\
+    \          pathType: Prefix\n  tls:\n    - secretName: trigger-tls\n      hosts:\n\
+    \        - trigger.example.com"

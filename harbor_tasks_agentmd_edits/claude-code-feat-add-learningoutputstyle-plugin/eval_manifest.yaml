@@ -1,52 +1,117 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anthropics/claude-code"
+  repo: anthropics/claude-code
   pr: 10826
-  base_commit: "ae411f846195b38c8bec88914dd06132e00eadf8"
-  merge_commit: "b8a98a8df7605c0030469fb0eaa2e3f14aa3366f"
-
+  base_commit: ae411f846195b38c8bec88914dd06132e00eadf8
+  merge_commit: b8a98a8df7605c0030469fb0eaa2e3f14aa3366f
 checks:
-  # [pr_diff] fail_to_pass — Plugin manifest is valid
-  - id: test_plugin_json_valid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Plugin manifest exists and is valid JSON with required fields"
-
-  # [pr_diff] fail_to_pass — Hooks configuration is valid
-  - id: test_hooks_json_valid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Hooks configuration exists and has valid SessionStart hook"
-
-  # [pr_diff] fail_to_pass — Session-start script executes correctly
-  - id: test_session_start_executable
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Session-start hook script is executable and outputs valid JSON"
-
-  # [pr_diff] fail_to_pass — README exists
-  - id: test_readme_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README.md exists and contains required documentation"
-
-  # [pr_diff] fail_to_pass — .gitignore updated
-  - id: test_gitignore_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".gitignore exists at root and ignores .DS_Store"
-
-  # [static] pass_to_pass — Directory structure
-  - id: test_plugin_directory_structure
-    type: pass_to_pass
-    origin: static
-    description: "Plugin directory structure matches expected layout"
-
-  # [static] pass_to_pass — Script has shebang
-  - id: test_session_start_has_shebang
-    type: pass_to_pass
-    origin: static
-    description: "Session-start script has proper shebang line"
-
+- id: test_plugin_json_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: Plugin manifest exists and is valid JSON with required fields
+- id: test_hooks_json_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hooks configuration exists and has valid SessionStart hook
+- id: test_session_start_executable
+  type: fail_to_pass
+  origin: pr_diff
+  description: Session-start hook script is executable and outputs valid JSON
+- id: test_readme_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md exists and contains required documentation
+- id: test_gitignore_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: .gitignore exists at root and ignores .DS_Store
+- id: test_plugin_directory_structure
+  type: pass_to_pass
+  origin: static
+  description: Plugin directory structure matches expected layout
+- id: test_session_start_has_shebang
+  type: pass_to_pass
+  origin: static
+  description: Session-start script has proper shebang line
 rubric: []
+config_edits:
+- path: plugins/learning-output-style/README.md
+  tier: 2
+  gold_added: '# Learning Style Plugin
+
+
+    This plugin combines the unshipped Learning output style with explanatory functionality
+    as a SessionStart hook.
+
+
+    **Note:** This plugin differs from the original unshipped Learning output style
+    by also incorporating all functionality from the [explanatory-output-style plugin](https://github.com/anthropics/claude-code/tree/main/plugins/explanatory-output-style),
+    providing both interactive learning and educational insights.
+
+
+    WARNING: Do not install this plugin unless you are fine with incurring the token
+    cost of this plugin''s additional instructions and the interactive nature of learning
+    mode.
+
+
+    ## What it does
+
+
+    When enabled, this plugin automatically adds instructions at the start of each
+    session that encourage Claude to:
+
+
+    1. **Learning Mode:** Engage you in active learning by requesting meaningful code
+    contributions at decision points
+
+    2. **Explanatory Mode:** Provide educational insights about implementation choices
+    and codebase patterns
+
+
+    Instead of implementing everything automatically, Claude will:
+
+
+    1. Identify opportunities where you can write 5-10 lines of meaningful code
+
+    2. Focus on business logic and design choices where your input truly matters
+
+    3. Prepare the context and location for your contribution
+
+    4. Explain trade-offs and guide your implementation
+
+    5. Provide educational insights before and after writing code
+
+
+    ## How it works
+
+
+    The plugin uses a SessionStart hook to inject additional context into every session.
+    This context instructs Claude to adopt an interactive teaching approach where
+    you actively participate in writing key parts of the code.
+
+
+    ## When Claude requests contributions
+
+
+    Claude will ask you to write code for:
+
+    - Business logic with multiple valid approaches
+
+    - Error handling strategies
+
+    - Algorithm implementation choices
+
+    - Data structure decisions
+
+    - User experience decisions
+
+    - Design patterns and architecture choices
+
+
+    ## When Claude won''t request contributions
+
+
+    Claude will implement directly:
+
+    - Boilerplate or repetitive co'
+  gold_removed: ''

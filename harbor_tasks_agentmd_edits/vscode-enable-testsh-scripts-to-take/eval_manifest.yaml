@@ -24,7 +24,8 @@ checks:
 - id: non_ts_bare_args_not_converted
   type: pass_to_pass
   origin: pr_diff
-  description: Non-.ts/.js bare arguments stay in positional args, not converted to --run
+  description: Non-.ts/.js bare arguments stay in positional args, not converted to
+    --run
 - id: bare_ts_file_becomes_run_arg
   type: fail_to_pass
   origin: pr_diff
@@ -36,7 +37,8 @@ checks:
 - id: bare_files_merge_with_explicit_run
   type: fail_to_pass
   origin: pr_diff
-  description: Bare files merge with an explicit --run flag rather than replacing it
+  description: Bare files merge with an explicit --run flag rather than replacing
+    it
 - id: help_text_mentions_positional_files
   type: fail_to_pass
   origin: pr_diff
@@ -136,3 +138,48 @@ rubric:
     bash
 
     ./scripts/test.sh src/vs/editor/test/common/model.test.ts src/vs/editor/test/common/range.'
+config_edits:
+- path: .github/skills/unit-tests/SKILL.md
+  tier: 1
+  gold_added: '#### Bare file paths - Run tests from specific files
+
+
+    Pass source file paths directly as positional arguments. The test runner automatically
+    treats bare `.ts`/`.js` positional arguments as `--run` values.
+
+
+    ```bash
+
+    ./scripts/test.sh src/vs/editor/test/common/model.test.ts
+
+    ```
+
+
+    ```bat
+
+    .\scripts\test.bat src\vs\editor\test\common\model.test.ts
+
+    ```
+
+
+    Multiple files:
+
+
+    ```bash
+
+    ./scripts/test.sh src/vs/editor/test/common/model.test.ts src/vs/editor/test/common/range.test.ts
+
+    ```
+
+
+    #### `--run <file>` - Run tests from a specific file (explicit form)
+
+    Integration tests (files ending in `.integrationTest.ts` or located in `extensions/`)
+    are **not run** by `scripts/test.sh`. Use `scripts/test-integration.sh` (or `scripts/test-integration.bat`)
+    instead. See the `integration-tests` skill for details.'
+  gold_removed: '#### `--run <file>` - Run tests from a specific file
+
+    Integration tests (files ending in `.integrationTest.ts` or located in `extensions/`)
+    are **not run** by `scripts/test.sh`. Use `scripts/test-integration.sh` (or `scripts/test-integration.bat`)
+    instead. See the `integration-tests` skill for details on filtering and running
+    specific integration test files.'

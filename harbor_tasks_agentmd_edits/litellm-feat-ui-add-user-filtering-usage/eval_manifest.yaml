@@ -1,53 +1,71 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "BerriAI/litellm"
+  repo: BerriAI/litellm
   pr: 22059
-  base_commit: "a38993b871a32090caea0941427a8bc5489a5c02"
-  merge_commit: "5662228e207c5b5f49a727594949118f4a6524c4"
-
+  base_commit: a38993b871a32090caea0941427a8bc5489a5c02
+  merge_commit: 5662228e207c5b5f49a727594949118f4a6524c4
 checks:
-  # Code behavior tests (fail_to_pass)
-  - id: entity_type_includes_user
-    type: fail_to_pass
-    origin: pr_diff
-    description: "EntityType union type includes 'user'"
-
-  - id: usage_view_select_has_user_option
-    type: fail_to_pass
-    origin: pr_diff
-    description: "UsageViewSelect component includes 'user' as a selectable option"
-
-  - id: export_header_supports_filter_mode
-    type: fail_to_pass
-    origin: pr_diff
-    description: "UsageExportHeader accepts filterMode prop for single/multiple select control"
-
-  # Config/documentation update tests (fail_to_pass)
-  - id: agents_md_documents_contract_mismatch
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md documents the UI/Backend Contract Mismatch pitfall (single vs array)"
-
-  - id: claude_md_adds_ui_backend_consistency
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md adds UI/Backend consistency section"
-
-  # Pass-to-pass tests
-  - id: tsconfig_valid_json
-    type: pass_to_pass
-    origin: static
-    description: "tsconfig.json is valid JSON with compilerOptions"
-
+- id: entity_type_includes_user
+  type: fail_to_pass
+  origin: pr_diff
+  description: EntityType union type includes 'user'
+- id: usage_view_select_has_user_option
+  type: fail_to_pass
+  origin: pr_diff
+  description: UsageViewSelect component includes 'user' as a selectable option
+- id: export_header_supports_filter_mode
+  type: fail_to_pass
+  origin: pr_diff
+  description: UsageExportHeader accepts filterMode prop for single/multiple select
+    control
+- id: agents_md_documents_contract_mismatch
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md documents the UI/Backend Contract Mismatch pitfall (single
+    vs array)
+- id: claude_md_adds_ui_backend_consistency
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md adds UI/Backend consistency section
+- id: tsconfig_valid_json
+  type: pass_to_pass
+  origin: static
+  description: tsconfig.json is valid JSON with compilerOptions
 rubric:
-  - rule: "Config updates should follow the style and format of existing pitfall entries in AGENTS.md"
-    source:
-      path: "AGENTS.md"
-      lines: "170-176"
-      commit: "a38993b871a32090caea0941427a8bc5489a5c02"
-  - rule: "New entity types should include corresponding tests in existing test files"
-    source:
-      path: "AGENTS.md"
-      lines: "73-86"
-      commit: "a38993b871a32090caea0941427a8bc5489a5c02"
+- rule: Config updates should follow the style and format of existing pitfall entries
+    in AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: 170-176
+    commit: a38993b871a32090caea0941427a8bc5489a5c02
+- rule: New entity types should include corresponding tests in existing test files
+  source:
+    path: AGENTS.md
+    lines: 73-86
+    commit: a38993b871a32090caea0941427a8bc5489a5c02
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '6. **UI/Backend Contract Mismatch**: When adding a new entity type
+    to the UI, always check whether the backend endpoint accepts a single value or
+    an array. Match the UI control accordingly (single-select vs. multi-select) to
+    avoid silently dropping user selections
+
+    7. **Missing Tests for New Entity Types**: When adding a new entity type (e.g.,
+    in `EntityUsage`, `UsageViewSelect`), always add corresponding tests in the existing
+    test files and update any icon/component mocks'
+  gold_removed: ''
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '- **Always add tests when adding new entity types or features** — if
+    the existing test file covers other entity types, add corresponding tests for
+    the new one
+
+
+    ### UI / Backend Consistency
+
+    - When wiring a new UI entity type to an existing backend endpoint, verify the
+    backend API contract (single value vs. array, required vs. optional params) and
+    ensure the UI controls match — e.g., use a single-select dropdown when the backend
+    accepts a single value, not a multi-select'
+  gold_removed: ''

@@ -81,9 +81,12 @@ rubric:
     path: .ai/AGENTS.md
     lines: 1-4
     commit: 2cd52c267ce4d0212eaa40c0ec7192a11654336f
-  reference: "- `make style`: runs formatters and linters (ruff), necessary to pass\
-    \ code style checks\n- `make typing`: runs the ty type checker and model structure\
-    \ rules\n- `make check-repo` — CI-style consistency checks (includes `make typing`)"
+  reference: '- `make style`: runs formatters and linters (ruff), necessary to pass
+    code style checks
+
+    - `make typing`: runs the ty type checker and model structure rules
+
+    - `make check-repo` — CI-style consistency checks (includes `make typing`)'
 - rule: SKILL.md must reference 'make typing' instead of 'make style' for type checks
   source:
     path: .ai/skills/add-or-fix-type-checking/SKILL.md
@@ -100,10 +103,45 @@ rubric:
     path: docs/source/en/pr_checks.md
     lines: 93-100
     commit: 2cd52c267ce4d0212eaa40c0ec7192a11654336f
-  reference: "# .ai/AGENTS.md\n- `make style`: runs formatters and linters (ruff),\
-    \ necessary to pass code style checks\n- `make typing`: runs the ty type checker\
-    \ and model structure rules\n- `make check-repo` — CI-style consistency checks\
-    \ (includes `make typing`)\n\n# .ai/skills/add-or-fix-type-checking/SKILL.md\n\
-    description: Fixes broken typing checks detected by ty, make typing, or make check-repo.\
-    \ Use when local runs, CI, or PR logs.\n- Optional `make\
-    \ typing` or CI output showing typing fa"
+  reference: '# .ai/AGENTS.md
+
+    - `make style`: runs formatters and linters (ruff), necessary to pass code style
+    checks
+
+    - `make typing`: runs the ty type checker and model structure rules
+
+    - `make check-repo` — CI-style consistency checks (includes `make typing`)
+
+
+    # .ai/skills/add-or-fix-type-checking/SKILL.md
+
+    description: Fixes broken typing checks detected by ty, make typing, or make check-repo.
+    Use when local runs, CI, or PR logs.
+
+    - Optional `make typing` or CI output showing typing fa'
+config_edits:
+- path: .ai/AGENTS.md
+  tier: 1
+  gold_added: '- `make style`: runs formatters and linters (ruff), necessary to pass
+    code style checks
+
+    - `make typing`: runs the ty type checker and model structure rules
+
+    - `make check-repo` — CI-style consistency checks (includes `make typing`)'
+  gold_removed: '- `make style`: runs formatters, linters and type checker, necessary
+    to pass code style checks
+
+    - `make check-repo` — CI-style consistency checks'
+- path: .ai/skills/add-or-fix-type-checking/SKILL.md
+  tier: 1
+  gold_added: "description: Fixes broken typing checks detected by ty, make typing,\
+    \ or make check-repo. Use when typing errors appear in local runs, CI, or PR logs.\n\
+    - Optional `make typing` or CI output showing typing failures.\n   - If you already\
+    \ have `make typing` or CI output, extract the failing file/module paths.\n  \
+    \   make typing\n   - Re-run `make typing` to confirm the type/model-rules step\
+    \ passes"
+  gold_removed: "description: Fixes broken typing checks detected by ty, make style,\
+    \ or make check-repo. Use when typing errors appear in local runs, CI, or PR logs.\n\
+    - Optional `make style` or CI output showing typing failures.\n   - If you already\
+    \ have `make style` or CI output, extract the failing file/module paths.\n   \
+    \  make style\n   - Re-run `make style` to confirm the full style/type step passes"

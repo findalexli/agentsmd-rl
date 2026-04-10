@@ -64,7 +64,7 @@ rubric:
     path: turbopack/crates/turbo-persistence/README.md
     lines: 128-131
     commit: b9e9f1112f6bb3bc20ae57ec5f8138e11331a5b6
-  reference: "- 8..255: inlined value (currently only values \u22648 bytes are inlined,\
+  reference: "- 8..255: inlined value (currently only values ≤8 bytes are inlined,\
     \ though the format supports up to 247)\n  - (type - 8) bytes value data (inline,\
     \ no separate value block)"
 - rule: README.md indicates inline values are stored directly, not in separate value
@@ -73,6 +73,13 @@ rubric:
     path: turbopack/crates/turbo-persistence/README.md
     lines: 128-131
     commit: b9e9f1112f6bb3bc20ae57ec5f8138e11331a5b6
-  reference: "- 8..255: inlined value (currently only values \u22648 bytes are inlined,\
+  reference: "- 8..255: inlined value (currently only values ≤8 bytes are inlined,\
     \ though the format supports up to 247)\n  - (type - 8) bytes value data (inline,\
     \ no separate value block)"
+config_edits:
+- path: turbopack/crates/turbo-persistence/README.md
+  tier: 2
+  gold_added: "- 8..255: inlined value (currently only values ≤8 bytes are inlined,\
+    \ though the format supports up to 247)\n  - (type - 8) bytes value data (inline,\
+    \ no separate value block)"
+  gold_removed: "- 8..255: inlined key (future)\n  - type - 8 bytes value data"

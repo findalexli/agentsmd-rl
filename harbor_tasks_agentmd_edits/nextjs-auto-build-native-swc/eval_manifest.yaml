@@ -38,11 +38,19 @@ rubric:
     lines: 365-375
     commit: def0e3aabfa112ada22ece9297501c52471d34bd
 - rule: scripts/build-native.ts uses prettier --stdin-filepath instead of --write
-  reference: "# AGENTS.md\n- **Edited Next.js code or Turbopack (Rust)?** \u2192 `pnpm\
-    \ build`"
+  reference: '# AGENTS.md
+
+    - **Edited Next.js code or Turbopack (Rust)?** → `pnpm build`'
 - rule: AGENTS.md updated to remove separate swc-build-native instructions
   source:
     path: AGENTS.md
     lines: 367-371
     commit: 9a7733ed83bce9cc1264454ddc7335fdcfb0c1eb
-  reference: "- **Edited Next.js code or Turbopack (Rust)?** \u2192 `pnpm build`"
+  reference: '- **Edited Next.js code or Turbopack (Rust)?** → `pnpm build`'
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- **Edited Next.js code or Turbopack (Rust)?** → `pnpm build`'
+  gold_removed: '- **Edited Turbopack (Rust)?** → `pnpm swc-build-native`
+
+    - **Edited both?** → `pnpm turbo build build-native`'

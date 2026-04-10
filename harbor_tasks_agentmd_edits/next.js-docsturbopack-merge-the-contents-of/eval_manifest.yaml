@@ -1,89 +1,132 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 91126
-  base_commit: "545eba1ff6a6e74042c6e9c7412e3315a6f36d19~1"
-  merge_commit: "885016306d325fb682e831e0e9679a0990a1e6b1"
-
+  base_commit: 545eba1ff6a6e74042c6e9c7412e3315a6f36d19~1
+  merge_commit: 885016306d325fb682e831e0e9679a0990a1e6b1
 checks:
-  # ---------------------------------------------------------------------------
-  # Gates (pass_to_pass) — syntax / compilation checks
-  # ---------------------------------------------------------------------------
-  - id: test_crate_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified crate compiles without errors (cargo check)"
-
-  - id: test_rustdoc_builds
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Documentation builds successfully with cargo doc --no-deps)"
-
-  # ---------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core behavioral tests
-  # ---------------------------------------------------------------------------
-  - id: vc_readme_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Vc README.md file is created with cells documentation"
-
-  - id: mod_rs_uses_include_str
-    type: fail_to_pass
-    origin: pr_diff
-    description: "mod.rs uses include_str! to embed README.md as module docs"
-
-  - id: vc_readme_has_cells_content
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README.md contains the merged cells page content (key sections)"
-
-  - id: lib_rs_docs_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "lib.rs documentation updated with improved Vc descriptions"
-
-  - id: raw_vc_docs_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "raw_vc.rs documentation updated with Vc links"
-
-  - id: resolved_vc_docs_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "resolved.rs documentation updated with reading section"
-
-  - id: crate_readme_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "turbo-tasks README.md simplified (cells section merged into Vc description)"
-
-  - id: mod_rs_typo_fixed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Typo fixed in mod.rs (missing backtick)"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests / static) — regression + anti-stub
-  # ---------------------------------------------------------------------------
-  - id: test_repo_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's clippy linting passes (cargo clippy)"
-
-  - id: test_repo_formatting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's code formatting passes (cargo fmt --check)"
-
-  - id: test_existing_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Upstream test suite (cargo test) still passes"
-
-  - id: test_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "README.md has substantial content, not just a placeholder"
-
+- id: test_crate_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified crate compiles without errors (cargo check)
+- id: test_rustdoc_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: Documentation builds successfully with cargo doc --no-deps)
+- id: vc_readme_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Vc README.md file is created with cells documentation
+- id: mod_rs_uses_include_str
+  type: fail_to_pass
+  origin: pr_diff
+  description: mod.rs uses include_str! to embed README.md as module docs
+- id: vc_readme_has_cells_content
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md contains the merged cells page content (key sections)
+- id: lib_rs_docs_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: lib.rs documentation updated with improved Vc descriptions
+- id: raw_vc_docs_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: raw_vc.rs documentation updated with Vc links
+- id: resolved_vc_docs_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolved.rs documentation updated with reading section
+- id: crate_readme_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: turbo-tasks README.md simplified (cells section merged into Vc description)
+- id: mod_rs_typo_fixed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Typo fixed in mod.rs (missing backtick)
+- id: test_repo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's clippy linting passes (cargo clippy)
+- id: test_repo_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's code formatting passes (cargo fmt --check)
+- id: test_existing_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream test suite (cargo test) still passes
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: README.md has substantial content, not just a placeholder
 rubric: []
+config_edits:
+- path: turbopack/crates/turbo-tasks/README.md
+  tier: 2
+  gold_added: ''
+  gold_removed: ''
+- path: turbopack/crates/turbo-tasks/src/vc/README.md
+  tier: 2
+  gold_added: '**Value cells** represent the pending result of a computation, similar
+    to a cell in a spreadsheet. When a `Vc`''s contents change, the change is propagated
+    by invalidating dependent tasks.
+
+
+    In order to get a reference to the pointed value, you need to `.await` the [`Vc<T>`]
+    to get a [`ReadRef<T>`][`ReadRef`]:
+
+
+    ```
+
+    let some_vc: Vc<T>;
+
+    let some_ref: ReadRef<T> = some_vc.await?;
+
+    some_ref.some_method_on_t();
+
+    ```
+
+
+    The returned [`ReadRef<T>`][`ReadRef`] represents a [reference-counted][triomphe::Arc]
+    snapshot of a cell''s value at a given point in time.
+
+
+    ## Understanding Cells
+
+
+    A **cell** is a storage location for data associated with a task. Cells provide:
+
+
+    - **Immutability**: Once a value is stored in a cell, it becomes immutable until
+    that task is re-executed.
+
+    - **Recomputability**: If invalidated or cache evicted, a cell''s contents can
+    be re-computed by re-executing its associated task.
+
+    - **Dependency Tracking**: When a cell''s contents are read (with `.await`), the
+    reading task is marked as dependent on the cell.
+
+    - **Persistence**: Cells owned by persisted tasks are serializable using the [`bincode`]
+    crate.
+
+
+    Cells are stored in arrays associated with the task that constructed them. A `Vc`
+    can either point to a specific cell (this is a *"resolved"* cell), or the return
+    value of a function (this is an *"unresolved"* cell).
+
+
+    <figure style="display: flex; flex-direction: column; justify-content: center;">
+
+    <img alt="A diagram showing where cells are stored in tasks" width="850px" src="https://h8dxkfmaphn8o0p3.public.blob.vercel-storage.com/rustdoc-images/RawVc.excalidraw.png">
+
+    <figcaption style="font-style: italic; font-size: 80%;">
+
+    <tt>TaskOutput</tt>s point to a specific task, and refer to the output cell for
+    that task. <tt>TaskCell</tt>s point to a specific cell within a task. Task cells
+    are stored in a table (conceptually a <tt>Map&lt;ValueTypeId, Vec&lt;SharedReference&gt;&gt</tt>)
+    and are referenced by a pair of a type id and a sequentially allocated index.
+
+    </figcaptio'
+  gold_removed: ''

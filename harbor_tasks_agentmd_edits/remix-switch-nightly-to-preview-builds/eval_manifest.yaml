@@ -1,54 +1,97 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "remix-run/remix"
+  repo: remix-run/remix
   pr: 11003
-  base_commit: "721dac4c6704d5b3e8428887af21accdcb3b23ea"
-  merge_commit: "5d080eb4aa24c706915844a6ea2fa0606598aef8"
-
+  base_commit: 721dac4c6704d5b3e8428887af21accdcb3b23ea
+  merge_commit: 5d080eb4aa24c706915844a6ea2fa0606598aef8
 checks:
-  # Gates — syntax / structural
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript and YAML files parse without errors"
-
-  # Code behavior — fail-to-pass
-  - id: setup_script_requires_positional_arg
-    type: fail_to_pass
-    origin: pr_diff
-    description: "setup-installable-branch.ts requires branch name as positional arg, no default"
-
-  - id: nightly_workflow_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "nightly.yml workflow is deleted"
-
-  - id: preview_workflow_continuous_build
-    type: fail_to_pass
-    origin: pr_diff
-    description: "preview.yml triggers on push to main with separate event handling"
-
-  # Config/documentation — fail-to-pass
-  - id: readme_documents_preview_install
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README.md documents preview branch install command, not nightly"
-
-  - id: contributing_documents_preview_builds
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CONTRIBUTING.md has Preview builds section with preview branch reference"
-
-  # Anti-regression — fail-to-pass
-  - id: setup_script_no_overwrite_protection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script has no branch overwrite protection (removed along with nightly default)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript and YAML files parse without errors
+- id: setup_script_requires_positional_arg
+  type: fail_to_pass
+  origin: pr_diff
+  description: setup-installable-branch.ts requires branch name as positional arg,
+    no default
+- id: nightly_workflow_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: nightly.yml workflow is deleted
+- id: preview_workflow_continuous_build
+  type: fail_to_pass
+  origin: pr_diff
+  description: preview.yml triggers on push to main with separate event handling
+- id: readme_documents_preview_install
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md documents preview branch install command, not nightly
+- id: contributing_documents_preview_builds
+  type: fail_to_pass
+  origin: pr_diff
+  description: CONTRIBUTING.md has Preview builds section with preview branch reference
+- id: setup_script_no_overwrite_protection
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script has no branch overwrite protection (removed along with nightly
+    default)
 rubric:
-  - rule: "Config updates are consistent with the existing documentation style"
-    source:
-      path: "CONTRIBUTING.md"
-      lines: "1-10"
-      commit: "721dac4c6704d5b3e8428887af21accdcb3b23ea"
+- rule: Config updates are consistent with the existing documentation style
+  source:
+    path: CONTRIBUTING.md
+    lines: 1-10
+    commit: 721dac4c6704d5b3e8428887af21accdcb3b23ea
+config_edits:
+- path: CONTRIBUTING.md
+  tier: 2
+  gold_added: '## Preview builds
+
+    We maintain installable builds of `main` in a `preview` branch as a way for folks
+    to test out the latest `main` branch without needing to publish releases to npm
+    and clutter up the npm registry and version history UI.
+
+    This is managed via the [`preview` workflow](/.github/workflows/preview.yaml)
+    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
+    script to build and commit the build and required `package.json` changes to the
+    `preview` branch on every new commit to `main`.
+
+    The `preview` branch build can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#preview&path:packages/remix"
+
+    pnpm install "remix-run/remix#preview&path:packages/@remix-run/fetch-router"'
+  gold_removed: '## Nightly Builds
+
+    We also maintain installable nightly builds in a `nightly` branch as a way for
+    folks to test out the latest `main` branch without needing to publish nightly
+    releases to npm and clutter up the npm registry and version history UI.
+
+    This is managed via the [`nightly` workflow](/.github/workflows/nightly.yaml)
+    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
+    script to build and commit the build and required `package.json` changes to the
+    `nightly` branch.
+
+    The nightly build can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#nightly&path:packages/remix"
+
+    pnpm install "remix-run/remix#nightly&path:packages/@remix-run/fetch-router"'
+- path: README.md
+  tier: 2
+  gold_added: 'If you want to play around with the bleeding edge, we also build the
+    latest `main` branch into a `preview` branch which can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#preview&path:packages/remix"
+
+    pnpm install "remix-run/remix#preview&path:packages/@remix-run/fetch-router"'
+  gold_removed: 'If you want to play around with the bleeding edge, we also build
+    the latest `main` branch every night into a `nightly` branch which can be [installed
+    directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#nightly&path:packages/remix"
+
+    pnpm install "remix-run/remix#nightly&path:packages/@remix-run/fetch-router"'

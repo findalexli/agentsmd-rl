@@ -1,64 +1,74 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12990
-  base_commit: "0b943a4fd0d7701203f1b79b70b5afed19ee8413"
-  merge_commit: "b0b1dc3282389a64ef3e16edb98805911f97444c"
-
+  base_commit: 0b943a4fd0d7701203f1b79b70b5afed19ee8413
+  merge_commit: b0b1dc3282389a64ef3e16edb98805911f97444c
 checks:
-  # Gate (pass_to_pass)
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "gradio/components/html.py parses without syntax errors"
-
-  # Pass-to-pass (repo CI/CD tests)
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff lint passes on html.py"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on html.py"
-
-  - id: test_repo_html_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "HTML component tests pass"
-
-  # Code behavior (fail_to_pass)
-  - id: head_param_in_init
-    type: fail_to_pass
-    origin: pr_diff
-    description: "HTML.__init__ accepts head parameter before server_functions"
-
-  - id: head_stored_as_attribute
-    type: fail_to_pass
-    origin: pr_diff
-    description: "HTML.__init__ stores head as self.head"
-
-  - id: publish_format_uses_self_head
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_to_publish_format uses self.head as fallback for head key"
-
-  - id: push_to_hub_uses_self_head
-    type: fail_to_pass
-    origin: pr_diff
-    description: "push_to_hub passes self.head as fallback when head not provided"
-
-  # Config/documentation updates (fail_to_pass)
-  - id: skill_md_html_signature_has_head
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md HTML component signature includes head: str | None = None"
-
-  - id: guide_documents_head_parameter
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Custom HTML guide documents the head parameter with code examples"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: gradio/components/html.py parses without syntax errors
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint passes on html.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on html.py
+- id: test_repo_html_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: HTML component tests pass
+- id: head_param_in_init
+  type: fail_to_pass
+  origin: pr_diff
+  description: HTML.__init__ accepts head parameter before server_functions
+- id: head_stored_as_attribute
+  type: fail_to_pass
+  origin: pr_diff
+  description: HTML.__init__ stores head as self.head
+- id: publish_format_uses_self_head
+  type: fail_to_pass
+  origin: pr_diff
+  description: _to_publish_format uses self.head as fallback for head key
+- id: push_to_hub_uses_self_head
+  type: fail_to_pass
+  origin: pr_diff
+  description: push_to_hub passes self.head as fallback when head not provided
+- id: skill_md_html_signature_has_head
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'SKILL.md HTML component signature includes head: str | None = None'
+- id: guide_documents_head_parameter
+  type: fail_to_pass
+  origin: pr_diff
+  description: Custom HTML guide documents the head parameter with code examples
 rubric: []
+config_edits:
+- path: .agents/skills/gradio/SKILL.md
+  tier: 1
+  gold_added: '### `HTML(value: Any | Callable | None = None, label: str | I18nData
+    | None = None, html_template: str = "${value}", css_template: str = "", js_on_load:
+    str | None = "element.addEventListener(''click'', function() { trigger(''click'')
+    });", apply_default_css: bool = True, every: Timer | float | None = None, inputs:
+    Component | Sequence[Component] | set[Component] | None = None, show_label: bool
+    = False, visible: bool | Literal[''hidden''] = True, elem_id: str | None = None,
+    elem_classes: list[str] | str | None = None, render: bool = True, key: int | str
+    | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None
+    = "value", min_height: int | None = None, max_height: int | None = None, container:
+    bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button]
+    | None = None, head: str | None = None, server_functions: list[Callable] | None
+    = None, props: Any)`'
+  gold_removed: '### `HTML(value: Any | Callable | None = None, label: str | I18nData
+    | None = None, html_template: str = "${value}", css_template: str = "", js_on_load:
+    str | None = "element.addEventListener(''click'', function() { trigger(''click'')
+    });", apply_default_css: bool = True, every: Timer | float | None = None, inputs:
+    Component | Sequence[Component] | set[Component] | None = None, show_label: bool
+    = False, visible: bool | Literal[''hidden''] = True, elem_id: str | None = None,
+    elem_classes: list[str] | str | None = None, render: bool = True, key: int | str
+    | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None
+    = "value", min_height: int | None = None, max_height: int | None = None, container:
+    bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button]
+    | None = None, server_functions: list[Callable] | None = None, props: Any)`'

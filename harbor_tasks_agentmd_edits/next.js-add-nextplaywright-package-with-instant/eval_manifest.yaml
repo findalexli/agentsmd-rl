@@ -1,83 +1,104 @@
-version: "2.0"
-
+version: '2.0'
 source:
   repo: vercel/next.js
   pr: 90470
   base_commit: 0f851c5ecd1872a209595770c5fe8b2b24274715
   merge_commit: 574ac9f0f81379acbdac0054e76876c726af1c73
-
 checks:
-  - id: root_tsconfig_valid_json
-    type: pass_to_pass
-    origin: static
-    description: Root tsconfig.json must remain valid JSON
-
-  - id: repo_package_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo root package.json must be valid and define workspaces
-
-  - id: existing_packages_have_valid_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: Existing packages in monorepo must have valid structure
-
-  - id: package_json_structure
-    type: fail_to_pass
-    origin: pr_diff
-    description: "@next/playwright package.json must exist with correct name and dist fields"
-
-  - id: package_compiles
-    type: fail_to_pass
-    origin: pr_diff
-    description: Package TypeScript compiles without errors (tsc --noEmit)
-
-  - id: instant_function_exported
-    type: fail_to_pass
-    origin: pr_diff
-    description: index.ts must export an async function named 'instant' taking page + callback
-
-  - id: instant_cookie_protocol
-    type: fail_to_pass
-    origin: pr_diff
-    description: instant() must use the 'next-instant-navigation-testing' cookie to control navigation
-
-  - id: instant_cleanup_on_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: instant() must clean up the cookie even if the callback throws (try/finally)
-
-  - id: tsconfig_path_mapping
-    type: fail_to_pass
-    origin: pr_diff
-    description: Root tsconfig.json must map '@next/playwright' to the package source
-
-  - id: path_mapping_resolves
-    type: fail_to_pass
-    origin: pr_diff
-    description: Path mapping must actually resolve to the package source file
-
-  - id: readme_documentation
-    type: fail_to_pass
-    origin: agent_config
-    description: README.md documents the instant() testing helper with usage examples
-    source:
-      path: CLAUDE.md
-      lines: "28-36"
-      commit: 0f851c5ecd1872a209595770c5fe8b2b24274715
-
-  - id: readme_cookie_protocol_explained
-    type: fail_to_pass
-    origin: agent_config
-    description: README.md explains the cookie-based protocol so others can replicate it
-    source:
-      path: packages/next-playwright/README.md
-      lines: "82-107"
-      commit: 574ac9f0f81379acbdac0054e76876c726af1c73
-
+- id: root_tsconfig_valid_json
+  type: pass_to_pass
+  origin: static
+  description: Root tsconfig.json must remain valid JSON
+- id: repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo root package.json must be valid and define workspaces
+- id: existing_packages_have_valid_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing packages in monorepo must have valid structure
+- id: package_json_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: '@next/playwright package.json must exist with correct name and dist
+    fields'
+- id: package_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Package TypeScript compiles without errors (tsc --noEmit)
+- id: instant_function_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: index.ts must export an async function named 'instant' taking page
+    + callback
+- id: instant_cookie_protocol
+  type: fail_to_pass
+  origin: pr_diff
+  description: instant() must use the 'next-instant-navigation-testing' cookie to
+    control navigation
+- id: instant_cleanup_on_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: instant() must clean up the cookie even if the callback throws (try/finally)
+- id: tsconfig_path_mapping
+  type: fail_to_pass
+  origin: pr_diff
+  description: Root tsconfig.json must map '@next/playwright' to the package source
+- id: path_mapping_resolves
+  type: fail_to_pass
+  origin: pr_diff
+  description: Path mapping must actually resolve to the package source file
+- id: readme_documentation
+  type: fail_to_pass
+  origin: agent_config
+  description: README.md documents the instant() testing helper with usage examples
+  source:
+    path: CLAUDE.md
+    lines: 28-36
+    commit: 0f851c5ecd1872a209595770c5fe8b2b24274715
+- id: readme_cookie_protocol_explained
+  type: fail_to_pass
+  origin: agent_config
+  description: README.md explains the cookie-based protocol so others can replicate
+    it
+  source:
+    path: packages/next-playwright/README.md
+    lines: 82-107
+    commit: 574ac9f0f81379acbdac0054e76876c726af1c73
 rubric:
-  - rule: README documentation should be consistent with the style of other package READMEs in the monorepo
-    source:
-      path: CLAUDE.md
-      lines: "28-36"
-      commit: 0f851c5ecd1872a209595770c5fe8b2b24274715
+- rule: README documentation should be consistent with the style of other package
+    READMEs in the monorepo
+  source:
+    path: CLAUDE.md
+    lines: 28-36
+    commit: 0f851c5ecd1872a209595770c5fe8b2b24274715
+config_edits:
+- path: packages/next-playwright/README.md
+  tier: 2
+  gold_added: "# @next/playwright\n\n> - **Status:** Experimental. This API is not\
+    \ yet stable.\n> - **Requires:** [Cache Components](https://nextjs.org/docs) to\
+    \ be enabled.\n\nPlaywright helpers for testing Next.js applications.\n\n## Instant\
+    \ Navigation Testing\n\nAn **instant navigation** commits immediately without\
+    \ waiting for data fetching.\nThe cached shell — including any Suspense loading\
+    \ boundaries — renders right\naway, and dynamic data streams in afterward. The\
+    \ shell is the instant part, not\nthe full page.\n\n`instant()` lets you test\
+    \ whether a route achieves this. While the callback is\nactive, navigations render\
+    \ only cached and prefetched content. Dynamic data is\ndeferred until the callback\
+    \ returns. This lets you make deterministic assertions\nagainst the shell without\
+    \ race conditions.\n\nThe tool assumes a warm cache: all prefetches have completed\
+    \ and all cacheable\ndata is available. This way you're testing whether the route\
+    \ is *structured\ncorrectly* for instant navigation, independent of network timing.\
+    \ If content you\nexpected to be cached is missing inside the callback, it points\
+    \ to a problem — a\nmissing `use cache` directive, a misplaced Suspense boundary,\
+    \ or a similar gap.\n\n### Examples\n\n**Loading shell appears instantly** (dynamic\
+    \ content behind a Suspense boundary):\n\n```ts\nimport { instant } from '@next/playwright'\n\
+    \ntest('shows loading shell during navigation', async ({ page }) => {\n  await\
+    \ page.goto('/')\n\n  await instant(page, async () => {\n    await page.click('a[href=\"\
+    /dashboard\"]')\n\n    // The loading shell is visible — dynamic data is deferred\n\
+    \    await expect(page.locator('[data-testid=\"loading\"]')).toBeVisible()\n \
+    \ })\n\n  // After instant() returns, dynamic data streams in normally\n  await\
+    \ expect(page.locator('[data-testid=\"content\"]')).toBeVisible()\n})\n```\n\n\
+    **Fully instant navigation** (all content is cached):\n\n```ts\ntest('navigates\
+    \ to profile instantly', async ({ page }) => {\n  await page.goto('/')\n\n  await\
+    \ instant(page, async () => {\n    await page.click('a[href=\"/profile\""
+  gold_removed: ''

@@ -1,47 +1,67 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anthropics/claude-code"
+  repo: anthropics/claude-code
   pr: 10495
-  base_commit: "4dc23d0275ff615ba1dccbdd76ad2b12a3ede591"
-  merge_commit: "0c7d02b56f97d53d3526eb5d9d201e69cec0a1c3"
-
+  base_commit: 4dc23d0275ff615ba1dccbdd76ad2b12a3ede591
+  merge_commit: 0c7d02b56f97d53d3526eb5d9d201e69cec0a1c3
 checks:
-  # fail_to_pass tests - core behavioral tests for the plugin
-  - id: test_plugin_files_exist
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Plugin directory and all required files must exist"
-
-  - id: test_session_start_outputs_valid_json
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Session start script must output valid JSON when executed"
-
-  - id: test_session_start_has_explanatory_content
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Session start output must contain the explanatory mode instructions"
-
-  - id: test_plugin_json_valid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Plugin manifest must be valid JSON with required fields"
-
-  - id: test_hooks_json_valid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Hooks configuration must be valid JSON with SessionStart handler"
-
-  # pass_to_pass tests - static quality checks
-  - id: test_shell_script_executable
-    type: pass_to_pass
-    origin: static
-    description: "Session start script must be executable with proper shebang"
-
-  - id: test_readme_documents_usage
-    type: pass_to_pass
-    origin: static
-    description: "README must document the plugin purpose and usage"
-
+- id: test_plugin_files_exist
+  type: fail_to_pass
+  origin: pr_diff
+  description: Plugin directory and all required files must exist
+- id: test_session_start_outputs_valid_json
+  type: fail_to_pass
+  origin: pr_diff
+  description: Session start script must output valid JSON when executed
+- id: test_session_start_has_explanatory_content
+  type: fail_to_pass
+  origin: pr_diff
+  description: Session start output must contain the explanatory mode instructions
+- id: test_plugin_json_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: Plugin manifest must be valid JSON with required fields
+- id: test_hooks_json_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hooks configuration must be valid JSON with SessionStart handler
+- id: test_shell_script_executable
+  type: pass_to_pass
+  origin: static
+  description: Session start script must be executable with proper shebang
+- id: test_readme_documents_usage
+  type: pass_to_pass
+  origin: static
+  description: README must document the plugin purpose and usage
 rubric: []
+config_edits:
+- path: plugins/explanatory-output-style/README.md
+  tier: 2
+  gold_added: "# Explanatory Output Style Plugin\n\nThis plugin recreates the deprecated\
+    \ Explanatory output style as a SessionStart\nhook.\n\nWARNING: Do not install\
+    \ this plugin unless you are fine with incurring the token\ncost of this plugin's\
+    \ additional instructions and output.\n\n## What it does\n\nWhen enabled, this\
+    \ plugin automatically adds instructions at the start of each\nsession that encourage\
+    \ Claude to:\n\n1. Provide educational insights about implementation choices\n\
+    2. Explain codebase patterns and decisions\n3. Balance task completion with learning\
+    \ opportunities\n\n## How it works\n\nThe plugin uses a SessionStart hook to inject\
+    \ additional context into every\nsession. This context instructs Claude to provide\
+    \ brief educational explanations\nbefore and after writing code, formatted as:\n\
+    \n```\n`★ Insight ─────────────────────────────────────`\n[2-3 key educational\
+    \ points]\n`─────────────────────────────────────────────────`\n```\n\n## Usage\n\
+    \nOnce installed, the plugin activates automatically at the start of every\nsession.\
+    \ No additional configuration is needed.\n\nThe insights focus on:\n\n- Specific\
+    \ implementation choices for your codebase\n- Patterns and conventions in your\
+    \ code\n- Trade-offs and design decisions\n- Codebase-specific details rather\
+    \ than general programming concepts\n\n## Migration from Output Styles\n\nThis\
+    \ plugin replaces the deprecated \"Explanatory\" output style setting. If you\n\
+    previously used:\n\n```json\n{\n  \"outputStyle\": \"Explanatory\"\n}\n```\n\n\
+    You can now achieve the same behavior by installing this plugin instead.\n\nMore\
+    \ generally, this SessionStart hook pattern is roughly equivalent to\nCLAUDE.md,\
+    \ but it is more flexible and allows for distribution through plugins.\n\nNote:\
+    \ Output styles that involve tasks besides software development, are better\n\
+    expressed as\n[subagents](https://docs.claude.com/en/docs/claude-code/sub-agents),\
+    \ not as\nSessionStart hooks. Subagents change the system prompt while SessionStart\
+    \ hooks\nadd to the default system prompt.\n\n## Managing changes\n\n- Disable\
+    \ the plugin - ke"
+  gold_removed: ''

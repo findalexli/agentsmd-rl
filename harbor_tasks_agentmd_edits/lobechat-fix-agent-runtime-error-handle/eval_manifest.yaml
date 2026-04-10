@@ -1,43 +1,55 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "lobehub/lobe-chat"
+  repo: lobehub/lobe-chat
   pr: 12834
-  base_commit: "6e2613597800616e3d101e383eca88d46c791588"
-  merge_commit: "c6de80931e0c2bb9f64838245cacf6008a045d2a"
-
+  base_commit: 6e2613597800616e3d101e383eca88d46c791588
+  merge_commit: c6de80931e0c2bb9f64838245cacf6008a045d2a
 checks:
-  # Code behavior tests (FileSnapshotStore)
-  - id: filestore_get_falls_back_to_partials
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FileSnapshotStore.get() falls back to partial snapshots when no completed snapshot exists"
-
-  - id: filestore_partial_to_snapshot_fills_defaults
-    type: fail_to_pass
-    origin: pr_diff
-    description: "partialToSnapshot fills in default values for missing fields (totalSteps=0, totalTokens=0, etc.)"
-
-  - id: error_handler_resilient_to_redis_failure
-    type: fail_to_pass
-    origin: pr_diff
-    description: "executeStep catch block wraps publishStreamEvent, loadAgentState, saveAgentState, and triggerCompletionWebhook in individual try-catch blocks"
-
-  # Config/documentation update test
-  - id: skill_md_documents_inspect_for_partials
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Agent tracing SKILL.md documents using inspect command for partial snapshots instead of deprecated partial inspect subcommand"
-
-  # Pass-to-pass tests
-  - id: filestore_completed_snapshot_takes_priority
-    type: pass_to_pass
-    origin: pr_diff
-    description: "FileSnapshotStore.get() prefers completed snapshots over partials when both exist"
-
-  - id: typescript_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files parse without syntax errors"
-
+- id: filestore_get_falls_back_to_partials
+  type: fail_to_pass
+  origin: pr_diff
+  description: FileSnapshotStore.get() falls back to partial snapshots when no completed
+    snapshot exists
+- id: filestore_partial_to_snapshot_fills_defaults
+  type: fail_to_pass
+  origin: pr_diff
+  description: partialToSnapshot fills in default values for missing fields (totalSteps=0,
+    totalTokens=0, etc.)
+- id: error_handler_resilient_to_redis_failure
+  type: fail_to_pass
+  origin: pr_diff
+  description: executeStep catch block wraps publishStreamEvent, loadAgentState, saveAgentState,
+    and triggerCompletionWebhook in individual try-catch blocks
+- id: skill_md_documents_inspect_for_partials
+  type: fail_to_pass
+  origin: pr_diff
+  description: Agent tracing SKILL.md documents using inspect command for partial
+    snapshots instead of deprecated partial inspect subcommand
+- id: filestore_completed_snapshot_takes_priority
+  type: pass_to_pass
+  origin: pr_diff
+  description: FileSnapshotStore.get() prefers completed snapshots over partials when
+    both exist
+- id: typescript_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without syntax errors
 rubric: []
+config_edits:
+- path: .agents/skills/agent-tracing/SKILL.md
+  tier: 1
+  gold_added: '# Inspect a partial (use `inspect` directly — all flags work with partial
+    IDs)
+
+    agent-tracing inspect <partialOperationId>
+
+    agent-tracing inspect <partialOperationId> -T
+
+    agent-tracing inspect <partialOperationId> -p'
+  gold_removed: '# Inspect a partial snapshot (defaults to latest)
+
+    agent-tracing partial inspect
+
+    agent-tracing partial inspect <operationId>
+
+    agent-tracing partial inspect -j'

@@ -16,12 +16,13 @@ checks:
 - id: preview_workflow_push_trigger
   type: fail_to_pass
   origin: pr_diff
-  description: preview.yml has push trigger targeting main branch (YAML parsed via subprocess)
+  description: preview.yml has push trigger targeting main branch (YAML parsed via
+    subprocess)
 - id: script_no_branch_flag
   type: fail_to_pass
   origin: pr_diff
-  description: setup-installable-branch.ts parseArgs config rejects --branch flag (executed
-    via Node subprocess)
+  description: setup-installable-branch.ts parseArgs config rejects --branch flag
+    (executed via Node subprocess)
 - id: script_requires_branch_name
   type: fail_to_pass
   origin: pr_diff
@@ -116,3 +117,57 @@ rubric:
     which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
     script to build and commit the build and required `package.json` changes to the
     `preview` branch on '
+config_edits:
+- path: CONTRIBUTING.md
+  tier: 2
+  gold_added: '## Preview builds
+
+    We maintain installable builds of `main` in a `preview` branch as a way for folks
+    to test out the latest `main` branch without needing to publish releases to npm
+    and clutter up the npm registry and version history UI.
+
+    This is managed via the [`preview` workflow](/.github/workflows/preview.yaml)
+    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
+    script to build and commit the build and required `package.json` changes to the
+    `preview` branch on every new commit to `main`.
+
+    The `preview` branch build can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#preview&path:packages/remix"
+
+    pnpm install "remix-run/remix#preview&path:packages/@remix-run/fetch-router"'
+  gold_removed: '## Nightly Builds
+
+    We also maintain installable nightly builds in a `nightly` branch as a way for
+    folks to test out the latest `main` branch without needing to publish nightly
+    releases to npm and clutter up the npm registry and version history UI.
+
+    This is managed via the [`nightly` workflow](/.github/workflows/nightly.yaml)
+    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
+    script to build and commit the build and required `package.json` changes to the
+    `nightly` branch.
+
+    The nightly build can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#nightly&path:packages/remix"
+
+    pnpm install "remix-run/remix#nightly&path:packages/@remix-run/fetch-router"'
+- path: README.md
+  tier: 2
+  gold_added: 'If you want to play around with the bleeding edge, we also build the
+    latest `main` branch into a `preview` branch which can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#preview&path:packages/remix"
+
+    pnpm install "remix-run/remix#preview&path:packages/@remix-run/fetch-router"'
+  gold_removed: 'If you want to play around with the bleeding edge, we also build
+    the latest `main` branch every night into a `nightly` branch which can be [installed
+    directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#nightly&path:packages/remix"
+
+    pnpm install "remix-run/remix#nightly&path:packages/@remix-run/fetch-router"'

@@ -44,7 +44,7 @@ checks:
   description: SKILL.md documents -b flag and new command names
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
-    lines: '28-29'
+    lines: 28-29
     commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
 - id: session_mgmt_md_uses_b_flag
   type: fail_to_pass
@@ -52,13 +52,12 @@ checks:
   description: session-management.md uses -b flag and new command names
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
-    lines: '28-29'
+    lines: 28-29
     commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
 - id: program_still_handles_open_close
   type: pass_to_pass
   origin: static
   description: program.ts still handles open, close, and delete-data commands
-
 - id: test_modified_typescript_files_have_balanced_braces
   type: pass_to_pass
   origin: repo_tests
@@ -95,12 +94,49 @@ rubric:
 - rule: Documentation updates are consistent with the style of existing SKILL.md content
   source:
     path: packages/playwright/src/skill/SKILL.md
-    lines: '1-10'
+    lines: 1-10
     commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
 - rule: Update skill file and references when commands change
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
-    lines: '28-29'
+    lines: 28-29
     commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
 - rule: User-facing messages say Browser instead of Session, [open]/[closed] instead
     of [running]/[stopped]
+config_edits:
+- path: packages/playwright/src/skill/SKILL.md
+  tier: 1
+  gold_added: '### Browser Sessions
+
+    playwright-cli -b mysession open example.com
+
+    playwright-cli -b mysession click e6
+
+    playwright-cli -b mysession close  # stop a named browser
+
+    playwright-cli -b mysession delete-data  # delete user data for named browser
+
+    playwright-cli list
+
+    playwright-cli close-all
+
+    playwright-cli kill-all
+
+    * **Browser session management** [references/session-management.md](references/session-management.md)'
+  gold_removed: '### Sessions
+
+    playwright-cli --session=mysession open example.com
+
+    playwright-cli --session=mysession click e6
+
+    playwright-cli --session=mysession close  # stop a named session
+
+    playwright-cli --session=mysession delete-data  # delete user data for named session
+
+    playwright-cli session-list
+
+    playwright-cli session-close-all
+
+    playwright-cli session-kill-all
+
+    * **Session management** [references/session-management.md](references/session-management.md)'

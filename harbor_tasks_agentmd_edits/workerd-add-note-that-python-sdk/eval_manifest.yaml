@@ -16,7 +16,7 @@ checks:
 - id: freeze_test_passes
   type: fail_to_pass
   origin: pr_diff
-  description: "The freeze test runs successfully \u2014 hashes match actual SDK files"
+  description: The freeze test runs successfully — hashes match actual SDK files
 - id: freeze_test_covers_key_files
   type: fail_to_pass
   origin: pr_diff
@@ -83,3 +83,17 @@ rubric:
     Python SDK (`internal/workers-api/`) now lives in [cloudflare/workers-py](https://github.com/cloudflare/workers-py)
     and is installed from PyPI. Keep existing code for backward compatibility; new
     features go to workers-py.'
+config_edits:
+- path: src/pyodide/AGENTS.md
+  tier: 1
+  gold_added: '| `internal/workers-api/`                       | Python SDK package
+    (frozen)                                            |
+
+    ## Python SDK
+
+
+    Python SDK (`internal/workers-api/`) now lives in [cloudflare/workers-py](https://github.com/cloudflare/workers-py)
+    and is installed from PyPI. Keep existing code for backward compatibility; new
+    features go to workers-py.'
+  gold_removed: '| `internal/workers-api/`                       | Python SDK package
+    (`pyproject.toml` + `uv.lock` managed)                                             |'

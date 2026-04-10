@@ -1,122 +1,153 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "dotnet/maui"
+  repo: dotnet/maui
   pr: 33179
-  base_commit: "260770c977f376c9b0190c03ed1a41920725f079"
-  merge_commit: "ef3ba62440f2365a9bba0ac3f61a4605f4cece9f"
-
+  base_commit: 260770c977f376c9b0190c03ed1a41920725f079
+  merge_commit: ef3ba62440f2365a9bba0ac3f61a4605f4cece9f
 checks:
-  # ---------------------------------------------------------------------------
-  # Gates (pass_to_pass, static)
-  # ---------------------------------------------------------------------------
-
-  - id: permissions_file_compiles
-    type: pass_to_pass
-    origin: static
-    description: "Modified Permissions.windows.cs compiles without errors"
-
-  - id: copilot_instructions_valid
-    type: pass_to_pass
-    origin: static
-    description: "Copilot instructions file still exists and has valid markdown structure"
-
-  - id: skill_md_valid
-    type: pass_to_pass
-    origin: static
-    description: "SKILL.md still exists and has valid structure"
-
-  - id: example_md_valid
-    type: pass_to_pass
-    origin: static
-    description: "complete-example.md still exists and has valid structure"
-
-  # ---------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core behavioral tests
-  # ---------------------------------------------------------------------------
-
-  - id: microphone_uses_packaged_check
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Microphone permission checks IsPackagedApp before EnsureDeclared"
-
-  - id: checkstatusasync_conditional_ensuredeclared
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CheckStatusAsync only calls EnsureDeclared for packaged apps"
-
-  - id: requestasync_conditional_ensuredeclared
-    type: fail_to_pass
-    origin: pr_diff
-    description: "RequestAsync only calls EnsureDeclared for packaged apps"
-
-  - id: tryrequestpermissionasync_extracted
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TryRequestPermissionAsync helper method is extracted from RequestAsync"
-
-  - id: copilot_instructions_pr_note_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Stale PR testing note removed from copilot-instructions.md"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "200-213"
-      commit: "260770c977f376c9b0190c03ed1a41920725f079"
-
-  - id: skill_md_pr_note_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Stale PR testing note removed from SKILL.md"
-    source:
-      path: ".github/skills/pr-finalize/SKILL.md"
-      lines: "127-137"
-      commit: "260770c977f376c9b0190c03ed1a41920725f079"
-
-  - id: example_md_pr_note_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Stale PR testing note removed from complete-example.md"
-    source:
-      path: ".github/skills/pr-finalize/references/complete-example.md"
-      lines: "9-12"
-      commit: "260770c977f376c9b0190c03ed1a41920725f079"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (static) — regression checks
-  # ---------------------------------------------------------------------------
-
-  - id: permissions_file_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Permissions.windows.cs has real implementation, not just stubs"
-
-  - id: repo_permissions_file_parses
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Permissions.windows.cs has valid C# syntax (balanced braces, valid structure)"
-
-  - id: repo_file_headers_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files have valid headers and structure (namespace, usings, class definitions)"
-
-  - id: no_stub_implementations
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Permissions file has no NotImplementedException stubs (real implementation only)"
-
-  # ---------------------------------------------------------------------------
-  # Config-derived (agent_config)
-  # ---------------------------------------------------------------------------
-
-  - id: config_copilot_instructions_updated
-    type: fail_to_pass
-    origin: agent_config
-    description: "Agent config files updated to remove stale PR note per Copilot instructions"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "200-213"
-      commit: "260770c977f376c9b0190c03ed1a41920725f079"
-
+- id: permissions_file_compiles
+  type: pass_to_pass
+  origin: static
+  description: Modified Permissions.windows.cs compiles without errors
+- id: copilot_instructions_valid
+  type: pass_to_pass
+  origin: static
+  description: Copilot instructions file still exists and has valid markdown structure
+- id: skill_md_valid
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md still exists and has valid structure
+- id: example_md_valid
+  type: pass_to_pass
+  origin: static
+  description: complete-example.md still exists and has valid structure
+- id: microphone_uses_packaged_check
+  type: fail_to_pass
+  origin: pr_diff
+  description: Microphone permission checks IsPackagedApp before EnsureDeclared
+- id: checkstatusasync_conditional_ensuredeclared
+  type: fail_to_pass
+  origin: pr_diff
+  description: CheckStatusAsync only calls EnsureDeclared for packaged apps
+- id: requestasync_conditional_ensuredeclared
+  type: fail_to_pass
+  origin: pr_diff
+  description: RequestAsync only calls EnsureDeclared for packaged apps
+- id: tryrequestpermissionasync_extracted
+  type: fail_to_pass
+  origin: pr_diff
+  description: TryRequestPermissionAsync helper method is extracted from RequestAsync
+- id: copilot_instructions_pr_note_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Stale PR testing note removed from copilot-instructions.md
+  source:
+    path: .github/copilot-instructions.md
+    lines: 200-213
+    commit: 260770c977f376c9b0190c03ed1a41920725f079
+- id: skill_md_pr_note_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Stale PR testing note removed from SKILL.md
+  source:
+    path: .github/skills/pr-finalize/SKILL.md
+    lines: 127-137
+    commit: 260770c977f376c9b0190c03ed1a41920725f079
+- id: example_md_pr_note_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Stale PR testing note removed from complete-example.md
+  source:
+    path: .github/skills/pr-finalize/references/complete-example.md
+    lines: 9-12
+    commit: 260770c977f376c9b0190c03ed1a41920725f079
+- id: permissions_file_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Permissions.windows.cs has real implementation, not just stubs
+- id: repo_permissions_file_parses
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Permissions.windows.cs has valid C# syntax (balanced braces,
+    valid structure)
+- id: repo_file_headers_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files have valid headers and structure (namespace, usings,
+    class definitions)
+- id: no_stub_implementations
+  type: pass_to_pass
+  origin: repo_tests
+  description: Permissions file has no NotImplementedException stubs (real implementation
+    only)
+- id: config_copilot_instructions_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: Agent config files updated to remove stale PR note per Copilot instructions
+  source:
+    path: .github/copilot-instructions.md
+    lines: 200-213
+    commit: 260770c977f376c9b0190c03ed1a41920725f079
 rubric: []
+config_edits:
+- path: .github/copilot-instructions.md
+  tier: 1
+  gold_added: ''
+  gold_removed: '### Opening PRs
+
+
+    All PRs are required to have this at the top of the description:
+
+
+    ```
+
+    <!-- Please let the below note in for people that find this PR -->
+
+    > [!NOTE]
+
+    > Are you waiting for the changes in this PR to be merged?
+
+    > It would be very helpful if you could [test the resulting artifacts](https://github.com/dotnet/maui/wiki/Testing-PR-Builds)
+    from this PR and let us know in a comment if this change resolves your issue.
+    Thank you!
+
+    ```
+
+
+    Always put that at the top, without the block quotes. Without it, users will NOT
+    be able to try the PR and your work will have been in vain!'
+- path: .github/skills/pr-finalize/SKILL.md
+  tier: 1
+  gold_added: '1. Include the base sections from `.github/PULL_REQUEST_TEMPLATE.md`
+    ("Description of Change" and "Issues Fixed"). The skill adds additional structured
+    fields (Root cause, Fix, Key insight, etc.) as recommended enhancements for better
+    agent context.
+
+    2. Match the actual implementation'
+  gold_removed: '1. Start with the required NOTE block (so users can test PR artifacts)
+
+    2. Include the base sections from `.github/PULL_REQUEST_TEMPLATE.md` ("Description
+    of Change" and "Issues Fixed"). The skill adds additional structured fields (Root
+    cause, Fix, Key insight, etc.) as recommended enhancements for better agent context.
+
+    3. Match the actual implementation
+
+    <!-- Please let the below note in for people that find this PR -->
+
+    > [!NOTE]
+
+    > Are you waiting for the changes in this PR to be merged?
+
+    > It would be very helpful if you could [test the resulting artifacts](https://github.com/dotnet/maui/wiki/Testing-PR-Builds)
+    from this PR and let us know in a comment if this change resolves your issue.
+    Thank you!
+
+
+    <!-- Please let the below note in for people that find this PR -->
+
+    > [!NOTE]
+
+    > Are you waiting for the changes in this PR to be merged?
+
+    > It would be very helpful if you could [test the resulting artifacts](https://github.com/dotnet/maui/wiki/Testing-PR-Builds)
+    from this PR and let us know i'

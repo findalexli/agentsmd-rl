@@ -1,55 +1,75 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92450
-  base_commit: "fea754747872122d167dd8bf1fc5581044e50521"
-  merge_commit: "6d572c27e01cbdb19dfbdf5bce94604229478088"
-
+  base_commit: fea754747872122d167dd8bf1fc5581044e50521
+  merge_commit: 6d572c27e01cbdb19dfbdf5bce94604229478088
 checks:
-  - id: syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "scripts/pr-status.js parses without errors"
-
-  - id: reply_and_resolve_subcommand_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "reply-and-resolve-thread subcommand is handled in main() and shows usage on missing args"
-
-  - id: reply_to_thread_uses_rest_api
-    type: fail_to_pass
-    origin: pr_diff
-    description: "replyToThread uses REST /comments/<id>/replies endpoint, not GraphQL mutation"
-
-  - id: generate_thread_md_includes_combined
-    type: fail_to_pass
-    origin: pr_diff
-    description: "generateThreadMd includes the reply-and-resolve one-step command in thread MD files"
-
-  - id: reply_to_thread_logs_html_url
-    type: fail_to_pass
-    origin: pr_diff
-    description: "replyToThread logs html_url from REST JSON response"
-
-  - id: skill_md_documents_combined_command
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md updated with Thread interaction section and reply-and-resolve-thread command"
-
-  - id: skill_md_workflow_step_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SKILL.md step 6 mentions the one-step reply-and-resolve option"
-
-  - id: workflow_md_documents_one_step
-    type: fail_to_pass
-    origin: pr_diff
-    description: "workflow.md shows the one-step reply-and-resolve alternative"
-
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: scripts/pr-status.js parses without errors
+- id: reply_and_resolve_subcommand_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: reply-and-resolve-thread subcommand is handled in main() and shows
+    usage on missing args
+- id: reply_to_thread_uses_rest_api
+  type: fail_to_pass
+  origin: pr_diff
+  description: replyToThread uses REST /comments/<id>/replies endpoint, not GraphQL
+    mutation
+- id: generate_thread_md_includes_combined
+  type: fail_to_pass
+  origin: pr_diff
+  description: generateThreadMd includes the reply-and-resolve one-step command in
+    thread MD files
+- id: reply_to_thread_logs_html_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: replyToThread logs html_url from REST JSON response
+- id: skill_md_documents_combined_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md updated with Thread interaction section and reply-and-resolve-thread
+    command
+- id: skill_md_workflow_step_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md step 6 mentions the one-step reply-and-resolve option
+- id: workflow_md_documents_one_step
+  type: fail_to_pass
+  origin: pr_diff
+  description: workflow.md shows the one-step reply-and-resolve alternative
 rubric:
-  - rule: "Documentation updates are consistent with the existing style in SKILL.md and workflow.md"
-    source:
-      path: ".agents/skills/pr-status-triage/SKILL.md"
-      lines: "31-38"
-      commit: "fea754747872122d167dd8bf1fc5581044e50521"
+- rule: Documentation updates are consistent with the existing style in SKILL.md and
+    workflow.md
+  source:
+    path: .agents/skills/pr-status-triage/SKILL.md
+    lines: 31-38
+    commit: fea754747872122d167dd8bf1fc5581044e50521
+config_edits:
+- path: .agents/skills/pr-status-triage/SKILL.md
+  tier: 1
+  gold_added: '6. After addressing review comments, reply to the thread describing
+    what was done, then resolve it. Use `reply-and-resolve-thread` to do both in one
+    step, or use `reply-thread` + `resolve-thread` separately. See `thread-N.md` files
+    for ready-to-use commands.
+
+    Thread interaction:
+
+
+    ```bash
+
+    node scripts/pr-status.js reply-thread <threadNodeId> "<body>"           # reply
+    to a review thread
+
+    node scripts/pr-status.js resolve-thread <threadNodeId>                  # resolve
+    a review thread
+
+    node scripts/pr-status.js reply-and-resolve-thread <threadNodeId> "<body>"  #
+    reply and resolve in one step
+
+    ```'
+  gold_removed: 6. After addressing review comments, reply to the thread describing
+    what was done, then resolve it. See `thread-N.md` files for ready-to-use commands.

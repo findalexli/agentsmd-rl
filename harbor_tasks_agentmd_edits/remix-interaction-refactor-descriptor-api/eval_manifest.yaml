@@ -1,58 +1,109 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "remix-run/remix"
+  repo: remix-run/remix
   pr: 10823
-  base_commit: "90016e313b24a05c5862a853a3b518290d9017ba"
-
+  base_commit: 90016e313b24a05c5862a853a3b518290d9017ba
 checks:
-  - id: test_core_files_exist
-    type: pass_to_pass
-    origin: static
-    description: "Core interaction source files exist with substantial content"
-
-  - id: test_core_exports_preserved
-    type: pass_to_pass
-    origin: static
-    description: "Core API functions still exported: on, createContainer, defineInteraction"
-
-  - id: test_create_container_on_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: "createContainer accepts { onError } option and calls it when a listener throws"
-
-  - id: test_descriptor_object_syntax
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Descriptor objects with { once: true, listener } work as inline descriptors"
-
-  - id: test_old_helpers_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "capture() and listenWith() are no longer exported from index.ts"
-
-  - id: test_new_types_exported
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Interaction and ContainerOptions types are exported from index.ts"
-
-  - id: test_interaction_context_pattern
-    type: fail_to_pass
-    origin: pr_diff
-    description: "InteractionSetup uses this: Interaction context instead of positional args"
-
-  - id: test_readme_descriptor_syntax
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README shows new descriptor object syntax, not old capture()/listenWith() calls"
-
-  - id: test_changelog_unreleased_heading
-    type: fail_to_pass
-    origin: agent_config
-    description: "CHANGELOG uses ## Unreleased heading per AGENTS.md convention"
-    source:
-      path: AGENTS.md
-      lines: "25"
-      commit: "90016e313b24a05c5862a853a3b518290d9017ba"
-
+- id: test_core_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Core interaction source files exist with substantial content
+- id: test_core_exports_preserved
+  type: pass_to_pass
+  origin: static
+  description: 'Core API functions still exported: on, createContainer, defineInteraction'
+- id: test_create_container_on_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: createContainer accepts { onError } option and calls it when a listener
+    throws
+- id: test_descriptor_object_syntax
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Descriptor objects with { once: true, listener } work as inline descriptors'
+- id: test_old_helpers_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: capture() and listenWith() are no longer exported from index.ts
+- id: test_new_types_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: Interaction and ContainerOptions types are exported from index.ts
+- id: test_interaction_context_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'InteractionSetup uses this: Interaction context instead of positional
+    args'
+- id: test_readme_descriptor_syntax
+  type: fail_to_pass
+  origin: pr_diff
+  description: README shows new descriptor object syntax, not old capture()/listenWith()
+    calls
+- id: test_changelog_unreleased_heading
+  type: fail_to_pass
+  origin: agent_config
+  description: 'CHANGELOG uses ## Unreleased heading per AGENTS.md convention'
+  source:
+    path: AGENTS.md
+    lines: '25'
+    commit: 90016e313b24a05c5862a853a3b518290d9017ba
 rubric: []
+config_edits:
+- path: packages/interaction/CHANGELOG.md
+  tier: 2
+  gold_added: "## Unreleased\n\n- BREAKING CHANGE: Interaction API refactor - interactions\
+    \ now use `this` context with `this.on()`, `this.target`, `this.signal`, and `this.raise`\n\
+    \n  Interactions are now functions that receive an `Interaction` context via `this`:\n\
+    \n  ```ts\n  // Before\n  function MyInteraction(target: EventTarget, signal:\
+    \ AbortSignal) {\n    createContainer(target, { signal }).set({ ... })\n  }\n\n\
+    \  // After\n  function MyInteraction(this: Interaction) {\n    this.on(this.target,\
+    \ { ... })\n    // or for different targets\n    this.on(this.target.ownerDocument,\
+    \ { ... })\n  }\n  ```\n\n  The `Interaction` context provides:\n\n  - `this.target`\
+    \ - The target element\n  - `this.signal` - Abort signal for cleanup\n  - `this.raise`\
+    \ - Error handler (renamed from `onError`)\n  - `this.on(target, listeners)` -\
+    \ Create a container with automatic signal/error propagation\n\n- BREAKING CHANGE:\
+    \ Simplify descriptor API - descriptors now extend `AddEventListenerOptions` directly\n\
+    \n  Removed `capture()` and `listenWith()` helper functions. Consumers now provide\
+    \ options inline using descriptor objects:\n\n  ```tsx\n  // removed\n  capture((event)\
+    \ => {})\n  listenWith({ once: true }, (event) => {})\n\n  // new API\n  {\n \
+    \   capture: true,\n    listener(event) {}\n  }\n  {\n    once: true,\n    listener(event)\
+    \ {}\n  }\n  ```\n\n- BREAKING CHANGE: Remove `on` signal overload, just use containers\
+    \ directly\n\n  ```tsx\n  // removed\n  on(target, signal, listeners)\n\n  //\
+    \ on is just a shortcut now\n  let dispose = on(target, listeners)\n  dispose()\n\
+    \n  // use containers for signal cleanup\n  let container = createContainer(target,\
+    \ { signal })\n  ```\n\n- Added `onError` handler so containers can handle listener\
+    \ errors in one place (avoids Remix Component needing to wrap EventListener interfaces\
+    \ to raise to `<Catch>`)\n\n  ```tsx\n  createContainer(target, {\n    onError(error)\
+    \ {\n      // handle error\n    },\n  })\n  ```"
+  gold_removed: ''
+- path: packages/interaction/README.md
+  tier: 2
+  gold_added: "import { on } from '@remix-run/interaction'\n    {\n      capture:\
+    \ true,\n      listener(event) {\n        // capture phase\n      },\n    },\n\
+    \    {\n      once: true,\n      listener(event) {\n        console.log('only\
+    \ once')\n      },\n    },\nimport { on } from '@remix-run/interaction'\n  click:\
+    \ {\n    capture: true,\n    listener(event) {\n      console.log('capture phase')\n\
+    \    },\n  },\n  focus: {\n    once: true,\n    listener(event) {\n      console.log('focused\
+    \ once')\n    },\n  },\nUse `createContainer` when you need to update listeners\
+    \ in place (e.g., in a component system). The container diffs and updates existing\
+    \ bindings without unnecessary `removeEventListener`/`addEventListener` churn.\n\
+    \n// Use a signal\nlet eventsController = new AbortController()\nlet container\
+    \ = createContainer(window, {\n  signal: eventsController.signal,\n})\ncontainer.set({\
+    \ resize: () => {} })\neventsController.abort()\nimport { defineInteraction, on,\
+    \ type Interaction } from '@remix-run/interaction'\nfunction KeydownEnter(this:\
+    \ Interaction) {\n  if (!(this.target instanceof HTMLElement)) return\n  this.on(this.target,\
+    \ {\n        this.target.dispatchEvent(new KeyboardEvent(keydownEnter, { key:\
+    \ 'Enter' }))"
+  gold_removed: "import { on, capture, listenWith } from '@remix-run/interaction'\n\
+    \    capture((event) => {\n      // capture phase\n    }),\n    listenWith({ once:\
+    \ true }, (event) => {\n      console.log('only once')\n    }),\nimport { on,\
+    \ listenWith, capture } from '@remix-run/interaction'\n  click: capture((event)\
+    \ => {\n    console.log('capture phase')\n  }),\n  focus: listenWith({ once: true\
+    \ }, (event) => {\n    console.log('focused once')\n  }),\nUse `createContainer(target,\
+    \ signal?)` when you need to update listeners in place (e.g., in a component system).\
+    \ The container diffs and updates existing bindings without unnecessary `removeEventListener`/`addEventListener`\
+    \ churn.\n// Using an external AbortSignal\nlet controller = new AbortController()\n\
+    on(button, controller.signal, { click: () => {} })\ncontroller.abort() // removes\
+    \ all listeners added via that call\n\nimport { defineInteraction, on } from '@remix-run/interaction'\n\
+    function KeydownEnter(target: EventTarget, signal: AbortSignal) {\n  if (!(target\
+    \ instanceof H"

@@ -1,67 +1,69 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "dotnet/maui"
+  repo: dotnet/maui
   pr: 34275
-  base_commit: "ecd6428d324e395ca07f8d375600c0fc93d0dd3c"
-  merge_commit: "84e28fac0179cc829e166eb1f40d69a5cec4578b"
-
+  base_commit: ecd6428d324e395ca07f8d375600c0fc93d0dd3c
+  merge_commit: 84e28fac0179cc829e166eb1f40d69a5cec4578b
 checks:
-  # -------------------------------------------------------------------------
-  # Gates (pass_to_pass, static)
-  # -------------------------------------------------------------------------
-  - id: csharp_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified C# files must have valid syntax"
-
-  # -------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core behavioral tests
-  # -------------------------------------------------------------------------
-  - id: header_footer_guard_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SelectableItemsViewAdapter has the header/footer selection guard that prevents ArgumentOutOfRangeException"
-
-  - id: guard_has_correct_comment
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The guard includes explanatory comment about why header/footer ViewHolders are excluded from selection tracking"
-
-  - id: adapter_compiles_with_fix
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The Controls.Core project compiles successfully with the guard fix applied"
-
-  # -------------------------------------------------------------------------
-  # Pass-to-pass (static) — anti-stub
-  # -------------------------------------------------------------------------
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified OnBindViewHolder method has real logic, not just pass/return"
-
-  # -------------------------------------------------------------------------
-  # Config-derived (agent_config) — rules from copilot-instructions.md
-  # -------------------------------------------------------------------------
-  - id: nullable_enable_documented
-    type: fail_to_pass
-    origin: agent_config
-    description: "copilot-instructions.md documents the #nullable enable must be line 1 rule"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "141-160"
-      commit: "ecd6428d324e395ca07f8d375600c0fc93d0dd3c"
-
-  - id: bash_script_provided
-    type: fail_to_pass
-    origin: agent_config
-    description: "copilot-instructions.md includes the safe bash pattern for PublicAPI.Unshipped.txt file handling"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "148-157"
-      commit: "ecd6428d324e395ca07f8d375600c0fc93d0dd3c"
-
-rubric:
-  # Soft rules for LLM judge - none needed for this task as rules are programmatically verifiable
-  []
+- id: csharp_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified C# files must have valid syntax
+- id: header_footer_guard_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: SelectableItemsViewAdapter has the header/footer selection guard that
+    prevents ArgumentOutOfRangeException
+- id: guard_has_correct_comment
+  type: fail_to_pass
+  origin: pr_diff
+  description: The guard includes explanatory comment about why header/footer ViewHolders
+    are excluded from selection tracking
+- id: adapter_compiles_with_fix
+  type: fail_to_pass
+  origin: pr_diff
+  description: The Controls.Core project compiles successfully with the guard fix
+    applied
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified OnBindViewHolder method has real logic, not just pass/return
+- id: nullable_enable_documented
+  type: fail_to_pass
+  origin: agent_config
+  description: 'copilot-instructions.md documents the #nullable enable must be line
+    1 rule'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 141-160
+    commit: ecd6428d324e395ca07f8d375600c0fc93d0dd3c
+- id: bash_script_provided
+  type: fail_to_pass
+  origin: agent_config
+  description: copilot-instructions.md includes the safe bash pattern for PublicAPI.Unshipped.txt
+    file handling
+  source:
+    path: .github/copilot-instructions.md
+    lines: 148-157
+    commit: ecd6428d324e395ca07f8d375600c0fc93d0dd3c
+rubric: []
+config_edits:
+- path: .github/copilot-instructions.md
+  tier: 1
+  gold_added: "**\U0001F6A8 CRITICAL: `#nullable enable` must be line 1**\n\nEvery\
+    \ `PublicAPI.Unshipped.txt` file starts with `#nullable enable` (often BOM-prefixed:\
+    \ `\uFEFF#nullable enable`) on the **first line**. If this line is moved or removed,\
+    \ the analyzer treats it as a declared API symbol and emits **RS0017** errors.\n\
+    \n**Never sort these files with plain `sort`** — the BOM bytes (`0xEF 0xBB 0xBF`)\
+    \ sort after ASCII characters under `LC_ALL=C`, pushing `#nullable enable` to\
+    \ the bottom of the file.\n\nWhen resolving merge conflicts or adding entries,\
+    \ use this safe pattern that preserves line 1:\n```bash\nfor f in $(git diff --name-only\
+    \ --diff-filter=U | grep \"PublicAPI.Unshipped.txt\"); do\n  # Extract and preserve\
+    \ the #nullable enable line (with or without BOM)\n  HEADER=$(head -1 \"$f\" |\
+    \ grep -o '.*#nullable enable' || echo '#nullable enable')\n  # Strip conflict\
+    \ markers, remove all #nullable lines, sort+dedup the API entries\n  grep -v '^<<<<<<\\\
+    |^======\\|^>>>>>>\\|#nullable enable' \"$f\" | LC_ALL=C sort -u | sed '/^$/d'\
+    \ > /tmp/api_fix.txt\n  # Reassemble: header first, then sorted entries\n  printf\
+    \ '%s\\n' \"$HEADER\" > \"$f\"\n  cat /tmp/api_fix.txt >> \"$f\"\n  git add \"\
+    $f\"\ndone\n```"
+  gold_removed: ''

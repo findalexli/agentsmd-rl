@@ -40,8 +40,8 @@ rubric:
     path: npm/grep/README.md
     lines: 422-436
     commit: 49aa0bbab1af77be3f6431d2252c4d7cac6bff26
-- rule: "Code changes are consistent \u2014 all env references replaced with expose,\
-    \ no partial migration"
+- rule: Code changes are consistent — all env references replaced with expose, no
+    partial migration
   source:
     path: npm/grep/src/plugin.ts
     lines: 1-130
@@ -118,3 +118,45 @@ rubric:
     npx cypress run --expose grep="user",grepTags="@critical @smoke"
 
     npx cypress run --expose grep="login'
+config_edits:
+- path: npm/grep/README.md
+  tier: 2
+  gold_added: "npx cypress run --expose grep=\"login\"\nnpx cypress run --expose grep=\"\
+    user authentication\"\nnpx cypress run --expose grep=\"login; logout; signup\"\
+    \nnpx cypress run --expose grepTags=\"@smoke\"\nnpx cypress run --expose grepTags=\"\
+    @smoke @critical\"\nnpx cypress run --expose grepTags=\"@smoke+@critical\"\nnpx\
+    \ cypress run --expose grepTags=\"@smoke+-@slow\"\nnpx cypress run --expose grep=\"\
+    login\",grepTags=\"@smoke\"\nnpx cypress run --expose grep=\"user\",grepTags=\"\
+    @critical @smoke\"\nnpx cypress run --expose grep=\"login\",grepFilterSpecs=true\n\
+    npx cypress run --expose grepTags=\"@smoke\",grepFilterSpecs=true\nnpx cypress\
+    \ run --expose grep=\"login\",grepOmitFiltered=true\nnpx cypress run --expose\
+    \ grep=\"login\",burn=5\nnpx cypress run --expose burn=10\nnpx cypress run --expose\
+    \ grep=\"-slow\"\nnpx cypress run --expose grepTags=\"-@slow\"\nnpx cypress run\
+    \ --expose grep=\"login; -slow\",grepTags=\"@smoke+-@regression\"\nnpx cypress\
+    \ run --expose grepUntagged=true\n  expose: {\n    \"cy:smoke\": \"cypress run\
+    \ --expose grepTags=@smoke\",\n    \"cy:critical\": \"cypress run --expose grepTags=@critical\"\
+    ,\n    \"cy:fast\": \"cypress run --expose grepTags=@fast\",\n    \"cy:burn\"\
+    : \"cypress run --expose grepTags=@smoke,burn=5\"\n3. **Runtime Changes**: Cannot\
+    \ change grep filters at runtime using `Cypress.expose()`\nnpx cypress run --expose\
+    \ grepTags=\"@smoke\"\nnpx cypress run --expose grep=\"user management\"\nnpx\
+    \ cypress run --expose grepTags=\"@critical\"\nDEBUG=@cypress/grep npx cypress\
+    \ run --expose grep=\"login\"\n### From v5 to v6\n\n`Cypress.env()` is deprecated\
+    \ in Cypress 15.10.0. For public configuration, the API has been replaced with\
+    \ `Cypress.expose()`\n\nTo migrate, change your `--env`/`-e` CLI arguments from\n\
+    ```sh\nnpx cypress run --env grepTags=\"tag1 tag2\"\n```\n\nto the following to\
+    \ use `--expose`/`-x`\n```sh\nnpx cypress run --expose grepTags=\"tag1 tag2\"\n\
+    ```"
+  gold_removed: "npx cypress run --env grep=\"login\"\nnpx cypress run --env grep=\"\
+    user authentication\"\nnpx cypress run --env grep=\"login; logout; signup\"\n\
+    npx cypress run --env grepTags=\"@smoke\"\nnpx cypress run --env grepTags=\"@smoke\
+    \ @critical\"\nnpx cypress run --env grepTags=\"@smoke+@critical\"\nnpx cypress\
+    \ run --env grepTags=\"@smoke+-@slow\"\nnpx cypress run --env grep=\"login\",grepTags=\"\
+    @smoke\"\nnpx cypress run --env grep=\"user\",grepTags=\"@critical @smoke\"\n\
+    npx cypress run --env grep=\"login\",grepFilterSpecs=true\nnpx cypress run --env\
+    \ grepTags=\"@smoke\",grepFilterSpecs=true\nnpx cypress run --env grep=\"login\"\
+    ,grepOmitFiltered=true\nnpx cypress run --env grep=\"login\",burn=5\nnpx cypress\
+    \ run --env burn=10\nnpx cypress run --env grep=\"-slow\"\nnpx cypress run --env\
+    \ grepTags=\"-@slow\"\nnpx cypress run --env grep=\"login; -slow\",grepTags=\"\
+    @smoke+-@regression\"\nnpx cypress run --env grepUntagged=true\n  env: {\n   \
+    \ \"cy:smoke\": \"cypress run --env grepTags=@smoke\",\n    \"cy:critical\": \"\
+    cypress run --env grepTags=@critical\",\n    \"cy:"
