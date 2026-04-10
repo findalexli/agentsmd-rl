@@ -1214,12 +1214,16 @@ async def _run_agent_gemini(
     prompt = prompt_file.read_text()
     await sandbox.files.write(f"/workspace/{prompt_name}", prompt.encode())
 
-    # Override env to route through litellm → Gemini instead of default backend
-    # Must override ANTHROPIC_AUTH_TOKEN too (Kimi backend sets it, could interfere)
+    # Override env to route through litellm → Gemini instead of default backend.
+    # Must clear ALL backend-specific env vars:
+    # - ANTHROPIC_BASE_URL → litellm proxy
+    # - ANTHROPIC_API_KEY/AUTH_TOKEN → dummy (litellm doesn't need auth)
+    # - ANTHROPIC_DEFAULT_*_MODEL → unset (Kimi model names break litellm)
     code, stdout, stderr = await run_cmd(
         sandbox,
         f"cat /workspace/{prompt_name} | "
-        f"env ANTHROPIC_BASE_URL=http://localhost:4000 ANTHROPIC_API_KEY=dummy ANTHROPIC_AUTH_TOKEN=dummy "
+        f"env -u ANTHROPIC_DEFAULT_OPUS_MODEL -u ANTHROPIC_DEFAULT_SONNET_MODEL -u ANTHROPIC_DEFAULT_HAIKU_MODEL "
+        f"ANTHROPIC_BASE_URL=http://localhost:4000 ANTHROPIC_API_KEY=dummy ANTHROPIC_AUTH_TOKEN=dummy "
         f"claude -p --dangerously-skip-permissions --model opus --output-format json",
         user="worker",
     )
