@@ -169,37 +169,35 @@ async def create_worker_sandbox(
         except Exception:
             pass
 
-        # Quick IP probe: test if this sandbox can reach the LLM API
-        # Always probe Fireworks directly (even if using a proxy) to detect IP blocks
-        probe_url = api_base or "https://api.fireworks.ai/inference"
-        api_key = envs.get("ANTHROPIC_API_KEY", "") or envs.get("ANTHROPIC_AUTH_TOKEN", "")
-        if api_key:
-            probe_code, probe_out, probe_err = await run_cmd(
-                sandbox,
-                f'curl -s -o /dev/null -w "%{{http_code}}" -X POST '
-                f'"https://api.fireworks.ai/inference/v1/messages" '
-                f'-H "Content-Type: application/json" '
-                f'-H "x-api-key: {api_key}" '
-                f'-H "anthropic-version: 2023-06-01" '
-                f"""-d '{{"model":"accounts/fireworks/routers/kimi-k2p5-turbo","messages":[{{"role":"user","content":"hi"}}],"max_tokens":1}}'""",
-                timeout=15,
-            )
-            status_code = probe_out.strip()
-            if status_code == "403":
-                logger.warning(
-                    "Sandbox %s blocked by API (403), retrying (%d/%d)...",
-                    sandbox.sandbox_id, ip_attempt + 1, max_ip_retries,
+        # Quick IP probe: only for Fireworks backend (detect IP blocks)
+        # Skip for Gemini (localhost proxy) and other non-Fireworks backends
+        is_fireworks = api_base and "fireworks" in api_base.lower()
+        if is_fireworks:
+            api_key = envs.get("ANTHROPIC_API_KEY", "")
+            if api_key and api_key != "dummy":
+                probe_code, probe_out, _ = await run_cmd(
+                    sandbox,
+                    f'curl -s -o /dev/null -w "%{{http_code}}" -X POST '
+                    f'"https://api.fireworks.ai/inference/v1/messages" '
+                    f'-H "Content-Type: application/json" '
+                    f'-H "x-api-key: {api_key}" '
+                    f'-H "anthropic-version: 2023-06-01" '
+                    f"""-d '{{"model":"accounts/fireworks/routers/kimi-k2p5-turbo","messages":[{{"role":"user","content":"hi"}}],"max_tokens":1}}'""",
+                    timeout=15,
                 )
-                try:
-                    await sandbox.kill()
-                except Exception:
-                    pass
-                await asyncio.sleep(1)
-                continue
-            elif status_code in ("200", "400", "401", "429"):
-                # 200=ok, 400/401=auth issue but not IP block, 429=rate limit but reachable
-                logger.info("Sandbox %s IP check OK (status %s)", sandbox.sandbox_id, status_code)
-            # else: probe failed (network issue, curl not found, etc.) — proceed anyway
+                status_code = probe_out.strip()
+                if status_code == "403":
+                    logger.warning(
+                        "Sandbox %s blocked by Fireworks (403), retrying (%d/%d)...",
+                        sandbox.sandbox_id, ip_attempt + 1, max_ip_retries,
+                    )
+                    try:
+                        await sandbox.kill()
+                    except Exception:
+                        pass
+                    await asyncio.sleep(1)
+                    continue
+                logger.info("Sandbox %s Fireworks IP check OK (status %s)", sandbox.sandbox_id, status_code)
 
         # Wait for Docker daemon to be ready
         for _ in range(10):
@@ -222,15 +220,15 @@ async def create_worker_sandbox(
                 'model_list:\n'
                 '  - model_name: "claude-opus-4-6"\n'
                 '    litellm_params:\n'
-                '      model: "gemini/gemini-3.1-pro-preview"\n'
+                '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
                 f'      api_key: "{gemini_key}"\n'
                 '  - model_name: "claude-sonnet-4-6"\n'
                 '    litellm_params:\n'
-                '      model: "gemini/gemini-3.1-pro-preview"\n'
+                '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
                 f'      api_key: "{gemini_key}"\n'
                 '  - model_name: "opus"\n'
                 '    litellm_params:\n'
-                '      model: "gemini/gemini-3.1-pro-preview"\n'
+                '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
                 f'      api_key: "{gemini_key}"\n'
             )
             await sandbox.files.write("/tmp/litellm_config.yaml", litellm_config.encode())

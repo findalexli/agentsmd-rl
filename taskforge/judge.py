@@ -212,7 +212,7 @@ def _call_gemini(prompt: str, api_key: str) -> list[dict]:
         },
     }).encode()
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview-customtools:generateContent?key={api_key}"
     req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
 
     with urllib.request.urlopen(req, timeout=120) as resp:
