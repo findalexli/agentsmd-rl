@@ -1,6 +1,10 @@
-# Enrich Rubric Rules (Deep Analysis)
+# Enrich Rubric Rules
 
-Your job: add **high-quality, PR-specific** rubric rules to eval_manifest.yaml. Generic rules are worthless — every rule must be directly evaluable by reading this PR's diff against a specific config file instruction.
+Your job: add rubric rules to eval_manifest.yaml from the repo's agent config files (CLAUDE.md, AGENTS.md, SKILL.md, etc.).
+
+**You MUST add 1-5 rules** if the repo has config files with coding conventions. An empty rubric is only acceptable if the config files contain zero coding/style conventions (e.g., only describe project structure or PR workflow).
+
+Each rule must cite a REAL line in a REAL config file and be verifiable by reading the PR's diff.
 
 ## Context
 
@@ -108,7 +112,9 @@ Before writing to eval_manifest.yaml, review each drafted rule:
 - Completely subjective with no concrete check ("write clean code")
 - About file types/languages not touched by this PR
 
-A recurring repo convention like "prefer single-word variable names" or "avoid try/catch" IS a valid rubric rule if the PR touches code where it applies — the judge checks the diff against the rule. Do NOT reject rules just because they apply broadly within the repo.
+**IMPORTANT**: A recurring repo convention like "prefer single-word variable names" or "avoid try/catch" IS a valid rubric rule if the PR touches code in that language. These are the BEST kind of rubric rules — concrete, from a real config file, and verifiable. Do NOT reject rules just because they apply broadly within the repo. The judge evaluates the agent's diff against each rule, so broad conventions that are still specific and concrete are exactly what we want.
+
+If you found config files with coding conventions, you MUST include at least 1 rule. Zero rules when config files have conventions is a failure.
 
 ## Phase 6: Write to eval_manifest.yaml
 

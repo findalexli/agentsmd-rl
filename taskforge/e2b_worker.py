@@ -1458,7 +1458,7 @@ async def run_task_agents(
                     try:
                         feedback_raw = await sandbox.files.read("/workspace/rubric_feedback.json", format="text")
                         feedback = json.loads(feedback_raw)
-                        precision = feedback.get("precision_score", 1.0)
+                        precision = feedback.get("precision_score") or 0.0
                         summary = feedback.get("summary", "")
                         logger.info("[%s] rubric validation: precision=%.2f %s", task_name, precision, summary[:100])
                     except Exception:

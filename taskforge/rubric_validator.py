@@ -375,13 +375,30 @@ Respond with ONLY a JSON object:
         end = text.find("```", start)
         text = text[start:end].strip()
 
-    if text.startswith("{"):
-        return json.loads(text)
+    # Try to parse JSON — multiple strategies
+    try:
+        if text.startswith("{"):
+            return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Find outermost { ... }
     start = text.find("{")
     end = text.rfind("}") + 1
     if start >= 0 and end > start:
-        return json.loads(text[start:end])
-    return {"error": "failed to parse Gemini response", "raw": text[:500]}
+        try:
+            return json.loads(text[start:end])
+        except json.JSONDecodeError:
+            pass
+
+    # Last resort: try to find "rules" array
+    print(f"WARNING: Failed to parse Gemini JSON. Raw response: {text[:500]}", file=sys.stderr)
+    return {
+        "error": "failed to parse Gemini response",
+        "raw": text[:500],
+        "rules": [],
+        "precision_score": 0.0,
+    }
 
 
 # ── Full validation ──────────────────────────────────────────────────────────
@@ -393,9 +410,11 @@ def validate(task_dir: Path, repo_dir: Path, gemini_key: str = "",
     Returns structured feedback dict ready for Kimi agent or human review.
     """
     context = phase1_check(task_dir, repo_dir)
+    config_files = [c["path"] for c in context["config_inventory"]]
 
     if not context["rule_checks"]:
-        return {"status": "no_rules", "num_rules": 0}
+        return {"status": "no_rules", "num_rules": 0,
+                "config_files": config_files, "precision_score": 1.0}
 
     # Phase 1 summary
     p1_results = []
@@ -405,20 +424,24 @@ def validate(task_dir: Path, repo_dir: Path, gemini_key: str = "",
             "rule": rc["rule"],
             "source_path": rc["source_path"],
             "file_exists": rc.get("file_exists", False),
+            "file_total_lines": rc.get("file_total_lines", 0),
             "p1_verdict": rc["p1_verdict"],
+            "cited_text": rc.get("cited_text", "")[:200],
         })
 
     if context_only:
         return {
             "status": "context_only",
             "num_rules": context["num_rules"],
-            "config_files": [c["path"] for c in context["config_inventory"]],
+            "config_files": config_files,
             "phase1": p1_results,
         }
 
     if not gemini_key:
         return {
             "status": "no_gemini_key",
+            "config_files": config_files,
+            "precision_score": 0.0,
             "phase1": p1_results,
         }
 
@@ -429,6 +452,8 @@ def validate(task_dir: Path, repo_dir: Path, gemini_key: str = "",
         return {
             "status": "gemini_error",
             "error": str(e)[:300],
+            "config_files": config_files,
+            "precision_score": 0.0,
             "phase1": p1_results,
         }
 
@@ -437,7 +462,7 @@ def validate(task_dir: Path, repo_dir: Path, gemini_key: str = "",
         "status": "complete",
         "num_rules": context["num_rules"],
         "config_files": [c["path"] for c in context["config_inventory"]],
-        "precision_score": gemini_result.get("precision_score", 0),
+        "precision_score": gemini_result.get("precision_score") or gemini_result.get("overall_precision") or 0.0,
         "summary": gemini_result.get("summary", ""),
         "rules": gemini_result.get("rules", []),
         "recall": gemini_result.get("recall", {}),
