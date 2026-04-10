@@ -211,55 +211,76 @@ async def create_worker_sandbox(
         # Add worker to docker group so it can run docker commands
         await run_cmd(sandbox, "usermod -aG docker worker 2>/dev/null || true", timeout=5)
 
-        # Start litellm proxy if using Gemini backend (translates Anthropic -> Gemini API)
-        gemini_key = envs.get("GEMINI_API_KEY", "")
-        if gemini_key and backend_env and backend_env.get("ANTHROPIC_BASE_URL") == "http://localhost:4000":
-            litellm_config = (
-                'litellm_settings:\n'
-                '  drop_params: true\n'
-                'model_list:\n'
-                '  - model_name: "claude-opus-4-6"\n'
-                '    litellm_params:\n'
-                '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
-                f'      api_key: "{gemini_key}"\n'
-                '  - model_name: "claude-sonnet-4-6"\n'
-                '    litellm_params:\n'
-                '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
-                f'      api_key: "{gemini_key}"\n'
-                '  - model_name: "opus"\n'
-                '    litellm_params:\n'
-                '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
-                f'      api_key: "{gemini_key}"\n'
-            )
-            await sandbox.files.write("/tmp/litellm_config.yaml", litellm_config.encode())
-            await run_cmd(
-                sandbox,
-                "nohup litellm --config /tmp/litellm_config.yaml --port 4000 "
-                "> /tmp/litellm.log 2>&1 &",
-                timeout=10,
-            )
-            # Poll for proxy readiness (litellm takes 10-20s to start)
-            proxy_ready = False
-            for _attempt in range(20):
-                await asyncio.sleep(2)
-                probe_code, probe_out, _ = await run_cmd(
-                    sandbox,
-                    'curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/health 2>/dev/null || echo 000',
-                    timeout=5,
-                )
-                if probe_out.strip() == "200":
-                    proxy_ready = True
-                    break
-            if proxy_ready:
-                logger.info("Sandbox %s: litellm proxy -> Gemini 3.1 Pro ready", sandbox.sandbox_id)
-            else:
-                logger.warning("Sandbox %s: litellm proxy failed to start", sandbox.sandbox_id)
+        # Start litellm proxy if using Gemini as main backend
+        if backend_env and backend_env.get("ANTHROPIC_BASE_URL") == "http://localhost:4000":
+            await _ensure_litellm_proxy(sandbox)
 
         return sandbox
 
     # All retries exhausted — return last sandbox anyway
     logger.error("All %d IP probe retries failed, proceeding with blocked sandbox", max_ip_retries)
     return sandbox
+
+
+async def _ensure_litellm_proxy(sandbox: AsyncSandbox) -> bool:
+    """Start litellm proxy for Gemini routing if not already running.
+
+    Used to route specific agents (rubric enrichment) through Gemini 3.1 Pro
+    while keeping the main backend (Kimi) for other agents.
+    Returns True if proxy is ready.
+    """
+    # Check if already running
+    code, stdout, _ = await run_cmd(
+        sandbox,
+        'curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/health 2>/dev/null || echo 000',
+        timeout=5,
+    )
+    if stdout.strip() == "200":
+        return True
+
+    gemini_key = os.environ.get("GEMINI_API_KEY", "")
+    if not gemini_key:
+        logger.warning("No GEMINI_API_KEY — cannot start litellm proxy for Gemini routing")
+        return False
+
+    litellm_config = (
+        'litellm_settings:\n'
+        '  drop_params: true\n'
+        'model_list:\n'
+        '  - model_name: "claude-opus-4-6"\n'
+        '    litellm_params:\n'
+        '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
+        f'      api_key: "{gemini_key}"\n'
+        '  - model_name: "claude-sonnet-4-6"\n'
+        '    litellm_params:\n'
+        '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
+        f'      api_key: "{gemini_key}"\n'
+        '  - model_name: "opus"\n'
+        '    litellm_params:\n'
+        '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
+        f'      api_key: "{gemini_key}"\n'
+    )
+    await sandbox.files.write("/tmp/litellm_config.yaml", litellm_config.encode())
+    await run_cmd(
+        sandbox,
+        "nohup litellm --config /tmp/litellm_config.yaml --port 4000 "
+        "> /tmp/litellm.log 2>&1 &",
+        timeout=10,
+    )
+    # Poll for proxy readiness (litellm takes 10-20s to start)
+    for _attempt in range(20):
+        await asyncio.sleep(2)
+        code, stdout, _ = await run_cmd(
+            sandbox,
+            'curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/health 2>/dev/null || echo 000',
+            timeout=5,
+        )
+        if stdout.strip() == "200":
+            logger.info("Sandbox %s: litellm proxy -> Gemini 3.1 Pro ready", sandbox.sandbox_id)
+            return True
+
+    logger.warning("Sandbox %s: litellm proxy failed to start after 40s", sandbox.sandbox_id)
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -1170,6 +1191,47 @@ async def _run_agent(
     return "ok", stdout, stderr
 
 
+async def _run_agent_gemini(
+    sandbox: AsyncSandbox,
+    prompt_name: str,
+) -> tuple[str, str, str]:
+    """Run a claude -p agent routed through Gemini 3.1 Pro via litellm proxy.
+
+    Used for rubric enrichment where Gemini's reasoning quality matters.
+    Starts litellm proxy if not already running, then overrides
+    ANTHROPIC_BASE_URL to route through Gemini instead of the default backend (Kimi).
+    """
+    prompt_file = ROOT / "taskforge" / "prompts" / prompt_name
+    if not prompt_file.exists():
+        return "skipped", "", f"prompt file missing: {prompt_name}"
+
+    # Ensure litellm proxy is running (idempotent — skips if already up)
+    proxy_ok = await _ensure_litellm_proxy(sandbox)
+    if not proxy_ok:
+        logger.warning("[%s] litellm proxy not available, falling back to default backend", prompt_name)
+        return await _run_agent(sandbox, prompt_name)
+
+    prompt = prompt_file.read_text()
+    await sandbox.files.write(f"/workspace/{prompt_name}", prompt.encode())
+
+    # Override env to route through litellm → Gemini instead of default backend
+    code, stdout, stderr = await run_cmd(
+        sandbox,
+        f"cat /workspace/{prompt_name} | "
+        f"env ANTHROPIC_BASE_URL=http://localhost:4000 ANTHROPIC_API_KEY=dummy "
+        f"claude -p --dangerously-skip-permissions --model opus --output-format json",
+        user="worker",
+    )
+
+    if code != 0:
+        combined = stdout + stderr
+        logger.warning("[%s] gemini agent error (exit %d): %s", prompt_name, code, combined[:300])
+        if "429" in combined or "Rate limit" in combined or "hit your limit" in combined.lower():
+            return "rate_limited", stdout, stderr
+        return "error", stdout, stderr
+    return "ok", stdout, stderr
+
+
 async def run_task_agents(
     task_name: str,
     task_dir: Path,
@@ -1342,7 +1404,8 @@ async def run_task_agents(
             except Exception:
                 pass
 
-            # ── Agent 1b: Enrich Rubric (discover config rules) ──
+            # ── Agent 1b: Enrich Rubric (Gemini 3.1 Pro via litellm) ──
+            # Rubric quality is critical — route through Gemini for better reasoning.
             # Check if rubric is empty — if so, run enrichment
             code, stdout_check, _ = await run_cmd(
                 sandbox,
@@ -1353,15 +1416,18 @@ async def run_task_agents(
             rubric_count = int(stdout_check.strip()) if code == 0 and stdout_check.strip().isdigit() else 0
             if rubric_count == 0:
                 t0 = time.monotonic()
-                s, stdout, stderr = await _run_agent(sandbox, "enrich_rubric.md")
+                # Use Gemini for rubric enrichment (better config file reasoning)
+                s, stdout, stderr = await _run_agent_gemini(sandbox, "enrich_rubric.md")
                 rubric_time = time.monotonic() - t0
                 # Merge our provenance with what the agent wrote (preserve configs_found, rules_added)
                 existing_node = (await read_sandbox_status(sandbox)).get("nodes", {}).get("rubric_enrichment", {})
-                existing_node.update(_stamp("rubric_enrichment", s, rubric_time))
+                gemini_stamp = _stamp("rubric_enrichment", s, rubric_time)
+                gemini_stamp["model"] = "gemini-3.1-pro"  # Override: this node uses Gemini
+                existing_node.update(gemini_stamp)
                 await update_sandbox_status(sandbox, "rubric_enrichment", existing_node)
                 if dest:
                     await download_task_files(sandbox, dest)
-                    logger.info("[%s] rubric enrich done (%s), synced", task_name, s)
+                    logger.info("[%s] rubric enrich done (%s, via Gemini), synced", task_name, s)
                 if _check_rate_limit("rubric_enrich", s):
                     raise _RateLimited(result.error)
 
