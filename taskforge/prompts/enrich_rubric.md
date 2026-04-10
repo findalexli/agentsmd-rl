@@ -102,21 +102,54 @@ If after filtering you have 0 relevant rules, that's OK — write an empty rubri
 
 ## Phase 6: Write to eval_manifest.yaml
 
-```yaml
-rubric:
-  - rule: "Specific, evaluable rule text tied to this PR"
-    source:
-      path: "CLAUDE.md"        # repo-relative path to the config file
-      lines: "45-48"           # actual line(s) containing the rule
-      commit: "abc123def"      # base commit (before the PR)
-  - rule: "Another specific rule"
-    source:
-      path: ".claude/skills/dev/SKILL.md"
-      lines: "12"
-      commit: "abc123def"
-    reference: |               # ONLY for agentmd-edit tasks where PR modifies this file
-      Expected content that should be added
+**CRITICAL**: Use `python3` to read, merge, and write the YAML file. Do NOT use the Edit tool for YAML — it's error-prone. Always use this exact pattern:
+
+```bash
+python3 << 'PYEOF'
+import yaml
+
+# Read existing manifest
+with open('/workspace/task/eval_manifest.yaml') as f:
+    manifest = yaml.safe_load(f)
+
+# Build new rubric rules
+new_rules = [
+    {
+        "rule": "Specific, evaluable rule text tied to this PR",
+        "source": {
+            "path": "CLAUDE.md",       # repo-relative path to the config file
+            "lines": "45-48",          # actual line(s) containing the rule
+            "commit": "abc123def",     # base commit (before the PR)
+        }
+    },
+    {
+        "rule": "Another specific rule",
+        "source": {
+            "path": ".claude/skills/dev/SKILL.md",
+            "lines": "12",
+            "commit": "abc123def",
+        },
+        # reference: ONLY for agentmd-edit tasks where PR modifies this config file
+        "reference": "Expected content that should be added"
+    },
+]
+
+# Merge: keep existing rules, append new ones (no duplicates)
+existing = manifest.get('rubric') or []
+existing_texts = {r['rule'] if isinstance(r, dict) else r for r in existing}
+for rule in new_rules:
+    if rule['rule'] not in existing_texts:
+        existing.append(rule)
+manifest['rubric'] = existing
+
+with open('/workspace/task/eval_manifest.yaml', 'w') as f:
+    yaml.dump(manifest, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
+print(f"Wrote {len(existing)} rubric rules to eval_manifest.yaml")
+PYEOF
 ```
+
+Adapt the `new_rules` list to your actual rules. Include `reference` field only for agentmd-edit tasks where the PR modifies the config file itself.
 
 **IMPORTANT**:
 - `source.path` must be the repo-relative path to the config file
@@ -127,11 +160,18 @@ rubric:
 
 ## Phase 7: Update status.json
 
-```python
+Use `python3` to merge (do NOT overwrite existing nodes):
+
+```bash
+python3 << 'PYEOF'
 import json
-status = json.load(open('/workspace/task/status.json'))
+
+with open('/workspace/task/status.json') as f:
+    status = json.load(f)
+
 if 'nodes' not in status:
     status['nodes'] = {}
+
 status['nodes']['rubric_enrichment'] = {
     "status": "ok",
     "configs_found": ["CLAUDE.md", ".claude/skills/dev/SKILL.md"],
@@ -140,7 +180,10 @@ status['nodes']['rubric_enrichment'] = {
     "rejection_reasons": "3 too generic, 2 not applicable to changed files",
     "notes": "Added 2 rules specific to the Bazel build changes in this PR"
 }
-json.dump(status, open('/workspace/task/status.json', 'w'), indent=2)
+
+with open('/workspace/task/status.json', 'w') as f:
+    json.dump(status, f, indent=2)
+PYEOF
 ```
 
 ## What NOT to do
